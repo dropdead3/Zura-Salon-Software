@@ -5,12 +5,14 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ChevronLeft, Clock, Loader2, Users, ChevronsUpDown, Check } from 'lucide-react';
+import { ChevronLeft, Clock, Loader2, Users, ChevronsUpDown, Check, AlertTriangle } from 'lucide-react';
 import { cn, formatDisplayName } from '@/lib/utils';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useSuggestedBlocks } from '@/hooks/useAssistantTimeBlocks';
+import { useAssistantsAtLocation } from '@/hooks/useAssistantAvailability';
+import { useAssistantConflictCheck } from '@/hooks/useAssistantConflictCheck';
 import type { PhorestAppointment } from '@/hooks/usePhorestCalendar';
 
 interface RequestAssistantPanelProps {
@@ -94,10 +96,35 @@ export function RequestAssistantPanel({
     enabled: !!effectiveOrganization?.id,
   });
 
+  // Availability-aware: get assistants scheduled at this location on this date
+  const availableAssistants = useAssistantsAtLocation(locationId, date);
+  const availableUserIds = useMemo(
+    () => new Set(availableAssistants.map(a => a.user_id)),
+    [availableAssistants]
+  );
+
+  // Conflict check for the selected time range
+  const conflictMap = useAssistantConflictCheck(
+    dateStr,
+    `${startTime}:00`,
+    `${endTime}:00`,
+    'new-block', // placeholder ID since this is a new block
+    true,
+  );
+
   const selectedAssistant = useMemo(() =>
     eligibleAssistants.find(a => a.user_id === assistantUserId),
     [eligibleAssistants, assistantUserId]
   );
+
+  // Sort: available first, then others
+  const sortedAssistants = useMemo(() => {
+    return [...eligibleAssistants].sort((a, b) => {
+      const aAvail = availableUserIds.has(a.user_id) ? 0 : 1;
+      const bAvail = availableUserIds.has(b.user_id) ? 0 : 1;
+      return aAvail - bAvail;
+    });
+  }, [eligibleAssistants, availableUserIds]);
 
   const handleSuggestionClick = (suggestion: { start_time: string; end_time: string }) => {
     setStartTime(suggestion.start_time.slice(0, 5));
@@ -219,19 +246,32 @@ export function RequestAssistantPanel({
                     <Check className={cn('mr-2 h-3.5 w-3.5', !assistantUserId ? 'opacity-100' : 'opacity-0')} />
                     Any available assistant
                   </CommandItem>
-                  {eligibleAssistants.map(member => (
-                    <CommandItem
-                      key={member.user_id}
-                      value={member.display_name || member.full_name || ''}
-                      onSelect={() => {
-                        setAssistantUserId(member.user_id);
-                        setAssistantSearchOpen(false);
-                      }}
-                    >
-                      <Check className={cn('mr-2 h-3.5 w-3.5', assistantUserId === member.user_id ? 'opacity-100' : 'opacity-0')} />
-                      {formatDisplayName(member.full_name, member.display_name)}
-                    </CommandItem>
-                  ))}
+                  {sortedAssistants.map(member => {
+                    const isAvailable = availableUserIds.has(member.user_id);
+                    const hasConflict = conflictMap.has(member.user_id);
+                    return (
+                      <CommandItem
+                        key={member.user_id}
+                        value={member.display_name || member.full_name || ''}
+                        onSelect={() => {
+                          setAssistantUserId(member.user_id);
+                          setAssistantSearchOpen(false);
+                        }}
+                      >
+                        <Check className={cn('mr-2 h-3.5 w-3.5', assistantUserId === member.user_id ? 'opacity-100' : 'opacity-0')} />
+                        <span className="flex-1">{formatDisplayName(member.full_name, member.display_name)}</span>
+                        {hasConflict && (
+                          <AlertTriangle className="h-3 w-3 text-amber-500 ml-1 shrink-0" />
+                        )}
+                        {!isAvailable && (
+                          <span className="text-[10px] text-muted-foreground ml-1 shrink-0">(not scheduled)</span>
+                        )}
+                        {isAvailable && !hasConflict && (
+                          <span className="h-1.5 w-1.5 rounded-full bg-green-500 ml-1 shrink-0" />
+                        )}
+                      </CommandItem>
+                    );
+                  })}
                 </CommandGroup>
               </CommandList>
             </Command>

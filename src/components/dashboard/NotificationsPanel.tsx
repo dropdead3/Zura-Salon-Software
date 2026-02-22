@@ -17,6 +17,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { AssistantBlockNotificationItem } from '@/components/dashboard/schedule/AssistantBlockNotificationItem';
 
 interface Announcement {
   id: string;
@@ -391,7 +392,20 @@ export function NotificationsPanel({ unreadCount }: NotificationsPanelProps) {
               ) : (announcements && announcements.length > 0) || (userNotifications && userNotifications.length > 0) ? (
                 <div className="divide-y divide-border">
                   {/* User Notifications (high-fives, etc.) */}
-                  {userNotifications?.map((notification) => (
+                  {userNotifications?.map((notification) => {
+                    // Route assistant_time_block notifications to custom renderer
+                    if (notification.type === 'assistant_time_block') {
+                      return (
+                        <AssistantBlockNotificationItem
+                          key={notification.id}
+                          notification={notification}
+                          currentUserId={user?.id || ''}
+                          onDismiss={handleDismissNotification}
+                        />
+                      );
+                    }
+
+                    return (
                     <div
                       key={notification.id}
                       className={cn(
@@ -431,7 +445,8 @@ export function NotificationsPanel({ unreadCount }: NotificationsPanelProps) {
                         )}
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
 
                   {/* Announcements */}
                   {announcements?.map((announcement) => (
