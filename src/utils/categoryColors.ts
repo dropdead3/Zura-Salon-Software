@@ -310,6 +310,8 @@ interface DarkCategoryStyle {
   hover: string;
   selected: string;
   text: string;
+  glow: string;
+  ring: string;
 }
 
 /**
@@ -358,5 +360,12 @@ export function getDarkCategoryStyle(hexColor: string): DarkCategoryStyle {
   // Text: original light-mode hex for colored, warm off-white for grays
   const text = isGray ? '#e8e4df' : hexColor;
 
-  return { fill, stroke, accent, hover, selected, text };
+  // Glow: subtle box-shadow halo on hover
+  const glowAlpha = isGray ? 0.08 : 0.15;
+  const glow = `0 0 12px rgba(${r}, ${g}, ${b}, ${glowAlpha})`;
+
+  // Ring: 2px outline for selected state
+  const ring = `0 0 0 2px ${hexColor}`;
+
+  return { fill, stroke, accent, hover, selected, text, glow, ring };
 }
