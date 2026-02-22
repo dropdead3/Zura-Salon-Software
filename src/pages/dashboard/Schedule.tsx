@@ -616,6 +616,12 @@ export default function Schedule() {
           setDetailOpen(false);
           setCheckoutOpen(true);
         }}
+        onOpenClientProfile={(clientId) => {
+          setDetailOpen(false);
+          setSelectedAppointment(null);
+          // Dispatch event for ClientDetailSheet (if wired via global state or context)
+          window.dispatchEvent(new CustomEvent('open-client-profile', { detail: { clientId } }));
+        }}
       />
 
       <CheckoutSummarySheet
