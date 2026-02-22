@@ -7,7 +7,7 @@ import {
   isToday,
   isTomorrow,
 } from 'date-fns';
-import { cn } from '@/lib/utils';
+import { cn, formatPhoneDisplay, formatDisplayName } from '@/lib/utils';
 import { 
   Tooltip,
   TooltipContent,
@@ -37,6 +37,7 @@ interface WeekViewProps {
   appointmentsWithAssistants?: Set<string>;
   colorBy?: 'status' | 'service' | 'stylist';
   serviceLookup?: Map<string, ServiceLookupEntry>;
+  assistantNamesMap?: Map<string, string[]>;
 }
 
 // Use consolidated status colors from design tokens
@@ -89,6 +90,7 @@ function AppointmentCard({
   hasAssistants = false,
   colorBy = 'service',
   serviceLookup,
+  assistantNamesMap,
 }: {
   appointment: PhorestAppointment; 
   hoursStart: number;
@@ -98,6 +100,7 @@ function AppointmentCard({
   hasAssistants?: boolean;
   colorBy?: 'status' | 'service' | 'stylist';
   serviceLookup?: Map<string, ServiceLookupEntry>;
+  assistantNamesMap?: Map<string, string[]>;
 }) {
   const style = getEventStyle(appointment.start_time, appointment.end_time, hoursStart);
   const statusColors = STATUS_COLORS[appointment.status];
@@ -246,7 +249,7 @@ function AppointmentCard({
                   {appointment.recurrence_group_id && <Repeat className="h-3 w-3 opacity-60 shrink-0" />}
                   {isAssisting && <span className="bg-accent/80 text-accent-foreground text-[8px] px-1 py-px rounded-sm font-medium shrink-0">ASSISTING</span>}
                   {!isAssisting && hasAssistants && <Users className="h-3 w-3 opacity-60 shrink-0" />}
-                  {appointment.client_name} {appointment.client_phone}
+                  {appointment.client_name} {appointment.client_phone ? formatPhoneDisplay(appointment.client_phone) : ''}
                 </div>
                 <div className="text-[11px] opacity-90 truncate">{appointment.service_name}</div>
               </>
@@ -283,8 +286,8 @@ function AppointmentCard({
           {appointment.client_phone && (
             <div className="text-sm flex items-center gap-1.5">
               <Phone className="h-3 w-3" />
-              <a href={`tel:${appointment.client_phone}`} className="hover:underline">
-                {appointment.client_phone}
+               <a href={`tel:${appointment.client_phone}`} className="hover:underline">
+                {formatPhoneDisplay(appointment.client_phone)}
               </a>
             </div>
           )}
@@ -295,7 +298,13 @@ function AppointmentCard({
           {appointment.stylist_profile && (
             <div className="text-sm flex items-center gap-1">
               <User className="h-3 w-3" />
-              {appointment.stylist_profile.display_name || appointment.stylist_profile.full_name}
+              {formatDisplayName(appointment.stylist_profile.full_name, appointment.stylist_profile.display_name)}
+            </div>
+          )}
+          {hasAssistants && assistantNamesMap?.get(appointment.id) && (
+            <div className="text-sm flex items-center gap-1">
+              <Users className="h-3 w-3" />
+              w/ {assistantNamesMap.get(appointment.id)!.join(', ')}
             </div>
           )}
           <Badge variant="outline" className={cn('text-xs', statusColors.bg, statusColors.text)}>
@@ -322,6 +331,7 @@ export function WeekView({
   appointmentsWithAssistants,
   colorBy = 'service',
   serviceLookup,
+  assistantNamesMap,
 }: WeekViewProps) {
   const [activeSlot, setActiveSlot] = useState<{ date: Date; time: string } | null>(null);
   const { colorMap: categoryColors } = useServiceCategoryColorsMap();
@@ -622,6 +632,7 @@ export function WeekView({
                       hasAssistants={appointmentsWithAssistants?.has(apt.id) || false}
                       colorBy={colorBy}
                       serviceLookup={serviceLookup}
+                      assistantNamesMap={assistantNamesMap}
                     />
                   ))}
 

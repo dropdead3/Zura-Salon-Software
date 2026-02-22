@@ -28,6 +28,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useDraftBookings, type DraftBooking } from '@/hooks/useDraftBookings';
 import { useServiceLookup } from '@/hooks/useServiceLookup';
+import { useAppointmentAssistantNames } from '@/hooks/useAppointmentAssistantNames';
 import { Loader2, Sparkles, Coffee } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -76,6 +77,13 @@ export default function Schedule() {
     updateStatus,
     isUpdating,
   } = usePhorestCalendar();
+
+  // Batch-fetch assistant names for appointments that have assistants
+  const assistantApptIds = useMemo(() => 
+    appointmentsWithAssistants ? Array.from(appointmentsWithAssistants) as string[] : [],
+    [appointmentsWithAssistants]
+  );
+  const { data: assistantNamesMap } = useAppointmentAssistantNames(assistantApptIds);
 
   // State for selections and sheets
   const [selectedAppointment, setSelectedAppointment] = useState<PhorestAppointment | null>(null);
@@ -448,6 +456,7 @@ export default function Schedule() {
                 appointmentsWithAssistants={appointmentsWithAssistants}
                 colorBy={preferences.color_by as 'status' | 'service' | 'stylist'}
                 serviceLookup={serviceLookup}
+                assistantNamesMap={assistantNamesMap}
               />
             );
           })()}
@@ -466,6 +475,7 @@ export default function Schedule() {
               appointmentsWithAssistants={appointmentsWithAssistants}
               colorBy={preferences.color_by as 'status' | 'service' | 'stylist'}
               serviceLookup={serviceLookup}
+              assistantNamesMap={assistantNamesMap}
             />
           )}
           
@@ -485,6 +495,7 @@ export default function Schedule() {
               appointmentsWithAssistants={appointmentsWithAssistants}
               colorBy={preferences.color_by as 'status' | 'service' | 'stylist'}
               serviceLookup={serviceLookup}
+              assistantNamesMap={assistantNamesMap}
             />
           )}
           
