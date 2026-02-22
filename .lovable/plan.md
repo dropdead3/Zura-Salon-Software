@@ -1,117 +1,151 @@
 
 
-# Phase 4: Realtime Updates, Availability-Aware Requests, and Notification Rendering
+# Phase 5: Deferred Items Build + Gap Analysis
 
 ## Summary
 
-Phases 1-3 built the full assistant time block lifecycle: creation, visibility across all views, management, and response flow. Phase 4 focuses on **operational polish** -- making the system feel alive with realtime updates, integrating availability intelligence into the request flow, and surfacing assistant block notifications in the existing notification feed.
+This phase implements the four deferred items from Phase 4, then performs a comprehensive gap analysis. The deferred items are: (1) push/email notifications for assistant blocks, (2) auto-suggestion algorithm, (3) interactive block resizing in DayView, and (4) assistant utilization analytics card.
 
 ---
 
-## Change 1: Realtime Subscription for Assistant Time Blocks
+## Change 1: Push and Email Notifications for Assistant Time Blocks
 
-**File**: `src/hooks/useAssistantTimeBlocks.ts`
-
-The `assistant_time_blocks` table already has realtime enabled (migration `20260222205848`), but no client-side subscription exists. When one user accepts/declines a block, other users only see the update after `staleTime` expires (30 seconds).
+**Problem**: Assistant block events (creation, acceptance, decline) only generate in-app notifications. Users who are not actively looking at the app miss time-sensitive coverage requests.
 
 **What changes**:
-- In `useAssistantTimeBlocks`, add a `useEffect` that subscribes to `postgres_changes` on `assistant_time_blocks` filtered by `location_id` and `date`
-- On any INSERT, UPDATE, or DELETE event, invalidate the relevant query keys (`assistant-time-blocks`, `assistant-time-blocks-range`, `assistant-pending-blocks`)
-- Clean up the channel subscription on unmount
-- This gives all users on the schedule page instant visual feedback when blocks change
+
+**File**: `src/hooks/useAssistantTimeBlocks.ts`
+- After inserting in-app notifications (both for direct assignment and pool notifications), invoke the existing `send-push-notification` edge function for each target user with title/body/url pointing to `/dashboard/schedule`
+- This reuses existing push infrastructure (`push_subscriptions` table, `send-push-notification` function, `usePushNotifications` hook)
+
+**File**: New edge function `supabase/functions/notify-assistant-block/index.ts`
+- Accepts `{ block_id, event_type, actor_user_id }` where event_type is `created`, `accepted`, or `declined`
+- Fetches the block, determines notification targets
+- Sends push notification via the same Web Push logic already in `send-push-notification`
+- Sends email via `sendOrgEmail` to the target user(s) with a simple template: block details + link to schedule
+- Handles rate limiting: no duplicate notifications for the same block within 5 minutes
 
 ---
 
-## Change 2: Availability-Aware Assistant Picker in RequestAssistantPanel
+## Change 2: Auto-Suggestion Algorithm for Assistant Assignment
+
+**Problem**: When a coverage request is created without a specific assistant, there is no intelligent suggestion for who the best match is. The system currently shows "Any available assistant" and relies on manual selection or pool notification.
+
+**What changes**:
+
+**File**: New hook `src/hooks/useAssistantAutoSuggest.ts`
+- Given a `locationId`, `date`, `startTime`, `endTime`, returns a ranked list of suggested assistants
+- Ranking criteria (weighted):
+  1. Is scheduled at this location on this day (from `employee_location_schedules`) -- highest weight
+  2. Has no overlapping appointments or time blocks (conflict-free) -- required
+  3. Historical acceptance rate: count of `confirmed` blocks vs total assigned blocks -- tiebreaker
+  4. Workload balance: fewer confirmed blocks today = higher rank -- tiebreaker
+- Returns `Array<{ user_id, name, photo_url, score, reasons: string[] }>`
 
 **File**: `src/components/dashboard/schedule/RequestAssistantPanel.tsx`
-
-Currently the "Assign to" picker shows all team members regardless of whether they're working that day. The `useAssistantsAtLocation` hook already exists in `useAssistantAvailability.ts` but isn't used.
-
-**What changes**:
-- Import `useAssistantsAtLocation` from `@/hooks/useAssistantAvailability`
-- Use it to get assistants scheduled at the selected location on the selected date
-- Show available assistants at the top of the picker with a green indicator
-- Show other team members below with a "(not scheduled)" label
-- Add conflict indicators using `useAssistantConflictCheck` to mark assistants who have overlapping commitments
+- Import `useAssistantAutoSuggest` and show a "Suggested" badge next to the top-ranked assistant in the picker
+- If only one assistant scores well, auto-select them with a note: "Auto-suggested based on availability and history"
 
 ---
 
-## Change 3: Conflict Warning on QuickBookingPopover Assistant Toggle
+## Change 3: Interactive Block Resizing in DayView
 
-**File**: `src/components/dashboard/schedule/QuickBookingPopover.tsx`
-
-When the "Request Assistant Coverage" toggle is enabled during booking, there is no check for whether assistants are actually available at that location/time.
+**Problem**: Once created, assistant time blocks cannot be visually resized on the calendar. Users must delete and recreate to adjust timing.
 
 **What changes**:
-- Import `useHasAssistantAvailability` from `@/hooks/useAssistantAvailability`
-- When the toggle is on, show a subtle info/warning note:
-  - If assistants are available: "X assistants are scheduled at this location"
-  - If none available: "No assistants are scheduled this day -- request will go to the open pool"
-- This is advisory only -- does not block the request
 
----
-
-## Change 4: Notification Feed Integration
-
-**File**: New file `src/components/dashboard/schedule/AssistantBlockNotificationItem.tsx`
-
-Currently, assistant block notifications are inserted into the `notifications` table but there is no type-specific rendering in the notification feed.
-
-**What changes**:
-- Create a small component that renders assistant block notification items with:
-  - Accept/Decline action buttons (reusing `AssistantBlockActions`)
-  - Time and date context
-  - Requester name
-- This component is used when `notification.type === 'assistant_time_block'`
-
-**File**: Find and update the notification rendering component to detect `type === 'assistant_time_block'` and render `AssistantBlockNotificationItem` instead of the default text-only layout.
-
----
-
-## Change 5: Auto-Notify Unassigned Block Pool
+**File**: `src/components/dashboard/schedule/AssistantBlockOverlay.tsx`
+- Add a bottom-edge drag handle (a thin bar at the bottom of each overlay block)
+- On drag, calculate the new `end_time` based on pixel offset, snapping to 15-minute increments
+- On drag end, call `updateBlock` mutation with the new `end_time`
+- Only show the drag handle when the current user is the requester and the block is not yet confirmed
+- Visual feedback: ghost outline showing the new end time during drag
 
 **File**: `src/hooks/useAssistantTimeBlocks.ts`
-
-When a block is created with `assistant_user_id: null`, no notification is sent to anyone. Assistants scheduled at that location should receive a notification.
-
-**What changes**:
-- In the `createBlock` mutation's success path, when `assistant_user_id` is null:
-  - Query `useAssistantsAtLocation` data (or call the query inline) to find assistants working at the location on that date
-  - Insert a notification for each of them: "An assistant coverage request is available for [date] [time range]"
-  - Metadata includes `time_block_id` so the notification action buttons work
+- Extend the `updateBlock` mutation to also accept `start_time` and `end_time` fields
 
 ---
 
-## Change 6: Stale Block Cleanup Indicator
+## Change 4: Assistant Utilization Analytics Card
 
-**File**: `src/components/dashboard/schedule/AssistantBlockManagerSheet.tsx`
-
-Blocks older than today with status `requested` are stale. While the pending badge now filters them out (gap fix), the manager sheet still shows them in the 30-day window with no visual distinction.
+**Problem**: There is no visibility into how effectively the assistant system is being used -- acceptance rates, coverage hours, response times.
 
 **What changes**:
-- In `BlockRow`, check if `block.date < todayStr` and `block.status === 'requested'`
-- If true, add a subtle "Expired" badge next to the status and dim the row
-- Add a "Clear expired" bulk action button at the top of the "My Requests" tab that deletes all past unconfirmed blocks
+
+**File**: New component `src/components/dashboard/analytics/AssistantUtilizationCard.tsx`
+- A standard analytics card (PinnableCard wrapper, design token compliance) showing:
+  - Total requests (last 30 days)
+  - Acceptance rate (confirmed / total)
+  - Average response time (time between creation and status change)
+  - Coverage hours (sum of confirmed block durations)
+  - Top assistants (ranked by confirmed hours)
+- Uses a new hook `useAssistantUtilizationStats`
+
+**File**: New hook `src/hooks/useAssistantUtilizationStats.ts`
+- Queries `assistant_time_blocks` with date range filter
+- Aggregates:
+  - `totalRequests`: count all
+  - `acceptedRequests`: count where status = 'confirmed'
+  - `acceptanceRate`: accepted / total
+  - `totalCoverageMinutes`: sum of (end_time - start_time) for confirmed blocks
+  - `avgResponseMinutes`: average of (updated_at - created_at) for confirmed blocks
+  - `topAssistants`: group by assistant_user_id, sum confirmed hours, join profiles
+
+**File**: Register in the Analytics Hub page under a relevant tab (Team or Operations)
+
+---
+
+## Change 5: Gap Analysis Pass (Post-Build)
+
+After implementing Changes 1-4, perform a full audit:
+
+**Data Completeness**:
+- Verify `organization_id` filtering is present on all new queries
+- Confirm notification deduplication prevents spam
+- Validate utilization stats handle edge cases (zero blocks, null times)
+
+**UX Polish**:
+- Confirm drag resize has proper cursor feedback and snap indicators
+- Verify auto-suggest badge uses design tokens (not raw classes)
+- Ensure analytics card follows card header canon (icon box + title + MetricInfoTooltip)
+- Check push notification permission prompt UX
+
+**Action Flow**:
+- Verify email notifications include unsubscribe links (via existing `sendOrgEmail`)
+- Confirm drag resize triggers conflict check before saving
+- Validate auto-suggest does not override explicit user selection
 
 ---
 
 ## Technical Details
 
+### Files Created
+
+| File | Purpose |
+|---|---|
+| `supabase/functions/notify-assistant-block/index.ts` | Push + email notifications for block events |
+| `src/hooks/useAssistantAutoSuggest.ts` | Ranked assistant suggestion algorithm |
+| `src/hooks/useAssistantUtilizationStats.ts` | Aggregated utilization metrics |
+| `src/components/dashboard/analytics/AssistantUtilizationCard.tsx` | Analytics card component |
+
 ### Files Modified
 
-| File | Change |
+| File | Changes |
 |---|---|
-| `src/hooks/useAssistantTimeBlocks.ts` | Add realtime subscription; add pool notification on unassigned block creation |
-| `src/components/dashboard/schedule/RequestAssistantPanel.tsx` | Integrate availability-aware picker with conflict indicators |
-| `src/components/dashboard/schedule/QuickBookingPopover.tsx` | Add availability info when assistant toggle is enabled |
-| `src/components/dashboard/schedule/AssistantBlockNotificationItem.tsx` | New: notification item renderer with action buttons |
-| `src/components/dashboard/schedule/AssistantBlockManagerSheet.tsx` | Add expired block indicator and bulk cleanup |
-| Notification feed component (to be identified) | Route `assistant_time_block` type to new renderer |
+| `src/hooks/useAssistantTimeBlocks.ts` | Call notify edge function on block create/accept/decline; extend updateBlock with time fields |
+| `src/components/dashboard/schedule/RequestAssistantPanel.tsx` | Add auto-suggest badge to picker |
+| `src/components/dashboard/schedule/AssistantBlockOverlay.tsx` | Add bottom-edge drag resize handle |
+| `src/components/dashboard/schedule/AssistantBlockActions.tsx` | Call notify edge function on accept/decline |
+| Analytics Hub page | Register AssistantUtilizationCard |
 
-### What This Does NOT Do (Deferred)
+### Database Changes
 
-- No push notifications or email alerts (remains in-app only)
-- No auto-assignment algorithm
-- No drag-to-resize time blocks on the calendar
-- No assistant utilization analytics/reporting
+- **Migration**: Add `assistant_time_blocks` to realtime publication (if not already present -- verify)
+- No new tables required; utilization stats are computed from existing `assistant_time_blocks` data
+
+### Dependencies
+
+- No new npm packages; drag uses native pointer events (same pattern as appointment drag-and-drop)
+- Email uses existing `sendOrgEmail` from `_shared/email-sender.ts`
+- Push uses existing `send-push-notification` infrastructure
+
