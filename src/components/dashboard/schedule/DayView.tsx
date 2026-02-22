@@ -17,6 +17,7 @@ import { useRescheduleAppointment } from '@/hooks/useRescheduleAppointment';
 import type { ServiceLookupEntry } from '@/hooks/useServiceLookup';
 import { APPOINTMENT_STATUS_COLORS } from '@/lib/design-tokens';
 import { getClientInitials, getAvatarColor, formatServicesWithDuration, sortServices } from '@/lib/appointment-card-utils';
+import { StylistBadge } from './StylistBadge';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { formatRelativeTime } from '@/lib/format';
@@ -307,9 +308,18 @@ function AppointmentCard({
             if (!isDragging) onClick();
           }}
         >
-          {/* Drag handle indicator */}
+          {/* Stylist badge top-right */}
+          {!isCompact && appointment.stylist_profile && (
+            <div className="absolute top-0.5 right-0.5">
+              <StylistBadge
+                stylistProfile={appointment.stylist_profile}
+                assistantNames={assistantNamesMap?.get(appointment.id)}
+              />
+            </div>
+          )}
+          {/* Drag handle indicator - left of badge */}
           {!isDragOverlay && !isCompact && (
-            <div className="absolute top-0.5 right-0.5 opacity-0 group-hover:opacity-40 transition-opacity">
+            <div className="absolute top-0.5 right-6 opacity-0 group-hover:opacity-40 transition-opacity">
               <GripVertical className="w-3 h-3" />
             </div>
           )}
@@ -477,19 +487,7 @@ function AppointmentCard({
                     {(duration >= 45 && formatServicesWithDuration(appointment.service_name, serviceLookup)) || appointment.service_name}
                   </div>
                 )}
-                {/* Stylist name */}
-                {appointment.stylist_profile && (
-                  <div className="text-xs opacity-70 truncate">
-                    {formatDisplayName(appointment.stylist_profile.full_name, appointment.stylist_profile.display_name)}
-                  </div>
-                )}
-                {/* Assistant name */}
-                {hasAssistants && assistantNamesMap?.get(appointment.id) && (
-                  <div className="text-xs opacity-70 truncate flex items-center gap-0.5">
-                    <Users className="h-2.5 w-2.5 shrink-0" />
-                    w/ {assistantNamesMap.get(appointment.id)!.join(', ')}
-                  </div>
-                )}
+                {/* Stylist/assistant info now in top-right badge tooltip */}
                 {duration >= 60 && (
                   <div className="text-xs opacity-80 mt-0.5 flex items-center justify-between">
                     <span>{formatTime12h(appointment.start_time)} - {formatTime12h(appointment.end_time)}</span>

@@ -11,6 +11,7 @@ import { formatRelativeTime } from '@/lib/format';
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
 import { APPOINTMENT_STATUS_BADGE } from '@/lib/design-tokens';
 import { getClientInitials, getAvatarColor, formatServicesWithDuration } from '@/lib/appointment-card-utils';
+import { StylistBadge } from './StylistBadge';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import type { ServiceLookupEntry } from '@/hooks/useServiceLookup';
 
@@ -125,6 +126,14 @@ function AppointmentCard({
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
+                {/* Stylist badge */}
+                {appointment.stylist_profile && (
+                  <StylistBadge
+                    stylistProfile={appointment.stylist_profile}
+                    assistantNames={assistantNamesMap?.get(appointment.id)}
+                    size="md"
+                  />
+                )}
                 {appointment.total_price != null && appointment.total_price > 0 && (
                   <BlurredAmount className="text-sm font-medium text-muted-foreground">
                     ${appointment.total_price.toFixed(0)}

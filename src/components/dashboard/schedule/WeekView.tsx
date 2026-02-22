@@ -16,6 +16,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Phone, User, Users, Repeat, RotateCcw, Star, ArrowRightLeft, Clock } from 'lucide-react';
 import { getClientInitials, getAvatarColor, formatServicesWithDuration, sortServices } from '@/lib/appointment-card-utils';
+import { StylistBadge } from './StylistBadge';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { formatRelativeTime } from '@/lib/format';
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
@@ -232,6 +233,15 @@ function AppointmentCard({
                   }}
                 />
               ))}
+            </div>
+          )}
+          {/* Stylist badge top-right */}
+          {!isCompact && appointment.stylist_profile && (
+            <div className="absolute top-0.5 right-0.5 z-10">
+              <StylistBadge
+                stylistProfile={appointment.stylist_profile}
+                assistantNames={assistantNamesMap?.get(appointment.id)}
+              />
             </div>
           )}
           <div className="relative z-10" style={serviceBands ? { textShadow: '0 0 3px rgba(0,0,0,0.15)' } : undefined}>
