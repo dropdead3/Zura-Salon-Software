@@ -1,55 +1,51 @@
 
-# Add Stylist Badge to Appointment Cards
+# Show Assistant Badges on DayView Appointment Cards
 
-## Overview
+## Context
 
-Add a compact stylist avatar/initials badge in the top-right corner of appointment cards across DayView, WeekView, and AgendaView. Hovering the badge shows a tooltip with the primary stylist name and any assistants.
+In DayView, each column already represents a stylist, so the current top-right `StylistBadge` (showing the lead stylist) is redundant information. What operators actually need is to see **which assistants** are scheduled on each appointment at a glance.
 
 ## What Changes
 
-### 1. DayView Cards (`src/components/dashboard/schedule/DayView.tsx`)
+### 1. Enhance assistant data hook (`useAppointmentAssistantNames.ts`)
 
-**Top-right badge (replaces current drag handle position):**
-- Add a stylist initials badge positioned `absolute top-0.5 right-0.5` (z-10) using a small circle with the stylist's first-name initial(s)
-- Uses the stylist's `photo_url` if available (tiny Avatar), otherwise falls back to initials in a muted circle
-- On compact cards (duration < 30min): hide the badge to preserve space
-- On non-compact cards: always visible
-- Move the existing drag handle (`GripVertical`) to appear on hover to the left of the badge, or shift it slightly
+Currently this hook only returns `Map<string, string[]>` (appointment ID to list of name strings). It needs to also return profile data (photo_url, display_name, full_name) so we can render avatar badges.
 
-**Hover tooltip on the badge:**
-- Primary stylist: `User` icon + stylist display name
-- If assistants present: `Users` icon + "w/ AssistantName1, AssistantName2"
+- Add `photo_url` to the profile select query
+- Export a new type `AssistantProfile` with `{ display_name, full_name, photo_url }`
+- Add a second return map: `Map<string, AssistantProfile[]>` keyed by appointment ID
+- The hook will return both `assistantNamesMap` (for backward compat with WeekView/AgendaView tooltips) and `assistantProfilesMap` (for DayView badges)
 
-**Remove inline stylist/assistant text lines** (lines 480-491) from the card body on non-compact cards, since this info moves to the badge tooltip. This reclaims vertical space for services.
+### 2. Pass assistant profiles to DayView (`Schedule.tsx`)
 
-### 2. WeekView Cards (`src/components/dashboard/schedule/WeekView.tsx`)
+- Destructure `assistantProfilesMap` from the updated hook
+- Pass it as a new prop to the DayView component
 
-Same pattern:
-- Add stylist initials badge at `absolute top-0.5 right-0.5` on medium and full-size cards
-- Tooltip with stylist + assistant names on hover
-- Compact cards: no badge (too small)
+### 3. Replace StylistBadge with AssistantBadges on DayView cards (`DayView.tsx`)
 
-### 3. AgendaView Cards (`src/components/dashboard/schedule/AgendaView.tsx`)
+**Remove**: The current `StylistBadge` in the top-right corner (lines 311-319) which redundantly shows the column's own stylist.
 
-AgendaView has more horizontal space, so:
-- Add a stylist avatar chip in the top-right area (within the existing flex layout at line 127)
-- Include assistant info inline with a `Users` icon
-- Tooltip on the avatar shows full stylist name + role + assistants
+**Add**: When the appointment has assistants, render assistant avatar badges in the top-right corner instead:
+- Each assistant gets a small `h-5 w-5` circle badge (photo or initials)
+- Multiple assistants stack horizontally with `-space-x-1` overlap
+- Each badge has a tooltip showing the assistant's name
+- A `Users` icon prefix (h-3 w-3) appears before the badges to indicate these are assistants
 
-### 4. Visual Design
+**Visual design**:
+- Badge container: `absolute top-0.5 right-0.5 z-10 flex items-center -space-x-1`
+- Each badge: `h-5 w-5` circle, `bg-muted/80 backdrop-blur-sm`, `text-[8px] font-medium`
+- Photo avatars use the Avatar component at the same size
+- Tooltip: assistant name with `Users` icon
+- Hidden on compact cards (duration < 30min)
 
-- Badge: `h-5 w-5` circle, `absolute top-1 right-1 z-10`
-- Background: `bg-muted/80 backdrop-blur-sm` with `text-[8px] font-medium`
-- If `photo_url` exists: use Avatar component at same size
-- Tooltip content structured as:
-  - Line 1: `User` icon + Stylist name (primary)
-  - Line 2 (conditional): `Users` icon + "w/ Assistant1, Assistant2"
-- Color: muted foreground, no bold weights
+### 4. Keep StylistBadge on WeekView and AgendaView
+
+Those views show all stylists together (not in columns), so the existing StylistBadge with assistant tooltip remains appropriate there.
 
 ## Files Modified
 
 | File | Change |
 |------|--------|
-| `src/components/dashboard/schedule/DayView.tsx` | Add stylist badge top-right with tooltip; remove inline stylist/assistant text from card body |
-| `src/components/dashboard/schedule/WeekView.tsx` | Add stylist badge top-right with tooltip |
-| `src/components/dashboard/schedule/AgendaView.tsx` | Add stylist avatar chip with tooltip in top-right area |
+| `src/hooks/useAppointmentAssistantNames.ts` | Add `photo_url` to query; export `assistantProfilesMap` alongside existing names map |
+| `src/pages/dashboard/Schedule.tsx` | Pass `assistantProfilesMap` to DayView |
+| `src/components/dashboard/schedule/DayView.tsx` | Replace `StylistBadge` with assistant avatar badges; add `assistantProfilesMap` prop to DayViewProps and AppointmentCardProps |
