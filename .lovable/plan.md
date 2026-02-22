@@ -1,83 +1,57 @@
 
-
-# Fix: Ensure Light Mode Cards Are Always Solid and Opaque
+# Remove Hover Tooltip from Appointment Cards
 
 ## Problem
-
-After dark mode styling changes, light mode appointment cards can appear translucent or show wrong text colors. The root cause is that `getDarkCategoryStyle` produces `rgba()` translucent fills. If the `resolvedTheme` from `useDashboardTheme()` has any delay or mismatch during initial render, dark mode's translucent styles can leak into light mode.
-
-Additionally, the light mode style block lacks explicit properties that would guarantee solid rendering regardless of any inherited or transitional styles.
+Appointment cards in both DayView and WeekView show a detailed tooltip on hover containing client info, service details, time, price, etc. Since clicking the card already opens the detail panel, the tooltip is redundant and should be removed.
 
 ## Solution
-
-Harden the light mode style branch to be fully self-contained and explicitly opaque, ensuring it can never appear translucent regardless of render timing or theme detection edge cases.
+Unwrap the `Tooltip` / `TooltipTrigger` / `TooltipContent` from the AppointmentBlock component in both files, keeping only the inner `<div>` that renders the card.
 
 ---
 
-## Change 1: Add explicit light mode properties in DayView
+## Change 1: DayView.tsx
 
-**File**: `src/components/dashboard/schedule/DayView.tsx` (lines 332-336)
+**Lines 291-293**: Remove opening `<Tooltip>` and `<TooltipTrigger asChild>` wrappers.
 
-Current light mode style:
-```typescript
-: useCategoryColor ? {
-  backgroundColor: catColor.bg,
-  color: catColor.text,
-  borderLeftColor: catColor.bg,
-} : {}
+**Lines 585-651**: Remove closing `</TooltipTrigger>`, the entire `<TooltipContent>` block, and closing `</Tooltip>`.
+
+The component return will go from:
+```
+return (
+  <Tooltip>
+    <TooltipTrigger asChild>
+      <div ...>...</div>
+    </TooltipTrigger>
+    <TooltipContent>...</TooltipContent>
+  </Tooltip>
+);
+```
+To simply:
+```
+return (
+  <div ...>...</div>
+);
 ```
 
-Replace with explicit, fully-qualified light mode style:
-```typescript
-: useCategoryColor ? {
-  backgroundColor: catColor.bg,
-  color: catColor.text,
-  borderLeftColor: catColor.bg,
-  borderWidth: '0 0 0 4px',
-  borderStyle: 'solid',
-  boxShadow: 'none',
-  opacity: 1,
-  backdropFilter: 'none',
-} : {}
-```
+Note: The inner assistant-badge tooltips (lines 364-386) remain -- those are separate small tooltips on team member avatars, not the card-level hover hint.
 
-This ensures:
-- `boxShadow: 'none'` clears any residual dark mode glow/ring
-- `opacity: 1` guarantees fully opaque rendering
-- `backdropFilter: 'none'` prevents any glassmorphism bleed
-- `borderWidth`/`borderStyle` are explicit so Tailwind classes don't create conflicts
+Unused imports (`Tooltip`, `TooltipContent`, `TooltipTrigger`) can be cleaned up only if no other usage remains in the file (the assistant badges still use them, so they stay).
 
-## Change 2: Same hardening in WeekView
+## Change 2: WeekView.tsx
 
-**File**: `src/components/dashboard/schedule/WeekView.tsx` (lines 189-193)
+**Lines 159-161**: Remove opening `<Tooltip>` and `<TooltipTrigger asChild>`.
 
-Same replacement -- add `boxShadow: 'none'`, `opacity: 1`, `backdropFilter: 'none'`, and explicit border properties to the light mode style object.
+**Lines 345-393**: Remove closing `</TooltipTrigger>`, entire `<TooltipContent>` block, and closing `</Tooltip>`.
 
-## Change 3: Guard darkStyle with explicit null fallback
-
-**Files**: `DayView.tsx` and `WeekView.tsx`
-
-Add a safety check so `darkStyle` is definitively null when not in dark mode:
-
-```typescript
-const darkStyle = useMemo(() => {
-  if (!isDark || !useCategoryColor || displayGradient) return null;
-  return getDarkCategoryStyle(catColor.bg);
-}, [isDark, useCategoryColor, displayGradient, catColor.bg]);
-```
-
-This is already correct, but we add an additional runtime guard in the style ternary: `useCategoryColor && isDark && darkStyle` instead of just `useCategoryColor && darkStyle` -- making the dark check explicit in both the memo AND the render path.
+Same unwrap pattern. Tooltip imports stay because WeekView has other tooltip usages (blocked-time tooltips at lines 710-739).
 
 ---
 
 ## Technical Details
 
-### Files Modified
-
 | File | Change |
 |---|---|
-| `src/components/dashboard/schedule/DayView.tsx` | Harden light mode style with explicit opacity, boxShadow, backdropFilter; add `isDark` guard to style ternary |
-| `src/components/dashboard/schedule/WeekView.tsx` | Same hardening and guard |
+| `src/components/dashboard/schedule/DayView.tsx` | Remove `Tooltip`/`TooltipTrigger`/`TooltipContent` wrapper from AppointmentBlock return |
+| `src/components/dashboard/schedule/WeekView.tsx` | Remove `Tooltip`/`TooltipTrigger`/`TooltipContent` wrapper from WeekAppointmentBlock return |
 
-### No new files, no new dependencies, no database changes.
-
+No new files, no new dependencies, no database changes.
