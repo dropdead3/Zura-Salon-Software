@@ -1,93 +1,58 @@
 
 
-# Draft Appointments System
+# Enhance Draft Bookings: Group by Client + "Most Recent" Badge + UX Improvements
 
-## Overview
+## What Changes
 
-When a user starts building an appointment in the booking wizard but closes it before confirming, the in-progress data is automatically saved as a "draft." Drafts can be recalled later to resume and finalize the booking. This eliminates lost work when a client changes their mind or the front desk gets interrupted.
+### 1. Group drafts by client
+Instead of a flat list, drafts are grouped under collapsible client headers. Clients with no name selected group under "No Client Selected." Within each group, drafts are sorted newest-first.
 
-## How It Works
+### 2. "Most Recent" badge
+The newest draft per client gets a small "Most Recent" badge (using the existing Badge component with `variant="secondary"`). This makes it immediately clear which version to resume.
 
-1. **Auto-save on close**: When the booking popover/panel is dismissed without completing the booking, any partially filled data (service, client, stylist, location, date/time, notes) is saved to a `draft_bookings` table.
-2. **Draft indicator**: A small badge/button on the schedule header (near the existing action buttons) shows the count of active drafts. Clicking it opens a searchable list.
-3. **Recall a draft**: Selecting a draft re-opens the booking wizard pre-populated with all saved data, jumping to the furthest step reached.
-4. **Drafts expire**: Drafts older than 7 days are automatically cleaned up (soft-deleted).
-5. **Draft is deleted on booking**: When a draft is successfully booked, its record is removed.
+### 3. Wizard step progress indicator
+Each draft card shows a minimal step progress bar (dots or small text like "Service > Client > Stylist") so staff can see at a glance how far the draft got. Uses the existing `STEPS` array from QuickBookingPopover.
+
+### 4. Created-by attribution
+Show who started the draft (small "by [name]" text) by joining on `employee_profiles` via `created_by`. This helps in multi-staff handoff scenarios.
+
+### 5. "Discard All" per client group
+When a client has 2+ drafts, a small "Discard All" link appears in the group header for fast cleanup.
+
+### 6. Draft count per client in group header
+Each client group header shows "(3 drafts)" count so the list is scannable.
 
 ## Technical Details
 
-### 1. Database: `draft_bookings` table
+### DraftBookingsSheet.tsx (modify)
+- Group `filtered` drafts into a `Map<string, DraftBooking[]>` keyed by `client_name || 'No Client Selected'`
+- Render each group with a collapsible header (using Collapsible from Radix) showing client name + draft count
+- First item in each group (already sorted newest-first from the query) gets a "Most Recent" Badge
+- Add "Discard All" button per group header when group has 2+ drafts
+- Add step progress indicator per card (map `step_reached` against the known steps array to show filled/unfilled dots)
 
-New table with RLS scoped to organization members:
+### useDraftBookings.ts (modify)
+- Update the query to also select `created_by` profile info via a join or separate lookup
+- Add `created_by_name` to the `DraftBooking` interface
+- Update the query: `.select('*, creator:employee_profiles!draft_bookings_created_by_fkey(display_name, full_name)')` (or use a separate lightweight lookup if FK isn't registered)
 
-| Column | Type | Notes |
-|--------|------|-------|
-| id | uuid (PK) | |
-| organization_id | uuid (FK) | Tenant scope |
-| location_id | text | |
-| created_by | uuid | auth.uid() of the person who started it |
-| appointment_date | date | |
-| start_time | time | |
-| client_id | uuid | Nullable -- client may not be selected yet |
-| client_name | text | Denormalized for search |
-| staff_user_id | uuid | Nullable |
-| staff_name | text | Denormalized |
-| selected_services | jsonb | Array of service IDs + names |
-| notes | text | |
-| step_reached | text | Last wizard step reached (service/location/client/stylist/confirm) |
-| is_redo | boolean | false default |
-| redo_metadata | jsonb | Redo reason, original appointment, etc. |
-| expires_at | timestamptz | created_at + 7 days |
-| created_at | timestamptz | |
+### useDeleteDraft hook (modify)
+- Add a `useDeleteDraftsForClient` mutation (or extend existing) that accepts an array of draft IDs for batch delete
 
-RLS: `is_org_member(auth.uid(), organization_id)` for SELECT/INSERT/UPDATE/DELETE.
+### Database
+- No schema changes needed -- all data is already present (`created_by`, `step_reached`, `client_name`, `created_at`)
+- The `created_by` FK to `auth.users` exists but we need employee_profiles join. Since there's no direct FK from `draft_bookings.created_by` to `employee_profiles.user_id`, we'll do a client-side lookup or add a denormalized `created_by_name` column
 
-### 2. Hook: `useDraftBookings`
-
-New file: `src/hooks/useDraftBookings.ts`
-
-- `useDraftBookings(orgId)` -- fetches active (non-expired) drafts, ordered by most recent
-- `useSaveDraft()` -- mutation to upsert a draft
-- `useDeleteDraft()` -- mutation to remove a draft (on successful booking or manual discard)
-- Query key: `['draft-bookings', orgId]`
-- Search filtering done client-side (drafts are low volume)
-
-### 3. Component: `DraftBookingsSheet`
-
-New file: `src/components/dashboard/schedule/DraftBookingsSheet.tsx`
-
-- Slide-out sheet triggered from a button in ScheduleHeader
-- Shows list of drafts with: client name (or "No client"), service names, date/time, stylist, how long ago it was created
-- Search input filters by client name, service name, or stylist name
-- Each draft has "Resume" and "Discard" actions
-- "Resume" opens QuickBookingPopover pre-populated with draft data
-- "Discard" deletes the draft with confirmation
-
-### 4. Changes to `QuickBookingPopover`
-
-- Accept optional `draftId` and `initialDraftData` props
-- On mount with draft data: pre-populate all state fields and jump to the appropriate step
-- On `handleClose` (dismiss without booking): if any meaningful data exists (at least one service or client selected), auto-save as draft via `useSaveDraft`
-- On successful booking (`onSuccess`): if `draftId` is set, delete the draft
-- Add a toast: "Booking saved as draft" when auto-saving on close
-
-### 5. Changes to `ScheduleHeader`
-
-- Add a "Drafts" button with a badge showing count of active drafts
-- Clicking opens `DraftBookingsSheet`
-
-### 6. Changes to Schedule page
-
-- Pass draft-resume handler that opens the booking panel pre-populated with draft data
+### Option: Add `created_by_name` column (simpler)
+- Migration: `ALTER TABLE draft_bookings ADD COLUMN created_by_name TEXT;`
+- Populate it at save time in `useSaveDraft` from the current user's profile
+- Avoids join complexity
 
 ## File Summary
 
 | Action | File |
 |--------|------|
-| Create | Migration SQL for `draft_bookings` table + RLS |
-| Create | `src/hooks/useDraftBookings.ts` |
-| Create | `src/components/dashboard/schedule/DraftBookingsSheet.tsx` |
-| Modify | `src/components/dashboard/schedule/QuickBookingPopover.tsx` (draft props, auto-save on close, delete on book) |
-| Modify | `src/components/dashboard/schedule/ScheduleHeader.tsx` (drafts button + badge) |
-| Modify | `src/pages/dashboard/Schedule.tsx` (wire draft resume flow) |
+| Modify | `src/components/dashboard/schedule/DraftBookingsSheet.tsx` -- grouped layout, most-recent badge, step progress, discard-all, created-by display |
+| Modify | `src/hooks/useDraftBookings.ts` -- add `created_by_name` to interface, batch delete mutation, populate `created_by_name` on save |
+| Migration | Add `created_by_name` column to `draft_bookings` |
 
