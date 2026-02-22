@@ -51,6 +51,7 @@ export function useClientHealthSegments() {
       const { data: clients, error: clientsError } = await supabase
         .from('phorest_clients')
         .select('id, name, email, phone, last_visit, first_visit, total_spend, visit_count, preferred_stylist_id, phorest_client_id')
+        .eq('is_duplicate', false)
         .order('name');
 
       if (clientsError) throw clientsError;

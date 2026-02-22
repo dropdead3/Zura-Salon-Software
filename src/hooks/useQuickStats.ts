@@ -29,6 +29,7 @@ export function useQuickStats(locationId?: string, accessibleLocationIds?: strin
       let query = supabase
         .from('phorest_clients')
         .select('*', { count: 'exact', head: true })
+        .eq('is_duplicate', false)
         .gte('first_visit', sevenDaysAgo)
         .lte('first_visit', today);
       if (accessibleLocationIds?.length) {

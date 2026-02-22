@@ -513,7 +513,7 @@ async function syncClients(
         ? staffMap.get(client.preferredStaffId) 
         : null;
 
-      const clientRecord = {
+      const clientRecord: Record<string, any> = {
         phorest_client_id: clientId,
         name: `${client.firstName || ''} ${client.lastName || ''}`.trim() || 'Unknown',
         first_name: client.firstName || null,
@@ -544,6 +544,29 @@ async function syncClients(
         phorest_branch_id: client._branchId || null,
         branch_name: client._branchName || null,
       };
+
+      // Check for duplicates before upserting
+      try {
+        const { data: dupes } = await supabase.rpc('find_duplicate_phorest_clients', {
+          p_email: clientRecord.email || null,
+          p_phone: clientRecord.phone || null,
+          p_exclude_phorest_client_id: clientId,
+        });
+
+        if (dupes && dupes.length > 0) {
+          // This is a duplicate — flag it and link to canonical
+          clientRecord.is_duplicate = true;
+          clientRecord.canonical_client_id = dupes[0].id;
+          console.log(`Duplicate detected: ${clientRecord.name} matches ${dupes[0].name} (${dupes[0].match_type})`);
+        } else {
+          clientRecord.is_duplicate = false;
+          clientRecord.canonical_client_id = null;
+        }
+      } catch (dupErr: any) {
+        console.log(`Dedup check failed for ${clientId}, proceeding without flag:`, dupErr.message);
+        clientRecord.is_duplicate = false;
+        clientRecord.canonical_client_id = null;
+      }
 
       const { error } = await supabase
         .from("phorest_clients")

@@ -95,6 +95,7 @@ export function useKioskCheckin(locationId: string, organizationId: string) {
       const { data: clients, error } = await supabase
         .from('phorest_clients')
         .select('id, phorest_client_id, name, email, phone')
+        .eq('is_duplicate', false)
         .ilike('phone', phonePattern)
         .limit(10);
 

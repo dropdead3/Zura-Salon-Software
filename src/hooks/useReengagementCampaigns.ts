@@ -186,6 +186,7 @@ export function useAtRiskClients(organizationId?: string, inactivityDays = 60) {
       const { data, error } = await supabase
         .from('phorest_clients')
         .select('id, name, email, phone, last_visit, visit_count, total_spend')
+        .eq('is_duplicate', false)
         .eq('location_id', organizationId)
         .lt('last_visit', cutoffDate.toISOString())
         .order('last_visit', { ascending: true })

@@ -189,6 +189,32 @@ Deno.serve(async (req) => {
       .eq("phorest_branch_id", branch_id)
       .single();
 
+    // Check for existing duplicate before inserting
+    const { data: existingDupes } = await supabase.rpc('find_duplicate_phorest_clients', {
+      p_email: email || null,
+      p_phone: phone || null,
+      p_exclude_phorest_client_id: phorestClientId,
+    });
+
+    if (existingDupes && existingDupes.length > 0) {
+      // Return the existing client instead of creating a duplicate
+      console.log(`Duplicate found for ${first_name} ${last_name}, returning existing client: ${existingDupes[0].name}`);
+      return new Response(
+        JSON.stringify({
+          success: true,
+          duplicate_detected: true,
+          client: {
+            id: existingDupes[0].id,
+            phorest_client_id: existingDupes[0].phorest_client_id,
+            name: existingDupes[0].name,
+            email: existingDupes[0].email,
+            phone: existingDupes[0].phone,
+          },
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Create local record
     const clientRecord: Record<string, any> = {
       phorest_client_id: phorestClientId,
@@ -216,6 +242,8 @@ Deno.serve(async (req) => {
       state: state || null,
       zip: zip || null,
       country: country || null,
+      is_duplicate: false,
+      canonical_client_id: null,
     };
 
     const { data: insertedClient, error: insertError } = await supabase

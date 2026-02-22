@@ -104,6 +104,7 @@ export function createPhorestAdapter(organizationId: string): POSAdapter {
       let query = supabase
         .from('phorest_clients')
         .select('*')
+        .eq('is_duplicate', false)
         .range(offset, offset + limit - 1);
 
       if (search) {

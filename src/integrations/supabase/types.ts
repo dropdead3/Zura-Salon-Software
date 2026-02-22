@@ -9229,12 +9229,14 @@ export type Database = {
           banned_by: string | null
           birthday: string | null
           branch_name: string | null
+          canonical_client_id: string | null
           city: string | null
           client_category: string | null
           client_since: string | null
           country: string | null
           created_at: string
           email: string | null
+          email_normalized: string | null
           external_client_id: string | null
           first_name: string | null
           first_visit: string | null
@@ -9242,6 +9244,7 @@ export type Database = {
           id: string
           is_archived: boolean
           is_banned: boolean | null
+          is_duplicate: boolean
           is_vip: boolean | null
           landline: string | null
           last_name: string | null
@@ -9251,6 +9254,7 @@ export type Database = {
           name: string
           notes: string | null
           phone: string | null
+          phone_normalized: string | null
           phorest_branch_id: string | null
           phorest_client_id: string
           preferred_services: string[] | null
@@ -9276,12 +9280,14 @@ export type Database = {
           banned_by?: string | null
           birthday?: string | null
           branch_name?: string | null
+          canonical_client_id?: string | null
           city?: string | null
           client_category?: string | null
           client_since?: string | null
           country?: string | null
           created_at?: string
           email?: string | null
+          email_normalized?: string | null
           external_client_id?: string | null
           first_name?: string | null
           first_visit?: string | null
@@ -9289,6 +9295,7 @@ export type Database = {
           id?: string
           is_archived?: boolean
           is_banned?: boolean | null
+          is_duplicate?: boolean
           is_vip?: boolean | null
           landline?: string | null
           last_name?: string | null
@@ -9298,6 +9305,7 @@ export type Database = {
           name: string
           notes?: string | null
           phone?: string | null
+          phone_normalized?: string | null
           phorest_branch_id?: string | null
           phorest_client_id: string
           preferred_services?: string[] | null
@@ -9323,12 +9331,14 @@ export type Database = {
           banned_by?: string | null
           birthday?: string | null
           branch_name?: string | null
+          canonical_client_id?: string | null
           city?: string | null
           client_category?: string | null
           client_since?: string | null
           country?: string | null
           created_at?: string
           email?: string | null
+          email_normalized?: string | null
           external_client_id?: string | null
           first_name?: string | null
           first_visit?: string | null
@@ -9336,6 +9346,7 @@ export type Database = {
           id?: string
           is_archived?: boolean
           is_banned?: boolean | null
+          is_duplicate?: boolean
           is_vip?: boolean | null
           landline?: string | null
           last_name?: string | null
@@ -9345,6 +9356,7 @@ export type Database = {
           name?: string
           notes?: string | null
           phone?: string | null
+          phone_normalized?: string | null
           phorest_branch_id?: string | null
           phorest_client_id?: string
           preferred_services?: string[] | null
@@ -9361,6 +9373,13 @@ export type Database = {
           zip?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "phorest_clients_canonical_client_id_fkey"
+            columns: ["canonical_client_id"]
+            isOneToOne: false
+            referencedRelation: "phorest_clients"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "phorest_clients_location_id_fkey"
             columns: ["location_id"]
@@ -17298,6 +17317,21 @@ export type Database = {
           match_type: string
           mobile: string
           total_spend: number
+        }[]
+      }
+      find_duplicate_phorest_clients: {
+        Args: {
+          p_email?: string
+          p_exclude_phorest_client_id?: string
+          p_phone?: string
+        }
+        Returns: {
+          email: string
+          id: string
+          match_type: string
+          name: string
+          phone: string
+          phorest_client_id: string
         }[]
       }
       generate_secure_token: { Args: never; Returns: string }

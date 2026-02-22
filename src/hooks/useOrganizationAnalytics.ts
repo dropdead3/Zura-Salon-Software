@@ -140,7 +140,8 @@ export function useOrganizationAnalytics() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('phorest_clients')
-        .select('id, location_id');
+        .select('id, location_id')
+        .eq('is_duplicate', false);
       if (error) throw error;
       return data || [];
     },
