@@ -10,7 +10,8 @@ import {
   RefreshCw,
   Plus,
   Settings2,
-  Filter
+  Filter,
+  Users
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { tokens } from '@/lib/design-tokens';
@@ -50,6 +51,8 @@ interface ScheduleToolbarProps {
   lastSync: Date | null;
   isSyncing?: boolean;
   canCreate?: boolean;
+  pendingBlockCount?: number;
+  onOpenBlockManager?: () => void;
 }
 
 const VIEW_ICONS = {
@@ -73,6 +76,8 @@ export function ScheduleToolbar({
   lastSync,
   isSyncing = false,
   canCreate = false,
+  pendingBlockCount = 0,
+  onOpenBlockManager,
 }: ScheduleToolbarProps) {
   const { formatDate } = useFormatDate();
   const [datePickerOpen, setDatePickerOpen] = useState(false);
@@ -317,6 +322,27 @@ export function ScheduleToolbar({
             </div>
           </PopoverContent>
         </Popover>
+
+        {/* Assistant Blocks Badge */}
+        {onOpenBlockManager && (
+          <Button
+            variant="outline"
+            size={tokens.button.inline}
+            onClick={onOpenBlockManager}
+            className="relative"
+          >
+            <Users className="h-4 w-4 mr-1.5" />
+            <span className="hidden sm:inline">Assists</span>
+            {pendingBlockCount > 0 && (
+              <Badge
+                variant="secondary"
+                className="absolute -top-1.5 -right-1.5 h-5 w-5 p-0 flex items-center justify-center text-xs bg-amber-500 text-white"
+              >
+                {pendingBlockCount}
+              </Badge>
+            )}
+          </Button>
+        )}
 
         {/* Sync Button */}
         <Button 

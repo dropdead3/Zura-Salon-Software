@@ -310,3 +310,71 @@ export function useAssistantTimeBlocksRange(
 
   return { timeBlocks, isLoading };
 }
+
+/**
+ * Fetch pending assistant blocks relevant to the current user.
+ * Returns blocks where the user is either a requester with unassigned blocks
+ * or an assigned assistant with 'requested' status.
+ */
+export function useMyPendingAssistantBlocks(
+  userId: string | null,
+  locationId: string | null,
+) {
+  const { data: pendingBlocks = [], isLoading } = useQuery({
+    queryKey: ['assistant-pending-blocks', userId, locationId],
+    queryFn: async () => {
+      // Fetch blocks where user is assigned assistant with status 'requested'
+      const { data: assistBlocks, error: err1 } = await supabase
+        .from('assistant_time_blocks')
+        .select('*')
+        .eq('assistant_user_id', userId!)
+        .eq('status', 'requested')
+        .eq('location_id', locationId!);
+
+      if (err1) throw err1;
+
+      // Fetch blocks where user is requester and no assistant assigned
+      const { data: reqBlocks, error: err2 } = await supabase
+        .from('assistant_time_blocks')
+        .select('*')
+        .eq('requesting_user_id', userId!)
+        .is('assistant_user_id', null)
+        .eq('status', 'requested')
+        .eq('location_id', locationId!);
+
+      if (err2) throw err2;
+
+      const all = [...(assistBlocks || []), ...(reqBlocks || [])];
+      // Deduplicate by id
+      const unique = Array.from(new Map(all.map(b => [b.id, b])).values());
+
+      // Fetch profiles
+      const userIds = new Set<string>();
+      unique.forEach(b => {
+        userIds.add(b.requesting_user_id);
+        if (b.assistant_user_id) userIds.add(b.assistant_user_id);
+      });
+
+      if (userIds.size === 0) return [] as AssistantTimeBlock[];
+
+      const { data: profiles } = await supabase
+        .from('employee_profiles')
+        .select('user_id, display_name, full_name, photo_url')
+        .in('user_id', Array.from(userIds));
+
+      const profileMap = new Map(
+        (profiles || []).map(p => [p.user_id, p])
+      );
+
+      return unique.map(b => ({
+        ...b,
+        requesting_profile: profileMap.get(b.requesting_user_id) || undefined,
+        assistant_profile: b.assistant_user_id ? profileMap.get(b.assistant_user_id) || undefined : undefined,
+      })) as AssistantTimeBlock[];
+    },
+    enabled: !!userId && !!locationId,
+    staleTime: 10_000,
+  });
+
+  return { pendingBlocks, pendingCount: pendingBlocks.length, isLoading };
+}
