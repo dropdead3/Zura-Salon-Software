@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
     // Fetch the current appointment from local DB
     const { data: localApt, error: fetchError } = await supabase
       .from("phorest_appointments")
-      .select("*, phorest_appointment_id, phorest_staff_id")
+      .select("*")
       .eq("id", appointment_id)
       .single();
 
@@ -130,7 +130,7 @@ Deno.serve(async (req) => {
 
     // Try to update in Phorest if we have the phorest_appointment_id and write-back is enabled
     let phorestUpdated = false;
-    if (phorestWriteEnabled && localApt.phorest_appointment_id) {
+    if (phorestWriteEnabled && localApt.phorest_id) {
       try {
         await phorestRequest(
           `/appointment/${localApt.phorest_appointment_id}`,
