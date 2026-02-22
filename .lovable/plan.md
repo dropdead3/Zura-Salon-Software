@@ -1,39 +1,37 @@
 
 
-# Scrollbar Audit -- Fixes Required
+# Fix: Drag-and-Drop Appointment Reschedule Bug
 
-## Issues Found
+## Root Cause
 
-### 1. Duplicate `transition` declarations in CSS (Bug)
+The edge function `update-phorest-appointment-time` references a column called `phorest_appointment_id` that does not exist. The actual column name in the `phorest_appointments` table is `phorest_id`.
 
-Three locations in `src/index.css` have **two consecutive `transition` lines** where the second (`0.2s`) silently overrides the first (`0.3s`). This means the `0.3s ease` transition we added is never actually applied.
+This causes the database query to fail silently, resulting in the "Appointment not found" error visible in the logs.
 
-| Lines | Section |
-|-------|---------|
-| 931-932 | `.scrollbar-minimal::-webkit-scrollbar-thumb` |
-| 973-974 | `.scrollbar-thin::-webkit-scrollbar-thumb` |
-| 1395-1396 | Global `::-webkit-scrollbar-thumb` |
+## What Happens Today
 
-**Fix:** Remove the old `transition: background 0.2s ease` line from each, keeping only `transition: background 0.3s ease`.
+1. User drags an appointment to a new time slot
+2. Frontend calls the `update-phorest-appointment-time` edge function with the correct appointment UUID
+3. The edge function runs this query:
+   ```
+   .select("*, phorest_appointment_id, phorest_staff_id")
+   .eq("id", appointment_id)
+   ```
+4. PostgREST rejects the query because `phorest_appointment_id` is not a valid column (the real column is `phorest_id`)
+5. The function throws "Appointment not found"
+6. User sees a toast error: "Failed to reschedule"
 
-### 2. No other structural issues
+## Fix
 
-- The Radix `ScrollArea` component correctly uses tokenized classes (`tokens.scrollbar.*`) with `forceMount` for the opacity animation.
-- Native CSS scrollbar rules (global, `.scrollbar-thin`, `.scrollbar-minimal`) all use the correct token-aligned colors (`--muted-foreground` at 0.25 / 0.4 / 0.5 opacity).
-- ~153 files use native `overflow-auto` / `overflow-y-auto` -- these are covered by the global CSS scrollbar rules and do not need migration to `ScrollArea`.
+In `supabase/functions/update-phorest-appointment-time/index.ts`:
+
+1. **Line 74** -- Change `.select("*, phorest_appointment_id, phorest_staff_id")` to `.select("*")` (since `*` already includes all columns including `phorest_id` and `phorest_staff_id`)
+
+2. **Line 133** -- Change `localApt.phorest_appointment_id` to `localApt.phorest_id` so the Phorest API call uses the correct field name
 
 ## Files Modified
 
 | File | Change |
 |------|--------|
-| `src/index.css` | Remove 3 duplicate `transition: background 0.2s ease` lines (lines 932, 974, 1396) |
-
-## Technical Detail
-
-CSS does not merge duplicate properties -- the last one wins. So:
-```css
-transition: background 0.3s ease;  /* ignored */
-transition: background 0.2s ease;  /* this wins */
-```
-Removing the `0.2s` line restores the intended `0.3s` timing across all native scrollbars.
+| `supabase/functions/update-phorest-appointment-time/index.ts` | Fix column name from `phorest_appointment_id` to `phorest_id`, simplify select to `*` |
 
