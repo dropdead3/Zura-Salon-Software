@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Phone, Clock, AlertTriangle, XCircle, GripVertical, Users, User, Repeat, RotateCcw, Star, ArrowRightLeft } from 'lucide-react';
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
 import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
-import { getCategoryColor, SPECIAL_GRADIENTS, isGradientMarker, getGradientFromMarker, getGlassCategoryStyle } from '@/utils/categoryColors';
+import { getCategoryColor, SPECIAL_GRADIENTS, isGradientMarker, getGradientFromMarker, getDarkCategoryStyle } from '@/utils/categoryColors';
 import { useRescheduleAppointment } from '@/hooks/useRescheduleAppointment';
 import type { ServiceLookupEntry } from '@/hooks/useServiceLookup';
 import { APPOINTMENT_STATUS_COLORS } from '@/lib/design-tokens';
@@ -279,11 +279,11 @@ function AppointmentCard({
   const isNoShow = appointment.status === 'no_show';
   const isCancelled = appointment.status === 'cancelled';
 
-  // Dark mode detection and glass style
+  // Dark mode detection and solid dark style
   const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
-  const glassStyle = useMemo(() => {
+  const darkStyle = useMemo(() => {
     if (!isDark || !useCategoryColor || displayGradient) return null;
-    return getGlassCategoryStyle(catColor.bg);
+    return getDarkCategoryStyle(catColor.bg);
   }, [isDark, useCategoryColor, displayGradient, catColor.bg]);
 
   return (
@@ -294,10 +294,8 @@ function AppointmentCard({
           {...(!isDragOverlay ? { ...attributes, ...listeners } : {})}
           className={cn(
             'absolute rounded-md cursor-pointer transition-all overflow-hidden group hover:shadow-md hover:z-20',
-            // Light mode: left accent bar. Dark mode with glass: full 1px border (applied via style)
-            !displayGradient && !glassStyle && 'border-l-4',
-            // Glass blur for dark mode category blocks
-            glassStyle && 'backdrop-blur-xl',
+            // Left accent bar in both light and dark (solid style)
+            !displayGradient && 'border-l-4',
             !useCategoryColor && !displayGradient && statusColors.bg,
             !useCategoryColor && !displayGradient && statusColors.border,
             !useCategoryColor && !displayGradient && statusColors.text,
@@ -319,12 +317,10 @@ function AppointmentCard({
             ...(displayGradient ? {
               background: displayGradient.background,
               color: displayGradient.textColor,
-            } : useCategoryColor && glassStyle ? {
-              backgroundColor: isSelected ? glassStyle.selectedFill : glassStyle.fill,
-              color: glassStyle.text,
-              borderColor: glassStyle.stroke,
-              borderWidth: '1px',
-              borderStyle: 'solid',
+            } : useCategoryColor && darkStyle ? {
+              backgroundColor: isSelected ? darkStyle.selected : darkStyle.fill,
+              color: darkStyle.text,
+              borderLeftColor: darkStyle.accent,
             } : useCategoryColor ? {
               backgroundColor: catColor.bg,
               color: catColor.text,
@@ -452,13 +448,13 @@ function AppointmentCard({
           {serviceBands && useCategoryColor && (
             <div className="absolute inset-0 flex flex-col overflow-hidden rounded-md">
               {serviceBands.map((band, i) => {
-                const bandGlass = isDark ? getGlassCategoryStyle(band.color.bg) : null;
+                const bandDark = isDark ? getDarkCategoryStyle(band.color.bg) : null;
                 return (
                   <div
                     key={i}
                     style={{
                       flex: `${band.percent} 0 0%`,
-                      backgroundColor: bandGlass ? bandGlass.fill : band.color.bg,
+                      backgroundColor: bandDark ? bandDark.fill : band.color.bg,
                     }}
                   />
                 );
