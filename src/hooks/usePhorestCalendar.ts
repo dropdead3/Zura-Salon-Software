@@ -202,7 +202,7 @@ export function usePhorestCalendar() {
       const response = await supabase.functions.invoke('update-phorest-appointment', {
         body: { 
           appointment_id: appointmentId, 
-          status: status.toUpperCase(),
+          status,
           ...(rebooked_at_checkout !== undefined && { rebooked_at_checkout }),
           ...(tip_amount !== undefined && { tip_amount }),
         },
