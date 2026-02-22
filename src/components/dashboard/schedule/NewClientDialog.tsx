@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { usePOSConfig } from '@/hooks/usePOSData';
 import { format } from 'date-fns';
 import { useOrgDefaults } from '@/hooks/useOrgDefaults';
@@ -69,6 +70,7 @@ export function NewClientDialog({
 }: NewClientDialogProps) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const { effectiveOrganization } = useOrganizationContext();
   const { data: locations = [] } = useLocations();
   const { data: allTeamMembers } = useTeamDirectory();
   const SERVICE_PROVIDER_ROLES = ['stylist', 'stylist_assistant', 'booth_renter'];
@@ -170,29 +172,63 @@ export function NewClientDialog({
   const createClient = useMutation({
     mutationFn: async () => {
       const location = locations.find(l => l.id === locationId);
-      if (!location?.phorest_branch_id) {
+      if (!locationId || !location) {
         throw new Error('Please select a location');
       }
 
-      const response = await supabase.functions.invoke('create-phorest-client', {
-        body: {
-          branch_id: location.phorest_branch_id,
+      // If the location has a phorest_branch_id, use the Phorest edge function
+      if (location.phorest_branch_id) {
+        const response = await supabase.functions.invoke('create-phorest-client', {
+          body: {
+            branch_id: location.phorest_branch_id,
+            first_name: firstName.trim(),
+            last_name: lastName.trim(),
+            gender: gender || undefined,
+            email: email.trim() || undefined,
+            phone: phone.replace(/\D/g, '').trim() || undefined,
+            notes: notes.trim() || undefined,
+            birthday: birthday ? format(birthday, 'yyyy-MM-dd') : undefined,
+            client_since: clientSince ? format(clientSince, 'yyyy-MM-dd') : undefined,
+            preferred_stylist_id: preferredStylistId && preferredStylistId !== 'none' ? preferredStylistId : undefined,
+          },
+        });
+
+        if (response.error) throw response.error;
+        if (!response.data?.success) throw new Error(response.data?.error || 'Failed to create client');
+
+        return response.data.client;
+      }
+
+      // Fallback: create client directly in the local clients table
+      const { data: newClient, error } = await supabase
+        .from('clients')
+        .insert({
           first_name: firstName.trim(),
           last_name: lastName.trim(),
-          gender: gender || undefined,
-          email: email.trim() || undefined,
-          phone: phone.replace(/\D/g, '').trim() || undefined,
-          notes: notes.trim() || undefined,
-          birthday: birthday ? format(birthday, 'yyyy-MM-dd') : undefined,
-          client_since: clientSince ? format(clientSince, 'yyyy-MM-dd') : undefined,
-          preferred_stylist_id: preferredStylistId && preferredStylistId !== 'none' ? preferredStylistId : undefined,
-        },
-      });
+          gender: gender || null,
+          email: email.trim() || null,
+          mobile: phone.replace(/\D/g, '').trim() || null,
+          notes: notes.trim() || null,
+          birthday: birthday ? format(birthday, 'yyyy-MM-dd') : null,
+          client_since: clientSince ? format(clientSince, 'yyyy-MM-dd') : null,
+          preferred_stylist_id: preferredStylistId && preferredStylistId !== 'none' ? preferredStylistId : null,
+          location_id: locationId,
+          organization_id: effectiveOrganization?.id || null,
+          import_source: 'manual',
+          status: 'active',
+        })
+        .select('id, first_name, last_name, email, mobile, phorest_client_id')
+        .single();
 
-      if (response.error) throw response.error;
-      if (!response.data?.success) throw new Error(response.data?.error || 'Failed to create client');
+      if (error) throw error;
 
-      return response.data.client;
+      return {
+        id: newClient.id,
+        phorest_client_id: newClient.phorest_client_id || '',
+        name: `${newClient.first_name} ${newClient.last_name}`,
+        email: newClient.email,
+        phone: newClient.mobile,
+      };
     },
     onSuccess: (client) => {
       queryClient.invalidateQueries({ queryKey: ['phorest-clients'] });
