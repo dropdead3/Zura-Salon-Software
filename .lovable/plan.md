@@ -1,53 +1,45 @@
 
 
-# Fix: Navbar Scrollbar Always Visible
+# Animate Scrollbar Fade-In/Out on Hover
 
-## Root Cause
+## Problem
 
-Two CSS issues make scrollbars permanently visible instead of hover-reveal:
+Current scrollbar visibility is instant (snap on/off). The `transition` property on `::-webkit-scrollbar-thumb` background is ignored by most browsers, so native scrollbar hover-reveal has no animation.
 
-1. **Firefox global rule** (line 1409-1412): `* { scrollbar-color: hsl(var(--muted-foreground) / 0.15) transparent; }` applies a 15% opacity thumb to EVERY element unconditionally. Firefox has no hover-based scrollbar pseudo-element support, so this thumb is always visible.
+## Solution
 
-2. **Firefox hover fix needed**: Change the default `scrollbar-color` to `transparent transparent` (fully hidden), then use `*:hover { scrollbar-color: ... }` to reveal on hover. Firefox does support `:hover` on the element itself for `scrollbar-color`.
+Two-pronged approach:
 
-## Changes
+### 1. Radix ScrollArea Component (`src/components/ui/scroll-area.tsx`)
 
-### 1. `src/index.css` (lines 1408-1412)
+Animate the entire scrollbar container's **opacity** instead of just the thumb color. This gives a true smooth fade because `opacity` transitions work reliably on any element.
 
-Replace the Firefox fallback block:
+- Scrollbar: `opacity-0 transition-opacity duration-300 group-hover/scroll:opacity-100`
+- Thumb: solid `bg-border` (always has color, but parent opacity controls visibility)
+- This gives a clean 300ms fade-in on hover and fade-out on mouse leave
 
-```css
-/* Before */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: hsl(var(--muted-foreground) / 0.15) transparent;
-}
+### 2. Native Scrollbars (`src/index.css`)
 
-/* After */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: transparent transparent;
-}
+WebKit browsers partially support transitions on scrollbar pseudo-elements. Keep the existing `transition: background 0.2s ease` declaration (it works in newer Chromium builds). For browsers that ignore it, the instant show/hide is an acceptable graceful degradation since most scrollable areas use the Radix ScrollArea component anyway.
 
-*:hover {
-  scrollbar-color: hsl(var(--muted-foreground) / 0.25) transparent;
-}
+No changes needed to the native scrollbar CSS -- the transition is already declared.
+
+### 3. Firefox
+
+Firefox's `scrollbar-color` property does not support transitions. No CSS-only animation is possible. Current instant show/hide on hover is the best available behavior.
+
+## Technical Details
+
+**`src/components/ui/scroll-area.tsx`** -- Update ScrollBar:
+
+```tsx
+// ScrollAreaScrollbar: add opacity-0, transition-opacity, group-hover fade-in
+className: "opacity-0 transition-opacity duration-300 group-hover/scroll:opacity-100"
+
+// ScrollAreaThumb: change from bg-transparent + group-hover to solid bg-border
+// (parent opacity now handles visibility)
+className: "bg-border"
 ```
 
-This makes Firefox scrollbars fully invisible by default and only visible when the specific scrollable container (or its children) is hovered.
-
-### 2. `.scrollbar-minimal` utility (lines 928-932)
-
-The `.scrollbar-minimal` class used by some components should also get the Firefox hover-reveal pattern. Currently it likely inherits the global `*` rule. No additional changes needed since the global fix covers it.
-
-### 3. `.scrollbar-thin` utility (lines 952-955)
-
-Same -- the `scrollbar-color: transparent transparent` default is already set here. Just need to verify the `:hover` variant exists (it does at line 957-959). No changes needed.
-
-## Technical Notes
-
-- WebKit (Chrome, Safari, Edge): The existing `*:hover::-webkit-scrollbar-thumb` rules are correct and work as expected
-- Firefox: `scrollbar-color` on the element itself does respond to `:hover`, so `*:hover { scrollbar-color: ... }` will work
-- The `:hover` pseudo-class bubbles up (parent elements are also `:hover`), which means the sidebar nav scrollbar appears when hovering anywhere inside the nav -- this is the correct and desired behavior
-- No JavaScript required
+This is a single-file change affecting all 235+ usages of ScrollArea across the app.
 
