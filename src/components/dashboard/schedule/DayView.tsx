@@ -293,7 +293,7 @@ function AppointmentCard({
           ref={!isDragOverlay ? setNodeRef : undefined}
           {...(!isDragOverlay ? { ...attributes, ...listeners } : {})}
           className={cn(
-            'absolute z-10 rounded-md cursor-pointer transition-transform duration-200 ease-out overflow-hidden group hover:shadow-md hover:z-20 hover:scale-[1.02]',
+            'absolute z-10 rounded-md cursor-pointer transition-all duration-200 ease-out overflow-hidden group hover:brightness-110 dark:hover:brightness-125 hover:z-20',
             // Left accent bar in both light and dark (solid style)
             !displayGradient && 'border-l-4',
             !useCategoryColor && !displayGradient && statusColors.bg,
