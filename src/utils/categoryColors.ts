@@ -337,10 +337,10 @@ export function getDarkCategoryStyle(hexColor: string): DarkCategoryStyle {
 
   const fill = hslToHex(`${Math.round(h)} ${Math.round(fillS)}% ${Math.round(fillL)}%`);
 
-  // Accent bar: darker, slightly more saturated
-  const accentS = Math.min(fillS + 5, 85);
-  const accentL = Math.max(fillL - 10, 12);
-  const accent = hslToHex(`${Math.round(h)} ${Math.round(accentS)}% ${Math.round(accentL)}%`);
+  // Accent bar: use original light-mode hex for colored categories
+  const accent = isGray
+    ? hslToHex(`${Math.round(h)} ${Math.round(Math.min(fillS + 5, 85))}% ${Math.round(Math.max(fillL - 10, 12))}%`)
+    : hexColor;
 
   // Hover: slightly brighter
   const hoverL = Math.min(fillL + 5, 50);
@@ -350,8 +350,8 @@ export function getDarkCategoryStyle(hexColor: string): DarkCategoryStyle {
   const selectedL = Math.max(fillL - 4, 12);
   const selected = hslToHex(`${Math.round(h)} ${Math.round(fillS)}% ${Math.round(selectedL)}%`);
 
-  // Text: white for colored, warm off-white for grays
-  const text = isGray ? '#e8e4df' : '#f0eff4';
+  // Text: original light-mode hex for colored, warm off-white for grays
+  const text = isGray ? '#e8e4df' : hexColor;
 
   return { fill, accent, hover, selected, text };
 }
