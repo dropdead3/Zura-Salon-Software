@@ -1,104 +1,79 @@
 
 
-# Luxury Bento Appointment Detail Panel
+# Appointment Detail Panel -- Gap Fixes and Enhancements
 
 ## Overview
 
-Replace the current `AppointmentDetailSheet` (Radix Sheet drawer) with a premium floating bento panel matching the `ClientDetailSheet` pattern -- portal-rendered, spring-animated, glass aesthetic, anchored right edge.
+Six targeted improvements to the existing Luxury Bento Appointment Detail Panel, addressing the gaps identified during review.
 
-## Architecture
+## Changes
 
-The new component will be a full rebuild of `AppointmentDetailSheet.tsx` using:
-- `createPortal` to render outside the React tree (same as `ClientDetailSheet`)
-- `framer-motion` spring animation (damping: 26, stiffness: 300, mass: 0.8) for slide-in from right
-- Glass aesthetic: `bg-card/80 backdrop-blur-xl border-border rounded-xl shadow-2xl`
-- Fixed position: `right-4 top-4 bottom-4`, max-width 440px
-- Tabbed interior for organized information density
+### 1. Cancellation / No-Show Reason Input
 
-## Panel Layout
+Add a `Textarea` to the confirmation dialog (`AlertDialog`) for capturing a reason when cancelling or marking no-show. The reason will be auto-appended to appointment notes via `useAppointmentNotes.addNote` before the status change fires.
 
-### Header
-- Client avatar with initials + deterministic color
-- Client name (large, font-display)
-- Service summary line
-- Status badge with dropdown for transitions (reuses existing STATUS_CONFIG)
-- Close button (rounded-full, top-right)
+**File:** `AppointmentDetailSheet.tsx`
+- Add `cancelReason` state variable
+- Expand the `AlertDialog` to include a Textarea between description and footer
+- In `confirmStatusChange`, call `addNote` with a prefixed reason (e.g., `[Cancelled] Client rescheduling next week`) before executing the status transition
+- Same pattern for the `handleCancelAllFuture` recurring cancellation -- add a reason input in that flow too
+- Clear reason state when dialog closes
 
-### Tabbed Content (3 tabs)
+### 2. Location Display in Appointment Info
 
-**Tab 1: Details (default)**
-- **Appointment Info Card** -- date, time range, duration, location
-- **Services Card** -- per-service breakdown with individual durations and prices, total at bottom wrapped in `BlurredAmount`
-- **Stylist Card** -- booked stylist avatar + name, preferred stylist comparison (highlight mismatch with amber indicator), assistant stylists section
-- **Client Contact Card** -- phone (formatted, tappable), email, copy buttons
-- **Confirmation Status** -- visual status timeline showing appointment lifecycle
-- **Redo/Recurrence badges** (carried over from current implementation)
+Add a `MapPin` row to the Appointment Info card showing the location name. The `PhorestAppointment` type already has `location_id`. We will look up the location name from `organization_locations` using a lightweight query.
 
-**Tab 2: History**
-- Client appointment history timeline (reuses `useClientVisitHistory`)
-- Visit count, total spend, client tenure
-- Preferred services list
-- At-risk / new client indicators
+**File:** `AppointmentDetailSheet.tsx`
+- Add a `useQuery` for location name from `organization_locations` keyed on `appointment.location_id`
+- Render a `MapPin` row below the date/time rows: `<MapPin /> Location Name`
 
-**Tab 3: Notes**
-- Appointment notes (from `useAppointmentNotes`)
-- Client notes (from `useClientNotes`)
-- Add note form with private toggle
-- Booking notes from POS (read-only)
+### 3. Escape Key Handler
 
-### Footer Action Bar
-Sticky bottom bar with contextual actions based on appointment status:
-- **Check In** (when confirmed)
-- **Pay / Checkout** (when checked_in)
-- **Reschedule** (opens reschedule flow)
-- **Rebook** (opens QuickBookingPopover pre-filled with same client + services)
-- **Cancel** (with confirmation dialog)
-- Status transition dropdown for edge cases
+Add a `useEffect` that listens for the `Escape` keydown event and calls `handleClose` when the panel is open.
 
-## Data Requirements
+**File:** `AppointmentDetailSheet.tsx`
+- Add `useEffect` with `keydown` listener for `key === 'Escape'`, gated on `open`
+- Clean up listener on unmount
 
-All data hooks already exist:
-- `useAppointmentNotes` -- appointment-scoped notes
-- `useClientNotes` -- client-scoped notes
-- `useClientVisitHistory` -- past visit timeline
-- `useAppointmentAssistants` -- assistant assignments
-- `useAssistantConflictCheck` -- conflict detection for assistant picker
-- `usePreferredStylist` -- preferred vs booked comparison
-- `useRescheduleAppointment` -- reschedule mutation
-- `useFormatCurrency` / `useFormatDate` -- locale-aware formatting
+### 4. "Open Client Profile" Button
 
-No new database tables or edge functions required.
+Add a button in the header area (below the client name) that opens the `ClientDetailSheet`. Since `ClientDetailSheet` is rendered separately in the page, this will close the appointment panel and emit a callback to open the client panel.
 
-## Gaps and Enhancements Identified
+**File:** `AppointmentDetailSheet.tsx`
+- Add `onOpenClientProfile?: (clientId: string) => void` prop
+- Render a small ghost button with `User` icon + "View Profile" text below the service summary line, only when the prop and `phorest_client_id` are both present
 
-1. **Preferred vs Booked Stylist Mismatch** -- currently the appointment type lacks `preferred_stylist_id` from the client record. The panel will fetch this via the `phorest_client_id` on the appointment to cross-reference against the booked `stylist_user_id`. An amber "Mismatch" badge will surface when they differ.
+**File:** `Schedule.tsx`
+- Wire the new prop to set the selected client and open `ClientDetailSheet`
 
-2. **Multi-Service Breakdown** -- the current `service_name` field is a single concatenated string. The panel will parse comma/pipe-delimited service names and display them individually. If structured service data becomes available (from `appointment_services` join), it will use that instead.
+### 5. Staggered Entry Animations for Bento Cards
 
-3. **Rebook Action** -- currently no "rebook" flow exists from the detail panel. This will invoke the `QuickBookingPopover` in panel mode, pre-filled with the same client, location, and services, allowing staff to quickly create a follow-up appointment.
+Wrap the content sections within each tab in `motion.div` containers with staggered children animation, matching the premium bento pattern.
 
-4. **Reschedule Inline** -- the panel will include a date/time picker for quick reschedule without leaving the panel, using the existing `useRescheduleAppointment` hook.
+**File:** `AppointmentDetailSheet.tsx`
+- Add a `staggerContainer` and `staggerItem` variant object
+- Wrap each tab's `TabsContent` children in `motion.div variants={staggerContainer}` with individual items as `motion.div variants={staggerItem}`
+- Animation: parent `staggerChildren: 0.04`, children fade+translateY from 8px
 
-5. **Client Email Missing** -- `PhorestAppointment` has `client_phone` but no `client_email`. The panel will fetch client email from `phorest_clients` using `phorest_client_id` when available.
+### 6. Service Frequency in History Tab
 
-6. **Status Timeline Visualization** -- a horizontal step indicator showing the appointment's lifecycle (Booked -> Confirmed -> Checked In -> Completed) with the current status highlighted.
+Add a "Top Services" mini-section to the History tab showing the most frequently booked services derived from `visitHistory`.
 
-7. **No-Show / Cancellation Reason** -- currently no structured field for cancellation reasons. The panel will show a text input when cancelling to capture the reason in the notes field.
+**File:** `AppointmentDetailSheet.tsx`
+- Add a `useMemo` that computes service frequency counts from `visitHistory` (parsing `service_name` the same way as the details tab)
+- Render up to 3 top services as small badges with count indicators below the KPI tiles, before the visit timeline
 
 ## Files Modified
 
-| File | Change |
+| File | Changes |
 |---|---|
-| `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` | Full rewrite: Sheet -> portal-based bento panel with tabs |
-| `src/pages/dashboard/Schedule.tsx` | Add rebook callback prop wiring, pass additional handlers |
+| `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` | Add cancel reason input, location query + display, Escape key handler, client profile button, stagger animations, service frequency |
+| `src/pages/dashboard/Schedule.tsx` | Wire `onOpenClientProfile` prop |
 
-## Design Token Compliance
+## Technical Notes
 
-- Card containers: `rounded-xl` (tokens.card.wrapper)
-- Typography: `font-display` for headers (Termina, uppercase), `font-sans` for body (Aeonik Pro)
-- No font-bold/font-semibold -- max font-medium
-- Monetary values: wrapped in `BlurredAmount`
-- Buttons: `tokens.button.inline` for in-panel actions, `tokens.button.card` for footer CTAs
-- Tab headers: `font-sans`, Title Case
-- Glass aesthetic: `bg-card/80 backdrop-blur-xl border-border`
+- Cancel reason is stored as an appointment note (not a new DB column) -- no migration needed
+- Location lookup uses existing `organization_locations` table
+- Stagger animations use framer-motion variants (already imported)
+- All changes are additive; no breaking interface changes
 
