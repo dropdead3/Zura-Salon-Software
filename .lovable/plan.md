@@ -1,44 +1,67 @@
 
-
-# Fix: Overlapping Service Labels on Appointment Cards
+# Fix: Position Service Labels Within Their Color Bands
 
 ## Problem
 
-On tall multi-service appointment cards (e.g., 270min Full Balayage + Blowout + Maintenance Cut), service names overlap each other. This happens because:
+The previous fix for overlapping labels moved all service names into a simple stacked list at the top of the card. While this solved the overlap, it broke the spatial mapping -- the "Maintenance Cut" label now sits at the top alongside "Full Balayage" and "Blowout", even though its blue color band is at the bottom of the card. Labels should visually correspond to their time-slot bands.
 
-- Service labels use `position: absolute` with percentage-based `top` offsets inside a container with a tiny `minHeight` (e.g., 42px for 3 services)
-- The percentages resolve against this small container, not the full card height, so labels cluster together and overlap
+## Solution
 
-## Fix
-
-Replace the absolute positioning approach with simple stacked (relative) layout for all service label counts. This guarantees no overlap regardless of how many services exist.
+Merge the service labels into the color band rendering itself. Instead of having separate layers (background bands in one absolute div, labels in another), render each label **inside** its proportional band section. This guarantees every label sits within its corresponding color area, regardless of card height.
 
 ### Technical Details
 
-**File: `src/components/dashboard/schedule/DayView.tsx` (lines 531-550)**
+**File: `src/components/dashboard/schedule/DayView.tsx`**
 
-Replace the per-service time-slot section. Instead of conditionally using `position: absolute` for 3+ services, always render service labels as a simple vertical list with relative positioning:
+1. **Update the color bands div (lines 452-467)**: Add service name labels inside each band `div`, so each band both shows its background color and displays its label. The bands already have the correct proportional `flex` sizing.
 
+2. **Remove the separate service label block (lines 530-538)**: The `flex flex-col` service list we added in the previous fix becomes redundant since labels now live inside the bands.
+
+**Updated color bands block (lines 452-467):**
 ```tsx
-// Before: absolute positioning causes overlap
-{serviceBands.map((band, i) => (
-  <div
-    style={{
-      position: serviceBands.length > 2 ? 'absolute' : 'relative',
-      top: serviceBands.length > 2 ? `${offsetPercent}%` : undefined,
-    }}
-  >
-
-// After: always use relative stacking
-{serviceBands.map((band, i) => (
-  <div className="text-[10px] opacity-90 truncate">
+{serviceBands && useCategoryColor && (
+  <div className="absolute inset-0 flex flex-col overflow-hidden rounded-md">
+    {serviceBands.map((band, i) => {
+      const bandDark = isDark ? getDarkCategoryStyle(band.color.bg) : null;
+      return (
+        <div
+          key={i}
+          className="relative overflow-hidden"
+          style={{
+            flex: `${band.percent} 0 0%`,
+            backgroundColor: bandDark ? bandDark.fill : band.color.bg,
+          }}
+        >
+          {duration >= 60 && (
+            <span className="absolute bottom-0 left-1.5 text-[10px] opacity-90 truncate right-1.5"
+              style={{ textShadow: '0 0 3px rgba(0,0,0,0.15)' }}>
+              {band.name} <span className="opacity-70">{band.duration}min</span>
+            </span>
+          )}
+        </div>
+      );
+    })}
+  </div>
+)}
 ```
 
-Remove the `minHeight` style and the `offsetPercent` calculation entirely. The service labels will simply stack vertically within the card's natural flow, which the card has plenty of vertical space for on 60min+ appointments.
+Each label anchors to the **bottom** of its band section, so the Maintenance Cut label appears at the bottom of the blue band area at the card's base.
+
+**Updated label block (lines 530-538):**
+Replace the conditional multi-service rendering so it falls through to the single-service display when `serviceBands` exists (since labels are now inside the bands):
+
+```tsx
+{duration >= 60 && serviceBands && serviceBands.length > 1 ? (
+  null /* labels rendered inside color bands above */
+) : (
+  <div className="text-xs opacity-90 truncate">
+    {(duration >= 45 && formatServicesWithDuration(...)) || appointment.service_name}
+  </div>
+)}
+```
 
 | File | Change |
 |---|---|
-| `src/components/dashboard/schedule/DayView.tsx` | Simplify service label rendering to use stacked layout instead of absolute positioning (lines 531-550) |
+| `src/components/dashboard/schedule/DayView.tsx` | Move service labels inside proportional color band divs; remove redundant stacked label block |
 
 No new files, no database changes, no dependency changes.
-
