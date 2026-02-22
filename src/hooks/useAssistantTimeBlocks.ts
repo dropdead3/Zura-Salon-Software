@@ -2,8 +2,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { useMemo } from 'react';
-import { format } from 'date-fns';
+import { useMemo, useEffect } from 'react';
+import { format, getDay } from 'date-fns';
 import type { PhorestAppointment } from '@/hooks/usePhorestCalendar';
 
 export interface AssistantTimeBlock {
@@ -91,6 +91,34 @@ export function useAssistantTimeBlocks(
     staleTime: 30_000,
   });
 
+  // Realtime subscription — invalidate on any change to assistant_time_blocks
+  useEffect(() => {
+    if (!dateStr || !locationId) return;
+
+    const channel = supabase
+      .channel(`assistant-blocks-${locationId}-${dateStr}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'assistant_time_blocks',
+          filter: `location_id=eq.${locationId}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['assistant-time-blocks'] });
+          queryClient.invalidateQueries({ queryKey: ['assistant-time-blocks-range'] });
+          queryClient.invalidateQueries({ queryKey: ['assistant-pending-blocks'] });
+          queryClient.invalidateQueries({ queryKey: ['assistant-conflicts'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [dateStr, locationId, queryClient]);
+
   // Create a new time block request
   const createBlock = useMutation({
     mutationFn: async (params: {
@@ -132,6 +160,51 @@ export function useAssistantTimeBlocks(
         }).then(({ error: notifErr }) => {
           if (notifErr) console.warn('[TimeBlockNotification] Failed:', notifErr);
         });
+      }
+
+      // Auto-notify pool: when no specific assistant is assigned, notify all
+      // assistants scheduled at this location on this date
+      if (!params.assistant_user_id && dateStr && locationId) {
+        try {
+          const DAY_KEYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+          const blockDate = new Date(dateStr + 'T12:00:00');
+          const dayOfWeek = DAY_KEYS[getDay(blockDate)];
+
+          // Find assistant role users
+          const { data: assistantRoles } = await supabase
+            .from('user_roles')
+            .select('user_id')
+            .in('role', ['stylist_assistant', 'assistant']);
+
+          if (assistantRoles?.length) {
+            const assistantUserIds = assistantRoles.map(r => r.user_id);
+
+            // Find which of them are scheduled at this location on this day
+            const { data: schedules } = await supabase
+              .from('employee_location_schedules')
+              .select('user_id')
+              .in('user_id', assistantUserIds)
+              .eq('location_id', locationId)
+              .contains('work_days', [dayOfWeek]);
+
+            const targetUserIds = (schedules || [])
+              .map(s => s.user_id)
+              .filter(uid => uid !== user.id);
+
+            if (targetUserIds.length > 0) {
+              const notifications = targetUserIds.map(uid => ({
+                user_id: uid,
+                type: 'assistant_time_block',
+                title: 'Assistant Coverage Available',
+                message: `A coverage request is available on ${dateStr} from ${params.start_time.slice(0, 5)} to ${params.end_time.slice(0, 5)}`,
+                metadata: { time_block_id: data.id, requesting_user_id: user.id },
+              }));
+              await supabase.from('notifications').insert(notifications);
+            }
+          }
+        } catch (poolErr) {
+          console.warn('[TimeBlockPoolNotify] Failed:', poolErr);
+        }
       }
 
       return data;

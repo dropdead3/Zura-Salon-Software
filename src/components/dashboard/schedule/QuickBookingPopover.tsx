@@ -54,6 +54,8 @@ import { BannedClientWarningDialog } from '@/components/dashboard/clients/Banned
 import { ServiceAddonToast } from './ServiceAddonToast';
 import { useAddonAssignmentMaps } from '@/hooks/useServiceAddonAssignments';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { useAssistantsAtLocation } from '@/hooks/useAssistantAvailability';
+import { AssistantAvailabilityNote } from './AssistantAvailabilityNote';
 import { useSaveDraft, useDeleteDraft } from '@/hooks/useDraftBookings';
 import { useServiceCategoryColors } from '@/hooks/useServiceCategoryColors';
 import { useServiceAddons } from '@/hooks/useServiceAddons';
@@ -2194,23 +2196,26 @@ export function QuickBookingPopover({
               </div>
 
               {/* Request Assistant Coverage toggle */}
-              <div className="flex items-center justify-between rounded-lg border border-border/60 p-3">
-                <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <Label htmlFor="request-assistant" className="text-xs cursor-pointer">Request Assistant Coverage</Label>
-                    {requestAssistant && (
-                      <p className="text-[10px] text-muted-foreground mt-0.5">
-                        An assistant time block will be created for this appointment's duration.
-                      </p>
-                    )}
+              <div className="rounded-lg border border-border/60 p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <Label htmlFor="request-assistant" className="text-xs cursor-pointer">Request Assistant Coverage</Label>
+                      {requestAssistant && (
+                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                          An assistant time block will be created for this appointment's duration.
+                        </p>
+                      )}
+                    </div>
                   </div>
+                  <Switch
+                    id="request-assistant"
+                    checked={requestAssistant}
+                    onCheckedChange={setRequestAssistant}
+                  />
                 </div>
-                <Switch
-                  id="request-assistant"
-                  checked={requestAssistant}
-                  onCheckedChange={setRequestAssistant}
-                />
+                {requestAssistant && <AssistantAvailabilityNote locationId={selectedLocation} date={date} />}
               </div>
             </div>
           </ScrollArea>

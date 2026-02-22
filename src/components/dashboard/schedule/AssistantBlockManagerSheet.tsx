@@ -22,6 +22,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Users, Clock, Trash2, Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useAssistantTimeBlocksRange, type AssistantTimeBlock } from '@/hooks/useAssistantTimeBlocks';
@@ -75,6 +76,9 @@ function BlockRow({
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const isExpired = block.date < todayStr && block.status === 'requested';
+
   const handleDelete = async () => {
     setIsDeleting(true);
     const { error } = await supabase
@@ -107,7 +111,10 @@ function BlockRow({
 
   return (
     <>
-      <div className="flex items-center justify-between gap-3 p-3 rounded-lg border border-border bg-card hover:bg-muted/30 transition-colors">
+      <div className={cn(
+        'flex items-center justify-between gap-3 p-3 rounded-lg border border-border bg-card hover:bg-muted/30 transition-colors',
+        isExpired && 'opacity-50'
+      )}>
         <div className="flex-1 min-w-0 space-y-1">
           <div className="flex items-center gap-2 text-sm">
             <Clock className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
@@ -115,6 +122,11 @@ function BlockRow({
               {formatTime12h(block.start_time)} – {formatTime12h(block.end_time)}
             </span>
             <StatusBadge status={block.status} />
+            {isExpired && (
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-muted text-muted-foreground">
+                Expired
+              </Badge>
+            )}
           </div>
           <div className="text-xs text-muted-foreground truncate">
             {isRequester
@@ -129,7 +141,7 @@ function BlockRow({
         </div>
 
         <div className="flex items-center gap-1 shrink-0">
-          {showActions && block.status === 'requested' && (
+          {showActions && block.status === 'requested' && !isExpired && (
             <AssistantBlockActions
               blockId={block.id}
               requestingUserId={block.requesting_user_id}
@@ -255,6 +267,37 @@ export function AssistantBlockManagerSheet({
     [timeBlocks, currentUserId]
   );
 
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const expiredRequestCount = useMemo(
+    () => myRequests.filter(b => b.date < todayStr && b.status === 'requested').length,
+    [myRequests, todayStr]
+  );
+
+  const [isClearingExpired, setIsClearingExpired] = useState(false);
+  const queryClient2 = useQueryClient();
+
+  const handleClearExpired = async () => {
+    setIsClearingExpired(true);
+    const expiredIds = myRequests
+      .filter(b => b.date < todayStr && b.status === 'requested')
+      .map(b => b.id);
+
+    const { error } = await supabase
+      .from('assistant_time_blocks')
+      .delete()
+      .in('id', expiredIds);
+
+    if (error) {
+      toast.error('Failed to clear expired blocks');
+    } else {
+      queryClient2.invalidateQueries({ queryKey: ['assistant-time-blocks'] });
+      queryClient2.invalidateQueries({ queryKey: ['assistant-time-blocks-range'] });
+      queryClient2.invalidateQueries({ queryKey: ['assistant-pending-blocks'] });
+      toast.success(`${expiredIds.length} expired block${expiredIds.length > 1 ? 's' : ''} cleared`);
+    }
+    setIsClearingExpired(false);
+  };
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full sm:max-w-md p-0 flex flex-col">
@@ -307,7 +350,19 @@ export function AssistantBlockManagerSheet({
               </div>
             ) : (
               <>
-                <TabsContent value="requests" className="mt-0">
+                <TabsContent value="requests" className="mt-0 space-y-3">
+                  {expiredRequestCount > 0 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full text-xs text-muted-foreground"
+                      onClick={handleClearExpired}
+                      disabled={isClearingExpired}
+                    >
+                      {isClearingExpired ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Trash2 className="h-3 w-3 mr-1" />}
+                      Clear {expiredRequestCount} expired request{expiredRequestCount > 1 ? 's' : ''}
+                    </Button>
+                  )}
                   <BlocksByDate
                     blocks={myRequests}
                     showActions={false}
