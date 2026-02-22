@@ -11,7 +11,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
-import { Phone, Clock, AlertTriangle, XCircle, GripVertical, Users, User, Repeat, RotateCcw, Star, ArrowRightLeft } from 'lucide-react';
+import { Phone, Clock, AlertTriangle, XCircle, Users, User, Repeat, RotateCcw, Star, ArrowRightLeft } from 'lucide-react';
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
 import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
 import { getCategoryColor, SPECIAL_GRADIENTS, isGradientMarker, getGradientFromMarker, getDarkCategoryStyle } from '@/utils/categoryColors';
@@ -386,12 +386,6 @@ function AppointmentCard({
               </div>
             );
           })()}
-          {/* Drag handle indicator - left of badge */}
-          {!isDragOverlay && !isCompact && (
-            <div className="absolute top-0.5 right-6 opacity-0 group-hover:opacity-40 transition-opacity">
-              <GripVertical className="w-3 h-3" />
-            </div>
-          )}
           {/* No-show overlay */}
           {isNoShow && (
             <div className="absolute inset-0 bg-destructive/20 flex items-center justify-center z-10">
