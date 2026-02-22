@@ -115,7 +115,7 @@ serve(async (req) => {
     try {
       const { data: locData } = await supabase
         .from("locations")
-        .select("organization_id")
+        .select("id, organization_id")
         .eq("phorest_branch_id", branch_id)
         .maybeSingle();
 
@@ -242,6 +242,19 @@ serve(async (req) => {
     // Create local record
     const appointmentId = response.appointmentId || response.id || `local-${Date.now()}`;
     
+    // Resolve location_id from branch_id
+    let resolvedLocationId: string | null = null;
+    try {
+      const { data: locLookup } = await supabase
+        .from("locations")
+        .select("id")
+        .eq("phorest_branch_id", branch_id)
+        .maybeSingle();
+      resolvedLocationId = locLookup?.id || null;
+    } catch (_e) {
+      console.log("Could not resolve location_id from branch_id");
+    }
+
     const localRecord: Record<string, any> = {
       phorest_id: appointmentId,
       stylist_user_id: staffMapping?.user_id || null,
@@ -254,6 +267,7 @@ serve(async (req) => {
       service_name: serviceName,
       status: appointmentStatus,
       notes: notes || null,
+      location_id: resolvedLocationId,
       is_redo: is_redo || false,
       redo_reason: is_redo ? redo_reason || null : null,
       original_appointment_id: is_redo ? original_appointment_id || null : null,

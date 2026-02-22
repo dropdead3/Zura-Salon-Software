@@ -75,6 +75,7 @@ interface QuickBookingPopoverProps {
   mode?: QuickBookingMode;
   defaultStylistId?: string;
   draftId?: string;
+  onBookingComplete?: (date: Date) => void;
   initialDraftData?: {
     locationId?: string;
     clientId?: string | null;
@@ -207,6 +208,7 @@ export function QuickBookingPopover({
   mode = 'popover',
   defaultStylistId,
   draftId,
+  onBookingComplete,
   initialDraftData,
 }: QuickBookingPopoverProps) {
   const queryClient = useQueryClient();
@@ -746,6 +748,7 @@ export function QuickBookingPopover({
       }
       queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] });
       toast.success('Appointment booked successfully');
+      onBookingComplete?.(date);
       handleClose(true);
     },
     onError: (error: Error) => {

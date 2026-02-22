@@ -606,6 +606,7 @@ export default function Schedule() {
         time={bookingDefaults.time || '09:00'}
         defaultLocationId={selectedLocation}
         defaultStylistId={bookingDefaults.stylistId}
+        onBookingComplete={(bookedDate) => setCurrentDate(bookedDate)}
         draftId={activeDraft?.id}
         initialDraftData={activeDraft ? {
           locationId: activeDraft.location_id || undefined,
