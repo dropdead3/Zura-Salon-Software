@@ -157,8 +157,6 @@ function AppointmentCard({
   }, [isDark, useCategoryColor, displayGradient, catColor.bg]);
 
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
         <div
           className={cn(
             'absolute left-1 right-1 z-10 rounded-md px-2 py-1 cursor-pointer transition-all hover:shadow-lg hover:z-20 overflow-hidden',
@@ -343,54 +341,6 @@ function AppointmentCard({
             </div>
           )}
         </div>
-      </TooltipTrigger>
-      <TooltipContent side="right" className="max-w-xs">
-        <div className="space-y-1.5">
-          <div className="font-medium flex items-center gap-1.5">
-            {appointment.client_name}
-            {appointment.is_new_client && <span className="text-[9px] px-1 py-px rounded-sm bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 font-medium">NEW</span>}
-          </div>
-          {appointment.client_phone && (
-            <div className="text-sm flex items-center gap-1.5">
-              <Phone className="h-3 w-3" />
-               <a href={`tel:${appointment.client_phone}`} className="hover:underline">
-                {formatPhoneDisplay(appointment.client_phone)}
-              </a>
-            </div>
-          )}
-          <div className="text-sm">{formatServicesWithDuration(appointment.service_name, serviceLookup) || appointment.service_name}</div>
-          <div className="text-sm text-muted-foreground">
-            {formatTime12h(appointment.start_time)} - {formatTime12h(appointment.end_time)}
-          </div>
-          {appointment.stylist_profile && (
-            <div className="text-sm flex items-center gap-1">
-              <User className="h-3 w-3" />
-              {formatDisplayName(appointment.stylist_profile.full_name, appointment.stylist_profile.display_name)}
-            </div>
-          )}
-          {hasAssistants && assistantNamesMap?.get(appointment.id) && (
-            <div className="text-sm flex items-center gap-1">
-              <Users className="h-3 w-3" />
-              w/ {assistantNamesMap.get(appointment.id)!.join(', ')}
-            </div>
-          )}
-          {appointment.total_price != null && appointment.total_price > 0 && (
-            <div className="text-sm text-muted-foreground">
-              <BlurredAmount className="font-medium">${appointment.total_price.toFixed(0)}</BlurredAmount>
-            </div>
-          )}
-          {(appointment as any).rescheduled_at && (
-            <div className="text-sm text-blue-600 dark:text-blue-400 flex items-center gap-1">
-              <ArrowRightLeft className="h-3 w-3" />
-              Moved from {(appointment as any).rescheduled_from_date !== appointment.appointment_date ? `${(appointment as any).rescheduled_from_date} ` : ''}{formatTime12h((appointment as any).rescheduled_from_time)} · {formatRelativeTime((appointment as any).rescheduled_at)}
-            </div>
-          )}
-          <Badge variant="outline" className={cn('text-xs', statusColors.bg, statusColors.text)}>
-            {appointment.status.replace('_', ' ')}
-          </Badge>
-        </div>
-      </TooltipContent>
-    </Tooltip>
   );
 }
 
