@@ -73,10 +73,11 @@ function ScheduledCoverageSection({
   endTime: string;
   locationId: string | null;
 }) {
+  const { effectiveOrganization } = useOrganizationContext();
   const { timeBlocks } = useAssistantTimeBlocks(
     appointmentDate ? new Date(appointmentDate + 'T12:00:00') : null,
     locationId,
-    null,
+    effectiveOrganization?.id || null,
   );
 
   const overlapping = useMemo(() => {
