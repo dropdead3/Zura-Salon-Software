@@ -348,7 +348,7 @@ function AppointmentCard({
             const profiles = assistantProfilesMap?.get(appointment.id);
             if (!profiles || profiles.length === 0) return null;
             return (
-              <div className="absolute top-0.5 right-0.5 z-10 flex items-center -space-x-1">
+              <div className="absolute top-5 right-1 z-10 flex items-center -space-x-1">
                 {profiles.map((p, i) => {
                   const initials = (() => {
                     const name = p.display_name || p.full_name;
