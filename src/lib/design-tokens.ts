@@ -188,15 +188,15 @@ export const SCROLLBAR_CSS = {
 
 type AppointmentStatusKey = 'pending' | 'booked' | 'confirmed' | 'checked_in' | 'completed' | 'cancelled' | 'no_show';
 
-/** Day / Week view appointment card colors (saturated for calendar cells) */
+/** Day / Week view appointment card colors (saturated for calendar cells, with dark mode variants) */
 export const APPOINTMENT_STATUS_COLORS: Record<AppointmentStatusKey, { bg: string; border: string; text: string }> = {
-  pending:    { bg: 'bg-amber-100',    border: 'border-amber-400',           text: 'text-amber-900' },
-  booked:     { bg: 'bg-muted',        border: 'border-muted-foreground/30', text: 'text-foreground' },
-  confirmed:  { bg: 'bg-green-500',    border: 'border-green-600',           text: 'text-white' },
-  checked_in: { bg: 'bg-blue-500',     border: 'border-blue-600',            text: 'text-white' },
-  completed:  { bg: 'bg-purple-500',   border: 'border-purple-600',          text: 'text-white' },
-  cancelled:  { bg: 'bg-muted/50',     border: 'border-muted',               text: 'text-muted-foreground' },
-  no_show:    { bg: 'bg-destructive',  border: 'border-destructive',         text: 'text-destructive-foreground' },
+  pending:    { bg: 'bg-amber-100 dark:bg-amber-800/60',         border: 'border-amber-400 dark:border-amber-700',               text: 'text-amber-900 dark:text-amber-200' },
+  booked:     { bg: 'bg-muted dark:bg-muted/40',                 border: 'border-muted-foreground/30 dark:border-muted-foreground/20', text: 'text-foreground' },
+  confirmed:  { bg: 'bg-green-500 dark:bg-green-700',            border: 'border-green-600 dark:border-green-900',               text: 'text-white dark:text-green-100' },
+  checked_in: { bg: 'bg-blue-500 dark:bg-blue-700',              border: 'border-blue-600 dark:border-blue-900',                 text: 'text-white dark:text-blue-100' },
+  completed:  { bg: 'bg-purple-500 dark:bg-purple-700',          border: 'border-purple-600 dark:border-purple-900',             text: 'text-white dark:text-purple-100' },
+  cancelled:  { bg: 'bg-muted/50 dark:bg-muted/30',              border: 'border-muted dark:border-muted/50',                    text: 'text-muted-foreground' },
+  no_show:    { bg: 'bg-destructive dark:bg-destructive/80',     border: 'border-destructive',                                   text: 'text-destructive-foreground' },
 };
 
 /** Agenda / badge / pastel variant colors */

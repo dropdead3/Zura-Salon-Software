@@ -22,7 +22,7 @@ import { formatRelativeTime } from '@/lib/format';
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
 import { QuickBookingPopover } from './QuickBookingPopover';
 import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
-import { getCategoryColor, SPECIAL_GRADIENTS, isGradientMarker, getGradientFromMarker } from '@/utils/categoryColors';
+import { getCategoryColor, SPECIAL_GRADIENTS, isGradientMarker, getGradientFromMarker, deriveDarkModeColor } from '@/utils/categoryColors';
 import { APPOINTMENT_STATUS_COLORS } from '@/lib/design-tokens';
 import type { ServiceLookupEntry } from '@/hooks/useServiceLookup';
 import type { AssistantTimeBlock } from '@/hooks/useAssistantTimeBlocks';
@@ -147,13 +147,20 @@ function AppointmentCard({
     }));
   }, [appointment.service_name, appointment.service_category, serviceLookup, categoryColors, useCategoryColor, displayGradient, isCompact]);
 
+  // Dark mode detection and derived colors
+  const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
+  const darkTokens = useMemo(() => {
+    if (!isDark || !useCategoryColor || displayGradient) return null;
+    return deriveDarkModeColor(catColor.bg);
+  }, [isDark, useCategoryColor, displayGradient, catColor.bg]);
+
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <div
           className={cn(
             'absolute left-1 right-1 rounded-md px-2 py-1 cursor-pointer transition-all hover:shadow-lg hover:z-20 overflow-hidden',
-            !displayGradient && 'border-l-4',
+            !displayGradient && !darkTokens && 'border-l-4',
             !useCategoryColor && !displayGradient && statusColors.bg,
             !useCategoryColor && !displayGradient && statusColors.border,
             !useCategoryColor && !displayGradient && statusColors.text,
@@ -167,11 +174,17 @@ function AppointmentCard({
           ...(displayGradient ? {
             background: displayGradient.background,
             color: displayGradient.textColor,
-          } : useCategoryColor && {
+          } : useCategoryColor && darkTokens ? {
+            backgroundColor: darkTokens.fill,
+            color: darkTokens.text,
+            borderColor: darkTokens.stroke,
+            borderWidth: '1px',
+            borderStyle: 'solid',
+          } : useCategoryColor ? {
               backgroundColor: catColor.bg,
               color: catColor.text,
               borderLeftColor: catColor.bg,
-            }),
+            } : undefined),
           }}
           onClick={onClick}
         >
@@ -226,15 +239,18 @@ function AppointmentCard({
           {/* Multi-service color bands */}
           {serviceBands && useCategoryColor && (
             <div className="absolute inset-0 flex flex-col overflow-hidden rounded-md">
-              {serviceBands.map((band, i) => (
-                <div
-                  key={i}
-                  style={{
-                    flex: `${band.percent} 0 0%`,
-                    backgroundColor: band.color.bg,
-                  }}
-                />
-              ))}
+              {serviceBands.map((band, i) => {
+                const bandDark = isDark ? deriveDarkModeColor(band.color.bg) : null;
+                return (
+                  <div
+                    key={i}
+                    style={{
+                      flex: `${band.percent} 0 0%`,
+                      backgroundColor: bandDark ? bandDark.fill : band.color.bg,
+                    }}
+                  />
+                );
+              })}
             </div>
           )}
           {/* Stylist badge top-right */}

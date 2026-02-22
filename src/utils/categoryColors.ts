@@ -147,3 +147,151 @@ export function getContrastingTextColor(hexColor: string): string {
   const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
   return luminance > 0.5 ? '#1f2937' : '#ffffff';
 }
+
+// ============================================================
+// DARK MODE COLOR DERIVATION SYSTEM
+// ============================================================
+// Re-derives dark mode colors from light-mode hex values.
+// Not opacity-based — produces richer, more saturated tokens
+// that read well against deep charcoal calendar backgrounds.
+
+import { hexToHsl, hslToHex } from '@/lib/colorUtils';
+
+interface ColorTokenSet {
+  fill: string;
+  stroke: string;
+  hover: string;
+  selected: string;
+  text: string;
+}
+
+/**
+ * Derive a complete dark-mode color token set from a light-mode hex color.
+ * Uses HSL transformations to produce richer, contained colors for dark backgrounds.
+ */
+export function deriveDarkModeColor(hexColor: string): ColorTokenSet {
+  const hslStr = hexToHsl(hexColor);
+  const parts = hslStr.split(/[\s%]+/).map(v => parseFloat(v));
+  const [h, s, l] = parts;
+
+  // Special case: grays (very low saturation)
+  const isGray = s < 8;
+  
+  // Dark fill derivation
+  let darkS: number;
+  let darkL: number;
+  
+  if (isGray) {
+    darkS = Math.min(s + 3, 12);
+    darkL = Math.max(Math.min(l * 0.35 + 15, 32), 20);
+  } else if (l > 85) {
+    // Very light colors (e.g., Blonding #facc15 has high lightness in perceived terms)
+    darkS = Math.min(s + 8, 85);
+    darkL = Math.max(Math.min(l * 0.35 + 16, 38), 22);
+  } else if (l < 25) {
+    // Very dark colors (e.g., Block #374151)
+    darkS = Math.min(s + 6, 30);
+    darkL = Math.max(l + 8, 22);
+  } else {
+    darkS = Math.min(s + 8, 85);
+    darkL = Math.max(Math.min(l * 0.45 + 18, 42), 22);
+  }
+
+  const fillHsl = `${Math.round(h)} ${Math.round(darkS)}% ${Math.round(darkL)}%`;
+  const fill = hslToHex(fillHsl);
+  
+  // Stroke: darker, more saturated edge
+  const strokeS = Math.min(darkS + 4, 90);
+  const strokeL = Math.max(darkL - 12, 8);
+  const strokeHsl = `${Math.round(h)} ${Math.round(strokeS)}% ${Math.round(strokeL)}%`;
+  const stroke = hslToHex(strokeHsl);
+  
+  // Hover: slightly brighter
+  const hoverL = Math.min(darkL + 5, 50);
+  const hoverHsl = `${Math.round(h)} ${Math.round(darkS)}% ${Math.round(hoverL)}%`;
+  const hover = hslToHex(hoverHsl);
+  
+  // Selected: slightly deeper, more saturated
+  const selectedS = Math.min(darkS + 4, 90);
+  const selectedL = Math.max(darkL - 4, 12);
+  const selectedHsl = `${Math.round(h)} ${Math.round(selectedS)}% ${Math.round(selectedL)}%`;
+  const selected = hslToHex(selectedHsl);
+  
+  // Text: contrast-aware
+  const text = darkL > 35 ? '#1a1a2e' : '#e8e4df';
+  
+  return { fill, stroke, hover, selected, text };
+}
+
+/**
+ * Derive light-mode token set from a hex color.
+ */
+export function deriveLightModeColor(hexColor: string): ColorTokenSet {
+  const hslStr = hexToHsl(hexColor);
+  const parts = hslStr.split(/[\s%]+/).map(v => parseFloat(v));
+  const [h, s, l] = parts;
+  
+  // Stroke: 20% darker
+  const strokeL = Math.max(l - 20, 5);
+  const stroke = hslToHex(`${Math.round(h)} ${Math.round(s)}% ${Math.round(strokeL)}%`);
+  
+  // Hover: 5% lighter
+  const hoverL = Math.min(l + 5, 95);
+  const hover = hslToHex(`${Math.round(h)} ${Math.round(s)}% ${Math.round(hoverL)}%`);
+  
+  // Selected: 8% darker
+  const selectedL = Math.max(l - 8, 5);
+  const selected = hslToHex(`${Math.round(h)} ${Math.round(s)}% ${Math.round(selectedL)}%`);
+  
+  const text = getContrastingTextColor(hexColor);
+  
+  return { fill: hexColor, stroke, hover, selected, text };
+}
+
+/**
+ * Get complete dual-mode color tokens for any hex color.
+ */
+export function deriveFullColorTokens(hexColor: string): { light: ColorTokenSet; dark: ColorTokenSet } {
+  return {
+    light: deriveLightModeColor(hexColor),
+    dark: deriveDarkModeColor(hexColor),
+  };
+}
+
+/**
+ * Returns inline style object for a calendar appointment block.
+ * Handles light/dark mode switching with proper containment.
+ */
+export function getCalendarBlockStyle(
+  hexColor: string,
+  isDark: boolean,
+  state: 'default' | 'hover' | 'selected' = 'default'
+): React.CSSProperties {
+  if (!isDark) {
+    const light = deriveLightModeColor(hexColor);
+    return {
+      backgroundColor: state === 'hover' ? light.hover : state === 'selected' ? light.selected : light.fill,
+      color: light.text,
+      borderColor: light.stroke,
+      borderWidth: '0 0 0 4px',
+      borderStyle: 'solid',
+    };
+  }
+
+  const dark = deriveDarkModeColor(hexColor);
+  return {
+    backgroundColor: state === 'hover' ? dark.hover : state === 'selected' ? dark.selected : dark.fill,
+    color: dark.text,
+    borderColor: dark.stroke,
+    borderWidth: '1px',
+    borderStyle: 'solid',
+  };
+}
+
+/**
+ * Get the derived dark-mode text color for a given category hex.
+ * Used when you need just the text color without full style.
+ */
+export function getDarkModeTextColor(hexColor: string): string {
+  return deriveDarkModeColor(hexColor).text;
+}
