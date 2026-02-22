@@ -556,6 +556,16 @@ function AppointmentCard({
                     {(duration >= 45 && formatServicesWithDuration(appointment.service_name, serviceLookup)) || appointment.service_name}
                   </div>
                 )}
+                {/* Assisted by line */}
+                {(() => {
+                  const names = assistantNamesMap?.get(appointment.id);
+                  if (!names || names.length === 0) return null;
+                  return (
+                    <div className="text-[11px] opacity-70 truncate">
+                      assisted by {names.join(', ')}
+                    </div>
+                  );
+                })()}
                 {/* Stylist/assistant info now in top-right badge tooltip */}
                 {duration >= 60 && (
                   <div className="text-[13px] opacity-80 mt-0.5 flex items-center justify-between">
