@@ -1,74 +1,80 @@
 
 
-# Dark Mode Cards: Translucent Fill + Light-Mode Color Stroke and Text
+# Dark Mode Card Polish: Glow, Ring, Transitions, and Grid Dimming
 
 ## Summary
 
-Restyle dark mode appointment blocks to use a **translucent** category-colored fill (allowing grid lines to subtly show through) with a **1px border stroke** in the original light-mode category color, plus light-mode colored text. This replaces the current solid opaque fills. The left accent bar also uses the light-mode color.
-
-## What Changes
-
-### Current State
-- `getDarkCategoryStyle` returns solid hex fills at lightness 30-42%
-- Cards use `z-10` to sit above grid lines (hiding them)
-- Text and accent bar already use the original `hexColor` -- that stays
-
-### Target State
-- Fill becomes an `rgba()` value at ~18-22% opacity of the category color
-- A 1px border stroke wraps the entire card in the original light-mode hex
-- Text stays as the light-mode category hex
-- Left accent bar stays as the light-mode category hex
-- `backdrop-blur` is NOT re-added (clean translucency, not frosted glass)
-- `z-10` stays for interaction layering but the translucent fill lets grid structure show through naturally
+Four enhancements to the dark mode appointment card styling: hover glow, selected ring, smooth transitions, and dimmer grid lines. Text hierarchy (enhancement 5) is excluded per your direction.
 
 ---
 
-## Change 1: Update `getDarkCategoryStyle` to return translucent fill and stroke
+## Change 1: Hover Glow Effect
 
 **File**: `src/utils/categoryColors.ts`
 
-Update the `DarkCategoryStyle` interface to add a `stroke` property, and change `fill` and `hover` to return `rgba()` strings instead of solid hex:
+Add a `glow` property to `DarkCategoryStyle` that returns a `box-shadow` string using the category color at ~15% opacity:
 
 ```
-DarkCategoryStyle {
-  fill: string;      // rgba(r, g, b, 0.18) -- translucent category color
-  stroke: string;    // original hexColor -- 1px border color
-  accent: string;    // original hexColor -- left bar color (unchanged)
-  hover: string;     // rgba(r, g, b, 0.28) -- slightly more opaque on hover
-  selected: string;  // rgba(r, g, b, 0.32) -- more opaque when selected
-  text: string;      // original hexColor for colored, #e8e4df for grays (unchanged)
-}
+glow: string;  // e.g. "0 0 12px rgba(250, 204, 21, 0.15)"
 ```
 
-Implementation: Convert the hex to RGB, then return `rgba(r, g, b, 0.18)` for fill. For grays, use a slightly higher opacity (~0.22) since gray is less visible. Add a helper to convert hex to RGB components.
+For grays, use a lower opacity (~0.08) since glow on neutral cards should be very subtle.
 
-### Change 2: Update DayView to apply stroke as border
+**Files**: `DayView.tsx`, `WeekView.tsx`
 
-**File**: `src/components/dashboard/schedule/DayView.tsx`
-
-In the dark mode style block, add `borderColor: darkStyle.stroke` and `borderWidth: '1px'` alongside the existing `borderLeftColor` and `borderLeftWidth` overrides. The left accent bar becomes 4px of the same color, so effectively:
-
-- `border: 1px solid [light-mode hex]` on all sides
-- `borderLeftWidth: 4px` for the accent bar (overrides left side to be thicker)
-
-### Change 3: Update WeekView with the same stroke treatment
-
-**File**: `src/components/dashboard/schedule/WeekView.tsx`
-
-Same border/stroke application as DayView.
+On the dark mode style block, add `boxShadow: darkStyle.glow` when not in compact mode.
 
 ---
 
-## Expected Visual Result
+## Change 2: Selected State Ring
 
-| Element | Value |
-|---|---|
-| Fill | Category color at 18% opacity (translucent, grid lines faintly visible) |
-| Stroke | 1px border in full light-mode category color |
-| Left bar | 4px left border in light-mode category color |
-| Text | Light-mode category color (e.g., #facc15 gold, #f472b6 pink) |
-| Hover | Category color at 28% opacity |
-| Backdrop blur | None (clean transparency, not frosted) |
+**File**: `src/utils/categoryColors.ts`
+
+Add a `ring` property returning a 2px outline/box-shadow ring in the light-mode hex:
+
+```
+ring: string;  // e.g. "0 0 0 2px #facc15"
+```
+
+**Files**: `DayView.tsx`, `WeekView.tsx`
+
+When `isSelected` is true in dark mode, apply `boxShadow: darkStyle.ring` instead of the hover glow.
+
+---
+
+## Change 3: Transition Smoothing
+
+**Files**: `DayView.tsx`, `WeekView.tsx`
+
+Add `transition: 'background-color 150ms ease, box-shadow 150ms ease'` to the dark mode inline style block. This makes hover and selection state changes feel fluid rather than abrupt.
+
+---
+
+## Change 4: Grid Line Dimming in Dark Mode
+
+**File**: `DayView.tsx` (line 145-148)
+
+Current dark mode grid line opacities:
+- Hour: `dark:border-border/80`
+- Half-hour: `dark:border-border/60`
+- Quarter-hour: `dark:border-border/50`
+
+Reduce to:
+- Hour: `dark:border-border/50`
+- Half-hour: `dark:border-border/35`
+- Quarter-hour: `dark:border-border/15`
+
+**File**: `WeekView.tsx` (lines 630-633, 668-671)
+
+Current:
+- Hour: `dark:border-border/70`
+- Half-hour: `dark:border-border/50`
+- Quarter-hour: `dark:border-border/35`
+
+Reduce to:
+- Hour: `dark:border-border/50`
+- Half-hour: `dark:border-border/30`
+- Quarter-hour: `dark:border-border/15`
 
 ---
 
@@ -78,9 +84,9 @@ Same border/stroke application as DayView.
 
 | File | Change |
 |---|---|
-| `src/utils/categoryColors.ts` | Add `stroke` to interface; change `fill`/`hover`/`selected` to `rgba()` strings; add hex-to-RGB helper |
-| `src/components/dashboard/schedule/DayView.tsx` | Apply `borderColor: darkStyle.stroke`, `borderWidth: '1px'`, keep `borderLeftWidth: '4px'` with `borderLeftColor: darkStyle.accent` |
-| `src/components/dashboard/schedule/WeekView.tsx` | Same stroke/border treatment as DayView |
+| `src/utils/categoryColors.ts` | Add `glow` and `ring` properties to `DarkCategoryStyle`; compute rgba box-shadow strings |
+| `src/components/dashboard/schedule/DayView.tsx` | Apply glow/ring/transition in dark style block; reduce grid line dark opacities |
+| `src/components/dashboard/schedule/WeekView.tsx` | Apply glow/ring/transition in dark style block; reduce grid line dark opacities |
 
 ### No new files, no new dependencies, no database changes.
 
