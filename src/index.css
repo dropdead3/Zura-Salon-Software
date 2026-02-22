@@ -635,9 +635,6 @@ html, body, #root {
 }
 
 /* Appointment card hover stroke overlay */
-.appt-card-hover {
-  position: relative;
-}
 .appt-card-hover::after {
   content: '';
   position: absolute;
