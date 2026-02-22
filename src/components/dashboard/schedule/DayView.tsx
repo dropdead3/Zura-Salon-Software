@@ -19,6 +19,8 @@ import type { ServiceLookupEntry } from '@/hooks/useServiceLookup';
 import { APPOINTMENT_STATUS_COLORS } from '@/lib/design-tokens';
 import { getClientInitials, getAvatarColor, formatServicesWithDuration, sortServices } from '@/lib/appointment-card-utils';
 import { StylistBadge } from './StylistBadge';
+import { AssistantBlockOverlay } from './AssistantBlockOverlay';
+import type { AssistantTimeBlock } from '@/hooks/useAssistantTimeBlocks';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { formatRelativeTime } from '@/lib/format';
@@ -59,6 +61,7 @@ interface DayViewProps {
   serviceLookup?: Map<string, ServiceLookupEntry>;
   assistantNamesMap?: Map<string, string[]>;
   assistantProfilesMap?: Map<string, AssistantProfile[]>;
+  assistantTimeBlocks?: AssistantTimeBlock[];
 }
 
 // Use consolidated status colors from design tokens
@@ -629,6 +632,7 @@ export function DayView({
   serviceLookup,
   assistantNamesMap,
   assistantProfilesMap,
+  assistantTimeBlocks = [],
 }: DayViewProps) {
   const ROW_HEIGHT = 20; // 20px per 15-min slot (matches Week view)
   const { colorMap: categoryColors } = useServiceCategoryColorsMap();
@@ -899,6 +903,14 @@ export function DayView({
                       );
                     })}
                     
+                    {/* Assistant Time Block Overlay */}
+                    <AssistantBlockOverlay
+                      timeBlocks={assistantTimeBlocks}
+                      stylistUserId={stylist.user_id}
+                      hoursStart={hoursStart}
+                      rowHeight={ROW_HEIGHT}
+                    />
+
                     {/* Appointments */}
                     {stylistAppointments.map((apt) => {
                       const { columnIndex, totalOverlapping } = getOverlapInfo(stylistAppointments, apt);

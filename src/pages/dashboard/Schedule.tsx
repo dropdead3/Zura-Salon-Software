@@ -30,12 +30,14 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useDraftBookings, type DraftBooking } from '@/hooks/useDraftBookings';
 import { useServiceLookup } from '@/hooks/useServiceLookup';
 import { useAppointmentAssistantNames } from '@/hooks/useAppointmentAssistantNames';
-import { Loader2, Sparkles, Coffee } from 'lucide-react';
+import { Loader2, Sparkles, Coffee, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import type { CalendarFilterState } from '@/components/dashboard/schedule/CalendarFiltersPopover';
 import { AddTimeBlockForm } from '@/components/dashboard/schedule/AddTimeBlockForm';
+import { RequestAssistantPanel } from '@/components/dashboard/schedule/RequestAssistantPanel';
+import { useAssistantTimeBlocks } from '@/hooks/useAssistantTimeBlocks';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import {
   AlertDialog,
@@ -103,6 +105,14 @@ export default function Schedule() {
   const [selectedAppointment, setSelectedAppointment] = useState<PhorestAppointment | null>(null);
   const [selectedStaffIds, setSelectedStaffIds] = useState<string[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<string>('');
+  
+  // Fetch assistant time blocks for the current date/location
+  const {
+    timeBlocks: assistantTimeBlocks,
+    createBlock: createAssistantBlock,
+    isCreating: isCreatingBlock,
+  } = useAssistantTimeBlocks(currentDate, selectedLocation, orgId ?? null);
+
   const [detailOpen, setDetailOpen] = useState(false);
   const [initialTab, setInitialTab] = useState<string | undefined>(undefined);
   const [bookingOpen, setBookingOpen] = useState(false);
@@ -155,6 +165,7 @@ export default function Schedule() {
     stylistId: string;
   } | null>(null);
   const [breakDialogOpen, setBreakDialogOpen] = useState(false);
+  const [assistantDialogOpen, setAssistantDialogOpen] = useState(false);
   const [breakDefaults, setBreakDefaults] = useState<{ time: string; stylistId: string }>({ time: '09:00', stylistId: '' });
 
   const handleSlotContextMenu = (stylistId: string, time: string, e: React.MouseEvent) => {
@@ -538,6 +549,7 @@ export default function Schedule() {
                 serviceLookup={serviceLookup}
                 assistantNamesMap={assistantNamesMap}
                 assistantProfilesMap={assistantProfilesMap}
+                assistantTimeBlocks={assistantTimeBlocks}
               />
             );
           })()}
@@ -556,8 +568,9 @@ export default function Schedule() {
               appointmentsWithAssistants={appointmentsWithAssistants}
               colorBy={preferences.color_by as 'status' | 'service' | 'stylist'}
               serviceLookup={serviceLookup}
-              assistantNamesMap={assistantNamesMap}
+               assistantNamesMap={assistantNamesMap}
                 assistantProfilesMap={assistantProfilesMap}
+                assistantTimeBlocks={assistantTimeBlocks}
               />
           )}
           
@@ -837,6 +850,17 @@ export default function Schedule() {
              <Coffee className="h-4 w-4" />
              Add Break / Block
           </button>
+          <button
+            className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors"
+            onClick={() => {
+              setBreakDefaults({ time: breakContextMenu.time, stylistId: breakContextMenu.stylistId });
+              setBreakContextMenu(null);
+              setAssistantDialogOpen(true);
+            }}
+          >
+             <Users className="h-4 w-4" />
+             Request Assistant
+          </button>
         </div>
       )}
 
@@ -850,6 +874,27 @@ export default function Schedule() {
             defaultStylistId={breakDefaults.stylistId}
             onBack={() => setBreakDialogOpen(false)}
             onComplete={() => setBreakDialogOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Request Assistant dialog from context menu */}
+      <Dialog open={assistantDialogOpen} onOpenChange={setAssistantDialogOpen}>
+        <DialogContent className="sm:max-w-md p-0">
+          <DialogTitle className="sr-only">Request Assistant</DialogTitle>
+          <RequestAssistantPanel
+            date={currentDate}
+            time={breakDefaults.time}
+            requestingUserId={breakDefaults.stylistId}
+            requestingUserName={allStylists.find(s => s.user_id === breakDefaults.stylistId)?.display_name || allStylists.find(s => s.user_id === breakDefaults.stylistId)?.full_name || 'Stylist'}
+            appointments={appointments}
+            locationId={selectedLocation}
+            onBack={() => setAssistantDialogOpen(false)}
+            onSubmit={(params) => {
+              createAssistantBlock(params);
+              setAssistantDialogOpen(false);
+            }}
+            isSubmitting={isCreatingBlock}
           />
         </DialogContent>
       </Dialog>
