@@ -319,7 +319,7 @@ interface DarkCategoryStyle {
 export function getDarkCategoryStyle(hexColor: string): DarkCategoryStyle {
   const hslStr = hexToHsl(hexColor);
   const parts = hslStr.split(/[\s%]+/).map(v => parseFloat(v));
-  const [h, s] = parts;
+  const [h, s, l] = parts;
 
   const isGray = s < 8;
 
@@ -332,7 +332,7 @@ export function getDarkCategoryStyle(hexColor: string): DarkCategoryStyle {
     fillL = Math.max(Math.min(25, 28), 22);
   } else {
     fillS = Math.max(Math.min(s + 12, 80), 35);
-    fillL = Math.max(Math.min(s * 0.38 + 18, 42), 30);
+    fillL = Math.max(Math.min(l * 0.38 + 18, 42), 30);
   }
 
   const fill = hslToHex(`${Math.round(h)} ${Math.round(fillS)}% ${Math.round(fillL)}%`);
