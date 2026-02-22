@@ -1,37 +1,37 @@
 
 
-# Fix: Drag-and-Drop Appointment Reschedule Bug
+# Fix: Appointment Card Not Moving After Drag-and-Drop
 
 ## Root Cause
 
-The edge function `update-phorest-appointment-time` references a column called `phorest_appointment_id` that does not exist. The actual column name in the `phorest_appointments` table is `phorest_id`.
+The reschedule mutation hook (`useRescheduleAppointment.ts`) invalidates the wrong query key after a successful move.
 
-This causes the database query to fail silently, resulting in the "Appointment not found" error visible in the logs.
+- **Current (broken):** `queryClient.invalidateQueries({ queryKey: ['phorest-calendar'] })`
+- **Actual query key used by the calendar:** `['phorest-appointments', ...]` (defined in `usePhorestCalendar.ts`)
 
-## What Happens Today
-
-1. User drags an appointment to a new time slot
-2. Frontend calls the `update-phorest-appointment-time` edge function with the correct appointment UUID
-3. The edge function runs this query:
-   ```
-   .select("*, phorest_appointment_id, phorest_staff_id")
-   .eq("id", appointment_id)
-   ```
-4. PostgREST rejects the query because `phorest_appointment_id` is not a valid column (the real column is `phorest_id`)
-5. The function throws "Appointment not found"
-6. User sees a toast error: "Failed to reschedule"
+Because the keys don't match, React Query never refetches the appointment data after the move succeeds. The backend updates correctly (hence "Moved to 11:00 AM" toast), but the UI stays stale.
 
 ## Fix
 
-In `supabase/functions/update-phorest-appointment-time/index.ts`:
+In `src/hooks/useRescheduleAppointment.ts`, change line 33 from:
 
-1. **Line 74** -- Change `.select("*, phorest_appointment_id, phorest_staff_id")` to `.select("*")` (since `*` already includes all columns including `phorest_id` and `phorest_staff_id`)
+```text
+queryClient.invalidateQueries({ queryKey: ['phorest-calendar'] });
+```
 
-2. **Line 133** -- Change `localApt.phorest_appointment_id` to `localApt.phorest_id` so the Phorest API call uses the correct field name
+to:
+
+```text
+queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] });
+```
+
+This matches the actual query key used by `usePhorestCalendar.ts` (line 123), so the calendar will immediately refetch and the appointment card will snap to its new position.
 
 ## Files Modified
 
 | File | Change |
 |------|--------|
-| `supabase/functions/update-phorest-appointment-time/index.ts` | Fix column name from `phorest_appointment_id` to `phorest_id`, simplify select to `*` |
+| `src/hooks/useRescheduleAppointment.ts` | Fix query key from `phorest-calendar` to `phorest-appointments` |
+
+One line change. No other files affected.
 
