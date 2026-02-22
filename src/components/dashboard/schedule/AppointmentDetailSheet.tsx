@@ -208,21 +208,25 @@ export function AppointmentDetailSheet({
   const { data: visitHistory = [], isLoading: historyLoading } = useClientVisitHistory(appointment?.phorest_client_id);
   const { data: serviceLookup } = useServiceLookup();
 
-  // Location name lookup
-  const { data: locationName } = useQuery({
-    queryKey: ['location-name', appointment?.location_id],
+  // Location name + org lookup
+  const { data: locationData } = useQuery({
+    queryKey: ['location-data', appointment?.location_id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('locations')
-        .select('name')
+        .select('name, organization_id')
         .eq('id', appointment!.location_id!)
         .maybeSingle();
       if (error) throw error;
-      return data?.name || null;
+      return data;
     },
     enabled: !!appointment?.location_id,
     staleTime: 10 * 60 * 1000,
   });
+  const locationName = locationData?.name || null;
+
+  // Resolved org ID: prefer effectiveOrganization, fall back to appointment's location org
+  const resolvedOrgId = effectiveOrganization?.id || locationData?.organization_id || null;
 
   // Fetch client email + preferred_stylist_id from phorest_clients
   const { data: clientRecord, isLoading: clientRecordLoading } = useQuery({
@@ -293,7 +297,7 @@ export function AppointmentDetailSheet({
   });
 
   // Team for assistant picker
-  const { data: teamMembers = [] } = useTeamDirectory(undefined, { organizationId: effectiveOrganization?.id });
+  const { data: teamMembers = [] } = useTeamDirectory(undefined, { organizationId: resolvedOrgId || undefined });
   const conflictMap = useAssistantConflictCheck(
     appointment?.appointment_date || null,
     appointment?.start_time || null,
@@ -826,12 +830,12 @@ export function AppointmentDetailSheet({
                                     className="flex flex-col w-full p-1.5 rounded hover:bg-muted text-left text-sm"
                                     disabled={isAssigning}
                                     onClick={() => {
-                                      const orgId = effectiveOrganization?.id;
+                                      const orgId = resolvedOrgId;
                                       if (orgId) {
                                         assignAssistant({ assistantUserId: member.user_id, organizationId: orgId });
                                         setShowAssistantPicker(false);
                                       } else {
-                                        console.error('[AssistantPicker] No effectiveOrganization available');
+                                        console.error('[AssistantPicker] No organization context available (effectiveOrganization and location org both null)');
                                         toast.error('Organization context not available. Please refresh the page.');
                                       }
                                     }}
