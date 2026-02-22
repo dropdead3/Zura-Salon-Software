@@ -471,13 +471,6 @@ function AppointmentCard({
                     w/ {assistantNamesMap.get(appointment.id)!.join(', ')}
                   </div>
                 )}
-                {/* Rescheduled from line */}
-                {duration >= 45 && (appointment as any).rescheduled_at && (appointment as any).rescheduled_from_time && (
-                  <div className="text-[10px] opacity-70 italic truncate flex items-center gap-0.5">
-                    <ArrowRightLeft className="h-2.5 w-2.5 shrink-0" />
-                    Moved from {formatTime12h((appointment as any).rescheduled_from_time)}
-                  </div>
-                )}
                 {duration >= 60 && (
                   <div className="text-xs opacity-80 mt-0.5 flex items-center justify-between">
                     <span>{formatTime12h(appointment.start_time)} - {formatTime12h(appointment.end_time)}</span>
@@ -486,6 +479,13 @@ function AppointmentCard({
                         ${appointment.total_price.toFixed(0)}
                       </BlurredAmount>
                     )}
+                  </div>
+                )}
+                {/* Rescheduled from line - below time */}
+                {duration >= 45 && (appointment as any).rescheduled_at && (appointment as any).rescheduled_from_time && (
+                  <div className="text-[10px] opacity-70 italic truncate flex items-center gap-0.5">
+                    <ArrowRightLeft className="h-2.5 w-2.5 shrink-0" />
+                    Moved from {formatTime12h((appointment as any).rescheduled_from_time)}
                   </div>
                 )}
               </>
