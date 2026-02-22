@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { parseISO, differenceInDays } from 'date-fns';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -46,13 +46,23 @@ import {
   Phone, Mail, Calendar, Clock, User, MapPin, DollarSign,
   ChevronDown, Copy, CheckCircle, UserCheck, XCircle, AlertTriangle,
   MessageSquare, Lock, Trash2, Loader2, UserPlus, X, Repeat, RotateCcw,
-  CreditCard, CalendarClock, RefreshCw, Star, TrendingUp,
+  CreditCard, CalendarClock, RefreshCw, Star, TrendingUp, ExternalLink,
 } from 'lucide-react';
 import { cn, formatPhoneDisplay } from '@/lib/utils';
 import { toast } from 'sonner';
 import { tokens } from '@/lib/design-tokens';
 import { getClientInitials, getAvatarColor } from '@/lib/appointment-card-utils';
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
+
+// ─── Stagger Animation Variants ─────────────────────────────────
+const staggerContainer = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.04 } },
+};
+const staggerItem = {
+  hidden: { opacity: 0, y: 8 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.25, ease: 'easeOut' as const } },
+};
 
 // ─── Status Config ──────────────────────────────────────────────
 const STATUS_CONFIG: Record<AppointmentStatus, {
@@ -103,6 +113,7 @@ interface AppointmentDetailSheetProps {
   onRebook?: (appointment: PhorestAppointment) => void;
   onReschedule?: (appointment: PhorestAppointment) => void;
   onPay?: (appointment: PhorestAppointment) => void;
+  onOpenClientProfile?: (clientId: string) => void;
 }
 
 export function AppointmentDetailSheet({
@@ -114,6 +125,7 @@ export function AppointmentDetailSheet({
   onRebook,
   onReschedule,
   onPay,
+  onOpenClientProfile,
 }: AppointmentDetailSheetProps) {
   const { user, hasPermission, roles } = useAuth();
   const { effectiveOrganization } = useOrganizationContext();
@@ -124,14 +136,27 @@ export function AppointmentDetailSheet({
   const [newNote, setNewNote] = useState('');
   const [isPrivateNote, setIsPrivateNote] = useState(false);
   const [confirmAction, setConfirmAction] = useState<AppointmentStatus | null>(null);
+  const [cancelReason, setCancelReason] = useState('');
   const [showAssistantPicker, setShowAssistantPicker] = useState(false);
   const [cancellingFuture, setCancellingFuture] = useState(false);
+  const [cancelFutureReason, setCancelFutureReason] = useState('');
+  const [showCancelFutureConfirm, setShowCancelFutureConfirm] = useState(false);
   const [newClientNote, setNewClientNote] = useState('');
   const [isPrivateClientNote, setIsPrivateClientNote] = useState(false);
 
   const isManagerOrAdmin = roles.some(r => ['admin', 'super_admin', 'manager'].includes(r));
   const canAddNotes = hasPermission('add_appointment_notes');
   const canManageAssistants = hasPermission('create_appointments') || hasPermission('view_team_appointments');
+
+  // ─── Escape Key Handler ─────────────────────────────────────
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onOpenChange(false);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [open, onOpenChange]);
 
   // ─── Data Hooks ────────────────────────────────────────────────
   const { notes, addNote, deleteNote, isAdding } = useAppointmentNotes(appointment?.phorest_id || null);
@@ -141,6 +166,22 @@ export function AppointmentDetailSheet({
   const deleteClientNote = useDeleteClientNote();
   const { data: visitHistory = [], isLoading: historyLoading } = useClientVisitHistory(appointment?.phorest_client_id);
   const { data: serviceLookup } = useServiceLookup();
+
+  // Location name lookup
+  const { data: locationName } = useQuery({
+    queryKey: ['location-name', appointment?.location_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('locations')
+        .select('name')
+        .eq('id', appointment!.location_id!)
+        .maybeSingle();
+      if (error) throw error;
+      return data?.name || null;
+    },
+    enabled: !!appointment?.location_id,
+    staleTime: 10 * 60 * 1000,
+  });
 
   // Fetch client email + preferred_stylist_id from phorest_clients
   const { data: clientRecord } = useQuery({
@@ -240,6 +281,23 @@ export function AppointmentDetailSheet({
     return { visitCount: completed.length, totalSpend, tenure };
   }, [visitHistory, clientRecord]);
 
+  // ─── Service Frequency (for History tab) ─────────────────────
+  const topServices = useMemo(() => {
+    if (visitHistory.length === 0) return [];
+    const counts: Record<string, number> = {};
+    for (const visit of visitHistory) {
+      if (!visit.service_name) continue;
+      const names = visit.service_name.split(',').map(s => s.trim()).filter(Boolean);
+      for (const name of names) {
+        counts[name] = (counts[name] || 0) + 1;
+      }
+    }
+    return Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([name, count]) => ({ name, count }));
+  }, [visitHistory]);
+
   const preferredStylistMismatch = useMemo(() => {
     if (!clientRecord?.preferred_stylist_id || !appointment?.stylist_user_id) return false;
     return clientRecord.preferred_stylist_id !== appointment.stylist_user_id;
@@ -292,6 +350,7 @@ export function AppointmentDetailSheet({
   const handleStatusChange = (status: AppointmentStatus) => {
     if (status === 'cancelled' || status === 'no_show') {
       setConfirmAction(status);
+      setCancelReason('');
     } else {
       onStatusChange(appointment.phorest_id, status);
     }
@@ -299,15 +358,31 @@ export function AppointmentDetailSheet({
 
   const confirmStatusChange = () => {
     if (confirmAction) {
+      // Append reason as a note before changing status
+      if (cancelReason.trim()) {
+        const prefix = confirmAction === 'cancelled' ? '[Cancelled]' : '[No Show]';
+        addNote({ note: `${prefix} ${cancelReason.trim()}`, isPrivate: false });
+      }
       onStatusChange(appointment.phorest_id, confirmAction);
       setConfirmAction(null);
+      setCancelReason('');
     }
   };
 
-  const handleCancelAllFuture = async () => {
+  const handleCancelAllFuture = () => {
+    if (!appointment.recurrence_group_id) return;
+    setCancelFutureReason('');
+    setShowCancelFutureConfirm(true);
+  };
+
+  const confirmCancelAllFuture = async () => {
     if (!appointment.recurrence_group_id) return;
     setCancellingFuture(true);
     try {
+      // Add reason as a note if provided
+      if (cancelFutureReason.trim()) {
+        addNote({ note: `[Recurring Cancelled] ${cancelFutureReason.trim()}`, isPrivate: false });
+      }
       const { error } = await supabase
         .from('phorest_appointments')
         .update({ status: 'cancelled' })
@@ -317,11 +392,19 @@ export function AppointmentDetailSheet({
       if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] });
       toast.success('All future recurring appointments cancelled');
+      setShowCancelFutureConfirm(false);
       handleClose();
     } catch (err: any) {
       toast.error('Failed to cancel future appointments', { description: err.message });
     } finally {
       setCancellingFuture(false);
+    }
+  };
+
+  const handleOpenClientProfile = () => {
+    if (onOpenClientProfile && appointment.phorest_client_id) {
+      handleClose();
+      onOpenClientProfile(appointment.phorest_client_id);
     }
   };
 
@@ -374,6 +457,17 @@ export function AppointmentDetailSheet({
                     <p className="text-sm text-muted-foreground truncate mt-0.5">
                       {services.length > 1 ? `${services.length} services` : appointment.service_name}
                     </p>
+                    {/* View Client Profile */}
+                    {onOpenClientProfile && appointment.phorest_client_id && (
+                      <button
+                        onClick={handleOpenClientProfile}
+                        className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors mt-1"
+                      >
+                        <User className="h-3 w-3" />
+                        View Profile
+                        <ExternalLink className="h-2.5 w-2.5" />
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -460,35 +554,38 @@ export function AppointmentDetailSheet({
 
                 <ScrollArea className="flex-1">
                   {/* ─── TAB: Details ──────────────────────────── */}
-                  <TabsContent value="details" className="p-6 pt-4 space-y-5 mt-0">
+                  <TabsContent value="details" className="p-6 pt-4 mt-0">
+                    <motion.div variants={staggerContainer} initial="hidden" animate="show" className="space-y-5">
                     {/* Redo approval actions */}
                     {appointment.is_redo && appointment.status === 'pending' && isManagerOrAdmin && (
-                      <div className="flex items-center gap-2">
+                      <motion.div variants={staggerItem} className="flex items-center gap-2">
                         <Button size="sm" className="flex-1 h-8 text-xs" onClick={() => approveRedo.mutate()} disabled={approveRedo.isPending || declineRedo.isPending}>
                           <CheckCircle className="h-3.5 w-3.5 mr-1" /> Approve Redo
                         </Button>
                         <Button variant="outline" size="sm" className="flex-1 h-8 text-xs text-destructive hover:text-destructive" onClick={() => declineRedo.mutate()} disabled={approveRedo.isPending || declineRedo.isPending}>
                           <XCircle className="h-3.5 w-3.5 mr-1" /> Decline
                         </Button>
-                      </div>
+                      </motion.div>
                     )}
                     {appointment.is_redo && appointment.status === 'pending' && !isManagerOrAdmin && (
-                      <p className="text-xs text-amber-600 dark:text-amber-400">Awaiting manager approval</p>
+                      <motion.div variants={staggerItem}>
+                        <p className="text-xs text-amber-600 dark:text-amber-400">Awaiting manager approval</p>
+                      </motion.div>
                     )}
 
                     {/* Linked Redos */}
                     {linkedRedos.length > 0 && (
-                      <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg px-3 py-2 border border-blue-200 dark:border-blue-800">
+                      <motion.div variants={staggerItem} className="flex items-center gap-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg px-3 py-2 border border-blue-200 dark:border-blue-800">
                         <RotateCcw className="h-4 w-4 text-blue-600 dark:text-blue-400 shrink-0" />
                         <span className="text-sm text-blue-700 dark:text-blue-300">
                           Redo scheduled: {linkedRedos[0].service_name || 'Service'} on {linkedRedos[0].appointment_date}
                           {linkedRedos[0].staff_name && ` with ${linkedRedos[0].staff_name}`}
                         </span>
-                      </div>
+                      </motion.div>
                     )}
 
                     {/* Appointment Info */}
-                    <div className="space-y-2">
+                    <motion.div variants={staggerItem} className="space-y-2">
                       <h4 className={tokens.heading.subsection}>Appointment</h4>
                       <div className="space-y-2 text-sm">
                         <div className="flex items-center gap-3">
@@ -499,13 +596,19 @@ export function AppointmentDetailSheet({
                           <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
                           <span>{formatTime12h(appointment.start_time)} – {formatTime12h(appointment.end_time)} ({durationMinutes}min)</span>
                         </div>
+                        {locationName && (
+                          <div className="flex items-center gap-3">
+                            <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
+                            <span>{locationName}</span>
+                          </div>
+                        )}
                       </div>
-                    </div>
+                    </motion.div>
 
                     <Separator />
 
                     {/* Services Breakdown */}
-                    <div className="space-y-2">
+                    <motion.div variants={staggerItem} className="space-y-2">
                       <h4 className={tokens.heading.subsection}>Services</h4>
                       <div className="space-y-1.5">
                         {services.map((svc, i) => (
@@ -530,12 +633,12 @@ export function AppointmentDetailSheet({
                           </span>
                         </div>
                       )}
-                    </div>
+                    </motion.div>
 
                     <Separator />
 
                     {/* Stylist + Preferred Comparison */}
-                    <div className="space-y-2">
+                    <motion.div variants={staggerItem} className="space-y-2">
                       <h4 className={tokens.heading.subsection}>Stylist</h4>
                       {appointment.stylist_profile && (
                         <div className="flex items-center gap-2">
@@ -655,12 +758,12 @@ export function AppointmentDetailSheet({
                           </div>
                         )}
                       </div>
-                    </div>
+                    </motion.div>
 
                     <Separator />
 
                     {/* Client Contact */}
-                    <div className="space-y-2">
+                    <motion.div variants={staggerItem} className="space-y-2">
                       <h4 className={tokens.heading.subsection}>Client Contact</h4>
                       <div className="space-y-1.5">
                         {appointment.client_phone && (
@@ -689,23 +792,23 @@ export function AppointmentDetailSheet({
                           <p className="text-xs text-muted-foreground">No contact info available</p>
                         )}
                       </div>
-                    </div>
+                    </motion.div>
 
                     {/* Booking Notes (POS) */}
                     {appointment.notes && (
-                      <>
-                        <Separator />
+                      <motion.div variants={staggerItem}>
+                        <Separator className="mb-5" />
                         <div className="space-y-1">
                           <h4 className={tokens.heading.subsection}>Booking Notes</h4>
                           <p className="text-sm text-muted-foreground">{appointment.notes}</p>
                         </div>
-                      </>
+                      </motion.div>
                     )}
 
                     {/* Recurrence cancel */}
                     {recurrenceLabel && (
-                      <>
-                        <Separator />
+                      <motion.div variants={staggerItem}>
+                        <Separator className="mb-5" />
                         <div className="flex items-center justify-between">
                           <span className="text-xs text-muted-foreground">{recurrenceLabel}</span>
                           <Button variant="ghost" size="sm" className="h-7 text-xs text-destructive hover:text-destructive" onClick={handleCancelAllFuture} disabled={cancellingFuture}>
@@ -713,14 +816,16 @@ export function AppointmentDetailSheet({
                             Cancel all future
                           </Button>
                         </div>
-                      </>
+                      </motion.div>
                     )}
+                    </motion.div>
                   </TabsContent>
 
                   {/* ─── TAB: History ─────────────────────────── */}
-                  <TabsContent value="history" className="p-6 pt-4 space-y-5 mt-0">
+                  <TabsContent value="history" className="p-6 pt-4 mt-0">
+                    <motion.div variants={staggerContainer} initial="hidden" animate="show" className="space-y-5">
                     {/* Stats */}
-                    <div className="grid grid-cols-3 gap-3">
+                    <motion.div variants={staggerItem} className="grid grid-cols-3 gap-3">
                       <div className="rounded-xl border border-border bg-card p-3 text-center">
                         <p className={tokens.kpi.label}>{visitStats.visitCount}</p>
                         <p className="text-[10px] text-muted-foreground mt-0.5">Visits</p>
@@ -737,12 +842,27 @@ export function AppointmentDetailSheet({
                         </p>
                         <p className="text-[10px] text-muted-foreground mt-0.5">Tenure</p>
                       </div>
-                    </div>
+                    </motion.div>
+
+                    {/* Top Services */}
+                    {topServices.length > 0 && (
+                      <motion.div variants={staggerItem} className="space-y-2">
+                        <h4 className={tokens.heading.subsection}>Top Services</h4>
+                        <div className="flex flex-wrap gap-1.5">
+                          {topServices.map(svc => (
+                            <Badge key={svc.name} variant="outline" className="text-xs gap-1">
+                              {svc.name}
+                              <span className="text-muted-foreground">×{svc.count}</span>
+                            </Badge>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
 
                     <Separator />
 
                     {/* Visit Timeline */}
-                    <div className="space-y-2">
+                    <motion.div variants={staggerItem} className="space-y-2">
                       <h4 className={tokens.heading.subsection}>Visit History</h4>
                       {historyLoading ? (
                         <div className="flex items-center justify-center py-6">
@@ -771,13 +891,15 @@ export function AppointmentDetailSheet({
                           ))}
                         </div>
                       )}
-                    </div>
+                    </motion.div>
+                    </motion.div>
                   </TabsContent>
 
                   {/* ─── TAB: Notes ───────────────────────────── */}
-                  <TabsContent value="notes" className="p-6 pt-4 space-y-5 mt-0">
+                  <TabsContent value="notes" className="p-6 pt-4 mt-0">
+                    <motion.div variants={staggerContainer} initial="hidden" animate="show" className="space-y-5">
                     {/* Appointment Notes */}
-                    <div className="space-y-2">
+                    <motion.div variants={staggerItem} className="space-y-2">
                       <h4 className={tokens.heading.subsection}>Appointment Notes</h4>
                       {notes.length > 0 ? (
                         <div className="space-y-2">
@@ -823,12 +945,12 @@ export function AppointmentDetailSheet({
                           </div>
                         </div>
                       )}
-                    </div>
+                    </motion.div>
 
                     <Separator />
 
                     {/* Client Notes */}
-                    <div className="space-y-2">
+                    <motion.div variants={staggerItem} className="space-y-2">
                       <h4 className={tokens.heading.subsection}>Client Notes</h4>
                       {clientNotesLoading ? (
                         <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
@@ -876,18 +998,19 @@ export function AppointmentDetailSheet({
                           </div>
                         </div>
                       )}
-                    </div>
+                    </motion.div>
 
                     {/* POS Booking Notes */}
                     {appointment.notes && (
-                      <>
-                        <Separator />
+                      <motion.div variants={staggerItem}>
+                        <Separator className="mb-5" />
                         <div className="space-y-1">
                           <h4 className={tokens.heading.subsection}>POS Booking Notes</h4>
                           <p className="text-sm text-muted-foreground">{appointment.notes}</p>
                         </div>
-                      </>
+                      </motion.div>
                     )}
+                    </motion.div>
                   </TabsContent>
                 </ScrollArea>
               </Tabs>
@@ -938,8 +1061,8 @@ export function AppointmentDetailSheet({
         )}
       </AnimatePresence>
 
-      {/* Confirmation Dialog */}
-      <AlertDialog open={!!confirmAction} onOpenChange={() => setConfirmAction(null)}>
+      {/* Confirmation Dialog (Cancel / No Show) */}
+      <AlertDialog open={!!confirmAction} onOpenChange={(open) => { if (!open) { setConfirmAction(null); setCancelReason(''); } }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
@@ -951,6 +1074,15 @@ export function AppointmentDetailSheet({
                 : 'This will mark the client as a no-show for this appointment.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
+          <div className="px-6 pb-2">
+            <Textarea
+              placeholder={confirmAction === 'cancelled' ? 'Reason for cancellation (optional)...' : 'Reason for no-show (optional)...'}
+              value={cancelReason}
+              onChange={e => setCancelReason(e.target.value)}
+              rows={2}
+              className="text-sm"
+            />
+          </div>
           <AlertDialogFooter>
             <AlertDialogCancel>Go Back</AlertDialogCancel>
             <AlertDialogAction
@@ -958,6 +1090,34 @@ export function AppointmentDetailSheet({
               className={confirmAction === 'no_show' ? 'bg-destructive text-destructive-foreground' : ''}
             >
               Confirm
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Recurring Cancel Confirmation Dialog */}
+      <AlertDialog open={showCancelFutureConfirm} onOpenChange={(open) => { if (!open) { setShowCancelFutureConfirm(false); setCancelFutureReason(''); } }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel All Future Recurring?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will cancel this and all future appointments in this recurring series.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="px-6 pb-2">
+            <Textarea
+              placeholder="Reason for cancellation (optional)..."
+              value={cancelFutureReason}
+              onChange={e => setCancelFutureReason(e.target.value)}
+              rows={2}
+              className="text-sm"
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Go Back</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmCancelAllFuture} disabled={cancellingFuture}>
+              {cancellingFuture && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
+              Cancel All Future
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
