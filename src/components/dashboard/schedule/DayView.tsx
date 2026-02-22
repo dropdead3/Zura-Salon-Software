@@ -246,7 +246,7 @@ function AppointmentCard({
           ref={!isDragOverlay ? setNodeRef : undefined}
           {...(!isDragOverlay ? { ...attributes, ...listeners } : {})}
           className={cn(
-            'absolute rounded-sm cursor-pointer transition-all overflow-hidden group',
+            'absolute rounded-md cursor-pointer transition-all overflow-hidden group hover:shadow-md hover:z-20',
             !displayGradient && 'border-l-4',
             !useCategoryColor && !displayGradient && statusColors.bg,
             !useCategoryColor && !displayGradient && statusColors.border,
@@ -375,8 +375,11 @@ function AppointmentCard({
                   {appointment.recurrence_group_id && (
                     <Repeat className="h-3 w-3 opacity-60 shrink-0" />
                   )}
-                  {appointment.status === 'confirmed' && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-white/80 shrink-0" />
+                  {(appointment.status === 'confirmed' || appointment.status === 'checked_in') && (
+                    <span className={cn(
+                      'w-2 h-2 rounded-full shrink-0 ring-1 ring-white/50',
+                      appointment.status === 'confirmed' ? 'bg-green-400' : 'bg-blue-400'
+                    )} />
                   )}
                   {isAssisting && (
                     <span className="bg-accent/80 text-accent-foreground text-[8px] px-1 py-px rounded-sm font-medium shrink-0">ASSISTING</span>
