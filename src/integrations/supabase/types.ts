@@ -4241,6 +4241,77 @@ export type Database = {
           },
         ]
       }
+      draft_bookings: {
+        Row: {
+          appointment_date: string | null
+          client_id: string | null
+          client_name: string | null
+          created_at: string
+          created_by: string
+          expires_at: string
+          id: string
+          is_redo: boolean
+          location_id: string | null
+          notes: string | null
+          organization_id: string
+          redo_metadata: Json | null
+          selected_services: Json | null
+          staff_name: string | null
+          staff_user_id: string | null
+          start_time: string | null
+          step_reached: string | null
+          updated_at: string
+        }
+        Insert: {
+          appointment_date?: string | null
+          client_id?: string | null
+          client_name?: string | null
+          created_at?: string
+          created_by: string
+          expires_at?: string
+          id?: string
+          is_redo?: boolean
+          location_id?: string | null
+          notes?: string | null
+          organization_id: string
+          redo_metadata?: Json | null
+          selected_services?: Json | null
+          staff_name?: string | null
+          staff_user_id?: string | null
+          start_time?: string | null
+          step_reached?: string | null
+          updated_at?: string
+        }
+        Update: {
+          appointment_date?: string | null
+          client_id?: string | null
+          client_name?: string | null
+          created_at?: string
+          created_by?: string
+          expires_at?: string
+          id?: string
+          is_redo?: boolean
+          location_id?: string | null
+          notes?: string | null
+          organization_id?: string
+          redo_metadata?: Json | null
+          selected_services?: Json | null
+          staff_name?: string | null
+          staff_user_id?: string | null
+          start_time?: string | null
+          step_reached?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "draft_bookings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       edge_function_logs: {
         Row: {
           completed_at: string | null
