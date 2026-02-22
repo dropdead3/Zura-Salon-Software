@@ -125,13 +125,12 @@ const sortCategories = (categories: string[]): string[] => {
 };
 
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-function getLastNameForSort(name: string): string {
-  const parts = name.trim().split(/\s+/);
-  return parts.length >= 2 ? parts[parts.length - 1] : parts[0];
+function getFirstNameForSort(name: string): string {
+  return name.trim().split(/\s+/)[0] || name;
 }
 function getSortLetterForClient(name: string): string {
-  const last = getLastNameForSort(name);
-  const ch = last.charAt(0).toUpperCase();
+  const first = getFirstNameForSort(name);
+  const ch = first.charAt(0).toUpperCase();
   return ch >= 'A' && ch <= 'Z' ? ch : '#';
 }
 
@@ -141,7 +140,7 @@ function ClientListWithAlphabet({ clients, isLoading, clientSearch, onSelectClie
 }) {
   const [activeLetter, setActiveLetter] = useState<string | null>(null);
   const letterRefs = useRef<Map<string, HTMLDivElement>>(new Map());
-  const sortedClients = useMemo(() => [...clients].sort((a, b) => getLastNameForSort(a.name).toLowerCase().localeCompare(getLastNameForSort(b.name).toLowerCase())), [clients]);
+  const sortedClients = useMemo(() => [...clients].sort((a, b) => getFirstNameForSort(a.name).toLowerCase().localeCompare(getFirstNameForSort(b.name).toLowerCase())), [clients]);
   const availableLetters = useMemo(() => { const s = new Set<string>(); sortedClients.forEach(c => s.add(getSortLetterForClient(c.name))); return s; }, [sortedClients]);
   const firstClientPerLetter = useMemo(() => { const m = new Map<string, string>(); sortedClients.forEach(c => { const l = getSortLetterForClient(c.name); if (!m.has(l)) m.set(l, c.id); }); return m; }, [sortedClients]);
   const scrollToLetter = useCallback((letter: string) => { setActiveLetter(letter); letterRefs.current.get(letter)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, []);

@@ -26,14 +26,13 @@ interface ClientStepProps {
 
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
-function getLastName(name: string): string {
-  const parts = name.trim().split(/\s+/);
-  return parts.length >= 2 ? parts[parts.length - 1] : parts[0];
+function getFirstName(name: string): string {
+  return name.trim().split(/\s+/)[0] || name;
 }
 
 function getSortLetter(name: string): string {
-  const last = getLastName(name);
-  const ch = last.charAt(0).toUpperCase();
+  const first = getFirstName(name);
+  const ch = first.charAt(0).toUpperCase();
   return ch >= 'A' && ch <= 'Z' ? ch : '#';
 }
 
@@ -105,9 +104,9 @@ export function ClientStep({
   // Sort clients alphabetically by last name
   const sortedClients = useMemo(() => {
     return [...clients].sort((a, b) => {
-      const lastA = getLastName(a.name).toLowerCase();
-      const lastB = getLastName(b.name).toLowerCase();
-      return lastA.localeCompare(lastB);
+      const firstA = getFirstName(a.name).toLowerCase();
+      const firstB = getFirstName(b.name).toLowerCase();
+      return firstA.localeCompare(firstB);
     });
   }, [clients]);
 
