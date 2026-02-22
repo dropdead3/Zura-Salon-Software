@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
 import { Phone, User, Users, Repeat, RotateCcw, Star, ArrowRightLeft, Clock } from 'lucide-react';
-import { getClientInitials, getAvatarColor, formatServicesWithDuration } from '@/lib/appointment-card-utils';
+import { getClientInitials, getAvatarColor, formatServicesWithDuration, sortServices } from '@/lib/appointment-card-utils';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { formatRelativeTime } from '@/lib/format';
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
@@ -127,18 +127,15 @@ function AppointmentCard({
   // Multi-service color banding
   const serviceBands = useMemo(() => {
     if (!useCategoryColor || !serviceLookup || displayGradient || isCompact) return null;
-    const serviceNames = appointment.service_name?.split(',').map(s => s.trim()).filter(Boolean) || [];
-    if (serviceNames.length <= 1) return null;
+    const sorted = sortServices(appointment.service_name, serviceLookup);
+    if (sorted.length <= 1) return null;
     
-    const bands = serviceNames.map(name => {
-      const info = serviceLookup.get(name);
-      const category = info?.category || appointment.service_category;
-      const durationMin = info?.duration_minutes || 30;
+    const bands = sorted.map(s => {
+      const category = s.category || appointment.service_category;
       const color = getCategoryColor(category, categoryColors);
-      return { name, category, duration: durationMin, color };
+      return { name: s.name, category, duration: s.duration || 30, color, isExtra: s.isExtra };
     });
     
-    bands.sort((a, b) => b.duration - a.duration);
     const totalDuration = bands.reduce((sum, b) => sum + b.duration, 0);
     
     return bands.map(b => ({

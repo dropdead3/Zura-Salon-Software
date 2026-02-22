@@ -16,7 +16,7 @@ import { getCategoryColor, SPECIAL_GRADIENTS, isGradientMarker, getGradientFromM
 import { useRescheduleAppointment } from '@/hooks/useRescheduleAppointment';
 import type { ServiceLookupEntry } from '@/hooks/useServiceLookup';
 import { APPOINTMENT_STATUS_COLORS } from '@/lib/design-tokens';
-import { getClientInitials, getAvatarColor, formatServicesWithDuration } from '@/lib/appointment-card-utils';
+import { getClientInitials, getAvatarColor, formatServicesWithDuration, sortServices } from '@/lib/appointment-card-utils';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { formatRelativeTime } from '@/lib/format';
@@ -241,19 +241,15 @@ function AppointmentCard({
   // Multi-service color banding
   const serviceBands = useMemo(() => {
     if (!useCategoryColor || !serviceLookup || displayGradient) return null;
-    const serviceNames = appointment.service_name?.split(',').map(s => s.trim()).filter(Boolean) || [];
-    if (serviceNames.length <= 1) return null;
+    const sorted = sortServices(appointment.service_name, serviceLookup);
+    if (sorted.length <= 1) return null;
     
-    const bands = serviceNames.map(name => {
-      const info = serviceLookup.get(name);
-      const category = info?.category || appointment.service_category;
-      const durationMin = info?.duration_minutes || 30;
+    const bands = sorted.map(s => {
+      const category = s.category || appointment.service_category;
       const color = getCategoryColor(category, categoryColors);
-      return { name, category, duration: durationMin, color };
+      return { name: s.name, category, duration: s.duration || 30, color, isExtra: s.isExtra };
     });
     
-    // Sort by duration descending (biggest on top)
-    bands.sort((a, b) => b.duration - a.duration);
     const totalDuration = bands.reduce((sum, b) => sum + b.duration, 0);
     
     return bands.map(b => ({
@@ -455,9 +451,32 @@ function AppointmentCard({
                     </span>
                   )}
                 </div>
-                <div className="text-xs opacity-90 truncate">
-                  {(duration >= 45 && formatServicesWithDuration(appointment.service_name, serviceLookup)) || appointment.service_name}
-                </div>
+                {/* Per-service time-slot positioned labels on tall cards */}
+                {duration >= 60 && serviceBands && serviceBands.length > 1 ? (
+                  <div className="relative" style={{ minHeight: `${Math.max(serviceBands.length * 14, 14)}px` }}>
+                    {serviceBands.map((band, i) => {
+                      const offsetPercent = serviceBands.slice(0, i).reduce((sum, b) => sum + b.percent, 0);
+                      return (
+                        <div
+                          key={i}
+                          className="text-[10px] opacity-90 truncate"
+                          style={{
+                            position: serviceBands.length > 2 ? 'absolute' : 'relative',
+                            top: serviceBands.length > 2 ? `${offsetPercent}%` : undefined,
+                            left: 0,
+                            right: 0,
+                          }}
+                        >
+                          {band.name} <span className="opacity-70">{band.duration}min</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-xs opacity-90 truncate">
+                    {(duration >= 45 && formatServicesWithDuration(appointment.service_name, serviceLookup)) || appointment.service_name}
+                  </div>
+                )}
                 {/* Stylist name */}
                 {appointment.stylist_profile && (
                   <div className="text-xs opacity-70 truncate">
