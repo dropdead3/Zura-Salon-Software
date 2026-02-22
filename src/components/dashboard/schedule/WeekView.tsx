@@ -182,6 +182,8 @@ function AppointmentCard({
             borderStyle: 'solid',
             borderLeftColor: darkStyle.accent,
             borderLeftWidth: '4px',
+            boxShadow: !isCompact ? darkStyle.glow : undefined,
+            transition: 'background-color 150ms ease, box-shadow 150ms ease',
           } : useCategoryColor ? {
               backgroundColor: catColor.bg,
               color: catColor.text,
@@ -627,10 +629,10 @@ export function WeekView({
                             'h-[20px] cursor-pointer transition-colors group relative',
                             isPastSlot && 'bg-muted/40',
                             slot.isHour 
-                              ? 'border-t border-border/80 dark:border-border/70' 
+                              ? 'border-t border-border/80 dark:border-border/50' 
                               : slot.isHalf 
-                                ? 'border-t border-dotted border-border/60 dark:border-border/50'
-                                : 'border-t border-dotted border-border/40 dark:border-border/35'
+                                ? 'border-t border-dotted border-border/60 dark:border-border/30'
+                                : 'border-t border-dotted border-border/40 dark:border-border/15'
                           )}
                           style={!isPastSlot && isOutsideHours ? {
                             background: `repeating-linear-gradient(-45deg, transparent, transparent 4px, hsl(var(--muted-foreground) / 0.08) 4px, hsl(var(--muted-foreground) / 0.08) 5px)`,
@@ -665,10 +667,10 @@ export function WeekView({
                           className={cn(
                             'h-[20px] hover:bg-primary/10 cursor-pointer transition-colors group relative',
                             slot.isHour 
-                              ? 'border-t border-border/80 dark:border-border/70' 
+                              ? 'border-t border-border/80 dark:border-border/50' 
                               : slot.isHalf 
-                                ? 'border-t border-dotted border-border/60 dark:border-border/50'
-                                : 'border-t border-dotted border-border/40 dark:border-border/35'
+                                ? 'border-t border-dotted border-border/60 dark:border-border/30'
+                                : 'border-t border-dotted border-border/40 dark:border-border/15'
                           )}
                           onMouseMove={(e) => {
                             const target = e.currentTarget;

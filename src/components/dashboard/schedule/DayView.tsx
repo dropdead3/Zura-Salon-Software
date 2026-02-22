@@ -142,10 +142,10 @@ function DroppableSlot({
   const [mouseX, setMouseX] = useState<number | null>(null);
 
   const borderClass = minute === 0
-    ? 'border-t border-border dark:border-border/80'
+    ? 'border-t border-border dark:border-border/50'
     : minute === 30
-      ? 'border-t border-dashed border-border dark:border-border/60'
-      : 'border-t border-dotted border-border/80 dark:border-border/50';
+      ? 'border-t border-dashed border-border dark:border-border/35'
+      : 'border-t border-dotted border-border/80 dark:border-border/15';
 
   return (
     <div
@@ -325,6 +325,8 @@ function AppointmentCard({
               borderStyle: 'solid',
               borderLeftColor: darkStyle.accent,
               borderLeftWidth: '4px',
+              boxShadow: isSelected ? darkStyle.ring : (!isCompact ? darkStyle.glow : undefined),
+              transition: 'background-color 150ms ease, box-shadow 150ms ease',
             } : useCategoryColor ? {
               backgroundColor: catColor.bg,
               color: catColor.text,
