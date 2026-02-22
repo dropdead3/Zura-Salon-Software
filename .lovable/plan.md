@@ -1,51 +1,37 @@
 
-# Show Assistant Badges on DayView Appointment Cards
 
-## Context
+# Add Assistant Role to Alex Day and Test
 
-In DayView, each column already represents a stylist, so the current top-right `StylistBadge` (showing the lead stylist) is redundant information. What operators actually need is to see **which assistants** are scheduled on each appointment at a glance.
+## Problem
+
+Alex Day (user_id: `52c43316-2ba5-4367-96d4-f097f8a492ea`) currently only has the `admin` role. While the assistant picker filter on line 819 of `AppointmentDetailSheet.tsx` does include `admin` as an eligible role, having the explicit `stylist_assistant` role is the correct architectural approach -- it ensures Alex is properly identified as an assistant throughout the system (scheduling, reporting, persona scaling).
 
 ## What Changes
 
-### 1. Enhance assistant data hook (`useAppointmentAssistantNames.ts`)
+### 1. Database: Add `stylist_assistant` role to Alex Day
 
-Currently this hook only returns `Map<string, string[]>` (appointment ID to list of name strings). It needs to also return profile data (photo_url, display_name, full_name) so we can render avatar badges.
+Run a migration to insert a `stylist_assistant` role for Alex:
 
-- Add `photo_url` to the profile select query
-- Export a new type `AssistantProfile` with `{ display_name, full_name, photo_url }`
-- Add a second return map: `Map<string, AssistantProfile[]>` keyed by appointment ID
-- The hook will return both `assistantNamesMap` (for backward compat with WeekView/AgendaView tooltips) and `assistantProfilesMap` (for DayView badges)
+```sql
+INSERT INTO public.user_roles (user_id, role)
+VALUES ('52c43316-2ba5-4367-96d4-f097f8a492ea', 'stylist_assistant')
+ON CONFLICT (user_id, role) DO NOTHING;
+```
 
-### 2. Pass assistant profiles to DayView (`Schedule.tsx`)
+This gives Alex both `admin` and `stylist_assistant` roles, which is valid -- `admin` for his management access, `stylist_assistant` for his service-provider function.
 
-- Destructure `assistantProfilesMap` from the updated hook
-- Pass it as a new prop to the DayView component
+### 2. Verify the assistant picker works
 
-### 3. Replace StylistBadge with AssistantBadges on DayView cards (`DayView.tsx`)
-
-**Remove**: The current `StylistBadge` in the top-right corner (lines 311-319) which redundantly shows the column's own stylist.
-
-**Add**: When the appointment has assistants, render assistant avatar badges in the top-right corner instead:
-- Each assistant gets a small `h-5 w-5` circle badge (photo or initials)
-- Multiple assistants stack horizontally with `-space-x-1` overlap
-- Each badge has a tooltip showing the assistant's name
-- A `Users` icon prefix (h-3 w-3) appears before the badges to indicate these are assistants
-
-**Visual design**:
-- Badge container: `absolute top-0.5 right-0.5 z-10 flex items-center -space-x-1`
-- Each badge: `h-5 w-5` circle, `bg-muted/80 backdrop-blur-sm`, `text-[8px] font-medium`
-- Photo avatars use the Avatar component at the same size
-- Tooltip: assistant name with `Users` icon
-- Hidden on compact cards (duration < 30min)
-
-### 4. Keep StylistBadge on WeekView and AgendaView
-
-Those views show all stylists together (not in columns), so the existing StylistBadge with assistant tooltip remains appropriate there.
+After the role is added, clicking Alex in the assistant picker on the appointment detail sheet should successfully insert into `appointment_assistants` and show the toast "Assistant assigned."
 
 ## Files Modified
 
-| File | Change |
+| Area | Change |
 |------|--------|
-| `src/hooks/useAppointmentAssistantNames.ts` | Add `photo_url` to query; export `assistantProfilesMap` alongside existing names map |
-| `src/pages/dashboard/Schedule.tsx` | Pass `assistantProfilesMap` to DayView |
-| `src/components/dashboard/schedule/DayView.tsx` | Replace `StylistBadge` with assistant avatar badges; add `assistantProfilesMap` prop to DayViewProps and AppointmentCardProps |
+| Database migration | Add `stylist_assistant` role to Alex Day's user_roles |
+
+No code changes needed -- the existing filter already supports `admin`, `stylist`, and `stylist_assistant` roles.
+
+## Debugging Note
+
+If the assignment still fails after the role change, the issue would be in the RLS `WITH CHECK` policy on `appointment_assistants` (which uses `is_org_member`). We confirmed Alex's `employee_profiles` record exists in the organization, so this should pass. We will test end-to-end after the migration.
