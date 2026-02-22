@@ -457,11 +457,19 @@ function AppointmentCard({
                 return (
                   <div
                     key={i}
+                    className="relative overflow-hidden"
                     style={{
                       flex: `${band.percent} 0 0%`,
                       backgroundColor: bandDark ? bandDark.fill : band.color.bg,
                     }}
-                  />
+                  >
+                    {duration >= 60 && (
+                      <span className="absolute bottom-0 left-1.5 right-1.5 text-[10px] opacity-90 truncate"
+                        style={{ textShadow: '0 0 3px rgba(0,0,0,0.15)' }}>
+                        {band.name} <span className="opacity-70">{band.duration}min</span>
+                      </span>
+                    )}
+                  </div>
                 );
               })}
             </div>
@@ -529,13 +537,7 @@ function AppointmentCard({
                 </div>
                 {/* Per-service time-slot positioned labels on tall cards */}
                 {duration >= 60 && serviceBands && serviceBands.length > 1 ? (
-                  <div className="flex flex-col">
-                    {serviceBands.map((band, i) => (
-                      <div key={i} className="text-[10px] opacity-90 truncate">
-                        {band.name} <span className="opacity-70">{band.duration}min</span>
-                      </div>
-                    ))}
-                  </div>
+                  null /* labels rendered inside color bands above */
                 ) : (
                   <div className="text-xs opacity-90 truncate">
                     {(duration >= 45 && formatServicesWithDuration(appointment.service_name, serviceLookup)) || appointment.service_name}
