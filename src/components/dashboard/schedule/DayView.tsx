@@ -1,7 +1,7 @@
 import { useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import { format, isToday, getWeek } from 'date-fns';
 import { ClosedBadge } from '@/components/dashboard/ClosedBadge';
-import { cn } from '@/lib/utils';
+import { cn, formatPhoneDisplay, formatDisplayName } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
   Tooltip,
@@ -9,7 +9,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
-import { Phone, Clock, AlertTriangle, XCircle, GripVertical, Users, Repeat, RotateCcw } from 'lucide-react';
+import { Phone, Clock, AlertTriangle, XCircle, GripVertical, Users, User, Repeat, RotateCcw } from 'lucide-react';
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
 import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
 import { getCategoryColor, SPECIAL_GRADIENTS, isGradientMarker, getGradientFromMarker } from '@/utils/categoryColors';
@@ -51,6 +51,7 @@ interface DayViewProps {
   appointmentsWithAssistants?: Set<string>;
   colorBy?: 'status' | 'service' | 'stylist';
   serviceLookup?: Map<string, ServiceLookupEntry>;
+  assistantNamesMap?: Map<string, string[]>;
 }
 
 // Use consolidated status colors from design tokens
@@ -79,14 +80,7 @@ function formatTime12h(time: string): string {
   return `${hour12}:${minutes} ${ampm}`;
 }
 
-function formatPhone(phone: string | null): string {
-  if (!phone) return '';
-  const digits = phone.replace(/\D/g, '');
-  if (digits.length === 10) {
-    return digits;
-  }
-  return phone;
-}
+// Removed local formatPhone — using formatPhoneDisplay from @/lib/utils
 
 // Categories that display the X pattern overlay
 const BLOCKED_CATEGORIES = ['Block', 'Break'];
@@ -198,6 +192,7 @@ interface AppointmentCardProps {
   hasAssistants?: boolean;
   colorBy?: 'status' | 'service' | 'stylist';
   serviceLookup?: Map<string, ServiceLookupEntry>;
+  assistantNamesMap?: Map<string, string[]>;
 }
 
 function AppointmentCard({ 
@@ -213,6 +208,7 @@ function AppointmentCard({
   hasAssistants = false,
   colorBy = 'service',
   serviceLookup,
+  assistantNamesMap,
 }: AppointmentCardProps) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: appointment.id,
@@ -429,19 +425,32 @@ function AppointmentCard({
                   {isAssisting && (
                     <span className="bg-accent/80 text-accent-foreground text-[8px] px-1 py-px rounded-sm font-medium shrink-0">ASSISTING</span>
                   )}
-                  {!isAssisting && hasAssistants && (
+                   {!isAssisting && hasAssistants && (
                     <Users className="h-3 w-3 opacity-60 shrink-0" />
                   )}
                   {appointment.client_name}
                   {appointment.client_phone && (
                     <span className="font-normal opacity-80">
-                      {formatPhone(appointment.client_phone)}
+                      {formatPhoneDisplay(appointment.client_phone)}
                     </span>
                   )}
                 </div>
                 <div className="text-xs opacity-90 truncate">
                   {appointment.service_name}
                 </div>
+                {/* Stylist name */}
+                {appointment.stylist_profile && (
+                  <div className="text-xs opacity-70 truncate">
+                    {formatDisplayName(appointment.stylist_profile.full_name, appointment.stylist_profile.display_name)}
+                  </div>
+                )}
+                {/* Assistant name */}
+                {hasAssistants && assistantNamesMap?.get(appointment.id) && (
+                  <div className="text-xs opacity-70 truncate flex items-center gap-0.5">
+                    <Users className="h-2.5 w-2.5 shrink-0" />
+                    w/ {assistantNamesMap.get(appointment.id)!.join(', ')}
+                  </div>
+                )}
                 {duration >= 60 && (
                   <div className="text-xs opacity-80 mt-0.5">
                     {formatTime12h(appointment.start_time)} - {formatTime12h(appointment.end_time)}
@@ -455,15 +464,27 @@ function AppointmentCard({
       <TooltipContent side="right" className="max-w-xs">
         <div className="space-y-1.5">
           <div className="font-medium">{appointment.client_name}</div>
-          {appointment.client_phone && (
+           {appointment.client_phone && (
             <div className="text-sm flex items-center gap-1.5">
               <Phone className="h-3 w-3" />
               <a href={`tel:${appointment.client_phone}`} className="hover:underline">
-                {appointment.client_phone}
+                {formatPhoneDisplay(appointment.client_phone)}
               </a>
             </div>
           )}
           <div className="text-sm">{appointment.service_name}</div>
+          {appointment.stylist_profile && (
+            <div className="text-sm flex items-center gap-1">
+              <User className="h-3 w-3" />
+              {formatDisplayName(appointment.stylist_profile.full_name, appointment.stylist_profile.display_name)}
+            </div>
+          )}
+          {hasAssistants && assistantNamesMap?.get(appointment.id) && (
+            <div className="text-sm flex items-center gap-1">
+              <Users className="h-3 w-3" />
+              w/ {assistantNamesMap.get(appointment.id)!.join(', ')}
+            </div>
+          )}
           <div className="text-sm text-muted-foreground flex items-center gap-1">
             <Clock className="h-3 w-3" />
             {formatTime12h(appointment.start_time)} - {formatTime12h(appointment.end_time)}
@@ -503,6 +524,7 @@ export function DayView({
   appointmentsWithAssistants,
   colorBy = 'service',
   serviceLookup,
+  assistantNamesMap,
 }: DayViewProps) {
   const ROW_HEIGHT = 20; // 20px per 15-min slot (matches Week view)
   const { colorMap: categoryColors } = useServiceCategoryColorsMap();
@@ -790,6 +812,7 @@ export function DayView({
                           hasAssistants={appointmentsWithAssistants?.has(apt.id) || false}
                           colorBy={colorBy}
                           serviceLookup={serviceLookup}
+                          assistantNamesMap={assistantNamesMap}
                         />
                       );
                     })}
