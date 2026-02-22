@@ -14,6 +14,7 @@ import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCa
 import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
 import { getCategoryColor, SPECIAL_GRADIENTS, isGradientMarker, getGradientFromMarker } from '@/utils/categoryColors';
 import { useRescheduleAppointment } from '@/hooks/useRescheduleAppointment';
+import type { ServiceLookupEntry } from '@/hooks/useServiceLookup';
 import { APPOINTMENT_STATUS_COLORS } from '@/lib/design-tokens';
 import {
   DndContext,
@@ -49,6 +50,7 @@ interface DayViewProps {
   assistedAppointmentIds?: Set<string>;
   appointmentsWithAssistants?: Set<string>;
   colorBy?: 'status' | 'service' | 'stylist';
+  serviceLookup?: Map<string, ServiceLookupEntry>;
 }
 
 // Use consolidated status colors from design tokens
@@ -195,6 +197,7 @@ interface AppointmentCardProps {
   isAssisting?: boolean;
   hasAssistants?: boolean;
   colorBy?: 'status' | 'service' | 'stylist';
+  serviceLookup?: Map<string, ServiceLookupEntry>;
 }
 
 function AppointmentCard({ 
@@ -209,6 +212,7 @@ function AppointmentCard({
   isAssisting = false,
   hasAssistants = false,
   colorBy = 'service',
+  serviceLookup,
 }: AppointmentCardProps) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: appointment.id,
@@ -233,6 +237,30 @@ function AppointmentCard({
   
   // Use gradient if: marker stored, OR consultation category defaults to teal-lime
   const displayGradient = gradientFromMarker || (isConsultation ? DEFAULT_CONSULTATION_GRADIENT : null);
+
+  // Multi-service color banding
+  const serviceBands = useMemo(() => {
+    if (!useCategoryColor || !serviceLookup || displayGradient) return null;
+    const serviceNames = appointment.service_name?.split(',').map(s => s.trim()).filter(Boolean) || [];
+    if (serviceNames.length <= 1) return null;
+    
+    const bands = serviceNames.map(name => {
+      const info = serviceLookup.get(name);
+      const category = info?.category || appointment.service_category;
+      const durationMin = info?.duration_minutes || 30;
+      const color = getCategoryColor(category, categoryColors);
+      return { name, category, duration: durationMin, color };
+    });
+    
+    // Sort by duration descending (biggest on top)
+    bands.sort((a, b) => b.duration - a.duration);
+    const totalDuration = bands.reduce((sum, b) => sum + b.duration, 0);
+    
+    return bands.map(b => ({
+      ...b,
+      percent: (b.duration / totalDuration) * 100,
+    }));
+  }, [appointment.service_name, appointment.service_category, serviceLookup, categoryColors, useCategoryColor, displayGradient]);
 
   // Calculate width and offset for overlapping appointments
   const widthPercent = 100 / totalOverlapping;
@@ -352,7 +380,21 @@ function AppointmentCard({
               />
             </div>
           )}
-          <div className="px-1.5 py-0.5 relative z-10">
+          {/* Multi-service color bands */}
+          {serviceBands && useCategoryColor && (
+            <div className="absolute inset-0 flex flex-col overflow-hidden rounded-md">
+              {serviceBands.map((band, i) => (
+                <div
+                  key={i}
+                  style={{
+                    flex: `${band.percent} 0 0%`,
+                    backgroundColor: band.color.bg,
+                  }}
+                />
+              ))}
+            </div>
+          )}
+          <div className="px-1.5 py-0.5 relative z-10" style={serviceBands ? { textShadow: '0 0 3px rgba(0,0,0,0.15)' } : undefined}>
             {isCompact ? (
               <div className="text-xs font-medium truncate flex items-center gap-1">
                 {(appointment as any).is_redo && (
@@ -460,6 +502,7 @@ export function DayView({
   assistedAppointmentIds,
   appointmentsWithAssistants,
   colorBy = 'service',
+  serviceLookup,
 }: DayViewProps) {
   const ROW_HEIGHT = 20; // 20px per 15-min slot (matches Week view)
   const { colorMap: categoryColors } = useServiceCategoryColorsMap();
@@ -746,6 +789,7 @@ export function DayView({
                           isAssisting={assistedAppointmentIds?.has(apt.id) || false}
                           hasAssistants={appointmentsWithAssistants?.has(apt.id) || false}
                           colorBy={colorBy}
+                          serviceLookup={serviceLookup}
                         />
                       );
                     })}
@@ -776,6 +820,7 @@ export function DayView({
             onClick={() => {}}
             categoryColors={categoryColors}
             colorBy={colorBy}
+            serviceLookup={serviceLookup}
             isDragOverlay
           />
         )}

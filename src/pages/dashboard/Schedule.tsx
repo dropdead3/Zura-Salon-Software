@@ -27,6 +27,7 @@ import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useDraftBookings, type DraftBooking } from '@/hooks/useDraftBookings';
+import { useServiceLookup } from '@/hooks/useServiceLookup';
 import { Loader2, Sparkles, Coffee } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -53,6 +54,7 @@ export default function Schedule() {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
   const { data: drafts = [] } = useDraftBookings(orgId);
+  const { data: serviceLookup } = useServiceLookup();
   
   // Check if user is stylist or stylist_assistant (they get full calendar view access)
   const isStylistRole = roles.includes('stylist') || roles.includes('stylist_assistant');
@@ -445,6 +447,7 @@ export default function Schedule() {
                 assistedAppointmentIds={assistedAppointmentIds}
                 appointmentsWithAssistants={appointmentsWithAssistants}
                 colorBy={preferences.color_by as 'status' | 'service' | 'stylist'}
+                serviceLookup={serviceLookup}
               />
             );
           })()}
@@ -462,6 +465,7 @@ export default function Schedule() {
               assistedAppointmentIds={assistedAppointmentIds}
               appointmentsWithAssistants={appointmentsWithAssistants}
               colorBy={preferences.color_by as 'status' | 'service' | 'stylist'}
+              serviceLookup={serviceLookup}
             />
           )}
           
@@ -480,6 +484,7 @@ export default function Schedule() {
               assistedAppointmentIds={assistedAppointmentIds}
               appointmentsWithAssistants={appointmentsWithAssistants}
               colorBy={preferences.color_by as 'status' | 'service' | 'stylist'}
+              serviceLookup={serviceLookup}
             />
           )}
           

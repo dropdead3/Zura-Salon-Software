@@ -213,11 +213,23 @@ serve(async (req) => {
     // Get service details for local record
     const { data: services } = await supabase
       .from("phorest_services")
-      .select("name, duration_minutes, price")
+      .select("name, duration_minutes, price, category")
       .in("phorest_service_id", service_ids);
 
     const totalDuration = services?.reduce((sum, s) => sum + (s.duration_minutes || 60), 0) || 60;
     const serviceName = services?.map(s => s.name).join(', ') || 'Service';
+
+    // Determine service_category from service data
+    let serviceCategory: string | null = null;
+    if (services && services.length > 0) {
+      const categories = [...new Set(services.map(s => s.category).filter(Boolean))];
+      if (categories.length === 1) {
+        serviceCategory = categories[0];
+      } else if (categories.length > 1) {
+        const sorted = [...services].sort((a, b) => (b.duration_minutes || 0) - (a.duration_minutes || 0));
+        serviceCategory = sorted[0].category || null;
+      }
+    }
 
     // Get staff mapping
     const { data: staffMapping } = await supabase
@@ -268,6 +280,7 @@ serve(async (req) => {
       start_time: startTimeLocal,
       end_time: endTimeLocal,
       service_name: serviceName,
+      service_category: serviceCategory,
       status: appointmentStatus,
       notes: notes || null,
       location_id: resolvedLocationId,

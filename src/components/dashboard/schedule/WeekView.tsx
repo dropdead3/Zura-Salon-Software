@@ -20,6 +20,7 @@ import { QuickBookingPopover } from './QuickBookingPopover';
 import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
 import { getCategoryColor, SPECIAL_GRADIENTS, isGradientMarker, getGradientFromMarker } from '@/utils/categoryColors';
 import { APPOINTMENT_STATUS_COLORS } from '@/lib/design-tokens';
+import type { ServiceLookupEntry } from '@/hooks/useServiceLookup';
 
 interface WeekViewProps {
   currentDate: Date;
@@ -35,6 +36,7 @@ interface WeekViewProps {
   assistedAppointmentIds?: Set<string>;
   appointmentsWithAssistants?: Set<string>;
   colorBy?: 'status' | 'service' | 'stylist';
+  serviceLookup?: Map<string, ServiceLookupEntry>;
 }
 
 // Use consolidated status colors from design tokens
@@ -86,6 +88,7 @@ function AppointmentCard({
   isAssisting = false,
   hasAssistants = false,
   colorBy = 'service',
+  serviceLookup,
 }: {
   appointment: PhorestAppointment; 
   hoursStart: number;
@@ -94,6 +97,7 @@ function AppointmentCard({
   isAssisting?: boolean;
   hasAssistants?: boolean;
   colorBy?: 'status' | 'service' | 'stylist';
+  serviceLookup?: Map<string, ServiceLookupEntry>;
 }) {
   const style = getEventStyle(appointment.start_time, appointment.end_time, hoursStart);
   const statusColors = STATUS_COLORS[appointment.status];
@@ -113,6 +117,29 @@ function AppointmentCard({
   
   // Use gradient if: marker stored, OR consultation category defaults to teal-lime
   const displayGradient = gradientFromMarker || (isConsultation ? DEFAULT_CONSULTATION_GRADIENT : null);
+
+  // Multi-service color banding
+  const serviceBands = useMemo(() => {
+    if (!useCategoryColor || !serviceLookup || displayGradient || isCompact) return null;
+    const serviceNames = appointment.service_name?.split(',').map(s => s.trim()).filter(Boolean) || [];
+    if (serviceNames.length <= 1) return null;
+    
+    const bands = serviceNames.map(name => {
+      const info = serviceLookup.get(name);
+      const category = info?.category || appointment.service_category;
+      const durationMin = info?.duration_minutes || 30;
+      const color = getCategoryColor(category, categoryColors);
+      return { name, category, duration: durationMin, color };
+    });
+    
+    bands.sort((a, b) => b.duration - a.duration);
+    const totalDuration = bands.reduce((sum, b) => sum + b.duration, 0);
+    
+    return bands.map(b => ({
+      ...b,
+      percent: (b.duration / totalDuration) * 100,
+    }));
+  }, [appointment.service_name, appointment.service_category, serviceLookup, categoryColors, useCategoryColor, displayGradient, isCompact]);
 
   return (
     <Tooltip>
@@ -190,7 +217,21 @@ function AppointmentCard({
               />
             </div>
           )}
-          <div className="relative z-10">
+          {/* Multi-service color bands */}
+          {serviceBands && useCategoryColor && (
+            <div className="absolute inset-0 flex flex-col overflow-hidden rounded-md">
+              {serviceBands.map((band, i) => (
+                <div
+                  key={i}
+                  style={{
+                    flex: `${band.percent} 0 0%`,
+                    backgroundColor: band.color.bg,
+                  }}
+                />
+              ))}
+            </div>
+          )}
+          <div className="relative z-10" style={serviceBands ? { textShadow: '0 0 3px rgba(0,0,0,0.15)' } : undefined}>
             {isCompact ? (
               <div className="text-xs font-medium truncate flex items-center gap-0.5">
                 {(appointment as any).is_redo && <RotateCcw className="h-2.5 w-2.5 text-amber-500 shrink-0" />}
@@ -280,6 +321,7 @@ export function WeekView({
   assistedAppointmentIds,
   appointmentsWithAssistants,
   colorBy = 'service',
+  serviceLookup,
 }: WeekViewProps) {
   const [activeSlot, setActiveSlot] = useState<{ date: Date; time: string } | null>(null);
   const { colorMap: categoryColors } = useServiceCategoryColorsMap();
@@ -579,6 +621,7 @@ export function WeekView({
                       isAssisting={assistedAppointmentIds?.has(apt.id) || false}
                       hasAssistants={appointmentsWithAssistants?.has(apt.id) || false}
                       colorBy={colorBy}
+                      serviceLookup={serviceLookup}
                     />
                   ))}
 
