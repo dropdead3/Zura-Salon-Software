@@ -17,8 +17,8 @@ import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
 import { getCategoryColor, SPECIAL_GRADIENTS, isGradientMarker, getGradientFromMarker, getDarkCategoryStyle } from '@/utils/categoryColors';
 import { useRescheduleAppointment } from '@/hooks/useRescheduleAppointment';
 import type { ServiceLookupEntry } from '@/hooks/useServiceLookup';
-import { APPOINTMENT_STATUS_COLORS } from '@/lib/design-tokens';
-import { getClientInitials, getAvatarColor, formatServicesWithDuration, sortServices } from '@/lib/appointment-card-utils';
+import { APPOINTMENT_STATUS_COLORS, APPOINTMENT_STATUS_BADGE } from '@/lib/design-tokens';
+import { formatServicesWithDuration, sortServices } from '@/lib/appointment-card-utils';
 import { StylistBadge } from './StylistBadge';
 import { AssistantBlockOverlay } from './AssistantBlockOverlay';
 import type { AssistantTimeBlock } from '@/hooks/useAssistantTimeBlocks';
@@ -501,7 +501,22 @@ function AppointmentCard({
               </div>
             ) : (
               <>
-                <div className="text-xs font-medium truncate flex items-center gap-1">
+                {/* Top-right status badge */}
+                {(() => {
+                  const statusKey = (appointment.status || 'booked') as keyof typeof APPOINTMENT_STATUS_BADGE;
+                  const badge = APPOINTMENT_STATUS_BADGE[statusKey] || APPOINTMENT_STATUS_BADGE.booked;
+                  return (
+                    <div className="absolute top-1 right-1 z-20">
+                      <span className={cn(
+                        'text-[9px] px-1.5 py-0.5 rounded-full font-medium',
+                        badge.bg, badge.text
+                      )}>
+                        {badge.label}
+                      </span>
+                    </div>
+                  );
+                })()}
+                <div className="text-sm font-medium truncate flex items-center gap-1 pr-16">
                   {(appointment as any).is_redo && (
                     <RotateCcw className="h-3 w-3 text-amber-500 shrink-0" />
                   )}
@@ -511,22 +526,12 @@ function AppointmentCard({
                   {(appointment as any).rescheduled_at && (
                     <ArrowRightLeft className="h-3 w-3 text-blue-500 dark:text-blue-400 shrink-0" />
                   )}
-                  {(appointment.status === 'confirmed' || appointment.status === 'checked_in') && (
-                    <span className={cn(
-                      'w-2 h-2 rounded-full shrink-0 ring-1 ring-white/50',
-                      appointment.status === 'confirmed' ? 'bg-green-400' : 'bg-blue-400'
-                    )} />
-                  )}
                   {isAssisting && (
                     <span className="bg-accent/80 text-accent-foreground text-[8px] px-1 py-px rounded-sm font-medium shrink-0">ASSISTING</span>
                   )}
                    {!isAssisting && hasAssistants && (
                     <Users className="h-3 w-3 opacity-60 shrink-0" />
                   )}
-                  {/* Client avatar initials */}
-                  <span className={cn('h-5 w-5 rounded-full flex items-center justify-center text-[8px] font-medium shrink-0', getAvatarColor(appointment.client_name))}>
-                    {getClientInitials(appointment.client_name)}
-                  </span>
                   {appointment.client_name}
                   {appointment.is_new_client && (
                     <span className="text-[8px] px-1 py-px rounded-sm bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 font-medium shrink-0">NEW</span>
@@ -539,20 +544,20 @@ function AppointmentCard({
                 </div>
                 {/* Per-service time-slot positioned labels on tall cards */}
                 {duration >= 60 && serviceBands && serviceBands.length > 1 ? (
-                  <div className="text-xs opacity-90 truncate">
+                  <div className="text-[13px] opacity-90 truncate">
                     {serviceBands.map(b => `${b.name} ${b.duration}min`).join(' + ')}
                   </div>
                 ) : (
-                  <div className="text-xs opacity-90 truncate">
+                  <div className="text-[13px] opacity-90 truncate">
                     {(duration >= 45 && formatServicesWithDuration(appointment.service_name, serviceLookup)) || appointment.service_name}
                   </div>
                 )}
                 {/* Stylist/assistant info now in top-right badge tooltip */}
                 {duration >= 60 && (
-                  <div className="text-xs opacity-80 mt-0.5 flex items-center justify-between">
+                  <div className="text-[13px] opacity-80 mt-0.5 flex items-center justify-between">
                     <span>{formatTime12h(appointment.start_time)} - {formatTime12h(appointment.end_time)}</span>
                     {appointment.total_price != null && appointment.total_price > 0 && (
-                      <BlurredAmount className="text-[10px] opacity-70">
+                      <BlurredAmount className="text-[11px] opacity-70">
                         ${appointment.total_price.toFixed(0)}
                       </BlurredAmount>
                     )}
