@@ -1,53 +1,57 @@
 
 
-# Improve Client Search to "Starts With" Filtering
+# Fix Client Search: Prevent Phone/Email From Polluting Name Results
 
 ## Problem
 
-The current client search uses a "contains" pattern (`%search%`), so typing "e" returns any client with an "e" anywhere in their name, phone, or email. Typing "er" returns anyone containing both letters anywhere -- not necessarily starting with "Er".
+The query uses `OR` across name, phone, and email:
+```
+name.ilike.er%,phone.ilike.%er%,email.ilike.%er%
+```
+
+So typing "er" correctly filters names starting with "Er", but ALSO returns any client whose phone number contains "er" or email contains "er" -- which defeats the purpose.
 
 ## Solution
 
-Change the database query filter from `%search%` (contains anywhere) to `search%` (starts with) for the `name` field. Phone and email will keep the contains pattern since users typically search those by partial fragments.
+Only include phone/email in the search when the input looks like a phone number or email:
 
-Additionally, the results will be sorted so that clients whose first name starts with the search term appear first, providing the prefix-priority ordering you described.
+- **Name**: Always searched with starts-with (`search%`)
+- **Phone**: Only searched if input contains at least one digit
+- **Email**: Only searched if input contains `@`
+
+This way, typing letters like "er" searches names only. Typing "555" searches phone numbers. Typing "eric@" searches emails.
 
 ## Changes
 
-Three files use the same query pattern and all need the same fix:
+Apply the same logic in all three files:
 
-### 1. `QuickBookingPopover.tsx` (line ~499)
+### Pattern (replaces current single-line `or` filter)
 
-Change:
+```typescript
+if (clientSearch) {
+  const hasDigit = /\d/.test(clientSearch);
+  const hasAt = clientSearch.includes('@');
+  const filters = [`name.ilike.${clientSearch}%`];
+  if (hasDigit) filters.push(`phone.ilike.%${clientSearch}%`);
+  if (hasAt) filters.push(`email.ilike.%${clientSearch}%`);
+  query = query.or(filters.join(','));
+}
 ```
-query = query.or(`name.ilike.%${clientSearch}%,phone.ilike.%${clientSearch}%,email.ilike.%${clientSearch}%`);
-```
-To:
-```
-query = query.or(`name.ilike.${clientSearch}%,phone.ilike.%${clientSearch}%,email.ilike.%${clientSearch}%`);
-```
 
-### 2. `BookingWizard.tsx` (line ~87)
-
-Same change -- remove the leading `%` on `name.ilike`.
-
-### 3. `NewBookingSheet.tsx` (line ~120)
-
-Same change -- remove the leading `%` on `name.ilike`.
-
-## What This Achieves
-
-- Typing "e" returns all clients whose name starts with "E"
-- Typing "er" narrows to clients whose name starts with "Er" (e.g., "Eric", "Erica", "Ernest")
-- Phone and email search still use contains, since partial matching is more useful there
-- Combined with the existing alphabetical sort, results appear in intuitive A-Z order within matches
-
-## File Summary
+### Files
 
 | Action | File |
 |--------|------|
-| Modify | `src/components/dashboard/schedule/QuickBookingPopover.tsx` -- name search starts-with |
-| Modify | `src/components/dashboard/schedule/booking/BookingWizard.tsx` -- name search starts-with |
-| Modify | `src/components/dashboard/schedule/NewBookingSheet.tsx` -- name search starts-with |
+| Modify | `src/components/dashboard/schedule/QuickBookingPopover.tsx` (line 499) |
+| Modify | `src/components/dashboard/schedule/booking/BookingWizard.tsx` (line 87) |
+| Modify | `src/components/dashboard/schedule/NewBookingSheet.tsx` (line 120) |
 
-Single-character change per file. No new dependencies. No database changes.
+## What This Achieves
+
+- Typing "e" returns only clients whose name starts with "E"
+- Typing "er" returns only clients whose name starts with "Er"
+- Typing "555" searches phone numbers containing "555"
+- Typing "eric@" searches emails containing "eric@"
+- No extra results from irrelevant phone/email matches when searching by name
+
+No new dependencies. No database changes.
