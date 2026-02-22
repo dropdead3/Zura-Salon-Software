@@ -159,7 +159,7 @@ function AppointmentCard({
   return (
         <div
           className={cn(
-            'absolute left-1 right-1 z-10 rounded-md px-2 py-1 cursor-pointer transition-all hover:shadow-lg hover:z-20 overflow-hidden hover:scale-[1.03] appt-card-hover',
+            'absolute left-1 right-1 z-10 rounded-md px-2 py-1 cursor-pointer transition-transform duration-200 ease-out hover:shadow-lg hover:z-20 overflow-hidden hover:scale-[1.02]',
             !displayGradient && 'border-l-4',
             !useCategoryColor && !displayGradient && statusColors.bg,
             !useCategoryColor && !displayGradient && statusColors.border,
