@@ -1,89 +1,98 @@
 
-# Gap Analysis Fixes -- Assistant Time Block System
+
+# Phase 4: Realtime Updates, Availability-Aware Requests, and Notification Rendering
 
 ## Summary
 
-This plan addresses the critical gaps identified in the Phase 1-3 analysis. Changes are grouped by priority: critical action flow fixes first, then data completeness, then UX polish.
+Phases 1-3 built the full assistant time block lifecycle: creation, visibility across all views, management, and response flow. Phase 4 focuses on **operational polish** -- making the system feel alive with realtime updates, integrating availability intelligence into the request flow, and surfacing assistant block notifications in the existing notification feed.
 
 ---
 
-## Fix 1: Accept Action -- Prevent Overwriting Pre-Assigned Assistant (Critical)
-
-**File**: `src/components/dashboard/schedule/AssistantBlockActions.tsx`
-
-**Problem**: `handleAccept` always sets `assistant_user_id: user.id`, overwriting any pre-assigned assistant. This is wrong when an admin accepts on behalf of someone else.
-
-**Fix**: Only set `assistant_user_id` if it is currently null. The update call should conditionally include the field.
-
----
-
-## Fix 2: Decline Action -- Clear `assistant_user_id` and Allow Re-Request (Critical)
-
-**File**: `src/components/dashboard/schedule/AssistantBlockActions.tsx`
-
-**Problem**: `handleDecline` sets status to `declined` but does not clear `assistant_user_id`. This prevents re-assignment. Also, there is no "re-request" flow.
-
-**Fix**: On decline, set `status: 'requested'` and `assistant_user_id: null` instead of `status: 'declined'`. This returns the block to the unassigned pool so someone else can pick it up. This is the correct behavior -- a decline should mean "I can't do it, find someone else," not "kill this request."
-
----
-
-## Fix 3: Pending Blocks Hook -- Add Date Scoping (Data)
+## Change 1: Realtime Subscription for Assistant Time Blocks
 
 **File**: `src/hooks/useAssistantTimeBlocks.ts`
 
-**Problem**: `useMyPendingAssistantBlocks` has no date filter, so stale past blocks inflate the badge count indefinitely.
+The `assistant_time_blocks` table already has realtime enabled (migration `20260222205848`), but no client-side subscription exists. When one user accepts/declines a block, other users only see the update after `staleTime` expires (30 seconds).
 
-**Fix**: Add a `.gte('date', todayStr)` filter to both queries in `useMyPendingAssistantBlocks`.
-
----
-
-## Fix 4: ScheduledCoverageSection -- Pass Organization ID (Data)
-
-**File**: `src/components/dashboard/schedule/AppointmentDetailSheet.tsx`
-
-**Problem**: `ScheduledCoverageSection` passes `null` as `organizationId` to `useAssistantTimeBlocks`. While the hook doesn't use it for querying (it filters by date + location), this is semantically incorrect and would break if org scoping were added later.
-
-**Fix**: Pass the appointment's `organization_id` (from the component's context) instead of `null`.
+**What changes**:
+- In `useAssistantTimeBlocks`, add a `useEffect` that subscribes to `postgres_changes` on `assistant_time_blocks` filtered by `location_id` and `date`
+- On any INSERT, UPDATE, or DELETE event, invalidate the relevant query keys (`assistant-time-blocks`, `assistant-time-blocks-range`, `assistant-pending-blocks`)
+- Clean up the channel subscription on unmount
+- This gives all users on the schedule page instant visual feedback when blocks change
 
 ---
 
-## Fix 5: QuickBookingPopover -- Reset `requestAssistant` State (UX)
+## Change 2: Availability-Aware Assistant Picker in RequestAssistantPanel
+
+**File**: `src/components/dashboard/schedule/RequestAssistantPanel.tsx`
+
+Currently the "Assign to" picker shows all team members regardless of whether they're working that day. The `useAssistantsAtLocation` hook already exists in `useAssistantAvailability.ts` but isn't used.
+
+**What changes**:
+- Import `useAssistantsAtLocation` from `@/hooks/useAssistantAvailability`
+- Use it to get assistants scheduled at the selected location on the selected date
+- Show available assistants at the top of the picker with a green indicator
+- Show other team members below with a "(not scheduled)" label
+- Add conflict indicators using `useAssistantConflictCheck` to mark assistants who have overlapping commitments
+
+---
+
+## Change 3: Conflict Warning on QuickBookingPopover Assistant Toggle
 
 **File**: `src/components/dashboard/schedule/QuickBookingPopover.tsx`
 
-**Problem**: The `requestAssistant` toggle state is never reset in `handleClose`, so it persists across bookings.
+When the "Request Assistant Coverage" toggle is enabled during booking, there is no check for whether assistants are actually available at that location/time.
 
-**Fix**: Add `setRequestAssistant(false)` to the `handleClose` function.
+**What changes**:
+- Import `useHasAssistantAvailability` from `@/hooks/useAssistantAvailability`
+- When the toggle is on, show a subtle info/warning note:
+  - If assistants are available: "X assistants are scheduled at this location"
+  - If none available: "No assistants are scheduled this day -- request will go to the open pool"
+- This is advisory only -- does not block the request
 
 ---
 
-## Fix 6: Manager Sheet Delete -- Add Confirmation Dialog (UX)
+## Change 4: Notification Feed Integration
+
+**File**: New file `src/components/dashboard/schedule/AssistantBlockNotificationItem.tsx`
+
+Currently, assistant block notifications are inserted into the `notifications` table but there is no type-specific rendering in the notification feed.
+
+**What changes**:
+- Create a small component that renders assistant block notification items with:
+  - Accept/Decline action buttons (reusing `AssistantBlockActions`)
+  - Time and date context
+  - Requester name
+- This component is used when `notification.type === 'assistant_time_block'`
+
+**File**: Find and update the notification rendering component to detect `type === 'assistant_time_block'` and render `AssistantBlockNotificationItem` instead of the default text-only layout.
+
+---
+
+## Change 5: Auto-Notify Unassigned Block Pool
+
+**File**: `src/hooks/useAssistantTimeBlocks.ts`
+
+When a block is created with `assistant_user_id: null`, no notification is sent to anyone. Assistants scheduled at that location should receive a notification.
+
+**What changes**:
+- In the `createBlock` mutation's success path, when `assistant_user_id` is null:
+  - Query `useAssistantsAtLocation` data (or call the query inline) to find assistants working at the location on that date
+  - Insert a notification for each of them: "An assistant coverage request is available for [date] [time range]"
+  - Metadata includes `time_block_id` so the notification action buttons work
+
+---
+
+## Change 6: Stale Block Cleanup Indicator
 
 **File**: `src/components/dashboard/schedule/AssistantBlockManagerSheet.tsx`
 
-**Problem**: Delete action in `BlockRow` has no confirmation, making accidental deletion too easy.
+Blocks older than today with status `requested` are stale. While the pending badge now filters them out (gap fix), the manager sheet still shows them in the 30-day window with no visual distinction.
 
-**Fix**: Add an `AlertDialog` confirmation before executing the delete.
-
----
-
-## Fix 7: Manager Sheet Date Format -- Include Year for Cross-Year (UX)
-
-**File**: `src/components/dashboard/schedule/AssistantBlockManagerSheet.tsx`
-
-**Problem**: Date headings use `EEEE, MMM d` which omits the year.
-
-**Fix**: Change format to `EEEE, MMM d, yyyy`.
-
----
-
-## Fix 8: Overlay -- Show Declined Status Visually (UX)
-
-**File**: `src/components/dashboard/schedule/AssistantBlockOverlay.tsx`
-
-**Problem**: Declined blocks with no assistant_user_id fall through to "unassigned" rendering. There is no visual distinction for a block that was explicitly declined vs one that was never assigned.
-
-**Fix**: After the decline fix (Fix 2), declined blocks revert to `requested` with `assistant_user_id: null`, so this resolves itself. No separate visual change needed.
+**What changes**:
+- In `BlockRow`, check if `block.date < todayStr` and `block.status === 'requested'`
+- If true, add a subtle "Expired" badge next to the status and dim the row
+- Add a "Clear expired" bulk action button at the top of the "My Requests" tab that deletes all past unconfirmed blocks
 
 ---
 
@@ -91,10 +100,18 @@ This plan addresses the critical gaps identified in the Phase 1-3 analysis. Chan
 
 ### Files Modified
 
-| File | Changes |
+| File | Change |
 |---|---|
-| `src/components/dashboard/schedule/AssistantBlockActions.tsx` | Fix accept/decline logic |
-| `src/hooks/useAssistantTimeBlocks.ts` | Add date scoping to pending blocks hook |
-| `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` | Pass org ID to coverage section |
-| `src/components/dashboard/schedule/QuickBookingPopover.tsx` | Reset requestAssistant state |
-| `src/components/dashboard/schedule/AssistantBlockManagerSheet.tsx` | Add delete confirmation dialog, fix date format |
+| `src/hooks/useAssistantTimeBlocks.ts` | Add realtime subscription; add pool notification on unassigned block creation |
+| `src/components/dashboard/schedule/RequestAssistantPanel.tsx` | Integrate availability-aware picker with conflict indicators |
+| `src/components/dashboard/schedule/QuickBookingPopover.tsx` | Add availability info when assistant toggle is enabled |
+| `src/components/dashboard/schedule/AssistantBlockNotificationItem.tsx` | New: notification item renderer with action buttons |
+| `src/components/dashboard/schedule/AssistantBlockManagerSheet.tsx` | Add expired block indicator and bulk cleanup |
+| Notification feed component (to be identified) | Route `assistant_time_block` type to new renderer |
+
+### What This Does NOT Do (Deferred)
+
+- No push notifications or email alerts (remains in-app only)
+- No auto-assignment algorithm
+- No drag-to-resize time blocks on the calendar
+- No assistant utilization analytics/reporting
