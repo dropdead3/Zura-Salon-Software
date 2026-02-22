@@ -1,71 +1,77 @@
 
 
-# Enhance and Refine Appointment Card UI
+# Wire Service Category Colors to All Appointment Statuses
 
-## Current State
+## Problem
 
-The appointment cards across DayView, WeekView, and AgendaView are functional but have several UI inconsistencies and missing polish:
+Appointment cards on the schedule are only colored by service category when their status is exactly `'booked'`. For all other statuses (`confirmed`, `checked_in`, `completed`, etc.), the cards fall back to status-based colors from the design tokens, ignoring the admin-configured service category colors entirely.
 
-1. **Missing `pending` status from design tokens** -- The `APPOINTMENT_STATUS_COLORS`, `APPOINTMENT_STATUS_BADGE`, and `APPOINTMENT_STATUS_CONFIG` maps only cover 6 statuses (booked, confirmed, checked_in, completed, cancelled, no_show). The `pending` status exists in the type but has no color tokens, causing newly created appointments or pending redos to fall through to undefined styling.
+The `color_by` preference already exists in `calendar_preferences` (with values `'status'`, `'service'`, `'stylist'`) but is never consumed by any calendar view component. It's stored in the database but completely unused.
 
-2. **No status indicator on "booked" appointments** -- When `status === 'booked'`, the card uses category-based coloring instead of status coloring (`useCategoryColor = true`). This is good for visual variety, but there's no status badge or indicator visible on the card itself, so a booked appointment looks identical regardless of whether it's pending confirmation.
+## Solution
 
-3. **Confirmed status dot is subtle** -- The `confirmed` status only shows a tiny 1.5px white dot that's nearly invisible against light category colors.
-
-4. **WeekView has static Heart/Smartphone icons** -- Bottom-right icons (Heart, Smartphone) appear on every non-compact appointment regardless of context. These are decorative placeholders with no meaning.
-
-5. **DayView card radius is `rounded-sm`** -- Doesn't match the bento card system's `rounded-xl` standard for containers. Calendar appointment cards should use `rounded-md` for better visual consistency.
-
-6. **No hover elevation on DayView cards** -- WeekView has `hover:shadow-lg hover:z-20` but DayView cards lack hover feedback.
+Wire the `color_by` calendar preference through to DayView and WeekView so that when set to `'service'` (or as the default behavior the user expects), appointments are always colored by their service category -- regardless of status. A subtle status indicator (the left border or a small pip) will still communicate appointment status without overriding the category color.
 
 ## Changes
 
-### 1. Add `pending` status to all three design token maps
+### 1. Pass `colorBy` preference from Schedule page to views
 
-**File:** `src/lib/design-tokens.ts`
+**File:** `src/pages/dashboard/Schedule.tsx`
 
-Add `pending` to `AppointmentStatusKey` type and all three maps:
-- `APPOINTMENT_STATUS_COLORS`: amber/warm styling (bg-amber-100, border-amber-400, text-amber-900)
-- `APPOINTMENT_STATUS_BADGE`: pastel amber variant
-- `APPOINTMENT_STATUS_CONFIG`: full config with amber borders/labels
+- Read `colorBy` from the existing `useCalendarPreferences` hook (already used for other prefs like `hoursStart`, `hoursEnd`)
+- Pass it as a prop to `DayView` and `WeekView`
 
-### 2. Improve DayView AppointmentCard polish
+### 2. Update DayView to respect `colorBy` preference
 
 **File:** `src/components/dashboard/schedule/DayView.tsx`
 
-- Change `rounded-sm` to `rounded-md` on the card container
-- Add `hover:shadow-md hover:z-20 transition-shadow` for hover elevation
-- Replace the tiny confirmed dot (w-1.5 h-1.5) with a small status-colored pip that's more visible
-- Add a subtle status badge for non-compact cards when the appointment has a meaningful status (confirmed, checked_in) -- a small uppercase label anchored at the bottom-right
+- Add `colorBy?: 'status' | 'service' | 'stylist'` to `DayViewProps`
+- Pass it through to `AppointmentCard`
+- Change the `useCategoryColor` logic from:
+  ```
+  const useCategoryColor = appointment.status === 'booked';
+  ```
+  to:
+  ```
+  const useCategoryColor = colorBy === 'service' || appointment.status === 'booked';
+  ```
+- When `colorBy === 'service'`, use the `statusColors.border` class on the left border to preserve a status signal while the card body uses category color
 
-### 3. Clean up WeekView AppointmentCard
+### 3. Update WeekView to respect `colorBy` preference
 
 **File:** `src/components/dashboard/schedule/WeekView.tsx`
 
-- Remove the static Heart/Smartphone placeholder icons (lines 226-231) -- they have no data backing and add noise
-- Change `rounded-sm` to `rounded-md`
-- Add a small status pip indicator for confirmed/checked_in appointments in non-compact mode
+- Add `colorBy?: 'status' | 'service' | 'stylist'` to `WeekViewProps` and `WeekAppointmentCard`
+- Apply the same `useCategoryColor` logic change as DayView
+- Preserve the left-border status indicator
 
-### 4. Refine AgendaView AppointmentCard
+### 4. Set default `color_by` to `'service'`
+
+**File:** `src/hooks/useCalendarPreferences.ts`
+
+- Change the default from `'status'` to `'service'` so new users and users who haven't explicitly chosen get category colors by default
+
+### 5. Update AgendaView status badge to show category color swatch
 
 **File:** `src/components/dashboard/schedule/AgendaView.tsx`
 
-- Add dark mode support to `APPOINTMENT_STATUS_BADGE` references (the badge map lacks dark mode classes -- already addressed in token update)
-- Add a subtle duration display (e.g., "45 min") next to the time range for quicker scanning
+- Add a small category color swatch (circle) next to each appointment row so category identity is visible even in list mode
 
-### 5. Update PhorestAppointment type compatibility
+## Status Signal Preservation
 
-**File:** `src/hooks/usePhorestCalendar.ts` (read-only check)
-
-Verify `AppointmentStatus` type includes `pending`. If not, add it to the union type.
+When `colorBy === 'service'`, the appointment card body uses the service category color, but the status is still communicated through:
+- **Left border color**: Maps to appointment status (green for confirmed, blue for checked-in, etc.)
+- **Status pip**: The small dot indicator already added in the previous enhancement
+- **Cancelled/No-show treatments**: Opacity reduction and ring indicators remain unchanged
 
 ## File Summary
 
 | Action | File |
 |--------|------|
-| Modify | `src/lib/design-tokens.ts` -- add `pending` to status type and all 3 color maps |
-| Modify | `src/components/dashboard/schedule/DayView.tsx` -- rounded-md, hover states, status pip |
-| Modify | `src/components/dashboard/schedule/WeekView.tsx` -- rounded-md, remove placeholder icons, status pip |
-| Modify | `src/components/dashboard/schedule/AgendaView.tsx` -- add duration display |
+| Modify | `src/pages/dashboard/Schedule.tsx` -- pass `colorBy` pref to views |
+| Modify | `src/components/dashboard/schedule/DayView.tsx` -- accept and use `colorBy` prop |
+| Modify | `src/components/dashboard/schedule/WeekView.tsx` -- accept and use `colorBy` prop |
+| Modify | `src/components/dashboard/schedule/AgendaView.tsx` -- add category color swatch |
+| Modify | `src/hooks/useCalendarPreferences.ts` -- change default `color_by` to `'service'` |
 
-No new files or dependencies required.
+No new files, no database changes, no new dependencies.
