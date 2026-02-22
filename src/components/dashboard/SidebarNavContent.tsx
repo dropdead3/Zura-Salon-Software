@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useRef, useImperativeHandle, useMemo } from 'react';
+import { forwardRef, useEffect, useRef, useImperativeHandle, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRubberBandScroll } from '@/hooks/useRubberBandScroll';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { ExternalLink, Rocket, TrendingUp, Users, LayoutGrid, Briefcase, ArrowLeft, Shield, FlaskConical, PanelLeftClose, ChevronRight } from 'lucide-react';
 import { NavBadge } from './NavBadge';
 import Logo from '@/assets/brand-logo-secondary.svg';
@@ -406,7 +407,8 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
       {/* Phorest Sync Status Widget moved to header popout */}
 
       {/* Navigation */}
-      <nav ref={internalRef} className="sidebar-nav flex-1 py-4 overflow-y-auto overscroll-none mb-3 min-h-0">
+      <ScrollArea className="flex-1 mb-3 min-h-0">
+        <nav ref={internalRef} className="sidebar-nav py-4 overscroll-none">
         {/* START HERE Priority Section - Only shows when onboarding incomplete (not for super_admin/owners) */}
         {!isOnboardingComplete && !roles.includes('super_admin') && (
           <div className="mb-4">
@@ -721,6 +723,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
           );
         })}
       </nav>
+      </ScrollArea>
 
       {/* Fixed Footer Navigation - always at bottom */}
       <div className="mt-auto shrink-0 flex flex-col gap-2">
