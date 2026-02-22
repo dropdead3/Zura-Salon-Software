@@ -488,6 +488,7 @@ export function QuickBookingPopover({
       let query = supabase
         .from('phorest_clients')
         .select('id, phorest_client_id, name, email, phone, preferred_stylist_id, visit_count, last_visit, total_spend, is_vip, branch_name, is_banned, ban_reason, birthday, client_since')
+        .eq('is_duplicate', false)
         .order('name')
         .limit(50);
       

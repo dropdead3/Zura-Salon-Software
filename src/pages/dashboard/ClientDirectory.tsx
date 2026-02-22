@@ -138,6 +138,7 @@ export default function ClientDirectory() {
       let query = supabase
         .from('phorest_clients')
         .select('*')
+        .eq('is_duplicate', false)
         .order('total_spend', { ascending: false });
 
       // Filter logic based on primary tab

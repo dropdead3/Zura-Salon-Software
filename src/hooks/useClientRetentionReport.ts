@@ -27,7 +27,8 @@ export function useClientRetentionReport(dateFrom: string, dateTo: string, locat
       // Get all clients
       const { data: clients } = await supabase
         .from('phorest_clients')
-        .select('id, name, created_at');
+        .select('id, name, created_at')
+        .eq('is_duplicate', false);
 
       if (!clients || clients.length === 0) {
         return {

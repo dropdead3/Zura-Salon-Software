@@ -76,6 +76,7 @@ export function BookingWizard({
       let query = supabase
         .from('phorest_clients')
         .select('id, phorest_client_id, name, email, phone, preferred_stylist_id')
+        .eq('is_duplicate', false)
         .order('name')
         .limit(50);
 
