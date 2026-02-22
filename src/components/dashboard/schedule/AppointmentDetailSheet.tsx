@@ -290,7 +290,7 @@ export function AppointmentDetailSheet({
     if (!appointment?.service_name) return [];
     return appointment.service_name.split(',').map(s => s.trim()).filter(Boolean).map(name => {
       const info = serviceLookup?.get(name);
-      return { name, duration: info?.duration_minutes || null, category: info?.category || null, price: info ? (serviceLookup?.get(name) as any)?.price ?? null : null };
+      return { name, duration: info?.duration_minutes || null, category: info?.category || null, price: info?.price ?? null };
     });
   }, [appointment?.service_name, serviceLookup]);
 
@@ -610,7 +610,7 @@ export function AppointmentDetailSheet({
                 <ScrollArea className="flex-1">
                   {/* ─── TAB: Details ──────────────────────────── */}
                   <TabsContent value="details" className="p-6 pt-4 mt-0">
-                    <motion.div variants={staggerContainer} initial="hidden" animate="show" className="space-y-5">
+                    <motion.div variants={staggerContainer} initial={false} animate="show" className="space-y-5">
                     {/* Redo approval actions */}
                     {appointment.is_redo && appointment.status === 'pending' && isManagerOrAdmin && (
                       <motion.div variants={staggerItem} className="flex items-center gap-2">
@@ -677,6 +677,9 @@ export function AppointmentDetailSheet({
                             <div className="flex items-center gap-2 shrink-0 ml-2">
                               {svc.duration && (
                                 <span className="text-muted-foreground text-xs">{svc.duration}min</span>
+                              )}
+                              {svc.price != null && (
+                                <span className="text-xs"><BlurredAmount>{formatCurrency(svc.price)}</BlurredAmount></span>
                               )}
                             </div>
                           </div>
@@ -867,7 +870,7 @@ export function AppointmentDetailSheet({
 
                   {/* ─── TAB: History ─────────────────────────── */}
                   <TabsContent value="history" className="p-6 pt-4 mt-0">
-                    <motion.div variants={staggerContainer} initial="hidden" animate="show" className="space-y-5">
+                    <motion.div variants={staggerContainer} initial={false} animate="show" className="space-y-5">
                     {/* Walk-in: collapse history for non-clients (#7) */}
                     {isWalkIn ? (
                       <motion.div variants={staggerItem} className="text-center py-8">
@@ -959,7 +962,7 @@ export function AppointmentDetailSheet({
 
                   {/* ─── TAB: Notes ───────────────────────────── */}
                   <TabsContent value="notes" className="p-6 pt-4 mt-0">
-                    <motion.div variants={staggerContainer} initial="hidden" animate="show" className="space-y-5">
+                    <motion.div variants={staggerContainer} initial={false} animate="show" className="space-y-5">
                     {/* Appointment Notes */}
                     <motion.div variants={staggerItem} className="space-y-2">
                       <h4 className={tokens.heading.subsection}>Appointment Notes</h4>

@@ -5,6 +5,7 @@ export interface ServiceLookupEntry {
   name: string;
   category: string | null;
   duration_minutes: number;
+  price: number | null;
 }
 
 /**
@@ -17,7 +18,7 @@ export function useServiceLookup() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('phorest_services')
-        .select('name, category, duration_minutes')
+        .select('name, category, duration_minutes, price')
         .eq('is_active', true);
 
       if (error) throw error;
@@ -31,6 +32,7 @@ export function useServiceLookup() {
             name: s.name,
             category: s.category,
             duration_minutes: s.duration_minutes,
+            price: s.price,
           });
         }
       }
