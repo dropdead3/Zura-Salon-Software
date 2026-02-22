@@ -159,10 +159,11 @@ export const tokens = {
 // Canonical status color definitions — import these instead of
 // defining local STATUS_COLORS / STATUS_CONFIG in view components.
 
-type AppointmentStatusKey = 'booked' | 'confirmed' | 'checked_in' | 'completed' | 'cancelled' | 'no_show';
+type AppointmentStatusKey = 'pending' | 'booked' | 'confirmed' | 'checked_in' | 'completed' | 'cancelled' | 'no_show';
 
 /** Day / Week view appointment card colors (saturated for calendar cells) */
 export const APPOINTMENT_STATUS_COLORS: Record<AppointmentStatusKey, { bg: string; border: string; text: string }> = {
+  pending:    { bg: 'bg-amber-100',    border: 'border-amber-400',           text: 'text-amber-900' },
   booked:     { bg: 'bg-muted',        border: 'border-muted-foreground/30', text: 'text-foreground' },
   confirmed:  { bg: 'bg-green-500',    border: 'border-green-600',           text: 'text-white' },
   checked_in: { bg: 'bg-blue-500',     border: 'border-blue-600',            text: 'text-white' },
@@ -173,12 +174,13 @@ export const APPOINTMENT_STATUS_COLORS: Record<AppointmentStatusKey, { bg: strin
 
 /** Agenda / badge / pastel variant colors */
 export const APPOINTMENT_STATUS_BADGE: Record<AppointmentStatusKey, { bg: string; text: string; label: string }> = {
-  booked:     { bg: 'bg-slate-100',  text: 'text-slate-700',  label: 'Booked' },
-  confirmed:  { bg: 'bg-green-100',  text: 'text-green-800',  label: 'Confirmed' },
-  checked_in: { bg: 'bg-blue-100',   text: 'text-blue-800',   label: 'Checked In' },
-  completed:  { bg: 'bg-purple-100', text: 'text-purple-800', label: 'Completed' },
-  cancelled:  { bg: 'bg-gray-100',   text: 'text-gray-600',   label: 'Cancelled' },
-  no_show:    { bg: 'bg-red-100',    text: 'text-red-800',    label: 'No Show' },
+  pending:    { bg: 'bg-amber-100 dark:bg-amber-900/30',  text: 'text-amber-800 dark:text-amber-300',  label: 'Pending' },
+  booked:     { bg: 'bg-slate-100 dark:bg-slate-800/30',  text: 'text-slate-700 dark:text-slate-300',  label: 'Booked' },
+  confirmed:  { bg: 'bg-green-100 dark:bg-green-900/30',  text: 'text-green-800 dark:text-green-300',  label: 'Confirmed' },
+  checked_in: { bg: 'bg-blue-100 dark:bg-blue-900/30',   text: 'text-blue-800 dark:text-blue-300',   label: 'Checked In' },
+  completed:  { bg: 'bg-purple-100 dark:bg-purple-900/30', text: 'text-purple-800 dark:text-purple-300', label: 'Completed' },
+  cancelled:  { bg: 'bg-gray-100 dark:bg-gray-800/30',   text: 'text-gray-600 dark:text-gray-400',   label: 'Cancelled' },
+  no_show:    { bg: 'bg-red-100 dark:bg-red-900/30',    text: 'text-red-800 dark:text-red-300',    label: 'No Show' },
 };
 
 /** Full status config used by usePhorestCalendar (includes border + label) */
@@ -188,6 +190,7 @@ export const APPOINTMENT_STATUS_CONFIG: Record<AppointmentStatusKey, {
   borderColor: string;
   label: string;
 }> = {
+  pending:    { color: 'text-amber-900',  bgColor: 'bg-amber-200',  borderColor: 'border-amber-500',  label: 'Pending' },
   booked:     { color: 'text-slate-900',  bgColor: 'bg-slate-200',  borderColor: 'border-slate-400',  label: 'Booked' },
   confirmed:  { color: 'text-green-900',  bgColor: 'bg-green-200',  borderColor: 'border-green-500',  label: 'Confirmed' },
   checked_in: { color: 'text-blue-900',   bgColor: 'bg-blue-200',   borderColor: 'border-blue-500',   label: 'Checked In' },

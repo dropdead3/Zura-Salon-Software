@@ -14,7 +14,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
-import { Phone, User, Heart, Smartphone, Users, Repeat, RotateCcw } from 'lucide-react';
+import { Phone, User, Users, Repeat, RotateCcw } from 'lucide-react';
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
 import { QuickBookingPopover } from './QuickBookingPopover';
 import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
@@ -116,7 +116,7 @@ function AppointmentCard({
       <TooltipTrigger asChild>
         <div
           className={cn(
-            'absolute left-1 right-1 rounded-sm px-2 py-1 cursor-pointer transition-all hover:shadow-lg hover:z-20 overflow-hidden',
+            'absolute left-1 right-1 rounded-md px-2 py-1 cursor-pointer transition-all hover:shadow-lg hover:z-20 overflow-hidden',
             !displayGradient && 'border-l-4',
             !useCategoryColor && !displayGradient && statusColors.bg,
             !useCategoryColor && !displayGradient && statusColors.border,
@@ -222,11 +222,13 @@ function AppointmentCard({
             )}
           </div>
           
-          {/* Action icons in bottom right */}
-          {!isCompact && (
-            <div className="absolute bottom-1 right-1 flex items-center gap-0.5">
-              <Heart className="h-3.5 w-3.5 opacity-70" />
-              <Smartphone className="h-3.5 w-3.5 opacity-70" />
+          {/* Status pip for confirmed/checked_in */}
+          {!isCompact && (appointment.status === 'confirmed' || appointment.status === 'checked_in') && (
+            <div className="absolute bottom-1 right-1">
+              <span className={cn(
+                'w-2 h-2 rounded-full block ring-1 ring-white/50',
+                appointment.status === 'confirmed' ? 'bg-green-400' : 'bg-blue-400'
+              )} />
             </div>
           )}
         </div>

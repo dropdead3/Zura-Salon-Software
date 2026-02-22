@@ -64,6 +64,10 @@ function AppointmentCard({
             <div className="text-xs text-muted-foreground">
               to {formatTime12h(appointment.end_time).replace(' ', '')}
             </div>
+            {(() => {
+              const dur = (parseInt(appointment.end_time.split(':')[0]) * 60 + parseInt(appointment.end_time.split(':')[1])) - (parseInt(appointment.start_time.split(':')[0]) * 60 + parseInt(appointment.start_time.split(':')[1]));
+              return dur > 0 ? <div className="text-[10px] text-muted-foreground mt-0.5">{dur} min</div> : null;
+            })()}
           </div>
 
           {/* Divider */}
