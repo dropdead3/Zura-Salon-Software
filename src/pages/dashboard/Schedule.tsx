@@ -95,7 +95,9 @@ export default function Schedule() {
     appointmentsWithAssistants ? Array.from(appointmentsWithAssistants) as string[] : [],
     [appointmentsWithAssistants]
   );
-  const { data: assistantNamesMap } = useAppointmentAssistantNames(assistantApptIds);
+  const { data: assistantData } = useAppointmentAssistantNames(assistantApptIds);
+  const assistantNamesMap = assistantData?.assistantNamesMap;
+  const assistantProfilesMap = assistantData?.assistantProfilesMap;
 
   // State for selections and sheets
   const [selectedAppointment, setSelectedAppointment] = useState<PhorestAppointment | null>(null);
@@ -535,6 +537,7 @@ export default function Schedule() {
                 colorBy={preferences.color_by as 'status' | 'service' | 'stylist'}
                 serviceLookup={serviceLookup}
                 assistantNamesMap={assistantNamesMap}
+                assistantProfilesMap={assistantProfilesMap}
               />
             );
           })()}
@@ -554,7 +557,8 @@ export default function Schedule() {
               colorBy={preferences.color_by as 'status' | 'service' | 'stylist'}
               serviceLookup={serviceLookup}
               assistantNamesMap={assistantNamesMap}
-            />
+                assistantProfilesMap={assistantProfilesMap}
+              />
           )}
           
           {view === 'week' && (
