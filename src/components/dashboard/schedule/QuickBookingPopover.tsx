@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { format } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
@@ -123,6 +123,79 @@ const sortCategories = (categories: string[]): string[] => {
     return a.localeCompare(b);
   });
 };
+
+const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+function getLastNameForSort(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  return parts.length >= 2 ? parts[parts.length - 1] : parts[0];
+}
+function getSortLetterForClient(name: string): string {
+  const last = getLastNameForSort(name);
+  const ch = last.charAt(0).toUpperCase();
+  return ch >= 'A' && ch <= 'Z' ? ch : '#';
+}
+
+function ClientListWithAlphabet({ clients, isLoading, clientSearch, onSelectClient, onViewProfile }: {
+  clients: PhorestClient[]; isLoading: boolean; clientSearch: string;
+  onSelectClient: (client: PhorestClient) => void; onViewProfile: (client: PhorestClient) => void;
+}) {
+  const [activeLetter, setActiveLetter] = useState<string | null>(null);
+  const letterRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const sortedClients = useMemo(() => [...clients].sort((a, b) => getLastNameForSort(a.name).toLowerCase().localeCompare(getLastNameForSort(b.name).toLowerCase())), [clients]);
+  const availableLetters = useMemo(() => { const s = new Set<string>(); sortedClients.forEach(c => s.add(getSortLetterForClient(c.name))); return s; }, [sortedClients]);
+  const firstClientPerLetter = useMemo(() => { const m = new Map<string, string>(); sortedClients.forEach(c => { const l = getSortLetterForClient(c.name); if (!m.has(l)) m.set(l, c.id); }); return m; }, [sortedClients]);
+  const scrollToLetter = useCallback((letter: string) => { setActiveLetter(letter); letterRefs.current.get(letter)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, []);
+  const setLetterRef = useCallback((letter: string, el: HTMLDivElement | null) => { if (el) letterRefs.current.set(letter, el); else letterRefs.current.delete(letter); }, []);
+  const gi = (name: string) => { const p = name.trim().split(/\s+/); return p.length >= 2 ? (p[0][0] + p[1][0]).toUpperCase() : name.slice(0, 2).toUpperCase(); };
+  const fp = (phone: string | null) => { if (!phone) return null; const d = phone.replace(/\D/g, ''); if (d.length === 10) return `(${d.slice(0,3)}) ${d.slice(3,6)}-${d.slice(6)}`; if (d.length === 11 && d[0] === '1') return `(${d.slice(1,4)}) ${d.slice(4,7)}-${d.slice(7)}`; return phone; };
+  const showStrip = sortedClients.length > 0 && !isLoading;
+  const handleTouchMove = useCallback((e: React.TouchEvent) => { const t = e.touches[0]; const el = document.elementFromPoint(t.clientX, t.clientY); const l = el?.getAttribute('data-letter'); if (l && availableLetters.has(l)) scrollToLetter(l); }, [availableLetters, scrollToLetter]);
+
+  return (
+    <div className="flex-1 relative min-h-0">
+      <ScrollArea className="h-full">
+        <div className={cn('p-2', showStrip && 'pr-7')}>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+          ) : sortedClients.length === 0 ? (
+            <div className="text-center py-8"><p className="text-muted-foreground text-sm">{clientSearch ? 'No clients found' : 'Start typing to search'}</p></div>
+          ) : (
+            <div className="space-y-0.5">
+              {sortedClients.map((client) => {
+                const letter = getSortLetterForClient(client.name);
+                const isFirst = firstClientPerLetter.get(letter) === client.id;
+                return (
+                  <div key={client.id}>
+                    {isFirst && (<div ref={(el) => setLetterRef(letter, el)} className="px-3 pt-2 pb-1"><span className="font-sans text-[11px] text-muted-foreground tracking-wide">{letter}</span></div>)}
+                    <div className={cn('flex items-center gap-2 p-2.5 rounded-lg', 'hover:bg-muted/70 transition-colors', client.is_banned && 'border border-destructive/30 bg-destructive/5')}>
+                      <button className="flex items-center gap-3 flex-1 min-w-0 text-left" onClick={() => onSelectClient(client)}>
+                        <Avatar className="h-9 w-9 bg-muted shrink-0"><AvatarFallback className="text-xs font-medium text-muted-foreground bg-muted">{gi(client.name)}</AvatarFallback></Avatar>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2"><span className="font-medium text-sm truncate">{client.name}</span>{client.is_banned && <BannedClientBadge />}</div>
+                          <div className="text-xs text-muted-foreground truncate">{fp(client.phone) || client.email || 'No contact info'}</div>
+                        </div>
+                      </button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground" onClick={(e) => { e.stopPropagation(); onViewProfile(client); }}><Info className="h-4 w-4" /></Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </ScrollArea>
+      {showStrip && (
+        <div className="absolute right-0 top-0 bottom-0 w-5 flex flex-col items-center justify-center z-10 select-none" onTouchMove={handleTouchMove}>
+          {ALPHABET.map((letter) => {
+            const available = availableLetters.has(letter);
+            const active = activeLetter === letter;
+            return (<button key={letter} data-letter={letter} className={cn('font-sans leading-none py-[1px] w-full text-center transition-all', available ? active ? 'text-primary text-[11px]' : 'text-muted-foreground text-[10px] hover:text-foreground' : 'text-muted-foreground/30 text-[10px] pointer-events-none')} onClick={() => available && scrollToLetter(letter)} tabIndex={-1} type="button">{letter}</button>);
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function QuickBookingPopover({
   date,
@@ -1105,65 +1178,13 @@ export function QuickBookingPopover({
                 </Button>
               </div>
             </div>
-            <ScrollArea className="flex-1">
-              <div className="p-2">
-                {isLoadingClients ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                  </div>
-                ) : clients.length === 0 ? (
-                  <div className="text-center py-8">
-                    <p className="text-muted-foreground text-sm">
-                      {clientSearch ? 'No clients found' : 'Start typing to search'}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-0.5">
-                    {clients.map((client) => (
-                      <div
-                        key={client.id}
-                        className={cn(
-                          'flex items-center gap-2 p-2.5 rounded-lg',
-                          'hover:bg-muted/70 transition-colors',
-                          client.is_banned && 'border border-destructive/30 bg-destructive/5'
-                        )}
-                      >
-                        <button
-                          className="flex items-center gap-3 flex-1 min-w-0 text-left"
-                          onClick={() => handleSelectClient(client)}
-                        >
-                          <Avatar className="h-9 w-9 bg-muted shrink-0">
-                            <AvatarFallback className="text-xs font-medium text-muted-foreground bg-muted">
-                              {getInitials(client.name)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium text-sm truncate">{client.name}</span>
-                              {client.is_banned && <BannedClientBadge />}
-                            </div>
-                            <div className="text-xs text-muted-foreground truncate">
-                              {formatPhone(client.phone) || client.email || 'No contact info'}
-                            </div>
-                          </div>
-                        </button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setViewingClientProfile(client);
-                          }}
-                        >
-                          <Info className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </ScrollArea>
+            <ClientListWithAlphabet
+              clients={clients}
+              isLoading={isLoadingClients}
+              clientSearch={clientSearch}
+              onSelectClient={handleSelectClient}
+              onViewProfile={setViewingClientProfile}
+            />
           </div>
         )
       )}
