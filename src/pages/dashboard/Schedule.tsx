@@ -129,6 +129,13 @@ export default function Schedule() {
   }, []);
   const [bookingDefaults, setBookingDefaults] = useState<{ date?: Date; stylistId?: string; time?: string }>({});
   const [activeDraft, setActiveDraft] = useState<DraftBooking | null>(null);
+  const [rebookData, setRebookData] = useState<{
+    clientId?: string;
+    clientName?: string;
+    staffUserId?: string;
+    staffName?: string;
+    selectedServices: string[];
+  } | null>(null);
   const [draftsSheetOpen, setDraftsSheetOpen] = useState(false);
   const [calendarFilters, setCalendarFilters] = useState<CalendarFilterState>({
     clientTypes: [],
@@ -448,15 +455,16 @@ export default function Schedule() {
       if (actionBarCancelReason.trim() && user?.id) {
         const prefix = '[Cancelled]';
         const noteText = `${prefix} ${actionBarCancelReason.trim()}`;
-        supabase
-          .from('appointment_notes')
-          .insert({
-            phorest_appointment_id: selectedAppointment.phorest_id || selectedAppointment.id,
-            author_id: user.id,
-            note: noteText,
-            is_private: false,
-          })
-          .then(() => {});
+        Promise.resolve(
+          supabase
+            .from('appointment_notes')
+            .insert({
+              phorest_appointment_id: selectedAppointment.phorest_id || selectedAppointment.id,
+              author_id: user.id,
+              note: noteText,
+              is_private: false,
+            })
+        ).catch(() => toast.warning('Cancellation reason could not be saved'));
       }
       handleStatusChange('cancelled');
       toast.success('Appointment cancelled');
@@ -673,16 +681,17 @@ export default function Schedule() {
         isUpdating={isUpdating}
         onRebook={(apt) => {
           setDetailOpen(false);
-          // FIX #15: Pre-fill client data for rebook
+          // FIX #15/A: Pre-fill client data for rebook via rebookData state
           setBookingDefaults({ date: currentDate, stylistId: apt.stylist_user_id || undefined });
           setActiveDraft(null);
+          setRebookData({
+            clientId: apt.phorest_client_id || undefined,
+            clientName: apt.client_name || undefined,
+            staffUserId: apt.stylist_user_id || undefined,
+            staffName: apt.stylist_profile?.display_name || apt.stylist_profile?.full_name || undefined,
+            selectedServices: [],
+          });
           setBookingOpen(true);
-          // Use initialDraftData pattern to pre-fill client -- set via activeDraft-like mechanism
-          // We'll pass the data through the booking popover's initialDraftData
-          setTimeout(() => {
-            // The QuickBookingPopover is already open with defaults; we need to also pass client data
-            // This is handled below in the QuickBookingPopover props via rebookData state
-          }, 0);
         }}
         onReschedule={(apt) => {
           setDetailOpen(false);
@@ -714,7 +723,10 @@ export default function Schedule() {
         open={bookingOpen}
         onOpenChange={(open) => {
           setBookingOpen(open);
-          if (!open) setActiveDraft(null);
+          if (!open) {
+            setActiveDraft(null);
+            setRebookData(null);
+          }
         }}
         date={bookingDefaults.date || currentDate}
         time={bookingDefaults.time || '09:00'}
@@ -733,6 +745,12 @@ export default function Schedule() {
           stepReached: activeDraft.step_reached || undefined,
           isRedo: activeDraft.is_redo,
           redoMetadata: activeDraft.redo_metadata,
+        } : rebookData ? {
+          clientId: rebookData.clientId,
+          clientName: rebookData.clientName,
+          staffUserId: rebookData.staffUserId,
+          staffName: rebookData.staffName,
+          selectedServices: rebookData.selectedServices,
         } : undefined}
       />
 

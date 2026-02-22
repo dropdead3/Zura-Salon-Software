@@ -54,18 +54,20 @@ export function ScheduleActionBar({
         hasSelection && 'ring-1 ring-primary/40 shadow-primary/10'
       )}
     >
-      {/* Left: Undo */}
+      {/* Left: Undo (hidden when no handler) */}
       <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size={tokens.button.inline}
-          onClick={onUndo}
-          disabled={isUpdating}
-          className="gap-1.5"
-        >
-          <Undo2 className="h-4 w-4" />
-          Undo
-        </Button>
+        {onUndo && (
+          <Button
+            variant="ghost"
+            size={tokens.button.inline}
+            onClick={onUndo}
+            disabled={isUpdating}
+            className="gap-1.5"
+          >
+            <Undo2 className="h-4 w-4" />
+            Undo
+          </Button>
+        )}
       </div>
 
       {/* Center: Selection info or appointment count */}
