@@ -602,6 +602,20 @@ export default function Schedule() {
         onOpenChange={setDetailOpen}
         onStatusChange={(_, status) => handleStatusChange(status)}
         isUpdating={isUpdating}
+        onRebook={(apt) => {
+          setDetailOpen(false);
+          setBookingDefaults({ date: currentDate, stylistId: apt.stylist_user_id || undefined });
+          setBookingOpen(true);
+        }}
+        onReschedule={(apt) => {
+          setDetailOpen(false);
+          setBookingDefaults({ date: new Date(apt.appointment_date + 'T12:00:00'), stylistId: apt.stylist_user_id || undefined, time: apt.start_time });
+          setBookingOpen(true);
+        }}
+        onPay={(apt) => {
+          setDetailOpen(false);
+          setCheckoutOpen(true);
+        }}
       />
 
       <CheckoutSummarySheet
