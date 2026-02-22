@@ -334,11 +334,13 @@ export function ScheduleHeader({
                   todayClosed.isClosed && !isToday(currentDate) && 'opacity-60'
                 )}
               >
-                <span className="font-medium text-xs tracking-wide">Today</span>
+                <div className="flex items-center gap-1">
+                  {todayClosed.isClosed && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-destructive flex-shrink-0" />
+                  )}
+                  <span className="font-medium text-xs tracking-wide">Today</span>
+                </div>
                 <span className="text-[10px] opacity-70">{format(new Date(), 'MMM d')}</span>
-                {todayClosed.isClosed && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-destructive mt-0.5" />
-                )}
               </button>
             );
 
