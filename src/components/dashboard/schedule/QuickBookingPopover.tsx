@@ -709,7 +709,8 @@ export function QuickBookingPopover({
 
       const response = await supabase.functions.invoke('create-phorest-booking', {
         body: {
-          branch_id: selectedLocation,
+          branch_id: selectedLocationBranchId || (() => { throw new Error('No Phorest branch ID for selected location'); })(),
+          location_id: selectedLocation,
           client_id: selectedClient.phorest_client_id,
           staff_id: stylistMapping.phorest_staff_id,
           service_ids: selectedServices.filter(id => !id.startsWith('addon:')),
