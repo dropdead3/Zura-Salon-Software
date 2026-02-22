@@ -1,62 +1,67 @@
 
 
-# Appointment Detail Panel -- Remaining Gaps Analysis (Round 3)
+# Appointment Detail Panel -- Gap Analysis (Round 4)
 
 ## Summary
 
-After reviewing the full 1,204-line `AppointmentDetailSheet.tsx` and 831-line `Schedule.tsx` post-implementation, the previous 15-item fix pass landed well. This analysis covers residual gaps that remain or were introduced.
+After reviewing all 1,207 lines of `AppointmentDetailSheet.tsx` and 850 lines of `Schedule.tsx`, the previous rounds of fixes have resolved the majority of critical issues. This round identifies **2 remaining bugs**, **3 data/UX polish gaps**, and **2 structural concerns**.
 
 ---
 
-## Remaining Gaps
+## A. Status Change Sends `NO_SHOW` Instead of `no_show`
 
-### A. Rebook Still Does NOT Pre-Fill Client (Fix #15 Incomplete)
+**Severity: Critical (actively broken)**
 
-The `onRebook` handler in `Schedule.tsx` (lines 674-686) sets `bookingDefaults` with `date` and `stylistId`, but the `initialDraftData` prop on `QuickBookingPopover` (line 725) is only populated when `activeDraft` is truthy. Since rebook sets `activeDraft` to `null` (line 678), the booking popover opens with no client pre-fill. The `setTimeout` block on lines 682-685 is a no-op placeholder comment.
+From the network logs, the edge function `update-phorest-appointment` received `"status":"NO_SHOW"` and returned a 400 error: `"Failed to update appointment locally"`. The panel's `handleStatusChange` passes lowercase `no_show` (correct), but the `updateStatus` mutation in the `usePhorestCalendar` hook may be transforming or uppercasing it before sending to the edge function. This means **No Show marking is completely broken** right now.
 
-**Fix:** Add a `rebookData` state variable. When `onRebook` fires, populate it with the appointment's client ID, client name, and services. Pass it as `initialDraftData` to `QuickBookingPopover` when `rebookData` is set. Clear it when the popover closes.
+**Fix:** Investigate the `updateStatus` mutation in `usePhorestCalendar` to find where the status is being uppercased (likely `.toUpperCase()` or an enum mapping). Ensure `no_show` is sent as-is, or the edge function is updated to accept the uppercase variant.
 
-### B. Per-Service Price Not Rendering
+### B. `confirmActionBarCancel` Note Insert Has Incorrect Promise Chain
 
-The services breakdown card (line 293) attempts to read `price` via `(serviceLookup?.get(name) as any)?.price`, but `useServiceLookup` (line 192, defined in `useServiceLookup.ts`) only selects `name, category, duration_minutes` -- it never fetches `price`. The `price` field is always `null`.
+**Severity: Medium**
 
-**Fix:** Update `useServiceLookup.ts` to also select `price` from `phorest_services`, add `price` to the `ServiceLookupEntry` interface, and render it in the services breakdown (line 677-681 area).
+In `Schedule.tsx` lines 459-468, the code wraps the Supabase call in `Promise.resolve(...)` which doesn't actually chain the inner promise correctly. `Promise.resolve(supabase...insert(...))` resolves with the Supabase query builder object, not its result. The `.catch()` will never fire on a failed insert because the error is swallowed inside the Supabase response object.
 
-### C. Loading Skeleton Missing on Panel Open
+**Fix:** Remove the `Promise.resolve()` wrapper. Instead, use:
+```
+supabase.from('appointment_notes').insert({...}).then(({ error }) => {
+  if (error) toast.warning('Cancellation reason could not be saved');
+});
+```
 
-When the panel opens, the header and all tabs render immediately with empty/missing data while `clientRecord`, `locationName`, `visitHistory`, and `linkedRedos` queries load. There is no skeleton placeholder -- sections just appear empty then pop in.
+---
 
-**Fix:** Add a brief loading skeleton state in the header area (avatar placeholder, name skeleton, status skeleton) and in the Details tab (info rows) that shows while `clientRecord` is loading.
+## C. No Loading Skeleton on Panel Open
+
+**Severity: Low-Medium**
+
+When the panel opens, the header renders immediately but sections like Client Contact (email), Location, and History all load asynchronously. There's no skeleton -- sections just appear empty then pop in. The header's "Last visit" line and "View Profile" button also pop in after `visitHistory` and `clientRecord` load.
+
+**Fix:** Add a simple loading skeleton in the header area (name placeholder, service placeholder) and in the Details tab's Client Contact section while `clientRecord` is loading. Use the existing `Skeleton` component.
 
 ### D. Mobile Panel Not Optimized
 
-The panel uses `right-4 top-4 bottom-4 w-[calc(100vw-2rem)] max-w-[440px]` (line 479). On mobile (< 480px), this means tiny 16px margins with no rounded-none adjustment. The footer action buttons wrap awkwardly on small screens.
+**Severity: Low-Medium**
 
-**Fix:** Add responsive classes: on mobile viewports, switch to `right-0 top-0 bottom-0 w-full max-w-none rounded-none` and stack footer buttons vertically. Use `useIsMobile()` hook already imported in Schedule.tsx (pass as prop or use directly).
+The panel uses `w-[calc(100vw-2rem)] max-w-[440px]` (line 479). On mobile (< 480px), the panel occupies nearly the full screen with small margins and rounded corners that waste space. The footer buttons wrap awkwardly on narrow screens.
 
-### E. `confirmActionBarCancel` Note Insert Has No Error Handling
+**Fix:** Import `useIsMobile` hook. On mobile, apply `right-0 top-0 bottom-0 w-full max-w-none rounded-none` to the panel container, and add `flex-col` to the footer button container so buttons stack vertically.
 
-In `Schedule.tsx` (lines 448-459), the note insertion uses `.then(() => {})` with no `.catch()`. If the insert fails (e.g., RLS issue), the cancellation still proceeds but the reason is silently lost.
+### E. Note Textarea and Assistant Picker State Not Reset on Appointment Change
 
-**Fix:** Add a `.catch()` that logs/toasts a warning ("Cancellation reason could not be saved") so operators know the note was lost.
+**Severity: Low**
 
-### F. Action Bar "Undo" Button Has No Handler
+When switching between appointments while the panel is open, the `newNote`, `newClientNote`, `showAssistantPicker`, and `isPrivateNote` states persist from the previous appointment. If a user was mid-way through typing a note for one client, switching to another appointment keeps that partial note visible.
 
-`ScheduleActionBar` renders an "Undo" button (line 65-72 of `ScheduleActionBar.tsx`) with `onClick={onUndo}`, but `Schedule.tsx` never passes an `onUndo` prop. The button renders but does nothing when clicked.
+**Fix:** Add a `useEffect` keyed on `appointment?.id` that resets `newNote`, `newClientNote`, `isPrivateNote`, `isPrivateClientNote`, `showAssistantPicker` to their defaults.
 
-**Fix:** Either implement an undo stack (track last status change, allow reverting) or hide the Undo button until an undo capability exists.
+### F. `handleNotes` Action Bar Button Only Opens Panel, Doesn't Navigate to Notes Tab
 
-### G. `formatDate` Used Incorrectly for Last Visit
+**Severity: Low**
 
-Line 512 calls `formatDate(parseISO(lastVisitDate), 'MMM d')` but `useFormatDate` may not accept a format string as the second argument depending on its implementation. If it wraps `date-fns/format` differently, this could silently fail or show unexpected output.
+The `handleNotes` handler in `Schedule.tsx` (line 477-481) opens the detail panel but doesn't set the active tab to "notes". The user lands on the Details tab and must manually click Notes.
 
-**Fix:** Verify `useFormatDate` signature; if it doesn't accept custom format strings, use `format` from `date-fns` directly instead.
-
-### H. Stagger Animations Re-trigger on Every Tab Switch
-
-Each tab's `motion.div` uses `initial="hidden" animate="show"`, which means every time you switch back to a tab, all items re-animate from opacity 0 + translateY. This feels janky on repeated tab switches.
-
-**Fix:** Use `initial={false}` after the first render, or wrap in `AnimatePresence mode="wait"` with `key={activeTab}` so animations only play on tab entry, not re-entry.
+**Fix:** Add a mechanism to open the panel with a specific tab. Either pass an `initialTab` prop to `AppointmentDetailSheet`, or set a state variable that the panel reads on open.
 
 ---
 
@@ -64,40 +69,45 @@ Each tab's `motion.div` uses `initial="hidden" animate="show"`, which means ever
 
 | # | Gap | Severity | Effort |
 |---|---|---|---|
-| A | Rebook no client pre-fill (incomplete) | High | Medium |
-| B | Per-service price never renders | Medium | Low |
-| E | Silent note insert failure | Medium | Low |
-| F | Undo button dead | Medium | Low |
+| A | NO_SHOW status uppercase bug | Critical | Low |
+| B | Promise chain incorrect for cancel note | Medium | Low |
+| F | Notes button doesn't navigate to Notes tab | Low | Low |
+| E | Note/picker state not reset on appointment change | Low | Low |
 | C | No loading skeleton | Low | Medium |
-| G | formatDate signature risk | Low | Low |
-| H | Stagger re-trigger on tab switch | Low | Low |
-| D | Mobile panel optimization | Low | High |
+| D | Mobile panel not optimized | Low | High |
 
 ## Recommended Approach
 
-Address A, B, E, F, G, H in a single pass (all low-to-medium effort). C and D can follow as a polish pass.
+Address A, B, E, and F in a single pass (all low effort). C and D follow as a polish pass.
 
 ### Technical Details
 
-**A -- Rebook Pre-Fill:**
-- Add state: `const [rebookData, setRebookData] = useState<{...} | null>(null)`
-- In `onRebook`: populate with `clientId`, `clientName`, `staffUserId`, `staffName`, `selectedServices` from the appointment
-- Pass `initialDraftData={activeDraft ? ... : rebookData ? rebookData : undefined}` to `QuickBookingPopover`
-- Clear `rebookData` when popover closes
+**A -- NO_SHOW Status Fix:**
+- Read `usePhorestCalendar` to find the `updateStatus` mutation
+- Locate where status is being uppercased or mapped
+- Ensure `no_show` passes through correctly to the edge function, or update the edge function to handle `NO_SHOW` -> `no_show` mapping
 
-**B -- Per-Service Price:**
-- In `useServiceLookup.ts`: add `price` to the select query and `ServiceLookupEntry` interface
-- In `AppointmentDetailSheet.tsx` line 677-681: render `svc.price` when available (wrapped in `BlurredAmount`)
+**B -- Promise Chain Fix:**
+- Replace lines 459-468 in `Schedule.tsx`:
+```typescript
+supabase
+  .from('appointment_notes')
+  .insert({
+    phorest_appointment_id: selectedAppointment.phorest_id || selectedAppointment.id,
+    author_id: user.id,
+    note: noteText,
+    is_private: false,
+  })
+  .then(({ error }) => {
+    if (error) toast.warning('Cancellation reason could not be saved');
+  });
+```
 
-**E -- Error Handling:**
-- Add `.catch(() => toast.warning('Cancellation reason could not be saved'))` to the supabase insert chain
+**E -- Reset States on Appointment Change:**
+- Extend the existing `useEffect` at line 171-173 in `AppointmentDetailSheet.tsx` to also reset `newNote`, `newClientNote`, `isPrivateNote`, `isPrivateClientNote`, `showAssistantPicker`
 
-**F -- Undo Button:**
-- Hide the Undo button by not rendering it when `onUndo` is undefined (add conditional in `ScheduleActionBar.tsx`)
-
-**G -- formatDate:**
-- Replace `formatDate(parseISO(lastVisitDate), 'MMM d')` with `format(parseISO(lastVisitDate), 'MMM d')` using date-fns directly
-
-**H -- Stagger Re-trigger:**
-- Change `initial="hidden"` to `initial={false}` on tab content `motion.div` containers, and only use `initial="hidden"` on first mount via a ref flag
+**F -- Notes Tab Navigation:**
+- Add optional `initialTab` prop to `AppointmentDetailSheet`
+- In `Schedule.tsx` `handleNotes`, set `setDetailOpen(true)` and pass `initialTab="notes"`
+- In `AppointmentDetailSheet`, when `initialTab` changes and panel opens, set `activeTab` to `initialTab`
 
