@@ -479,7 +479,7 @@ function AppointmentCard({
           </div>
         </div>
       </TooltipTrigger>
-      <TooltipContent side="bottom" sideOffset={0} className="max-w-xs !fixed !left-1/2 !top-1/2 !-translate-x-1/2 !-translate-y-1/2 !transform z-[100]">
+      <TooltipContent side="top" align="center" sideOffset={8} collisionPadding={16} className="max-w-sm z-[100]">
         <div className="space-y-1.5">
           <div className="font-medium flex items-center gap-1.5">
             {appointment.client_name}
