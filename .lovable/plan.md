@@ -1,99 +1,100 @@
 
 
-# Fix: Wire Appointment Cards to Service Category Colors + Multi-Service Color Banding
+# Enhance Appointment Card: Phone Formatting, Stylist Name, Assistant Name
 
-## Root Cause (Why the card is solid green)
+## Current Issues (from screenshot)
 
-Two issues combine to produce the wrong color:
-
-1. **`color_by` is stuck on `'status'`** -- The existing user's `calendar_preferences` row still has `color_by: 'status'` from before we changed the default. So confirmed appointments render with the green status color, not service category colors.
-
-2. **`service_category` is never set on new bookings** -- The `create-phorest-booking` edge function builds the appointment record but never includes `service_category` in the insert. It is always NULL. Even if `color_by` were `'service'`, the lookup would hit the fallback gray color.
-
-## Multi-Service Color Banding (New Feature)
-
-For appointments with multiple services (e.g., "Glaze Add On, Signature Haircut"), the card should display stacked color bands proportional to each service's duration, sorted largest-to-smallest from top to bottom.
-
-The data needed (category + duration per service) already exists in `phorest_services` and can be resolved at render time.
+1. **Phone number is raw digits** -- "14805430240" displayed unformatted on the card. Should be "(480) 543-0240" (strip leading country code 1, then format with parentheses and dashes).
+2. **No stylist name** -- The card shows client name, services, and time but no indication of which stylist is assigned. In DayView, stylists are column headers so it's implicit, but in WeekView/AgendaView it's critical. Even in DayView, it's useful for multi-column overlap awareness.
+3. **No assistant name** -- When an assistant is assigned (indicated by the Users icon), the assistant's name is not shown. Only a generic icon or "ASSISTING" badge appears.
 
 ## Changes
 
-### 1. Update existing user's calendar preference
+### 1. Fix phone formatting across all views
 
-Run a data fix to set `color_by = 'service'` for existing users who still have `'status'`.
+**Files:** `DayView.tsx`, `WeekView.tsx`
 
-### 2. Fix edge function to set `service_category` on new bookings
+Replace the `formatPhone` function that currently just returns raw digits:
 
-**File:** `supabase/functions/create-phorest-booking/index.ts`
-
-- When fetching service details (line 214-217), also select `category`
-- If all services share the same category, set `service_category` to that value
-- If mixed categories, set `service_category` to the category of the longest-duration service (primary category)
-
-### 3. Create a service lookup hook for render-time category resolution
-
-**File:** `src/hooks/useServiceLookup.ts` (new)
-
-- Fetches all active services from `phorest_services` with `name`, `category`, `duration_minutes`
-- Returns a Map keyed by service name for O(1) lookup
-- Used by appointment cards to resolve per-service categories when `service_category` is null or when multi-service banding is needed
-
-### 4. Update DayView AppointmentCard to support multi-service color banding
-
-**File:** `src/components/dashboard/schedule/DayView.tsx`
-
-- Accept the service lookup map as a prop
-- Parse `service_name` by comma to get individual service names
-- Look up each service's category and duration from the lookup map
-- Sort by duration descending (biggest block on top)
-- Render stacked color bands as absolutely-positioned divs within the card, each sized proportionally to its share of total duration
-- Text content overlays the bands (positioned with z-index above the bands)
-- Single-service appointments continue to render as a solid color (no visual change)
-
-### 5. Update WeekView AppointmentCard with the same banding logic
-
-**File:** `src/components/dashboard/schedule/WeekView.tsx`
-
-- Same multi-service color banding as DayView
-- For very compact cards (under 30min), skip banding and use the primary service's color
-
-### 6. Fix null `service_category` on existing appointments
-
-Run a data fix to update the two Eric Day appointments with the correct `service_category` based on their services.
-
-### 7. Pass service lookup from Schedule page
-
-**File:** `src/pages/dashboard/Schedule.tsx`
-
-- Call `useServiceLookup()` and pass the result to DayView and WeekView
-
-## Visual Behavior
-
-For a 90-minute appointment with "Signature Haircut" (60min, Haircuts category) and "Glaze Add On" (30min, Color category):
-
-```text
-+---------------------------+
-|  Haircuts color (67%)     |  <- light blue (#e0f2fe)
-|  Client Name, Phone       |
-|                           |
-|---------------------------|
-|  Color color (33%)        |  <- pink (#fbcfe8)
-|  12:00 PM - 1:30 PM       |
-+---------------------------+
+```
+// Current (broken)
+function formatPhone(phone: string | null): string {
+  if (!phone) return '';
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length === 10) return digits; // just returns raw digits!
+  return phone;
+}
 ```
 
-- Biggest time block on top, smallest on bottom
-- Text overlays all bands with a subtle text-shadow for readability
-- Single-service appointments show a single solid color (unchanged behavior)
+With proper formatting using the existing `formatPhoneDisplay` utility from `src/lib/utils.ts` which already handles 10-digit and 11-digit (with leading 1) US numbers and formats as `(XXX) XXX-XXXX`.
+
+- Import `formatPhoneDisplay` from `@/lib/utils`
+- Replace all `formatPhone(...)` calls with `formatPhoneDisplay(...)`
+- Remove the local `formatPhone` function
+
+### 2. Add stylist name to non-compact appointment cards
+
+**Files:** `DayView.tsx`, `WeekView.tsx`
+
+The `PhorestAppointment` type already includes `stylist_profile?: { display_name, full_name, photo_url }`. This data is already joined in the query.
+
+- For non-compact DayView cards (duration > 30min): Add stylist name on a new line below service name, using `formatDisplayName` from `@/lib/utils` (shows "FirstName L." format)
+- For WeekView medium and large cards: Same treatment -- add stylist display name below service name
+- Style: `text-xs opacity-70` to keep it secondary to client name and service
+
+### 3. Show assistant name on appointment cards when assigned
+
+**Files:** `DayView.tsx`, `WeekView.tsx`
+
+Currently, when `hasAssistants` is true, only a `Users` icon is shown. We need to show the assistant's name.
+
+The challenge: assistant data (names) is not currently available on the appointment card props. The `appointmentsWithAssistants` is just a `Set<string>` of appointment IDs -- it doesn't carry names.
+
+**Approach:** 
+- Create a new hook `useAppointmentAssistantNames` that batch-fetches assistant names for all visible appointment IDs that have assistants
+- Returns a `Map<appointmentId, assistantDisplayName[]>`
+- Pass this map from Schedule.tsx down to DayView/WeekView
+- On the card, when `hasAssistants` is true, show "w/ FirstName L." next to the Users icon
+
+**New file:** `src/hooks/useAppointmentAssistantNames.ts`
+- Accepts `appointmentIds: string[]` (the IDs from `appointmentsWithAssistants`)
+- Queries `appointment_assistants` joined with `employee_profiles` for display names
+- Returns `Map<string, string[]>` mapping appointment ID to array of assistant display names
+
+**Schedule.tsx:**
+- Call `useAppointmentAssistantNames` with the set of appointment IDs that have assistants
+- Pass the resulting map to DayView and WeekView
+
+**DayView.tsx / WeekView.tsx:**
+- Add `assistantNamesMap?: Map<string, string[]>` to props
+- On non-compact cards with assistants, render "w/ AssistantName" in `text-xs opacity-70`
+
+### 4. Tooltip enhancement
+
+**Files:** `DayView.tsx`, `WeekView.tsx`
+
+Update the tooltip to also show:
+- Formatted phone number (using `formatPhoneDisplay`)
+- Stylist name
+- Assistant name(s) if any
+
+## Gap Analysis and Additional Suggestions
+
+After implementing these changes, remaining gaps include:
+
+1. **AgendaView parity** -- AgendaView should also show formatted phone, stylist name, and assistant names
+2. **Client avatar** -- Cards could show a tiny avatar initial circle for quick client identification
+3. **Service duration per service** -- For multi-service cards, showing individual durations (e.g., "Haircut 45min + Glaze 30min") would help stylists plan
+4. **Price visibility** -- `total_price` exists on the appointment but is never shown on cards; could be useful for front desk staff
+5. **New client indicator** -- `is_new_client` flag exists but isn't visually indicated on cards (e.g., a small star or "NEW" badge)
 
 ## File Summary
 
 | Action | File |
 |--------|------|
-| Data fix | Update `calendar_preferences` to `color_by = 'service'` for existing users |
-| Data fix | Update Eric Day appointments with correct `service_category` |
-| Modify | `supabase/functions/create-phorest-booking/index.ts` -- set `service_category` from service data |
-| Create | `src/hooks/useServiceLookup.ts` -- service name to category/duration lookup |
-| Modify | `src/pages/dashboard/Schedule.tsx` -- pass service lookup to views |
-| Modify | `src/components/dashboard/schedule/DayView.tsx` -- multi-service color banding |
-| Modify | `src/components/dashboard/schedule/WeekView.tsx` -- multi-service color banding |
+| Create | `src/hooks/useAppointmentAssistantNames.ts` -- batch fetch assistant display names |
+| Modify | `src/pages/dashboard/Schedule.tsx` -- call new hook, pass assistant names map |
+| Modify | `src/components/dashboard/schedule/DayView.tsx` -- format phone, add stylist name, show assistant name |
+| Modify | `src/components/dashboard/schedule/WeekView.tsx` -- format phone, add stylist name, show assistant name |
+
+No database changes. No new dependencies.
