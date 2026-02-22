@@ -1,4 +1,5 @@
 import { useMemo, useState, useRef, useEffect } from 'react';
+import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
 import { ClosedBadge } from '@/components/dashboard/ClosedBadge';
 import { isClosedOnDate, getLocationHoursForDate, type HoursJson, type HolidayClosure } from '@/hooks/useLocations';
 import { 
@@ -147,8 +148,9 @@ function AppointmentCard({
     }));
   }, [appointment.service_name, appointment.service_category, serviceLookup, categoryColors, useCategoryColor, displayGradient, isCompact]);
 
-  // Dark mode detection and solid dark style
-  const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
+  // Dark mode detection (reactive via context)
+  const { resolvedTheme } = useDashboardTheme();
+  const isDark = resolvedTheme === 'dark';
   const darkStyle = useMemo(() => {
     if (!isDark || !useCategoryColor || displayGradient) return null;
     return getDarkCategoryStyle(catColor.bg);
