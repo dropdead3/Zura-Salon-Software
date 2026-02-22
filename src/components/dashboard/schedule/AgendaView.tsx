@@ -6,7 +6,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Phone, Clock, MapPin, User, ChevronRight, Repeat, Users, Star } from 'lucide-react';
+import { Phone, Clock, MapPin, User, ChevronRight, Repeat, Users, Star, ArrowRightLeft } from 'lucide-react';
+import { formatRelativeTime } from '@/lib/format';
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
 import { APPOINTMENT_STATUS_BADGE } from '@/lib/design-tokens';
 import { getClientInitials, getAvatarColor, formatServicesWithDuration } from '@/lib/appointment-card-utils';
@@ -105,6 +106,9 @@ function AppointmentCard({
                     {appointment.recurrence_group_id && (
                       <Repeat className="h-3.5 w-3.5 text-muted-foreground" />
                     )}
+                    {(appointment as any).rescheduled_at && (
+                      <ArrowRightLeft className="h-3.5 w-3.5 text-blue-500 dark:text-blue-400" />
+                    )}
                     {isAssisting && (
                       <span className="bg-accent text-accent-foreground text-[10px] px-1.5 py-0.5 rounded-sm font-medium">ASSISTING</span>
                     )}
@@ -112,6 +116,12 @@ function AppointmentCard({
                   <p className="text-sm text-muted-foreground">
                     {formatServicesWithDuration(appointment.service_name, serviceLookup) || appointment.service_name}
                   </p>
+                  {(appointment as any).rescheduled_at && (appointment as any).rescheduled_from_time && (
+                    <p className="text-xs text-blue-600 dark:text-blue-400 italic flex items-center gap-1 mt-0.5">
+                      <ArrowRightLeft className="h-3 w-3 shrink-0" />
+                      Moved from {(appointment as any).rescheduled_from_date !== appointment.appointment_date ? `${(appointment as any).rescheduled_from_date} ` : ''}{formatTime12h((appointment as any).rescheduled_from_time)} · {formatRelativeTime((appointment as any).rescheduled_at)}
+                    </p>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
