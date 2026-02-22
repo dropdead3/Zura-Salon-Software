@@ -143,24 +143,25 @@ function ClientListWithAlphabet({ clients, isLoading, clientSearch, onSelectClie
   const sortedClients = useMemo(() => [...clients].sort((a, b) => getFirstNameForSort(a.name).toLowerCase().localeCompare(getFirstNameForSort(b.name).toLowerCase())), [clients]);
   const availableLetters = useMemo(() => { const s = new Set<string>(); sortedClients.forEach(c => s.add(getSortLetterForClient(c.name))); return s; }, [sortedClients]);
   const firstClientPerLetter = useMemo(() => { const m = new Map<string, string>(); sortedClients.forEach(c => { const l = getSortLetterForClient(c.name); if (!m.has(l)) m.set(l, c.id); }); return m; }, [sortedClients]);
-  const scrollToLetter = useCallback((letter: string) => { setActiveLetter(letter); letterRefs.current.get(letter)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, []);
+  const filteredClients = useMemo(() => { if (!activeLetter) return sortedClients; return sortedClients.filter(c => getSortLetterForClient(c.name) === activeLetter); }, [sortedClients, activeLetter]);
+  const handleLetterClick = useCallback((letter: string) => { setActiveLetter(prev => prev === letter ? null : letter); }, []);
   const setLetterRef = useCallback((letter: string, el: HTMLDivElement | null) => { if (el) letterRefs.current.set(letter, el); else letterRefs.current.delete(letter); }, []);
   const gi = (name: string) => { const p = name.trim().split(/\s+/); return p.length >= 2 ? (p[0][0] + p[1][0]).toUpperCase() : name.slice(0, 2).toUpperCase(); };
   const fp = (phone: string | null) => { if (!phone) return null; const d = phone.replace(/\D/g, ''); if (d.length === 10) return `(${d.slice(0,3)}) ${d.slice(3,6)}-${d.slice(6)}`; if (d.length === 11 && d[0] === '1') return `(${d.slice(1,4)}) ${d.slice(4,7)}-${d.slice(7)}`; return phone; };
   const showStrip = sortedClients.length > 0 && !isLoading;
-  const handleTouchMove = useCallback((e: React.TouchEvent) => { const t = e.touches[0]; const el = document.elementFromPoint(t.clientX, t.clientY); const l = el?.getAttribute('data-letter'); if (l && availableLetters.has(l)) scrollToLetter(l); }, [availableLetters, scrollToLetter]);
+  const handleTouchMove = useCallback((e: React.TouchEvent) => { const t = e.touches[0]; const el = document.elementFromPoint(t.clientX, t.clientY); const l = el?.getAttribute('data-letter'); if (l && availableLetters.has(l)) handleLetterClick(l); }, [availableLetters, handleLetterClick]);
 
   return (
     <div className="flex-1 relative min-h-0">
       <ScrollArea className="h-full">
-        <div className={cn('p-2', showStrip && 'pr-7')}>
+        <div className={cn('p-2', showStrip && 'pr-8')}>
           {isLoading ? (
             <div className="flex items-center justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
-          ) : sortedClients.length === 0 ? (
-            <div className="text-center py-8"><p className="text-muted-foreground text-sm">{clientSearch ? 'No clients found' : 'Start typing to search'}</p></div>
+          ) : filteredClients.length === 0 ? (
+            <div className="text-center py-8"><p className="text-muted-foreground text-sm">{activeLetter ? `No clients starting with "${activeLetter}"` : clientSearch ? 'No clients found' : 'Start typing to search'}</p>{activeLetter && <button className="text-primary text-xs mt-1 hover:underline" onClick={() => setActiveLetter(null)}>Clear filter</button>}</div>
           ) : (
             <div className="space-y-0.5">
-              {sortedClients.map((client) => {
+              {filteredClients.map((client) => {
                 const letter = getSortLetterForClient(client.name);
                 const isFirst = firstClientPerLetter.get(letter) === client.id;
                 return (
@@ -184,11 +185,11 @@ function ClientListWithAlphabet({ clients, isLoading, clientSearch, onSelectClie
         </div>
       </ScrollArea>
       {showStrip && (
-        <div className="absolute right-0 top-0 bottom-0 w-5 flex flex-col items-center justify-center z-10 select-none" onTouchMove={handleTouchMove}>
+        <div className="absolute right-1 top-0 bottom-0 w-5 flex flex-col items-center justify-center z-10 select-none" onTouchMove={handleTouchMove}>
           {ALPHABET.map((letter) => {
             const available = availableLetters.has(letter);
             const active = activeLetter === letter;
-            return (<button key={letter} data-letter={letter} className={cn('font-sans leading-none py-[1px] w-full text-center transition-all', available ? active ? 'text-primary text-[11px]' : 'text-muted-foreground text-[10px] hover:text-foreground' : 'text-muted-foreground/30 text-[10px] pointer-events-none')} onClick={() => available && scrollToLetter(letter)} tabIndex={-1} type="button">{letter}</button>);
+            return (<button key={letter} data-letter={letter} className={cn('font-sans leading-none py-[1px] w-full text-center transition-all', available ? active ? 'text-primary font-medium text-[11px]' : 'text-muted-foreground text-[10px] hover:text-foreground' : 'text-muted-foreground/30 text-[10px] pointer-events-none')} onClick={() => available && handleLetterClick(letter)} tabIndex={-1} type="button">{letter}</button>);
           })}
         </div>
       )}
