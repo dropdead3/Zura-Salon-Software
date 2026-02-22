@@ -464,7 +464,7 @@ function AppointmentCard({
                     }}
                   >
                     {duration >= 60 && (
-                      <span className="absolute bottom-0 left-1.5 right-1.5 text-[10px] opacity-90 truncate"
+                      <span className="absolute top-0 left-1.5 right-1.5 text-[10px] opacity-90 truncate"
                         style={{ textShadow: '0 0 3px rgba(0,0,0,0.15)' }}>
                         {band.name} <span className="opacity-70">{band.duration}min</span>
                       </span>
