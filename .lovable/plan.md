@@ -1,70 +1,67 @@
 
 
-# Draft Bookings: Compare View + Auto-Save Feedback + E2E Test
+# Alphabetical Quick-Jump Selector for Client Step
 
-## 1. Side-by-Side Draft Comparison
+## Overview
 
-Add a "Compare" mode to `DraftBookingsSheet` that lets staff select two drafts for the same client and view them in a split layout.
+Add a vertical A-Z letter strip along the right edge of the client list in the booking wizard's Client step. Tapping a letter instantly scrolls to the first client whose last name (or first name, based on sort) starts with that letter. Letters with no matching clients appear dimmed. This is the same pattern used in phone contact lists.
 
-**How it works:**
-- When a client group has 2+ drafts, each draft card gets a checkbox-style "Compare" toggle button
-- Selecting exactly two drafts activates a comparison dialog (full-width Dialog, not the sheet)
-- The comparison dialog shows two columns, each rendering the draft's details: services, stylist, date/time, notes, step progress, created-by, and creation timestamp
-- Differences are highlighted with a subtle accent background (e.g., `bg-primary/10` on fields that differ between the two drafts)
-- Each column has a "Resume This One" button at the bottom
-- A "Cancel" button returns to the sheet
+## How It Works
 
-**New component:** `DraftCompareDialog.tsx`
-- Accepts two `DraftBooking` objects
-- Renders a two-column layout inside a `Dialog`
-- Compares fields and marks divergences with a highlight class
-- "Resume" on either side triggers `onResume` and closes both the dialog and the sheet
+1. A narrow vertical strip of A-Z letters is positioned on the right side of the ScrollArea
+2. Clients are sorted alphabetically by last name (falling back to first name)
+3. Tapping a letter scrolls the list to the first client starting with that letter
+4. Letters with no matching clients are dimmed (lower opacity, no pointer)
+5. The currently active letter (based on scroll position) is subtly highlighted
+6. On touch devices, dragging a finger along the strip continuously scrolls to each letter
 
-**Changes to `DraftBookingsSheet.tsx`:**
-- Add `compareSelection` state: `Set<string>` (draft IDs) scoped per client group
-- Add a small "Compare" toggle on each `DraftCard` (visible only when client group has 2+ drafts)
-- When `compareSelection.size === 2`, open `DraftCompareDialog`
-- Disable the compare toggle when 2 are already selected (unless deselecting)
+## Visual Design
 
-## 2. Auto-Save Notification Enhancement
+- Strip width: ~20px, positioned absolute right-0 inside the scroll container
+- Letters: font-sans, text-[10px], text-muted-foreground
+- Active letter: text-primary, slightly larger
+- Disabled letters: opacity-30
+- No background -- just floating letters over a subtle backdrop-blur area
 
-Replace the plain `toast.info('Booking saved as draft')` with a richer notification that includes a subtle entrance animation and contextual detail.
+## Technical Details
 
-**Changes to `QuickBookingPopover.tsx`:**
-- Replace the `toast.info(...)` call with a `toast` that uses a custom description showing what was saved (e.g., client name, service count)
-- Use `toast.success` with icon styling (checkmark) for clearer positive feedback
-- Example:
-  ```
-  toast.success('Draft saved', {
-    description: `${selectedClient?.name || 'No client'} - ${selectedServices.length} service(s)`,
-  });
-  ```
+### Changes to `ClientStep.tsx`
 
-This leverages the existing Sonner toast system already configured with glass styling and animations. No new component needed -- Sonner's built-in slide-in animation already provides the motion feedback.
+1. **Sort clients alphabetically** before rendering (by last name extracted from `client.name`)
+2. **Build a letter index** -- a `Map<string, number>` mapping each letter to the index of the first client starting with that letter
+3. **Add refs** -- individual refs or a single container ref with `scrollIntoView` targeting the first client of each letter group
+4. **Render the A-Z strip** as a vertical flex column of buttons positioned absolutely on the right side of the ScrollArea
+5. **Letter tap handler** -- finds the first client for that letter and scrolls to it using `scrollIntoView({ behavior: 'smooth', block: 'start' })`
+6. **Active letter tracking** (optional, lightweight) -- use an IntersectionObserver or simply derive from scroll position which letter section is currently visible
 
-## 3. End-to-End Test
+### Component structure
 
-Create a Playwright test that validates the full draft booking lifecycle.
+```
+<div className="flex-1 relative">  {/* wrapper */}
+  <ScrollArea ref={scrollRef}>
+    {/* existing client list, now sorted */}
+    {/* letter group anchors: <div id="letter-A" /> before first A client */}
+  </ScrollArea>
+  <AlphabetStrip
+    availableLetters={availableLetters}
+    activeLetter={activeLetter}
+    onLetterClick={scrollToLetter}
+  />
+</div>
+```
 
-**New file:** `e2e/draft-bookings.spec.ts`
+### AlphabetStrip sub-component (inline in ClientStep.tsx)
 
-Test flow:
-1. Navigate to `/dashboard/schedule`
-2. Open the booking wizard (click new booking button)
-3. Select a service, then close the wizard without completing
-4. Verify the "Drafts" badge count increments
-5. Open the drafts sheet
-6. Verify the draft appears grouped under the correct client (or "No Client Selected")
-7. Click "Resume" on the draft
-8. Verify the booking wizard reopens with the saved service pre-selected
-9. Close the wizard again, reopen drafts, verify the draft is updated (not duplicated)
+- Renders A-Z as a vertical column
+- Each letter is a small button
+- `availableLetters: Set<string>` controls which are tappable vs dimmed
+- `onLetterClick(letter)` triggers the scroll
 
 ## File Summary
 
 | Action | File |
 |--------|------|
-| Create | `src/components/dashboard/schedule/DraftCompareDialog.tsx` -- side-by-side comparison dialog |
-| Modify | `src/components/dashboard/schedule/DraftBookingsSheet.tsx` -- compare selection state, compare toggle on cards |
-| Modify | `src/components/dashboard/schedule/QuickBookingPopover.tsx` -- enhanced auto-save toast with description |
-| Create | `e2e/draft-bookings.spec.ts` -- end-to-end test for draft lifecycle |
+| Modify | `src/components/dashboard/schedule/booking/ClientStep.tsx` -- add alphabet strip, sort clients, scroll-to-letter logic |
+
+No database changes. No new dependencies. Single file modification.
 
