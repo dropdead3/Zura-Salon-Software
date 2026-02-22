@@ -1,44 +1,72 @@
 
 
-# Fix: Light Mode Card Styling Regression
+# Fix: Ensure Light Mode Cards Are Always Solid and Opaque
 
 ## Problem
 
-The dark mode `isDark` detection in DayView and WeekView reads directly from the DOM (`document.documentElement.classList.contains('dark')`) instead of using React state. This is not reactive -- when you switch themes, the DOM class updates but the appointment card components don't re-render because `isDark` isn't tied to React's rendering cycle. This causes dark mode styles (translucent fills, category-colored text) to bleed into light mode.
+After dark mode styling changes, light mode appointment cards can appear translucent or show wrong text colors. The root cause is that `getDarkCategoryStyle` produces `rgba()` translucent fills. If the `resolvedTheme` from `useDashboardTheme()` has any delay or mismatch during initial render, dark mode's translucent styles can leak into light mode.
+
+Additionally, the light mode style block lacks explicit properties that would guarantee solid rendering regardless of any inherited or transitional styles.
 
 ## Solution
 
-Replace the raw DOM check with the `useDashboardTheme()` hook, which provides a reactive `resolvedTheme` value that triggers re-renders when the theme changes.
+Harden the light mode style branch to be fully self-contained and explicitly opaque, ensuring it can never appear translucent regardless of render timing or theme detection edge cases.
 
 ---
 
-## Change 1: DayView -- Use reactive theme detection
+## Change 1: Add explicit light mode properties in DayView
 
-**File**: `src/components/dashboard/schedule/DayView.tsx`
+**File**: `src/components/dashboard/schedule/DayView.tsx` (lines 332-336)
 
-Replace:
+Current light mode style:
 ```typescript
-const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
+: useCategoryColor ? {
+  backgroundColor: catColor.bg,
+  color: catColor.text,
+  borderLeftColor: catColor.bg,
+} : {}
 ```
 
-With:
+Replace with explicit, fully-qualified light mode style:
 ```typescript
-// isDark is derived from the DashboardTheme context (reactive)
+: useCategoryColor ? {
+  backgroundColor: catColor.bg,
+  color: catColor.text,
+  borderLeftColor: catColor.bg,
+  borderWidth: '0 0 0 4px',
+  borderStyle: 'solid',
+  boxShadow: 'none',
+  opacity: 1,
+  backdropFilter: 'none',
+} : {}
 ```
 
-The component already receives props from its parent. We need to either:
-- Import and use `useDashboardTheme()` directly in the `AppointmentBlock` sub-component, or
-- Pass `resolvedTheme` as a prop from the parent Schedule page
+This ensures:
+- `boxShadow: 'none'` clears any residual dark mode glow/ring
+- `opacity: 1` guarantees fully opaque rendering
+- `backdropFilter: 'none'` prevents any glassmorphism bleed
+- `borderWidth`/`borderStyle` are explicit so Tailwind classes don't create conflicts
 
-Since `AppointmentBlock` is defined inside `DayView.tsx`, the simplest approach is to import `useDashboardTheme` and call it within the component that computes `darkStyle`.
+## Change 2: Same hardening in WeekView
 
-**Specific change**: Replace `const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark')` with `const { resolvedTheme } = useDashboardTheme()` and `const isDark = resolvedTheme === 'dark'`.
+**File**: `src/components/dashboard/schedule/WeekView.tsx` (lines 189-193)
 
-## Change 2: WeekView -- Same reactive fix
+Same replacement -- add `boxShadow: 'none'`, `opacity: 1`, `backdropFilter: 'none'`, and explicit border properties to the light mode style object.
 
-**File**: `src/components/dashboard/schedule/WeekView.tsx`
+## Change 3: Guard darkStyle with explicit null fallback
 
-Same replacement: swap the DOM classList check for `useDashboardTheme().resolvedTheme === 'dark'`.
+**Files**: `DayView.tsx` and `WeekView.tsx`
+
+Add a safety check so `darkStyle` is definitively null when not in dark mode:
+
+```typescript
+const darkStyle = useMemo(() => {
+  if (!isDark || !useCategoryColor || displayGradient) return null;
+  return getDarkCategoryStyle(catColor.bg);
+}, [isDark, useCategoryColor, displayGradient, catColor.bg]);
+```
+
+This is already correct, but we add an additional runtime guard in the style ternary: `useCategoryColor && isDark && darkStyle` instead of just `useCategoryColor && darkStyle` -- making the dark check explicit in both the memo AND the render path.
 
 ---
 
@@ -48,8 +76,8 @@ Same replacement: swap the DOM classList check for `useDashboardTheme().resolved
 
 | File | Change |
 |---|---|
-| `src/components/dashboard/schedule/DayView.tsx` | Import `useDashboardTheme`, replace DOM check with reactive `resolvedTheme === 'dark'` |
-| `src/components/dashboard/schedule/WeekView.tsx` | Import `useDashboardTheme`, replace DOM check with reactive `resolvedTheme === 'dark'` |
+| `src/components/dashboard/schedule/DayView.tsx` | Harden light mode style with explicit opacity, boxShadow, backdropFilter; add `isDark` guard to style ternary |
+| `src/components/dashboard/schedule/WeekView.tsx` | Same hardening and guard |
 
 ### No new files, no new dependencies, no database changes.
 
