@@ -26,6 +26,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,9 +45,10 @@ import {
 } from '@/components/ui/alert-dialog';
 import {
   Phone, Mail, Calendar, Clock, User, MapPin, DollarSign,
-  ChevronDown, Copy, CheckCircle, UserCheck, XCircle, AlertTriangle,
+  ChevronDown, Copy, Check, CheckCircle, UserCheck, XCircle, AlertTriangle,
   MessageSquare, Lock, Trash2, Loader2, UserPlus, X, Repeat, RotateCcw,
   CreditCard, CalendarClock, RefreshCw, Star, TrendingUp, ExternalLink,
+  UserX,
 } from 'lucide-react';
 import { cn, formatPhoneDisplay } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -103,6 +105,21 @@ function getDurationMinutes(start: string, end: string): number {
   return (eh * 60 + em) - (sh * 60 + sm);
 }
 
+// ─── Copy button with check feedback ────────────────────────────
+function CopyButton({ onCopy }: { onCopy: () => void }) {
+  const [copied, setCopied] = useState(false);
+  const handleClick = () => {
+    onCopy();
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+  return (
+    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleClick}>
+      {copied ? <Check className="h-3 w-3 text-green-600" /> : <Copy className="h-3 w-3" />}
+    </Button>
+  );
+}
+
 // ─── Props ──────────────────────────────────────────────────────
 interface AppointmentDetailSheetProps {
   appointment: PhorestAppointment | null;
@@ -143,10 +160,17 @@ export function AppointmentDetailSheet({
   const [showCancelFutureConfirm, setShowCancelFutureConfirm] = useState(false);
   const [newClientNote, setNewClientNote] = useState('');
   const [isPrivateClientNote, setIsPrivateClientNote] = useState(false);
+  // Tab state -- resets to "details" when appointment changes (#10)
+  const [activeTab, setActiveTab] = useState('details');
 
   const isManagerOrAdmin = roles.some(r => ['admin', 'super_admin', 'manager'].includes(r));
   const canAddNotes = hasPermission('add_appointment_notes');
   const canManageAssistants = hasPermission('create_appointments') || hasPermission('view_team_appointments');
+
+  // Reset tab to details when appointment changes (#10)
+  useEffect(() => {
+    setActiveTab('details');
+  }, [appointment?.id]);
 
   // ─── Escape Key Handler ─────────────────────────────────────
   useEffect(() => {
@@ -266,7 +290,7 @@ export function AppointmentDetailSheet({
     if (!appointment?.service_name) return [];
     return appointment.service_name.split(',').map(s => s.trim()).filter(Boolean).map(name => {
       const info = serviceLookup?.get(name);
-      return { name, duration: info?.duration_minutes || null, category: info?.category || null };
+      return { name, duration: info?.duration_minutes || null, category: info?.category || null, price: info ? (serviceLookup?.get(name) as any)?.price ?? null : null };
     });
   }, [appointment?.service_name, serviceLookup]);
 
@@ -278,8 +302,21 @@ export function AppointmentDetailSheet({
     const tenure = clientRecord?.client_since
       ? differenceInDays(new Date(), parseISO(clientRecord.client_since))
       : null;
-    return { visitCount: completed.length, totalSpend, tenure };
+    // Average visit frequency (#6)
+    let avgFrequencyWeeks: number | null = null;
+    if (completed.length >= 2 && tenure != null && tenure > 0) {
+      avgFrequencyWeeks = Math.round((tenure / 7) / (completed.length - 1) * 10) / 10;
+    }
+    return { visitCount: completed.length, totalSpend, tenure, avgFrequencyWeeks };
   }, [visitHistory, clientRecord]);
+
+  // Last visit date for header (#4)
+  const lastVisitDate = useMemo(() => {
+    if (visitHistory.length === 0) return null;
+    // Find the most recent completed visit that isn't the current appointment
+    const past = visitHistory.find(v => v.id !== appointment?.id && v.status === 'completed');
+    return past?.appointment_date || null;
+  }, [visitHistory, appointment?.id]);
 
   // ─── Service Frequency (for History tab) ─────────────────────
   const topServices = useMemo(() => {
@@ -302,6 +339,9 @@ export function AppointmentDetailSheet({
     if (!clientRecord?.preferred_stylist_id || !appointment?.stylist_user_id) return false;
     return clientRecord.preferred_stylist_id !== appointment.stylist_user_id;
   }, [clientRecord, appointment]);
+
+  // Walk-in detection (#7)
+  const isWalkIn = appointment ? !appointment.phorest_client_id : false;
 
   if (!appointment) return null;
 
@@ -347,12 +387,13 @@ export function AppointmentDetailSheet({
     setIsPrivateClientNote(false);
   };
 
+  // FIX #2: Use appointment.id (not phorest_id) to align with Schedule.tsx contract
   const handleStatusChange = (status: AppointmentStatus) => {
     if (status === 'cancelled' || status === 'no_show') {
       setConfirmAction(status);
       setCancelReason('');
     } else {
-      onStatusChange(appointment.phorest_id, status);
+      onStatusChange(appointment.id, status);
     }
   };
 
@@ -363,7 +404,7 @@ export function AppointmentDetailSheet({
         const prefix = confirmAction === 'cancelled' ? '[Cancelled]' : '[No Show]';
         addNote({ note: `${prefix} ${cancelReason.trim()}`, isPrivate: false });
       }
-      onStatusChange(appointment.phorest_id, confirmAction);
+      onStatusChange(appointment.id, confirmAction);
       setConfirmAction(null);
       setCancelReason('');
     }
@@ -453,10 +494,24 @@ export function AppointmentDetailSheet({
                     {initials}
                   </div>
                   <div className="flex-1 min-w-0 pr-8">
-                    <h2 className="font-display text-lg font-medium tracking-wide truncate">{appointment.client_name}</h2>
+                    <div className="flex items-center gap-2">
+                      <h2 className="font-display text-lg font-medium tracking-wide truncate">{appointment.client_name}</h2>
+                      {/* Walk-in badge (#7) */}
+                      {isWalkIn && (
+                        <Badge variant="outline" className="text-[10px] shrink-0 border-amber-300 text-amber-700 dark:text-amber-300">
+                          <UserX className="h-2.5 w-2.5 mr-0.5" /> Walk-In
+                        </Badge>
+                      )}
+                    </div>
                     <p className="text-sm text-muted-foreground truncate mt-0.5">
                       {services.length > 1 ? `${services.length} services` : appointment.service_name}
                     </p>
+                    {/* Last visit date (#4) */}
+                    {lastVisitDate && (
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Last visit: {formatDate(parseISO(lastVisitDate), 'MMM d')}
+                      </p>
+                    )}
                     {/* View Client Profile */}
                     {onOpenClientProfile && appointment.phorest_client_id && (
                       <button
@@ -545,7 +600,7 @@ export function AppointmentDetailSheet({
               </div>
 
               {/* ─── Tabbed Content ───────────────────────────── */}
-              <Tabs defaultValue="details" className="flex-1 flex flex-col overflow-hidden">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
                 <TabsList className="mx-6 mb-0 shrink-0">
                   <TabsTrigger value="details" className="font-sans">Details</TabsTrigger>
                   <TabsTrigger value="history" className="font-sans">History</TabsTrigger>
@@ -607,7 +662,7 @@ export function AppointmentDetailSheet({
 
                     <Separator />
 
-                    {/* Services Breakdown */}
+                    {/* Services Breakdown -- with per-service price (#5) */}
                     <motion.div variants={staggerItem} className="space-y-2">
                       <h4 className={tokens.heading.subsection}>Services</h4>
                       <div className="space-y-1.5">
@@ -619,9 +674,11 @@ export function AppointmentDetailSheet({
                                 <Badge variant="outline" className="text-[10px] shrink-0">{svc.category}</Badge>
                               )}
                             </div>
-                            {svc.duration && (
-                              <span className="text-muted-foreground text-xs shrink-0 ml-2">{svc.duration}min</span>
-                            )}
+                            <div className="flex items-center gap-2 shrink-0 ml-2">
+                              {svc.duration && (
+                                <span className="text-muted-foreground text-xs">{svc.duration}min</span>
+                              )}
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -772,9 +829,7 @@ export function AppointmentDetailSheet({
                               <Phone className="h-3.5 w-3.5 text-muted-foreground" />
                               {formatPhoneDisplay(appointment.client_phone)}
                             </a>
-                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleCopyPhone}>
-                              <Copy className="h-3 w-3" />
-                            </Button>
+                            <CopyButton onCopy={handleCopyPhone} />
                           </div>
                         )}
                         {clientRecord?.email && (
@@ -783,9 +838,7 @@ export function AppointmentDetailSheet({
                               <Mail className="h-3.5 w-3.5 text-muted-foreground" />
                               {clientRecord.email}
                             </a>
-                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleCopyEmail}>
-                              <Copy className="h-3 w-3" />
-                            </Button>
+                            <CopyButton onCopy={handleCopyEmail} />
                           </div>
                         )}
                         {!appointment.client_phone && !clientRecord?.email && (
@@ -794,16 +847,7 @@ export function AppointmentDetailSheet({
                       </div>
                     </motion.div>
 
-                    {/* Booking Notes (POS) */}
-                    {appointment.notes && (
-                      <motion.div variants={staggerItem}>
-                        <Separator className="mb-5" />
-                        <div className="space-y-1">
-                          <h4 className={tokens.heading.subsection}>Booking Notes</h4>
-                          <p className="text-sm text-muted-foreground">{appointment.notes}</p>
-                        </div>
-                      </motion.div>
-                    )}
+                    {/* Removed duplicate Booking Notes from Details tab (#11) -- kept only in Notes tab */}
 
                     {/* Recurrence cancel */}
                     {recurrenceLabel && (
@@ -824,8 +868,16 @@ export function AppointmentDetailSheet({
                   {/* ─── TAB: History ─────────────────────────── */}
                   <TabsContent value="history" className="p-6 pt-4 mt-0">
                     <motion.div variants={staggerContainer} initial="hidden" animate="show" className="space-y-5">
-                    {/* Stats */}
-                    <motion.div variants={staggerItem} className="grid grid-cols-3 gap-3">
+                    {/* Walk-in: collapse history for non-clients (#7) */}
+                    {isWalkIn ? (
+                      <motion.div variants={staggerItem} className="text-center py-8">
+                        <UserX className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                        <p className="text-sm text-muted-foreground">Walk-in client — no history available</p>
+                      </motion.div>
+                    ) : (
+                    <>
+                    {/* Stats -- now 4 tiles with visit frequency (#6) */}
+                    <motion.div variants={staggerItem} className="grid grid-cols-2 gap-3">
                       <div className="rounded-xl border border-border bg-card p-3 text-center">
                         <p className={tokens.kpi.label}>{visitStats.visitCount}</p>
                         <p className="text-[10px] text-muted-foreground mt-0.5">Visits</p>
@@ -841,6 +893,14 @@ export function AppointmentDetailSheet({
                             : '—'}
                         </p>
                         <p className="text-[10px] text-muted-foreground mt-0.5">Tenure</p>
+                      </div>
+                      <div className="rounded-xl border border-border bg-card p-3 text-center">
+                        <p className={tokens.kpi.label}>
+                          {visitStats.avgFrequencyWeeks != null
+                            ? `${visitStats.avgFrequencyWeeks}w`
+                            : '—'}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">Avg Frequency</p>
                       </div>
                     </motion.div>
 
@@ -892,6 +952,8 @@ export function AppointmentDetailSheet({
                         </div>
                       )}
                     </motion.div>
+                    </>
+                    )}
                     </motion.div>
                   </TabsContent>
 
@@ -949,7 +1011,8 @@ export function AppointmentDetailSheet({
 
                     <Separator />
 
-                    {/* Client Notes */}
+                    {/* Client Notes -- collapsed for walk-ins (#7) */}
+                    {!isWalkIn && (
                     <motion.div variants={staggerItem} className="space-y-2">
                       <h4 className={tokens.heading.subsection}>Client Notes</h4>
                       {clientNotesLoading ? (
@@ -999,8 +1062,9 @@ export function AppointmentDetailSheet({
                         </div>
                       )}
                     </motion.div>
+                    )}
 
-                    {/* POS Booking Notes */}
+                    {/* POS Booking Notes -- canonical location (#11) */}
                     {appointment.notes && (
                       <motion.div variants={staggerItem}>
                         <Separator className="mb-5" />
@@ -1018,6 +1082,12 @@ export function AppointmentDetailSheet({
               {/* ─── Footer Action Bar ────────────────────────── */}
               <div className="p-4 border-t border-border/60 bg-card/60 backdrop-blur-md shrink-0">
                 <div className="flex items-center gap-2 flex-wrap">
+                  {/* Confirm (#13) */}
+                  {availableTransitions.includes('confirmed') && (
+                    <Button size={tokens.button.card} onClick={() => handleStatusChange('confirmed')} disabled={isUpdating}>
+                      <CheckCircle className="h-3.5 w-3.5 mr-1" /> Confirm
+                    </Button>
+                  )}
                   {/* Check In */}
                   {availableTransitions.includes('checked_in') && (
                     <Button size={tokens.button.card} onClick={() => handleStatusChange('checked_in')} disabled={isUpdating}>
@@ -1046,6 +1116,12 @@ export function AppointmentDetailSheet({
                   {onRebook && (
                     <Button variant="outline" size={tokens.button.card} onClick={() => onRebook(appointment)}>
                       <RefreshCw className="h-3.5 w-3.5 mr-1" /> Rebook
+                    </Button>
+                  )}
+                  {/* No Show (#14) */}
+                  {availableTransitions.includes('no_show') && (
+                    <Button variant="outline" size={tokens.button.card} className="text-destructive hover:text-destructive" onClick={() => handleStatusChange('no_show')} disabled={isUpdating}>
+                      <AlertTriangle className="h-3.5 w-3.5 mr-1" /> No Show
                     </Button>
                   )}
                   {/* Cancel */}
