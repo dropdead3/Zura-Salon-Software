@@ -1,58 +1,70 @@
 
 
-# Enhance Draft Bookings: Group by Client + "Most Recent" Badge + UX Improvements
+# Draft Bookings: Compare View + Auto-Save Feedback + E2E Test
 
-## What Changes
+## 1. Side-by-Side Draft Comparison
 
-### 1. Group drafts by client
-Instead of a flat list, drafts are grouped under collapsible client headers. Clients with no name selected group under "No Client Selected." Within each group, drafts are sorted newest-first.
+Add a "Compare" mode to `DraftBookingsSheet` that lets staff select two drafts for the same client and view them in a split layout.
 
-### 2. "Most Recent" badge
-The newest draft per client gets a small "Most Recent" badge (using the existing Badge component with `variant="secondary"`). This makes it immediately clear which version to resume.
+**How it works:**
+- When a client group has 2+ drafts, each draft card gets a checkbox-style "Compare" toggle button
+- Selecting exactly two drafts activates a comparison dialog (full-width Dialog, not the sheet)
+- The comparison dialog shows two columns, each rendering the draft's details: services, stylist, date/time, notes, step progress, created-by, and creation timestamp
+- Differences are highlighted with a subtle accent background (e.g., `bg-primary/10` on fields that differ between the two drafts)
+- Each column has a "Resume This One" button at the bottom
+- A "Cancel" button returns to the sheet
 
-### 3. Wizard step progress indicator
-Each draft card shows a minimal step progress bar (dots or small text like "Service > Client > Stylist") so staff can see at a glance how far the draft got. Uses the existing `STEPS` array from QuickBookingPopover.
+**New component:** `DraftCompareDialog.tsx`
+- Accepts two `DraftBooking` objects
+- Renders a two-column layout inside a `Dialog`
+- Compares fields and marks divergences with a highlight class
+- "Resume" on either side triggers `onResume` and closes both the dialog and the sheet
 
-### 4. Created-by attribution
-Show who started the draft (small "by [name]" text) by joining on `employee_profiles` via `created_by`. This helps in multi-staff handoff scenarios.
+**Changes to `DraftBookingsSheet.tsx`:**
+- Add `compareSelection` state: `Set<string>` (draft IDs) scoped per client group
+- Add a small "Compare" toggle on each `DraftCard` (visible only when client group has 2+ drafts)
+- When `compareSelection.size === 2`, open `DraftCompareDialog`
+- Disable the compare toggle when 2 are already selected (unless deselecting)
 
-### 5. "Discard All" per client group
-When a client has 2+ drafts, a small "Discard All" link appears in the group header for fast cleanup.
+## 2. Auto-Save Notification Enhancement
 
-### 6. Draft count per client in group header
-Each client group header shows "(3 drafts)" count so the list is scannable.
+Replace the plain `toast.info('Booking saved as draft')` with a richer notification that includes a subtle entrance animation and contextual detail.
 
-## Technical Details
+**Changes to `QuickBookingPopover.tsx`:**
+- Replace the `toast.info(...)` call with a `toast` that uses a custom description showing what was saved (e.g., client name, service count)
+- Use `toast.success` with icon styling (checkmark) for clearer positive feedback
+- Example:
+  ```
+  toast.success('Draft saved', {
+    description: `${selectedClient?.name || 'No client'} - ${selectedServices.length} service(s)`,
+  });
+  ```
 
-### DraftBookingsSheet.tsx (modify)
-- Group `filtered` drafts into a `Map<string, DraftBooking[]>` keyed by `client_name || 'No Client Selected'`
-- Render each group with a collapsible header (using Collapsible from Radix) showing client name + draft count
-- First item in each group (already sorted newest-first from the query) gets a "Most Recent" Badge
-- Add "Discard All" button per group header when group has 2+ drafts
-- Add step progress indicator per card (map `step_reached` against the known steps array to show filled/unfilled dots)
+This leverages the existing Sonner toast system already configured with glass styling and animations. No new component needed -- Sonner's built-in slide-in animation already provides the motion feedback.
 
-### useDraftBookings.ts (modify)
-- Update the query to also select `created_by` profile info via a join or separate lookup
-- Add `created_by_name` to the `DraftBooking` interface
-- Update the query: `.select('*, creator:employee_profiles!draft_bookings_created_by_fkey(display_name, full_name)')` (or use a separate lightweight lookup if FK isn't registered)
+## 3. End-to-End Test
 
-### useDeleteDraft hook (modify)
-- Add a `useDeleteDraftsForClient` mutation (or extend existing) that accepts an array of draft IDs for batch delete
+Create a Playwright test that validates the full draft booking lifecycle.
 
-### Database
-- No schema changes needed -- all data is already present (`created_by`, `step_reached`, `client_name`, `created_at`)
-- The `created_by` FK to `auth.users` exists but we need employee_profiles join. Since there's no direct FK from `draft_bookings.created_by` to `employee_profiles.user_id`, we'll do a client-side lookup or add a denormalized `created_by_name` column
+**New file:** `e2e/draft-bookings.spec.ts`
 
-### Option: Add `created_by_name` column (simpler)
-- Migration: `ALTER TABLE draft_bookings ADD COLUMN created_by_name TEXT;`
-- Populate it at save time in `useSaveDraft` from the current user's profile
-- Avoids join complexity
+Test flow:
+1. Navigate to `/dashboard/schedule`
+2. Open the booking wizard (click new booking button)
+3. Select a service, then close the wizard without completing
+4. Verify the "Drafts" badge count increments
+5. Open the drafts sheet
+6. Verify the draft appears grouped under the correct client (or "No Client Selected")
+7. Click "Resume" on the draft
+8. Verify the booking wizard reopens with the saved service pre-selected
+9. Close the wizard again, reopen drafts, verify the draft is updated (not duplicated)
 
 ## File Summary
 
 | Action | File |
 |--------|------|
-| Modify | `src/components/dashboard/schedule/DraftBookingsSheet.tsx` -- grouped layout, most-recent badge, step progress, discard-all, created-by display |
-| Modify | `src/hooks/useDraftBookings.ts` -- add `created_by_name` to interface, batch delete mutation, populate `created_by_name` on save |
-| Migration | Add `created_by_name` column to `draft_bookings` |
+| Create | `src/components/dashboard/schedule/DraftCompareDialog.tsx` -- side-by-side comparison dialog |
+| Modify | `src/components/dashboard/schedule/DraftBookingsSheet.tsx` -- compare selection state, compare toggle on cards |
+| Modify | `src/components/dashboard/schedule/QuickBookingPopover.tsx` -- enhanced auto-save toast with description |
+| Create | `e2e/draft-bookings.spec.ts` -- end-to-end test for draft lifecycle |
 
