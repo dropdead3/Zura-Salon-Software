@@ -295,3 +295,67 @@ export function getCalendarBlockStyle(
 export function getDarkModeTextColor(hexColor: string): string {
   return deriveDarkModeColor(hexColor).text;
 }
+
+// ============================================================
+// GLASSMORPHISM DARK MODE SYSTEM
+// ============================================================
+// Luxury translucent treatment for calendar appointment blocks.
+// Uses category hex at low opacity with backdrop blur and
+// luminous stroke for premium glass containment.
+
+interface GlassCategoryStyle {
+  fill: string;
+  stroke: string;
+  hoverFill: string;
+  hoverStroke: string;
+  selectedFill: string;
+  text: string;
+}
+
+/**
+ * Parse a hex color to RGB components.
+ */
+function hexToRgb(hex: string): { r: number; g: number; b: number } {
+  const clean = hex.replace('#', '');
+  return {
+    r: parseInt(clean.substring(0, 2), 16),
+    g: parseInt(clean.substring(2, 4), 16),
+    b: parseInt(clean.substring(4, 6), 16),
+  };
+}
+
+/**
+ * Derive a pastel-tinted text color from a category hex.
+ * Preserves hue identity but shifts to high lightness / low saturation
+ * for legibility on dark translucent backgrounds.
+ */
+function derivePastelText(hex: string): string {
+  const hslStr = hexToHsl(hex);
+  const parts = hslStr.split(/[\s%]+/).map(v => parseFloat(v));
+  const [h, s] = parts;
+
+  // Grays / neutrals: use a neutral light foreground
+  if (s < 8) return '#e8e4df';
+
+  // Pastel tint: preserve hue, soft saturation, high lightness
+  const pastelS = Math.max(Math.min(s * 0.35, 35), 25);
+  const pastelL = 85;
+  return hslToHex(`${Math.round(h)} ${Math.round(pastelS)}% ${pastelL}%`);
+}
+
+/**
+ * Returns a glassmorphism style set for a calendar appointment block in dark mode.
+ * Category hex is used at low opacity for translucent fill with luminous stroke.
+ */
+export function getGlassCategoryStyle(hexColor: string): GlassCategoryStyle {
+  const { r, g, b } = hexToRgb(hexColor);
+
+  return {
+    fill: `rgba(${r}, ${g}, ${b}, 0.22)`,
+    stroke: `rgba(${r}, ${g}, ${b}, 0.35)`,
+    hoverFill: `rgba(${r}, ${g}, ${b}, 0.30)`,
+    hoverStroke: `rgba(${r}, ${g}, ${b}, 0.45)`,
+    selectedFill: `rgba(${r}, ${g}, ${b}, 0.18)`,
+    text: derivePastelText(hexColor),
+  };
+}
