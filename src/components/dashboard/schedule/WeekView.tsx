@@ -176,7 +176,7 @@ function AppointmentCard({
           ...(displayGradient ? {
             background: displayGradient.background,
             color: displayGradient.textColor,
-          } : useCategoryColor && darkStyle ? {
+          } : useCategoryColor && isDark && darkStyle ? {
             backgroundColor: darkStyle.fill,
             color: darkStyle.text,
             borderColor: darkStyle.stroke,
@@ -190,6 +190,11 @@ function AppointmentCard({
               backgroundColor: catColor.bg,
               color: catColor.text,
               borderLeftColor: catColor.bg,
+              borderWidth: '0 0 0 4px',
+              borderStyle: 'solid',
+              boxShadow: 'none',
+              opacity: 1,
+              backdropFilter: 'none',
             } : undefined),
           }}
           onClick={onClick}
