@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo, useRef, useCallback } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -24,6 +24,72 @@ interface ClientStepProps {
   onNewClient: () => void;
 }
 
+const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+
+function getLastName(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  return parts.length >= 2 ? parts[parts.length - 1] : parts[0];
+}
+
+function getSortLetter(name: string): string {
+  const last = getLastName(name);
+  const ch = last.charAt(0).toUpperCase();
+  return ch >= 'A' && ch <= 'Z' ? ch : '#';
+}
+
+function AlphabetStrip({
+  availableLetters,
+  activeLetter,
+  onLetterClick,
+}: {
+  availableLetters: Set<string>;
+  activeLetter: string | null;
+  onLetterClick: (letter: string) => void;
+}) {
+  const handleTouchMove = useCallback(
+    (e: React.TouchEvent) => {
+      const touch = e.touches[0];
+      const el = document.elementFromPoint(touch.clientX, touch.clientY);
+      const letter = el?.getAttribute('data-letter');
+      if (letter && availableLetters.has(letter)) {
+        onLetterClick(letter);
+      }
+    },
+    [availableLetters, onLetterClick]
+  );
+
+  return (
+    <div
+      className="absolute right-0 top-0 bottom-0 w-5 flex flex-col items-center justify-center z-10 select-none"
+      onTouchMove={handleTouchMove}
+    >
+      {ALPHABET.map((letter) => {
+        const available = availableLetters.has(letter);
+        const active = activeLetter === letter;
+        return (
+          <button
+            key={letter}
+            data-letter={letter}
+            className={cn(
+              'font-sans leading-none py-[1px] w-full text-center transition-all',
+              available
+                ? active
+                  ? 'text-primary text-[11px]'
+                  : 'text-muted-foreground text-[10px] hover:text-foreground'
+                : 'text-muted-foreground/30 text-[10px] pointer-events-none'
+            )}
+            onClick={() => available && onLetterClick(letter)}
+            tabIndex={-1}
+            type="button"
+          >
+            {letter}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export function ClientStep({
   clients,
   isLoading,
@@ -33,6 +99,54 @@ export function ClientStep({
   onNewClient,
 }: ClientStepProps) {
   const [pendingBannedClient, setPendingBannedClient] = useState<ExtendedPhorestClient | null>(null);
+  const [activeLetter, setActiveLetter] = useState<string | null>(null);
+  const letterRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+
+  // Sort clients alphabetically by last name
+  const sortedClients = useMemo(() => {
+    return [...clients].sort((a, b) => {
+      const lastA = getLastName(a.name).toLowerCase();
+      const lastB = getLastName(b.name).toLowerCase();
+      return lastA.localeCompare(lastB);
+    });
+  }, [clients]);
+
+  // Build set of available letters
+  const availableLetters = useMemo(() => {
+    const letters = new Set<string>();
+    for (const client of sortedClients) {
+      letters.add(getSortLetter(client.name));
+    }
+    return letters;
+  }, [sortedClients]);
+
+  // Track which letters need anchor divs (first client per letter)
+  const firstClientPerLetter = useMemo(() => {
+    const map = new Map<string, string>(); // letter -> client id
+    for (const client of sortedClients) {
+      const letter = getSortLetter(client.name);
+      if (!map.has(letter)) {
+        map.set(letter, client.id);
+      }
+    }
+    return map;
+  }, [sortedClients]);
+
+  const scrollToLetter = useCallback((letter: string) => {
+    setActiveLetter(letter);
+    const el = letterRefs.current.get(letter);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, []);
+
+  const setLetterRef = useCallback((letter: string, el: HTMLDivElement | null) => {
+    if (el) {
+      letterRefs.current.set(letter, el);
+    } else {
+      letterRefs.current.delete(letter);
+    }
+  }, []);
 
   const handleClientClick = (client: ExtendedPhorestClient) => {
     if (client.is_banned) {
@@ -52,6 +166,8 @@ export function ClientStep({
   const handleCancelBanned = () => {
     setPendingBannedClient(null);
   };
+
+  const showAlphabetStrip = sortedClients.length > 0 && !isLoading;
 
   return (
     <div className="flex flex-col h-full">
@@ -79,60 +195,86 @@ export function ClientStep({
         </div>
       </div>
 
-      {/* Client list */}
-      <ScrollArea className="flex-1">
-        <div className="p-2">
-          {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : clients.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground text-sm">
-                {searchQuery ? 'No clients found' : 'Start typing to search clients'}
-              </p>
-              <Button
-                variant="link"
-                size={tokens.button.card}
-                className="mt-2 text-primary"
-                onClick={onNewClient}
-              >
-                <UserPlus className="h-3.5 w-3.5 mr-1.5" />
-                Add new client
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-0.5">
-              {clients.map((client) => (
-                <button
-                  key={client.id}
-                  className={cn(
-                    'w-full flex items-center gap-3 p-3 rounded-lg text-left',
-                    'hover:bg-muted/70 active:bg-muted transition-colors',
-                    client.is_banned && 'border border-destructive/30 bg-destructive/5'
-                  )}
-                  onClick={() => handleClientClick(client)}
+      {/* Client list with alphabet strip */}
+      <div className="flex-1 relative min-h-0">
+        <ScrollArea className="h-full">
+          <div className={cn('p-2', showAlphabetStrip && 'pr-6')}>
+            {isLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : sortedClients.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground text-sm">
+                  {searchQuery ? 'No clients found' : 'Start typing to search clients'}
+                </p>
+                <Button
+                  variant="link"
+                  size={tokens.button.card}
+                  className="mt-2 text-primary"
+                  onClick={onNewClient}
                 >
-                  <Avatar className="h-10 w-10 bg-muted">
-                    <AvatarFallback className="text-xs font-medium text-muted-foreground bg-muted">
-                      {getInitials(client.name)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-sm truncate">{client.name}</span>
-                      {client.is_banned && <BannedClientBadge />}
+                  <UserPlus className="h-3.5 w-3.5 mr-1.5" />
+                  Add new client
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-0.5">
+                {sortedClients.map((client) => {
+                  const letter = getSortLetter(client.name);
+                  const isFirstForLetter = firstClientPerLetter.get(letter) === client.id;
+
+                  return (
+                    <div key={client.id}>
+                      {isFirstForLetter && (
+                        <div
+                          ref={(el) => setLetterRef(letter, el)}
+                          className="px-3 pt-2 pb-1"
+                        >
+                          <span className="font-sans text-[11px] text-muted-foreground tracking-wide">
+                            {letter}
+                          </span>
+                        </div>
+                      )}
+                      <button
+                        className={cn(
+                          'w-full flex items-center gap-3 p-3 rounded-lg text-left',
+                          'hover:bg-muted/70 active:bg-muted transition-colors',
+                          client.is_banned && 'border border-destructive/30 bg-destructive/5'
+                        )}
+                        onClick={() => handleClientClick(client)}
+                      >
+                        <Avatar className="h-10 w-10 bg-muted">
+                          <AvatarFallback className="text-xs font-medium text-muted-foreground bg-muted">
+                            {getInitials(client.name)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-sm truncate">{client.name}</span>
+                            {client.is_banned && <BannedClientBadge />}
+                          </div>
+                          <div className="text-xs text-muted-foreground truncate">
+                            {formatPhone(client.phone) || client.email || 'No contact info'}
+                          </div>
+                        </div>
+                      </button>
                     </div>
-                    <div className="text-xs text-muted-foreground truncate">
-                      {formatPhone(client.phone) || client.email || 'No contact info'}
-                    </div>
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      </ScrollArea>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </ScrollArea>
+
+        {showAlphabetStrip && (
+          <AlphabetStrip
+            availableLetters={availableLetters}
+            activeLetter={activeLetter}
+            onLetterClick={scrollToLetter}
+          />
+        )}
+      </div>
 
       {/* Banned Client Warning Dialog */}
       <BannedClientWarningDialog
@@ -157,9 +299,7 @@ function getInitials(name: string): string {
 
 function formatPhone(phone: string | null): string | null {
   if (!phone) return null;
-  // Remove all non-digits
   const digits = phone.replace(/\D/g, '');
-  // Format as (XXX) XXX-XXXX for US numbers
   if (digits.length === 10) {
     return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
   }
