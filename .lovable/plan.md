@@ -1,113 +1,58 @@
 
 
-# Appointment Detail Panel -- Gap Analysis (Round 4)
+# Polish Scrollbars -- Invisible Until Hover
 
-## Summary
+## What Changes
 
-After reviewing all 1,207 lines of `AppointmentDetailSheet.tsx` and 850 lines of `Schedule.tsx`, the previous rounds of fixes have resolved the majority of critical issues. This round identifies **2 remaining bugs**, **3 data/UX polish gaps**, and **2 structural concerns**.
+All scrollbars across the app will become invisible by default and only appear (fade in) when the user hovers over the scrollable area. Track backgrounds will be fully transparent -- no visible container/gutter. This applies globally to native scrollbars and to the Radix ScrollArea component.
 
----
+## Changes
 
-## A. Status Change Sends `NO_SHOW` Instead of `no_show`
+### 1. Global Native Scrollbar Styles (`src/index.css`)
 
-**Severity: Critical (actively broken)**
+Replace the existing scrollbar block (lines 1364-1434) with:
 
-From the network logs, the edge function `update-phorest-appointment` received `"status":"NO_SHOW"` and returned a 400 error: `"Failed to update appointment locally"`. The panel's `handleStatusChange` passes lowercase `no_show` (correct), but the `updateStatus` mutation in the `usePhorestCalendar` hook may be transforming or uppercasing it before sending to the edge function. This means **No Show marking is completely broken** right now.
+- **Track**: fully transparent (no background color) in both light and dark mode
+- **Thumb**: starts at 0 opacity, transitions to visible on container hover
+- **Width**: stays at 8px for comfortable grab target
+- **Firefox**: uses `scrollbar-width: thin` with transparent track color; Firefox doesn't support hover-reveal natively, so the thumb will remain subtly visible (`0.15` opacity) but with no track background
+- Remove `.sidebar-nav` and `.dashboard-cursor` track background overrides (they become transparent too)
+- Remove the `.dashboard-top-bar::after` pseudo-element that filled the scrollbar gutter gap (no longer needed with transparent tracks)
 
-**Fix:** Investigate the `updateStatus` mutation in `usePhorestCalendar` to find where the status is being uppercased (likely `.toUpperCase()` or an enum mapping). Ensure `no_show` is sent as-is, or the edge function is updated to accept the uppercase variant.
+The hover-reveal pattern uses a parent hover selector:
 
-### B. `confirmActionBarCancel` Note Insert Has Incorrect Promise Chain
+```css
+::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
 
-**Severity: Medium**
+*:hover::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.25);
+}
 
-In `Schedule.tsx` lines 459-468, the code wraps the Supabase call in `Promise.resolve(...)` which doesn't actually chain the inner promise correctly. `Promise.resolve(supabase...insert(...))` resolves with the Supabase query builder object, not its result. The `.catch()` will never fire on a failed insert because the error is swallowed inside the Supabase response object.
-
-**Fix:** Remove the `Promise.resolve()` wrapper. Instead, use:
-```
-supabase.from('appointment_notes').insert({...}).then(({ error }) => {
-  if (error) toast.warning('Cancellation reason could not be saved');
-});
-```
-
----
-
-## C. No Loading Skeleton on Panel Open
-
-**Severity: Low-Medium**
-
-When the panel opens, the header renders immediately but sections like Client Contact (email), Location, and History all load asynchronously. There's no skeleton -- sections just appear empty then pop in. The header's "Last visit" line and "View Profile" button also pop in after `visitHistory` and `clientRecord` load.
-
-**Fix:** Add a simple loading skeleton in the header area (name placeholder, service placeholder) and in the Details tab's Client Contact section while `clientRecord` is loading. Use the existing `Skeleton` component.
-
-### D. Mobile Panel Not Optimized
-
-**Severity: Low-Medium**
-
-The panel uses `w-[calc(100vw-2rem)] max-w-[440px]` (line 479). On mobile (< 480px), the panel occupies nearly the full screen with small margins and rounded corners that waste space. The footer buttons wrap awkwardly on narrow screens.
-
-**Fix:** Import `useIsMobile` hook. On mobile, apply `right-0 top-0 bottom-0 w-full max-w-none rounded-none` to the panel container, and add `flex-col` to the footer button container so buttons stack vertically.
-
-### E. Note Textarea and Assistant Picker State Not Reset on Appointment Change
-
-**Severity: Low**
-
-When switching between appointments while the panel is open, the `newNote`, `newClientNote`, `showAssistantPicker`, and `isPrivateNote` states persist from the previous appointment. If a user was mid-way through typing a note for one client, switching to another appointment keeps that partial note visible.
-
-**Fix:** Add a `useEffect` keyed on `appointment?.id` that resets `newNote`, `newClientNote`, `isPrivateNote`, `isPrivateClientNote`, `showAssistantPicker` to their defaults.
-
-### F. `handleNotes` Action Bar Button Only Opens Panel, Doesn't Navigate to Notes Tab
-
-**Severity: Low**
-
-The `handleNotes` handler in `Schedule.tsx` (line 477-481) opens the detail panel but doesn't set the active tab to "notes". The user lands on the Details tab and must manually click Notes.
-
-**Fix:** Add a mechanism to open the panel with a specific tab. Either pass an `initialTab` prop to `AppointmentDetailSheet`, or set a state variable that the panel reads on open.
-
----
-
-## Priority
-
-| # | Gap | Severity | Effort |
-|---|---|---|---|
-| A | NO_SHOW status uppercase bug | Critical | Low |
-| B | Promise chain incorrect for cancel note | Medium | Low |
-| F | Notes button doesn't navigate to Notes tab | Low | Low |
-| E | Note/picker state not reset on appointment change | Low | Low |
-| C | No loading skeleton | Low | Medium |
-| D | Mobile panel not optimized | Low | High |
-
-## Recommended Approach
-
-Address A, B, E, and F in a single pass (all low effort). C and D follow as a polish pass.
-
-### Technical Details
-
-**A -- NO_SHOW Status Fix:**
-- Read `usePhorestCalendar` to find the `updateStatus` mutation
-- Locate where status is being uppercased or mapped
-- Ensure `no_show` passes through correctly to the edge function, or update the edge function to handle `NO_SHOW` -> `no_show` mapping
-
-**B -- Promise Chain Fix:**
-- Replace lines 459-468 in `Schedule.tsx`:
-```typescript
-supabase
-  .from('appointment_notes')
-  .insert({
-    phorest_appointment_id: selectedAppointment.phorest_id || selectedAppointment.id,
-    author_id: user.id,
-    note: noteText,
-    is_private: false,
-  })
-  .then(({ error }) => {
-    if (error) toast.warning('Cancellation reason could not be saved');
-  });
+*:hover::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.4);
+}
 ```
 
-**E -- Reset States on Appointment Change:**
-- Extend the existing `useEffect` at line 171-173 in `AppointmentDetailSheet.tsx` to also reset `newNote`, `newClientNote`, `isPrivateNote`, `isPrivateClientNote`, `showAssistantPicker`
+### 2. Radix ScrollArea Component (`src/components/ui/scroll-area.tsx`)
 
-**F -- Notes Tab Navigation:**
-- Add optional `initialTab` prop to `AppointmentDetailSheet`
-- In `Schedule.tsx` `handleNotes`, set `setDetailOpen(true)` and pass `initialTab="notes"`
-- In `AppointmentDetailSheet`, when `initialTab` changes and panel opens, set `activeTab` to `initialTab`
+Update the `ScrollBar` component to:
+- Remove the `border-l-transparent` / `border-t-transparent` borders (these create visual gutter)
+- Make the thumb transparent by default with a hover group pattern
+- Add `group` class to the `ScrollArea` root
+- Thumb transitions from `bg-transparent` to `bg-border` on group hover
+
+### 3. Existing Utility Classes (`src/index.css`)
+
+The `.scrollbar-minimal` and `.scrollbar-thin` utility classes (lines 920-964) will also be updated to use transparent tracks and hover-reveal thumbs, staying consistent with the global pattern.
+
+## Technical Notes
+
+- WebKit (Chrome, Safari, Edge) supports `::-webkit-scrollbar` pseudo-elements with CSS transitions for full hover-reveal
+- Firefox only supports `scrollbar-color` which doesn't support transitions or hover states -- the thumb will be set to a very subtle opacity as a graceful fallback
+- No JavaScript required -- pure CSS solution
+- The Radix ScrollArea uses Tailwind's `group` / `group-hover` pattern for the same effect
 
