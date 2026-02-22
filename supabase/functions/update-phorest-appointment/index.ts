@@ -162,7 +162,9 @@ serve(async (req) => {
     };
 
     if (status) {
-      localUpdate.status = statusFromPhorest[status] || status.toLowerCase();
+      // Accept both lowercase (no_show) and uppercase (NO_SHOW) statuses
+      const normalizedStatus = statusFromPhorest[status] || status.toLowerCase();
+      localUpdate.status = normalizedStatus;
     }
     
     if (notes !== undefined) {

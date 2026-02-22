@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { createPortal } from 'react-dom';
 import { parseISO, differenceInDays } from 'date-fns';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -131,6 +132,7 @@ interface AppointmentDetailSheetProps {
   onReschedule?: (appointment: PhorestAppointment) => void;
   onPay?: (appointment: PhorestAppointment) => void;
   onOpenClientProfile?: (clientId: string) => void;
+  initialTab?: string;
 }
 
 export function AppointmentDetailSheet({
@@ -143,12 +145,14 @@ export function AppointmentDetailSheet({
   onReschedule,
   onPay,
   onOpenClientProfile,
+  initialTab,
 }: AppointmentDetailSheetProps) {
   const { user, hasPermission, roles } = useAuth();
   const { effectiveOrganization } = useOrganizationContext();
   const { formatCurrency } = useFormatCurrency();
   const { formatDate } = useFormatDate();
   const queryClient = useQueryClient();
+  const isMobile = useIsMobile();
 
   const [newNote, setNewNote] = useState('');
   const [isPrivateNote, setIsPrivateNote] = useState(false);
@@ -167,10 +171,22 @@ export function AppointmentDetailSheet({
   const canAddNotes = hasPermission('add_appointment_notes');
   const canManageAssistants = hasPermission('create_appointments') || hasPermission('view_team_appointments');
 
-  // Reset tab to details when appointment changes (#10)
+  // Reset states when appointment changes (#10, #E)
   useEffect(() => {
-    setActiveTab('details');
+    setActiveTab(initialTab || 'details');
+    setNewNote('');
+    setNewClientNote('');
+    setIsPrivateNote(false);
+    setIsPrivateClientNote(false);
+    setShowAssistantPicker(false);
   }, [appointment?.id]);
+
+  // Handle initialTab changes while panel is open (#F)
+  useEffect(() => {
+    if (initialTab && open) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab, open]);
 
   // ─── Escape Key Handler ─────────────────────────────────────
   useEffect(() => {
@@ -208,7 +224,7 @@ export function AppointmentDetailSheet({
   });
 
   // Fetch client email + preferred_stylist_id from phorest_clients
-  const { data: clientRecord } = useQuery({
+  const { data: clientRecord, isLoading: clientRecordLoading } = useQuery({
     queryKey: ['client-record-for-panel', appointment?.phorest_client_id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -476,7 +492,12 @@ export function AppointmentDetailSheet({
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 80 }}
               transition={{ type: 'spring', damping: 26, stiffness: 300, mass: 0.8 }}
-              className="fixed right-4 top-4 bottom-4 z-50 w-[calc(100vw-2rem)] max-w-[440px] rounded-xl border border-border bg-card/80 backdrop-blur-xl shadow-2xl overflow-hidden flex flex-col"
+              className={cn(
+                "fixed z-50 border border-border bg-card/80 backdrop-blur-xl shadow-2xl overflow-hidden flex flex-col",
+                isMobile
+                  ? "right-0 top-0 bottom-0 w-full max-w-none rounded-none"
+                  : "right-4 top-4 bottom-4 w-[calc(100vw-2rem)] max-w-[440px] rounded-xl"
+              )}
             >
               {/* Close button */}
               <button
@@ -507,6 +528,9 @@ export function AppointmentDetailSheet({
                       {services.length > 1 ? `${services.length} services` : appointment.service_name}
                     </p>
                     {/* Last visit date (#4) */}
+                    {historyLoading && !lastVisitDate && (
+                      <Skeleton className="h-3 w-24 mt-1" />
+                    )}
                     {lastVisitDate && (
                       <p className="text-xs text-muted-foreground mt-0.5">
                         Last visit: {formatDate(parseISO(lastVisitDate), 'MMM d')}
@@ -835,7 +859,12 @@ export function AppointmentDetailSheet({
                             <CopyButton onCopy={handleCopyPhone} />
                           </div>
                         )}
-                        {clientRecord?.email && (
+                        {clientRecordLoading && (
+                          <div className="space-y-2">
+                            <Skeleton className="h-4 w-40" />
+                          </div>
+                        )}
+                        {!clientRecordLoading && clientRecord?.email && (
                           <div className="flex items-center justify-between">
                             <a href={`mailto:${clientRecord.email}`} className="flex items-center gap-2 text-sm hover:text-primary transition-colors">
                               <Mail className="h-3.5 w-3.5 text-muted-foreground" />
@@ -844,7 +873,7 @@ export function AppointmentDetailSheet({
                             <CopyButton onCopy={handleCopyEmail} />
                           </div>
                         )}
-                        {!appointment.client_phone && !clientRecord?.email && (
+                        {!clientRecordLoading && !appointment.client_phone && !clientRecord?.email && (
                           <p className="text-xs text-muted-foreground">No contact info available</p>
                         )}
                       </div>
@@ -1084,7 +1113,7 @@ export function AppointmentDetailSheet({
 
               {/* ─── Footer Action Bar ────────────────────────── */}
               <div className="p-4 border-t border-border/60 bg-card/60 backdrop-blur-md shrink-0">
-                <div className="flex items-center gap-2 flex-wrap">
+                <div className={cn("flex items-center gap-2 flex-wrap", isMobile && "flex-col")}>
                   {/* Confirm (#13) */}
                   {availableTransitions.includes('confirmed') && (
                     <Button size={tokens.button.card} onClick={() => handleStatusChange('confirmed')} disabled={isUpdating}>

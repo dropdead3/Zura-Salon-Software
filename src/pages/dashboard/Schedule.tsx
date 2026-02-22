@@ -102,6 +102,7 @@ export default function Schedule() {
   const [selectedStaffIds, setSelectedStaffIds] = useState<string[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<string>('');
   const [detailOpen, setDetailOpen] = useState(false);
+  const [initialTab, setInitialTab] = useState<string | undefined>(undefined);
   const [bookingOpen, setBookingOpen] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [copilotOpen, setCopilotOpen] = useState(false);
@@ -456,16 +457,17 @@ export default function Schedule() {
       if (actionBarCancelReason.trim() && user?.id) {
         const prefix = '[Cancelled]';
         const noteText = `${prefix} ${actionBarCancelReason.trim()}`;
-        Promise.resolve(
-          supabase
-            .from('appointment_notes')
-            .insert({
-              phorest_appointment_id: selectedAppointment.phorest_id || selectedAppointment.id,
-              author_id: user.id,
-              note: noteText,
-              is_private: false,
-            })
-        ).catch(() => toast.warning('Cancellation reason could not be saved'));
+        supabase
+          .from('appointment_notes')
+          .insert({
+            phorest_appointment_id: selectedAppointment.phorest_id || selectedAppointment.id,
+            author_id: user.id,
+            note: noteText,
+            is_private: false,
+          })
+          .then(({ error }) => {
+            if (error) toast.warning('Cancellation reason could not be saved');
+          });
       }
       handleStatusChange('cancelled');
       toast.success('Appointment cancelled');
@@ -476,6 +478,7 @@ export default function Schedule() {
 
   const handleNotes = () => {
     if (selectedAppointment) {
+      setInitialTab('notes');
       setDetailOpen(true);
     }
   };
@@ -674,7 +677,8 @@ export default function Schedule() {
       <AppointmentDetailSheet
         appointment={selectedAppointment}
         open={detailOpen}
-        onOpenChange={setDetailOpen}
+        onOpenChange={(open) => { setDetailOpen(open); if (!open) setInitialTab(undefined); }}
+        initialTab={initialTab}
         onStatusChange={(appointmentId, status) => {
           // FIX #2: Use the appointmentId passed from the panel
           updateStatus({ appointmentId, status });
