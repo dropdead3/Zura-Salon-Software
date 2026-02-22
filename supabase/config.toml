@@ -203,3 +203,9 @@ verify_jwt = false
 
 [functions.send-test-service-email]
 verify_jwt = false
+
+[functions.notify-assistant-block]
+verify_jwt = false
+
+[functions.send-push-notification]
+verify_jwt = false
