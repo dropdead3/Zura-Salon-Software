@@ -1,56 +1,58 @@
 
 
-# Fix: Booked Appointments Not Appearing on Schedule
+# Fix: Appointments Not Appearing on Schedule
 
 ## Root Cause
 
-Two issues prevent newly booked appointments from showing on the schedule:
+The `QuickBookingPopover` sends the wrong value for `branch_id` when invoking `create-phorest-booking`. On line 712, it sends `selectedLocation` (the internal location ID like `"north-mesa"`), but the edge function expects the Phorest branch ID (like `"hYztERWvOdMpLUcvRSNbSA"`).
 
-### Issue 1: Schedule doesn't navigate to the booked date
-After a successful booking, the `QuickBookingPopover` invalidates the query cache and closes -- but the schedule stays on the **current date** (today, Feb 22). If the appointment was booked for a future date (Feb 24), the user won't see it because the day view only shows today's appointments.
+This causes the edge function's location lookup (`.eq("phorest_branch_id", branch_id)`) to find nothing, so `location_id` on the appointment record stays `null`.
 
-### Issue 2: `location_id` is not set on new appointments
-The `create-phorest-booking` edge function builds the local `phorest_appointments` record without setting `location_id`. It receives `branch_id` (the Phorest branch ID) and looks up the location for org-level checks, but never maps it to the `location_id` column on the appointment record. This means the appointment has `location_id: null`, which will cause it to disappear when location filters are active.
+The Schedule page then filters appointments by `apt.location_id === selectedLocation`, which drops any appointment with `null` location_id. Result: the appointment exists in the database but is invisible on the calendar.
 
 ## Fix
 
-### 1. Navigate to booked date after successful booking
+### 1. Send the correct Phorest branch ID from QuickBookingPopover
 
 **File:** `src/components/dashboard/schedule/QuickBookingPopover.tsx`
 
-- Add an `onBookingComplete` callback prop that passes the booked date back to the parent.
-- On successful booking, call `onBookingComplete(bookedDate)` before closing.
+Line 712 currently sends:
+```
+branch_id: selectedLocation
+```
 
-**File:** `src/pages/dashboard/Schedule.tsx`
+Change to use the already-computed `selectedLocationBranchId` (line 598-601):
+```
+branch_id: selectedLocationBranchId
+```
 
-- Pass `onBookingComplete` to `QuickBookingPopover` that calls `setCurrentDate(date)` so the schedule automatically navigates to show the newly booked appointment.
+Also add a guard: if `selectedLocationBranchId` is null, throw before invoking.
 
-### 2. Set `location_id` on the local appointment record
+### 2. Also pass `location_id` directly to the edge function
+
+As a belt-and-suspenders approach, pass the known `location_id` (`selectedLocation`) in the request body so the edge function can use it as a fallback, avoiding a redundant database lookup.
 
 **File:** `supabase/functions/create-phorest-booking/index.ts`
 
-- The function already queries the `locations` table to check org settings (line 116-120). Reuse that lookup to also grab the `id` (location_id) from the locations table.
-- Add `location_id` to the `localRecord` object before upserting.
+- Accept optional `location_id` in the request body
+- Use it as fallback if the branch-based lookup returns nothing
+
+### 3. Fix existing appointments with null location_id
+
+Run a database update to set `location_id` on the two Eric Day appointments that were already created with `null`.
+
+### 4. Check BookingWizard for the same bug
+
+**File:** `src/components/dashboard/schedule/booking/BookingWizard.tsx`
+
+Verify whether the same `branch_id: selectedLocation` mistake exists there and fix it if so.
 
 ## File Summary
 
 | Action | File |
 |--------|------|
-| Modify | `src/components/dashboard/schedule/QuickBookingPopover.tsx` -- add `onBookingComplete` prop, call it on success with booked date |
-| Modify | `src/pages/dashboard/Schedule.tsx` -- pass `onBookingComplete` that navigates to the booked date |
-| Modify | `supabase/functions/create-phorest-booking/index.ts` -- set `location_id` from branch_id lookup |
-
-## Technical Details
-
-**QuickBookingPopover changes:**
-- Add `onBookingComplete?: (date: Date) => void` to `QuickBookingPopoverProps`
-- In the booking mutation `onSuccess`, before `handleClose(true)`, call `onBookingComplete?.(selectedDate)` where `selectedDate` is the date chosen in the wizard
-
-**Schedule.tsx changes:**
-```
-onBookingComplete={(date) => setCurrentDate(date)}
-```
-
-**Edge function changes:**
-The existing location lookup (line 116-120) fetches `organization_id` from locations matching `phorest_branch_id`. Extend this to also select the location's `id` field, then set `localRecord.location_id = locData.id` in the record builder.
+| Modify | `src/components/dashboard/schedule/QuickBookingPopover.tsx` -- send `selectedLocationBranchId` instead of `selectedLocation` as `branch_id`, and also pass `location_id` |
+| Modify | `supabase/functions/create-phorest-booking/index.ts` -- accept optional `location_id` field as fallback |
+| Modify | `src/components/dashboard/schedule/booking/BookingWizard.tsx` -- same fix if applicable |
+| Data fix | Update existing null-location appointments to correct location_id |
 
