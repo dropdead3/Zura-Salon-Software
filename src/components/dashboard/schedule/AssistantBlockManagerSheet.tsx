@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { format } from 'date-fns';
 import {
   Sheet,
@@ -7,6 +7,16 @@ import {
   SheetTitle,
   SheetDescription,
 } from '@/components/ui/sheet';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -62,8 +72,11 @@ function BlockRow({
   currentUserId: string;
 }) {
   const queryClient = useQueryClient();
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {
+    setIsDeleting(true);
     const { error } = await supabase
       .from('assistant_time_blocks')
       .delete()
@@ -71,6 +84,7 @@ function BlockRow({
 
     if (error) {
       toast.error('Failed to remove block');
+      setIsDeleting(false);
       return;
     }
 
@@ -78,6 +92,8 @@ function BlockRow({
     queryClient.invalidateQueries({ queryKey: ['assistant-time-blocks-range'] });
     queryClient.invalidateQueries({ queryKey: ['assistant-pending-blocks'] });
     toast.success('Block removed');
+    setConfirmDeleteOpen(false);
+    setIsDeleting(false);
   };
 
   const requesterName = block.requesting_profile
@@ -90,42 +106,62 @@ function BlockRow({
   const isRequester = block.requesting_user_id === currentUserId;
 
   return (
-    <div className="flex items-center justify-between gap-3 p-3 rounded-lg border border-border bg-card hover:bg-muted/30 transition-colors">
-      <div className="flex-1 min-w-0 space-y-1">
-        <div className="flex items-center gap-2 text-sm">
-          <Clock className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-          <span className="font-medium">
-            {formatTime12h(block.start_time)} – {formatTime12h(block.end_time)}
-          </span>
-          <StatusBadge status={block.status} />
+    <>
+      <div className="flex items-center justify-between gap-3 p-3 rounded-lg border border-border bg-card hover:bg-muted/30 transition-colors">
+        <div className="flex-1 min-w-0 space-y-1">
+          <div className="flex items-center gap-2 text-sm">
+            <Clock className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            <span className="font-medium">
+              {formatTime12h(block.start_time)} – {formatTime12h(block.end_time)}
+            </span>
+            <StatusBadge status={block.status} />
+          </div>
+          <div className="text-xs text-muted-foreground truncate">
+            {isRequester
+              ? assistantName
+                ? `Assistant: ${assistantName}`
+                : 'Unassigned — awaiting assistant'
+              : `Requested by ${requesterName}`}
+          </div>
+          {block.notes && (
+            <div className="text-xs text-muted-foreground italic truncate">{block.notes}</div>
+          )}
         </div>
-        <div className="text-xs text-muted-foreground truncate">
-          {isRequester
-            ? assistantName
-              ? `Assistant: ${assistantName}`
-              : 'Unassigned — awaiting assistant'
-            : `Requested by ${requesterName}`}
+
+        <div className="flex items-center gap-1 shrink-0">
+          {showActions && block.status === 'requested' && (
+            <AssistantBlockActions
+              blockId={block.id}
+              requestingUserId={block.requesting_user_id}
+              compact
+            />
+          )}
+          {showDelete && (
+            <Button variant="ghost" size="icon" onClick={() => setConfirmDeleteOpen(true)} className="h-8 w-8 text-muted-foreground hover:text-destructive">
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          )}
         </div>
-        {block.notes && (
-          <div className="text-xs text-muted-foreground italic truncate">{block.notes}</div>
-        )}
       </div>
 
-      <div className="flex items-center gap-1 shrink-0">
-        {showActions && block.status === 'requested' && (
-          <AssistantBlockActions
-            blockId={block.id}
-            requestingUserId={block.requesting_user_id}
-            compact
-          />
-        )}
-        {showDelete && (
-          <Button variant="ghost" size="icon" onClick={handleDelete} className="h-8 w-8 text-muted-foreground hover:text-destructive">
-            <Trash2 className="h-3.5 w-3.5" />
-          </Button>
-        )}
-      </div>
-    </div>
+      <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove assistant block?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove the {formatTime12h(block.start_time)} – {formatTime12h(block.end_time)} coverage block. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} disabled={isDeleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {isDeleting ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
 
@@ -166,7 +202,7 @@ function BlocksByDate({
       {grouped.map(([dateStr, dateBlocks]) => (
         <div key={dateStr} className="space-y-2">
           <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-            {format(new Date(dateStr + 'T12:00:00'), 'EEEE, MMM d')}
+            {format(new Date(dateStr + 'T12:00:00'), 'EEEE, MMM d, yyyy')}
           </h4>
           {dateBlocks
             .sort((a, b) => a.start_time.localeCompare(b.start_time))

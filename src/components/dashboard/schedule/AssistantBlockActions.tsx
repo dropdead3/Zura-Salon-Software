@@ -39,9 +39,16 @@ export function AssistantBlockActions({
     if (!user?.id) return;
     setIsAccepting(true);
     try {
+      // Only set assistant_user_id if not already pre-assigned (admin accepting on behalf)
+      const updatePayload: Record<string, unknown> = { status: 'confirmed' };
+      if (isAssistant) {
+        // Current user is the assistant — only set if not already assigned
+        updatePayload.assistant_user_id = user.id;
+      }
+
       const { error } = await supabase
         .from('assistant_time_blocks')
-        .update({ status: 'confirmed', assistant_user_id: user.id })
+        .update(updatePayload)
         .eq('id', blockId);
 
       if (error) throw error;
@@ -69,9 +76,10 @@ export function AssistantBlockActions({
     if (!user?.id) return;
     setIsDeclining(true);
     try {
+      // Clear assistant and return to pool so someone else can pick it up
       const { error } = await supabase
         .from('assistant_time_blocks')
-        .update({ status: 'declined' })
+        .update({ status: 'requested', assistant_user_id: null })
         .eq('id', blockId);
 
       if (error) throw error;
@@ -80,13 +88,13 @@ export function AssistantBlockActions({
       await supabase.from('notifications').insert({
         user_id: requestingUserId,
         type: 'assistant_time_block',
-        title: 'Assistant Declined',
-        message: 'Your assistant coverage request was declined.',
-        metadata: { time_block_id: blockId, assistant_user_id: user.id },
+        title: 'Assistant Unavailable',
+        message: 'Your assistant declined — the request is back in the pool for another assistant.',
+        metadata: { time_block_id: blockId, declined_by: user.id },
       });
 
       invalidateAll();
-      toast.success('Coverage declined');
+      toast.success('Coverage declined — returned to pool');
       onActionComplete?.();
     } catch {
       toast.error('Failed to decline');

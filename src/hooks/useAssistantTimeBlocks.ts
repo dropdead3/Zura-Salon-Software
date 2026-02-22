@@ -323,13 +323,16 @@ export function useMyPendingAssistantBlocks(
   const { data: pendingBlocks = [], isLoading } = useQuery({
     queryKey: ['assistant-pending-blocks', userId, locationId],
     queryFn: async () => {
+      const todayStr = new Date().toISOString().slice(0, 10);
+
       // Fetch blocks where user is assigned assistant with status 'requested'
       const { data: assistBlocks, error: err1 } = await supabase
         .from('assistant_time_blocks')
         .select('*')
         .eq('assistant_user_id', userId!)
         .eq('status', 'requested')
-        .eq('location_id', locationId!);
+        .eq('location_id', locationId!)
+        .gte('date', todayStr);
 
       if (err1) throw err1;
 
@@ -340,7 +343,8 @@ export function useMyPendingAssistantBlocks(
         .eq('requesting_user_id', userId!)
         .is('assistant_user_id', null)
         .eq('status', 'requested')
-        .eq('location_id', locationId!);
+        .eq('location_id', locationId!)
+        .gte('date', todayStr);
 
       if (err2) throw err2;
 

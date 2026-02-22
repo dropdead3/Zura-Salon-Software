@@ -833,6 +833,7 @@ export function QuickBookingPopover({
     setBookingNotes('');
     setShowNotes(false);
     setShowBreakForm(false);
+    setRequestAssistant(false);
     // Reset redo state
     setIsRedo(false);
     setRedoReason('');
