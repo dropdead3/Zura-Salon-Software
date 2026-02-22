@@ -463,12 +463,7 @@ function AppointmentCard({
                       backgroundColor: bandDark ? bandDark.fill : band.color.bg,
                     }}
                   >
-                    {duration >= 60 && (
-                      <span className="absolute top-0 left-1.5 right-1.5 text-[10px] opacity-90 truncate"
-                        style={{ textShadow: '0 0 3px rgba(0,0,0,0.15)' }}>
-                        {band.name} <span className="opacity-70">{band.duration}min</span>
-                      </span>
-                    )}
+                    {/* Color band only — labels rendered in content area below */}
                   </div>
                 );
               })}
@@ -537,7 +532,9 @@ function AppointmentCard({
                 </div>
                 {/* Per-service time-slot positioned labels on tall cards */}
                 {duration >= 60 && serviceBands && serviceBands.length > 1 ? (
-                  null /* labels rendered inside color bands above */
+                  <div className="text-xs opacity-90 truncate">
+                    {serviceBands.map(b => `${b.name} ${b.duration}min`).join(' + ')}
+                  </div>
                 ) : (
                   <div className="text-xs opacity-90 truncate">
                     {(duration >= 45 && formatServicesWithDuration(appointment.service_name, serviceLookup)) || appointment.service_name}
