@@ -529,24 +529,12 @@ function AppointmentCard({
                 </div>
                 {/* Per-service time-slot positioned labels on tall cards */}
                 {duration >= 60 && serviceBands && serviceBands.length > 1 ? (
-                  <div className="relative" style={{ minHeight: `${Math.max(serviceBands.length * 14, 14)}px` }}>
-                    {serviceBands.map((band, i) => {
-                      const offsetPercent = serviceBands.slice(0, i).reduce((sum, b) => sum + b.percent, 0);
-                      return (
-                        <div
-                          key={i}
-                          className="text-[10px] opacity-90 truncate"
-                          style={{
-                            position: serviceBands.length > 2 ? 'absolute' : 'relative',
-                            top: serviceBands.length > 2 ? `${offsetPercent}%` : undefined,
-                            left: 0,
-                            right: 0,
-                          }}
-                        >
-                          {band.name} <span className="opacity-70">{band.duration}min</span>
-                        </div>
-                      );
-                    })}
+                  <div className="flex flex-col">
+                    {serviceBands.map((band, i) => (
+                      <div key={i} className="text-[10px] opacity-90 truncate">
+                        {band.name} <span className="opacity-70">{band.duration}min</span>
+                      </div>
+                    ))}
                   </div>
                 ) : (
                   <div className="text-xs opacity-90 truncate">
