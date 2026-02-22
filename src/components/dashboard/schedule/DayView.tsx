@@ -9,13 +9,16 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
-import { Phone, Clock, AlertTriangle, XCircle, GripVertical, Users, User, Repeat, RotateCcw } from 'lucide-react';
+import { Phone, Clock, AlertTriangle, XCircle, GripVertical, Users, User, Repeat, RotateCcw, Star } from 'lucide-react';
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
 import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
 import { getCategoryColor, SPECIAL_GRADIENTS, isGradientMarker, getGradientFromMarker } from '@/utils/categoryColors';
 import { useRescheduleAppointment } from '@/hooks/useRescheduleAppointment';
 import type { ServiceLookupEntry } from '@/hooks/useServiceLookup';
 import { APPOINTMENT_STATUS_COLORS } from '@/lib/design-tokens';
+import { getClientInitials, getAvatarColor, formatServicesWithDuration } from '@/lib/appointment-card-utils';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import {
   DndContext,
   DragOverlay,
@@ -405,6 +408,9 @@ function AppointmentCard({
                 {!isAssisting && hasAssistants && (
                   <Users className="h-3 w-3 opacity-60 shrink-0" />
                 )}
+                {appointment.is_new_client && (
+                  <Star className="h-2.5 w-2.5 text-amber-500 shrink-0" />
+                )}
                 {appointment.client_name}
               </div>
             ) : (
@@ -428,7 +434,14 @@ function AppointmentCard({
                    {!isAssisting && hasAssistants && (
                     <Users className="h-3 w-3 opacity-60 shrink-0" />
                   )}
+                  {/* Client avatar initials */}
+                  <span className={cn('h-5 w-5 rounded-full flex items-center justify-center text-[8px] font-medium shrink-0', getAvatarColor(appointment.client_name))}>
+                    {getClientInitials(appointment.client_name)}
+                  </span>
                   {appointment.client_name}
+                  {appointment.is_new_client && (
+                    <span className="text-[8px] px-1 py-px rounded-sm bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 font-medium shrink-0">NEW</span>
+                  )}
                   {appointment.client_phone && (
                     <span className="font-normal opacity-80">
                       {formatPhoneDisplay(appointment.client_phone)}
@@ -436,7 +449,7 @@ function AppointmentCard({
                   )}
                 </div>
                 <div className="text-xs opacity-90 truncate">
-                  {appointment.service_name}
+                  {(duration >= 45 && formatServicesWithDuration(appointment.service_name, serviceLookup)) || appointment.service_name}
                 </div>
                 {/* Stylist name */}
                 {appointment.stylist_profile && (
@@ -452,8 +465,13 @@ function AppointmentCard({
                   </div>
                 )}
                 {duration >= 60 && (
-                  <div className="text-xs opacity-80 mt-0.5">
-                    {formatTime12h(appointment.start_time)} - {formatTime12h(appointment.end_time)}
+                  <div className="text-xs opacity-80 mt-0.5 flex items-center justify-between">
+                    <span>{formatTime12h(appointment.start_time)} - {formatTime12h(appointment.end_time)}</span>
+                    {appointment.total_price != null && appointment.total_price > 0 && (
+                      <BlurredAmount className="text-[10px] opacity-70">
+                        ${appointment.total_price.toFixed(0)}
+                      </BlurredAmount>
+                    )}
                   </div>
                 )}
               </>
@@ -463,7 +481,12 @@ function AppointmentCard({
       </TooltipTrigger>
       <TooltipContent side="right" className="max-w-xs">
         <div className="space-y-1.5">
-          <div className="font-medium">{appointment.client_name}</div>
+          <div className="font-medium flex items-center gap-1.5">
+            {appointment.client_name}
+            {appointment.is_new_client && (
+              <span className="text-[9px] px-1 py-px rounded-sm bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 font-medium">NEW</span>
+            )}
+          </div>
            {appointment.client_phone && (
             <div className="text-sm flex items-center gap-1.5">
               <Phone className="h-3 w-3" />
@@ -472,7 +495,7 @@ function AppointmentCard({
               </a>
             </div>
           )}
-          <div className="text-sm">{appointment.service_name}</div>
+          <div className="text-sm">{formatServicesWithDuration(appointment.service_name, serviceLookup) || appointment.service_name}</div>
           {appointment.stylist_profile && (
             <div className="text-sm flex items-center gap-1">
               <User className="h-3 w-3" />
@@ -489,6 +512,11 @@ function AppointmentCard({
             <Clock className="h-3 w-3" />
             {formatTime12h(appointment.start_time)} - {formatTime12h(appointment.end_time)}
           </div>
+          {appointment.total_price != null && appointment.total_price > 0 && (
+            <div className="text-sm text-muted-foreground">
+              <BlurredAmount className="font-medium">${appointment.total_price.toFixed(0)}</BlurredAmount>
+            </div>
+          )}
           <Badge 
             variant="outline" 
             className={cn(

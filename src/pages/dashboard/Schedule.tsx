@@ -516,6 +516,9 @@ export default function Schedule() {
               appointments={appointments}
               onAppointmentClick={handleAppointmentClick}
               assistedAppointmentIds={assistedAppointmentIds}
+              assistantNamesMap={assistantNamesMap}
+              appointmentsWithAssistants={appointmentsWithAssistants}
+              serviceLookup={serviceLookup}
             />
           )}
         </>
