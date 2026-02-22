@@ -20,7 +20,7 @@ const DEFAULT_PREFERENCES: Omit<CalendarPreferences, 'id' | 'user_id' | 'created
   default_view: 'week',
   default_location_id: null,
   show_cancelled: false,
-  color_by: 'status',
+  color_by: 'service',
   hours_start: 8,
   hours_end: 20,
 };

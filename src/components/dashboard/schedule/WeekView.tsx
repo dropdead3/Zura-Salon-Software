@@ -34,6 +34,7 @@ interface WeekViewProps {
   locationHolidayClosures?: HolidayClosure[] | null;
   assistedAppointmentIds?: Set<string>;
   appointmentsWithAssistants?: Set<string>;
+  colorBy?: 'status' | 'service' | 'stylist';
 }
 
 // Use consolidated status colors from design tokens
@@ -84,13 +85,15 @@ function AppointmentCard({
   categoryColors,
   isAssisting = false,
   hasAssistants = false,
-}: { 
+  colorBy = 'service',
+}: {
   appointment: PhorestAppointment; 
   hoursStart: number;
   onClick: () => void;
   categoryColors: Record<string, { bg: string; text: string; abbr: string }>;
   isAssisting?: boolean;
   hasAssistants?: boolean;
+  colorBy?: 'status' | 'service' | 'stylist';
 }) {
   const style = getEventStyle(appointment.start_time, appointment.end_time, hoursStart);
   const statusColors = STATUS_COLORS[appointment.status];
@@ -101,7 +104,7 @@ function AppointmentCard({
   // Get category-based color for non-status-specific appointments
   const serviceCategory = appointment.service_category;
   const catColor = getCategoryColor(serviceCategory, categoryColors);
-  const useCategoryColor = appointment.status === 'booked';
+  const useCategoryColor = colorBy === 'service' || appointment.status === 'booked';
   const isConsultation = isConsultationCategory(serviceCategory);
   
   // Check if the category has a gradient marker stored
@@ -276,6 +279,7 @@ export function WeekView({
   locationHolidayClosures,
   assistedAppointmentIds,
   appointmentsWithAssistants,
+  colorBy = 'service',
 }: WeekViewProps) {
   const [activeSlot, setActiveSlot] = useState<{ date: Date; time: string } | null>(null);
   const { colorMap: categoryColors } = useServiceCategoryColorsMap();
@@ -574,6 +578,7 @@ export function WeekView({
                       categoryColors={categoryColors}
                       isAssisting={assistedAppointmentIds?.has(apt.id) || false}
                       hasAssistants={appointmentsWithAssistants?.has(apt.id) || false}
+                      colorBy={colorBy}
                     />
                   ))}
 
