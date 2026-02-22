@@ -562,7 +562,7 @@ function AppointmentCard({
                   if (!names || names.length === 0) return null;
                   return (
                     <div className="text-[11px] opacity-70 truncate">
-                      assisted by {names.join(', ')}
+                      Assisted by {names.join(', ')}
                     </div>
                   );
                 })()}
