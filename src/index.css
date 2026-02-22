@@ -929,7 +929,6 @@ html, body, #root {
     background: transparent;
     border-radius: 9999px;
     transition: background 0.3s ease;
-    transition: background 0.2s ease;
   }
 
   .scrollbar-minimal:hover::-webkit-scrollbar-thumb {
@@ -971,7 +970,6 @@ html, body, #root {
     background: transparent;
     border-radius: 3px;
     transition: background 0.3s ease;
-    transition: background 0.2s ease;
   }
 
   .scrollbar-thin:hover::-webkit-scrollbar-thumb {
@@ -1393,7 +1391,6 @@ html, body, #root {
   background: transparent;
   border-radius: 4px;
   transition: background 0.3s ease;
-  transition: background 0.2s ease;
 }
 
 *:hover::-webkit-scrollbar-thumb {
