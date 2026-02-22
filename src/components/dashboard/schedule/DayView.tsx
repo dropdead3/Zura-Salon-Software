@@ -463,7 +463,14 @@ function AppointmentCard({
                       backgroundColor: bandDark ? bandDark.fill : band.color.bg,
                     }}
                   >
-                    {/* Color band only — labels rendered in content area below */}
+                    {duration >= 60 && (
+                      <span
+                        className="absolute bottom-0 right-1 text-[9px] opacity-70 truncate max-w-[90%] text-right"
+                        style={{ textShadow: '0 0 3px rgba(0,0,0,0.15)' }}
+                      >
+                        {band.name}
+                      </span>
+                    )}
                   </div>
                 );
               })}
