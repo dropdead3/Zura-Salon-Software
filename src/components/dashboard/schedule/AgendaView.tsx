@@ -1,20 +1,26 @@
 import { useMemo } from 'react';
 import { addDays, isToday, isTomorrow, parseISO } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
-import { cn } from '@/lib/utils';
+import { cn, formatPhoneDisplay } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Phone, Clock, MapPin, User, ChevronRight, Repeat } from 'lucide-react';
+import { Phone, Clock, MapPin, User, ChevronRight, Repeat, Users, Star } from 'lucide-react';
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
 import { APPOINTMENT_STATUS_BADGE } from '@/lib/design-tokens';
+import { getClientInitials, getAvatarColor, formatServicesWithDuration } from '@/lib/appointment-card-utils';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
+import type { ServiceLookupEntry } from '@/hooks/useServiceLookup';
 
 interface AgendaViewProps {
   currentDate: Date;
   appointments: PhorestAppointment[];
   onAppointmentClick: (appointment: PhorestAppointment) => void;
   assistedAppointmentIds?: Set<string>;
+  assistantNamesMap?: Map<string, string[]>;
+  appointmentsWithAssistants?: Set<string>;
+  serviceLookup?: Map<string, ServiceLookupEntry>;
 }
 
 const STATUS_CONFIG = APPOINTMENT_STATUS_BADGE;
@@ -38,10 +44,16 @@ function AppointmentCard({
   appointment, 
   onClick,
   isAssisting = false,
+  assistantNamesMap,
+  hasAssistants = false,
+  serviceLookup,
 }: { 
   appointment: PhorestAppointment; 
   onClick: () => void;
   isAssisting?: boolean;
+  assistantNamesMap?: Map<string, string[]>;
+  hasAssistants?: boolean;
+  serviceLookup?: Map<string, ServiceLookupEntry>;
 }) {
   const statusConfig = STATUS_CONFIG[appointment.status];
   const isCancelledOrNoShow = appointment.status === 'cancelled' || appointment.status === 'no_show';
@@ -79,21 +91,39 @@ function AppointmentCard({
           {/* Main Content */}
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
-              <div>
-                <div className="flex items-center gap-1.5">
-                  <h4 className="font-medium text-base">{appointment.client_name}</h4>
-                  {appointment.recurrence_group_id && (
-                    <Repeat className="h-3.5 w-3.5 text-muted-foreground" />
-                  )}
-                  {isAssisting && (
-                    <span className="bg-accent text-accent-foreground text-[10px] px-1.5 py-0.5 rounded-sm font-medium">ASSISTING</span>
-                  )}
+              <div className="flex items-start gap-2 min-w-0">
+                {/* Client avatar initials */}
+                <span className={cn('h-7 w-7 rounded-full flex items-center justify-center text-[10px] font-medium shrink-0 mt-0.5', getAvatarColor(appointment.client_name))}>
+                  {getClientInitials(appointment.client_name)}
+                </span>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <h4 className="font-medium text-base">{appointment.client_name}</h4>
+                    {appointment.is_new_client && (
+                      <span className="text-[9px] px-1.5 py-0.5 rounded-sm bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 font-medium">NEW</span>
+                    )}
+                    {appointment.recurrence_group_id && (
+                      <Repeat className="h-3.5 w-3.5 text-muted-foreground" />
+                    )}
+                    {isAssisting && (
+                      <span className="bg-accent text-accent-foreground text-[10px] px-1.5 py-0.5 rounded-sm font-medium">ASSISTING</span>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {formatServicesWithDuration(appointment.service_name, serviceLookup) || appointment.service_name}
+                  </p>
                 </div>
-                <p className="text-sm text-muted-foreground">{appointment.service_name}</p>
               </div>
-              <Badge className={cn('shrink-0', statusConfig.bg, statusConfig.text)}>
-                {statusConfig.label}
-              </Badge>
+              <div className="flex items-center gap-2 shrink-0">
+                {appointment.total_price != null && appointment.total_price > 0 && (
+                  <BlurredAmount className="text-sm font-medium text-muted-foreground">
+                    ${appointment.total_price.toFixed(0)}
+                  </BlurredAmount>
+                )}
+                <Badge className={cn('shrink-0', statusConfig.bg, statusConfig.text)}>
+                  {statusConfig.label}
+                </Badge>
+              </div>
             </div>
 
             <div className="flex flex-wrap gap-3 mt-2 text-sm text-muted-foreground">
@@ -104,7 +134,7 @@ function AppointmentCard({
                   onClick={(e) => e.stopPropagation()}
                 >
                   <Phone className="h-3.5 w-3.5" />
-                  {appointment.client_phone}
+                  {formatPhoneDisplay(appointment.client_phone)}
                 </a>
               )}
               
@@ -117,6 +147,14 @@ function AppointmentCard({
                     </AvatarFallback>
                   </Avatar>
                   {appointment.stylist_profile.display_name || appointment.stylist_profile.full_name}
+                </div>
+              )}
+
+              {/* Assistant names */}
+              {hasAssistants && assistantNamesMap?.get(appointment.id) && (
+                <div className="flex items-center gap-1">
+                  <Users className="h-3.5 w-3.5" />
+                  w/ {assistantNamesMap.get(appointment.id)!.join(', ')}
                 </div>
               )}
             </div>
@@ -135,6 +173,9 @@ export function AgendaView({
   appointments,
   onAppointmentClick,
   assistedAppointmentIds,
+  assistantNamesMap,
+  appointmentsWithAssistants,
+  serviceLookup,
 }: AgendaViewProps) {
   const { formatDate } = useFormatDate();
 
@@ -204,6 +245,9 @@ export function AgendaView({
                   appointment={apt}
                   onClick={() => onAppointmentClick(apt)}
                   isAssisting={assistedAppointmentIds?.has(apt.id) || false}
+                  assistantNamesMap={assistantNamesMap}
+                  hasAssistants={appointmentsWithAssistants?.has(apt.id) || false}
+                  serviceLookup={serviceLookup}
                 />
               ))}
             </div>

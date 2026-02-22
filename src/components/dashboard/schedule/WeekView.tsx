@@ -14,7 +14,9 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
-import { Phone, User, Users, Repeat, RotateCcw } from 'lucide-react';
+import { Phone, User, Users, Repeat, RotateCcw, Star } from 'lucide-react';
+import { getClientInitials, getAvatarColor, formatServicesWithDuration } from '@/lib/appointment-card-utils';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
 import { QuickBookingPopover } from './QuickBookingPopover';
 import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
@@ -241,6 +243,7 @@ function AppointmentCard({
                 {appointment.recurrence_group_id && <Repeat className="h-2.5 w-2.5 opacity-60 shrink-0" />}
                 {isAssisting && <span className="bg-accent/80 text-accent-foreground text-[7px] px-0.5 rounded-sm font-medium shrink-0">AST</span>}
                 {!isAssisting && hasAssistants && <Users className="h-2.5 w-2.5 opacity-60 shrink-0" />}
+                {appointment.is_new_client && <Star className="h-2.5 w-2.5 text-amber-500 shrink-0" />}
                 {appointment.client_name}
               </div>
             ) : isMedium ? (
@@ -249,9 +252,14 @@ function AppointmentCard({
                   {appointment.recurrence_group_id && <Repeat className="h-3 w-3 opacity-60 shrink-0" />}
                   {isAssisting && <span className="bg-accent/80 text-accent-foreground text-[8px] px-1 py-px rounded-sm font-medium shrink-0">ASSISTING</span>}
                   {!isAssisting && hasAssistants && <Users className="h-3 w-3 opacity-60 shrink-0" />}
-                  {appointment.client_name} {appointment.client_phone ? formatPhoneDisplay(appointment.client_phone) : ''}
+                  <span className={cn('h-4 w-4 rounded-full flex items-center justify-center text-[7px] font-medium shrink-0', getAvatarColor(appointment.client_name))}>
+                    {getClientInitials(appointment.client_name)}
+                  </span>
+                  {appointment.client_name}
+                  {appointment.is_new_client && <span className="text-[8px] px-1 py-px rounded-sm bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 font-medium shrink-0">NEW</span>}
+                  {appointment.client_phone ? <span className="font-normal opacity-80">{formatPhoneDisplay(appointment.client_phone)}</span> : ''}
                 </div>
-                <div className="text-[11px] opacity-90 truncate">{appointment.service_name}</div>
+                <div className="text-[11px] opacity-90 truncate">{formatServicesWithDuration(appointment.service_name, serviceLookup) || appointment.service_name}</div>
               </>
             ) : (
               <>
@@ -259,11 +267,21 @@ function AppointmentCard({
                   {appointment.recurrence_group_id && <Repeat className="h-3 w-3 opacity-60 shrink-0" />}
                   {isAssisting && <span className="bg-accent/80 text-accent-foreground text-[8px] px-1 py-px rounded-sm font-medium shrink-0">ASSISTING</span>}
                   {!isAssisting && hasAssistants && <Users className="h-3 w-3 opacity-60 shrink-0" />}
-                  {appointment.client_name} {appointment.client_phone}
+                  <span className={cn('h-4 w-4 rounded-full flex items-center justify-center text-[7px] font-medium shrink-0', getAvatarColor(appointment.client_name))}>
+                    {getClientInitials(appointment.client_name)}
+                  </span>
+                  {appointment.client_name}
+                  {appointment.is_new_client && <span className="text-[8px] px-1 py-px rounded-sm bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 font-medium shrink-0">NEW</span>}
+                  {appointment.client_phone && <span className="font-normal opacity-80">{formatPhoneDisplay(appointment.client_phone)}</span>}
                 </div>
-                <div className="text-[11px] opacity-90 truncate">{appointment.service_name}</div>
-                <div className="text-[10px] opacity-80">
-                  {formatTime12h(appointment.start_time)} - {formatTime12h(appointment.end_time)}
+                <div className="text-[11px] opacity-90 truncate">{formatServicesWithDuration(appointment.service_name, serviceLookup) || appointment.service_name}</div>
+                <div className="text-[10px] opacity-80 flex items-center justify-between">
+                  <span>{formatTime12h(appointment.start_time)} - {formatTime12h(appointment.end_time)}</span>
+                  {appointment.total_price != null && appointment.total_price > 0 && (
+                    <BlurredAmount className="opacity-70">
+                      ${appointment.total_price.toFixed(0)}
+                    </BlurredAmount>
+                  )}
                 </div>
               </>
             )}
@@ -282,7 +300,10 @@ function AppointmentCard({
       </TooltipTrigger>
       <TooltipContent side="right" className="max-w-xs">
         <div className="space-y-1.5">
-          <div className="font-medium">{appointment.client_name}</div>
+          <div className="font-medium flex items-center gap-1.5">
+            {appointment.client_name}
+            {appointment.is_new_client && <span className="text-[9px] px-1 py-px rounded-sm bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 font-medium">NEW</span>}
+          </div>
           {appointment.client_phone && (
             <div className="text-sm flex items-center gap-1.5">
               <Phone className="h-3 w-3" />
@@ -291,7 +312,7 @@ function AppointmentCard({
               </a>
             </div>
           )}
-          <div className="text-sm">{appointment.service_name}</div>
+          <div className="text-sm">{formatServicesWithDuration(appointment.service_name, serviceLookup) || appointment.service_name}</div>
           <div className="text-sm text-muted-foreground">
             {formatTime12h(appointment.start_time)} - {formatTime12h(appointment.end_time)}
           </div>
@@ -305,6 +326,11 @@ function AppointmentCard({
             <div className="text-sm flex items-center gap-1">
               <Users className="h-3 w-3" />
               w/ {assistantNamesMap.get(appointment.id)!.join(', ')}
+            </div>
+          )}
+          {appointment.total_price != null && appointment.total_price > 0 && (
+            <div className="text-sm text-muted-foreground">
+              <BlurredAmount className="font-medium">${appointment.total_price.toFixed(0)}</BlurredAmount>
             </div>
           )}
           <Badge variant="outline" className={cn('text-xs', statusColors.bg, statusColors.text)}>
