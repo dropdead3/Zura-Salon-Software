@@ -1,37 +1,64 @@
 
 
-# Fix: Appointment Card Not Moving After Drag-and-Drop
+# Reschedule History on Appointment Cards
 
-## Root Cause
+## Overview
 
-The reschedule mutation hook (`useRescheduleAppointment.ts`) invalidates the wrong query key after a successful move.
+When an appointment is moved or rescheduled, there is currently no record of the original time/date. This plan adds reschedule tracking at the database level and surfaces it visually on appointment cards so staff can instantly see that an appointment was moved and where it came from.
 
-- **Current (broken):** `queryClient.invalidateQueries({ queryKey: ['phorest-calendar'] })`
-- **Actual query key used by the calendar:** `['phorest-appointments', ...]` (defined in `usePhorestCalendar.ts`)
+## What Changes
 
-Because the keys don't match, React Query never refetches the appointment data after the move succeeds. The backend updates correctly (hence "Moved to 11:00 AM" toast), but the UI stays stale.
+### 1. Database: Add reschedule tracking columns
 
-## Fix
+Add three new columns to `phorest_appointments`:
 
-In `src/hooks/useRescheduleAppointment.ts`, change line 33 from:
+| Column | Type | Purpose |
+|--------|------|---------|
+| `rescheduled_from_date` | date | Original date before the most recent move |
+| `rescheduled_from_time` | time | Original start time before the most recent move |
+| `rescheduled_at` | timestamptz | When the reschedule happened |
+
+These are nullable and only populated when an appointment is actually moved.
+
+### 2. Edge Function: Record previous time before updating
+
+In `update-phorest-appointment-time/index.ts`, before writing the new date/time, save the current values into the new columns:
 
 ```text
-queryClient.invalidateQueries({ queryKey: ['phorest-calendar'] });
+updatePayload.rescheduled_from_date = localApt.appointment_date
+updatePayload.rescheduled_from_time = localApt.start_time
+updatePayload.rescheduled_at = new Date().toISOString()
 ```
 
-to:
+This captures the "moved from" snapshot on every reschedule.
 
-```text
-queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] });
-```
+### 3. UI: Visual indicator on appointment cards
 
-This matches the actual query key used by `usePhorestCalendar.ts` (line 123), so the calendar will immediately refetch and the appointment card will snap to its new position.
+**DayView and WeekView cards** -- When `rescheduled_at` is present:
+- Show a small `ArrowRightLeft` icon (from lucide) next to the client name, indicating the appointment was moved
+- On non-compact cards (duration >= 45min), show a subtle line: "Moved from 9:00 AM" in muted text
 
-## Files Modified
+**Tooltip** -- Add a "Rescheduled" section showing:
+- "Moved from [original date if different] [original time]"
+- Relative timestamp: "2 hours ago" or "Yesterday"
+
+**AppointmentDetailSheet** -- In the Details tab, add a "Reschedule History" row showing the original date/time and when it was moved.
+
+### 4. Files Modified
 
 | File | Change |
 |------|--------|
-| `src/hooks/useRescheduleAppointment.ts` | Fix query key from `phorest-calendar` to `phorest-appointments` |
+| Database migration | Add `rescheduled_from_date`, `rescheduled_from_time`, `rescheduled_at` columns |
+| `supabase/functions/update-phorest-appointment-time/index.ts` | Save previous date/time into new columns before updating |
+| `src/components/dashboard/schedule/DayView.tsx` | Add rescheduled icon and "Moved from" line on cards and tooltip |
+| `src/components/dashboard/schedule/WeekView.tsx` | Same rescheduled indicator on week view cards |
+| `src/components/dashboard/schedule/AgendaView.tsx` | Same rescheduled indicator on agenda cards |
+| `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` | Add reschedule history row in Details tab |
 
-One line change. No other files affected.
+### 5. Visual Design
+
+- Icon: `ArrowRightLeft` from lucide-react, sized `h-3 w-3`, styled with `text-blue-500 dark:text-blue-400`
+- "Moved from" text: `text-[10px] opacity-70 italic` to keep it subtle and non-intrusive
+- Tooltip section: Standard muted foreground, with a `Clock` icon prefix
+- No bold weights used (per UI Canon)
 
