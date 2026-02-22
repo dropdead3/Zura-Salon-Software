@@ -84,7 +84,12 @@ export function BookingWizard({
       }
 
       if (clientSearch) {
-        query = query.or(`name.ilike.${clientSearch}%,phone.ilike.%${clientSearch}%,email.ilike.%${clientSearch}%`);
+        const hasDigit = /\d/.test(clientSearch);
+        const hasAt = clientSearch.includes('@');
+        const filters = [`name.ilike.${clientSearch}%`];
+        if (hasDigit) filters.push(`phone.ilike.%${clientSearch}%`);
+        if (hasAt) filters.push(`email.ilike.%${clientSearch}%`);
+        query = query.or(filters.join(','));
       }
 
       const { data } = await query;
