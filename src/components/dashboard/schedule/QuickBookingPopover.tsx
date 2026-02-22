@@ -53,6 +53,7 @@ import { BannedClientWarningDialog } from '@/components/dashboard/clients/Banned
 import { ServiceAddonToast } from './ServiceAddonToast';
 import { useAddonAssignmentMaps } from '@/hooks/useServiceAddonAssignments';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { useSaveDraft, useDeleteDraft } from '@/hooks/useDraftBookings';
 import { useServiceCategoryColors } from '@/hooks/useServiceCategoryColors';
 import { useServiceAddons } from '@/hooks/useServiceAddons';
 import type { ServiceAddon } from '@/hooks/useServiceAddons';
@@ -73,6 +74,19 @@ interface QuickBookingPopoverProps {
   defaultLocationId?: string;
   mode?: QuickBookingMode;
   defaultStylistId?: string;
+  draftId?: string;
+  initialDraftData?: {
+    locationId?: string;
+    clientId?: string | null;
+    clientName?: string | null;
+    staffUserId?: string | null;
+    staffName?: string | null;
+    selectedServices?: string[];
+    notes?: string;
+    stepReached?: string;
+    isRedo?: boolean;
+    redoMetadata?: Record<string, unknown> | null;
+  };
 }
 
 import { ClientProfileView, ExtendedPhorestClient } from './booking/ClientProfileView';
@@ -119,11 +133,15 @@ export function QuickBookingPopover({
   defaultLocationId,
   mode = 'popover',
   defaultStylistId,
+  draftId,
+  initialDraftData,
 }: QuickBookingPopoverProps) {
   const queryClient = useQueryClient();
   const { user, roles } = useAuth();
   const { data: redoPolicy } = useRedoPolicySettings();
   const isManagerOrAdmin = roles.some(r => ['admin', 'super_admin', 'manager'].includes(r));
+  const saveDraft = useSaveDraft();
+  const deleteDraftMutation = useDeleteDraft();
 
   // Notify FAB about booking popover state
   useEffect(() => {
@@ -296,12 +314,31 @@ export function QuickBookingPopover({
            isStepCompleted(step);
   }, [step, highestStepReached, selectedLocation, selectedClient, selectedStylist, preSelectedStylistId]);
 
+  // Pre-populate from draft data when opening with a draft
+  useEffect(() => {
+    if (open && initialDraftData) {
+      if (initialDraftData.locationId) setSelectedLocation(initialDraftData.locationId);
+      if (initialDraftData.selectedServices?.length) setSelectedServices(initialDraftData.selectedServices);
+      if (initialDraftData.notes) { setBookingNotes(initialDraftData.notes); setShowNotes(true); }
+      if (initialDraftData.isRedo) setIsRedo(true);
+      if (initialDraftData.staffUserId) setSelectedStylist(initialDraftData.staffUserId);
+      // Jump to the furthest step reached
+      if (initialDraftData.stepReached) {
+        const stepIdx = STEPS.indexOf(initialDraftData.stepReached as Step);
+        if (stepIdx >= 0) {
+          setHighestStepReached(stepIdx);
+          setStep(initialDraftData.stepReached as Step);
+        }
+      }
+    }
+  }, [open, initialDraftData]);
+
   // Sync location when popover opens with a new default
   useEffect(() => {
-    if (open && defaultLocationId) {
+    if (open && defaultLocationId && !initialDraftData?.locationId) {
       setSelectedLocation(defaultLocationId);
     }
-  }, [open, defaultLocationId]);
+  }, [open, defaultLocationId, initialDraftData]);
 
   const { data: locations = [] } = useLocations();
   const { data: servicesByCategory, services = [], isLoading: isLoadingServices } = useAllServicesByCategory();
@@ -624,16 +661,49 @@ export function QuickBookingPopover({
       return response.data;
     },
     onSuccess: () => {
+      // Delete draft if booking was resumed from one
+      if (draftId && effectiveOrganization?.id) {
+        deleteDraftMutation.mutate({ id: draftId, orgId: effectiveOrganization.id });
+      }
       queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] });
       toast.success('Appointment booked successfully');
-      handleClose();
+      handleClose(true);
     },
     onError: (error: Error) => {
       toast.error('Failed to create booking', { description: error.message });
     },
   });
 
-  const handleClose = () => {
+  const handleClose = (skipDraftSave = false) => {
+    // Auto-save as draft if meaningful data exists and not a completed booking
+    if (!skipDraftSave && effectiveOrganization?.id) {
+      const hasData = selectedServices.length > 0 || selectedClient || bookingNotes;
+      if (hasData) {
+        const serviceDetails = services
+          .filter(s => selectedServices.filter(id => !id.startsWith('addon:')).includes(s.phorest_service_id))
+          .map(s => ({ id: s.phorest_service_id, name: s.name }));
+        const addonDetails = selectedAddonDetails.map(a => ({ id: `addon:${a.id}`, name: a.name }));
+
+        saveDraft.mutate({
+          id: draftId || undefined,
+          organization_id: effectiveOrganization.id,
+          location_id: selectedLocation || undefined,
+          appointment_date: format(date, 'yyyy-MM-dd'),
+          start_time: time,
+          client_id: selectedClient?.id || null,
+          client_name: selectedClient?.name || null,
+          staff_user_id: selectedStylist || null,
+          staff_name: selectedStylistData?.employee_profiles?.display_name || selectedStylistData?.employee_profiles?.full_name || null,
+          selected_services: [...serviceDetails, ...addonDetails],
+          notes: bookingNotes || undefined,
+          step_reached: step,
+          is_redo: isRedo,
+          redo_metadata: isRedo ? { reason: redoReason, originalAppointmentId } : undefined,
+        });
+        toast.info('Booking saved as draft');
+      }
+    }
+
     setStep('service');
     setHighestStepReached(0);
     setSelectedClient(null);
@@ -946,7 +1016,7 @@ export function QuickBookingPopover({
               variant="ghost"
               size="icon"
               className="h-8 w-8 rounded-full hover:bg-muted"
-              onClick={handleClose}
+              onClick={() => handleClose()}
             >
               <X className="h-4 w-4" />
             </Button>
@@ -2164,7 +2234,7 @@ export function QuickBookingPopover({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                onClick={handleClose}
+                onClick={() => handleClose()}
                 aria-hidden="true"
               />
               <motion.div

@@ -15,6 +15,7 @@ import { CheckoutSummarySheet } from '@/components/dashboard/schedule/CheckoutSu
 import { QuickBookingPopover } from '@/components/dashboard/schedule/QuickBookingPopover';
 import { ScheduleUtilizationBar } from '@/components/dashboard/schedule/ScheduleUtilizationBar';
 import { SchedulingCopilotPanel } from '@/components/scheduling/SchedulingCopilotPanel';
+import { DraftBookingsSheet } from '@/components/dashboard/schedule/DraftBookingsSheet';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { usePhorestCalendar, type PhorestAppointment, type CalendarView } from '@/hooks/usePhorestCalendar';
 import { useCalendarPreferences } from '@/hooks/useCalendarPreferences';
@@ -24,6 +25,8 @@ import { useActiveLocations, isClosedOnDate, getLocationHoursForDate } from '@/h
 import { ClosedDayWarningDialog } from '@/components/dashboard/schedule/ClosedDayWarningDialog';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useAuth } from '@/contexts/AuthContext';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { useDraftBookings, type DraftBooking } from '@/hooks/useDraftBookings';
 import { Loader2, Sparkles, Coffee } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -47,6 +50,9 @@ export default function Schedule() {
   const { data: locations = [] } = useActiveLocations();
   const { data: businessSettings } = useBusinessSettings();
   const quickLoginHandled = useRef(false);
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id;
+  const { data: drafts = [] } = useDraftBookings(orgId);
   
   // Check if user is stylist or stylist_assistant (they get full calendar view access)
   const isStylistRole = roles.includes('stylist') || roles.includes('stylist_assistant');
@@ -91,6 +97,8 @@ export default function Schedule() {
     return () => window.removeEventListener('toggle-scheduling-copilot', handleToggle);
   }, []);
   const [bookingDefaults, setBookingDefaults] = useState<{ date?: Date; stylistId?: string; time?: string }>({});
+  const [activeDraft, setActiveDraft] = useState<DraftBooking | null>(null);
+  const [draftsSheetOpen, setDraftsSheetOpen] = useState(false);
   const [calendarFilters, setCalendarFilters] = useState<CalendarFilterState>({
     clientTypes: [],
     confirmationStatus: [],
@@ -356,7 +364,18 @@ export default function Schedule() {
   };
 
   const handleNewBooking = () => {
+    setActiveDraft(null);
     setBookingDefaults({});
+    setBookingOpen(true);
+  };
+
+  const handleResumeDraft = (draft: DraftBooking) => {
+    setActiveDraft(draft);
+    setBookingDefaults({
+      date: draft.appointment_date ? new Date(draft.appointment_date + 'T12:00:00') : currentDate,
+      time: draft.start_time || '09:00',
+      stylistId: draft.staff_user_id || undefined,
+    });
     setBookingOpen(true);
   };
 
@@ -505,6 +524,8 @@ export default function Schedule() {
                 canCreate={canCreate}
                 calendarFilters={calendarFilters}
                 onCalendarFiltersChange={setCalendarFilters}
+                draftCount={drafts.length}
+                onOpenDrafts={() => setDraftsSheetOpen(true)}
               />
         </div>
 
@@ -577,11 +598,34 @@ export default function Schedule() {
       <QuickBookingPopover
         mode="panel"
         open={bookingOpen}
-        onOpenChange={setBookingOpen}
+        onOpenChange={(open) => {
+          setBookingOpen(open);
+          if (!open) setActiveDraft(null);
+        }}
         date={bookingDefaults.date || currentDate}
         time={bookingDefaults.time || '09:00'}
         defaultLocationId={selectedLocation}
         defaultStylistId={bookingDefaults.stylistId}
+        draftId={activeDraft?.id}
+        initialDraftData={activeDraft ? {
+          locationId: activeDraft.location_id || undefined,
+          clientId: activeDraft.client_id,
+          clientName: activeDraft.client_name,
+          staffUserId: activeDraft.staff_user_id,
+          staffName: activeDraft.staff_name,
+          selectedServices: activeDraft.selected_services?.map(s => s.id) || [],
+          notes: activeDraft.notes || undefined,
+          stepReached: activeDraft.step_reached || undefined,
+          isRedo: activeDraft.is_redo,
+          redoMetadata: activeDraft.redo_metadata,
+        } : undefined}
+      />
+
+      <DraftBookingsSheet
+        open={draftsSheetOpen}
+        onOpenChange={setDraftsSheetOpen}
+        orgId={orgId}
+        onResume={handleResumeDraft}
       />
 
       <ClosedDayWarningDialog
