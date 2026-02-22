@@ -1,75 +1,33 @@
 
-# Move All Card Icons/Indicators to Top-Right
 
-## Summary
+# Fix Confirmation Badge Overlapping Assistant Badge
 
-Move all the inline icons and indicator badges (redo, recurrence, reschedule, assisting, assistants, NEW client) from the left side of the client name row to the top-right corner of the card, grouped alongside the existing status badge.
+## Problem
 
-## What Changes
+The top-right indicators cluster (status badge, icons) at `top-1 right-1 z-20` overlaps with the assistant avatar badges at `top-0.5 right-0.5 z-10` because both are absolutely positioned in the same corner.
 
-Currently, icons like redo (RotateCcw), recurrence (Repeat), reschedule (ArrowRightLeft), ASSISTING badge, assistants (Users), and NEW client badge all appear inline before or after the client name. They will move into the absolute-positioned top-right area, stacked horizontally next to the status badge.
+## Solution
 
-The client name row becomes clean text only (plus phone number if present), without any leading icons.
+Stack the assistant avatars below the indicators cluster instead of competing for the same spot. Move the assistant badges from `top-0.5 right-0.5` to sit just below the indicator row by changing their position to `top-5 right-1`. This gives the status/indicator row clear ownership of the top-right corner, with assistant avatars neatly tucked underneath.
 
 ## Technical Details
 
 **File: `src/components/dashboard/schedule/DayView.tsx`**
 
-**Non-compact card (lines 504-544):**
+**Line 351** -- Change the assistant badges container position:
 
-Replace the current top-right div (status badge only) and the icon-laden client name row with:
-
+Before:
 ```tsx
-{/* Top-right indicators cluster */}
-<div className="absolute top-1 right-1 z-20 flex items-center gap-1">
-  {(appointment as any).is_redo && (
-    <RotateCcw className="h-3 w-3 text-amber-500" />
-  )}
-  {appointment.recurrence_group_id && (
-    <Repeat className="h-3 w-3 opacity-60" />
-  )}
-  {(appointment as any).rescheduled_at && (
-    <ArrowRightLeft className="h-3 w-3 text-blue-500 dark:text-blue-400" />
-  )}
-  {!isAssisting && hasAssistants && (
-    <Users className="h-3 w-3 opacity-60" />
-  )}
-  {isAssisting && (
-    <span className="bg-accent/80 text-accent-foreground text-[8px] px-1 py-px rounded-sm font-medium">AST</span>
-  )}
-  {appointment.is_new_client && (
-    <span className="text-[8px] px-1 py-px rounded-sm bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 font-medium">NEW</span>
-  )}
-  {/* Status badge */}
-  <span className={cn(
-    'text-[9px] px-1.5 py-0.5 rounded-full font-medium',
-    badge.bg, badge.text
-  )}>
-    {badge.label}
-  </span>
-</div>
-
-{/* Client name - clean, no icons */}
-<div className="text-sm font-medium truncate pr-20">
-  {appointment.client_name}
-  {appointment.client_phone && (
-    <span className="font-normal opacity-80 ml-1">
-      {formatPhoneDisplay(appointment.client_phone)}
-    </span>
-  )}
-</div>
+<div className="absolute top-0.5 right-0.5 z-10 flex items-center -space-x-1">
 ```
 
-Key details:
-- All indicators cluster in a single `flex` row at `top-1 right-1`
-- Status badge anchors at the far right of the cluster
-- `pr-20` (increased from `pr-16`) on client name to accommodate the wider indicator cluster
-- The compact card row (lines 480-501) gets the same treatment: icons move to the right side
+After:
+```tsx
+<div className="absolute top-5 right-1 z-10 flex items-center -space-x-1">
+```
 
-**Compact card (lines 480-501):**
-
-Same pattern -- move the inline icons from before the client name into a right-aligned cluster within the compact row.
+This positions the assistant avatars roughly 20px from the top, clearing the indicator/status badge row above them.
 
 | File | Change |
 |---|---|
-| `src/components/dashboard/schedule/DayView.tsx` | Move all icons/indicators from client name row to top-right cluster alongside status badge |
+| `src/components/dashboard/schedule/DayView.tsx` | Move assistant avatar cluster from `top-0.5 right-0.5` to `top-5 right-1` to sit below the status indicator row |
