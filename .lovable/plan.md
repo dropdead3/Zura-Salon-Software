@@ -1,125 +1,103 @@
 
 
-# Appointment Detail Panel -- Full Gap Analysis
+# Appointment Detail Panel -- Remaining Gaps Analysis (Round 3)
 
 ## Summary
 
-After thorough review of the 1,128-line `AppointmentDetailSheet.tsx` and its integration in `Schedule.tsx`, I found **3 critical bugs**, **4 data completeness gaps**, **5 UX polish issues**, and **3 action flow gaps**.
+After reviewing the full 1,204-line `AppointmentDetailSheet.tsx` and 831-line `Schedule.tsx` post-implementation, the previous 15-item fix pass landed well. This analysis covers residual gaps that remain or were introduced.
 
 ---
 
-## Critical Bugs
+## Remaining Gaps
 
-### 1. "View Profile" Button is a Dead End
-The `onOpenClientProfile` dispatches a `CustomEvent('open-client-profile')` in `Schedule.tsx`, but **no listener exists anywhere in the codebase** to receive it. The `ClientDetailSheet` component is only rendered in `ClientDirectory.tsx`, not in `Schedule.tsx`. Clicking "View Profile" closes the appointment panel and does nothing.
+### A. Rebook Still Does NOT Pre-Fill Client (Fix #15 Incomplete)
 
-**Fix:** Import `ClientDetailSheet` into `Schedule.tsx`, add state for the selected client, and wire the event listener (or replace the custom event pattern with direct state management).
+The `onRebook` handler in `Schedule.tsx` (lines 674-686) sets `bookingDefaults` with `date` and `stylistId`, but the `initialDraftData` prop on `QuickBookingPopover` (line 725) is only populated when `activeDraft` is truthy. Since rebook sets `activeDraft` to `null` (line 678), the booking popover opens with no client pre-fill. The `setTimeout` block on lines 682-685 is a no-op placeholder comment.
 
-### 2. Status Change from Detail Panel Uses Wrong ID
-The `onStatusChange` prop passes `appointment.phorest_id` (line 356/366), but `Schedule.tsx` receives it as `(_, status) => handleStatusChange(status)` (line 603) -- it ignores the first argument and uses `selectedAppointment.id` instead. If `phorest_id` and `id` ever differ, the panel's status change will silently use the wrong identifier. This is fragile coupling.
+**Fix:** Add a `rebookData` state variable. When `onRebook` fires, populate it with the appointment's client ID, client name, and services. Pass it as `initialDraftData` to `QuickBookingPopover` when `rebookData` is set. Clear it when the popover closes.
 
-**Fix:** Align the status change contract -- either always use `appointment.id` in the panel, or consume the passed ID in Schedule.
+### B. Per-Service Price Not Rendering
 
-### 3. Cancel from Action Bar Skips Reason Dialog
-`ScheduleActionBar`'s Cancel button calls `handleRemove` (line 414-418) which directly calls `handleStatusChange('cancelled')` and shows a toast -- **completely bypassing** the cancellation reason dialog that the detail panel enforces. This means cancellations triggered from the bottom bar have no reason captured.
+The services breakdown card (line 293) attempts to read `price` via `(serviceLookup?.get(name) as any)?.price`, but `useServiceLookup` (line 192, defined in `useServiceLookup.ts`) only selects `name, category, duration_minutes` -- it never fetches `price`. The `price` field is always `null`.
 
-**Fix:** Route the action bar cancel through the same confirmation dialog flow, or open the detail panel's cancel dialog.
+**Fix:** Update `useServiceLookup.ts` to also select `price` from `phorest_services`, add `price` to the `ServiceLookupEntry` interface, and render it in the services breakdown (line 677-681 area).
 
----
+### C. Loading Skeleton Missing on Panel Open
 
-## Data Completeness Gaps
+When the panel opens, the header and all tabs render immediately with empty/missing data while `clientRecord`, `locationName`, `visitHistory`, and `linkedRedos` queries load. There is no skeleton placeholder -- sections just appear empty then pop in.
 
-### 4. No "Last Visit" Date in Header
-The header shows client name and service summary but no quick indicator of when they were last seen. This is high-value context for the stylist -- knowing "last visited 3 weeks ago" vs. "6 months ago" changes the interaction entirely.
+**Fix:** Add a brief loading skeleton state in the header area (avatar placeholder, name skeleton, status skeleton) and in the Details tab (info rows) that shows while `clientRecord` is loading.
 
-**Fix:** Derive last visit date from `visitHistory[0]?.appointment_date` and show as a subtle line under the service summary (e.g., "Last visit: Mar 2").
+### D. Mobile Panel Not Optimized
 
-### 5. No Service Price Per-Line in Services Breakdown
-The services card shows individual service names, categories, and durations but **no per-service price**. Only the total is shown. Operators need per-line pricing for transparency when discussing services with clients.
+The panel uses `right-4 top-4 bottom-4 w-[calc(100vw-2rem)] max-w-[440px]` (line 479). On mobile (< 480px), this means tiny 16px margins with no rounded-none adjustment. The footer action buttons wrap awkwardly on small screens.
 
-**Fix:** Join `phorest_services` price data via the service lookup to display per-service pricing where available.
+**Fix:** Add responsive classes: on mobile viewports, switch to `right-0 top-0 bottom-0 w-full max-w-none rounded-none` and stack footer buttons vertically. Use `useIsMobile()` hook already imported in Schedule.tsx (pass as prop or use directly).
 
-### 6. History Tab Missing Average Visit Frequency
-The History tab shows visit count, total spend, and tenure, but **no average visit frequency** (e.g., "every 5.2 weeks"). This is a core retention metric that operators use to assess client health.
+### E. `confirmActionBarCancel` Note Insert Has No Error Handling
 
-**Fix:** Calculate from visit dates: `tenure / visitCount` and display as a 4th KPI tile or inline stat.
+In `Schedule.tsx` (lines 448-459), the note insertion uses `.then(() => {})` with no `.catch()`. If the insert fails (e.g., RLS issue), the cancellation still proceeds but the reason is silently lost.
 
-### 7. No "Walk-In" Indicator
-If `phorest_client_id` is null (walk-in client), the panel still renders with missing data across all tabs but doesn't clearly indicate this is a walk-in. The "View Profile" button just won't appear, but there's no positive indicator.
+**Fix:** Add a `.catch()` that logs/toasts a warning ("Cancellation reason could not be saved") so operators know the note was lost.
 
-**Fix:** Show a "Walk-In" badge next to the client name when `phorest_client_id` is null, and collapse the History/Client Notes sections to reduce noise.
+### F. Action Bar "Undo" Button Has No Handler
 
----
+`ScheduleActionBar` renders an "Undo" button (line 65-72 of `ScheduleActionBar.tsx`) with `onClick={onUndo}`, but `Schedule.tsx` never passes an `onUndo` prop. The button renders but does nothing when clicked.
 
-## UX Polish Gaps
+**Fix:** Either implement an undo stack (track last status change, allow reverting) or hide the Undo button until an undo capability exists.
 
-### 8. No Mobile Responsiveness
-The panel uses `w-[calc(100vw-2rem)] max-w-[440px]` which works on desktop but on mobile (< 480px) the panel occupies nearly the full screen with tiny margins. No swipe-to-close, no adjusted padding, and the footer action bar buttons wrap awkwardly.
+### G. `formatDate` Used Incorrectly for Last Visit
 
-**Fix:** On mobile viewports, go full-width (`right-0 top-0 bottom-0 rounded-none`), reduce padding, stack footer actions vertically, and consider swipe-to-close via `framer-motion` drag gesture.
+Line 512 calls `formatDate(parseISO(lastVisitDate), 'MMM d')` but `useFormatDate` may not accept a format string as the second argument depending on its implementation. If it wraps `date-fns/format` differently, this could silently fail or show unexpected output.
 
-### 9. No Loading Skeleton on Panel Open
-When the panel opens, all data hooks fire simultaneously. There is no skeleton or loading state for the main content -- the panel shows empty sections that pop in as data loads. The location name, client record, and linked redos all load asynchronously.
+**Fix:** Verify `useFormatDate` signature; if it doesn't accept custom format strings, use `format` from `date-fns` directly instead.
 
-**Fix:** Add a brief skeleton state in the header and details tab while primary queries are loading.
+### H. Stagger Animations Re-trigger on Every Tab Switch
 
-### 10. Tab State Not Reset on Appointment Change
-When selecting a different appointment while the panel is open, the tab state (`defaultValue="details"`) is only set on mount. If you're on the "Notes" tab and click a different appointment, you stay on Notes instead of resetting to Details.
+Each tab's `motion.div` uses `initial="hidden" animate="show"`, which means every time you switch back to a tab, all items re-animate from opacity 0 + translateY. This feels janky on repeated tab switches.
 
-**Fix:** Use `key={appointment?.id}` on the `Tabs` component to force re-mount on appointment change, or use controlled tab state that resets.
-
-### 11. Booking Notes Duplicated Across Tabs
-`appointment.notes` (POS Booking Notes) is rendered identically in **both** the Details tab (lines 797-805) and the Notes tab (lines 1003-1012). This is redundant and creates confusion about where the canonical location for notes is.
-
-**Fix:** Remove POS Booking Notes from the Details tab; keep only in the Notes tab where it belongs contextually.
-
-### 12. Copy Buttons Have No Visual Feedback
-The copy-to-clipboard buttons for phone and email show toast notifications but the button itself has no visual state change (no checkmark animation, no color change). Premium panels typically show inline confirmation.
-
-**Fix:** Add a brief check icon swap animation on the copy button after click (icon changes from Copy to Check for 1.5 seconds).
+**Fix:** Use `initial={false}` after the first render, or wrap in `AnimatePresence mode="wait"` with `key={activeTab}` so animations only play on tab entry, not re-entry.
 
 ---
 
-## Action Flow Gaps
+## Priority
 
-### 13. No "Mark as Confirmed" in Footer
-The footer action bar shows Check In, Pay, Reschedule, Rebook, and Cancel. But for `booked` status appointments, there is no "Confirm" button in the footer -- the user must use the status dropdown in the header. This is the most common status transition and should be one-tap accessible.
-
-**Fix:** Add a "Confirm" button to the footer when `availableTransitions.includes('confirmed')`.
-
-### 14. No "No Show" in Footer
-Similarly, "No Show" is only accessible via the status dropdown. For front-desk operators doing end-of-day reconciliation, marking no-shows should be a prominent action, not buried in a dropdown.
-
-**Fix:** Add a "No Show" button (with destructive styling) to the footer when `availableTransitions.includes('no_show')`.
-
-### 15. Rebook Doesn't Pre-Fill Client
-The `onRebook` handler in Schedule.tsx (line 605-608) only passes `date` and `stylistId` to the booking popover defaults. It does **not** pre-fill the client name or services. The operator has to re-select the client manually, defeating the purpose of a "rebook" action.
-
-**Fix:** Extend `bookingDefaults` to include `clientId`, `clientName`, and `selectedServices` from the appointment, and wire these through to `QuickBookingPopover`'s initial data.
-
----
-
-## Priority Matrix
-
-| # | Issue | Severity | Effort |
+| # | Gap | Severity | Effort |
 |---|---|---|---|
-| 1 | View Profile dead end | Critical | Medium |
-| 2 | Status change ID mismatch | Critical | Low |
-| 3 | Action bar cancel skips reason | Critical | Low |
-| 10 | Tab state not reset | High | Low |
-| 13 | No Confirm in footer | High | Low |
-| 15 | Rebook no client pre-fill | High | Medium |
-| 11 | Duplicate booking notes | Medium | Low |
-| 4 | No last visit date | Medium | Low |
-| 14 | No Show not in footer | Medium | Low |
-| 6 | No visit frequency KPI | Medium | Low |
-| 7 | No walk-in indicator | Medium | Low |
-| 12 | Copy button feedback | Low | Low |
-| 5 | No per-service price | Low | Medium |
-| 8 | Mobile responsiveness | Low | High |
-| 9 | Loading skeleton | Low | Medium |
+| A | Rebook no client pre-fill (incomplete) | High | Medium |
+| B | Per-service price never renders | Medium | Low |
+| E | Silent note insert failure | Medium | Low |
+| F | Undo button dead | Medium | Low |
+| C | No loading skeleton | Low | Medium |
+| G | formatDate signature risk | Low | Low |
+| H | Stagger re-trigger on tab switch | Low | Low |
+| D | Mobile panel optimization | Low | High |
 
 ## Recommended Approach
 
-Address items 1-4, 10-11, 13-15 as a single pass (all in `AppointmentDetailSheet.tsx` and `Schedule.tsx`). These are high-impact, low-to-medium effort fixes that resolve all critical bugs and the most visible UX gaps. Items 5, 8, 9 can follow as a polish pass.
+Address A, B, E, F, G, H in a single pass (all low-to-medium effort). C and D can follow as a polish pass.
+
+### Technical Details
+
+**A -- Rebook Pre-Fill:**
+- Add state: `const [rebookData, setRebookData] = useState<{...} | null>(null)`
+- In `onRebook`: populate with `clientId`, `clientName`, `staffUserId`, `staffName`, `selectedServices` from the appointment
+- Pass `initialDraftData={activeDraft ? ... : rebookData ? rebookData : undefined}` to `QuickBookingPopover`
+- Clear `rebookData` when popover closes
+
+**B -- Per-Service Price:**
+- In `useServiceLookup.ts`: add `price` to the select query and `ServiceLookupEntry` interface
+- In `AppointmentDetailSheet.tsx` line 677-681: render `svc.price` when available (wrapped in `BlurredAmount`)
+
+**E -- Error Handling:**
+- Add `.catch(() => toast.warning('Cancellation reason could not be saved'))` to the supabase insert chain
+
+**F -- Undo Button:**
+- Hide the Undo button by not rendering it when `onUndo` is undefined (add conditional in `ScheduleActionBar.tsx`)
+
+**G -- formatDate:**
+- Replace `formatDate(parseISO(lastVisitDate), 'MMM d')` with `format(parseISO(lastVisitDate), 'MMM d')` using date-fns directly
+
+**H -- Stagger Re-trigger:**
+- Change `initial="hidden"` to `initial={false}` on tab content `motion.div` containers, and only use `initial="hidden"` on first mount via a ref flag
 
