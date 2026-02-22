@@ -37,7 +37,9 @@ import { cn } from '@/lib/utils';
 import type { CalendarFilterState } from '@/components/dashboard/schedule/CalendarFiltersPopover';
 import { AddTimeBlockForm } from '@/components/dashboard/schedule/AddTimeBlockForm';
 import { RequestAssistantPanel } from '@/components/dashboard/schedule/RequestAssistantPanel';
-import { useAssistantTimeBlocks, useAssistantTimeBlocksRange } from '@/hooks/useAssistantTimeBlocks';
+import { AssistantBlockManagerSheet } from '@/components/dashboard/schedule/AssistantBlockManagerSheet';
+import { useAssistantTimeBlocks, useAssistantTimeBlocksRange, useMyPendingAssistantBlocks } from '@/hooks/useAssistantTimeBlocks';
+import type { AssistantTimeBlock } from '@/hooks/useAssistantTimeBlocks';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import {
   AlertDialog,
@@ -114,6 +116,8 @@ export default function Schedule() {
   } = useAssistantTimeBlocks(currentDate, selectedLocation, orgId ?? null);
 
   // Range-based time blocks for week/agenda views
+  // Pending blocks for toolbar badge
+  const { pendingCount } = useMyPendingAssistantBlocks(user?.id ?? null, selectedLocation || null);
   const weekStartStr = useMemo(() => format(currentDate, 'yyyy-MM-dd'), [currentDate]);
   const weekEndStr = useMemo(() => {
     const end = new Date(currentDate);
@@ -179,6 +183,7 @@ export default function Schedule() {
   } | null>(null);
   const [breakDialogOpen, setBreakDialogOpen] = useState(false);
   const [assistantDialogOpen, setAssistantDialogOpen] = useState(false);
+  const [blockManagerOpen, setBlockManagerOpen] = useState(false);
   const [breakDefaults, setBreakDefaults] = useState<{ time: string; stylistId: string }>({ time: '09:00', stylistId: '' });
 
   const handleSlotContextMenu = (stylistId: string, time: string, e: React.MouseEvent) => {
@@ -563,6 +568,7 @@ export default function Schedule() {
                 assistantNamesMap={assistantNamesMap}
                 assistantProfilesMap={assistantProfilesMap}
                 assistantTimeBlocks={assistantTimeBlocks}
+                onBlockClick={() => setBlockManagerOpen(true)}
               />
             );
           })()}
@@ -582,8 +588,9 @@ export default function Schedule() {
               colorBy={preferences.color_by as 'status' | 'service' | 'stylist'}
               serviceLookup={serviceLookup}
                assistantNamesMap={assistantNamesMap}
-                assistantProfilesMap={assistantProfilesMap}
-                assistantTimeBlocks={assistantTimeBlocks}
+                 assistantProfilesMap={assistantProfilesMap}
+                 assistantTimeBlocks={assistantTimeBlocks}
+                 onBlockClick={() => setBlockManagerOpen(true)}
               />
           )}
           
@@ -657,6 +664,8 @@ export default function Schedule() {
                 onCalendarFiltersChange={setCalendarFilters}
                 draftCount={drafts.length}
                 onOpenDrafts={() => setDraftsSheetOpen(true)}
+                pendingBlockCount={pendingCount}
+                onOpenBlockManager={() => setBlockManagerOpen(true)}
               />
         </div>
 
@@ -912,6 +921,14 @@ export default function Schedule() {
           />
         </DialogContent>
       </Dialog>
+
+      {/* Assistant Block Manager Sheet */}
+      <AssistantBlockManagerSheet
+        open={blockManagerOpen}
+        onOpenChange={setBlockManagerOpen}
+        locationId={selectedLocation}
+        currentDate={currentDate}
+      />
     </DashboardLayout>
   );
 }

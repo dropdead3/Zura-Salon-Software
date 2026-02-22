@@ -62,6 +62,7 @@ interface DayViewProps {
   assistantNamesMap?: Map<string, string[]>;
   assistantProfilesMap?: Map<string, AssistantProfile[]>;
   assistantTimeBlocks?: AssistantTimeBlock[];
+  onBlockClick?: (block: AssistantTimeBlock) => void;
 }
 
 // Use consolidated status colors from design tokens
@@ -204,6 +205,7 @@ interface AppointmentCardProps {
   serviceLookup?: Map<string, ServiceLookupEntry>;
   assistantNamesMap?: Map<string, string[]>;
   assistantProfilesMap?: Map<string, AssistantProfile[]>;
+  hasCoverageScheduled?: boolean;
 }
 
 function AppointmentCard({ 
@@ -221,6 +223,7 @@ function AppointmentCard({
   serviceLookup,
   assistantNamesMap,
   assistantProfilesMap,
+  hasCoverageScheduled = false,
 }: AppointmentCardProps) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: appointment.id,
@@ -580,6 +583,12 @@ function AppointmentCard({
               w/ {assistantNamesMap.get(appointment.id)!.join(', ')}
             </div>
           )}
+          {hasCoverageScheduled && (
+            <div className="text-sm flex items-center gap-1 text-primary">
+              <Users className="h-3 w-3" />
+              Coverage scheduled
+            </div>
+          )}
           <div className="text-sm text-muted-foreground flex items-center gap-1">
             <Clock className="h-3 w-3" />
             {formatTime12h(appointment.start_time)} - {formatTime12h(appointment.end_time)}
@@ -633,6 +642,7 @@ export function DayView({
   assistantNamesMap,
   assistantProfilesMap,
   assistantTimeBlocks = [],
+  onBlockClick,
 }: DayViewProps) {
   const ROW_HEIGHT = 20; // 20px per 15-min slot (matches Week view)
   const { colorMap: categoryColors } = useServiceCategoryColorsMap();
@@ -909,11 +919,21 @@ export function DayView({
                       stylistUserId={stylist.user_id}
                       hoursStart={hoursStart}
                       rowHeight={ROW_HEIGHT}
+                      onBlockClick={onBlockClick}
                     />
 
                     {/* Appointments */}
                     {stylistAppointments.map((apt) => {
                       const { columnIndex, totalOverlapping } = getOverlapInfo(stylistAppointments, apt);
+                      // Check if any confirmed time block overlaps this appointment
+                      const aptStartMin = parseTimeToMinutes(apt.start_time);
+                      const aptEndMin = parseTimeToMinutes(apt.end_time);
+                      const hasCoverage = assistantTimeBlocks.some(b =>
+                        b.status === 'confirmed' &&
+                        parseTimeToMinutes(b.start_time) < aptEndMin &&
+                        parseTimeToMinutes(b.end_time) > aptStartMin &&
+                        (b.requesting_user_id === stylist.user_id || b.assistant_user_id === stylist.user_id)
+                      );
                       return (
                         <AppointmentCard
                           key={apt.id}
@@ -930,6 +950,7 @@ export function DayView({
                           serviceLookup={serviceLookup}
                           assistantNamesMap={assistantNamesMap}
                           assistantProfilesMap={assistantProfilesMap}
+                          hasCoverageScheduled={hasCoverage}
                         />
                       );
                     })}

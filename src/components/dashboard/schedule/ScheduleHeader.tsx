@@ -15,6 +15,7 @@ import {
   Settings,
   Sparkles,
   FileText,
+  Users,
 } from 'lucide-react';
 import { NavBadge } from '@/components/dashboard/NavBadge';
 import { Button } from '@/components/ui/button';
@@ -61,6 +62,8 @@ interface ScheduleHeaderProps {
   onCopilotToggle?: () => void;
   draftCount?: number;
   onOpenDrafts?: () => void;
+  pendingBlockCount?: number;
+  onOpenBlockManager?: () => void;
 }
 
 export function ScheduleHeader({
@@ -82,6 +85,8 @@ export function ScheduleHeader({
   onCopilotToggle,
   draftCount = 0,
   onOpenDrafts,
+  pendingBlockCount = 0,
+  onOpenBlockManager,
 }: ScheduleHeaderProps) {
   const { formatDate } = useFormatDate();
   const navigate = useNavigate();
@@ -259,6 +264,28 @@ export function ScheduleHeader({
               </PopoverContent>
             </Popover>
           </div>
+
+          {/* Assistant Blocks Button */}
+          {onOpenBlockManager && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="relative text-[hsl(40,20%,92%)]/70 hover:text-[hsl(40,20%,92%)] hover:bg-[hsl(40,20%,92%)]/10"
+                  onClick={onOpenBlockManager}
+                >
+                  <Users className="h-4 w-4" />
+                  {pendingBlockCount > 0 && (
+                    <NavBadge count={pendingBlockCount} className="absolute -top-1 -right-1" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                <p>{pendingBlockCount > 0 ? `${pendingBlockCount} pending assist${pendingBlockCount > 1 ? 's' : ''}` : 'Assistant Blocks'}</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
 
           {/* Drafts Button */}
           {onOpenDrafts && (

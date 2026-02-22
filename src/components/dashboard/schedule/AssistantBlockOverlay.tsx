@@ -13,6 +13,7 @@ interface AssistantBlockOverlayProps {
   stylistUserId: string;
   hoursStart: number;
   rowHeight?: number;
+  onBlockClick?: (block: AssistantTimeBlock) => void;
 }
 
 function parseTimeToMinutes(time: string): number {
@@ -47,6 +48,7 @@ export function AssistantBlockOverlay({
   stylistUserId,
   hoursStart,
   rowHeight = 20,
+  onBlockClick,
 }: AssistantBlockOverlayProps) {
   // Filter blocks relevant to this stylist column
   const relevantBlocks = useMemo(() => {
@@ -82,12 +84,14 @@ export function AssistantBlockOverlay({
             <TooltipTrigger asChild>
               <div
                 className={cn(
-                  'absolute left-0 right-0 z-[5] pointer-events-auto cursor-default rounded-sm mx-0.5 flex items-start px-1.5 py-0.5 overflow-hidden',
+                  'absolute left-0 right-0 z-[5] pointer-events-auto rounded-sm mx-0.5 flex items-start px-1.5 py-0.5 overflow-hidden',
+                  onBlockClick ? 'cursor-pointer' : 'cursor-default',
                   isRequester && isUnassigned && 'border-2 border-dashed border-amber-400/60 bg-amber-500/10 dark:bg-amber-500/5',
                   isRequester && isConfirmed && 'border border-primary/30 bg-primary/8 dark:bg-primary/5',
                   isAssistant && 'border border-dashed border-primary/40 bg-primary/10 dark:bg-primary/8',
                 )}
                 style={style}
+                onClick={() => onBlockClick?.(block)}
               >
                 <div className="flex items-center gap-1 text-[10px] truncate">
                   <Users className="h-3 w-3 shrink-0 opacity-60" />
