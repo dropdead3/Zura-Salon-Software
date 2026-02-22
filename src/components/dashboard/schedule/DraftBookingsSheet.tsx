@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { Search, FileText, Trash2, Play, Clock, User, Scissors, ChevronDown, ChevronRight } from 'lucide-react';
+import { Search, FileText, Trash2, Play, Clock, User, Scissors, ChevronDown, ChevronRight, GitCompareArrows } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
@@ -27,6 +28,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { DraftCompareDialog } from './DraftCompareDialog';
 
 const WIZARD_STEPS = ['client', 'service', 'stylist', 'confirm'] as const;
 
@@ -164,6 +166,7 @@ export function DraftBookingsSheet({ open, onOpenChange, orgId, onResume }: Draf
                     onResume={handleResume}
                     onDiscard={setDiscardingDraft}
                     onDiscardAll={(ids) => setDiscardingGroup({ clientKey, ids })}
+                    onCloseSheet={() => onOpenChange(false)}
                   />
                 ))
               )}
@@ -220,54 +223,107 @@ interface ClientGroupProps {
   onResume: (draft: DraftBooking) => void;
   onDiscard: (draft: DraftBooking) => void;
   onDiscardAll: (ids: string[]) => void;
+  onCloseSheet: () => void;
 }
 
-function ClientGroup({ clientKey, drafts, onResume, onDiscard, onDiscardAll }: ClientGroupProps) {
+function ClientGroup({ clientKey, drafts, onResume, onDiscard, onDiscardAll, onCloseSheet }: ClientGroupProps) {
   const [isOpen, setIsOpen] = useState(true);
+  const [compareIds, setCompareIds] = useState<Set<string>>(new Set());
+  const showCompare = drafts.length >= 2;
+
+  const toggleCompare = (id: string) => {
+    setCompareIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else if (next.size < 2) {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const compareArray = Array.from(compareIds);
+  const compareDraftA = drafts.find(d => d.id === compareArray[0]);
+  const compareDraftB = drafts.find(d => d.id === compareArray[1]);
+
+  const handleCompareResume = (draft: DraftBooking) => {
+    setCompareIds(new Set());
+    onResume(draft);
+    onCloseSheet();
+  };
 
   return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <div className="rounded-xl border border-border/60 bg-card/80 backdrop-blur-sm overflow-hidden">
-        {/* Group header */}
-        <CollapsibleTrigger asChild>
-          <button className="flex items-center justify-between w-full px-4 py-3 hover:bg-muted/50 transition-colors text-left">
-            <div className="flex items-center gap-2">
-              {isOpen ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
-              <User className="h-4 w-4 text-muted-foreground" />
-              <span className="font-sans text-sm text-foreground">{clientKey}</span>
-              <span className="text-xs text-muted-foreground">
-                ({drafts.length} draft{drafts.length > 1 ? 's' : ''})
-              </span>
-            </div>
-            {drafts.length >= 2 && (
-              <span
-                className="text-xs text-destructive hover:underline cursor-pointer"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDiscardAll(drafts.map(d => d.id));
-                }}
-              >
-                Discard All
-              </span>
-            )}
-          </button>
-        </CollapsibleTrigger>
+    <>
+      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+        <div className="rounded-xl border border-border/60 bg-card/80 backdrop-blur-sm overflow-hidden">
+          {/* Group header */}
+          <CollapsibleTrigger asChild>
+            <button className="flex items-center justify-between w-full px-4 py-3 hover:bg-muted/50 transition-colors text-left">
+              <div className="flex items-center gap-2">
+                {isOpen ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                <User className="h-4 w-4 text-muted-foreground" />
+                <span className="font-sans text-sm text-foreground">{clientKey}</span>
+                <span className="text-xs text-muted-foreground">
+                  ({drafts.length} draft{drafts.length > 1 ? 's' : ''})
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                {showCompare && compareIds.size === 2 && (
+                  <span
+                    className="text-xs text-primary hover:underline cursor-pointer flex items-center gap-1"
+                    onClick={(e) => { e.stopPropagation(); }}
+                  >
+                    <GitCompareArrows className="h-3 w-3" />
+                    Comparing
+                  </span>
+                )}
+                {drafts.length >= 2 && (
+                  <span
+                    className="text-xs text-destructive hover:underline cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDiscardAll(drafts.map(d => d.id));
+                    }}
+                  >
+                    Discard All
+                  </span>
+                )}
+              </div>
+            </button>
+          </CollapsibleTrigger>
 
-        <CollapsibleContent>
-          <div className="px-3 pb-3 space-y-2">
-            {drafts.map((draft, index) => (
-              <DraftCard
-                key={draft.id}
-                draft={draft}
-                isMostRecent={index === 0}
-                onResume={onResume}
-                onDiscard={onDiscard}
-              />
-            ))}
-          </div>
-        </CollapsibleContent>
-      </div>
-    </Collapsible>
+          <CollapsibleContent>
+            <div className="px-3 pb-3 space-y-2">
+              {drafts.map((draft, index) => (
+                <DraftCard
+                  key={draft.id}
+                  draft={draft}
+                  isMostRecent={index === 0}
+                  onResume={onResume}
+                  onDiscard={onDiscard}
+                  showCompare={showCompare}
+                  isCompareSelected={compareIds.has(draft.id)}
+                  onToggleCompare={() => toggleCompare(draft.id)}
+                  compareDisabled={compareIds.size >= 2 && !compareIds.has(draft.id)}
+                />
+              ))}
+            </div>
+          </CollapsibleContent>
+        </div>
+      </Collapsible>
+
+      {/* Compare dialog */}
+      {compareDraftA && compareDraftB && (
+        <DraftCompareDialog
+          open={compareIds.size === 2}
+          onOpenChange={(open) => { if (!open) setCompareIds(new Set()); }}
+          draftA={compareDraftA}
+          draftB={compareDraftB}
+          onResume={handleCompareResume}
+        />
+      )}
+    </>
   );
 }
 
@@ -276,14 +332,27 @@ interface DraftCardProps {
   isMostRecent: boolean;
   onResume: (draft: DraftBooking) => void;
   onDiscard: (draft: DraftBooking) => void;
+  showCompare?: boolean;
+  isCompareSelected?: boolean;
+  onToggleCompare?: () => void;
+  compareDisabled?: boolean;
 }
 
-function DraftCard({ draft, isMostRecent, onResume, onDiscard }: DraftCardProps) {
+function DraftCard({ draft, isMostRecent, onResume, onDiscard, showCompare, isCompareSelected, onToggleCompare, compareDisabled }: DraftCardProps) {
   return (
     <div className="rounded-lg border border-border/40 bg-background/60 p-3 space-y-2">
-      {/* Top row: badges + time */}
+      {/* Top row: badges + time + compare checkbox */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
+          {showCompare && (
+            <Checkbox
+              checked={isCompareSelected}
+              onCheckedChange={() => onToggleCompare?.()}
+              disabled={compareDisabled}
+              className="h-3.5 w-3.5"
+              aria-label="Select for comparison"
+            />
+          )}
           {isMostRecent && (
             <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Most Recent</Badge>
           )}

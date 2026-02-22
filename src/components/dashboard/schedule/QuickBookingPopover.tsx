@@ -700,7 +700,9 @@ export function QuickBookingPopover({
           is_redo: isRedo,
           redo_metadata: isRedo ? { reason: redoReason, originalAppointmentId } : undefined,
         });
-        toast.info('Booking saved as draft');
+        toast.success('Draft saved', {
+          description: `${selectedClient?.name || 'No client'} · ${selectedServices.length} service(s)`,
+        });
       }
     }
 
