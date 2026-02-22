@@ -1,64 +1,52 @@
 
-
-# Reschedule History on Appointment Cards
-
-## Overview
-
-When an appointment is moved or rescheduled, there is currently no record of the original time/date. This plan adds reschedule tracking at the database level and surfaces it visually on appointment cards so staff can instantly see that an appointment was moved and where it came from.
+# Improve Service Ordering and Layout on Appointment Cards
 
 ## What Changes
 
-### 1. Database: Add reschedule tracking columns
+### 1. Service ordering logic (in `appointment-card-utils.ts`)
 
-Add three new columns to `phorest_appointments`:
+Update `formatServicesWithDuration` to sort services before rendering:
 
-| Column | Type | Purpose |
-|--------|------|---------|
-| `rescheduled_from_date` | date | Original date before the most recent move |
-| `rescheduled_from_time` | time | Original start time before the most recent move |
-| `rescheduled_at` | timestamptz | When the reschedule happened |
+1. **Primary services first**, ordered by duration longest-to-shortest
+2. **Add-ons/Extras last**, ordered by price highest-to-lowest
+3. Add-on detection: Any service whose category is "Extras" (identified via `serviceLookup`)
 
-These are nullable and only populated when an appointment is actually moved.
+Currently the function just maps over comma-split names in their original order. The new version will sort using the `serviceLookup` map to access `duration_minutes`, `price`, and `category`.
 
-### 2. Edge Function: Record previous time before updating
+### 2. Multi-service color band ordering (in `DayView.tsx` and `WeekView.tsx`)
 
-In `update-phorest-appointment-time/index.ts`, before writing the new date/time, save the current values into the new columns:
+The `serviceBands` memo already sorts by duration descending -- this is correct for primary services. Update to also push "Extras" category bands to the bottom of the card, so the visual band layout matches the text ordering.
 
-```text
-updatePayload.rescheduled_from_date = localApt.appointment_date
-updatePayload.rescheduled_from_time = localApt.start_time
-updatePayload.rescheduled_at = new Date().toISOString()
-```
+### 3. Per-service time-slot positioning on cards (DayView only)
 
-This captures the "moved from" snapshot on every reschedule.
+For non-compact cards with enough vertical space (duration >= 60min), render each service name at its corresponding vertical position within the card. This means:
 
-### 3. UI: Visual indicator on appointment cards
+- Calculate each service's start offset relative to the appointment start
+- Position each service label at the proportional vertical point within the card
+- Fall back to the current stacked list when the card is too short
 
-**DayView and WeekView cards** -- When `rescheduled_at` is present:
-- Show a small `ArrowRightLeft` icon (from lucide) next to the client name, indicating the appointment was moved
-- On non-compact cards (duration >= 45min), show a subtle line: "Moved from 9:00 AM" in muted text
+This gives users an at-a-glance view of which service covers which time segment.
 
-**Tooltip** -- Add a "Rescheduled" section showing:
-- "Moved from [original date if different] [original time]"
-- Relative timestamp: "2 hours ago" or "Yesterday"
+## Technical Details
 
-**AppointmentDetailSheet** -- In the Details tab, add a "Reschedule History" row showing the original date/time and when it was moved.
+### `appointment-card-utils.ts`
 
-### 4. Files Modified
+New function: `sortAndFormatServices(serviceName, serviceLookup)` that returns a sorted array of `{ name, duration, price, category, isExtra }` objects. The existing `formatServicesWithDuration` will use this sorted array internally.
+
+### `DayView.tsx` changes (lines ~242-263, ~458-460)
+
+- Update `serviceBands` memo to use the new sort order (primary by duration desc, extras by price desc, extras always last)
+- For non-compact cards (duration >= 60min), render service names as absolutely-positioned labels within the card at their proportional vertical offset, instead of a single truncated line
+
+### `WeekView.tsx` changes (lines ~128-150, ~265, ~281)
+
+- Same `serviceBands` sort update
+- Same text ordering update for the service line
+
+### Files Modified
 
 | File | Change |
 |------|--------|
-| Database migration | Add `rescheduled_from_date`, `rescheduled_from_time`, `rescheduled_at` columns |
-| `supabase/functions/update-phorest-appointment-time/index.ts` | Save previous date/time into new columns before updating |
-| `src/components/dashboard/schedule/DayView.tsx` | Add rescheduled icon and "Moved from" line on cards and tooltip |
-| `src/components/dashboard/schedule/WeekView.tsx` | Same rescheduled indicator on week view cards |
-| `src/components/dashboard/schedule/AgendaView.tsx` | Same rescheduled indicator on agenda cards |
-| `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` | Add reschedule history row in Details tab |
-
-### 5. Visual Design
-
-- Icon: `ArrowRightLeft` from lucide-react, sized `h-3 w-3`, styled with `text-blue-500 dark:text-blue-400`
-- "Moved from" text: `text-[10px] opacity-70 italic` to keep it subtle and non-intrusive
-- Tooltip section: Standard muted foreground, with a `Clock` icon prefix
-- No bold weights used (per UI Canon)
-
+| `src/lib/appointment-card-utils.ts` | Add `sortServices` helper; update `formatServicesWithDuration` to use sorted order |
+| `src/components/dashboard/schedule/DayView.tsx` | Update band sort; add per-service positioned labels on tall cards |
+| `src/components/dashboard/schedule/WeekView.tsx` | Update band sort; use sorted service display |
