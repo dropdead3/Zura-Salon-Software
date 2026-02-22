@@ -25,6 +25,7 @@ import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
 import { getCategoryColor, SPECIAL_GRADIENTS, isGradientMarker, getGradientFromMarker } from '@/utils/categoryColors';
 import { APPOINTMENT_STATUS_COLORS } from '@/lib/design-tokens';
 import type { ServiceLookupEntry } from '@/hooks/useServiceLookup';
+import type { AssistantTimeBlock } from '@/hooks/useAssistantTimeBlocks';
 
 interface WeekViewProps {
   currentDate: Date;
@@ -42,6 +43,7 @@ interface WeekViewProps {
   colorBy?: 'status' | 'service' | 'stylist';
   serviceLookup?: Map<string, ServiceLookupEntry>;
   assistantNamesMap?: Map<string, string[]>;
+  assistantTimeBlocks?: AssistantTimeBlock[];
 }
 
 // Use consolidated status colors from design tokens
@@ -381,6 +383,7 @@ export function WeekView({
   colorBy = 'service',
   serviceLookup,
   assistantNamesMap,
+  assistantTimeBlocks = [],
 }: WeekViewProps) {
   const [activeSlot, setActiveSlot] = useState<{ date: Date; time: string } | null>(null);
   const { colorMap: categoryColors } = useServiceCategoryColorsMap();
@@ -669,6 +672,47 @@ export function WeekView({
                     );
                   })}
                   
+                  {/* Assistant time block overlays */}
+                  {assistantTimeBlocks
+                    .filter(b => b.date === dateKey)
+                    .map(block => {
+                      const blockStyle = getEventStyle(block.start_time, block.end_time, hoursStart);
+                      const isUnassigned = !block.assistant_user_id;
+                      const isConfirmed = block.status === 'confirmed';
+                      return (
+                        <Tooltip key={block.id}>
+                          <TooltipTrigger asChild>
+                            <div
+                              className={cn(
+                                'absolute left-0 w-1.5 z-[4] rounded-r-sm',
+                                isUnassigned && 'bg-amber-400/60 border-r border-dashed border-amber-500/40',
+                                isConfirmed && 'bg-primary/30',
+                                !isUnassigned && !isConfirmed && 'bg-primary/20',
+                              )}
+                              style={blockStyle}
+                            />
+                          </TooltipTrigger>
+                          <TooltipContent side="right" className="text-xs max-w-xs z-[100]">
+                            <div className="space-y-0.5">
+                              <div className="font-medium flex items-center gap-1">
+                                <Users className="h-3 w-3" />
+                                Assistant Coverage
+                              </div>
+                              <div className="text-muted-foreground">
+                                {formatTime12h(block.start_time)} – {formatTime12h(block.end_time)}
+                              </div>
+                              {isUnassigned && <div className="text-amber-600 dark:text-amber-400">Unassigned</div>}
+                              {block.assistant_profile && (
+                                <div className="text-primary">
+                                  {block.assistant_profile.display_name || block.assistant_profile.full_name}
+                                </div>
+                              )}
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      );
+                    })}
+
                   {/* Appointments */}
                   {dayAppointments.map((apt) => (
                     <AppointmentCard

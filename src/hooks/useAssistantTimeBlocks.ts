@@ -259,3 +259,54 @@ function parseTime(time: string): number {
   const [h, m] = time.split(':').map(Number);
   return h * 60 + m;
 }
+
+/**
+ * Fetch assistant time blocks for a date range and location.
+ * Used by WeekView and AgendaView.
+ */
+export function useAssistantTimeBlocksRange(
+  startDate: string | null,
+  endDate: string | null,
+  locationId: string | null,
+) {
+  const { data: timeBlocks = [], isLoading } = useQuery({
+    queryKey: ['assistant-time-blocks-range', startDate, endDate, locationId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('assistant_time_blocks')
+        .select('*')
+        .gte('date', startDate!)
+        .lte('date', endDate!)
+        .eq('location_id', locationId!);
+
+      if (error) throw error;
+
+      const userIds = new Set<string>();
+      (data || []).forEach(b => {
+        userIds.add(b.requesting_user_id);
+        if (b.assistant_user_id) userIds.add(b.assistant_user_id);
+      });
+
+      if (userIds.size === 0) return [] as AssistantTimeBlock[];
+
+      const { data: profiles } = await supabase
+        .from('employee_profiles')
+        .select('user_id, display_name, full_name, photo_url')
+        .in('user_id', Array.from(userIds));
+
+      const profileMap = new Map(
+        (profiles || []).map(p => [p.user_id, p])
+      );
+
+      return (data || []).map(b => ({
+        ...b,
+        requesting_profile: profileMap.get(b.requesting_user_id) || undefined,
+        assistant_profile: b.assistant_user_id ? profileMap.get(b.assistant_user_id) || undefined : undefined,
+      })) as AssistantTimeBlock[];
+    },
+    enabled: !!startDate && !!endDate && !!locationId,
+    staleTime: 30_000,
+  });
+
+  return { timeBlocks, isLoading };
+}
