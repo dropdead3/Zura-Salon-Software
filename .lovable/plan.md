@@ -1,128 +1,101 @@
 
 
-# Dark Mode Appointment Glassmorphism Restyle
+# Dark Mode Appointment Restyle: Solid Saturated Blocks
 
 ## Summary
 
-Replace the current solid-fill dark mode appointment block rendering with a luxury glassmorphism treatment. Instead of opaque re-derived fills, dark mode blocks will use translucent category-colored backgrounds at 22% opacity, backdrop blur, and a thin 1px luminous stroke at 35% opacity -- preserving semantic color identity while feeling architectural and premium against deep charcoal calendar surfaces.
-
----
+Replace the current glassmorphism treatment (translucent 22% opacity fills with backdrop blur) with solid, richly saturated fills inspired by the Daylite reference. The reference shows a premium macOS-native calendar aesthetic: vivid but controlled solid fills, left accent bars in a darker shade, white text, and zero transparency. This matches the Zura doctrine of "controlled, composed, high signal clarity" better than the current glass approach.
 
 ## What Changes
 
 ### Current State (Problem)
 
-Dark mode appointment blocks use `deriveDarkModeColor()` which produces solid, opaque fills (e.g., `#8B7420` for Blonding). These read as heavy, flat blobs on dark backgrounds -- functional but not luxurious. No translucency, no depth, no glass containment.
+Dark mode appointment blocks use `getGlassCategoryStyle` which produces:
+- 22% opacity translucent fills
+- `backdrop-blur-xl` (12px frosted glass)
+- 35% opacity luminous strokes
+- Pastel-tinted text
+
+This creates a soft, ethereal look -- but the reference shows the opposite: appointment blocks should be confident, solid surfaces that clearly separate from the dark background with strong color identity.
 
 ### Target State
 
 Each appointment block in dark mode gets:
-- **Fill**: Category hex at 22% opacity (e.g., `rgba(250, 204, 21, 0.22)` for Blonding)
-- **Blur**: `backdrop-blur-xl` (12px) for frosted glass depth
-- **Stroke**: Category hex at 35% opacity, 1px, creating a luminous containment edge
-- **Text**: Pastel-tinted variant of category color for legibility (e.g., warm cream for gold-family, soft pink for rose-family)
-- **Hover**: Opacity lifts to 30% on fill, stroke brightens to 45%
-- **Selected**: Ring treatment with category color at 50% opacity
+- **Fill**: Solid, re-derived hex -- richer and more saturated than light mode, not brighter. Mid-range lightness (30-45%) so they pop against the ~7-14% lightness background without glowing
+- **Left accent bar**: 4px left border in a darker, more saturated shade (matching the Daylite pattern and Zura light mode convention)
+- **Text**: White (#ffffff or #f0eff4) for all colored blocks -- clean, high contrast
+- **Hover**: Fill lightness +4-5%
+- **Selected**: Ring treatment (existing pattern)
+- **No blur, no transparency**: Remove `backdrop-blur-xl` and rgba fills entirely
 
 Light mode remains completely unchanged.
 
 ---
 
-## Change 1: New `getGlassCategoryStyle` Utility
+## Change 1: Replace Glass Style with Solid Dark Mode Style
 
 **File**: `src/utils/categoryColors.ts`
 
-Replace `deriveDarkModeColor` usage with a new `getGlassCategoryStyle` function:
+Update `getGlassCategoryStyle` to return solid fills instead of translucent rgba values. Rename to `getDarkCategoryStyle` for clarity:
 
 ```text
-getGlassCategoryStyle(hexColor: string) returns:
-  fill:       rgba(r, g, b, 0.22)    -- translucent category color
-  stroke:     rgba(r, g, b, 0.35)    -- luminous edge containment
-  hoverFill:  rgba(r, g, b, 0.30)    -- lifted on hover
-  hoverStroke: rgba(r, g, b, 0.45)   -- brighter edge on hover
-  selectedFill: rgba(r, g, b, 0.18)  -- slightly deeper
-  text:        pastel tint derived from category hue
+getDarkCategoryStyle(hexColor: string) returns:
+  fill:         solid hex, HSL-derived (preserve hue, saturation +10-15%, lightness 32-42%)
+  accent:       solid hex, lightness -10 from fill, saturation +5 (for left border)
+  hover:        solid hex, lightness +5 from fill
+  selected:     solid hex, lightness -4 from fill
+  text:         '#f0eff4' (soft white) for all colored blocks, '#e8e4df' for grays
 ```
 
-**Text color derivation**: Convert hex to HSL, then produce a pastel tint:
-- Hue: preserve from category
-- Saturation: 25-35% (soft, not washed)
-- Lightness: 82-88% (readable on dark translucent bg)
-- Exception: grays/neutrals use `hsl(var(--foreground))` equivalent
+HSL derivation rules:
+- **Hue**: Preserve from source (identity-preserving)
+- **Saturation**: `clamp(s + 12, 35, 80)` -- noticeably richer than light mode
+- **Lightness**: `clamp(l * 0.38 + 18, 30, 42)` -- sits cleanly above the 7-14% background range
+- **Accent bar**: Same hue, saturation +5, lightness -10 from fill
+- **Grays** (s < 8): `lightness 22-28`, minimal saturation bump
 
-This function returns CSS inline style objects, not Tailwind classes, since the category colors are dynamic hex values from the database.
+This replaces both `getGlassCategoryStyle` and the previous `deriveDarkModeColor` logic for calendar use.
 
 ---
 
-## Change 2: Update DayView Dark Mode Rendering
+## Change 2: Update DayView Rendering
 
 **File**: `src/components/dashboard/schedule/DayView.tsx`
 
-In the `AppointmentCard` component:
-
-1. Replace `deriveDarkModeColor` import with `getGlassCategoryStyle`
-2. Replace `darkTokens` memo to call `getGlassCategoryStyle(catColor.bg)` instead
-3. Update the inline style block for dark + category color:
-   - `backgroundColor` uses the translucent rgba fill
-   - `borderColor` uses the luminous rgba stroke
-   - `borderWidth: '1px'`, `borderStyle: 'solid'` (unchanged)
-   - `color` uses the pastel tint text
-4. Add `backdrop-blur-xl` class when dark + category color is active (via `cn()`)
-5. Multi-service bands: each band gets its own translucent fill (no blur on individual bands -- blur applies to the parent container only)
+1. Replace `getGlassCategoryStyle` import with `getDarkCategoryStyle`
+2. Remove `backdrop-blur-xl` class from dark mode blocks
+3. Restore `border-l-4` accent bar pattern in dark mode (matching the reference and light mode convention) using the derived accent color
+4. Apply solid `backgroundColor` and white `color` text
+5. Multi-service bands: each band gets its own solid dark fill (no blur needed)
 
 ---
 
-## Change 3: Update WeekView Dark Mode Rendering
+## Change 3: Update WeekView Rendering
 
 **File**: `src/components/dashboard/schedule/WeekView.tsx`
 
-Same pattern as DayView:
-1. Replace `deriveDarkModeColor` with `getGlassCategoryStyle`
-2. Apply translucent fills, luminous strokes, pastel text
-3. Add `backdrop-blur-xl` class conditionally for dark mode category blocks
-4. Multi-service bands: translucent fills per band
+Same changes as DayView:
+1. Replace glass style with solid dark style
+2. Remove backdrop blur
+3. Restore left accent bar
+4. Solid fills with white text
 
 ---
 
-## Change 4: Retain `deriveDarkModeColor` for Non-Calendar Use
+## Per-Category Expected Dark Palette
 
-**File**: `src/utils/categoryColors.ts`
-
-Keep `deriveDarkModeColor`, `deriveLightModeColor`, `deriveFullColorTokens`, and `getCalendarBlockStyle` as-is. They may be used by other surfaces (analytics, legends). The new `getGlassCategoryStyle` is specifically for calendar appointment blocks.
-
----
-
-## Visual Specification
-
-### Against Calendar Backgrounds
-
-```text
-Primary bg:  #0F1115   (hsl 225, 16%, 7%)
-Surface:     #151821   (hsl 225, 18%, 11%)
-Card:        #1B1F2A   (hsl 225, 20%, 14%)
-
-Appointment block (e.g., Blonding #facc15):
-  Fill:    rgba(250, 204, 21, 0.22)  -- warm gold wash
-  Stroke:  rgba(250, 204, 21, 0.35)  -- luminous gold edge
-  Text:    hsl(45, 30%, 85%)         -- soft warm cream
-  Blur:    12px backdrop
-
-Result: The block reads as "gold" without being a bright blob.
-It has depth (blur), containment (stroke), and identity (hue).
-```
-
-### Per-Category Dark Glass Palette
-
-| Category | Light Fill | Glass Fill (22%) | Glass Stroke (35%) | Pastel Text |
+| Category | Light Fill | Dark Fill | Dark Accent | Dark Text |
 |---|---|---|---|---|
-| Blonding | #facc15 | rgba(250,204,21,0.22) | rgba(250,204,21,0.35) | hsl(45, 30%, 85%) |
-| Color | #f472b6 | rgba(244,114,182,0.22) | rgba(244,114,182,0.35) | hsl(330, 35%, 85%) |
-| Haircuts | #60a5fa | rgba(96,165,250,0.22) | rgba(96,165,250,0.35) | hsl(213, 30%, 86%) |
-| Styling | #a78bfa | rgba(167,139,250,0.22) | rgba(167,139,250,0.35) | hsl(255, 30%, 87%) |
-| Extensions | #10b981 | rgba(16,185,129,0.22) | rgba(16,185,129,0.35) | hsl(160, 28%, 84%) |
-| Consultation | #d4a574 | rgba(212,165,116,0.22) | rgba(212,165,116,0.35) | hsl(30, 28%, 85%) |
-| Treatment | #06b6d4 | rgba(6,182,212,0.22) | rgba(6,182,212,0.35) | hsl(188, 30%, 85%) |
-| Block | #374151 | rgba(55,65,81,0.22) | rgba(55,65,81,0.35) | foreground token |
+| Blonding | #facc15 | ~#7A6A22 (warm amber-brown) | ~#5C5018 | #f0eff4 |
+| Color | #f472b6 | ~#9E4470 (deep rose) | ~#7A3458 | #f0eff4 |
+| Haircuts | #60a5fa | ~#3868A0 (navy blue) | ~#2A5080 | #f0eff4 |
+| Styling | #a78bfa | ~#6858A0 (deep violet) | ~#504080 | #f0eff4 |
+| Extensions | #10b981 | ~#1C7A58 (forest green) | ~#126042 | #f0eff4 |
+| Consultation | #d4a574 | ~#886A48 (warm brown) | ~#6A5236 | #f0eff4 |
+| Treatment | #06b6d4 | ~#1A788A (teal) | ~#125E6A | #f0eff4 |
+| Block | #374151 | ~#383E4C (slate) | ~#2A2E38 | #e8e4df |
+
+These sit at lightness 30-42%, well above the background (7-14%) for clear separation, well below the light fills (50-90%) so they never glow.
 
 ---
 
@@ -132,16 +105,24 @@ It has depth (blur), containment (stroke), and identity (hue).
 
 | File | Changes |
 |---|---|
-| `src/utils/categoryColors.ts` | Add `getGlassCategoryStyle` export; hex-to-rgba conversion helper |
-| `src/components/dashboard/schedule/DayView.tsx` | Replace `deriveDarkModeColor` with `getGlassCategoryStyle`; add conditional `backdrop-blur-xl` |
-| `src/components/dashboard/schedule/WeekView.tsx` | Same glass treatment as DayView |
+| `src/utils/categoryColors.ts` | Replace `getGlassCategoryStyle` with `getDarkCategoryStyle`; solid hex returns instead of rgba; remove hex-to-rgb helper if no longer needed |
+| `src/components/dashboard/schedule/DayView.tsx` | Swap glass import to solid; remove `backdrop-blur-xl`; restore `border-l-4` with dark accent color; white text |
+| `src/components/dashboard/schedule/WeekView.tsx` | Same solid treatment as DayView |
 
-### No Files Created, No Database Changes, No New Dependencies
+### What Gets Removed
+
+- `backdrop-blur-xl` on appointment blocks
+- `rgba()` translucent fills
+- Pastel text derivation (replaced with simple white)
+- `getGlassCategoryStyle` function (replaced by `getDarkCategoryStyle`)
 
 ### What Stays Unchanged
 
-- Light mode rendering (border-l-4, solid fills)
-- Gradient categories (rose-gold, ocean-blue, etc.) -- they already have their own glass treatment
-- Status-based coloring (Tailwind dark: variants in `APPOINTMENT_STATUS_COLORS`)
-- `deriveDarkModeColor` and related exports (retained for non-calendar surfaces)
+- Light mode rendering (border-l-4, solid fills) -- completely untouched
+- Gradient categories (rose-gold, ocean-blue, etc.) -- retain their own treatment
+- Status-based coloring (Tailwind `dark:` variants in `APPOINTMENT_STATUS_COLORS`)
+- `deriveDarkModeColor` and related exports (retained for non-calendar surfaces like analytics)
+- All hover/selected interaction patterns
+
+### No New Dependencies, No Database Changes
 
