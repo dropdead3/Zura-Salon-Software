@@ -1,80 +1,44 @@
 
 
-# Dark Mode Card Polish: Glow, Ring, Transitions, and Grid Dimming
+# Fix: Light Mode Card Styling Regression
 
-## Summary
+## Problem
 
-Four enhancements to the dark mode appointment card styling: hover glow, selected ring, smooth transitions, and dimmer grid lines. Text hierarchy (enhancement 5) is excluded per your direction.
+The dark mode `isDark` detection in DayView and WeekView reads directly from the DOM (`document.documentElement.classList.contains('dark')`) instead of using React state. This is not reactive -- when you switch themes, the DOM class updates but the appointment card components don't re-render because `isDark` isn't tied to React's rendering cycle. This causes dark mode styles (translucent fills, category-colored text) to bleed into light mode.
 
----
+## Solution
 
-## Change 1: Hover Glow Effect
-
-**File**: `src/utils/categoryColors.ts`
-
-Add a `glow` property to `DarkCategoryStyle` that returns a `box-shadow` string using the category color at ~15% opacity:
-
-```
-glow: string;  // e.g. "0 0 12px rgba(250, 204, 21, 0.15)"
-```
-
-For grays, use a lower opacity (~0.08) since glow on neutral cards should be very subtle.
-
-**Files**: `DayView.tsx`, `WeekView.tsx`
-
-On the dark mode style block, add `boxShadow: darkStyle.glow` when not in compact mode.
+Replace the raw DOM check with the `useDashboardTheme()` hook, which provides a reactive `resolvedTheme` value that triggers re-renders when the theme changes.
 
 ---
 
-## Change 2: Selected State Ring
+## Change 1: DayView -- Use reactive theme detection
 
-**File**: `src/utils/categoryColors.ts`
+**File**: `src/components/dashboard/schedule/DayView.tsx`
 
-Add a `ring` property returning a 2px outline/box-shadow ring in the light-mode hex:
-
+Replace:
+```typescript
+const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
 ```
-ring: string;  // e.g. "0 0 0 2px #facc15"
+
+With:
+```typescript
+// isDark is derived from the DashboardTheme context (reactive)
 ```
 
-**Files**: `DayView.tsx`, `WeekView.tsx`
+The component already receives props from its parent. We need to either:
+- Import and use `useDashboardTheme()` directly in the `AppointmentBlock` sub-component, or
+- Pass `resolvedTheme` as a prop from the parent Schedule page
 
-When `isSelected` is true in dark mode, apply `boxShadow: darkStyle.ring` instead of the hover glow.
+Since `AppointmentBlock` is defined inside `DayView.tsx`, the simplest approach is to import `useDashboardTheme` and call it within the component that computes `darkStyle`.
 
----
+**Specific change**: Replace `const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark')` with `const { resolvedTheme } = useDashboardTheme()` and `const isDark = resolvedTheme === 'dark'`.
 
-## Change 3: Transition Smoothing
+## Change 2: WeekView -- Same reactive fix
 
-**Files**: `DayView.tsx`, `WeekView.tsx`
+**File**: `src/components/dashboard/schedule/WeekView.tsx`
 
-Add `transition: 'background-color 150ms ease, box-shadow 150ms ease'` to the dark mode inline style block. This makes hover and selection state changes feel fluid rather than abrupt.
-
----
-
-## Change 4: Grid Line Dimming in Dark Mode
-
-**File**: `DayView.tsx` (line 145-148)
-
-Current dark mode grid line opacities:
-- Hour: `dark:border-border/80`
-- Half-hour: `dark:border-border/60`
-- Quarter-hour: `dark:border-border/50`
-
-Reduce to:
-- Hour: `dark:border-border/50`
-- Half-hour: `dark:border-border/35`
-- Quarter-hour: `dark:border-border/15`
-
-**File**: `WeekView.tsx` (lines 630-633, 668-671)
-
-Current:
-- Hour: `dark:border-border/70`
-- Half-hour: `dark:border-border/50`
-- Quarter-hour: `dark:border-border/35`
-
-Reduce to:
-- Hour: `dark:border-border/50`
-- Half-hour: `dark:border-border/30`
-- Quarter-hour: `dark:border-border/15`
+Same replacement: swap the DOM classList check for `useDashboardTheme().resolvedTheme === 'dark'`.
 
 ---
 
@@ -84,9 +48,8 @@ Reduce to:
 
 | File | Change |
 |---|---|
-| `src/utils/categoryColors.ts` | Add `glow` and `ring` properties to `DarkCategoryStyle`; compute rgba box-shadow strings |
-| `src/components/dashboard/schedule/DayView.tsx` | Apply glow/ring/transition in dark style block; reduce grid line dark opacities |
-| `src/components/dashboard/schedule/WeekView.tsx` | Apply glow/ring/transition in dark style block; reduce grid line dark opacities |
+| `src/components/dashboard/schedule/DayView.tsx` | Import `useDashboardTheme`, replace DOM check with reactive `resolvedTheme === 'dark'` |
+| `src/components/dashboard/schedule/WeekView.tsx` | Import `useDashboardTheme`, replace DOM check with reactive `resolvedTheme === 'dark'` |
 
 ### No new files, no new dependencies, no database changes.
 
