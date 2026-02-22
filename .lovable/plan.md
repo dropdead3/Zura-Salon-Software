@@ -1,32 +1,30 @@
 
 
-# Fix: Tooltip Clipping Off-Screen in DayView
+# Fix DayView Tooltip to Appear Center-Screen
 
 ## Problem
 
-The appointment hover tooltip in DayView uses `side="right"` which works for most columns, but when the appointment card is near the left edge of the viewport, the tooltip content extends beyond the visible area and gets cut off (as seen in the screenshot).
+The tooltip currently anchors to the appointment card and can overlap the sidebar or get clipped at edges, even with collision padding. The user wants it centered on screen for consistent, predictable placement.
 
-## Root Cause
+## Approach
 
-The `TooltipContent` on line 482 of `DayView.tsx` has `side="right"` but no collision boundary or padding configured. Radix Tooltip does support automatic collision detection, but it needs `collisionPadding` to account for viewport edges properly.
+Replace the Radix `TooltipContent` positioning with a **fixed center-screen** placement using custom CSS classes on the existing `TooltipContent` component.
 
-## Fix
+**File:** `src/components/dashboard/schedule/DayView.tsx` (line 482)
 
-**File:** `src/components/dashboard/schedule/DayView.tsx`
+### What Changes
 
-- Change the `TooltipContent` props to add `collisionPadding={16}` and `sideOffset={8}` so Radix's collision detection flips the tooltip to whichever side has more room, with breathing space from the viewport edge.
+- Remove `side="right"` and `sideOffset`/`collisionPadding` props from `TooltipContent`
+- Add custom className overrides to position the tooltip at center-screen using fixed positioning:
+  - `fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2` for true center
+  - Override Radix's default transform-based positioning with `!important` styles
+- Since Radix `TooltipContent` renders inside a Portal, fixed positioning will work relative to the viewport
 
-This is a single-line prop change -- no new files, no structural changes.
+### Technical Detail
 
-## Technical Detail
+The `TooltipContent` already renders through a `TooltipPrimitive.Portal`. By applying `data-[side=bottom]:slide-in-from-top-2` and setting side to bottom (so Radix doesn't fight the positioning), then overriding with fixed-center classes, the tooltip will always appear in the center of the viewport regardless of which stylist column the card is in.
 
-```
-// Before
-<TooltipContent side="right" className="max-w-xs">
+Alternatively, if Radix's positioning conflicts with fixed overrides, the cleaner approach is to swap from `Tooltip` to a custom hover-state div rendered via a React portal at a fixed center position -- but the CSS override approach will be tried first as it's minimal.
 
-// After
-<TooltipContent side="right" sideOffset={8} collisionPadding={16} className="max-w-xs">
-```
-
-Radix's built-in collision avoidance will automatically flip to `left`, `top`, or `bottom` when the preferred `right` side doesn't have enough space.
+## Single file change, single line modification.
 
