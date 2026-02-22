@@ -45,7 +45,19 @@ export function useAssistantConflictCheck(
         .neq('id', currentAppointmentId!);
 
       if (error) throw error;
-      return data;
+
+      // Also fetch overlapping assistant time blocks
+      const { data: timeBlocks, error: tbError } = await supabase
+        .from('assistant_time_blocks')
+        .select('id, start_time, end_time, requesting_user_id, assistant_user_id, status')
+        .eq('date', appointmentDate!)
+        .lt('start_time', endTime!)
+        .gt('end_time', startTime!)
+        .in('status', ['requested', 'confirmed']);
+
+      if (tbError) console.warn('[ConflictCheck] Time blocks query failed:', tbError);
+
+      return { appointments: data, timeBlocks: timeBlocks || [] };
     },
     enabled: enabled && !!appointmentDate && !!startTime && !!endTime && !!currentAppointmentId,
     staleTime: 30000,
@@ -55,7 +67,9 @@ export function useAssistantConflictCheck(
     const map = new Map<string, ConflictingAppointment[]>();
     if (!rawConflicts) return map;
 
-    for (const apt of rawConflicts) {
+    const { appointments: appts, timeBlocks } = rawConflicts;
+
+    for (const apt of (appts || [])) {
       const base: Omit<ConflictingAppointment, 'role'> = {
         appointmentId: apt.id,
         startTime: apt.start_time,
@@ -79,6 +93,29 @@ export function useAssistantConflictCheck(
           existing.push({ ...base, role: 'assistant' });
           map.set(aa.assistant_user_id, existing);
         }
+      }
+    }
+
+    // Time block conflicts
+    for (const tb of timeBlocks) {
+      const base: Omit<ConflictingAppointment, 'role'> = {
+        appointmentId: tb.id,
+        startTime: tb.start_time,
+        endTime: tb.end_time,
+        clientName: 'Time Block',
+        serviceName: 'Assistant Coverage',
+      };
+
+      if (tb.assistant_user_id) {
+        const existing = map.get(tb.assistant_user_id) || [];
+        existing.push({ ...base, role: 'assistant' });
+        map.set(tb.assistant_user_id, existing);
+      }
+
+      if (tb.requesting_user_id) {
+        const existing = map.get(tb.requesting_user_id) || [];
+        existing.push({ ...base, role: 'lead' });
+        map.set(tb.requesting_user_id, existing);
       }
     }
 

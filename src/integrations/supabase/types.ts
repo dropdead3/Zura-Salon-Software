@@ -1228,6 +1228,62 @@ export type Database = {
           },
         ]
       }
+      assistant_time_blocks: {
+        Row: {
+          assistant_user_id: string | null
+          created_at: string
+          created_by: string | null
+          date: string
+          end_time: string
+          id: string
+          location_id: string
+          notes: string | null
+          organization_id: string
+          requesting_user_id: string
+          start_time: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assistant_user_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          date: string
+          end_time: string
+          id?: string
+          location_id: string
+          notes?: string | null
+          organization_id: string
+          requesting_user_id: string
+          start_time: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          assistant_user_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          end_time?: string
+          id?: string
+          location_id?: string
+          notes?: string | null
+          organization_id?: string
+          requesting_user_id?: string
+          start_time?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assistant_time_blocks_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       balance_transactions: {
         Row: {
           amount: number
