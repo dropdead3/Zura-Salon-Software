@@ -136,6 +136,14 @@ export function NewClientDialog({
       setShowLocationSelector(false);
     }
   }, [defaultLocationId]);
+
+  // Auto-select first location when none is set
+  useEffect(() => {
+    if (!locationId && locations.length > 0) {
+      setLocationId(locations[0].id);
+    }
+  }, [locations, locationId]);
+
   const [preferredStylistId, setPreferredStylistId] = useState('');
 
   const debouncedEmail = useDebounce(email.trim(), 500);
