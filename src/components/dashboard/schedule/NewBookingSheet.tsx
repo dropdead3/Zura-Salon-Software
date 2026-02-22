@@ -117,7 +117,7 @@ export function NewBookingSheet({
         .limit(20);
       
       if (clientSearch) {
-        query = query.or(`name.ilike.%${clientSearch}%,phone.ilike.%${clientSearch}%,email.ilike.%${clientSearch}%`);
+        query = query.or(`name.ilike.${clientSearch}%,phone.ilike.%${clientSearch}%,email.ilike.%${clientSearch}%`);
       }
       
       const { data } = await query;
