@@ -4248,6 +4248,7 @@ export type Database = {
           client_name: string | null
           created_at: string
           created_by: string
+          created_by_name: string | null
           expires_at: string
           id: string
           is_redo: boolean
@@ -4268,6 +4269,7 @@ export type Database = {
           client_name?: string | null
           created_at?: string
           created_by: string
+          created_by_name?: string | null
           expires_at?: string
           id?: string
           is_redo?: boolean
@@ -4288,6 +4290,7 @@ export type Database = {
           client_name?: string | null
           created_at?: string
           created_by?: string
+          created_by_name?: string | null
           expires_at?: string
           id?: string
           is_redo?: boolean
