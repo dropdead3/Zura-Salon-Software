@@ -1,11 +1,11 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ChevronLeft, Clock, Loader2, Users, ChevronsUpDown, Check, AlertTriangle } from 'lucide-react';
+import { ChevronLeft, Clock, Loader2, Users, ChevronsUpDown, Check, AlertTriangle, Sparkles } from 'lucide-react';
 import { cn, formatDisplayName } from '@/lib/utils';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useQuery } from '@tanstack/react-query';
@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useSuggestedBlocks } from '@/hooks/useAssistantTimeBlocks';
 import { useAssistantsAtLocation } from '@/hooks/useAssistantAvailability';
 import { useAssistantConflictCheck } from '@/hooks/useAssistantConflictCheck';
+import { useAssistantAutoSuggest } from '@/hooks/useAssistantAutoSuggest';
 import type { PhorestAppointment } from '@/hooks/usePhorestCalendar';
 
 interface RequestAssistantPanelProps {
@@ -112,19 +113,40 @@ export function RequestAssistantPanel({
     true,
   );
 
+  // Auto-suggestion algorithm
+  const suggestions = useAssistantAutoSuggest(
+    locationId, date, `${startTime}:00`, `${endTime}:00`, requestingUserId,
+  );
+  const topSuggestion = suggestions.length > 0 ? suggestions[0] : null;
+
+  // Auto-select top suggestion if only one strong candidate and nothing manually selected
+  useEffect(() => {
+    if (topSuggestion && suggestions.length === 1 && !assistantUserId) {
+      setAssistantUserId(topSuggestion.user_id);
+    }
+  }, [topSuggestion?.user_id, suggestions.length]);
+
+  const suggestedUserIds = useMemo(
+    () => new Set(suggestions.map(s => s.user_id)),
+    [suggestions]
+  );
+
   const selectedAssistant = useMemo(() =>
     eligibleAssistants.find(a => a.user_id === assistantUserId),
     [eligibleAssistants, assistantUserId]
   );
 
-  // Sort: available first, then others
+  // Sort: suggested first, then available, then others
   const sortedAssistants = useMemo(() => {
     return [...eligibleAssistants].sort((a, b) => {
+      const aSugg = suggestedUserIds.has(a.user_id) ? 0 : 1;
+      const bSugg = suggestedUserIds.has(b.user_id) ? 0 : 1;
+      if (aSugg !== bSugg) return aSugg - bSugg;
       const aAvail = availableUserIds.has(a.user_id) ? 0 : 1;
       const bAvail = availableUserIds.has(b.user_id) ? 0 : 1;
       return aAvail - bAvail;
     });
-  }, [eligibleAssistants, availableUserIds]);
+  }, [eligibleAssistants, availableUserIds, suggestedUserIds]);
 
   const handleSuggestionClick = (suggestion: { start_time: string; end_time: string }) => {
     setStartTime(suggestion.start_time.slice(0, 5));
@@ -260,13 +282,19 @@ export function RequestAssistantPanel({
                       >
                         <Check className={cn('mr-2 h-3.5 w-3.5', assistantUserId === member.user_id ? 'opacity-100' : 'opacity-0')} />
                         <span className="flex-1">{formatDisplayName(member.full_name, member.display_name)}</span>
+                        {suggestedUserIds.has(member.user_id) && (
+                          <Badge variant="secondary" className="text-[9px] px-1.5 py-0 h-4 ml-1 shrink-0">
+                            <Sparkles className="h-2.5 w-2.5 mr-0.5" />
+                            Suggested
+                          </Badge>
+                        )}
                         {hasConflict && (
                           <AlertTriangle className="h-3 w-3 text-amber-500 ml-1 shrink-0" />
                         )}
-                        {!isAvailable && (
+                        {!isAvailable && !suggestedUserIds.has(member.user_id) && (
                           <span className="text-[10px] text-muted-foreground ml-1 shrink-0">(not scheduled)</span>
                         )}
-                        {isAvailable && !hasConflict && (
+                        {isAvailable && !hasConflict && !suggestedUserIds.has(member.user_id) && (
                           <span className="h-1.5 w-1.5 rounded-full bg-green-500 ml-1 shrink-0" />
                         )}
                       </CommandItem>
@@ -277,6 +305,11 @@ export function RequestAssistantPanel({
             </Command>
           </PopoverContent>
         </Popover>
+        {topSuggestion && assistantUserId === topSuggestion.user_id && suggestions.length === 1 && (
+          <p className="text-[10px] text-muted-foreground px-1 mt-1">
+            Auto-suggested based on availability and history
+          </p>
+        )}
       </div>
 
       {/* Notes */}

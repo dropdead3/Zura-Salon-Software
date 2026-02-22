@@ -14,6 +14,7 @@ import { ClientsContent } from '@/components/dashboard/analytics/ClientsContent'
 import { StaffingContent } from '@/components/dashboard/analytics/StaffingContent';
 import { StaffUtilizationContent } from '@/components/dashboard/analytics/StaffUtilizationContent';
 import { BookingPipelineContent } from '@/components/dashboard/analytics/BookingPipelineContent';
+import { AssistantUtilizationCard } from '@/components/dashboard/analytics/AssistantUtilizationCard';
 import type { AnalyticsFilters } from '@/pages/dashboard/admin/AnalyticsHub';
 
 interface OperationsTabContentProps {
@@ -99,6 +100,9 @@ export function OperationsTabContent({ filters, subTab = 'overview', onSubTabCha
             <VisibilityGate elementKey="operations_booking_pipeline_subtab" elementName="Booking Pipeline" elementCategory="Page Tabs">
               <SubTabsTrigger value="booking-pipeline">Booking Pipeline</SubTabsTrigger>
             </VisibilityGate>
+            <VisibilityGate elementKey="operations_assistant_subtab" elementName="Assistant Coverage" elementCategory="Page Tabs">
+              <SubTabsTrigger value="assistant-coverage">Assistant Coverage</SubTabsTrigger>
+            </VisibilityGate>
           </SubTabsList>
 
         <TabsContent value="overview" className="mt-6">
@@ -160,6 +164,10 @@ export function OperationsTabContent({ filters, subTab = 'overview', onSubTabCha
             locationId={locationFilter}
             dateRange={operationalDateRange}
           />
+        </TabsContent>
+
+        <TabsContent value="assistant-coverage" className="mt-6">
+          <AssistantUtilizationCard />
         </TabsContent>
         </Tabs>
       </div>

@@ -64,6 +64,12 @@ export function AssistantBlockActions({
 
       invalidateAll();
       toast.success('Coverage accepted');
+
+      // Push + email notification
+      supabase.functions.invoke('notify-assistant-block', {
+        body: { block_id: blockId, event_type: 'accepted', actor_user_id: user.id },
+      }).catch(err => console.warn('[NotifyEdge] Failed:', err));
+
       onActionComplete?.();
     } catch {
       toast.error('Failed to accept');
@@ -95,6 +101,12 @@ export function AssistantBlockActions({
 
       invalidateAll();
       toast.success('Coverage declined — returned to pool');
+
+      // Push + email notification
+      supabase.functions.invoke('notify-assistant-block', {
+        body: { block_id: blockId, event_type: 'declined', actor_user_id: user.id },
+      }).catch(err => console.warn('[NotifyEdge] Failed:', err));
+
       onActionComplete?.();
     } catch {
       toast.error('Failed to decline');
