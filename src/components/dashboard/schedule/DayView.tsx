@@ -303,7 +303,7 @@ function AppointmentCard({
             !useCategoryColor && !displayGradient && statusColors.text,
             isCancelled && 'opacity-60',
             isNoShow && 'ring-2 ring-destructive ring-inset',
-            isSelected && 'ring-2 ring-primary ring-offset-1',
+            // Selection visual handled by detail panel, no ring stroke
             isDragging && !isDragOverlay && 'opacity-30',
             isDragOverlay && 'shadow-2xl ring-2 ring-primary scale-105 z-50',
             displayGradient && 'shadow-lg',
@@ -320,14 +320,14 @@ function AppointmentCard({
               background: displayGradient.background,
               color: displayGradient.textColor,
             } : useCategoryColor && isDark && darkStyle ? {
-              backgroundColor: isSelected ? darkStyle.selected : darkStyle.fill,
+              backgroundColor: darkStyle.fill,
               color: darkStyle.text,
               borderColor: darkStyle.stroke,
               borderWidth: '1px',
               borderStyle: 'solid',
               borderLeftColor: darkStyle.accent,
               borderLeftWidth: '4px',
-              boxShadow: isSelected ? darkStyle.ring : (!isCompact ? darkStyle.glow : undefined),
+              boxShadow: !isCompact ? darkStyle.glow : undefined,
               transition: 'background-color 150ms ease, box-shadow 150ms ease',
             } : useCategoryColor ? {
               backgroundColor: catColor.bg,
