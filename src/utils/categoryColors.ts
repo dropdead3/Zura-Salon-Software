@@ -305,6 +305,7 @@ export function getDarkModeTextColor(hexColor: string): string {
 
 interface DarkCategoryStyle {
   fill: string;
+  stroke: string;
   accent: string;
   hover: string;
   selected: string;
@@ -316,42 +317,46 @@ interface DarkCategoryStyle {
  * Derives rich, saturated fills from the light-mode hex that sit at
  * lightness 30-42%, well above the 7-14% calendar background.
  */
+/**
+ * Convert hex to RGB components
+ */
+function hexToRgb(hex: string): { r: number; g: number; b: number } {
+  const clean = hex.replace('#', '');
+  return {
+    r: parseInt(clean.substring(0, 2), 16),
+    g: parseInt(clean.substring(2, 4), 16),
+    b: parseInt(clean.substring(4, 6), 16),
+  };
+}
+
 export function getDarkCategoryStyle(hexColor: string): DarkCategoryStyle {
   const hslStr = hexToHsl(hexColor);
   const parts = hslStr.split(/[\s%]+/).map(v => parseFloat(v));
-  const [h, s, l] = parts;
+  const [, s] = parts;
 
   const isGray = s < 8;
+  const { r, g, b } = hexToRgb(hexColor);
 
-  // Fill derivation
-  let fillS: number;
-  let fillL: number;
+  // Translucent fill from original color
+  const fillAlpha = isGray ? 0.22 : 0.18;
+  const fill = `rgba(${r}, ${g}, ${b}, ${fillAlpha})`;
 
-  if (isGray) {
-    fillS = Math.min(s + 3, 12);
-    fillL = Math.max(Math.min(25, 28), 22);
-  } else {
-    fillS = Math.max(Math.min(s + 12, 80), 35);
-    fillL = Math.max(Math.min(l * 0.38 + 18, 42), 30);
-  }
+  // Hover: slightly more opaque
+  const hover = `rgba(${r}, ${g}, ${b}, ${isGray ? 0.30 : 0.28})`;
 
-  const fill = hslToHex(`${Math.round(h)} ${Math.round(fillS)}% ${Math.round(fillL)}%`);
+  // Selected: more opaque
+  const selected = `rgba(${r}, ${g}, ${b}, ${isGray ? 0.36 : 0.32})`;
 
-  // Accent bar: use original light-mode hex for colored categories
+  // Stroke: original light-mode hex
+  const stroke = hexColor;
+
+  // Accent bar: original light-mode hex for colored, derived for grays
   const accent = isGray
-    ? hslToHex(`${Math.round(h)} ${Math.round(Math.min(fillS + 5, 85))}% ${Math.round(Math.max(fillL - 10, 12))}%`)
+    ? hslToHex(`${Math.round(parts[0])} ${Math.round(Math.min(s + 8, 20))}% 35%`)
     : hexColor;
-
-  // Hover: slightly brighter
-  const hoverL = Math.min(fillL + 5, 50);
-  const hover = hslToHex(`${Math.round(h)} ${Math.round(fillS)}% ${Math.round(hoverL)}%`);
-
-  // Selected: slightly deeper
-  const selectedL = Math.max(fillL - 4, 12);
-  const selected = hslToHex(`${Math.round(h)} ${Math.round(fillS)}% ${Math.round(selectedL)}%`);
 
   // Text: original light-mode hex for colored, warm off-white for grays
   const text = isGray ? '#e8e4df' : hexColor;
 
-  return { fill, accent, hover, selected, text };
+  return { fill, stroke, accent, hover, selected, text };
 }

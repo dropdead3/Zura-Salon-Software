@@ -177,7 +177,11 @@ function AppointmentCard({
           } : useCategoryColor && darkStyle ? {
             backgroundColor: darkStyle.fill,
             color: darkStyle.text,
+            borderColor: darkStyle.stroke,
+            borderWidth: '1px',
+            borderStyle: 'solid',
             borderLeftColor: darkStyle.accent,
+            borderLeftWidth: '4px',
           } : useCategoryColor ? {
               backgroundColor: catColor.bg,
               color: catColor.text,
