@@ -1,52 +1,55 @@
 
-# Improve Service Ordering and Layout on Appointment Cards
+# Add Stylist Badge to Appointment Cards
+
+## Overview
+
+Add a compact stylist avatar/initials badge in the top-right corner of appointment cards across DayView, WeekView, and AgendaView. Hovering the badge shows a tooltip with the primary stylist name and any assistants.
 
 ## What Changes
 
-### 1. Service ordering logic (in `appointment-card-utils.ts`)
+### 1. DayView Cards (`src/components/dashboard/schedule/DayView.tsx`)
 
-Update `formatServicesWithDuration` to sort services before rendering:
+**Top-right badge (replaces current drag handle position):**
+- Add a stylist initials badge positioned `absolute top-0.5 right-0.5` (z-10) using a small circle with the stylist's first-name initial(s)
+- Uses the stylist's `photo_url` if available (tiny Avatar), otherwise falls back to initials in a muted circle
+- On compact cards (duration < 30min): hide the badge to preserve space
+- On non-compact cards: always visible
+- Move the existing drag handle (`GripVertical`) to appear on hover to the left of the badge, or shift it slightly
 
-1. **Primary services first**, ordered by duration longest-to-shortest
-2. **Add-ons/Extras last**, ordered by price highest-to-lowest
-3. Add-on detection: Any service whose category is "Extras" (identified via `serviceLookup`)
+**Hover tooltip on the badge:**
+- Primary stylist: `User` icon + stylist display name
+- If assistants present: `Users` icon + "w/ AssistantName1, AssistantName2"
 
-Currently the function just maps over comma-split names in their original order. The new version will sort using the `serviceLookup` map to access `duration_minutes`, `price`, and `category`.
+**Remove inline stylist/assistant text lines** (lines 480-491) from the card body on non-compact cards, since this info moves to the badge tooltip. This reclaims vertical space for services.
 
-### 2. Multi-service color band ordering (in `DayView.tsx` and `WeekView.tsx`)
+### 2. WeekView Cards (`src/components/dashboard/schedule/WeekView.tsx`)
 
-The `serviceBands` memo already sorts by duration descending -- this is correct for primary services. Update to also push "Extras" category bands to the bottom of the card, so the visual band layout matches the text ordering.
+Same pattern:
+- Add stylist initials badge at `absolute top-0.5 right-0.5` on medium and full-size cards
+- Tooltip with stylist + assistant names on hover
+- Compact cards: no badge (too small)
 
-### 3. Per-service time-slot positioning on cards (DayView only)
+### 3. AgendaView Cards (`src/components/dashboard/schedule/AgendaView.tsx`)
 
-For non-compact cards with enough vertical space (duration >= 60min), render each service name at its corresponding vertical position within the card. This means:
+AgendaView has more horizontal space, so:
+- Add a stylist avatar chip in the top-right area (within the existing flex layout at line 127)
+- Include assistant info inline with a `Users` icon
+- Tooltip on the avatar shows full stylist name + role + assistants
 
-- Calculate each service's start offset relative to the appointment start
-- Position each service label at the proportional vertical point within the card
-- Fall back to the current stacked list when the card is too short
+### 4. Visual Design
 
-This gives users an at-a-glance view of which service covers which time segment.
+- Badge: `h-5 w-5` circle, `absolute top-1 right-1 z-10`
+- Background: `bg-muted/80 backdrop-blur-sm` with `text-[8px] font-medium`
+- If `photo_url` exists: use Avatar component at same size
+- Tooltip content structured as:
+  - Line 1: `User` icon + Stylist name (primary)
+  - Line 2 (conditional): `Users` icon + "w/ Assistant1, Assistant2"
+- Color: muted foreground, no bold weights
 
-## Technical Details
-
-### `appointment-card-utils.ts`
-
-New function: `sortAndFormatServices(serviceName, serviceLookup)` that returns a sorted array of `{ name, duration, price, category, isExtra }` objects. The existing `formatServicesWithDuration` will use this sorted array internally.
-
-### `DayView.tsx` changes (lines ~242-263, ~458-460)
-
-- Update `serviceBands` memo to use the new sort order (primary by duration desc, extras by price desc, extras always last)
-- For non-compact cards (duration >= 60min), render service names as absolutely-positioned labels within the card at their proportional vertical offset, instead of a single truncated line
-
-### `WeekView.tsx` changes (lines ~128-150, ~265, ~281)
-
-- Same `serviceBands` sort update
-- Same text ordering update for the service line
-
-### Files Modified
+## Files Modified
 
 | File | Change |
 |------|--------|
-| `src/lib/appointment-card-utils.ts` | Add `sortServices` helper; update `formatServicesWithDuration` to use sorted order |
-| `src/components/dashboard/schedule/DayView.tsx` | Update band sort; add per-service positioned labels on tall cards |
-| `src/components/dashboard/schedule/WeekView.tsx` | Update band sort; use sorted service display |
+| `src/components/dashboard/schedule/DayView.tsx` | Add stylist badge top-right with tooltip; remove inline stylist/assistant text from card body |
+| `src/components/dashboard/schedule/WeekView.tsx` | Add stylist badge top-right with tooltip |
+| `src/components/dashboard/schedule/AgendaView.tsx` | Add stylist avatar chip with tooltip in top-right area |
