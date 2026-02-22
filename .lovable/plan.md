@@ -1,30 +1,23 @@
 
-# Fix: Auto-Select Location in Add New Client Dialog
 
-## Problem
-When opening "Add New Client" without a `defaultLocationId`, the location field defaults to empty. If the user doesn't manually select a location before saving, the mutation throws "Please select a location." For organizations with a single location, this is unnecessary friction since there's only one valid choice.
+# Add Stylist Role to Your Account for Testing
 
-## Solution
-Auto-select the first available location when the locations list loads and no location is currently set. This is a single `useEffect` addition.
+## What This Does
 
-## Technical Change
+Adds the `stylist` role to your account (Eric Day, eric@dropdeadhair.com) alongside your existing `super_admin` role. This will make you appear in the available stylists list when creating bookings in the New Booking Wizard.
 
-**File:** `src/components/dashboard/schedule/NewClientDialog.tsx`
+## Technical Approach
 
-Add a `useEffect` after the existing location sync effect (around line 138) that auto-selects:
+Create a small temporary edge function (`add-user-role`) that uses the service role key to insert into `user_roles`, then invoke it to add the row:
 
-```tsx
-// Auto-select location when there's only one, or pick the first if none set
-useEffect(() => {
-  if (!locationId && locations.length > 0) {
-    setLocationId(locations[0].id);
-  }
-}, [locations, locationId]);
+```
+user_id: 1be01269-08b2-4da4-9d57-1b6ff7678317
+role: stylist
 ```
 
-This ensures:
-- Single-location orgs never see the error -- it's pre-selected automatically
-- Multi-location orgs get the first location pre-selected, but can still change it via the dropdown
-- If `defaultLocationId` is already set, this effect does nothing (since `locationId` is already populated)
+After confirming the insert, the edge function can be deleted since it was only needed for this one-time operation.
 
-One file, one small effect. No other changes needed.
+## Result
+
+Your `user_roles` will contain both `super_admin` and `stylist`, so you'll show up as an available stylist for booking assignments.
+
