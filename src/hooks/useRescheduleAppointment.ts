@@ -30,7 +30,7 @@ export function useRescheduleAppointment() {
     },
     onSuccess: (data) => {
       // Invalidate calendar queries to refresh the data
-      queryClient.invalidateQueries({ queryKey: ['phorest-calendar'] });
+      queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] });
       
       if (data.phorest_updated) {
         toast.success('Appointment rescheduled and synced to Phorest');
