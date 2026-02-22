@@ -151,6 +151,33 @@ export const tokens = {
     /** Skeleton row */
     skeleton: 'h-14 w-full',
   },
+
+  // ========================================
+  // SCROLLBAR TOKENS
+  // ========================================
+  scrollbar: {
+    /** Base track: hidden by default, fades in on container hover */
+    track: 'flex touch-none select-none opacity-0 transition-opacity duration-700 ease-in-out group-hover/scroll:opacity-100',
+    /** Vertical track sizing */
+    trackV: 'h-full w-2 p-[1px]',
+    /** Horizontal track sizing */
+    trackH: 'h-2 flex-col p-[1px]',
+    /** Thumb: rounded pill, muted color with hover lift */
+    thumb: 'relative flex-1 rounded-full bg-muted-foreground/25 hover:bg-muted-foreground/40',
+  },
+} as const;
+
+/**
+ * CSS-level scrollbar constants (documentation-only — CSS cannot import JS).
+ * Keep these in sync with the native scrollbar rules in index.css.
+ */
+export const SCROLLBAR_CSS = {
+  COLOR_IDLE:    'transparent',
+  COLOR_HOVER:   'hsl(var(--muted-foreground) / 0.25)',
+  COLOR_ACTIVE:  'hsl(var(--muted-foreground) / 0.4)',
+  WIDTH:         '8px',
+  WIDTH_THIN:    '6px',
+  WIDTH_MINIMAL: '4px',
 } as const;
 
 // ============================================================
@@ -223,6 +250,8 @@ export function getTokenFor(context:
   | 'table-column-header'
   | 'empty-heading'
   | 'empty-description'
+  | 'scrollbar-track'
+  | 'scrollbar-thumb'
 ): string {
   const map: Record<string, string> = {
     'page-title': tokens.heading.page,
@@ -241,6 +270,8 @@ export function getTokenFor(context:
     'table-column-header': tokens.table.columnHeader,
     'empty-heading': tokens.empty.heading,
     'empty-description': tokens.empty.description,
+    'scrollbar-track': tokens.scrollbar.track,
+    'scrollbar-thumb': tokens.scrollbar.thumb,
   };
   return map[context] ?? tokens.body.default;
 }
