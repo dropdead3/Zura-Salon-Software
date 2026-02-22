@@ -1,67 +1,53 @@
 
 
-# Alphabetical Quick-Jump Selector for Client Step
+# Improve Client Search to "Starts With" Filtering
 
-## Overview
+## Problem
 
-Add a vertical A-Z letter strip along the right edge of the client list in the booking wizard's Client step. Tapping a letter instantly scrolls to the first client whose last name (or first name, based on sort) starts with that letter. Letters with no matching clients appear dimmed. This is the same pattern used in phone contact lists.
+The current client search uses a "contains" pattern (`%search%`), so typing "e" returns any client with an "e" anywhere in their name, phone, or email. Typing "er" returns anyone containing both letters anywhere -- not necessarily starting with "Er".
 
-## How It Works
+## Solution
 
-1. A narrow vertical strip of A-Z letters is positioned on the right side of the ScrollArea
-2. Clients are sorted alphabetically by last name (falling back to first name)
-3. Tapping a letter scrolls the list to the first client starting with that letter
-4. Letters with no matching clients are dimmed (lower opacity, no pointer)
-5. The currently active letter (based on scroll position) is subtly highlighted
-6. On touch devices, dragging a finger along the strip continuously scrolls to each letter
+Change the database query filter from `%search%` (contains anywhere) to `search%` (starts with) for the `name` field. Phone and email will keep the contains pattern since users typically search those by partial fragments.
 
-## Visual Design
+Additionally, the results will be sorted so that clients whose first name starts with the search term appear first, providing the prefix-priority ordering you described.
 
-- Strip width: ~20px, positioned absolute right-0 inside the scroll container
-- Letters: font-sans, text-[10px], text-muted-foreground
-- Active letter: text-primary, slightly larger
-- Disabled letters: opacity-30
-- No background -- just floating letters over a subtle backdrop-blur area
+## Changes
 
-## Technical Details
+Three files use the same query pattern and all need the same fix:
 
-### Changes to `ClientStep.tsx`
+### 1. `QuickBookingPopover.tsx` (line ~499)
 
-1. **Sort clients alphabetically** before rendering (by last name extracted from `client.name`)
-2. **Build a letter index** -- a `Map<string, number>` mapping each letter to the index of the first client starting with that letter
-3. **Add refs** -- individual refs or a single container ref with `scrollIntoView` targeting the first client of each letter group
-4. **Render the A-Z strip** as a vertical flex column of buttons positioned absolutely on the right side of the ScrollArea
-5. **Letter tap handler** -- finds the first client for that letter and scrolls to it using `scrollIntoView({ behavior: 'smooth', block: 'start' })`
-6. **Active letter tracking** (optional, lightweight) -- use an IntersectionObserver or simply derive from scroll position which letter section is currently visible
-
-### Component structure
-
+Change:
 ```
-<div className="flex-1 relative">  {/* wrapper */}
-  <ScrollArea ref={scrollRef}>
-    {/* existing client list, now sorted */}
-    {/* letter group anchors: <div id="letter-A" /> before first A client */}
-  </ScrollArea>
-  <AlphabetStrip
-    availableLetters={availableLetters}
-    activeLetter={activeLetter}
-    onLetterClick={scrollToLetter}
-  />
-</div>
+query = query.or(`name.ilike.%${clientSearch}%,phone.ilike.%${clientSearch}%,email.ilike.%${clientSearch}%`);
+```
+To:
+```
+query = query.or(`name.ilike.${clientSearch}%,phone.ilike.%${clientSearch}%,email.ilike.%${clientSearch}%`);
 ```
 
-### AlphabetStrip sub-component (inline in ClientStep.tsx)
+### 2. `BookingWizard.tsx` (line ~87)
 
-- Renders A-Z as a vertical column
-- Each letter is a small button
-- `availableLetters: Set<string>` controls which are tappable vs dimmed
-- `onLetterClick(letter)` triggers the scroll
+Same change -- remove the leading `%` on `name.ilike`.
+
+### 3. `NewBookingSheet.tsx` (line ~120)
+
+Same change -- remove the leading `%` on `name.ilike`.
+
+## What This Achieves
+
+- Typing "e" returns all clients whose name starts with "E"
+- Typing "er" narrows to clients whose name starts with "Er" (e.g., "Eric", "Erica", "Ernest")
+- Phone and email search still use contains, since partial matching is more useful there
+- Combined with the existing alphabetical sort, results appear in intuitive A-Z order within matches
 
 ## File Summary
 
 | Action | File |
 |--------|------|
-| Modify | `src/components/dashboard/schedule/booking/ClientStep.tsx` -- add alphabet strip, sort clients, scroll-to-letter logic |
+| Modify | `src/components/dashboard/schedule/QuickBookingPopover.tsx` -- name search starts-with |
+| Modify | `src/components/dashboard/schedule/booking/BookingWizard.tsx` -- name search starts-with |
+| Modify | `src/components/dashboard/schedule/NewBookingSheet.tsx` -- name search starts-with |
 
-No database changes. No new dependencies. Single file modification.
-
+Single-character change per file. No new dependencies. No database changes.
