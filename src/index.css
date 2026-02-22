@@ -1405,10 +1405,14 @@ html, body, #root {
   background: hsl(var(--muted-foreground) / 0.5);
 }
 
-/* Firefox — no hover-reveal support, use subtle always-visible thumb */
+/* Firefox — hover-reveal: transparent by default, visible on hover */
 * {
   scrollbar-width: thin;
-  scrollbar-color: hsl(var(--muted-foreground) / 0.15) transparent;
+  scrollbar-color: transparent transparent;
+}
+
+*:hover {
+  scrollbar-color: hsl(var(--muted-foreground) / 0.25) transparent;
 }
 
 /* ===== SYNTHETIC BOLD PREVENTION =====
