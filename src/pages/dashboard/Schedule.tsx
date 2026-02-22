@@ -333,6 +333,7 @@ export default function Schedule() {
 
   const handleAppointmentClick = (apt: PhorestAppointment) => {
     setSelectedAppointment(apt);
+    setDetailOpen(true);
   };
 
   const handleSlotClick = (dateOrStylistId: Date | string, time: string) => {
