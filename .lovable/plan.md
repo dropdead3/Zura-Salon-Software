@@ -1,58 +1,53 @@
 
 
-# Polish Scrollbars -- Invisible Until Hover
+# Fix: Navbar Scrollbar Always Visible
 
-## What Changes
+## Root Cause
 
-All scrollbars across the app will become invisible by default and only appear (fade in) when the user hovers over the scrollable area. Track backgrounds will be fully transparent -- no visible container/gutter. This applies globally to native scrollbars and to the Radix ScrollArea component.
+Two CSS issues make scrollbars permanently visible instead of hover-reveal:
+
+1. **Firefox global rule** (line 1409-1412): `* { scrollbar-color: hsl(var(--muted-foreground) / 0.15) transparent; }` applies a 15% opacity thumb to EVERY element unconditionally. Firefox has no hover-based scrollbar pseudo-element support, so this thumb is always visible.
+
+2. **Firefox hover fix needed**: Change the default `scrollbar-color` to `transparent transparent` (fully hidden), then use `*:hover { scrollbar-color: ... }` to reveal on hover. Firefox does support `:hover` on the element itself for `scrollbar-color`.
 
 ## Changes
 
-### 1. Global Native Scrollbar Styles (`src/index.css`)
+### 1. `src/index.css` (lines 1408-1412)
 
-Replace the existing scrollbar block (lines 1364-1434) with:
-
-- **Track**: fully transparent (no background color) in both light and dark mode
-- **Thumb**: starts at 0 opacity, transitions to visible on container hover
-- **Width**: stays at 8px for comfortable grab target
-- **Firefox**: uses `scrollbar-width: thin` with transparent track color; Firefox doesn't support hover-reveal natively, so the thumb will remain subtly visible (`0.15` opacity) but with no track background
-- Remove `.sidebar-nav` and `.dashboard-cursor` track background overrides (they become transparent too)
-- Remove the `.dashboard-top-bar::after` pseudo-element that filled the scrollbar gutter gap (no longer needed with transparent tracks)
-
-The hover-reveal pattern uses a parent hover selector:
+Replace the Firefox fallback block:
 
 ```css
-::-webkit-scrollbar-thumb {
-  background: transparent;
-  border-radius: 4px;
-  transition: background 0.2s ease;
+/* Before */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.15) transparent;
 }
 
-*:hover::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted-foreground) / 0.25);
+/* After */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
 }
 
-*:hover::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground) / 0.4);
+*:hover {
+  scrollbar-color: hsl(var(--muted-foreground) / 0.25) transparent;
 }
 ```
 
-### 2. Radix ScrollArea Component (`src/components/ui/scroll-area.tsx`)
+This makes Firefox scrollbars fully invisible by default and only visible when the specific scrollable container (or its children) is hovered.
 
-Update the `ScrollBar` component to:
-- Remove the `border-l-transparent` / `border-t-transparent` borders (these create visual gutter)
-- Make the thumb transparent by default with a hover group pattern
-- Add `group` class to the `ScrollArea` root
-- Thumb transitions from `bg-transparent` to `bg-border` on group hover
+### 2. `.scrollbar-minimal` utility (lines 928-932)
 
-### 3. Existing Utility Classes (`src/index.css`)
+The `.scrollbar-minimal` class used by some components should also get the Firefox hover-reveal pattern. Currently it likely inherits the global `*` rule. No additional changes needed since the global fix covers it.
 
-The `.scrollbar-minimal` and `.scrollbar-thin` utility classes (lines 920-964) will also be updated to use transparent tracks and hover-reveal thumbs, staying consistent with the global pattern.
+### 3. `.scrollbar-thin` utility (lines 952-955)
+
+Same -- the `scrollbar-color: transparent transparent` default is already set here. Just need to verify the `:hover` variant exists (it does at line 957-959). No changes needed.
 
 ## Technical Notes
 
-- WebKit (Chrome, Safari, Edge) supports `::-webkit-scrollbar` pseudo-elements with CSS transitions for full hover-reveal
-- Firefox only supports `scrollbar-color` which doesn't support transitions or hover states -- the thumb will be set to a very subtle opacity as a graceful fallback
-- No JavaScript required -- pure CSS solution
-- The Radix ScrollArea uses Tailwind's `group` / `group-hover` pattern for the same effect
+- WebKit (Chrome, Safari, Edge): The existing `*:hover::-webkit-scrollbar-thumb` rules are correct and work as expected
+- Firefox: `scrollbar-color` on the element itself does respond to `:hover`, so `*:hover { scrollbar-color: ... }` will work
+- The `:hover` pseudo-class bubbles up (parent elements are also `:hover`), which means the sidebar nav scrollbar appears when hovering anywhere inside the nav -- this is the correct and desired behavior
+- No JavaScript required
 
