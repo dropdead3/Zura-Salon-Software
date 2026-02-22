@@ -1,4 +1,5 @@
 import { useMemo, useState, useCallback, useRef, useEffect } from 'react';
+import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
 import type { AssistantProfile } from '@/hooks/useAppointmentAssistantNames';
 import { format, isToday, getWeek } from 'date-fns';
 import { ClosedBadge } from '@/components/dashboard/ClosedBadge';
@@ -279,8 +280,9 @@ function AppointmentCard({
   const isNoShow = appointment.status === 'no_show';
   const isCancelled = appointment.status === 'cancelled';
 
-  // Dark mode detection and solid dark style
-  const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
+  // Dark mode detection (reactive via context)
+  const { resolvedTheme } = useDashboardTheme();
+  const isDark = resolvedTheme === 'dark';
   const darkStyle = useMemo(() => {
     if (!isDark || !useCategoryColor || displayGradient) return null;
     return getDarkCategoryStyle(catColor.bg);
