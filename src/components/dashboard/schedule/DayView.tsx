@@ -63,6 +63,8 @@ interface DayViewProps {
   assistantProfilesMap?: Map<string, AssistantProfile[]>;
   assistantTimeBlocks?: AssistantTimeBlock[];
   onBlockClick?: (block: AssistantTimeBlock) => void;
+  onBlockResize?: (blockId: string, newEndTime: string) => void;
+  currentUserId?: string;
 }
 
 // Use consolidated status colors from design tokens
@@ -643,6 +645,8 @@ export function DayView({
   assistantProfilesMap,
   assistantTimeBlocks = [],
   onBlockClick,
+  onBlockResize,
+  currentUserId,
 }: DayViewProps) {
   const ROW_HEIGHT = 20; // 20px per 15-min slot (matches Week view)
   const { colorMap: categoryColors } = useServiceCategoryColorsMap();
@@ -920,6 +924,8 @@ export function DayView({
                       hoursStart={hoursStart}
                       rowHeight={ROW_HEIGHT}
                       onBlockClick={onBlockClick}
+                      onBlockResize={onBlockResize}
+                      currentUserId={currentUserId}
                     />
 
                     {/* Appointments */}

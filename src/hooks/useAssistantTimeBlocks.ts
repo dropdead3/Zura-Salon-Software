@@ -162,6 +162,11 @@ export function useAssistantTimeBlocks(
         });
       }
 
+      // Fire-and-forget: push + email via edge function
+      supabase.functions.invoke('notify-assistant-block', {
+        body: { block_id: data.id, event_type: 'created', actor_user_id: user.id },
+      }).catch(err => console.warn('[NotifyEdge] Failed:', err));
+
       // Auto-notify pool: when no specific assistant is assigned, notify all
       // assistants scheduled at this location on this date
       if (!params.assistant_user_id && dateStr && locationId) {
@@ -221,13 +226,22 @@ export function useAssistantTimeBlocks(
 
   // Update a time block (status, assistant assignment)
   const updateBlock = useMutation({
-    mutationFn: async (params: { id: string; status?: string; assistant_user_id?: string | null }) => {
+    mutationFn: async (params: {
+      id: string;
+      status?: string;
+      assistant_user_id?: string | null;
+      start_time?: string;
+      end_time?: string;
+    }) => {
+      const updatePayload: Record<string, unknown> = {};
+      if (params.status) updatePayload.status = params.status;
+      if (params.assistant_user_id !== undefined) updatePayload.assistant_user_id = params.assistant_user_id;
+      if (params.start_time) updatePayload.start_time = params.start_time;
+      if (params.end_time) updatePayload.end_time = params.end_time;
+
       const { error } = await supabase
         .from('assistant_time_blocks')
-        .update({
-          ...(params.status && { status: params.status }),
-          ...(params.assistant_user_id !== undefined && { assistant_user_id: params.assistant_user_id }),
-        })
+        .update(updatePayload)
         .eq('id', params.id);
       if (error) throw error;
     },
