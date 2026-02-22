@@ -15,6 +15,7 @@ interface BookingRequest {
   service_ids: string[];
   start_time: string;
   notes?: string;
+  location_id?: string; // Direct location_id fallback from client
   // Redo / adjustment fields
   is_redo?: boolean;
   redo_reason?: string;
@@ -102,7 +103,7 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const bookingData: BookingRequest = await req.json();
-    const { branch_id, client_id, staff_id, service_ids, start_time, notes, is_redo, redo_reason, original_appointment_id, redo_pricing_override, redo_requires_approval, redo_is_manager } = bookingData;
+    const { branch_id, client_id, staff_id, service_ids, start_time, notes, location_id: clientLocationId, is_redo, redo_reason, original_appointment_id, redo_pricing_override, redo_requires_approval, redo_is_manager } = bookingData;
 
     if (!branch_id || !client_id || !staff_id || !service_ids?.length || !start_time) {
       throw new Error("Missing required fields: branch_id, client_id, staff_id, service_ids, start_time");
@@ -242,17 +243,19 @@ serve(async (req) => {
     // Create local record
     const appointmentId = response.appointmentId || response.id || `local-${Date.now()}`;
     
-    // Resolve location_id from branch_id
-    let resolvedLocationId: string | null = null;
-    try {
-      const { data: locLookup } = await supabase
-        .from("locations")
-        .select("id")
-        .eq("phorest_branch_id", branch_id)
-        .maybeSingle();
-      resolvedLocationId = locLookup?.id || null;
-    } catch (_e) {
-      console.log("Could not resolve location_id from branch_id");
+    // Resolve location_id from branch_id, with client-provided fallback
+    let resolvedLocationId: string | null = clientLocationId || null;
+    if (!resolvedLocationId) {
+      try {
+        const { data: locLookup } = await supabase
+          .from("locations")
+          .select("id")
+          .eq("phorest_branch_id", branch_id)
+          .maybeSingle();
+        resolvedLocationId = locLookup?.id || null;
+      } catch (_e) {
+        console.log("Could not resolve location_id from branch_id");
+      }
     }
 
     const localRecord: Record<string, any> = {

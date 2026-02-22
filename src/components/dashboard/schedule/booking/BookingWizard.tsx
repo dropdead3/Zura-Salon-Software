@@ -154,11 +154,17 @@ export function BookingWizard({
       const stylistMapping = stylists.find(s => s.user_id === selectedStylist);
       if (!stylistMapping || !selectedClient) throw new Error('Missing required data');
 
+      // Resolve phorest_branch_id from selected location
+      const selectedLoc = locations.find(l => l.id === selectedLocation);
+      const branchId = selectedLoc?.phorest_branch_id;
+      if (!branchId) throw new Error('No Phorest branch ID for selected location');
+
       const startDateTime = `${format(selectedDate, 'yyyy-MM-dd')}T${selectedTime}:00Z`;
 
       const response = await supabase.functions.invoke('create-phorest-booking', {
         body: {
-          branch_id: selectedLocation,
+          branch_id: branchId,
+          location_id: selectedLocation,
           client_id: selectedClient.phorest_client_id,
           staff_id: stylistMapping.phorest_staff_id,
           service_ids: selectedServices,
