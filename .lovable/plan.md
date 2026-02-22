@@ -1,39 +1,22 @@
 
 
-# Fix: Appointment Cards Not Appearing in Time Slots
+# Remove Hover Stroke and Smooth the Magnification Animation
 
-## Root Cause
+## Changes
 
-The `.appt-card-hover` utility class added in `src/index.css` includes `position: relative`, which overrides the `position: absolute` required by appointment cards to render at the correct top/height position in the schedule grid. Without absolute positioning, all cards stack at the top of their container and disappear from their time slots.
+### 1. Remove stroke overlay from `src/index.css`
+Delete the entire `.appt-card-hover::after` and `.appt-card-hover:hover::after` rule blocks (lines 637-650). The stroke effect is no longer needed.
 
-## Fix
+### 2. Smooth the scale transition in DayView.tsx and WeekView.tsx
+Replace `hover:scale-[1.03]` with `hover:scale-[1.02]` (subtler) and replace `transition-all` with `transition-transform duration-200 ease-out` for a smoother, more controlled animation that avoids the "jump" feel. Also remove the `appt-card-hover` class reference since the CSS utility is being deleted.
 
-Remove `position: relative` from `.appt-card-hover`. The appointment card `div` already has `position: absolute` set inline (via the `style` prop), and the `::after` pseudo-element will still work correctly since `absolute` is also a positioned element (it establishes a containing block for `::after` just like `relative` does).
-
-### Change in `src/index.css` (line 638-640)
-
-Remove the `position: relative` rule from `.appt-card-hover`:
-
-```css
-/* Before */
-.appt-card-hover {
-  position: relative;
-}
-
-/* After */
-.appt-card-hover {
-  /* position established by inline absolute; ::after inherits correctly */
-}
-```
-
-Or simply remove the `.appt-card-hover` selector block entirely (keeping only the `::after` and `:hover::after` rules), since `position: absolute` on the parent already establishes a containing block.
-
----
-
-## Technical Details
+### Technical Details
 
 | File | Change |
 |---|---|
-| `src/index.css` | Remove `position: relative` from `.appt-card-hover` |
+| `src/index.css` | Delete lines 637-650 (`.appt-card-hover::after` and `:hover::after` blocks) |
+| `src/components/dashboard/schedule/DayView.tsx` | Replace `transition-all ... hover:scale-[1.03] appt-card-hover` with `transition-transform duration-200 ease-out hover:scale-[1.02]` |
+| `src/components/dashboard/schedule/WeekView.tsx` | Same class update as DayView |
 
-No other files need changes. The `::after` pseudo-element with `position: absolute` and `inset: 0` works correctly when the parent has `position: absolute` -- both `relative` and `absolute` establish a containing block for absolutely-positioned children.
+No new files, no new dependencies, no database changes.
+
