@@ -2,12 +2,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 
 export interface DraftBooking {
   id: string;
   organization_id: string;
   location_id: string | null;
   created_by: string;
+  created_by_name: string | null;
   appointment_date: string | null;
   start_time: string | null;
   client_id: string | null;
@@ -64,6 +66,7 @@ export function useDraftBookings(orgId: string | undefined) {
 export function useSaveDraft() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { data: profile } = useEmployeeProfile();
 
   return useMutation({
     mutationFn: async (input: DraftBookingInput) => {
@@ -71,6 +74,7 @@ export function useSaveDraft() {
         organization_id: input.organization_id,
         location_id: input.location_id || null,
         created_by: user?.id,
+        created_by_name: profile?.display_name || profile?.full_name || null,
         appointment_date: input.appointment_date || null,
         start_time: input.start_time || null,
         client_id: input.client_id || null,
@@ -130,6 +134,27 @@ export function useDeleteDraft() {
     },
     onError: (error) => {
       toast.error('Failed to delete draft: ' + error.message);
+    },
+  });
+}
+
+export function useBatchDeleteDrafts() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ ids, orgId }: { ids: string[]; orgId: string }) => {
+      const { error } = await supabase
+        .from('draft_bookings')
+        .delete()
+        .in('id', ids);
+      if (error) throw error;
+      return { orgId };
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['draft-bookings', result.orgId] });
+    },
+    onError: (error) => {
+      toast.error('Failed to delete drafts: ' + error.message);
     },
   });
 }
