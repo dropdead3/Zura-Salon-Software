@@ -31,7 +31,8 @@ import {
   Scissors,
   Info,
   User,
-  Sparkles
+  Sparkles,
+  Users
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -245,6 +246,7 @@ export function QuickBookingPopover({
   const [bookingNotes, setBookingNotes] = useState('');
   const [showNotes, setShowNotes] = useState(false);
   const [showBreakForm, setShowBreakForm] = useState(false);
+  const [requestAssistant, setRequestAssistant] = useState(false);
 
   // Redo / Adjustment state
   const [isRedo, setIsRedo] = useState(false);
@@ -747,7 +749,35 @@ export function QuickBookingPopover({
       if (draftId && effectiveOrganization?.id) {
         deleteDraftMutation.mutate({ id: draftId, orgId: effectiveOrganization.id });
       }
+
+      // Auto-create assistant time block if requested
+      if (requestAssistant && effectiveOrganization?.id) {
+        const effectiveStylistId = preSelectedStylistId || selectedStylist;
+        const bookingDate = format(date, 'yyyy-MM-dd');
+        // Calculate end time from start + total duration
+        const [startH, startM] = time.split(':').map(Number);
+        const endMinutes = startH * 60 + startM + totalDuration;
+        const endH = Math.floor(endMinutes / 60);
+        const endM = endMinutes % 60;
+        const endTime = `${endH.toString().padStart(2, '0')}:${endM.toString().padStart(2, '0')}:00`;
+
+        supabase.from('assistant_time_blocks').insert({
+          organization_id: effectiveOrganization.id,
+          location_id: selectedLocation,
+          date: bookingDate,
+          start_time: `${time}:00`,
+          end_time: endTime,
+          requesting_user_id: effectiveStylistId,
+          assistant_user_id: null,
+          status: 'requested',
+          created_by: user?.id || effectiveStylistId,
+        }).then(({ error }) => {
+          if (error) console.warn('[AssistantTimeBlock] Auto-create failed:', error);
+        });
+      }
+
       queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] });
+      queryClient.invalidateQueries({ queryKey: ['assistant-time-blocks'] });
       toast.success('Appointment booked successfully');
       onBookingComplete?.(date);
       handleClose(true);
@@ -2160,6 +2190,26 @@ export function QuickBookingPopover({
                     />
                   </div>
                 )}
+              </div>
+
+              {/* Request Assistant Coverage toggle */}
+              <div className="flex items-center justify-between rounded-lg border border-border/60 p-3">
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <Label htmlFor="request-assistant" className="text-xs cursor-pointer">Request Assistant Coverage</Label>
+                    {requestAssistant && (
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        An assistant time block will be created for this appointment's duration.
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <Switch
+                  id="request-assistant"
+                  checked={requestAssistant}
+                  onCheckedChange={setRequestAssistant}
+                />
               </div>
             </div>
           </ScrollArea>

@@ -37,7 +37,7 @@ import { cn } from '@/lib/utils';
 import type { CalendarFilterState } from '@/components/dashboard/schedule/CalendarFiltersPopover';
 import { AddTimeBlockForm } from '@/components/dashboard/schedule/AddTimeBlockForm';
 import { RequestAssistantPanel } from '@/components/dashboard/schedule/RequestAssistantPanel';
-import { useAssistantTimeBlocks } from '@/hooks/useAssistantTimeBlocks';
+import { useAssistantTimeBlocks, useAssistantTimeBlocksRange } from '@/hooks/useAssistantTimeBlocks';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import {
   AlertDialog,
@@ -112,6 +112,19 @@ export default function Schedule() {
     createBlock: createAssistantBlock,
     isCreating: isCreatingBlock,
   } = useAssistantTimeBlocks(currentDate, selectedLocation, orgId ?? null);
+
+  // Range-based time blocks for week/agenda views
+  const weekStartStr = useMemo(() => format(currentDate, 'yyyy-MM-dd'), [currentDate]);
+  const weekEndStr = useMemo(() => {
+    const end = new Date(currentDate);
+    end.setDate(end.getDate() + 13); // Cover both week (7 days) and agenda (14 days)
+    return format(end, 'yyyy-MM-dd');
+  }, [currentDate]);
+  const { timeBlocks: rangeTimeBlocks } = useAssistantTimeBlocksRange(
+    (view === 'week' || view === 'agenda') ? weekStartStr : null,
+    (view === 'week' || view === 'agenda') ? weekEndStr : null,
+    selectedLocation || null,
+  );
 
   const [detailOpen, setDetailOpen] = useState(false);
   const [initialTab, setInitialTab] = useState<string | undefined>(undefined);
@@ -614,6 +627,7 @@ export default function Schedule() {
               assistantNamesMap={assistantNamesMap}
               appointmentsWithAssistants={appointmentsWithAssistants}
               serviceLookup={serviceLookup}
+              assistantTimeBlocks={rangeTimeBlocks}
             />
           )}
         </>

@@ -57,6 +57,72 @@ import { tokens } from '@/lib/design-tokens';
 import { getClientInitials, getAvatarColor } from '@/lib/appointment-card-utils';
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
 import { formatRelativeTime } from '@/lib/format';
+import { useAssistantTimeBlocks } from '@/hooks/useAssistantTimeBlocks';
+import { formatDisplayName } from '@/lib/utils';
+import { Users as UsersIcon } from 'lucide-react';
+
+// ─── Scheduled Coverage sub-component ───────────────────────────
+function ScheduledCoverageSection({
+  appointmentDate,
+  startTime,
+  endTime,
+  locationId,
+}: {
+  appointmentDate: string;
+  startTime: string;
+  endTime: string;
+  locationId: string | null;
+}) {
+  const { timeBlocks } = useAssistantTimeBlocks(
+    appointmentDate ? new Date(appointmentDate + 'T12:00:00') : null,
+    locationId,
+    null,
+  );
+
+  const overlapping = useMemo(() => {
+    if (!timeBlocks.length) return [];
+    const parseT = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+    const aptStart = parseT(startTime);
+    const aptEnd = parseT(endTime);
+    return timeBlocks.filter(b => {
+      const bStart = parseT(b.start_time);
+      const bEnd = parseT(b.end_time);
+      return bStart < aptEnd && bEnd > aptStart;
+    });
+  }, [timeBlocks, startTime, endTime]);
+
+  if (overlapping.length === 0) return null;
+
+  return (
+    <div className="mt-3">
+      <span className="text-xs text-muted-foreground">Scheduled Coverage</span>
+      <div className="space-y-1.5 mt-1">
+        {overlapping.map(block => {
+          const name = block.assistant_profile
+            ? formatDisplayName(block.assistant_profile.full_name, block.assistant_profile.display_name)
+            : null;
+          return (
+            <div key={block.id} className="flex items-center gap-2 text-sm">
+              <UsersIcon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+              <span className="truncate">
+                {name || 'Unassigned'}
+              </span>
+              <span className="text-xs text-muted-foreground">
+                {formatTime12h(block.start_time)}–{formatTime12h(block.end_time)}
+              </span>
+              <Badge variant="outline" className={cn(
+                'text-[10px]',
+                block.status === 'confirmed' ? 'text-green-700 dark:text-green-300 border-green-300' : 'text-amber-700 dark:text-amber-300 border-amber-300'
+              )}>
+                {block.status === 'confirmed' ? 'Confirmed' : 'Requested'}
+              </Badge>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 // ─── Stagger Animation Variants ─────────────────────────────────
 const staggerContainer = {
@@ -859,6 +925,14 @@ export function AppointmentDetailSheet({
                           </div>
                         )}
                       </div>
+
+                      {/* Scheduled Coverage (from assistant_time_blocks) */}
+                      <ScheduledCoverageSection
+                        appointmentDate={appointment.appointment_date}
+                        startTime={appointment.start_time}
+                        endTime={appointment.end_time}
+                        locationId={appointment.location_id}
+                      />
                     </motion.div>
 
                     <Separator />

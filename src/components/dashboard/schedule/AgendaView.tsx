@@ -14,6 +14,8 @@ import { getClientInitials, getAvatarColor, formatServicesWithDuration } from '@
 import { StylistBadge } from './StylistBadge';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import type { ServiceLookupEntry } from '@/hooks/useServiceLookup';
+import type { AssistantTimeBlock } from '@/hooks/useAssistantTimeBlocks';
+import { formatDisplayName } from '@/lib/utils';
 
 interface AgendaViewProps {
   currentDate: Date;
@@ -23,6 +25,7 @@ interface AgendaViewProps {
   assistantNamesMap?: Map<string, string[]>;
   appointmentsWithAssistants?: Set<string>;
   serviceLookup?: Map<string, ServiceLookupEntry>;
+  assistantTimeBlocks?: AssistantTimeBlock[];
 }
 
 const STATUS_CONFIG = APPOINTMENT_STATUS_BADGE;
@@ -195,6 +198,7 @@ export function AgendaView({
   assistantNamesMap,
   appointmentsWithAssistants,
   serviceLookup,
+  assistantTimeBlocks = [],
 }: AgendaViewProps) {
   const { formatDate } = useFormatDate();
 
@@ -269,6 +273,49 @@ export function AgendaView({
                   serviceLookup={serviceLookup}
                 />
               ))}
+
+              {/* Assistant Time Blocks */}
+              {assistantTimeBlocks
+                .filter(b => b.date === dateStr)
+                .map(block => {
+                  const isUnassigned = !block.assistant_user_id;
+                  const requesterName = block.requesting_profile
+                    ? formatDisplayName(block.requesting_profile.full_name, block.requesting_profile.display_name)
+                    : 'Unknown';
+                  const assistantName = block.assistant_profile
+                    ? formatDisplayName(block.assistant_profile.full_name, block.assistant_profile.display_name)
+                    : null;
+
+                  return (
+                    <Card key={block.id} className={cn(
+                      'border-dashed',
+                      isUnassigned ? 'border-amber-400/60 bg-amber-50/50 dark:bg-amber-900/10' : 'border-primary/30 bg-primary/5'
+                    )}>
+                      <CardContent className="p-3">
+                        <div className="flex items-center gap-3">
+                          <div className="text-center shrink-0 w-16">
+                            <div className="text-sm font-medium">{formatTime12h(block.start_time).replace(' ', '')}</div>
+                            <div className="text-xs text-muted-foreground">to {formatTime12h(block.end_time).replace(' ', '')}</div>
+                          </div>
+                          <div className={cn('w-1 self-stretch rounded-full', isUnassigned ? 'bg-amber-400/60' : 'bg-primary/40')} />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <Users className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                              <span className="text-sm font-medium">Assistant Coverage</span>
+                              <Badge variant="outline" className={cn('text-[10px]', isUnassigned ? 'text-amber-700 dark:text-amber-300 border-amber-300' : 'text-primary border-primary/30')}>
+                                {block.status === 'confirmed' ? 'Confirmed' : 'Requested'}
+                              </Badge>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              Requested by {requesterName}
+                              {assistantName && ` · Assigned to ${assistantName}`}
+                            </p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
             </div>
           </div>
         );
