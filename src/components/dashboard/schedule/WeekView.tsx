@@ -14,9 +14,10 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
-import { Phone, User, Users, Repeat, RotateCcw, Star } from 'lucide-react';
+import { Phone, User, Users, Repeat, RotateCcw, Star, ArrowRightLeft, Clock } from 'lucide-react';
 import { getClientInitials, getAvatarColor, formatServicesWithDuration } from '@/lib/appointment-card-utils';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
+import { formatRelativeTime } from '@/lib/format';
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
 import { QuickBookingPopover } from './QuickBookingPopover';
 import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
@@ -241,6 +242,7 @@ function AppointmentCard({
               <div className="text-xs font-medium truncate flex items-center gap-0.5">
                 {(appointment as any).is_redo && <RotateCcw className="h-2.5 w-2.5 text-amber-500 shrink-0" />}
                 {appointment.recurrence_group_id && <Repeat className="h-2.5 w-2.5 opacity-60 shrink-0" />}
+                {(appointment as any).rescheduled_at && <ArrowRightLeft className="h-2.5 w-2.5 text-blue-500 dark:text-blue-400 shrink-0" />}
                 {isAssisting && <span className="bg-accent/80 text-accent-foreground text-[7px] px-0.5 rounded-sm font-medium shrink-0">AST</span>}
                 {!isAssisting && hasAssistants && <Users className="h-2.5 w-2.5 opacity-60 shrink-0" />}
                 {appointment.is_new_client && <Star className="h-2.5 w-2.5 text-amber-500 shrink-0" />}
@@ -250,6 +252,7 @@ function AppointmentCard({
               <>
                 <div className="text-xs font-medium truncate flex items-center gap-0.5">
                   {appointment.recurrence_group_id && <Repeat className="h-3 w-3 opacity-60 shrink-0" />}
+                  {(appointment as any).rescheduled_at && <ArrowRightLeft className="h-3 w-3 text-blue-500 dark:text-blue-400 shrink-0" />}
                   {isAssisting && <span className="bg-accent/80 text-accent-foreground text-[8px] px-1 py-px rounded-sm font-medium shrink-0">ASSISTING</span>}
                   {!isAssisting && hasAssistants && <Users className="h-3 w-3 opacity-60 shrink-0" />}
                   <span className={cn('h-4 w-4 rounded-full flex items-center justify-center text-[7px] font-medium shrink-0', getAvatarColor(appointment.client_name))}>
@@ -265,6 +268,7 @@ function AppointmentCard({
               <>
                 <div className="text-xs font-medium truncate flex items-center gap-0.5">
                   {appointment.recurrence_group_id && <Repeat className="h-3 w-3 opacity-60 shrink-0" />}
+                  {(appointment as any).rescheduled_at && <ArrowRightLeft className="h-3 w-3 text-blue-500 dark:text-blue-400 shrink-0" />}
                   {isAssisting && <span className="bg-accent/80 text-accent-foreground text-[8px] px-1 py-px rounded-sm font-medium shrink-0">ASSISTING</span>}
                   {!isAssisting && hasAssistants && <Users className="h-3 w-3 opacity-60 shrink-0" />}
                   <span className={cn('h-4 w-4 rounded-full flex items-center justify-center text-[7px] font-medium shrink-0', getAvatarColor(appointment.client_name))}>
@@ -275,6 +279,12 @@ function AppointmentCard({
                   {appointment.client_phone && <span className="font-normal opacity-80">{formatPhoneDisplay(appointment.client_phone)}</span>}
                 </div>
                 <div className="text-[11px] opacity-90 truncate">{formatServicesWithDuration(appointment.service_name, serviceLookup) || appointment.service_name}</div>
+                {(appointment as any).rescheduled_at && (appointment as any).rescheduled_from_time && (
+                  <div className="text-[10px] opacity-70 italic truncate flex items-center gap-0.5">
+                    <ArrowRightLeft className="h-2.5 w-2.5 shrink-0" />
+                    Moved from {formatTime12h((appointment as any).rescheduled_from_time)}
+                  </div>
+                )}
                 <div className="text-[10px] opacity-80 flex items-center justify-between">
                   <span>{formatTime12h(appointment.start_time)} - {formatTime12h(appointment.end_time)}</span>
                   {appointment.total_price != null && appointment.total_price > 0 && (
@@ -331,6 +341,12 @@ function AppointmentCard({
           {appointment.total_price != null && appointment.total_price > 0 && (
             <div className="text-sm text-muted-foreground">
               <BlurredAmount className="font-medium">${appointment.total_price.toFixed(0)}</BlurredAmount>
+            </div>
+          )}
+          {(appointment as any).rescheduled_at && (
+            <div className="text-sm text-blue-600 dark:text-blue-400 flex items-center gap-1">
+              <ArrowRightLeft className="h-3 w-3" />
+              Moved from {(appointment as any).rescheduled_from_date !== appointment.appointment_date ? `${(appointment as any).rescheduled_from_date} ` : ''}{formatTime12h((appointment as any).rescheduled_from_time)} · {formatRelativeTime((appointment as any).rescheduled_at)}
             </div>
           )}
           <Badge variant="outline" className={cn('text-xs', statusColors.bg, statusColors.text)}>

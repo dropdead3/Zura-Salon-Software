@@ -49,13 +49,14 @@ import {
   ChevronDown, Copy, Check, CheckCircle, UserCheck, XCircle, AlertTriangle,
   MessageSquare, Lock, Trash2, Loader2, UserPlus, X, Repeat, RotateCcw,
   CreditCard, CalendarClock, RefreshCw, Star, TrendingUp, ExternalLink,
-  UserX,
+  UserX, ArrowRightLeft,
 } from 'lucide-react';
 import { cn, formatPhoneDisplay } from '@/lib/utils';
 import { toast } from 'sonner';
 import { tokens } from '@/lib/design-tokens';
 import { getClientInitials, getAvatarColor } from '@/lib/appointment-card-utils';
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
+import { formatRelativeTime } from '@/lib/format';
 
 // ─── Stagger Animation Variants ─────────────────────────────────
 const staggerContainer = {
@@ -678,7 +679,15 @@ export function AppointmentDetailSheet({
                         {locationName && (
                           <div className="flex items-center gap-3">
                             <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
-                            <span>{locationName}</span>
+                          <span>{locationName}</span>
+                          </div>
+                        )}
+                        {(appointment as any).rescheduled_at && (appointment as any).rescheduled_from_time && (
+                          <div className="flex items-center gap-3">
+                            <ArrowRightLeft className="h-4 w-4 text-blue-500 dark:text-blue-400 shrink-0" />
+                            <span className="text-blue-600 dark:text-blue-400">
+                              Moved from {(appointment as any).rescheduled_from_date !== appointment.appointment_date ? `${formatDate(parseISO((appointment as any).rescheduled_from_date), 'MMM d')} at ` : ''}{formatTime12h((appointment as any).rescheduled_from_time)} · {formatRelativeTime((appointment as any).rescheduled_at)}
+                            </span>
                           </div>
                         )}
                       </div>

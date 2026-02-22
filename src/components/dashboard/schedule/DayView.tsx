@@ -9,7 +9,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
-import { Phone, Clock, AlertTriangle, XCircle, GripVertical, Users, User, Repeat, RotateCcw, Star } from 'lucide-react';
+import { Phone, Clock, AlertTriangle, XCircle, GripVertical, Users, User, Repeat, RotateCcw, Star, ArrowRightLeft } from 'lucide-react';
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
 import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
 import { getCategoryColor, SPECIAL_GRADIENTS, isGradientMarker, getGradientFromMarker } from '@/utils/categoryColors';
@@ -19,6 +19,7 @@ import { APPOINTMENT_STATUS_COLORS } from '@/lib/design-tokens';
 import { getClientInitials, getAvatarColor, formatServicesWithDuration } from '@/lib/appointment-card-utils';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
+import { formatRelativeTime } from '@/lib/format';
 import {
   DndContext,
   DragOverlay,
@@ -402,6 +403,9 @@ function AppointmentCard({
                 {appointment.recurrence_group_id && (
                   <Repeat className="h-2.5 w-2.5 opacity-60 shrink-0" />
                 )}
+                {(appointment as any).rescheduled_at && (
+                  <ArrowRightLeft className="h-2.5 w-2.5 text-blue-500 dark:text-blue-400 shrink-0" />
+                )}
                 {isAssisting && (
                   <span className="bg-accent/80 text-accent-foreground text-[8px] px-1 py-px rounded-sm font-medium shrink-0">AST</span>
                 )}
@@ -421,6 +425,9 @@ function AppointmentCard({
                   )}
                   {appointment.recurrence_group_id && (
                     <Repeat className="h-3 w-3 opacity-60 shrink-0" />
+                  )}
+                  {(appointment as any).rescheduled_at && (
+                    <ArrowRightLeft className="h-3 w-3 text-blue-500 dark:text-blue-400 shrink-0" />
                   )}
                   {(appointment.status === 'confirmed' || appointment.status === 'checked_in') && (
                     <span className={cn(
@@ -462,6 +469,13 @@ function AppointmentCard({
                   <div className="text-xs opacity-70 truncate flex items-center gap-0.5">
                     <Users className="h-2.5 w-2.5 shrink-0" />
                     w/ {assistantNamesMap.get(appointment.id)!.join(', ')}
+                  </div>
+                )}
+                {/* Rescheduled from line */}
+                {duration >= 45 && (appointment as any).rescheduled_at && (appointment as any).rescheduled_from_time && (
+                  <div className="text-[10px] opacity-70 italic truncate flex items-center gap-0.5">
+                    <ArrowRightLeft className="h-2.5 w-2.5 shrink-0" />
+                    Moved from {formatTime12h((appointment as any).rescheduled_from_time)}
                   </div>
                 )}
                 {duration >= 60 && (
@@ -515,6 +529,12 @@ function AppointmentCard({
           {appointment.total_price != null && appointment.total_price > 0 && (
             <div className="text-sm text-muted-foreground">
               <BlurredAmount className="font-medium">${appointment.total_price.toFixed(0)}</BlurredAmount>
+            </div>
+          )}
+          {(appointment as any).rescheduled_at && (
+            <div className="text-sm text-blue-600 dark:text-blue-400 flex items-center gap-1">
+              <ArrowRightLeft className="h-3 w-3" />
+              Moved from {(appointment as any).rescheduled_from_date !== appointment.appointment_date ? `${(appointment as any).rescheduled_from_date} ` : ''}{formatTime12h((appointment as any).rescheduled_from_time)} · {formatRelativeTime((appointment as any).rescheduled_at)}
             </div>
           )}
           <Badge 

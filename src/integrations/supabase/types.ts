@@ -9128,6 +9128,9 @@ export type Database = {
           redo_approved_by: string | null
           redo_pricing_override: number | null
           redo_reason: string | null
+          rescheduled_at: string | null
+          rescheduled_from_date: string | null
+          rescheduled_from_time: string | null
           service_category: string | null
           service_name: string | null
           start_time: string
@@ -9160,6 +9163,9 @@ export type Database = {
           redo_approved_by?: string | null
           redo_pricing_override?: number | null
           redo_reason?: string | null
+          rescheduled_at?: string | null
+          rescheduled_from_date?: string | null
+          rescheduled_from_time?: string | null
           service_category?: string | null
           service_name?: string | null
           start_time: string
@@ -9192,6 +9198,9 @@ export type Database = {
           redo_approved_by?: string | null
           redo_pricing_override?: number | null
           redo_reason?: string | null
+          rescheduled_at?: string | null
+          rescheduled_from_date?: string | null
+          rescheduled_from_time?: string | null
           service_category?: string | null
           service_name?: string | null
           start_time?: string

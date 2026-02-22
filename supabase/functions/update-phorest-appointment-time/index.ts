@@ -90,11 +90,14 @@ Deno.serve(async (req) => {
     const newEndMin = newEndMinutes % 60;
     const new_end_time = `${newEndHour.toString().padStart(2, "0")}:${newEndMin.toString().padStart(2, "0")}`;
 
-    // Prepare update payload
+    // Prepare update payload with reschedule history
     const updatePayload: any = {
       appointment_date: new_date,
       start_time: new_time,
       end_time: new_end_time,
+      rescheduled_from_date: localApt.appointment_date,
+      rescheduled_from_time: localApt.start_time,
+      rescheduled_at: new Date().toISOString(),
     };
 
     // If staff is changing, look up the new phorest_staff_id
