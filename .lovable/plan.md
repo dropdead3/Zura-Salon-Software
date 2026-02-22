@@ -1,57 +1,57 @@
 
-
-# Fix Client Search: Prevent Phone/Email From Polluting Name Results
+# Fix Red Dot Position on "Today" Button
 
 ## Problem
 
-The query uses `OR` across name, phone, and email:
+The "Today" button in the schedule header renders the red closure dot **below** the date label (as a third stacked element), while the other day buttons correctly render the dot **to the left** of the day name using a horizontal flex row.
+
+## Root Cause
+
+In `ScheduleHeader.tsx`, the "Today" button (line 337-341) stacks elements vertically:
 ```
-name.ilike.er%,phone.ilike.%er%,email.ilike.%er%
-```
-
-So typing "er" correctly filters names starting with "Er", but ALSO returns any client whose phone number contains "er" or email contains "er" -- which defeats the purpose.
-
-## Solution
-
-Only include phone/email in the search when the input looks like a phone number or email:
-
-- **Name**: Always searched with starts-with (`search%`)
-- **Phone**: Only searched if input contains at least one digit
-- **Email**: Only searched if input contains `@`
-
-This way, typing letters like "er" searches names only. Typing "555" searches phone numbers. Typing "eric@" searches emails.
-
-## Changes
-
-Apply the same logic in all three files:
-
-### Pattern (replaces current single-line `or` filter)
-
-```typescript
-if (clientSearch) {
-  const hasDigit = /\d/.test(clientSearch);
-  const hasAt = clientSearch.includes('@');
-  const filters = [`name.ilike.${clientSearch}%`];
-  if (hasDigit) filters.push(`phone.ilike.%${clientSearch}%`);
-  if (hasAt) filters.push(`email.ilike.%${clientSearch}%`);
-  query = query.or(filters.join(','));
-}
+Today        (text)
+Feb 22       (text)
+ *           (red dot -- BELOW, wrong)
 ```
 
-### Files
+The other day buttons (lines 378-386) use a nested `flex items-center gap-1` row:
+```
+ * Mon       (dot + label in a row -- CORRECT)
+  23         (date below)
+```
+
+## Fix
+
+Restructure the "Today" button to match the same pattern as the other day buttons -- wrap "Today" and the red dot in a horizontal flex row.
+
+### File: `src/components/dashboard/schedule/ScheduleHeader.tsx`
+
+**Before (lines 337-341):**
+```tsx
+<span className="font-medium text-xs tracking-wide">Today</span>
+<span className="text-[10px] opacity-70">{format(new Date(), 'MMM d')}</span>
+{todayClosed.isClosed && (
+  <span className="w-1.5 h-1.5 rounded-full bg-destructive mt-0.5" />
+)}
+```
+
+**After:**
+```tsx
+<div className="flex items-center gap-1">
+  {todayClosed.isClosed && (
+    <span className="w-1.5 h-1.5 rounded-full bg-destructive flex-shrink-0" />
+  )}
+  <span className="font-medium text-xs tracking-wide">Today</span>
+</div>
+<span className="text-[10px] opacity-70">{format(new Date(), 'MMM d')}</span>
+```
+
+This places the red dot to the left of "Today", matching the pattern used by Mon/Tue/Wed buttons.
+
+## Summary
 
 | Action | File |
 |--------|------|
-| Modify | `src/components/dashboard/schedule/QuickBookingPopover.tsx` (line 499) |
-| Modify | `src/components/dashboard/schedule/booking/BookingWizard.tsx` (line 87) |
-| Modify | `src/components/dashboard/schedule/NewBookingSheet.tsx` (line 120) |
+| Modify | `src/components/dashboard/schedule/ScheduleHeader.tsx` -- move red dot beside label |
 
-## What This Achieves
-
-- Typing "e" returns only clients whose name starts with "E"
-- Typing "er" returns only clients whose name starts with "Er"
-- Typing "555" searches phone numbers containing "555"
-- Typing "eric@" searches emails containing "eric@"
-- No extra results from irrelevant phone/email matches when searching by name
-
-No new dependencies. No database changes.
+Single structural change. No new dependencies.
