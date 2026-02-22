@@ -1,50 +1,56 @@
 
 
-# Fix Alphabetical Filter: Positioning and Click-to-Filter
+# Fix: Booked Appointments Not Appearing on Schedule
 
-## Problems
+## Root Cause
 
-1. **Alphabet strip hidden by scrollbar**: The strip is positioned `absolute right-0` which overlaps with the ScrollArea's native scrollbar, making letters partially obscured.
-2. **No filter functionality**: Clicking a letter only scrolls to that section. It does not filter the list to show only clients starting with that letter.
+Two issues prevent newly booked appointments from showing on the schedule:
 
-## Solution
+### Issue 1: Schedule doesn't navigate to the booked date
+After a successful booking, the `QuickBookingPopover` invalidates the query cache and closes -- but the schedule stays on the **current date** (today, Feb 22). If the appointment was booked for a future date (Feb 24), the user won't see it because the day view only shows today's appointments.
 
-### 1. Fix positioning overlap
+### Issue 2: `location_id` is not set on new appointments
+The `create-phorest-booking` edge function builds the local `phorest_appointments` record without setting `location_id`. It receives `branch_id` (the Phorest branch ID) and looks up the location for org-level checks, but never maps it to the `location_id` column on the appointment record. This means the appointment has `location_id: null`, which will cause it to disappear when location filters are active.
 
-Move the alphabet strip outside the ScrollArea's scroll region by increasing its `right` offset and adding right padding to the scroll content to prevent overlap.
+## Fix
 
-**Files affected:**
-- `src/components/dashboard/schedule/QuickBookingPopover.tsx` (line 187): Change `right-0` to `right-1` and increase content padding from `pr-7` to `pr-8`
-- `src/components/dashboard/schedule/booking/ClientStep.tsx` (line 62): Same positioning fix
+### 1. Navigate to booked date after successful booking
 
-### 2. Add click-to-filter behavior
+**File:** `src/components/dashboard/schedule/QuickBookingPopover.tsx`
 
-When a letter is clicked:
-- If already active, clear the filter (show all clients again)
-- If not active, filter the client list to only show clients whose name starts with that letter
+- Add an `onBookingComplete` callback prop that passes the booked date back to the parent.
+- On successful booking, call `onBookingComplete(bookedDate)` before closing.
 
-**Changes in `QuickBookingPopover.tsx` (`ClientListWithAlphabet`):**
-- Rename `activeLetter` state to serve as both scroll target and active filter
-- Add a `filteredClients` memo that filters `sortedClients` by the active letter
-- On letter click: toggle the filter (click same letter = clear filter, click new letter = filter to that letter)
-- Render `filteredClients` instead of `sortedClients`
+**File:** `src/pages/dashboard/Schedule.tsx`
 
-**Changes in `ClientStep.tsx` (`ClientStepContent`):**
-- Same toggle-filter logic: click a letter filters the list, click again clears it
-- Add `filteredClients` memo
-- Render filtered list
+- Pass `onBookingComplete` to `QuickBookingPopover` that calls `setCurrentDate(date)` so the schedule automatically navigates to show the newly booked appointment.
 
-### 3. Visual feedback
+### 2. Set `location_id` on the local appointment record
 
-- Active/filtered letter gets `text-primary` styling (already exists)
-- Add a small "clear" indicator so users know they can click again to reset
+**File:** `supabase/functions/create-phorest-booking/index.ts`
+
+- The function already queries the `locations` table to check org settings (line 116-120). Reuse that lookup to also grab the `id` (location_id) from the locations table.
+- Add `location_id` to the `localRecord` object before upserting.
 
 ## File Summary
 
 | Action | File |
 |--------|------|
-| Modify | `src/components/dashboard/schedule/QuickBookingPopover.tsx` -- fix strip position, add filter logic |
-| Modify | `src/components/dashboard/schedule/booking/ClientStep.tsx` -- fix strip position, add filter logic |
+| Modify | `src/components/dashboard/schedule/QuickBookingPopover.tsx` -- add `onBookingComplete` prop, call it on success with booked date |
+| Modify | `src/pages/dashboard/Schedule.tsx` -- pass `onBookingComplete` that navigates to the booked date |
+| Modify | `supabase/functions/create-phorest-booking/index.ts` -- set `location_id` from branch_id lookup |
 
-No new files or dependencies.
+## Technical Details
+
+**QuickBookingPopover changes:**
+- Add `onBookingComplete?: (date: Date) => void` to `QuickBookingPopoverProps`
+- In the booking mutation `onSuccess`, before `handleClose(true)`, call `onBookingComplete?.(selectedDate)` where `selectedDate` is the date chosen in the wizard
+
+**Schedule.tsx changes:**
+```
+onBookingComplete={(date) => setCurrentDate(date)}
+```
+
+**Edge function changes:**
+The existing location lookup (line 116-120) fetches `organization_id` from locations matching `phorest_branch_id`. Extend this to also select the location's `id` field, then set `localRecord.location_id = locData.id` in the record builder.
 
