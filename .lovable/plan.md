@@ -1,45 +1,64 @@
 
-# Dual Labels: Band Corner Labels + Top Service Summary
 
-## What Changes
+# Appointment Card Readability Overhaul
 
-1. **Keep the service summary line at the top** (already working) -- the "Full Balayage 270min + Blowout 30min + Maintenance Cut 30min" text stays in the card content area below the client name.
+## Summary of Changes
 
-2. **Add small labels in the bottom-right corner of each color band** -- each band gets a short service name label anchored to its bottom-right, giving a quick visual key for which color corresponds to which service.
+Make card text larger and more readable, remove the initials avatar, and replace the inline status dot with a badge in the top-right corner showing the status label.
+
+## Changes
+
+### 1. Remove client initials avatar (lines 526-529)
+
+Delete the round avatar circle that shows client initials (e.g., "AB"). The client name text alone provides enough identity.
+
+### 2. Replace inline status dot with top-right badge (lines 514-518)
+
+Remove the small colored dot that currently sits inline with the client name. Instead, add an absolutely-positioned status badge in the top-right corner of the card using the existing `APPOINTMENT_STATUS_BADGE` token map from `design-tokens.ts`. This badge will show text like "Confirmed", "Checked In", "Booked", etc. with matching pastel colors.
+
+### 3. Increase text sizes throughout the non-compact card
+
+- Client name: bump from `text-xs` to `text-sm`
+- Service summary line: bump from `text-xs` to `text-sm` (or `text-xs` with slightly larger sizing)
+- Time/price row: bump from `text-xs` to `text-sm`
 
 ## Technical Details
 
 **File: `src/components/dashboard/schedule/DayView.tsx`**
 
-**Change 1 (line 466):** Replace the empty comment inside each color band div with a bottom-right label:
+**Import change:** Add `APPOINTMENT_STATUS_BADGE` from `@/lib/design-tokens`.
+
+**Lines 504-538 (non-compact card content):** Restructure to:
 
 ```tsx
-<div
-  key={i}
-  className="relative overflow-hidden"
-  style={{
-    flex: `${band.percent} 0 0%`,
-    backgroundColor: bandDark ? bandDark.fill : band.color.bg,
-  }}
->
-  {duration >= 60 && (
-    <span
-      className="absolute bottom-0 right-1 text-[9px] opacity-70 truncate max-w-[90%] text-right"
-      style={{ textShadow: '0 0 3px rgba(0,0,0,0.15)' }}
-    >
-      {band.name}
-    </span>
-  )}
+{/* Top-right status badge */}
+<div className="absolute top-1 right-1 z-20">
+  <span className={cn(
+    'text-[9px] px-1.5 py-0.5 rounded-full font-medium',
+    statusBadge.bg, statusBadge.text
+  )}>
+    {statusBadge.label}
+  </span>
 </div>
+
+{/* Client name row - larger text, no avatar, no status dot */}
+<div className="text-sm font-medium truncate flex items-center gap-1 pr-16">
+  {/* ...icons (redo, recurrence, reschedule, assisting, etc.)... */}
+  {appointment.client_name}
+  {/* ...NEW badge, phone... */}
+</div>
+
+{/* Service summary - slightly larger */}
+<div className="text-[13px] opacity-90 truncate">...</div>
+
+{/* Time row - slightly larger */}
+<div className="text-[13px] opacity-80 ...">...</div>
 ```
 
-- Labels show the service name only (no duration -- that's already in the top summary)
-- Positioned bottom-right so they don't compete with the top-left card content (client name, summary)
-- Small font (9px) and reduced opacity to stay subtle
-- Only shown on cards 60min or longer (same existing threshold)
+The `pr-16` on the client name row prevents text from running under the status badge.
 
-**No other changes** -- the top summary line (lines 534-537) remains as-is.
+The card's content container (line 479) needs `relative` added for the absolute badge positioning.
 
 | File | Change |
 |---|---|
-| `src/components/dashboard/schedule/DayView.tsx` | Add bottom-right service name labels inside each color band div (line 466) |
+| `src/components/dashboard/schedule/DayView.tsx` | Import `APPOINTMENT_STATUS_BADGE`; remove avatar and status dot; add top-right status badge; increase text sizes |
