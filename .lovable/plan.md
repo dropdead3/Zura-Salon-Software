@@ -1,151 +1,115 @@
 
 
-# Phase 5: Deferred Items Build + Gap Analysis
+# Gap Analysis and Fixes -- Assistant Time Block System (Post Phase 5)
 
 ## Summary
 
-This phase implements the four deferred items from Phase 4, then performs a comprehensive gap analysis. The deferred items are: (1) push/email notifications for assistant blocks, (2) auto-suggestion algorithm, (3) interactive block resizing in DayView, and (4) assistant utilization analytics card.
+After auditing all assistant time block files, I found 1 critical error, 3 data/config gaps, 2 UX issues, and 3 enhancement opportunities.
 
 ---
 
-## Change 1: Push and Email Notifications for Assistant Time Blocks
+## CRITICAL: Edge Function Not Registered in config.toml
 
-**Problem**: Assistant block events (creation, acceptance, decline) only generate in-app notifications. Users who are not actively looking at the app miss time-sensitive coverage requests.
+**File**: `supabase/config.toml`
 
-**What changes**:
+**Problem**: The `notify-assistant-block` edge function exists at `supabase/functions/notify-assistant-block/index.ts` but is NOT registered in `config.toml` with `verify_jwt = false`. Every call from `supabase.functions.invoke('notify-assistant-block', ...)` in `useAssistantTimeBlocks.ts` and `AssistantBlockActions.tsx` will fail silently (JWT verification error) because the client invokes it with the anon key, not a service role key.
 
-**File**: `src/hooks/useAssistantTimeBlocks.ts`
-- After inserting in-app notifications (both for direct assignment and pool notifications), invoke the existing `send-push-notification` edge function for each target user with title/body/url pointing to `/dashboard/schedule`
-- This reuses existing push infrastructure (`push_subscriptions` table, `send-push-notification` function, `usePushNotifications` hook)
-
-**File**: New edge function `supabase/functions/notify-assistant-block/index.ts`
-- Accepts `{ block_id, event_type, actor_user_id }` where event_type is `created`, `accepted`, or `declined`
-- Fetches the block, determines notification targets
-- Sends push notification via the same Web Push logic already in `send-push-notification`
-- Sends email via `sendOrgEmail` to the target user(s) with a simple template: block details + link to schedule
-- Handles rate limiting: no duplicate notifications for the same block within 5 minutes
+**Fix**: Add `[functions.notify-assistant-block]` with `verify_jwt = false` to `supabase/config.toml`.
 
 ---
 
-## Change 2: Auto-Suggestion Algorithm for Assistant Assignment
+## Gap 1: Console Error -- AlertDialog Ref Warning
 
-**Problem**: When a coverage request is created without a specific assistant, there is no intelligent suggestion for who the best match is. The system currently shows "Any available assistant" and relies on manual selection or pool notification.
+**File**: `src/components/dashboard/schedule/AppointmentDetailSheet.tsx`
 
-**What changes**:
+**Problem**: The console shows "Function components cannot be given refs" pointing to `AlertDialog` inside `AppointmentDetailSheet`. The `AlertDialog` components at lines 1265 and 1299 are rendered inside a `createPortal(...)` call. When `AlertDialog` (a Radix primitive) is used as a direct child of a portal fragment, React attempts to attach a ref to it, which fails because `AlertDialog` is not wrapped with `forwardRef`.
 
-**File**: New hook `src/hooks/useAssistantAutoSuggest.ts`
-- Given a `locationId`, `date`, `startTime`, `endTime`, returns a ranked list of suggested assistants
-- Ranking criteria (weighted):
-  1. Is scheduled at this location on this day (from `employee_location_schedules`) -- highest weight
-  2. Has no overlapping appointments or time blocks (conflict-free) -- required
-  3. Historical acceptance rate: count of `confirmed` blocks vs total assigned blocks -- tiebreaker
-  4. Workload balance: fewer confirmed blocks today = higher rank -- tiebreaker
-- Returns `Array<{ user_id, name, photo_url, score, reasons: string[] }>`
+**Fix**: Wrap each `AlertDialog` in a `<div>` fragment or use `AlertDialog` at the component root level instead of inside the portal's JSX fragment. This is a cosmetic warning but creates console noise.
+
+---
+
+## Gap 2: `send-push-notification` Not in config.toml
+
+**File**: `supabase/config.toml`
+
+**Problem**: The `notify-assistant-block` edge function calls `send-push-notification` internally via `fetch()`. If `send-push-notification` is also not in config.toml, the internal call will also fail. Need to verify and add if missing.
+
+**Fix**: Verify `send-push-notification` is registered in config.toml. If not, add it.
+
+---
+
+## Gap 3: `useAssistantAutoSuggest` Missing `assistantUserId` Dependency
 
 **File**: `src/components/dashboard/schedule/RequestAssistantPanel.tsx`
-- Import `useAssistantAutoSuggest` and show a "Suggested" badge next to the top-ranked assistant in the picker
-- If only one assistant scores well, auto-select them with a note: "Auto-suggested based on availability and history"
+
+**Problem**: The `useEffect` at line 123-127 has `assistantUserId` in its closure but not in the dependency array. The effect runs when `topSuggestion` or `suggestions.length` changes, but the condition `!assistantUserId` reads a stale value after the user manually selects someone. This could cause the auto-suggestion to re-override a manual selection if the suggestions list changes.
+
+**Fix**: This is minor since `topSuggestion.user_id` is stable, but the correct fix is to track whether the user has ever manually selected (a `hasManuallySelected` ref) and skip auto-select if true.
 
 ---
 
-## Change 3: Interactive Block Resizing in DayView
+## Gap 4: Notification Item Missing Block Status Check
 
-**Problem**: Once created, assistant time blocks cannot be visually resized on the calendar. Users must delete and recreate to adjust timing.
+**File**: `src/components/dashboard/schedule/AssistantBlockNotificationItem.tsx`
 
-**What changes**:
+**Problem**: The Accept/Decline buttons render based on `showActions` (checks `requestingUserId !== currentUserId`), but there is no check for whether the block has already been confirmed or declined. If the block was already accepted by someone else, clicking Accept would still work but would overwrite the existing assistant.
+
+**Fix**: Fetch the current block status before rendering actions, or pass `block_status` in the notification metadata and only show actions when `status === 'requested'`.
+
+---
+
+## Gap 5: Utilization Stats Missing Organization Scoping on Profiles Query
+
+**File**: `src/hooks/useAssistantUtilizationStats.ts`
+
+**Problem**: The profiles query at line 63 fetches ALL `employee_profiles` without filtering by `organization_id`. In a multi-tenant system this is wasteful and could expose cross-org names if the query ever returned to a shared context.
+
+**Fix**: Add `.eq('organization_id', organizationId)` to the profiles query.
+
+---
+
+## Enhancement 1: Auto-Suggest Algorithm -- Exclude Self from Pool Notifications
+
+**File**: `src/hooks/useAssistantAutoSuggest.ts`
+
+**Problem**: The algorithm correctly filters out `requestingUserId` at line 91, but the `useAssistantsAtLocation` hook doesn't filter by role. This means non-assistant employees (e.g., stylists, managers) could appear in the suggestion list.
+
+**Enhancement**: Filter `availableAssistants` to only include users who have the `stylist_assistant` or `assistant` role, matching the pool notification logic.
+
+---
+
+## Enhancement 2: Resize Does Not Check Conflicts
 
 **File**: `src/components/dashboard/schedule/AssistantBlockOverlay.tsx`
-- Add a bottom-edge drag handle (a thin bar at the bottom of each overlay block)
-- On drag, calculate the new `end_time` based on pixel offset, snapping to 15-minute increments
-- On drag end, call `updateBlock` mutation with the new `end_time`
-- Only show the drag handle when the current user is the requester and the block is not yet confirmed
-- Visual feedback: ghost outline showing the new end time during drag
 
-**File**: `src/hooks/useAssistantTimeBlocks.ts`
-- Extend the `updateBlock` mutation to also accept `start_time` and `end_time` fields
+**Problem**: When a block is resized, `onBlockResize` fires immediately without checking if the new end time creates a conflict with an existing appointment or time block. The plan noted this as a gap analysis item but it was not addressed.
+
+**Enhancement**: After resize, validate the new time range against `useAssistantConflictCheck` before committing. If conflicting, show a toast warning and revert.
 
 ---
 
-## Change 4: Assistant Utilization Analytics Card
+## Enhancement 3: Manager Sheet -- Add Organization ID Filter
 
-**Problem**: There is no visibility into how effectively the assistant system is being used -- acceptance rates, coverage hours, response times.
+**File**: `src/components/dashboard/schedule/AssistantBlockManagerSheet.tsx`
 
-**What changes**:
+**Problem**: The "All" tab shows all blocks at the location without `organization_id` filtering. While the location itself is org-scoped via RLS, adding an explicit org filter would be defense-in-depth.
 
-**File**: New component `src/components/dashboard/analytics/AssistantUtilizationCard.tsx`
-- A standard analytics card (PinnableCard wrapper, design token compliance) showing:
-  - Total requests (last 30 days)
-  - Acceptance rate (confirmed / total)
-  - Average response time (time between creation and status change)
-  - Coverage hours (sum of confirmed block durations)
-  - Top assistants (ranked by confirmed hours)
-- Uses a new hook `useAssistantUtilizationStats`
-
-**File**: New hook `src/hooks/useAssistantUtilizationStats.ts`
-- Queries `assistant_time_blocks` with date range filter
-- Aggregates:
-  - `totalRequests`: count all
-  - `acceptedRequests`: count where status = 'confirmed'
-  - `acceptanceRate`: accepted / total
-  - `totalCoverageMinutes`: sum of (end_time - start_time) for confirmed blocks
-  - `avgResponseMinutes`: average of (updated_at - created_at) for confirmed blocks
-  - `topAssistants`: group by assistant_user_id, sum confirmed hours, join profiles
-
-**File**: Register in the Analytics Hub page under a relevant tab (Team or Operations)
-
----
-
-## Change 5: Gap Analysis Pass (Post-Build)
-
-After implementing Changes 1-4, perform a full audit:
-
-**Data Completeness**:
-- Verify `organization_id` filtering is present on all new queries
-- Confirm notification deduplication prevents spam
-- Validate utilization stats handle edge cases (zero blocks, null times)
-
-**UX Polish**:
-- Confirm drag resize has proper cursor feedback and snap indicators
-- Verify auto-suggest badge uses design tokens (not raw classes)
-- Ensure analytics card follows card header canon (icon box + title + MetricInfoTooltip)
-- Check push notification permission prompt UX
-
-**Action Flow**:
-- Verify email notifications include unsubscribe links (via existing `sendOrgEmail`)
-- Confirm drag resize triggers conflict check before saving
-- Validate auto-suggest does not override explicit user selection
+**Enhancement**: Pass `organizationId` to `useAssistantTimeBlocksRange` and add `.eq('organization_id', orgId)` to the query.
 
 ---
 
 ## Technical Details
 
-### Files Created
+### Files to Modify
 
-| File | Purpose |
-|---|---|
-| `supabase/functions/notify-assistant-block/index.ts` | Push + email notifications for block events |
-| `src/hooks/useAssistantAutoSuggest.ts` | Ranked assistant suggestion algorithm |
-| `src/hooks/useAssistantUtilizationStats.ts` | Aggregated utilization metrics |
-| `src/components/dashboard/analytics/AssistantUtilizationCard.tsx` | Analytics card component |
-
-### Files Modified
-
-| File | Changes |
-|---|---|
-| `src/hooks/useAssistantTimeBlocks.ts` | Call notify edge function on block create/accept/decline; extend updateBlock with time fields |
-| `src/components/dashboard/schedule/RequestAssistantPanel.tsx` | Add auto-suggest badge to picker |
-| `src/components/dashboard/schedule/AssistantBlockOverlay.tsx` | Add bottom-edge drag resize handle |
-| `src/components/dashboard/schedule/AssistantBlockActions.tsx` | Call notify edge function on accept/decline |
-| Analytics Hub page | Register AssistantUtilizationCard |
-
-### Database Changes
-
-- **Migration**: Add `assistant_time_blocks` to realtime publication (if not already present -- verify)
-- No new tables required; utilization stats are computed from existing `assistant_time_blocks` data
-
-### Dependencies
-
-- No new npm packages; drag uses native pointer events (same pattern as appointment drag-and-drop)
-- Email uses existing `sendOrgEmail` from `_shared/email-sender.ts`
-- Push uses existing `send-push-notification` infrastructure
+| File | Change | Priority |
+|---|---|---|
+| `supabase/config.toml` | Add `[functions.notify-assistant-block]` with `verify_jwt = false` | Critical |
+| `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` | Wrap AlertDialog instances to fix ref warning | Medium |
+| `src/components/dashboard/schedule/RequestAssistantPanel.tsx` | Add `hasManuallySelected` ref to prevent auto-select override | Low |
+| `src/components/dashboard/schedule/AssistantBlockNotificationItem.tsx` | Add block status metadata check before showing action buttons | Medium |
+| `src/hooks/useAssistantUtilizationStats.ts` | Add org scoping to profiles query | Medium |
+| `src/hooks/useAssistantAutoSuggest.ts` | Filter suggestions to assistant-role users only | Low |
+| `src/components/dashboard/schedule/AssistantBlockOverlay.tsx` | Add conflict check on resize completion | Low |
+| `src/components/dashboard/schedule/AssistantBlockManagerSheet.tsx` | Add org ID to range query | Low |
 
