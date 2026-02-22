@@ -826,9 +826,13 @@ export function AppointmentDetailSheet({
                                     className="flex flex-col w-full p-1.5 rounded hover:bg-muted text-left text-sm"
                                     disabled={isAssigning}
                                     onClick={() => {
-                                      if (effectiveOrganization?.id) {
-                                        assignAssistant({ assistantUserId: member.user_id, organizationId: effectiveOrganization.id });
+                                      const orgId = effectiveOrganization?.id;
+                                      if (orgId) {
+                                        assignAssistant({ assistantUserId: member.user_id, organizationId: orgId });
                                         setShowAssistantPicker(false);
+                                      } else {
+                                        console.error('[AssistantPicker] No effectiveOrganization available');
+                                        toast.error('Organization context not available. Please refresh the page.');
                                       }
                                     }}
                                   >

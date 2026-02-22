@@ -54,9 +54,7 @@ export function useAppointmentAssistants(appointmentId: string | null) {
 
   const assignAssistant = useMutation({
     mutationFn: async ({ assistantUserId, organizationId }: { assistantUserId: string; organizationId: string }) => {
-      console.log('[AssignAssistant] Attempting insert:', { appointmentId, assistantUserId, organizationId });
       const currentUser = (await supabase.auth.getUser()).data.user;
-      console.log('[AssignAssistant] Current user:', currentUser?.id);
       const { data, error } = await supabase
         .from('appointment_assistants')
         .insert({
@@ -67,8 +65,6 @@ export function useAppointmentAssistants(appointmentId: string | null) {
         })
         .select()
         .single();
-
-      console.log('[AssignAssistant] Result:', { data, error });
       if (error) throw error;
       return data;
     },
