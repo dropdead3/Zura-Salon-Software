@@ -922,15 +922,21 @@ html, body, #root {
   }
 
   .scrollbar-minimal::-webkit-scrollbar-track {
-    @apply bg-transparent;
+    background: transparent;
   }
 
   .scrollbar-minimal::-webkit-scrollbar-thumb {
-    @apply bg-muted-foreground/20 rounded-full;
+    background: transparent;
+    border-radius: 9999px;
+    transition: background 0.2s ease;
   }
 
-  .scrollbar-minimal::-webkit-scrollbar-thumb:hover {
-    @apply bg-muted-foreground/40;
+  .scrollbar-minimal:hover::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.25);
+  }
+
+  .scrollbar-minimal:hover::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.4);
   }
 
   .scrollbar-hide {
@@ -945,6 +951,11 @@ html, body, #root {
   /* Thin scrollbar utility */
   .scrollbar-thin {
     scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+  }
+
+  .scrollbar-thin:hover {
+    scrollbar-color: hsl(var(--muted-foreground) / 0.25) transparent;
   }
 
   .scrollbar-thin::-webkit-scrollbar {
@@ -956,11 +967,16 @@ html, body, #root {
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: hsl(var(--muted-foreground) / 0.2);
+    background: transparent;
     border-radius: 3px;
+    transition: background 0.2s ease;
   }
 
   .scrollbar-thin:hover::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.25);
+  }
+
+  .scrollbar-thin:hover::-webkit-scrollbar-thumb:hover {
     background: hsl(var(--muted-foreground) / 0.4);
   }
 
@@ -1361,88 +1377,38 @@ html, body, #root {
   }
 }
 
-/* ===== Custom Scrollbars ===== */
-/* Light mode */
+/* ===== Custom Scrollbars — Invisible Until Hover ===== */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: hsl(var(--muted) / 0.5);
-  border-radius: 4px;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted-foreground) / 0.25);
+  background: transparent;
   border-radius: 4px;
+  transition: background 0.2s ease;
 }
 
-::-webkit-scrollbar-thumb:hover {
+*:hover::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.25);
+}
+
+*:hover::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--muted-foreground) / 0.4);
 }
 
-::-webkit-scrollbar-thumb:active {
+*:hover::-webkit-scrollbar-thumb:active {
   background: hsl(var(--muted-foreground) / 0.5);
 }
 
-/* Firefox */
+/* Firefox — no hover-reveal support, use subtle always-visible thumb */
 * {
   scrollbar-width: thin;
-  scrollbar-color: hsl(var(--muted-foreground) / 0.25) hsl(var(--muted) / 0.5);
-}
-
-/* Dark mode – matches dashboard dark theme */
-.dark ::-webkit-scrollbar-track {
-  background: hsl(var(--background));
-}
-
-.dark ::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted-foreground) / 0.25);
-}
-
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground) / 0.35);
-}
-
-.dark ::-webkit-scrollbar-thumb:active {
-  background: hsl(var(--muted-foreground) / 0.45);
-}
-
-.dark * {
-  scrollbar-color: hsl(var(--muted-foreground) / 0.3) hsl(var(--background));
-}
-
-/* Sidebar nav – scrollbar track matches nav/sidebar background (bg-card/90) */
-.sidebar-nav::-webkit-scrollbar-track {
-  background: hsl(var(--card));
-}
-
-.sidebar-nav {
-  scrollbar-color: hsl(var(--muted-foreground) / 0.25) hsl(var(--card));
-}
-
-/* Main dashboard content – scrollbar track matches page background (bg-background) */
-html.dashboard-cursor::-webkit-scrollbar-track,
-body.dashboard-cursor::-webkit-scrollbar-track {
-  background: hsl(var(--background));
-}
-
-html.dashboard-cursor,
-body.dashboard-cursor {
-  scrollbar-color: hsl(var(--muted-foreground) / 0.25) hsl(var(--background));
-}
-
-/* Top bar – extend into scrollbar area to eliminate gap at junction */
-.dashboard-top-bar::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 8px;
-  height: 100%;
-  background: hsl(var(--card));
-  transform: translateX(100%);
+  scrollbar-color: hsl(var(--muted-foreground) / 0.15) transparent;
 }
 
 /* ===== SYNTHETIC BOLD PREVENTION =====
