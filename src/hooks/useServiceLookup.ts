@@ -1,0 +1,41 @@
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+
+export interface ServiceLookupEntry {
+  name: string;
+  category: string | null;
+  duration_minutes: number;
+}
+
+/**
+ * Fetches all active services from phorest_services and returns a Map keyed by service name.
+ * Used for render-time category resolution on appointment cards (multi-service banding).
+ */
+export function useServiceLookup() {
+  return useQuery({
+    queryKey: ['service-lookup-map'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('phorest_services')
+        .select('name, category, duration_minutes')
+        .eq('is_active', true);
+
+      if (error) throw error;
+
+      const map = new Map<string, ServiceLookupEntry>();
+      for (const s of data || []) {
+        // Keep first occurrence (or longest duration) per name
+        const existing = map.get(s.name);
+        if (!existing || s.duration_minutes > existing.duration_minutes) {
+          map.set(s.name, {
+            name: s.name,
+            category: s.category,
+            duration_minutes: s.duration_minutes,
+          });
+        }
+      }
+      return map;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+}
