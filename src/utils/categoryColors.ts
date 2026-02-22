@@ -297,65 +297,61 @@ export function getDarkModeTextColor(hexColor: string): string {
 }
 
 // ============================================================
-// GLASSMORPHISM DARK MODE SYSTEM
+// SOLID DARK MODE SYSTEM (Calendar Appointment Blocks)
 // ============================================================
-// Luxury translucent treatment for calendar appointment blocks.
-// Uses category hex at low opacity with backdrop blur and
-// luminous stroke for premium glass containment.
+// Solid, richly saturated fills for dark mode calendar blocks.
+// Inspired by macOS-native calendar aesthetic: vivid but controlled
+// solid fills, left accent bars, white text, zero transparency.
 
-interface GlassCategoryStyle {
+interface DarkCategoryStyle {
   fill: string;
-  stroke: string;
-  hoverFill: string;
-  hoverStroke: string;
-  selectedFill: string;
+  accent: string;
+  hover: string;
+  selected: string;
   text: string;
 }
 
 /**
- * Parse a hex color to RGB components.
+ * Returns a solid dark-mode style set for a calendar appointment block.
+ * Derives rich, saturated fills from the light-mode hex that sit at
+ * lightness 30-42%, well above the 7-14% calendar background.
  */
-function hexToRgb(hex: string): { r: number; g: number; b: number } {
-  const clean = hex.replace('#', '');
-  return {
-    r: parseInt(clean.substring(0, 2), 16),
-    g: parseInt(clean.substring(2, 4), 16),
-    b: parseInt(clean.substring(4, 6), 16),
-  };
-}
-
-/**
- * Derive a pastel-tinted text color from a category hex.
- * Preserves hue identity but shifts to high lightness / low saturation
- * for legibility on dark translucent backgrounds.
- */
-function derivePastelText(hex: string): string {
-  const hslStr = hexToHsl(hex);
+export function getDarkCategoryStyle(hexColor: string): DarkCategoryStyle {
+  const hslStr = hexToHsl(hexColor);
   const parts = hslStr.split(/[\s%]+/).map(v => parseFloat(v));
   const [h, s] = parts;
 
-  // Grays / neutrals: use a neutral light foreground
-  if (s < 8) return '#e8e4df';
+  const isGray = s < 8;
 
-  // Pastel tint: preserve hue, soft saturation, high lightness
-  const pastelS = Math.max(Math.min(s * 0.35, 35), 25);
-  const pastelL = 85;
-  return hslToHex(`${Math.round(h)} ${Math.round(pastelS)}% ${pastelL}%`);
-}
+  // Fill derivation
+  let fillS: number;
+  let fillL: number;
 
-/**
- * Returns a glassmorphism style set for a calendar appointment block in dark mode.
- * Category hex is used at low opacity for translucent fill with luminous stroke.
- */
-export function getGlassCategoryStyle(hexColor: string): GlassCategoryStyle {
-  const { r, g, b } = hexToRgb(hexColor);
+  if (isGray) {
+    fillS = Math.min(s + 3, 12);
+    fillL = Math.max(Math.min(25, 28), 22);
+  } else {
+    fillS = Math.max(Math.min(s + 12, 80), 35);
+    fillL = Math.max(Math.min(s * 0.38 + 18, 42), 30);
+  }
 
-  return {
-    fill: `rgba(${r}, ${g}, ${b}, 0.22)`,
-    stroke: `rgba(${r}, ${g}, ${b}, 0.35)`,
-    hoverFill: `rgba(${r}, ${g}, ${b}, 0.30)`,
-    hoverStroke: `rgba(${r}, ${g}, ${b}, 0.45)`,
-    selectedFill: `rgba(${r}, ${g}, ${b}, 0.18)`,
-    text: derivePastelText(hexColor),
-  };
+  const fill = hslToHex(`${Math.round(h)} ${Math.round(fillS)}% ${Math.round(fillL)}%`);
+
+  // Accent bar: darker, slightly more saturated
+  const accentS = Math.min(fillS + 5, 85);
+  const accentL = Math.max(fillL - 10, 12);
+  const accent = hslToHex(`${Math.round(h)} ${Math.round(accentS)}% ${Math.round(accentL)}%`);
+
+  // Hover: slightly brighter
+  const hoverL = Math.min(fillL + 5, 50);
+  const hover = hslToHex(`${Math.round(h)} ${Math.round(fillS)}% ${Math.round(hoverL)}%`);
+
+  // Selected: slightly deeper
+  const selectedL = Math.max(fillL - 4, 12);
+  const selected = hslToHex(`${Math.round(h)} ${Math.round(fillS)}% ${Math.round(selectedL)}%`);
+
+  // Text: white for colored, warm off-white for grays
+  const text = isGray ? '#e8e4df' : '#f0eff4';
+
+  return { fill, accent, hover, selected, text };
 }
