@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -72,6 +72,7 @@ export function RequestAssistantPanel({
   const [notes, setNotes] = useState('');
   const [assistantUserId, setAssistantUserId] = useState<string | null>(null);
   const [assistantSearchOpen, setAssistantSearchOpen] = useState(false);
+  const hasManuallySelected = useRef(false);
 
   const endTime = addMinutesToTime(startTime, selectedDuration);
 
@@ -121,10 +122,10 @@ export function RequestAssistantPanel({
 
   // Auto-select top suggestion if only one strong candidate and nothing manually selected
   useEffect(() => {
-    if (topSuggestion && suggestions.length === 1 && !assistantUserId) {
+    if (topSuggestion && suggestions.length === 1 && !assistantUserId && !hasManuallySelected.current) {
       setAssistantUserId(topSuggestion.user_id);
     }
-  }, [topSuggestion?.user_id, suggestions.length]);
+  }, [topSuggestion?.user_id, suggestions.length, assistantUserId]);
 
   const suggestedUserIds = useMemo(
     () => new Set(suggestions.map(s => s.user_id)),
@@ -261,6 +262,7 @@ export function RequestAssistantPanel({
                   <CommandItem
                     value="any-available"
                     onSelect={() => {
+                      hasManuallySelected.current = true;
                       setAssistantUserId(null);
                       setAssistantSearchOpen(false);
                     }}
@@ -276,6 +278,7 @@ export function RequestAssistantPanel({
                         key={member.user_id}
                         value={member.display_name || member.full_name || ''}
                         onSelect={() => {
+                          hasManuallySelected.current = true;
                           setAssistantUserId(member.user_id);
                           setAssistantSearchOpen(false);
                         }}

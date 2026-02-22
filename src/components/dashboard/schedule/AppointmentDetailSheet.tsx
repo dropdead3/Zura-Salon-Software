@@ -1262,6 +1262,7 @@ export function AppointmentDetailSheet({
       </AnimatePresence>
 
       {/* Confirmation Dialog (Cancel / No Show) */}
+      <div>
       <AlertDialog open={!!confirmAction} onOpenChange={(open) => { if (!open) { setConfirmAction(null); setCancelReason(''); } }}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -1294,8 +1295,10 @@ export function AppointmentDetailSheet({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      </div>
 
       {/* Recurring Cancel Confirmation Dialog */}
+      <div>
       <AlertDialog open={showCancelFutureConfirm} onOpenChange={(open) => { if (!open) { setShowCancelFutureConfirm(false); setCancelFutureReason(''); } }}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -1322,6 +1325,7 @@ export function AppointmentDetailSheet({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      </div>
     </>,
     document.body
   );

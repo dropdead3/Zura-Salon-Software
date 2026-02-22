@@ -24,9 +24,12 @@ export function AssistantBlockNotificationItem({
   const metadata = notification.metadata as Record<string, string> | null;
   const timeBlockId = metadata?.time_block_id;
   const requestingUserId = metadata?.requesting_user_id;
+  const blockStatus = metadata?.block_status;
 
-  // Only show action buttons if this is targeted at the current user as assistant
-  const showActions = !!timeBlockId && !!requestingUserId && requestingUserId !== currentUserId;
+  // Only show action buttons if targeted at current user as assistant AND block is still requested
+  const showActions = !!timeBlockId && !!requestingUserId
+    && requestingUserId !== currentUserId
+    && (!blockStatus || blockStatus === 'requested');
 
   return (
     <div

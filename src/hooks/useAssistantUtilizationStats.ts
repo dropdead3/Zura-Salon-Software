@@ -59,9 +59,11 @@ export function useAssistantUtilizationStats(
   const { data: profiles } = useQuery({
     queryKey: ['assistant-utilization-profiles', organizationId],
     queryFn: async () => {
+      if (!organizationId) return new Map();
       const { data, error } = await supabase
         .from('employee_profiles')
-        .select('user_id, display_name, full_name, photo_url');
+        .select('user_id, display_name, full_name, photo_url')
+        .eq('organization_id', organizationId);
       if (error) throw error;
       return new Map((data || []).map(p => [p.user_id, p]));
     },

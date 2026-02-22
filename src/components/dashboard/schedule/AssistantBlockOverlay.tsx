@@ -1,6 +1,7 @@
 import { useMemo, useState, useCallback, useRef } from 'react';
 import { cn, formatDisplayName } from '@/lib/utils';
 import { Users, GripHorizontal } from 'lucide-react';
+import { toast } from 'sonner';
 import {
   Tooltip,
   TooltipContent,
@@ -97,7 +98,22 @@ export function AssistantBlockOverlay({
         if (block) {
           const currentEnd = parseTimeToMinutes(block.end_time);
           const newEnd = Math.max(parseTimeToMinutes(block.start_time) + 15, currentEnd + deltaMinutes);
-          onBlockResize(blockId, minutesToTimeStr(newEnd));
+          const newEndStr = minutesToTimeStr(newEnd);
+
+          // Basic overlap check against other blocks for same user
+          const hasOverlap = timeBlocks.some(other =>
+            other.id !== blockId
+            && (other.requesting_user_id === block.requesting_user_id || other.assistant_user_id === block.requesting_user_id)
+            && parseTimeToMinutes(other.start_time) < newEnd
+            && parseTimeToMinutes(other.end_time) > parseTimeToMinutes(block.start_time)
+            && other.date === block.date
+          );
+
+          if (hasOverlap) {
+            toast.warning('Resize would create a conflict — reverted');
+          } else {
+            onBlockResize(blockId, newEndStr);
+          }
         }
       }
 
