@@ -1,100 +1,90 @@
 
 
-# Enhance Appointment Card: Phone Formatting, Stylist Name, Assistant Name
+# AgendaView Parity + Card Enhancements (New Client Badge, Per-Service Duration, Price, Client Avatar)
 
-## Current Issues (from screenshot)
+## Overview
 
-1. **Phone number is raw digits** -- "14805430240" displayed unformatted on the card. Should be "(480) 543-0240" (strip leading country code 1, then format with parentheses and dashes).
-2. **No stylist name** -- The card shows client name, services, and time but no indication of which stylist is assigned. In DayView, stylists are column headers so it's implicit, but in WeekView/AgendaView it's critical. Even in DayView, it's useful for multi-column overlap awareness.
-3. **No assistant name** -- When an assistant is assigned (indicated by the Users icon), the assistant's name is not shown. Only a generic icon or "ASSISTING" badge appears.
+Five enhancements to appointment cards across all calendar views, with AgendaView as the primary focus for parity with DayView/WeekView.
 
 ## Changes
 
-### 1. Fix phone formatting across all views
+### 1. AgendaView Parity -- Phone, Stylist, Assistant, Category Color
 
-**Files:** `DayView.tsx`, `WeekView.tsx`
+**File:** `src/components/dashboard/schedule/AgendaView.tsx`
 
-Replace the `formatPhone` function that currently just returns raw digits:
+- Add props: `assistantNamesMap`, `serviceLookup`, `colorBy`, and category color map
+- Import `formatPhoneDisplay` from `@/lib/utils` and replace raw `appointment.client_phone` display with formatted output
+- Stylist name is already rendered (lines 111-121) -- no change needed
+- Show assistant names: when `assistantNamesMap` has entries for the appointment, render "w/ AssistantName" below the stylist row
+- Add a small category color swatch (8px circle) next to the vertical status divider, using the service lookup to resolve category colors
+- Import `useServiceCategoryColorsMap` and `getCategoryColor` for color resolution
 
-```
-// Current (broken)
-function formatPhone(phone: string | null): string {
-  if (!phone) return '';
-  const digits = phone.replace(/\D/g, '');
-  if (digits.length === 10) return digits; // just returns raw digits!
-  return phone;
-}
-```
+**File:** `src/pages/dashboard/Schedule.tsx`
 
-With proper formatting using the existing `formatPhoneDisplay` utility from `src/lib/utils.ts` which already handles 10-digit and 11-digit (with leading 1) US numbers and formats as `(XXX) XXX-XXXX`.
+- Pass `assistantNamesMap`, `serviceLookup`, and `colorBy` to `AgendaView` (currently only passed to DayView/WeekView)
 
-- Import `formatPhoneDisplay` from `@/lib/utils`
-- Replace all `formatPhone(...)` calls with `formatPhoneDisplay(...)`
-- Remove the local `formatPhone` function
+### 2. New Client Badge
 
-### 2. Add stylist name to non-compact appointment cards
+**Files:** `DayView.tsx`, `WeekView.tsx`, `AgendaView.tsx`
 
-**Files:** `DayView.tsx`, `WeekView.tsx`
+The `is_new_client` field exists on `PhorestAppointment` and is already fetched.
 
-The `PhorestAppointment` type already includes `stylist_profile?: { display_name, full_name, photo_url }`. This data is already joined in the query.
+- On non-compact DayView/WeekView cards: render a small "NEW" chip (`text-[8px] px-1 py-px rounded-sm bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300`) next to the client name
+- On compact cards: render a small star icon (`Star` from lucide, h-2.5 w-2.5, amber color) to save space
+- On AgendaView: render a "NEW" badge next to the client name in the header row
+- Condition: `appointment.is_new_client === true`
 
-- For non-compact DayView cards (duration > 30min): Add stylist name on a new line below service name, using `formatDisplayName` from `@/lib/utils` (shows "FirstName L." format)
-- For WeekView medium and large cards: Same treatment -- add stylist display name below service name
-- Style: `text-xs opacity-70` to keep it secondary to client name and service
+### 3. Per-Service Duration Display
 
-### 3. Show assistant name on appointment cards when assigned
+**Files:** `DayView.tsx`, `WeekView.tsx`, `AgendaView.tsx`
 
-**Files:** `DayView.tsx`, `WeekView.tsx`
+For multi-service appointments, replace the plain comma-separated service name with individual durations when space allows.
 
-Currently, when `hasAssistants` is true, only a `Users` icon is shown. We need to show the assistant's name.
+- Parse `service_name` by comma, look up each in `serviceLookup` for duration
+- On non-compact DayView cards (duration >= 45min): render "Haircut 60min + Glaze 30min" format
+- On WeekView medium/large cards: same treatment
+- On AgendaView: always show per-service duration since there is more horizontal space
+- Single-service appointments: no change (show service name only, duration already visible in the time column)
+- Fallback: if a service is not found in the lookup map, show just the name without duration
 
-The challenge: assistant data (names) is not currently available on the appointment card props. The `appointmentsWithAssistants` is just a `Set<string>` of appointment IDs -- it doesn't carry names.
+### 4. Price on Card
 
-**Approach:** 
-- Create a new hook `useAppointmentAssistantNames` that batch-fetches assistant names for all visible appointment IDs that have assistants
-- Returns a `Map<appointmentId, assistantDisplayName[]>`
-- Pass this map from Schedule.tsx down to DayView/WeekView
-- On the card, when `hasAssistants` is true, show "w/ FirstName L." next to the Users icon
+**Files:** `DayView.tsx`, `WeekView.tsx`, `AgendaView.tsx`
 
-**New file:** `src/hooks/useAppointmentAssistantNames.ts`
-- Accepts `appointmentIds: string[]` (the IDs from `appointmentsWithAssistants`)
-- Queries `appointment_assistants` joined with `employee_profiles` for display names
-- Returns `Map<string, string[]>` mapping appointment ID to array of assistant display names
+The `total_price` field exists on `PhorestAppointment`.
 
-**Schedule.tsx:**
-- Call `useAppointmentAssistantNames` with the set of appointment IDs that have assistants
-- Pass the resulting map to DayView and WeekView
+- On non-compact DayView cards (duration >= 60min): show formatted price in the bottom-right corner using `useFormatCurrency` hook, wrapped in `BlurredAmount` for privacy toggle support
+- On WeekView large cards: same treatment
+- On AgendaView: show price next to the status badge (right-aligned)
+- Condition: `appointment.total_price != null && appointment.total_price > 0`
+- Import `useFormatCurrency` from `@/hooks/useFormatCurrency`
 
-**DayView.tsx / WeekView.tsx:**
-- Add `assistantNamesMap?: Map<string, string[]>` to props
-- On non-compact cards with assistants, render "w/ AssistantName" in `text-xs opacity-70`
+### 5. Client Avatar Initials
 
-### 4. Tooltip enhancement
+**Files:** `DayView.tsx`, `WeekView.tsx`, `AgendaView.tsx`
 
-**Files:** `DayView.tsx`, `WeekView.tsx`
+- On non-compact DayView cards: add a tiny avatar circle (h-5 w-5) with client initials before the client name
+- On AgendaView: already has an avatar-like structure; add initials circle (h-7 w-7) at the start of the main content area
+- On WeekView medium/large cards: add h-4 w-4 initials circle
+- Initials extraction: first character of first name + first character of last name (split by space)
+- Colors: use a deterministic color based on client name hash (modulo a set of 8 muted background colors) for visual scanning variety
+- Compact cards: skip avatar to preserve space
 
-Update the tooltip to also show:
-- Formatted phone number (using `formatPhoneDisplay`)
-- Stylist name
-- Assistant name(s) if any
+## Tooltip Updates
 
-## Gap Analysis and Additional Suggestions
-
-After implementing these changes, remaining gaps include:
-
-1. **AgendaView parity** -- AgendaView should also show formatted phone, stylist name, and assistant names
-2. **Client avatar** -- Cards could show a tiny avatar initial circle for quick client identification
-3. **Service duration per service** -- For multi-service cards, showing individual durations (e.g., "Haircut 45min + Glaze 30min") would help stylists plan
-4. **Price visibility** -- `total_price` exists on the appointment but is never shown on cards; could be useful for front desk staff
-5. **New client indicator** -- `is_new_client` flag exists but isn't visually indicated on cards (e.g., a small star or "NEW" badge)
+All three views' tooltips will be updated to include:
+- New client indicator ("New Client" label)
+- Per-service durations
+- Total price (formatted)
 
 ## File Summary
 
 | Action | File |
 |--------|------|
-| Create | `src/hooks/useAppointmentAssistantNames.ts` -- batch fetch assistant display names |
-| Modify | `src/pages/dashboard/Schedule.tsx` -- call new hook, pass assistant names map |
-| Modify | `src/components/dashboard/schedule/DayView.tsx` -- format phone, add stylist name, show assistant name |
-| Modify | `src/components/dashboard/schedule/WeekView.tsx` -- format phone, add stylist name, show assistant name |
+| Modify | `src/components/dashboard/schedule/AgendaView.tsx` -- full parity + all 5 enhancements |
+| Modify | `src/components/dashboard/schedule/DayView.tsx` -- new client badge, per-service duration, price, avatar |
+| Modify | `src/components/dashboard/schedule/WeekView.tsx` -- new client badge, per-service duration, price, avatar |
+| Modify | `src/pages/dashboard/Schedule.tsx` -- pass missing props to AgendaView |
 
-No database changes. No new dependencies.
+No new files, no database changes, no new dependencies.
+
