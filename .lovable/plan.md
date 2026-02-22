@@ -1,33 +1,31 @@
 
+# Add "Assisted by [name]" Text Below Services Summary
 
-# Fix Confirmation Badge Overlapping Assistant Badge
+## Summary
 
-## Problem
-
-The top-right indicators cluster (status badge, icons) at `top-1 right-1 z-20` overlaps with the assistant avatar badges at `top-0.5 right-0.5 z-10` because both are absolutely positioned in the same corner.
-
-## Solution
-
-Stack the assistant avatars below the indicators cluster instead of competing for the same spot. Move the assistant badges from `top-0.5 right-0.5` to sit just below the indicator row by changing their position to `top-5 right-1`. This gives the status/indicator row clear ownership of the top-right corner, with assistant avatars neatly tucked underneath.
+Add a text line showing "assisted by [assistant name(s)]" on appointment cards, displayed below the services summary. This gives at-a-glance visibility into who is assisting without needing to hover over the avatar badge.
 
 ## Technical Details
 
 **File: `src/components/dashboard/schedule/DayView.tsx`**
 
-**Line 351** -- Change the assistant badges container position:
+After the services summary block (lines 550-558), insert a new conditional block that renders assistant names when present:
 
-Before:
 ```tsx
-<div className="absolute top-0.5 right-0.5 z-10 flex items-center -space-x-1">
+{/* Assisted by line */}
+{(() => {
+  const names = assistantNamesMap?.get(appointment.id);
+  if (!names || names.length === 0) return null;
+  return (
+    <div className="text-[11px] opacity-70 truncate">
+      assisted by {names.join(', ')}
+    </div>
+  );
+})()}
 ```
 
-After:
-```tsx
-<div className="absolute top-5 right-1 z-10 flex items-center -space-x-1">
-```
-
-This positions the assistant avatars roughly 20px from the top, clearing the indicator/status badge row above them.
+This renders only on non-compact cards (it's inside the non-compact branch) and only when assistant names exist for the appointment. The styling matches the existing info lines: small text, reduced opacity, truncated for overflow.
 
 | File | Change |
 |---|---|
-| `src/components/dashboard/schedule/DayView.tsx` | Move assistant avatar cluster from `top-0.5 right-0.5` to `top-5 right-1` to sit below the status indicator row |
+| `src/components/dashboard/schedule/DayView.tsx` | Add "assisted by [name]" line after services summary (after line 558) |
