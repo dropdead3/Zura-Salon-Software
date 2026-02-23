@@ -87,7 +87,7 @@ export function AppointmentBatchBar({ selectedAppointments, onClearSelection }: 
 
   return (
     <>
-      <div className="sticky bottom-0 z-10 border-t bg-background/95 backdrop-blur px-4 py-3 flex items-center justify-between gap-3">
+      <div className="sticky bottom-0 z-10 border-t bg-background/95 backdrop-blur px-4 py-2 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium">{selectedAppointments.length} selected</span>
           <Button variant="ghost" size={tokens.button.inline} onClick={onClearSelection} className="h-7 px-2">
@@ -96,9 +96,9 @@ export function AppointmentBatchBar({ selectedAppointments, onClearSelection }: 
         </div>
         <div className="flex items-center gap-2">
           <Select onValueChange={handleBulkStatusUpdate} disabled={updating}>
-            <SelectTrigger className="w-[150px] h-8 text-xs">
+            <SelectTrigger className="w-[180px] h-7 text-xs">
               <div className="flex items-center gap-1.5">
-                <CheckCircle2 className="h-3.5 w-3.5" />
+                <CheckCircle2 className="h-3 w-3" />
                 <SelectValue placeholder="Update Status" />
               </div>
             </SelectTrigger>
@@ -109,11 +109,11 @@ export function AppointmentBatchBar({ selectedAppointments, onClearSelection }: 
               <SelectItem value="no_show">No Show</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" size={tokens.button.inline} onClick={() => setShareOpen(true)} className="gap-1.5">
-            <MessageSquare className="h-3.5 w-3.5" /> Share
+          <Button variant="outline" size={tokens.button.inline} onClick={() => setShareOpen(true)} className="h-7 text-xs gap-1.5">
+            <MessageSquare className="h-3 w-3" /> Share
           </Button>
-          <Button variant="outline" size={tokens.button.inline} onClick={handleExportCSV} className="gap-1.5">
-            <Download className="h-3.5 w-3.5" /> Export CSV
+          <Button variant="outline" size={tokens.button.inline} onClick={handleExportCSV} className="h-7 text-xs gap-1.5">
+            <Download className="h-3 w-3" /> Export CSV
           </Button>
         </div>
       </div>
