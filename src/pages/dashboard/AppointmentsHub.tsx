@@ -150,98 +150,96 @@ function TransactionsTab({ search }: { search: string }) {
         </Card>
       </BentoGrid>
 
-      {/* Filters */}
-      <Card>
-        <div className="p-4 flex flex-wrap gap-3 items-center">
-          <Select value={datePreset} onValueChange={(v) => setDatePreset(v as DatePreset)}>
-            <SelectTrigger className="w-[140px]"><SelectValue placeholder="Date range" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="today">Today</SelectItem>
-              <SelectItem value="this_week">This Week</SelectItem>
-              <SelectItem value="this_month">This Month</SelectItem>
-              <SelectItem value="last_month">Last Month</SelectItem>
-              <SelectItem value="all">All Time</SelectItem>
-            </SelectContent>
-          </Select>
+      {/* Filters — bare row, no card wrapper */}
+      <div className="flex flex-wrap gap-3 items-center">
+        <Select value={datePreset} onValueChange={(v) => setDatePreset(v as DatePreset)}>
+          <SelectTrigger className="w-[140px]"><SelectValue placeholder="Date range" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="today">Today</SelectItem>
+            <SelectItem value="this_week">This Week</SelectItem>
+            <SelectItem value="this_month">This Month</SelectItem>
+            <SelectItem value="last_month">Last Month</SelectItem>
+            <SelectItem value="all">All Time</SelectItem>
+          </SelectContent>
+        </Select>
 
-          <Select value={locationId} onValueChange={setLocationId}>
-            <SelectTrigger className="w-[160px]"><SelectValue placeholder="Location" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Locations</SelectItem>
-              {locations.map(loc => (
-                <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <Select value={locationId} onValueChange={setLocationId}>
+          <SelectTrigger className="w-[160px]"><SelectValue placeholder="Location" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Locations</SelectItem>
+            {locations.map(loc => (
+              <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-          <Select value={itemType} onValueChange={setItemType}>
-            <SelectTrigger className="w-[130px]"><SelectValue placeholder="Type" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
-              <SelectItem value="service">Services</SelectItem>
-              <SelectItem value="product">Products</SelectItem>
-            </SelectContent>
-          </Select>
+        <Select value={itemType} onValueChange={setItemType}>
+          <SelectTrigger className="w-[130px]"><SelectValue placeholder="Type" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Types</SelectItem>
+            <SelectItem value="service">Services</SelectItem>
+            <SelectItem value="product">Products</SelectItem>
+          </SelectContent>
+        </Select>
 
-          {/* Discounted Only toggle */}
-          <Button
-            variant={showDiscountedOnly ? 'default' : 'outline'}
-            size={tokens.button.card}
-            onClick={() => setShowDiscountedOnly(!showDiscountedOnly)}
-            className="gap-2"
-          >
-            <Tag className="w-4 h-4" />
-            Discounted Only
-            {discountedCount > 0 && (
-              <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[10px]">
-                {discountedCount}
-              </Badge>
-            )}
-          </Button>
-
-          {/* Pending Refunds toggle */}
-          {pendingRefunds.length > 0 && (
-            <Button
-              variant={showPendingRefunds ? 'default' : 'outline'}
-              size={tokens.button.card}
-              onClick={() => setShowPendingRefunds(!showPendingRefunds)}
-              className="gap-2"
-            >
-              <AlertTriangle className="w-4 h-4" />
-              Pending Refunds
-              <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[10px]">
-                {pendingRefunds.length}
-              </Badge>
-            </Button>
+        {/* Discounted Only toggle */}
+        <Button
+          variant={showDiscountedOnly ? 'default' : 'outline'}
+          size={tokens.button.card}
+          onClick={() => setShowDiscountedOnly(!showDiscountedOnly)}
+          className="gap-2"
+        >
+          <Tag className="w-4 h-4" />
+          Discounted Only
+          {discountedCount > 0 && (
+            <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[10px]">
+              {discountedCount}
+            </Badge>
           )}
+        </Button>
 
-          {/* Promo History toggle */}
+        {/* Pending Refunds toggle */}
+        {pendingRefunds.length > 0 && (
           <Button
-            variant={showPromoHistory ? 'default' : 'outline'}
+            variant={showPendingRefunds ? 'default' : 'outline'}
             size={tokens.button.card}
-            onClick={() => setShowPromoHistory(!showPromoHistory)}
+            onClick={() => setShowPendingRefunds(!showPendingRefunds)}
             className="gap-2"
           >
-            <Ticket className="w-4 h-4" />
-            Promo History
+            <AlertTriangle className="w-4 h-4" />
+            Pending Refunds
+            <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[10px]">
+              {pendingRefunds.length}
+            </Badge>
           </Button>
+        )}
 
-          <div className="ml-auto flex gap-2">
-            <Button variant="outline" size={tokens.button.card} onClick={handleExportCSV} disabled={filteredTransactions.length === 0}>
-              <Download className="w-4 h-4 mr-2" />
-              CSV
-            </Button>
-            <Button variant="outline" size={tokens.button.card} onClick={() => refetch()}>
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Refresh
-            </Button>
-            <Button size={tokens.button.card} onClick={() => setIsCreditsOpen(true)}>
-              <CreditCard className="w-4 h-4 mr-2" />
-              Issue Credits
-            </Button>
-          </div>
+        {/* Promo History toggle */}
+        <Button
+          variant={showPromoHistory ? 'default' : 'outline'}
+          size={tokens.button.card}
+          onClick={() => setShowPromoHistory(!showPromoHistory)}
+          className="gap-2"
+        >
+          <Ticket className="w-4 h-4" />
+          Promo History
+        </Button>
+
+        <div className="ml-auto flex gap-2">
+          <Button variant="outline" size={tokens.button.card} onClick={handleExportCSV} disabled={filteredTransactions.length === 0}>
+            <Download className="w-4 h-4 mr-2" />
+            CSV
+          </Button>
+          <Button variant="outline" size={tokens.button.card} onClick={() => refetch()}>
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Refresh
+          </Button>
+          <Button size={tokens.button.card} onClick={() => setIsCreditsOpen(true)}>
+            <CreditCard className="w-4 h-4 mr-2" />
+            Issue Credits
+          </Button>
         </div>
-      </Card>
+      </div>
 
       {/* Pending Refunds List */}
       {showPendingRefunds && pendingRefunds.length > 0 && (
@@ -302,20 +300,22 @@ export default function AppointmentsHub() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={handleTabChange}>
-          <TabsList>
-            <TabsTrigger value="appointments" className="gap-2">
-              <Calendar className="w-4 h-4" />
-              Appointments
-            </TabsTrigger>
-            <TabsTrigger value="transactions" className="gap-2">
-              <Receipt className="w-4 h-4" />
-              Transactions
-            </TabsTrigger>
-            <TabsTrigger value="gift-cards" className="gap-2">
-              <Gift className="w-4 h-4" />
-              Gift Cards
-            </TabsTrigger>
-          </TabsList>
+          <div className="flex items-center justify-between gap-4">
+            <TabsList>
+              <TabsTrigger value="appointments" className="gap-2">
+                <Calendar className="w-4 h-4" />
+                Appointments
+              </TabsTrigger>
+              <TabsTrigger value="transactions" className="gap-2">
+                <Receipt className="w-4 h-4" />
+                Transactions
+              </TabsTrigger>
+              <TabsTrigger value="gift-cards" className="gap-2">
+                <Gift className="w-4 h-4" />
+                Gift Cards
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="appointments" className="mt-4">
             <AppointmentsList search={search} />
