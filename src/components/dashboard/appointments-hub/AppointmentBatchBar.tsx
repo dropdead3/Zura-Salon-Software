@@ -87,7 +87,7 @@ export function AppointmentBatchBar({ selectedAppointments, onClearSelection }: 
 
   return (
     <>
-      <div className="sticky bottom-0 z-10 border-t bg-background/95 backdrop-blur px-4 py-2 flex items-center justify-between gap-3">
+      <div className="sticky bottom-0 z-10 border-t bg-background/95 backdrop-blur px-4 py-2 flex items-center justify-between gap-3 rounded-b-xl">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium">{selectedAppointments.length} selected</span>
           <Button variant="ghost" size={tokens.button.inline} onClick={onClearSelection} className="h-7 px-2">
