@@ -99,6 +99,8 @@ interface Client {
   zip?: string | null;
   country?: string | null;
   preferred_stylist_id?: string | null;
+  is_duplicate?: boolean;
+  canonical_client_id?: string | null;
 }
 
 interface ClientDetailSheetProps {
@@ -274,6 +276,27 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
         .eq('id', client.id);
       
       if (error) throw error;
+
+      // Belt-and-suspenders: clear stale duplicate flag if contact no longer matches canonical
+      if (client.is_duplicate && client.canonical_client_id) {
+        const { data: canonical } = await supabase
+          .from('phorest_clients')
+          .select('email_normalized, phone_normalized')
+          .eq('id', client.canonical_client_id)
+          .maybeSingle();
+
+        const newEmail = (editEmail.trim() || '').toLowerCase();
+        const newPhone = editPhone.trim();
+        const emailMatch = newEmail && canonical?.email_normalized === newEmail;
+        const phoneMatch = newPhone && canonical?.phone_normalized === newPhone;
+
+        if (!emailMatch && !phoneMatch) {
+          await supabase
+            .from('phorest_clients')
+            .update({ is_duplicate: false, canonical_client_id: null } as any)
+            .eq('id', client.id);
+        }
+      }
     },
     onSuccess: () => {
       const fullName = `${editFirstName.trim()} ${editLastName.trim()}`.trim();
