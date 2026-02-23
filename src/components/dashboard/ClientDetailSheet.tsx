@@ -133,6 +133,9 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
   const [editBirthday, setEditBirthday] = useState('');
   const [editClientSince, setEditClientSince] = useState('');
 
+  // Source edit mode state
+  const [isEditingSource, setIsEditingSource] = useState(false);
+
   // Settings edit mode state
   const [isEditingSettings, setIsEditingSettings] = useState(false);
   const [editCategory, setEditCategory] = useState('');
@@ -187,9 +190,8 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
     setIsEditingDates(true);
   };
 
-  const startEditingSettings = () => {
+  const startEditingSource = () => {
     if (!client) return;
-    setEditCategory(client.client_category || '');
     const currentSource = client.lead_source || '';
     if (isStandardSource(currentSource) || !currentSource) {
       setEditLeadSource(currentSource);
@@ -199,6 +201,12 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
       setEditLeadSourceCustom(currentSource);
     }
     setEditReferredBy(client.referred_by || '');
+    setIsEditingSource(true);
+  };
+
+  const startEditingSettings = () => {
+    if (!client) return;
+    setEditCategory(client.client_category || '');
     setEditExternalId(client.external_client_id || '');
     setEditPreferredStylist(client.preferred_stylist_id || 'none');
     setIsEditingSettings(true);
@@ -280,19 +288,33 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
     onError: (error: Error) => { toast.error('Failed to update dates', { description: error.message }); },
   });
 
-  const saveSettingsMutation = useMutation({
+  const saveSourceMutation = useMutation({
     mutationFn: async () => {
       if (!client) throw new Error('No client');
       const resolvedSource = editLeadSource === 'other' && editLeadSourceCustom.trim()
         ? editLeadSourceCustom.trim()
         : editLeadSource || null;
+      const { error } = await supabase
+        .from('phorest_clients')
+        .update({
+          lead_source: resolvedSource,
+          referred_by: editReferredBy || null,
+        } as any)
+        .eq('id', client.id);
+      if (error) throw error;
+    },
+    onSuccess: () => { invalidateClients(); toast.success('Source updated'); setIsEditingSource(false); },
+    onError: (error: Error) => { toast.error('Failed to update source', { description: error.message }); },
+  });
+
+  const saveSettingsMutation = useMutation({
+    mutationFn: async () => {
+      if (!client) throw new Error('No client');
       const resolvedStylist = editPreferredStylist === 'none' ? null : editPreferredStylist || null;
       const { error } = await supabase
         .from('phorest_clients')
         .update({
           client_category: editCategory || null,
-          lead_source: resolvedSource,
-          referred_by: editReferredBy || null,
           external_client_id: editExternalId || null,
           preferred_stylist_id: resolvedStylist,
         } as any)
@@ -394,6 +416,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
   const handleClose = () => {
     setIsEditing(false);
     setIsEditingDates(false);
+    setIsEditingSource(false);
     setIsEditingSettings(false);
     setIsEditingPrompts(false);
     setIsEditingAddress(false);
@@ -665,8 +688,70 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
           </Card>
           </motion.div>
 
-          {/* Important Dates */}
+          {/* Source */}
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
+          <Card className="bg-card/80 backdrop-blur-xl border-border/60">
+            <EditHeader
+              title="Source"
+              icon={Megaphone}
+              isEditMode={isEditingSource}
+              onStart={startEditingSource}
+              onCancel={() => setIsEditingSource(false)}
+              onSave={() => saveSourceMutation.mutate()}
+              isPending={saveSourceMutation.isPending}
+            />
+            <CardContent className="space-y-2 text-sm">
+              {isEditingSource ? (
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs text-muted-foreground">How did they hear about us?</label>
+                    <Select value={editLeadSource} onValueChange={(v) => { setEditLeadSource(v); if (v !== 'other') setEditLeadSourceCustom(''); }}>
+                      <SelectTrigger className="h-8 text-sm">
+                        <SelectValue placeholder="Select source..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {LEAD_SOURCES.map(source => (
+                          <SelectItem key={source.value} value={source.value}>
+                            {source.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {editLeadSource === 'other' && (
+                    <div>
+                      <label className="text-xs text-muted-foreground">Please specify</label>
+                      <Input value={editLeadSourceCustom} onChange={(e) => setEditLeadSourceCustom(e.target.value)} className="h-8 text-sm" placeholder="e.g. Magazine ad, friend's recommendation..." />
+                    </div>
+                  )}
+                  <div>
+                    <label className="text-xs text-muted-foreground">Referred By</label>
+                    <Input value={editReferredBy} onChange={(e) => setEditReferredBy(e.target.value)} className="h-8 text-sm" />
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  {client.lead_source ? (
+                    <div className="flex items-center gap-2">
+                      <Megaphone className="w-4 h-4 text-muted-foreground" />
+                      <Badge variant="outline" className={cn("text-xs font-medium", getLeadSourceColor(client.lead_source))}>
+                        {getLeadSourceLabel(client.lead_source)}
+                      </Badge>
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground italic">No source recorded</p>
+                  )}
+                  {client.referred_by && (
+                    <p><span className="text-muted-foreground">Referred by:</span> {client.referred_by}</p>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+          </motion.div>
+
+          {/* Important Dates */}
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
           <Card className="bg-card/80 backdrop-blur-xl border-border/60">
             <EditHeader
               title="Important Dates"
@@ -723,7 +808,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
           </motion.div>
 
           {/* Notifications — Marketing + Reminders */}
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
           <Card className="bg-card/80 backdrop-blur-xl border-border/60">
             <CardHeader className="pb-2">
               <div className="flex items-center gap-2">
@@ -787,7 +872,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
           </motion.div>
 
           {/* Client Settings */}
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
           <Card className="bg-card/80 backdrop-blur-xl border-border/60">
             <EditHeader
               title="Client Settings"
@@ -886,7 +971,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
           </motion.div>
 
           {/* Prompts */}
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
           <Card className="bg-card/80 backdrop-blur-xl border-border/60">
             <EditHeader
               title="Prompts"
@@ -920,7 +1005,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
           </motion.div>
 
           {/* Address */}
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
           <Card className="bg-card/80 backdrop-blur-xl border-border/60">
             <EditHeader
               title="Address"
