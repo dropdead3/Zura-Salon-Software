@@ -137,24 +137,37 @@ export default function ClientDirectory() {
   const { data: clients, isLoading } = useQuery({
     queryKey: ['client-directory', user?.id, primaryTab, selectedStylist, canViewAllClients],
     queryFn: async () => {
-      let query = supabase
+      let baseQuery = supabase
         .from('phorest_clients')
-        .select('*')
+        .select('*', { count: 'exact' })
         .order('total_spend', { ascending: false });
 
       // Filter logic based on primary tab
       if (primaryTab === 'my' || !canViewAllClients) {
-        // My Clients: only show user's clients
-        query = query.eq('preferred_stylist_id', user?.id);
+        baseQuery = baseQuery.eq('preferred_stylist_id', user?.id);
       } else if (selectedStylist !== 'all') {
-        // All Clients with stylist filter
-        query = query.eq('preferred_stylist_id', selectedStylist);
+        baseQuery = baseQuery.eq('preferred_stylist_id', selectedStylist);
       }
-      // If All Clients with no filter, no preferred_stylist_id constraint
 
-      const { data, error } = await query;
-      if (error) throw error;
-      return data;
+      // Fetch all rows in batches of 1000 to avoid the default limit
+      const allData: any[] = [];
+      let from = 0;
+      const batchSize = 1000;
+      let hasMore = true;
+
+      while (hasMore) {
+        const { data, error } = await baseQuery.range(from, from + batchSize - 1);
+        if (error) throw error;
+        if (data && data.length > 0) {
+          allData.push(...data);
+          from += batchSize;
+          hasMore = data.length === batchSize;
+        } else {
+          hasMore = false;
+        }
+      }
+
+      return allData;
     },
     enabled: !!user?.id,
   });
