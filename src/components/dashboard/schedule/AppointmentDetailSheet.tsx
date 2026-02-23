@@ -476,7 +476,7 @@ export function AppointmentDetailSheet({
   }, [clientRecord, appointment]);
 
   // Walk-in detection (#7)
-  const isWalkIn = appointment ? !appointment.phorest_client_id : false;
+  const isWalkIn = appointment ? (!appointment.phorest_client_id && !appointment.client_name) : false;
 
   // Fuzzy client match for walk-ins without phorest_client_id
   const { data: matchedClient } = useQuery({
