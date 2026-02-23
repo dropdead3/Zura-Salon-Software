@@ -1,48 +1,47 @@
 
-# Show Duplicate Clients in Directory with Merge Prompts
 
-## Problem
-Duplicate clients are currently hidden from the directory via `.eq('is_duplicate', false)`. This silently removes records, confusing salon staff who can't find clients they know exist. Duplicates should be visible but clearly flagged with inline merge functionality.
+# Fix: Merge Wizard Cannot Find Both Duplicate Profiles
 
-## Approach
-Remove the duplicate filter from the directory query. Instead, show duplicate clients with a visual "Duplicate" badge and an inline prompt to merge them with their canonical (original) record.
+## Root Cause
 
-## Changes
+There is a **table mismatch** between the Client Directory and the Merge Wizard:
 
-### 1. ClientDirectory.tsx -- Remove duplicate filter from query
-- **Line 141**: Remove `.eq('is_duplicate', false)` so all clients (including duplicates) are fetched.
-- Update the query `select` to include `is_duplicate` and `canonical_client_id` (already in the `*` select).
+| Surface | Table Used | Eric Day Records |
+|---|---|---|
+| Client Directory | `phorest_clients` | 2 (one canonical, one duplicate) |
+| Merge Wizard search (`useClientSearch`) | `clients` | 1 |
 
-### 2. ClientDirectory.tsx -- Add "Duplicates" tab filter
-- Add a new tab alongside VIP, At Risk, New, Banned, Archived:
-  - "Duplicates (N)" -- filters to only `is_duplicate === true` clients
-- Add a `duplicates` count to the `stats` object.
-- Add a stats card showing the duplicate count (amber/orange styling, GitMerge icon).
+The "Merge" button in the directory passes `phorest_clients` UUIDs in the URL, but the Merge Wizard's `ClientSelector` uses `useClientSearch` which queries the `clients` table. The IDs don't match, and only one record exists there.
 
-### 3. ClientDirectory.tsx -- Duplicate badge on client rows
-- In the client row (around line 734), add a "Duplicate" badge when `client.is_duplicate === true`:
-  - Badge: amber styling with GitMerge icon, text "Duplicate"
-  - Sits alongside VIP, At Risk, New badges
+## Fix
 
-### 4. ClientDirectory.tsx -- Inline merge prompt for duplicate rows
-- For duplicate clients, replace the generic merge icon button with a more prominent "Merge" button:
-  - If `canonical_client_id` exists, the merge button navigates to the merge wizard pre-populated with both the duplicate and canonical client IDs
-  - Tooltip: "This client matches an existing profile. Merge to consolidate."
+### 1. Create a dedicated `usePhorestClientSearch` hook (new function in `useClientsData.ts`)
 
-### 5. Other query locations -- Keep duplicate filter
-- Analytics hooks (`useClientHealthSegments`, `useClientRetentionReport`, `useQuickStats`, `useOrganizationAnalytics`), booking search (`QuickBookingPopover`, `BookingWizard`), kiosk, re-engagement, and the POS adapter should continue filtering out duplicates with `.eq('is_duplicate', false)` since those surfaces need deduplicated data for accuracy.
+Add a search hook that queries `phorest_clients` instead of `clients`, since that's the table the directory and merge flow operate on. This hook:
+
+- Queries `phorest_clients` with the same search pattern (name, email, phone ilike)
+- Does NOT filter out `is_duplicate = true` (both records must be searchable for merging)
+- Returns fields compatible with the `MergeClient` interface
+
+### 2. Update `ClientSelector.tsx` to use the new hook
+
+- Import and use `usePhorestClientSearch` instead of `useClientSearch`
+- This ensures the merge wizard searches the same table the directory uses
+
+### 3. Pre-populate from URL params using `phorest_clients`
+
+- When `preselectedIds` are provided via URL, fetch those records from `phorest_clients` (not `clients`) so pre-selection works correctly on mount
 
 ## Technical Details
 
 | File | Change |
 |---|---|
-| `src/pages/dashboard/ClientDirectory.tsx` (line 141) | Remove `.eq('is_duplicate', false)` |
-| `src/pages/dashboard/ClientDirectory.tsx` (stats) | Add `duplicates` count from `is_duplicate` field |
-| `src/pages/dashboard/ClientDirectory.tsx` (tabs) | Add "Duplicates" tab trigger with count badge |
-| `src/pages/dashboard/ClientDirectory.tsx` (row) | Add amber "Duplicate" badge + prominent merge CTA with canonical linking |
-| No other files affected | Analytics/booking queries keep their duplicate filter |
+| `src/hooks/useClientsData.ts` | Add `usePhorestClientSearch(query, limit)` -- queries `phorest_clients`, no `is_duplicate` filter |
+| `src/components/dashboard/clients/merge/ClientSelector.tsx` | Switch from `useClientSearch` to `usePhorestClientSearch`; add `useEffect` to fetch preselected IDs from `phorest_clients` |
 
 ## What stays the same
-- All analytics, booking, kiosk, and campaign hooks continue excluding duplicates (correct for those contexts)
-- The merge wizard, audit log, and undo functionality remain unchanged
-- The `is_duplicate` flag is still set during POS sync as before
+
+- The `useClientSearch` hook remains unchanged (other surfaces like booking and POS still use the `clients` table correctly)
+- Merge wizard steps 2-4 (PrimarySelector, ConflictResolver, MergeConfirmation) are unaffected
+- The `merge-clients` edge function will need to handle `phorest_clients` IDs -- but that's already the table structure it operates on
+
