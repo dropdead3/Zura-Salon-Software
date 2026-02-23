@@ -1,34 +1,34 @@
 
+## Fix: Remove Reverted Hover Effects from Appointment Cards
 
-## Add "Appointments & Transactions" Link to Schedule
+Two hover behaviors that were previously removed have reappeared on the appointment cards in the scheduler. This plan removes them again.
 
-Two link buttons that navigate to `/dashboard/appointments-hub`, giving front desk, managers, and admins quick access to transaction data, refunds, and appointment history.
+### Issue 1: Magnify (scale) effect on hover
 
-### 1. Schedule Bottom Action Bar (`ScheduleActionBar.tsx`)
+**File:** `src/components/dashboard/schedule/AppointmentCardContent.tsx` (line 582)
 
-Add a `Receipt` icon button (from lucide-react) to the right side of the bar, just before the Schedule Legend. It will be a small pill-shaped link using `react-router-dom`'s `Link` component, styled consistently with the existing bar aesthetic:
+The class `hover:scale-[1.01]` applies a subtle zoom on hover. This will be removed while keeping the other hover classes (`hover:shadow-md hover:z-20`) intact -- the shadow and z-index ensure the card still feels interactive without the magnify effect.
 
-- Icon-only button with a tooltip ("Appointments & Transactions")
-- Placed between the payment queue bubbles and the legend
-- Uses `Receipt` icon to match the hub's existing icon in the nav config
+### Issue 2: Hover preview tooltip on appointment cards
 
-### 2. Appointment Detail Sheet (`AppointmentDetailSheet.tsx`)
+**File:** `src/components/dashboard/schedule/AppointmentCardContent.tsx` (lines 435-474, 648-653)
 
-Add a "View in Transactions" link button inside the detail sheet footer/action area. This lets users jump directly from a specific appointment to the full hub view:
+The `HoverPreviewWrapper` wraps cards in a Radix tooltip that shows client details on hover. This wrapper and its usage will be removed.
 
-- Small outline button with `Receipt` icon + "Transactions" label
-- Links to `/dashboard/appointments-hub`
-- Positioned in the sheet's action/footer area alongside existing action buttons
+Additionally, the callers that pass `showHoverPreview` will be cleaned up:
 
-### Files Changed
+- `src/components/dashboard/schedule/DayView.tsx` (line 263) -- remove `showHoverPreview` prop
+- `src/components/dashboard/schedule/WeekView.tsx` (line 119) -- remove `showHoverPreview` prop
 
-- `src/components/dashboard/schedule/ScheduleActionBar.tsx` -- Add Receipt icon link button before the legend
-- `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` -- Add "Transactions" link button in the detail sheet
+### Summary of changes
 
-### Technical Details
+| File | Change |
+|------|--------|
+| `AppointmentCardContent.tsx` | Remove `hover:scale-[1.01]` from line 582 |
+| `AppointmentCardContent.tsx` | Remove `HoverPreviewWrapper` function (lines 435-474) |
+| `AppointmentCardContent.tsx` | Remove `showHoverPreview` from props interface and default |
+| `AppointmentCardContent.tsx` | Remove conditional wrapper at lines 648-653, always return `gridContent` directly |
+| `DayView.tsx` | Remove `showHoverPreview` prop (line 263) |
+| `WeekView.tsx` | Remove `showHoverPreview` prop (line 119) |
 
-- Import `Link` from `react-router-dom` and `Receipt` from `lucide-react`
-- Bottom bar button: `Link to="/dashboard/appointments-hub"` wrapped in a `Tooltip`, styled as a ghost icon button (`h-8 w-8 rounded-full`) to match the bar's pill design
-- Detail sheet button: Small outline `Button` with `asChild` wrapping a `Link`, using `tokens.button.inline` sizing
-- No new dependencies or database changes required
-
+The hover behavior will be: shadow elevation + z-index boost only. No scale, no tooltip.
