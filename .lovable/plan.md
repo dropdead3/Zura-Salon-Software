@@ -1,30 +1,40 @@
 
-# Fix Page Padding: Appointments & Transactions Hub
 
-## Problem
+## Fix Filter Dropdowns: Auto-Width and Background Fill
 
-The Appointments & Transactions Hub has **zero side padding** on its content. The page wraps children in `<div className="space-y-6">` with no `px-` or `py-` values, causing content to sit flush against the sidebar edge.
+### Problem
+1. Filter select triggers have hardcoded widths (`w-[140px]`, `w-[130px]`, `w-[160px]`) causing content truncation (visible in screenshot: "All..." instead of full label)
+2. Filters lack the subtle dark background fill that the search bar has, making them less visually prominent
 
-**Command Center reference padding:** `px-6 pb-6 lg:px-8 lg:pb-8`
-**Management Hub reference padding:** `p-6 lg:p-8`
-**Appointments Hub current padding:** none
+### Changes
 
-## Fix
+#### 1. Add a new `input.filter` token to `src/lib/design-tokens.ts`
+- Add `filter: 'bg-muted/50 border-border/60'` alongside the existing `input.search` token
+- This ensures all filter dropdowns share the same visual treatment as the search bar
 
-### File: `src/pages/dashboard/AppointmentsHub.tsx` (line 297)
+#### 2. Update `src/components/dashboard/appointments-hub/AppointmentsList.tsx`
+- Remove fixed widths from all four `SelectTrigger` components (`w-[140px]`, `w-[130px]`, `w-[160px]`)
+- Replace with `w-auto` so triggers size to fit their content naturally
+- Apply `tokens.input.filter` classes to each `SelectTrigger` for the muted background fill
 
-Replace:
-```tsx
-<div className="space-y-6">
+### Technical Detail
+
+**design-tokens.ts** -- new token:
+```ts
+input: {
+  search: 'bg-muted/50 border-border/60',
+  filter: 'bg-muted/50 border-border/60',
+},
 ```
 
-With:
+**AppointmentsList.tsx** -- each SelectTrigger changes from:
 ```tsx
-<div className="px-6 pb-6 lg:px-8 lg:pb-8 pt-2 lg:pt-3 space-y-6">
+<SelectTrigger className="w-[140px]">
+```
+to:
+```tsx
+<SelectTrigger className={cn("w-auto", tokens.input.filter)}>
 ```
 
-This matches the exact padding used by the Command Center (`DashboardHome.tsx` line 251): `pt-2 px-6 pb-6 lg:pt-3 lg:px-8 lg:pb-8`.
+This applies to all four filter selects: Date Range, Status, Location, and Stylist.
 
-### Single file, single line change
-
-No other files are affected. This is a one-line correction to bring the page into alignment with the canonical dashboard padding rhythm.
