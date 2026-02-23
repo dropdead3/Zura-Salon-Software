@@ -113,6 +113,7 @@ function WeekAppointmentCard({
         categoryColors={categoryColors}
         showHoverPreview
         showStylistBadge
+        showClientPhone={false}
         onClick={() => {}}
       />
     </div>

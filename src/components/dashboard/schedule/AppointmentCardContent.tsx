@@ -63,6 +63,7 @@ export interface AppointmentCardContentProps {
   isOverdueForCheckin?: boolean;
   showHoverPreview?: boolean;
   showStylistBadge?: boolean;
+  showClientPhone?: boolean;
   onClick: () => void;
 }
 
@@ -189,6 +190,7 @@ function GridContent({
   serviceBands,
   duration,
   showStylistBadge,
+  showClientPhone,
 }: {
   appointment: PhorestAppointment;
   size: CardSize;
@@ -198,6 +200,7 @@ function GridContent({
   serviceBands: any[] | null;
   duration: number;
   showStylistBadge?: boolean;
+  showClientPhone?: boolean;
 }) {
   if (size === 'compact') {
     return (
@@ -242,7 +245,7 @@ function GridContent({
           {getClientInitials(appointment.client_name)}
         </span>
         <span className="truncate">{appointment.client_name}</span>
-        {appointment.client_phone && (
+        {showClientPhone && appointment.client_phone && (
           <span className="font-normal opacity-80 text-xs shrink-0">
             {formatPhoneDisplay(appointment.client_phone)}
           </span>
@@ -477,6 +480,7 @@ export function AppointmentCardContent({
   isOverdueForCheckin = false,
   showHoverPreview = false,
   showStylistBadge = false,
+  showClientPhone = true,
   onClick,
 }: AppointmentCardContentProps) {
   // ─── All hooks run unconditionally ────────────────────────
@@ -623,6 +627,7 @@ export function AppointmentCardContent({
         serviceBands={serviceBands}
         duration={duration}
         showStylistBadge={showStylistBadge}
+        showClientPhone={showClientPhone}
       />
     </div>
   );
