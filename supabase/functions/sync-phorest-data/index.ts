@@ -17,28 +17,46 @@ interface SyncRequest {
 const PHOREST_BASE_URL = "https://platform.phorest.com/third-party-api-server/api";
 
 async function phorestRequest(endpoint: string, businessId: string, username: string, password: string) {
-  // Ensure username has global/ prefix
   const formattedUsername = username.startsWith('global/') ? username : `global/${username}`;
   const basicAuth = btoa(`${formattedUsername}:${password}`);
   
-  const url = `${PHOREST_BASE_URL}/business/${businessId}${endpoint}`;
-  console.log(`Phorest request: ${url}`);
-  
-  const response = await fetch(url, {
-    headers: {
-      "Authorization": `Basic ${basicAuth}`,
-      "Content-Type": "application/json",
-      "Accept": "application/json",
-    },
-  });
+  const baseUrls = [
+    PHOREST_BASE_URL,
+    "https://platform-us.phorest.com/third-party-api-server/api",
+  ];
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error(`Phorest API error (${response.status}):`, errorText);
-    throw new Error(`Phorest API error: ${response.status} - ${errorText}`);
+  for (const base of baseUrls) {
+    const url = `${base}/business/${businessId}${endpoint}`;
+    console.log(`Phorest request: ${url}`);
+    
+    const response = await fetch(url, {
+      headers: {
+        "Authorization": `Basic ${basicAuth}`,
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+      },
+    });
+
+    if (response.status === 302 || response.status === 301) {
+      await response.text();
+      continue;
+    }
+
+    if (!response.ok) {
+      // If 404 and we have another base to try, continue
+      if (response.status === 404 && base === PHOREST_BASE_URL) {
+        await response.text();
+        continue;
+      }
+      const errorText = await response.text();
+      console.error(`Phorest API error (${response.status}):`, errorText);
+      throw new Error(`Phorest API error: ${response.status} - ${errorText}`);
+    }
+
+    return response.json();
   }
-
-  return response.json();
+  
+  throw new Error('Phorest API GET: all base URLs failed');
 }
 
 // POST request helper for CSV export jobs
@@ -46,26 +64,44 @@ async function phorestPostRequest(endpoint: string, businessId: string, username
   const formattedUsername = username.startsWith('global/') ? username : `global/${username}`;
   const basicAuth = btoa(`${formattedUsername}:${password}`);
   
-  const url = `${PHOREST_BASE_URL}/business/${businessId}${endpoint}`;
-  console.log(`Phorest POST request: ${url}`);
-  
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      "Authorization": `Basic ${basicAuth}`,
-      "Content-Type": "application/json",
-      "Accept": "application/json",
-    },
-    body: JSON.stringify(body),
-  });
+  const authHeaders = {
+    "Authorization": `Basic ${basicAuth}`,
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+  };
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error(`Phorest API POST error (${response.status}):`, errorText);
-    throw new Error(`Phorest API error: ${response.status} - ${errorText}`);
+  // Try EU first (default), then US if we get a 302
+  const baseUrls = [
+    PHOREST_BASE_URL,
+    "https://platform-us.phorest.com/third-party-api-server/api",
+  ];
+
+  for (const base of baseUrls) {
+    const url = `${base}/business/${businessId}${endpoint}`;
+    console.log(`Phorest POST request: ${url}`);
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: authHeaders,
+      body: JSON.stringify(body),
+    });
+
+    if (response.status === 302 || response.status === 301) {
+      const errorText = await response.text();
+      console.log(`Phorest POST got ${response.status} from ${base}, trying next base URL...`);
+      continue; // Try next base URL
+    }
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Phorest API POST error (${response.status}):`, errorText);
+      throw new Error(`Phorest API error: ${response.status} - ${errorText}`);
+    }
+
+    return response.json();
   }
-
-  return response.json();
+  
+  throw new Error('Phorest API POST: all base URLs returned redirects');
 }
 
 // Fetch raw text (for CSV downloads)
@@ -73,23 +109,39 @@ async function phorestRequestText(endpoint: string, businessId: string, username
   const formattedUsername = username.startsWith('global/') ? username : `global/${username}`;
   const basicAuth = btoa(`${formattedUsername}:${password}`);
   
-  const url = `${PHOREST_BASE_URL}/business/${businessId}${endpoint}`;
-  console.log(`Phorest request (text): ${url}`);
-  
-  const response = await fetch(url, {
-    headers: {
-      "Authorization": `Basic ${basicAuth}`,
-      "Accept": "text/csv,application/json",
-    },
-  });
+  // Try EU first, then US (CSV download may also need US endpoint)
+  const baseUrls = [
+    PHOREST_BASE_URL,
+    "https://platform-us.phorest.com/third-party-api-server/api",
+  ];
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error(`Phorest API error (${response.status}):`, errorText);
-    throw new Error(`Phorest API error: ${response.status} - ${errorText}`);
+  for (const base of baseUrls) {
+    const url = `${base}/business/${businessId}${endpoint}`;
+    console.log(`Phorest request (text): ${url}`);
+    
+    const response = await fetch(url, {
+      headers: {
+        "Authorization": `Basic ${basicAuth}`,
+        "Accept": "text/csv,application/json",
+      },
+    });
+
+    if (response.status === 302 || response.status === 301) {
+      await response.text();
+      console.log(`Phorest GET text got ${response.status} from ${base}, trying next...`);
+      continue;
+    }
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Phorest API error (${response.status}):`, errorText);
+      throw new Error(`Phorest API error: ${response.status} - ${errorText}`);
+    }
+
+    return response.text();
   }
-
-  return response.text();
+  
+  throw new Error('Phorest API GET text: all base URLs returned redirects');
 }
 
 async function syncStaff(supabase: any, businessId: string, username: string, password: string) {
@@ -893,6 +945,7 @@ async function syncSalesTransactions(
             unit_price: item.unitPrice || item.price || 0,
             discount_amount: item.discountAmount || item.discount || 0,
             tax_amount: item.taxAmount || item.tax || 0,
+            tip_amount: item.tip || purchase.tipAmount || 0,
             total_amount: item.totalPrice || item.total || item.price || 0,
             payment_method: purchase.paymentMethod || purchase.payments?.[0]?.type || null,
           };
@@ -1019,10 +1072,57 @@ async function syncSalesTransactions(
 
     console.log(`Synced ${syncedTransactions} transaction items, ${summariesSynced} daily summaries`);
 
+    // Backfill tip data to phorest_appointments from transaction records
+    let tipsBackfilled = 0;
+    if (syncedTransactions > 0) {
+      try {
+        // Find transactions with tips and match to appointments by date + staff + client
+        const { data: tippedTransactions } = await supabase
+          .from('phorest_transaction_items')
+          .select('transaction_date, phorest_staff_id, phorest_client_id, tip_amount')
+          .gt('tip_amount', 0)
+          .gte('transaction_date', dateFrom)
+          .lte('transaction_date', dateTo);
+
+        if (tippedTransactions && tippedTransactions.length > 0) {
+          console.log(`Found ${tippedTransactions.length} transactions with tips to backfill`);
+          
+          // Group tips by date + staff + client
+          const tipMap = new Map<string, number>();
+          for (const t of tippedTransactions) {
+            const key = `${t.transaction_date}:${t.phorest_staff_id}:${t.phorest_client_id}`;
+            tipMap.set(key, (tipMap.get(key) || 0) + Number(t.tip_amount));
+          }
+
+          for (const [key, tipTotal] of tipMap) {
+            const [date, staffId, clientId] = key.split(':');
+            if (!date || !staffId) continue;
+
+            const updateQuery = supabase
+              .from('phorest_appointments')
+              .update({ tip_amount: tipTotal })
+              .eq('appointment_date', date)
+              .eq('phorest_staff_id', staffId);
+            
+            if (clientId && clientId !== 'null') {
+              updateQuery.eq('phorest_client_id', clientId);
+            }
+            
+            const { error: tipError, count } = await updateQuery;
+            if (!tipError) tipsBackfilled += (count || 0);
+          }
+          console.log(`Backfilled tips to ${tipsBackfilled} appointments`);
+        }
+      } catch (tipErr: any) {
+        console.log(`Tip backfill error (non-fatal): ${tipErr.message}`);
+      }
+    }
+
     return { 
       total_transactions: totalTransactions, 
       synced_items: syncedTransactions,
-      daily_summaries: summariesSynced 
+      daily_summaries: summariesSynced,
+      tips_backfilled: tipsBackfilled
     };
   } catch (error) {
     console.error("Sales sync error:", error);
@@ -1214,8 +1314,9 @@ function parseSalesCsv(csvText: string, branchId: string): any[] {
   const idxQuantity = getIndex(['quantity', 'qty', 'count']);
   const idxDiscount = getIndex(['discount', 'discountamount', 'discountvalue']);
   const idxTax = getIndex(['tax', 'taxamount', 'vat']);
+  const idxTip = getIndex(['tip', 'tipamount', 'gratuity', 'tips']);
   
-  console.log(`[CSV Parser] Column indices: transactionId=${idxTransactionId}, staffId=${idxStaffId}, date=${idxDate}, amount=${idxAmount}, type=${idxType}, name=${idxName}`);
+  console.log(`[CSV Parser] Column indices: transactionId=${idxTransactionId}, staffId=${idxStaffId}, date=${idxDate}, amount=${idxAmount}, type=${idxType}, name=${idxName}, tip=${idxTip}, tax=${idxTax}`);
   
   const transactions: any[] = [];
   
@@ -1249,6 +1350,7 @@ function parseSalesCsv(csvText: string, branchId: string): any[] {
         purchaseDate: transactionDate,
         purchaseTime: idxTime >= 0 ? values[idxTime] : null,
         total: idxAmount >= 0 ? parseFloat(values[idxAmount]?.replace(/[^0-9.-]/g, '')) || 0 : 0,
+        tipAmount: idxTip >= 0 ? parseFloat(values[idxTip]?.replace(/[^0-9.-]/g, '')) || 0 : 0,
         clientId: idxClientId >= 0 ? values[idxClientId] : null,
         clientName: idxClientName >= 0 ? values[idxClientName] : null,
         items: [{
@@ -1258,6 +1360,7 @@ function parseSalesCsv(csvText: string, branchId: string): any[] {
           quantity: idxQuantity >= 0 ? parseInt(values[idxQuantity]) || 1 : 1,
           discount: idxDiscount >= 0 ? parseFloat(values[idxDiscount]?.replace(/[^0-9.-]/g, '')) || 0 : 0,
           tax: idxTax >= 0 ? parseFloat(values[idxTax]?.replace(/[^0-9.-]/g, '')) || 0 : 0,
+          tip: idxTip >= 0 ? parseFloat(values[idxTip]?.replace(/[^0-9.-]/g, '')) || 0 : 0,
         }]
       };
       
@@ -1361,6 +1464,8 @@ async function saveTransactionItems(
         quantity: item.quantity || 1,
         unit_price: item.price || 0,
         discount: item.discount || 0,
+        tax_amount: item.tax || 0,
+        tip_amount: item.tip || transaction.tipAmount || 0,
         total_amount: (item.price || 0) * (item.quantity || 1) - (item.discount || 0),
       };
       
@@ -1522,7 +1627,10 @@ serve(async (req: Request) => {
         }
         
         results.sales = await syncSalesTransactions(supabase, businessId, username, password, salesFrom, salesTo);
-        await logSync(supabase, 'sales', 'success', results.sales.synced_items, undefined, { quick });
+        const salesStatus = (results.sales.synced_items || 0) === 0 ? 'no_data' : 'success';
+        await logSync(supabase, 'sales', salesStatus, results.sales.synced_items, 
+          salesStatus === 'no_data' ? 'All sales endpoints returned 0 records' : undefined, 
+          { quick });
       } catch (error: any) {
         results.sales = { error: error.message };
         await logSync(supabase, 'sales', 'failed', 0, error.message);

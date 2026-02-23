@@ -9909,6 +9909,7 @@ export type Database = {
           quantity: number | null
           stylist_user_id: string | null
           tax_amount: number | null
+          tip_amount: number | null
           total_amount: number
           transaction_date: string
           transaction_time: string | null
@@ -9932,6 +9933,7 @@ export type Database = {
           quantity?: number | null
           stylist_user_id?: string | null
           tax_amount?: number | null
+          tip_amount?: number | null
           total_amount: number
           transaction_date: string
           transaction_time?: string | null
@@ -9955,6 +9957,7 @@ export type Database = {
           quantity?: number | null
           stylist_user_id?: string | null
           tax_amount?: number | null
+          tip_amount?: number | null
           total_amount?: number
           transaction_date?: string
           transaction_time?: string | null
@@ -10170,6 +10173,8 @@ export type Database = {
           sale_classification: string | null
           stylist_name: string | null
           stylist_user_id: string | null
+          tax_amount: number | null
+          tip_amount: number | null
           total_amount: number
           transaction_date: string
           transaction_id: string
@@ -10194,6 +10199,8 @@ export type Database = {
           sale_classification?: string | null
           stylist_name?: string | null
           stylist_user_id?: string | null
+          tax_amount?: number | null
+          tip_amount?: number | null
           total_amount: number
           transaction_date: string
           transaction_id: string
@@ -10218,6 +10225,8 @@ export type Database = {
           sale_classification?: string | null
           stylist_name?: string | null
           stylist_user_id?: string | null
+          tax_amount?: number | null
+          tip_amount?: number | null
           total_amount?: number
           transaction_date?: string
           transaction_id?: string
