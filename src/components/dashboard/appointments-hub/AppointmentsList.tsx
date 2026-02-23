@@ -115,69 +115,65 @@ export function AppointmentsList({ search }: AppointmentsListProps) {
 
   return (
     <div className="space-y-4">
-      {/* Filters */}
-      <Card>
-        <div className="p-4">
-          <div className="flex flex-wrap gap-3 items-center">
-            <Select value={datePreset} onValueChange={(v) => { setDatePreset(v as DatePreset); setPage(0); }}>
-              <SelectTrigger className="w-[140px]"><SelectValue placeholder="Date range" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="today">Today</SelectItem>
-                <SelectItem value="this_week">This Week</SelectItem>
-                <SelectItem value="this_month">This Month</SelectItem>
-                <SelectItem value="last_month">Last Month</SelectItem>
-                <SelectItem value="all">All Time</SelectItem>
-              </SelectContent>
-            </Select>
+      {/* Filters — bare row, no card wrapper */}
+      <div className="flex flex-wrap gap-3 items-center">
+        <Select value={datePreset} onValueChange={(v) => { setDatePreset(v as DatePreset); setPage(0); }}>
+          <SelectTrigger className="w-[140px]"><SelectValue placeholder="Date range" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="today">Today</SelectItem>
+            <SelectItem value="this_week">This Week</SelectItem>
+            <SelectItem value="this_month">This Month</SelectItem>
+            <SelectItem value="last_month">Last Month</SelectItem>
+            <SelectItem value="all">All Time</SelectItem>
+          </SelectContent>
+        </Select>
 
-            <Select value={status} onValueChange={(v) => { setStatus(v); setPage(0); }}>
-              <SelectTrigger className="w-[130px]">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="booked">Booked</SelectItem>
-                <SelectItem value="confirmed">Confirmed</SelectItem>
-                <SelectItem value="checked_in">Checked In</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
-                <SelectItem value="no_show">No Show</SelectItem>
-              </SelectContent>
-            </Select>
+        <Select value={status} onValueChange={(v) => { setStatus(v); setPage(0); }}>
+          <SelectTrigger className="w-[130px]">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Statuses</SelectItem>
+            <SelectItem value="booked">Booked</SelectItem>
+            <SelectItem value="confirmed">Confirmed</SelectItem>
+            <SelectItem value="checked_in">Checked In</SelectItem>
+            <SelectItem value="completed">Completed</SelectItem>
+            <SelectItem value="cancelled">Cancelled</SelectItem>
+            <SelectItem value="no_show">No Show</SelectItem>
+          </SelectContent>
+        </Select>
 
-            <Select value={locationId} onValueChange={(v) => { setLocationId(v); setPage(0); }}>
-              <SelectTrigger className="w-[160px]">
-                <SelectValue placeholder="Location" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Locations</SelectItem>
-                {locations.map(loc => (
-                  <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        <Select value={locationId} onValueChange={(v) => { setLocationId(v); setPage(0); }}>
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="Location" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Locations</SelectItem>
+            {locations.map(loc => (
+              <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-            <Select value={stylistId} onValueChange={(v) => { setStylistId(v); setPage(0); }}>
-              <SelectTrigger className="w-[160px]">
-                <SelectValue placeholder="Stylist" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Stylists</SelectItem>
-                {stylistOptions.map(s => (
-                  <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        <Select value={stylistId} onValueChange={(v) => { setStylistId(v); setPage(0); }}>
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="Stylist" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Stylists</SelectItem>
+            {stylistOptions.map(s => (
+              <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-            <div className="ml-auto">
-              <Button variant="outline" size={tokens.button.card} onClick={handleExportCSV} disabled={appointments.length === 0}>
-                <Download className="w-4 h-4 mr-2" />
-                CSV
-              </Button>
-            </div>
-          </div>
+        <div className="ml-auto">
+          <Button variant="outline" size={tokens.button.card} onClick={handleExportCSV} disabled={appointments.length === 0}>
+            <Download className="w-4 h-4 mr-2" />
+            CSV
+          </Button>
         </div>
-      </Card>
+      </div>
 
       {/* Table */}
       <Card>
