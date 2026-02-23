@@ -77,7 +77,7 @@ export function PhorestSyncPopout({ asMenuItem = false }: { asMenuItem?: boolean
       for (const syncType of syncTypes) {
         try {
           const { data, error } = await supabase.functions.invoke('sync-phorest-data', {
-            body: { type: syncType },
+            body: { sync_type: syncType },
           });
           if (error) {
             results[syncType] = { error: error.message };
@@ -102,9 +102,15 @@ export function PhorestSyncPopout({ asMenuItem = false }: { asMenuItem?: boolean
         toast.success('Full sync completed successfully');
       }
 
-      // Refresh sync status
+      // Refresh sync status and sales analytics data
       queryClient.invalidateQueries({ queryKey: ['phorest-sync-popout-status'] });
       queryClient.invalidateQueries({ queryKey: ['sidebar-sync-status'] });
+      queryClient.invalidateQueries({ queryKey: ['sales-metrics'] });
+      queryClient.invalidateQueries({ queryKey: ['sales-comparison'] });
+      queryClient.invalidateQueries({ queryKey: ['quick-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['appointment-summary'] });
+      queryClient.invalidateQueries({ queryKey: ['goal-period-revenue'] });
+      queryClient.invalidateQueries({ queryKey: ['rebooking-rate'] });
     } catch (error: any) {
       console.error('Sync failed:', error);
       toast.error(`Sync failed: ${error.message}`);
