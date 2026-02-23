@@ -106,9 +106,10 @@ interface ClientDetailSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   locationName?: string;
+  onClientUpdated?: (updates: Partial<Client>) => void;
 }
 
-export function ClientDetailSheet({ client, open, onOpenChange, locationName }: ClientDetailSheetProps) {
+export function ClientDetailSheet({ client, open, onOpenChange, locationName, onClientUpdated }: ClientDetailSheetProps) {
   const navigate = useNavigate();
   const { data: visitHistory, isLoading: historyLoading } = useClientVisitHistory(client?.phorest_client_id);
   const { formatCurrencyWhole } = useFormatCurrency();
@@ -266,6 +267,16 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
       if (error) throw error;
     },
     onSuccess: () => {
+      const fullName = `${editFirstName.trim()} ${editLastName.trim()}`.trim();
+      onClientUpdated?.({
+        first_name: editFirstName.trim() || null,
+        last_name: editLastName.trim() || null,
+        name: fullName,
+        gender: editGender || null,
+        email: editEmail.trim() || null,
+        phone: editPhone.trim() || null,
+        landline: editLandline.trim() || null,
+      });
       invalidateClients();
       toast.success('Client info updated');
       setIsEditing(false);
@@ -284,7 +295,10 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
         .eq('id', client.id);
       if (error) throw error;
     },
-    onSuccess: () => { invalidateClients(); toast.success('Dates updated'); setIsEditingDates(false); },
+    onSuccess: () => {
+      onClientUpdated?.({ birthday: editBirthday || null, client_since: editClientSince || null });
+      invalidateClients(); toast.success('Dates updated'); setIsEditingDates(false);
+    },
     onError: (error: Error) => { toast.error('Failed to update dates', { description: error.message }); },
   });
 
@@ -303,7 +317,13 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
         .eq('id', client.id);
       if (error) throw error;
     },
-    onSuccess: () => { invalidateClients(); toast.success('Source updated'); setIsEditingSource(false); },
+    onSuccess: () => {
+      const resolvedSource = editLeadSource === 'other' && editLeadSourceCustom.trim()
+        ? editLeadSourceCustom.trim()
+        : editLeadSource || null;
+      onClientUpdated?.({ lead_source: resolvedSource, referred_by: editReferredBy || null });
+      invalidateClients(); toast.success('Source updated'); setIsEditingSource(false);
+    },
     onError: (error: Error) => { toast.error('Failed to update source', { description: error.message }); },
   });
 
@@ -321,7 +341,11 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
         .eq('id', client.id);
       if (error) throw error;
     },
-    onSuccess: () => { invalidateClients(); toast.success('Settings updated'); setIsEditingSettings(false); },
+    onSuccess: () => {
+      const resolvedStylist = editPreferredStylist === 'none' ? null : editPreferredStylist || null;
+      onClientUpdated?.({ client_category: editCategory || null, external_client_id: editExternalId || null, preferred_stylist_id: resolvedStylist });
+      invalidateClients(); toast.success('Settings updated'); setIsEditingSettings(false);
+    },
     onError: (error: Error) => { toast.error('Failed to update settings', { description: error.message }); },
   });
 
@@ -337,7 +361,10 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
         .eq('id', client.id);
       if (error) throw error;
     },
-    onSuccess: () => { invalidateClients(); toast.success('Prompts updated'); setIsEditingPrompts(false); },
+    onSuccess: () => {
+      onClientUpdated?.({ prompt_client_notes: editPromptClientNotes, prompt_appointment_notes: editPromptAppointmentNotes });
+      invalidateClients(); toast.success('Prompts updated'); setIsEditingPrompts(false);
+    },
     onError: (error: Error) => { toast.error('Failed to update prompts', { description: error.message }); },
   });
 
@@ -357,7 +384,10 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
         .eq('id', client.id);
       if (error) throw error;
     },
-    onSuccess: () => { invalidateClients(); toast.success('Address updated'); setIsEditingAddress(false); },
+    onSuccess: () => {
+      onClientUpdated?.({ address_line1: editAddress1 || null, address_line2: editAddress2 || null, city: editCity || null, state: editState || null, zip: editZip || null, country: editCountry || null });
+      invalidateClients(); toast.success('Address updated'); setIsEditingAddress(false);
+    },
     onError: (error: Error) => { toast.error('Failed to update address', { description: error.message }); },
   });
 
@@ -373,7 +403,10 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
         .eq('id', client.id);
       if (error) throw error;
     },
-    onSuccess: () => { invalidateClients(); toast.success('Reminders updated'); setIsEditingReminders(false); },
+    onSuccess: () => {
+      onClientUpdated?.({ reminder_email_opt_in: editReminderEmail, reminder_sms_opt_in: editReminderSms });
+      invalidateClients(); toast.success('Reminders updated'); setIsEditingReminders(false);
+    },
     onError: (error: Error) => { toast.error('Failed to update reminders', { description: error.message }); },
   });
 
