@@ -916,7 +916,7 @@ export default function ClientDirectory() {
 
         {/* Client List */}
         <Card>
-          <CardHeader className="pb-0">
+          <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
               <CardTitle className="font-display text-lg">
                 {activeTab === 'duplicates' ? `${duplicatePairs.length} Duplicate Pairs` : `${filteredClients.length} ${activeTab === 'all' ? 'Clients' : activeTab === 'vip' ? 'VIP Clients' : activeTab === 'at-risk' ? 'At-Risk Clients' : activeTab === 'new' ? 'New Clients' : activeTab === 'banned' ? 'Banned Clients' : activeTab === 'archived' ? 'Archived Clients' : 'Clients'}`}
