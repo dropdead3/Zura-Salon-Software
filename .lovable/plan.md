@@ -1,21 +1,21 @@
 
-## Fix Batch Bar Corner Radius
+
+## Fix Card Corner Clipping for Batch Bar
 
 ### Problem
-The sticky batch action bar at the bottom of the appointments Card has square corners, which visually breaks through the parent Card's `rounded-xl` border radius. This is visible in dark mode where the bar's background extends past the card's rounded bottom corners.
+The batch bar's background bleeds past the parent Card's rounded corners because the Card element does not clip its overflow. Even though `rounded-b-xl` was added to the batch bar, the Card itself allows content to extend beyond its rounded border, creating visible square corners in dark mode.
 
 ### Solution
-Add `rounded-b-xl` to the batch bar container in `AppointmentBatchBar.tsx`. This matches the Card's `rounded-xl` so the bar's bottom corners align perfectly with the card boundary.
+Add `overflow-hidden` to the `<Card>` wrapping the table and batch bar in `AppointmentsList.tsx`. This lets the Card's `rounded-xl` border radius naturally clip all child content, including the batch bar.
 
 ### File Changed
 
-**`src/components/dashboard/appointments-hub/AppointmentBatchBar.tsx`** (line 90)
-
-Add `rounded-b-xl` to the bar's container div:
+**`src/components/dashboard/appointments-hub/AppointmentsList.tsx`** (line 282)
 
 ```
-Current:  "sticky bottom-0 z-10 border-t bg-background/95 backdrop-blur px-4 py-2 flex items-center justify-between gap-3"
-Updated:  "sticky bottom-0 z-10 border-t bg-background/95 backdrop-blur px-4 py-2 flex items-center justify-between gap-3 rounded-b-xl"
+Current:  <Card>
+Updated:  <Card className="overflow-hidden">
 ```
 
-This is a single-class addition that ensures the batch bar's bottom corners respect the card container's border radius.
+This single change ensures the Card's border radius clips all inner content (table + pagination + batch bar), eliminating the corner bleed without affecting table scrollability (the Table component has its own internal scroll wrapper).
+
