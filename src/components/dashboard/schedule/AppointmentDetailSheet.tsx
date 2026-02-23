@@ -1,9 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { createPortal } from 'react-dom';
 import { parseISO, differenceInDays } from 'date-fns';
 import { AnimatePresence, motion } from 'framer-motion';
+import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useFormatDate } from '@/hooks/useFormatDate';
@@ -644,42 +644,9 @@ export function AppointmentDetailSheet({
   const isTerminal = ['cancelled', 'no_show'].includes(appointment.status);
 
   // ─── Render ───────────────────────────────────────────────────
-  return createPortal(
+  return (
     <>
-      <AnimatePresence>
-        {open && (
-          <>
-            {/* Backdrop */}
-            <motion.div
-              key="apt-detail-backdrop"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm"
-              onClick={handleClose}
-            />
-            {/* Floating Panel */}
-            <motion.div
-              key="apt-detail-panel"
-              initial={{ opacity: 0, x: 80 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 80 }}
-              transition={{ type: 'spring', damping: 26, stiffness: 300, mass: 0.8 }}
-              className={cn(
-                "fixed z-50 border border-border bg-card/80 backdrop-blur-xl shadow-2xl overflow-hidden flex flex-col",
-                isMobile
-                  ? "right-0 top-0 bottom-0 w-full max-w-none rounded-none"
-                  : "right-4 top-4 bottom-4 w-[calc(100vw-2rem)] max-w-[440px] rounded-xl"
-              )}
-            >
-              {/* Close button */}
-              <button
-                onClick={handleClose}
-                className="absolute right-3 top-3 z-10 rounded-full p-1.5 bg-muted/60 hover:bg-muted transition-colors"
-              >
-                <X className="w-4 h-4 text-muted-foreground" />
-              </button>
+      <PremiumFloatingPanel open={open} onOpenChange={(v) => { if (!v) handleClose(); }}>
 
               {/* ─── Header ────────────────────────────────────── */}
               <div className="p-6 pb-4">
@@ -1356,10 +1323,7 @@ export function AppointmentDetailSheet({
                   )}
                 </div>
               </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+            </PremiumFloatingPanel>
 
       {/* Confirmation Dialog (Cancel / No Show) */}
       <div>
@@ -1426,7 +1390,6 @@ export function AppointmentDetailSheet({
         </AlertDialogContent>
       </AlertDialog>
       </div>
-    </>,
-    document.body
+    </>
   );
 }
