@@ -561,8 +561,8 @@ function AppointmentCard({
                   const names = assistantNamesMap?.get(appointment.id);
                   if (!names || names.length === 0) return null;
                   return (
-                    <div className="text-[11px] opacity-70 truncate">
-                      Assisted by {names.join(', ')}
+                    <div className="text-[11px] opacity-70 truncate flex items-center gap-1">
+                      <span className="opacity-50">└</span> Assisted by {names.join(', ')}
                     </div>
                   );
                 })()}
