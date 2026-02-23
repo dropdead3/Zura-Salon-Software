@@ -70,8 +70,8 @@ export default function ClientDirectory() {
   const { user, roles } = useAuth();
   const { formatCurrencyWhole } = useFormatCurrency();
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortField, setSortField] = useState<SortField>('total_spend');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [sortField, setSortField] = useState<SortField>('name');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [activeTab, setActiveTab] = useState('all');
   const [selectedLocation, setSelectedLocation] = useState<string>('all');
   const [selectedClient, setSelectedClient] = useState<any | null>(null);
