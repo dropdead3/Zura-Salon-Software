@@ -1,9 +1,9 @@
 import { useState, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { tokens } from '@/lib/design-tokens';
-import { Receipt, Calendar, Gift, Tag, Ticket } from 'lucide-react';
+import { Receipt, Calendar, Gift, Tag, Ticket, ArrowUpRight } from 'lucide-react';
 
 import { AppointmentsList } from '@/components/dashboard/appointments-hub/AppointmentsList';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
@@ -296,6 +296,24 @@ export default function AppointmentsHub() {
     <DashboardLayout>
       <div className={tokens.layout.pageContainer}>
         <DashboardPageHeader title="Appointments & Transactions" />
+
+        {/* Analytics quick-links */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-muted-foreground text-sm font-sans">Looking for analytics?</span>
+          {[
+            { label: 'Appointment Analytics', to: '/dashboard/admin/analytics?tab=operations&subtab=appointments' },
+            { label: 'Booking Pipeline', to: '/dashboard/admin/analytics?tab=operations&subtab=booking-pipeline' },
+            { label: 'Sales Overview', to: '/dashboard/admin/analytics?tab=sales' },
+            { label: 'Staff Utilization', to: '/dashboard/admin/analytics?tab=operations&subtab=staff-utilization' },
+          ].map((link) => (
+            <Button key={link.label} variant="ghost" size="sm" asChild className="text-muted-foreground hover:text-foreground rounded-full gap-1.5 h-8 px-3">
+              <Link to={link.to}>
+                {link.label}
+                <ArrowUpRight className="w-3.5 h-3.5" />
+              </Link>
+            </Button>
+          ))}
+        </div>
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={handleTabChange}>
