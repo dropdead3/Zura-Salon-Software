@@ -499,18 +499,18 @@ function AppointmentCard({
                         <Users className="h-3 w-3 opacity-60" />
                       )}
                       {isAssisting && (
-                        <span className="bg-accent/80 text-accent-foreground text-[8px] px-1 py-px rounded-sm font-medium">AST</span>
+                        <span className="bg-accent/80 text-accent-foreground text-[10px] px-1.5 py-0.5 rounded-full font-medium whitespace-nowrap">AST</span>
                       )}
                       {appointment.is_new_client && (
-                        <span className="text-[8px] px-1 py-px rounded-sm bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 font-medium">NEW</span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 font-medium whitespace-nowrap">NEW</span>
                       )}
                       {isOverdueForCheckin && (
-                        <span className="text-[8px] px-1 py-px rounded-sm bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 font-medium">
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-200 text-red-800 dark:bg-red-900/50 dark:text-red-300 font-medium whitespace-nowrap">
                           No Check-In
                         </span>
                       )}
                       <span className={cn(
-                        'text-[9px] px-1.5 py-0.5 rounded-full font-medium',
+                        'text-[10px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap',
                         badge.bg, badge.text
                       )}>
                         {badge.label}
