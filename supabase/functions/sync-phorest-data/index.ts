@@ -913,6 +913,9 @@ async function syncSalesTransactions(
         console.log(`Saved ${itemsSaved} items to phorest_transaction_items for ${branchName}`);
       }
 
+      // Collect all transaction records in memory first, then batch upsert
+      const allTransactionRecords: any[] = [];
+
       for (const purchase of purchases) {
         const staffId = purchase.staffId || purchase.staff?.staffId;
         const stylistUserId = staffId ? staffMap.get(staffId) : null;
@@ -950,19 +953,15 @@ async function syncSalesTransactions(
             payment_method: purchase.paymentMethod || purchase.payments?.[0]?.type || null,
           };
 
-          const { error } = await supabase
-            .from("phorest_sales_transactions")
-            .upsert(transactionRecord, { onConflict: 'phorest_transaction_id,item_name' });
-
-          if (!error) syncedTransactions++;
+          allTransactionRecords.push(transactionRecord);
 
           // Aggregate for daily summary - store for ALL staff, not just mapped ones
           if (staffId && transactionDate) {
             const summaryKey = `${staffId}:${branchId}:${transactionDate}`;
             if (!dailySummaries.has(summaryKey)) {
               dailySummaries.set(summaryKey, {
-                phorest_staff_id: staffId,   // Always store with Phorest ID
-                user_id: stylistUserId || null, // Optional - linked later if mapped
+                phorest_staff_id: staffId,
+                user_id: stylistUserId || null,
                 location_id: branchId,
                 branch_name: branchName,
                 summary_date: transactionDate,
@@ -1003,7 +1002,7 @@ async function syncSalesTransactions(
             branch_name: branchName,
             transaction_date: transactionDate,
             transaction_time: transactionTime,
-            client_name: purchase.clientName || null,
+            client_name: purchase.clientName || `${purchase.client?.firstName || ''} ${purchase.client?.lastName || ''}`.trim() || null,
             client_phone: null,
             item_type: 'service',
             item_name: purchase.description || 'Transaction',
@@ -1012,15 +1011,12 @@ async function syncSalesTransactions(
             unit_price: purchase.total || purchase.amount || 0,
             discount_amount: purchase.discountAmount || 0,
             tax_amount: purchase.taxAmount || 0,
+            tip_amount: purchase.tipAmount || 0,
             total_amount: purchase.total || purchase.amount || 0,
             payment_method: purchase.paymentMethod || null,
           };
 
-          const { error } = await supabase
-            .from("phorest_sales_transactions")
-            .upsert(transactionRecord, { onConflict: 'phorest_transaction_id,item_name' });
-
-          if (!error) syncedTransactions++;
+          allTransactionRecords.push(transactionRecord);
           
           // Also add to daily summary
           if (staffId && transactionDate) {
@@ -1049,25 +1045,52 @@ async function syncSalesTransactions(
           }
         }
       }
+
+      // Deduplicate by phorest_transaction_id + item_name (last wins)
+      const deduped = new Map<string, any>();
+      for (const rec of allTransactionRecords) {
+        deduped.set(`${rec.phorest_transaction_id}::${rec.item_name}`, rec);
+      }
+      const uniqueRecords = Array.from(deduped.values());
+      console.log(`Deduped to ${uniqueRecords.length} unique transaction records`);
+      
+      // Batch upsert transaction records in chunks of 200
+      const TX_BATCH_SIZE = 200;
+      for (let i = 0; i < uniqueRecords.length; i += TX_BATCH_SIZE) {
+        const batch = uniqueRecords.slice(i, i + TX_BATCH_SIZE);
+        const { error } = await supabase
+          .from("phorest_sales_transactions")
+          .upsert(batch, { onConflict: 'phorest_transaction_id,item_name' });
+        if (error) {
+          console.error(`Batch upsert error (batch ${i}): ${error.message}`);
+        } else {
+          syncedTransactions += batch.length;
+        }
+      }
+      console.log(`Batch upserted ${syncedTransactions} sales transactions for ${branchName}`);
     }
 
-    // Upsert daily summaries
+    // Batch upsert daily summaries
     let summariesSynced = 0;
-    for (const summary of dailySummaries.values()) {
-      // Calculate average ticket
-      summary.average_ticket = summary.total_transactions > 0 
-        ? summary.total_revenue / summary.total_transactions 
-        : 0;
-
-      // Use phorest_staff_id + location + date as the unique key
+    const summaryRecords = Array.from(dailySummaries.values()).map(s => ({
+      ...s,
+      average_ticket: s.total_transactions > 0 ? s.total_revenue / s.total_transactions : 0,
+    }));
+    
+    const SUMMARY_BATCH_SIZE = 200;
+    for (let i = 0; i < summaryRecords.length; i += SUMMARY_BATCH_SIZE) {
+      const batch = summaryRecords.slice(i, i + SUMMARY_BATCH_SIZE);
       const { error } = await supabase
         .from("phorest_daily_sales_summary")
-        .upsert(summary, { 
+        .upsert(batch, { 
           onConflict: 'phorest_staff_id,location_id,summary_date',
           ignoreDuplicates: false 
         });
-
-      if (!error) summariesSynced++;
+      if (error) {
+        console.error(`Daily summary upsert error: ${error.message}`);
+      } else {
+        summariesSynced += batch.length;
+      }
     }
 
     console.log(`Synced ${syncedTransactions} transaction items, ${summariesSynced} daily summaries`);
