@@ -1,14 +1,19 @@
 
-# Default Client Directory Sort to Alphabetical by Name
 
-## Problem
-The Client Directory currently defaults to sorting by `total_spend` (descending). The expected default is alphabetical by client name (A-Z).
+# Add Client Directory Links to Clients Analytics Page
 
-## Change (single file: `src/pages/dashboard/ClientDirectory.tsx`)
+## Changes (single file: `src/components/dashboard/analytics/ClientsContent.tsx`)
 
-Update the two `useState` initializers on lines 73-74:
+### 1. Add navigation import
+Import `useNavigate` from `react-router-dom` and the `ExternalLink` icon from `lucide-react`.
 
-- `sortField`: change default from `'total_spend'` to `'name'`
-- `sortDirection`: change default from `'desc'` to `'asc'`
+### 2. Make the "Total Clients" KPI card clickable
+Wrap the first KPI card (Total Clients, line 60-70) with an `onClick` handler that navigates to `/dashboard/admin/client-directory`. Add `cursor-pointer` and hover styling so it's visually interactive.
 
-This ensures the directory loads sorted A-Z by name. Users can still click any sort button (Spend, Visits, Recent) to re-sort as needed.
+### 3. Add a "View Client Directory" link button
+Add a small link button (using `tokens.button.cardAction` pill style) in the page header area or near the top of the content, linking to `/dashboard/admin/client-directory`. This gives users an always-visible path to the full directory.
+
+## Technical Detail
+- Uses `useNavigate()` for SPA navigation
+- Total Clients card gets `onClick={() => navigate('/dashboard/admin/client-directory')}` plus `cursor-pointer hover:border-primary/30 transition-colors` classes
+- A pill-style "View Client Directory" button with an `ExternalLink` icon will be placed above the KPI grid
