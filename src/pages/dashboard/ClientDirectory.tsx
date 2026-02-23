@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -71,6 +71,7 @@ type PrimaryTab = 'all' | 'my';
 
 export default function ClientDirectory() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { formatDate } = useFormatDate();
   const { user, roles } = useAuth();
   const { formatCurrencyWhole } = useFormatCurrency();
@@ -100,7 +101,28 @@ export default function ClientDirectory() {
   const removeFromHousehold = useRemoveFromHousehold();
   const deleteHousehold = useDeleteHousehold();
 
-  // Dismiss a duplicate pair as "not a duplicate"
+  // Deep-link: auto-open client profile from URL param
+  useEffect(() => {
+    const clientId = searchParams.get('clientId');
+    if (!clientId) return;
+    // Fetch client by phorest_client_id and open the detail sheet
+    const openClient = async () => {
+      const { data } = await supabase
+        .from('phorest_clients')
+        .select('*')
+        .eq('phorest_client_id', clientId)
+        .maybeSingle();
+      if (data) {
+        setSelectedClient(data);
+        setDetailSheetOpen(true);
+      }
+      // Clear the param so it doesn't re-trigger
+      searchParams.delete('clientId');
+      setSearchParams(searchParams, { replace: true });
+    };
+    openClient();
+  }, [searchParams]);
+
   const handleDismissDuplicate = useCallback(async (clientId: string, canonicalId: string, reason: string) => {
     setIsDismissing(true);
     try {
