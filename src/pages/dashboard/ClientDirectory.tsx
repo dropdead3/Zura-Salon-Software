@@ -32,6 +32,7 @@ import {
   GitMerge
 } from 'lucide-react';
 import { BannedClientBadge } from '@/components/dashboard/clients/BannedClientBadge';
+import { DuplicateDrilldown } from '@/components/dashboard/clients/DuplicateDrilldown';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { differenceInDays } from 'date-fns';
@@ -81,6 +82,7 @@ export default function ClientDirectory() {
   const [selectedLetter, setSelectedLetter] = useState<string>('all');
   const [selectedForMerge, setSelectedForMerge] = useState<Set<string>>(new Set());
   const [showMerged, setShowMerged] = useState(false);
+  const [expandedDuplicateId, setExpandedDuplicateId] = useState<string | null>(null);
 
   const canMerge = roles.some(role => ['admin', 'manager', 'super_admin'].includes(role));
 
@@ -730,8 +732,8 @@ export default function ClientDirectory() {
                     };
 
                     return (
-                      <div 
-                        key={client.id} 
+                      <div key={client.id}>
+                      <div
                         className={cn(
                           "py-4 flex items-center gap-4 cursor-pointer hover:bg-muted/50 -mx-6 px-6 transition-colors",
                           client.is_archived && "opacity-60",
@@ -781,19 +783,15 @@ export default function ClientDirectory() {
                             {(client as any).is_duplicate && (
                               <Badge 
                                 variant="outline" 
-                                className="text-xs bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800 gap-1 cursor-pointer hover:bg-amber-100 dark:hover:bg-amber-950/50 transition-colors"
+                                className={cn(
+                                  "text-xs bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800 gap-1 cursor-pointer hover:bg-amber-100 dark:hover:bg-amber-950/50 transition-colors",
+                                  expandedDuplicateId === client.id && "bg-amber-100 dark:bg-amber-950/50"
+                                )}
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  if ((client as any).canonical_client_id) {
-                                    const canonical = filteredClients.find(c => c.id === (client as any).canonical_client_id) || 
-                                      processedClients?.find((c: any) => c.id === (client as any).canonical_client_id);
-                                    if (canonical) {
-                                      setSelectedClient(canonical as any);
-                                      setDetailSheetOpen(true);
-                                    }
-                                  }
+                                  setExpandedDuplicateId(prev => prev === client.id ? null : client.id);
                                 }}
-                                title={`Duplicate — matched by ${(client as any).duplicateReasons?.join(' & ') || 'match'}. Click to view original.`}
+                                title="Click to see the matching profile"
                               >
                                 <GitMerge className="w-3 h-3" /> Duplicate{(client as any).duplicateReasons?.length > 0 && (client as any).duplicateReasons[0] !== 'match' ? ` (${(client as any).duplicateReasons.map((r: string) => r === 'phone' ? 'Same Phone' : r === 'email' ? 'Same Email' : r === 'name' ? 'Same Name' : r).join(', ')})` : ''}
                               </Badge>
@@ -914,6 +912,25 @@ export default function ClientDirectory() {
                           )}
                           <ChevronRight className="w-5 h-5 text-muted-foreground" />
                         </div>
+                      </div>
+
+                      {/* Duplicate drill-down */}
+                      {expandedDuplicateId === client.id && (client as any).canonical_client_id && (
+                        <div className="px-6 pb-4 -mt-px">
+                          <DuplicateDrilldown
+                            client={client}
+                            canonicalClientId={(client as any).canonical_client_id}
+                            duplicateReasons={(client as any).duplicateReasons || []}
+                            onViewProfile={(profileData) => {
+                              setSelectedClient(profileData);
+                              setDetailSheetOpen(true);
+                            }}
+                            onMerge={(duplicateId, canonicalId) => {
+                              navigate(`/dashboard/admin/merge-clients?clientIds=${duplicateId},${canonicalId}`);
+                            }}
+                          />
+                        </div>
+                      )}
                       </div>
                     );
                   })}
