@@ -1,27 +1,55 @@
 
-
-# Show Duplicate Badge and Merge Button on Both Linked Profiles
+# Fix 1,000 Client Limit in Analytics
 
 ## Problem
-When searching for a client like "Eric Day," both the duplicate and its canonical (original) profile appear in results. However, only the duplicate record shows the amber "Duplicate (Same Phone)" badge and the prominent "Merge" button. The canonical profile just shows a small ghost merge icon -- making it unclear that these two records are related and mergeable.
+The Operations > Clients analytics tab shows only 1,000 total clients because the `useOperationalAnalytics` hook fetches from the `phorest_clients` table without pagination. The default query limit caps results at 1,000 rows, so `data.length` returns 1,000 instead of the actual 3,000+ clients.
 
 ## Solution
-When a canonical profile is auto-included via the linked-profile expansion logic, treat it visually the same as the duplicate: show the duplicate context badge (with match reasons) and the prominent "Merge" button pre-populated with both IDs.
+Apply the same batch-pagination pattern (already used in the Client Directory) to the retention query inside `useOperationalAnalytics.ts`. This fetches all rows in batches of 1,000 using `.range()` until the full dataset is retrieved.
 
-## Changes (single file: `src/pages/dashboard/ClientDirectory.tsx`)
+## File Change: `src/hooks/useOperationalAnalytics.ts`
 
-### 1. Compute duplicate reasons for linked canonical profiles
-When a canonical profile is pulled in via `_linkedReason === 'canonical'`, compute the match reasons (Same Phone, Same Email, etc.) by comparing it against the duplicate that triggered its inclusion. Currently `duplicateReasons` is only computed for records where `is_duplicate === true`.
+### Retention query (lines ~202-251)
 
-### 2. Show the duplicate badge on linked canonical profiles
-Update the badge rendering (around line 839) so that profiles with `_linkedReason === 'canonical'` also display an amber-styled badge showing the match reason, e.g., "Linked (Same Phone)".
+Replace the single query call with a paginated fetch loop:
 
-### 3. Show the prominent Merge button on linked canonical profiles
-Update the merge button logic (around line 923) so that profiles with `_linkedReason` also get the styled "Merge" button (not the ghost icon). The button will pre-populate the merge wizard with both the canonical and duplicate client IDs.
+```text
+Current (capped at 1,000):
+  const { data, error } = await query;
 
-## Technical Details
+Replacement (fetches all rows in batches):
+  const allData = [];
+  let from = 0;
+  const batchSize = 1000;
+  let hasMore = true;
 
-- The `_linkedReason` property already identifies auto-included profiles
-- For canonical profiles pulled in, we find the duplicate that triggered inclusion and compute match reasons from the same phone/email/name comparison logic
-- The existing blue "Linked original" badge will be replaced with the amber duplicate-style badge showing actual match reasons
-- The merge button for linked canonicals will include both IDs in the URL params, same as the duplicate's merge button
+  while (hasMore) {
+    let batchQuery = supabase
+      .from('phorest_clients')
+      .select('id, name, email, phone, visit_count, last_visit, total_spend, created_at')
+      .range(from, from + batchSize - 1);
+
+    if (locationId) {
+      batchQuery = batchQuery.eq('location_id', locationId);
+    }
+
+    const { data, error } = await batchQuery;
+    if (error) throw error;
+    if (data && data.length > 0) {
+      allData.push(...data);
+      from += batchSize;
+      hasMore = data.length === batchSize;
+    } else {
+      hasMore = false;
+    }
+  }
+```
+
+Then use `allData` instead of `data` for computing `totalClients`, `returningClients`, `newClients`, and `atRiskClients`.
+
+### Additional: Volume, Heatmap, and Status queries
+
+These three queries also fetch from `phorest_appointments` without pagination. While they may not yet hit 1,000 rows for a single date range, they will as the organization scales. The same batch pattern will be applied to all three queries for consistency and future-proofing.
+
+## No database changes required
+This is purely a frontend hook fix -- no schema or RLS modifications needed.
