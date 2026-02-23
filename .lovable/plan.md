@@ -1,45 +1,37 @@
 
 
-## Fix Remaining Gaps in Appointments/Client Directory Wiring
+## Fix: Tab Switch Wipes Search Param
 
-### Gap Found: Deep-Link Search Parameter Not Read
+### The Gap
 
-The Client Directory's "View All Appointments" button navigates to:
-```
-/dashboard/appointments-hub?tab=appointments&search=ClientName
-```
-
-But the Appointments Hub page **ignores the `search` query parameter**. On line 287 of `AppointmentsHub.tsx`, the search state initializes as an empty string and never reads from `searchParams`:
+In `AppointmentsHub.tsx` line 290, `handleTabChange` does:
 
 ```typescript
-const [search, setSearch] = useState('');  // <-- never reads URL param
+setSearchParams({ tab }, { replace: true });
 ```
 
-This means clicking "View All Appointments" from a client profile lands on the hub with no filter applied -- the cross-navigation is broken.
+This replaces ALL query params with just `{ tab }`, discarding the `search` param. If a user arrives via `?tab=appointments&search=Jane` and switches tabs, the search filter is lost from the URL (though it persists in React state, it won't survive a page refresh after tab switch).
 
 ### Fix
 
-**File: `src/pages/dashboard/AppointmentsHub.tsx`**
+**File: `src/pages/dashboard/AppointmentsHub.tsx`** (line 289-291)
 
-Initialize the `search` state from the URL search param so the deep-link pre-fills the filter:
+Preserve the `search` param when switching tabs:
 
 ```typescript
-const initialSearch = searchParams.get('search') || '';
-const [search, setSearch] = useState(initialSearch);
+const handleTabChange = useCallback((tab: string) => {
+  const params: Record<string, string> = { tab };
+  if (search) params.search = search;
+  setSearchParams(params, { replace: true });
+}, [setSearchParams, search]);
 ```
 
-This is a one-line change. No other files need modification.
+### Summary of All Wiring (Now Complete)
 
-### What's Already Working
-
-- "View in Client Directory" link in the Appointment Detail Drawer -- working (resolves phorest_client_id to directory ID)
-- "View All Appointments" link in Client Detail Sheet -- navigation works, just the search param wasn't being consumed
-- Transaction History tab in Client Detail Sheet -- working (useClientTransactionHistory wired up)
-- `/dashboard/transactions` route -- already redirects to the hub (no dead page)
-- Client Directory deep-link via `?clientId=` -- working (lines 104-124 of ClientDirectory.tsx)
-
-### Technical Notes
-
-- Single file edit, single line change
-- No database or hook changes needed
-- Existing `search` state flows correctly into `AppointmentsList` and the hub filters once initialized properly
+- "View in Client Directory" from Appointment Detail Drawer -- working
+- "View in Client Directory" from Schedule Detail Sheet -- working
+- "View All Appointments" from Client Detail Sheet -- working
+- Deep-link search param consumed on load -- working (previous fix)
+- Search param preserved across tab switches -- this fix
+- Transaction History tab in Client Detail Sheet -- working
+- No remaining gaps identified
