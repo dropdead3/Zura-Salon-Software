@@ -1,13 +1,16 @@
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { 
   Users, 
   AlertTriangle,
   UserCheck,
   UserPlus,
   TrendingUp,
-  RefreshCw
+  RefreshCw,
+  ExternalLink
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
@@ -25,6 +28,7 @@ interface ClientsContentProps {
 
 export function ClientsContent({ retention, isLoading, dateRange, locationName }: ClientsContentProps) {
   const { formatNumber } = useFormatNumber();
+  const navigate = useNavigate();
 
   if (isLoading || !retention) {
     return (
@@ -47,6 +51,18 @@ export function ClientsContent({ retention, isLoading, dateRange, locationName }
 
   return (
     <>
+      <div className="flex justify-end mb-4">
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-9 px-4 rounded-full"
+          onClick={() => navigate('/dashboard/admin/client-directory')}
+        >
+          <ExternalLink className="w-4 h-4 mr-1.5" />
+          View Client Directory
+        </Button>
+      </div>
+
       {/* Key Metrics */}
       <PinnableCard 
         elementKey="retention_metrics" 
@@ -57,7 +73,10 @@ export function ClientsContent({ retention, isLoading, dateRange, locationName }
         locationName={locationName}
       >
         <BentoGrid maxPerRow={5} gap="gap-4">
-          <Card className="p-4">
+          <Card
+            className="p-4 cursor-pointer hover:border-primary/30 transition-colors"
+            onClick={() => navigate('/dashboard/admin/client-directory')}
+          >
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-primary/10">
                 <Users className="w-5 h-5 text-primary" />
