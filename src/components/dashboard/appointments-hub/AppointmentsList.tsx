@@ -247,12 +247,12 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
   return (
     <div className="space-y-4">
       {/* Row 1: Search + Time Period Toggle */}
-      <div className="flex flex-wrap gap-3 items-center">
-        <div className="flex-1 min-w-0 max-w-[640px]">
+      <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
+        <div className="w-full sm:flex-1 sm:min-w-0 sm:max-w-[640px]">
           <HubSearchBar value={search} onChange={onSearchChange} />
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="w-full sm:w-auto overflow-x-auto scrollbar-hide flex items-center gap-2">
           <TogglePill
             options={TIME_PERIOD_OPTIONS}
             value={timePeriod}
@@ -272,7 +272,7 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
                     : 'Pick dates'}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="end">
+              <PopoverContent className="w-auto p-0" align="start" side="bottom">
                 <CalendarWidget
                   mode="range"
                   selected={customRange.from ? customRange as { from: Date; to?: Date } : undefined}
