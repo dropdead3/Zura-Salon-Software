@@ -134,7 +134,7 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
                 <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-2">
                   <div className="flex items-center gap-2">
                     <Percent className="w-4 h-4 text-primary shrink-0" />
-                    <span className="text-sm font-medium">{promoInfo.name}</span>
+                    <span className={tokens.body.emphasis}>{promoInfo.name}</span>
                     {promoInfo.code && (
                       <Badge variant="outline" className="gap-1 border-primary/30 text-primary bg-primary/5 text-[10px] px-1.5 py-0">
                         <Tag className="w-3 h-3" />
@@ -144,7 +144,7 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
                   </div>
                   {promoInfo.discount > 0 && (
                     <p className="text-sm text-muted-foreground">
-                      Discount applied: <BlurredAmount><span className="text-amber-600 font-medium">-${promoInfo.discount.toFixed(2)}</span></BlurredAmount>
+                      Discount applied: <BlurredAmount><span className="text-amber-600 font-medium text-sm">-${promoInfo.discount.toFixed(2)}</span></BlurredAmount>
                     </p>
                   )}
                 </div>
@@ -156,7 +156,7 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
               <>
                 <Separator />
                 <div className="text-xs text-muted-foreground">
-                  <span className="font-medium">Moved from:</span>{' '}
+                  <span className={tokens.label.default}>Moved from:</span>{' '}
                   {appointment.rescheduled_from_date} at {appointment.rescheduled_from_time}
                 </div>
               </>

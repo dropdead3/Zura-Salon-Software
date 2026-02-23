@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -114,10 +114,10 @@ export function AppointmentsList({ search }: AppointmentsListProps) {
     .sort((a, b) => a.name.localeCompare(b.name));
 
   return (
-    <>
+    <div className="space-y-4">
       {/* Filters */}
-      <Card className="mb-4">
-        <CardContent className="pt-4">
+      <Card>
+        <div className="p-4">
           <div className="flex flex-wrap gap-3 items-center">
             <Select value={datePreset} onValueChange={(v) => { setDatePreset(v as DatePreset); setPage(0); }}>
               <SelectTrigger className="w-[140px]"><SelectValue placeholder="Date range" /></SelectTrigger>
@@ -176,7 +176,7 @@ export function AppointmentsList({ search }: AppointmentsListProps) {
               </Button>
             </div>
           </div>
-        </CardContent>
+        </div>
       </Card>
 
       {/* Table */}
@@ -266,6 +266,6 @@ export function AppointmentsList({ search }: AppointmentsListProps) {
         open={!!selectedAppt}
         onOpenChange={(open) => { if (!open) setSelectedAppt(null); }}
       />
-    </>
+    </div>
   );
 }

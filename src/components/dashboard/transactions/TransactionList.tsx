@@ -101,7 +101,7 @@ export function TransactionList({
       <Card className="overflow-hidden">
         <div className="p-4 space-y-3">
           {Array.from({ length: 10 }).map((_, i) => (
-            <Skeleton key={i} className="h-12 w-full" />
+            <Skeleton key={i} className={tokens.loading.skeleton} />
           ))}
         </div>
       </Card>
@@ -110,12 +110,12 @@ export function TransactionList({
 
   if (transactions.length === 0) {
     return (
-      <Card className="p-8 text-center">
-        <Package className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-        <h3 className="font-medium text-lg mb-2">No transactions found</h3>
-        <p className="text-muted-foreground text-sm">
-          Try adjusting your filters or search query
-        </p>
+      <Card>
+        <div className={tokens.empty.container}>
+          <Package className={tokens.empty.icon} />
+          <h3 className={tokens.empty.heading}>No transactions found</h3>
+          <p className={tokens.empty.description}>Try adjusting your filters or search query</p>
+        </div>
       </Card>
     );
   }
@@ -126,33 +126,33 @@ export function TransactionList({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[100px]">
+              <TableHead className={cn(tokens.table.columnHeader, "w-[100px]")}>
                 <SortHeader field="transaction_date">Date</SortHeader>
               </TableHead>
-              <TableHead className="min-w-[150px]">
+              <TableHead className={cn(tokens.table.columnHeader, "min-w-[150px]")}>
                 <SortHeader field="client_name">Client</SortHeader>
               </TableHead>
-              <TableHead className="min-w-[200px]">
+              <TableHead className={cn(tokens.table.columnHeader, "min-w-[200px]")}>
                 <SortHeader field="item_name">Item</SortHeader>
               </TableHead>
-              <TableHead className="w-[100px]">Type</TableHead>
-              <TableHead className="w-[90px] text-right">Discount</TableHead>
-              <TableHead className="w-[100px] text-right">
+              <TableHead className={cn(tokens.table.columnHeader, "w-[100px]")}>Type</TableHead>
+              <TableHead className={cn(tokens.table.columnHeader, "w-[90px] text-right")}>Discount</TableHead>
+              <TableHead className={cn(tokens.table.columnHeader, "w-[100px] text-right")}>
                 <SortHeader field="total_amount">Amount</SortHeader>
               </TableHead>
-              <TableHead className="w-[120px]">Location</TableHead>
-              <TableHead className="w-[100px]">Status</TableHead>
+              <TableHead className={cn(tokens.table.columnHeader, "w-[120px]")}>Location</TableHead>
+              <TableHead className={cn(tokens.table.columnHeader, "w-[100px]")}>Status</TableHead>
               <TableHead className="w-[60px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {sortedTransactions.map((transaction) => (
               <TableRow key={transaction.id}>
-                <TableCell className="font-medium text-sm">
+                <TableCell className={tokens.body.emphasis}>
                   {formatDate(new Date(transaction.transaction_date), 'MMM d, yyyy')}
                 </TableCell>
                 <TableCell>
-                  <span className="font-medium">{transaction.client_name || 'Walk-in'}</span>
+                  <span className={tokens.body.emphasis}>{transaction.client_name || 'Walk-in'}</span>
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
@@ -181,12 +181,12 @@ export function TransactionList({
                 </TableCell>
                 <TableCell className="text-right text-sm">
                   {(Number(transaction.discount) || 0) > 0 ? (
-                    <span className="text-amber-600 font-medium">-{formatCurrency(Number(transaction.discount))}</span>
+                    <span className="text-amber-600 font-medium text-sm">-{formatCurrency(Number(transaction.discount))}</span>
                   ) : (
                     <span className="text-muted-foreground">—</span>
                   )}
                 </TableCell>
-                <TableCell className="text-right font-medium">
+                <TableCell className={cn(tokens.body.emphasis, 'text-right')}>
                   {formatCurrency(Number(transaction.total_amount) || 0)}
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">

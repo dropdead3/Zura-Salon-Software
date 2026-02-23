@@ -123,20 +123,20 @@ function TransactionsTab({ search }: { search: string }) {
     <div className="space-y-4">
       {/* Stats */}
       <BentoGrid maxPerRow={5} gap="gap-4">
-        <Card className="p-4">
-          <p className="text-sm text-muted-foreground">Total Revenue</p>
+        <Card className={cn(tokens.card.wrapper, 'p-4')}>
+          <p className={tokens.body.muted}>Total Revenue</p>
           <p className={tokens.stat.large}><BlurredAmount>{formatCurrency(totalRevenue)}</BlurredAmount></p>
         </Card>
-        <Card className="p-4">
-          <p className="text-sm text-muted-foreground">Services</p>
+        <Card className={cn(tokens.card.wrapper, 'p-4')}>
+          <p className={tokens.body.muted}>Services</p>
           <p className={tokens.stat.large}>{serviceCount}</p>
         </Card>
-        <Card className="p-4">
-          <p className="text-sm text-muted-foreground">Products</p>
+        <Card className={cn(tokens.card.wrapper, 'p-4')}>
+          <p className={tokens.body.muted}>Products</p>
           <p className={tokens.stat.large}>{productCount}</p>
         </Card>
-        <Card className="p-4">
-          <p className="text-sm text-muted-foreground">Discounts Given</p>
+        <Card className={cn(tokens.card.wrapper, 'p-4')}>
+          <p className={tokens.body.muted}>Discounts Given</p>
           <p className={cn(tokens.stat.large, totalDiscounts > 0 && 'text-amber-600')}>
             <BlurredAmount>{formatCurrency(totalDiscounts)}</BlurredAmount>
           </p>
@@ -144,8 +144,8 @@ function TransactionsTab({ search }: { search: string }) {
             <p className="text-xs text-muted-foreground mt-1">{discountedCount} item{discountedCount !== 1 ? 's' : ''}</p>
           )}
         </Card>
-        <Card className="p-4">
-          <p className="text-sm text-muted-foreground">Refunded</p>
+        <Card className={cn(tokens.card.wrapper, 'p-4')}>
+          <p className={tokens.body.muted}>Refunded</p>
           <p className={cn(tokens.stat.large, refundedCount > 0 && 'text-amber-600')}>{refundedCount}</p>
         </Card>
       </BentoGrid>
@@ -251,11 +251,11 @@ function TransactionsTab({ search }: { search: string }) {
             {pendingRefunds.map((r: any) => (
               <div key={r.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
                 <div>
-                  <p className="text-sm font-medium">{r.original_item_name || 'Transaction'}</p>
+                  <p className={tokens.body.emphasis}>{r.original_item_name || 'Transaction'}</p>
                   <p className="text-xs text-muted-foreground">{r.reason || 'No reason provided'}</p>
                 </div>
                 <BlurredAmount>
-                  <span className="text-sm font-medium">${r.refund_amount}</span>
+                  <span className={tokens.body.emphasis}>${r.refund_amount}</span>
                 </BlurredAmount>
               </div>
             ))}
