@@ -1,30 +1,38 @@
 
-## Move Filters and Export Button Inside the Table Card
 
-### Change
+## Enhance Select All Checkbox UI
 
-Move the filter row (Status, Location, Stylist dropdowns + CSV export button) and the dynamic filter description line from their current standalone positions into the top of the main table `Card`. This consolidates the controls with the data they govern, creating a cleaner, more cohesive layout.
+### Problem
+The current "Select All" checkbox in the table header is a bare, unlabeled checkbox that blends into the column headers. Users may not recognize it as a batch-selection control.
 
-### Visual Structure
+### Solution
+Replace the bare checkbox with a more descriptive, visually distinct control that communicates its purpose clearly:
 
-```text
-[ Search Bar ]                       [ All | Past | Today | Future | Range ]
+1. **Add a text label** next to the checkbox: "All" (or the count when some are selected, e.g. "3 of 42")
+2. **Style the cell** so the checkbox + label group stands out slightly from the column headers
+3. **Show selection count** when items are partially selected to reinforce the selection state
 
-+-----------------------------------------------------------------------+
-|  [ All Statuses v ]  [ All Locations v ]  [ All Stylists v ]  [ CSV ] |
-|  Showing 661 all appointments, sorted by date (newest first)          |
-|-----------------------------------------------------------------------|
-|  [ ] Date   Time   Client   ...                                       |
-+-----------------------------------------------------------------------+
-```
+### Visual Behavior
+
+| State | Display |
+|-------|---------|
+| None selected | `[ ] All` |
+| Some selected (e.g. 3 of 42) | `[-] 3 selected` (indeterminate) |
+| All selected | `[x] All` |
+
+The label text will use `text-xs text-muted-foreground` styling, keeping it subtle but readable. The checkbox and label will be wrapped in a clickable `label` element so the entire area is tappable.
 
 ### Technical Details
 
 **File:** `src/components/dashboard/appointments-hub/AppointmentsList.tsx`
 
-1. **Remove** the standalone "Row 2: Filters + CSV" `div` (lines 291-336) and the standalone filter description `p` (lines 338-341) from their current positions outside the Card
-2. **Insert** both elements inside the table `Card` (currently line 344), before the `Table` element:
-   - The filter row becomes a `div` with `flex flex-wrap gap-3 items-center p-4 pb-2` inside the Card
-   - The filter description becomes a `p` with `text-sm text-muted-foreground font-sans px-4 pb-3` inside the Card
-   - Then the existing `Table` follows
-3. No logic changes -- just moving the JSX blocks into the Card wrapper
+1. In the `TableHeader`, expand the first `TableHead` cell (currently `w-10 pr-0`) to be wider (`w-[100px]`) to accommodate the label
+2. Wrap the `Checkbox` in a `label` element with `flex items-center gap-1.5 cursor-pointer`
+3. Add a `span` after the checkbox:
+   - When none selected: `"All"`
+   - When some selected: `"{n} selected"`
+   - When all selected: `"All"`
+4. Style the span with `text-xs text-muted-foreground whitespace-nowrap`
+
+Single file edit. No new dependencies.
+
