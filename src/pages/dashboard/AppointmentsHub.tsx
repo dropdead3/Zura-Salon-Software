@@ -284,7 +284,7 @@ function TransactionsTab({ search }: { search: string }) {
 export default function AppointmentsHub() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('tab') || 'appointments';
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(searchParams.get('search') || '');
 
   const handleTabChange = useCallback((tab: string) => {
     setSearchParams({ tab }, { replace: true });
