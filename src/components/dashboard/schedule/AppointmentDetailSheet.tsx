@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { createPortal } from 'react-dom';
 import { parseISO, differenceInDays } from 'date-fns';
@@ -221,6 +222,7 @@ export function AppointmentDetailSheet({
   const { formatDate } = useFormatDate();
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
 
   const [newNote, setNewNote] = useState('');
   const [isPrivateNote, setIsPrivateNote] = useState(false);
@@ -967,6 +969,18 @@ export function AppointmentDetailSheet({
                         )}
                         {!clientRecordLoading && !appointment.client_phone && !clientRecord?.email && (
                           <p className="text-xs text-muted-foreground">No contact info available</p>
+                        )}
+                        {!isWalkIn && appointment.phorest_client_id && (
+                          <button
+                            onClick={() => {
+                              handleClose();
+                              navigate(`/dashboard/admin/clients?clientId=${appointment.phorest_client_id}`);
+                            }}
+                            className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors mt-1"
+                          >
+                            <ExternalLink className="h-3 w-3" />
+                            View in Client Directory
+                          </button>
                         )}
                       </div>
                     </motion.div>
