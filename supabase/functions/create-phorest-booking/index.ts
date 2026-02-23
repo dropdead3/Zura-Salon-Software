@@ -297,12 +297,56 @@ serve(async (req) => {
       localRecord.total_price = redoFinalPrice;
     }
 
-    const { error: insertError } = await supabase
+    // Extract auth user from request header for created_by
+    const authHeader = req.headers.get("authorization") || "";
+    let createdByUserId: string | null = null;
+    if (authHeader.startsWith("Bearer ")) {
+      try {
+        const { data: { user: reqUser } } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
+        createdByUserId = reqUser?.id || null;
+      } catch (_) { /* ignore */ }
+    }
+    if (createdByUserId) {
+      localRecord.created_by = createdByUserId;
+    }
+
+    const { data: insertedRecord, error: insertError } = await supabase
       .from("phorest_appointments")
-      .upsert(localRecord, { onConflict: 'phorest_id' });
+      .upsert(localRecord, { onConflict: 'phorest_id' })
+      .select('id')
+      .maybeSingle();
 
     if (insertError) {
       console.error("Failed to create local record:", insertError);
+    }
+
+    // Write audit log entry
+    const insertedId = insertedRecord?.id || null;
+    if (insertedId) {
+      try {
+        // Resolve org_id
+        let auditOrgId: string | null = null;
+        if (resolvedLocationId) {
+          const { data: locOrg } = await supabase.from("locations").select("organization_id").eq("id", resolvedLocationId).maybeSingle();
+          auditOrgId = locOrg?.organization_id || null;
+        }
+        if (!auditOrgId) {
+          const { data: orgFallback } = await supabase.from("organizations").select("id").limit(1).single();
+          auditOrgId = orgFallback?.id || null;
+        }
+        if (auditOrgId) {
+          await supabase.from("appointment_audit_log").insert({
+            appointment_id: insertedId,
+            organization_id: auditOrgId,
+            event_type: "created",
+            actor_user_id: createdByUserId,
+            actor_name: "System",
+            new_value: { service: serviceName, client: client?.name || 'Client', date: appointmentDate, time: startTimeLocal },
+          });
+        }
+      } catch (auditErr) {
+        console.log("Audit log write failed (non-fatal):", auditErr);
+      }
     }
 
     // --- Manager notification for redo ---

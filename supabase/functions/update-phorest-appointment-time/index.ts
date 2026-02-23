@@ -165,6 +165,41 @@ Deno.serve(async (req) => {
       throw new Error(`Failed to update local appointment: ${updateError.message}`);
     }
 
+    // Write audit log entry for reschedule
+    try {
+      // Resolve org_id from appointment's location
+      let auditOrgId: string | null = null;
+      if (localApt.location_id) {
+        const { data: locData } = await supabase
+          .from("locations")
+          .select("organization_id")
+          .eq("id", localApt.location_id)
+          .maybeSingle();
+        auditOrgId = locData?.organization_id || null;
+      }
+      if (!auditOrgId) {
+        const { data: orgFallback } = await supabase
+          .from("organizations")
+          .select("id")
+          .limit(1)
+          .single();
+        auditOrgId = orgFallback?.id || null;
+      }
+
+      if (auditOrgId) {
+        await supabase.from("appointment_audit_log").insert({
+          appointment_id,
+          organization_id: auditOrgId,
+          event_type: "rescheduled",
+          actor_name: "System",
+          previous_value: { date: localApt.appointment_date, time: localApt.start_time },
+          new_value: { date: new_date, time: new_time },
+        });
+      }
+    } catch (auditErr) {
+      console.log("Audit log write failed (non-fatal):", auditErr);
+    }
+
     return new Response(
       JSON.stringify({
         success: true,

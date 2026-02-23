@@ -557,6 +557,60 @@ export type Database = {
           },
         ]
       }
+      appointment_audit_log: {
+        Row: {
+          actor_name: string | null
+          actor_user_id: string | null
+          appointment_id: string
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json | null
+          new_value: Json | null
+          organization_id: string
+          previous_value: Json | null
+        }
+        Insert: {
+          actor_name?: string | null
+          actor_user_id?: string | null
+          appointment_id: string
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          new_value?: Json | null
+          organization_id: string
+          previous_value?: Json | null
+        }
+        Update: {
+          actor_name?: string | null
+          actor_user_id?: string | null
+          appointment_id?: string
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          new_value?: Json | null
+          organization_id?: string
+          previous_value?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_audit_log_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "phorest_appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_audit_log_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appointment_check_ins: {
         Row: {
           appointment_id: string | null
@@ -9289,6 +9343,7 @@ export type Database = {
           client_name: string | null
           client_phone: string | null
           created_at: string
+          created_by: string | null
           end_time: string
           id: string
           is_new_client: boolean | null
@@ -9324,6 +9379,7 @@ export type Database = {
           client_name?: string | null
           client_phone?: string | null
           created_at?: string
+          created_by?: string | null
           end_time: string
           id?: string
           is_new_client?: boolean | null
@@ -9359,6 +9415,7 @@ export type Database = {
           client_name?: string | null
           client_phone?: string | null
           created_at?: string
+          created_by?: string | null
           end_time?: string
           id?: string
           is_new_client?: boolean | null
@@ -9969,6 +10026,7 @@ export type Database = {
       }
       phorest_transaction_items: {
         Row: {
+          appointment_id: string | null
           branch_name: string | null
           client_name: string | null
           created_at: string | null
@@ -9978,10 +10036,12 @@ export type Database = {
           item_name: string
           item_type: string
           location_id: string | null
+          payment_method: string | null
           phorest_client_id: string | null
           phorest_staff_id: string | null
           quantity: number | null
           sale_classification: string | null
+          stylist_name: string | null
           stylist_user_id: string | null
           total_amount: number
           transaction_date: string
@@ -9989,6 +10049,7 @@ export type Database = {
           unit_price: number | null
         }
         Insert: {
+          appointment_id?: string | null
           branch_name?: string | null
           client_name?: string | null
           created_at?: string | null
@@ -9998,10 +10059,12 @@ export type Database = {
           item_name: string
           item_type: string
           location_id?: string | null
+          payment_method?: string | null
           phorest_client_id?: string | null
           phorest_staff_id?: string | null
           quantity?: number | null
           sale_classification?: string | null
+          stylist_name?: string | null
           stylist_user_id?: string | null
           total_amount: number
           transaction_date: string
@@ -10009,6 +10072,7 @@ export type Database = {
           unit_price?: number | null
         }
         Update: {
+          appointment_id?: string | null
           branch_name?: string | null
           client_name?: string | null
           created_at?: string | null
@@ -10018,10 +10082,12 @@ export type Database = {
           item_name?: string
           item_type?: string
           location_id?: string | null
+          payment_method?: string | null
           phorest_client_id?: string | null
           phorest_staff_id?: string | null
           quantity?: number | null
           sale_classification?: string | null
+          stylist_name?: string | null
           stylist_user_id?: string | null
           total_amount?: number
           transaction_date?: string
@@ -10029,6 +10095,13 @@ export type Database = {
           unit_price?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "phorest_transaction_items_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "phorest_appointments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "phorest_transaction_items_stylist_user_id_fkey"
             columns: ["stylist_user_id"]
