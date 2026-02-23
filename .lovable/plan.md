@@ -1,37 +1,24 @@
 
 
-## Two Changes: Rename Appointments Page + Enhance Audit Log Page
+## Rename Back to "Appointments & Transactions" + Fix Sidebar i18n Key
 
-### 1. Rename "Appointments & Transactions" to "Appointments"
+### Problem
+Two issues visible in the screenshot:
+1. The page and nav labels were renamed to just "Appointments" but you want "Appointments & Transactions" back.
+2. The sidebar flyout shows the raw i18n key `nav.appointments_hub` instead of the proper label, because the translation entry was never added to the locale file.
 
-Update the page title and all navigation references:
+### Fix (3 files)
 
-- **`src/pages/dashboard/AppointmentsHub.tsx`** (line 296): Change `DashboardPageHeader title` from "Appointments & Transactions" to "Appointments"
-- **`src/config/dashboardNav.ts`** (lines 113, 145): Change both nav labels from "Appointments & Transactions" to "Appointments"
+**1. `src/config/dashboardNav.ts`** -- Update both label references (lines 113 and 145):
+- Change `label: 'Appointments'` to `label: 'Appointments & Transactions'` in both the main nav array and the hub quick links array.
 
-The route path (`/dashboard/appointments-hub`) stays the same to avoid breaking bookmarks or the existing redirect on line 333 of App.tsx.
+**2. `src/pages/dashboard/AppointmentsHub.tsx`** -- Update page header (line 296):
+- Change `title="Appointments"` to `title="Appointments & Transactions"`.
 
----
+**3. `src/locales/en.json`** -- Add the missing translation key (after line 86):
+- Add `"appointments_hub": "Appointments & Transactions"` to the `nav` section. This is what the sidebar reads via `t('nav.appointments_hub')`, and its absence caused the raw key display.
 
-### 2. Enhance the Platform Audit Log Page
-
-The existing page at `src/pages/dashboard/platform/AuditLog.tsx` has hardcoded `slate-*` color classes throughout (dark-mode-only styling that won't adapt to theme changes). This refactor brings it in line with the design token system and improves usability.
-
-**Styling overhaul:**
-- Replace all `bg-slate-800/40`, `border-slate-700/50`, `text-slate-400`, etc. with semantic tokens (`bg-muted/50`, `border-border/60`, `text-muted-foreground`, `text-foreground`)
-- Filter bar: apply `tokens.input.filter` to all `SelectTrigger` components, remove hardcoded widths, use `w-auto`
-- Search input: apply `tokens.input.search` class
-- Table headers: use `tokens.table.columnHeader` (Title Case, font-sans)
-- Badge colors: use theme-aware classes (`bg-violet-500/20 text-violet-400` becomes semantic or kept as accent colors but with proper dark/light support)
-- Detail Sheet: replace `bg-slate-900`, `text-white` with `bg-card`, `text-foreground`
-
-**Page header update:**
-- Rename title from "Audit Log Explorer" to "Activity Log" for approachability
-- Update sidebar nav label in `src/config/platformNav.ts` from "Audit Log" to "Activity Log"
-
-**Files changed:**
-- `src/pages/dashboard/platform/AuditLog.tsx` -- full styling refactor to semantic tokens
-- `src/config/platformNav.ts` -- rename "Audit Log" label to "Activity Log"
-- `src/pages/dashboard/AppointmentsHub.tsx` -- rename title
-- `src/config/dashboardNav.ts` -- rename nav labels
-
+### Files Changed
+- `src/config/dashboardNav.ts` (2 label updates)
+- `src/pages/dashboard/AppointmentsHub.tsx` (1 title update)
+- `src/locales/en.json` (1 new translation key)
