@@ -1,59 +1,48 @@
 
 
-# Extract Source Fields into a Dedicated Card
+# Highlight Duplicate Match Reasons in Merge Wizard
 
 ## What changes
 
-The "How did they hear about us?" (lead source), "Referred By", and custom source fields will be moved out of the "Client Settings" card into a new standalone "Source" card, positioned above "Important Dates."
+In the ClientSelector search results, each client row will show colored badges indicating which fields match other visible results (e.g., "Same Phone", "Same Email", "Same Name"). This makes it immediately clear why two records are flagged as potential duplicates.
 
-## Changes to `src/components/dashboard/ClientDetailSheet.tsx`
+## Changes to `src/components/dashboard/clients/merge/ClientSelector.tsx`
 
-### 1. New "Source" card (inserted before "Important Dates", around line 667)
+### 1. Add imports
+- `useMemo` from React
+- `Mail`, `Phone`, `User` icons from lucide-react
+- `Tooltip` components from radix
 
-- New card with its own `EditHeader` (icon: `Megaphone` or `MapPin`, title: "Source")
-- Own edit mode state (`isEditingSource` / `setIsEditingSource`) and save mutation
-- Contains:
-  - **Lead Source** select dropdown ("How did they hear about us?")
-  - **Custom source** text input (shown when "Other" is selected)
-  - **Referred By** text input
-- Read-only view shows source badge + referred by info
+### 2. Compute match reasons across visible results
 
-### 2. Update "Client Settings" card (line 789+)
+Add a `useMemo` that builds a map of `clientId -> matchReasons[]` by comparing all visible results (both `filteredResults` and `selectedClients`) against each other:
 
-- Remove the lead source select, custom source input, and "Referred By" input from the edit form
-- Remove lead source and referred by from the read-only view
-- Keep only: Client Category, External Client ID, Preferred Stylist
+- **Phone match**: Two or more clients share the same normalized phone number
+- **Email match**: Two or more clients share the same normalized email (case-insensitive)
+- **Name match**: Two or more clients share the same full name (case-insensitive), only flagged if no phone/email match exists
 
-### 3. State and mutation updates
+### 3. Render match badges inline with contact info
 
-- Add new state variables: `isEditingSource` / `setIsEditingSource`
-- Add a new `saveSourceMutation` (or fold into the existing settings mutation if it uses the same fields)
-- Wire `startEditingSource` to populate edit state from current client data
-- The existing `editLeadSource`, `editLeadSourceCustom`, and `editReferredBy` state variables remain -- they just move to the new card's edit form
+Below each client's email/phone line, render small colored badges:
 
-### 4. Card ordering (top to bottom)
+| Match | Badge | Icon | Color |
+|---|---|---|---|
+| Phone | "Same Phone" | Phone icon | Amber (warning tone) |
+| Email | "Same Email" | Mail icon | Amber |
+| Name | "Same Name" | User icon | Muted amber |
 
-Current order around this area:
-1. Contact Information
-2. Important Dates
-3. Communication Preferences
-4. Client Settings (contains source fields)
+The matching field text (email or phone) will also be highlighted with `text-amber-500` so it visually pops compared to non-matching fields.
 
-New order:
-1. Contact Information
-2. **Source** (new card -- lead source, referred by)
-3. Important Dates
-4. Communication Preferences
-5. Client Settings (category, external ID, preferred stylist only)
+### 4. Also show match info on selected client badges
+
+When clients are selected (shown as badges at the top), include a small tooltip showing which fields matched.
 
 ## Technical Details
 
 | Area | Detail |
 |---|---|
-| File | `src/components/dashboard/ClientDetailSheet.tsx` |
-| New state | `isEditingSource` boolean + setter |
-| New mutation | `saveSourceMutation` -- updates `lead_source`, `lead_source_custom`, `referred_by` on `phorest_clients` |
-| Moved fields | `editLeadSource`, `editLeadSourceCustom`, `editReferredBy` -- same state, rendered in new card |
-| Removed from Settings card | Lead source select, custom source input, referred by input (both edit and read-only views) |
-| Animation delay | Adjust `transition.delay` values to maintain staggered entrance sequence |
-
+| File | `src/components/dashboard/clients/merge/ClientSelector.tsx` |
+| New imports | `useMemo`, `Mail`, `Phone`, `User`, `Tooltip*` |
+| New logic | `useMemo` computing `duplicateMatches: Map<string, string[]>` across all visible + selected clients |
+| UI change | Amber match badges rendered below contact info per result row |
+| Normalization | Phone: strip non-digits; Email: lowercase trim -- matches existing DB normalization logic |
