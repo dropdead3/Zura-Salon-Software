@@ -616,8 +616,8 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
                         <SelectValue placeholder="Select..." />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Male">Male</SelectItem>
                         <SelectItem value="Female">Female</SelectItem>
+                        <SelectItem value="Male">Male</SelectItem>
                         <SelectItem value="Non-Binary">Non-Binary</SelectItem>
                         <SelectItem value="Prefer not to say">Prefer not to say</SelectItem>
                       </SelectContent>
