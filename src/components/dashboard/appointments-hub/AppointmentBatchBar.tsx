@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { tokens } from '@/lib/design-tokens';
 import { Button } from '@/components/ui/button';
-import { Download, X, MessageSquare, CheckCircle2, XCircle, CalendarX } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Download, X, MessageSquare, CheckCircle2, XCircle, CalendarX, AlertTriangle } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ShareToDMDialog } from '@/components/dashboard/sales/ShareToDMDialog';
 import {
@@ -14,6 +15,33 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { format, parseISO } from 'date-fns';
+
+/** Compute unique client IDs from a selection, treating walk-ins as distinct unknowns */
+function getUniqueClientIds(appointments: any[]): Set<string> {
+  const ids = new Set<string>();
+  let unknownCounter = 0;
+  for (const a of appointments) {
+    const clientId = a._source === 'phorest' ? a.phorest_client_id : a.client_id;
+    if (clientId) {
+      ids.add(clientId);
+    } else {
+      unknownCounter++;
+      ids.add(`__unknown_${unknownCounter}`);
+    }
+  }
+  return ids;
+}
+
+function MultiClientWarning({ count }: { count: number }) {
+  return (
+    <div className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm">
+      <AlertTriangle className="h-4 w-4 shrink-0 text-amber-500 mt-0.5" />
+      <p className="text-amber-200">
+        These appointments belong to <span className="font-medium">{count} different clients</span> with the same or similar name. Verify you intend to affect all of them.
+      </p>
+    </div>
+  );
+}
 
 interface AppointmentBatchBarProps {
   selectedAppointments: any[];
@@ -31,6 +59,10 @@ export function AppointmentBatchBar({ selectedAppointments, onClearSelection }: 
   const [cancelSelectedOpen, setCancelSelectedOpen] = useState(false);
   const [cancelFutureOpen, setCancelFutureOpen] = useState(false);
   const queryClient = useQueryClient();
+
+  const uniqueClientIds = useMemo(() => getUniqueClientIds(selectedAppointments), [selectedAppointments]);
+  const isMultiClient = uniqueClientIds.size > 1;
+  const clientCount = uniqueClientIds.size;
 
   if (selectedAppointments.length === 0) return null;
 
@@ -65,6 +97,11 @@ export function AppointmentBatchBar({ selectedAppointments, onClearSelection }: 
 
   const handleBulkStatusUpdate = async (newStatus: string, appointments?: any[]) => {
     const targets = appointments || selectedAppointments;
+    if (isMultiClient && newStatus !== 'cancelled') {
+      toast.warning(`Action affects ${clientCount} different clients`, {
+        description: 'Verify you intend to update appointments for multiple clients with the same or similar name.',
+      });
+    }
     setUpdating(true);
     try {
       const phorestIds = targets.filter(a => a._source === 'phorest').map(a => a.id);
@@ -116,6 +153,12 @@ export function AppointmentBatchBar({ selectedAppointments, onClearSelection }: 
             >
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium">{selectedAppointments.length} selected</span>
+                {isMultiClient && (
+                  <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 gap-1">
+                    <AlertTriangle className="h-3 w-3" />
+                    {clientCount} different clients
+                  </Badge>
+                )}
                 <Button variant="ghost" size={tokens.button.inline} onClick={onClearSelection} className="h-7 px-2">
                   <X className="h-3 w-3" />
                 </Button>
@@ -176,6 +219,11 @@ export function AppointmentBatchBar({ selectedAppointments, onClearSelection }: 
               This will cancel all selected appointments. Cancelled appointments cannot be automatically restored.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          {isMultiClient && (
+            <div className="px-6">
+              <MultiClientWarning count={clientCount} />
+            </div>
+          )}
           <AlertDialogFooter>
             <AlertDialogCancel>Go Back</AlertDialogCancel>
             <AlertDialogAction
@@ -197,6 +245,11 @@ export function AppointmentBatchBar({ selectedAppointments, onClearSelection }: 
               This will cancel only the selected appointments dated today or later. Past appointments will not be affected.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          {isMultiClient && (
+            <div className="px-6">
+              <MultiClientWarning count={clientCount} />
+            </div>
+          )}
           <AlertDialogFooter>
             <AlertDialogCancel>Go Back</AlertDialogCancel>
             <AlertDialogAction
