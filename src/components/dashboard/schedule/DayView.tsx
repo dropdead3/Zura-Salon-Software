@@ -260,7 +260,7 @@ function AppointmentCard({
         assistantNamesMap={assistantNamesMap}
         categoryColors={categoryColors}
         isOverdueForCheckin={isOverdueForCheckin}
-        showHoverPreview
+        
         onClick={() => {}}
       />
     </div>

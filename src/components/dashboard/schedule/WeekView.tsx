@@ -116,7 +116,7 @@ function WeekAppointmentCard({
         assistantNamesMap={assistantNamesMap}
         assistantProfilesMap={assistantProfilesMap}
         categoryColors={categoryColors}
-        showHoverPreview
+        
         showStylistBadge
         showClientPhone={false}
         showClientAvatar={false}

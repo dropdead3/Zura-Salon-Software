@@ -11,7 +11,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Phone, ChevronRight, ArrowRightLeft, Users } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+
 import { getClientInitials, getAvatarColor, formatServicesWithDuration, sortServices } from '@/lib/appointment-card-utils';
 import { StylistBadge } from './StylistBadge';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
@@ -62,7 +62,7 @@ export interface AppointmentCardContentProps {
   assistantProfilesMap?: Map<string, import('@/hooks/useAppointmentAssistantNames').AssistantProfile[]>;
   categoryColors: Record<string, { bg: string; text: string; abbr: string }>;
   isOverdueForCheckin?: boolean;
-  showHoverPreview?: boolean;
+  
   showStylistBadge?: boolean;
   showClientPhone?: boolean;
   showClientAvatar?: boolean;
@@ -432,47 +432,7 @@ function AgendaContent({
   );
 }
 
-// ─── Hover Preview Tooltip ────────────────────────────────────
-function HoverPreviewWrapper({
-  appointment,
-  serviceLookup,
-  enabled,
-  children,
-}: {
-  appointment: PhorestAppointment;
-  serviceLookup?: Map<string, ServiceLookupEntry>;
-  enabled: boolean;
-  children: React.ReactNode;
-}) {
-  if (!enabled) return <>{children}</>;
 
-  const duration = parseTimeToMinutes(appointment.end_time) - parseTimeToMinutes(appointment.start_time);
-  const statusConfig = APPOINTMENT_STATUS_BADGE[appointment.status] || APPOINTMENT_STATUS_BADGE.booked;
-
-  return (
-    <Tooltip delayDuration={400}>
-      <TooltipTrigger asChild>{children}</TooltipTrigger>
-      <TooltipContent side="right" sideOffset={8} className="max-w-[240px] text-xs z-[100] p-3">
-        <div className="space-y-1.5">
-          <div className="font-medium">{appointment.client_name}</div>
-          {appointment.client_phone && (
-            <div className="text-muted-foreground">{formatPhoneDisplay(appointment.client_phone)}</div>
-          )}
-          <div>{formatServicesWithDuration(appointment.service_name, serviceLookup) || appointment.service_name}</div>
-          <div className="flex items-center justify-between text-muted-foreground">
-            <span>{formatTime12h(appointment.start_time)} – {formatTime12h(appointment.end_time)} ({duration}min)</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <Badge className={cn('text-[9px] px-1.5 py-0', statusConfig.bg, statusConfig.text)}>{statusConfig.label}</Badge>
-            {appointment.total_price != null && appointment.total_price > 0 && (
-              <span className="text-muted-foreground">${appointment.total_price.toFixed(0)}</span>
-            )}
-          </div>
-        </div>
-      </TooltipContent>
-    </Tooltip>
-  );
-}
 
 // ─── Main Component ───────────────────────────────────────────
 export function AppointmentCardContent({
@@ -488,7 +448,7 @@ export function AppointmentCardContent({
   assistantProfilesMap,
   categoryColors,
   isOverdueForCheckin = false,
-  showHoverPreview = false,
+  
   showStylistBadge = false,
   showClientPhone = true,
   showClientAvatar = true,
@@ -579,7 +539,7 @@ export function AppointmentCardContent({
     <div
       className={cn(
         'h-full w-full rounded-lg cursor-pointer transition-all duration-200 ease-out overflow-hidden group',
-        'hover:shadow-md hover:z-20 hover:scale-[1.01]',
+        'hover:shadow-md hover:z-20',
         !displayGradient && 'border-l-4',
         !useCategoryColor && !displayGradient && statusColors.bg,
         !useCategoryColor && !displayGradient && statusColors.border,
@@ -644,14 +604,6 @@ export function AppointmentCardContent({
       />
     </div>
   );
-
-  if (showHoverPreview) {
-    return (
-      <HoverPreviewWrapper appointment={appointment} serviceLookup={serviceLookup} enabled>
-        {gridContent}
-      </HoverPreviewWrapper>
-    );
-  }
 
   return gridContent;
 }
