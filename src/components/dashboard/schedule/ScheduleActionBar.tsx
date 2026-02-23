@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Calendar, CheckCircle2, Info } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Calendar, CheckCircle2, Info, Receipt } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -132,6 +133,19 @@ export function ScheduleActionBar({
           </ScrollArea>
         )}
       </div>
+
+      {/* Appointments & Transactions link */}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Link
+            to="/dashboard/appointments-hub"
+            className="shrink-0 h-8 w-8 flex items-center justify-center rounded-full hover:bg-muted transition-colors"
+          >
+            <Receipt className="h-4 w-4 text-muted-foreground" />
+          </Link>
+        </TooltipTrigger>
+        <TooltipContent side="top">Appointments &amp; Transactions</TooltipContent>
+      </Tooltip>
 
       {/* Right: Schedule Legend */}
       <div className="shrink-0">
