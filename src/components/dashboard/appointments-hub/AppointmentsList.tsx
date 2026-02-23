@@ -279,7 +279,7 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
       </div>
 
       {/* Table */}
-      <Card>
+      <Card className="overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
