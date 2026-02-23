@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -6,13 +6,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar as CalendarWidget } from '@/components/ui/calendar';
 import { tokens } from '@/lib/design-tokens';
 import { APPOINTMENT_STATUS_BADGE } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { ChevronLeft, ChevronRight, Download, Calendar, History, Sun, ArrowRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Download, Calendar, History, Sun, ArrowRight, CalendarRange } from 'lucide-react';
 import { useAppointmentsHub, type HubFilters } from '@/hooks/useAppointmentsHub';
 import { HubSearchBar } from './HubSearchBar';
 import { AppointmentDetailDrawer } from './AppointmentDetailDrawer';
+import { AppointmentBatchBar } from './AppointmentBatchBar';
 import { useLocations } from '@/hooks/useLocations';
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
@@ -26,7 +30,7 @@ interface AppointmentsListProps {
   onSearchChange: (value: string) => void;
 }
 
-type TimePeriod = 'past' | 'today' | 'future';
+type TimePeriod = 'past' | 'today' | 'future' | 'custom';
 
 function formatTime12h(time: string): string {
   const [hours, minutes] = time.split(':');
@@ -54,7 +58,7 @@ function formatCreatedAt(dateStr: string | null): string {
   }
 }
 
-function getDateRange(period: TimePeriod): { startDate?: string; endDate?: string } {
+function getDateRange(period: TimePeriod, customRange?: { from?: Date; to?: Date }): { startDate?: string; endDate?: string } {
   const now = new Date();
   const fmt = (d: Date) => format(d, 'yyyy-MM-dd');
   switch (period) {
@@ -64,6 +68,11 @@ function getDateRange(period: TimePeriod): { startDate?: string; endDate?: strin
       return { startDate: fmt(now), endDate: fmt(now) };
     case 'future':
       return { startDate: fmt(addDays(now, 1)) };
+    case 'custom':
+      return {
+        startDate: customRange?.from ? fmt(customRange.from) : undefined,
+        endDate: customRange?.to ? fmt(customRange.to) : undefined,
+      };
   }
 }
 
@@ -71,6 +80,7 @@ const TIME_PERIOD_OPTIONS = [
   { value: 'past', label: 'Past', icon: <History className="w-3.5 h-3.5" />, tooltip: 'Past Appointments\nBefore today' },
   { value: 'today', label: 'Today', icon: <Sun className="w-3.5 h-3.5" />, tooltip: "Today's Appointments" },
   { value: 'future', label: 'Future', icon: <ArrowRight className="w-3.5 h-3.5" />, tooltip: 'Future Appointments\nAfter today' },
+  { value: 'custom', label: 'Range', icon: <CalendarRange className="w-3.5 h-3.5" />, tooltip: 'Custom Date Range' },
 ];
 
 export function AppointmentsList({ search, onSearchChange }: AppointmentsListProps) {
@@ -80,12 +90,15 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('today');
   const [stylistId, setStylistId] = useState('all');
   const [selectedAppt, setSelectedAppt] = useState<any>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [customRange, setCustomRange] = useState<{ from?: Date; to?: Date }>({});
+  const [rangePopoverOpen, setRangePopoverOpen] = useState(false);
 
   const { effectiveOrganization } = useOrganizationContext();
   const { data: locations = [] } = useLocations();
   const { data: teamMembers = [] } = useTeamDirectory(undefined, { organizationId: effectiveOrganization?.id || undefined });
 
-  const dateRange = getDateRange(timePeriod);
+  const dateRange = getDateRange(timePeriod, customRange);
 
   const filters: HubFilters = {
     search: search || undefined,
@@ -101,6 +114,29 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
   const appointments = data?.appointments || [];
   const totalCount = data?.totalCount || 0;
   const totalPages = Math.ceil(totalCount / 50);
+
+  // Clear selection when filters/page change
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [page, status, locationId, stylistId, timePeriod, search]);
+
+  const toggleSelection = useCallback((id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const toggleSelectAll = useCallback(() => {
+    if (selectedIds.size === appointments.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(appointments.map((a: any) => a.id)));
+    }
+  }, [appointments, selectedIds.size]);
+
+  const selectedAppointments = appointments.filter((a: any) => selectedIds.has(a.id));
 
   const handleExportCSV = () => {
     if (appointments.length === 0) return;
@@ -128,6 +164,15 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
     URL.revokeObjectURL(url);
   };
 
+  const handleTimePeriodChange = (v: string) => {
+    const period = v as TimePeriod;
+    setTimePeriod(period);
+    setPage(0);
+    if (period === 'custom') {
+      setRangePopoverOpen(true);
+    }
+  };
+
   // Stylists for the filter dropdown
   const stylistOptions = teamMembers
     .filter((m: any) => m.user_id)
@@ -137,7 +182,10 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
 
-  const COL_COUNT = 11;
+  const COL_COUNT = 12;
+
+  const allSelected = appointments.length > 0 && selectedIds.size === appointments.length;
+  const someSelected = selectedIds.size > 0 && selectedIds.size < appointments.length;
 
   return (
     <div className="space-y-4">
@@ -147,13 +195,40 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
           <HubSearchBar value={search} onChange={onSearchChange} />
         </div>
 
-        <TogglePill
-          options={TIME_PERIOD_OPTIONS}
-          value={timePeriod}
-          onChange={(v) => { setTimePeriod(v as TimePeriod); setPage(0); }}
-          size="sm"
-          variant="solid"
-        />
+        <div className="flex items-center gap-2">
+          <TogglePill
+            options={TIME_PERIOD_OPTIONS}
+            value={timePeriod}
+            onChange={handleTimePeriodChange}
+            size="sm"
+            variant="solid"
+          />
+
+          {/* Date Range Popover (shown when custom is selected) */}
+          {timePeriod === 'custom' && (
+            <Popover open={rangePopoverOpen} onOpenChange={setRangePopoverOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size={tokens.button.card} className="gap-2 text-xs">
+                  <CalendarRange className="h-3.5 w-3.5" />
+                  {customRange.from
+                    ? `${format(customRange.from, 'MMM d')}${customRange.to ? ` – ${format(customRange.to, 'MMM d')}` : ''}`
+                    : 'Pick dates'}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="end">
+                <CalendarWidget
+                  mode="range"
+                  selected={customRange.from ? customRange as { from: Date; to?: Date } : undefined}
+                  onSelect={(range: any) => {
+                    setCustomRange(range || {});
+                    if (range?.to) setRangePopoverOpen(false);
+                  }}
+                  numberOfMonths={2}
+                />
+              </PopoverContent>
+            </Popover>
+          )}
+        </div>
       </div>
 
       {/* Row 2: Filters + CSV */}
@@ -208,6 +283,16 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-10 pr-0">
+                <Checkbox
+                  checked={allSelected}
+                  ref={(el) => {
+                    if (el) (el as any).indeterminate = someSelected;
+                  }}
+                  onCheckedChange={toggleSelectAll}
+                  aria-label="Select all"
+                />
+              </TableHead>
               <TableHead className={tokens.table.columnHeader}>Date</TableHead>
               <TableHead className={cn(tokens.table.columnHeader, 'hidden md:table-cell')}>Time</TableHead>
               <TableHead className={tokens.table.columnHeader}>Client</TableHead>
@@ -225,6 +310,7 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
             {isLoading ? (
               [1, 2, 3, 4, 5].map(i => (
                 <TableRow key={i}>
+                  <TableCell className="w-10 pr-0"><Skeleton className="h-4 w-4" /></TableCell>
                   <TableCell><Skeleton className="h-5 w-full" /></TableCell>
                   <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-full" /></TableCell>
                   <TableCell><Skeleton className="h-5 w-full" /></TableCell>
@@ -250,12 +336,20 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
             ) : (
               appointments.map((appt: any) => {
                 const statusBadge = APPOINTMENT_STATUS_BADGE[appt.status as keyof typeof APPOINTMENT_STATUS_BADGE] || APPOINTMENT_STATUS_BADGE.booked;
+                const isSelected = selectedIds.has(appt.id);
                 return (
                   <TableRow
                     key={appt.id}
-                    className="cursor-pointer"
+                    className={cn('cursor-pointer', isSelected && 'bg-muted/50')}
                     onClick={() => setSelectedAppt(appt)}
                   >
+                    <TableCell className="w-10 pr-0" onClick={(e) => e.stopPropagation()}>
+                      <Checkbox
+                        checked={isSelected}
+                        onCheckedChange={() => toggleSelection(appt.id)}
+                        aria-label={`Select ${appt.client_name || 'appointment'}`}
+                      />
+                    </TableCell>
                     <TableCell className="text-sm whitespace-nowrap">{formatDateDisplay(appt.appointment_date)}</TableCell>
                     <TableCell className="text-sm whitespace-nowrap hidden md:table-cell">{formatTime12h(appt.start_time)}</TableCell>
                     <TableCell className="text-sm font-medium">{appt.client_name || 'Walk-in'}</TableCell>
@@ -309,6 +403,12 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
             </div>
           </div>
         )}
+
+        {/* Batch Action Bar */}
+        <AppointmentBatchBar
+          selectedAppointments={selectedAppointments}
+          onClearSelection={() => setSelectedIds(new Set())}
+        />
       </Card>
 
       {/* Detail Drawer */}
