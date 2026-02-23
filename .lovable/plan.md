@@ -1,30 +1,35 @@
 
-
-# Always-Visible Archived & Banned Tabs in Client Directory
+# Fix Duplicates Tab to Show Both Records in a Pair
 
 ## Problem
-The "Archived" and "Banned" tabs in the Client Directory only appear when there are archived or banned clients (`stats.banned > 0` / `stats.archived > 0`). The user wants these tabs always available as entry points, regardless of count.
+The Duplicates tab count shows "1" and only displays the record flagged as `is_duplicate`. The canonical (original) profile that the duplicate points to is not included, even though both are part of the same duplicate pair. Both should appear.
 
-## Change (single file: `src/pages/dashboard/ClientDirectory.tsx`)
+## Root Cause
+Three filter expressions only check `is_duplicate === true`, missing canonical profiles that have a `_linkedDuplicateId` set.
 
-### Remove conditional rendering on Banned and Archived tabs (~lines 647-656)
+## Changes (single file: `src/pages/dashboard/ClientDirectory.tsx`)
 
-Currently:
+### 1. Stats computation (~line 466)
+Change the duplicates count from:
 ```
-{stats.banned > 0 && ( <TabsTrigger value="banned" ... /> )}
-{stats.archived > 0 && ( <TabsTrigger value="archived" ... /> )}
+active.filter(c => (c as any).is_duplicate === true).length
 ```
-
-Change to always render both tabs (no wrapping conditional). Keep the count badge but show `(0)` when empty:
-
+to:
 ```
-<TabsTrigger value="banned" className="text-xs text-red-600">
-  <Ban className="w-3 h-3 mr-1" /> Banned ({stats.banned})
-</TabsTrigger>
-<TabsTrigger value="archived" className="text-xs text-muted-foreground">
-  <Archive className="w-3 h-3 mr-1" /> Archived ({stats.archived})
-</TabsTrigger>
+active.filter(c => (c as any).is_duplicate === true || (c as any)._linkedDuplicateId).length
 ```
 
-This is a two-line conditional removal. No other files or logic changes needed -- the filtering logic for `activeTab === 'banned'` and `activeTab === 'archived'` already exists and will correctly show an empty state when there are zero matching clients.
+### 2. Tab filter -- first occurrence (~line 300)
+Change:
+```
+filtered = filtered.filter(c => (c as any).is_duplicate === true);
+```
+to:
+```
+filtered = filtered.filter(c => (c as any).is_duplicate === true || (c as any)._linkedDuplicateId);
+```
 
+### 3. Tab filter -- second occurrence (~line 407)
+Same change as above for the parallel filter path.
+
+These three one-line edits ensure both the duplicate and its canonical counterpart appear in the Duplicates tab and are reflected in the count badge.
