@@ -13,7 +13,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Calendar, Clock, User, MapPin, DollarSign, MessageSquare, Tag, Percent, Phone, Mail, FileText, UserCheck, Info, StickyNote, ExternalLink, XCircle } from 'lucide-react';
+import { Calendar, Clock, User, MapPin, DollarSign, MessageSquare, Tag, Percent, Phone, Mail, FileText, UserCheck, Info, StickyNote, ExternalLink, XCircle, Hash, Copy } from 'lucide-react';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { cn } from '@/lib/utils';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -218,6 +218,27 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
                     <span className="text-muted-foreground">Not provided</span>
                   )}
                 </DetailRow>
+                {(() => {
+                  const displayClientId = appointment._source === 'phorest'
+                    ? appointment.phorest_client_id
+                    : appointment.client_id;
+                  if (!displayClientId) return null;
+                  return (
+                    <DetailRow icon={Hash} label="Client ID">
+                      <button
+                        type="button"
+                        className="inline-flex items-center gap-1.5 text-xs text-muted-foreground font-mono hover:text-foreground transition-colors"
+                        onClick={() => {
+                          navigator.clipboard.writeText(displayClientId);
+                          toast.success('Client ID copied');
+                        }}
+                      >
+                        {displayClientId.length > 12 ? `${displayClientId.slice(0, 12)}…` : displayClientId}
+                        <Copy className="h-3 w-3" />
+                      </button>
+                    </DetailRow>
+                  );
+                })()}
               </div>
               {resolvedClientId && (
                 <Button
