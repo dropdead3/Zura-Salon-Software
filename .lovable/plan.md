@@ -1,25 +1,53 @@
 
+## Fix: Appointments Not Loading in Appointments & Transactions Hub
 
-## Re-add Brightness Hover Effect to Appointment Cards
+### Root Cause
 
-The "Background tint shift" hover effect (brightness filter) was part of the original card interaction design but got lost during the recent cleanup. This adds it back.
+The Appointments Hub query is failing with a **400 error** from the database. The error message:
 
-### Change
+> "Could not find a relationship between 'phorest_appointments' and 'phorest_clients' using the hint 'phorest_appointments_phorest_client_id_fkey'"
 
-**File:** `src/components/dashboard/schedule/AppointmentCardContent.tsx` (line 542)
+The `useAppointmentsHub` hook tries to join `phorest_clients` via a foreign key that no longer exists in the database schema. This causes every query to fail silently, showing an empty table.
 
-Add `hover:brightness-[1.08]` to the existing hover classes. This creates a subtle lightening effect on hover that signals interactivity without the magnify/scale behavior we removed.
+### Why the Scheduler Still Works
+
+The scheduler queries `phorest_appointments` directly without joining `phorest_clients`. It uses the `client_name` field stored directly on the appointment row -- which is already populated. The hub query tries an unnecessary join that breaks everything.
+
+### Fix
+
+**File:** `src/hooks/useAppointmentsHub.ts` (line 23-24)
+
+Remove the `phorest_clients` join from the select statement. The `client_name` field is already stored directly on `phorest_appointments`, so the join is redundant.
 
 Before:
 ```
-'hover:shadow-md hover:z-20',
+.select('*, phorest_clients!phorest_appointments_phorest_client_id_fkey(name, email, phone)', { count: 'exact' })
 ```
 
 After:
 ```
-'hover:shadow-md hover:z-20 hover:brightness-[1.08]',
+.select('*', { count: 'exact' })
 ```
 
-### Result
-Appointment cards will brighten slightly on hover alongside the existing shadow elevation -- no scale, no tooltip, just a clean tint shift + shadow.
+Also update the table row rendering in `AppointmentsList.tsx` (line 227) to remove the fallback to `appt.phorest_clients?.name` since that join data will no longer be available:
 
+Before:
+```
+{appt.client_name || appt.phorest_clients?.name || 'Walk-in'}
+```
+
+After:
+```
+{appt.client_name || 'Walk-in'}
+```
+
+### Files Changed
+
+| File | Change |
+|------|--------|
+| `src/hooks/useAppointmentsHub.ts` | Remove broken `phorest_clients` join from select |
+| `src/components/dashboard/appointments-hub/AppointmentsList.tsx` | Remove `phorest_clients` fallback reference |
+
+### Impact
+
+This is a one-line fix per file that will immediately restore all 412 appointments to the hub view. No database migration needed.
