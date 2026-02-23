@@ -1,53 +1,72 @@
 
-## Fix: Appointments Not Loading in Appointments & Transactions Hub
 
-### Root Cause
+## Fix: Resolve Client Names from Linked Tables
 
-The Appointments Hub query is failing with a **400 error** from the database. The error message:
+### Problem
 
-> "Could not find a relationship between 'phorest_appointments' and 'phorest_clients' using the hint 'phorest_appointments_phorest_client_id_fkey'"
+Almost all appointments in both tables have `client_name` as NULL:
+- **phorest_appointments**: 525 of 530 have NULL `client_name`. The actual names are in the `phorest_clients` table, linked via `phorest_client_id`.
+- **local appointments**: All 127 have NULL `client_name`. They use a `client_id` foreign key instead.
 
-The `useAppointmentsHub` hook tries to join `phorest_clients` via a foreign key that no longer exists in the database schema. This causes every query to fail silently, showing an empty table.
-
-### Why the Scheduler Still Works
-
-The scheduler queries `phorest_appointments` directly without joining `phorest_clients`. It uses the `client_name` field stored directly on the appointment row -- which is already populated. The hub query tries an unnecessary join that breaks everything.
+Since the hub only displays `appt.client_name || 'Walk-in'`, every row shows "Walk-in."
 
 ### Fix
 
-**File:** `src/hooks/useAppointmentsHub.ts` (line 23-24)
+**File:** `src/hooks/useAppointmentsHub.ts`
 
-Remove the `phorest_clients` join from the select statement. The `client_name` field is already stored directly on `phorest_appointments`, so the join is redundant.
+After paginating results, resolve client names from `phorest_clients` for phorest appointments that have a `phorest_client_id` but no `client_name`. This follows the same pattern already used for resolving stylist names.
 
-Before:
-```
-.select('*, phorest_clients!phorest_appointments_phorest_client_id_fkey(name, email, phone)', { count: 'exact' })
+#### Steps:
+
+1. Collect all `phorest_client_id` values from paged phorest appointments where `client_name` is null
+2. Batch-query `phorest_clients` for those IDs to get `name`
+3. Merge the resolved names into the enriched results
+
+### Technical Detail
+
+Add a client name resolution step between the pagination (line 77) and the stylist resolution (line 80):
+
+```typescript
+// Resolve client names for phorest appointments missing client_name
+const missingClientIds = [
+  ...new Set(
+    paged
+      .filter((a: any) => !a.client_name && a.phorest_client_id)
+      .map((a: any) => a.phorest_client_id)
+  ),
+] as string[];
+
+let clientNameMap: Record<string, string> = {};
+if (missingClientIds.length > 0) {
+  const { data: clients } = await supabase
+    .from('phorest_clients')
+    .select('phorest_client_id, name')
+    .in('phorest_client_id', missingClientIds);
+  for (const c of clients || []) {
+    if (c.phorest_client_id && c.name) {
+      clientNameMap[c.phorest_client_id] = c.name;
+    }
+  }
+}
 ```
 
-After:
-```
-.select('*', { count: 'exact' })
-```
+Then in the enrichment step, add the fallback:
 
-Also update the table row rendering in `AppointmentsList.tsx` (line 227) to remove the fallback to `appt.phorest_clients?.name` since that join data will no longer be available:
-
-Before:
-```
-{appt.client_name || appt.phorest_clients?.name || 'Walk-in'}
-```
-
-After:
-```
-{appt.client_name || 'Walk-in'}
+```typescript
+const enriched = paged.map((a: any) => ({
+  ...a,
+  client_name: a.client_name || clientNameMap[a.phorest_client_id] || null,
+  stylist_name: stylistMap[a.stylist_user_id] || a.staff_name || null,
+}));
 ```
 
 ### Files Changed
 
 | File | Change |
 |------|--------|
-| `src/hooks/useAppointmentsHub.ts` | Remove broken `phorest_clients` join from select |
-| `src/components/dashboard/appointments-hub/AppointmentsList.tsx` | Remove `phorest_clients` fallback reference |
+| `src/hooks/useAppointmentsHub.ts` | Add client name resolution from `phorest_clients` table |
 
 ### Impact
 
-This is a one-line fix per file that will immediately restore all 412 appointments to the hub view. No database migration needed.
+All 525+ appointments with linked `phorest_client_id` will now display the correct client name (e.g., "Barbara Bloom") instead of "Walk-in." Only truly anonymous appointments (no client_id and no client_name) will show "Walk-in."
+
