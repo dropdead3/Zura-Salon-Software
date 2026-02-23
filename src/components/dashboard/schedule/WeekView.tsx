@@ -8,25 +8,20 @@ import {
   isToday,
   isTomorrow,
 } from 'date-fns';
-import { cn, formatPhoneDisplay, formatDisplayName } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { 
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { Badge } from '@/components/ui/badge';
-import { Phone, User, Users, Repeat, RotateCcw, Star, ArrowRightLeft, Clock } from 'lucide-react';
-import { getClientInitials, getAvatarColor, formatServicesWithDuration, sortServices } from '@/lib/appointment-card-utils';
-import { StylistBadge } from './StylistBadge';
-import { BlurredAmount } from '@/contexts/HideNumbersContext';
-import { formatRelativeTime } from '@/lib/format';
-import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
-import { QuickBookingPopover } from './QuickBookingPopover';
 import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
-import { getCategoryColor, SPECIAL_GRADIENTS, isGradientMarker, getGradientFromMarker, getDarkCategoryStyle } from '@/utils/categoryColors';
+import { Users } from 'lucide-react';
 import { APPOINTMENT_STATUS_COLORS } from '@/lib/design-tokens';
+import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
 import type { ServiceLookupEntry } from '@/hooks/useServiceLookup';
 import type { AssistantTimeBlock } from '@/hooks/useAssistantTimeBlocks';
+import { AppointmentCardContent, getCardSize } from './AppointmentCardContent';
+import { QuickBookingPopover } from './QuickBookingPopover';
 
 interface WeekViewProps {
   currentDate: Date;
@@ -53,18 +48,6 @@ const STATUS_COLORS = APPOINTMENT_STATUS_COLORS;
 const ROW_HEIGHT = 20; // Height per 15-minute slot
 const SLOTS_PER_HOUR = 4;
 
-// Categories that display the X pattern overlay
-const BLOCKED_CATEGORIES = ['Block', 'Break'];
-
-// Helper to detect consultation category
-const isConsultationCategory = (category: string | null | undefined) => {
-  if (!category) return false;
-  return category.toLowerCase().includes('consult');
-};
-
-// Default consultation gradient (teal-lime) for fallback
-const DEFAULT_CONSULTATION_GRADIENT = SPECIAL_GRADIENTS['teal-lime'];
-
 function parseTimeToMinutes(time: string): number {
   const [hours, minutes] = time.split(':').map(Number);
   return hours * 60 + minutes;
@@ -88,8 +71,8 @@ function formatTime12h(time: string): string {
   return `${hour12}:${minutes} ${ampm}`;
 }
 
-function AppointmentCard({ 
-  appointment, 
+function WeekAppointmentCard({
+  appointment,
   hoursStart,
   onClick,
   categoryColors,
@@ -99,7 +82,7 @@ function AppointmentCard({
   serviceLookup,
   assistantNamesMap,
 }: {
-  appointment: PhorestAppointment; 
+  appointment: PhorestAppointment;
   hoursStart: number;
   onClick: () => void;
   categoryColors: Record<string, { bg: string; text: string; abbr: string }>;
@@ -110,237 +93,28 @@ function AppointmentCard({
   assistantNamesMap?: Map<string, string[]>;
 }) {
   const style = getEventStyle(appointment.start_time, appointment.end_time, hoursStart);
-  const statusColors = STATUS_COLORS[appointment.status];
-  const duration = parseTimeToMinutes(appointment.end_time) - parseTimeToMinutes(appointment.start_time);
-  const isCompact = duration <= 30;
-  const isMedium = duration <= 60;
-
-  // Get category-based color for non-status-specific appointments
-  const serviceCategory = appointment.service_category;
-  const catColor = getCategoryColor(serviceCategory, categoryColors);
-  const useCategoryColor = colorBy === 'service' || appointment.status === 'booked';
-  const isConsultation = isConsultationCategory(serviceCategory);
-  
-  // Check if the category has a gradient marker stored
-  const storedColorHex = categoryColors[serviceCategory?.toLowerCase() || '']?.bg || '';
-  const gradientFromMarker = isGradientMarker(storedColorHex) ? getGradientFromMarker(storedColorHex) : null;
-  
-  // Use gradient if: marker stored, OR consultation category defaults to teal-lime
-  const displayGradient = gradientFromMarker || (isConsultation ? DEFAULT_CONSULTATION_GRADIENT : null);
-
-  // Multi-service color banding
-  const serviceBands = useMemo(() => {
-    if (!useCategoryColor || !serviceLookup || displayGradient || isCompact) return null;
-    const sorted = sortServices(appointment.service_name, serviceLookup);
-    if (sorted.length <= 1) return null;
-    
-    const bands = sorted.map(s => {
-      const category = s.category || appointment.service_category;
-      const color = getCategoryColor(category, categoryColors);
-      return { name: s.name, category, duration: s.duration || 30, color, isExtra: s.isExtra };
-    });
-    
-    const totalDuration = bands.reduce((sum, b) => sum + b.duration, 0);
-    
-    return bands.map(b => ({
-      ...b,
-      percent: (b.duration / totalDuration) * 100,
-    }));
-  }, [appointment.service_name, appointment.service_category, serviceLookup, categoryColors, useCategoryColor, displayGradient, isCompact]);
-
-  // Dark mode detection (reactive via context)
-  const { resolvedTheme } = useDashboardTheme();
-  const isDark = resolvedTheme === 'dark';
-  const darkStyle = useMemo(() => {
-    if (!isDark || !useCategoryColor || displayGradient) return null;
-    return getDarkCategoryStyle(catColor.bg);
-  }, [isDark, useCategoryColor, displayGradient, catColor.bg]);
+  const size = getCardSize(appointment.start_time, appointment.end_time);
 
   return (
-        <div
-          className={cn(
-            'absolute left-1 right-1 z-10 rounded-md px-2 py-1 cursor-pointer transition-transform duration-200 ease-out hover:shadow-lg hover:z-20 overflow-hidden hover:scale-[1.02]',
-            !displayGradient && 'border-l-4',
-            !useCategoryColor && !displayGradient && statusColors.bg,
-            !useCategoryColor && !displayGradient && statusColors.border,
-            !useCategoryColor && !displayGradient && statusColors.text,
-            appointment.status === 'cancelled' && 'opacity-50 line-through',
-            displayGradient && 'shadow-lg',
-            // Pending redo: amber dashed border treatment
-            appointment.status === 'pending' && (appointment as any).is_redo && 'border-dashed border-2 border-amber-500 dark:border-amber-400',
-          )}
-          style={{
-            ...style,
-          ...(displayGradient ? {
-            background: displayGradient.background,
-            color: displayGradient.textColor,
-          } : useCategoryColor && isDark && darkStyle ? {
-            backgroundColor: darkStyle.fill,
-            color: darkStyle.text,
-            borderColor: darkStyle.stroke,
-            borderWidth: '1px',
-            borderStyle: 'solid',
-            borderLeftColor: darkStyle.accent,
-            borderLeftWidth: '4px',
-            boxShadow: !isCompact ? darkStyle.glow : undefined,
-            transition: 'background-color 150ms ease, box-shadow 150ms ease',
-          } : useCategoryColor ? {
-              backgroundColor: catColor.bg,
-              color: catColor.text,
-              borderLeftColor: catColor.bg,
-              borderWidth: '0 0 0 4px',
-              borderStyle: 'solid',
-              boxShadow: 'none',
-              opacity: 1,
-              backdropFilter: 'none',
-            } : undefined),
-          }}
-          onClick={onClick}
-        >
-          {/* Glass stroke overlay for gradient */}
-          {displayGradient && (
-            <div 
-              className="absolute inset-0 rounded-sm pointer-events-none"
-              style={{
-                background: displayGradient.glassStroke,
-                mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-                maskComposite: 'xor',
-                WebkitMaskComposite: 'xor',
-                padding: '1px',
-              }}
-            />
-          )}
-          {/* Shimmer animation for gradient */}
-          {displayGradient && (
-            <div 
-              className="absolute inset-0 pointer-events-none animate-shimmer"
-              style={{
-                background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%)',
-                backgroundSize: '200% 100%',
-              }}
-            />
-          )}
-          {/* X pattern overlay for Block/Break entries */}
-          {BLOCKED_CATEGORIES.includes(appointment.service_category || '') && (
-            <div className="absolute inset-0 pointer-events-none overflow-hidden">
-              <div 
-                className="absolute inset-0"
-                style={{
-                  background: `linear-gradient(to bottom right, 
-                    transparent calc(50% - 1px), 
-                    ${useCategoryColor ? catColor.text : 'currentColor'}19 calc(50% - 1px), 
-                    ${useCategoryColor ? catColor.text : 'currentColor'}19 calc(50% + 1px), 
-                    transparent calc(50% + 1px))`,
-                }}
-              />
-              <div 
-                className="absolute inset-0"
-                style={{
-                  background: `linear-gradient(to bottom left, 
-                    transparent calc(50% - 1px), 
-                    ${useCategoryColor ? catColor.text : 'currentColor'}19 calc(50% - 1px), 
-                    ${useCategoryColor ? catColor.text : 'currentColor'}19 calc(50% + 1px), 
-                    transparent calc(50% + 1px))`,
-                }}
-              />
-            </div>
-          )}
-          {/* Multi-service color bands */}
-          {serviceBands && useCategoryColor && (
-            <div className="absolute inset-0 flex flex-col overflow-hidden rounded-md">
-              {serviceBands.map((band, i) => {
-                const bandDark = isDark ? getDarkCategoryStyle(band.color.bg) : null;
-                return (
-                  <div
-                    key={i}
-                    style={{
-                      flex: `${band.percent} 0 0%`,
-                      backgroundColor: bandDark ? bandDark.fill : band.color.bg,
-                    }}
-                  />
-                );
-              })}
-            </div>
-          )}
-          {/* Stylist badge top-right */}
-          {!isCompact && appointment.stylist_profile && (
-            <div className="absolute top-0.5 right-0.5 z-10">
-              <StylistBadge
-                stylistProfile={appointment.stylist_profile}
-                assistantNames={assistantNamesMap?.get(appointment.id)}
-              />
-            </div>
-          )}
-          <div className="relative z-10" style={serviceBands ? { textShadow: '0 0 3px rgba(0,0,0,0.15)' } : undefined}>
-            {isCompact ? (
-              <div className="text-xs font-medium truncate flex items-center gap-0.5">
-                {(appointment as any).is_redo && <RotateCcw className="h-2.5 w-2.5 text-amber-500 shrink-0" />}
-                {appointment.recurrence_group_id && <Repeat className="h-2.5 w-2.5 opacity-60 shrink-0" />}
-                {(appointment as any).rescheduled_at && <ArrowRightLeft className="h-2.5 w-2.5 text-blue-500 dark:text-blue-400 shrink-0" />}
-                {isAssisting && <span className="bg-accent/80 text-accent-foreground text-[7px] px-0.5 rounded-sm font-medium shrink-0">AST</span>}
-                {!isAssisting && hasAssistants && <Users className="h-2.5 w-2.5 opacity-60 shrink-0" />}
-                {appointment.is_new_client && <Star className="h-2.5 w-2.5 text-amber-500 shrink-0" />}
-                {appointment.client_name}
-              </div>
-            ) : isMedium ? (
-              <>
-                <div className="text-xs font-medium truncate flex items-center gap-0.5">
-                  {appointment.recurrence_group_id && <Repeat className="h-3 w-3 opacity-60 shrink-0" />}
-                  {(appointment as any).rescheduled_at && <ArrowRightLeft className="h-3 w-3 text-blue-500 dark:text-blue-400 shrink-0" />}
-                  {isAssisting && <span className="bg-accent/80 text-accent-foreground text-[8px] px-1 py-px rounded-sm font-medium shrink-0">ASSISTING</span>}
-                  {!isAssisting && hasAssistants && <Users className="h-3 w-3 opacity-60 shrink-0" />}
-                  <span className={cn('h-4 w-4 rounded-full flex items-center justify-center text-[7px] font-medium shrink-0', getAvatarColor(appointment.client_name))}>
-                    {getClientInitials(appointment.client_name)}
-                  </span>
-                  {appointment.client_name}
-                  {appointment.is_new_client && <span className="text-[8px] px-1 py-px rounded-sm bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 font-medium shrink-0">NEW</span>}
-                  {appointment.client_phone ? <span className="font-normal opacity-80">{formatPhoneDisplay(appointment.client_phone)}</span> : ''}
-                </div>
-                <div className="text-[11px] opacity-90 truncate">{formatServicesWithDuration(appointment.service_name, serviceLookup) || appointment.service_name}</div>
-              </>
-            ) : (
-              <>
-                <div className="text-xs font-medium truncate flex items-center gap-0.5">
-                  {appointment.recurrence_group_id && <Repeat className="h-3 w-3 opacity-60 shrink-0" />}
-                  {(appointment as any).rescheduled_at && <ArrowRightLeft className="h-3 w-3 text-blue-500 dark:text-blue-400 shrink-0" />}
-                  {isAssisting && <span className="bg-accent/80 text-accent-foreground text-[8px] px-1 py-px rounded-sm font-medium shrink-0">ASSISTING</span>}
-                  {!isAssisting && hasAssistants && <Users className="h-3 w-3 opacity-60 shrink-0" />}
-                  <span className={cn('h-4 w-4 rounded-full flex items-center justify-center text-[7px] font-medium shrink-0', getAvatarColor(appointment.client_name))}>
-                    {getClientInitials(appointment.client_name)}
-                  </span>
-                  {appointment.client_name}
-                  {appointment.is_new_client && <span className="text-[8px] px-1 py-px rounded-sm bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 font-medium shrink-0">NEW</span>}
-                  {appointment.client_phone && <span className="font-normal opacity-80">{formatPhoneDisplay(appointment.client_phone)}</span>}
-                </div>
-                <div className="text-[11px] opacity-90 truncate">{formatServicesWithDuration(appointment.service_name, serviceLookup) || appointment.service_name}</div>
-                {(appointment as any).rescheduled_at && (appointment as any).rescheduled_from_time && (
-                  <div className="text-[10px] opacity-70 italic truncate flex items-center gap-0.5">
-                    <ArrowRightLeft className="h-2.5 w-2.5 shrink-0" />
-                    Moved from {formatTime12h((appointment as any).rescheduled_from_time)}
-                  </div>
-                )}
-                <div className="text-[10px] opacity-80 flex items-center justify-between">
-                  <span>{formatTime12h(appointment.start_time)} - {formatTime12h(appointment.end_time)}</span>
-                  {appointment.total_price != null && appointment.total_price > 0 && (
-                    <BlurredAmount className="opacity-70">
-                      ${appointment.total_price.toFixed(0)}
-                    </BlurredAmount>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
-          
-          {/* Status pip for confirmed/checked_in */}
-          {!isCompact && (appointment.status === 'confirmed' || appointment.status === 'checked_in') && (
-            <div className="absolute bottom-1 right-1">
-              <span className={cn(
-                'w-2 h-2 rounded-full block ring-1 ring-white/50',
-                appointment.status === 'confirmed' ? 'bg-green-400' : 'bg-blue-400'
-              )} />
-            </div>
-          )}
-        </div>
+    <div
+      className="absolute left-1 right-1 z-10"
+      style={style}
+      onClick={onClick}
+    >
+      <AppointmentCardContent
+        appointment={appointment}
+        variant="grid"
+        size={size}
+        isAssisting={isAssisting}
+        hasAssistants={hasAssistants}
+        colorBy={colorBy}
+        serviceLookup={serviceLookup}
+        assistantNamesMap={assistantNamesMap}
+        categoryColors={categoryColors}
+        showHoverPreview
+        onClick={() => {}}
+      />
+    </div>
   );
 }
 
@@ -692,7 +466,7 @@ export function WeekView({
 
                   {/* Appointments */}
                   {dayAppointments.map((apt) => (
-                    <AppointmentCard
+                    <WeekAppointmentCard
                       key={apt.id}
                       appointment={apt}
                       hoursStart={hoursStart}
