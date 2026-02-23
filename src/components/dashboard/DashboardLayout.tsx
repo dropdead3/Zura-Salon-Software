@@ -870,7 +870,7 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
           sidebarCollapsed
             ? "lg:bg-card/80 lg:backdrop-saturate-150 lg:border-border lg:rounded-[32px]"
             : "lg:bg-card/80 lg:backdrop-saturate-150 lg:border-border lg:rounded-xl",
-          sidebarCollapsed ? "lg:w-16" : "lg:w-72"
+          sidebarCollapsed ? "lg:w-16" : "lg:w-80"
         )}
       >
         <SidebarNavContent
@@ -902,7 +902,7 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
       {/* Content wrapper - flex column when hideFooter for proper height chain */}
       <div className={cn(
         "w-full transition-[padding-left] duration-200 ease-in-out min-w-0 overflow-x-clip",
-        sidebarCollapsed ? "lg:pl-[88px]" : "lg:pl-[312px]",
+        sidebarCollapsed ? "lg:pl-[88px]" : "lg:pl-[344px]",
         hideFooter && "h-screen flex flex-col"
       )}>
       {/* Platform Incident Banner - above everything */}
