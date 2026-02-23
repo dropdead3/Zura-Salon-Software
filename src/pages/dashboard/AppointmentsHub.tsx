@@ -3,10 +3,11 @@ import { useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { tokens } from '@/lib/design-tokens';
-import { Receipt, Calendar, Gift } from 'lucide-react';
+import { Receipt, Calendar, Gift, Tag, Ticket } from 'lucide-react';
 import { HubSearchBar } from '@/components/dashboard/appointments-hub/HubSearchBar';
 import { AppointmentsList } from '@/components/dashboard/appointments-hub/AppointmentsList';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
+import { PromoRedemptionList } from '@/components/dashboard/appointments-hub/PromoRedemptionList';
 
 // Lazy imports for existing transaction/gift card components
 import { TransactionList } from '@/components/dashboard/transactions/TransactionList';
@@ -34,6 +35,8 @@ function TransactionsTab({ search }: { search: string }) {
   const [locationId, setLocationId] = useState('all');
   const [itemType, setItemType] = useState('all');
   const [showPendingRefunds, setShowPendingRefunds] = useState(false);
+  const [showDiscountedOnly, setShowDiscountedOnly] = useState(false);
+  const [showPromoHistory, setShowPromoHistory] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
   const [isRefundOpen, setIsRefundOpen] = useState(false);
   const [isCreditsOpen, setIsCreditsOpen] = useState(false);
@@ -70,19 +73,30 @@ function TransactionsTab({ search }: { search: string }) {
 
   const { data: transactions = [], isLoading, refetch } = useTransactions(filters);
 
-  const totalRevenue = transactions.reduce((sum, t) => sum + (Number(t.total_amount) || 0), 0);
-  const serviceCount = transactions.filter(t => t.item_type === 'service').length;
-  const productCount = transactions.filter(t => t.item_type === 'product').length;
-  const refundedCount = transactions.filter(t => t.refund_status).length;
+  // Apply client-side discounted-only filter
+  const filteredTransactions = showDiscountedOnly
+    ? transactions.filter(t => (Number(t.discount) || 0) > 0)
+    : transactions;
+
+  const totalRevenue = filteredTransactions.reduce((sum, t) => sum + (Number(t.total_amount) || 0), 0);
+  const serviceCount = filteredTransactions.filter(t => t.item_type === 'service').length;
+  const productCount = filteredTransactions.filter(t => t.item_type === 'product').length;
+  const refundedCount = filteredTransactions.filter(t => t.refund_status).length;
+  const totalDiscounts = transactions.reduce((sum, t) => sum + (Number(t.discount) || 0), 0);
+  const discountedCount = transactions.filter(t => (Number(t.discount) || 0) > 0).length;
 
   const handleExportCSV = () => {
-    if (transactions.length === 0) return;
-    const headers = ['Date', 'Client', 'Type', 'Amount', 'Refund Status'];
-    const rows = transactions.map((t: any) => [
+    if (filteredTransactions.length === 0) return;
+    const headers = ['Date', 'Client', 'Type', 'Item', 'Discount', 'Amount', 'Promo Code', 'Promotion Name', 'Refund Status'];
+    const rows = filteredTransactions.map((t: any) => [
       t.transaction_date || '',
       t.client_name || '',
       t.item_type || '',
+      t.item_name || '',
+      t.discount ?? '',
       t.total_amount ?? '',
+      t.promo_code || '',
+      t.promotion_name || '',
       t.refund_status || '',
     ]);
     const csv = [headers, ...rows].map(r => r.map((c: any) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
@@ -98,10 +112,10 @@ function TransactionsTab({ search }: { search: string }) {
   return (
     <div className="space-y-4">
       {/* Stats */}
-      <BentoGrid maxPerRow={4} gap="gap-4">
+      <BentoGrid maxPerRow={5} gap="gap-4">
         <Card className="p-4">
           <p className="text-sm text-muted-foreground">Total Revenue</p>
-          <p className={tokens.stat.large}>{formatCurrency(totalRevenue)}</p>
+          <p className={tokens.stat.large}><BlurredAmount>{formatCurrency(totalRevenue)}</BlurredAmount></p>
         </Card>
         <Card className="p-4">
           <p className="text-sm text-muted-foreground">Services</p>
@@ -110,6 +124,15 @@ function TransactionsTab({ search }: { search: string }) {
         <Card className="p-4">
           <p className="text-sm text-muted-foreground">Products</p>
           <p className={tokens.stat.large}>{productCount}</p>
+        </Card>
+        <Card className="p-4">
+          <p className="text-sm text-muted-foreground">Discounts Given</p>
+          <p className={cn(tokens.stat.large, totalDiscounts > 0 && 'text-amber-600')}>
+            <BlurredAmount>{formatCurrency(totalDiscounts)}</BlurredAmount>
+          </p>
+          {discountedCount > 0 && (
+            <p className="text-xs text-muted-foreground mt-1">{discountedCount} item{discountedCount !== 1 ? 's' : ''}</p>
+          )}
         </Card>
         <Card className="p-4">
           <p className="text-sm text-muted-foreground">Refunded</p>
@@ -150,6 +173,22 @@ function TransactionsTab({ search }: { search: string }) {
             </SelectContent>
           </Select>
 
+          {/* Discounted Only toggle */}
+          <Button
+            variant={showDiscountedOnly ? 'default' : 'outline'}
+            size={tokens.button.card}
+            onClick={() => setShowDiscountedOnly(!showDiscountedOnly)}
+            className="gap-2"
+          >
+            <Tag className="w-4 h-4" />
+            Discounted Only
+            {discountedCount > 0 && (
+              <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[10px]">
+                {discountedCount}
+              </Badge>
+            )}
+          </Button>
+
           {/* Pending Refunds toggle */}
           {pendingRefunds.length > 0 && (
             <Button
@@ -166,8 +205,19 @@ function TransactionsTab({ search }: { search: string }) {
             </Button>
           )}
 
+          {/* Promo History toggle */}
+          <Button
+            variant={showPromoHistory ? 'default' : 'outline'}
+            size={tokens.button.card}
+            onClick={() => setShowPromoHistory(!showPromoHistory)}
+            className="gap-2"
+          >
+            <Ticket className="w-4 h-4" />
+            Promo History
+          </Button>
+
           <div className="ml-auto flex gap-2">
-            <Button variant="outline" size={tokens.button.card} onClick={handleExportCSV} disabled={transactions.length === 0}>
+            <Button variant="outline" size={tokens.button.card} onClick={handleExportCSV} disabled={filteredTransactions.length === 0}>
               <Download className="w-4 h-4 mr-2" />
               CSV
             </Button>
@@ -203,8 +253,16 @@ function TransactionsTab({ search }: { search: string }) {
         </Card>
       )}
 
+      {/* Promo Redemption History */}
+      {showPromoHistory && (
+        <div className="space-y-2">
+          <h4 className={tokens.heading.subsection}>Promotion Redemption History</h4>
+          <PromoRedemptionList redemptions={[]} isLoading={false} />
+        </div>
+      )}
+
       <TransactionList
-        transactions={transactions}
+        transactions={filteredTransactions}
         isLoading={isLoading}
         onRefund={(t) => { setSelectedTransaction(t); setIsRefundOpen(true); }}
       />
