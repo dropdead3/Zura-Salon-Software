@@ -85,11 +85,11 @@ export function useAppointmentsHub(filters: HubFilters) {
         ),
       ] as string[];
 
-      let clientInfoMap: Record<string, { name?: string; email?: string; phone?: string }> = {};
+      let clientInfoMap: Record<string, { name?: string; email?: string; phone?: string; customer_number?: string }> = {};
       if (missingClientIds.length > 0) {
         const { data: clients } = await supabase
           .from('phorest_clients')
-          .select('phorest_client_id, name, email, phone')
+          .select('phorest_client_id, name, email, phone, customer_number')
           .in('phorest_client_id', missingClientIds);
         for (const c of clients || []) {
           if (c.phorest_client_id) {
@@ -97,6 +97,7 @@ export function useAppointmentsHub(filters: HubFilters) {
               name: c.name || undefined,
               email: c.email || undefined,
               phone: c.phone || undefined,
+              customer_number: (c as any).customer_number || undefined,
             };
           }
         }
@@ -141,14 +142,31 @@ export function useAppointmentsHub(filters: HubFilters) {
         }
       }
 
+      // ── Resolve customer_number for local appointments ──
+      const localClientIds = [...new Set(paged.filter((a: any) => a._source === 'local' && a.client_id).map((a: any) => a.client_id))] as string[];
+      let localClientMap: Record<string, string> = {};
+      if (localClientIds.length > 0) {
+        const { data: localClients } = await supabase
+          .from('clients')
+          .select('id, customer_number')
+          .in('id', localClientIds);
+        for (const c of localClients || []) {
+          if ((c as any).customer_number) localClientMap[c.id] = (c as any).customer_number;
+        }
+      }
+
       // ── Enrich ──
       const enriched = paged.map((a: any) => {
         const clientInfo = clientInfoMap[a.phorest_client_id] || {};
+        const customerNumber = a._source === 'phorest'
+          ? (clientInfo.customer_number || null)
+          : (a.client_id ? localClientMap[a.client_id] || null : null);
         return {
           ...a,
           client_name: a.client_name || clientInfo.name || null,
           client_email: a.client_email || clientInfo.email || null,
           client_phone: a.client_phone || clientInfo.phone || null,
+          customer_number: customerNumber,
           stylist_name: stylistMap[a.stylist_user_id] || a.staff_name || null,
           created_by_name: a.created_by
             ? createdByMap[a.created_by] || 'Unknown'

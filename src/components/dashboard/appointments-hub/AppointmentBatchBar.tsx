@@ -32,12 +32,15 @@ function getUniqueClientIds(appointments: any[]): Set<string> {
   return ids;
 }
 
-function MultiClientWarning({ count }: { count: number }) {
+function MultiClientWarning({ count, customerNumbers }: { count: number; customerNumbers?: string[] }) {
+  const displayNumbers = customerNumbers && customerNumbers.length > 0
+    ? customerNumbers.slice(0, 3).join(', ') + (customerNumbers.length > 3 ? ` +${customerNumbers.length - 3} more` : '')
+    : null;
   return (
     <div className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm">
       <AlertTriangle className="h-4 w-4 shrink-0 text-amber-500 mt-0.5" />
       <p className="text-amber-200">
-        These appointments belong to <span className="font-medium">{count} different clients</span> with the same or similar name. Verify you intend to affect all of them.
+        These appointments belong to <span className="font-medium">{count} different clients</span>{displayNumbers ? ` (${displayNumbers})` : ''} with the same or similar name. Verify you intend to affect all of them.
       </p>
     </div>
   );
@@ -63,6 +66,13 @@ export function AppointmentBatchBar({ selectedAppointments, onClearSelection }: 
   const uniqueClientIds = useMemo(() => getUniqueClientIds(selectedAppointments), [selectedAppointments]);
   const isMultiClient = uniqueClientIds.size > 1;
   const clientCount = uniqueClientIds.size;
+
+  const customerNumbers = useMemo(() => {
+    const nums = selectedAppointments
+      .map((a: any) => a.customer_number)
+      .filter((n: any): n is string => !!n);
+    return [...new Set(nums)];
+  }, [selectedAppointments]);
 
   if (selectedAppointments.length === 0) return null;
 
@@ -221,7 +231,7 @@ export function AppointmentBatchBar({ selectedAppointments, onClearSelection }: 
           </AlertDialogHeader>
           {isMultiClient && (
             <div className="px-6">
-              <MultiClientWarning count={clientCount} />
+              <MultiClientWarning count={clientCount} customerNumbers={customerNumbers} />
             </div>
           )}
           <AlertDialogFooter>
@@ -247,7 +257,7 @@ export function AppointmentBatchBar({ selectedAppointments, onClearSelection }: 
           </AlertDialogHeader>
           {isMultiClient && (
             <div className="px-6">
-              <MultiClientWarning count={clientCount} />
+              <MultiClientWarning count={clientCount} customerNumbers={customerNumbers} />
             </div>
           )}
           <AlertDialogFooter>

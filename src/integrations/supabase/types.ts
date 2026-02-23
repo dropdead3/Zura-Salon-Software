@@ -3593,6 +3593,7 @@ export type Database = {
           client_since: string | null
           country: string | null
           created_at: string | null
+          customer_number: string | null
           email: string | null
           email_normalized: string | null
           external_id: string | null
@@ -3638,6 +3639,7 @@ export type Database = {
           client_since?: string | null
           country?: string | null
           created_at?: string | null
+          customer_number?: string | null
           email?: string | null
           email_normalized?: string | null
           external_id?: string | null
@@ -3683,6 +3685,7 @@ export type Database = {
           client_since?: string | null
           country?: string | null
           created_at?: string | null
+          customer_number?: string | null
           email?: string | null
           email_normalized?: string | null
           external_id?: string | null
@@ -9600,6 +9603,7 @@ export type Database = {
           client_since: string | null
           country: string | null
           created_at: string
+          customer_number: string | null
           email: string | null
           email_normalized: string | null
           external_client_id: string | null
@@ -9651,6 +9655,7 @@ export type Database = {
           client_since?: string | null
           country?: string | null
           created_at?: string
+          customer_number?: string | null
           email?: string | null
           email_normalized?: string | null
           external_client_id?: string | null
@@ -9702,6 +9707,7 @@ export type Database = {
           client_since?: string | null
           country?: string | null
           created_at?: string
+          customer_number?: string | null
           email?: string | null
           email_normalized?: string | null
           external_client_id?: string | null
