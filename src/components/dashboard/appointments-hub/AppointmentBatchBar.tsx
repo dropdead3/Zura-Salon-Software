@@ -99,7 +99,7 @@ export function AppointmentBatchBar({ selectedAppointments, onClearSelection }: 
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 60, opacity: 0 }}
               transition={{ type: 'spring', damping: 26, stiffness: 300, mass: 0.8 }}
-              className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 max-w-2xl w-[calc(100%-2rem)] bg-card/80 backdrop-blur-xl border border-border rounded-xl shadow-2xl px-5 py-3 flex items-center justify-between gap-3"
+              className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 max-w-xl w-[calc(100%-2rem)] bg-card/80 backdrop-blur-xl border border-border rounded-xl shadow-2xl px-5 py-3 flex items-center justify-between gap-3"
             >
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium">{selectedAppointments.length} selected</span>
@@ -107,7 +107,7 @@ export function AppointmentBatchBar({ selectedAppointments, onClearSelection }: 
                   <X className="h-3 w-3" />
                 </Button>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <Select onValueChange={handleBulkStatusUpdate} disabled={updating}>
                   <SelectTrigger className="w-[180px] h-7 text-xs">
                     <div className="flex items-center gap-1.5">
