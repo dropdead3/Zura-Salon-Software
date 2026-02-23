@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { format, subDays, subHours, startOfDay, endOfDay } from 'date-fns';
+import { format, subDays, subHours } from 'date-fns';
 import { 
   FileText, 
   Download, 
@@ -8,7 +8,6 @@ import {
   Search, 
   ChevronRight,
   Calendar,
-  User,
   Building2,
   RefreshCw
 } from 'lucide-react';
@@ -55,6 +54,7 @@ import { getAuditActionConfig, type AuditLogEntry } from '@/hooks/usePlatformAud
 import { useOrganizations } from '@/hooks/useOrganizations';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 
 const DATE_PRESETS = [
   { label: 'Last 24 hours', value: '24h', getRange: () => ({ from: subHours(new Date(), 24), to: new Date() }) },
@@ -95,7 +95,7 @@ export default function AuditLogPage() {
   return (
     <PlatformPageContainer className="space-y-6">
       <PlatformPageHeader
-        title="Audit Log Explorer"
+        title="Activity Log"
         description="View and search platform activity history"
         backTo="/dashboard/platform/overview"
         backLabel="Back to Overview"
@@ -131,12 +131,12 @@ export default function AuditLogPage() {
       />
 
       {/* Filters Bar */}
-      <div className="rounded-xl border border-slate-700/50 bg-slate-800/40 p-4">
+      <div className="rounded-xl border border-border/60 bg-card/80 backdrop-blur-sm p-4">
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-slate-400" />
+            <Calendar className="h-4 w-4 text-muted-foreground" />
             <Select value={datePreset} onValueChange={setDatePreset}>
-              <SelectTrigger className="w-[160px] bg-slate-700/50 border-slate-600">
+              <SelectTrigger className={cn("w-auto", tokens.input.filter)}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -150,7 +150,7 @@ export default function AuditLogPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-slate-400" />
+            <Filter className="h-4 w-4 text-muted-foreground" />
             <Select 
               value={filters.actions?.[0] || 'all'} 
               onValueChange={(v) => setFilters(prev => ({ 
@@ -159,7 +159,7 @@ export default function AuditLogPage() {
                 page: 1
               }))}
             >
-              <SelectTrigger className="w-[180px] bg-slate-700/50 border-slate-600">
+              <SelectTrigger className={cn("w-auto", tokens.input.filter)}>
                 <SelectValue placeholder="All actions" />
               </SelectTrigger>
               <SelectContent>
@@ -174,7 +174,7 @@ export default function AuditLogPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Building2 className="h-4 w-4 text-slate-400" />
+            <Building2 className="h-4 w-4 text-muted-foreground" />
             <Select 
               value={filters.organizationId || 'all'} 
               onValueChange={(v) => setFilters(prev => ({ 
@@ -183,7 +183,7 @@ export default function AuditLogPage() {
                 page: 1
               }))}
             >
-              <SelectTrigger className="w-[180px] bg-slate-700/50 border-slate-600">
+              <SelectTrigger className={cn("w-auto", tokens.input.filter)}>
                 <SelectValue placeholder="All organizations" />
               </SelectTrigger>
               <SelectContent>
@@ -199,12 +199,12 @@ export default function AuditLogPage() {
 
           <div className="flex-1 min-w-[200px]">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search logs..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 bg-slate-700/50 border-slate-600"
+                className={cn("pl-9", tokens.input.search)}
               />
             </div>
           </div>
@@ -212,32 +212,32 @@ export default function AuditLogPage() {
       </div>
 
       {/* Results Table */}
-      <div className="rounded-xl border border-slate-700/50 bg-slate-800/40 overflow-hidden">
+      <div className="rounded-xl border border-border/60 bg-card/80 backdrop-blur-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-slate-700/50">
-                <th className="text-left px-4 py-3 text-sm font-medium text-slate-400">Action</th>
-                <th className="text-left px-4 py-3 text-sm font-medium text-slate-400">User</th>
-                <th className="text-left px-4 py-3 text-sm font-medium text-slate-400">Organization</th>
-                <th className="text-left px-4 py-3 text-sm font-medium text-slate-400">Time</th>
+              <tr className="border-b border-border/60">
+                <th className={cn("text-left px-4 py-3", tokens.table.columnHeader)}>Action</th>
+                <th className={cn("text-left px-4 py-3", tokens.table.columnHeader)}>User</th>
+                <th className={cn("text-left px-4 py-3", tokens.table.columnHeader)}>Organization</th>
+                <th className={cn("text-left px-4 py-3", tokens.table.columnHeader)}>Time</th>
                 <th className="w-10"></th>
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
                 [...Array(10)].map((_, i) => (
-                  <tr key={i} className="border-b border-slate-700/30">
-                    <td className="px-4 py-3"><Skeleton className="h-6 w-32 bg-slate-700/50" /></td>
-                    <td className="px-4 py-3"><Skeleton className="h-6 w-28 bg-slate-700/50" /></td>
-                    <td className="px-4 py-3"><Skeleton className="h-6 w-28 bg-slate-700/50" /></td>
-                    <td className="px-4 py-3"><Skeleton className="h-6 w-20 bg-slate-700/50" /></td>
+                  <tr key={i} className="border-b border-border/30">
+                    <td className="px-4 py-3"><Skeleton className="h-6 w-32" /></td>
+                    <td className="px-4 py-3"><Skeleton className="h-6 w-28" /></td>
+                    <td className="px-4 py-3"><Skeleton className="h-6 w-28" /></td>
+                    <td className="px-4 py-3"><Skeleton className="h-6 w-20" /></td>
                     <td></td>
                   </tr>
                 ))
               ) : data?.logs.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-12 text-center text-slate-400">
+                  <td colSpan={5} className="px-4 py-12 text-center text-muted-foreground">
                     No audit logs found matching your filters.
                   </td>
                 </tr>
@@ -245,18 +245,18 @@ export default function AuditLogPage() {
                 data?.logs.map(log => {
                   const config = getAuditActionConfig(log.action);
                   const colorClasses = {
-                    violet: 'bg-violet-500/20 text-violet-300',
-                    emerald: 'bg-emerald-500/20 text-emerald-300',
-                    amber: 'bg-amber-500/20 text-amber-300',
-                    rose: 'bg-rose-500/20 text-rose-300',
-                    blue: 'bg-blue-500/20 text-blue-300',
-                    slate: 'bg-slate-500/20 text-slate-300',
+                    violet: 'bg-violet-500/15 text-violet-700 dark:text-violet-300',
+                    emerald: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300',
+                    amber: 'bg-amber-500/15 text-amber-700 dark:text-amber-300',
+                    rose: 'bg-rose-500/15 text-rose-700 dark:text-rose-300',
+                    blue: 'bg-blue-500/15 text-blue-700 dark:text-blue-300',
+                    slate: 'bg-muted text-muted-foreground',
                   };
 
                   return (
                     <tr 
                       key={log.id} 
-                      className="border-b border-slate-700/30 hover:bg-slate-700/20 cursor-pointer transition-colors"
+                      className="border-b border-border/30 hover:bg-muted/50 cursor-pointer transition-colors"
                       onClick={() => setSelectedLog(log)}
                     >
                       <td className="px-4 py-3">
@@ -268,23 +268,23 @@ export default function AuditLogPage() {
                         <div className="flex items-center gap-2">
                           <Avatar className="h-6 w-6">
                             <AvatarImage src={log.user_photo || undefined} />
-                            <AvatarFallback className="text-xs bg-slate-600">
+                            <AvatarFallback className="text-xs bg-muted">
                               {log.user_name?.[0] || 'S'}
                             </AvatarFallback>
                           </Avatar>
-                          <span className="text-sm text-slate-200">
+                          <span className="text-sm text-foreground">
                             {log.user_name || 'System'}
                           </span>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-300">
+                      <td className="px-4 py-3 text-sm text-muted-foreground">
                         {log.organization_name || '-'}
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-400">
+                      <td className="px-4 py-3 text-sm text-muted-foreground">
                         {format(new Date(log.created_at), 'MMM d, h:mm a')}
                       </td>
                       <td className="px-4 py-3">
-                        <ChevronRight className="h-4 w-4 text-slate-500" />
+                        <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
                       </td>
                     </tr>
                   );
@@ -296,8 +296,8 @@ export default function AuditLogPage() {
 
         {/* Pagination */}
         {data && data.totalPages > 1 && (
-          <div className="border-t border-slate-700/50 px-4 py-3 flex items-center justify-between">
-            <span className="text-sm text-slate-400">
+          <div className="border-t border-border/60 px-4 py-3 flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">
               Showing {((filters.page || 1) - 1) * (filters.pageSize || 50) + 1}-
               {Math.min((filters.page || 1) * (filters.pageSize || 50), data.totalCount)} of {data.totalCount} entries
             </span>
@@ -340,37 +340,37 @@ export default function AuditLogPage() {
 
       {/* Detail Sheet */}
       <Sheet open={!!selectedLog} onOpenChange={(open) => !open && setSelectedLog(null)}>
-        <SheetContent className="bg-slate-900 border-slate-700 w-[500px] sm:max-w-[500px]">
+        <SheetContent className="bg-card border-border w-[500px] sm:max-w-[500px]">
           <SheetHeader>
-            <SheetTitle className="text-white">Audit Log Details</SheetTitle>
+            <SheetTitle className="text-foreground">Activity Log Details</SheetTitle>
           </SheetHeader>
           {selectedLog && (
             <div className="mt-6 space-y-6">
               <div>
-                <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Action</label>
-                <p className="mt-1 text-white">{getAuditActionConfig(selectedLog.action).label}</p>
+                <label className={tokens.heading.subsection}>Action</label>
+                <p className="mt-1 text-foreground">{getAuditActionConfig(selectedLog.action).label}</p>
               </div>
               <div>
-                <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">User</label>
-                <p className="mt-1 text-white">{selectedLog.user_name || 'System'}</p>
+                <label className={tokens.heading.subsection}>User</label>
+                <p className="mt-1 text-foreground">{selectedLog.user_name || 'System'}</p>
               </div>
               <div>
-                <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Organization</label>
-                <p className="mt-1 text-white">{selectedLog.organization_name || '-'}</p>
+                <label className={tokens.heading.subsection}>Organization</label>
+                <p className="mt-1 text-foreground">{selectedLog.organization_name || '-'}</p>
               </div>
               <div>
-                <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Timestamp</label>
-                <p className="mt-1 text-white">{format(new Date(selectedLog.created_at), 'PPpp')}</p>
+                <label className={tokens.heading.subsection}>Timestamp</label>
+                <p className="mt-1 text-foreground">{format(new Date(selectedLog.created_at), 'PPpp')}</p>
               </div>
               {selectedLog.entity_type && (
                 <div>
-                  <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Entity</label>
-                  <p className="mt-1 text-white">{selectedLog.entity_type} ({selectedLog.entity_id})</p>
+                  <label className={tokens.heading.subsection}>Entity</label>
+                  <p className="mt-1 text-foreground">{selectedLog.entity_type} ({selectedLog.entity_id})</p>
                 </div>
               )}
               <div>
-                <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Details</label>
-                <pre className="mt-1 p-3 bg-slate-800 rounded-lg text-sm text-slate-300 overflow-auto max-h-[300px]">
+                <label className={tokens.heading.subsection}>Details</label>
+                <pre className="mt-1 p-3 bg-muted/50 rounded-lg text-sm text-foreground overflow-auto max-h-[300px]">
                   {JSON.stringify(selectedLog.details, null, 2)}
                 </pre>
               </div>

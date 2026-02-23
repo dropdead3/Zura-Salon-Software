@@ -293,7 +293,7 @@ export default function AppointmentsHub() {
   return (
     <DashboardLayout>
       <div className={tokens.layout.pageContainer}>
-        <DashboardPageHeader title="Appointments & Transactions" />
+        <DashboardPageHeader title="Appointments" />
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={handleTabChange}>
