@@ -100,8 +100,10 @@ export const tokens = {
   // LAYOUT TOKENS
   // ========================================
   layout: {
-    /** Standard page container with responsive padding */
-    pageContainer: 'px-6 lg:px-8 py-8 max-w-[1600px] mx-auto',
+    /** Canonical dashboard page padding — use on the first child inside DashboardLayout.
+     *  Provides responsive horizontal padding, vertical breathing room, and section spacing.
+     *  Rule: Every dashboard page MUST wrap its content in this token. */
+    pageContainer: 'px-6 pb-6 lg:px-8 lg:pb-8 pt-4 lg:pt-6 space-y-6',
     /** Card base styling */
     cardBase: 'rounded-xl',
     /** Standard card padding */
