@@ -141,9 +141,9 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
 
   return (
     <div className="space-y-4">
-      {/* Search + Filters — single row */}
+      {/* Row 1: Search + Time Period Toggle */}
       <div className="flex flex-wrap gap-3 items-center">
-        <div className="w-[640px]">
+        <div className="flex-1 min-w-0 max-w-[640px]">
           <HubSearchBar value={search} onChange={onSearchChange} />
         </div>
 
@@ -154,53 +154,53 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
           size="sm"
           variant="solid"
         />
+      </div>
 
-        <div className="ml-auto flex flex-wrap gap-3 items-center">
+      {/* Row 2: Filters + CSV */}
+      <div className="flex flex-wrap gap-3 items-center">
+        <Select value={status} onValueChange={(v) => { setStatus(v); setPage(0); }}>
+          <SelectTrigger className={cn("w-auto", tokens.input.filter)}>
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Statuses</SelectItem>
+            <SelectItem value="booked">Booked</SelectItem>
+            <SelectItem value="confirmed">Confirmed</SelectItem>
+            <SelectItem value="checked_in">Checked In</SelectItem>
+            <SelectItem value="completed">Completed</SelectItem>
+            <SelectItem value="cancelled">Cancelled</SelectItem>
+            <SelectItem value="no_show">No Show</SelectItem>
+          </SelectContent>
+        </Select>
 
-          <Select value={status} onValueChange={(v) => { setStatus(v); setPage(0); }}>
-            <SelectTrigger className={cn("w-auto", tokens.input.filter)}>
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="booked">Booked</SelectItem>
-              <SelectItem value="confirmed">Confirmed</SelectItem>
-              <SelectItem value="checked_in">Checked In</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
-              <SelectItem value="cancelled">Cancelled</SelectItem>
-              <SelectItem value="no_show">No Show</SelectItem>
-            </SelectContent>
-          </Select>
+        <Select value={locationId} onValueChange={(v) => { setLocationId(v); setPage(0); }}>
+          <SelectTrigger className={cn("w-auto", tokens.input.filter)}>
+            <SelectValue placeholder="Location" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Locations</SelectItem>
+            {locations.map(loc => (
+              <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-          <Select value={locationId} onValueChange={(v) => { setLocationId(v); setPage(0); }}>
-            <SelectTrigger className={cn("w-auto", tokens.input.filter)}>
-              <SelectValue placeholder="Location" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Locations</SelectItem>
-              {locations.map(loc => (
-                <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <Select value={stylistId} onValueChange={(v) => { setStylistId(v); setPage(0); }}>
+          <SelectTrigger className={cn("w-auto", tokens.input.filter)}>
+            <SelectValue placeholder="Stylist" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Stylists</SelectItem>
+            {stylistOptions.map(s => (
+              <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-          <Select value={stylistId} onValueChange={(v) => { setStylistId(v); setPage(0); }}>
-            <SelectTrigger className={cn("w-auto", tokens.input.filter)}>
-              <SelectValue placeholder="Stylist" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Stylists</SelectItem>
-              {stylistOptions.map(s => (
-                <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Button variant="outline" size={tokens.button.card} onClick={handleExportCSV} disabled={appointments.length === 0}>
-            <Download className="w-4 h-4 mr-2" />
-            CSV
-          </Button>
-        </div>
+        <Button variant="outline" size={tokens.button.card} onClick={handleExportCSV} disabled={appointments.length === 0} className="ml-auto">
+          <Download className="w-4 h-4 mr-2" />
+          CSV
+        </Button>
       </div>
 
       {/* Table */}
@@ -209,11 +209,11 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
           <TableHeader>
             <TableRow>
               <TableHead className={tokens.table.columnHeader}>Date</TableHead>
-              <TableHead className={cn(tokens.table.columnHeader, 'hidden sm:table-cell')}>Time</TableHead>
+              <TableHead className={tokens.table.columnHeader}>Time</TableHead>
               <TableHead className={tokens.table.columnHeader}>Client</TableHead>
               <TableHead className={cn(tokens.table.columnHeader, 'hidden md:table-cell')}>Phone</TableHead>
               <TableHead className={cn(tokens.table.columnHeader, 'hidden lg:table-cell')}>Email</TableHead>
-              <TableHead className={cn(tokens.table.columnHeader, 'hidden sm:table-cell')}>Service</TableHead>
+              <TableHead className={cn(tokens.table.columnHeader, 'hidden md:table-cell')}>Service</TableHead>
               <TableHead className={tokens.table.columnHeader}>Stylist</TableHead>
               <TableHead className={cn(tokens.table.columnHeader, 'hidden md:table-cell')}>Status</TableHead>
               <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden md:table-cell')}>Price</TableHead>
@@ -226,11 +226,11 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
               [1, 2, 3, 4, 5].map(i => (
                 <TableRow key={i}>
                   <TableCell><Skeleton className="h-5 w-full" /></TableCell>
-                  <TableCell className="hidden sm:table-cell"><Skeleton className="h-5 w-full" /></TableCell>
+                  <TableCell><Skeleton className="h-5 w-full" /></TableCell>
                   <TableCell><Skeleton className="h-5 w-full" /></TableCell>
                   <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-full" /></TableCell>
                   <TableCell className="hidden lg:table-cell"><Skeleton className="h-5 w-full" /></TableCell>
-                  <TableCell className="hidden sm:table-cell"><Skeleton className="h-5 w-full" /></TableCell>
+                  <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-full" /></TableCell>
                   <TableCell><Skeleton className="h-5 w-full" /></TableCell>
                   <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-full" /></TableCell>
                   <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-full" /></TableCell>
@@ -257,7 +257,7 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
                     onClick={() => setSelectedAppt(appt)}
                   >
                     <TableCell className="text-sm">{formatDateDisplay(appt.appointment_date)}</TableCell>
-                    <TableCell className="text-sm hidden sm:table-cell">{formatTime12h(appt.start_time)}</TableCell>
+                    <TableCell className="text-sm">{formatTime12h(appt.start_time)}</TableCell>
                     <TableCell className="text-sm font-medium">{appt.client_name || 'Walk-in'}</TableCell>
                     <TableCell className="text-sm text-muted-foreground hidden md:table-cell">{appt.client_phone || '—'}</TableCell>
                     <TableCell className="text-sm text-muted-foreground max-w-[160px] truncate hidden lg:table-cell">
@@ -270,7 +270,7 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
                         </Tooltip>
                       ) : '—'}
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground truncate max-w-[200px] hidden sm:table-cell">{appt.service_name || '—'}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground truncate max-w-[200px] hidden md:table-cell">{appt.service_name || '—'}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">{appt.stylist_name || '—'}</TableCell>
                     <TableCell className="hidden md:table-cell">
                       <Badge variant="outline" className={cn('text-[10px]', statusBadge.bg, statusBadge.text, statusBadge.border)}>
