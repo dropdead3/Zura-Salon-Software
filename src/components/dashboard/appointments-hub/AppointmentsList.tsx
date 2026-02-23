@@ -125,7 +125,7 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
 
         <div className="ml-auto flex flex-wrap gap-3 items-center">
           <Select value={datePreset} onValueChange={(v) => { setDatePreset(v as DatePreset); setPage(0); }}>
-            <SelectTrigger className="w-[140px]"><SelectValue placeholder="Date range" /></SelectTrigger>
+            <SelectTrigger className={cn("w-auto", tokens.input.filter)}><SelectValue placeholder="Date range" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="today">Today</SelectItem>
               <SelectItem value="this_week">This Week</SelectItem>
@@ -136,7 +136,7 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
           </Select>
 
           <Select value={status} onValueChange={(v) => { setStatus(v); setPage(0); }}>
-            <SelectTrigger className="w-[130px]">
+            <SelectTrigger className={cn("w-auto", tokens.input.filter)}>
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
@@ -151,7 +151,7 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
           </Select>
 
           <Select value={locationId} onValueChange={(v) => { setLocationId(v); setPage(0); }}>
-            <SelectTrigger className="w-[160px]">
+            <SelectTrigger className={cn("w-auto", tokens.input.filter)}>
               <SelectValue placeholder="Location" />
             </SelectTrigger>
             <SelectContent>
@@ -163,7 +163,7 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
           </Select>
 
           <Select value={stylistId} onValueChange={(v) => { setStylistId(v); setPage(0); }}>
-            <SelectTrigger className="w-[160px]">
+            <SelectTrigger className={cn("w-auto", tokens.input.filter)}>
               <SelectValue placeholder="Stylist" />
             </SelectTrigger>
             <SelectContent>
