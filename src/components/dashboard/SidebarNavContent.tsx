@@ -1,6 +1,6 @@
 import { forwardRef, useEffect, useRef, useImperativeHandle, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useRubberBandScroll } from '@/hooks/useRubberBandScroll';
+
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { PopoverTrigger } from '@/components/ui/popover';
 import { HoverPopover } from './HoverPopover';
@@ -102,7 +102,6 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
   const { t } = useTranslation('dashboard');
   const { resolvedTheme } = useDashboardTheme();
   const internalRef = useRef<HTMLElement>(null);
-  useRubberBandScroll(internalRef);
   const { data: businessSettings } = useBusinessSettings();
   const { data: sidebarLayout } = useSidebarLayout();
   
