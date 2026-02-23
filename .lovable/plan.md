@@ -1,19 +1,41 @@
 
 
-# Add Client Directory Links to Clients Analytics Page
+# Visual Duplicate Pairing in Client Directory
 
-## Changes (single file: `src/components/dashboard/analytics/ClientsContent.tsx`)
+## Problem
+When two duplicate clients appear in the directory (e.g., "Eric Day" x2), only the record flagged as `is_duplicate` shows a badge. The original (canonical) profile shows no visual indicator, making it unclear these are duplicates of each other.
 
-### 1. Add navigation import
-Import `useNavigate` from `react-router-dom` and the `ExternalLink` icon from `lucide-react`.
+## Solution
+Add a duplicate indicator badge to canonical profiles that have a known duplicate pointing to them. The data is already computed (`duplicateReasons` and `_linkedDuplicateId` are populated for canonical profiles in the processing step), but the UI only renders a badge when `_linkedReason` is set (which only happens during search expansion). We need to also render a badge when `_linkedDuplicateId` is present.
 
-### 2. Make the "Total Clients" KPI card clickable
-Wrap the first KPI card (Total Clients, line 60-70) with an `onClick` handler that navigates to `/dashboard/admin/client-directory`. Add `cursor-pointer` and hover styling so it's visually interactive.
+Additionally, add a subtle left-border accent (amber) to both duplicate and canonical rows in a pair, making them visually grouped even when scanning quickly.
 
-### 3. Add a "View Client Directory" link button
-Add a small link button (using `tokens.button.cardAction` pill style) in the page header area or near the top of the content, linking to `/dashboard/admin/client-directory`. This gives users an always-visible path to the full directory.
+## File Change: `src/pages/dashboard/ClientDirectory.tsx`
+
+### 1. Add badge for canonical profiles with duplicates (after the existing `_linkedReason` badge, ~line 866)
+Add a new conditional badge that renders when a client has `_linkedDuplicateId` set but is NOT itself a duplicate and does NOT have `_linkedReason` (to avoid double-badging):
+
+```
+{!client.is_duplicate && !client._linkedReason && client._linkedDuplicateId && (
+  <Badge variant="outline" className="...amber styling... gap-1 cursor-pointer">
+    <GitMerge /> Duplicate Match (Same Phone / Same Email / etc.)
+  </Badge>
+)}
+```
+
+Clicking this badge will toggle the duplicate drilldown, same as the existing duplicate badge.
+
+### 2. Add amber left-border accent to duplicate-pair rows (~line 795)
+Add a `border-l-2 border-l-amber-500/60` class to any row where the client is a duplicate, has a `_linkedDuplicateId`, or has a `_linkedReason`. This creates a subtle visual grouping stripe.
+
+### 3. Enable drilldown for canonical profiles (~line 1002)
+Currently the drilldown only expands when the client has `canonical_client_id`. For canonical profiles, expand to show the duplicate profile instead (using `_linkedDuplicateId`).
 
 ## Technical Detail
-- Uses `useNavigate()` for SPA navigation
-- Total Clients card gets `onClick={() => navigate('/dashboard/admin/client-directory')}` plus `cursor-pointer hover:border-primary/30 transition-colors` classes
-- A pill-style "View Client Directory" button with an `ExternalLink` icon will be placed above the KPI grid
+
+The processing at lines 207-221 already computes `duplicateReasons` and `_linkedDuplicateId` for canonical profiles. The changes are purely in the render section:
+- Line ~795: Add conditional left border class
+- Line ~857-866: Add a new badge block for canonical profiles
+- Line ~1002: Allow drilldown for canonical profiles using `_linkedDuplicateId`
+- Merge CTA: The existing merge button at line 959 already handles `_linkedReason` but not bare `_linkedDuplicateId` -- add that condition too
+
