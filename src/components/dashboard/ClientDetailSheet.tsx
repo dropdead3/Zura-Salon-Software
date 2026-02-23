@@ -537,6 +537,9 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
                 <h2 className="font-display text-xl tracking-wide flex items-center gap-2 flex-wrap uppercase">
                   {client.name}
                 </h2>
+                {(client as any).customer_number && (
+                  <p className="text-xs text-muted-foreground font-mono mt-0.5">{(client as any).customer_number}</p>
+                )}
                 <div className="flex flex-wrap gap-2 mt-1.5">
                   {client.is_banned && <BannedClientBadge size="md" />}
                   {client.is_archived && (

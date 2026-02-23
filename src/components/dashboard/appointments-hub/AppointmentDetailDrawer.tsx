@@ -219,21 +219,23 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
                   )}
                 </DetailRow>
                 {(() => {
-                  const displayClientId = appointment._source === 'phorest'
+                  const customerNumber = appointment.customer_number;
+                  const fallbackId = appointment._source === 'phorest'
                     ? appointment.phorest_client_id
                     : appointment.client_id;
-                  if (!displayClientId) return null;
+                  const displayValue = customerNumber || fallbackId;
+                  if (!displayValue) return null;
                   return (
-                    <DetailRow icon={Hash} label="Client ID">
+                    <DetailRow icon={Hash} label="Customer ID">
                       <button
                         type="button"
                         className="inline-flex items-center gap-1.5 text-xs text-muted-foreground font-mono hover:text-foreground transition-colors"
                         onClick={() => {
-                          navigator.clipboard.writeText(displayClientId);
-                          toast.success('Client ID copied');
+                          navigator.clipboard.writeText(displayValue);
+                          toast.success('Customer ID copied');
                         }}
                       >
-                        {displayClientId.length > 12 ? `${displayClientId.slice(0, 12)}…` : displayClientId}
+                        {customerNumber || (fallbackId.length > 12 ? `${fallbackId.slice(0, 12)}…` : fallbackId)}
                         <Copy className="h-3 w-3" />
                       </button>
                     </DetailRow>
