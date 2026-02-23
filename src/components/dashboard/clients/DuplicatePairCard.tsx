@@ -85,18 +85,13 @@ function ProfileColumn({
     <div
       className={cn(
         "rounded-lg border p-4 space-y-3 cursor-pointer transition-colors hover:bg-muted/50 group",
-        isDuplicate
-          ? "border-amber-500/30 bg-amber-500/5"
-          : "border-border bg-card/50"
+        "border-border bg-card/50"
       )}
       onClick={() => onViewProfile(data)}
     >
       {/* Label */}
       <div className="flex items-center justify-between">
-        <span className={cn(
-          "text-[10px] font-medium tracking-wider uppercase font-display",
-          isDuplicate ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"
-        )}>
+        <span className="text-[10px] font-medium tracking-wider uppercase font-display text-muted-foreground">
           {label}
         </span>
         <Eye className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -245,7 +240,7 @@ export function DuplicatePairCard({
           />
           <ProfileColumn
             data={canonical}
-            label="Original Profile"
+            label="Flagged Duplicate"
             isDuplicate={false}
             phoneMatch={phoneMatch}
             emailMatch={emailMatch}
