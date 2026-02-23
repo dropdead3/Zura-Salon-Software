@@ -29,7 +29,8 @@ import {
   User,
   Ban,
   Archive,
-  GitMerge
+  GitMerge,
+  Home
 } from 'lucide-react';
 import { BannedClientBadge } from '@/components/dashboard/clients/BannedClientBadge';
 import { DuplicateDrilldown } from '@/components/dashboard/clients/DuplicateDrilldown';
@@ -49,6 +50,8 @@ import { useLocations } from '@/hooks/useLocations';
 import { ClientDetailSheet } from '@/components/dashboard/ClientDetailSheet';
 import { ClientHealthSummaryCard } from '@/components/dashboard/client-health/ClientHealthSummaryCard';
 import { BentoGrid } from '@/components/ui/bento-grid';
+import { useHouseholds, useCreateHousehold, useUpdateHouseholdName, useRemoveFromHousehold, useDeleteHousehold } from '@/hooks/useHouseholds';
+import { HouseholdCard } from '@/components/dashboard/clients/HouseholdCard';
 import {
   Pagination,
   PaginationContent,
@@ -90,6 +93,13 @@ export default function ClientDirectory() {
 
   const canMerge = roles.some(role => ['admin', 'manager', 'super_admin'].includes(role));
 
+  // Households hooks
+  const { data: households = [] } = useHouseholds();
+  const createHousehold = useCreateHousehold();
+  const updateHouseholdName = useUpdateHouseholdName();
+  const removeFromHousehold = useRemoveFromHousehold();
+  const deleteHousehold = useDeleteHousehold();
+
   // Dismiss a duplicate pair as "not a duplicate"
   const handleDismissDuplicate = useCallback(async (clientId: string, canonicalId: string, reason: string) => {
     setIsDismissing(true);
@@ -100,11 +110,18 @@ export default function ClientDirectory() {
       // Get the organization_id from the client record
       const { data: clientRecord } = await supabase
         .from('phorest_clients')
-        .select('organization_id' as any)
+        .select('organization_id, name' as any)
         .eq('id', clientId)
         .single();
       const orgId = (clientRecord as any)?.organization_id;
       if (!orgId) throw new Error('Organization not found');
+
+      // Get canonical name for household naming
+      const { data: canonicalRecord } = await supabase
+        .from('phorest_clients')
+        .select('name' as any)
+        .eq('id', canonicalId)
+        .single();
 
       // Insert dismissal record
       const { data: dismissal, error: dismissError } = await supabase
@@ -127,17 +144,74 @@ export default function ClientDirectory() {
         .update({ is_duplicate: false, canonical_client_id: null } as any)
         .eq('id', clientId);
 
+      // If reason is 'household', create a household relationship
+      let createdHouseholdId: string | null = null;
+      if (reason === 'household') {
+        // Check if either client already belongs to a household
+        const { data: existingMemberA } = await supabase
+          .from('client_household_members' as any)
+          .select('household_id')
+          .eq('client_id', clientId)
+          .maybeSingle();
+
+        const { data: existingMemberB } = await supabase
+          .from('client_household_members' as any)
+          .select('household_id')
+          .eq('client_id', canonicalId)
+          .maybeSingle();
+
+        if ((existingMemberA as any)?.household_id) {
+          // Add canonical to existing household
+          await supabase
+            .from('client_household_members' as any)
+            .insert({ household_id: (existingMemberA as any).household_id, client_id: canonicalId } as any);
+          createdHouseholdId = (existingMemberA as any).household_id;
+        } else if ((existingMemberB as any)?.household_id) {
+          // Add client to existing household
+          await supabase
+            .from('client_household_members' as any)
+            .insert({ household_id: (existingMemberB as any).household_id, client_id: clientId } as any);
+          createdHouseholdId = (existingMemberB as any).household_id;
+        } else {
+          // Create new household
+          const clientName = (clientRecord as any)?.name || '';
+          const canonicalName = (canonicalRecord as any)?.name || '';
+          const sharedLastName = clientName.split(' ').pop() || canonicalName.split(' ').pop() || 'Family';
+          const householdName = `${sharedLastName} Household`;
+
+          const { data: newHousehold } = await supabase
+            .from('client_households' as any)
+            .insert({ organization_id: orgId, household_name: householdName, created_by: user?.id } as any)
+            .select('id')
+            .single();
+
+          if (newHousehold) {
+            createdHouseholdId = (newHousehold as any).id;
+            await supabase
+              .from('client_household_members' as any)
+              .insert([
+                { household_id: createdHouseholdId, client_id: clientId },
+                { household_id: createdHouseholdId, client_id: canonicalId },
+              ] as any);
+          }
+        }
+      }
+
       // Collapse the drilldown
       setExpandedDuplicateId(null);
 
       // Refresh the client list
       queryClient.invalidateQueries({ queryKey: ['client-directory'] });
+      queryClient.invalidateQueries({ queryKey: ['households'] });
+
+      const toastMessage = reason === 'household' ? 'Marked as same household' : 'Marked as not a duplicate';
 
       // Show undo toast
-      toast('Marked as not a duplicate', {
+      toast(toastMessage, {
         action: {
           label: 'Undo',
           onClick: async () => {
+            // Undo dismissal
             await supabase
               .from('duplicate_dismissals' as any)
               .delete()
@@ -148,7 +222,30 @@ export default function ClientDirectory() {
               .update({ is_duplicate: true, canonical_client_id: canonicalId } as any)
               .eq('id', clientId);
 
+            // Undo household creation if applicable
+            if (reason === 'household' && createdHouseholdId) {
+              // Remove both memberships
+              await supabase
+                .from('client_household_members' as any)
+                .delete()
+                .in('client_id', [clientId, canonicalId]);
+
+              // Check if household is now empty and delete
+              const { count } = await supabase
+                .from('client_household_members' as any)
+                .select('*', { count: 'exact', head: true })
+                .eq('household_id', createdHouseholdId);
+
+              if (count === 0) {
+                await supabase
+                  .from('client_households' as any)
+                  .delete()
+                  .eq('id', createdHouseholdId);
+              }
+            }
+
             queryClient.invalidateQueries({ queryKey: ['client-directory'] });
+            queryClient.invalidateQueries({ queryKey: ['households'] });
             toast('Dismissal undone');
           },
         },
@@ -764,6 +861,11 @@ export default function ClientDirectory() {
                   <GitMerge className="w-3 h-3 mr-1" /> Duplicates ({stats.duplicates})
                 </TabsTrigger>
               )}
+              {households.length > 0 && (
+                <TabsTrigger value="households" className="text-xs">
+                  <Home className="w-3 h-3 mr-1" /> Households ({households.length})
+                </TabsTrigger>
+              )}
               {showMerged && (
                 <TabsTrigger value="merged" className="text-xs text-muted-foreground">
                   <GitMerge className="w-3 h-3 mr-1" /> Merged
@@ -882,6 +984,30 @@ export default function ClientDirectory() {
                 <p className="text-muted-foreground">
                   {searchQuery ? 'No clients match your search.' : selectedLetter !== 'all' ? `No clients starting with "${selectedLetter}".` : 'No client data available yet. Sync with Phorest to populate.'}
                 </p>
+              </div>
+            ) : activeTab === 'households' ? (
+              <div className="space-y-4">
+                {households.map((household) => (
+                  <HouseholdCard
+                    key={household.id}
+                    household={household}
+                    onViewClient={(client) => {
+                      setSelectedClient(client);
+                      setDetailSheetOpen(true);
+                    }}
+                    onRename={(id, name) => updateHouseholdName.mutate({ householdId: id, name })}
+                    onRemoveMember={(memberId, householdId) => removeFromHousehold.mutate({ memberId, householdId })}
+                    onDeleteHousehold={(id) => deleteHousehold.mutate(id)}
+                    canEdit={canMerge}
+                  />
+                ))}
+                {households.length === 0 && (
+                  <div className="text-center py-12">
+                    <Home className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">No households created yet.</p>
+                    <p className="text-xs text-muted-foreground mt-1">Dismiss a duplicate pair as "Same Household" to create one.</p>
+                  </div>
+                )}
               </div>
             ) : activeTab === 'duplicates' ? (
               <>
