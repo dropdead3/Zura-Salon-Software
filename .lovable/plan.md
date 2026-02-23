@@ -1,23 +1,26 @@
 
 
-## Fix Dropdown Arrow Spacing in Select Filters
+## Batch Bar Button Sizing and Layout Fix
 
 ### Problem
-The chevron (dropdown arrow) icons in the filter SelectTriggers sit too close to the label text ("All Statuses", "All Locations", "All Stylists"). With `w-auto` triggers, `justify-between` has no effect since the container shrinks to fit content, leaving zero gap between text and arrow.
+From the screenshot, the batch bar buttons are too large and the "Update Status" select trigger is too narrow (150px), causing "Update Status" text to wrap to two lines.
 
-### Solution
-Add a consistent left margin to the ChevronDown icon inside the global `SelectTrigger` component. This is a single-line change that fixes all Select dropdowns across the entire application.
+### Changes
 
-### File Changed
+**File: `src/components/dashboard/appointments-hub/AppointmentBatchBar.tsx`**
 
-**`src/components/ui/select.tsx`** (line 27)
+1. **Widen the Update Status select trigger**: Change `w-[150px]` to `w-[180px]` so "Update Status" text stays on one line
+2. **Reduce button heights**: Add `h-7 text-xs` to the Share and Export CSV buttons to make them more compact
+3. **Reduce bar padding**: Change `py-3` to `py-2` on the sticky bar container for a tighter look
+4. **Shrink icons**: Reduce button icons from `h-3.5 w-3.5` to `h-3 w-3` for proportion
 
-Add `ml-2` (8px left margin) to the ChevronDown icon inside SelectTrigger:
+### Summary of class changes
 
-```
-Current:  <ChevronDown className="h-4 w-4 opacity-50" />
-Updated:  <ChevronDown className="h-4 w-4 opacity-50 ml-2" />
-```
-
-This creates proper visual breathing room between the selected value text and the dropdown indicator arrow, matching standard dropdown UX patterns. Since this is the global SelectTrigger component, it fixes spacing everywhere in one change.
+| Element | Current | New |
+|---------|---------|-----|
+| Bar container | `py-3` | `py-2` |
+| SelectTrigger | `w-[150px] h-8 text-xs` | `w-[180px] h-7 text-xs` |
+| Share / Export buttons | default `h-9` via size="sm" | Add `h-7 text-xs` override |
+| Button icons | `h-3.5 w-3.5` | `h-3 w-3` |
+| SelectTrigger icon | `h-3.5 w-3.5` | `h-3 w-3` |
 
