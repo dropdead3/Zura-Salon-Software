@@ -5,11 +5,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { tokens } from '@/lib/design-tokens';
 import { APPOINTMENT_STATUS_BADGE } from '@/lib/design-tokens';
 import { AppointmentAuditTimeline } from './AppointmentAuditTimeline';
-import { Calendar, Clock, User, MapPin, DollarSign, MessageSquare, Tag, Percent } from 'lucide-react';
+import { Calendar, Clock, User, MapPin, DollarSign, MessageSquare, Tag, Percent, Phone, Mail, FileText, UserCheck, Info } from 'lucide-react';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { format, parseISO } from 'date-fns';
 
 interface AppointmentDetailDrawerProps {
   appointment: any | null;
@@ -23,6 +24,28 @@ function formatTime12h(time: string): string {
   const ampm = hour >= 12 ? 'PM' : 'AM';
   const hour12 = hour % 12 || 12;
   return `${hour12}:${minutes} ${ampm}`;
+}
+
+function formatFullDateTime(dateStr: string | null): string {
+  if (!dateStr) return '—';
+  try {
+    return format(parseISO(dateStr), 'MMM d, yyyy · h:mm a');
+  } catch {
+    return '—';
+  }
+}
+
+/** Inline detail row used in the drawer sections */
+function DetailRow({ icon: Icon, label, children }: { icon: React.ElementType; label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-start gap-3 text-sm">
+      <Icon className="w-4 h-4 shrink-0 text-muted-foreground mt-0.5" />
+      <div className="min-w-0">
+        <span className="text-muted-foreground">{label}</span>
+        <div className="text-foreground mt-0.5">{children}</div>
+      </div>
+    </div>
+  );
 }
 
 export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: AppointmentDetailDrawerProps) {
@@ -62,6 +85,35 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
     staleTime: 5 * 60 * 1000,
   });
 
+  // Fetch confirmation event from audit log
+  const { data: confirmationEvent } = useQuery({
+    queryKey: ['appointment-confirmation', appointment?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('appointment_audit_log')
+        .select('created_at, actor_name, event_type, new_value')
+        .eq('appointment_id', appointment!.id)
+        .eq('event_type', 'status_changed')
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (!data) return null;
+      // Find the event where status changed to confirmed
+      const confirmed = data.find((e: any) => {
+        const nv = e.new_value as any;
+        return nv?.status === 'confirmed';
+      });
+      if (!confirmed) return null;
+      return {
+        confirmedAt: confirmed.created_at,
+        confirmedBy: confirmed.actor_name || 'System',
+        method: confirmed.actor_name === 'System' || !confirmed.actor_name ? 'Auto-confirmed' : 'Manual',
+      };
+    },
+    enabled: !!appointment?.id,
+    staleTime: 60_000,
+  });
+
   if (!appointment) return null;
 
   const status = appointment.status || 'booked';
@@ -98,33 +150,66 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
             <TabsTrigger value="comms" disabled>Comms</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="summary" className="flex-1 overflow-auto p-6 space-y-4">
-            {/* Details grid */}
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Calendar className="w-4 h-4 shrink-0" />
-                <span>{appointment.appointment_date}</span>
+          <TabsContent value="summary" className="flex-1 overflow-auto p-6 space-y-5">
+            {/* ── Client Info ── */}
+            <div className="space-y-3">
+              <h4 className={tokens.heading.subsection}>Client Info</h4>
+              <div className="space-y-2">
+                <DetailRow icon={User} label="Name">
+                  {clientName}
+                </DetailRow>
+                <DetailRow icon={Phone} label="Phone">
+                  {appointment.client_phone ? (
+                    <a href={`tel:${appointment.client_phone}`} className="text-primary hover:underline">
+                      {appointment.client_phone}
+                    </a>
+                  ) : (
+                    <span className="text-muted-foreground">Not provided</span>
+                  )}
+                </DetailRow>
+                <DetailRow icon={Mail} label="Email">
+                  {appointment.client_email ? (
+                    <a href={`mailto:${appointment.client_email}`} className="text-primary hover:underline">
+                      {appointment.client_email}
+                    </a>
+                  ) : (
+                    <span className="text-muted-foreground">Not provided</span>
+                  )}
+                </DetailRow>
               </div>
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Clock className="w-4 h-4 shrink-0" />
-                <span>{formatTime12h(appointment.start_time)} – {formatTime12h(appointment.end_time)}</span>
-              </div>
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <User className="w-4 h-4 shrink-0" />
-                <span>{appointment.stylist_name || 'Unassigned'}</span>
-              </div>
-              {appointment.location_name && (
+            </div>
+
+            <Separator />
+
+            {/* ── Appointment Details ── */}
+            <div className="space-y-3">
+              <h4 className={tokens.heading.subsection}>Appointment Details</h4>
+              <div className="grid grid-cols-2 gap-3 text-sm">
                 <div className="flex items-center gap-2 text-muted-foreground">
-                  <MapPin className="w-4 h-4 shrink-0" />
-                  <span>{appointment.location_name}</span>
+                  <Calendar className="w-4 h-4 shrink-0" />
+                  <span>{appointment.appointment_date}</span>
                 </div>
-              )}
-              {appointment.total_price != null && (
                 <div className="flex items-center gap-2 text-muted-foreground">
-                  <DollarSign className="w-4 h-4 shrink-0" />
-                  <BlurredAmount>${appointment.total_price}</BlurredAmount>
+                  <Clock className="w-4 h-4 shrink-0" />
+                  <span>{formatTime12h(appointment.start_time)} – {formatTime12h(appointment.end_time)}</span>
                 </div>
-              )}
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <User className="w-4 h-4 shrink-0" />
+                  <span>{appointment.stylist_name || 'Unassigned'}</span>
+                </div>
+                {appointment.location_name && (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <MapPin className="w-4 h-4 shrink-0" />
+                    <span>{appointment.location_name}</span>
+                  </div>
+                )}
+                {appointment.total_price != null && (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <DollarSign className="w-4 h-4 shrink-0" />
+                    <BlurredAmount>${appointment.total_price}</BlurredAmount>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Promo / Discount context */}
@@ -150,6 +235,69 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
                 </div>
               </>
             )}
+
+            <Separator />
+
+            {/* ── Booking Provenance ── */}
+            <div className="space-y-3">
+              <h4 className={tokens.heading.subsection}>Booking Provenance</h4>
+              <div className="space-y-2">
+                <DetailRow icon={Calendar} label="Created At">
+                  {formatFullDateTime(appointment.created_at)}
+                </DetailRow>
+                <DetailRow icon={UserCheck} label="Created By">
+                  {appointment.created_by_name || '—'}
+                </DetailRow>
+                <DetailRow icon={Info} label="Source">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="text-[10px]">
+                      {appointment._source === 'phorest' ? 'Phorest' : 'Local'}
+                    </Badge>
+                    {appointment.import_source && appointment.import_source !== 'manual' && (
+                      <Badge variant="outline" className="text-[10px]">
+                        {appointment.import_source}
+                      </Badge>
+                    )}
+                  </div>
+                </DetailRow>
+                {appointment.payment_method && (
+                  <DetailRow icon={DollarSign} label="Payment Method">
+                    {appointment.payment_method}
+                  </DetailRow>
+                )}
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* ── Confirmation Details ── */}
+            <div className="space-y-3">
+              <h4 className={tokens.heading.subsection}>Confirmation Details</h4>
+              <div className="space-y-2">
+                <DetailRow icon={FileText} label="Status">
+                  <Badge className={cn('text-[10px]', statusBadge.bg, statusBadge.text, statusBadge.border)} variant="outline">
+                    {statusBadge.label}
+                  </Badge>
+                </DetailRow>
+                {confirmationEvent ? (
+                  <>
+                    <DetailRow icon={Clock} label="Confirmed At">
+                      {formatFullDateTime(confirmationEvent.confirmedAt)}
+                    </DetailRow>
+                    <DetailRow icon={UserCheck} label="Confirmed By">
+                      {confirmationEvent.confirmedBy}
+                    </DetailRow>
+                    <DetailRow icon={Info} label="Method">
+                      {confirmationEvent.method}
+                    </DetailRow>
+                  </>
+                ) : status !== 'confirmed' && status !== 'completed' ? (
+                  <DetailRow icon={Clock} label="Confirmation">
+                    <span className="text-muted-foreground">Pending</span>
+                  </DetailRow>
+                ) : null}
+              </div>
+            </div>
 
             {/* Reschedule history */}
             {appointment.rescheduled_from_date && (

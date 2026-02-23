@@ -76,29 +76,33 @@ export function useAppointmentsHub(filters: HubFilters) {
       const from = page * pageSize;
       const paged = all.slice(from, from + pageSize);
 
-      // Resolve client names for phorest appointments missing client_name
+      // ── Resolve client info (name, email, phone) from phorest_clients ──
       const missingClientIds = [
         ...new Set(
           paged
-            .filter((a: any) => !a.client_name && a.phorest_client_id)
+            .filter((a: any) => a.phorest_client_id)
             .map((a: any) => a.phorest_client_id)
         ),
       ] as string[];
 
-      let clientNameMap: Record<string, string> = {};
+      let clientInfoMap: Record<string, { name?: string; email?: string; phone?: string }> = {};
       if (missingClientIds.length > 0) {
         const { data: clients } = await supabase
           .from('phorest_clients')
-          .select('phorest_client_id, name')
+          .select('phorest_client_id, name, email, phone')
           .in('phorest_client_id', missingClientIds);
         for (const c of clients || []) {
-          if (c.phorest_client_id && c.name) {
-            clientNameMap[c.phorest_client_id] = c.name;
+          if (c.phorest_client_id) {
+            clientInfoMap[c.phorest_client_id] = {
+              name: c.name || undefined,
+              email: c.email || undefined,
+              phone: c.phone || undefined,
+            };
           }
         }
       }
 
-      // Resolve stylist names
+      // ── Resolve stylist names ──
       const stylistIds = [...new Set(paged.map((a: any) => a.stylist_user_id).filter(Boolean))] as string[];
       let stylistMap: Record<string, string> = {};
       if (stylistIds.length > 0) {
@@ -111,11 +115,49 @@ export function useAppointmentsHub(filters: HubFilters) {
         }
       }
 
-      const enriched = paged.map((a: any) => ({
-        ...a,
-        client_name: a.client_name || clientNameMap[a.phorest_client_id] || null,
-        stylist_name: stylistMap[a.stylist_user_id] || a.staff_name || null,
-      }));
+      // ── Resolve created_by names ──
+      const createdByIds = [...new Set(paged.map((a: any) => a.created_by).filter(Boolean))] as string[];
+      let createdByMap: Record<string, string> = {};
+      if (createdByIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('employee_profiles')
+          .select('user_id, display_name, full_name')
+          .in('user_id', createdByIds);
+        for (const p of profiles || []) {
+          createdByMap[p.user_id] = p.display_name || p.full_name || 'Unknown';
+        }
+      }
+
+      // ── Resolve location names ──
+      const locationIds = [...new Set(paged.map((a: any) => a.location_id).filter(Boolean))] as string[];
+      let locationMap: Record<string, string> = {};
+      if (locationIds.length > 0) {
+        const { data: locs } = await supabase
+          .from('locations')
+          .select('id, name')
+          .in('id', locationIds);
+        for (const l of locs || []) {
+          locationMap[l.id] = l.name;
+        }
+      }
+
+      // ── Enrich ──
+      const enriched = paged.map((a: any) => {
+        const clientInfo = clientInfoMap[a.phorest_client_id] || {};
+        return {
+          ...a,
+          client_name: a.client_name || clientInfo.name || null,
+          client_email: a.client_email || clientInfo.email || null,
+          client_phone: a.client_phone || clientInfo.phone || null,
+          stylist_name: stylistMap[a.stylist_user_id] || a.staff_name || null,
+          created_by_name: a.created_by
+            ? createdByMap[a.created_by] || 'Unknown'
+            : a._source === 'phorest'
+              ? 'Phorest Sync'
+              : null,
+          location_name: locationMap[a.location_id] || null,
+        };
+      });
 
       return {
         appointments: enriched,
