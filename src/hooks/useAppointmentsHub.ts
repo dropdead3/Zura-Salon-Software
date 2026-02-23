@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useOrganizationContext } from '@/contexts/OrganizationContext';
 
 export interface HubFilters {
   search?: string;
@@ -14,20 +13,16 @@ export interface HubFilters {
 }
 
 export function useAppointmentsHub(filters: HubFilters) {
-  const { effectiveOrganization } = useOrganizationContext();
-  const orgId = effectiveOrganization?.id;
   const page = filters.page || 0;
   const pageSize = filters.pageSize || 50;
 
   return useQuery({
-    queryKey: ['appointments-hub', orgId, filters],
+    queryKey: ['appointments-hub', filters],
     queryFn: async () => {
-      // Build query
       let query = supabase
         .from('phorest_appointments')
         .select('*, phorest_clients!phorest_appointments_phorest_client_id_fkey(name, email, phone)', { count: 'exact' });
 
-      // Location filter for org scoping
       if (filters.locationId) {
         query = query.eq('location_id', filters.locationId);
       }
@@ -48,13 +43,12 @@ export function useAppointmentsHub(filters: HubFilters) {
         query = query.lte('appointment_date', filters.endDate);
       }
 
-      // Search across client_name, or joined client email/phone
+      // Search across client_name and phone
       if (filters.search) {
         const term = `%${filters.search}%`;
         query = query.or(`client_name.ilike.${term},client_phone.ilike.${term}`);
       }
 
-      // Pagination + ordering
       const from = page * pageSize;
       const to = from + pageSize - 1;
       query = query
@@ -65,8 +59,26 @@ export function useAppointmentsHub(filters: HubFilters) {
       const { data, error, count } = await query;
       if (error) throw error;
 
+      // Resolve stylist names from stylist_user_id
+      const stylistIds = [...new Set((data || []).map((a: any) => a.stylist_user_id).filter(Boolean))] as string[];
+      let stylistMap: Record<string, string> = {};
+      if (stylistIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('employee_profiles')
+          .select('user_id, display_name, full_name')
+          .in('user_id', stylistIds);
+        for (const p of profiles || []) {
+          stylistMap[p.user_id] = p.display_name || p.full_name || 'Unknown';
+        }
+      }
+
+      const enriched = (data || []).map((a: any) => ({
+        ...a,
+        stylist_name: stylistMap[a.stylist_user_id] || null,
+      }));
+
       return {
-        appointments: data || [],
+        appointments: enriched,
         totalCount: count || 0,
         page,
         pageSize,

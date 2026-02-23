@@ -14,6 +14,7 @@ import { RefundDialog } from '@/components/dashboard/transactions/RefundDialog';
 import { IssueCreditsDialog } from '@/components/dashboard/transactions/IssueCreditsDialog';
 import { GiftCardManager } from '@/components/dashboard/transactions/GiftCardManager';
 import { useTransactions, type TransactionFilters } from '@/hooks/useTransactions';
+import { useRefundRecords } from '@/hooks/useRefunds';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Card } from '@/components/ui/card';
 import { BentoGrid } from '@/components/ui/bento-grid';
@@ -21,9 +22,10 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useLocations } from '@/hooks/useLocations';
 import { format, startOfMonth, endOfMonth, subMonths, startOfDay, endOfDay } from 'date-fns';
-import { CreditCard, RefreshCw, Download } from 'lucide-react';
+import { CreditCard, RefreshCw, Download, AlertTriangle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
 
 type DatePreset = 'today' | 'this_week' | 'this_month' | 'last_month' | 'all';
 
@@ -31,11 +33,13 @@ function TransactionsTab({ search }: { search: string }) {
   const [datePreset, setDatePreset] = useState<DatePreset>('this_month');
   const [locationId, setLocationId] = useState('all');
   const [itemType, setItemType] = useState('all');
+  const [showPendingRefunds, setShowPendingRefunds] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
   const [isRefundOpen, setIsRefundOpen] = useState(false);
   const [isCreditsOpen, setIsCreditsOpen] = useState(false);
   const { data: locations = [] } = useLocations();
   const { formatCurrency } = useFormatCurrency();
+  const { data: pendingRefunds = [] } = useRefundRecords({ status: 'pending' });
 
   const getDateRange = (): { startDate?: string; endDate?: string } => {
     const now = new Date();
@@ -146,6 +150,22 @@ function TransactionsTab({ search }: { search: string }) {
             </SelectContent>
           </Select>
 
+          {/* Pending Refunds toggle */}
+          {pendingRefunds.length > 0 && (
+            <Button
+              variant={showPendingRefunds ? 'default' : 'outline'}
+              size={tokens.button.card}
+              onClick={() => setShowPendingRefunds(!showPendingRefunds)}
+              className="gap-2"
+            >
+              <AlertTriangle className="w-4 h-4" />
+              Pending Refunds
+              <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[10px]">
+                {pendingRefunds.length}
+              </Badge>
+            </Button>
+          )}
+
           <div className="ml-auto flex gap-2">
             <Button variant="outline" size={tokens.button.card} onClick={handleExportCSV} disabled={transactions.length === 0}>
               <Download className="w-4 h-4 mr-2" />
@@ -162,6 +182,26 @@ function TransactionsTab({ search }: { search: string }) {
           </div>
         </div>
       </Card>
+
+      {/* Pending Refunds List */}
+      {showPendingRefunds && pendingRefunds.length > 0 && (
+        <Card className="border-amber-300 dark:border-amber-700">
+          <div className="p-4 space-y-2">
+            <h4 className={tokens.heading.subsection}>Refunds Awaiting Approval</h4>
+            {pendingRefunds.map((r: any) => (
+              <div key={r.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                <div>
+                  <p className="text-sm font-medium">{r.original_item_name || 'Transaction'}</p>
+                  <p className="text-xs text-muted-foreground">{r.reason || 'No reason provided'}</p>
+                </div>
+                <BlurredAmount>
+                  <span className="text-sm font-medium">${r.refund_amount}</span>
+                </BlurredAmount>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       <TransactionList
         transactions={transactions}

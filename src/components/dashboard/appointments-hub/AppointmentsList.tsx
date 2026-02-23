@@ -12,10 +12,17 @@ import { ChevronLeft, ChevronRight, Download, Calendar } from 'lucide-react';
 import { useAppointmentsHub, type HubFilters } from '@/hooks/useAppointmentsHub';
 import { AppointmentDetailDrawer } from './AppointmentDetailDrawer';
 import { useLocations } from '@/hooks/useLocations';
+import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { format, startOfMonth, endOfMonth, subMonths, startOfDay, endOfDay } from 'date-fns';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
+import { formatDisplayName } from '@/lib/utils';
 
 interface AppointmentsListProps {
   search: string;
 }
+
+type DatePreset = 'today' | 'this_week' | 'this_month' | 'last_month' | 'all';
 
 function formatTime12h(time: string): string {
   const [hours, minutes] = time.split(':');
@@ -25,18 +32,47 @@ function formatTime12h(time: string): string {
   return `${hour12}:${minutes} ${ampm}`;
 }
 
+function getDateRange(preset: DatePreset): { startDate?: string; endDate?: string } {
+  const now = new Date();
+  switch (preset) {
+    case 'today':
+      return { startDate: format(startOfDay(now), 'yyyy-MM-dd'), endDate: format(endOfDay(now), 'yyyy-MM-dd') };
+    case 'this_week': {
+      const weekStart = new Date(now);
+      weekStart.setDate(now.getDate() - now.getDay());
+      return { startDate: format(weekStart, 'yyyy-MM-dd'), endDate: format(now, 'yyyy-MM-dd') };
+    }
+    case 'this_month':
+      return { startDate: format(startOfMonth(now), 'yyyy-MM-dd'), endDate: format(endOfMonth(now), 'yyyy-MM-dd') };
+    case 'last_month': {
+      const lastMonth = subMonths(now, 1);
+      return { startDate: format(startOfMonth(lastMonth), 'yyyy-MM-dd'), endDate: format(endOfMonth(lastMonth), 'yyyy-MM-dd') };
+    }
+    default:
+      return {};
+  }
+}
+
 export function AppointmentsList({ search }: AppointmentsListProps) {
   const [page, setPage] = useState(0);
   const [status, setStatus] = useState('all');
   const [locationId, setLocationId] = useState('all');
+  const [datePreset, setDatePreset] = useState<DatePreset>('this_month');
+  const [stylistId, setStylistId] = useState('all');
   const [selectedAppt, setSelectedAppt] = useState<any>(null);
 
+  const { effectiveOrganization } = useOrganizationContext();
   const { data: locations = [] } = useLocations();
+  const { data: teamMembers = [] } = useTeamDirectory(undefined, { organizationId: effectiveOrganization?.id || undefined });
+
+  const dateRange = getDateRange(datePreset);
 
   const filters: HubFilters = {
     search: search || undefined,
     status: status !== 'all' ? status : undefined,
     locationId: locationId !== 'all' ? locationId : undefined,
+    stylistUserId: stylistId !== 'all' ? stylistId : undefined,
+    ...dateRange,
     page,
     pageSize: 50,
   };
@@ -68,12 +104,32 @@ export function AppointmentsList({ search }: AppointmentsListProps) {
     URL.revokeObjectURL(url);
   };
 
+  // Stylists for the filter dropdown
+  const stylistOptions = teamMembers
+    .filter((m: any) => m.user_id)
+    .map((m: any) => ({
+      id: m.user_id,
+      name: formatDisplayName(m.full_name, m.display_name),
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
   return (
     <>
       {/* Filters */}
       <Card className="mb-4">
         <CardContent className="pt-4">
           <div className="flex flex-wrap gap-3 items-center">
+            <Select value={datePreset} onValueChange={(v) => { setDatePreset(v as DatePreset); setPage(0); }}>
+              <SelectTrigger className="w-[140px]"><SelectValue placeholder="Date range" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="today">Today</SelectItem>
+                <SelectItem value="this_week">This Week</SelectItem>
+                <SelectItem value="this_month">This Month</SelectItem>
+                <SelectItem value="last_month">Last Month</SelectItem>
+                <SelectItem value="all">All Time</SelectItem>
+              </SelectContent>
+            </Select>
+
             <Select value={status} onValueChange={(v) => { setStatus(v); setPage(0); }}>
               <SelectTrigger className="w-[130px]">
                 <SelectValue placeholder="Status" />
@@ -101,6 +157,18 @@ export function AppointmentsList({ search }: AppointmentsListProps) {
               </SelectContent>
             </Select>
 
+            <Select value={stylistId} onValueChange={(v) => { setStylistId(v); setPage(0); }}>
+              <SelectTrigger className="w-[160px]">
+                <SelectValue placeholder="Stylist" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Stylists</SelectItem>
+                {stylistOptions.map(s => (
+                  <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
             <div className="ml-auto">
               <Button variant="outline" size={tokens.button.card} onClick={handleExportCSV} disabled={appointments.length === 0}>
                 <Download className="w-4 h-4 mr-2" />
@@ -122,20 +190,21 @@ export function AppointmentsList({ search }: AppointmentsListProps) {
               <TableHead className={tokens.table.columnHeader}>Service</TableHead>
               <TableHead className={tokens.table.columnHeader}>Stylist</TableHead>
               <TableHead className={tokens.table.columnHeader}>Status</TableHead>
+              <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Price</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               [1, 2, 3, 4, 5].map(i => (
                 <TableRow key={i}>
-                  {[1, 2, 3, 4, 5, 6].map(j => (
+                  {[1, 2, 3, 4, 5, 6, 7].map(j => (
                     <TableCell key={j}><Skeleton className="h-5 w-full" /></TableCell>
                   ))}
                 </TableRow>
               ))
             ) : appointments.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6}>
+                <TableCell colSpan={7}>
                   <div className={tokens.empty.container}>
                     <Calendar className={tokens.empty.icon} />
                     <p className={tokens.empty.description}>No appointments found</p>
@@ -160,6 +229,11 @@ export function AppointmentsList({ search }: AppointmentsListProps) {
                       <Badge variant="outline" className={cn('text-[10px]', statusBadge.bg, statusBadge.text, statusBadge.border)}>
                         {statusBadge.label}
                       </Badge>
+                    </TableCell>
+                    <TableCell className="text-sm text-right">
+                      {appt.total_price != null ? (
+                        <BlurredAmount>${appt.total_price}</BlurredAmount>
+                      ) : '—'}
                     </TableCell>
                   </TableRow>
                 );
