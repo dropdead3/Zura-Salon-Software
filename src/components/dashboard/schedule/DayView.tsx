@@ -209,6 +209,7 @@ interface AppointmentCardProps {
   assistantNamesMap?: Map<string, string[]>;
   assistantProfilesMap?: Map<string, AssistantProfile[]>;
   hasCoverageScheduled?: boolean;
+  date?: Date;
 }
 
 function AppointmentCard({ 
@@ -227,6 +228,7 @@ function AppointmentCard({
   assistantNamesMap,
   assistantProfilesMap,
   hasCoverageScheduled = false,
+  date,
 }: AppointmentCardProps) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: appointment.id,
@@ -238,6 +240,17 @@ function AppointmentCard({
   const statusColors = STATUS_COLORS[appointment.status];
   const duration = parseTimeToMinutes(appointment.end_time) - parseTimeToMinutes(appointment.start_time);
   const isCompact = duration <= 30;
+
+  // Late check-in detection
+  const isOverdueForCheckin = useMemo(() => {
+    if (!date || !isToday(date)) return false;
+    const status = appointment.status;
+    if (status !== 'booked' && status !== 'confirmed') return false;
+    const now = new Date();
+    const nowMinutes = now.getHours() * 60 + now.getMinutes();
+    const startMinutes = parseTimeToMinutes(appointment.start_time);
+    return nowMinutes > startMinutes;
+  }, [date, appointment.status, appointment.start_time]);
 
   // Get category-based color for non-status-specific appointments
   const serviceCategory = appointment.service_category;
@@ -301,6 +314,7 @@ function AppointmentCard({
             !useCategoryColor && !displayGradient && statusColors.text,
             isCancelled && 'opacity-60',
             isNoShow && 'ring-2 ring-destructive ring-inset',
+            isOverdueForCheckin && 'ring-2 ring-red-500/70 ring-inset bg-red-50/30 dark:bg-red-950/20',
             // Selection visual handled by detail panel, no ring stroke
             isDragging && !isDragOverlay && 'opacity-30',
             isDragOverlay && 'shadow-2xl ring-2 ring-primary scale-105 z-50',
@@ -495,7 +509,10 @@ function AppointmentCard({
                   {isAssisting && (
                     <span className="bg-accent/80 text-accent-foreground text-[7px] px-0.5 py-px rounded-sm font-medium">AST</span>
                   )}
-                  {appointment.is_new_client && (
+                   {isOverdueForCheckin && (
+                    <AlertTriangle className="h-2.5 w-2.5 text-red-500" />
+                   )}
+                   {appointment.is_new_client && (
                     <Star className="h-2.5 w-2.5 text-amber-500" />
                   )}
                 </div>
@@ -528,6 +545,11 @@ function AppointmentCard({
                       )}
                       {appointment.is_new_client && (
                         <span className="text-[8px] px-1 py-px rounded-sm bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 font-medium">NEW</span>
+                      )}
+                      {isOverdueForCheckin && (
+                        <span className="text-[8px] px-1 py-px rounded-sm bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 font-medium">
+                          No Check-In
+                        </span>
                       )}
                       <span className={cn(
                         'text-[9px] px-1.5 py-0.5 rounded-full font-medium',
@@ -924,6 +946,7 @@ export function DayView({
                           assistantNamesMap={assistantNamesMap}
                           assistantProfilesMap={assistantProfilesMap}
                           hasCoverageScheduled={hasCoverage}
+                          date={date}
                         />
                       );
                     })}
