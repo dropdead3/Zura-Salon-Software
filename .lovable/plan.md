@@ -1,37 +1,18 @@
 
-
-## Add Hover Effect and Right Arrow to Appointment Rows
+## Move Analytics Cards Above Client Health Pulse
 
 **What changes:**
-Each appointment row in the table will get a subtle hover background color change and a right-pointing chevron arrow that appears on the far right, signaling that the row is clickable and leads to the detail drill-down.
+Swap the order of the stats cards (Total Clients, VIP, At Risk, etc.) and the Client Health Pulse card on the Client Directory page, so the analytics cards appear first.
 
 ### Technical Details
 
-**File: `src/components/dashboard/appointments-hub/AppointmentsList.tsx`**
+**File: `src/pages/dashboard/ClientDirectory.tsx`**
 
-1. **Import `ChevronRight`** -- already imported (line 15).
+Lines 756-798 will be reordered so the Stats Cards `BentoGrid` block (currently lines 763-798) moves above the Client Health Summary Widget block (currently lines 756-761).
 
-2. **Add a new `TableHead` column** at the end of the header row (after "Created By") -- an empty, narrow column (`w-8`) to reserve space for the arrow.
+**New order:**
+1. Tabs (All Clients / My Clients) -- unchanged at line 740
+2. Stats Cards (`BentoGrid` with Total Clients, VIP, At Risk, New Clients, Total Revenue, Top Source) -- moved up
+3. Client Health Pulse (`ClientHealthSummaryCard`) -- moved down
 
-3. **Update `COL_COUNT`** from 12 to 13.
-
-4. **Add hover class to `TableRow`** -- add `hover:bg-muted/40 transition-colors` to each data row's className (line 346).
-
-5. **Add a new `TableCell` at the end of each data row** containing a `ChevronRight` icon styled with `opacity-0 group-hover:opacity-100 transition-opacity` -- this requires adding `group` to the `TableRow` className so the arrow appears only on hover.
-
-6. **Add matching skeleton and empty-state cells** for the new column to keep column counts aligned.
-
-**Summary of row className:**
-```
-cn('cursor-pointer group hover:bg-muted/40 transition-colors', isSelected && 'bg-muted/50')
-```
-
-**Arrow cell:**
-```tsx
-<TableCell className="w-8 pr-2">
-  <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-</TableCell>
-```
-
-This is a minimal, UI-only change -- no data or logic changes needed.
-
+This is a layout-only change with no logic or data modifications.
