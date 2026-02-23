@@ -5,26 +5,15 @@ import { format, isToday, getWeek } from 'date-fns';
 import { ClosedBadge } from '@/components/dashboard/ClosedBadge';
 import { cn, formatPhoneDisplay, formatDisplayName } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { 
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { Badge } from '@/components/ui/badge';
-import { Phone, Clock, AlertTriangle, XCircle, Users, User, Repeat, RotateCcw, Star, ArrowRightLeft } from 'lucide-react';
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
 import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
-import { getCategoryColor, SPECIAL_GRADIENTS, isGradientMarker, getGradientFromMarker, getDarkCategoryStyle } from '@/utils/categoryColors';
 import { useRescheduleAppointment } from '@/hooks/useRescheduleAppointment';
 import type { ServiceLookupEntry } from '@/hooks/useServiceLookup';
-import { APPOINTMENT_STATUS_COLORS, APPOINTMENT_STATUS_BADGE } from '@/lib/design-tokens';
-import { formatServicesWithDuration, sortServices } from '@/lib/appointment-card-utils';
+import { APPOINTMENT_STATUS_COLORS } from '@/lib/design-tokens';
 import { StylistBadge } from './StylistBadge';
 import { AssistantBlockOverlay } from './AssistantBlockOverlay';
 import type { AssistantTimeBlock } from '@/hooks/useAssistantTimeBlocks';
-import { useFormatCurrency } from '@/hooks/useFormatCurrency';
-import { BlurredAmount } from '@/contexts/HideNumbersContext';
-import { formatRelativeTime } from '@/lib/format';
+import { AppointmentCardContent, getCardSize } from './AppointmentCardContent';
 import {
   DndContext,
   DragOverlay,
@@ -94,19 +83,8 @@ function formatTime12h(time: string): string {
   return `${hour12}:${minutes} ${ampm}`;
 }
 
-// Removed local formatPhone — using formatPhoneDisplay from @/lib/utils
-
 // Categories that display the X pattern overlay
 const BLOCKED_CATEGORIES = ['Block', 'Break'];
-
-// Helper to detect consultation category
-const isConsultationCategory = (category: string | null | undefined) => {
-  if (!category) return false;
-  return category.toLowerCase().includes('consult');
-};
-
-// Default consultation gradient (teal-lime) for fallback
-const DEFAULT_CONSULTATION_GRADIENT = SPECIAL_GRADIENTS['teal-lime'];
 
 // ─── Droppable Time Slot ───────────────────────────────────────────
 function formatSlotTime(hour: number, minute: number): string {
@@ -192,7 +170,7 @@ function DroppableSlot({
   );
 }
 
-// ─── Draggable Appointment Card ────────────────────────────────────
+// ─── Draggable Appointment Card (thin wrapper) ─────────────────
 interface AppointmentCardProps {
   appointment: PhorestAppointment;
   hoursStart: number;
@@ -212,8 +190,8 @@ interface AppointmentCardProps {
   date?: Date;
 }
 
-function AppointmentCard({ 
-  appointment, 
+function AppointmentCard({
+  appointment,
   hoursStart,
   onClick,
   isSelected = false,
@@ -226,8 +204,6 @@ function AppointmentCard({
   colorBy = 'service',
   serviceLookup,
   assistantNamesMap,
-  assistantProfilesMap,
-  hasCoverageScheduled = false,
   date,
 }: AppointmentCardProps) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
@@ -237,9 +213,9 @@ function AppointmentCard({
   });
 
   const style = getEventStyle(appointment.start_time, appointment.end_time, hoursStart);
-  const statusColors = STATUS_COLORS[appointment.status];
-  const duration = parseTimeToMinutes(appointment.end_time) - parseTimeToMinutes(appointment.start_time);
-  const isCompact = duration <= 30;
+  const widthPercent = 100 / totalOverlapping;
+  const leftPercent = columnIndex * widthPercent;
+  const size = getCardSize(appointment.start_time, appointment.end_time);
 
   // Late check-in detection
   const isOverdueForCheckin = useMemo(() => {
@@ -252,322 +228,42 @@ function AppointmentCard({
     return nowMinutes > startMinutes;
   }, [date, appointment.status, appointment.start_time]);
 
-  // Get category-based color for non-status-specific appointments
-  const serviceCategory = appointment.service_category;
-  const catColor = getCategoryColor(serviceCategory, categoryColors);
-  const useCategoryColor = colorBy === 'service' || appointment.status === 'booked';
-  const isConsultation = isConsultationCategory(serviceCategory);
-
-  // Check if the category has a gradient marker stored
-  const storedColorHex = categoryColors[serviceCategory?.toLowerCase() || '']?.bg || '';
-  const gradientFromMarker = isGradientMarker(storedColorHex) ? getGradientFromMarker(storedColorHex) : null;
-  
-  // Use gradient if: marker stored, OR consultation category defaults to teal-lime
-  const displayGradient = gradientFromMarker || (isConsultation ? DEFAULT_CONSULTATION_GRADIENT : null);
-
-  // Multi-service color banding
-  const serviceBands = useMemo(() => {
-    if (!useCategoryColor || !serviceLookup || displayGradient) return null;
-    const sorted = sortServices(appointment.service_name, serviceLookup);
-    if (sorted.length <= 1) return null;
-    
-    const bands = sorted.map(s => {
-      const category = s.category || appointment.service_category;
-      const color = getCategoryColor(category, categoryColors);
-      return { name: s.name, category, duration: s.duration || 30, color, isExtra: s.isExtra };
-    });
-    
-    const totalDuration = bands.reduce((sum, b) => sum + b.duration, 0);
-    
-    return bands.map(b => ({
-      ...b,
-      percent: (b.duration / totalDuration) * 100,
-    }));
-  }, [appointment.service_name, appointment.service_category, serviceLookup, categoryColors, useCategoryColor, displayGradient]);
-
-  // Calculate width and offset for overlapping appointments
-  const widthPercent = 100 / totalOverlapping;
-  const leftPercent = columnIndex * widthPercent;
-
-  // No-show and cancelled indicators
-  const isNoShow = appointment.status === 'no_show';
-  const isCancelled = appointment.status === 'cancelled';
-
-  // Dark mode detection (reactive via context)
-  const { resolvedTheme } = useDashboardTheme();
-  const isDark = resolvedTheme === 'dark';
-  const darkStyle = useMemo(() => {
-    if (!isDark || !useCategoryColor || displayGradient) return null;
-    return getDarkCategoryStyle(catColor.bg);
-  }, [isDark, useCategoryColor, displayGradient, catColor.bg]);
-
   return (
-        <div
-          ref={!isDragOverlay ? setNodeRef : undefined}
-          {...(!isDragOverlay ? { ...attributes, ...listeners } : {})}
-          className={cn(
-            'absolute z-10 rounded-md cursor-pointer transition-all duration-200 ease-out overflow-hidden group hover:brightness-110 dark:hover:brightness-125 hover:z-20',
-            // Left accent bar in both light and dark (solid style)
-            !displayGradient && 'border-l-4',
-            !useCategoryColor && !displayGradient && statusColors.bg,
-            !useCategoryColor && !displayGradient && statusColors.border,
-            !useCategoryColor && !displayGradient && statusColors.text,
-            isCancelled && 'opacity-60',
-            isNoShow && 'ring-2 ring-destructive ring-inset',
-            isOverdueForCheckin && 'ring-2 ring-red-500/70 ring-inset bg-red-50/30 dark:bg-red-950/20',
-            // Selection visual handled by detail panel, no ring stroke
-            isDragging && !isDragOverlay && 'opacity-30',
-            isDragOverlay && 'shadow-2xl ring-2 ring-primary scale-105 z-50',
-            displayGradient && 'shadow-lg',
-            // Pending redo: amber dashed border treatment
-            appointment.status === 'pending' && (appointment as any).is_redo && 'border-dashed border-2 border-amber-500 dark:border-amber-400',
-          )}
-          style={{
-            ...(isDragOverlay ? { position: 'relative', width: '200px', height: style.height } : style),
-            ...(!isDragOverlay ? {
-              left: `calc(${leftPercent}% + 2px)`,
-              width: `calc(${widthPercent}% - 4px)`,
-            } : {}),
-            ...(displayGradient ? {
-              background: displayGradient.background,
-              color: displayGradient.textColor,
-            } : useCategoryColor && isDark && darkStyle ? {
-              backgroundColor: darkStyle.fill,
-              color: darkStyle.text,
-              borderColor: darkStyle.stroke,
-              borderWidth: '1px',
-              borderStyle: 'solid',
-              borderLeftColor: darkStyle.accent,
-              borderLeftWidth: '4px',
-              boxShadow: !isCompact ? darkStyle.glow : undefined,
-              transition: 'background-color 150ms ease, box-shadow 150ms ease',
-            } : useCategoryColor ? {
-              backgroundColor: catColor.bg,
-              color: catColor.text,
-              borderLeftColor: catColor.bg,
-              borderWidth: '0 0 0 4px',
-              borderStyle: 'solid',
-              boxShadow: 'none',
-              opacity: 1,
-              backdropFilter: 'none',
-            } : {}),
-          }}
-          onClick={(e) => {
-            // Only fire click if not dragging
-            if (!isDragging) onClick();
-          }}
-        >
-          {/* Assistant avatar badges removed per design decision */}
-          {/* No-show overlay */}
-          {isNoShow && (
-            <div className="absolute inset-0 bg-destructive/20 flex items-center justify-center z-10">
-              <div className="absolute top-1 right-1">
-                <AlertTriangle className="w-4 h-4 text-destructive" />
-              </div>
-            </div>
-          )}
-          
-          {/* Cancelled overlay with strikethrough */}
-          {isCancelled && (
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="absolute inset-y-1/2 left-0 right-0 h-0.5 bg-current opacity-50" />
-            </div>
-          )}
-          {/* Glass stroke overlay for gradient */}
-          {displayGradient && (
-            <div 
-              className="absolute inset-0 rounded-sm pointer-events-none"
-              style={{
-                background: displayGradient.glassStroke,
-                mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-                maskComposite: 'xor',
-                WebkitMaskComposite: 'xor',
-                padding: '1px',
-              }}
-            />
-          )}
-          {/* Shimmer animation for gradient */}
-          {displayGradient && (
-            <div 
-              className="absolute inset-0 pointer-events-none animate-shimmer"
-              style={{
-                background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%)',
-                backgroundSize: '200% 100%',
-              }}
-            />
-          )}
-          {/* X pattern overlay for Block/Break entries */}
-          {BLOCKED_CATEGORIES.includes(appointment.service_category || '') && (
-            <div className="absolute inset-0 pointer-events-none overflow-hidden">
-              <div 
-                className="absolute inset-0"
-                style={{
-                  background: `linear-gradient(to bottom right, 
-                    transparent calc(50% - 1px), 
-                    ${useCategoryColor ? catColor.text : 'currentColor'}19 calc(50% - 1px), 
-                    ${useCategoryColor ? catColor.text : 'currentColor'}19 calc(50% + 1px), 
-                    transparent calc(50% + 1px))`,
-                }}
-              />
-              <div 
-                className="absolute inset-0"
-                style={{
-                  background: `linear-gradient(to bottom left, 
-                    transparent calc(50% - 1px), 
-                    ${useCategoryColor ? catColor.text : 'currentColor'}19 calc(50% - 1px), 
-                    ${useCategoryColor ? catColor.text : 'currentColor'}19 calc(50% + 1px), 
-                    transparent calc(50% + 1px))`,
-                }}
-              />
-            </div>
-          )}
-          {/* Multi-service color bands */}
-          {serviceBands && useCategoryColor && (
-            <div className="absolute inset-0 flex flex-col overflow-hidden rounded-md">
-              {serviceBands.map((band, i) => {
-                const bandDark = isDark ? getDarkCategoryStyle(band.color.bg) : null;
-                return (
-                  <div
-                    key={i}
-                    className="relative overflow-hidden"
-                    style={{
-                      flex: `${band.percent} 0 0%`,
-                      backgroundColor: bandDark ? bandDark.fill : band.color.bg,
-                    }}
-                  >
-                    {duration >= 60 && (
-                      <span
-                        className="absolute bottom-0 right-1 text-[9px] opacity-70 truncate max-w-[90%] text-right"
-                        style={{ textShadow: '0 0 3px rgba(0,0,0,0.15)' }}
-                      >
-                        {band.name}
-                      </span>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-          <div className="px-1.5 py-0.5 relative z-10" style={serviceBands ? { textShadow: '0 0 3px rgba(0,0,0,0.15)' } : undefined}>
-            {isCompact ? (
-              <>
-                <div className="absolute top-0.5 right-1 z-20 flex items-center gap-0.5">
-                  {(appointment as any).is_redo && (
-                    <RotateCcw className="h-2.5 w-2.5 text-amber-500" />
-                  )}
-                  {appointment.recurrence_group_id && (
-                    <Repeat className="h-2.5 w-2.5 opacity-60" />
-                  )}
-                  {(appointment as any).rescheduled_at && (
-                    <ArrowRightLeft className="h-2.5 w-2.5 text-blue-500 dark:text-blue-400" />
-                  )}
-                  {!isAssisting && hasAssistants && (
-                    <Users className="h-2.5 w-2.5 opacity-60" />
-                  )}
-                  {isAssisting && (
-                    <span className="bg-accent/80 text-accent-foreground text-[7px] px-0.5 py-px rounded-sm font-medium">AST</span>
-                  )}
-                   {isOverdueForCheckin && (
-                    <AlertTriangle className="h-2.5 w-2.5 text-red-500" />
-                   )}
-                   {appointment.is_new_client && (
-                    <Star className="h-2.5 w-2.5 text-amber-500" />
-                  )}
-                </div>
-                <div className="text-xs font-medium truncate pr-16">
-                  {appointment.client_name}
-                </div>
-              </>
-            ) : (
-              <>
-                {/* Top-right indicators cluster */}
-                {(() => {
-                  const statusKey = (appointment.status || 'booked') as keyof typeof APPOINTMENT_STATUS_BADGE;
-                  const badge = APPOINTMENT_STATUS_BADGE[statusKey] || APPOINTMENT_STATUS_BADGE.booked;
-                  return (
-                    <div className="absolute top-1 right-1 z-20 flex items-center gap-1">
-                      {(appointment as any).is_redo && (
-                        <RotateCcw className="h-3 w-3 text-amber-500" />
-                      )}
-                      {appointment.recurrence_group_id && (
-                        <Repeat className="h-3 w-3 opacity-60" />
-                      )}
-                      {(appointment as any).rescheduled_at && (
-                        <ArrowRightLeft className="h-3 w-3 text-blue-500 dark:text-blue-400" />
-                      )}
-                      {!isAssisting && hasAssistants && (
-                        <Users className="h-3 w-3 opacity-60" />
-                      )}
-                      {isAssisting && (
-                        <span className="bg-accent/80 text-accent-foreground border border-accent-foreground/30 text-[10px] px-1.5 py-0.5 rounded-full font-medium whitespace-nowrap">AST</span>
-                      )}
-                      {appointment.is_new_client && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-700/30 dark:border-amber-300/30 font-medium whitespace-nowrap">NEW</span>
-                      )}
-                      {isOverdueForCheckin && (
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-200 text-red-800 dark:bg-red-900/50 dark:text-red-300 border border-red-800/30 dark:border-red-300/30 font-medium whitespace-nowrap">
-                          No Check-In
-                        </span>
-                      )}
-                      <span className={cn(
-                        'text-[10px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap border',
-                        badge.bg, badge.text, badge.border
-                      )}>
-                        {badge.label}
-                      </span>
-                    </div>
-                  );
-                })()}
-                <div className="text-sm font-medium truncate pr-20">
-                  {appointment.client_name}
-                  {appointment.client_phone && (
-                    <span className="font-normal opacity-80 ml-1">
-                      {formatPhoneDisplay(appointment.client_phone)}
-                    </span>
-                  )}
-                </div>
-                {/* Per-service time-slot positioned labels on tall cards */}
-                {duration >= 60 && serviceBands && serviceBands.length > 1 ? (
-                  <div className="text-[13px] opacity-90 truncate">
-                    {serviceBands.map(b => `${b.name} ${b.duration}min`).join(' + ')}
-                  </div>
-                ) : (
-                  <div className="text-[13px] opacity-90 truncate">
-                    {(duration >= 45 && formatServicesWithDuration(appointment.service_name, serviceLookup)) || appointment.service_name}
-                  </div>
-                )}
-                {/* Assisted by line */}
-                {(() => {
-                  const names = assistantNamesMap?.get(appointment.id);
-                  if (!names || names.length === 0) return null;
-                  return (
-                    <div className="text-[11px] opacity-70 truncate flex items-center gap-1">
-                      <span className="opacity-50">└</span> Assisted by {names.join(', ')}
-                    </div>
-                  );
-                })()}
-                {/* Stylist/assistant info now in top-right badge tooltip */}
-                {duration >= 60 && (
-                  <div className="text-[13px] opacity-80 mt-0.5 flex items-center justify-between">
-                    <span>{formatTime12h(appointment.start_time)} - {formatTime12h(appointment.end_time)}</span>
-                    {appointment.total_price != null && appointment.total_price > 0 && (
-                      <BlurredAmount className="text-[11px] opacity-70">
-                        ${appointment.total_price.toFixed(0)}
-                      </BlurredAmount>
-                    )}
-                  </div>
-                )}
-                {/* Rescheduled from line - below time */}
-                {duration >= 45 && (appointment as any).rescheduled_at && (appointment as any).rescheduled_from_time && (
-                  <div className="text-[10px] opacity-70 italic truncate flex items-center gap-0.5">
-                    <ArrowRightLeft className="h-2.5 w-2.5 shrink-0" />
-                    Moved from {formatTime12h((appointment as any).rescheduled_from_time)}
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        </div>
+    <div
+      ref={!isDragOverlay ? setNodeRef : undefined}
+      {...(!isDragOverlay ? { ...attributes, ...listeners } : {})}
+      className={cn(
+        'absolute z-10',
+        isDragging && !isDragOverlay && 'opacity-30',
+        isDragOverlay && 'shadow-2xl ring-2 ring-primary scale-105 z-50',
+      )}
+      style={{
+        ...(isDragOverlay ? { position: 'relative', width: '200px', height: style.height } : style),
+        ...(!isDragOverlay ? {
+          left: `calc(${leftPercent}% + 2px)`,
+          width: `calc(${widthPercent}% - 4px)`,
+        } : {}),
+      }}
+      onClick={(e) => {
+        if (!isDragging) onClick();
+      }}
+    >
+      <AppointmentCardContent
+        appointment={appointment}
+        variant="grid"
+        size={size}
+        isSelected={isSelected}
+        isAssisting={isAssisting}
+        hasAssistants={hasAssistants}
+        colorBy={colorBy}
+        serviceLookup={serviceLookup}
+        assistantNamesMap={assistantNamesMap}
+        categoryColors={categoryColors}
+        isOverdueForCheckin={isOverdueForCheckin}
+        showHoverPreview
+        onClick={() => {}}
+      />
+    </div>
   );
 }
 
