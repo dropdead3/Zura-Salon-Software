@@ -1,25 +1,50 @@
 
-## Make Analytics Callout Card Collapsible
 
-### Change
+## Add Dynamic Filter Description Above the Appointments List
 
-Wrap the analytics quick-links card in a `Collapsible` component from `@radix-ui/react-collapsible` (already available at `@/components/ui/collapsible`). The header row (icon, title, description) becomes the `CollapsibleTrigger`, and only the 4 link chips are wrapped in `CollapsibleContent`. A small chevron indicator will be added to signal expand/collapse state.
+### What Changes
 
-### Visual Behavior
+Add a concise, human-readable summary line between the filter controls (Row 2) and the table Card that dynamically describes the active filters and sort order. It will read naturally, e.g.:
 
-- **Expanded (default):** Card looks exactly as it does now -- icon, header, description, and 4 link chips
-- **Collapsed:** Icon, header, and description remain visible; the 4 link chips are hidden. A `ChevronDown`/`ChevronUp` icon on the right side of the header row indicates state
-- Card maintains full width span in both states
+- "Showing all appointments, sorted by date (newest first)"
+- "Showing today's completed appointments at Downtown Studio for Sarah M., sorted by date (newest first)"
+- "Showing appointments from Feb 10 -- Feb 18, sorted by date (newest first)"
+
+When a search term is active, it appends: `matching "haircut"`
+
+### Visual Placement
+
+```text
+[ Search Bar ]                       [ All | Past | Today | Future | Range ]
+[ Status v ]  [ Location v ]  [ Stylist v ]                        [ CSV ]
+
+  Showing today's confirmed appointments at Downtown Studio, sorted by date (newest first)   <-- NEW
+
++-----------------------------------------------------------------------+
+|  [ ] Date   Time   Client   ...                                       |
++-----------------------------------------------------------------------+
+```
+
+The line will use `text-sm text-muted-foreground` styling with `font-sans` -- subtle, informational, not visually heavy.
 
 ### Technical Details
 
-**File:** `src/pages/dashboard/AppointmentsHub.tsx`
+**File:** `src/components/dashboard/appointments-hub/AppointmentsList.tsx`
 
-1. Add imports: `Collapsible`, `CollapsibleContent`, `CollapsibleTrigger` from `@/components/ui/collapsible`; add `ChevronDown` to the lucide import
-2. Add `const [analyticsOpen, setAnalyticsOpen] = useState(true)` for default-expanded state
-3. Wrap the `Card` contents:
-   - The header `div` (icon + title + description) becomes a `CollapsibleTrigger` with a chevron on the right that rotates based on open state
-   - The links grid gets wrapped in `CollapsibleContent`
-4. The outer `Card` element stays unchanged (same glass aesthetic, full width)
+1. **Build description string** using a `useMemo` that reads `timePeriod`, `customRange`, `status`, `locationId`, `stylistId`, `search`, and `totalCount`:
+   - Time: "all" / "today's" / "past" / "future" / "Feb 10 -- Feb 18" (for custom range)
+   - Status: omitted when "all", otherwise appended as adjective (e.g. "completed", "confirmed")
+   - Location: resolved from `locations` array by `locationId`, omitted when "all"
+   - Stylist: resolved from `stylistOptions` by `stylistId`, omitted when "all"
+   - Search: appended as `matching "term"` when present
+   - Sort: always ends with `sorted by date (newest first)` (matching the default query order)
+   - Count: prefixed with the `totalCount` value, e.g. "Showing 42 past appointments..."
 
-No new files. No database changes. Single file edit.
+2. **Insert the line** at line 284 (just before the `{/* Table */}` comment), as a simple `<p>` element:
+   ```tsx
+   <p className="text-sm text-muted-foreground px-1">
+     {filterDescription}
+   </p>
+   ```
+
+No new files. No new dependencies. Single file edit.
