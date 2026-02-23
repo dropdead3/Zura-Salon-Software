@@ -4,8 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Search, X, Loader2 } from 'lucide-react';
-import { useClientSearch } from '@/hooks/useClientsData';
+import { usePhorestClientSearch } from '@/hooks/useClientsData';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { supabase } from '@/integrations/supabase/client';
 import type { MergeClient } from './MergeWizard';
 
 interface ClientSelectorProps {
@@ -16,8 +17,32 @@ interface ClientSelectorProps {
 
 export function ClientSelector({ selectedClients, onSelectionChange, preselectedIds }: ClientSelectorProps) {
   const [search, setSearch] = useState('');
-  const { data: results, isLoading } = useClientSearch(search, 20);
+  const { data: results, isLoading } = usePhorestClientSearch(search, 20);
   const { formatCurrencyWhole } = useFormatCurrency();
+
+  // Pre-populate from URL params using phorest_clients
+  useEffect(() => {
+    if (!preselectedIds?.length || selectedClients.length > 0) return;
+
+    const fetchPreselected = async () => {
+      const { data, error } = await supabase
+        .from('phorest_clients')
+        .select('id, first_name, last_name, name, email, phone, visit_count, total_spend, last_visit, is_vip, preferred_stylist_id, notes, birthday, address_line1, city, state, zip, location_id')
+        .in('id', preselectedIds);
+
+      if (!error && data?.length) {
+        const clients = data.map(c => ({
+          ...c,
+          name: c.name || `${c.first_name || ''} ${c.last_name || ''}`.trim(),
+          mobile: c.phone,
+          last_visit_date: c.last_visit,
+        })) as unknown as MergeClient[];
+        onSelectionChange(clients);
+      }
+    };
+
+    fetchPreselected();
+  }, [preselectedIds]);
 
   const handleAdd = (client: any) => {
     if (selectedClients.some(c => c.id === client.id)) return;
@@ -89,7 +114,7 @@ export function ClientSelector({ selectedClients, onSelectionChange, preselected
               <p className="font-medium text-sm truncate">{client.name}</p>
               <div className="flex items-center gap-3 text-xs text-muted-foreground">
                 {client.email && <span className="truncate">{client.email}</span>}
-                {(client.phone || client.mobile) && <span>{client.phone || client.mobile}</span>}
+                {client.phone && <span>{client.phone}</span>}
               </div>
             </div>
             <div className="text-right shrink-0">

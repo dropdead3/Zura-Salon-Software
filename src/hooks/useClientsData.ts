@@ -253,6 +253,39 @@ export function useUpdateClient() {
 /**
  * Client stats for dashboard
  */
+/**
+ * Search phorest_clients for the merge wizard.
+ * Includes duplicates (no is_duplicate filter) so both profiles are findable.
+ */
+export function usePhorestClientSearch(searchQuery: string, limit = 20) {
+  return useQuery({
+    queryKey: ['phorest-client-search', searchQuery],
+    queryFn: async () => {
+      let query = supabase
+        .from('phorest_clients')
+        .select('id, first_name, last_name, name, email, phone, visit_count, total_spend, last_visit, is_vip, preferred_stylist_id, is_duplicate, canonical_client_id, notes, birthday, address_line1, city, state, zip, location_id')
+        .order('last_name')
+        .order('first_name')
+        .limit(limit);
+
+      if (searchQuery) {
+        query = query.or(`first_name.ilike.%${searchQuery}%,last_name.ilike.%${searchQuery}%,name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%`);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      return (data || []).map(c => ({
+        ...c,
+        name: c.name || `${c.first_name || ''} ${c.last_name || ''}`.trim(),
+        mobile: c.phone,
+        last_visit_date: c.last_visit,
+      }));
+    },
+    enabled: searchQuery.length > 0,
+  });
+}
+
 export function useClientStats(locationId?: string) {
   const { user, roles } = useAuth();
   
