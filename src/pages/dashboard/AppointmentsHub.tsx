@@ -287,8 +287,10 @@ export default function AppointmentsHub() {
   const [search, setSearch] = useState(searchParams.get('search') || '');
 
   const handleTabChange = useCallback((tab: string) => {
-    setSearchParams({ tab }, { replace: true });
-  }, [setSearchParams]);
+    const params: Record<string, string> = { tab };
+    if (search) params.search = search;
+    setSearchParams(params, { replace: true });
+  }, [setSearchParams, search]);
 
   return (
     <DashboardLayout>
