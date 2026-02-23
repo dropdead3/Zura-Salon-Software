@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -55,6 +55,16 @@ export function MergeWizard({ preselectedClientIds, onComplete, onCancel }: Merg
       default: return false;
     }
   };
+
+  // Auto-select primary: client with most visits
+  useEffect(() => {
+    if (step === 1 && !primaryClientId && selectedClients.length >= 2) {
+      const sorted = [...selectedClients].sort(
+        (a, b) => (b.visit_count || 0) - (a.visit_count || 0)
+      );
+      setPrimaryClientId(sorted[0].id);
+    }
+  }, [step, selectedClients, primaryClientId]);
 
   const primaryClient = selectedClients.find(c => c.id === primaryClientId);
   const secondaryClients = selectedClients.filter(c => c.id !== primaryClientId);
