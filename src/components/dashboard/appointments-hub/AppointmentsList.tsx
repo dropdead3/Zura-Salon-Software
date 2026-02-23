@@ -9,23 +9,24 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { tokens } from '@/lib/design-tokens';
 import { APPOINTMENT_STATUS_BADGE } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { ChevronLeft, ChevronRight, Download, Calendar } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Download, Calendar, History, Sun, ArrowRight } from 'lucide-react';
 import { useAppointmentsHub, type HubFilters } from '@/hooks/useAppointmentsHub';
 import { HubSearchBar } from './HubSearchBar';
 import { AppointmentDetailDrawer } from './AppointmentDetailDrawer';
 import { useLocations } from '@/hooks/useLocations';
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { format, startOfMonth, endOfMonth, subMonths, startOfDay, endOfDay, parseISO } from 'date-fns';
+import { format, addDays, subDays, parseISO } from 'date-fns';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { formatDisplayName } from '@/lib/utils';
+import { TogglePill } from '@/components/ui/toggle-pill';
 
 interface AppointmentsListProps {
   search: string;
   onSearchChange: (value: string) => void;
 }
 
-type DatePreset = 'today' | 'this_week' | 'this_month' | 'last_month' | 'all';
+type TimePeriod = 'past' | 'today' | 'future';
 
 function formatTime12h(time: string): string {
   const [hours, minutes] = time.split(':');
@@ -35,41 +36,48 @@ function formatTime12h(time: string): string {
   return `${hour12}:${minutes} ${ampm}`;
 }
 
-function formatCreatedAt(dateStr: string | null): string {
+function formatDateDisplay(dateStr: string | null): string {
   if (!dateStr) return '—';
   try {
-    return format(parseISO(dateStr), 'MMM d, h:mm a');
+    return format(parseISO(dateStr), 'MM/dd/yyyy');
   } catch {
     return '—';
   }
 }
 
-function getDateRange(preset: DatePreset): { startDate?: string; endDate?: string } {
-  const now = new Date();
-  switch (preset) {
-    case 'today':
-      return { startDate: format(startOfDay(now), 'yyyy-MM-dd'), endDate: format(endOfDay(now), 'yyyy-MM-dd') };
-    case 'this_week': {
-      const weekStart = new Date(now);
-      weekStart.setDate(now.getDate() - now.getDay());
-      return { startDate: format(weekStart, 'yyyy-MM-dd'), endDate: format(now, 'yyyy-MM-dd') };
-    }
-    case 'this_month':
-      return { startDate: format(startOfMonth(now), 'yyyy-MM-dd'), endDate: format(endOfMonth(now), 'yyyy-MM-dd') };
-    case 'last_month': {
-      const lastMonth = subMonths(now, 1);
-      return { startDate: format(startOfMonth(lastMonth), 'yyyy-MM-dd'), endDate: format(endOfMonth(lastMonth), 'yyyy-MM-dd') };
-    }
-    default:
-      return {};
+function formatCreatedAt(dateStr: string | null): string {
+  if (!dateStr) return '—';
+  try {
+    return format(parseISO(dateStr), 'MM/dd/yyyy h:mm a');
+  } catch {
+    return '—';
   }
 }
+
+function getDateRange(period: TimePeriod): { startDate?: string; endDate?: string } {
+  const now = new Date();
+  const fmt = (d: Date) => format(d, 'yyyy-MM-dd');
+  switch (period) {
+    case 'past':
+      return { endDate: fmt(subDays(now, 1)) };
+    case 'today':
+      return { startDate: fmt(now), endDate: fmt(now) };
+    case 'future':
+      return { startDate: fmt(addDays(now, 1)) };
+  }
+}
+
+const TIME_PERIOD_OPTIONS = [
+  { value: 'past', label: 'Past', icon: <History className="w-3.5 h-3.5" />, tooltip: 'Past Appointments\nBefore today' },
+  { value: 'today', label: 'Today', icon: <Sun className="w-3.5 h-3.5" />, tooltip: "Today's Appointments" },
+  { value: 'future', label: 'Future', icon: <ArrowRight className="w-3.5 h-3.5" />, tooltip: 'Future Appointments\nAfter today' },
+];
 
 export function AppointmentsList({ search, onSearchChange }: AppointmentsListProps) {
   const [page, setPage] = useState(0);
   const [status, setStatus] = useState('all');
   const [locationId, setLocationId] = useState('all');
-  const [datePreset, setDatePreset] = useState<DatePreset>('this_month');
+  const [timePeriod, setTimePeriod] = useState<TimePeriod>('today');
   const [stylistId, setStylistId] = useState('all');
   const [selectedAppt, setSelectedAppt] = useState<any>(null);
 
@@ -77,7 +85,7 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
   const { data: locations = [] } = useLocations();
   const { data: teamMembers = [] } = useTeamDirectory(undefined, { organizationId: effectiveOrganization?.id || undefined });
 
-  const dateRange = getDateRange(datePreset);
+  const dateRange = getDateRange(timePeriod);
 
   const filters: HubFilters = {
     search: search || undefined,
@@ -98,7 +106,7 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
     if (appointments.length === 0) return;
     const headers = ['Date', 'Time', 'Client', 'Phone', 'Email', 'Service', 'Stylist', 'Status', 'Price', 'Created', 'Created By'];
     const rows = appointments.map((a: any) => [
-      a.appointment_date,
+      formatDateDisplay(a.appointment_date),
       `${a.start_time}-${a.end_time}`,
       a.client_name || '',
       a.client_phone || '',
@@ -107,7 +115,7 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
       a.stylist_name || '',
       a.status || '',
       a.total_price ?? '',
-      a.created_at || '',
+      formatCreatedAt(a.created_at),
       a.created_by_name || '',
     ]);
     const csv = [headers, ...rows].map(r => r.map((c: any) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
@@ -139,17 +147,15 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
           <HubSearchBar value={search} onChange={onSearchChange} />
         </div>
 
+        <TogglePill
+          options={TIME_PERIOD_OPTIONS}
+          value={timePeriod}
+          onChange={(v) => { setTimePeriod(v as TimePeriod); setPage(0); }}
+          size="sm"
+          variant="solid"
+        />
+
         <div className="ml-auto flex flex-wrap gap-3 items-center">
-          <Select value={datePreset} onValueChange={(v) => { setDatePreset(v as DatePreset); setPage(0); }}>
-            <SelectTrigger className={cn("w-auto", tokens.input.filter)}><SelectValue placeholder="Date range" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="today">Today</SelectItem>
-              <SelectItem value="this_week">This Week</SelectItem>
-              <SelectItem value="this_month">This Month</SelectItem>
-              <SelectItem value="last_month">Last Month</SelectItem>
-              <SelectItem value="all">All Time</SelectItem>
-            </SelectContent>
-          </Select>
 
           <Select value={status} onValueChange={(v) => { setStatus(v); setPage(0); }}>
             <SelectTrigger className={cn("w-auto", tokens.input.filter)}>
@@ -242,7 +248,7 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
                     className="cursor-pointer"
                     onClick={() => setSelectedAppt(appt)}
                   >
-                    <TableCell className="text-sm">{appt.appointment_date}</TableCell>
+                    <TableCell className="text-sm">{formatDateDisplay(appt.appointment_date)}</TableCell>
                     <TableCell className="text-sm">{formatTime12h(appt.start_time)}</TableCell>
                     <TableCell className="text-sm font-medium">{appt.client_name || 'Walk-in'}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">{appt.client_phone || '—'}</TableCell>
