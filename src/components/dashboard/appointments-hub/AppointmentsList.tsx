@@ -209,15 +209,15 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
           <TableHeader>
             <TableRow>
               <TableHead className={tokens.table.columnHeader}>Date</TableHead>
-              <TableHead className={cn(tokens.table.columnHeader, 'hidden sm:table-cell')}>Time</TableHead>
+              <TableHead className={cn(tokens.table.columnHeader, 'hidden md:table-cell')}>Time</TableHead>
               <TableHead className={tokens.table.columnHeader}>Client</TableHead>
-              <TableHead className={cn(tokens.table.columnHeader, 'hidden lg:table-cell')}>Phone</TableHead>
-              <TableHead className={cn(tokens.table.columnHeader, 'hidden xl:table-cell')}>Email</TableHead>
-              <TableHead className={cn(tokens.table.columnHeader, 'hidden lg:table-cell')}>Service</TableHead>
+              <TableHead className={cn(tokens.table.columnHeader, 'hidden xl:table-cell')}>Phone</TableHead>
+              <TableHead className={cn(tokens.table.columnHeader, 'hidden 2xl:table-cell')}>Email</TableHead>
+              <TableHead className={cn(tokens.table.columnHeader, 'hidden xl:table-cell')}>Service</TableHead>
               <TableHead className={tokens.table.columnHeader}>Stylist</TableHead>
-              <TableHead className={cn(tokens.table.columnHeader, 'hidden md:table-cell whitespace-nowrap')}>Status</TableHead>
-              <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden md:table-cell')}>Price</TableHead>
-              <TableHead className={cn(tokens.table.columnHeader, 'hidden xl:table-cell')}>Created</TableHead>
+              <TableHead className={cn(tokens.table.columnHeader, 'whitespace-nowrap')}>Status</TableHead>
+              <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden lg:table-cell')}>Price</TableHead>
+              <TableHead className={cn(tokens.table.columnHeader, 'hidden 2xl:table-cell')}>Created</TableHead>
               <TableHead className={cn(tokens.table.columnHeader, 'hidden 2xl:table-cell')}>Created By</TableHead>
             </TableRow>
           </TableHeader>
@@ -226,15 +226,15 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
               [1, 2, 3, 4, 5].map(i => (
                 <TableRow key={i}>
                   <TableCell><Skeleton className="h-5 w-full" /></TableCell>
-                  <TableCell className="hidden sm:table-cell"><Skeleton className="h-5 w-full" /></TableCell>
+                  <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-full" /></TableCell>
+                  <TableCell><Skeleton className="h-5 w-full" /></TableCell>
+                  <TableCell className="hidden xl:table-cell"><Skeleton className="h-5 w-full" /></TableCell>
+                  <TableCell className="hidden 2xl:table-cell"><Skeleton className="h-5 w-full" /></TableCell>
+                  <TableCell className="hidden xl:table-cell"><Skeleton className="h-5 w-full" /></TableCell>
+                  <TableCell><Skeleton className="h-5 w-full" /></TableCell>
                   <TableCell><Skeleton className="h-5 w-full" /></TableCell>
                   <TableCell className="hidden lg:table-cell"><Skeleton className="h-5 w-full" /></TableCell>
-                  <TableCell className="hidden xl:table-cell"><Skeleton className="h-5 w-full" /></TableCell>
-                  <TableCell className="hidden lg:table-cell"><Skeleton className="h-5 w-full" /></TableCell>
-                  <TableCell><Skeleton className="h-5 w-full" /></TableCell>
-                  <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-full" /></TableCell>
-                  <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-full" /></TableCell>
-                  <TableCell className="hidden xl:table-cell"><Skeleton className="h-5 w-full" /></TableCell>
+                  <TableCell className="hidden 2xl:table-cell"><Skeleton className="h-5 w-full" /></TableCell>
                   <TableCell className="hidden 2xl:table-cell"><Skeleton className="h-5 w-full" /></TableCell>
                 </TableRow>
               ))
@@ -257,10 +257,10 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
                     onClick={() => setSelectedAppt(appt)}
                   >
                     <TableCell className="text-sm whitespace-nowrap">{formatDateDisplay(appt.appointment_date)}</TableCell>
-                    <TableCell className="text-sm whitespace-nowrap hidden sm:table-cell">{formatTime12h(appt.start_time)}</TableCell>
+                    <TableCell className="text-sm whitespace-nowrap hidden md:table-cell">{formatTime12h(appt.start_time)}</TableCell>
                     <TableCell className="text-sm font-medium">{appt.client_name || 'Walk-in'}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground hidden lg:table-cell">{appt.client_phone || '—'}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground max-w-[160px] truncate hidden xl:table-cell">
+                    <TableCell className="text-sm text-muted-foreground hidden xl:table-cell">{appt.client_phone || '—'}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground max-w-[160px] truncate hidden 2xl:table-cell">
                       {appt.client_email ? (
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -270,19 +270,19 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
                         </Tooltip>
                       ) : '—'}
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground truncate max-w-[200px] hidden lg:table-cell">{appt.service_name || '—'}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground truncate max-w-[200px] hidden xl:table-cell">{appt.service_name || '—'}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">{appt.stylist_name || '—'}</TableCell>
-                    <TableCell className="hidden md:table-cell whitespace-nowrap">
+                    <TableCell className="whitespace-nowrap">
                       <Badge variant="outline" className={cn('text-[10px]', statusBadge.bg, statusBadge.text, statusBadge.border)}>
                         {statusBadge.label}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-sm text-right hidden md:table-cell whitespace-nowrap">
+                    <TableCell className="text-sm text-right hidden lg:table-cell whitespace-nowrap">
                       {appt.total_price != null ? (
                         <BlurredAmount>${appt.total_price}</BlurredAmount>
                       ) : '—'}
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground whitespace-nowrap hidden xl:table-cell">
+                    <TableCell className="text-sm text-muted-foreground whitespace-nowrap hidden 2xl:table-cell">
                       {formatCreatedAt(appt.created_at)}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground hidden 2xl:table-cell">{appt.created_by_name || '—'}</TableCell>
