@@ -295,7 +295,10 @@ export default function AppointmentsHub() {
   return (
     <DashboardLayout>
       <div className={tokens.layout.pageContainer}>
-        <DashboardPageHeader title="Appointments & Transactions" />
+        <DashboardPageHeader
+          title="Appointments & Transactions"
+          description="View, filter, and manage individual appointment records, transactions, and gift cards. Use batch actions to update statuses or export data."
+        />
 
         {/* Analytics quick-links */}
         <div className="flex items-center gap-2 flex-wrap">
