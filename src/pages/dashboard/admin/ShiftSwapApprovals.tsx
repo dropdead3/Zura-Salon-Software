@@ -18,10 +18,10 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { 
-  ArrowLeft, CheckCircle, XCircle, Clock, MapPin,
+  CheckCircle, XCircle, Clock, MapPin,
   ArrowLeftRight, ArrowDown, Gift, Loader2, AlertCircle 
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { usePendingApprovals, useShiftSwaps, useApproveSwap, type ShiftSwap } from '@/hooks/useShiftSwaps';
 
 const swapTypeConfig = {
@@ -191,20 +191,13 @@ export default function ShiftSwapApprovals() {
   return (
     <DashboardLayout>
       <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-6">
-          <Link to="/dashboard/admin/management">
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-          </Link>
-          <div>
-            <h1 className="font-display text-2xl sm:text-3xl">Shift Swap Approvals</h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Review and approve shift swap requests from your team
-            </p>
-          </div>
-        </div>
+        <DashboardPageHeader
+          title="Shift Swap Approvals"
+          description="Review and approve shift swap requests from your team"
+          backTo="/dashboard/admin/management"
+          backLabel="Back to Management"
+          className="mb-6"
+        />
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>

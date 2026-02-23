@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Tabs, TabsContent, TabsTrigger, ResponsiveTabsList } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -53,26 +54,18 @@ export default function AccessHub() {
   return (
     <DashboardLayout>
       <div className="p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6">
-        {/* Header */}
-        <div className="space-y-1">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <Shield className="h-5 w-5" />
-            </div>
-            <div className="flex-1">
-              <h1 className="text-2xl font-medium tracking-tight">Roles & Controls Hub</h1>
-              <p className="text-muted-foreground">
-                Manage modules, permissions, and visibility in one place
-              </p>
-            </div>
-            {!canManage && (
+        <DashboardPageHeader
+          title="Roles & Controls Hub"
+          description="Manage modules, permissions, and visibility in one place"
+          actions={
+            !canManage ? (
               <Badge variant="secondary" className="gap-1">
                 <Lock className="h-3 w-3" />
                 View Only
               </Badge>
-            )}
-          </div>
-        </div>
+            ) : undefined
+          }
+        />
 
         {/* Main Tabs */}
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">

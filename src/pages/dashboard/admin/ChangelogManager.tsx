@@ -21,8 +21,9 @@ import { useFormatDate } from '@/hooks/useFormatDate';
 import { cn } from '@/lib/utils';
 import {
   Plus, Search, Calendar as CalendarIcon, Clock, Edit, Trash2, Send, Archive,
-  Eye, Star, ChevronUp, MessageSquare, Link2, Filter, Rocket, Bug, Sparkles, Lightbulb, ArrowLeft
+  Eye, Star, ChevronUp, MessageSquare, Link2, Filter, Rocket, Bug, Sparkles, Lightbulb
 } from 'lucide-react';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import {
   useAdminChangelog, useCreateChangelog, useUpdateChangelog, usePublishChangelog, useDeleteChangelog,
   type ChangelogEntry, type CreateChangelogEntry
@@ -372,23 +373,18 @@ export default function ChangelogManager() {
     <DashboardLayout>
       <div className="p-6 lg:p-8 max-w-6xl mx-auto">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-          <div className="flex items-start gap-4">
-            <Button variant="ghost" size="icon" asChild className="shrink-0 mt-1">
-              <Link to="/dashboard/admin/management">
-                <ArrowLeft className="w-5 h-5" />
-              </Link>
+        <DashboardPageHeader
+          title="Changelog & Roadmap"
+          description="Manage updates, features, and user feedback"
+          backTo="/dashboard/admin/management"
+          backLabel="Back to Management"
+          actions={
+            <Button onClick={() => { resetForm(); setShowEntryDialog(true); }}>
+              <Plus className="h-4 w-4 mr-2" />
+              New Entry
             </Button>
-            <div>
-              <h1 className="text-2xl font-display tracking-wide">CHANGELOG & ROADMAP</h1>
-              <p className="text-muted-foreground">Manage updates, features, and user feedback</p>
-            </div>
-          </div>
-          <Button onClick={() => { resetForm(); setShowEntryDialog(true); }}>
-            <Plus className="h-4 w-4 mr-2" />
-            New Entry
-          </Button>
-        </div>
+          }
+        />
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">

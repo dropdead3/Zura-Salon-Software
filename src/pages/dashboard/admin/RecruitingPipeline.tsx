@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { 
   useJobApplications, 

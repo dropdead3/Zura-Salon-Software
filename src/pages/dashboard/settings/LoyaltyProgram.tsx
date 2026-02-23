@@ -1,14 +1,8 @@
 import { useState } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Tabs, TabsContent, TabsTrigger, ResponsiveTabsList } from '@/components/ui/tabs';
-import { 
-  Gift, 
-  Star, 
-  Crown, 
-  Sparkles,
-  CreditCard,
-  Package
-} from 'lucide-react';
+import { Star, Crown, Sparkles, CreditCard, Package } from 'lucide-react';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { LoyaltyProgramConfigurator } from '@/components/dashboard/loyalty/LoyaltyProgramConfigurator';
 import { LoyaltyTiersEditor } from '@/components/dashboard/loyalty/LoyaltyTiersEditor';
 import { GiftCardDesignEditor } from '@/components/dashboard/loyalty/GiftCardDesignEditor';
@@ -24,16 +18,10 @@ export default function LoyaltyProgram() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="font-display text-2xl font-medium flex items-center gap-2">
-            <Gift className="h-6 w-6 text-primary" />
-            Loyalty & Rewards
-          </h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Configure your client loyalty program and gift card designs
-          </p>
-        </div>
+        <DashboardPageHeader
+          title="Loyalty & Rewards"
+          description="Configure your client loyalty program and gift card designs"
+        />
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">

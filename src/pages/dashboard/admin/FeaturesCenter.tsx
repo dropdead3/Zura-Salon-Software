@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Search, Blocks, Filter } from 'lucide-react';
+import { Search, Filter, Blocks } from 'lucide-react';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -84,20 +85,10 @@ export default function FeaturesCenter() {
   return (
     <DashboardLayout>
       <div className="p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6">
-        {/* Header */}
-        <div className="space-y-1">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <Blocks className="h-5 w-5" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-medium tracking-tight">Features Center</h1>
-              <p className="text-muted-foreground">
-                Customize which features are available in your organization
-              </p>
-            </div>
-          </div>
-        </div>
+        <DashboardPageHeader
+          title="Features Center"
+          description="Customize which features are available in your organization"
+        />
 
         {/* Stats */}
         <div className="flex flex-wrap items-center gap-4">
