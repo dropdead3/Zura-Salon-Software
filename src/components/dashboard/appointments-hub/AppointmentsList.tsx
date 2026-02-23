@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -141,6 +141,69 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
 
   const selectedAppointments = appointments.filter((a: any) => selectedIds.has(a.id));
 
+  // Stylists for the filter dropdown
+  const stylistOptions = teamMembers
+    .filter((m: any) => m.user_id)
+    .map((m: any) => ({
+      id: m.user_id,
+      name: formatDisplayName(m.full_name, m.display_name),
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  const filterDescription = useMemo(() => {
+    // Time period
+    let timePart = '';
+    switch (timePeriod) {
+      case 'all': timePart = 'all'; break;
+      case 'past': timePart = 'past'; break;
+      case 'today': timePart = "today's"; break;
+      case 'future': timePart = 'future'; break;
+      case 'custom':
+        if (customRange.from) {
+          const from = format(customRange.from, 'MMM d');
+          const to = customRange.to ? format(customRange.to, 'MMM d') : '';
+          timePart = to ? `from ${from} – ${to}` : `from ${from}`;
+        } else {
+          timePart = 'all';
+        }
+        break;
+    }
+
+    // Status
+    const statusPart = status !== 'all' ? status.replace('_', ' ') : '';
+
+    // Build "Showing X [time] [status] appointments"
+    const countStr = totalCount > 0 ? `${totalCount} ` : '';
+    const timeBefore = timePeriod === 'custom' ? '' : `${timePart} `;
+    const statusStr = statusPart ? `${statusPart} ` : '';
+    let desc = `Showing ${countStr}${timeBefore}${statusStr}appointments`;
+    if (timePeriod === 'custom' && timePart !== 'all') {
+      desc += ` ${timePart}`;
+    }
+
+    // Location
+    if (locationId !== 'all') {
+      const loc = locations.find(l => l.id === locationId);
+      if (loc) desc += ` at ${loc.name}`;
+    }
+
+    // Stylist
+    if (stylistId !== 'all') {
+      const sty = stylistOptions.find(s => s.id === stylistId);
+      if (sty) desc += ` for ${sty.name}`;
+    }
+
+    // Search
+    if (search) {
+      desc += ` matching "${search}"`;
+    }
+
+    // Sort
+    desc += ', sorted by date (newest first)';
+
+    return desc;
+  }, [timePeriod, customRange, status, locationId, stylistId, search, totalCount, locations, stylistOptions]);
+
   const handleExportCSV = () => {
     if (appointments.length === 0) return;
     const headers = ['Date', 'Time', 'Client', 'Phone', 'Email', 'Service', 'Stylist', 'Status', 'Price', 'Created', 'Created By'];
@@ -175,15 +238,6 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
       setRangePopoverOpen(true);
     }
   };
-
-  // Stylists for the filter dropdown
-  const stylistOptions = teamMembers
-    .filter((m: any) => m.user_id)
-    .map((m: any) => ({
-      id: m.user_id,
-      name: formatDisplayName(m.full_name, m.display_name),
-    }))
-    .sort((a, b) => a.name.localeCompare(b.name));
 
   const COL_COUNT = 13;
 
@@ -280,6 +334,11 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
           CSV
         </Button>
       </div>
+
+      {/* Filter Description */}
+      <p className="text-sm text-muted-foreground font-sans px-1">
+        {filterDescription}
+      </p>
 
       {/* Table */}
       <Card className="overflow-hidden">
