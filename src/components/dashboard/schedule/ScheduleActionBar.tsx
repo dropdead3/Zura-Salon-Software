@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Calendar, CheckCircle2 } from 'lucide-react';
+import { Calendar, CheckCircle2, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { ScheduleLegend } from './ScheduleLegend';
@@ -91,6 +92,14 @@ export function ScheduleActionBar({
           <div className={cn('flex items-center justify-center gap-1.5 py-0.5', tokens.body.muted)}>
             <CheckCircle2 className="h-3.5 w-3.5 text-success" />
             <span className="text-xs">All clear</span>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Info className="h-3 w-3 text-muted-foreground/60 cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-[220px] text-xs">
+                This queue shows clients who are nearing checkout or overdue for payment. When it's empty, all checked-in clients are on track.
+              </TooltipContent>
+            </Tooltip>
           </div>
         ) : (
           <ScrollArea className="w-full">
