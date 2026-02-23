@@ -478,6 +478,30 @@ export function AppointmentDetailSheet({
   // Walk-in detection (#7)
   const isWalkIn = appointment ? !appointment.phorest_client_id : false;
 
+  // Fuzzy client match for walk-ins without phorest_client_id
+  const { data: matchedClient } = useQuery({
+    queryKey: ['walk-in-client-match', appointment?.client_phone, appointment?.client_name],
+    queryFn: async () => {
+      const phone = appointment?.client_phone;
+      if (!phone) return null;
+      // Normalize: strip non-digits, add +1 if 10 digits
+      let normalized = phone.replace(/[^0-9+]/g, '');
+      if (normalized.length === 10 && !normalized.startsWith('+')) normalized = '+1' + normalized;
+      else if (normalized.length === 11 && normalized.startsWith('1')) normalized = '+' + normalized;
+      const { data } = await supabase
+        .from('phorest_clients')
+        .select('phorest_client_id')
+        .eq('phone_normalized', normalized)
+        .limit(1)
+        .maybeSingle();
+      return data?.phorest_client_id || null;
+    },
+    enabled: !!appointment && !appointment.phorest_client_id && !!appointment.client_phone && open,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const resolvedClientId = appointment?.phorest_client_id || matchedClient;
+
   if (!appointment) return null;
 
   const statusConfig = STATUS_CONFIG[appointment.status];
@@ -1015,11 +1039,11 @@ export function AppointmentDetailSheet({
                         {!clientRecordLoading && !appointment.client_phone && !clientRecord?.email && (
                           <p className="text-xs text-muted-foreground">No contact info available</p>
                         )}
-                        {appointment.phorest_client_id && (
+                        {resolvedClientId && (
                           <button
                             onClick={() => {
                               handleClose();
-                              navigate(`/dashboard/admin/clients?clientId=${appointment.phorest_client_id}`);
+                              navigate(`/dashboard/admin/clients?clientId=${resolvedClientId}`);
                             }}
                             className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors mt-1"
                           >
