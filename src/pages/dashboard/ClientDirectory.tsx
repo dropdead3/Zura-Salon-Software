@@ -763,7 +763,22 @@ export default function ClientDirectory() {
                               </Badge>
                             )}
                             {(client as any).is_duplicate && (
-                              <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800 gap-1">
+                              <Badge 
+                                variant="outline" 
+                                className="text-xs bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800 gap-1 cursor-pointer hover:bg-amber-100 dark:hover:bg-amber-950/50 transition-colors"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if ((client as any).canonical_client_id) {
+                                    const canonical = filteredClients.find(c => c.id === (client as any).canonical_client_id) || 
+                                      processedClients?.find((c: any) => c.id === (client as any).canonical_client_id);
+                                    if (canonical) {
+                                      setSelectedClient(canonical as any);
+                                      setDetailSheetOpen(true);
+                                    }
+                                  }
+                                }}
+                                title="View original profile"
+                              >
                                 <GitMerge className="w-3 h-3" /> Duplicate
                               </Badge>
                             )}
