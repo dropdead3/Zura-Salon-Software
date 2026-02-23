@@ -13,6 +13,7 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useAppointmentNotes } from '@/hooks/useAppointmentNotes';
 import { useClientNotes, useAddClientNote, useDeleteClientNote } from '@/hooks/useClientNotes';
 import { useClientVisitHistory } from '@/hooks/useClientVisitHistory';
+import { useHouseholdByPhorestClientId } from '@/hooks/useHouseholds';
 import { useAppointmentAssistants } from '@/hooks/useAppointmentAssistants';
 import { useAssistantConflictCheck } from '@/hooks/useAssistantConflictCheck';
 import { usePreferredStylist, getStylistDisplayName } from '@/hooks/usePreferredStylist';
@@ -60,7 +61,7 @@ import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCa
 import { formatRelativeTime } from '@/lib/format';
 import { useAssistantTimeBlocks } from '@/hooks/useAssistantTimeBlocks';
 import { formatDisplayName } from '@/lib/utils';
-import { Users as UsersIcon } from 'lucide-react';
+import { Users as UsersIcon, Home } from 'lucide-react';
 
 // ─── Scheduled Coverage sub-component ───────────────────────────
 function ScheduledCoverageSection({
@@ -123,6 +124,50 @@ function ScheduledCoverageSection({
         })}
       </div>
     </div>
+  );
+}
+
+// ─── Household Section sub-component ────────────────────────────
+function HouseholdSection({ phorestClientId, formatDate }: { phorestClientId: string | null; formatDate: (d: Date, f: string) => string }) {
+  const { data: householdData } = useHouseholdByPhorestClientId(phorestClientId);
+
+  if (!householdData || householdData.members.length === 0) return null;
+
+  return (
+    <>
+      <Separator />
+      <motion.div variants={staggerItem} className="space-y-2">
+        <h4 className={tokens.heading.subsection}>
+          <Home className="h-3.5 w-3.5 inline mr-1.5" />
+          {householdData.household_name || 'Household'}
+        </h4>
+        <div className="space-y-2">
+          {householdData.members.map((member: any) => {
+            const client = member.client;
+            if (!client) return null;
+            const initials = client.name?.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase() || '??';
+            return (
+              <div key={member.id} className="flex items-center gap-2.5 text-sm">
+                <Avatar className="h-7 w-7">
+                  <AvatarFallback className="text-[10px] font-display bg-primary/10">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <span className="font-medium truncate block">{client.name}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {client.last_visit
+                      ? `Last visit: ${formatDate(new Date(client.last_visit), 'MMM d')}`
+                      : 'No visits yet'}
+                    {client.visit_count > 0 && ` · ${client.visit_count} visits`}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </motion.div>
+    </>
   );
 }
 
@@ -984,6 +1029,9 @@ export function AppointmentDetailSheet({
                         )}
                       </div>
                     </motion.div>
+
+                    {/* Household Members */}
+                    <HouseholdSection phorestClientId={appointment.phorest_client_id} formatDate={formatDate} />
 
                     {/* Removed duplicate Booking Notes from Details tab (#11) -- kept only in Notes tab */}
 

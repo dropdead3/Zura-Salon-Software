@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useClientHousehold } from '@/hooks/useHouseholds';
 import { useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { differenceInDays } from 'date-fns';
@@ -39,7 +40,8 @@ import {
   Home,
   StickyNote,
   Megaphone,
-  GitMerge
+  GitMerge,
+  Users
 } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn, formatPhoneDisplay } from '@/lib/utils';
@@ -114,6 +116,7 @@ interface ClientDetailSheetProps {
 export function ClientDetailSheet({ client, open, onOpenChange, locationName, onClientUpdated }: ClientDetailSheetProps) {
   const navigate = useNavigate();
   const { data: visitHistory, isLoading: historyLoading } = useClientVisitHistory(client?.phorest_client_id);
+  const { data: householdData } = useClientHousehold(client?.id);
   const { formatCurrencyWhole } = useFormatCurrency();
   const { formatDate } = useFormatDate();
   const { roles } = useAuth();
@@ -645,6 +648,46 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
               )}
             </Card>
           </motion.div>
+
+          {/* Household Card */}
+          {householdData && householdData.members.length > 0 && (
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
+              <Card className="bg-card/80 backdrop-blur-xl border-border/60">
+                <CardHeader className="pb-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 bg-muted rounded-md flex items-center justify-center">
+                      <Home className="w-3.5 h-3.5 text-primary" />
+                    </div>
+                    <CardTitle className={tokens.heading.subsection}>
+                      {householdData.household_name || 'Household'}
+                    </CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {householdData.members
+                    .filter((m: any) => m.client_id !== client?.id)
+                    .map((member: any) => {
+                      const mc = member.client;
+                      if (!mc) return null;
+                      const mInitials = mc.name?.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase() || '??';
+                      return (
+                        <div key={member.id} className="flex items-center gap-2.5 text-sm">
+                          <Avatar className="h-7 w-7">
+                            <AvatarFallback className="text-[10px] font-display bg-primary/10">{mInitials}</AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <span className="font-medium truncate block">{mc.name}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {mc.visit_count || 0} visits · {formatCurrencyWhole(Number(mc.total_spend || 0))}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
 
           {/* Contact Info — Phorest-aligned */}
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>

@@ -3144,6 +3144,77 @@ export type Database = {
           },
         ]
       }
+      client_household_members: {
+        Row: {
+          added_at: string
+          client_id: string
+          household_id: string
+          id: string
+        }
+        Insert: {
+          added_at?: string
+          client_id: string
+          household_id: string
+          id?: string
+        }
+        Update: {
+          added_at?: string
+          client_id?: string
+          household_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_household_members_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "phorest_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_household_members_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "client_households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_households: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          household_name: string | null
+          id: string
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          household_name?: string | null
+          id?: string
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          household_name?: string | null
+          id?: string
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_households_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_loyalty_points: {
         Row: {
           client_id: string
