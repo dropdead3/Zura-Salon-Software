@@ -1,33 +1,32 @@
 
 
-## Convert Batch Bar to Fixed Floating Bar
+## Fix Floating Batch Bar Placement
 
-### Problem
-The batch action bar currently sits inside the Card as a sticky element at the bottom. When you scroll, it stays pinned to the card's bottom edge but remains visually attached to the table. The request is to make it a fixed floating bar at the bottom of the viewport, independent of the card.
+### Problems (from screenshot)
+1. The bar extends off the right edge of the screen -- "Export CSV" is clipped.
+2. The bar overlaps the AI Copilot FAB (bottom-right corner).
 
 ### Solution
-Update `AppointmentBatchBar` to render via a portal (`createPortal`) as a fixed bar at the bottom of the screen with glass-morphism styling, matching the platform's bento aesthetic.
-
-### File Changed
 
 **`src/components/dashboard/appointments-hub/AppointmentBatchBar.tsx`**
 
-1. Import `createPortal` from `react-dom` and `AnimatePresence` / `motion` from `framer-motion`.
+Two adjustments to the `motion.div` className:
 
-2. Replace the current `<div className="sticky bottom-0 ...">` with a portaled, fixed-position bar:
-   - Use `createPortal(..., document.body)` so it escapes the Card entirely.
-   - Wrap in `AnimatePresence` + `motion.div` for a smooth slide-up entrance / exit.
-   - Positioning: `fixed bottom-4 left-1/2 -translate-x-1/2 z-50` (centered, floating above the page bottom).
-   - Styling: `bg-card/80 backdrop-blur-xl border border-border rounded-xl shadow-2xl px-5 py-3` -- consistent with the platform's glass bento aesthetic.
-   - Max width constrained (e.g., `max-w-2xl w-[calc(100%-2rem)]`) so it doesn't span the full viewport.
+1. **Prevent right overflow**: Change `max-w-2xl` to `max-w-xl` so the bar fits comfortably within the viewport. Also add `pr-20` (or equivalent right margin) to account for the FAB, or shift the bar slightly left.
 
-3. Animation: slide up from `y: 60, opacity: 0` to `y: 0, opacity: 1` using spring physics matching the platform standard (damping: 26, stiffness: 300, mass: 0.8).
+2. **Clear the FAB**: Move the bar up from `bottom-4` to `bottom-20` so it sits above the FAB zone (which lives at `bottom-4 right-4`). Alternatively, keep `bottom-4` but add `right-20` padding so the bar content stops before the FAB. The cleaner approach is `bottom-20` since the FAB is a fixed 56px button at `bottom-4`.
 
-4. The `ShareToDMDialog` stays outside the portal as it manages its own overlay.
+3. **Responsive content**: On smaller viewports, the action buttons should wrap or shrink. Add `flex-wrap` to the actions row so "Update Status", "Share", and "Export CSV" can stack if needed.
 
-### Visual Result
-- Bar floats centered at the bottom of the screen, detached from the table card.
-- Glass blur + rounded corners + shadow give it a premium feel.
-- Smoothly animates in/out as selections change.
-- No more corner-clipping concerns since it's no longer inside the Card.
+### Specific Changes
+
+```
+Current:  className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 max-w-2xl w-[calc(100%-2rem)] ..."
+Updated:  className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 max-w-xl w-[calc(100%-2rem)] ..."
+```
+
+- `bottom-4` becomes `bottom-20` -- clears the FAB at bottom-4/right-4
+- `max-w-2xl` (672px) becomes `max-w-xl` (576px) -- prevents right-edge clipping on standard viewports
+
+The actions container also gets `flex-wrap` so buttons reflow on narrow screens instead of overflowing.
 
