@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -157,13 +158,10 @@ export default function NotificationPreferences() {
   return (
     <DashboardLayout>
       <div className="p-6 lg:p-8 space-y-6 max-w-2xl mx-auto">
-        {/* Header */}
-        <div>
-          <h1 className="text-2xl font-display tracking-wide">Notification Preferences</h1>
-          <p className="text-muted-foreground mt-1">
-            Choose which notifications you'd like to receive
-          </p>
-        </div>
+        <DashboardPageHeader
+          title="Notification Preferences"
+          description="Choose which notifications you'd like to receive"
+        />
 
         {/* In-App Notifications */}
         <Card>

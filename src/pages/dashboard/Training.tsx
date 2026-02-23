@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { tokens } from '@/lib/design-tokens';
@@ -166,15 +167,11 @@ export default function Training() {
   return (
     <DashboardLayout>
       <div className="p-6 lg:p-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="font-display text-3xl lg:text-4xl mb-2">
-            TRAINING
-          </h1>
-          <p className="text-muted-foreground font-sans">
-            Level up your skills with our training library.
-          </p>
-        </div>
+        <DashboardPageHeader
+          title="Training"
+          description="Complete assigned training videos and track your progress across all categories."
+          className="mb-8"
+        />
 
         {/* Progress Overview */}
         <Card className="p-6 mb-8">

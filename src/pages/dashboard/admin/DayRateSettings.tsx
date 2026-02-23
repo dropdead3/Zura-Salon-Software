@@ -4,17 +4,16 @@ import { ChairManager } from '@/components/dashboard/day-rate/ChairManager';
 import { AgreementEditor } from '@/components/dashboard/day-rate/AgreementEditor';
 import { VisibilityGate } from '@/components/visibility/VisibilityGate';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 
 export default function DayRateSettings() {
   return (
     <DashboardLayout>
       <div className="container py-6 space-y-6">
-        <div>
-          <h1 className="font-display text-2xl tracking-wide">DAY RATE SETTINGS</h1>
-          <p className="text-muted-foreground">
-            Configure chair inventory, pricing, and rental agreements
-          </p>
-        </div>
+        <DashboardPageHeader
+          title="Day Rate Settings"
+          description="Configure chair inventory, pricing, and rental agreements"
+        />
 
         <Tabs defaultValue="chairs" className="w-full">
           <ResponsiveTabsList>

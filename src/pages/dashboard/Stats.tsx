@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -111,38 +112,32 @@ export default function Stats() {
   return (
     <DashboardLayout>
       <div className="p-6 lg:p-8">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-          <div>
-            <h1 className="font-display text-3xl lg:text-4xl mb-2">
-              {isAdmin ? 'TEAM STATS' : 'MY STATS'}
-            </h1>
-            <p className="text-muted-foreground font-sans">
-              {isAdmin 
-                ? 'View performance metrics for any team member.' 
-                : 'Track your personal performance metrics.'}
-            </p>
-          </div>
-          
-          {/* Team member selector - only for admins */}
-          {isAdmin && teamMembers && teamMembers.length > 0 && (
-            <Select 
-              value={selectedMemberId || ''} 
-              onValueChange={(value) => setSelectedMemberId(value || null)}
-            >
-              <SelectTrigger className="w-full sm:w-[250px]">
-                <SelectValue placeholder="Select team member..." />
-              </SelectTrigger>
-              <SelectContent>
-                {teamMembers.map((member) => (
-                  <SelectItem key={member.user_id} value={member.user_id}>
-                    {member.display_name || member.full_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        </div>
+        <DashboardPageHeader
+          title={isAdmin ? 'Team Stats' : 'My Stats'}
+          description={isAdmin 
+            ? 'View performance metrics for any team member.' 
+            : 'Track your personal performance metrics.'}
+          className="mb-8"
+          actions={
+            isAdmin && teamMembers && teamMembers.length > 0 ? (
+              <Select 
+                value={selectedMemberId || ''} 
+                onValueChange={(value) => setSelectedMemberId(value || null)}
+              >
+                <SelectTrigger className="w-full sm:w-[250px]">
+                  <SelectValue placeholder="Select team member..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {teamMembers.map((member) => (
+                    <SelectItem key={member.user_id} value={member.user_id}>
+                      {member.display_name || member.full_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : undefined
+          }
+        />
 
         {/* Viewing indicator for admins */}
         {isAdmin && selectedMemberId && selectedMember && (

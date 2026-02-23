@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { tokens } from '@/lib/design-tokens';
@@ -373,15 +374,10 @@ export default function MyGraduation() {
   return (
     <DashboardLayout>
       <div className="p-6 space-y-6">
-        <div>
-          <h1 className="text-3xl font-medium flex items-center gap-3">
-            <GraduationCap className="h-8 w-8 text-primary" />
-            My Graduation Progress
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Track your progress towards becoming a stylist
-          </p>
-        </div>
+        <DashboardPageHeader
+          title="My Graduation Progress"
+          description="Submit proof of completion for graduation requirements and track review status."
+        />
 
         {/* Progress Overview */}
         <Card className={isGraduationReady ? 'border-emerald-500/50 bg-emerald-500/5' : ''}>
