@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { ScheduleHeader } from '@/components/dashboard/schedule/ScheduleHeader';
 import { ScheduleActionBar } from '@/components/dashboard/schedule/ScheduleActionBar';
+import { ScheduleLegend } from '@/components/dashboard/schedule/ScheduleLegend';
 import { DayView } from '@/components/dashboard/schedule/DayView';
 import { WeekView } from '@/components/dashboard/schedule/WeekView';
 import { MonthView } from '@/components/dashboard/schedule/MonthView';
@@ -697,7 +698,8 @@ export default function Schedule() {
         {/* Floating Action Bar */}
         {(view === 'day' || view === 'week') && (
           <div className="absolute bottom-0 left-0 right-0 px-4 pb-4 pointer-events-none z-20">
-            <div className="pointer-events-auto">
+            <div className="pointer-events-auto flex items-center gap-2">
+              <ScheduleLegend />
               <ScheduleActionBar
                 selectedAppointment={selectedAppointment}
                 onCheckIn={handleCheckIn}
