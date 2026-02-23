@@ -697,7 +697,7 @@ export default function Schedule() {
 
         {/* Floating Action Bar */}
         {(view === 'day' || view === 'week') && (
-          <div className="absolute bottom-0 left-0 right-0 px-4 pb-4 pointer-events-none z-20">
+          <div className="absolute bottom-0 left-0 right-0 pl-4 pr-20 pb-4 pointer-events-none z-20">
             <div className="pointer-events-auto flex items-center gap-2">
               <ScheduleActionBar
                 appointments={allAppointments.filter(apt => 
