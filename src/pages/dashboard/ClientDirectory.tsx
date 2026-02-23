@@ -753,13 +753,6 @@ export default function ClientDirectory() {
           </Tabs>
         </div>
 
-        {/* Client Health Summary Widget */}
-        {canViewAllClients && (
-          <div className="mb-6">
-            <ClientHealthSummaryCard />
-          </div>
-        )}
-
         {/* Stats Cards */}
         <BentoGrid maxPerRow={6} gap="gap-4" className="mb-6">
           <Card className="p-4 text-center">
@@ -797,6 +790,13 @@ export default function ClientDirectory() {
             </p>
           </Card>
         </BentoGrid>
+
+        {/* Client Health Summary Widget */}
+        {canViewAllClients && (
+          <div className="mb-6">
+            <ClientHealthSummaryCard />
+          </div>
+        )}
 
         {/* Filters */}
         <div className="flex flex-col md:flex-row gap-4 mb-4">
