@@ -288,60 +288,60 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
         </div>
       </div>
 
-      {/* Row 2: Filters + CSV */}
-      <div className="flex flex-wrap gap-3 items-center">
-        <Select value={status} onValueChange={(v) => { setStatus(v); setPage(0); }}>
-          <SelectTrigger className={cn("w-auto", tokens.input.filter)}>
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
-            <SelectItem value="booked">Booked</SelectItem>
-            <SelectItem value="confirmed">Confirmed</SelectItem>
-            <SelectItem value="checked_in">Checked In</SelectItem>
-            <SelectItem value="completed">Completed</SelectItem>
-            <SelectItem value="cancelled">Cancelled</SelectItem>
-            <SelectItem value="no_show">No Show</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <Select value={locationId} onValueChange={(v) => { setLocationId(v); setPage(0); }}>
-          <SelectTrigger className={cn("w-auto", tokens.input.filter)}>
-            <SelectValue placeholder="Location" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Locations</SelectItem>
-            {locations.map(loc => (
-              <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select value={stylistId} onValueChange={(v) => { setStylistId(v); setPage(0); }}>
-          <SelectTrigger className={cn("w-auto", tokens.input.filter)}>
-            <SelectValue placeholder="Stylist" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Stylists</SelectItem>
-            {stylistOptions.map(s => (
-              <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Button variant="outline" size={tokens.button.card} onClick={handleExportCSV} disabled={appointments.length === 0} className="ml-auto">
-          <Download className="w-4 h-4 mr-2" />
-          CSV
-        </Button>
-      </div>
-
-      {/* Filter Description */}
-      <p className="text-sm text-muted-foreground font-sans px-1">
-        {filterDescription}
-      </p>
-
       {/* Table */}
       <Card className="overflow-hidden">
+        {/* Filters + CSV */}
+        <div className="flex flex-wrap gap-3 items-center p-4 pb-2">
+          <Select value={status} onValueChange={(v) => { setStatus(v); setPage(0); }}>
+            <SelectTrigger className={cn("w-auto", tokens.input.filter)}>
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="booked">Booked</SelectItem>
+              <SelectItem value="confirmed">Confirmed</SelectItem>
+              <SelectItem value="checked_in">Checked In</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
+              <SelectItem value="no_show">No Show</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={locationId} onValueChange={(v) => { setLocationId(v); setPage(0); }}>
+            <SelectTrigger className={cn("w-auto", tokens.input.filter)}>
+              <SelectValue placeholder="Location" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Locations</SelectItem>
+              {locations.map(loc => (
+                <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={stylistId} onValueChange={(v) => { setStylistId(v); setPage(0); }}>
+            <SelectTrigger className={cn("w-auto", tokens.input.filter)}>
+              <SelectValue placeholder="Stylist" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Stylists</SelectItem>
+              {stylistOptions.map(s => (
+                <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Button variant="outline" size={tokens.button.card} onClick={handleExportCSV} disabled={appointments.length === 0} className="ml-auto">
+            <Download className="w-4 h-4 mr-2" />
+            CSV
+          </Button>
+        </div>
+
+        {/* Filter Description */}
+        <p className="text-sm text-muted-foreground font-sans px-4 pb-3">
+          {filterDescription}
+        </p>
+
         <Table>
           <TableHeader>
             <TableRow>
