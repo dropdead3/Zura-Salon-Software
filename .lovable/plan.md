@@ -1,90 +1,91 @@
 
 
-## Add Unified Customer ID (ZU-XXXXX) to All Clients
+## Multi-Client Resolution Dialog for Batch Actions
 
 ### Problem
 
-Neither `clients` nor `phorest_clients` tables have a unified, human-readable customer ID. The `external_client_id` field on `phorest_clients` is empty for all 3,160 records, and `external_id` on `clients` is populated only for imports (504 of 505). There is no auto-assignment on creation or import.
+The current multi-client warning is a passive amber badge and text block. When an operator selects appointments for "Eric Day" that actually belong to 2+ different clients (same name, different customer IDs), the only safeguard is a warning message. There is no way to review which appointments belong to which client and selectively exclude one client's appointments before executing the action.
 
 ### Solution
 
-Add a `customer_number` column with a database sequence that auto-generates `ZU-00001`, `ZU-00002`, etc. for every client -- on both manual creation and Phorest sync/import. This provides a single, human-readable, org-independent identifier operators can use to distinguish same-name clients.
+Replace the passive warning with an interactive **Multi-Client Resolution Dialog** that opens automatically when a batch action is triggered on appointments belonging to different clients. The dialog groups appointments by client identity, shows each client's Customer ID (ZU-XXXXX), and lets the operator check/uncheck entire client groups before confirming.
 
-### Database Changes
-
-#### 1. Create sequence + columns + trigger
-
-- Add a new sequence: `client_customer_number_seq`
-- Add `customer_number TEXT` column to both `clients` and `phorest_clients` tables with a unique constraint
-- Create a trigger function `generate_customer_number()` that fires BEFORE INSERT on both tables and sets `customer_number = 'ZU-' || lpad(nextval('client_customer_number_seq')::text, 5, '0')` (shared sequence ensures no collisions across tables)
-- Add an index on `customer_number` for fast lookups
-
-#### 2. Backfill existing records
-
-- Backfill all 3,160 `phorest_clients` records ordered by `created_at`
-- Backfill all 505 `clients` records ordered by `created_at`
-- This ensures existing clients get sequential IDs reflecting their creation order
+### User Flow
 
 ```text
-Migration 1 (schema): sequence + columns + triggers + indexes
-Migration 2 (data): backfill existing records
+1. Operator selects 5 appointments for "Eric Day"
+2. Operator clicks "Cancel Selected"
+3. System detects 2 different client IDs in the selection
+4. Instead of the standard confirmation, a Resolution Dialog opens:
+
+   ┌──────────────────────────────────────────────────┐
+   │  Multiple Clients Detected                       │
+   │                                                  │
+   │  Your selection includes appointments for 2      │
+   │  different clients. Choose which to include.     │
+   │                                                  │
+   │  ☑ Eric Day  ·  ZU-00042  ·  3 appointments     │
+   │    02/24 5:00 PM  ·  Confirmed                   │
+   │    02/24 3:30 PM  ·  Confirmed                   │
+   │    02/24 1:00 PM  ·  Confirmed                   │
+   │                                                  │
+   │  ☑ Eric Day  ·  ZU-01287  ·  2 appointments      │
+   │    02/22 2:15 PM  ·  Confirmed                   │
+   │    02/22 12:30 PM ·  Confirmed                   │
+   │                                                  │
+   │            [Go Back]  [Cancel 5 Appointments]    │
+   └──────────────────────────────────────────────────┘
+
+5. Operator unchecks one client group (e.g., ZU-01287)
+6. Button updates: "Cancel 3 Appointments"
+7. Operator confirms -- only the checked group is affected
 ```
 
-### Code Changes
+### Technical Changes
 
-#### 3. Edge Function: create-phorest-client (supabase/functions/create-phorest-client/index.ts)
+#### 1. New Component: `MultiClientResolutionDialog.tsx`
 
-No change needed -- the trigger auto-assigns `customer_number` on INSERT. The function already does `.select()` after insert, so the returned record will include the new field.
+Location: `src/components/dashboard/appointments-hub/MultiClientResolutionDialog.tsx`
 
-#### 4. NewClientDialog (src/components/dashboard/schedule/NewClientDialog.tsx)
+- Receives: `appointments`, `action` (cancel/status update), `actionLabel`, `onConfirm(filteredAppointments)`, `onCancel`
+- Groups appointments by client identity (phorest_client_id or client_id, walk-ins grouped separately)
+- Each group shows:
+  - Checkbox to include/exclude the entire group
+  - Client name + Customer Number (ZU-XXXXX) badge
+  - Appointment count
+  - Collapsible list of individual appointments (date, time, status)
+- Confirm button dynamically updates count based on checked groups
+- At least one group must be checked to proceed
 
-No change needed for the local `clients` insert -- same trigger logic applies. The `.select()` call after insert will include `customer_number`.
+#### 2. Updated: `AppointmentBatchBar.tsx`
 
-#### 5. AppointmentDetailDrawer -- Show Customer Number
+- Add state: `resolutionDialogOpen`, `pendingAction` (tracks which action triggered it)
+- When any destructive/update action is triggered and `isMultiClient === true`:
+  - Instead of opening the existing AlertDialog or firing the status update directly, open the `MultiClientResolutionDialog`
+  - Pass the pending action type and callback
+- When `isMultiClient === false`: behavior is unchanged (existing AlertDialogs work as-is)
+- Remove the inline `MultiClientWarning` component from the AlertDialogs (no longer needed -- the resolution dialog replaces it)
+- Keep the amber badge in the batch bar as a passive indicator
 
-Update the Client ID display (added in the previous batch action guard) to prefer `customer_number` over raw UUIDs. Display format: `ZU-00042` with copy-to-clipboard.
+#### 3. Action Flow Changes
 
-#### 6. ClientDetailSheet -- Show Customer Number
-
-Add a "Customer ID" badge near the client name in the header section, displaying the `ZU-XXXXX` value. This makes it instantly visible when operators open a client profile.
-
-#### 7. AppointmentBatchBar -- Use Customer Number in Warning
-
-Update the multi-client warning to reference customer numbers when available, so operators can see exactly which clients are affected (e.g., "Includes ZU-00042 and ZU-00089").
-
-### Technical Details
-
-**Sequence design:**
-- Single shared sequence across both `clients` and `phorest_clients` tables prevents ID collisions
-- Format: `ZU-` prefix + zero-padded 5-digit number (supports up to 99,999 before rolling to 6 digits naturally)
-- Trigger-based: no application code needed for assignment -- any INSERT path (edge function, direct SQL, sync job) automatically gets a customer number
-
-**Data flow:**
-```text
-Any INSERT into clients or phorest_clients
-  --> BEFORE INSERT trigger fires
-  --> nextval('client_customer_number_seq') generates next number
-  --> customer_number = 'ZU-00001' (auto-assigned)
-```
-
-**Query pattern for resolving customer numbers in appointments:**
-- `phorest_appointments` already join to `phorest_clients` via `phorest_client_id` -- add `customer_number` to the select
-- `appointments` already have `client_id` FK -- join to `clients` for `customer_number`
-- The `useAppointmentsHub` hook will be updated to include `customer_number` in the enrichment step
+| Action | Single Client | Multi Client |
+|--------|--------------|--------------|
+| Status Update (dropdown) | Direct execute | Resolution Dialog, then execute on confirmed subset |
+| Cancel Selected | AlertDialog | Resolution Dialog, then execute on confirmed subset |
+| Cancel All Future | AlertDialog | Resolution Dialog (filtered to future only), then execute on confirmed subset |
+| Export CSV | Direct execute (no risk) | Direct execute (no risk) |
+| Share | Direct execute (no risk) | Direct execute (no risk) |
 
 ### Files Modified
 
-- **New migration SQL** -- sequence, columns, triggers, indexes, backfill
-- `supabase/functions/create-phorest-client/index.ts` -- no changes needed (trigger handles it)
-- `src/hooks/useAppointmentsHub.ts` -- include `customer_number` in client info resolution
-- `src/components/dashboard/appointments-hub/AppointmentDetailDrawer.tsx` -- display `customer_number` instead of raw UUID
-- `src/components/dashboard/appointments-hub/AppointmentBatchBar.tsx` -- reference customer numbers in multi-client warning
-- `src/components/dashboard/ClientDetailSheet.tsx` -- display customer number badge in header
+- **New:** `src/components/dashboard/appointments-hub/MultiClientResolutionDialog.tsx` -- resolution dialog component
+- **Edit:** `src/components/dashboard/appointments-hub/AppointmentBatchBar.tsx` -- intercept actions when multi-client, delegate to resolution dialog
 
 ### What Does NOT Change
 
-- No changes to RLS policies (new column inherits existing row-level policies)
-- No changes to existing client creation flows (trigger handles everything)
-- No changes to Phorest sync (sync inserts into `phorest_clients`, trigger auto-assigns)
-- Existing `external_id` and `external_client_id` fields remain untouched
-
+- Single-client batch actions behave exactly as they do today
+- No database changes
+- No hook changes (customer_number is already enriched)
+- Export CSV and Share actions are unaffected (non-destructive)
+- The amber "N different clients" badge remains in the batch bar as a passive indicator
