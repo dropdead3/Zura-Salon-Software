@@ -357,49 +357,7 @@ function AppointmentCard({
             if (!isDragging) onClick();
           }}
         >
-          {/* Assistant badges top-right (DayView: column = stylist, so show assistants instead) */}
-          {!isCompact && (() => {
-            const profiles = assistantProfilesMap?.get(appointment.id);
-            if (!profiles || profiles.length === 0) return null;
-            return (
-              <div className="absolute top-5 right-1 z-10 flex items-center -space-x-1">
-                {profiles.map((p, i) => {
-                  const initials = (() => {
-                    const name = p.display_name || p.full_name;
-                    if (!name?.trim()) return '?';
-                    const parts = name.trim().split(/\s+/);
-                    if (parts.length === 1) return parts[0][0].toUpperCase();
-                    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-                  })();
-                  const displayName = formatDisplayName(p.full_name, p.display_name);
-                  return (
-                    <Tooltip key={i}>
-                      <TooltipTrigger asChild>
-                        <div className="shrink-0">
-                          {p.photo_url ? (
-                            <Avatar className="h-5 w-5">
-                              <AvatarImage src={p.photo_url} />
-                              <AvatarFallback className="text-[8px] bg-muted/80">{initials}</AvatarFallback>
-                            </Avatar>
-                          ) : (
-                            <span className="h-5 w-5 rounded-full flex items-center justify-center text-[8px] font-medium bg-muted/80 backdrop-blur-sm text-muted-foreground">
-                              {initials}
-                            </span>
-                          )}
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent side="top" align="end" sideOffset={4} className="text-xs z-[100]">
-                        <div className="flex items-center gap-1.5">
-                          <Users className="h-3 w-3 shrink-0 opacity-70" />
-                          <span>{displayName}</span>
-                        </div>
-                      </TooltipContent>
-                    </Tooltip>
-                  );
-                })}
-              </div>
-            );
-          })()}
+          {/* Assistant avatar badges removed per design decision */}
           {/* No-show overlay */}
           {isNoShow && (
             <div className="absolute inset-0 bg-destructive/20 flex items-center justify-center z-10">
