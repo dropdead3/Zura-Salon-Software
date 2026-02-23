@@ -1,28 +1,19 @@
 
-# Remove Client Phone Numbers from Week View Cards
+
+# Remove Client Avatar from Week View Cards
 
 ## Problem
-Week View appointment cards show client phone numbers inline, which adds clutter in a denser grid where horizontal space is limited.
+The client avatar (initials circle) on Week View cards consumes horizontal space in an already dense grid. Removing it gives more room for the client name and service info.
 
 ## Approach
-Add a `showClientPhone` prop to `AppointmentCardContent`, defaulting to `true` (preserving current behavior for DayView). WeekView will pass `showClientPhone={false}` to hide them.
-
-The phone number block to be conditionally rendered is at lines 245-249 of `AppointmentCardContent.tsx`:
-```
-{appointment.client_phone && (
-  <span className="font-normal opacity-80 text-xs shrink-0">
-    {formatPhoneDisplay(appointment.client_phone)}
-  </span>
-)}
-```
-
-Note: The hover preview tooltip (lines 444-448) will still show the phone number, so the information remains accessible on hover.
+Same pattern as `showClientPhone` and `showStylistBadge` -- add a `showClientAvatar?: boolean` prop defaulting to `true`.
 
 ### Changes
 
 | File | Change |
 |---|---|
-| `AppointmentCardContent.tsx` | Add `showClientPhone?: boolean` prop (default `true`); wrap the inline phone span with `showClientPhone` guard |
-| `WeekView.tsx` | Pass `showClientPhone={false}` |
+| `AppointmentCardContent.tsx` | Add `showClientAvatar?: boolean` prop (default `true`); pass it through to `GridContent`; wrap the avatar span (line 244-246) with a `showClientAvatar` guard |
+| `WeekView.tsx` | Pass `showClientAvatar={false}` |
 
-Two files, minimal diff. DayView and AgendaView are unaffected.
+DayView and AgendaView remain unaffected (avatar continues to show by default).
+
