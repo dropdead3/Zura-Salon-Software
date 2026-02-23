@@ -11,6 +11,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { MultiClientResolutionDialog } from './MultiClientResolutionDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
@@ -32,20 +33,6 @@ function getUniqueClientIds(appointments: any[]): Set<string> {
   return ids;
 }
 
-function MultiClientWarning({ count, customerNumbers }: { count: number; customerNumbers?: string[] }) {
-  const displayNumbers = customerNumbers && customerNumbers.length > 0
-    ? customerNumbers.slice(0, 3).join(', ') + (customerNumbers.length > 3 ? ` +${customerNumbers.length - 3} more` : '')
-    : null;
-  return (
-    <div className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm">
-      <AlertTriangle className="h-4 w-4 shrink-0 text-amber-500 mt-0.5" />
-      <p className="text-amber-200">
-        These appointments belong to <span className="font-medium">{count} different clients</span>{displayNumbers ? ` (${displayNumbers})` : ''} with the same or similar name. Verify you intend to affect all of them.
-      </p>
-    </div>
-  );
-}
-
 interface AppointmentBatchBarProps {
   selectedAppointments: any[];
   onClearSelection: () => void;
@@ -56,11 +43,18 @@ function formatDateDisplay(dateStr: string | null): string {
   try { return format(parseISO(dateStr), 'MM/dd/yyyy'); } catch { return '—'; }
 }
 
+type PendingAction =
+  | { type: 'cancel-selected' }
+  | { type: 'cancel-future' }
+  | { type: 'status-update'; status: string };
+
 export function AppointmentBatchBar({ selectedAppointments, onClearSelection }: AppointmentBatchBarProps) {
   const [shareOpen, setShareOpen] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [cancelSelectedOpen, setCancelSelectedOpen] = useState(false);
   const [cancelFutureOpen, setCancelFutureOpen] = useState(false);
+  const [resolutionOpen, setResolutionOpen] = useState(false);
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
   const queryClient = useQueryClient();
 
   const uniqueClientIds = useMemo(() => getUniqueClientIds(selectedAppointments), [selectedAppointments]);
@@ -74,13 +68,19 @@ export function AppointmentBatchBar({ selectedAppointments, onClearSelection }: 
     return [...new Set(nums)];
   }, [selectedAppointments]);
 
-  if (selectedAppointments.length === 0) return null;
-
   const today = new Date().toISOString().split('T')[0];
-  const futureAppointments = selectedAppointments.filter(
+  const futureAppointments = useMemo(() => selectedAppointments.filter(
     (a: any) => a.appointment_date >= today && a.status !== 'cancelled' && a.status !== 'completed'
-  );
+  ), [selectedAppointments, today]);
   const hasFuture = futureAppointments.length > 0;
+
+  const resolutionAppointments = useMemo(() => {
+    if (!pendingAction) return selectedAppointments;
+    if (pendingAction.type === 'cancel-future') return futureAppointments;
+    return selectedAppointments;
+  }, [pendingAction, selectedAppointments, futureAppointments]);
+
+  if (selectedAppointments.length === 0) return null;
 
   const handleExportCSV = () => {
     const headers = ['Date', 'Time', 'Client', 'Phone', 'Email', 'Service', 'Stylist', 'Status', 'Price'];
@@ -107,11 +107,6 @@ export function AppointmentBatchBar({ selectedAppointments, onClearSelection }: 
 
   const handleBulkStatusUpdate = async (newStatus: string, appointments?: any[]) => {
     const targets = appointments || selectedAppointments;
-    if (isMultiClient && newStatus !== 'cancelled') {
-      toast.warning(`Action affects ${clientCount} different clients`, {
-        description: 'Verify you intend to update appointments for multiple clients with the same or similar name.',
-      });
-    }
     setUpdating(true);
     try {
       const phorestIds = targets.filter(a => a._source === 'phorest').map(a => a.id);
@@ -142,6 +137,39 @@ export function AppointmentBatchBar({ selectedAppointments, onClearSelection }: 
       setUpdating(false);
     }
   };
+
+  // Route destructive/update actions through resolution dialog when multi-client
+  const handleActionWithResolution = (action: PendingAction) => {
+    if (isMultiClient) {
+      setPendingAction(action);
+      setResolutionOpen(true);
+    } else {
+      // Single client — use existing flows
+      if (action.type === 'cancel-selected') setCancelSelectedOpen(true);
+      else if (action.type === 'cancel-future') setCancelFutureOpen(true);
+      else if (action.type === 'status-update') handleBulkStatusUpdate(action.status);
+    }
+  };
+
+  const handleResolutionConfirm = (filteredAppointments: any[]) => {
+    if (!pendingAction) return;
+    if (pendingAction.type === 'cancel-selected' || pendingAction.type === 'cancel-future') {
+      handleBulkStatusUpdate('cancelled', filteredAppointments);
+    } else if (pendingAction.type === 'status-update') {
+      handleBulkStatusUpdate(pendingAction.status, filteredAppointments);
+    }
+    setPendingAction(null);
+  };
+
+  const getResolutionLabel = (): string => {
+    if (!pendingAction) return 'Confirm';
+    if (pendingAction.type === 'cancel-selected' || pendingAction.type === 'cancel-future') return 'Cancel';
+    if (pendingAction.type === 'status-update') return `Mark ${pendingAction.status}`;
+    return 'Confirm';
+  };
+
+
+
 
   const shareContent = selectedAppointments.slice(0, 15).map(a =>
     `• ${a.client_name || 'Walk-in'} — ${formatDateDisplay(a.appointment_date)} ${a.start_time || ''} (${a.status || 'booked'})`
@@ -174,7 +202,10 @@ export function AppointmentBatchBar({ selectedAppointments, onClearSelection }: 
                 </Button>
               </div>
               <div className="flex items-center gap-2 flex-wrap">
-                <Select onValueChange={(v) => handleBulkStatusUpdate(v)} disabled={updating}>
+                <Select
+                  onValueChange={(v) => handleActionWithResolution({ type: 'status-update', status: v })}
+                  disabled={updating}
+                >
                   <SelectTrigger className="w-[180px] h-7 text-xs">
                     <div className="flex items-center gap-1.5">
                       <CheckCircle2 className="h-3 w-3" />
@@ -190,7 +221,7 @@ export function AppointmentBatchBar({ selectedAppointments, onClearSelection }: 
                 <Button
                   variant="outline"
                   size={tokens.button.inline}
-                  onClick={() => setCancelSelectedOpen(true)}
+                  onClick={() => handleActionWithResolution({ type: 'cancel-selected' })}
                   disabled={updating}
                   className="h-7 text-xs gap-1.5 text-destructive border-destructive/30 hover:bg-destructive/10"
                 >
@@ -200,7 +231,7 @@ export function AppointmentBatchBar({ selectedAppointments, onClearSelection }: 
                   <Button
                     variant="outline"
                     size={tokens.button.inline}
-                    onClick={() => setCancelFutureOpen(true)}
+                    onClick={() => handleActionWithResolution({ type: 'cancel-future' })}
                     disabled={updating}
                     className="h-7 text-xs gap-1.5 text-destructive border-destructive/30 hover:bg-destructive/10"
                   >
@@ -220,7 +251,7 @@ export function AppointmentBatchBar({ selectedAppointments, onClearSelection }: 
         document.body,
       )}
 
-      {/* Cancel Selected Dialog */}
+      {/* Cancel Selected Dialog — single-client only */}
       <AlertDialog open={cancelSelectedOpen} onOpenChange={setCancelSelectedOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -229,11 +260,6 @@ export function AppointmentBatchBar({ selectedAppointments, onClearSelection }: 
               This will cancel all selected appointments. Cancelled appointments cannot be automatically restored.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          {isMultiClient && (
-            <div className="px-6">
-              <MultiClientWarning count={clientCount} customerNumbers={customerNumbers} />
-            </div>
-          )}
           <AlertDialogFooter>
             <AlertDialogCancel>Go Back</AlertDialogCancel>
             <AlertDialogAction
@@ -246,7 +272,7 @@ export function AppointmentBatchBar({ selectedAppointments, onClearSelection }: 
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Cancel All Future Dialog */}
+      {/* Cancel All Future Dialog — single-client only */}
       <AlertDialog open={cancelFutureOpen} onOpenChange={setCancelFutureOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -255,11 +281,6 @@ export function AppointmentBatchBar({ selectedAppointments, onClearSelection }: 
               This will cancel only the selected appointments dated today or later. Past appointments will not be affected.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          {isMultiClient && (
-            <div className="px-6">
-              <MultiClientWarning count={clientCount} customerNumbers={customerNumbers} />
-            </div>
-          )}
           <AlertDialogFooter>
             <AlertDialogCancel>Go Back</AlertDialogCancel>
             <AlertDialogAction
@@ -271,6 +292,16 @@ export function AppointmentBatchBar({ selectedAppointments, onClearSelection }: 
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Multi-Client Resolution Dialog */}
+      <MultiClientResolutionDialog
+        open={resolutionOpen}
+        onOpenChange={setResolutionOpen}
+        appointments={resolutionAppointments}
+        actionLabel={getResolutionLabel()}
+        actionVariant={pendingAction?.type === 'status-update' ? 'default' : 'destructive'}
+        onConfirm={handleResolutionConfirm}
+      />
 
       <ShareToDMDialog
         open={shareOpen}
