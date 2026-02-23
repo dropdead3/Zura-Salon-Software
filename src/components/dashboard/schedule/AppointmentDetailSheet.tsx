@@ -1015,7 +1015,7 @@ export function AppointmentDetailSheet({
                         {!clientRecordLoading && !appointment.client_phone && !clientRecord?.email && (
                           <p className="text-xs text-muted-foreground">No contact info available</p>
                         )}
-                        {!isWalkIn && appointment.phorest_client_id && (
+                        {appointment.phorest_client_id && (
                           <button
                             onClick={() => {
                               handleClose();
