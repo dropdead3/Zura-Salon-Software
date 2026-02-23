@@ -297,7 +297,7 @@ export default function ClientDirectory() {
       } else if (activeTab === 'banned') {
         filtered = filtered.filter(c => c.is_banned);
       } else if (activeTab === 'duplicates') {
-        filtered = filtered.filter(c => (c as any).is_duplicate === true);
+        filtered = filtered.filter(c => (c as any).is_duplicate === true || (c as any)._linkedDuplicateId);
       }
     }
 
@@ -404,7 +404,7 @@ export default function ClientDirectory() {
       else if (activeTab === 'at-risk') baseFiltered = baseFiltered.filter(c => c.isAtRisk);
       else if (activeTab === 'new') baseFiltered = baseFiltered.filter(c => c.isNew);
       else if (activeTab === 'banned') baseFiltered = baseFiltered.filter(c => c.is_banned);
-      else if (activeTab === 'duplicates') baseFiltered = baseFiltered.filter(c => (c as any).is_duplicate === true);
+      else if (activeTab === 'duplicates') baseFiltered = baseFiltered.filter(c => (c as any).is_duplicate === true || (c as any)._linkedDuplicateId);
     }
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
@@ -463,7 +463,7 @@ export default function ClientDirectory() {
       banned: active.filter(c => c.is_banned).length,
       atRisk: active.filter(c => c.isAtRisk).length,
       newClients: active.filter(c => c.isNew).length,
-      duplicates: active.filter(c => (c as any).is_duplicate === true).length,
+      duplicates: active.filter(c => (c as any).is_duplicate === true || (c as any)._linkedDuplicateId).length,
       totalRevenue: active.reduce((s, c) => s + Number(c.total_spend || 0), 0),
       archived: clientsForStats.filter(c => c.is_archived).length,
       topSource: (() => {
