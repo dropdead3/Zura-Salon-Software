@@ -1,16 +1,18 @@
 import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { tokens } from '@/lib/design-tokens';
 import { APPOINTMENT_STATUS_BADGE } from '@/lib/design-tokens';
 import { AppointmentAuditTimeline } from './AppointmentAuditTimeline';
 import { AppointmentNotesPanel } from './AppointmentNotesPanel';
-import { Calendar, Clock, User, MapPin, DollarSign, MessageSquare, Tag, Percent, Phone, Mail, FileText, UserCheck, Info, StickyNote } from 'lucide-react';
+import { Calendar, Clock, User, MapPin, DollarSign, MessageSquare, Tag, Percent, Phone, Mail, FileText, UserCheck, Info, StickyNote, ExternalLink } from 'lucide-react';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
 
 interface AppointmentDetailDrawerProps {
@@ -59,6 +61,25 @@ function DetailRow({ icon: Icon, label, children }: { icon: React.ElementType; l
 }
 
 export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: AppointmentDetailDrawerProps) {
+  const navigate = useNavigate();
+
+  // Resolve phorest_client_id to client directory ID
+  const phorestClientId = appointment?.phorest_client_id || appointment?.client_id;
+  const { data: resolvedClientId } = useQuery({
+    queryKey: ['resolve-client-directory-id', phorestClientId],
+    queryFn: async () => {
+      if (!phorestClientId) return null;
+      const { data } = await supabase
+        .from('phorest_clients')
+        .select('id')
+        .eq('phorest_client_id', phorestClientId)
+        .maybeSingle();
+      return data?.id || null;
+    },
+    enabled: !!phorestClientId,
+    staleTime: 5 * 60 * 1000,
+  });
+
   // Fetch promo details if transaction items exist for this appointment
   const { data: promoInfo } = useQuery({
     queryKey: ['appointment-promo', appointment?.id],
@@ -187,6 +208,20 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
                   )}
                 </DetailRow>
               </div>
+              {resolvedClientId && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full mt-2 gap-1.5 rounded-xl border-border/60"
+                  onClick={() => {
+                    onOpenChange(false);
+                    navigate(`/dashboard/clients?clientId=${resolvedClientId}`);
+                  }}
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  View in Client Directory
+                </Button>
+              )}
             </div>
 
             <Separator />
