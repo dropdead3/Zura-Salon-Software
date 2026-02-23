@@ -1,32 +1,37 @@
 
 
-## Fix Floating Batch Bar Placement
+## Add Hover Effect and Right Arrow to Appointment Rows
 
-### Problems (from screenshot)
-1. The bar extends off the right edge of the screen -- "Export CSV" is clipped.
-2. The bar overlaps the AI Copilot FAB (bottom-right corner).
+**What changes:**
+Each appointment row in the table will get a subtle hover background color change and a right-pointing chevron arrow that appears on the far right, signaling that the row is clickable and leads to the detail drill-down.
 
-### Solution
+### Technical Details
 
-**`src/components/dashboard/appointments-hub/AppointmentBatchBar.tsx`**
+**File: `src/components/dashboard/appointments-hub/AppointmentsList.tsx`**
 
-Two adjustments to the `motion.div` className:
+1. **Import `ChevronRight`** -- already imported (line 15).
 
-1. **Prevent right overflow**: Change `max-w-2xl` to `max-w-xl` so the bar fits comfortably within the viewport. Also add `pr-20` (or equivalent right margin) to account for the FAB, or shift the bar slightly left.
+2. **Add a new `TableHead` column** at the end of the header row (after "Created By") -- an empty, narrow column (`w-8`) to reserve space for the arrow.
 
-2. **Clear the FAB**: Move the bar up from `bottom-4` to `bottom-20` so it sits above the FAB zone (which lives at `bottom-4 right-4`). Alternatively, keep `bottom-4` but add `right-20` padding so the bar content stops before the FAB. The cleaner approach is `bottom-20` since the FAB is a fixed 56px button at `bottom-4`.
+3. **Update `COL_COUNT`** from 12 to 13.
 
-3. **Responsive content**: On smaller viewports, the action buttons should wrap or shrink. Add `flex-wrap` to the actions row so "Update Status", "Share", and "Export CSV" can stack if needed.
+4. **Add hover class to `TableRow`** -- add `hover:bg-muted/40 transition-colors` to each data row's className (line 346).
 
-### Specific Changes
+5. **Add a new `TableCell` at the end of each data row** containing a `ChevronRight` icon styled with `opacity-0 group-hover:opacity-100 transition-opacity` -- this requires adding `group` to the `TableRow` className so the arrow appears only on hover.
 
+6. **Add matching skeleton and empty-state cells** for the new column to keep column counts aligned.
+
+**Summary of row className:**
 ```
-Current:  className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 max-w-2xl w-[calc(100%-2rem)] ..."
-Updated:  className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 max-w-xl w-[calc(100%-2rem)] ..."
+cn('cursor-pointer group hover:bg-muted/40 transition-colors', isSelected && 'bg-muted/50')
 ```
 
-- `bottom-4` becomes `bottom-20` -- clears the FAB at bottom-4/right-4
-- `max-w-2xl` (672px) becomes `max-w-xl` (576px) -- prevents right-edge clipping on standard viewports
+**Arrow cell:**
+```tsx
+<TableCell className="w-8 pr-2">
+  <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+</TableCell>
+```
 
-The actions container also gets `flex-wrap` so buttons reflow on narrow screens instead of overflowing.
+This is a minimal, UI-only change -- no data or logic changes needed.
 
