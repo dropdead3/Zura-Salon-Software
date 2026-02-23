@@ -4,7 +4,7 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { tokens } from '@/lib/design-tokens';
 import { Receipt, Calendar, Gift, Tag, Ticket } from 'lucide-react';
-import { HubSearchBar } from '@/components/dashboard/appointments-hub/HubSearchBar';
+
 import { AppointmentsList } from '@/components/dashboard/appointments-hub/AppointmentsList';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { PromoRedemptionList } from '@/components/dashboard/appointments-hub/PromoRedemptionList';
@@ -295,9 +295,6 @@ export default function AppointmentsHub() {
       <div className={tokens.layout.pageContainer}>
         <DashboardPageHeader title="Appointments & Transactions" />
 
-        {/* Unified search */}
-        <HubSearchBar value={search} onChange={setSearch} />
-
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={handleTabChange}>
           <div className="flex items-center justify-between gap-4">
@@ -318,7 +315,7 @@ export default function AppointmentsHub() {
           </div>
 
           <TabsContent value="appointments" className="mt-4">
-            <AppointmentsList search={search} />
+            <AppointmentsList search={search} onSearchChange={setSearch} />
           </TabsContent>
 
           <TabsContent value="transactions" className="mt-4">
