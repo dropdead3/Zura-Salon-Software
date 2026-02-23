@@ -1,38 +1,21 @@
 
-
-## Make Search + Toggle Filter Bar Responsive
+## Make Page Title Responsive on Mobile
 
 ### Problem
-The search bar and time-period toggle pill sit side-by-side in a single flex row. On smaller screens, they collide and overflow rather than stacking vertically. The toggle pill doesn't adapt for mobile.
+The title "APPOINTMENTS & TRANSACTIONS" uses Termina (uppercase, wide tracking) at `text-2xl` on all screen sizes. On mobile, the wide tracking causes the title to truncate with an ellipsis, cutting off important context.
 
-### Changes
+### Solution
+Two small changes in a single file:
 
-**File:** `src/components/dashboard/appointments-hub/AppointmentsList.tsx`
+**File:** `src/components/dashboard/DashboardPageHeader.tsx`
 
-**1. Stack search and toggle on small screens**
+1. **Scale the title font size responsively** -- Change the heading from the static `tokens.heading.page` class (which is `text-2xl` at all sizes) to a responsive override: `text-lg sm:text-xl md:text-2xl`. This keeps the existing Termina/medium/tracking styles but scales the size down on small screens so the full title fits.
 
-Change the Row 1 container (currently line 250) from a horizontal-only flex to a responsive layout:
-- Replace `flex flex-wrap gap-3 items-center` with `flex flex-col sm:flex-row gap-3 sm:items-center`
-- This makes the search bar and toggle pill stack vertically on mobile and sit side-by-side on `sm` (640px+)
-
-**2. Make the search bar full-width on mobile**
-
-Update the search bar wrapper (line 251):
-- Change `flex-1 min-w-0 max-w-[640px]` to `w-full sm:flex-1 sm:min-w-0 sm:max-w-[640px]`
-- On mobile, the search bar takes full width; on desktop it flexes as before
-
-**3. Make the toggle pill scrollable on mobile**
-
-Update the toggle pill wrapper (line 255):
-- Add `w-full sm:w-auto overflow-x-auto` so on mobile the toggle pill spans the full width and scrolls horizontally if needed
-- Hide the scrollbar with a utility class for cleanliness
-
-**4. Custom range popover alignment**
-
-When stacked, the date range popover (line 266) should align to `start` on mobile to avoid clipping off-screen.
+2. **Remove `truncate`** from the `h1` -- The title should wrap naturally on mobile rather than being cut off with an ellipsis. Replace `truncate` with `break-words` so long titles flow to a second line when needed.
 
 ### Result
-- **Mobile**: Search bar on top, toggle pill below (full width, horizontally scrollable if needed)
-- **Desktop**: No change -- side-by-side layout preserved
-- No new files or dependencies
+- **Mobile**: Title renders at `text-lg` and wraps if needed -- no truncation
+- **Tablet**: `text-xl`
+- **Desktop**: `text-2xl` (unchanged)
 
+Single file, two class changes. No new dependencies.
