@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import { BannedClientBadge } from '@/components/dashboard/clients/BannedClientBadge';
 import { DuplicateDrilldown } from '@/components/dashboard/clients/DuplicateDrilldown';
+import { DuplicatePairCard } from '@/components/dashboard/clients/DuplicatePairCard';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { differenceInDays } from 'date-fns';
@@ -458,6 +459,34 @@ export default function ClientDirectory() {
 
   const totalPages = Math.ceil(filteredClients.length / PAGE_SIZE);
 
+  // Group duplicates into pairs for the Duplicates tab
+  const duplicatePairs = useMemo(() => {
+    if (activeTab !== 'duplicates') return [];
+    const seen = new Set<string>();
+    const pairs: Array<{ duplicate: any; canonical: any; reasons: string[] }> = [];
+    
+    for (const client of filteredClients) {
+      if ((client as any).is_duplicate && (client as any).canonical_client_id) {
+        const pairKey = [client.id, (client as any).canonical_client_id].sort().join('-');
+        if (seen.has(pairKey)) continue;
+        seen.add(pairKey);
+        const canonical = processedClients.find(c => c.id === (client as any).canonical_client_id);
+        if (canonical) {
+          pairs.push({ duplicate: client, canonical, reasons: (client as any).duplicateReasons || [] });
+        }
+      }
+    }
+    return pairs;
+  }, [activeTab, filteredClients, processedClients]);
+
+  // Paginated pairs for the duplicates tab
+  const paginatedPairs = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return duplicatePairs.slice(start, start + PAGE_SIZE);
+  }, [duplicatePairs, currentPage]);
+
+  const totalPairsPages = Math.ceil(duplicatePairs.length / PAGE_SIZE);
+
   // Batch-resolve preferred stylist names for visible clients
   const stylistIdsForPage = useMemo(() => 
     paginatedClients.map(c => c.preferred_stylist_id).filter(Boolean) as string[],
@@ -788,7 +817,7 @@ export default function ClientDirectory() {
           <CardHeader className="pb-0">
             <div className="flex items-center justify-between">
               <CardTitle className="font-display text-lg">
-                {filteredClients.length} {activeTab === 'all' ? 'Clients' : activeTab === 'vip' ? 'VIP Clients' : activeTab === 'at-risk' ? 'At-Risk Clients' : activeTab === 'new' ? 'New Clients' : activeTab === 'duplicates' ? 'Duplicate Clients' : activeTab === 'banned' ? 'Banned Clients' : activeTab === 'archived' ? 'Archived Clients' : 'Clients'}
+                {activeTab === 'duplicates' ? `${duplicatePairs.length} Duplicate Pairs` : `${filteredClients.length} ${activeTab === 'all' ? 'Clients' : activeTab === 'vip' ? 'VIP Clients' : activeTab === 'at-risk' ? 'At-Risk Clients' : activeTab === 'new' ? 'New Clients' : activeTab === 'banned' ? 'Banned Clients' : activeTab === 'archived' ? 'Archived Clients' : 'Clients'}`}
                 {selectedLocation !== 'all' && (
                   <Badge variant="outline" className="ml-2 font-sans font-normal">
                     <MapPin className="w-3 h-3 mr-1" />
@@ -854,6 +883,59 @@ export default function ClientDirectory() {
                   {searchQuery ? 'No clients match your search.' : selectedLetter !== 'all' ? `No clients starting with "${selectedLetter}".` : 'No client data available yet. Sync with Phorest to populate.'}
                 </p>
               </div>
+            ) : activeTab === 'duplicates' ? (
+              <>
+                <div className="space-y-4">
+                  {paginatedPairs.map(({ duplicate, canonical, reasons }) => (
+                    <DuplicatePairCard
+                      key={`${duplicate.id}-${canonical.id}`}
+                      duplicate={duplicate}
+                      canonical={canonical}
+                      reasons={reasons}
+                      onViewProfile={(profileData) => {
+                        setSelectedClient(profileData);
+                        setDetailSheetOpen(true);
+                      }}
+                      onMerge={(duplicateId, canonicalId) => {
+                        navigate(`/dashboard/admin/merge-clients?clientIds=${duplicateId},${canonicalId}`);
+                      }}
+                      onDismiss={canMerge ? handleDismissDuplicate : undefined}
+                      isDismissing={isDismissing}
+                    />
+                  ))}
+                  {duplicatePairs.length === 0 && (
+                    <div className="text-center py-12">
+                      <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                      <p className="text-muted-foreground">No duplicate pairs found.</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Pagination for pairs */}
+                {totalPairsPages > 1 && (
+                  <div className="mt-6 flex flex-col items-center gap-3">
+                    <p className="text-sm text-muted-foreground">
+                      Showing {Math.min((currentPage - 1) * PAGE_SIZE + 1, duplicatePairs.length)}–{Math.min(currentPage * PAGE_SIZE, duplicatePairs.length)} of {duplicatePairs.length} pairs
+                    </p>
+                    <Pagination>
+                      <PaginationContent>
+                        <PaginationItem>
+                          <PaginationPrevious
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            className={cn(currentPage === 1 && "pointer-events-none opacity-50")}
+                          />
+                        </PaginationItem>
+                        <PaginationItem>
+                          <PaginationNext
+                            onClick={() => setCurrentPage(p => Math.min(totalPairsPages, p + 1))}
+                            className={cn(currentPage === totalPairsPages && "pointer-events-none opacity-50")}
+                          />
+                        </PaginationItem>
+                      </PaginationContent>
+                    </Pagination>
+                  </div>
+                )}
+              </>
             ) : (
               <>
                 <div className="divide-y">
