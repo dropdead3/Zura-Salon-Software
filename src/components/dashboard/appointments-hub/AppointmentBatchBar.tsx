@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { tokens } from '@/lib/design-tokens';
 import { Button } from '@/components/ui/button';
 import { Download, X, MessageSquare, CheckCircle2 } from 'lucide-react';
@@ -85,38 +87,53 @@ export function AppointmentBatchBar({ selectedAppointments, onClearSelection }: 
     `• ${a.client_name || 'Walk-in'} — ${formatDateDisplay(a.appointment_date)} ${a.start_time || ''} (${a.status || 'booked'})`
   ).join('\n') + (selectedAppointments.length > 15 ? `\n...and ${selectedAppointments.length - 15} more` : '');
 
+  const isVisible = selectedAppointments.length > 0;
+
   return (
     <>
-      <div className="sticky bottom-0 z-10 border-t bg-background/95 backdrop-blur px-4 py-2 flex items-center justify-between gap-3 rounded-b-xl">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium">{selectedAppointments.length} selected</span>
-          <Button variant="ghost" size={tokens.button.inline} onClick={onClearSelection} className="h-7 px-2">
-            <X className="h-3 w-3" />
-          </Button>
-        </div>
-        <div className="flex items-center gap-2">
-          <Select onValueChange={handleBulkStatusUpdate} disabled={updating}>
-            <SelectTrigger className="w-[180px] h-7 text-xs">
-              <div className="flex items-center gap-1.5">
-                <CheckCircle2 className="h-3 w-3" />
-                <SelectValue placeholder="Update Status" />
+      {createPortal(
+        <AnimatePresence>
+          {isVisible && (
+            <motion.div
+              initial={{ y: 60, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 60, opacity: 0 }}
+              transition={{ type: 'spring', damping: 26, stiffness: 300, mass: 0.8 }}
+              className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 max-w-2xl w-[calc(100%-2rem)] bg-card/80 backdrop-blur-xl border border-border rounded-xl shadow-2xl px-5 py-3 flex items-center justify-between gap-3"
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">{selectedAppointments.length} selected</span>
+                <Button variant="ghost" size={tokens.button.inline} onClick={onClearSelection} className="h-7 px-2">
+                  <X className="h-3 w-3" />
+                </Button>
               </div>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="confirmed">Confirmed</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
-              <SelectItem value="cancelled">Cancelled</SelectItem>
-              <SelectItem value="no_show">No Show</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button variant="outline" size={tokens.button.inline} onClick={() => setShareOpen(true)} className="h-7 text-xs gap-1.5">
-            <MessageSquare className="h-3 w-3" /> Share
-          </Button>
-          <Button variant="outline" size={tokens.button.inline} onClick={handleExportCSV} className="h-7 text-xs gap-1.5">
-            <Download className="h-3 w-3" /> Export CSV
-          </Button>
-        </div>
-      </div>
+              <div className="flex items-center gap-2">
+                <Select onValueChange={handleBulkStatusUpdate} disabled={updating}>
+                  <SelectTrigger className="w-[180px] h-7 text-xs">
+                    <div className="flex items-center gap-1.5">
+                      <CheckCircle2 className="h-3 w-3" />
+                      <SelectValue placeholder="Update Status" />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="confirmed">Confirmed</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                    <SelectItem value="no_show">No Show</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button variant="outline" size={tokens.button.inline} onClick={() => setShareOpen(true)} className="h-7 text-xs gap-1.5">
+                  <MessageSquare className="h-3 w-3" /> Share
+                </Button>
+                <Button variant="outline" size={tokens.button.inline} onClick={handleExportCSV} className="h-7 text-xs gap-1.5">
+                  <Download className="h-3 w-3" /> Export CSV
+                </Button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body,
+      )}
 
       <ShareToDMDialog
         open={shareOpen}
