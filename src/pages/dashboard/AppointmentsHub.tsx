@@ -3,7 +3,8 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { tokens } from '@/lib/design-tokens';
-import { Receipt, Calendar, Gift, Tag, Ticket, ArrowUpRight, BarChart3 } from 'lucide-react';
+import { Receipt, Calendar, Gift, Tag, Ticket, ArrowUpRight, BarChart3, ChevronDown } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 import { AppointmentsList } from '@/components/dashboard/appointments-hub/AppointmentsList';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
@@ -301,35 +302,42 @@ export default function AppointmentsHub() {
         />
 
         {/* Analytics quick-links callout */}
-        <Card className="bg-card/80 backdrop-blur-xl border-border/60 overflow-hidden">
-          <div className="flex items-start gap-3 p-4 pb-3">
-            <div className={tokens.card.iconBox}>
-              <BarChart3 className={tokens.card.icon} />
-            </div>
-            <div className="min-w-0">
-              <h3 className="font-display text-sm tracking-wide text-foreground">LOOKING FOR ANALYTICS?</h3>
-              <p className="text-xs text-muted-foreground font-sans mt-0.5">Jump to detailed breakdowns and trend reports.</p>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 px-4 pb-4">
-            {[
-              { label: 'Appointment Analytics', to: '/dashboard/admin/analytics?tab=operations&subtab=appointments', icon: Calendar },
-              { label: 'Booking Pipeline', to: '/dashboard/admin/analytics?tab=operations&subtab=booking-pipeline', icon: Tag },
-              { label: 'Sales Overview', to: '/dashboard/admin/analytics?tab=sales', icon: CreditCard },
-              { label: 'Staff Utilization', to: '/dashboard/admin/analytics?tab=operations&subtab=staff-utilization', icon: Receipt },
-            ].map((link) => (
-              <Link
-                key={link.label}
-                to={link.to}
-                className="group flex items-center gap-3 rounded-lg bg-muted/40 hover:bg-muted/60 px-3.5 py-2.5 transition-all duration-200 hover:shadow-sm"
-              >
-                <link.icon className="w-4 h-4 text-primary shrink-0" />
-                <span className="font-sans text-sm text-foreground">{link.label}</span>
-                <ArrowUpRight className="w-3.5 h-3.5 text-muted-foreground ml-auto shrink-0 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-              </Link>
-            ))}
-          </div>
-        </Card>
+        <Collapsible defaultOpen>
+          <Card className="bg-card/80 backdrop-blur-xl border-border/60 overflow-hidden">
+            <CollapsibleTrigger className="flex items-center justify-between w-full p-4 pb-3 cursor-pointer group">
+              <div className="flex items-start gap-3">
+                <div className={tokens.card.iconBox}>
+                  <BarChart3 className={tokens.card.icon} />
+                </div>
+                <div className="min-w-0 text-left">
+                  <h3 className="font-display text-sm tracking-wide text-foreground">LOOKING FOR ANALYTICS?</h3>
+                  <p className="text-xs text-muted-foreground font-sans mt-0.5">Jump to detailed breakdowns and trend reports.</p>
+                </div>
+              </div>
+              <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 px-4 pb-4">
+                {[
+                  { label: 'Appointment Analytics', to: '/dashboard/admin/analytics?tab=operations&subtab=appointments', icon: Calendar },
+                  { label: 'Booking Pipeline', to: '/dashboard/admin/analytics?tab=operations&subtab=booking-pipeline', icon: Tag },
+                  { label: 'Sales Overview', to: '/dashboard/admin/analytics?tab=sales', icon: CreditCard },
+                  { label: 'Staff Utilization', to: '/dashboard/admin/analytics?tab=operations&subtab=staff-utilization', icon: Receipt },
+                ].map((link) => (
+                  <Link
+                    key={link.label}
+                    to={link.to}
+                    className="group flex items-center gap-3 rounded-lg bg-muted/40 hover:bg-muted/60 px-3.5 py-2.5 transition-all duration-200 hover:shadow-sm"
+                  >
+                    <link.icon className="w-4 h-4 text-primary shrink-0" />
+                    <span className="font-sans text-sm text-foreground">{link.label}</span>
+                    <ArrowUpRight className="w-3.5 h-3.5 text-muted-foreground ml-auto shrink-0 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                  </Link>
+                ))}
+              </div>
+            </CollapsibleContent>
+          </Card>
+        </Collapsible>
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={handleTabChange}>
