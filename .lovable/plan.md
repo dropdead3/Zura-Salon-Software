@@ -1,21 +1,61 @@
 
-## Make Page Title Responsive on Mobile
+## Fix Appointment Status Mapping from Phorest API
 
-### Problem
-The title "APPOINTMENTS & TRANSACTIONS" uses Termina (uppercase, wide tracking) at `text-2xl` on all screen sizes. On mobile, the wide tracking causes the title to truncate with an ellipsis, cutting off important context.
+### Root Cause
+
+The Phorest API does not return a `status` field on appointment objects. Instead, it uses a field called **`activationState`** with three possible values:
+
+- `ACTIVE` -- The appointment is confirmed/active
+- `RESERVED` -- The appointment is reserved but not yet confirmed
+- `CANCELED` -- The appointment was cancelled
+
+The current sync code reads `apt.status`, which is always `undefined`, causing the `mapPhorestStatus` function to fall back to `'unknown'`. This is why 529 out of 534 appointments display with an "Unknown" badge.
+
+### Regarding Completed/Paid Status
+
+You are correct that the Phorest API does not provide a "completed" or "paid" status on the appointment endpoint. The financial/transaction endpoints (`/purchase/search`, `/report/sales`, `/csvexportjob`) are all returning 404 errors, confirming that your current API credentials do not have permissions for transaction data. Without that data, there is no way to know from Phorest alone whether an appointment was paid/completed.
 
 ### Solution
-Two small changes in a single file:
 
-**File:** `src/components/dashboard/DashboardPageHeader.tsx`
+**1. Fix the field name in the sync function**
 
-1. **Scale the title font size responsively** -- Change the heading from the static `tokens.heading.page` class (which is `text-2xl` at all sizes) to a responsive override: `text-lg sm:text-xl md:text-2xl`. This keeps the existing Termina/medium/tracking styles but scales the size down on small screens so the full title fits.
+In `supabase/functions/sync-phorest-data/index.ts`, update the appointment mapping to read `activationState` instead of `status`:
 
-2. **Remove `truncate`** from the `h1` -- The title should wrap naturally on mobile rather than being cut off with an ellipsis. Replace `truncate` with `break-words` so long titles flow to a second line when needed.
+```
+status: mapPhorestStatus(apt.activationState || apt.status),
+```
 
-### Result
-- **Mobile**: Title renders at `text-lg` and wraps if needed -- no truncation
-- **Tablet**: `text-xl`
-- **Desktop**: `text-2xl` (unchanged)
+**2. Update the status mapping function**
 
-Single file, two class changes. No new dependencies.
+Expand `mapPhorestStatus` to handle Phorest's actual `activationState` values:
+
+| Phorest Value | Mapped Status |
+|---|---|
+| `ACTIVE` | `booked` (confirmed in Phorest = booked in Zura lifecycle) |
+| `RESERVED` | `booked` |
+| `CANCELED` | `cancelled` |
+
+**3. Add time-based inference for past appointments**
+
+Since the financial API is unavailable, add a simple time-based heuristic during sync: if an appointment's `activationState` is `ACTIVE` and its date/time is in the past, mark it as `completed`. This gives a reasonable approximation until financial API access is available.
+
+**4. Add debug logging**
+
+Log the first raw appointment object's keys during sync so we can see exactly what fields Phorest returns. This will help confirm the fix and catch any other missing field mappings.
+
+**5. Backfill existing records**
+
+Run a one-time database migration to fix the 529 existing `unknown` status records:
+- Past `unknown` appointments become `completed`
+- Future `unknown` appointments become `booked`
+
+### Files Modified
+
+- `supabase/functions/sync-phorest-data/index.ts` -- Field name fix, mapping update, time-based inference, debug logging
+- Database migration -- Backfill existing `unknown` status records
+
+### Technical Notes
+
+- The 5 appointments that already show `confirmed` were likely created via the internal booking flow (`create-phorest-booking`), which explicitly sets status to `booked`/`confirmed`
+- Once Phorest financial API access is granted, the system can use transaction data to distinguish between `completed` and `paid` statuses
+- Manual status override from the appointment detail panel remains available as a fallback
