@@ -41,7 +41,9 @@ import {
   StickyNote,
   Megaphone,
   GitMerge,
-  Users
+  Users,
+  ExternalLink,
+  Receipt
 } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn, formatPhoneDisplay } from '@/lib/utils';
@@ -59,6 +61,8 @@ import { ClientRedoHistory } from './clients/ClientRedoHistory';
 import { ArchiveClientToggle } from './clients/ArchiveClientToggle';
 import { ClientMarketingStatus } from './clients/ClientMarketingStatus';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { useClientTransactionHistory } from '@/hooks/useClientTransactionHistory';
+import { TransactionHistoryTimeline } from './TransactionHistoryTimeline';
 import { toast } from 'sonner';
 
 interface Client {
@@ -116,6 +120,7 @@ interface ClientDetailSheetProps {
 export function ClientDetailSheet({ client, open, onOpenChange, locationName, onClientUpdated }: ClientDetailSheetProps) {
   const navigate = useNavigate();
   const { data: visitHistory, isLoading: historyLoading } = useClientVisitHistory(client?.phorest_client_id);
+  const { data: transactionData, isLoading: transactionsLoading } = useClientTransactionHistory(client?.phorest_client_id);
   const { data: householdData } = useClientHousehold(client?.id);
   const { formatCurrencyWhole } = useFormatCurrency();
   const { formatDate } = useFormatDate();
@@ -1163,10 +1168,28 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
             </Card>
           )}
 
-          {/* Tabs for History, Notes, and Redos */}
+          {/* View All Appointments link */}
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full gap-1.5 rounded-xl border-border/60"
+            onClick={() => {
+              onOpenChange(false);
+              navigate(`/dashboard/appointments-hub?tab=appointments&search=${encodeURIComponent(client.name)}`);
+            }}
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+            View All Appointments
+          </Button>
+
+          {/* Tabs for History, Notes, Transactions, and Redos */}
           <Tabs defaultValue="history" className="mt-0">
             <TabsList className="w-full rounded-xl">
               <TabsTrigger value="history" className="flex-1">Visit History</TabsTrigger>
+              <TabsTrigger value="transactions" className="flex-1 gap-1">
+                <Receipt className="w-3.5 h-3.5" />
+                Transactions
+              </TabsTrigger>
               <TabsTrigger value="notes" className="flex-1">Notes</TabsTrigger>
               <TabsTrigger value="redos" className="flex-1">Redos</TabsTrigger>
             </TabsList>
@@ -1175,6 +1198,14 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
               <VisitHistoryTimeline 
                 visits={visitHistory || []} 
                 isLoading={historyLoading} 
+              />
+            </TabsContent>
+
+            <TabsContent value="transactions" className="mt-4">
+              <TransactionHistoryTimeline
+                transactions={transactionData?.transactions || []}
+                summary={transactionData?.summary || { totalSpend: 0, serviceSpend: 0, productSpend: 0, visitCount: 0, averageTicket: 0, preferredStaffId: null, preferredStaffName: null, firstVisit: null, lastVisit: null }}
+                isLoading={transactionsLoading}
               />
             </TabsContent>
             
