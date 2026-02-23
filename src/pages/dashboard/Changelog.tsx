@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { tokens } from '@/lib/design-tokens';
@@ -344,34 +345,35 @@ export default function Changelog() {
     <DashboardLayout>
       <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-display tracking-wide">WHAT'S NEW</h1>
-            <p className="text-sm text-muted-foreground">Stay updated on the latest features</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="flex rounded-lg border bg-muted p-1">
-              <Button
-                variant={activeTab === 'list' ? 'secondary' : 'ghost'}
-                size={tokens.button.card}
-                onClick={() => setActiveTab('list')}
-                className="gap-1.5 text-xs sm:text-sm"
-              >
-                <LayoutList className="h-4 w-4" />
-                <span className="hidden sm:inline">List</span>
-              </Button>
-              <Button
-                variant={activeTab === 'timeline' ? 'secondary' : 'ghost'}
-                size={tokens.button.card}
-                onClick={() => setActiveTab('timeline')}
-                className="gap-1.5 text-xs sm:text-sm"
-              >
-                <GitBranch className="h-4 w-4" />
-                <span className="hidden sm:inline">Timeline</span>
-              </Button>
+        <DashboardPageHeader
+          title="WHAT'S NEW"
+          description="Stay updated on the latest features"
+          className="mb-6"
+          actions={
+            <div className="flex items-center gap-2">
+              <div className="flex rounded-lg border bg-muted p-1">
+                <Button
+                  variant={activeTab === 'list' ? 'secondary' : 'ghost'}
+                  size={tokens.button.card}
+                  onClick={() => setActiveTab('list')}
+                  className="gap-1.5 text-xs sm:text-sm"
+                >
+                  <LayoutList className="h-4 w-4" />
+                  <span className="hidden sm:inline">List</span>
+                </Button>
+                <Button
+                  variant={activeTab === 'timeline' ? 'secondary' : 'ghost'}
+                  size={tokens.button.card}
+                  onClick={() => setActiveTab('timeline')}
+                  className="gap-1.5 text-xs sm:text-sm"
+                >
+                  <GitBranch className="h-4 w-4" />
+                  <span className="hidden sm:inline">Timeline</span>
+                </Button>
+              </div>
             </div>
-          </div>
-        </div>
+          }
+        />
 
         {activeTab === 'list' ? (
           <div className="space-y-8">

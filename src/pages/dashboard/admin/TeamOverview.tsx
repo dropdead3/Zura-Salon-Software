@@ -297,12 +297,10 @@ export default function TeamOverview() {
       <div className="p-6 lg:p-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="font-display text-3xl lg:text-4xl mb-2">
-            NEW-CLIENT ENGINE PROGRAM TEAM OVERVIEW
-          </h1>
-          <p className="text-muted-foreground font-sans">
-            Monitor stylist progress, view Weekly Wins, and add coaching notes.
-          </p>
+          <DashboardPageHeader
+            title="New-Client Engine Program Team Overview"
+            description="Monitor stylist progress, view Weekly Wins, and add coaching notes."
+          />
         </div>
 
         {/* Client Engine Overview Card */}

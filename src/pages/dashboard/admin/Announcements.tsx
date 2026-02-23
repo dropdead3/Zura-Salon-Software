@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -346,56 +347,50 @@ export default function Announcements() {
   return (
     <DashboardLayout>
       <div className="p-6 lg:p-8">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-start gap-4">
-            <Button variant="ghost" size="icon" asChild className="shrink-0 mt-1">
-              <Link to="/dashboard/admin/management">
-                <ArrowLeft className="w-5 h-5" />
-              </Link>
-            </Button>
-            <div>
-              <h1 className="font-display text-3xl lg:text-4xl mb-2">Make An Announcement</h1>
-              <p className="text-muted-foreground font-sans">
-                Post updates and news for the team
-              </p>
-            </div>
-          </div>
-          
-          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={resetForm}>
-                <Plus className="w-4 h-4 mr-2" />
-                New Announcement
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-lg">
-              <DialogHeader>
-                <DialogTitle className="font-display">Create Announcement</DialogTitle>
-              </DialogHeader>
-              <AnnouncementForm
-                title={title}
-                setTitle={setTitle}
-                content={content}
-                setContent={setContent}
-                priority={priority}
-                setPriority={setPriority}
-                isPinned={isPinned}
-                setIsPinned={setIsPinned}
-                expiresAt={expiresAt}
-                setExpiresAt={setExpiresAt}
-                linkUrl={linkUrl}
-                setLinkUrl={setLinkUrl}
-                linkLabel={linkLabel}
-                setLinkLabel={setLinkLabel}
-                locationId={locationId}
-                setLocationId={setLocationId}
-                locations={locations}
-                onSubmit={handleCreate}
-                isLoading={createMutation.isPending}
-                submitLabel="Create Announcement"
-              />
-            </DialogContent>
-          </Dialog>
+        <div className="mb-8">
+          <DashboardPageHeader
+            title="Make An Announcement"
+            description="Post updates and news for the team"
+            backTo="/dashboard/admin/management"
+            backLabel="Back to Management"
+            actions={
+              <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+                <DialogTrigger asChild>
+                  <Button onClick={resetForm}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    New Announcement
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-lg">
+                  <DialogHeader>
+                    <DialogTitle className="font-display">Create Announcement</DialogTitle>
+                  </DialogHeader>
+                  <AnnouncementForm
+                    title={title}
+                    setTitle={setTitle}
+                    content={content}
+                    setContent={setContent}
+                    priority={priority}
+                    setPriority={setPriority}
+                    isPinned={isPinned}
+                    setIsPinned={setIsPinned}
+                    expiresAt={expiresAt}
+                    setExpiresAt={setExpiresAt}
+                    linkUrl={linkUrl}
+                    setLinkUrl={setLinkUrl}
+                    linkLabel={linkLabel}
+                    setLinkLabel={setLinkLabel}
+                    locationId={locationId}
+                    setLocationId={setLocationId}
+                    locations={locations}
+                    onSubmit={handleCreate}
+                    isLoading={createMutation.isPending}
+                    submitLabel="Create Announcement"
+                  />
+                </DialogContent>
+              </Dialog>
+            }
+          />
         </div>
 
         {isLoading ? (

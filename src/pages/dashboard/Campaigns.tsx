@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -59,23 +60,23 @@ export default function Campaigns() {
   return (
     <DashboardLayout>
       <div className="p-4 md:p-6 lg:p-8 space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-xl md:text-2xl font-display tracking-wide">CAMPAIGNS</h1>
-            <p className="text-sm text-muted-foreground">Track and manage your action campaigns</p>
-          </div>
-          <Select value={filter} onValueChange={setFilter}>
-            <SelectTrigger className="w-[160px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Campaigns</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
-              <SelectItem value="archived">Archived</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <DashboardPageHeader
+          title="CAMPAIGNS"
+          description="Track and manage your action campaigns"
+          actions={
+            <Select value={filter} onValueChange={setFilter}>
+              <SelectTrigger className="w-[160px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Campaigns</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="archived">Archived</SelectItem>
+              </SelectContent>
+            </Select>
+          }
+        />
 
         {isLoading ? (
           <div className="flex items-center justify-center py-16">

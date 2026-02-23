@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -207,19 +208,12 @@ export default function HeadshotRequests() {
     <DashboardLayout>
       <div className="p-6 lg:p-8">
         {/* Header */}
-        <div className="mb-8 flex items-start gap-4">
-          <Button variant="ghost" size="icon" asChild className="shrink-0 mt-1">
-            <Link to="/dashboard/admin/management">
-              <ArrowLeft className="w-5 h-5" />
-            </Link>
-          </Button>
-          <div>
-            <h1 className="font-display text-3xl lg:text-4xl mb-2">HEADSHOT REQUESTS</h1>
-            <p className="text-muted-foreground font-sans">
-              Schedule and manage headshot sessions for team members.
-            </p>
-          </div>
-        </div>
+        <DashboardPageHeader
+          title="Headshot Requests"
+          description="Schedule and manage headshot sessions for team members."
+          backTo="/dashboard/admin/management"
+          className="mb-8"
+        />
 
         {/* Stats Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">

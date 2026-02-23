@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -199,18 +200,17 @@ export default function FeatureFlags() {
     <DashboardLayout>
       <div className="p-6 lg:p-8 max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-          <div>
-            <h1 className="font-display text-3xl lg:text-4xl mb-2">FEATURE FLAGS</h1>
-            <p className="text-muted-foreground font-sans">
-              Control feature rollouts and experiments
-            </p>
-          </div>
-          <Button onClick={handleCreate} className="gap-2">
-            <Plus className="w-4 h-4" />
-            New Flag
-          </Button>
-        </div>
+        <DashboardPageHeader
+          title="Feature Flags"
+          description="Control feature rollouts and experiments"
+          className="mb-8"
+          actions={
+            <Button onClick={handleCreate} className="gap-2">
+              <Plus className="w-4 h-4" />
+              New Flag
+            </Button>
+          }
+        />
 
         {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

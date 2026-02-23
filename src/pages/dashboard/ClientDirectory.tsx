@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -716,25 +717,24 @@ export default function ClientDirectory() {
     <DashboardLayout>
       <div className="p-6 lg:p-8">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-          <div>
-            <h1 className="font-display text-3xl lg:text-4xl mb-2">CLIENT DIRECTORY</h1>
-            <p className="text-muted-foreground font-sans">
-              {primaryTab === 'all' 
-                ? 'View and manage all salon clients.' 
-                : 'Track your client relationships and identify opportunities.'}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            {canMerge && selectedForMerge.size >= 2 && (
-              <Button onClick={handleBulkMerge} className="gap-2">
-                <GitMerge className="w-4 h-4" />
-                Merge Selected ({selectedForMerge.size})
-              </Button>
-            )}
-            <PhorestSyncButton syncType="clients" />
-          </div>
-        </div>
+        <DashboardPageHeader
+          title="Client Directory"
+          description={primaryTab === 'all' 
+            ? 'View and manage all salon clients.' 
+            : 'Track your client relationships and identify opportunities.'}
+          actions={
+            <div className="flex items-center gap-2">
+              {canMerge && selectedForMerge.size >= 2 && (
+                <Button onClick={handleBulkMerge} className="gap-2">
+                  <GitMerge className="w-4 h-4" />
+                  Merge Selected ({selectedForMerge.size})
+                </Button>
+              )}
+              <PhorestSyncButton syncType="clients" />
+            </div>
+          }
+          className="mb-8"
+        />
 
         {/* Primary Tabs */}
         <div className="mb-6">

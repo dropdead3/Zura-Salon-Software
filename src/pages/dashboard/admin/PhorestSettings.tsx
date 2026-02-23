@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { tokens } from '@/lib/design-tokens';
@@ -308,22 +309,20 @@ export default function PhorestSettings() {
     <DashboardLayout>
       <div className="p-6 lg:p-8 space-y-8">
         {/* Header */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div>
-            <h1 className="font-display text-3xl lg:text-4xl mb-2">{providerLabel.toUpperCase()} INTEGRATION</h1>
-            <p className="text-muted-foreground font-sans">
-              Manage {providerLabel} API connection and data synchronization.
-            </p>
-          </div>
-          <Button
-            onClick={() => refetchConnection()}
-            variant="outline"
-            disabled={connectionLoading}
-          >
-            <RefreshCw className={`w-4 h-4 ${connectionLoading ? 'animate-spin' : ''}`} />
-            <span className="ml-2">Test Connection</span>
-          </Button>
-        </div>
+        <DashboardPageHeader
+          title={`${providerLabel.toUpperCase()} Integration`}
+          description={`Manage ${providerLabel} API connection and data synchronization.`}
+          actions={
+            <Button
+              onClick={() => refetchConnection()}
+              variant="outline"
+              disabled={connectionLoading}
+            >
+              <RefreshCw className={`w-4 h-4 ${connectionLoading ? 'animate-spin' : ''}`} />
+              <span className="ml-2">Test Connection</span>
+            </Button>
+          }
+        />
 
         {/* Connection Status */}
         <Card className="p-6 bg-card">

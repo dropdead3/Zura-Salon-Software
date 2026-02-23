@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { LocationSelect } from '@/components/ui/location-select';
@@ -201,12 +202,11 @@ export default function TeamDirectory() {
   return (
     <DashboardLayout>
       <div className="p-6 lg:p-8">
-        <div className="mb-8">
-          <h1 className="text-2xl font-display font-medium mb-2">Directory</h1>
-          <p className="text-muted-foreground">
-            View team members and salon locations.
-          </p>
-        </div>
+        <DashboardPageHeader
+          title="Directory"
+          description="View team members and salon locations."
+          className="mb-8"
+        />
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
           <TabsList>

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Button } from '@/components/ui/button';
 import { tokens } from '@/lib/design-tokens';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -104,65 +105,63 @@ export default function PerformanceReviews() {
   return (
     <DashboardLayout>
       <div className="p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6">
-        <div className="flex items-start gap-4">
-          <Button variant="ghost" size="icon" asChild className="shrink-0 mt-1">
-            <Link to="/dashboard/admin/management"><ArrowLeft className="w-5 h-5" /></Link>
-          </Button>
-          <div className="flex-1">
-            <h1 className="font-display text-3xl lg:text-4xl">Performance Reviews</h1>
-            <p className="text-muted-foreground mt-1">Structured reviews with goals and ratings</p>
-          </div>
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button><Plus className="w-4 h-4 mr-2" />New Review</Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-lg">
-              <DialogHeader><DialogTitle>Create Performance Review</DialogTitle></DialogHeader>
-              <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
-                <div>
-                  <Label>Employee</Label>
-                  <Select value={form.user_id} onValueChange={v => setForm(f => ({ ...f, user_id: v }))}>
-                    <SelectTrigger><SelectValue placeholder="Select employee" /></SelectTrigger>
-                    <SelectContent>
-                      {teamMembers?.map(m => (
-                        <SelectItem key={m.user_id} value={m.user_id}>{m.display_name || m.full_name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+        <DashboardPageHeader
+          title="Performance Reviews"
+          description="Structured reviews with goals and ratings"
+          backTo="/dashboard/admin/management"
+          actions={
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogTrigger asChild>
+                <Button><Plus className="w-4 h-4 mr-2" />New Review</Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-lg">
+                <DialogHeader><DialogTitle>Create Performance Review</DialogTitle></DialogHeader>
+                <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+                  <div>
+                    <Label>Employee</Label>
+                    <Select value={form.user_id} onValueChange={v => setForm(f => ({ ...f, user_id: v }))}>
+                      <SelectTrigger><SelectValue placeholder="Select employee" /></SelectTrigger>
+                      <SelectContent>
+                        {teamMembers?.map(m => (
+                          <SelectItem key={m.user_id} value={m.user_id}>{m.display_name || m.full_name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Review Type</Label>
+                    <Select value={form.review_type} onValueChange={v => setForm(f => ({ ...f, review_type: v }))}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {REVIEW_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div><Label>Period Start</Label><Input type="date" value={form.review_period_start} onChange={e => setForm(f => ({ ...f, review_period_start: e.target.value }))} /></div>
+                    <div><Label>Period End</Label><Input type="date" value={form.review_period_end} onChange={e => setForm(f => ({ ...f, review_period_end: e.target.value }))} /></div>
+                  </div>
+                  <div>
+                    <Label>Overall Rating (1–5)</Label>
+                    <Select value={form.overall_rating} onValueChange={v => setForm(f => ({ ...f, overall_rating: v }))}>
+                      <SelectTrigger><SelectValue placeholder="Select rating" /></SelectTrigger>
+                      <SelectContent>
+                        {[1, 2, 3, 4, 5].map(n => <SelectItem key={n} value={String(n)}>{n} Star{n > 1 ? 's' : ''}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div><Label>Strengths</Label><Textarea value={form.strengths} onChange={e => setForm(f => ({ ...f, strengths: e.target.value }))} /></div>
+                  <div><Label>Areas for Improvement</Label><Textarea value={form.areas_for_improvement} onChange={e => setForm(f => ({ ...f, areas_for_improvement: e.target.value }))} /></div>
+                  <div><Label>Goals</Label><Textarea value={form.goals_summary} onChange={e => setForm(f => ({ ...f, goals_summary: e.target.value }))} /></div>
+                  <div><Label>Reviewer Notes</Label><Textarea value={form.reviewer_notes} onChange={e => setForm(f => ({ ...f, reviewer_notes: e.target.value }))} /></div>
+                  <Button onClick={handleSubmit} disabled={createReview.isPending} className="w-full">
+                    {createReview.isPending ? 'Creating...' : 'Create Review (Draft)'}
+                  </Button>
                 </div>
-                <div>
-                  <Label>Review Type</Label>
-                  <Select value={form.review_type} onValueChange={v => setForm(f => ({ ...f, review_type: v }))}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {REVIEW_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div><Label>Period Start</Label><Input type="date" value={form.review_period_start} onChange={e => setForm(f => ({ ...f, review_period_start: e.target.value }))} /></div>
-                  <div><Label>Period End</Label><Input type="date" value={form.review_period_end} onChange={e => setForm(f => ({ ...f, review_period_end: e.target.value }))} /></div>
-                </div>
-                <div>
-                  <Label>Overall Rating (1–5)</Label>
-                  <Select value={form.overall_rating} onValueChange={v => setForm(f => ({ ...f, overall_rating: v }))}>
-                    <SelectTrigger><SelectValue placeholder="Select rating" /></SelectTrigger>
-                    <SelectContent>
-                      {[1, 2, 3, 4, 5].map(n => <SelectItem key={n} value={String(n)}>{n} Star{n > 1 ? 's' : ''}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div><Label>Strengths</Label><Textarea value={form.strengths} onChange={e => setForm(f => ({ ...f, strengths: e.target.value }))} /></div>
-                <div><Label>Areas for Improvement</Label><Textarea value={form.areas_for_improvement} onChange={e => setForm(f => ({ ...f, areas_for_improvement: e.target.value }))} /></div>
-                <div><Label>Goals</Label><Textarea value={form.goals_summary} onChange={e => setForm(f => ({ ...f, goals_summary: e.target.value }))} /></div>
-                <div><Label>Reviewer Notes</Label><Textarea value={form.reviewer_notes} onChange={e => setForm(f => ({ ...f, reviewer_notes: e.target.value }))} /></div>
-                <Button onClick={handleSubmit} disabled={createReview.isPending} className="w-full">
-                  {createReview.isPending ? 'Creating...' : 'Create Review (Draft)'}
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </div>
+              </DialogContent>
+            </Dialog>
+          }
+        />
 
         <div className="grid gap-4 sm:grid-cols-3">
           <Card><CardContent className="p-4 flex items-center gap-3"><FileCheck className="w-8 h-8 text-primary" /><div><p className="text-2xl font-medium">{reviewList.length}</p><p className="text-sm text-muted-foreground">Total Reviews</p></div></CardContent></Card>

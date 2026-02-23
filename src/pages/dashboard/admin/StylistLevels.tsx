@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { tokens } from '@/lib/design-tokens';
@@ -247,17 +248,12 @@ export default function StylistLevels() {
       <div className="p-6 max-w-4xl mx-auto space-y-8">
         {/* Header - Sticky */}
         <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm -mx-6 px-6 py-4 -mt-6 mb-2 border-b border-transparent transition-all duration-200" style={{ borderColor: 'transparent' }}>
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-display">Stylist Levels</h1>
-              <p className="text-muted-foreground text-sm mt-1">
-                Manage experience levels and pricing tiers
-              </p>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              {hasChanges && (
-                <>
+          <DashboardPageHeader
+            title="Stylist Levels"
+            description="Manage experience levels and pricing tiers"
+            actions={
+              hasChanges && (
+                <div className="flex items-center gap-2">
                   <Button 
                     variant="ghost"
                     onClick={handleDiscard}
@@ -276,10 +272,10 @@ export default function StylistLevels() {
                     )}
                     Save Changes
                   </Button>
-                </>
-              )}
-            </div>
-          </div>
+                </div>
+              )
+            }
+          />
         </div>
 
         {/* Info Notice */}

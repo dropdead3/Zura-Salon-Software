@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { format, startOfMonth, endOfMonth, subMonths, startOfDay, endOfDay } from 'date-fns';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { tokens } from '@/lib/design-tokens';
@@ -100,24 +101,22 @@ export default function Transactions() {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="font-display text-2xl font-medium">Transactions</h1>
-            <p className="text-muted-foreground text-sm">
-              View and manage client transaction history
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size={tokens.button.card} onClick={() => refetch()}>
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Refresh
-            </Button>
-            <Button size={tokens.button.card} onClick={() => setIsCreditsOpen(true)}>
-              <CreditCard className="w-4 h-4 mr-2" />
-              Issue Credits
-            </Button>
-          </div>
-        </div>
+        <DashboardPageHeader
+          title="Transactions"
+          description="View and manage client transaction history"
+          actions={
+            <div className="flex gap-2">
+              <Button variant="outline" size={tokens.button.card} onClick={() => refetch()}>
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Refresh
+              </Button>
+              <Button size={tokens.button.card} onClick={() => setIsCreditsOpen(true)}>
+                <CreditCard className="w-4 h-4 mr-2" />
+                Issue Credits
+              </Button>
+            </div>
+          }
+        />
 
         {/* Tabs */}
         <Tabs defaultValue="transactions" className="space-y-4">

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -89,25 +90,14 @@ export default function TeamBirthdays() {
     <DashboardLayout>
       <div className="p-6 lg:p-8 space-y-8">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-start gap-4">
-            <Button variant="ghost" size="icon" asChild className="shrink-0 mt-1">
-              <Link to="/dashboard/admin/management">
-                <ArrowLeft className="w-5 h-5" />
-              </Link>
-            </Button>
-            <div>
-              <h1 className="font-display text-3xl lg:text-4xl mb-2 flex items-center gap-3">
-                <Cake className="w-8 h-8" />
-                Team Birthdays & Anniversaries
-              </h1>
-              <p className="text-muted-foreground font-sans">
-                Celebrate your team members' special days and milestones
-              </p>
-            </div>
-          </div>
-          <BirthdayExportButton birthdays={upcomingBirthdays || []} />
-        </div>
+        <DashboardPageHeader
+          title="Team Birthdays & Anniversaries"
+          description="Celebrate your team members' special days and milestones"
+          backTo="/dashboard/admin/management"
+          actions={
+            <BirthdayExportButton birthdays={upcomingBirthdays || []} />
+          }
+        />
 
         {/* Today's Birthdays Banner */}
         {todaysBirthdays && todaysBirthdays.length > 0 && (
