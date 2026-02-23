@@ -12,7 +12,7 @@ import { Calendar as CalendarWidget } from '@/components/ui/calendar';
 import { tokens } from '@/lib/design-tokens';
 import { APPOINTMENT_STATUS_BADGE } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { ChevronLeft, ChevronRight, Download, Calendar, History, Sun, ArrowRight, CalendarRange } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Download, Calendar, History, Sun, ArrowRight, CalendarRange, List } from 'lucide-react';
 import { useAppointmentsHub, type HubFilters } from '@/hooks/useAppointmentsHub';
 import { HubSearchBar } from './HubSearchBar';
 import { AppointmentDetailDrawer } from './AppointmentDetailDrawer';
@@ -30,7 +30,7 @@ interface AppointmentsListProps {
   onSearchChange: (value: string) => void;
 }
 
-type TimePeriod = 'past' | 'today' | 'future' | 'custom';
+type TimePeriod = 'all' | 'past' | 'today' | 'future' | 'custom';
 
 function formatTime12h(time: string): string {
   const [hours, minutes] = time.split(':');
@@ -62,6 +62,8 @@ function getDateRange(period: TimePeriod, customRange?: { from?: Date; to?: Date
   const now = new Date();
   const fmt = (d: Date) => format(d, 'yyyy-MM-dd');
   switch (period) {
+    case 'all':
+      return {};
     case 'past':
       return { endDate: fmt(subDays(now, 1)) };
     case 'today':
@@ -77,6 +79,7 @@ function getDateRange(period: TimePeriod, customRange?: { from?: Date; to?: Date
 }
 
 const TIME_PERIOD_OPTIONS = [
+  { value: 'all', label: 'All', icon: <List className="w-3.5 h-3.5" />, tooltip: 'All Appointments\nNo date filter' },
   { value: 'past', label: 'Past', icon: <History className="w-3.5 h-3.5" />, tooltip: 'Past Appointments\nBefore today' },
   { value: 'today', label: 'Today', icon: <Sun className="w-3.5 h-3.5" />, tooltip: "Today's Appointments" },
   { value: 'future', label: 'Future', icon: <ArrowRight className="w-3.5 h-3.5" />, tooltip: 'Future Appointments\nAfter today' },
