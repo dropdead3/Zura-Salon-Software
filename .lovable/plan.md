@@ -1,82 +1,52 @@
 
-## Enrich Appointments Hub with Full Contact and Booking Metadata
 
-### What Changes
+## Add Time-Period Toggle and MM/DD/YYYY Date Format
 
-The Appointments Hub table and detail drawer will be expanded to show significantly more data about each appointment, including client contact info, booking provenance, and confirmation details.
+### Overview
 
-### 1. Expand Data Enrichment in useAppointmentsHub.ts
+Add a prominent "Past / Today / Future" toggle to the Appointments Hub and standardize all date display to MM/DD/YYYY format.
 
-The client name resolution query already fetches from `phorest_clients` -- we will expand it to also pull `email`, `phone`, and other contact fields. We will also resolve `created_by` user IDs to names, and resolve `location_id` to location names.
+### Changes
 
-**Updated phorest_clients fetch** (line 93):
-- Change `.select('phorest_client_id, name')` to `.select('phorest_client_id, name, email, phone')`
-- Build a full `clientInfoMap` instead of just `clientNameMap` so we can attach email and phone
+**File: `src/components/dashboard/appointments-hub/AppointmentsList.tsx`**
 
-**Resolve created_by names**: Collect all unique `created_by` user IDs from paged results, batch-query `employee_profiles` to get names, and attach as `created_by_name`.
+1. **Add time-period toggle** using the existing `TogglePill` component (already in the codebase at `src/components/ui/toggle-pill.tsx`). Three options:
+   - **Past** -- filters to `endDate` = yesterday
+   - **Today** -- filters to today only
+   - **Future** -- filters to `startDate` = tomorrow
 
-**Resolve location names**: Build a location map from `location_id` values present in paged results by querying the `locations` table, attach as `location_name`.
+2. **Replace the existing date preset dropdown** (`today / this_week / this_month / last_month / all`) with the new toggle. The toggle will sit prominently in the filter bar, left-aligned after the search bar.
 
-**Enrichment output** will add these fields to each appointment:
-- `client_email` -- from `phorest_clients.email` or local `appointments.client_email`
-- `client_phone` -- already exists on `phorest_appointments`, fallback from `phorest_clients.phone`
-- `created_by_name` -- resolved from `employee_profiles` via `created_by` field
-- `location_name` -- resolved from `locations` table
-- `created_at` -- already present from both tables (no change needed)
+3. **Format all dates as MM/DD/YYYY**:
+   - Table "Date" column: change from raw `appointment_date` (YYYY-MM-DD) to `format(parseISO(appt.appointment_date), 'MM/dd/yyyy')`
+   - "Created" column: change from `MMM d, h:mm a` to `MM/dd/yyyy h:mm a`
+   - CSV export: same MM/DD/YYYY format
+   - Detail drawer dates: also updated to MM/DD/YYYY
 
-### 2. Add Columns to the Table (AppointmentsList.tsx)
+4. **Default selection**: "Today" will be the default when the page loads, showing the most operationally relevant view.
 
-Add new visible columns to the table:
+**File: `src/components/dashboard/appointments-hub/AppointmentDetailDrawer.tsx`**
 
-| Column | Source | Notes |
-|--------|--------|-------|
-| Phone | `client_phone` | Formatted for display |
-| Email | `client_email` | Truncated with tooltip if long |
-| Created | `created_at` | Formatted as "Feb 22, 2:15 PM" |
-| Created By | `created_by_name` | Falls back to "System" or "Phorest Sync" based on `_source` |
+5. **Update date formatting** in the detail drawer to use MM/DD/YYYY consistently.
 
-The table will go from 7 columns to 11. To manage width, the Email column will truncate with `max-w-[160px]`.
+### Technical Detail
 
-Update CSV export headers to include the new fields.
+The `TogglePill` component provides a polished sliding-indicator pill UI. The time-period state will replace `datePreset` and drive the `startDate`/`endDate` filters passed to `useAppointmentsHub`:
 
-### 3. Expand the Detail Drawer (AppointmentDetailDrawer.tsx)
+```text
+type TimePeriod = 'past' | 'today' | 'future';
 
-The Summary tab will be restructured into clear sections:
+past:   { endDate: yesterday }
+today:  { startDate: today, endDate: today }
+future: { startDate: tomorrow }
+```
 
-**Client Info Section:**
-- Client name (existing)
-- Phone number (clickable `tel:` link)
-- Email (clickable `mailto:` link)
+A helper `formatDateDisplay(dateStr)` will be added to centralize the MM/DD/YYYY formatting for the table.
 
-**Appointment Details Section** (existing, enhanced):
-- Date, time, stylist, location (existing)
-- Price and tip (existing)
+### Files Modified
 
-**Booking Provenance Section** (new):
-- "Created at" timestamp with full date/time
-- "Created by" name (or "Phorest Sync" / "Online Booking" based on source)
-- "Source" badge showing `_source` (phorest vs local) and `import_source` if available
-- Payment method (if set)
+| File | Change |
+|------|--------|
+| `src/components/dashboard/appointments-hub/AppointmentsList.tsx` | Replace date preset dropdown with TogglePill; format dates as MM/DD/YYYY |
+| `src/components/dashboard/appointments-hub/AppointmentDetailDrawer.tsx` | Format dates as MM/DD/YYYY |
 
-**Confirmation Details Section** (new):
-- Status with badge (existing, moved here)
-- Confirmation method -- derived from audit log if available, otherwise shows "Pending" or the status change context
-- "Confirmed at" timestamp -- from audit log `status_changed` event where new status = confirmed
-
-For confirmation details, we will query the `appointment_audit_log` for the specific appointment in the drawer (already done via `AppointmentAuditTimeline`), but we will also extract the confirmation event specifically to show it inline in the summary.
-
-### 4. Add Confirmation Metadata Hook
-
-Create a small helper within the drawer that queries `appointment_audit_log` for the `status_changed` event where `new_value.status = 'confirmed'` to extract:
-- When confirmed (`created_at` of that audit entry)
-- Who confirmed it (`actor_name`)
-- This serves as the "method of confirmation" -- if `actor_name` is "System" it was auto-confirmed, if it is a person's name it was manual confirmation
-
-### Technical Details
-
-**Files modified:**
-- `src/hooks/useAppointmentsHub.ts` -- Expand client info resolution, add created_by and location name resolution
-- `src/components/dashboard/appointments-hub/AppointmentsList.tsx` -- Add Phone, Email, Created, Created By columns; update CSV export
-- `src/components/dashboard/appointments-hub/AppointmentDetailDrawer.tsx` -- Add Client Info section with phone/email, Booking Provenance section, Confirmation Details section with audit log lookup
-
-**No database changes needed** -- all required data already exists in `phorest_appointments`, `appointments`, `phorest_clients`, `employee_profiles`, `locations`, and `appointment_audit_log` tables.
