@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -46,48 +47,45 @@ export default function MarketingAnalytics() {
     <DashboardLayout>
       <div className="p-6 lg:p-8">
         {/* Header with filters */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-          <div className="flex items-center gap-2">
-            <div>
-              <h1 className="font-display text-3xl lg:text-4xl mb-2">MARKETING ANALYTICS</h1>
-              <p className="text-muted-foreground font-sans">
-                Track UTM campaign performance, conversion rates, and ROI.
-              </p>
+        <DashboardPageHeader
+          title="Marketing Analytics"
+          description="Track UTM campaign performance, conversion rates, and ROI."
+          className="mb-8"
+          actions={
+            <div className="flex items-center gap-2">
+              <CommandCenterVisibilityToggle 
+                elementKey="website_analytics" 
+                elementName="Website Traffic" 
+              />
+              {/* Manage Campaigns Button */}
+              <Button variant="outline" onClick={() => setShowBudgetManager(true)}>
+                <Settings2 className="h-4 w-4 mr-2" />
+                Manage Campaigns
+              </Button>
+              {/* Location filter */}
+              <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+                <SelectTrigger className="w-[180px]">
+                  <MapPin className="w-4 h-4 mr-2 text-muted-foreground" />
+                  <SelectValue placeholder="All Locations" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Locations</SelectItem>
+                  {locations.map(loc => (
+                    <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {/* Date range tabs */}
+              <Tabs value={dateRange} onValueChange={(v) => setDateRange(v as DateRange)}>
+                <TabsList>
+                  <TabsTrigger value="week">Week</TabsTrigger>
+                  <TabsTrigger value="month">Month</TabsTrigger>
+                  <TabsTrigger value="3months">3 Months</TabsTrigger>
+                </TabsList>
+              </Tabs>
             </div>
-            <CommandCenterVisibilityToggle 
-              elementKey="website_analytics" 
-              elementName="Website Traffic" 
-            />
-          </div>
-          <div className="flex flex-wrap gap-3">
-            {/* Manage Campaigns Button */}
-            <Button variant="outline" onClick={() => setShowBudgetManager(true)}>
-              <Settings2 className="h-4 w-4 mr-2" />
-              Manage Campaigns
-            </Button>
-            {/* Location filter */}
-            <Select value={selectedLocation} onValueChange={setSelectedLocation}>
-              <SelectTrigger className="w-[180px]">
-                <MapPin className="w-4 h-4 mr-2 text-muted-foreground" />
-                <SelectValue placeholder="All Locations" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Locations</SelectItem>
-                {locations.map(loc => (
-                  <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {/* Date range tabs */}
-            <Tabs value={dateRange} onValueChange={(v) => setDateRange(v as DateRange)}>
-              <TabsList>
-                <TabsTrigger value="week">Week</TabsTrigger>
-                <TabsTrigger value="month">Month</TabsTrigger>
-                <TabsTrigger value="3months">3 Months</TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </div>
-        </div>
+          }
+        />
 
         {/* Summary KPI Cards - Row 1: Main Metrics */}
         <BentoGrid maxPerRow={5} gap="gap-4" className="mb-4">

@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, addWeeks, subWeeks } from 'date-fns';
 import { ChevronLeft, ChevronRight, Plus, Calendar, CalendarDays, CalendarRange } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Button } from '@/components/ui/button';
 import { tokens } from '@/lib/design-tokens';
 import { Card } from '@/components/ui/card';
@@ -93,18 +94,16 @@ export default function TeamCalendar() {
     <DashboardLayout>
       <div className="p-6 lg:p-8 max-w-[1400px] mx-auto space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="font-display text-3xl lg:text-4xl">Team Calendar</h1>
-            <p className="text-muted-foreground mt-1">
-              View and manage team events, time off, and meetings
-            </p>
-          </div>
-          <Button onClick={() => setCreateDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            New Event
-          </Button>
-        </div>
+        <DashboardPageHeader
+          title="Team Calendar"
+          description="View and manage team events, time off, and meetings"
+          actions={
+            <Button onClick={() => setCreateDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              New Event
+            </Button>
+          }
+        />
 
         {/* Controls */}
         <Card className="p-4">

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Button } from '@/components/ui/button';
 import { tokens } from '@/lib/design-tokens';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -94,63 +95,61 @@ export default function IncidentReports() {
   return (
     <DashboardLayout>
       <div className="p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6">
-        <div className="flex items-start gap-4">
-          <Button variant="ghost" size="icon" asChild className="shrink-0 mt-1">
-            <Link to="/dashboard/admin/management"><ArrowLeft className="w-5 h-5" /></Link>
-          </Button>
-          <div className="flex-1">
-            <h1 className="font-display text-3xl lg:text-4xl">Incident & Safety Log</h1>
-            <p className="text-muted-foreground mt-1">Document workplace incidents for compliance</p>
-          </div>
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button><Plus className="w-4 h-4 mr-2" />Report Incident</Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-lg">
-              <DialogHeader><DialogTitle>Report Incident</DialogTitle></DialogHeader>
-              <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
-                <div className="grid grid-cols-2 gap-3">
+        <DashboardPageHeader
+          title="Incident & Safety Log"
+          description="Document workplace incidents for compliance"
+          backTo="/dashboard/admin/management"
+          actions={
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogTrigger asChild>
+                <Button><Plus className="w-4 h-4 mr-2" />Report Incident</Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-lg">
+                <DialogHeader><DialogTitle>Report Incident</DialogTitle></DialogHeader>
+                <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label>Incident Type</Label>
+                      <Select value={form.incident_type} onValueChange={v => setForm(f => ({ ...f, incident_type: v }))}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {INCIDENT_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>Severity</Label>
+                      <Select value={form.severity} onValueChange={v => setForm(f => ({ ...f, severity: v }))}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {SEVERITIES.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div><Label>Date</Label><Input type="date" value={form.incident_date} onChange={e => setForm(f => ({ ...f, incident_date: e.target.value }))} /></div>
                   <div>
-                    <Label>Incident Type</Label>
-                    <Select value={form.incident_type} onValueChange={v => setForm(f => ({ ...f, incident_type: v }))}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                    <Label>Involved Person (optional)</Label>
+                    <Select value={form.involved_user_id} onValueChange={v => setForm(f => ({ ...f, involved_user_id: v }))}>
+                      <SelectTrigger><SelectValue placeholder="Select person" /></SelectTrigger>
                       <SelectContent>
-                        {INCIDENT_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+                        {teamMembers?.map(m => (
+                          <SelectItem key={m.user_id} value={m.user_id}>{m.display_name || m.full_name}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
-                  <div>
-                    <Label>Severity</Label>
-                    <Select value={form.severity} onValueChange={v => setForm(f => ({ ...f, severity: v }))}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {SEVERITIES.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <div><Label>Description</Label><Textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Describe the incident..." /></div>
+                  <div><Label>Witnesses</Label><Input value={form.witnesses} onChange={e => setForm(f => ({ ...f, witnesses: e.target.value }))} placeholder="Names of witnesses" /></div>
+                  <div><Label>Corrective Action Taken</Label><Textarea value={form.corrective_action} onChange={e => setForm(f => ({ ...f, corrective_action: e.target.value }))} /></div>
+                  <Button onClick={handleSubmit} disabled={createIncident.isPending} className="w-full">
+                    {createIncident.isPending ? 'Submitting...' : 'Submit Report'}
+                  </Button>
                 </div>
-                <div><Label>Date</Label><Input type="date" value={form.incident_date} onChange={e => setForm(f => ({ ...f, incident_date: e.target.value }))} /></div>
-                <div>
-                  <Label>Involved Person (optional)</Label>
-                  <Select value={form.involved_user_id} onValueChange={v => setForm(f => ({ ...f, involved_user_id: v }))}>
-                    <SelectTrigger><SelectValue placeholder="Select person" /></SelectTrigger>
-                    <SelectContent>
-                      {teamMembers?.map(m => (
-                        <SelectItem key={m.user_id} value={m.user_id}>{m.display_name || m.full_name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div><Label>Description</Label><Textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Describe the incident..." /></div>
-                <div><Label>Witnesses</Label><Input value={form.witnesses} onChange={e => setForm(f => ({ ...f, witnesses: e.target.value }))} placeholder="Names of witnesses" /></div>
-                <div><Label>Corrective Action Taken</Label><Textarea value={form.corrective_action} onChange={e => setForm(f => ({ ...f, corrective_action: e.target.value }))} /></div>
-                <Button onClick={handleSubmit} disabled={createIncident.isPending} className="w-full">
-                  {createIncident.isPending ? 'Submitting...' : 'Submit Report'}
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </div>
+              </DialogContent>
+            </Dialog>
+          }
+        />
 
         <div className="grid gap-4 sm:grid-cols-3">
           <Card><CardContent className="p-4 flex items-center gap-3"><ShieldAlert className="w-8 h-8 text-primary" /><div><p className="text-2xl font-medium">{incidentList.length}</p><p className="text-sm text-muted-foreground">Total Incidents</p></div></CardContent></Card>

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -76,23 +77,18 @@ export default function ChallengesDashboard() {
     <DashboardLayout>
       <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-6">
-          <Link to="/dashboard/admin/management">
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="w-5 h-5" />
+        <DashboardPageHeader
+          title="Team Challenges"
+          description="Create and manage team competitions"
+          backTo="/dashboard/admin/management"
+          className="mb-6"
+          actions={
+            <Button onClick={() => setCreateDialogOpen(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              New Challenge
             </Button>
-          </Link>
-          <div className="flex-1">
-            <h1 className="font-display text-2xl sm:text-3xl">Team Challenges</h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Create and manage team competitions
-            </p>
-          </div>
-          <Button onClick={() => setCreateDialogOpen(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            New Challenge
-          </Button>
-        </div>
+          }
+        />
 
         {/* Stats Overview */}
         <div className="grid gap-4 grid-cols-2 lg:grid-cols-4 mb-6">

@@ -4,6 +4,7 @@ import { useFormatDate } from '@/hooks/useFormatDate';
 import { Plus, Clock, User, CheckCircle2, XCircle, Calendar, List, LayoutGrid, MapPin, Repeat, Users, CalendarDays, TrendingUp, AlertCircle, UserCheck, UserPlus, Inbox, Loader2 } from 'lucide-react';
 import { tokens, APPOINTMENT_STATUS_BADGE } from '@/lib/design-tokens';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -488,44 +489,39 @@ export default function AssistantSchedule() {
   return (
     <DashboardLayout>
       <div className={cn("p-6 mx-auto", isAdmin ? "max-w-6xl" : "max-w-4xl")}>
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className={tokens.heading.page}>
-              {isStylist ? 'Request An Assistant' : isStylistAssistant ? 'Assisting Requests' : 'Assistant Schedule'}
-            </h1>
-            <p className={tokens.body.muted}>
-              {isStylist ? 'Request help from salon assistants' : isStylistAssistant ? 'View and manage your assignments' : 'Overview of all assistant request activity'}
-            </p>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            {locations.length > 1 && (
-              <Select value={locationFilter} onValueChange={setLocationFilter}>
-                <SelectTrigger className="w-[180px]">
-                  <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
-                  <SelectValue placeholder="All Locations" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Locations</SelectItem>
-                  {locations.map((location) => (
-                    <SelectItem key={location.id} value={location.id}>
-                      {location.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
+        <DashboardPageHeader
+          title={isStylist ? 'Request An Assistant' : isStylistAssistant ? 'Assisting Requests' : 'Assistant Schedule'}
+          description={isStylist ? 'Request help from salon assistants' : isStylistAssistant ? 'View and manage your assignments' : 'Overview of all assistant request activity'}
+          className="mb-6"
+          actions={
+            <div className="flex items-center gap-2">
+              {locations.length > 1 && (
+                <Select value={locationFilter} onValueChange={setLocationFilter}>
+                  <SelectTrigger className="w-[180px]">
+                    <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
+                    <SelectValue placeholder="All Locations" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Locations</SelectItem>
+                    {locations.map((location) => (
+                      <SelectItem key={location.id} value={location.id}>
+                        {location.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
 
-            {isStylist && (
-              <RequestAssistantDialog>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Request Assistant
-                </Button>
-              </RequestAssistantDialog>
-            )}
-            
-            {showCalendarToggle && (
+              {isStylist && (
+                <RequestAssistantDialog>
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Request Assistant
+                  </Button>
+                </RequestAssistantDialog>
+              )}
+              
+              {showCalendarToggle && (
               <ToggleGroup 
                 type="single" 
                 value={viewMode} 
@@ -539,9 +535,10 @@ export default function AssistantSchedule() {
                   <LayoutGrid className="h-4 w-4" />
                 </ToggleGroupItem>
               </ToggleGroup>
-            )}
-          </div>
-        </div>
+              )}
+            </div>
+          }
+        />
 
         {/* Non-admin Calendar View */}
         {showCalendarToggle && viewMode === 'calendar' && (

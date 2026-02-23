@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -92,12 +93,10 @@ export default function DataImport() {
     <DashboardLayout>
       <div className="p-6 lg:p-8 space-y-8">
         {/* Header */}
-        <div>
-          <h1 className="font-display text-3xl lg:text-4xl mb-2">DATA IMPORT</h1>
-          <p className="text-muted-foreground">
-            Migrate your data from other salon software or import from CSV files.
-          </p>
-        </div>
+        <DashboardPageHeader
+          title="Data Import"
+          description="Migrate your data from other salon software or import from CSV files."
+        />
 
         <Tabs defaultValue="import" className="space-y-6">
           <TabsList>

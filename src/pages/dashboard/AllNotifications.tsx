@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { formatRelativeTime } from '@/lib/format';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Tabs, TabsContent, TabsTrigger, ResponsiveTabsList } from '@/components/ui/tabs';
@@ -405,26 +406,28 @@ export default function AllNotifications() {
     <DashboardLayout>
       <div className="max-w-4xl mx-auto p-6">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-            <CardTitle className="text-xl flex items-center gap-2">
-              <Bell className="w-5 h-5" />
-              Notifications
-              {totalUnread > 0 && (
-                <Badge variant="destructive" className="ml-2">
-                  {totalUnread} unread
-                </Badge>
-              )}
-            </CardTitle>
+          <CardHeader className="space-y-0 pb-4">
+            <DashboardPageHeader
+              title="Notifications"
+              description="View all announcements and system notifications in one place."
+              actions={
+                totalUnread > 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => markAllAsReadMutation.mutate()}
+                    disabled={markAllAsReadMutation.isPending}
+                  >
+                    <Check className="w-4 h-4 mr-1" />
+                    Mark All Read
+                  </Button>
+                )
+              }
+            />
             {totalUnread > 0 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => markAllAsReadMutation.mutate()}
-                disabled={markAllAsReadMutation.isPending}
-              >
-                <Check className="w-4 h-4 mr-1" />
-                Mark All Read
-              </Button>
+              <Badge variant="destructive" className="ml-2 w-fit mt-2">
+                {totalUnread} unread
+              </Badge>
             )}
           </CardHeader>
           <CardContent>

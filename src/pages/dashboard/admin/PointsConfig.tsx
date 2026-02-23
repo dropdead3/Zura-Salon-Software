@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -79,19 +80,11 @@ export default function PointsConfig() {
     <DashboardLayout>
       <div className="p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6">
         {/* Header */}
-        <div className="flex items-start gap-4">
-          <Button variant="ghost" size="icon" asChild className="shrink-0 mt-1">
-            <Link to="/dashboard/admin/management">
-              <ArrowLeft className="w-5 h-5" />
-            </Link>
-          </Button>
-          <div>
-            <h1 className="font-display text-3xl lg:text-4xl">Points & Rewards</h1>
-            <p className="text-muted-foreground mt-1">
-              Configure point rules, manage rewards, and approve redemptions
-            </p>
-          </div>
-        </div>
+        <DashboardPageHeader
+          title="Points & Rewards"
+          description="Configure point rules, manage rewards, and approve redemptions"
+          backTo="/dashboard/admin/management"
+        />
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
