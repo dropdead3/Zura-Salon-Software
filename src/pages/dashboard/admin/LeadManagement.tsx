@@ -1,10 +1,9 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MapPin, ArrowLeft } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 import { LeadFunnelCard } from '@/components/dashboard/LeadFunnelCard';
 import { LeadInbox } from '@/components/dashboard/LeadInbox';
 import { LeadSlaSettings } from '@/components/dashboard/leads/LeadSlaSettings';
@@ -22,19 +21,12 @@ export default function LeadManagement() {
       <div className="p-6 lg:p-8">
         {/* Header with filters */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-          <div className="flex items-start gap-4">
-            <Button variant="ghost" size="icon" asChild className="shrink-0 mt-1">
-              <Link to="/dashboard/admin/management">
-                <ArrowLeft className="w-5 h-5" />
-              </Link>
-            </Button>
-            <div>
-              <h1 className="font-display text-3xl lg:text-4xl mb-2">LEAD MANAGEMENT</h1>
-              <p className="text-muted-foreground font-sans">
-                Track, assign, and convert salon inquiries from all sources.
-              </p>
-            </div>
-          </div>
+          <DashboardPageHeader
+            title="Lead Management"
+            description="Track, assign, and convert salon inquiries from all sources."
+            backTo="/dashboard/admin/management"
+            backLabel="Back to Management"
+          />
           <div className="flex flex-wrap gap-3">
             {/* Location filter */}
             <Select value={selectedLocation} onValueChange={setSelectedLocation}>

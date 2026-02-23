@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { Button } from '@/components/ui/button';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Tabs, TabsContent, TabsTrigger, ResponsiveTabsList } from '@/components/ui/tabs';
-import { Link } from 'react-router-dom';
-import { ArrowLeft, Video, UserPlus, BarChart3, HelpCircle } from 'lucide-react';
+import { Video, UserPlus, BarChart3, HelpCircle } from 'lucide-react';
 import { VideoLibraryManager } from '@/components/training/VideoLibraryManager';
 import { IndividualAssignments } from '@/components/training/IndividualAssignments';
 import { TeamProgressDashboard } from '@/components/training/TeamProgressDashboard';
@@ -15,20 +14,12 @@ export default function TrainingHub() {
   return (
     <DashboardLayout>
       <div className="p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-start gap-4">
-          <Button variant="ghost" size="icon" asChild className="shrink-0 mt-1">
-            <Link to="/dashboard/admin/management">
-              <ArrowLeft className="w-5 h-5" />
-            </Link>
-          </Button>
-          <div>
-            <h1 className="font-display text-3xl lg:text-4xl">Training Hub</h1>
-            <p className="text-muted-foreground mt-1">
-              Manage training library, assignments, quizzes, and track team progress
-            </p>
-          </div>
-        </div>
+        <DashboardPageHeader
+          title="Training Hub"
+          description="Manage training library, assignments, quizzes, and track team progress"
+          backTo="/dashboard/admin/management"
+          backLabel="Back to Management"
+        />
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">

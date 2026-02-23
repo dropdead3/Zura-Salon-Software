@@ -11,8 +11,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { usePTOPolicies, usePTOBalances } from '@/hooks/usePTOBalances';
-import { ArrowLeft, Plus, Calendar, Settings } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Plus, Calendar, Settings } from 'lucide-react';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 
 const ACCRUAL_PERIODS = [
   { value: 'per_pay_period', label: 'Per Pay Period' },
@@ -53,15 +53,12 @@ export default function PTOManager() {
   return (
     <DashboardLayout>
       <div className="p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6">
-        <div className="flex items-start gap-4">
-          <Button variant="ghost" size="icon" asChild className="shrink-0 mt-1">
-            <Link to="/dashboard/admin/management"><ArrowLeft className="w-5 h-5" /></Link>
-          </Button>
-          <div>
-            <h1 className="font-display text-3xl lg:text-4xl">PTO Manager</h1>
-            <p className="text-muted-foreground mt-1">Manage PTO policies and employee balances</p>
-          </div>
-        </div>
+        <DashboardPageHeader
+          title="PTO Manager"
+          description="Manage PTO policies and employee balances"
+          backTo="/dashboard/admin/management"
+          backLabel="Back to Management"
+        />
 
         <Tabs defaultValue="policies">
           <TabsList>
