@@ -1,40 +1,24 @@
 
-
-## Fix Filter Dropdowns: Auto-Width and Background Fill
+## Fix Select Dropdown Arrow Centering
 
 ### Problem
-1. Filter select triggers have hardcoded widths (`w-[140px]`, `w-[130px]`, `w-[160px]`) causing content truncation (visible in screenshot: "All..." instead of full label)
-2. Filters lack the subtle dark background fill that the search bar has, making them less visually prominent
+The chevron arrow inside `SelectTrigger` has an extra `mr-2` (margin-right) on line 27 of `src/components/ui/select.tsx`. Combined with the trigger's own `px-4` padding, this creates asymmetric spacing -- the arrow sits too far from the right edge of the container.
 
-### Changes
+### Fix
+Remove `mr-2` from the `ChevronDown` icon in `src/components/ui/select.tsx`.
 
-#### 1. Add a new `input.filter` token to `src/lib/design-tokens.ts`
-- Add `filter: 'bg-muted/50 border-border/60'` alongside the existing `input.search` token
-- This ensures all filter dropdowns share the same visual treatment as the search bar
-
-#### 2. Update `src/components/dashboard/appointments-hub/AppointmentsList.tsx`
-- Remove fixed widths from all four `SelectTrigger` components (`w-[140px]`, `w-[130px]`, `w-[160px]`)
-- Replace with `w-auto` so triggers size to fit their content naturally
-- Apply `tokens.input.filter` classes to each `SelectTrigger` for the muted background fill
-
-### Technical Detail
-
-**design-tokens.ts** -- new token:
-```ts
-input: {
-  search: 'bg-muted/50 border-border/60',
-  filter: 'bg-muted/50 border-border/60',
-},
-```
-
-**AppointmentsList.tsx** -- each SelectTrigger changes from:
+**Before:**
 ```tsx
-<SelectTrigger className="w-[140px]">
+<ChevronDown className="h-4 w-4 opacity-50 mr-2" />
 ```
-to:
+
+**After:**
 ```tsx
-<SelectTrigger className={cn("w-auto", tokens.input.filter)}>
+<ChevronDown className="h-4 w-4 opacity-50" />
 ```
 
-This applies to all four filter selects: Date Range, Status, Location, and Stylist.
+### Impact
+This is a global change to the `SelectTrigger` component, so all select dropdowns across the platform will benefit from balanced arrow spacing. Since the container already applies `px-4` on both sides, removing the icon's extra margin restores visual symmetry.
 
+### Files Changed
+- `src/components/ui/select.tsx` (line 27 only)
