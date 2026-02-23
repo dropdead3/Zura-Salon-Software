@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffectiveRoles } from '@/hooks/useEffectiveUser';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -146,12 +147,11 @@ export default function MyHandbooks() {
   return (
     <DashboardLayout>
       <div className="p-6 lg:p-8">
-        {/* Header */}
         <div className="mb-8">
-          <h1 className="font-display text-3xl lg:text-4xl mb-2">MY HANDBOOKS</h1>
-          <p className="text-muted-foreground font-sans">
-            Training materials and resources for your role.
-          </p>
+          <DashboardPageHeader
+            title="My Handbooks"
+            description="Review and acknowledge required training materials and team documents."
+          />
           {totalCount > 0 && (
             <div className="mt-4 flex items-center gap-2">
               <div className="h-2 flex-1 max-w-xs bg-muted rounded-full overflow-hidden">

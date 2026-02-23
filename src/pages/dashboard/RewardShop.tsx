@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -57,30 +58,25 @@ export default function RewardShop() {
   return (
     <DashboardLayout>
       <div className="p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="font-display text-3xl lg:text-4xl">Reward Shop</h1>
-            <p className="text-muted-foreground mt-1">
-              Redeem your points for amazing rewards
-            </p>
-          </div>
-
-          {/* Points balance */}
-          <Card className="px-4 py-3 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
-              <Coins className="w-5 h-5 text-amber-500" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Your Balance</p>
-              {balanceLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <p className="text-xl font-medium">{formatNumber(balance)}</p>
-              )}
-            </div>
-          </Card>
-        </div>
+        <DashboardPageHeader
+          title="Reward Shop"
+          description="Redeem your points for amazing rewards"
+          actions={
+            <Card className="px-4 py-3 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                <Coins className="w-5 h-5 text-amber-500" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Your Balance</p>
+                {balanceLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <p className="text-xl font-medium">{formatNumber(balance)}</p>
+                )}
+              </div>
+            </Card>
+          }
+        />
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>

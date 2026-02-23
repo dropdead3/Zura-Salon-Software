@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -200,18 +201,11 @@ export default function WeeklyWins() {
   return (
     <DashboardLayout>
       <div className="p-6 lg:p-8 max-w-3xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <Trophy className="w-6 h-6" />
-            <h1 className="font-display text-3xl lg:text-4xl">
-              WEEKLY WINS
-            </h1>
-          </div>
-          <p className="text-muted-foreground font-sans">
-            Week {currentWeek} Report — Reflect on your progress and plan ahead.
-          </p>
-        </div>
+        <DashboardPageHeader
+          title="Weekly Wins"
+          description={`Week ${currentWeek} Report — Reflect on your progress and plan ahead.`}
+          className="mb-8"
+        />
 
         {loading ? (
           <div className="flex items-center justify-center py-20">

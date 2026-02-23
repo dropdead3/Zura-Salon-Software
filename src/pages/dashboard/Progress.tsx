@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Card } from '@/components/ui/card';
 import { CheckCircle, Circle, Lock, AlertCircle, Loader2 } from 'lucide-react';
 
@@ -79,15 +80,11 @@ export default function Progress() {
   return (
     <DashboardLayout>
       <div className="p-6 lg:p-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="font-display text-3xl lg:text-4xl mb-2">
-            PROGRAM PROGRESS
-          </h1>
-          <p className="text-muted-foreground font-sans">
-            Your 75-day journey at a glance.
-          </p>
-        </div>
+        <DashboardPageHeader
+          title="Program Progress"
+          description="Visualize your 75-day program journey, track streaks, and celebrate milestones."
+          className="mb-8"
+        />
 
         {loading ? (
           <div className="flex items-center justify-center py-20">

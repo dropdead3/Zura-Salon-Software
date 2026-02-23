@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useEffectiveRoles } from '@/hooks/useEffectiveUser';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { BellEntryCard } from '@/components/dashboard/BellEntryCard';
 import { Button } from '@/components/ui/button';
 import { tokens } from '@/lib/design-tokens';
@@ -510,24 +511,20 @@ export default function RingTheBell() {
   return (
     <DashboardLayout>
       <div className="p-6 lg:p-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="font-display text-3xl lg:text-4xl mb-2">
-              RING THE BELL
-            </h1>
-            <p className="text-muted-foreground font-sans">
-              Celebrate high-ticket wins with the team.
-            </p>
-          </div>
-          <Button 
-            onClick={() => setShowForm(!showForm)}
-            className="font-display tracking-wide"
-          >
-            <Bell className="w-4 h-4 mr-2" />
-            {showForm ? 'CANCEL' : 'RING IT'}
-          </Button>
-        </div>
+        <DashboardPageHeader
+          title="Ring the Bell"
+          description="Celebrate high-ticket wins with the team."
+          className="mb-8"
+          actions={
+            <Button 
+              onClick={() => setShowForm(!showForm)}
+              className="font-display tracking-wide"
+            >
+              <Bell className="w-4 h-4 mr-2" />
+              {showForm ? 'CANCEL' : 'RING IT'}
+            </Button>
+          }
+        />
 
 
         {/* Info Notice */}

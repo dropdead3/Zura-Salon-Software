@@ -1,4 +1,5 @@
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useMyPayData } from '@/hooks/useMyPayData';
@@ -26,10 +27,7 @@ export default function MyPay() {
     return (
       <DashboardLayout>
         <div className="px-8 py-8 max-w-[1600px] mx-auto">
-          <div className="mb-8">
-            <h1 className="text-2xl font-medium tracking-tight">My Pay</h1>
-            <p className="text-muted-foreground">Your earnings and pay history</p>
-          </div>
+          <DashboardPageHeader title="My Pay" description="Your earnings and pay history" className="mb-8" />
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-16">
               <Wallet className="h-12 w-12 text-muted-foreground/50 mb-4" />
@@ -49,10 +47,7 @@ export default function MyPay() {
   return (
     <DashboardLayout>
       <div className="px-8 py-8 max-w-[1600px] mx-auto">
-        <div className="mb-8">
-          <h1 className="text-2xl font-medium tracking-tight">My Pay</h1>
-          <p className="text-muted-foreground">Your earnings and pay history</p>
-        </div>
+        <DashboardPageHeader title="My Pay" description="Your earnings and pay history" className="mb-8" />
 
         <Tabs defaultValue="current" className="space-y-6">
           <TabsList>

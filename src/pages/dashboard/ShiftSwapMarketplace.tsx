@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -66,24 +67,19 @@ export default function ShiftSwapMarketplace() {
   return (
     <DashboardLayout>
       <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-6">
-          <Link to="/dashboard">
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="w-5 h-5" />
+        <DashboardPageHeader
+          title="Shift Swap Marketplace"
+          description="Trade, cover, or give away shifts with your team"
+          backTo="/dashboard"
+          backLabel="Back to Dashboard"
+          className="mb-6"
+          actions={
+            <Button onClick={() => setPostDialogOpen(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              Post a Shift
             </Button>
-          </Link>
-          <div className="flex-1">
-            <h1 className="font-display text-2xl sm:text-3xl">Shift Swap Marketplace</h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Trade, cover, or give away shifts with your team
-            </p>
-          </div>
-          <Button onClick={() => setPostDialogOpen(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            Post a Shift
-          </Button>
-        </div>
+          }
+        />
 
         {/* Main Content */}
         <div className="grid gap-6 lg:grid-cols-3">
