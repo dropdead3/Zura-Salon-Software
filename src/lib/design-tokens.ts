@@ -142,6 +142,8 @@ export const tokens = {
   input: {
     /** Search input: subtle filled background with soft border */
     search: 'bg-muted/50 border-border/60',
+    /** Filter dropdown: subtle filled background with soft border */
+    filter: 'bg-muted/50 border-border/60',
   },
 
   // ========================================
