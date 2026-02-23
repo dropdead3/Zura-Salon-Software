@@ -137,6 +137,14 @@ export const tokens = {
   },
 
   // ========================================
+  // INPUT TOKENS
+  // ========================================
+  input: {
+    /** Search input: subtle filled background with soft border */
+    search: 'bg-muted/50 border-border/60',
+  },
+
+  // ========================================
   // TABLE TOKENS
   // ========================================
   table: {
