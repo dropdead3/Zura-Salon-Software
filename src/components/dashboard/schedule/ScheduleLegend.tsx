@@ -243,13 +243,13 @@ export function ScheduleLegend() {
         side="top"
         align="start"
         sideOffset={8}
-        className="w-80 p-0 rounded-xl"
+        className="w-80 p-0 rounded-xl overflow-hidden"
       >
         <div className="px-4 pt-3 pb-2 border-b border-border">
           <h3 className={tokens.heading.card}>Schedule Key</h3>
           <p className={cn(tokens.body.muted, 'text-xs mt-0.5')}>Visual guide for all calendar elements</p>
         </div>
-        <ScrollArea className="max-h-[60vh]">
+        <ScrollArea className="h-[60vh]">
           <div className="px-4 py-3 space-y-4">
             <LegendSection title="Appointment Status" rows={statusRows} />
             <LegendSection title="Badges" rows={badgeRows} />
