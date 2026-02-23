@@ -1,21 +1,24 @@
 
 
-## Fix Card Corner Clipping for Batch Bar
+## Fix Internal Rounded Corner on Table Inside Card
 
 ### Problem
-The batch bar's background bleeds past the parent Card's rounded corners because the Card element does not clip its overflow. Even though `rounded-b-xl` was added to the batch bar, the Card itself allows content to extend beyond its rounded border, creating visible square corners in dark mode.
+The `Table` component's wrapper `div` uses `rounded-[inherit]`, which inherits `rounded-xl` from the parent Card. When the batch bar sits below the table, this creates a visible double-rounded-corner effect -- the card clips its own corners correctly, but the table's wrapper also draws its own rounded border inside, producing an awkward inner radius visible between the last row and the batch bar.
 
 ### Solution
-Add `overflow-hidden` to the `<Card>` wrapping the table and batch bar in `AppointmentsList.tsx`. This lets the Card's `rounded-xl` border radius naturally clip all child content, including the batch bar.
+Remove `rounded-[inherit]` from the Table component's wrapper div in `src/components/ui/table.tsx`. The Card's `overflow-hidden` already handles all corner clipping, so the table doesn't need its own rounding.
 
 ### File Changed
 
-**`src/components/dashboard/appointments-hub/AppointmentsList.tsx`** (line 282)
+**`src/components/ui/table.tsx`** (line 7)
 
 ```
-Current:  <Card>
-Updated:  <Card className="overflow-hidden">
+Current:  <div className="relative w-full overflow-auto rounded-[inherit]">
+Updated:  <div className="relative w-full overflow-auto">
 ```
 
-This single change ensures the Card's border radius clips all inner content (table + pagination + batch bar), eliminating the corner bleed without affecting table scrollability (the Table component has its own internal scroll wrapper).
+### Risk Assessment
+- `rounded-[inherit]` only has an effect when the Table is inside a rounded parent with visible overflow. Since the Appointments Hub Card already uses `overflow-hidden`, this class is redundant there.
+- For any other Table usage outside a Card (e.g., inside a plain div), removing `rounded-[inherit]` has no visual impact since the inherited value would be `0`.
+- Net effect: eliminates the internal double-radius artifact with no side effects.
 
