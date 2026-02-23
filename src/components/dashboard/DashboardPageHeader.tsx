@@ -40,7 +40,7 @@ export function DashboardPageHeader({
         )}
 
         <div className="min-w-0">
-          <h1 className={cn(tokens.heading.page, 'truncate')}>{title}</h1>
+          <h1 className={cn('font-display uppercase tracking-widest font-medium text-lg sm:text-xl md:text-2xl break-words')}>{title}</h1>
           {description && <p className="text-muted-foreground text-sm">{description}</p>}
         </div>
       </div>
