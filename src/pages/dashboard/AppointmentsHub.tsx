@@ -3,7 +3,7 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { tokens } from '@/lib/design-tokens';
-import { Receipt, Calendar, Gift, Tag, Ticket, ArrowUpRight } from 'lucide-react';
+import { Receipt, Calendar, Gift, Tag, Ticket, ArrowUpRight, BarChart3 } from 'lucide-react';
 
 import { AppointmentsList } from '@/components/dashboard/appointments-hub/AppointmentsList';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
@@ -300,23 +300,36 @@ export default function AppointmentsHub() {
           description="View, filter, and manage individual appointment records, transactions, and gift cards. Use batch actions to update statuses or export data."
         />
 
-        {/* Analytics quick-links */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-muted-foreground text-sm font-sans">Looking for analytics?</span>
-          {[
-            { label: 'Appointment Analytics', to: '/dashboard/admin/analytics?tab=operations&subtab=appointments' },
-            { label: 'Booking Pipeline', to: '/dashboard/admin/analytics?tab=operations&subtab=booking-pipeline' },
-            { label: 'Sales Overview', to: '/dashboard/admin/analytics?tab=sales' },
-            { label: 'Staff Utilization', to: '/dashboard/admin/analytics?tab=operations&subtab=staff-utilization' },
-          ].map((link) => (
-            <Button key={link.label} variant="ghost" size="sm" asChild className="text-muted-foreground hover:text-foreground rounded-full gap-1.5 h-8 px-3">
-              <Link to={link.to}>
-                {link.label}
-                <ArrowUpRight className="w-3.5 h-3.5" />
+        {/* Analytics quick-links callout */}
+        <Card className="bg-card/80 backdrop-blur-xl border-border/60 overflow-hidden">
+          <div className="flex items-start gap-3 p-4 pb-3">
+            <div className={tokens.card.iconBox}>
+              <BarChart3 className={tokens.card.icon} />
+            </div>
+            <div className="min-w-0">
+              <h3 className="font-display text-sm tracking-wide text-foreground">LOOKING FOR ANALYTICS?</h3>
+              <p className="text-xs text-muted-foreground font-sans mt-0.5">Jump to detailed breakdowns and trend reports.</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 px-4 pb-4">
+            {[
+              { label: 'Appointment Analytics', to: '/dashboard/admin/analytics?tab=operations&subtab=appointments', icon: Calendar },
+              { label: 'Booking Pipeline', to: '/dashboard/admin/analytics?tab=operations&subtab=booking-pipeline', icon: Tag },
+              { label: 'Sales Overview', to: '/dashboard/admin/analytics?tab=sales', icon: CreditCard },
+              { label: 'Staff Utilization', to: '/dashboard/admin/analytics?tab=operations&subtab=staff-utilization', icon: Receipt },
+            ].map((link) => (
+              <Link
+                key={link.label}
+                to={link.to}
+                className="group flex items-center gap-3 rounded-lg bg-muted/40 hover:bg-muted/60 px-3.5 py-2.5 transition-all duration-200 hover:shadow-sm"
+              >
+                <link.icon className="w-4 h-4 text-primary shrink-0" />
+                <span className="font-sans text-sm text-foreground">{link.label}</span>
+                <ArrowUpRight className="w-3.5 h-3.5 text-muted-foreground ml-auto shrink-0 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
               </Link>
-            </Button>
-          ))}
-        </div>
+            ))}
+          </div>
+        </Card>
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={handleTabChange}>
