@@ -110,7 +110,7 @@ export const managerNavItems: DashboardNavItem[] = [
   { href: '/dashboard/admin/booth-renters', label: 'Renter Hub', labelKey: 'renter_hub', icon: Store, permission: 'manage_booth_renters', managerGroup: 'operations' },
   { href: '/dashboard/admin/website-sections', label: 'Website Editor', labelKey: 'website_editor', icon: Globe, permission: 'manage_homepage_stylists', managerGroup: 'operations' },
   { href: '/dashboard/admin/seo-workshop', label: 'SEO Workshop', labelKey: 'seo_workshop', icon: Search, permission: 'view_team_overview', managerGroup: 'operations' },
-  { href: '/dashboard/appointments-hub', label: 'Appointments & Transactions', labelKey: 'appointments_hub', icon: CalendarClock, permission: 'view_transactions', managerGroup: 'operations' },
+  { href: '/dashboard/appointments-hub', label: 'Appointments', labelKey: 'appointments_hub', icon: CalendarClock, permission: 'view_transactions', managerGroup: 'operations' },
 ];
 
 export const adminOnlyNavItems: DashboardNavItem[] = [
@@ -142,7 +142,7 @@ export const hubLinksConfig: HubLinkConfig[] = [
   { href: '/dashboard/admin/access-hub', icon: Shield, label: 'Roles Hub', colorClass: 'bg-primary/5 text-primary hover:bg-primary/10', permission: 'manage_settings' },
   { href: '/dashboard/admin/onboarding-tracker', icon: ClipboardList, label: 'Onboarding Hub', colorClass: 'bg-primary/5 text-primary hover:bg-primary/10', permission: 'view_team_overview' },
   { href: '/dashboard/schedule-meeting', icon: CalendarClock, label: 'Schedule 1:1', colorClass: 'bg-primary/5 text-primary hover:bg-primary/10', permission: 'schedule_meetings' },
-  { href: '/dashboard/appointments-hub', icon: Receipt, label: 'Appointments & Transactions', colorClass: 'bg-primary/5 text-primary hover:bg-primary/10', permission: 'view_transactions' },
+  { href: '/dashboard/appointments-hub', icon: Receipt, label: 'Appointments', colorClass: 'bg-primary/5 text-primary hover:bg-primary/10', permission: 'view_transactions' },
 ];
 
 /** Canonical Analytics Hub base path. Use with ?tab= and &subtab= for drill-downs. */

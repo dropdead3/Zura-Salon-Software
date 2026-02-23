@@ -56,7 +56,7 @@ export const platformNavGroups: PlatformNavGroup[] = [
   {
     label: 'Monitoring',
     items: [
-      { href: '/dashboard/platform/audit-log', label: 'Audit Log', icon: FileText, platformRoles: ['platform_owner', 'platform_admin', 'platform_support'] },
+      { href: '/dashboard/platform/audit-log', label: 'Activity Log', icon: FileText, platformRoles: ['platform_owner', 'platform_admin', 'platform_support'] },
       { href: '/dashboard/platform/health', label: 'System Health', icon: Activity, platformRoles: ['platform_owner', 'platform_admin', 'platform_support'] },
       { href: '/dashboard/platform/stripe-health', label: 'Payments Health', icon: CreditCard, platformRoles: ['platform_owner', 'platform_admin', 'platform_support'] },
       { href: '/dashboard/platform/notifications', label: 'Notifications', icon: Bell, platformRoles: ['platform_owner', 'platform_admin'] },
