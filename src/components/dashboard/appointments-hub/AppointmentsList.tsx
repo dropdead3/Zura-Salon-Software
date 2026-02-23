@@ -90,7 +90,7 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
   const [page, setPage] = useState(0);
   const [status, setStatus] = useState('all');
   const [locationId, setLocationId] = useState('all');
-  const [timePeriod, setTimePeriod] = useState<TimePeriod>('today');
+  const [timePeriod, setTimePeriod] = useState<TimePeriod>('all');
   const [stylistId, setStylistId] = useState('all');
   const [selectedAppt, setSelectedAppt] = useState<any>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
