@@ -228,18 +228,18 @@ function GridContent({
       {/* Top-right indicator cluster + status badge */}
       <div className="absolute top-1 right-1 z-20 flex items-center gap-1">
         <IndicatorCluster flags={indicatorFlags} size={size} />
-        {showStylistBadge && appointment.stylist_profile && (
-          <StylistBadge
-            stylistProfile={appointment.stylist_profile}
-            assistantNames={assistantNamesMap?.get(appointment.id)}
-          />
-        )}
         <span className={cn(
           'text-[10px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap border',
           badge.bg, badge.text, badge.border
         )}>
           {badge.label}
         </span>
+        {showStylistBadge && appointment.stylist_profile && (
+          <StylistBadge
+            stylistProfile={appointment.stylist_profile}
+            assistantNames={assistantNamesMap?.get(appointment.id)}
+          />
+        )}
       </div>
 
       {/* Client name + phone */}
