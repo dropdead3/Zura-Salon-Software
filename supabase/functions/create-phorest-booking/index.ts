@@ -178,7 +178,7 @@ serve(async (req) => {
     }
 
     // Determine appointment status (pending if redo requires approval and user is not manager)
-    let appointmentStatus = 'confirmed';
+    let appointmentStatus = 'booked';
     if (is_redo && redo_requires_approval && !redo_is_manager) {
       appointmentStatus = 'pending';
     }
