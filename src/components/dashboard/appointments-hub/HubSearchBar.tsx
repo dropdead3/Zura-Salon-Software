@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Search, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 
 interface HubSearchBarProps {
   value: string;
@@ -30,7 +31,7 @@ export function HubSearchBar({ value, onChange, placeholder = 'Search by client 
         value={local}
         onChange={(e) => setLocal(e.target.value)}
         placeholder={placeholder}
-        className="pl-9 pr-8 bg-muted/50 border-border/60"
+        className={`pl-9 pr-8 ${tokens.input.search}`}
       />
       {local && (
         <Button
