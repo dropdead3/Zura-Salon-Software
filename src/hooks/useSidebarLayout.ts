@@ -94,6 +94,7 @@ export const DEFAULT_LINK_ORDER: Record<string, string[]> = {
     '/dashboard/assistant-schedule',
     '/dashboard/schedule-meeting',
     '/dashboard/admin/analytics',
+    '/dashboard/appointments-hub',
     
     '/dashboard/admin/kpi-builder',
     '/dashboard/admin/decision-history',
