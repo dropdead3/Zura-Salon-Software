@@ -162,6 +162,9 @@ export default function ClientDirectory() {
     if (!clients) return [];
     
     const today = new Date();
+
+    // Build a lookup by id for canonical comparison
+    const clientById = new Map(clients.map(c => [c.id, c]));
     
     return clients.map(client => {
       const daysSinceVisit = client.last_visit 
@@ -173,6 +176,18 @@ export default function ClientDirectory() {
       
       // New client: only 1 visit
       const isNew = client.visit_count === 1;
+
+      // Compute duplicate match reasons
+      let duplicateReasons: string[] = [];
+      if ((client as any).is_duplicate && (client as any).canonical_client_id) {
+        const canonical = clientById.get((client as any).canonical_client_id);
+        if (canonical) {
+          if (client.phone && canonical.phone && client.phone === canonical.phone) duplicateReasons.push('phone');
+          if (client.email && canonical.email && client.email.toLowerCase() === canonical.email.toLowerCase()) duplicateReasons.push('email');
+          if (client.name && canonical.name && client.name.toLowerCase() === canonical.name.toLowerCase() && duplicateReasons.length === 0) duplicateReasons.push('name');
+        }
+        if (duplicateReasons.length === 0) duplicateReasons.push('match');
+      }
       
       return {
         ...client,
@@ -180,6 +195,7 @@ export default function ClientDirectory() {
         isAtRisk,
         isNew,
         is_archived: (client as any).is_archived ?? false,
+        duplicateReasons,
       };
     });
   }, [clients]);
@@ -777,9 +793,9 @@ export default function ClientDirectory() {
                                     }
                                   }
                                 }}
-                                title="View original profile"
+                                title={`Duplicate — matched by ${(client as any).duplicateReasons?.join(' & ') || 'match'}. Click to view original.`}
                               >
-                                <GitMerge className="w-3 h-3" /> Duplicate
+                                <GitMerge className="w-3 h-3" /> Duplicate{(client as any).duplicateReasons?.length > 0 && (client as any).duplicateReasons[0] !== 'match' ? ` (${(client as any).duplicateReasons.map((r: string) => r === 'phone' ? 'Same Phone' : r === 'email' ? 'Same Email' : r === 'name' ? 'Same Name' : r).join(', ')})` : ''}
                               </Badge>
                             )}
                           </div>
