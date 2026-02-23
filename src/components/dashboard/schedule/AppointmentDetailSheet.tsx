@@ -695,32 +695,9 @@ export function AppointmentDetailSheet({
 
                 {/* Status + Dropdown */}
                 <div className="flex items-center gap-2 mt-3">
-                  {availableTransitions.length > 0 ? (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size={tokens.button.inline} className={cn('gap-1.5', statusConfig.bg, statusConfig.text)} disabled={isUpdating}>
-                          {isUpdating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <StatusIcon className="h-3.5 w-3.5" />}
-                          {statusConfig.label}
-                          <ChevronDown className="h-3 w-3" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="start">
-                        {availableTransitions.map(status => {
-                          const cfg = STATUS_CONFIG[status];
-                          const Icon = cfg.icon;
-                          return (
-                            <DropdownMenuItem key={status} onClick={() => handleStatusChange(status)} className={cfg.text}>
-                              <Icon className="h-4 w-4 mr-2" /> Mark as {cfg.label}
-                            </DropdownMenuItem>
-                          );
-                        })}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  ) : (
-                    <Badge className={cn(statusConfig.bg, statusConfig.text)}>
-                      <StatusIcon className="h-3.5 w-3.5 mr-1" /> {statusConfig.label}
-                    </Badge>
-                  )}
+                  <Badge className={cn(statusConfig.bg, statusConfig.text)}>
+                    <StatusIcon className="h-3.5 w-3.5 mr-1" /> {statusConfig.label}
+                  </Badge>
 
                   {appointment.is_redo && (
                     <Badge variant="outline" className="text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700">
