@@ -1,50 +1,30 @@
 
+## Move Filters and Export Button Inside the Table Card
 
-## Add Dynamic Filter Description Above the Appointments List
+### Change
 
-### What Changes
+Move the filter row (Status, Location, Stylist dropdowns + CSV export button) and the dynamic filter description line from their current standalone positions into the top of the main table `Card`. This consolidates the controls with the data they govern, creating a cleaner, more cohesive layout.
 
-Add a concise, human-readable summary line between the filter controls (Row 2) and the table Card that dynamically describes the active filters and sort order. It will read naturally, e.g.:
-
-- "Showing all appointments, sorted by date (newest first)"
-- "Showing today's completed appointments at Downtown Studio for Sarah M., sorted by date (newest first)"
-- "Showing appointments from Feb 10 -- Feb 18, sorted by date (newest first)"
-
-When a search term is active, it appends: `matching "haircut"`
-
-### Visual Placement
+### Visual Structure
 
 ```text
 [ Search Bar ]                       [ All | Past | Today | Future | Range ]
-[ Status v ]  [ Location v ]  [ Stylist v ]                        [ CSV ]
-
-  Showing today's confirmed appointments at Downtown Studio, sorted by date (newest first)   <-- NEW
 
 +-----------------------------------------------------------------------+
+|  [ All Statuses v ]  [ All Locations v ]  [ All Stylists v ]  [ CSV ] |
+|  Showing 661 all appointments, sorted by date (newest first)          |
+|-----------------------------------------------------------------------|
 |  [ ] Date   Time   Client   ...                                       |
 +-----------------------------------------------------------------------+
 ```
-
-The line will use `text-sm text-muted-foreground` styling with `font-sans` -- subtle, informational, not visually heavy.
 
 ### Technical Details
 
 **File:** `src/components/dashboard/appointments-hub/AppointmentsList.tsx`
 
-1. **Build description string** using a `useMemo` that reads `timePeriod`, `customRange`, `status`, `locationId`, `stylistId`, `search`, and `totalCount`:
-   - Time: "all" / "today's" / "past" / "future" / "Feb 10 -- Feb 18" (for custom range)
-   - Status: omitted when "all", otherwise appended as adjective (e.g. "completed", "confirmed")
-   - Location: resolved from `locations` array by `locationId`, omitted when "all"
-   - Stylist: resolved from `stylistOptions` by `stylistId`, omitted when "all"
-   - Search: appended as `matching "term"` when present
-   - Sort: always ends with `sorted by date (newest first)` (matching the default query order)
-   - Count: prefixed with the `totalCount` value, e.g. "Showing 42 past appointments..."
-
-2. **Insert the line** at line 284 (just before the `{/* Table */}` comment), as a simple `<p>` element:
-   ```tsx
-   <p className="text-sm text-muted-foreground px-1">
-     {filterDescription}
-   </p>
-   ```
-
-No new files. No new dependencies. Single file edit.
+1. **Remove** the standalone "Row 2: Filters + CSV" `div` (lines 291-336) and the standalone filter description `p` (lines 338-341) from their current positions outside the Card
+2. **Insert** both elements inside the table `Card` (currently line 344), before the `Table` element:
+   - The filter row becomes a `div` with `flex flex-wrap gap-3 items-center p-4 pb-2` inside the Card
+   - The filter description becomes a `p` with `text-sm text-muted-foreground font-sans px-4 pb-3` inside the Card
+   - Then the existing `Table` follows
+3. No logic changes -- just moving the JSX blocks into the Card wrapper
