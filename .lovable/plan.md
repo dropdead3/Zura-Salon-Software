@@ -1,41 +1,30 @@
 
 
-# Visual Duplicate Pairing in Client Directory
+# Always-Visible Archived & Banned Tabs in Client Directory
 
 ## Problem
-When two duplicate clients appear in the directory (e.g., "Eric Day" x2), only the record flagged as `is_duplicate` shows a badge. The original (canonical) profile shows no visual indicator, making it unclear these are duplicates of each other.
+The "Archived" and "Banned" tabs in the Client Directory only appear when there are archived or banned clients (`stats.banned > 0` / `stats.archived > 0`). The user wants these tabs always available as entry points, regardless of count.
 
-## Solution
-Add a duplicate indicator badge to canonical profiles that have a known duplicate pointing to them. The data is already computed (`duplicateReasons` and `_linkedDuplicateId` are populated for canonical profiles in the processing step), but the UI only renders a badge when `_linkedReason` is set (which only happens during search expansion). We need to also render a badge when `_linkedDuplicateId` is present.
+## Change (single file: `src/pages/dashboard/ClientDirectory.tsx`)
 
-Additionally, add a subtle left-border accent (amber) to both duplicate and canonical rows in a pair, making them visually grouped even when scanning quickly.
+### Remove conditional rendering on Banned and Archived tabs (~lines 647-656)
 
-## File Change: `src/pages/dashboard/ClientDirectory.tsx`
-
-### 1. Add badge for canonical profiles with duplicates (after the existing `_linkedReason` badge, ~line 866)
-Add a new conditional badge that renders when a client has `_linkedDuplicateId` set but is NOT itself a duplicate and does NOT have `_linkedReason` (to avoid double-badging):
-
+Currently:
 ```
-{!client.is_duplicate && !client._linkedReason && client._linkedDuplicateId && (
-  <Badge variant="outline" className="...amber styling... gap-1 cursor-pointer">
-    <GitMerge /> Duplicate Match (Same Phone / Same Email / etc.)
-  </Badge>
-)}
+{stats.banned > 0 && ( <TabsTrigger value="banned" ... /> )}
+{stats.archived > 0 && ( <TabsTrigger value="archived" ... /> )}
 ```
 
-Clicking this badge will toggle the duplicate drilldown, same as the existing duplicate badge.
+Change to always render both tabs (no wrapping conditional). Keep the count badge but show `(0)` when empty:
 
-### 2. Add amber left-border accent to duplicate-pair rows (~line 795)
-Add a `border-l-2 border-l-amber-500/60` class to any row where the client is a duplicate, has a `_linkedDuplicateId`, or has a `_linkedReason`. This creates a subtle visual grouping stripe.
+```
+<TabsTrigger value="banned" className="text-xs text-red-600">
+  <Ban className="w-3 h-3 mr-1" /> Banned ({stats.banned})
+</TabsTrigger>
+<TabsTrigger value="archived" className="text-xs text-muted-foreground">
+  <Archive className="w-3 h-3 mr-1" /> Archived ({stats.archived})
+</TabsTrigger>
+```
 
-### 3. Enable drilldown for canonical profiles (~line 1002)
-Currently the drilldown only expands when the client has `canonical_client_id`. For canonical profiles, expand to show the duplicate profile instead (using `_linkedDuplicateId`).
-
-## Technical Detail
-
-The processing at lines 207-221 already computes `duplicateReasons` and `_linkedDuplicateId` for canonical profiles. The changes are purely in the render section:
-- Line ~795: Add conditional left border class
-- Line ~857-866: Add a new badge block for canonical profiles
-- Line ~1002: Allow drilldown for canonical profiles using `_linkedDuplicateId`
-- Merge CTA: The existing merge button at line 959 already handles `_linkedReason` but not bare `_linkedDuplicateId` -- add that condition too
+This is a two-line conditional removal. No other files or logic changes needed -- the filtering logic for `activeTab === 'banned'` and `activeTab === 'archived'` already exists and will correctly show an empty state when there are zero matching clients.
 
