@@ -322,6 +322,23 @@ async function syncAppointments(
         }
       }
 
+      // Debug: log first appointment's raw keys to identify available fields
+      if (synced === 0) {
+        console.log(`[DEBUG] First appointment raw keys:`, Object.keys(apt));
+        console.log(`[DEBUG] First appointment activationState:`, apt.activationState, `status:`, apt.status);
+      }
+
+      // Map status using activationState (Phorest's actual field) with fallback to status
+      let mappedStatus = mapPhorestStatus(apt.activationState || apt.status);
+      
+      // Time-based inference: if appointment is ACTIVE but in the past, mark as completed
+      if (mappedStatus === 'booked' && appointmentDate) {
+        const aptDateTime = new Date(`${appointmentDate}T${endTime || '23:59'}:00`);
+        if (aptDateTime < new Date()) {
+          mappedStatus = 'completed';
+        }
+      }
+
       const appointmentRecord: any = {
         phorest_id: phorestId,
         stylist_user_id: stylistUserId,
@@ -335,7 +352,7 @@ async function syncAppointments(
         end_time: endTime,
         service_name: apt.services?.[0]?.name || apt.serviceName || 'Unknown Service',
         service_category: apt.services?.[0]?.category || null,
-        status: mapPhorestStatus(apt.status),
+        status: mappedStatus,
         total_price: apt.totalPrice || apt.price || null,
         notes: apt.notes || null,
         is_new_client: apt.isNewClient || false,
@@ -361,6 +378,11 @@ async function syncAppointments(
 
 function mapPhorestStatus(phorestStatus: string): string {
   const statusMap: Record<string, string> = {
+    // Phorest activationState values
+    'ACTIVE': 'booked',
+    'RESERVED': 'booked',
+    'CANCELED': 'cancelled',
+    // Legacy/future mappings (in case API changes)
     'CONFIRMED': 'confirmed',
     'CHECKED_IN': 'checked_in',
     'STARTED': 'in_progress',
