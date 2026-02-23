@@ -44,7 +44,7 @@ export const SECTION_LABELS: Record<string, string> = {
 // Management section sub-group labels and display order (links derived from registry)
 const MANAGER_GROUP_LABELS: Record<ManagerGroupId, string> = {
   teamTools: 'Team Tools',
-  analytics: 'Analytics & Insights',
+  analytics: 'Analytics & Reports',
   people: 'People',
   operations: 'Operations',
 };

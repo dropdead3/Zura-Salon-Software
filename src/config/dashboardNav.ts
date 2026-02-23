@@ -110,7 +110,7 @@ export const managerNavItems: DashboardNavItem[] = [
   { href: '/dashboard/admin/booth-renters', label: 'Renter Hub', labelKey: 'renter_hub', icon: Store, permission: 'manage_booth_renters', managerGroup: 'operations' },
   { href: '/dashboard/admin/website-sections', label: 'Website Editor', labelKey: 'website_editor', icon: Globe, permission: 'manage_homepage_stylists', managerGroup: 'operations' },
   { href: '/dashboard/admin/seo-workshop', label: 'SEO Workshop', labelKey: 'seo_workshop', icon: Search, permission: 'view_team_overview', managerGroup: 'operations' },
-  { href: '/dashboard/appointments-hub', label: 'Appointments & Transactions', labelKey: 'appointments_hub', icon: CalendarClock, permission: 'view_transactions', managerGroup: 'operations' },
+  { href: '/dashboard/appointments-hub', label: 'Appointments & Transactions', labelKey: 'appointments_hub', icon: CalendarClock, permission: 'view_transactions', managerGroup: 'analytics' },
 ];
 
 export const adminOnlyNavItems: DashboardNavItem[] = [
