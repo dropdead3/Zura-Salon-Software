@@ -278,6 +278,33 @@ export default function ClientDirectory() {
         c.email?.toLowerCase().includes(query) ||
         c.phone?.includes(query)
       );
+
+      // Expand results to include linked duplicate/canonical profiles
+      const resultIds = new Set(filtered.map(c => c.id));
+      const toAdd: typeof filtered = [];
+
+      for (const client of filtered) {
+        // If this is a duplicate, pull in its canonical profile
+        const canonicalId = (client as any).canonical_client_id;
+        if (canonicalId && !resultIds.has(canonicalId)) {
+          const canonical = processedClients.find(c => c.id === canonicalId);
+          if (canonical) {
+            toAdd.push({ ...canonical, _linkedReason: 'canonical' } as any);
+            resultIds.add(canonicalId);
+          }
+        }
+        // If this is a canonical, pull in any duplicates pointing to it
+        if (!(client as any).is_duplicate) {
+          for (const other of processedClients) {
+            if ((other as any).canonical_client_id === client.id && !resultIds.has(other.id)) {
+              toAdd.push({ ...other, _linkedReason: 'duplicate' } as any);
+              resultIds.add(other.id);
+            }
+          }
+        }
+      }
+
+      filtered = [...filtered, ...toAdd];
     }
 
     // Alphabetical filter
@@ -794,6 +821,12 @@ export default function ClientDirectory() {
                                 title="Click to see the matching profile"
                               >
                                 <GitMerge className="w-3 h-3" /> Duplicate{(client as any).duplicateReasons?.length > 0 && (client as any).duplicateReasons[0] !== 'match' ? ` (${(client as any).duplicateReasons.map((r: string) => r === 'phone' ? 'Same Phone' : r === 'email' ? 'Same Email' : r === 'name' ? 'Same Name' : r).join(', ')})` : ''}
+                              </Badge>
+                            )}
+                            {(client as any)._linkedReason && (
+                              <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-300 dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-800 gap-1">
+                                <GitMerge className="w-3 h-3" />
+                                {(client as any)._linkedReason === 'canonical' ? 'Linked original' : 'Linked duplicate'}
                               </Badge>
                             )}
                           </div>
