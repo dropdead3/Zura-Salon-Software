@@ -1,35 +1,20 @@
 
-# Fix Duplicates Tab to Show Both Records in a Pair
+# Reorder Gender Options: Female First
 
-## Problem
-The Duplicates tab count shows "1" and only displays the record flagged as `is_duplicate`. The canonical (original) profile that the duplicate points to is not included, even though both are part of the same duplicate pair. Both should appear.
+## Summary
+The gender dropdown in the Client Detail Sheet currently lists "Male" as the first option. Per the established UI standard (and the NewClientDialog which already has it correct), "Female" should be the first option.
 
-## Root Cause
-Three filter expressions only check `is_duplicate === true`, missing canonical profiles that have a `_linkedDuplicateId` set.
+## Change
 
-## Changes (single file: `src/pages/dashboard/ClientDirectory.tsx`)
+**File: `src/components/dashboard/ClientDetailSheet.tsx` (~line 619)**
 
-### 1. Stats computation (~line 466)
-Change the duplicates count from:
+Swap the order of the first two `SelectItem` entries so "Female" appears before "Male":
+
 ```
-active.filter(c => (c as any).is_duplicate === true).length
-```
-to:
-```
-active.filter(c => (c as any).is_duplicate === true || (c as any)._linkedDuplicateId).length
+<SelectItem value="Female">Female</SelectItem>
+<SelectItem value="Male">Male</SelectItem>
+<SelectItem value="Non-Binary">Non-Binary</SelectItem>
+<SelectItem value="Prefer not to say">Prefer not to say</SelectItem>
 ```
 
-### 2. Tab filter -- first occurrence (~line 300)
-Change:
-```
-filtered = filtered.filter(c => (c as any).is_duplicate === true);
-```
-to:
-```
-filtered = filtered.filter(c => (c as any).is_duplicate === true || (c as any)._linkedDuplicateId);
-```
-
-### 3. Tab filter -- second occurrence (~line 407)
-Same change as above for the parallel filter path.
-
-These three one-line edits ensure both the duplicate and its canonical counterpart appear in the Duplicates tab and are reflected in the count badge.
+Single two-line swap. No other files affected.
