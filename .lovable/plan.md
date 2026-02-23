@@ -1,52 +1,48 @@
 
 
-## Add Time-Period Toggle and MM/DD/YYYY Date Format
+## Responsive Table Columns
 
-### Overview
+The table currently shows all 11 columns at every screen size. We will add Tailwind responsive `hidden` classes so columns progressively hide as the viewport shrinks, while keeping all data in the CSV export and detail drawer.
 
-Add a prominent "Past / Today / Future" toggle to the Appointments Hub and standardize all date display to MM/DD/YYYY format.
+### Column Visibility Tiers
 
-### Changes
+| Breakpoint | Visible Columns |
+|-----------|----------------|
+| xl (1280px+) | All 11 columns |
+| lg (1024-1279px) | Drop: Created By |
+| md (768-1023px) | Drop: Created, Email |
+| sm (640-767px) | Drop: Phone, Price, Status |
+| < 640px | Date, Client, Stylist only |
 
-**File: `src/components/dashboard/appointments-hub/AppointmentsList.tsx`**
+### Priority Map
 
-1. **Add time-period toggle** using the existing `TogglePill` component (already in the codebase at `src/components/ui/toggle-pill.tsx`). Three options:
-   - **Past** -- filters to `endDate` = yesterday
-   - **Today** -- filters to today only
-   - **Future** -- filters to `startDate` = tomorrow
+| Column | Always visible? | Hidden below |
+|--------|----------------|-------------|
+| Date | Yes | Never |
+| Time | No | sm (< 640px) |
+| Client | Yes | Never |
+| Phone | No | md (< 768px) |
+| Email | No | lg (< 1024px) |
+| Service | No | sm (< 640px) |
+| Stylist | Yes | Never |
+| Status | No | md (< 768px) |
+| Price | No | md (< 768px) |
+| Created | No | lg (< 1024px) |
+| Created By | No | xl (< 1280px) |
 
-2. **Replace the existing date preset dropdown** (`today / this_week / this_month / last_month / all`) with the new toggle. The toggle will sit prominently in the filter bar, left-aligned after the search bar.
-
-3. **Format all dates as MM/DD/YYYY**:
-   - Table "Date" column: change from raw `appointment_date` (YYYY-MM-DD) to `format(parseISO(appt.appointment_date), 'MM/dd/yyyy')`
-   - "Created" column: change from `MMM d, h:mm a` to `MM/dd/yyyy h:mm a`
-   - CSV export: same MM/DD/YYYY format
-   - Detail drawer dates: also updated to MM/DD/YYYY
-
-4. **Default selection**: "Today" will be the default when the page loads, showing the most operationally relevant view.
-
-**File: `src/components/dashboard/appointments-hub/AppointmentDetailDrawer.tsx`**
-
-5. **Update date formatting** in the detail drawer to use MM/DD/YYYY consistently.
+At the smallest viewport (below 640px): Date, Client, Stylist remain -- matching the requirement. At 640px+ Time and Service come back. At 768px+ Phone, Status, Price return. At 1024px+ Email and Created appear. At 1280px+ Created By shows.
 
 ### Technical Detail
 
-The `TogglePill` component provides a polished sliding-indicator pill UI. The time-period state will replace `datePreset` and drive the `startDate`/`endDate` filters passed to `useAppointmentsHub`:
+**File: `src/components/dashboard/appointments-hub/AppointmentsList.tsx`**
 
-```text
-type TimePeriod = 'past' | 'today' | 'future';
+Add matching `hidden` + responsive `table-cell` classes to both `TableHead` and `TableCell` for each column tier:
 
-past:   { endDate: yesterday }
-today:  { startDate: today, endDate: today }
-future: { startDate: tomorrow }
-```
+- `hidden xl:table-cell` for Created By
+- `hidden lg:table-cell` for Email, Created
+- `hidden md:table-cell` for Phone, Status, Price
+- `hidden sm:table-cell` for Time, Service
 
-A helper `formatDateDisplay(dateStr)` will be added to centralize the MM/DD/YYYY formatting for the table.
+The skeleton loading rows will also respect these classes by applying them to each skeleton cell. The `COL_COUNT` for `colSpan` on the empty state remains 11 (it just spans whatever is visible).
 
-### Files Modified
-
-| File | Change |
-|------|--------|
-| `src/components/dashboard/appointments-hub/AppointmentsList.tsx` | Replace date preset dropdown with TogglePill; format dates as MM/DD/YYYY |
-| `src/components/dashboard/appointments-hub/AppointmentDetailDrawer.tsx` | Format dates as MM/DD/YYYY |
-
+No changes to data fetching, CSV export, or the detail drawer -- all data remains accessible, just visually hidden at smaller widths.
