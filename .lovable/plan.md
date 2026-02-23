@@ -1,30 +1,18 @@
 
-
-# Fix Walk-In Badge Logic
+# Remove Redundant Status Dropdown from Appointment Detail Header
 
 ## Problem
-
-The "Walk-In" badge currently appears on any appointment missing a `phorest_client_id`. This is too broad -- appointments created through the booking wizard (like Eric Day's) may not have a linked Phorest client ID but are not walk-ins. The badge should only appear for genuine walk-in scenarios.
+The appointment detail panel has a status dropdown near the top (below the client name) that duplicates the exact same status transition buttons already present in the footer action bar. This adds visual clutter without providing additional value.
 
 ## Solution
+Remove the interactive status dropdown from the header area (lines 696-718) and replace it with a **static, read-only status badge** so the user can still see the current status at a glance -- without the dropdown trigger and transition options.
 
-**File: `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` (line 479)**
+The contextual badges (Redo, Recurrence, New Client) that sit alongside the status badge will remain untouched.
 
-Change the `isWalkIn` detection from the current broad check to a more precise condition. A true walk-in is an appointment where:
-- There is no `phorest_client_id`, AND
-- There is no `client_name` (anonymous/unknown client)
+## Technical Details
 
-Appointments with a name but no Phorest client link are simply unlinked clients, not walk-ins.
+**File:** `src/components/dashboard/schedule/AppointmentDetailSheet.tsx`
 
-```text
-Before:  const isWalkIn = appointment ? !appointment.phorest_client_id : false;
-After:   const isWalkIn = appointment ? (!appointment.phorest_client_id && !appointment.client_name) : false;
-```
+**Change (lines 696-723):** Replace the conditional DropdownMenu/Badge block with a single static Badge that always renders the current status (icon + label) without any interactive dropdown. This removes the `DropdownMenu`, `DropdownMenuTrigger`, `DropdownMenuContent`, and `DropdownMenuItem` elements from the header section entirely.
 
-This single-line change ensures:
-- Eric Day (has name, no client ID) -- no badge
-- Anonymous appointments (no name, no client ID) -- badge shown
-- Linked clients (has client ID) -- no badge regardless of name
-
-All downstream uses of `isWalkIn` (History tab collapse, Client Notes visibility, badge rendering) will automatically reflect the corrected logic.
-
+The footer action bar (line 1292+) remains unchanged and continues to serve as the single point for all status transitions (Confirm, Check In, Pay, Complete, No Show, Cancel).
