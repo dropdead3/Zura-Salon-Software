@@ -112,6 +112,7 @@ function WeekAppointmentCard({
         assistantNamesMap={assistantNamesMap}
         categoryColors={categoryColors}
         showHoverPreview
+        showStylistBadge
         onClick={() => {}}
       />
     </div>
