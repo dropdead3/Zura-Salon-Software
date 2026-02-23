@@ -3,6 +3,30 @@ import { useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, parseISO, differenceInDays, addDays } from 'date-fns';
 
+/** Fetch all rows from a table in batches to bypass the 1,000-row default limit. */
+async function fetchAllBatched<T>(
+  buildQuery: (from: number, to: number) => any,
+  batchSize = 1000,
+): Promise<T[]> {
+  const allData: T[] = [];
+  let from = 0;
+  let hasMore = true;
+
+  while (hasMore) {
+    const { data, error } = await buildQuery(from, from + batchSize - 1);
+    if (error) throw error;
+    if (data && data.length > 0) {
+      allData.push(...data);
+      from += batchSize;
+      hasMore = data.length === batchSize;
+    } else {
+      hasMore = false;
+    }
+  }
+
+  return allData;
+}
+
 export interface DailyVolume {
   date: string;
   count: number;
@@ -84,18 +108,16 @@ export function useOperationalAnalytics(locationId?: string, dateRange: Analytic
   const volumeQuery = useQuery({
     queryKey: ['operational-analytics-volume', locationId, startDateStr, endDateStr],
     queryFn: async () => {
-      let query = supabase
-        .from('phorest_appointments')
-        .select('appointment_date, status')
-        .gte('appointment_date', startDateStr)
-        .lte('appointment_date', endDateStr);
-
-      if (locationId) {
-        query = query.eq('location_id', locationId);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
+      const data = await fetchAllBatched<{ appointment_date: string; status: string }>((from, to) => {
+        let q = supabase
+          .from('phorest_appointments')
+          .select('appointment_date, status')
+          .gte('appointment_date', startDateStr)
+          .lte('appointment_date', endDateStr)
+          .range(from, to);
+        if (locationId) q = q.eq('location_id', locationId);
+        return q;
+      });
 
       // Group by date
       const volumeByDate = new Map<string, { count: number; completed: number; cancelled: number; noShow: number }>();
@@ -125,19 +147,17 @@ export function useOperationalAnalytics(locationId?: string, dateRange: Analytic
   const heatmapQuery = useQuery({
     queryKey: ['operational-analytics-heatmap', locationId, startDateStr, endDateStr],
     queryFn: async () => {
-      let query = supabase
-        .from('phorest_appointments')
-        .select('appointment_date, start_time')
-        .gte('appointment_date', startDateStr)
-        .lte('appointment_date', endDateStr)
-        .not('status', 'in', '("cancelled","no_show")');
-
-      if (locationId) {
-        query = query.eq('location_id', locationId);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
+      const data = await fetchAllBatched<{ appointment_date: string; start_time: string }>((from, to) => {
+        let q = supabase
+          .from('phorest_appointments')
+          .select('appointment_date, start_time')
+          .gte('appointment_date', startDateStr)
+          .lte('appointment_date', endDateStr)
+          .not('status', 'in', '("cancelled","no_show")')
+          .range(from, to);
+        if (locationId) q = q.eq('location_id', locationId);
+        return q;
+      });
 
       // Group by hour and day of week
       const distribution: HourlyDistribution[] = [];
@@ -166,18 +186,16 @@ export function useOperationalAnalytics(locationId?: string, dateRange: Analytic
   const statusQuery = useQuery({
     queryKey: ['operational-analytics-status', locationId, startDateStr, endDateStr],
     queryFn: async () => {
-      let query = supabase
-        .from('phorest_appointments')
-        .select('status')
-        .gte('appointment_date', startDateStr)
-        .lte('appointment_date', endDateStr);
-
-      if (locationId) {
-        query = query.eq('location_id', locationId);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
+      const data = await fetchAllBatched<{ status: string }>((from, to) => {
+        let q = supabase
+          .from('phorest_appointments')
+          .select('status')
+          .gte('appointment_date', startDateStr)
+          .lte('appointment_date', endDateStr)
+          .range(from, to);
+        if (locationId) q = q.eq('location_id', locationId);
+        return q;
+      });
 
       // Count by status
       const statusCounts = new Map<string, number>();
@@ -202,16 +220,17 @@ export function useOperationalAnalytics(locationId?: string, dateRange: Analytic
   const retentionQuery = useQuery({
     queryKey: ['operational-analytics-retention', locationId],
     queryFn: async () => {
-      let query = supabase
-        .from('phorest_clients')
-        .select('id, name, email, phone, visit_count, last_visit, total_spend, created_at');
-
-      if (locationId) {
-        query = query.eq('location_id', locationId);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
+      const data = await fetchAllBatched<{
+        id: string; name: string | null; email: string | null; phone: string | null;
+        visit_count: number; last_visit: string | null; total_spend: number | null; created_at: string;
+      }>((from, to) => {
+        let q = supabase
+          .from('phorest_clients')
+          .select('id, name, email, phone, visit_count, last_visit, total_spend, created_at')
+          .range(from, to);
+        if (locationId) q = q.eq('location_id', locationId);
+        return q;
+      });
 
       const totalClients = data?.length || 0;
       const returningClients = (data || []).filter(c => c.visit_count > 1).length;
