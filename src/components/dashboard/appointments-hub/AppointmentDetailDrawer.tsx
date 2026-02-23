@@ -66,7 +66,7 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
 
   const status = appointment.status || 'booked';
   const statusBadge = APPOINTMENT_STATUS_BADGE[status as keyof typeof APPOINTMENT_STATUS_BADGE] || APPOINTMENT_STATUS_BADGE.booked;
-  const clientName = appointment.client_name || appointment.phorest_clients?.name || 'Walk-in';
+  const clientName = appointment.client_name || 'Walk-in';
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
