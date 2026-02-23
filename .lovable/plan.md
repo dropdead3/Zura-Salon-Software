@@ -1,31 +1,34 @@
 
-# Add "Assisted by [name]" Text Below Services Summary
+
+# Add Indented L-Hook Before "Assisted by"
 
 ## Summary
 
-Add a text line showing "assisted by [assistant name(s)]" on appointment cards, displayed below the services summary. This gives at-a-glance visibility into who is assisting without needing to hover over the avatar badge.
+Add a visual "L" hook (└) before the "Assisted by" text to visually indicate it's a child detail of the services summary above it.
 
 ## Technical Details
 
 **File: `src/components/dashboard/schedule/DayView.tsx`**
 
-After the services summary block (lines 550-558), insert a new conditional block that renders assistant names when present:
+**Line 564** -- Update the "Assisted by" div to include left padding and an L-hook character:
 
+Before:
 ```tsx
-{/* Assisted by line */}
-{(() => {
-  const names = assistantNamesMap?.get(appointment.id);
-  if (!names || names.length === 0) return null;
-  return (
-    <div className="text-[11px] opacity-70 truncate">
-      assisted by {names.join(', ')}
-    </div>
-  );
-})()}
+<div className="text-[11px] opacity-70 truncate">
+  Assisted by {names.join(', ')}
+</div>
 ```
 
-This renders only on non-compact cards (it's inside the non-compact branch) and only when assistant names exist for the appointment. The styling matches the existing info lines: small text, reduced opacity, truncated for overflow.
+After:
+```tsx
+<div className="text-[11px] opacity-70 truncate flex items-center gap-1">
+  <span className="opacity-50">└</span> Assisted by {names.join(', ')}
+</div>
+```
+
+The `└` character acts as the L-hook, with slightly reduced opacity so it reads as a structural connector rather than content. The flex layout keeps the hook and text aligned on the same baseline.
 
 | File | Change |
 |---|---|
-| `src/components/dashboard/schedule/DayView.tsx` | Add "assisted by [name]" line after services summary (after line 558) |
+| `src/components/dashboard/schedule/DayView.tsx` | Add └ character before "Assisted by" text (line 564) |
+
