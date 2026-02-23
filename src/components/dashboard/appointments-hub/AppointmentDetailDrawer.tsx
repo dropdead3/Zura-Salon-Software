@@ -1,19 +1,26 @@
+import { useState } from 'react';
 import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
 import { tokens } from '@/lib/design-tokens';
 import { APPOINTMENT_STATUS_BADGE } from '@/lib/design-tokens';
 import { AppointmentAuditTimeline } from './AppointmentAuditTimeline';
 import { AppointmentNotesPanel } from './AppointmentNotesPanel';
-import { Calendar, Clock, User, MapPin, DollarSign, MessageSquare, Tag, Percent, Phone, Mail, FileText, UserCheck, Info, StickyNote, ExternalLink } from 'lucide-react';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Calendar, Clock, User, MapPin, DollarSign, MessageSquare, Tag, Percent, Phone, Mail, FileText, UserCheck, Info, StickyNote, ExternalLink, XCircle } from 'lucide-react';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { cn } from '@/lib/utils';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
+import { toast } from 'sonner';
 
 interface AppointmentDetailDrawerProps {
   appointment: any | null;
@@ -62,6 +69,10 @@ function DetailRow({ icon: Icon, label, children }: { icon: React.ElementType; l
 
 export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: AppointmentDetailDrawerProps) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
+  const [cancelling, setCancelling] = useState(false);
 
   // Resolve phorest_client_id to client directory ID
   const phorestClientId = appointment?.phorest_client_id || appointment?.client_id;
@@ -372,6 +383,22 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
               <MessageSquare className="w-5 h-5 mx-auto mb-2 text-muted-foreground" />
               <p className="text-xs text-muted-foreground">Communications — Coming Soon</p>
             </div>
+
+            {/* Cancel Appointment */}
+            {status !== 'cancelled' && status !== 'completed' && (
+              <>
+                <Separator />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full gap-1.5 text-destructive border-destructive/30 hover:bg-destructive/10"
+                  onClick={() => setCancelOpen(true)}
+                >
+                  <XCircle className="w-3.5 h-3.5" />
+                  Cancel Appointment
+                </Button>
+              </>
+            )}
           </TabsContent>
 
           {/* Notes Tab */}
@@ -391,6 +418,54 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
             </div>
           </TabsContent>
         </Tabs>
+
+        {/* Cancel Appointment Dialog */}
+        <AlertDialog open={cancelOpen} onOpenChange={(v) => { setCancelOpen(v); if (!v) setCancelReason(''); }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Cancel this appointment?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will cancel {clientName}'s appointment on {formatDateDisplay(appointment.appointment_date)}. The client may need to be notified separately.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="px-6 pb-2">
+              <Textarea
+                placeholder="Reason for cancellation (optional)"
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+                className="resize-none"
+                rows={2}
+              />
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={cancelling}>Go Back</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                disabled={cancelling}
+                onClick={async (e) => {
+                  e.preventDefault();
+                  setCancelling(true);
+                  try {
+                    const table = appointment._source === 'phorest' ? 'phorest_appointments' : 'appointments';
+                    const { error } = await supabase.from(table).update({ status: 'cancelled' }).eq('id', appointment.id);
+                    if (error) throw error;
+                    toast.success(`${clientName}'s appointment has been cancelled`);
+                    queryClient.invalidateQueries({ queryKey: ['appointments-hub'] });
+                    setCancelOpen(false);
+                    setCancelReason('');
+                    onOpenChange(false);
+                  } catch (err: any) {
+                    toast.error('Failed to cancel appointment', { description: err.message });
+                  } finally {
+                    setCancelling(false);
+                  }
+                }}
+              >
+                {cancelling ? 'Cancelling…' : 'Cancel Appointment'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
     </PremiumFloatingPanel>
   );
 }
