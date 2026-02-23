@@ -1,47 +1,59 @@
 
 
-# Fix: Merge Wizard Cannot Find Both Duplicate Profiles
+# Extract Source Fields into a Dedicated Card
 
-## Root Cause
+## What changes
 
-There is a **table mismatch** between the Client Directory and the Merge Wizard:
+The "How did they hear about us?" (lead source), "Referred By", and custom source fields will be moved out of the "Client Settings" card into a new standalone "Source" card, positioned above "Important Dates."
 
-| Surface | Table Used | Eric Day Records |
-|---|---|---|
-| Client Directory | `phorest_clients` | 2 (one canonical, one duplicate) |
-| Merge Wizard search (`useClientSearch`) | `clients` | 1 |
+## Changes to `src/components/dashboard/ClientDetailSheet.tsx`
 
-The "Merge" button in the directory passes `phorest_clients` UUIDs in the URL, but the Merge Wizard's `ClientSelector` uses `useClientSearch` which queries the `clients` table. The IDs don't match, and only one record exists there.
+### 1. New "Source" card (inserted before "Important Dates", around line 667)
 
-## Fix
+- New card with its own `EditHeader` (icon: `Megaphone` or `MapPin`, title: "Source")
+- Own edit mode state (`isEditingSource` / `setIsEditingSource`) and save mutation
+- Contains:
+  - **Lead Source** select dropdown ("How did they hear about us?")
+  - **Custom source** text input (shown when "Other" is selected)
+  - **Referred By** text input
+- Read-only view shows source badge + referred by info
 
-### 1. Create a dedicated `usePhorestClientSearch` hook (new function in `useClientsData.ts`)
+### 2. Update "Client Settings" card (line 789+)
 
-Add a search hook that queries `phorest_clients` instead of `clients`, since that's the table the directory and merge flow operate on. This hook:
+- Remove the lead source select, custom source input, and "Referred By" input from the edit form
+- Remove lead source and referred by from the read-only view
+- Keep only: Client Category, External Client ID, Preferred Stylist
 
-- Queries `phorest_clients` with the same search pattern (name, email, phone ilike)
-- Does NOT filter out `is_duplicate = true` (both records must be searchable for merging)
-- Returns fields compatible with the `MergeClient` interface
+### 3. State and mutation updates
 
-### 2. Update `ClientSelector.tsx` to use the new hook
+- Add new state variables: `isEditingSource` / `setIsEditingSource`
+- Add a new `saveSourceMutation` (or fold into the existing settings mutation if it uses the same fields)
+- Wire `startEditingSource` to populate edit state from current client data
+- The existing `editLeadSource`, `editLeadSourceCustom`, and `editReferredBy` state variables remain -- they just move to the new card's edit form
 
-- Import and use `usePhorestClientSearch` instead of `useClientSearch`
-- This ensures the merge wizard searches the same table the directory uses
+### 4. Card ordering (top to bottom)
 
-### 3. Pre-populate from URL params using `phorest_clients`
+Current order around this area:
+1. Contact Information
+2. Important Dates
+3. Communication Preferences
+4. Client Settings (contains source fields)
 
-- When `preselectedIds` are provided via URL, fetch those records from `phorest_clients` (not `clients`) so pre-selection works correctly on mount
+New order:
+1. Contact Information
+2. **Source** (new card -- lead source, referred by)
+3. Important Dates
+4. Communication Preferences
+5. Client Settings (category, external ID, preferred stylist only)
 
 ## Technical Details
 
-| File | Change |
+| Area | Detail |
 |---|---|
-| `src/hooks/useClientsData.ts` | Add `usePhorestClientSearch(query, limit)` -- queries `phorest_clients`, no `is_duplicate` filter |
-| `src/components/dashboard/clients/merge/ClientSelector.tsx` | Switch from `useClientSearch` to `usePhorestClientSearch`; add `useEffect` to fetch preselected IDs from `phorest_clients` |
-
-## What stays the same
-
-- The `useClientSearch` hook remains unchanged (other surfaces like booking and POS still use the `clients` table correctly)
-- Merge wizard steps 2-4 (PrimarySelector, ConflictResolver, MergeConfirmation) are unaffected
-- The `merge-clients` edge function will need to handle `phorest_clients` IDs -- but that's already the table structure it operates on
+| File | `src/components/dashboard/ClientDetailSheet.tsx` |
+| New state | `isEditingSource` boolean + setter |
+| New mutation | `saveSourceMutation` -- updates `lead_source`, `lead_source_custom`, `referred_by` on `phorest_clients` |
+| Moved fields | `editLeadSource`, `editLeadSourceCustom`, `editReferredBy` -- same state, rendered in new card |
+| Removed from Settings card | Lead source select, custom source input, referred by input (both edit and read-only views) |
+| Animation delay | Adjust `transition.delay` values to maintain staggered entrance sequence |
 
