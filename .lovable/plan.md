@@ -1,91 +1,45 @@
 
 
-## Multi-Client Resolution Dialog for Batch Actions
+## Add Analytics Navigation Links to Appointments & Transactions Hub
 
 ### Problem
 
-The current multi-client warning is a passive amber badge and text block. When an operator selects appointments for "Eric Day" that actually belong to 2+ different clients (same name, different customer IDs), the only safeguard is a warning message. There is no way to review which appointments belong to which client and selectively exclude one client's appointments before executing the action.
+Users landing on the Appointments & Transactions page may be looking for analytics (appointment trends, operations metrics, sales data) rather than raw records. Currently there is no way to navigate from this hub to the relevant Analytics Hub subtabs without going back to the sidebar.
 
 ### Solution
 
-Replace the passive warning with an interactive **Multi-Client Resolution Dialog** that opens automatically when a batch action is triggered on appointments belonging to different clients. The dialog groups appointments by client identity, shows each client's Customer ID (ZU-XXXXX), and lets the operator check/uncheck entire client groups before confirming.
+Add a subtle, contextual navigation strip below the page header with quick-link pills that route users to the relevant Analytics Hub subtabs. This follows the existing drill-down contract pattern (summary surface links to canonical Analytics Hub tabs).
 
-### User Flow
+### Navigation Links
 
-```text
-1. Operator selects 5 appointments for "Eric Day"
-2. Operator clicks "Cancel Selected"
-3. System detects 2 different client IDs in the selection
-4. Instead of the standard confirmation, a Resolution Dialog opens:
+| Label | Route | Rationale |
+|-------|-------|-----------|
+| Appointment Analytics | `/dashboard/admin/analytics?tab=operations&subtab=appointments` | Appointment-level operational analytics |
+| Booking Pipeline | `/dashboard/admin/analytics?tab=operations&subtab=booking-pipeline` | Pipeline health and booking flow |
+| Sales Overview | `/dashboard/admin/analytics?tab=sales` | Revenue and transaction analytics |
+| Staff Utilization | `/dashboard/admin/analytics?tab=operations&subtab=staff-utilization` | Capacity and utilization metrics |
 
-   ┌──────────────────────────────────────────────────┐
-   │  Multiple Clients Detected                       │
-   │                                                  │
-   │  Your selection includes appointments for 2      │
-   │  different clients. Choose which to include.     │
-   │                                                  │
-   │  ☑ Eric Day  ·  ZU-00042  ·  3 appointments     │
-   │    02/24 5:00 PM  ·  Confirmed                   │
-   │    02/24 3:30 PM  ·  Confirmed                   │
-   │    02/24 1:00 PM  ·  Confirmed                   │
-   │                                                  │
-   │  ☑ Eric Day  ·  ZU-01287  ·  2 appointments      │
-   │    02/22 2:15 PM  ·  Confirmed                   │
-   │    02/22 12:30 PM ·  Confirmed                   │
-   │                                                  │
-   │            [Go Back]  [Cancel 5 Appointments]    │
-   └──────────────────────────────────────────────────┘
+### UI Design
 
-5. Operator unchecks one client group (e.g., ZU-01287)
-6. Button updates: "Cancel 3 Appointments"
-7. Operator confirms -- only the checked group is affected
-```
+- A single row of pill-style links (ghost buttons with an external-link or arrow-right icon) positioned between the page header and the tab bar
+- Styled with `text-muted-foreground` and `hover:text-foreground` for a calm, non-intrusive appearance
+- Prefixed with a subtle label: "Looking for analytics?" in `text-muted-foreground text-sm`
+- Responsive: wraps on mobile, single row on desktop
 
 ### Technical Changes
 
-#### 1. New Component: `MultiClientResolutionDialog.tsx`
+#### 1. Edit: `src/pages/dashboard/AppointmentsHub.tsx`
 
-Location: `src/components/dashboard/appointments-hub/MultiClientResolutionDialog.tsx`
-
-- Receives: `appointments`, `action` (cancel/status update), `actionLabel`, `onConfirm(filteredAppointments)`, `onCancel`
-- Groups appointments by client identity (phorest_client_id or client_id, walk-ins grouped separately)
-- Each group shows:
-  - Checkbox to include/exclude the entire group
-  - Client name + Customer Number (ZU-XXXXX) badge
-  - Appointment count
-  - Collapsible list of individual appointments (date, time, status)
-- Confirm button dynamically updates count based on checked groups
-- At least one group must be checked to proceed
-
-#### 2. Updated: `AppointmentBatchBar.tsx`
-
-- Add state: `resolutionDialogOpen`, `pendingAction` (tracks which action triggered it)
-- When any destructive/update action is triggered and `isMultiClient === true`:
-  - Instead of opening the existing AlertDialog or firing the status update directly, open the `MultiClientResolutionDialog`
-  - Pass the pending action type and callback
-- When `isMultiClient === false`: behavior is unchanged (existing AlertDialogs work as-is)
-- Remove the inline `MultiClientWarning` component from the AlertDialogs (no longer needed -- the resolution dialog replaces it)
-- Keep the amber badge in the batch bar as a passive indicator
-
-#### 3. Action Flow Changes
-
-| Action | Single Client | Multi Client |
-|--------|--------------|--------------|
-| Status Update (dropdown) | Direct execute | Resolution Dialog, then execute on confirmed subset |
-| Cancel Selected | AlertDialog | Resolution Dialog, then execute on confirmed subset |
-| Cancel All Future | AlertDialog | Resolution Dialog (filtered to future only), then execute on confirmed subset |
-| Export CSV | Direct execute (no risk) | Direct execute (no risk) |
-| Share | Direct execute (no risk) | Direct execute (no risk) |
-
-### Files Modified
-
-- **New:** `src/components/dashboard/appointments-hub/MultiClientResolutionDialog.tsx` -- resolution dialog component
-- **Edit:** `src/components/dashboard/appointments-hub/AppointmentBatchBar.tsx` -- intercept actions when multi-client, delegate to resolution dialog
+- Add a contextual navigation strip between the `DashboardPageHeader` and the `Tabs` component
+- Uses `Link` from react-router-dom with pill-style buttons (`variant="ghost"`, `size="sm"`, `rounded-full`)
+- Each link includes an `ArrowUpRight` icon (from lucide-react) to indicate it navigates away from the current hub
+- The strip is wrapped in a simple flex container with `items-center gap-2 flex-wrap`
 
 ### What Does NOT Change
 
-- Single-client batch actions behave exactly as they do today
 - No database changes
-- No hook changes (customer_number is already enriched)
-- Export CSV and Share actions are unaffected (non-destructive)
-- The amber "N different clients" badge remains in the batch bar as a passive indicator
+- No new components (inline in the page)
+- No changes to DashboardPageHeader component
+- No changes to analytics hub routing or tab structure
+- Existing tab behavior (Appointments, Transactions, Gift Cards) is untouched
+
