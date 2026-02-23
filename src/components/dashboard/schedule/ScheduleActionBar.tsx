@@ -1,172 +1,132 @@
-import { 
-  UserCheck, 
-  CreditCard, 
-  Trash2, 
-  StickyNote, 
-  CheckCircle,
-  Undo2,
-  Calendar,
-  Eye,
-} from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Calendar, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
-import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
+import { ScheduleLegend } from './ScheduleLegend';
+import type { PhorestAppointment } from '@/hooks/usePhorestCalendar';
+
+type UrgencyLevel = 'overdue' | 'nearing';
+
+interface QueueItem {
+  appointment: PhorestAppointment;
+  urgency: UrgencyLevel;
+  /** Positive = minutes overdue; negative = minutes until end */
+  overdueMinutes: number;
+}
 
 interface ScheduleActionBarProps {
-  selectedAppointment: PhorestAppointment | null;
-  onCheckIn?: () => void;
-  onPay?: () => void;
-  onRemove?: () => void;
-  onNotes?: () => void;
-  onConfirm?: () => void;
-  onUndo?: () => void;
-  onViewDetails?: () => void;
-  isUpdating?: boolean;
+  appointments: PhorestAppointment[];
+  onSelectAppointment: (apt: PhorestAppointment) => void;
   todayAppointmentCount?: number;
 }
 
+function getFirstName(fullName: string): string {
+  return fullName.split(' ')[0] || fullName;
+}
+
+function buildPaymentQueue(appointments: PhorestAppointment[], now: Date): QueueItem[] {
+  const queue: QueueItem[] = [];
+
+  for (const apt of appointments) {
+    if (apt.status !== 'checked_in') continue;
+
+    // Parse end_time (HH:MM) into a Date for today
+    const [h, m] = apt.end_time.split(':').map(Number);
+    const endDate = new Date(now);
+    endDate.setHours(h, m, 0, 0);
+
+    const diffMs = now.getTime() - endDate.getTime();
+    const diffMin = diffMs / 60_000;
+
+    if (diffMin >= 0) {
+      // Past end time — overdue
+      queue.push({ appointment: apt, urgency: 'overdue', overdueMinutes: diffMin });
+    } else if (diffMin >= -15) {
+      // Within 15 min of end — nearing checkout
+      queue.push({ appointment: apt, urgency: 'nearing', overdueMinutes: diffMin });
+    }
+  }
+
+  // Sort: overdue first (most overdue at front), then nearing
+  queue.sort((a, b) => b.overdueMinutes - a.overdueMinutes);
+
+  return queue;
+}
+
 export function ScheduleActionBar({
-  selectedAppointment,
-  onCheckIn,
-  onPay,
-  onRemove,
-  onNotes,
-  onConfirm,
-  onUndo,
-  onViewDetails,
-  isUpdating = false,
+  appointments,
+  onSelectAppointment,
   todayAppointmentCount = 0,
 }: ScheduleActionBarProps) {
-  const hasSelection = !!selectedAppointment;
-  const status = selectedAppointment?.status;
+  const [now, setNow] = useState(() => new Date());
 
-  // Determine which actions are available based on current status
-  const canCheckIn = hasSelection && status === 'confirmed';
-  const canConfirm = hasSelection && status === 'booked';
-  const canPay = hasSelection && status === 'checked_in';
-  const canRemove = hasSelection && !['completed', 'cancelled'].includes(status || '');
+  // Refresh clock every 60s
+  useEffect(() => {
+    const interval = setInterval(() => setNow(new Date()), 60_000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const queue = useMemo(() => buildPaymentQueue(appointments, now), [appointments, now]);
 
   return (
     <div
       className={cn(
-        'bg-card/80 backdrop-blur-xl border border-border rounded-full px-6 py-2.5 flex items-center justify-between transition-all duration-300 shadow-lg',
-        hasSelection && 'ring-1 ring-primary/40 shadow-primary/10'
+        'bg-card/80 backdrop-blur-xl border border-border rounded-full px-4 py-2.5 flex items-center gap-3 transition-all duration-300 shadow-lg flex-1'
       )}
     >
-      {/* Left: Undo (hidden when no handler) */}
-      <div className="flex items-center gap-4">
-        {onUndo && (
-          <Button
-            variant="ghost"
-            size={tokens.button.inline}
-            onClick={onUndo}
-            disabled={isUpdating}
-            className="gap-1.5"
-          >
-            <Undo2 className="h-4 w-4" />
-            Undo
-          </Button>
-        )}
+      {/* Left: Appointment count */}
+      <div className={cn('flex items-center gap-2 shrink-0', tokens.body.muted)}>
+        <Calendar className="h-4 w-4" />
+        <span>
+          <span className="font-medium text-foreground">{todayAppointmentCount}</span>
+          {' '}appt{todayAppointmentCount !== 1 ? 's' : ''}
+        </span>
       </div>
 
-      {/* Center: Selection info or appointment count */}
-      <div className={cn('flex items-center gap-2', tokens.body.muted)}>
-        {hasSelection ? (
-          <div className="flex items-center gap-3">
-            <span className="font-medium text-foreground">
-              {selectedAppointment.client_name}
-            </span>
-            <span className="text-muted-foreground">·</span>
-            <span className="text-muted-foreground truncate max-w-[200px]">
-              {selectedAppointment.service_name}
-            </span>
-            <Button
-              variant="ghost"
-              size={tokens.button.inline}
-              onClick={onViewDetails}
-              className="gap-1.5 text-primary"
-            >
-              <Eye className="h-4 w-4" />
-              Details
-            </Button>
+      {/* Center: Payment queue bubbles */}
+      <div className="flex-1 min-w-0">
+        {queue.length === 0 ? (
+          <div className={cn('flex items-center justify-center gap-1.5 py-0.5', tokens.body.muted)}>
+            <CheckCircle2 className="h-3.5 w-3.5 text-success" />
+            <span className="text-xs">All clear</span>
           </div>
         ) : (
-          <>
-            <Calendar className="h-4 w-4" />
-            <span>
-              <span className="font-medium text-foreground">{todayAppointmentCount}</span>
-              {' '}appointment{todayAppointmentCount !== 1 ? 's' : ''} today
-            </span>
-          </>
+          <ScrollArea className="w-full">
+            <div className="flex items-center gap-1.5 px-1">
+              {queue.map((item) => (
+                <Button
+                  key={item.appointment.id}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onSelectAppointment(item.appointment)}
+                  className={cn(
+                    'rounded-full h-7 px-3 text-xs shrink-0 gap-1',
+                    item.urgency === 'overdue' &&
+                      'border-destructive/60 text-destructive hover:bg-destructive/10 dark:border-destructive/40',
+                    item.urgency === 'nearing' &&
+                      'border-amber-500/60 text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-950 dark:border-amber-500/40'
+                  )}
+                >
+                  <span
+                    className={cn(
+                      'w-1.5 h-1.5 rounded-full shrink-0',
+                      item.urgency === 'overdue' ? 'bg-destructive' : 'bg-amber-500'
+                    )}
+                  />
+                  {getFirstName(item.appointment.client_name)}
+                </Button>
+              ))}
+            </div>
+            <ScrollBar orientation="horizontal" />
+          </ScrollArea>
         )}
       </div>
 
-      {/* Right: Action Buttons */}
-      <div className="flex items-center gap-2">
-        <Button
-          variant="outline"
-          size={tokens.button.inline}
-          onClick={onCheckIn}
-          disabled={!canCheckIn || isUpdating}
-          className={cn(
-            'gap-1.5',
-            canCheckIn && 'border-blue-500 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950'
-          )}
-        >
-          <UserCheck className="h-4 w-4" />
-          Check In
-        </Button>
-
-        <Button
-          variant="outline"
-          size={tokens.button.inline}
-          onClick={onPay}
-          disabled={!canPay || isUpdating}
-          className={cn(
-            'gap-1.5',
-            canPay && 'border-green-500 text-green-600 hover:bg-green-50 dark:hover:bg-green-950'
-          )}
-        >
-          <CreditCard className="h-4 w-4" />
-          Pay
-        </Button>
-
-        <Button
-          variant="outline"
-          size={tokens.button.inline}
-          onClick={onRemove}
-          disabled={!canRemove || isUpdating}
-          className="gap-1.5"
-        >
-          <Trash2 className="h-4 w-4" />
-          Cancel
-        </Button>
-
-        <Button
-          variant="outline"
-          size={tokens.button.inline}
-          onClick={onNotes}
-          disabled={!hasSelection || isUpdating}
-          className="gap-1.5"
-        >
-          <StickyNote className="h-4 w-4" />
-          Notes
-        </Button>
-
-        <Button
-          variant="outline"
-          size={tokens.button.inline}
-          onClick={onConfirm}
-          disabled={!canConfirm || isUpdating}
-          className={cn(
-            'gap-1.5',
-            canConfirm && 'border-purple-500 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950'
-          )}
-        >
-          <CheckCircle className="h-4 w-4" />
-          Confirm
-        </Button>
+      {/* Right: Schedule Legend */}
+      <div className="shrink-0">
+        <ScheduleLegend />
       </div>
     </div>
   );

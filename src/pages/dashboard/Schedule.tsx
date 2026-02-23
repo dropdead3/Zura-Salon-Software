@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { ScheduleHeader } from '@/components/dashboard/schedule/ScheduleHeader';
 import { ScheduleActionBar } from '@/components/dashboard/schedule/ScheduleActionBar';
-import { ScheduleLegend } from '@/components/dashboard/schedule/ScheduleLegend';
+// ScheduleLegend is now embedded inside ScheduleActionBar
 import { DayView } from '@/components/dashboard/schedule/DayView';
 import { WeekView } from '@/components/dashboard/schedule/WeekView';
 import { MonthView } from '@/components/dashboard/schedule/MonthView';
@@ -699,16 +699,15 @@ export default function Schedule() {
         {(view === 'day' || view === 'week') && (
           <div className="absolute bottom-0 left-0 right-0 px-4 pb-4 pointer-events-none z-20">
             <div className="pointer-events-auto flex items-center gap-2">
-              <ScheduleLegend />
               <ScheduleActionBar
-                selectedAppointment={selectedAppointment}
-                onCheckIn={handleCheckIn}
-                onPay={handlePay}
-                onRemove={handleRemove}
-                onNotes={handleNotes}
-                onConfirm={handleConfirm}
-                onViewDetails={() => setDetailOpen(true)}
-                isUpdating={isUpdating}
+                appointments={allAppointments.filter(apt => 
+                  apt.appointment_date === format(new Date(), 'yyyy-MM-dd') &&
+                  apt.location_id === selectedLocation
+                )}
+                onSelectAppointment={(apt) => {
+                  setSelectedAppointment(apt);
+                  setDetailOpen(true);
+                }}
                 todayAppointmentCount={todayAppointmentCount}
               />
             </div>
