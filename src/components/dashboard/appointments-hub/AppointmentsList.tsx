@@ -119,7 +119,7 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
     <div className="space-y-4">
       {/* Search + Filters — single row */}
       <div className="flex flex-wrap gap-3 items-center">
-        <div className="w-[320px]">
+        <div className="w-[640px]">
           <HubSearchBar value={search} onChange={onSearchChange} />
         </div>
 
