@@ -294,7 +294,7 @@ export default function AppointmentsHub() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="px-6 pb-6 lg:px-8 lg:pb-8 pt-2 lg:pt-3 space-y-6">
         <DashboardPageHeader title="Appointments & Transactions" />
 
         {/* Unified search */}
