@@ -1084,6 +1084,7 @@ export default function ClientDirectory() {
           open={detailSheetOpen}
           onOpenChange={setDetailSheetOpen}
           locationName={locations?.find(l => l.id === selectedClient?.location_id)?.name}
+          onClientUpdated={(updates) => setSelectedClient((prev: any) => prev ? { ...prev, ...updates } : null)}
         />
       </div>
     </DashboardLayout>
