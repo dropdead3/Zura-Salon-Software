@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useClientHousehold } from '@/hooks/useHouseholds';
 import { useNavigate } from 'react-router-dom';
-import { createPortal } from 'react-dom';
 import { differenceInDays } from 'date-fns';
-import { AnimatePresence, motion } from 'framer-motion';
+import { motion } from 'framer-motion';
+import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -492,36 +492,8 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
     onOpenChange(false);
   };
 
-  return createPortal(
-    <AnimatePresence>
-      {open && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            key="client-detail-backdrop"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm"
-            onClick={handleClose}
-          />
-          {/* Floating Panel */}
-          <motion.div
-            key="client-detail-panel"
-            initial={{ opacity: 0, x: 80 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 80 }}
-            transition={{ type: 'spring', damping: 26, stiffness: 300, mass: 0.8 }}
-            className="fixed right-4 top-4 bottom-4 z-50 w-[calc(100vw-2rem)] max-w-[440px] rounded-xl border border-border bg-card/80 backdrop-blur-xl shadow-2xl overflow-hidden flex flex-col"
-          >
-            {/* Close button */}
-            <button
-              onClick={handleClose}
-              className="absolute right-3 top-3 z-10 rounded-full p-1.5 bg-muted/60 hover:bg-muted transition-colors"
-            >
-              <X className="w-4 h-4 text-muted-foreground" />
-            </button>
+  return (
+    <PremiumFloatingPanel open={open} onOpenChange={onOpenChange}>
             <ScrollArea className="flex-1">
     <div className="p-6 space-y-4">
           {/* Merged Profile Banner */}
@@ -1247,10 +1219,6 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
           )}
         </div>
             </ScrollArea>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>,
-    document.body
+    </PremiumFloatingPanel>
   );
 }

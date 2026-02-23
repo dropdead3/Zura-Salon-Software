@@ -1,4 +1,4 @@
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -130,25 +130,22 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
   const clientName = appointment.client_name || 'Walk-in';
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-lg p-0 flex flex-col">
+    <PremiumFloatingPanel open={open} onOpenChange={onOpenChange} maxWidth="512px">
         {/* Header */}
         <div className="p-6 pb-4 border-b border-border">
-          <SheetHeader>
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <SheetTitle className={cn(tokens.heading.card, 'truncate')}>
-                  {clientName}
-                </SheetTitle>
-                <SheetDescription className="mt-1">
-                  {appointment.service_name || 'Service'}
-                </SheetDescription>
-              </div>
-              <Badge className={cn('shrink-0', statusBadge.bg, statusBadge.text, statusBadge.border)} variant="outline">
-                {statusBadge.label}
-              </Badge>
+          <div className="flex items-start justify-between gap-3 pr-8">
+            <div className="min-w-0">
+              <h2 className={cn(tokens.heading.card, 'truncate')}>
+                {clientName}
+              </h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                {appointment.service_name || 'Service'}
+              </p>
             </div>
-          </SheetHeader>
+            <Badge className={cn('shrink-0', statusBadge.bg, statusBadge.text, statusBadge.border)} variant="outline">
+              {statusBadge.label}
+            </Badge>
+          </div>
         </div>
 
         {/* Tabs */}
@@ -350,7 +347,6 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
             </div>
           </TabsContent>
         </Tabs>
-      </SheetContent>
-    </Sheet>
+    </PremiumFloatingPanel>
   );
 }

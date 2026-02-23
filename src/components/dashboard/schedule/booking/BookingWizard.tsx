@@ -1,8 +1,8 @@
 import { useState, useMemo } from 'react';
 import { format } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
-import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useServicesByCategory } from '@/hooks/usePhorestServices';
@@ -268,27 +268,13 @@ export function BookingWizard({
 
   return (
     <>
-      <AnimatePresence>
-        {open && (
-          <>
-            {/* Backdrop overlay */}
-            <motion.div
-              className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              onClick={handleClose}
-            />
-
-            {/* Floating bento panel */}
-            <motion.div
-              className="fixed z-50 top-3 right-3 bottom-3 w-full sm:max-w-md rounded-xl bg-card/80 backdrop-blur-xl border border-border shadow-2xl flex flex-col overflow-hidden"
-              initial={{ x: '100%', opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: '100%', opacity: 0 }}
-              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            >
+      <PremiumFloatingPanel
+        open={open}
+        onOpenChange={(v) => { if (!v) handleClose(); }}
+        maxWidth="448px"
+        backdropClassName="bg-black/40"
+        showCloseButton={false}
+      >
               <BookingHeader
                 step={step}
                 title={getStepTitle()}
@@ -373,10 +359,7 @@ export function BookingWizard({
                   />
                 )}
               </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+      </PremiumFloatingPanel>
 
       <NewClientDialog
         open={showNewClientDialog}
