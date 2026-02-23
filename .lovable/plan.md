@@ -1,36 +1,27 @@
 
-# Show Both Duplicate and Canonical Profiles Together in Search
+
+# Show Duplicate Badge and Merge Button on Both Linked Profiles
 
 ## Problem
-When you search for a client name in the directory, you only see the matching record. If "Eric Day" is a duplicate of another profile (e.g., different name spelling), the linked canonical profile doesn't appear in search results because it doesn't match the search query. You can't see both sides of the duplicate relationship.
+When searching for a client like "Eric Day," both the duplicate and its canonical (original) profile appear in results. However, only the duplicate record shows the amber "Duplicate (Same Phone)" badge and the prominent "Merge" button. The canonical profile just shows a small ghost merge icon -- making it unclear that these two records are related and mergeable.
 
 ## Solution
-Enhance the search/filter logic so that whenever a duplicate or canonical client appears in results, its linked counterpart is automatically pulled in too. Both records will appear together, with a subtle visual grouping indicator.
+When a canonical profile is auto-included via the linked-profile expansion logic, treat it visually the same as the duplicate: show the duplicate context badge (with match reasons) and the prominent "Merge" button pre-populated with both IDs.
 
-## Changes to `src/pages/dashboard/ClientDirectory.tsx`
+## Changes (single file: `src/pages/dashboard/ClientDirectory.tsx`)
 
-### 1. Expand search results to include linked profiles
+### 1. Compute duplicate reasons for linked canonical profiles
+When a canonical profile is pulled in via `_linkedReason === 'canonical'`, compute the match reasons (Same Phone, Same Email, etc.) by comparing it against the duplicate that triggered its inclusion. Currently `duplicateReasons` is only computed for records where `is_duplicate === true`.
 
-After the existing search filter (around line 274), add logic that:
-- For each duplicate in the results, checks if its `canonical_client_id` profile is missing from results, and adds it
-- For each canonical profile in the results, checks if any duplicates pointing to it are missing, and adds them
-- Uses the already-fetched `processedClients` list as the lookup source (no extra DB query needed)
+### 2. Show the duplicate badge on linked canonical profiles
+Update the badge rendering (around line 839) so that profiles with `_linkedReason === 'canonical'` also display an amber-styled badge showing the match reason, e.g., "Linked (Same Phone)".
 
-### 2. Mark auto-included profiles
-
-Profiles pulled in automatically (not matching the search themselves) get a small "Linked duplicate" or "Linked original" indicator so you understand why they appeared.
-
-### 3. Sort linked profiles adjacent
-
-When a profile is auto-included, position it immediately after its linked counterpart in the list so the pair is visually grouped together.
+### 3. Show the prominent Merge button on linked canonical profiles
+Update the merge button logic (around line 923) so that profiles with `_linkedReason` also get the styled "Merge" button (not the ghost icon). The button will pre-populate the merge wizard with both the canonical and duplicate client IDs.
 
 ## Technical Details
 
-| Area | Detail |
-|---|---|
-| File | `src/pages/dashboard/ClientDirectory.tsx` |
-| Location | `filteredClients` useMemo, after search filter (line ~280) |
-| Logic | Build a Set of filtered IDs, then scan for missing canonical/duplicate links from `processedClients` |
-| No new queries | Uses the already-loaded full client list for lookups |
-| New computed field | `linkedReason?: 'canonical' \| 'duplicate'` added to auto-included profiles |
-| Sorting | After main sort, re-order so linked pairs sit adjacent (duplicate immediately after its canonical, or vice versa) |
+- The `_linkedReason` property already identifies auto-included profiles
+- For canonical profiles pulled in, we find the duplicate that triggered inclusion and compute match reasons from the same phone/email/name comparison logic
+- The existing blue "Linked original" badge will be replaced with the amber duplicate-style badge showing actual match reasons
+- The merge button for linked canonicals will include both IDs in the URL params, same as the duplicate's merge button
