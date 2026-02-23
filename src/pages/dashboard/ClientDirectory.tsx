@@ -138,7 +138,6 @@ export default function ClientDirectory() {
       let query = supabase
         .from('phorest_clients')
         .select('*')
-        .eq('is_duplicate', false)
         .order('total_spend', { ascending: false });
 
       // Filter logic based on primary tab
@@ -248,6 +247,8 @@ export default function ClientDirectory() {
         filtered = filtered.filter(c => c.isNew);
       } else if (activeTab === 'banned') {
         filtered = filtered.filter(c => c.is_banned);
+      } else if (activeTab === 'duplicates') {
+        filtered = filtered.filter(c => (c as any).is_duplicate === true);
       }
     }
 
@@ -327,6 +328,7 @@ export default function ClientDirectory() {
       else if (activeTab === 'at-risk') baseFiltered = baseFiltered.filter(c => c.isAtRisk);
       else if (activeTab === 'new') baseFiltered = baseFiltered.filter(c => c.isNew);
       else if (activeTab === 'banned') baseFiltered = baseFiltered.filter(c => c.is_banned);
+      else if (activeTab === 'duplicates') baseFiltered = baseFiltered.filter(c => (c as any).is_duplicate === true);
     }
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
@@ -385,6 +387,7 @@ export default function ClientDirectory() {
       banned: active.filter(c => c.is_banned).length,
       atRisk: active.filter(c => c.isAtRisk).length,
       newClients: active.filter(c => c.isNew).length,
+      duplicates: active.filter(c => (c as any).is_duplicate === true).length,
       totalRevenue: active.reduce((s, c) => s + Number(c.total_spend || 0), 0),
       archived: clientsForStats.filter(c => c.is_archived).length,
       topSource: (() => {
@@ -575,6 +578,11 @@ export default function ClientDirectory() {
                   <Archive className="w-3 h-3 mr-1" /> Archived ({stats.archived})
                 </TabsTrigger>
               )}
+              {stats.duplicates > 0 && (
+                <TabsTrigger value="duplicates" className="text-xs text-amber-600">
+                  <GitMerge className="w-3 h-3 mr-1" /> Duplicates ({stats.duplicates})
+                </TabsTrigger>
+              )}
               {showMerged && (
                 <TabsTrigger value="merged" className="text-xs text-muted-foreground">
                   <GitMerge className="w-3 h-3 mr-1" /> Merged
@@ -754,6 +762,11 @@ export default function ClientDirectory() {
                                 New
                               </Badge>
                             )}
+                            {(client as any).is_duplicate && (
+                              <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800 gap-1">
+                                <GitMerge className="w-3 h-3" /> Duplicate
+                              </Badge>
+                            )}
                           </div>
                           <div className="flex items-center gap-4 text-xs text-muted-foreground">
                             <span>{client.visit_count} visits</span>
@@ -832,7 +845,7 @@ export default function ClientDirectory() {
                             <p className="text-xs text-muted-foreground">lifetime</p>
                           </div>
                           {/* Single merge action */}
-                          {canMerge && (client as any).status !== 'merged' && (
+                          {canMerge && (client as any).status !== 'merged' && !(client as any).is_duplicate && (
                             <Button
                               variant="ghost"
                               size="sm"
@@ -844,6 +857,23 @@ export default function ClientDirectory() {
                               title="Merge this client"
                             >
                               <GitMerge className="w-4 h-4 text-muted-foreground" />
+                            </Button>
+                          )}
+                          {canMerge && (client as any).is_duplicate && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="shrink-0 gap-1.5 text-amber-700 border-amber-300 hover:bg-amber-50 dark:text-amber-400 dark:border-amber-800 dark:hover:bg-amber-950/30"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const ids = (client as any).canonical_client_id
+                                  ? `${client.id},${(client as any).canonical_client_id}`
+                                  : client.id;
+                                navigate(`/dashboard/admin/merge-clients?clientIds=${ids}`);
+                              }}
+                              title="This client matches an existing profile. Merge to consolidate."
+                            >
+                              <GitMerge className="w-3.5 h-3.5" /> Merge
                             </Button>
                           )}
                           {(client as any).status === 'merged' && (
