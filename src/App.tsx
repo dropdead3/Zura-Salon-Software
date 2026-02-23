@@ -115,6 +115,7 @@ import PayrollCallback from "./pages/dashboard/admin/PayrollCallback";
 import HelpCenter from "./pages/dashboard/HelpCenter";
 import MyPay from "./pages/dashboard/MyPay";
 import Transactions from "./pages/dashboard/Transactions";
+import AppointmentsHub from "./pages/dashboard/AppointmentsHub";
 import Inventory from "./pages/dashboard/Inventory";
 import Register from "./pages/dashboard/Register";
 import LoyaltyProgram from "./pages/dashboard/settings/LoyaltyProgram";
@@ -329,7 +330,8 @@ const App = () => (
                       <Route path="/dashboard/admin/import" element={<ProtectedRoute requiredPermission="manage_settings"><DataImport /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/payroll" element={<ProtectedRoute requiredPermission="manage_payroll"><Payroll /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/payroll/callback" element={<ProtectedRoute requiredPermission="manage_payroll"><PayrollCallback /></ProtectedRoute>} />
-                      <Route path="/dashboard/transactions" element={<ProtectedRoute requiredPermission="view_transactions"><Transactions /></ProtectedRoute>} />
+                      <Route path="/dashboard/transactions" element={<Navigate to="/dashboard/appointments-hub?tab=transactions" replace />} />
+                      <Route path="/dashboard/appointments-hub" element={<ProtectedRoute requiredPermission="view_transactions"><AppointmentsHub /></ProtectedRoute>} />
                       <Route path="/dashboard/inventory" element={<ProtectedRoute requiredPermission="manage_inventory"><Inventory /></ProtectedRoute>} />
                       <Route path="/dashboard/register" element={<ProtectedRoute requiredPermission="process_retail_sales"><Register /></ProtectedRoute>} />
                       <Route path="/dashboard/settings/loyalty" element={<ProtectedRoute requiredPermission="manage_loyalty_program"><LoyaltyProgram /></ProtectedRoute>} />
