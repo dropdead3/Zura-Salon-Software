@@ -10,6 +10,7 @@ import { APPOINTMENT_STATUS_BADGE } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { ChevronLeft, ChevronRight, Download, Calendar } from 'lucide-react';
 import { useAppointmentsHub, type HubFilters } from '@/hooks/useAppointmentsHub';
+import { HubSearchBar } from './HubSearchBar';
 import { AppointmentDetailDrawer } from './AppointmentDetailDrawer';
 import { useLocations } from '@/hooks/useLocations';
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
@@ -20,6 +21,7 @@ import { formatDisplayName } from '@/lib/utils';
 
 interface AppointmentsListProps {
   search: string;
+  onSearchChange: (value: string) => void;
 }
 
 type DatePreset = 'today' | 'this_week' | 'this_month' | 'last_month' | 'all';
@@ -53,7 +55,7 @@ function getDateRange(preset: DatePreset): { startDate?: string; endDate?: strin
   }
 }
 
-export function AppointmentsList({ search }: AppointmentsListProps) {
+export function AppointmentsList({ search, onSearchChange }: AppointmentsListProps) {
   const [page, setPage] = useState(0);
   const [status, setStatus] = useState('all');
   const [locationId, setLocationId] = useState('all');
@@ -174,6 +176,9 @@ export function AppointmentsList({ search }: AppointmentsListProps) {
           </Button>
         </div>
       </div>
+
+      {/* Search bar */}
+      <HubSearchBar value={search} onChange={onSearchChange} />
 
       {/* Table */}
       <Card>
