@@ -203,6 +203,23 @@ export default function ClientDirectory() {
         }
         if (duplicateReasons.length === 0) duplicateReasons.push('match');
       }
+
+      // Compute linked duplicate ID for canonical profiles (used when linked via search expansion)
+      let _linkedDuplicateId: string | null = null;
+      if (!(client as any).is_duplicate) {
+        // Find any duplicate pointing to this canonical
+        const dup = clients.find(c => (c as any).canonical_client_id === client.id && (c as any).is_duplicate);
+        if (dup) {
+          _linkedDuplicateId = dup.id;
+          // Compute reasons for the canonical by comparing against its duplicate
+          if (duplicateReasons.length === 0) {
+            if (client.phone && dup.phone && client.phone === dup.phone) duplicateReasons.push('phone');
+            if (client.email && dup.email && client.email.toLowerCase() === dup.email.toLowerCase()) duplicateReasons.push('email');
+            if (client.name && dup.name && client.name.toLowerCase() === dup.name.toLowerCase() && duplicateReasons.length === 0) duplicateReasons.push('name');
+            if (duplicateReasons.length === 0) duplicateReasons.push('match');
+          }
+        }
+      }
       
       return {
         ...client,
@@ -211,6 +228,7 @@ export default function ClientDirectory() {
         isNew,
         is_archived: (client as any).is_archived ?? false,
         duplicateReasons,
+        _linkedDuplicateId,
       };
     });
   }, [clients]);
@@ -837,9 +855,13 @@ export default function ClientDirectory() {
                               </Badge>
                             )}
                             {(client as any)._linkedReason && (
-                              <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-300 dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-800 gap-1">
-                                <GitMerge className="w-3 h-3" />
-                                {(client as any)._linkedReason === 'canonical' ? 'Linked original' : 'Linked duplicate'}
+                              <Badge 
+                                variant="outline" 
+                                className="text-xs bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800 gap-1"
+                              >
+                                <GitMerge className="w-3 h-3" /> 
+                                {(client as any)._linkedReason === 'canonical' ? 'Linked Original' : 'Linked Duplicate'}
+                                {(client as any).duplicateReasons?.length > 0 && (client as any).duplicateReasons[0] !== 'match' ? ` (${(client as any).duplicateReasons.map((r: string) => r === 'phone' ? 'Same Phone' : r === 'email' ? 'Same Email' : r === 'name' ? 'Same Name' : r).join(', ')})` : ''}
                               </Badge>
                             )}
                           </div>
@@ -920,7 +942,7 @@ export default function ClientDirectory() {
                             <p className="text-xs text-muted-foreground">lifetime</p>
                           </div>
                           {/* Single merge action */}
-                          {canMerge && (client as any).status !== 'merged' && !(client as any).is_duplicate && (
+                          {canMerge && (client as any).status !== 'merged' && !(client as any).is_duplicate && !(client as any)._linkedReason && (
                             <Button
                               variant="ghost"
                               size="sm"
@@ -932,6 +954,22 @@ export default function ClientDirectory() {
                               title="Merge this client"
                             >
                               <GitMerge className="w-4 h-4 text-muted-foreground" />
+                            </Button>
+                          )}
+                          {canMerge && (client as any)._linkedReason && (client as any).status !== 'merged' && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="shrink-0 gap-1.5 text-amber-700 border-amber-300 hover:bg-amber-50 dark:text-amber-400 dark:border-amber-800 dark:hover:bg-amber-950/30"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const linkedId = (client as any)._linkedDuplicateId || (client as any).canonical_client_id;
+                                const ids = linkedId ? `${client.id},${linkedId}` : client.id;
+                                navigate(`/dashboard/admin/merge-clients?clientIds=${ids}`);
+                              }}
+                              title="This profile has a matching record. Merge to consolidate."
+                            >
+                              <GitMerge className="w-3.5 h-3.5" /> Merge
                             </Button>
                           )}
                           {canMerge && (client as any).is_duplicate && (
