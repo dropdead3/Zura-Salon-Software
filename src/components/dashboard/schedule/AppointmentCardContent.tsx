@@ -62,6 +62,7 @@ export interface AppointmentCardContentProps {
   categoryColors: Record<string, { bg: string; text: string; abbr: string }>;
   isOverdueForCheckin?: boolean;
   showHoverPreview?: boolean;
+  showStylistBadge?: boolean;
   onClick: () => void;
 }
 
@@ -187,6 +188,7 @@ function GridContent({
   assistantNamesMap,
   serviceBands,
   duration,
+  showStylistBadge,
 }: {
   appointment: PhorestAppointment;
   size: CardSize;
@@ -195,6 +197,7 @@ function GridContent({
   assistantNamesMap?: Map<string, string[]>;
   serviceBands: any[] | null;
   duration: number;
+  showStylistBadge?: boolean;
 }) {
   if (size === 'compact') {
     return (
@@ -229,6 +232,12 @@ function GridContent({
 
       {/* Client name + phone */}
       <div className="text-sm font-medium truncate pr-20 flex items-center gap-1">
+        {showStylistBadge && appointment.stylist_profile && (
+          <StylistBadge
+            stylistProfile={appointment.stylist_profile}
+            assistantNames={assistantNamesMap?.get(appointment.id)}
+          />
+        )}
         <span className={cn('h-5 w-5 rounded-full flex items-center justify-center text-[8px] font-medium shrink-0', getAvatarColor(appointment.client_name))}>
           {getClientInitials(appointment.client_name)}
         </span>
@@ -467,6 +476,7 @@ export function AppointmentCardContent({
   categoryColors,
   isOverdueForCheckin = false,
   showHoverPreview = false,
+  showStylistBadge = false,
   onClick,
 }: AppointmentCardContentProps) {
   // ─── All hooks run unconditionally ────────────────────────
@@ -604,16 +614,6 @@ export function AppointmentCardContent({
         </div>
       )}
 
-      {/* Stylist badge */}
-      {!isCompact && appointment.stylist_profile && (
-        <div className="absolute top-0.5 right-0.5 z-10">
-          <StylistBadge
-            stylistProfile={appointment.stylist_profile}
-            assistantNames={assistantNamesMap?.get(appointment.id)}
-          />
-        </div>
-      )}
-
       <GridContent
         appointment={appointment}
         size={size}
@@ -622,6 +622,7 @@ export function AppointmentCardContent({
         assistantNamesMap={assistantNamesMap}
         serviceBands={serviceBands}
         duration={duration}
+        showStylistBadge={showStylistBadge}
       />
     </div>
   );
