@@ -612,6 +612,7 @@ export default function Schedule() {
               colorBy={preferences.color_by as 'status' | 'service' | 'stylist'}
               serviceLookup={serviceLookup}
               assistantNamesMap={assistantNamesMap}
+              assistantProfilesMap={assistantProfilesMap}
             />
           )}
           

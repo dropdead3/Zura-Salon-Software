@@ -20,6 +20,7 @@ import { APPOINTMENT_STATUS_COLORS } from '@/lib/design-tokens';
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
 import type { ServiceLookupEntry } from '@/hooks/useServiceLookup';
 import type { AssistantTimeBlock } from '@/hooks/useAssistantTimeBlocks';
+import type { AssistantProfile } from '@/hooks/useAppointmentAssistantNames';
 import { AppointmentCardContent, getCardSize } from './AppointmentCardContent';
 import { QuickBookingPopover } from './QuickBookingPopover';
 
@@ -39,6 +40,7 @@ interface WeekViewProps {
   colorBy?: 'status' | 'service' | 'stylist';
   serviceLookup?: Map<string, ServiceLookupEntry>;
   assistantNamesMap?: Map<string, string[]>;
+  assistantProfilesMap?: Map<string, AssistantProfile[]>;
   assistantTimeBlocks?: AssistantTimeBlock[];
 }
 
@@ -81,6 +83,7 @@ function WeekAppointmentCard({
   colorBy = 'service',
   serviceLookup,
   assistantNamesMap,
+  assistantProfilesMap,
 }: {
   appointment: PhorestAppointment;
   hoursStart: number;
@@ -91,6 +94,7 @@ function WeekAppointmentCard({
   colorBy?: 'status' | 'service' | 'stylist';
   serviceLookup?: Map<string, ServiceLookupEntry>;
   assistantNamesMap?: Map<string, string[]>;
+  assistantProfilesMap?: Map<string, AssistantProfile[]>;
 }) {
   const style = getEventStyle(appointment.start_time, appointment.end_time, hoursStart);
   const size = getCardSize(appointment.start_time, appointment.end_time);
@@ -110,6 +114,7 @@ function WeekAppointmentCard({
         colorBy={colorBy}
         serviceLookup={serviceLookup}
         assistantNamesMap={assistantNamesMap}
+        assistantProfilesMap={assistantProfilesMap}
         categoryColors={categoryColors}
         showHoverPreview
         showStylistBadge
@@ -137,6 +142,7 @@ export function WeekView({
   colorBy = 'service',
   serviceLookup,
   assistantNamesMap,
+  assistantProfilesMap,
   assistantTimeBlocks = [],
 }: WeekViewProps) {
   const [activeSlot, setActiveSlot] = useState<{ date: Date; time: string } | null>(null);
@@ -480,6 +486,7 @@ export function WeekView({
                       colorBy={colorBy}
                       serviceLookup={serviceLookup}
                       assistantNamesMap={assistantNamesMap}
+                      assistantProfilesMap={assistantProfilesMap}
                     />
                   ))}
 
