@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 
 export interface DashboardPageHeaderProps {
   title: string;
@@ -39,7 +40,7 @@ export function DashboardPageHeader({
         )}
 
         <div className="min-w-0">
-          <h1 className="text-xl md:text-2xl font-display truncate">{title}</h1>
+          <h1 className={cn(tokens.heading.page, 'truncate')}>{title}</h1>
           {description && <p className="text-muted-foreground text-sm">{description}</p>}
         </div>
       </div>
