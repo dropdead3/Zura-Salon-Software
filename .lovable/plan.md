@@ -1,34 +1,25 @@
 
-## Fix: Remove Reverted Hover Effects from Appointment Cards
 
-Two hover behaviors that were previously removed have reappeared on the appointment cards in the scheduler. This plan removes them again.
+## Re-add Brightness Hover Effect to Appointment Cards
 
-### Issue 1: Magnify (scale) effect on hover
+The "Background tint shift" hover effect (brightness filter) was part of the original card interaction design but got lost during the recent cleanup. This adds it back.
 
-**File:** `src/components/dashboard/schedule/AppointmentCardContent.tsx` (line 582)
+### Change
 
-The class `hover:scale-[1.01]` applies a subtle zoom on hover. This will be removed while keeping the other hover classes (`hover:shadow-md hover:z-20`) intact -- the shadow and z-index ensure the card still feels interactive without the magnify effect.
+**File:** `src/components/dashboard/schedule/AppointmentCardContent.tsx` (line 542)
 
-### Issue 2: Hover preview tooltip on appointment cards
+Add `hover:brightness-[1.08]` to the existing hover classes. This creates a subtle lightening effect on hover that signals interactivity without the magnify/scale behavior we removed.
 
-**File:** `src/components/dashboard/schedule/AppointmentCardContent.tsx` (lines 435-474, 648-653)
+Before:
+```
+'hover:shadow-md hover:z-20',
+```
 
-The `HoverPreviewWrapper` wraps cards in a Radix tooltip that shows client details on hover. This wrapper and its usage will be removed.
+After:
+```
+'hover:shadow-md hover:z-20 hover:brightness-[1.08]',
+```
 
-Additionally, the callers that pass `showHoverPreview` will be cleaned up:
+### Result
+Appointment cards will brighten slightly on hover alongside the existing shadow elevation -- no scale, no tooltip, just a clean tint shift + shadow.
 
-- `src/components/dashboard/schedule/DayView.tsx` (line 263) -- remove `showHoverPreview` prop
-- `src/components/dashboard/schedule/WeekView.tsx` (line 119) -- remove `showHoverPreview` prop
-
-### Summary of changes
-
-| File | Change |
-|------|--------|
-| `AppointmentCardContent.tsx` | Remove `hover:scale-[1.01]` from line 582 |
-| `AppointmentCardContent.tsx` | Remove `HoverPreviewWrapper` function (lines 435-474) |
-| `AppointmentCardContent.tsx` | Remove `showHoverPreview` from props interface and default |
-| `AppointmentCardContent.tsx` | Remove conditional wrapper at lines 648-653, always return `gridContent` directly |
-| `DayView.tsx` | Remove `showHoverPreview` prop (line 263) |
-| `WeekView.tsx` | Remove `showHoverPreview` prop (line 119) |
-
-The hover behavior will be: shadow elevation + z-index boost only. No scale, no tooltip.
