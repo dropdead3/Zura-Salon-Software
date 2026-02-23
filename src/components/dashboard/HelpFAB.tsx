@@ -47,7 +47,7 @@ export function HelpFAB() {
   if (isSchedulePage) {
     return (
       <motion.div
-        className="fixed bottom-20 right-6 z-50"
+        className="fixed bottom-4 right-4 z-50"
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: 'spring', stiffness: 260, damping: 20, delay: 0.5 }}
