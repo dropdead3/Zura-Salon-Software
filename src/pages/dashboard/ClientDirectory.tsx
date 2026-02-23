@@ -106,6 +106,11 @@ export default function ClientDirectory() {
     setCurrentPage(1);
   }, [searchQuery, activeTab, selectedLocation, selectedStylist, selectedSource, selectedLetter, sortField, sortDirection]);
 
+  // Reset alphabet filter when switching tabs to prevent stale filters hiding results
+  useEffect(() => {
+    setSelectedLetter('all');
+  }, [activeTab]);
+
   // Determine if user can see all clients (leadership + front desk)
   const canViewAllClients = roles.some(role => 
     ['admin', 'manager', 'super_admin', 'receptionist'].includes(role)
@@ -708,7 +713,7 @@ export default function ClientDirectory() {
           <CardHeader className="pb-0">
             <div className="flex items-center justify-between">
               <CardTitle className="font-display text-lg">
-                {filteredClients.length} {activeTab === 'all' ? 'Clients' : activeTab === 'vip' ? 'VIP Clients' : activeTab === 'at-risk' ? 'At-Risk Clients' : 'New Clients'}
+                {filteredClients.length} {activeTab === 'all' ? 'Clients' : activeTab === 'vip' ? 'VIP Clients' : activeTab === 'at-risk' ? 'At-Risk Clients' : activeTab === 'new' ? 'New Clients' : activeTab === 'duplicates' ? 'Duplicate Clients' : activeTab === 'banned' ? 'Banned Clients' : activeTab === 'archived' ? 'Archived Clients' : 'Clients'}
                 {selectedLocation !== 'all' && (
                   <Badge variant="outline" className="ml-2 font-sans font-normal">
                     <MapPin className="w-3 h-3 mr-1" />
