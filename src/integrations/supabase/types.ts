@@ -4371,6 +4371,58 @@ export type Database = {
           },
         ]
       }
+      duplicate_dismissals: {
+        Row: {
+          client_a_id: string
+          client_b_id: string
+          dismissed_at: string
+          dismissed_by: string | null
+          id: string
+          organization_id: string
+          reason: string | null
+        }
+        Insert: {
+          client_a_id: string
+          client_b_id: string
+          dismissed_at?: string
+          dismissed_by?: string | null
+          id?: string
+          organization_id: string
+          reason?: string | null
+        }
+        Update: {
+          client_a_id?: string
+          client_b_id?: string
+          dismissed_at?: string
+          dismissed_by?: string | null
+          id?: string
+          organization_id?: string
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "duplicate_dismissals_client_a_id_fkey"
+            columns: ["client_a_id"]
+            isOneToOne: false
+            referencedRelation: "phorest_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "duplicate_dismissals_client_b_id_fkey"
+            columns: ["client_b_id"]
+            isOneToOne: false
+            referencedRelation: "phorest_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "duplicate_dismissals_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       edge_function_logs: {
         Row: {
           completed_at: string | null

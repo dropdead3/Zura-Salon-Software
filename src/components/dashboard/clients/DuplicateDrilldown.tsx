@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Loader2, GitMerge, Phone, Mail, User, ArrowRight, Calendar, DollarSign } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Loader2, GitMerge, Phone, Mail, User, ArrowRight, Calendar, DollarSign, UserX, Users, Home } from 'lucide-react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { cn } from '@/lib/utils';
@@ -14,6 +16,8 @@ interface DuplicateDrilldownProps {
   duplicateReasons: string[];
   onViewProfile: (client: any) => void;
   onMerge: (duplicateId: string, canonicalId: string) => void;
+  onDismiss?: (clientId: string, canonicalId: string, reason: string) => void;
+  isDismissing?: boolean;
 }
 
 function normalizePhone(phone: string | null | undefined): string {
@@ -21,9 +25,16 @@ function normalizePhone(phone: string | null | undefined): string {
   return phone.replace(/\D/g, '');
 }
 
-export function DuplicateDrilldown({ client, canonicalClientId, duplicateReasons, onViewProfile, onMerge }: DuplicateDrilldownProps) {
+const DISMISS_REASONS = [
+  { value: 'family', label: 'Family Members', icon: Users },
+  { value: 'household', label: 'Same Household', icon: Home },
+  { value: 'other', label: 'Other', icon: UserX },
+] as const;
+
+export function DuplicateDrilldown({ client, canonicalClientId, duplicateReasons, onViewProfile, onMerge, onDismiss, isDismissing }: DuplicateDrilldownProps) {
   const { formatCurrencyWhole } = useFormatCurrency();
   const { formatDate } = useFormatDate();
+  const [reasonPopoverOpen, setReasonPopoverOpen] = useState(false);
 
   const { data: canonical, isLoading } = useQuery({
     queryKey: ['canonical-client', canonicalClientId],
@@ -65,6 +76,11 @@ export function DuplicateDrilldown({ client, canonicalClientId, duplicateReasons
     { label: 'Original Profile', data: canonical, isDuplicate: false },
   ];
 
+  const handleDismissWithReason = (reason: string) => {
+    setReasonPopoverOpen(false);
+    onDismiss?.(client.id, canonicalClientId, reason);
+  };
+
   return (
     <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4 space-y-3 animate-in slide-in-from-top-2 duration-200">
       {/* Header */}
@@ -92,16 +108,47 @@ export function DuplicateDrilldown({ client, canonicalClientId, duplicateReasons
             )}
           </div>
         </div>
-        <Button
-          size="sm"
-          className="gap-1.5 h-7 text-xs"
-          onClick={(e) => {
-            e.stopPropagation();
-            onMerge(client.id, canonicalClientId);
-          }}
-        >
-          <GitMerge className="w-3 h-3" /> Merge Profiles
-        </Button>
+        <div className="flex items-center gap-2">
+          {onDismiss && (
+            <Popover open={reasonPopoverOpen} onOpenChange={setReasonPopoverOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5 h-7 text-xs"
+                  disabled={isDismissing}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {isDismissing ? <Loader2 className="w-3 h-3 animate-spin" /> : <UserX className="w-3 h-3" />}
+                  Not a Duplicate
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-48 p-2" align="end" onClick={(e) => e.stopPropagation()}>
+                <p className="text-xs font-medium text-muted-foreground mb-2 px-2">Why not a duplicate?</p>
+                {DISMISS_REASONS.map(({ value, label, icon: Icon }) => (
+                  <button
+                    key={value}
+                    className="flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded-md hover:bg-muted transition-colors text-left"
+                    onClick={() => handleDismissWithReason(value)}
+                  >
+                    <Icon className="w-3.5 h-3.5 text-muted-foreground" />
+                    {label}
+                  </button>
+                ))}
+              </PopoverContent>
+            </Popover>
+          )}
+          <Button
+            size="sm"
+            className="gap-1.5 h-7 text-xs"
+            onClick={(e) => {
+              e.stopPropagation();
+              onMerge(client.id, canonicalClientId);
+            }}
+          >
+            <GitMerge className="w-3 h-3" /> Merge Profiles
+          </Button>
+        </div>
       </div>
 
       {/* Side-by-side comparison */}

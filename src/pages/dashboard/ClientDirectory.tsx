@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
@@ -33,9 +33,10 @@ import {
 } from 'lucide-react';
 import { BannedClientBadge } from '@/components/dashboard/clients/BannedClientBadge';
 import { DuplicateDrilldown } from '@/components/dashboard/clients/DuplicateDrilldown';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { differenceInDays } from 'date-fns';
+import { toast } from 'sonner';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { cn } from '@/lib/utils';
@@ -83,8 +84,82 @@ export default function ClientDirectory() {
   const [selectedForMerge, setSelectedForMerge] = useState<Set<string>>(new Set());
   const [showMerged, setShowMerged] = useState(false);
   const [expandedDuplicateId, setExpandedDuplicateId] = useState<string | null>(null);
+  const [isDismissing, setIsDismissing] = useState(false);
+  const queryClient = useQueryClient();
 
   const canMerge = roles.some(role => ['admin', 'manager', 'super_admin'].includes(role));
+
+  // Dismiss a duplicate pair as "not a duplicate"
+  const handleDismissDuplicate = useCallback(async (clientId: string, canonicalId: string, reason: string) => {
+    setIsDismissing(true);
+    try {
+      // Sort IDs so smaller UUID is always client_a_id
+      const [clientA, clientB] = clientId < canonicalId ? [clientId, canonicalId] : [canonicalId, clientId];
+
+      // Get the organization_id from the client record
+      const { data: clientRecord } = await supabase
+        .from('phorest_clients')
+        .select('organization_id' as any)
+        .eq('id', clientId)
+        .single();
+      const orgId = (clientRecord as any)?.organization_id;
+      if (!orgId) throw new Error('Organization not found');
+
+      // Insert dismissal record
+      const { data: dismissal, error: dismissError } = await supabase
+        .from('duplicate_dismissals' as any)
+        .insert({
+          organization_id: orgId,
+          client_a_id: clientA,
+          client_b_id: clientB,
+          dismissed_by: user?.id,
+          reason,
+        } as any)
+        .select('id')
+        .single();
+
+      if (dismissError) throw dismissError;
+
+      // Clear the is_duplicate flag on the flagged client
+      await supabase
+        .from('phorest_clients')
+        .update({ is_duplicate: false, canonical_client_id: null } as any)
+        .eq('id', clientId);
+
+      // Collapse the drilldown
+      setExpandedDuplicateId(null);
+
+      // Refresh the client list
+      queryClient.invalidateQueries({ queryKey: ['client-directory'] });
+
+      // Show undo toast
+      toast('Marked as not a duplicate', {
+        action: {
+          label: 'Undo',
+          onClick: async () => {
+            await supabase
+              .from('duplicate_dismissals' as any)
+              .delete()
+              .eq('id', (dismissal as any).id);
+
+            await supabase
+              .from('phorest_clients')
+              .update({ is_duplicate: true, canonical_client_id: canonicalId } as any)
+              .eq('id', clientId);
+
+            queryClient.invalidateQueries({ queryKey: ['client-directory'] });
+            toast('Dismissal undone');
+          },
+        },
+        duration: 6000,
+      });
+    } catch (err) {
+      console.error('Failed to dismiss duplicate:', err);
+      toast.error('Failed to dismiss duplicate');
+    } finally {
+      setIsDismissing(false);
+    }
+  }, [user?.id, queryClient]);
 
   const toggleMergeSelection = (clientId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -1030,6 +1105,8 @@ export default function ClientDirectory() {
                             onMerge={(duplicateId, canonicalId) => {
                               navigate(`/dashboard/admin/merge-clients?clientIds=${duplicateId},${canonicalId}`);
                             }}
+                            onDismiss={canMerge ? handleDismissDuplicate : undefined}
+                            isDismissing={isDismissing}
                           />
                         </div>
                       )}
