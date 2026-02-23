@@ -539,7 +539,7 @@ export function AppointmentCardContent({
     <div
       className={cn(
         'h-full w-full rounded-lg cursor-pointer transition-all duration-200 ease-out overflow-hidden group',
-        'hover:shadow-md hover:z-20',
+        'hover:shadow-md hover:z-20 hover:brightness-[1.08]',
         !displayGradient && 'border-l-4',
         !useCategoryColor && !displayGradient && statusColors.bg,
         !useCategoryColor && !displayGradient && statusColors.border,
