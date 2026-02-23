@@ -185,7 +185,7 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
 
-  const COL_COUNT = 12;
+  const COL_COUNT = 13;
 
   const allSelected = appointments.length > 0 && selectedIds.size === appointments.length;
   const someSelected = selectedIds.size > 0 && selectedIds.size < appointments.length;
@@ -307,6 +307,7 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
               <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden lg:table-cell')}>Price</TableHead>
               <TableHead className={cn(tokens.table.columnHeader, 'hidden 2xl:table-cell')}>Created</TableHead>
               <TableHead className={cn(tokens.table.columnHeader, 'hidden 2xl:table-cell')}>Created By</TableHead>
+              <TableHead className="w-8" />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -324,7 +325,8 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
                   <TableCell><Skeleton className="h-5 w-full" /></TableCell>
                   <TableCell className="hidden lg:table-cell"><Skeleton className="h-5 w-full" /></TableCell>
                   <TableCell className="hidden 2xl:table-cell"><Skeleton className="h-5 w-full" /></TableCell>
-                  <TableCell className="hidden 2xl:table-cell"><Skeleton className="h-5 w-full" /></TableCell>
+                   <TableCell className="hidden 2xl:table-cell"><Skeleton className="h-5 w-full" /></TableCell>
+                   <TableCell className="w-8" />
                 </TableRow>
               ))
             ) : appointments.length === 0 ? (
@@ -343,7 +345,7 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
                 return (
                   <TableRow
                     key={appt.id}
-                    className={cn('cursor-pointer', isSelected && 'bg-muted/50')}
+                    className={cn('cursor-pointer group hover:bg-muted/40 transition-colors', isSelected && 'bg-muted/50')}
                     onClick={() => setSelectedAppt(appt)}
                   >
                     <TableCell className="w-10 pr-0" onClick={(e) => e.stopPropagation()}>
@@ -383,6 +385,9 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
                       {formatCreatedAt(appt.created_at)}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground hidden 2xl:table-cell">{appt.created_by_name || '—'}</TableCell>
+                    <TableCell className="w-8 pr-2">
+                      <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </TableCell>
                   </TableRow>
                 );
               })
