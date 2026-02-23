@@ -1,85 +1,39 @@
 
 
-# Redesigned Duplicates Tab: Paired Card Layout
+# Add "View in Client Directory" Link to Appointment Detail Panel
 
-## Problem
+## What Changes
 
-The current Duplicates tab shows duplicates as a flat list of individual rows. To see which records match and why, you have to click a small badge to expand a drilldown panel. This makes it hard to quickly scan and resolve duplicates.
+Add a navigation link at the bottom of the **Client Contact** section in the Appointment Detail Panel. This link will navigate the user to the Client Directory page, pre-selecting the client record.
 
-## Solution
+## Where It Goes
 
-Replace the flat list rendering **only when `activeTab === 'duplicates'`** with a **grouped paired-card layout**. Each duplicate pair is displayed as a single card with both profiles side-by-side, the match reason prominently shown, and action buttons (Merge / Not a Duplicate) directly visible -- no clicking required to understand what is going on.
+In `src/components/dashboard/schedule/AppointmentDetailSheet.tsx`, after the existing contact info (phone, email) and before the recurrence section, a small link reading **"View in Client Directory"** with an ExternalLink icon will be added. It uses `react-router-dom`'s `useNavigate` to route to `/dashboard/admin/clients?clientId={phorest_client_id}`.
 
-## Visual Layout
-
-```text
-+---------------------------------------------------------------+
-| MATCHING: Same Phone (480-555-1234)                           |
-+-----------------------------+---------------------------------+
-|  [Avatar] Addey Lindsey    |  [Avatar] Addey X               |
-|  addey@email.com           |  addeyx@email.com               |
-|  480-555-1234  [match]     |  480-555-1234  [match]          |
-|  12 visits  |  $450        |  0 visits  |  $0                |
-+-----------------------------+---------------------------------+
-|        [ Not a Duplicate ]          [ Merge Profiles ]        |
-+---------------------------------------------------------------+
-```
+The link will only appear for non-walk-in appointments (where `phorest_client_id` exists).
 
 ## Technical Details
 
-### 1. New component: `src/components/dashboard/clients/DuplicatePairCard.tsx`
+### File: `src/components/dashboard/schedule/AppointmentDetailSheet.tsx`
 
-A self-contained card component that receives a duplicate client and its canonical client, shows them side-by-side with match highlights, and provides Merge / Dismiss actions inline.
+1. Import `useNavigate` from `react-router-dom` (if not already imported)
+2. After the existing contact info block (around line 971, after the closing `</div>` of the Client Contact section), add a small link:
 
-- Two-column grid layout (responsive: stacks on mobile)
-- Match reason badges prominently displayed in the card header
-- Matching fields (phone, email) highlighted in amber
-- Stats row (visits, spend, last visit) under each profile
-- Footer with "Not a Duplicate" (with reason popover) and "Merge Profiles" buttons
-- Clicking either profile opens the ClientDetailSheet
-
-### 2. Modified: `src/pages/dashboard/ClientDirectory.tsx`
-
-When `activeTab === 'duplicates'`, instead of rendering the standard flat row list:
-
-- Group `processedClients` into pairs: each duplicate + its canonical forms one group
-- Deduplicate pairs so the same pair does not appear twice (when both sides are in the list)
-- Render each pair using `DuplicatePairCard` instead of the standard row
-- Pass existing `handleDismissDuplicate` and merge navigation handlers through
-- Keep pagination, search, and sorting functional
-
-### 3. Pair grouping logic (in `useMemo`)
-
-```typescript
-// Group duplicates into pairs for the Duplicates tab
-const duplicatePairs = useMemo(() => {
-  if (activeTab !== 'duplicates') return [];
-  const seen = new Set<string>();
-  const pairs: Array<{ duplicate: Client; canonical: Client; reasons: string[] }> = [];
-  
-  for (const client of filteredClients) {
-    if (client.is_duplicate && client.canonical_client_id) {
-      const pairKey = [client.id, client.canonical_client_id].sort().join('-');
-      if (seen.has(pairKey)) continue;
-      seen.add(pairKey);
-      const canonical = processedClients.find(c => c.id === client.canonical_client_id);
-      if (canonical) {
-        pairs.push({ duplicate: client, canonical, reasons: client.duplicateReasons });
-      }
-    }
-  }
-  return pairs;
-}, [activeTab, filteredClients, processedClients]);
+```tsx
+{!isWalkIn && appointment.phorest_client_id && (
+  <button
+    onClick={() => {
+      handleClose();
+      navigate(`/dashboard/admin/clients?clientId=${appointment.phorest_client_id}`);
+    }}
+    className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors mt-1"
+  >
+    <ExternalLink className="h-3 w-3" />
+    View in Client Directory
+  </button>
+)}
 ```
 
-### 4. No changes to existing drilldown
+3. The Client Directory page (`ClientDirectory.tsx`) already supports opening a client detail sheet via query params or click -- we just need to route there with the `phorest_client_id` so the user lands on the directory with the right client context.
 
-The `DuplicateDrilldown` component and its expand-on-click behavior remain available for any non-duplicates-tab context (e.g., when a duplicate badge appears in the All tab). Only the Duplicates tab gets the new paired layout.
-
-## Files Changed
-
-| File | Change |
-|------|--------|
-| `src/components/dashboard/clients/DuplicatePairCard.tsx` | New component: side-by-side paired card with match highlights and inline actions |
-| `src/pages/dashboard/ClientDirectory.tsx` | Add pair grouping logic; render `DuplicatePairCard` list when on Duplicates tab |
-
+This is a single-file, minimal change.
