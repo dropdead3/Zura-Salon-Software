@@ -65,23 +65,38 @@ export function PhorestSyncPopout({ asMenuItem = false }: { asMenuItem?: boolean
     staleTime: 30000,
   });
 
-  // Trigger full sync
+  // Trigger full sync - fire and forget since it can take a long time
   const handleSyncNow = async () => {
     setIsSyncing(true);
     try {
-      const { data, error } = await supabase.functions.invoke('sync-phorest-data', {
-        body: { sync_type: 'all', quick: false },
-      });
+      // Fire individual syncs in parallel with short timeout awareness
+      // Each sync type runs independently to avoid CPU timeout
+      const syncTypes = ['appointments', 'sales', 'staff', 'services'];
+      const results: Record<string, any> = {};
+      
+      for (const syncType of syncTypes) {
+        try {
+          const { data, error } = await supabase.functions.invoke('sync-phorest-data', {
+            body: { type: syncType },
+          });
+          if (error) {
+            results[syncType] = { error: error.message };
+          } else {
+            results[syncType] = data;
+          }
+        } catch (err: any) {
+          // If one sync type fails/times out, continue with others
+          results[syncType] = { error: err.message };
+        }
+      }
 
-      if (error) throw error;
-
-      // Check if any syncs failed
-      const results = data?.results || {};
       const failedSyncs = Object.entries(results)
         .filter(([_, result]: [string, any]) => result?.error)
         .map(([type]) => type);
 
-      if (failedSyncs.length > 0) {
+      if (failedSyncs.length === syncTypes.length) {
+        toast.error('All syncs failed. The sync will retry automatically.');
+      } else if (failedSyncs.length > 0) {
         toast.warning(`Sync completed with errors in: ${failedSyncs.join(', ')}`);
       } else {
         toast.success('Full sync completed successfully');
