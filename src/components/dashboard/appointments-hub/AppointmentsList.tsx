@@ -224,7 +224,7 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
                   >
                     <TableCell className="text-sm">{appt.appointment_date}</TableCell>
                     <TableCell className="text-sm">{formatTime12h(appt.start_time)}</TableCell>
-                    <TableCell className="text-sm font-medium">{appt.client_name || appt.phorest_clients?.name || 'Walk-in'}</TableCell>
+                    <TableCell className="text-sm font-medium">{appt.client_name || 'Walk-in'}</TableCell>
                     <TableCell className="text-sm text-muted-foreground truncate max-w-[200px]">{appt.service_name || '—'}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">{appt.stylist_name || '—'}</TableCell>
                     <TableCell>

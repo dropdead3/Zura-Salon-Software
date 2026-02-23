@@ -21,7 +21,7 @@ export function useAppointmentsHub(filters: HubFilters) {
     queryFn: async () => {
       let query = supabase
         .from('phorest_appointments')
-        .select('*, phorest_clients!phorest_appointments_phorest_client_id_fkey(name, email, phone)', { count: 'exact' });
+        .select('*', { count: 'exact' });
 
       if (filters.locationId) {
         query = query.eq('location_id', filters.locationId);
