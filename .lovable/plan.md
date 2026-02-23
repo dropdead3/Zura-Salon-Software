@@ -1,69 +1,56 @@
 
 
-## Add Cancel Appointment Capabilities to Appointments Hub
+## Add Upcoming Appointments Card to Client Detail Sheet
 
-### Current State
+### What This Adds
 
-The **Schedule page's** `AppointmentDetailSheet` already has robust cancellation:
-- Single cancel with AlertDialog + reason textarea
-- Cancel all future recurring with AlertDialog + reason textarea  
-- Audit log firing on cancel
-- Proper confirmation flow
+A dedicated "Upcoming Appointments" card positioned above the tabs section in the Client Detail Sheet. It filters the already-fetched visit history data to show only future-dated, non-cancelled appointments, giving operators immediate visibility into what is scheduled for this client.
 
-The **Appointments Hub** has zero cancellation capability:
-- The detail drawer (`AppointmentDetailDrawer`) has no cancel button
-- The batch bar (`AppointmentBatchBar`) has "cancelled" buried in the generic status dropdown but no dedicated cancel actions with confirmation
-- Neither surface has a "Cancel All Future" option
+### Implementation
 
-### Changes
+#### 1. Filter Future Appointments from Existing Data
 
-#### 1. AppointmentDetailDrawer.tsx -- Add Cancel Button
+No new query needed. The `useClientVisitHistory` hook already fetches all appointments sorted by date descending. We filter client-side:
 
-Add a "Cancel Appointment" button at the bottom of the Summary tab (after the Communications placeholder), visible only when status is not already `cancelled` or `completed`:
+```typescript
+const today = new Date().toISOString().split('T')[0];
+const upcomingVisits = (visitHistory || []).filter(
+  v => v.appointment_date >= today && v.status !== 'cancelled'
+);
+```
 
-- Button opens an `AlertDialog` with:
-  - Title: "Cancel this appointment?"
-  - Description: "This will cancel {clientName}'s appointment on {date}. The client may need to be notified."
-  - Optional reason `Textarea`
-  - "Go Back" and "Cancel Appointment" actions
-- On confirm: updates the correct table (`phorest_appointments` or `appointments`) based on `_source` tag
-- Invalidates `appointments-hub` query cache
-- Shows success toast, closes drawer
-- Destructive styling on confirm button
+#### 2. Add Upcoming Appointments Card (ClientDetailSheet.tsx)
 
-#### 2. AppointmentBatchBar.tsx -- Add Dedicated Cancel Actions
+Insert a new card between the "View All Appointments" button (line 1171) and the Tabs section (line 1185). Only renders when `upcomingVisits.length > 0`:
 
-Add two new buttons to the batch bar (replacing the buried dropdown option):
+- Card header: Calendar icon + "Upcoming Appointments" title (font-display, tokens.card.title)
+- Each appointment rendered as a compact row showing:
+  - Date (formatted via `formatDate`)
+  - Time (12h format)
+  - Service name
+  - Stylist name (if available)
+  - Status badge
+- Card footer: count label ("2 upcoming") for quick scanning
+- Each row is clickable and navigates to the Appointments Hub filtered to that client:
+  ```
+  /dashboard/appointments-hub?tab=appointments&search={clientName}
+  ```
 
-**"Cancel Selected"** button:
-- Destructive outline styling with `XCircle` icon
-- Opens AlertDialog: "Cancel {N} selected appointments?"
-- Description: "This will cancel all selected appointments. Cancelled appointments cannot be automatically restored."
-- On confirm: reuses existing `handleBulkStatusUpdate('cancelled')` logic
-- Clears selection after success
+#### 3. Visual Treatment
 
-**"Cancel All Future"** button:
-- Only visible when at least one selected appointment has `appointment_date >= today`
-- Opens AlertDialog showing count of future appointments
-- Filters `selectedAppointments` to only those with future dates before updating
-- Updates only the future subset, not past appointments
-
-#### 3. Remove "cancelled" from generic status dropdown
-
-Since cancellation now has its own dedicated buttons with confirmation dialogs, remove the `cancelled` option from the `Select` dropdown to prevent accidental cancellation without confirmation.
-
-### Technical Details
-
-- No database changes needed -- uses existing `phorest_appointments` and `appointments` tables
-- `AlertDialog` imported from `@/components/ui/alert-dialog` (already in project)
-- Date filtering uses simple ISO string comparison: `appointment.appointment_date >= new Date().toISOString().split('T')[0]`
-- Copy follows governance tone -- advisory, no shame language
-- All buttons use `tokens.button.inline` sizing consistent with existing batch bar
-- Font weight stays at `font-medium` maximum per typography rules
-- `XCircle` icon from lucide-react for cancel actions
+- Same glass card style as other cards: `bg-card/80 backdrop-blur-xl border-border/60`
+- Compact rows with `space-y-2` spacing
+- Calendar icon in `w-10 h-10 bg-muted rounded-lg` container per card header canon
+- Status uses existing `STATUS_CONFIG` color mapping from `VisitHistoryTimeline`
+- Font weight stays at `font-medium` maximum
 
 ### Files Modified
 
-- `src/components/dashboard/appointments-hub/AppointmentDetailDrawer.tsx` -- add cancel button + AlertDialog
-- `src/components/dashboard/appointments-hub/AppointmentBatchBar.tsx` -- add Cancel Selected, Cancel All Future buttons + AlertDialogs, remove cancelled from dropdown
+- `src/components/dashboard/ClientDetailSheet.tsx` -- add upcoming appointments card between "View All Appointments" button and tabs
 
+### What Does NOT Change
+
+- No new hooks or queries (reuses existing `visitHistory` data)
+- No database changes
+- Existing "View All Appointments" button remains
+- Visit History tab remains unchanged
