@@ -241,7 +241,7 @@ export function ScheduleLegend() {
       </PopoverTrigger>
       <PopoverContent
         side="top"
-        align="start"
+        align="end"
         sideOffset={8}
         className="w-80 p-0 rounded-xl overflow-hidden"
       >
