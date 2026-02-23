@@ -1043,7 +1043,7 @@ export function AppointmentDetailSheet({
                           <button
                             onClick={() => {
                               handleClose();
-                              navigate(`/dashboard/admin/clients?clientId=${resolvedClientId}`);
+                              navigate(`/dashboard/clients?clientId=${resolvedClientId}`);
                             }}
                             className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors mt-1"
                           >
