@@ -1,72 +1,82 @@
 
+## Enrich Appointments Hub with Full Contact and Booking Metadata
 
-## Fix: Resolve Client Names from Linked Tables
+### What Changes
 
-### Problem
+The Appointments Hub table and detail drawer will be expanded to show significantly more data about each appointment, including client contact info, booking provenance, and confirmation details.
 
-Almost all appointments in both tables have `client_name` as NULL:
-- **phorest_appointments**: 525 of 530 have NULL `client_name`. The actual names are in the `phorest_clients` table, linked via `phorest_client_id`.
-- **local appointments**: All 127 have NULL `client_name`. They use a `client_id` foreign key instead.
+### 1. Expand Data Enrichment in useAppointmentsHub.ts
 
-Since the hub only displays `appt.client_name || 'Walk-in'`, every row shows "Walk-in."
+The client name resolution query already fetches from `phorest_clients` -- we will expand it to also pull `email`, `phone`, and other contact fields. We will also resolve `created_by` user IDs to names, and resolve `location_id` to location names.
 
-### Fix
+**Updated phorest_clients fetch** (line 93):
+- Change `.select('phorest_client_id, name')` to `.select('phorest_client_id, name, email, phone')`
+- Build a full `clientInfoMap` instead of just `clientNameMap` so we can attach email and phone
 
-**File:** `src/hooks/useAppointmentsHub.ts`
+**Resolve created_by names**: Collect all unique `created_by` user IDs from paged results, batch-query `employee_profiles` to get names, and attach as `created_by_name`.
 
-After paginating results, resolve client names from `phorest_clients` for phorest appointments that have a `phorest_client_id` but no `client_name`. This follows the same pattern already used for resolving stylist names.
+**Resolve location names**: Build a location map from `location_id` values present in paged results by querying the `locations` table, attach as `location_name`.
 
-#### Steps:
+**Enrichment output** will add these fields to each appointment:
+- `client_email` -- from `phorest_clients.email` or local `appointments.client_email`
+- `client_phone` -- already exists on `phorest_appointments`, fallback from `phorest_clients.phone`
+- `created_by_name` -- resolved from `employee_profiles` via `created_by` field
+- `location_name` -- resolved from `locations` table
+- `created_at` -- already present from both tables (no change needed)
 
-1. Collect all `phorest_client_id` values from paged phorest appointments where `client_name` is null
-2. Batch-query `phorest_clients` for those IDs to get `name`
-3. Merge the resolved names into the enriched results
+### 2. Add Columns to the Table (AppointmentsList.tsx)
 
-### Technical Detail
+Add new visible columns to the table:
 
-Add a client name resolution step between the pagination (line 77) and the stylist resolution (line 80):
+| Column | Source | Notes |
+|--------|--------|-------|
+| Phone | `client_phone` | Formatted for display |
+| Email | `client_email` | Truncated with tooltip if long |
+| Created | `created_at` | Formatted as "Feb 22, 2:15 PM" |
+| Created By | `created_by_name` | Falls back to "System" or "Phorest Sync" based on `_source` |
 
-```typescript
-// Resolve client names for phorest appointments missing client_name
-const missingClientIds = [
-  ...new Set(
-    paged
-      .filter((a: any) => !a.client_name && a.phorest_client_id)
-      .map((a: any) => a.phorest_client_id)
-  ),
-] as string[];
+The table will go from 7 columns to 11. To manage width, the Email column will truncate with `max-w-[160px]`.
 
-let clientNameMap: Record<string, string> = {};
-if (missingClientIds.length > 0) {
-  const { data: clients } = await supabase
-    .from('phorest_clients')
-    .select('phorest_client_id, name')
-    .in('phorest_client_id', missingClientIds);
-  for (const c of clients || []) {
-    if (c.phorest_client_id && c.name) {
-      clientNameMap[c.phorest_client_id] = c.name;
-    }
-  }
-}
-```
+Update CSV export headers to include the new fields.
 
-Then in the enrichment step, add the fallback:
+### 3. Expand the Detail Drawer (AppointmentDetailDrawer.tsx)
 
-```typescript
-const enriched = paged.map((a: any) => ({
-  ...a,
-  client_name: a.client_name || clientNameMap[a.phorest_client_id] || null,
-  stylist_name: stylistMap[a.stylist_user_id] || a.staff_name || null,
-}));
-```
+The Summary tab will be restructured into clear sections:
 
-### Files Changed
+**Client Info Section:**
+- Client name (existing)
+- Phone number (clickable `tel:` link)
+- Email (clickable `mailto:` link)
 
-| File | Change |
-|------|--------|
-| `src/hooks/useAppointmentsHub.ts` | Add client name resolution from `phorest_clients` table |
+**Appointment Details Section** (existing, enhanced):
+- Date, time, stylist, location (existing)
+- Price and tip (existing)
 
-### Impact
+**Booking Provenance Section** (new):
+- "Created at" timestamp with full date/time
+- "Created by" name (or "Phorest Sync" / "Online Booking" based on source)
+- "Source" badge showing `_source` (phorest vs local) and `import_source` if available
+- Payment method (if set)
 
-All 525+ appointments with linked `phorest_client_id` will now display the correct client name (e.g., "Barbara Bloom") instead of "Walk-in." Only truly anonymous appointments (no client_id and no client_name) will show "Walk-in."
+**Confirmation Details Section** (new):
+- Status with badge (existing, moved here)
+- Confirmation method -- derived from audit log if available, otherwise shows "Pending" or the status change context
+- "Confirmed at" timestamp -- from audit log `status_changed` event where new status = confirmed
 
+For confirmation details, we will query the `appointment_audit_log` for the specific appointment in the drawer (already done via `AppointmentAuditTimeline`), but we will also extract the confirmation event specifically to show it inline in the summary.
+
+### 4. Add Confirmation Metadata Hook
+
+Create a small helper within the drawer that queries `appointment_audit_log` for the `status_changed` event where `new_value.status = 'confirmed'` to extract:
+- When confirmed (`created_at` of that audit entry)
+- Who confirmed it (`actor_name`)
+- This serves as the "method of confirmation" -- if `actor_name` is "System" it was auto-confirmed, if it is a person's name it was manual confirmation
+
+### Technical Details
+
+**Files modified:**
+- `src/hooks/useAppointmentsHub.ts` -- Expand client info resolution, add created_by and location name resolution
+- `src/components/dashboard/appointments-hub/AppointmentsList.tsx` -- Add Phone, Email, Created, Created By columns; update CSV export
+- `src/components/dashboard/appointments-hub/AppointmentDetailDrawer.tsx` -- Add Client Info section with phone/email, Booking Provenance section, Confirmation Details section with audit log lookup
+
+**No database changes needed** -- all required data already exists in `phorest_appointments`, `appointments`, `phorest_clients`, `employee_profiles`, `locations`, and `appointment_audit_log` tables.
