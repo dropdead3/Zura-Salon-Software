@@ -200,14 +200,14 @@ export const APPOINTMENT_STATUS_COLORS: Record<AppointmentStatusKey, { bg: strin
 };
 
 /** Agenda / badge / pastel variant colors */
-export const APPOINTMENT_STATUS_BADGE: Record<AppointmentStatusKey, { bg: string; text: string; label: string }> = {
-  pending:    { bg: 'bg-amber-100 dark:bg-amber-900/30',  text: 'text-amber-800 dark:text-amber-300',  label: 'Pending' },
-  booked:     { bg: 'bg-slate-100 dark:bg-slate-800/30',  text: 'text-slate-700 dark:text-slate-300',  label: 'Booked' },
-  confirmed:  { bg: 'bg-green-100 dark:bg-green-900/30',  text: 'text-green-800 dark:text-green-300',  label: 'Confirmed' },
-  checked_in: { bg: 'bg-blue-100 dark:bg-blue-900/30',   text: 'text-blue-800 dark:text-blue-300',   label: 'Checked In' },
-  completed:  { bg: 'bg-purple-100 dark:bg-purple-900/30', text: 'text-purple-800 dark:text-purple-300', label: 'Completed' },
-  cancelled:  { bg: 'bg-gray-100 dark:bg-gray-800/30',   text: 'text-gray-600 dark:text-gray-400',   label: 'Cancelled' },
-  no_show:    { bg: 'bg-red-100 dark:bg-red-900/30',    text: 'text-red-800 dark:text-red-300',    label: 'No Show' },
+export const APPOINTMENT_STATUS_BADGE: Record<AppointmentStatusKey, { bg: string; text: string; border: string; label: string }> = {
+  pending:    { bg: 'bg-amber-100 dark:bg-amber-900/30',  text: 'text-amber-800 dark:text-amber-300',  border: 'border-amber-800/30 dark:border-amber-300/30',  label: 'Pending' },
+  booked:     { bg: 'bg-slate-100 dark:bg-slate-800/30',  text: 'text-slate-700 dark:text-slate-300',  border: 'border-slate-700/30 dark:border-slate-300/30',  label: 'Booked' },
+  confirmed:  { bg: 'bg-green-100 dark:bg-green-900/30',  text: 'text-green-800 dark:text-green-300',  border: 'border-green-800/30 dark:border-green-300/30',  label: 'Confirmed' },
+  checked_in: { bg: 'bg-blue-100 dark:bg-blue-900/30',   text: 'text-blue-800 dark:text-blue-300',   border: 'border-blue-800/30 dark:border-blue-300/30',   label: 'Checked In' },
+  completed:  { bg: 'bg-purple-100 dark:bg-purple-900/30', text: 'text-purple-800 dark:text-purple-300', border: 'border-purple-800/30 dark:border-purple-300/30', label: 'Completed' },
+  cancelled:  { bg: 'bg-gray-100 dark:bg-gray-800/30',   text: 'text-gray-600 dark:text-gray-400',   border: 'border-gray-600/30 dark:border-gray-400/30',   label: 'Cancelled' },
+  no_show:    { bg: 'bg-red-100 dark:bg-red-900/30',    text: 'text-red-800 dark:text-red-300',    border: 'border-red-800/30 dark:border-red-300/30',    label: 'No Show' },
 };
 
 /** Full status config used by usePhorestCalendar (includes border + label) */

@@ -499,19 +499,19 @@ function AppointmentCard({
                         <Users className="h-3 w-3 opacity-60" />
                       )}
                       {isAssisting && (
-                        <span className="bg-accent/80 text-accent-foreground text-[10px] px-1.5 py-0.5 rounded-full font-medium whitespace-nowrap">AST</span>
+                        <span className="bg-accent/80 text-accent-foreground border border-accent-foreground/30 text-[10px] px-1.5 py-0.5 rounded-full font-medium whitespace-nowrap">AST</span>
                       )}
                       {appointment.is_new_client && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 font-medium whitespace-nowrap">NEW</span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-700/30 dark:border-amber-300/30 font-medium whitespace-nowrap">NEW</span>
                       )}
                       {isOverdueForCheckin && (
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-200 text-red-800 dark:bg-red-900/50 dark:text-red-300 font-medium whitespace-nowrap">
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-200 text-red-800 dark:bg-red-900/50 dark:text-red-300 border border-red-800/30 dark:border-red-300/30 font-medium whitespace-nowrap">
                           No Check-In
                         </span>
                       )}
                       <span className={cn(
-                        'text-[10px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap',
-                        badge.bg, badge.text
+                        'text-[10px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap border',
+                        badge.bg, badge.text, badge.border
                       )}>
                         {badge.label}
                       </span>
