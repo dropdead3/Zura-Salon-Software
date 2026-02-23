@@ -59,6 +59,7 @@ export interface AppointmentCardContentProps {
   colorBy?: 'status' | 'service' | 'stylist';
   serviceLookup?: Map<string, ServiceLookupEntry>;
   assistantNamesMap?: Map<string, string[]>;
+  assistantProfilesMap?: Map<string, import('@/hooks/useAppointmentAssistantNames').AssistantProfile[]>;
   categoryColors: Record<string, { bg: string; text: string; abbr: string }>;
   isOverdueForCheckin?: boolean;
   showHoverPreview?: boolean;
@@ -188,6 +189,7 @@ function GridContent({
   indicatorFlags,
   serviceLookup,
   assistantNamesMap,
+  assistantProfilesMap,
   serviceBands,
   duration,
   showStylistBadge,
@@ -199,6 +201,7 @@ function GridContent({
   indicatorFlags: IndicatorFlags;
   serviceLookup?: Map<string, ServiceLookupEntry>;
   assistantNamesMap?: Map<string, string[]>;
+  assistantProfilesMap?: Map<string, import('@/hooks/useAppointmentAssistantNames').AssistantProfile[]>;
   serviceBands: any[] | null;
   duration: number;
   showStylistBadge?: boolean;
@@ -238,6 +241,7 @@ function GridContent({
           <StylistBadge
             stylistProfile={appointment.stylist_profile}
             assistantNames={assistantNamesMap?.get(appointment.id)}
+            assistantProfiles={assistantProfilesMap?.get(appointment.id)}
           />
         )}
       </div>
@@ -481,6 +485,7 @@ export function AppointmentCardContent({
   colorBy = 'service',
   serviceLookup,
   assistantNamesMap,
+  assistantProfilesMap,
   categoryColors,
   isOverdueForCheckin = false,
   showHoverPreview = false,
@@ -630,6 +635,7 @@ export function AppointmentCardContent({
         indicatorFlags={indicatorFlags}
         serviceLookup={serviceLookup}
         assistantNamesMap={assistantNamesMap}
+        assistantProfilesMap={assistantProfilesMap}
         serviceBands={serviceBands}
         duration={duration}
         showStylistBadge={showStylistBadge}
