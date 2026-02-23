@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { createPortal } from 'react-dom';
 import { parseISO, differenceInDays } from 'date-fns';
@@ -51,7 +51,7 @@ import {
   ChevronDown, Copy, Check, CheckCircle, UserCheck, XCircle, AlertTriangle,
   MessageSquare, Lock, Trash2, Loader2, UserPlus, X, Repeat, RotateCcw,
   CreditCard, CalendarClock, RefreshCw, Star, TrendingUp, ExternalLink,
-  UserX, ArrowRightLeft,
+  UserX, ArrowRightLeft, Receipt,
 } from 'lucide-react';
 import { cn, formatPhoneDisplay } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -1336,6 +1336,12 @@ export function AppointmentDetailSheet({
                       <RefreshCw className="h-3.5 w-3.5 mr-1" /> Rebook
                     </Button>
                   )}
+                  {/* Transactions link */}
+                  <Button variant="outline" size={tokens.button.card} asChild>
+                    <Link to="/dashboard/appointments-hub">
+                      <Receipt className="h-3.5 w-3.5 mr-1" /> Transactions
+                    </Link>
+                  </Button>
                   {/* No Show (#14) */}
                   {availableTransitions.includes('no_show') && (
                     <Button variant="outline" size={tokens.button.card} className="text-destructive hover:text-destructive" onClick={() => handleStatusChange('no_show')} disabled={isUpdating}>
