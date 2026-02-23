@@ -703,6 +703,76 @@ export type Database = {
           },
         ]
       }
+      appointment_fee_charges: {
+        Row: {
+          appointment_id: string
+          charged_at: string | null
+          collected_via: string | null
+          created_at: string
+          fee_amount: number
+          fee_type: string
+          id: string
+          organization_id: string
+          policy_id: string | null
+          status: string
+          updated_at: string
+          waived_by: string | null
+          waived_reason: string | null
+        }
+        Insert: {
+          appointment_id: string
+          charged_at?: string | null
+          collected_via?: string | null
+          created_at?: string
+          fee_amount: number
+          fee_type: string
+          id?: string
+          organization_id: string
+          policy_id?: string | null
+          status?: string
+          updated_at?: string
+          waived_by?: string | null
+          waived_reason?: string | null
+        }
+        Update: {
+          appointment_id?: string
+          charged_at?: string | null
+          collected_via?: string | null
+          created_at?: string
+          fee_amount?: number
+          fee_type?: string
+          id?: string
+          organization_id?: string
+          policy_id?: string | null
+          status?: string
+          updated_at?: string
+          waived_by?: string | null
+          waived_reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_fee_charges_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "phorest_appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_fee_charges_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_fee_charges_policy_id_fkey"
+            columns: ["policy_id"]
+            isOneToOne: false
+            referencedRelation: "cancellation_fee_policies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appointment_notes: {
         Row: {
           author_id: string
@@ -2066,6 +2136,53 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      cancellation_fee_policies: {
+        Row: {
+          applies_to_new_clients_only: boolean
+          created_at: string
+          fee_amount: number
+          fee_type: string
+          id: string
+          is_active: boolean
+          min_notice_hours: number | null
+          organization_id: string
+          policy_type: string
+          updated_at: string
+        }
+        Insert: {
+          applies_to_new_clients_only?: boolean
+          created_at?: string
+          fee_amount?: number
+          fee_type?: string
+          id?: string
+          is_active?: boolean
+          min_notice_hours?: number | null
+          organization_id: string
+          policy_type: string
+          updated_at?: string
+        }
+        Update: {
+          applies_to_new_clients_only?: boolean
+          created_at?: string
+          fee_amount?: number
+          fee_type?: string
+          id?: string
+          is_active?: boolean
+          min_notice_hours?: number | null
+          organization_id?: string
+          policy_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cancellation_fee_policies_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       challenge_participants: {
         Row: {
@@ -9352,6 +9469,7 @@ export type Database = {
           notes: string | null
           original_appointment_id: string | null
           original_price: number | null
+          payment_method: string | null
           phorest_client_id: string | null
           phorest_id: string
           phorest_staff_id: string | null
@@ -9388,6 +9506,7 @@ export type Database = {
           notes?: string | null
           original_appointment_id?: string | null
           original_price?: number | null
+          payment_method?: string | null
           phorest_client_id?: string | null
           phorest_id: string
           phorest_staff_id?: string | null
@@ -9424,6 +9543,7 @@ export type Database = {
           notes?: string | null
           original_appointment_id?: string | null
           original_price?: number | null
+          payment_method?: string | null
           phorest_client_id?: string | null
           phorest_id?: string
           phorest_staff_id?: string | null
