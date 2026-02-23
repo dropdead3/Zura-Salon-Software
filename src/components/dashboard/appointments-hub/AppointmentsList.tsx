@@ -345,15 +345,20 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-10 pr-0">
-                <Checkbox
-                  checked={allSelected}
-                  ref={(el) => {
-                    if (el) (el as any).indeterminate = someSelected;
-                  }}
-                  onCheckedChange={toggleSelectAll}
-                  aria-label="Select all"
-                />
+              <TableHead className="w-[100px] pr-0">
+                <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                  <Checkbox
+                    checked={allSelected}
+                    ref={(el) => {
+                      if (el) (el as any).indeterminate = someSelected;
+                    }}
+                    onCheckedChange={toggleSelectAll}
+                    aria-label="Select all"
+                  />
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">
+                    {someSelected ? `${selectedIds.size} selected` : 'All'}
+                  </span>
+                </label>
               </TableHead>
               <TableHead className={tokens.table.columnHeader}>Date</TableHead>
               <TableHead className={cn(tokens.table.columnHeader, 'hidden md:table-cell')}>Time</TableHead>
