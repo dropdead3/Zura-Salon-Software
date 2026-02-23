@@ -1,106 +1,50 @@
 
 
-# Fix: Duplicate Clients "Lost" After Editing
+# Speed Up Client Directory Edits
 
-## Problem Summary
+## Problem
+After saving a client edit (e.g. name change), the system calls `invalidateQueries` which triggers a full refetch of **all clients** in batches of 1000 rows. For large directories, this is slow and causes a noticeable delay before the UI reflects the change.
 
-Two interconnected bugs cause both records in a duplicate pair to "disappear" after editing:
-
-1. **Stale duplicate flags**: When you edit a client's name/phone to break the duplicate match, the `is_duplicate` and `canonical_client_id` fields in the database are never re-evaluated. They persist even though the records no longer match, keeping both cards trapped in the Duplicates tab.
-
-2. **Alphabet filter not reset**: The alphabet letter filter (e.g. "E" for Eric) persists when switching tabs. After renaming "Eric Day" to "Test Test", both records now start with "T" but the filter is still stuck on "E", hiding everything.
-
-3. **Minor**: The list heading says "New Clients" for the Duplicates/Banned/Archived tabs instead of the correct label.
+The `onClientUpdated` callback we added earlier updates `selectedClient` state instantly, but the **list behind the sheet** still waits for the full refetch to complete.
 
 ## Solution
 
-### 1. Database trigger to re-evaluate duplicate status on edit
+Use **optimistic cache updates** on the `client-directory` query data. Instead of just invalidating (which triggers a network refetch), directly patch the matching record in the cached array. Then do a background refetch to stay in sync.
 
-Add a trigger on `phorest_clients` that fires after UPDATE. When `email`, `phone`, or `name` changes on a record:
-- If the record has `is_duplicate = true`, check if it still matches its canonical on `email_normalized` or `phone_normalized`. If neither matches, clear `is_duplicate` and `canonical_client_id`.
-- Also check the reverse: if the updated record is a canonical (i.e., other records point to it), clear the duplicate flags on those records if they no longer match.
+## Changes
 
-### 2. Reset alphabet filter when tab changes
+### File: `src/components/dashboard/ClientDetailSheet.tsx`
 
-Add a `useEffect` that sets `selectedLetter` back to `'all'` whenever `activeTab` changes, preventing stale letter filters from hiding results.
+**Replace `invalidateClients` with an optimistic updater:**
 
-### 3. Fix heading label
-
-Update the heading on line 711 to include cases for `'duplicates'`, `'banned'`, and `'archived'` tabs.
-
-## Technical Details
-
-### Database migration (new SQL migration)
-
-```sql
-CREATE OR REPLACE FUNCTION public.reevaluate_duplicate_status()
-  RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER
-  SET search_path TO 'public'
-AS $$
-BEGIN
-  -- Skip if no identity fields changed
-  IF OLD.email_normalized IS NOT DISTINCT FROM NEW.email_normalized
-     AND OLD.phone_normalized IS NOT DISTINCT FROM NEW.phone_normalized THEN
-    RETURN NEW;
-  END IF;
-
-  -- Case 1: This record is a duplicate -- check if it still matches its canonical
-  IF NEW.is_duplicate = true AND NEW.canonical_client_id IS NOT NULL THEN
-    PERFORM 1 FROM phorest_clients c
-    WHERE c.id = NEW.canonical_client_id
-      AND (
-        (NEW.email_normalized IS NOT NULL AND c.email_normalized = NEW.email_normalized)
-        OR
-        (NEW.phone_normalized IS NOT NULL AND c.phone_normalized = NEW.phone_normalized)
-      );
-    IF NOT FOUND THEN
-      NEW.is_duplicate := false;
-      NEW.canonical_client_id := NULL;
-    END IF;
-  END IF;
-
-  -- Case 2: This record is a canonical -- clear orphaned duplicates
-  IF NEW.is_duplicate = false THEN
-    UPDATE phorest_clients dup
-    SET is_duplicate = false, canonical_client_id = NULL
-    WHERE dup.canonical_client_id = NEW.id
-      AND dup.is_duplicate = true
-      AND NOT (
-        (dup.email_normalized IS NOT NULL AND NEW.email_normalized IS NOT NULL
-         AND dup.email_normalized = NEW.email_normalized)
-        OR
-        (dup.phone_normalized IS NOT NULL AND NEW.phone_normalized IS NOT NULL
-         AND dup.phone_normalized = NEW.phone_normalized)
-      );
-  END IF;
-
-  RETURN NEW;
-END;
-$$;
-
-CREATE TRIGGER reevaluate_duplicate_status_trigger
-  BEFORE UPDATE ON public.phorest_clients
-  FOR EACH ROW EXECUTE FUNCTION public.reevaluate_duplicate_status();
-```
-
-### Frontend changes (ClientDirectory.tsx)
-
-**Reset alphabet on tab change** -- add a useEffect:
 ```typescript
-useEffect(() => {
-  setSelectedLetter('all');
-}, [activeTab]);
+const updateClientCache = (updates: Record<string, any>) => {
+  // Optimistically patch the client in all client-directory caches
+  queryClient.setQueriesData(
+    { queryKey: ['client-directory'] },
+    (old: any[] | undefined) => {
+      if (!old || !client) return old;
+      return old.map(c => c.id === client.id ? { ...c, ...updates } : c);
+    }
+  );
+  // Background refetch for consistency (non-blocking)
+  queryClient.invalidateQueries({ queryKey: ['client-directory'] });
+  queryClient.invalidateQueries({ queryKey: ['phorest-clients'] });
+};
 ```
 
-**Fix heading label** -- update line 711 to handle all tab types:
-```typescript
-activeTab === 'all' ? 'Clients'
-  : activeTab === 'vip' ? 'VIP Clients'
-  : activeTab === 'at-risk' ? 'At-Risk Clients'
-  : activeTab === 'new' ? 'New Clients'
-  : activeTab === 'duplicates' ? 'Duplicate Clients'
-  : activeTab === 'banned' ? 'Banned Clients'
-  : activeTab === 'archived' ? 'Archived Clients'
-  : 'Clients'
-```
+Then in each mutation's `onSuccess`, replace `invalidateClients()` with `updateClientCache(updatedFields)`, passing the same fields already sent to `onClientUpdated`. This makes the list update instantly while the background refetch ensures long-term consistency.
 
+### Mutations affected (all in ClientDetailSheet.tsx):
+- `saveMutation` -- name, gender, email, phone, landline
+- `saveDatesMutation` -- birthday, client_since
+- `saveSourceMutation` -- lead_source, referred_by
+- `saveSettingsMutation` -- category, preferred_stylist_id, etc.
+- `savePromptsMutation` -- prompts/notes
+- `saveAddressMutation` -- address fields
+- `saveRemindersMutation` -- reminder preferences
+
+Each will call `updateClientCache({...fields})` instead of `invalidateClients()`.
+
+### No other files change
+The `onClientUpdated` callback for the sheet's local state continues to work as-is. This change targets the **list** cache specifically.
