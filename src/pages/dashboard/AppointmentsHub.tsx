@@ -8,6 +8,8 @@ import { HubSearchBar } from '@/components/dashboard/appointments-hub/HubSearchB
 import { AppointmentsList } from '@/components/dashboard/appointments-hub/AppointmentsList';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { PromoRedemptionList } from '@/components/dashboard/appointments-hub/PromoRedemptionList';
+import { useTransactionPromoDetails } from '@/hooks/useTransactionPromoDetails';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 
 // Lazy imports for existing transaction/gift card components
 import { TransactionList } from '@/components/dashboard/transactions/TransactionList';
@@ -43,6 +45,7 @@ function TransactionsTab({ search }: { search: string }) {
   const { data: locations = [] } = useLocations();
   const { formatCurrency } = useFormatCurrency();
   const { data: pendingRefunds = [] } = useRefundRecords({ status: 'pending' });
+  const { effectiveOrganization } = useOrganizationContext();
 
   const getDateRange = (): { startDate?: string; endDate?: string } => {
     const now = new Date();
@@ -72,6 +75,13 @@ function TransactionsTab({ search }: { search: string }) {
   };
 
   const { data: transactions = [], isLoading, refetch } = useTransactions(filters);
+
+  const dateRange = getDateRange();
+  const { data: promoRedemptions = [], isLoading: promoLoading } = useTransactionPromoDetails({
+    organizationId: effectiveOrganization?.id,
+    startDate: dateRange.startDate,
+    endDate: dateRange.endDate,
+  });
 
   // Apply client-side discounted-only filter
   const filteredTransactions = showDiscountedOnly
@@ -257,7 +267,7 @@ function TransactionsTab({ search }: { search: string }) {
       {showPromoHistory && (
         <div className="space-y-2">
           <h4 className={tokens.heading.subsection}>Promotion Redemption History</h4>
-          <PromoRedemptionList redemptions={[]} isLoading={false} />
+          <PromoRedemptionList redemptions={promoRedemptions} isLoading={promoLoading} />
         </div>
       )}
 
