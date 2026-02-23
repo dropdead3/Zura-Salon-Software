@@ -1,53 +1,41 @@
 
 
-# Late Client Detection: Red Card Styling and "No Show Yet" Badge
+# Improve Appointment Card Badge Styling
 
 ## Summary
 
-Add real-time detection for appointments where the scheduled start time has passed but the client has not checked in. These cards will get a red border/ring treatment and a warning badge reading "No Check-In" to alert staff at a glance.
+Upgrade the "No Check-In" and status badges (e.g., "Confirmed") in the top-right indicator cluster of appointment cards. The current badges are tiny (`text-[8px]`, minimal padding) and hard to read. They will be made larger, use `rounded-full` pill styling consistent with the design system, and scale responsively on smaller cards.
 
-## How It Works
-
-- An appointment is considered "overdue for check-in" when:
-  1. The viewed date is today
-  2. The current time is past the appointment's start_time
-  3. The appointment status is still `booked` or `confirmed` (not yet `checked_in`, `completed`, or `cancelled`)
-- The card receives a red ring and subtle red background tint
-- A badge reading "No Check-In" appears in the top-right indicator cluster, replacing or supplementing the normal status badge
-- Both compact and non-compact card layouts will show the indicator
-
-## Technical Details
+## Changes
 
 **File: `src/components/dashboard/schedule/DayView.tsx`**
 
-1. **Add `isOverdueForCheckin` computed boolean** (after line 240, inside `AppointmentCard`):
-   - Use `isToday(date)` check (date is not currently passed to the card -- it will need to be added as a prop or derived from the parent)
-   - Compare `parseTimeToMinutes(appointment.start_time)` against current time minutes
-   - Only applies when `appointment.status` is `booked` or `confirmed`
+### 1. "No Check-In" badge (lines 507-510)
 
-2. **Add `date` prop to `AppointmentCardProps`** (around line 195):
-   - Add `date: Date` to the interface
-   - Pass it through from the parent rendering loop
+Current: `text-[8px] px-1 py-px rounded-sm`
 
-3. **Apply red styling conditionally** (in the `className` block around line 295-309):
-   - Add `isOverdueForCheckin && 'ring-2 ring-red-500/70 ring-inset bg-red-50/30 dark:bg-red-950/20'`
+Updated to:
+- `text-[10px] px-2 py-0.5 rounded-full` for a proper pill shape
+- Stronger color contrast: `bg-red-200 text-red-800 dark:bg-red-900/50 dark:text-red-300`
+- Add `whitespace-nowrap` to prevent wrapping
 
-4. **Add "No Check-In" badge in the top-right indicator cluster** (around line 532-537, non-compact path):
-   - Before the status badge span, insert a conditional red badge:
-   ```tsx
-   {isOverdueForCheckin && (
-     <span className="text-[8px] px-1 py-px rounded-sm bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 font-medium">
-       No Check-In
-     </span>
-   )}
-   ```
+### 2. Status badge (lines 512-517, e.g., "Confirmed")
 
-5. **Add compact card indicator** (around line 482-501):
-   - Add a small `AlertTriangle` icon in the compact indicator cluster when overdue
+Current: `text-[9px] px-1.5 py-0.5 rounded-full`
 
-6. **Pass `date` prop from parent** -- update the `AppointmentCard` invocations in the render loop to include `date={date}`
+Updated to:
+- `text-[10px] px-2 py-0.5 rounded-full` -- slightly larger text and padding to match the "No Check-In" badge proportionally
+
+### 3. Other small badges in the cluster
+
+- **AST badge** (line 502): bump from `text-[8px] px-1 py-px rounded-sm` to `text-[10px] px-1.5 py-0.5 rounded-full`
+- **NEW badge** (line 505): bump from `text-[8px] px-1 py-px rounded-sm` to `text-[10px] px-1.5 py-0.5 rounded-full`
+
+### 4. Responsive behavior
+
+For compact cards (short appointments), the badges are already replaced by small icons (lines 470-475), which is the correct responsive behavior. No change needed there.
 
 | File | Change |
 |---|---|
-| `src/components/dashboard/schedule/DayView.tsx` | Add `date` prop to AppointmentCardProps, compute `isOverdueForCheckin`, apply red ring/tint styling, add "No Check-In" badge in both compact and non-compact layouts, pass `date` from parent |
+| `src/components/dashboard/schedule/DayView.tsx` | Increase badge sizes from text-[8px] to text-[10px], add rounded-full pill styling, improve padding and color contrast for "No Check-In", status, AST, and NEW badges |
 
