@@ -1,24 +1,34 @@
 
 
-## Rename Back to "Appointments & Transactions" + Fix Sidebar i18n Key
+## Add "Appointments & Transactions" Link to Schedule
 
-### Problem
-Two issues visible in the screenshot:
-1. The page and nav labels were renamed to just "Appointments" but you want "Appointments & Transactions" back.
-2. The sidebar flyout shows the raw i18n key `nav.appointments_hub` instead of the proper label, because the translation entry was never added to the locale file.
+Two link buttons that navigate to `/dashboard/appointments-hub`, giving front desk, managers, and admins quick access to transaction data, refunds, and appointment history.
 
-### Fix (3 files)
+### 1. Schedule Bottom Action Bar (`ScheduleActionBar.tsx`)
 
-**1. `src/config/dashboardNav.ts`** -- Update both label references (lines 113 and 145):
-- Change `label: 'Appointments'` to `label: 'Appointments & Transactions'` in both the main nav array and the hub quick links array.
+Add a `Receipt` icon button (from lucide-react) to the right side of the bar, just before the Schedule Legend. It will be a small pill-shaped link using `react-router-dom`'s `Link` component, styled consistently with the existing bar aesthetic:
 
-**2. `src/pages/dashboard/AppointmentsHub.tsx`** -- Update page header (line 296):
-- Change `title="Appointments"` to `title="Appointments & Transactions"`.
+- Icon-only button with a tooltip ("Appointments & Transactions")
+- Placed between the payment queue bubbles and the legend
+- Uses `Receipt` icon to match the hub's existing icon in the nav config
 
-**3. `src/locales/en.json`** -- Add the missing translation key (after line 86):
-- Add `"appointments_hub": "Appointments & Transactions"` to the `nav` section. This is what the sidebar reads via `t('nav.appointments_hub')`, and its absence caused the raw key display.
+### 2. Appointment Detail Sheet (`AppointmentDetailSheet.tsx`)
+
+Add a "View in Transactions" link button inside the detail sheet footer/action area. This lets users jump directly from a specific appointment to the full hub view:
+
+- Small outline button with `Receipt` icon + "Transactions" label
+- Links to `/dashboard/appointments-hub`
+- Positioned in the sheet's action/footer area alongside existing action buttons
 
 ### Files Changed
-- `src/config/dashboardNav.ts` (2 label updates)
-- `src/pages/dashboard/AppointmentsHub.tsx` (1 title update)
-- `src/locales/en.json` (1 new translation key)
+
+- `src/components/dashboard/schedule/ScheduleActionBar.tsx` -- Add Receipt icon link button before the legend
+- `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` -- Add "Transactions" link button in the detail sheet
+
+### Technical Details
+
+- Import `Link` from `react-router-dom` and `Receipt` from `lucide-react`
+- Bottom bar button: `Link to="/dashboard/appointments-hub"` wrapped in a `Tooltip`, styled as a ghost icon button (`h-8 w-8 rounded-full`) to match the bar's pill design
+- Detail sheet button: Small outline `Button` with `asChild` wrapping a `Link`, using `tokens.button.inline` sizing
+- No new dependencies or database changes required
+
