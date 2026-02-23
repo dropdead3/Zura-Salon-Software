@@ -1,76 +1,87 @@
 
 
-# Fix: Stale Duplicate Flags Not Cleared
+# Duplicate Dismissal: "Not a Duplicate" Workflow
 
-## Root Cause
+## Problem
 
-The `reevaluate_duplicate_status_trigger` was created **after** you already removed the phone number from "Test Test". The trigger only fires on future UPDATEs, so the existing stale flags were never cleared.
+Clients who legitimately share contact information (e.g., a parent's phone on children's accounts) are incorrectly flagged as duplicates. There is no way to dismiss a false positive -- once flagged, they stay flagged until the shared data is removed.
 
-Current state in the database:
-- **Eric Day** (cff0282d): `is_duplicate = true`, `canonical_client_id = 76cd57b1` (pointing to Test Test), phone = 14805430240
-- **Test Test** (76cd57b1): `is_duplicate = false`, phone = NULL, email = eric@dropdeadhair.com
+## Solution: Dismissal Whitelist
 
-They no longer share a phone or email, so neither should be flagged as a duplicate.
+Add a lightweight dismissal mechanism that lets admins mark a duplicate pair as "confirmed different people." Once dismissed, those records are no longer shown in the Duplicates tab, and future scans skip whitelisted pairs.
 
-## Solution
+No restructuring of the existing duplicate detection system is required. This layers on top of the current `is_duplicate` / `canonical_client_id` architecture.
 
-### 1. One-time data cleanup (database migration)
+## How It Works
 
-Run a cleanup query that scans all records with `is_duplicate = true` and checks if they still match their canonical on email or phone. If not, clear the flags. This catches any stale data from before the trigger existed.
-
-### 2. Add a periodic safety net to the saveMutation
-
-After saving client info, also explicitly clear `is_duplicate` and `canonical_client_id` if the record no longer matches its canonical. This provides a belt-and-suspenders approach alongside the trigger.
+1. Admin sees a flagged duplicate pair in the Duplicates tab
+2. Admin clicks "Not a Duplicate" (new button alongside existing "Merge" CTA)
+3. System records the dismissal and clears the `is_duplicate` flag
+4. If contact info changes later and re-triggers detection, the whitelisted pair is skipped
+5. Dismissals are reversible from an audit trail
 
 ## Technical Details
 
-### Database migration (one-time cleanup)
+### 1. New database table: `duplicate_dismissals`
 
 ```sql
--- Clear is_duplicate on records whose canonical no longer matches on email or phone
-UPDATE phorest_clients dup
-SET is_duplicate = false, canonical_client_id = NULL
-WHERE dup.is_duplicate = true
-  AND dup.canonical_client_id IS NOT NULL
-  AND NOT EXISTS (
-    SELECT 1 FROM phorest_clients canon
-    WHERE canon.id = dup.canonical_client_id
-      AND (
-        (dup.email_normalized IS NOT NULL AND canon.email_normalized IS NOT NULL
-         AND dup.email_normalized = canon.email_normalized)
-        OR
-        (dup.phone_normalized IS NOT NULL AND canon.phone_normalized IS NOT NULL
-         AND dup.phone_normalized = canon.phone_normalized)
-      )
-  );
+CREATE TABLE IF NOT EXISTS public.duplicate_dismissals (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+  client_a_id UUID NOT NULL REFERENCES public.phorest_clients(id) ON DELETE CASCADE,
+  client_b_id UUID NOT NULL REFERENCES public.phorest_clients(id) ON DELETE CASCADE,
+  dismissed_by UUID REFERENCES auth.users(id),
+  reason TEXT, -- optional: "family", "household", "other"
+  dismissed_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE(client_a_id, client_b_id)
+);
 ```
 
-### Frontend: `src/components/dashboard/ClientDetailSheet.tsx`
+With RLS policies for org member read / org admin write, and an index on `(client_a_id, client_b_id)`.
 
-In the `saveMutation` (the one that saves name, email, phone), after the main update succeeds, add a follow-up query: if the saved client has `is_duplicate = true`, re-check whether it still matches its canonical. If not, clear the flags. This ensures any phone/email removal immediately clears the duplicate status without relying solely on the trigger.
+Store IDs in sorted order (smaller UUID first) so lookups are consistent regardless of which record is "primary."
 
-```typescript
-// After main update succeeds, clear stale duplicate flag if needed
-if (client.is_duplicate && client.canonical_client_id) {
-  const { data: canonical } = await supabase
-    .from('phorest_clients')
-    .select('email_normalized, phone_normalized')
-    .eq('id', client.canonical_client_id)
-    .single();
+### 2. Update duplicate detection to respect dismissals
 
-  const newEmail = (editEmail.trim() || '').toLowerCase();
-  const newPhone = editPhone.trim();
-  const emailMatch = newEmail && canonical?.email_normalized === newEmail;
-  const phoneMatch = newPhone && canonical?.phone_normalized; // simplified check
+Modify the `find_duplicate_phorest_clients` database function and any batch scan logic to exclude pairs that exist in `duplicate_dismissals`. This prevents re-flagging after the dismissal.
 
-  if (!emailMatch && !phoneMatch) {
-    await supabase
-      .from('phorest_clients')
-      .update({ is_duplicate: false, canonical_client_id: null } as any)
-      .eq('id', client.id);
-  }
-}
-```
+### 3. New "Not a Duplicate" action in the UI
 
-This two-pronged approach fixes the existing data immediately and prevents future occurrences even if trigger timing causes edge cases.
+**File: `src/components/dashboard/clients/DuplicateDrilldown.tsx`**
+
+Add a "Not a Duplicate" button next to the existing "Merge" button. When clicked:
+- Optionally prompt for a reason (Family / Household / Other) via a small popover
+- Insert into `duplicate_dismissals`
+- Clear `is_duplicate` and `canonical_client_id` on the flagged record
+- Optimistically update the client-directory cache to remove the record from the Duplicates tab
+- Show a toast with an "Undo" action (deletes the dismissal row)
+
+**File: `src/pages/dashboard/ClientDirectory.tsx`**
+
+Pass the new `onDismiss` handler down to `DuplicateDrilldown`.
+
+### 4. Update the duplicate re-evaluation trigger
+
+**File: Database trigger `reevaluate_duplicate_status`**
+
+When the normalization trigger fires and would re-flag a client as a duplicate, check `duplicate_dismissals` first. If a dismissal exists for that pair, skip re-flagging.
+
+### 5. Audit visibility (optional, low effort)
+
+Add a small "Dismissed Pairs" section at the bottom of the Duplicates tab (or behind a toggle) showing previously dismissed pairs with the ability to undo. This prevents data from silently disappearing.
+
+## Files Changed
+
+| File | Change |
+|------|--------|
+| New migration SQL | Create `duplicate_dismissals` table with RLS |
+| Migration SQL | Update `find_duplicate_phorest_clients` to exclude dismissed pairs |
+| Migration SQL | Update `reevaluate_duplicate_status` trigger to check dismissals before re-flagging |
+| `src/components/dashboard/clients/DuplicateDrilldown.tsx` | Add "Not a Duplicate" button with reason selector |
+| `src/pages/dashboard/ClientDirectory.tsx` | Wire dismiss handler, pass to DuplicateDrilldown |
+| `src/hooks/useClientsData.ts` | No change needed (dismissed records will have `is_duplicate = false`) |
+
+## Future: Household Grouping (Phase 2)
+
+This dismissal data becomes a signal for a future `client_relationships` table that models family/household connections (parent, child, spouse, guardian). Dismissed pairs can be auto-suggested as relationship candidates. This is a separate effort and not needed now.
 
