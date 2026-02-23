@@ -1,45 +1,25 @@
 
+## Make Analytics Callout Card Collapsible
 
-## Redesign Analytics Quick-Links as a Premium Callout Card
+### Change
 
-### Current State
-The "Looking for analytics?" section is a plain inline row of ghost buttons with arrow icons -- it looks flat and utilitarian, blending into the page without visual distinction.
+Wrap the analytics quick-links card in a `Collapsible` component from `@radix-ui/react-collapsible` (already available at `@/components/ui/collapsible`). The header row (icon, title, description) becomes the `CollapsibleTrigger`, and only the 4 link chips are wrapped in `CollapsibleContent`. A small chevron indicator will be added to signal expand/collapse state.
 
-### New Design
-A styled callout card with glass aesthetic that serves as a clear wayfinding element, featuring:
+### Visual Behavior
 
-- A subtle glass card container (`bg-card/80 backdrop-blur-xl border-border/60 rounded-xl`) with a left accent gradient border
-- A header row with a `BarChart3` icon in a `tokens.card.iconBox`, the prompt text "Looking for analytics?", and a muted description
-- Link pills rendered as individually styled interactive chips with hover effects -- each link gets its own mini card treatment with icon + label + arrow, using a subtle background (`bg-muted/40`) that lifts on hover
+- **Expanded (default):** Card looks exactly as it does now -- icon, header, description, and 4 link chips
+- **Collapsed:** Icon, header, and description remain visible; the 4 link chips are hidden. A `ChevronDown`/`ChevronUp` icon on the right side of the header row indicates state
+- Card maintains full width span in both states
 
-### Visual Structure
+### Technical Details
 
-```text
-+---------------------------------------------------------------+
-|  [icon]  Looking for analytics?                                |
-|          Jump to detailed breakdowns and trend reports.        |
-|                                                                |
-|  [ Appointment Analytics -> ]  [ Booking Pipeline -> ]         |
-|  [ Sales Overview -> ]         [ Staff Utilization -> ]        |
-+---------------------------------------------------------------+
-```
+**File:** `src/pages/dashboard/AppointmentsHub.tsx`
 
-### Technical Changes
+1. Add imports: `Collapsible`, `CollapsibleContent`, `CollapsibleTrigger` from `@/components/ui/collapsible`; add `ChevronDown` to the lucide import
+2. Add `const [analyticsOpen, setAnalyticsOpen] = useState(true)` for default-expanded state
+3. Wrap the `Card` contents:
+   - The header `div` (icon + title + description) becomes a `CollapsibleTrigger` with a chevron on the right that rotates based on open state
+   - The links grid gets wrapped in `CollapsibleContent`
+4. The outer `Card` element stays unchanged (same glass aesthetic, full width)
 
-**Edit: `src/pages/dashboard/AppointmentsHub.tsx`** (lines 303-319)
-
-Replace the plain flex row with a styled `Card` component:
-
-- Import `BarChart3` from lucide-react (add to existing import)
-- Card uses `tokens.card.wrapper` with glass treatment
-- Header uses `tokens.card.iconBox` + icon pattern per UI Canon
-- Links rendered as a grid of interactive link chips (2-column on desktop, 1-column on mobile)
-- Each chip: `rounded-lg bg-muted/40 hover:bg-muted/60 transition-colors` with `group` hover for the arrow animation
-- Arrow icon slides right on hover via `group-hover:translate-x-0.5 transition-transform`
-- Typography: prompt text in `font-display` (Termina), link labels in `font-sans` (Aeonik Pro)
-- All within a compact padding (`p-4`) to keep it lightweight
-
-### Files Modified
-
-- **Edit:** `src/pages/dashboard/AppointmentsHub.tsx` -- Replace lines 303-319 with the new callout card component
-
+No new files. No database changes. Single file edit.
