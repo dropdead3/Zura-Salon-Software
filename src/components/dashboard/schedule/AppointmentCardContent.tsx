@@ -64,6 +64,7 @@ export interface AppointmentCardContentProps {
   showHoverPreview?: boolean;
   showStylistBadge?: boolean;
   showClientPhone?: boolean;
+  showClientAvatar?: boolean;
   onClick: () => void;
 }
 
@@ -191,6 +192,7 @@ function GridContent({
   duration,
   showStylistBadge,
   showClientPhone,
+  showClientAvatar,
 }: {
   appointment: PhorestAppointment;
   size: CardSize;
@@ -201,6 +203,7 @@ function GridContent({
   duration: number;
   showStylistBadge?: boolean;
   showClientPhone?: boolean;
+  showClientAvatar?: boolean;
 }) {
   if (size === 'compact') {
     return (
@@ -241,9 +244,11 @@ function GridContent({
             assistantNames={assistantNamesMap?.get(appointment.id)}
           />
         )}
-        <span className={cn('h-5 w-5 rounded-full flex items-center justify-center text-[8px] font-medium shrink-0', getAvatarColor(appointment.client_name))}>
-          {getClientInitials(appointment.client_name)}
-        </span>
+        {showClientAvatar && (
+          <span className={cn('h-5 w-5 rounded-full flex items-center justify-center text-[8px] font-medium shrink-0', getAvatarColor(appointment.client_name))}>
+            {getClientInitials(appointment.client_name)}
+          </span>
+        )}
         <span className="truncate">{appointment.client_name}</span>
         {showClientPhone && appointment.client_phone && (
           <span className="font-normal opacity-80 text-xs shrink-0">
@@ -481,6 +486,7 @@ export function AppointmentCardContent({
   showHoverPreview = false,
   showStylistBadge = false,
   showClientPhone = true,
+  showClientAvatar = true,
   onClick,
 }: AppointmentCardContentProps) {
   // ─── All hooks run unconditionally ────────────────────────
@@ -628,6 +634,7 @@ export function AppointmentCardContent({
         duration={duration}
         showStylistBadge={showStylistBadge}
         showClientPhone={showClientPhone}
+        showClientAvatar={showClientAvatar}
       />
     </div>
   );

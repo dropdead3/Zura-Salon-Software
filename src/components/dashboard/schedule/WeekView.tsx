@@ -114,6 +114,7 @@ function WeekAppointmentCard({
         showHoverPreview
         showStylistBadge
         showClientPhone={false}
+        showClientAvatar={false}
         onClick={() => {}}
       />
     </div>
