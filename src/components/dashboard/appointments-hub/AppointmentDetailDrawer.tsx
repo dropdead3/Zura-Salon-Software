@@ -29,7 +29,16 @@ function formatTime12h(time: string): string {
 function formatFullDateTime(dateStr: string | null): string {
   if (!dateStr) return '—';
   try {
-    return format(parseISO(dateStr), 'MMM d, yyyy · h:mm a');
+    return format(parseISO(dateStr), 'MM/dd/yyyy · h:mm a');
+  } catch {
+    return '—';
+  }
+}
+
+function formatDateDisplay(dateStr: string | null): string {
+  if (!dateStr) return '—';
+  try {
+    return format(parseISO(dateStr), 'MM/dd/yyyy');
   } catch {
     return '—';
   }
@@ -187,7 +196,7 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Calendar className="w-4 h-4 shrink-0" />
-                  <span>{appointment.appointment_date}</span>
+                  <span>{formatDateDisplay(appointment.appointment_date)}</span>
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Clock className="w-4 h-4 shrink-0" />
@@ -305,7 +314,7 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
                 <Separator />
                 <div className="text-xs text-muted-foreground">
                   <span className={tokens.label.default}>Moved from:</span>{' '}
-                  {appointment.rescheduled_from_date} at {appointment.rescheduled_from_time}
+                  {formatDateDisplay(appointment.rescheduled_from_date)} at {appointment.rescheduled_from_time}
                 </div>
               </>
             )}
