@@ -24,11 +24,26 @@ export function useClientRetentionReport(dateFrom: string, dateTo: string, locat
   return useQuery({
     queryKey: ['client-retention-report', dateFrom, dateTo, locationId],
     queryFn: async (): Promise<ClientRetentionData> => {
-      // Get all clients
-      const { data: clients } = await supabase
-        .from('phorest_clients')
-        .select('id, name, created_at')
-        .eq('is_duplicate', false);
+      // Get all clients (batch to bypass 1,000 row limit)
+      const clients: { id: string; name: string | null; created_at: string }[] = [];
+      let from = 0;
+      const batchSize = 1000;
+      let hasMore = true;
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('phorest_clients')
+          .select('id, name, created_at')
+          .eq('is_duplicate', false)
+          .range(from, from + batchSize - 1);
+        if (error) throw error;
+        if (data && data.length > 0) {
+          clients.push(...data);
+          from += batchSize;
+          hasMore = data.length === batchSize;
+        } else {
+          hasMore = false;
+        }
+      }
 
       if (!clients || clients.length === 0) {
         return {
