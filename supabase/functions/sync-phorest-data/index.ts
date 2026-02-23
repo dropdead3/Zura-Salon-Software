@@ -1221,30 +1221,62 @@ async function fetchSalesViaCsvExport(
         continue; // Try next job type
       }
       
-      console.log(`[CSV Export] Job ${jobId} completed successfully, downloading CSV...`);
+      console.log(`[CSV Export] Job ${jobId} completed. totalRows: ${jobStatusResponse?.totalRows}, succeededRows: ${jobStatusResponse?.succeededRows}`);
       
-      // Step 3: Download CSV with retry
+      // Check for 0 rows - no data to download
+      if (jobStatusResponse?.totalRows === 0) {
+        console.log(`[CSV Export] Job completed with 0 rows for date range, skipping download`);
+        continue; // Try next job type or branch
+      }
+      
+      // Use tempCsvExternalUrl (pre-signed S3 URL) from the job status response
+      const csvDownloadUrl = jobStatusResponse?.tempCsvExternalUrl;
+      
+      // Step 3: Download CSV
       let csvText = '';
       let downloadAttempts = 0;
       const maxDownloadAttempts = 3;
       
-      while (downloadAttempts < maxDownloadAttempts) {
-        try {
-          csvText = await phorestRequestText(
-            `/branch/${branchId}/csvexportjob/${jobId}/download`,
-            businessId,
-            username,
-            password
-          );
-          
-          console.log(`[CSV Export] Downloaded ${csvText.length} characters`);
-          console.log(`[CSV Export] First 500 chars: ${csvText.substring(0, 500)}`);
-          break;
-        } catch (downloadError: any) {
-          downloadAttempts++;
-          console.log(`[CSV Export] Download attempt ${downloadAttempts} failed: ${downloadError.message}`);
-          if (downloadAttempts < maxDownloadAttempts) {
-            await new Promise(r => setTimeout(r, 1000)); // Wait 1 second before retry
+      if (csvDownloadUrl) {
+        console.log(`[CSV Export] Using tempCsvExternalUrl for download`);
+        while (downloadAttempts < maxDownloadAttempts) {
+          try {
+            const dlResponse = await fetch(csvDownloadUrl);
+            if (!dlResponse.ok) {
+              throw new Error(`S3 download failed: ${dlResponse.status} ${dlResponse.statusText}`);
+            }
+            csvText = await dlResponse.text();
+            console.log(`[CSV Export] Downloaded ${csvText.length} characters from S3`);
+            console.log(`[CSV Export] First 500 chars: ${csvText.substring(0, 500)}`);
+            break;
+          } catch (downloadError: any) {
+            downloadAttempts++;
+            console.log(`[CSV Export] S3 download attempt ${downloadAttempts} failed: ${downloadError.message}`);
+            if (downloadAttempts < maxDownloadAttempts) {
+              await new Promise(r => setTimeout(r, 1000));
+            }
+          }
+        }
+      } else {
+        // Fallback to constructed path (legacy)
+        console.log(`[CSV Export] No tempCsvExternalUrl, trying constructed path...`);
+        while (downloadAttempts < maxDownloadAttempts) {
+          try {
+            csvText = await phorestRequestText(
+              `/branch/${branchId}/csvexportjob/${jobId}/download`,
+              businessId,
+              username,
+              password
+            );
+            console.log(`[CSV Export] Downloaded ${csvText.length} characters`);
+            console.log(`[CSV Export] First 500 chars: ${csvText.substring(0, 500)}`);
+            break;
+          } catch (downloadError: any) {
+            downloadAttempts++;
+            console.log(`[CSV Export] Download attempt ${downloadAttempts} failed: ${downloadError.message}`);
+            if (downloadAttempts < maxDownloadAttempts) {
+              await new Promise(r => setTimeout(r, 1000));
+            }
           }
         }
       }
