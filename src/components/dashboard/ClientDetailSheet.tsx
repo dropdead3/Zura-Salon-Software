@@ -1168,6 +1168,68 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
             </Card>
           )}
 
+          {/* Upcoming Appointments Card */}
+          {(() => {
+            const today = new Date().toISOString().split('T')[0];
+            const upcomingVisits = (visitHistory || []).filter(
+              v => v.appointment_date >= today && v.status !== 'cancelled'
+            );
+            if (upcomingVisits.length === 0) return null;
+            return (
+              <Card className="bg-card/80 backdrop-blur-xl border-border/60">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className={tokens.card.iconBox}>
+                        <Calendar className="w-5 h-5 text-primary" />
+                      </div>
+                      <CardTitle className={tokens.card.title}>Upcoming Appointments</CardTitle>
+                    </div>
+                    <Badge variant="secondary" className="text-xs">
+                      {upcomingVisits.length} upcoming
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {upcomingVisits.map(visit => {
+                    const statusConfig = { completed: { color: 'text-green-600', label: 'Completed' }, confirmed: { color: 'text-blue-600', label: 'Confirmed' }, checked_in: { color: 'text-blue-600', label: 'Checked In' }, booked: { color: 'text-muted-foreground', label: 'Booked' }, cancelled: { color: 'text-muted-foreground', label: 'Cancelled' }, no_show: { color: 'text-red-600', label: 'No Show' } }[visit.status] || { color: 'text-muted-foreground', label: visit.status };
+                    return (
+                      <div
+                        key={visit.id}
+                        className="flex items-center justify-between p-2.5 rounded-lg bg-muted/40 hover:bg-muted/60 cursor-pointer transition-colors"
+                        onClick={() => {
+                          onOpenChange(false);
+                          navigate(`/dashboard/appointments-hub?tab=appointments&search=${encodeURIComponent(client.name)}`);
+                        }}
+                      >
+                        <div className="flex flex-col gap-0.5 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-sans text-sm text-foreground">{formatDate(visit.appointment_date, 'EEE, MMM d')}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {(() => { const [h, m] = visit.start_time.split(':'); const hr = parseInt(h); return `${hr % 12 || 12}:${m} ${hr >= 12 ? 'PM' : 'AM'}`; })()}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-sans text-xs text-muted-foreground truncate">{visit.service_name}</span>
+                            {visit.stylist_name && (
+                              <>
+                                <span className="text-muted-foreground/40">·</span>
+                                <span className="font-sans text-xs text-muted-foreground truncate">{visit.stylist_name}</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        <Badge variant="outline" className={cn('text-[10px] shrink-0', statusConfig.color)}>
+                          {statusConfig.label}
+                        </Badge>
+                      </div>
+                    );
+                  })}
+                </CardContent>
+              </Card>
+            );
+          })()}
+
           {/* View All Appointments link */}
           <Button
             variant="outline"
