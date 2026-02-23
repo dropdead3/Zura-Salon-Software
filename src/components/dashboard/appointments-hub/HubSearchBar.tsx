@@ -30,7 +30,7 @@ export function HubSearchBar({ value, onChange, placeholder = 'Search by client 
         value={local}
         onChange={(e) => setLocal(e.target.value)}
         placeholder={placeholder}
-        className="pl-9 pr-8"
+        className="pl-9 pr-8 bg-muted/50 border-border/60"
       />
       {local && (
         <Button
