@@ -795,7 +795,8 @@ export default function ClientDirectory() {
                         className={cn(
                           "py-4 flex items-center gap-4 cursor-pointer hover:bg-muted/50 -mx-6 px-6 transition-colors",
                           client.is_archived && "opacity-60",
-                          (client as any).status === 'merged' && "opacity-50"
+                          (client as any).status === 'merged' && "opacity-50",
+                          ((client as any).is_duplicate || (client as any)._linkedDuplicateId || (client as any)._linkedReason) && "border-l-2 border-l-amber-500/60"
                         )}
                         onClick={handleClientClick}
                       >
@@ -862,6 +863,22 @@ export default function ClientDirectory() {
                                 <GitMerge className="w-3 h-3" /> 
                                 {(client as any)._linkedReason === 'canonical' ? 'Linked Original' : 'Linked Duplicate'}
                                 {(client as any).duplicateReasons?.length > 0 && (client as any).duplicateReasons[0] !== 'match' ? ` (${(client as any).duplicateReasons.map((r: string) => r === 'phone' ? 'Same Phone' : r === 'email' ? 'Same Email' : r === 'name' ? 'Same Name' : r).join(', ')})` : ''}
+                              </Badge>
+                            )}
+                            {!(client as any).is_duplicate && !(client as any)._linkedReason && (client as any)._linkedDuplicateId && (
+                              <Badge 
+                                variant="outline" 
+                                className={cn(
+                                  "text-xs bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800 gap-1 cursor-pointer hover:bg-amber-100 dark:hover:bg-amber-950/50 transition-colors",
+                                  expandedDuplicateId === client.id && "bg-amber-100 dark:bg-amber-950/50"
+                                )}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setExpandedDuplicateId(prev => prev === client.id ? null : client.id);
+                                }}
+                                title="Click to see the matching profile"
+                              >
+                                <GitMerge className="w-3 h-3" /> Duplicate Match{(client as any).duplicateReasons?.length > 0 && (client as any).duplicateReasons[0] !== 'match' ? ` (${(client as any).duplicateReasons.map((r: string) => r === 'phone' ? 'Same Phone' : r === 'email' ? 'Same Email' : r === 'name' ? 'Same Name' : r).join(', ')})` : ''}
                               </Badge>
                             )}
                           </div>
@@ -942,7 +959,7 @@ export default function ClientDirectory() {
                             <p className="text-xs text-muted-foreground">lifetime</p>
                           </div>
                           {/* Single merge action */}
-                          {canMerge && (client as any).status !== 'merged' && !(client as any).is_duplicate && !(client as any)._linkedReason && (
+                          {canMerge && (client as any).status !== 'merged' && !(client as any).is_duplicate && !(client as any)._linkedReason && !(client as any)._linkedDuplicateId && (
                             <Button
                               variant="ghost"
                               size="sm"
@@ -956,7 +973,7 @@ export default function ClientDirectory() {
                               <GitMerge className="w-4 h-4 text-muted-foreground" />
                             </Button>
                           )}
-                          {canMerge && (client as any)._linkedReason && (client as any).status !== 'merged' && (
+                          {canMerge && ((client as any)._linkedReason || (!(client as any).is_duplicate && (client as any)._linkedDuplicateId)) && (client as any).status !== 'merged' && (
                             <Button
                               variant="outline"
                               size="sm"
@@ -999,11 +1016,11 @@ export default function ClientDirectory() {
                       </div>
 
                       {/* Duplicate drill-down */}
-                      {expandedDuplicateId === client.id && (client as any).canonical_client_id && (
+                      {expandedDuplicateId === client.id && ((client as any).canonical_client_id || (client as any)._linkedDuplicateId) && (
                         <div className="px-6 pb-4 -mt-px">
                           <DuplicateDrilldown
                             client={client}
-                            canonicalClientId={(client as any).canonical_client_id}
+                            canonicalClientId={(client as any).canonical_client_id || (client as any)._linkedDuplicateId}
                             duplicateReasons={(client as any).duplicateReasons || []}
                             onViewProfile={(profileData) => {
                               setSelectedClient(profileData);
