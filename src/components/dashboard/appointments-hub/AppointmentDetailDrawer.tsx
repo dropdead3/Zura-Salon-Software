@@ -5,7 +5,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { tokens } from '@/lib/design-tokens';
 import { APPOINTMENT_STATUS_BADGE } from '@/lib/design-tokens';
 import { AppointmentAuditTimeline } from './AppointmentAuditTimeline';
-import { Calendar, Clock, User, MapPin, DollarSign, MessageSquare, Tag, Percent, Phone, Mail, FileText, UserCheck, Info } from 'lucide-react';
+import { AppointmentNotesPanel } from './AppointmentNotesPanel';
+import { Calendar, Clock, User, MapPin, DollarSign, MessageSquare, Tag, Percent, Phone, Mail, FileText, UserCheck, Info, StickyNote } from 'lucide-react';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
@@ -107,7 +108,6 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
         .limit(10);
 
       if (!data) return null;
-      // Find the event where status changed to confirmed
       const confirmed = data.find((e: any) => {
         const nv = e.new_value as any;
         return nv?.status === 'confirmed';
@@ -152,6 +152,10 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
         <Tabs defaultValue="summary" className="flex-1 flex flex-col overflow-hidden">
           <TabsList className="mx-6 mt-3">
             <TabsTrigger value="summary">Summary</TabsTrigger>
+            <TabsTrigger value="notes" className="gap-1.5">
+              <StickyNote className="h-3.5 w-3.5" />
+              Notes
+            </TabsTrigger>
             <TabsTrigger value="timeline">Audit Trail</TabsTrigger>
             <TabsTrigger value="comms" disabled>Comms</TabsTrigger>
           </TabsList>
@@ -316,12 +320,12 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
               </>
             )}
 
-            {/* Notes */}
+            {/* Notes (inline, read-only display of existing notes field) */}
             {appointment.notes && (
               <>
                 <Separator />
                 <div>
-                  <h4 className={tokens.heading.subsection}>Notes</h4>
+                  <h4 className={tokens.heading.subsection}>Booking Notes</h4>
                   <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">{appointment.notes}</p>
                 </div>
               </>
@@ -333,6 +337,11 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
               <MessageSquare className="w-5 h-5 mx-auto mb-2 text-muted-foreground" />
               <p className="text-xs text-muted-foreground">Communications — Coming Soon</p>
             </div>
+          </TabsContent>
+
+          {/* Notes Tab */}
+          <TabsContent value="notes" className="flex-1 overflow-auto p-6">
+            <AppointmentNotesPanel appointmentId={appointment.id} />
           </TabsContent>
 
           <TabsContent value="timeline" className="flex-1 overflow-auto p-6">
