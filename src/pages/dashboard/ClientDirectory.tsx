@@ -520,7 +520,7 @@ export default function ClientDirectory() {
               placeholder="Search by name, email, or phone..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+              className="pl-10 bg-muted/50"
             />
           </div>
           
