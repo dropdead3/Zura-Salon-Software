@@ -76,6 +76,28 @@ export function useAppointmentsHub(filters: HubFilters) {
       const from = page * pageSize;
       const paged = all.slice(from, from + pageSize);
 
+      // Resolve client names for phorest appointments missing client_name
+      const missingClientIds = [
+        ...new Set(
+          paged
+            .filter((a: any) => !a.client_name && a.phorest_client_id)
+            .map((a: any) => a.phorest_client_id)
+        ),
+      ] as string[];
+
+      let clientNameMap: Record<string, string> = {};
+      if (missingClientIds.length > 0) {
+        const { data: clients } = await supabase
+          .from('phorest_clients')
+          .select('phorest_client_id, name')
+          .in('phorest_client_id', missingClientIds);
+        for (const c of clients || []) {
+          if (c.phorest_client_id && c.name) {
+            clientNameMap[c.phorest_client_id] = c.name;
+          }
+        }
+      }
+
       // Resolve stylist names
       const stylistIds = [...new Set(paged.map((a: any) => a.stylist_user_id).filter(Boolean))] as string[];
       let stylistMap: Record<string, string> = {};
@@ -91,6 +113,7 @@ export function useAppointmentsHub(filters: HubFilters) {
 
       const enriched = paged.map((a: any) => ({
         ...a,
+        client_name: a.client_name || clientNameMap[a.phorest_client_id] || null,
         stylist_name: stylistMap[a.stylist_user_id] || a.staff_name || null,
       }));
 
