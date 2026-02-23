@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { tokens } from '@/lib/design-tokens';
 import { APPOINTMENT_STATUS_BADGE } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
@@ -15,7 +16,7 @@ import { AppointmentDetailDrawer } from './AppointmentDetailDrawer';
 import { useLocations } from '@/hooks/useLocations';
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { format, startOfMonth, endOfMonth, subMonths, startOfDay, endOfDay } from 'date-fns';
+import { format, startOfMonth, endOfMonth, subMonths, startOfDay, endOfDay, parseISO } from 'date-fns';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { formatDisplayName } from '@/lib/utils';
 
@@ -32,6 +33,15 @@ function formatTime12h(time: string): string {
   const ampm = hour >= 12 ? 'PM' : 'AM';
   const hour12 = hour % 12 || 12;
   return `${hour12}:${minutes} ${ampm}`;
+}
+
+function formatCreatedAt(dateStr: string | null): string {
+  if (!dateStr) return '—';
+  try {
+    return format(parseISO(dateStr), 'MMM d, h:mm a');
+  } catch {
+    return '—';
+  }
 }
 
 function getDateRange(preset: DatePreset): { startDate?: string; endDate?: string } {
@@ -86,15 +96,19 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
 
   const handleExportCSV = () => {
     if (appointments.length === 0) return;
-    const headers = ['Date', 'Time', 'Client', 'Service', 'Stylist', 'Status', 'Price'];
+    const headers = ['Date', 'Time', 'Client', 'Phone', 'Email', 'Service', 'Stylist', 'Status', 'Price', 'Created', 'Created By'];
     const rows = appointments.map((a: any) => [
       a.appointment_date,
       `${a.start_time}-${a.end_time}`,
       a.client_name || '',
+      a.client_phone || '',
+      a.client_email || '',
       a.service_name || '',
       a.stylist_name || '',
       a.status || '',
       a.total_price ?? '',
+      a.created_at || '',
+      a.created_by_name || '',
     ]);
     const csv = [headers, ...rows].map(r => r.map((c: any) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
@@ -114,6 +128,8 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
       name: formatDisplayName(m.full_name, m.display_name),
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
+
+  const COL_COUNT = 11;
 
   return (
     <div className="space-y-4">
@@ -189,24 +205,28 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
               <TableHead className={tokens.table.columnHeader}>Date</TableHead>
               <TableHead className={tokens.table.columnHeader}>Time</TableHead>
               <TableHead className={tokens.table.columnHeader}>Client</TableHead>
+              <TableHead className={tokens.table.columnHeader}>Phone</TableHead>
+              <TableHead className={tokens.table.columnHeader}>Email</TableHead>
               <TableHead className={tokens.table.columnHeader}>Service</TableHead>
               <TableHead className={tokens.table.columnHeader}>Stylist</TableHead>
               <TableHead className={tokens.table.columnHeader}>Status</TableHead>
               <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Price</TableHead>
+              <TableHead className={tokens.table.columnHeader}>Created</TableHead>
+              <TableHead className={tokens.table.columnHeader}>Created By</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               [1, 2, 3, 4, 5].map(i => (
                 <TableRow key={i}>
-                  {[1, 2, 3, 4, 5, 6, 7].map(j => (
+                  {Array.from({ length: COL_COUNT }).map((_, j) => (
                     <TableCell key={j}><Skeleton className="h-5 w-full" /></TableCell>
                   ))}
                 </TableRow>
               ))
             ) : appointments.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7}>
+                <TableCell colSpan={COL_COUNT}>
                   <div className={tokens.empty.container}>
                     <Calendar className={tokens.empty.icon} />
                     <p className={tokens.empty.description}>No appointments found</p>
@@ -225,6 +245,17 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
                     <TableCell className="text-sm">{appt.appointment_date}</TableCell>
                     <TableCell className="text-sm">{formatTime12h(appt.start_time)}</TableCell>
                     <TableCell className="text-sm font-medium">{appt.client_name || 'Walk-in'}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{appt.client_phone || '—'}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground max-w-[160px] truncate">
+                      {appt.client_email ? (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="truncate block">{appt.client_email}</span>
+                          </TooltipTrigger>
+                          <TooltipContent>{appt.client_email}</TooltipContent>
+                        </Tooltip>
+                      ) : '—'}
+                    </TableCell>
                     <TableCell className="text-sm text-muted-foreground truncate max-w-[200px]">{appt.service_name || '—'}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">{appt.stylist_name || '—'}</TableCell>
                     <TableCell>
@@ -237,6 +268,10 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
                         <BlurredAmount>${appt.total_price}</BlurredAmount>
                       ) : '—'}
                     </TableCell>
+                    <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
+                      {formatCreatedAt(appt.created_at)}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{appt.created_by_name || '—'}</TableCell>
                   </TableRow>
                 );
               })
