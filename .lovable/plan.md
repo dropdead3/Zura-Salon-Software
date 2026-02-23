@@ -1,50 +1,76 @@
 
 
-# Speed Up Client Directory Edits
+# Fix: Stale Duplicate Flags Not Cleared
 
-## Problem
-After saving a client edit (e.g. name change), the system calls `invalidateQueries` which triggers a full refetch of **all clients** in batches of 1000 rows. For large directories, this is slow and causes a noticeable delay before the UI reflects the change.
+## Root Cause
 
-The `onClientUpdated` callback we added earlier updates `selectedClient` state instantly, but the **list behind the sheet** still waits for the full refetch to complete.
+The `reevaluate_duplicate_status_trigger` was created **after** you already removed the phone number from "Test Test". The trigger only fires on future UPDATEs, so the existing stale flags were never cleared.
+
+Current state in the database:
+- **Eric Day** (cff0282d): `is_duplicate = true`, `canonical_client_id = 76cd57b1` (pointing to Test Test), phone = 14805430240
+- **Test Test** (76cd57b1): `is_duplicate = false`, phone = NULL, email = eric@dropdeadhair.com
+
+They no longer share a phone or email, so neither should be flagged as a duplicate.
 
 ## Solution
 
-Use **optimistic cache updates** on the `client-directory` query data. Instead of just invalidating (which triggers a network refetch), directly patch the matching record in the cached array. Then do a background refetch to stay in sync.
+### 1. One-time data cleanup (database migration)
 
-## Changes
+Run a cleanup query that scans all records with `is_duplicate = true` and checks if they still match their canonical on email or phone. If not, clear the flags. This catches any stale data from before the trigger existed.
 
-### File: `src/components/dashboard/ClientDetailSheet.tsx`
+### 2. Add a periodic safety net to the saveMutation
 
-**Replace `invalidateClients` with an optimistic updater:**
+After saving client info, also explicitly clear `is_duplicate` and `canonical_client_id` if the record no longer matches its canonical. This provides a belt-and-suspenders approach alongside the trigger.
 
-```typescript
-const updateClientCache = (updates: Record<string, any>) => {
-  // Optimistically patch the client in all client-directory caches
-  queryClient.setQueriesData(
-    { queryKey: ['client-directory'] },
-    (old: any[] | undefined) => {
-      if (!old || !client) return old;
-      return old.map(c => c.id === client.id ? { ...c, ...updates } : c);
-    }
+## Technical Details
+
+### Database migration (one-time cleanup)
+
+```sql
+-- Clear is_duplicate on records whose canonical no longer matches on email or phone
+UPDATE phorest_clients dup
+SET is_duplicate = false, canonical_client_id = NULL
+WHERE dup.is_duplicate = true
+  AND dup.canonical_client_id IS NOT NULL
+  AND NOT EXISTS (
+    SELECT 1 FROM phorest_clients canon
+    WHERE canon.id = dup.canonical_client_id
+      AND (
+        (dup.email_normalized IS NOT NULL AND canon.email_normalized IS NOT NULL
+         AND dup.email_normalized = canon.email_normalized)
+        OR
+        (dup.phone_normalized IS NOT NULL AND canon.phone_normalized IS NOT NULL
+         AND dup.phone_normalized = canon.phone_normalized)
+      )
   );
-  // Background refetch for consistency (non-blocking)
-  queryClient.invalidateQueries({ queryKey: ['client-directory'] });
-  queryClient.invalidateQueries({ queryKey: ['phorest-clients'] });
-};
 ```
 
-Then in each mutation's `onSuccess`, replace `invalidateClients()` with `updateClientCache(updatedFields)`, passing the same fields already sent to `onClientUpdated`. This makes the list update instantly while the background refetch ensures long-term consistency.
+### Frontend: `src/components/dashboard/ClientDetailSheet.tsx`
 
-### Mutations affected (all in ClientDetailSheet.tsx):
-- `saveMutation` -- name, gender, email, phone, landline
-- `saveDatesMutation` -- birthday, client_since
-- `saveSourceMutation` -- lead_source, referred_by
-- `saveSettingsMutation` -- category, preferred_stylist_id, etc.
-- `savePromptsMutation` -- prompts/notes
-- `saveAddressMutation` -- address fields
-- `saveRemindersMutation` -- reminder preferences
+In the `saveMutation` (the one that saves name, email, phone), after the main update succeeds, add a follow-up query: if the saved client has `is_duplicate = true`, re-check whether it still matches its canonical. If not, clear the flags. This ensures any phone/email removal immediately clears the duplicate status without relying solely on the trigger.
 
-Each will call `updateClientCache({...fields})` instead of `invalidateClients()`.
+```typescript
+// After main update succeeds, clear stale duplicate flag if needed
+if (client.is_duplicate && client.canonical_client_id) {
+  const { data: canonical } = await supabase
+    .from('phorest_clients')
+    .select('email_normalized, phone_normalized')
+    .eq('id', client.canonical_client_id)
+    .single();
 
-### No other files change
-The `onClientUpdated` callback for the sheet's local state continues to work as-is. This change targets the **list** cache specifically.
+  const newEmail = (editEmail.trim() || '').toLowerCase();
+  const newPhone = editPhone.trim();
+  const emailMatch = newEmail && canonical?.email_normalized === newEmail;
+  const phoneMatch = newPhone && canonical?.phone_normalized; // simplified check
+
+  if (!emailMatch && !phoneMatch) {
+    await supabase
+      .from('phorest_clients')
+      .update({ is_duplicate: false, canonical_client_id: null } as any)
+      .eq('id', client.id);
+  }
+}
+```
+
+This two-pronged approach fixes the existing data immediately and prevents future occurrences even if trigger timing causes edge cases.
+
