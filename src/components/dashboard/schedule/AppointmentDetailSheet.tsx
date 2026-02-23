@@ -60,6 +60,7 @@ import { getClientInitials, getAvatarColor } from '@/lib/appointment-card-utils'
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
 import { formatRelativeTime } from '@/lib/format';
 import { useAssistantTimeBlocks } from '@/hooks/useAssistantTimeBlocks';
+import { useLogAuditEvent } from '@/hooks/useAppointmentAuditLog';
 import { formatDisplayName } from '@/lib/utils';
 import { Users as UsersIcon, Home } from 'lucide-react';
 
@@ -268,6 +269,7 @@ export function AppointmentDetailSheet({
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
   const navigate = useNavigate();
+  const logAuditEvent = useLogAuditEvent();
 
   const [newNote, setNewNote] = useState('');
   const [isPrivateNote, setIsPrivateNote] = useState(false);
@@ -396,7 +398,11 @@ export function AppointmentDetailSheet({
       const { error } = await supabase.from('phorest_appointments').update({ redo_approved_by: user.id, status: 'confirmed' }).eq('id', appointment.id);
       if (error) throw error;
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] }); toast.success('Redo approved'); },
+    onSuccess: () => {
+      fireAuditLog('redo_approved', { status: 'pending' }, { status: 'confirmed' });
+      queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] });
+      toast.success('Redo approved');
+    },
     onError: (e: Error) => toast.error('Failed to approve redo', { description: e.message }),
   });
 
@@ -406,7 +412,12 @@ export function AppointmentDetailSheet({
       const { error } = await supabase.from('phorest_appointments').update({ status: 'cancelled', notes: (appointment.notes || '') + '\n[Redo declined]' }).eq('id', appointment.id);
       if (error) throw error;
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] }); toast.success('Redo declined'); handleClose(); },
+    onSuccess: () => {
+      fireAuditLog('redo_declined', { status: 'pending' }, { status: 'cancelled' });
+      queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] });
+      toast.success('Redo declined');
+      handleClose();
+    },
     onError: (e: Error) => toast.error('Failed to decline redo', { description: e.message }),
   });
 
@@ -546,12 +557,26 @@ export function AppointmentDetailSheet({
     setIsPrivateClientNote(false);
   };
 
+  // Audit helper
+  const fireAuditLog = (eventType: string, previousValue?: Record<string, any> | null, newValue?: Record<string, any> | null, metadata?: Record<string, any> | null) => {
+    if (!appointment?.id || !resolvedOrgId) return;
+    logAuditEvent.mutate({
+      appointmentId: appointment.id,
+      organizationId: resolvedOrgId,
+      eventType,
+      previousValue,
+      newValue,
+      metadata,
+    });
+  };
+
   // FIX #2: Use appointment.id (not phorest_id) to align with Schedule.tsx contract
   const handleStatusChange = (status: AppointmentStatus) => {
     if (status === 'cancelled' || status === 'no_show') {
       setConfirmAction(status);
       setCancelReason('');
     } else {
+      fireAuditLog('status_changed', { status: appointment.status }, { status });
       onStatusChange(appointment.id, status);
     }
   };
@@ -563,6 +588,12 @@ export function AppointmentDetailSheet({
         const prefix = confirmAction === 'cancelled' ? '[Cancelled]' : '[No Show]';
         addNote({ note: `${prefix} ${cancelReason.trim()}`, isPrivate: false });
       }
+      fireAuditLog(
+        confirmAction === 'cancelled' ? 'cancelled' : 'no_show',
+        { status: appointment.status },
+        { status: confirmAction },
+        cancelReason.trim() ? { reason: cancelReason.trim() } : null,
+      );
       onStatusChange(appointment.id, confirmAction);
       setConfirmAction(null);
       setCancelReason('');
