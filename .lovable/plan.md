@@ -1,18 +1,26 @@
 
-# Remove Redundant Status Dropdown from Appointment Detail Header
+# Fix: Default Appointment Status and Lifecycle Progress Bar
 
-## Problem
-The appointment detail panel has a status dropdown near the top (below the client name) that duplicates the exact same status transition buttons already present in the footer action bar. This adds visual clutter without providing additional value.
+## What You're Seeing
 
-## Solution
-Remove the interactive status dropdown from the header area (lines 696-718) and replace it with a **static, read-only status badge** so the user can still see the current status at a glance -- without the dropdown trigger and transition options.
+1. **The 4-step progress bar** is a status lifecycle timeline showing: Booked -> Confirmed -> Checked In -> Completed. It visually tracks where an appointment is in its journey.
 
-The contextual badges (Redo, Recurrence, New Client) that sit alongside the status badge will remain untouched.
+2. **Why it says "Confirmed"**: When a new appointment is created through the booking wizard, the system incorrectly defaults the status to "confirmed" instead of "booked." Confirmation should only happen when a client responds to a confirmation request (text/email) or when staff manually marks it confirmed.
 
-## Technical Details
+## Changes
 
-**File:** `src/components/dashboard/schedule/AppointmentDetailSheet.tsx`
+### 1. Fix default status in booking creation
 
-**Change (lines 696-723):** Replace the conditional DropdownMenu/Badge block with a single static Badge that always renders the current status (icon + label) without any interactive dropdown. This removes the `DropdownMenu`, `DropdownMenuTrigger`, `DropdownMenuContent`, and `DropdownMenuItem` elements from the header section entirely.
+**File:** `supabase/functions/create-phorest-booking/index.ts` (line 181)
 
-The footer action bar (line 1292+) remains unchanged and continues to serve as the single point for all status transitions (Confirm, Check In, Pay, Complete, No Show, Cancel).
+Change the default appointment status from `'confirmed'` to `'booked'`. The existing logic for redo approvals (which overrides to `'pending'`) remains unchanged.
+
+### 2. No changes needed to the progress bar
+
+The lifecycle timeline itself is correct -- it accurately reflects the 4-stage journey. The problem was purely that new appointments were skipping the first stage ("Booked") and jumping straight to "Confirmed." Once the default status is fixed, new appointments will correctly show only the first segment filled.
+
+## Technical Detail
+
+- The edge function `create-phorest-booking` line 181: `let appointmentStatus = 'confirmed'` changes to `let appointmentStatus = 'booked'`
+- Existing appointments already marked "confirmed" will remain unchanged (this only affects future bookings)
+- The Phorest API write-back (line 193) will continue sending `'CONFIRMED'` to Phorest since that's Phorest's expected status -- this is separate from the local status tracking
