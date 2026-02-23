@@ -644,16 +644,12 @@ export default function ClientDirectory() {
                 <AlertTriangle className="w-3 h-3 mr-1" /> At Risk
               </TabsTrigger>
               <TabsTrigger value="new" className="text-xs">New</TabsTrigger>
-              {stats.banned > 0 && (
-                <TabsTrigger value="banned" className="text-xs text-red-600">
-                  <Ban className="w-3 h-3 mr-1" /> Banned ({stats.banned})
-                </TabsTrigger>
-              )}
-              {stats.archived > 0 && (
-                <TabsTrigger value="archived" className="text-xs text-muted-foreground">
-                  <Archive className="w-3 h-3 mr-1" /> Archived ({stats.archived})
-                </TabsTrigger>
-              )}
+              <TabsTrigger value="banned" className="text-xs text-red-600">
+                <Ban className="w-3 h-3 mr-1" /> Banned ({stats.banned})
+              </TabsTrigger>
+              <TabsTrigger value="archived" className="text-xs text-muted-foreground">
+                <Archive className="w-3 h-3 mr-1" /> Archived ({stats.archived})
+              </TabsTrigger>
               {stats.duplicates > 0 && (
                 <TabsTrigger value="duplicates" className="text-xs text-amber-600">
                   <GitMerge className="w-3 h-3 mr-1" /> Duplicates ({stats.duplicates})
