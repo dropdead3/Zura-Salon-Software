@@ -1,26 +1,21 @@
 
-
-## Batch Bar Button Sizing and Layout Fix
+## Fix Batch Bar Corner Radius
 
 ### Problem
-From the screenshot, the batch bar buttons are too large and the "Update Status" select trigger is too narrow (150px), causing "Update Status" text to wrap to two lines.
+The sticky batch action bar at the bottom of the appointments Card has square corners, which visually breaks through the parent Card's `rounded-xl` border radius. This is visible in dark mode where the bar's background extends past the card's rounded bottom corners.
 
-### Changes
+### Solution
+Add `rounded-b-xl` to the batch bar container in `AppointmentBatchBar.tsx`. This matches the Card's `rounded-xl` so the bar's bottom corners align perfectly with the card boundary.
 
-**File: `src/components/dashboard/appointments-hub/AppointmentBatchBar.tsx`**
+### File Changed
 
-1. **Widen the Update Status select trigger**: Change `w-[150px]` to `w-[180px]` so "Update Status" text stays on one line
-2. **Reduce button heights**: Add `h-7 text-xs` to the Share and Export CSV buttons to make them more compact
-3. **Reduce bar padding**: Change `py-3` to `py-2` on the sticky bar container for a tighter look
-4. **Shrink icons**: Reduce button icons from `h-3.5 w-3.5` to `h-3 w-3` for proportion
+**`src/components/dashboard/appointments-hub/AppointmentBatchBar.tsx`** (line 90)
 
-### Summary of class changes
+Add `rounded-b-xl` to the bar's container div:
 
-| Element | Current | New |
-|---------|---------|-----|
-| Bar container | `py-3` | `py-2` |
-| SelectTrigger | `w-[150px] h-8 text-xs` | `w-[180px] h-7 text-xs` |
-| Share / Export buttons | default `h-9` via size="sm" | Add `h-7 text-xs` override |
-| Button icons | `h-3.5 w-3.5` | `h-3 w-3` |
-| SelectTrigger icon | `h-3.5 w-3.5` | `h-3 w-3` |
+```
+Current:  "sticky bottom-0 z-10 border-t bg-background/95 backdrop-blur px-4 py-2 flex items-center justify-between gap-3"
+Updated:  "sticky bottom-0 z-10 border-t bg-background/95 backdrop-blur px-4 py-2 flex items-center justify-between gap-3 rounded-b-xl"
+```
 
+This is a single-class addition that ensures the batch bar's bottom corners respect the card container's border radius.
