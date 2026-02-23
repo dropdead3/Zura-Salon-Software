@@ -99,7 +99,7 @@ export function AppointmentBatchBar({ selectedAppointments, onClearSelection }: 
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 60, opacity: 0 }}
               transition={{ type: 'spring', damping: 26, stiffness: 300, mass: 0.8 }}
-              className="fixed bottom-[18px] right-24 z-50 h-14 bg-card/80 backdrop-blur-xl border border-border rounded-full shadow-2xl px-6 flex items-center gap-3"
+              className="fixed bottom-4 right-24 z-50 h-14 bg-card/80 backdrop-blur-xl border border-border rounded-full shadow-2xl px-6 flex items-center gap-3"
             >
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium">{selectedAppointments.length} selected</span>
