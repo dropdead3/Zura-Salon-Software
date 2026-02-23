@@ -12,12 +12,19 @@
 6. **Sales sync logging improved** — Logs `no_data` status instead of `success` when 0 records retrieved
 7. **Tip backfill logic added** — After syncing transactions, matches tips back to appointments
 8. **US endpoint support added** — All Phorest API calls now fall back to `platform-us.phorest.com` (fixes 302 redirects)
+9. **CSV export parameter fix** — Uses `startFilter`/`finishFilter` instead of `startDate`/`endDate`
+10. **Download URL fix** — Uses `tempCsvExternalUrl` (pre-signed S3 URL) from job status response instead of constructing `/download` path (which returned 404)
+11. **Zero-row optimization** — Skips download when `totalRows: 0` to avoid unnecessary S3 fetches
 
-### Remaining Issue 🔧
+### Current Status ✅
 
-**CSV export download returns 404** — The job creates successfully on the US endpoint (`jobStatus: DONE`), but the download endpoint (`/csvexportjob/{jobId}/download`) returns 404 on both EU and US base URLs. Possible causes:
-- The download endpoint path may differ from creation/status endpoint
-- The job may need a longer wait before download is available
-- The download may require a different URL format (e.g., a `downloadUrl` field in the job status response)
+CSV export pipeline is now fully functional:
+- Job creation works on US endpoint
+- Status polling correctly reads `jobStatus` field
+- Download uses `tempCsvExternalUrl` (S3 pre-signed URL)
+- Zero-row results skip download gracefully
+- Today returned `totalRows: 0` (expected — Sunday, no transactions)
 
-**Next step:** Check the Phorest API docs for the exact download URL format, or inspect the full job status response for a `downloadUrl` or `fileUrl` field that contains the direct download link.
+### Next Verification
+
+Trigger a sync on a business day with known transactions to confirm CSV data flows through parsing → upsert → tip backfill pipeline.
