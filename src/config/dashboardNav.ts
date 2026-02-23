@@ -39,6 +39,8 @@ import {
   Settings,
   Search,
   Receipt,
+  Armchair,
+  Package,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -96,6 +98,7 @@ export const managerNavItems: DashboardNavItem[] = [
   { href: '/dashboard/schedule-meeting', label: 'Meetings & Accountability', labelKey: 'meetings_accountability', icon: CalendarClock, permission: 'schedule_meetings', managerGroup: 'teamTools' },
   { href: '/dashboard/admin/team', label: 'Program Team Overview', labelKey: 'program_team_overview', icon: Users, permission: 'view_team_overview', managerGroup: 'teamTools' },
   { href: '/dashboard/admin/analytics', label: 'Analytics Hub', labelKey: 'analytics_hub', icon: TrendingUp, permission: 'view_team_overview', managerGroup: 'analytics' },
+  { href: '/dashboard/appointments-hub', label: 'Appointments & Transactions', labelKey: 'appointments_hub', icon: CalendarClock, permission: 'view_transactions', managerGroup: 'analytics' },
   { href: '/dashboard/campaigns', label: 'Campaigns', labelKey: 'campaigns', icon: Rocket, permission: 'view_team_overview', managerGroup: 'analytics' },
   
   { href: '/dashboard/admin/kpi-builder', label: 'KPI Architecture', labelKey: 'kpi_architecture', icon: Target, permission: 'manage_settings', managerGroup: 'analytics' },
@@ -104,13 +107,10 @@ export const managerNavItems: DashboardNavItem[] = [
   { href: '/dashboard/leaderboard', label: 'Team Leaderboard', labelKey: 'team_leaderboard', icon: Trophy, permission: 'view_leaderboard', managerGroup: 'analytics' },
   { href: '/dashboard/directory', label: 'Team Directory', labelKey: 'team_directory', icon: Contact, permission: 'view_team_directory', managerGroup: 'people' },
   { href: '/dashboard/clients', label: 'Client Directory', labelKey: 'client_directory', icon: Users, permission: 'view_clients', managerGroup: 'people' },
-  { href: '/dashboard/admin/management', label: 'Management Hub', labelKey: 'management_hub', icon: LayoutGrid, permission: 'view_team_overview', managerGroup: 'operations' },
-  { href: '/dashboard/admin/client-health', label: 'Client Health', labelKey: 'client_health', icon: HeartPulse, permission: 'view_team_overview', managerGroup: 'operations' },
-  { href: '/dashboard/admin/payroll', label: 'Hiring & Payroll Hub', labelKey: 'hiring_payroll_hub', icon: DollarSign, permission: 'manage_payroll', managerGroup: 'operations' },
-  { href: '/dashboard/admin/booth-renters', label: 'Renter Hub', labelKey: 'renter_hub', icon: Store, permission: 'manage_booth_renters', managerGroup: 'operations' },
+  { href: '/dashboard/admin/booth-rental', label: 'Booth Rental', labelKey: 'booth_rental', icon: Armchair, permission: 'manage_booth_rental', managerGroup: 'people' },
+  { href: '/dashboard/admin/inventory', label: 'Inventory', labelKey: 'inventory', icon: Package, permission: 'manage_inventory', managerGroup: 'operations' },
   { href: '/dashboard/admin/website-sections', label: 'Website Editor', labelKey: 'website_editor', icon: Globe, permission: 'manage_homepage_stylists', managerGroup: 'operations' },
   { href: '/dashboard/admin/seo-workshop', label: 'SEO Workshop', labelKey: 'seo_workshop', icon: Search, permission: 'view_team_overview', managerGroup: 'operations' },
-  { href: '/dashboard/appointments-hub', label: 'Appointments & Transactions', labelKey: 'appointments_hub', icon: CalendarClock, permission: 'view_transactions', managerGroup: 'analytics' },
 ];
 
 export const adminOnlyNavItems: DashboardNavItem[] = [
