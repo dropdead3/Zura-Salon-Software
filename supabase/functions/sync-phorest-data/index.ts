@@ -754,39 +754,43 @@ async function syncSalesTransactions(
 
       let purchases: any[] = [];
       
-      // Try multiple endpoints in order of preference
-      // Phorest API has various endpoint formats depending on account permissions
+      // Phorest confirmed CSV export is the supported method for transaction data.
+      // Try CSV export first, then fall back to other endpoints.
       
-      // 1. Try /purchase/search POST endpoint (requires POST with date filter)
+      // 1. Try CSV export job (Phorest-confirmed primary method)
       try {
-        console.log(`Trying /purchase/search POST endpoint for branch ${branchId}...`);
-        const purchaseData = await phorestPostRequest(
-          `/branch/${branchId}/purchase/search`,
-          businessId,
-          username,
-          password,
-          { 
-            startDate: dateFrom, 
-            endDate: dateTo,
-            page: 0,
-            size: 500
-          }
-        );
-        purchases = purchaseData._embedded?.purchases || purchaseData.purchases || 
-                   purchaseData.page?.content || purchaseData.content || [];
-        console.log(`/purchase/search endpoint returned ${purchases.length} records`);
+        console.log(`Trying CSV export job for branch ${branchId}...`);
+        purchases = await fetchSalesViaCsvExport(branchId, businessId, username, password, dateFrom, dateTo);
+        console.log(`CSV export returned ${purchases.length} records`);
+        if (purchases.length > 0) {
+          console.log(`[CSV Export] Sample record keys: ${JSON.stringify(Object.keys(purchases[0]))}`);
+          console.log(`[CSV Export] First 3 records: ${JSON.stringify(purchases.slice(0, 3)).substring(0, 1000)}`);
+        }
       } catch (e1: any) {
-        console.log(`/purchase/search endpoint failed: ${e1.message}`);
+        console.log(`CSV export failed: ${e1.message}`);
         
-        // 2. Try CSV export job approach
+        // 2. Fallback: Try /purchase/search POST endpoint
         try {
-          console.log(`Trying CSV export job for branch ${branchId}...`);
-          purchases = await fetchSalesViaCsvExport(branchId, businessId, username, password, dateFrom, dateTo);
-          console.log(`CSV export returned ${purchases.length} records`);
+          console.log(`Trying /purchase/search POST endpoint for branch ${branchId}...`);
+          const purchaseData = await phorestPostRequest(
+            `/branch/${branchId}/purchase/search`,
+            businessId,
+            username,
+            password,
+            { 
+              startDate: dateFrom, 
+              endDate: dateTo,
+              page: 0,
+              size: 500
+            }
+          );
+          purchases = purchaseData._embedded?.purchases || purchaseData.purchases || 
+                     purchaseData.page?.content || purchaseData.content || [];
+          console.log(`/purchase/search endpoint returned ${purchases.length} records`);
         } catch (e2: any) {
-          console.log(`CSV export failed: ${e2.message}`);
+          console.log(`/purchase/search endpoint failed: ${e2.message}`);
           
-          // 3. Try /report/sales endpoint 
+          // 3. Fallback: Try /report/sales endpoint 
           try {
             console.log(`Trying /report/sales endpoint for branch ${branchId}...`);
             const reportData = await phorestRequest(
@@ -1048,10 +1052,11 @@ async function fetchSalesViaCsvExport(
       console.log(`[CSV Export] Date range: ${dateFrom} to ${dateTo}`);
       
       // Step 1: Create CSV export job
+      // Phorest API uses startFilter/finishFilter (not startDate/endDate)
       const jobBody = { 
         jobType,
-        startDate: dateFrom,
-        endDate: dateTo
+        startFilter: dateFrom,
+        finishFilter: dateTo
       };
       
       console.log(`[CSV Export] Creating job with body:`, JSON.stringify(jobBody));
@@ -1091,7 +1096,8 @@ async function fetchSalesViaCsvExport(
             password
           );
           
-          status = (jobStatusResponse.status || jobStatusResponse.state || "").toUpperCase();
+          // Phorest API returns jobStatus (not status)
+          status = (jobStatusResponse.jobStatus || jobStatusResponse.status || jobStatusResponse.state || "").toUpperCase();
           
           if (attempts % 5 === 0) { // Log every 10 seconds
             console.log(`[CSV Export] Job ${jobId} status: ${status} (attempt ${attempts + 1}/${maxAttempts})`);
