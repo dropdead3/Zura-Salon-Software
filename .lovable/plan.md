@@ -1,39 +1,28 @@
 
 
-# Add "View in Client Directory" Link to Appointment Detail Panel
+# Duplicate Pair Card UI Refinements
 
-## What Changes
+## Changes
 
-Add a navigation link at the bottom of the **Client Contact** section in the Appointment Detail Panel. This link will navigate the user to the Client Directory page, pre-selecting the client record.
+All changes are in **`src/components/dashboard/clients/DuplicatePairCard.tsx`**.
 
-## Where It Goes
+### 1. Both cards labeled "Flagged Duplicate"
+Change line 248 from `label="Original Profile"` to `label="Flagged Duplicate"`. Neither profile is assumed to be the "original."
 
-In `src/components/dashboard/schedule/AppointmentDetailSheet.tsx`, after the existing contact info (phone, email) and before the recurrence section, a small link reading **"View in Client Directory"** with an ExternalLink icon will be added. It uses `react-router-dom`'s `useNavigate` to route to `/dashboard/admin/clients?clientId={phorest_client_id}`.
+### 2. Both cards use neutral styling (no orange card backgrounds)
+Remove the `isDuplicate` conditional on the card container (lines 88-90). Both columns get the same neutral `border-border bg-card/50` styling. The amber/orange background is removed entirely from the card level.
 
-The link will only appear for non-walk-in appointments (where `phorest_client_id` exists).
+Also remove the amber color from the label text (lines 96-99) -- both labels use `text-muted-foreground`.
 
-## Technical Details
+### 3. Only matching fields stay highlighted
+The existing amber highlights on matching phone, email, and name text (lines 113-150) remain unchanged. These correctly highlight only the specific fields that caused the match.
 
-### File: `src/components/dashboard/schedule/AppointmentDetailSheet.tsx`
+## Summary of line changes
 
-1. Import `useNavigate` from `react-router-dom` (if not already imported)
-2. After the existing contact info block (around line 971, after the closing `</div>` of the Client Contact section), add a small link:
+| Lines | What | Before | After |
+|-------|------|--------|-------|
+| 88-90 | Card container class | Conditional amber bg for `isDuplicate` | Always `border-border bg-card/50` |
+| 96-99 | Label text color | Conditional amber for `isDuplicate` | Always `text-muted-foreground` |
+| 248 | Right column label | `"Original Profile"` | `"Flagged Duplicate"` |
 
-```tsx
-{!isWalkIn && appointment.phorest_client_id && (
-  <button
-    onClick={() => {
-      handleClose();
-      navigate(`/dashboard/admin/clients?clientId=${appointment.phorest_client_id}`);
-    }}
-    className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors mt-1"
-  >
-    <ExternalLink className="h-3 w-3" />
-    View in Client Directory
-  </button>
-)}
-```
-
-3. The Client Directory page (`ClientDirectory.tsx`) already supports opening a client detail sheet via query params or click -- we just need to route there with the `phorest_client_id` so the user lands on the directory with the right client context.
-
-This is a single-file, minimal change.
+No other files are modified.
