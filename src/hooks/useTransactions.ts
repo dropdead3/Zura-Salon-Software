@@ -13,9 +13,13 @@ export interface TransactionItem {
   quantity: number | null;
   unit_price: number | null;
   total_amount: number | null;
+  discount: number | null;
   phorest_staff_id: string | null;
   location_id: string | null;
   branch_name: string | null;
+  promotion_id: string | null;
+  promotion_name?: string | null;
+  promo_code?: string | null;
   refund_status?: string | null;
   refund_type?: string | null;
   refund_amount?: number | null;
@@ -81,9 +85,25 @@ export function useTransactions(filters: TransactionFilters = {}) {
         });
       }
 
-      // Merge refund info
+      // Fetch promotion details for items with promotion_id
+      const promoIds = [...new Set((data || []).filter(t => t.promotion_id).map(t => t.promotion_id!))];
+      let promoMap: Record<string, { name: string; code: string | null }> = {};
+      if (promoIds.length > 0) {
+        const { data: promos } = await supabase
+          .from('promotions' as any)
+          .select('id, name, promo_code')
+          .in('id', promoIds);
+        
+        (promos || []).forEach((p: any) => {
+          promoMap[p.id] = { name: p.name, code: p.promo_code };
+        });
+      }
+
+      // Merge refund + promo info
       return (data || []).map(item => ({
         ...item,
+        promotion_name: item.promotion_id ? promoMap[item.promotion_id]?.name || null : null,
+        promo_code: item.promotion_id ? promoMap[item.promotion_id]?.code || null : null,
         refund_status: refundMap[item.transaction_id]?.status || null,
         refund_type: refundMap[item.transaction_id]?.type || null,
         refund_amount: refundMap[item.transaction_id]?.amount || null,

@@ -25,7 +25,8 @@ import {
   RotateCcw, 
   Eye,
   Package,
-  Scissors
+  Scissors,
+  Tag
 } from 'lucide-react';
 import { TransactionItem } from '@/hooks/useTransactions';
 import { cn } from '@/lib/utils';
@@ -135,6 +136,7 @@ export function TransactionList({
                 <SortHeader field="item_name">Item</SortHeader>
               </TableHead>
               <TableHead className="w-[100px]">Type</TableHead>
+              <TableHead className="w-[90px] text-right">Discount</TableHead>
               <TableHead className="w-[100px] text-right">
                 <SortHeader field="total_amount">Amount</SortHeader>
               </TableHead>
@@ -160,6 +162,12 @@ export function TransactionList({
                       <Package className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                     )}
                     <span className="truncate">{transaction.item_name}</span>
+                    {transaction.promotion_name && (
+                      <Badge variant="outline" className="gap-1 border-primary/30 text-primary bg-primary/5 text-[10px] px-1.5 py-0 shrink-0">
+                        <Tag className="w-3 h-3" />
+                        {transaction.promo_code || transaction.promotion_name}
+                      </Badge>
+                    )}
                   </div>
                 </TableCell>
                 <TableCell>
@@ -170,6 +178,13 @@ export function TransactionList({
                   )}>
                     {transaction.item_type}
                   </Badge>
+                </TableCell>
+                <TableCell className="text-right text-sm">
+                  {(Number(transaction.discount) || 0) > 0 ? (
+                    <span className="text-amber-600 font-medium">-{formatCurrency(Number(transaction.discount))}</span>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
                 </TableCell>
                 <TableCell className="text-right font-medium">
                   {formatCurrency(Number(transaction.total_amount) || 0)}

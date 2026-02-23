@@ -10159,6 +10159,7 @@ export type Database = {
           payment_method: string | null
           phorest_client_id: string | null
           phorest_staff_id: string | null
+          promotion_id: string | null
           quantity: number | null
           sale_classification: string | null
           stylist_name: string | null
@@ -10182,6 +10183,7 @@ export type Database = {
           payment_method?: string | null
           phorest_client_id?: string | null
           phorest_staff_id?: string | null
+          promotion_id?: string | null
           quantity?: number | null
           sale_classification?: string | null
           stylist_name?: string | null
@@ -10205,6 +10207,7 @@ export type Database = {
           payment_method?: string | null
           phorest_client_id?: string | null
           phorest_staff_id?: string | null
+          promotion_id?: string | null
           quantity?: number | null
           sale_classification?: string | null
           stylist_name?: string | null
@@ -10220,6 +10223,13 @@ export type Database = {
             columns: ["appointment_id"]
             isOneToOne: false
             referencedRelation: "phorest_appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "phorest_transaction_items_promotion_id_fkey"
+            columns: ["promotion_id"]
+            isOneToOne: false
+            referencedRelation: "promotions"
             referencedColumns: ["id"]
           },
           {

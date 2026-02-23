@@ -5,9 +5,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { tokens } from '@/lib/design-tokens';
 import { APPOINTMENT_STATUS_BADGE } from '@/lib/design-tokens';
 import { AppointmentAuditTimeline } from './AppointmentAuditTimeline';
-import { Calendar, Clock, User, MapPin, DollarSign, MessageSquare } from 'lucide-react';
+import { Calendar, Clock, User, MapPin, DollarSign, MessageSquare, Tag, Percent } from 'lucide-react';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { cn } from '@/lib/utils';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AppointmentDetailDrawerProps {
   appointment: any | null;
@@ -24,6 +26,42 @@ function formatTime12h(time: string): string {
 }
 
 export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: AppointmentDetailDrawerProps) {
+  // Fetch promo details if transaction items exist for this appointment
+  const { data: promoInfo } = useQuery({
+    queryKey: ['appointment-promo', appointment?.id],
+    queryFn: async () => {
+      if (!appointment?.transaction_id && !appointment?.phorest_appointment_id) return null;
+      
+      const lookupId = appointment.transaction_id || appointment.phorest_appointment_id;
+      if (!lookupId) return null;
+
+      const { data: items } = await supabase
+        .from('phorest_transaction_items')
+        .select('discount, promotion_id')
+        .eq('transaction_id', lookupId)
+        .not('promotion_id', 'is', null)
+        .limit(1);
+
+      if (!items || items.length === 0) return null;
+      const item = items[0];
+
+      const { data: promo } = await supabase
+        .from('promotions' as any)
+        .select('name, promo_code, discount_value, promotion_type')
+        .eq('id', item.promotion_id)
+        .single();
+
+      if (!promo) return null;
+      return {
+        name: (promo as any).name,
+        code: (promo as any).promo_code,
+        discount: Number(item.discount) || 0,
+      };
+    },
+    enabled: !!appointment,
+    staleTime: 5 * 60 * 1000,
+  });
+
   if (!appointment) return null;
 
   const status = appointment.status || 'booked';
@@ -88,6 +126,30 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
                 </div>
               )}
             </div>
+
+            {/* Promo / Discount context */}
+            {promoInfo && (
+              <>
+                <Separator />
+                <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Percent className="w-4 h-4 text-primary shrink-0" />
+                    <span className="text-sm font-medium">{promoInfo.name}</span>
+                    {promoInfo.code && (
+                      <Badge variant="outline" className="gap-1 border-primary/30 text-primary bg-primary/5 text-[10px] px-1.5 py-0">
+                        <Tag className="w-3 h-3" />
+                        {promoInfo.code}
+                      </Badge>
+                    )}
+                  </div>
+                  {promoInfo.discount > 0 && (
+                    <p className="text-sm text-muted-foreground">
+                      Discount applied: <BlurredAmount><span className="text-amber-600 font-medium">-${promoInfo.discount.toFixed(2)}</span></BlurredAmount>
+                    </p>
+                  )}
+                </div>
+              </>
+            )}
 
             {/* Reschedule history */}
             {appointment.rescheduled_from_date && (
