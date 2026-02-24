@@ -27,6 +27,10 @@ export interface Service {
   content_creation_time_minutes: number;
   processing_time_minutes: number;
   requires_new_client_consultation: boolean;
+  requires_deposit: boolean;
+  deposit_type: string;
+  deposit_amount: number | null;
+  deposit_amount_flat: number | null;
 }
 
 /**
