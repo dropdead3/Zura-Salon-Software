@@ -33,13 +33,13 @@ export function useAppointmentsHub(filters: HubFilters) {
         return q;
       };
 
-      // Query both tables in parallel
+      // Query both tables in parallel (exclude soft-deleted)
       let phorestQuery = buildFilters(
-        supabase.from('phorest_appointments').select('*', { count: 'exact' }),
+        supabase.from('phorest_appointments').select('*', { count: 'exact' }).is('deleted_at', null),
         'stylist_user_id'
       );
       let localQuery = buildFilters(
-        supabase.from('appointments').select('*', { count: 'exact' }),
+        supabase.from('appointments').select('*', { count: 'exact' }).is('deleted_at', null),
         'staff_user_id'
       );
 

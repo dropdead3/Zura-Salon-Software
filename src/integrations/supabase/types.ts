@@ -900,6 +900,8 @@ export type Database = {
           client_notes: string | null
           client_phone: string | null
           created_at: string | null
+          deleted_at: string | null
+          deleted_by: string | null
           duration_minutes: number | null
           end_time: string
           external_id: string | null
@@ -939,6 +941,8 @@ export type Database = {
           client_notes?: string | null
           client_phone?: string | null
           created_at?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           duration_minutes?: number | null
           end_time: string
           external_id?: string | null
@@ -978,6 +982,8 @@ export type Database = {
           client_notes?: string | null
           client_phone?: string | null
           created_at?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           duration_minutes?: number | null
           end_time?: string
           external_id?: string | null
@@ -9464,6 +9470,8 @@ export type Database = {
           client_phone: string | null
           created_at: string
           created_by: string | null
+          deleted_at: string | null
+          deleted_by: string | null
           end_time: string
           id: string
           is_new_client: boolean | null
@@ -9501,6 +9509,8 @@ export type Database = {
           client_phone?: string | null
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           end_time: string
           id?: string
           is_new_client?: boolean | null
@@ -9538,6 +9548,8 @@ export type Database = {
           client_phone?: string | null
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           end_time?: string
           id?: string
           is_new_client?: boolean | null
