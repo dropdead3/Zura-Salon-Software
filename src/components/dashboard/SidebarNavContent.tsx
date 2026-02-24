@@ -105,7 +105,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
   const internalRef = useRef<HTMLElement>(null);
   const { data: businessSettings } = useBusinessSettings();
   const { data: sidebarLayout } = useSidebarLayout();
-  const { favorites: analyticsSubLinks, toggleFavorite: toggleSubtabFavorite } = useAnalyticsSubtabFavorites();
+  const { groupedFavorites, toggleFavorite: toggleSubtabFavorite } = useAnalyticsSubtabFavorites();
   
   // Map section IDs to nav items (for built-in sections)
   const sectionItemsMap = useMemo(() => ({
@@ -651,7 +651,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                   onNavClick={onNavClick}
                   getNavLabel={getNavLabel}
                   hiddenLinks={sectionHiddenLinks}
-                  analyticsSubLinks={analyticsSubLinks}
+                  groupedFavorites={groupedFavorites}
                   onRemoveSubLink={(tab, subtab) => toggleSubtabFavorite(tab, subtab, '')}
                 />
               ) : isCollapsed && sectionId !== 'main' ? (
