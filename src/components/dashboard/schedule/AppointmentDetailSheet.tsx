@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { parseISO, differenceInDays } from 'date-fns';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useAuditLog } from '@/hooks/useAppointmentAuditLog';
 import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -46,6 +47,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Globe } from 'lucide-react';
 import {
   Phone, Mail, Calendar, Clock, User, MapPin, DollarSign,
   ChevronDown, Copy, Check, CheckCircle, UserCheck, XCircle, AlertTriangle,
@@ -283,6 +295,11 @@ export function AppointmentDetailSheet({
   const [isDeleting, setIsDeleting] = useState(false);
   const [newClientNote, setNewClientNote] = useState('');
   const [isPrivateClientNote, setIsPrivateClientNote] = useState(false);
+  // Confirmation gate state
+  const [showConfirmGate, setShowConfirmGate] = useState(false);
+  const [confirmMethod, setConfirmMethod] = useState('');
+  const [confirmNote, setConfirmNote] = useState('');
+  const [confirmAcknowledged, setConfirmAcknowledged] = useState(false);
   // Tab state -- resets to "details" when appointment changes (#10)
   const [activeTab, setActiveTab] = useState('details');
 
@@ -299,6 +316,10 @@ export function AppointmentDetailSheet({
     setIsPrivateNote(false);
     setIsPrivateClientNote(false);
     setShowAssistantPicker(false);
+    setShowConfirmGate(false);
+    setConfirmMethod('');
+    setConfirmNote('');
+    setConfirmAcknowledged(false);
   }, [appointment?.id]);
 
   // Handle initialTab changes while panel is open (#F)
@@ -516,6 +537,24 @@ export function AppointmentDetailSheet({
 
   const resolvedClientId = appointment?.phorest_client_id || matchedClient;
 
+  // ─── Confirmation source from audit log ──────────────────────
+  const { data: auditEntries = [] } = useAuditLog(appointment?.id || null);
+  const confirmationSource = useMemo(() => {
+    const event = auditEntries.find(
+      e => e.event_type === 'status_changed' && (e.new_value as any)?.status === 'confirmed'
+    );
+    if (!event) return null;
+    const method = (event.metadata as any)?.confirmation_method || null;
+    return { method, actorName: event.actor_name, createdAt: event.created_at };
+  }, [auditEntries]);
+
+  const CONFIRM_METHOD_DISPLAY: Record<string, { icon: React.ElementType; label: string }> = {
+    called: { icon: Phone, label: 'Phone Call' },
+    texted: { icon: MessageSquare, label: 'Text Message' },
+    online: { icon: Globe, label: 'Online' },
+    in_person: { icon: User, label: 'In Person' },
+  };
+
   // ─── Cancel & Delete Access Control (must be before early return) ─────
   const isOwnAppointment = appointment ? appointment.stylist_user_id === user?.id : false;
   const canCancel = isManagerOrAdmin || isOwnAppointment;
@@ -594,10 +633,44 @@ export function AppointmentDetailSheet({
     if (status === 'cancelled' || status === 'no_show') {
       setConfirmAction(status);
       setCancelReason('');
+    } else if (status === 'confirmed') {
+      // Open confirmation gate dialog
+      if (isWalkIn) {
+        setConfirmMethod('in_person');
+        setConfirmAcknowledged(true);
+      } else {
+        setConfirmMethod('');
+        setConfirmAcknowledged(false);
+      }
+      setConfirmNote('');
+      setShowConfirmGate(true);
     } else {
       fireAuditLog('status_changed', { status: appointment.status }, { status });
       onStatusChange(appointment.id, status);
     }
+  };
+
+  const handleConfirmGateSubmit = () => {
+    fireAuditLog(
+      'status_changed',
+      { status: appointment.status },
+      { status: 'confirmed' },
+      {
+        confirmation_method: confirmMethod,
+        ...(confirmNote.trim() ? { confirmation_note: confirmNote.trim() } : {}),
+      },
+    );
+    onStatusChange(appointment.id, 'confirmed');
+    setShowConfirmGate(false);
+    setConfirmMethod('');
+    setConfirmNote('');
+    setConfirmAcknowledged(false);
+  };
+
+  const handleRevertToBooked = () => {
+    fireAuditLog('status_changed', { status: 'confirmed' }, { status: 'booked' }, { reverted: true });
+    onStatusChange(appointment.id, 'booked' as AppointmentStatus);
+    toast.success('Appointment reverted to Booked');
   };
 
   const confirmStatusChange = () => {
@@ -722,8 +795,8 @@ export function AppointmentDetailSheet({
                     {initials}
                   </div>
                   <div className="flex-1 min-w-0 pr-8">
-                  {/* Overflow menu (Delete) */}
-                  {canDelete && (
+                  {/* Overflow menu (Delete + Revert) */}
+                  {(canDelete || (isManagerOrAdmin && appointment.status === 'confirmed')) && (
                     <div className="absolute top-4 right-4 z-10">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -732,13 +805,22 @@ export function AppointmentDetailSheet({
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            className="text-destructive focus:text-destructive"
-                            onClick={handleDeleteAppointment}
-                          >
-                            <Trash2 className="h-3.5 w-3.5 mr-2" />
-                            Delete Appointment
-                          </DropdownMenuItem>
+                          {/* Revert to Booked (admin/manager only, confirmed status) */}
+                          {isManagerOrAdmin && appointment.status === 'confirmed' && (
+                            <DropdownMenuItem onClick={handleRevertToBooked}>
+                              <RotateCcw className="h-3.5 w-3.5 mr-2" />
+                              Revert to Booked
+                            </DropdownMenuItem>
+                          )}
+                          {canDelete && (
+                            <DropdownMenuItem
+                              className="text-destructive focus:text-destructive"
+                              onClick={handleDeleteAppointment}
+                            >
+                              <Trash2 className="h-3.5 w-3.5 mr-2" />
+                              Delete Appointment
+                            </DropdownMenuItem>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
@@ -800,6 +882,26 @@ export function AppointmentDetailSheet({
                     </Badge>
                   )}
                 </div>
+
+                {/* Confirmation Source Display */}
+                {appointment.status === 'confirmed' && (
+                  <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+                    {confirmationSource?.method && CONFIRM_METHOD_DISPLAY[confirmationSource.method] ? (
+                      <>
+                        {(() => {
+                          const MethodIcon = CONFIRM_METHOD_DISPLAY[confirmationSource.method].icon;
+                          return <MethodIcon className="h-3.5 w-3.5 text-green-600 dark:text-green-400 shrink-0" />;
+                        })()}
+                        <span>Confirmed via {CONFIRM_METHOD_DISPLAY[confirmationSource.method].label}</span>
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="h-3.5 w-3.5 text-green-600 dark:text-green-400 shrink-0" />
+                        <span>Confirmed (method unknown)</span>
+                      </>
+                    )}
+                  </div>
+                )}
 
                 {/* Status Lifecycle Timeline */}
                 {!isTerminal && (
@@ -1504,6 +1606,60 @@ export function AppointmentDetailSheet({
         </AlertDialogContent>
       </AlertDialog>
       </div>
+
+      {/* Confirmation Gate Dialog */}
+      <Dialog open={showConfirmGate} onOpenChange={(open) => { if (!open) setShowConfirmGate(false); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display text-base tracking-wide">Confirm Appointment</DialogTitle>
+            <DialogDescription>How was the client informed about this appointment?</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <RadioGroup value={confirmMethod} onValueChange={setConfirmMethod} className="space-y-2">
+              {[
+                { value: 'called', icon: Phone, label: 'Called Client' },
+                { value: 'texted', icon: MessageSquare, label: 'Texted Client' },
+                { value: 'online', icon: Globe, label: 'Client Confirmed Online' },
+                { value: 'in_person', icon: User, label: 'Spoke In Person' },
+              ].map(opt => (
+                <label key={opt.value} className="flex items-center gap-3 rounded-lg border border-border p-3 cursor-pointer hover:bg-muted/50 transition-colors">
+                  <RadioGroupItem value={opt.value} id={`confirm-${opt.value}`} />
+                  <opt.icon className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <span className="text-sm">{opt.label}</span>
+                </label>
+              ))}
+            </RadioGroup>
+            <Textarea
+              placeholder="Additional notes (optional)..."
+              value={confirmNote}
+              onChange={e => setConfirmNote(e.target.value)}
+              rows={2}
+              className="text-sm"
+            />
+            <div className="flex items-start gap-2">
+              <Checkbox
+                id="confirm-acknowledged"
+                checked={confirmAcknowledged}
+                onCheckedChange={(checked) => setConfirmAcknowledged(checked === true)}
+              />
+              <label htmlFor="confirm-acknowledged" className="text-sm leading-tight cursor-pointer">
+                Client has been informed and acknowledged
+              </label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowConfirmGate(false)}>Go Back</Button>
+            <Button
+              onClick={handleConfirmGateSubmit}
+              disabled={!confirmMethod || !confirmAcknowledged || isUpdating}
+            >
+              {isUpdating && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
+              <CheckCircle className="h-3.5 w-3.5 mr-1" />
+              Mark as Confirmed
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
