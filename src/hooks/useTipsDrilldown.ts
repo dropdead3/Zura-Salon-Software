@@ -23,9 +23,15 @@ export interface CategoryTipMetrics {
   totalTips: number;
 }
 
+export interface PaymentMethodTipMetrics {
+  totalTips: number;
+  count: number;
+}
+
 export interface TipsDrilldownData {
   byStylist: StylistTipMetrics[];
   byCategory: Record<string, CategoryTipMetrics>;
+  byPaymentMethod: Record<string, PaymentMethodTipMetrics>;
   isLoading: boolean;
   error: Error | null;
 }
@@ -79,9 +85,31 @@ export function useTipsDrilldown({ period, locationId, minAppointments = 10 }: U
     staleTime: 1000 * 60 * 10,
   });
 
+  // Fetch payment method data from transaction items
+  const { data: transactionItems, isLoading: txLoading } = useQuery({
+    queryKey: ['tips-drilldown-payment-methods', dateFrom, dateTo, locationId],
+    queryFn: async () => {
+      let query = supabase
+        .from('phorest_transaction_items')
+        .select('payment_method, tip_amount')
+        .gte('transaction_date', dateFrom)
+        .lte('transaction_date', dateTo)
+        .gt('tip_amount', 0);
+
+      if (locationId && locationId !== 'all') {
+        query = query.eq('location_id', locationId);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
+    staleTime: 1000 * 60 * 5,
+  });
+
   const result = useMemo(() => {
     if (!appointments || !profiles) {
-      return { byStylist: [], byCategory: {} };
+      return { byStylist: [], byCategory: {}, byPaymentMethod: {} };
     }
 
     const profileMap = new Map(
@@ -161,12 +189,24 @@ export function useTipsDrilldown({ period, locationId, minAppointments = 10 }: U
       };
     }
 
-    return { byStylist, byCategory };
-  }, [appointments, profiles, minAppointments]);
+    // Build payment method record from transaction items
+    const byPaymentMethod: Record<string, PaymentMethodTipMetrics> = {};
+    if (transactionItems) {
+      for (const ti of transactionItems) {
+        const method = ti.payment_method || 'Unknown';
+        const existing = byPaymentMethod[method] ?? { totalTips: 0, count: 0 };
+        existing.totalTips += ti.tip_amount ?? 0;
+        existing.count += 1;
+        byPaymentMethod[method] = existing;
+      }
+    }
+
+    return { byStylist, byCategory, byPaymentMethod };
+  }, [appointments, profiles, transactionItems, minAppointments]);
 
   return {
     ...result,
-    isLoading: aptsLoading || profilesLoading,
+    isLoading: aptsLoading || profilesLoading || txLoading,
     error: aptsError as Error | null,
   };
 }
