@@ -563,7 +563,7 @@ export function AggregateSalesCard({
       ) : (
       <>
       {/* Main Content Grid */}
-      <div className="grid xl:grid-cols-3 gap-6 mb-6">
+      <div className="grid xl:grid-cols-5 gap-6 mb-6">
         {/* KPIs with Trends */}
         <div className="xl:col-span-2">
           {/* Hero: Total Revenue with Breakdown */}
@@ -979,7 +979,7 @@ export function AggregateSalesCard({
         </div>
 
         {/* Sidebar - Top Performers & Donut */}
-        <div className="flex flex-col gap-6 min-w-0 order-last xl:order-none">
+        <div className="xl:col-span-3 flex flex-col gap-6 min-w-0 order-last xl:order-none">
           <div className="flex-1">
             <TopPerformersCard 
               performers={stylistData || []} 
