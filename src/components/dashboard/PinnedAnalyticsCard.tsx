@@ -10,7 +10,7 @@ import {
   DollarSign, TrendingUp, Users, Clock, BarChart3, Heart,
   Activity, MapPin, Scissors, ShoppingBag, CalendarCheck,
   Target, Gauge, FileText, Sparkles, Briefcase, UserPlus,
-  LineChart, BarChart2, ChevronRight,
+  LineChart, BarChart2, ChevronRight, CheckCircle2, AlertTriangle,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { tokens } from '@/lib/design-tokens';
@@ -343,6 +343,7 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
     // Extract primary metric per card
     let metricValue = '';
     let metricLabel = '';
+    let goalPaceIcon: React.ReactNode = null;
     
     switch (cardId) {
       case 'executive_summary':
@@ -443,7 +444,11 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
       }
       case 'goal_tracker': {
         metricValue = `${Math.round(goalOrgMetrics.percentage)}%`;
-        metricLabel = goalOrgMetrics.paceStatus === 'ahead' ? 'Ahead of target pace' : goalOrgMetrics.paceStatus === 'behind' ? 'Falling behind target pace' : 'On track to hit goal';
+        const ps = goalOrgMetrics.paceStatus;
+        metricLabel = ps === 'ahead' ? 'Ahead of target pace' : ps === 'behind' ? 'Falling behind target pace' : 'On track to hit goal';
+        goalPaceIcon = ps === 'behind'
+          ? <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+          : <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />;
         break;
       }
       case 'week_ahead_forecast': {
@@ -510,7 +515,10 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
             <div className="mt-4 flex-1">
               <BlurredAmount className="font-display text-2xl font-medium">{metricValue}</BlurredAmount>
               {metricLabel && (
-                <p className="text-xs text-muted-foreground/80 mt-1">{metricLabel}</p>
+                <p className="text-xs text-muted-foreground/80 mt-1 flex items-center gap-1">
+                  {goalPaceIcon}
+                  {metricLabel}
+                </p>
               )}
             </div>
             <div className="flex justify-between items-center mt-2 pt-2 border-t border-border/30 min-h-[28px]">
