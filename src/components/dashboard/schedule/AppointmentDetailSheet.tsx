@@ -798,7 +798,7 @@ export function AppointmentDetailSheet({
                   </div>
                   <div className="flex-1 min-w-0 pr-8">
                   {/* Overflow menu (Delete + Revert) */}
-                  {(canDelete || (isManagerOrAdmin && appointment.status === 'confirmed')) && (
+                  {(canDelete || (isManagerOrAdmin && appointment.status === 'confirmed') || !!resolvedClientId) && (
                     <div className="absolute top-4 right-12 z-10">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -807,6 +807,15 @@ export function AppointmentDetailSheet({
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          {resolvedClientId && (
+                            <DropdownMenuItem onClick={() => {
+                              handleClose();
+                              navigate(`/dashboard/clients?clientId=${resolvedClientId}`);
+                            }}>
+                              <ExternalLink className="h-3.5 w-3.5 mr-2" />
+                              View in Client Directory
+                            </DropdownMenuItem>
+                          )}
                           {/* Revert to Booked (admin/manager only, confirmed status) */}
                           {isManagerOrAdmin && appointment.status === 'confirmed' && (
                             <DropdownMenuItem onClick={handleRevertToBooked}>
@@ -1191,18 +1200,6 @@ export function AppointmentDetailSheet({
                         )}
                         {!clientRecordLoading && !appointment.client_phone && !clientRecord?.email && (
                           <p className="text-xs text-muted-foreground">No contact info available</p>
-                        )}
-                        {resolvedClientId && (
-                          <button
-                            onClick={() => {
-                              handleClose();
-                              navigate(`/dashboard/clients?clientId=${resolvedClientId}`);
-                            }}
-                            className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors mt-1"
-                          >
-                            <ExternalLink className="h-3 w-3" />
-                            View in Client Directory
-                          </button>
                         )}
                       </div>
                     </motion.div>
