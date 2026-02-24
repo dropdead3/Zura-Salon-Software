@@ -116,25 +116,41 @@ serve(async (req) => {
     }
 
     // Check write-gate: look up org from the appointment record
+    // Try matching by phorest_id first, then fall back to id (UUID)
     let phorestWriteEnabled = false;
-    try {
-      const { data: aptData } = await supabase
+    let matchColumn = "phorest_id";
+    
+    // Determine which column to use for matching
+    const { data: aptByPhorestId } = await supabase
+      .from("phorest_appointments")
+      .select("organization_id")
+      .eq("phorest_id", appointment_id)
+      .maybeSingle();
+    
+    let orgId: string | null = aptByPhorestId?.organization_id || null;
+    
+    if (!orgId) {
+      // Try matching by UUID id
+      const { data: aptById } = await supabase
         .from("phorest_appointments")
         .select("organization_id")
-        .eq("phorest_id", appointment_id)
-        .single();
-
-      if (aptData?.organization_id) {
-        const { data: orgData } = await supabase
-          .from("organizations")
-          .select("settings")
-          .eq("id", aptData.organization_id)
-          .single();
-        const settings = (orgData?.settings || {}) as Record<string, any>;
-        phorestWriteEnabled = settings.phorest_write_enabled === true;
+        .eq("id", appointment_id)
+        .maybeSingle();
+      
+      if (aptById?.organization_id) {
+        orgId = aptById.organization_id;
+        matchColumn = "id";
       }
-    } catch (e) {
-      console.log("Could not resolve org for write-gate check, defaulting to disabled");
+    }
+    
+    if (orgId) {
+      const { data: orgData } = await supabase
+        .from("organizations")
+        .select("settings")
+        .eq("id", orgId)
+        .single();
+      const settings = (orgData?.settings || {}) as Record<string, any>;
+      phorestWriteEnabled = settings.phorest_write_enabled === true;
     }
 
     // Update in Phorest (only if write-back is enabled)
@@ -182,7 +198,7 @@ serve(async (req) => {
     const { error: updateError, data: updatedAppointment } = await supabase
       .from("phorest_appointments")
       .update(localUpdate)
-      .eq("phorest_id", appointment_id)
+      .eq(matchColumn, appointment_id)
       .select()
       .single();
 
