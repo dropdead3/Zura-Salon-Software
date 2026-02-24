@@ -1,71 +1,125 @@
 
 
-## Today's Revenue: Real-Time First
+## Data Gaps, Enhancements, and Contextual Clarity Audit
 
-The current "today" view shows **expected revenue** (from scheduled appointments) as the hero number, with actual revenue as a small progress bar beneath it. This is backwards -- operators care most about what has actually come in. The screenshot reference confirms the desired hierarchy.
+Great instinct to audit after the real-time revenue change -- that kind of structural self-review is exactly what keeps intelligence surfaces trustworthy. Here is what I found across the codebase:
 
-### What Changes
+---
 
-**File: `src/components/dashboard/AggregateSalesCard.tsx`**
+### Critical Data Gap: `useSalesMetrics` Does Not Filter Out Cancelled/No-Show Appointments
 
-When `dateRange === 'today'`, restructure the hero section:
+**Severity: High**
 
-1. **Hero number becomes actual revenue** -- The large `text-5xl` number shows `todayActual.actualRevenue` (revenue from completed transactions / checked-out appointments via `phorest_daily_sales_summary`).
+The primary sales metrics hook (`useSalesMetrics` in `src/hooks/useSalesData.ts`) queries `phorest_appointments` but does **not** exclude cancelled or no-show appointments. It only filters `NOT total_price IS NULL`. Every other appointment query in the codebase correctly applies `.not('status', 'in', '("cancelled","no_show")')`.
 
-2. **Expected revenue becomes secondary** -- Below the hero, show the "Expected Revenue" badge with the expected total from scheduled appointments (`displayMetrics.totalRevenue`) in a smaller format, similar to the screenshot reference.
+This means:
+- The hero "Total Revenue" (for non-today views) may include revenue from cancelled appointments
+- Avg Ticket, Rev/Hour, transaction counts, and service hours are all inflated
+- The leaderboard (`useSalesByStylist`) has the same missing filter
+- The location breakdown (`useSalesByLocation`) also lacks this filter
 
-3. **Progress bar stays** -- Shows actual as a percentage of expected, keeping the visual context.
+**Fix:** Add `.not('status', 'in', '("cancelled","no_show")')` to the appointment queries in `useSalesMetrics`, `useSalesByStylist`, and `useSalesByLocation`.
 
-4. **Before any actual data exists** (early morning, before first checkout), show `$0` as the hero with the expected revenue clearly labeled below, and the existing "Actual revenue not available until appointments check out" message.
+---
 
-5. **Services and Products sub-cards** -- When on "today" and actual data exists, these should reflect actual service/product revenue (`todayActual.actualServiceRevenue`, `todayActual.actualProductRevenue`) instead of expected. The expected breakdown remains visible via the "Expected Revenue" secondary display.
+### Data Source Inconsistency: Appointments vs Daily Sales Summary
 
-6. **Auto-refresh** -- `useTodayActualRevenue` already has a 5-minute refetch interval, which provides near real-time updates. No change needed.
+**Severity: Medium**
 
-### Layout (Today View)
+Two different data sources are used for revenue across the dashboard:
 
-```text
-+------------------------------------------+
-| All locations combined                   |
-|                                          |
-|              $2,450                      |  <-- Actual revenue (hero, font-display)
-|         Revenue So Far Today             |
-|           Excludes Tips                  |
-|                                          |
-|     [clock] $4,200 Expected  (i)         |  <-- Secondary badge + amount
-|                                          |
-|   [$2,450 of $4,200 expected] ========   |  <-- Progress bar
-|                                          |
-|   Est. final transaction at 8:00 PM      |
-|                                          |
-| +------------------+------------------+  |
-| |  Services $1,890 |  Retail   $560   |  |  <-- Actual breakdown
-| |       77%        |       23%        |  |
-| +------------------+------------------+  |
-+------------------------------------------+
-```
+| Surface | Source |
+|---|---|
+| Sales Overview hero, leaderboard, by-location | `phorest_appointments` (via `useSalesMetrics`) |
+| Trend indicators, comparison badges | `phorest_daily_sales_summary` (via `useSalesComparison`) |
+| Today actual revenue | `phorest_daily_sales_summary` (via `useTodayActualRevenue`) |
+| Payroll calculations | `phorest_daily_sales_summary` |
 
-### Technical Details
+When these two sources disagree (and they will -- summary is aggregated from checked-out transactions, appointments include all non-cancelled), the trend indicator can show a direction that contradicts the hero number. For example, summary shows +5% but appointments show -2%.
 
-**Conditional rendering in AggregateSalesCard.tsx (lines ~594-724):**
+**Fix (contextual):** Add a subtle footnote or tooltip to the trend indicator clarifying "Trend based on completed transactions" when the hero metric uses a different source. Long-term, unify on one source.
 
-- When `dateRange === 'today'`:
-  - Hero `AnimatedBlurredAmount` value changes from `displayMetrics.totalRevenue` to `todayActual.actualRevenue`
-  - Label changes from "Total Revenue" to "Revenue So Far Today"
-  - Below the label, add the expected revenue in a compact secondary layout: badge with clock icon + formatted expected amount + info tooltip
-  - Services sub-card value: `todayActual.actualServiceRevenue` instead of `displayMetrics.serviceRevenue`
-  - Products sub-card value: `todayActual.actualProductRevenue` instead of `displayMetrics.productRevenue`
-  - Percentages recalculated from actual totals
+---
 
-- When `dateRange !== 'today'`: No change -- existing behavior preserved.
+### Donut Chart Uses Expected Revenue Even on Today View
 
-- The existing "Actual vs Expected" block (lines 632-668) is replaced by the new integrated layout described above, eliminating the redundant section.
+**Severity: Low-Medium**
 
-- `useTodayActualRevenue` is already called with `enabled: dateRange === 'today'` -- no hook changes needed.
+The `RevenueDonutChart` on line 1029-1036 always receives `displayMetrics.serviceRevenue` and `displayMetrics.productRevenue` (expected/scheduled amounts). On the today view, while the hero and sub-cards now correctly show **actual** revenue, the donut chart in the sidebar still shows the **expected** breakdown.
 
-### What Does NOT Change
+**Fix:** When `isToday && todayActual?.hasActualData`, pass `todayActual.actualServiceRevenue` and `todayActual.actualProductRevenue` to the donut chart.
 
-- `useTodayActualRevenue` hook -- already provides all needed data (actualRevenue, actualServiceRevenue, actualProductRevenue, lastAppointmentEndTime)
-- Other date ranges (yesterday, 7d, 30d, etc.) -- completely unaffected
-- Location-level drilldowns -- `locationActuals` data is already available
-- Trend indicators -- continue using comparison data as-is
+---
+
+### No-Show Rate Not Surfaced Anywhere
+
+**Severity: Low**
+
+The `useNoShowReport` hook exists and the data is tracked, but the Sales Overview card has no visibility into no-show rate for the selected period. For operators, no-shows directly erode the gap between expected and actual revenue. Surfacing "X% no-show rate" near the expected revenue badge would give immediate context for why actual might trail expected.
+
+**Fix:** Add a small no-show rate indicator near the expected revenue badge on the today view, e.g., "3 no-shows (2.1%)" as a subtle text line.
+
+---
+
+### Today View: Location Rows Show Expected, Not Actual
+
+**Severity: Medium**
+
+The location breakdown rows (lines 1136-1347) always show `location.totalRevenue` from `useSalesByLocation`, which queries `phorest_appointments` (expected). On the today view, the `locationActuals` data is already fetched and available but only used in the "Status" tile of expanded location rows. The collapsed row's primary revenue number should show actual revenue when available.
+
+**Fix:** When `isToday`, use `locationActuals[locId]?.actualRevenue` as the primary displayed value in the collapsed row, with the expected amount as secondary context.
+
+---
+
+### Missing "Last Updated" Timestamp on Today View
+
+**Severity: Low**
+
+The today actual revenue auto-refreshes every 5 minutes, but there is no indication to the operator of when the data was last fetched. An operator staring at the dashboard at 2:30 PM has no way to know if they're seeing data from 2:25 PM or 2:30 PM.
+
+**Fix:** Add a subtle "Updated X min ago" timestamp below the progress bar, using the query's `dataUpdatedAt` from React Query.
+
+---
+
+### Discount Data Always Shows Zero
+
+**Severity: Low**
+
+`useSalesMetrics` hardcodes `totalDiscounts: 0` (line 318). The `phorest_daily_sales_summary` table has a `total_discounts` column that is populated. This means any discount-related analytics would show nothing.
+
+**Fix:** Query `total_discounts` from `phorest_daily_sales_summary` when available, or calculate from transaction items. This becomes important when operators want to understand margin erosion.
+
+---
+
+### Row Limit Risk on High-Volume Days
+
+**Severity: Medium**
+
+`useSalesMetrics` does not paginate its appointment query. The default Supabase limit is 1,000 rows. A busy multi-location operation with 1,000+ appointments in a 30-day window would silently truncate results, underreporting revenue.
+
+Other hooks (like `useRebookingRate`, `useOperationalAnalytics`) correctly implement pagination. `useSalesMetrics`, `useSalesByStylist`, and `useSalesByLocation` do not.
+
+**Fix:** Add batch-fetching to these three hooks using the `fetchAllBatched` pattern already established in `useOperationalAnalytics`.
+
+---
+
+### Summary of Proposed Changes
+
+| Priority | Issue | File(s) |
+|---|---|---|
+| **P0** | Add cancelled/no-show filter to `useSalesMetrics`, `useSalesByStylist`, `useSalesByLocation` | `src/hooks/useSalesData.ts` |
+| **P0** | Add pagination to same three hooks (1,000-row limit risk) | `src/hooks/useSalesData.ts` |
+| **P1** | Pass actual revenue to donut chart on today view | `src/components/dashboard/AggregateSalesCard.tsx` |
+| **P1** | Show actual revenue in location rows on today view | `src/components/dashboard/AggregateSalesCard.tsx` |
+| **P2** | Add "Updated X min ago" to today view | `src/components/dashboard/AggregateSalesCard.tsx` |
+| **P2** | Add no-show count/rate context near expected revenue badge | `src/components/dashboard/AggregateSalesCard.tsx`, new query |
+| **P2** | Add tooltip clarifying trend data source vs hero data source | `src/components/dashboard/AggregateSalesCard.tsx` |
+| **P3** | Surface discount totals from `phorest_daily_sales_summary` | `src/hooks/useSalesData.ts` |
+
+### Technical Sequence
+
+1. Fix `useSalesData.ts` -- add status filter + pagination to all three hooks
+2. Fix `AggregateSalesCard.tsx` -- donut chart actual data, location row actual data, "updated" timestamp
+3. Add no-show rate context (requires small query addition to `useTodayActualRevenue` or new hook)
+4. Add trend source tooltip clarification
+
