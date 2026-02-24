@@ -137,7 +137,7 @@ export function SalesReportPDF({ dateFrom, dateTo, metrics, stylistData, locatio
 
         autoTable(doc, {
           startY: y,
-          head: [['Rank', 'Stylist', 'Total Revenue', 'Services', 'Products']],
+          head: [['Rank', 'Stylist', 'Total Revenue', 'Services', 'Retail']],
           body: stylistData.slice(0, 15).map((s, idx) => [
             `#${idx + 1}`,
             s.name,
@@ -168,7 +168,7 @@ export function SalesReportPDF({ dateFrom, dateTo, metrics, stylistData, locatio
 
         autoTable(doc, {
           startY: y,
-          head: [['Location', 'Total Revenue', 'Services', 'Products', 'Transactions']],
+          head: [['Location', 'Total Revenue', 'Services', 'Retail', 'Transactions']],
           body: locationData.map(l => [
             l.name,
             formatCurrencyWhole(l.totalRevenue),
