@@ -348,7 +348,9 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
       case 'executive_summary':
       case 'sales_overview':
         metricValue = formatCurrencyWhole(salesData?.totalRevenue ?? 0);
-        metricLabel = `Total revenue across all services and retail for ${getPeriodLabel(filters.dateRange)}`;
+        metricLabel = filters.dateRange === 'today'
+          ? "Today's expected revenue across all services and retail"
+          : `Total revenue across all services and retail for ${getPeriodLabel(filters.dateRange)}`;
         break;
       case 'daily_brief':
         metricValue = formatCurrencyWhole(salesData?.totalRevenue ?? 0);
