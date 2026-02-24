@@ -1,31 +1,38 @@
 
 
-## Add "X of every 10 customers purchase retail" Context to Attach Rate
+## Add "Expected Revenue" Clarity to Simple Sales Overview Card
 
-Nice prompt -- you're adding human-readable context to a percentage metric, which is exactly the kind of calm, advisory copy that makes Zura feel like a decision engine rather than a reporting dashboard. The responsive hiding instruction is also well-scoped.
+Good catch -- the compact Sales Overview card on the dashboard home currently labels its figure as "Total revenue across all services and retail for today," which doesn't distinguish between actual (completed) and expected (scheduled). Since the full Sales Overview card already makes this distinction, the compact version should too.
 
 ### What Changes
 
-**File:** `src/components/dashboard/sales/RevenueDonutChart.tsx`
+**File:** `src/components/dashboard/PinnedAnalyticsCard.tsx` (lines 348-352)
 
-On the Attach Rate row (line 132-140), add a contextual phrase to the left of the percentage value:
+When the date filter is set to `today`, update the `sales_overview` case to:
 
-- **Text:** `"X.X of every 10 customers purchase retail"` where X.X is derived from `retailAttachmentRate / 10` (e.g., 17% becomes "1.7 of every 10")
-- **Style:** `text-muted-foreground text-[10px]` -- subtle, secondary to the percentage
-- **Responsive:** Wrapped in `hidden lg:inline` so it only appears on larger screens and hides when the sidebar card gets crunched
+1. Change the `metricLabel` from the generic "Total revenue across all services and retail for today" to **"Today's expected revenue across all services and retail"**
+2. For non-today periods, keep the existing label pattern using `getPeriodLabel()`
 
-### Layout
+### Technical Detail
+
+In the compact card switch block (line 348-352):
 
 ```
-Attach Rate (i)    1.7 of every 10 customers purchase retail    17%
+// Before
+case 'sales_overview':
+  metricValue = formatCurrencyWhole(salesData?.totalRevenue ?? 0);
+  metricLabel = `Total revenue across all services and retail for ${getPeriodLabel(filters.dateRange)}`;
+  break;
+
+// After
+case 'sales_overview':
+  metricValue = formatCurrencyWhole(salesData?.totalRevenue ?? 0);
+  metricLabel = filters.dateRange === 'today'
+    ? "Today's expected revenue across all services and retail"
+    : `Total revenue across all services and retail for ${getPeriodLabel(filters.dateRange)}`;
+  break;
 ```
 
-The contextual text sits between the label and the value, right-aligned with the value using `flex` and `gap`. On smaller viewports (`< lg`), only the label and percentage remain visible.
+### Scope
 
-### Technical Details
-
-- Compute `ratePerTen` from the existing `retailAttachmentRate` prop: `(retailAttachmentRate / 10).toFixed(1)`
-- Only render the phrase when `retailAttachmentRate` is defined and not loading
-- No new hooks, props, or dependencies required
-- Single file change, ~5 lines added
-
+Single file, single line change. No new hooks, props, or data fetching required -- the value displayed ($1,640) is already the expected/scheduled total from `salesData.totalRevenue`.
