@@ -516,6 +516,23 @@ export function AppointmentDetailSheet({
 
   const resolvedClientId = appointment?.phorest_client_id || matchedClient;
 
+  // ─── Cancel & Delete Access Control (must be before early return) ─────
+  const isOwnAppointment = appointment ? appointment.stylist_user_id === user?.id : false;
+  const canCancel = isManagerOrAdmin || isOwnAppointment;
+
+  // Delete: admins can delete booked/pending anytime; stylists can delete own creations within 10 min
+  const canDelete = useMemo(() => {
+    if (!appointment || ['completed', 'checked_in'].includes(appointment.status)) return false;
+    if (!['booked', 'pending'].includes(appointment.status)) return false;
+    if (isManagerOrAdmin) return true;
+    if (isStylistOnly && appointment.created_by === user?.id) {
+      const createdAt = new Date(appointment.created_at);
+      const minutesSinceCreation = (Date.now() - createdAt.getTime()) / 60000;
+      return minutesSinceCreation <= 10;
+    }
+    return false;
+  }, [appointment, isManagerOrAdmin, isStylistOnly, user?.id]);
+
   if (!appointment) return null;
 
   const statusConfig = STATUS_CONFIG[appointment.status];
@@ -642,22 +659,7 @@ export function AppointmentDetailSheet({
     }
   };
 
-  // ─── Cancel & Delete Access Control ─────────────────────────
-  const isOwnAppointment = appointment ? appointment.stylist_user_id === user?.id : false;
-  const canCancel = isManagerOrAdmin || isOwnAppointment;
-
-  // Delete: admins can delete booked/pending anytime; stylists can delete own creations within 10 min
-  const canDelete = useMemo(() => {
-    if (!appointment || ['completed', 'checked_in'].includes(appointment.status)) return false;
-    if (!['booked', 'pending'].includes(appointment.status)) return false;
-    if (isManagerOrAdmin) return true;
-    if (isStylistOnly && appointment.created_by === user?.id) {
-      const createdAt = new Date(appointment.created_at);
-      const minutesSinceCreation = (Date.now() - createdAt.getTime()) / 60000;
-      return minutesSinceCreation <= 10;
-    }
-    return false;
-  }, [appointment, isManagerOrAdmin, isStylistOnly, user?.id]);
+  // (canCancel and canDelete moved above early return)
 
   // Soft-delete handler
   const handleDeleteAppointment = async () => {
