@@ -799,7 +799,7 @@ export function AppointmentDetailSheet({
                   <div className="flex-1 min-w-0 pr-8">
                   {/* Overflow menu (Delete + Revert) */}
                   {(canDelete || (isManagerOrAdmin && appointment.status === 'confirmed')) && (
-                    <div className="absolute top-4 right-4 z-10">
+                    <div className="absolute top-4 right-12 z-10">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="icon" className="h-8 w-8">
