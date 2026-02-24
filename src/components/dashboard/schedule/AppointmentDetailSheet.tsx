@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { parseISO, differenceInDays } from 'date-fns';
@@ -23,6 +23,7 @@ import { useServiceLookup } from '@/hooks/useServiceLookup';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useIsPrimaryOwner } from '@/hooks/useIsPrimaryOwner';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -61,10 +62,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Globe } from 'lucide-react';
 import {
   Phone, Mail, Calendar, Clock, User, MapPin, DollarSign,
-  ChevronDown, Copy, Check, CheckCircle, UserCheck, XCircle, AlertTriangle,
+  ChevronDown, ChevronRight, Copy, Check, CheckCircle, UserCheck, XCircle, AlertTriangle,
   MessageSquare, Lock, Trash2, Loader2, UserPlus, X, Repeat, RotateCcw,
   CreditCard, CalendarClock, RefreshCw, Star, TrendingUp, ExternalLink,
-  UserX, ArrowRightLeft, Receipt, MoreHorizontal,
+  UserX, ArrowRightLeft, Receipt, MoreHorizontal, Sparkles,
 } from 'lucide-react';
 import { cn, formatPhoneDisplay } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -296,11 +297,15 @@ export function AppointmentDetailSheet({
   const [isDeleting, setIsDeleting] = useState(false);
   const [newClientNote, setNewClientNote] = useState('');
   const [isPrivateClientNote, setIsPrivateClientNote] = useState(false);
+  const [showReassignDialog, setShowReassignDialog] = useState(false);
+  const [selectedNewStylist, setSelectedNewStylist] = useState<string | null>(null);
   // Confirmation gate state
   const [showConfirmGate, setShowConfirmGate] = useState(false);
   const [confirmMethod, setConfirmMethod] = useState('');
   const [confirmNote, setConfirmNote] = useState('');
   const [confirmAcknowledged, setConfirmAcknowledged] = useState(false);
+  // Client notes collapsible state
+  const [clientNotesExpanded, setClientNotesExpanded] = useState(false);
   // Tab state -- resets to "details" when appointment changes (#10)
   const [activeTab, setActiveTab] = useState('details');
 
@@ -318,6 +323,9 @@ export function AppointmentDetailSheet({
     setIsPrivateNote(false);
     setIsPrivateClientNote(false);
     setShowAssistantPicker(false);
+    setShowReassignDialog(false);
+    setSelectedNewStylist(null);
+    setClientNotesExpanded(false);
     setShowConfirmGate(false);
     setConfirmMethod('');
     setConfirmNote('');
@@ -454,8 +462,51 @@ export function AppointmentDetailSheet({
     appointment?.start_time || null,
     appointment?.end_time || null,
     appointment?.id || null,
-    showAssistantPicker,
+    showAssistantPicker || showReassignDialog,
   );
+
+  // Reassign stylist mutation
+  const reassignStylist = useMutation({
+    mutationFn: async ({ newStylistUserId }: { newStylistUserId: string }) => {
+      if (!appointment?.id || !resolvedOrgId) throw new Error('Missing data');
+      const member = teamMembers.find(m => m.user_id === newStylistUserId);
+      const newName = member?.display_name || member?.full_name || 'Unknown';
+
+      // Look up phorest_staff_id for phorest appointments
+      let phorestStaffId: string | null = null;
+      if (appointment._source !== 'local') {
+        const { data: mapping } = await supabase
+          .from('phorest_staff_mapping')
+          .select('phorest_staff_id')
+          .eq('user_id', newStylistUserId)
+          .maybeSingle();
+        phorestStaffId = mapping?.phorest_staff_id || null;
+      }
+
+      const table = appointment._source === 'local' ? 'appointments' : 'phorest_appointments';
+      const updatePayload: Record<string, any> = {
+        stylist_user_id: newStylistUserId,
+        staff_name: newName,
+      };
+      if (table === 'phorest_appointments' && phorestStaffId) {
+        updatePayload.phorest_staff_id = phorestStaffId;
+      }
+
+      const { error } = await supabase.from(table).update(updatePayload as any).eq('id', appointment.id);
+      if (error) throw error;
+
+      return { oldName: appointment.stylist_profile?.display_name || appointment.stylist_profile?.full_name || 'Unknown', newName };
+    },
+    onSuccess: (result) => {
+      fireAuditLog('stylist_reassigned', { stylist: result.oldName }, { stylist: result.newName });
+      queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] });
+      queryClient.invalidateQueries({ queryKey: ['appointments-hub'] });
+      toast.success(`Reassigned to ${result.newName}`);
+      setShowReassignDialog(false);
+      setSelectedNewStylist(null);
+    },
+    onError: (e: Error) => toast.error('Failed to reassign', { description: e.message }),
+  });
 
   // ─── Derived Data ─────────────────────────────────────────────
   const services = useMemo(() => {
@@ -816,6 +867,13 @@ export function AppointmentDetailSheet({
                               View in Client Directory
                             </DropdownMenuItem>
                           )}
+                          {/* Reassign Stylist (manager/admin only) */}
+                          {isManagerOrAdmin && !['completed', 'cancelled', 'no_show'].includes(appointment.status) && (
+                            <DropdownMenuItem onClick={() => setShowReassignDialog(true)}>
+                              <ArrowRightLeft className="h-3.5 w-3.5 mr-2" />
+                              Reassign Stylist
+                            </DropdownMenuItem>
+                          )}
                           {/* Revert to Booked (admin/manager only, confirmed status) */}
                           {isManagerOrAdmin && appointment.status === 'confirmed' && (
                             <DropdownMenuItem onClick={handleRevertToBooked}>
@@ -964,6 +1022,16 @@ export function AppointmentDetailSheet({
                         <span className="text-sm text-blue-700 dark:text-blue-300">
                           Redo scheduled: {linkedRedos[0].service_name || 'Service'} on {linkedRedos[0].appointment_date}
                           {linkedRedos[0].staff_name && ` with ${linkedRedos[0].staff_name}`}
+                        </span>
+                      </motion.div>
+                    )}
+
+                    {/* First-time client banner */}
+                    {!isWalkIn && !!appointment.phorest_client_id && !historyLoading && visitStats.visitCount === 0 && (
+                      <motion.div variants={staggerItem} className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg px-3 py-2 border border-emerald-200 dark:border-emerald-800">
+                        <Sparkles className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                        <span className="text-sm text-emerald-700 dark:text-emerald-300">
+                          First-time client — no prior service history on file.
                         </span>
                       </motion.div>
                     )}
@@ -1206,6 +1274,115 @@ export function AppointmentDetailSheet({
 
                     {/* Household Members */}
                     <HouseholdSection phorestClientId={appointment.phorest_client_id} formatDate={formatDate} />
+
+                    {/* Client Notes Preview (read-only, collapsible) */}
+                    {!isWalkIn && appointment.phorest_client_id && (
+                      <>
+                        <Separator />
+                        <motion.div variants={staggerItem} className="space-y-2">
+                          <h4 className={tokens.heading.subsection}>
+                            <MessageSquare className="h-3.5 w-3.5 inline mr-1.5" />
+                            Client Notes
+                            {clientNotes.length > 0 && (
+                              <span className="text-xs text-muted-foreground ml-1.5">({clientNotes.length})</span>
+                            )}
+                          </h4>
+                          {clientNotesLoading ? (
+                            <Skeleton className="h-12 w-full" />
+                          ) : clientNotes.length === 0 ? (
+                            <p className="text-xs text-muted-foreground">No client notes</p>
+                          ) : (
+                            <Collapsible open={clientNotesExpanded} onOpenChange={setClientNotesExpanded}>
+                              <div className="space-y-1.5">
+                                {clientNotes.slice(0, 3).map(note => (
+                                  <div key={note.id} className={cn('p-2 rounded-lg border text-sm', note.is_private && 'bg-muted/50 border-dashed')}>
+                                    <div className="flex items-center gap-1.5">
+                                      <Avatar className="h-4 w-4">
+                                        <AvatarImage src={note.author?.photo_url || undefined} />
+                                        <AvatarFallback className="text-[7px]">{(note.author?.display_name || note.author?.full_name || '?').slice(0, 2).toUpperCase()}</AvatarFallback>
+                                      </Avatar>
+                                      <span className="text-xs font-medium truncate">{note.author?.display_name || note.author?.full_name}</span>
+                                      {note.is_private && <Lock className="h-2.5 w-2.5 text-muted-foreground" />}
+                                      <span className="text-[10px] text-muted-foreground ml-auto shrink-0">{formatDate(new Date(note.created_at), 'MMM d')}</span>
+                                    </div>
+                                    <p className="mt-1 text-xs line-clamp-2 text-muted-foreground">{note.note}</p>
+                                  </div>
+                                ))}
+                              </div>
+                              {clientNotes.length > 3 && (
+                                <>
+                                  <CollapsibleContent>
+                                    <ScrollArea className="max-h-48 mt-1.5">
+                                      <div className="space-y-1.5">
+                                        {clientNotes.slice(3).map(note => (
+                                          <div key={note.id} className={cn('p-2 rounded-lg border text-sm', note.is_private && 'bg-muted/50 border-dashed')}>
+                                            <div className="flex items-center gap-1.5">
+                                              <Avatar className="h-4 w-4">
+                                                <AvatarImage src={note.author?.photo_url || undefined} />
+                                                <AvatarFallback className="text-[7px]">{(note.author?.display_name || note.author?.full_name || '?').slice(0, 2).toUpperCase()}</AvatarFallback>
+                                              </Avatar>
+                                              <span className="text-xs font-medium truncate">{note.author?.display_name || note.author?.full_name}</span>
+                                              {note.is_private && <Lock className="h-2.5 w-2.5 text-muted-foreground" />}
+                                              <span className="text-[10px] text-muted-foreground ml-auto shrink-0">{formatDate(new Date(note.created_at), 'MMM d')}</span>
+                                            </div>
+                                            <p className="mt-1 text-xs line-clamp-2 text-muted-foreground">{note.note}</p>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </ScrollArea>
+                                  </CollapsibleContent>
+                                  <CollapsibleTrigger asChild>
+                                    <button className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 mt-1.5 transition-colors">
+                                      {clientNotesExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                                      {clientNotesExpanded ? 'Show less' : `Show all ${clientNotes.length} notes`}
+                                    </button>
+                                  </CollapsibleTrigger>
+                                </>
+                              )}
+                            </Collapsible>
+                          )}
+                        </motion.div>
+                      </>
+                    )}
+
+                    {/* Appointment Notes Preview (2 most recent, read-only) */}
+                    {notes.length > 0 && (
+                      <>
+                        <Separator />
+                        <motion.div variants={staggerItem} className="space-y-2">
+                          <h4 className={tokens.heading.subsection}>
+                            <MessageSquare className="h-3.5 w-3.5 inline mr-1.5" />
+                            Appointment Notes
+                            <span className="text-xs text-muted-foreground ml-1.5">({notes.length})</span>
+                          </h4>
+                          <div className="space-y-1.5">
+                            {notes.slice(0, 2).map(note => (
+                              <div key={note.id} className={cn('p-2 rounded-lg border text-sm', note.is_private && 'bg-muted/50 border-dashed')}>
+                                <div className="flex items-center gap-1.5">
+                                  <Avatar className="h-4 w-4">
+                                    <AvatarImage src={note.author?.photo_url || undefined} />
+                                    <AvatarFallback className="text-[7px]">{(note.author?.display_name || note.author?.full_name || '?').slice(0, 2).toUpperCase()}</AvatarFallback>
+                                  </Avatar>
+                                  <span className="text-xs font-medium truncate">{note.author?.display_name || note.author?.full_name}</span>
+                                  {note.is_private && <Lock className="h-2.5 w-2.5 text-muted-foreground" />}
+                                  <span className="text-[10px] text-muted-foreground ml-auto shrink-0">{formatDate(new Date(note.created_at), 'MMM d')}</span>
+                                </div>
+                                <p className="mt-1 text-xs line-clamp-2 text-muted-foreground">{note.note}</p>
+                              </div>
+                            ))}
+                          </div>
+                          {notes.length > 2 && (
+                            <button
+                              onClick={() => setActiveTab('notes')}
+                              className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
+                            >
+                              View all {notes.length} notes in Notes tab
+                              <ChevronRight className="h-3 w-3" />
+                            </button>
+                          )}
+                        </motion.div>
+                      </>
+                    )}
 
                     {/* Removed duplicate Booking Notes from Details tab (#11) -- kept only in Notes tab */}
 
@@ -1642,6 +1819,68 @@ export function AppointmentDetailSheet({
               {isUpdating && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
               <CheckCircle className="h-3.5 w-3.5 mr-1" />
               Mark as Confirmed
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reassign Stylist Dialog */}
+      <Dialog open={showReassignDialog} onOpenChange={(open) => { if (!open) { setShowReassignDialog(false); setSelectedNewStylist(null); } }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display text-base tracking-wide">Reassign Stylist</DialogTitle>
+            <DialogDescription>Select a new stylist for this appointment.</DialogDescription>
+          </DialogHeader>
+          <ScrollArea className="max-h-[400px]">
+            <div className="space-y-1 p-1">
+              {teamMembers
+                .filter(m =>
+                  m.user_id !== appointment.stylist_user_id &&
+                  (m.roles?.includes('stylist') || m.roles?.includes('admin'))
+                )
+                .map(member => {
+                  const conflicts = conflictMap.get(member.user_id) || [];
+                  const isSelected = selectedNewStylist === member.user_id;
+                  return (
+                    <button
+                      key={member.user_id}
+                      className={cn(
+                        'flex flex-col w-full p-3 rounded-lg text-left text-sm transition-colors',
+                        isSelected ? 'bg-primary/10 ring-1 ring-primary' : 'hover:bg-muted',
+                      )}
+                      onClick={() => setSelectedNewStylist(member.user_id)}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <Avatar className="h-7 w-7">
+                          <AvatarImage src={member.photo_url || undefined} />
+                          <AvatarFallback className="text-[9px]">{(member.display_name || member.full_name || '?').slice(0, 2).toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                        <span className="font-medium">{member.display_name || member.full_name}</span>
+                        {conflicts.length > 0 && (
+                          <Badge variant="outline" className="text-[10px] text-amber-700 dark:text-amber-300 border-amber-300 ml-auto shrink-0">
+                            <AlertTriangle className="h-2.5 w-2.5 mr-0.5" /> {conflicts.length} conflict{conflicts.length > 1 ? 's' : ''}
+                          </Badge>
+                        )}
+                      </div>
+                      {conflicts.map((c, i) => (
+                        <span key={i} className="text-[11px] text-amber-600 dark:text-amber-400 pl-9 leading-tight mt-0.5">
+                          {c.role === 'assistant' ? 'Assisting' : 'Busy'} {formatTime12h(c.startTime)}–{formatTime12h(c.endTime)} ({c.serviceName})
+                        </span>
+                      ))}
+                    </button>
+                  );
+                })}
+            </div>
+          </ScrollArea>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setShowReassignDialog(false); setSelectedNewStylist(null); }}>Cancel</Button>
+            <Button
+              onClick={() => selectedNewStylist && reassignStylist.mutate({ newStylistUserId: selectedNewStylist })}
+              disabled={!selectedNewStylist || reassignStylist.isPending}
+            >
+              {reassignStylist.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
+              <ArrowRightLeft className="h-3.5 w-3.5 mr-1" />
+              Reassign
             </Button>
           </DialogFooter>
         </DialogContent>
