@@ -708,7 +708,8 @@ export function AggregateSalesCard({
               >
                 <div className="flex items-center justify-center gap-1.5 mb-2">
                   <ShoppingBag className="w-3.5 h-3.5 text-primary" />
-                  <span className="text-xs text-muted-foreground">{t('sales.products')}</span>
+                   <span className="text-xs text-muted-foreground">{t('sales.products')}</span>
+                  <MetricInfoTooltip description="Net revenue from retail product sales (e.g. shampoo, styling products). Excludes services, tips, and discounted amounts. Sourced from Phorest transaction items where item type is Product or Retail." />
                 </div>
                 <AnimatedBlurredAmount 
                   value={displayMetrics.productRevenue}
@@ -812,7 +813,7 @@ export function AggregateSalesCard({
                       <div className="flex items-center gap-1 justify-center mt-1">
                         <p className="text-xs text-muted-foreground">{t('sales.tips')}</p>
                         <ChevronDown className={cn("w-3 h-3 text-muted-foreground transition-transform duration-200", tipsDrilldownOpen && "rotate-180")} />
-                        <MetricInfoTooltip description="Total tips collected from completed appointments. Click for stylist breakdown." />
+                         <MetricInfoTooltip description="Total gratuities (staff tips) recorded across all transactions. Includes tips on both service and retail sales. Excludes Phorest-level tips if applicable. Click for stylist breakdown." />
                       </div>
                     </div>
                   </div>
@@ -908,7 +909,7 @@ export function AggregateSalesCard({
                     <div className="flex items-center gap-1 justify-center mt-1">
                       <p className="text-xs text-muted-foreground">{t('sales.tips')}</p>
                       <ChevronDown className={cn("w-3 h-3 text-muted-foreground transition-transform duration-200", tipsDrilldownOpen && "rotate-180")} />
-                      <MetricInfoTooltip description="Total tips collected from completed appointments. Click for stylist breakdown." />
+                      <MetricInfoTooltip description="Total gratuities (staff tips) recorded across all transactions. Includes tips on both service and retail sales. Excludes Phorest-level tips if applicable. Click for stylist breakdown." />
                     </div>
                   </div>
                 </div>
