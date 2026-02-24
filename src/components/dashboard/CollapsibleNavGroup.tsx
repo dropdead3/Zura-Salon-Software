@@ -283,21 +283,13 @@ export function CollapsibleNavGroup({
 
                           return (
                             <div key={group.tab}>
-                              {/* Category header */}
-                              <a
-                                href={categoryHref}
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  navigate(categoryHref, { state: { navTimestamp: Date.now() } });
-                                  onNavClick();
-                                }}
+                              {/* Category header - static label, not clickable */}
+                              <div
                                 className={cn(
-                                  "flex items-center gap-2 text-xs font-display uppercase tracking-wide cursor-pointer group/catlink",
+                                  "flex items-center gap-2 text-xs font-display uppercase tracking-wide group/catlink",
                                   "transition-all duration-200 ease-out rounded-lg",
                                   "px-3 py-1.5 mx-3 pl-12",
-                                  isCategoryActive
-                                    ? "bg-foreground text-background shadow-sm dark:bg-muted dark:text-foreground dark:shadow-none"
-                                    : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                                  "text-muted-foreground"
                                 )}
                               >
                                 <span className="flex-1">{group.tabLabel}</span>
@@ -314,7 +306,43 @@ export function CollapsibleNavGroup({
                                     <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
                                   </button>
                                 )}
-                              </a>
+                              </div>
+
+                              {/* Auto-generated Overview link when main tab is favorited */}
+                              {group.hasTabFavorite && (
+                                <a
+                                  href={categoryHref}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    navigate(categoryHref, { state: { navTimestamp: Date.now() } });
+                                    onNavClick();
+                                  }}
+                                  className={cn(
+                                    "flex items-center gap-2 text-xs font-sans cursor-pointer group/sublink",
+                                    "transition-all duration-200 ease-out rounded-lg",
+                                    "px-3 py-1.5 mx-3 pl-14",
+                                    isCategoryActive
+                                      ? "bg-foreground text-background shadow-sm dark:bg-muted dark:text-foreground dark:shadow-none"
+                                      : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                                  )}
+                                >
+                                  <ChevronRight className={cn("w-3 h-3 flex-shrink-0", isCategoryActive ? "" : "text-muted-foreground/50")} />
+                                  <span className="flex-1">Overview</span>
+                                  {onRemoveSubLink && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        e.preventDefault();
+                                        onRemoveSubLink(group.tab, '');
+                                      }}
+                                      className="opacity-0 group-hover/sublink:opacity-100 transition-opacity"
+                                      aria-label="Unpin Overview"
+                                    >
+                                      <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
+                                    </button>
+                                  )}
+                                </a>
+                              )}
 
                               {/* Nested subtabs */}
                               {group.subtabs.map(sub => {
