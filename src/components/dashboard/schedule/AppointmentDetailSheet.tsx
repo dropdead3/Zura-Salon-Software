@@ -830,6 +830,7 @@ export function AppointmentDetailSheet({
       fireAuditLog('deleted', { status: appointment.status }, null, { deleted_by: user.id });
       queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] });
       queryClient.invalidateQueries({ queryKey: ['appointments-hub'] });
+      queryClient.invalidateQueries({ queryKey: ['live-session-snapshot'] });
       toast.success('Appointment deleted. This was removed as a data entry correction.');
       setShowDeleteConfirm(false);
       handleClose();
