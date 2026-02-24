@@ -1,25 +1,36 @@
 
 
-## Adjust Sales Overview Column Widths
+## Remove Filter Badge from Revenue Breakdown Card
 
-### Current Layout
-The Sales Overview card uses a 3-column grid where the left column spans 2 of 3 columns (66%) and the right spans 1 (33%).
+### Problem
+The Revenue Breakdown card (inside the Sales Overview right sidebar) shows its own "All Locations / Last 30 days" filter badge, which is redundant since those filters are already displayed on the parent Sales Overview card header.
 
-### Change
-Switch from `xl:grid-cols-3` to a custom 5-column grid so the left takes 2/5 (40%) and the right takes 3/5 (60%):
+### Fix
 
-**File: `src/components/dashboard/AggregateSalesCard.tsx` (line 566-568)**
+**File: `src/components/dashboard/AggregateSalesCard.tsx` (line 994)**
+
+Remove the `filterContext` prop from the `RevenueDonutChart` component:
 
 ```
 // Before
-<div className="grid xl:grid-cols-3 gap-6 mb-6">
-  <div className="xl:col-span-2">
+<RevenueDonutChart
+  serviceRevenue={displayMetrics.serviceRevenue} 
+  productRevenue={displayMetrics.productRevenue}
+  size={64}
+  filterContext={filterContext as any}
+  retailAttachmentRate={attachmentData?.attachmentRate}
+  retailAttachmentLoading={attachmentLoading}
+/>
 
 // After
-<div className="grid xl:grid-cols-5 gap-6 mb-6">
-  <div className="xl:col-span-2">
+<RevenueDonutChart
+  serviceRevenue={displayMetrics.serviceRevenue} 
+  productRevenue={displayMetrics.productRevenue}
+  size={64}
+  retailAttachmentRate={attachmentData?.attachmentRate}
+  retailAttachmentLoading={attachmentLoading}
+/>
 ```
 
-The right sidebar column (currently implicit `col-span-1`) will need `xl:col-span-3` added to its container.
+Since `filterContext` is optional in `RevenueDonutChart`, removing it will simply hide the `AnalyticsFilterBadge` -- no other changes needed.
 
-This is a two-line class change -- no logic or layout restructuring needed.
