@@ -1,68 +1,81 @@
 
 
-## Fix: Slow Drag-and-Drop Feedback with Optimistic Updates
+## Confirmation Gate: Require Client Acknowledgment Before Confirming
 
-### Problem
+### What This Solves
 
-When dragging an appointment to a new time slot, the UI waits ~3 seconds for the full round-trip:
-1. Edge function call to `update-phorest-appointment-time`
-2. Query invalidation of `phorest-appointments`
-3. Re-fetch and re-render
-
-During this time, the appointment snaps back to its original position, then jumps to the new one. There are also **duplicate toasts** -- one from `useRescheduleAppointment.onSuccess` ("Appointment rescheduled locally") and another from `DayView.handleDragEnd` ("Moved to 2:00 PM").
-
-### Solution
-
-Add optimistic cache updates so the appointment visually moves **instantly** on drop, before the server responds.
+Appointments can be marked "Confirmed" with a single click, even when no one has communicated with the client. This creates false confidence in the schedule. After this change, staff must declare **how the client was informed** before confirmation proceeds.
 
 ### Changes
 
-#### 1. `src/hooks/useRescheduleAppointment.ts` -- Add Optimistic Update
+#### 1. Confirmation Method Dialog (AppointmentDetailSheet.tsx)
 
-- Add an `onMutate` handler that:
-  - Cancels in-flight `phorest-appointments` queries (prevents race conditions)
-  - Snapshots current cache data for rollback
-  - Immediately updates the appointment's `start_time` (and `stylist_user_id` if staff changed) in the query cache
-  - Stores the previous snapshot in mutation context
+When clicking "Confirm" on a booked/pending appointment:
+- A dialog opens requiring the staff to select a communication method
+- Methods: "Called Client", "Texted Client", "Client Confirmed Online", "Spoke In Person"
+- A mandatory checkbox: "Client has been informed and acknowledged"
+- Optional notes field
+- "Mark as Confirmed" button stays disabled until the checkbox is checked
+- Walk-in appointments (no `phorest_client_id` and no `client_name`) auto-select "In Person" and pre-check the acknowledgment
 
-- Update `onError` to restore the snapshot if the mutation fails
+New state variables:
+- `showConfirmGate` (boolean)
+- `confirmMethod` (string)
+- `confirmNote` (string)
+- `confirmAcknowledged` (boolean)
 
-- **Remove the duplicate toast** from `onSuccess` -- let the caller (`DayView`) control the toast message (it already shows "Moved to 2:00 PM" with an Undo button, which is better UX)
+The `handleStatusChange` function will intercept `'confirmed'` status and open the dialog instead of directly changing status. On submit, it fires `onStatusChange` and logs the audit event with `confirmation_method` and `confirmation_note` in metadata.
 
-- Keep the `invalidateQueries` call in `onSuccess` to ensure the cache stays fresh after server confirmation
+#### 2. Schedule.tsx -- Gate the Action Bar Confirm Path
 
-#### 2. `src/components/dashboard/schedule/DayView.tsx` -- Add Instant Drop Toast
+The `handleConfirm` on line 462 also calls `handleStatusChange('confirmed')` directly. Since `AppointmentDetailSheet` is the component that renders the confirm button and has the dialog, and `handleConfirm` in Schedule.tsx is wired through the same `onStatusChange` prop, the gate is already enforced through the detail sheet's footer. No changes needed in Schedule.tsx.
 
-- Show an **immediate** info toast on drop (before server response): "Moving appointment..." -- this gives instant confirmation that the action was registered
-- On success: replace with the existing "Moved to [time]" toast with Undo button
-- On error: the `useRescheduleAppointment` hook handles the error toast and rollback
+#### 3. Confirmation Source Display (AppointmentDetailSheet.tsx)
 
-### Technical Detail
+When an appointment is in `confirmed` status, show an inline indicator below the status badge area:
+- Queries the audit log for the `status_changed` event with `new_value.status === 'confirmed'`
+- Extracts `confirmation_method` from `metadata`
+- Displays: icon + "Confirmed via Phone Call" (or Text, Online, In Person)
+- Falls back to "Confirmed (method unknown)" for legacy appointments
 
-The optimistic update modifies all cached queries matching the `phorest-appointments` prefix. Since the query key includes date range and filters, we use `queryClient.setQueriesData` with a partial key match to update all relevant caches.
+Method display map:
+- `called` -- Phone icon + "Phone Call"
+- `texted` -- MessageSquare icon + "Text Message"
+- `online` -- Globe icon + "Online"
+- `in_person` -- User icon + "In Person"
 
-```text
-User drops appointment
-  |
-  +---> [Instant] Cache updated, appointment visually moves
-  +---> [Instant] "Moving..." toast shown
-  |
-  +---> [~2-3s] Edge function completes
-  |       |
-  |       +---> Success: "Moved to 2:00 PM" toast with Undo
-  |       +---> Failure: Cache rolled back, error toast
-  |
-  +---> [Background] Query refetch confirms final state
-```
+#### 4. Confirmation Method in Appointments Hub (AppointmentDetailDrawer.tsx)
+
+Update the existing `confirmationEvent` query (line 131-156) to also extract `metadata.confirmation_method` from the audit log. Replace the current `'Manual'` fallback with the actual method label.
+
+#### 5. Revert-to-Booked Path (Admin Only)
+
+Add a "Revert to Booked" option in the overflow menu (MoreHorizontal dropdown) for admin/manager roles when the appointment is in `confirmed` status. This handles accidental confirmations without requiring a full cancel/rebook cycle.
 
 ### Files Modified
 
-- `src/hooks/useRescheduleAppointment.ts` -- Add `onMutate` optimistic update, remove duplicate toast
-- `src/components/dashboard/schedule/DayView.tsx` -- Minor: no structural changes needed since the optimistic update handles the visual snap
+- `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` -- Confirmation dialog, confirmation source display, revert-to-booked option
+- `src/components/dashboard/appointments-hub/AppointmentDetailDrawer.tsx` -- Extract and display confirmation method from audit metadata
 
-### What This Fixes
+### Technical Details
 
-- Appointment moves visually **on drop** instead of after 3+ seconds
-- No more duplicate toasts
-- Automatic rollback if server fails
-- Undo still works (re-invokes the mutation with original time)
+```text
+Staff clicks "Confirm"
+  |
+  +--> Is walk-in? --> Pre-select "In Person", pre-check acknowledgment
+  |
+  +--> Dialog opens with radio group for method selection
+  |
+  +--> Staff selects method + checks "Client informed" box
+  |
+  +--> "Mark as Confirmed" enabled
+  |
+  +--> On submit:
+         1. fireAuditLog('status_changed', {status: 'booked'}, {status: 'confirmed'}, 
+              {confirmation_method: 'called', confirmation_note: '...'})
+         2. onStatusChange(appointment.id, 'confirmed')
+         3. Close dialog
+```
+
+No database schema changes required -- the existing `metadata` JSONB column on `appointment_audit_log` stores the confirmation method.
+
