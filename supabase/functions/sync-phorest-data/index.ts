@@ -911,6 +911,32 @@ async function syncSalesTransactions(
       if (purchases.length > 0) {
         const itemsSaved = await saveTransactionItems(supabase, purchases, branchId, branchName, staffMap);
         console.log(`Saved ${itemsSaved} items to phorest_transaction_items for ${branchName}`);
+        
+        // Propagate payment method from transaction items to appointments
+        try {
+          const { data: paymentData, error: pmError } = await supabase
+            .from('phorest_transaction_items')
+            .select('transaction_date, phorest_staff_id, phorest_client_id, payment_method')
+            .eq('location_id', branchId)
+            .not('payment_method', 'is', null);
+          
+          if (!pmError && paymentData && paymentData.length > 0) {
+            let pmUpdated = 0;
+            for (const ti of paymentData) {
+              const { error: upErr } = await supabase
+                .from('phorest_appointments')
+                .update({ payment_method: ti.payment_method })
+                .eq('phorest_staff_id', ti.phorest_staff_id)
+                .eq('appointment_date', ti.transaction_date)
+                .eq('phorest_client_id', ti.phorest_client_id)
+                .is('payment_method', null);
+              if (!upErr) pmUpdated++;
+            }
+            console.log(`Propagated payment method to ${pmUpdated} appointments for ${branchName}`);
+          }
+        } catch (pmErr: any) {
+          console.error(`Payment method propagation failed for ${branchName}:`, pmErr.message);
+        }
       }
 
       // Collect all transaction records in memory first, then batch upsert
@@ -1391,8 +1417,10 @@ function parseSalesCsv(csvText: string, branchId: string): any[] {
   const idxTip = getIndex(['stafftips', 'phoresttips', 'tipamount', 'gratuity']);
   // Unit price
   const idxUnitPrice = getIndex(['unitprice', 'price']);
+  // Payment method
+  const idxPaymentType = getIndex(['paymenttypenames', 'paymenttype', 'paymentmethod']);
   
-  console.log(`[CSV Parser] Column indices: transactionId=${idxTransactionId}, staffId=${idxStaffId}, date=${idxDate}, amount=${idxAmount}, type=${idxType}, name=${idxName}, tip=${idxTip}, tax=${idxTax}, unitPrice=${idxUnitPrice}, discount=${idxDiscount}`);
+  console.log(`[CSV Parser] Column indices: transactionId=${idxTransactionId}, staffId=${idxStaffId}, date=${idxDate}, amount=${idxAmount}, type=${idxType}, name=${idxName}, tip=${idxTip}, tax=${idxTax}, unitPrice=${idxUnitPrice}, discount=${idxDiscount}, paymentType=${idxPaymentType}`);
   
   const transactions: any[] = [];
   
@@ -1429,6 +1457,7 @@ function parseSalesCsv(csvText: string, branchId: string): any[] {
         purchaseTime: idxTime >= 0 ? values[idxTime] : null,
         total: netTotal,
         tipAmount: idxTip >= 0 ? Math.abs(parseFloat(values[idxTip]?.replace(/[^0-9.-]/g, '')) || 0) : 0,
+        paymentMethod: idxPaymentType >= 0 ? (values[idxPaymentType]?.trim() || null) : null,
         clientId: idxClientId >= 0 ? values[idxClientId] : null,
         clientName: idxClientName >= 0 ? values[idxClientName] : null,
         items: [{
@@ -1549,6 +1578,7 @@ async function saveTransactionItems(
         tax_amount: item.tax || 0,
         tip_amount: item.tip || transaction.tipAmount || 0,
         total_amount: totalAmount,
+        payment_method: transaction.paymentMethod || null,
       };
       
       const { error } = await supabase

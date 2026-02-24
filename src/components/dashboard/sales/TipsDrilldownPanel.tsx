@@ -6,6 +6,7 @@ import { tokens } from '@/lib/design-tokens';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useTipsDrilldown, type StylistTipMetrics } from '@/hooks/useTipsDrilldown';
+import { TipPaymentMethodBreakdown } from './TipPaymentMethodBreakdown';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -75,7 +76,7 @@ export function TipsDrilldownPanel({ isOpen, parentLocationId }: TipsDrilldownPa
     return locationFilter;
   }, [locationFilter, regionFilter, locationRegionMap]);
 
-  const { byStylist, byCategory, isLoading } = useTipsDrilldown({
+  const { byStylist, byCategory, byPaymentMethod, isLoading } = useTipsDrilldown({
     period,
     locationId: effectiveLocationId !== 'all' ? effectiveLocationId : undefined,
   });
@@ -320,6 +321,9 @@ export function TipsDrilldownPanel({ isOpen, parentLocationId }: TipsDrilldownPa
                     <CategoryRows categories={sortedCategories} totalCategoryTips={totalCategoryTips} />
                   </div>
                 )}
+
+                {/* Payment Method Breakdown */}
+                <TipPaymentMethodBreakdown byPaymentMethod={byPaymentMethod} />
               </>
             )}
           </div>
