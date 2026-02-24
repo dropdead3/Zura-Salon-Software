@@ -44,6 +44,7 @@ import {
 } from '@/hooks/useAnnouncementBar';
 import { cn } from '@/lib/utils';
 import { DomainConfigCard } from './DomainConfigCard';
+import { CancellationFeePoliciesSettings } from './CancellationFeePoliciesSettings';
 import { ActiveThemeCard } from './ActiveThemeCard';
 import { ThemeLibraryGrid } from './ThemeLibraryGrid';
 import { useWebsiteThemes, useActiveTheme, useActivateTheme } from '@/hooks/useWebsiteThemes';
@@ -714,6 +715,11 @@ function BookingTab() {
       </Card>
 
       <BookingVisibilityCard />
+
+      {/* Cancellation & No-Show Fee Policies */}
+      <div className="lg:col-span-2">
+        <CancellationFeePoliciesSettings />
+      </div>
     </div>
   );
 }

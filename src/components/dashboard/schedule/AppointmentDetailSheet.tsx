@@ -1166,6 +1166,30 @@ export function AppointmentDetailSheet({
                           </span>
                         </div>
                       )}
+                      {/* Deposit Status */}
+                      {(appointment as any).deposit_required && (
+                        <div className="flex items-center justify-between pt-2 border-t border-dashed">
+                          <span className="text-sm text-muted-foreground">Deposit</span>
+                          <div className="flex items-center gap-2">
+                            {(appointment as any).deposit_amount != null && (
+                              <span className="text-xs">
+                                <BlurredAmount>{formatCurrency((appointment as any).deposit_amount)}</BlurredAmount>
+                              </span>
+                            )}
+                            <Badge
+                              variant="outline"
+                              className={cn('text-[10px]', {
+                                'text-amber-600 border-amber-300': (appointment as any).deposit_status === 'pending',
+                                'text-green-600 border-green-300': (appointment as any).deposit_status === 'collected',
+                                'text-blue-600 border-blue-300': (appointment as any).deposit_status === 'applied',
+                                'text-red-600 border-red-300': (appointment as any).deposit_status === 'refunded' || (appointment as any).deposit_status === 'forfeited',
+                              })}
+                            >
+                              {((appointment as any).deposit_status || 'pending').replace('_', ' ')}
+                            </Badge>
+                          </div>
+                        </div>
+                      )}
                     </motion.div>
 
                     <Separator />

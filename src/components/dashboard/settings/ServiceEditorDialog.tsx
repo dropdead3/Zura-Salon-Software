@@ -45,6 +45,10 @@ export function ServiceEditorDialog({
   const [leadTimeDays, setLeadTimeDays] = useState('0');
   const [finishingTime, setFinishingTime] = useState('0');
   const [contentCreationTime, setContentCreationTime] = useState('0');
+  const [requiresDeposit, setRequiresDeposit] = useState(false);
+  const [depositType, setDepositType] = useState('percentage');
+  const [depositAmount, setDepositAmount] = useState('');
+  const [depositAmountFlat, setDepositAmountFlat] = useState('');
   const [processingTime, setProcessingTime] = useState('0');
   const [requiresNewClientConsultation, setRequiresNewClientConsultation] = useState(false);
 
@@ -66,6 +70,10 @@ export function ServiceEditorDialog({
         setContentCreationTime(String(initialData.content_creation_time_minutes || 0));
         setProcessingTime(String(initialData.processing_time_minutes || 0));
         setRequiresNewClientConsultation(initialData.requires_new_client_consultation ?? false);
+        setRequiresDeposit(initialData.requires_deposit ?? false);
+        setDepositType(initialData.deposit_type ?? 'percentage');
+        setDepositAmount(initialData.deposit_amount != null ? String(initialData.deposit_amount) : '');
+        setDepositAmountFlat(initialData.deposit_amount_flat != null ? String(initialData.deposit_amount_flat) : '');
       } else {
         setName('');
         setCategory(presetCategory || categories[0]?.category_name || '');
@@ -81,6 +89,10 @@ export function ServiceEditorDialog({
         setContentCreationTime('0');
         setProcessingTime('0');
         setRequiresNewClientConsultation(false);
+        setRequiresDeposit(false);
+        setDepositType('percentage');
+        setDepositAmount('');
+        setDepositAmountFlat('');
       }
     }
   }, [open, initialData, categories, presetCategory]);
@@ -103,6 +115,10 @@ export function ServiceEditorDialog({
       content_creation_time_minutes: parseInt(contentCreationTime) || 0,
       processing_time_minutes: parseInt(processingTime) || 0,
       requires_new_client_consultation: requiresNewClientConsultation,
+      requires_deposit: requiresDeposit,
+      deposit_type: depositType,
+      deposit_amount: depositAmount ? parseFloat(depositAmount) : null,
+      deposit_amount_flat: depositAmountFlat ? parseFloat(depositAmountFlat) : null,
     });
   };
 
@@ -234,6 +250,63 @@ export function ServiceEditorDialog({
                       <p className={tokens.body.muted}>New clients must complete a consultation before booking</p>
                     </div>
                     <Switch checked={requiresNewClientConsultation} onCheckedChange={setRequiresNewClientConsultation} />
+                  </div>
+
+                  {/* Deposit Configuration */}
+                  <div className="pt-2 border-t border-border/60">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className={tokens.body.emphasis}>Requires Deposit</p>
+                        <p className={tokens.body.muted}>Collect a deposit or prepayment before confirming this service</p>
+                      </div>
+                      <Switch checked={requiresDeposit} onCheckedChange={setRequiresDeposit} />
+                    </div>
+
+                    {requiresDeposit && (
+                      <div className="mt-3 pl-4 border-l-2 border-muted space-y-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs">Deposit Type</Label>
+                          <Select value={depositType} onValueChange={setDepositType}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="percentage">Percentage of Service Price</SelectItem>
+                              <SelectItem value="flat">Flat Amount</SelectItem>
+                              <SelectItem value="full_prepay">Full Prepayment</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        {depositType !== 'full_prepay' && (
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1">
+                              <Label className="text-xs">
+                                {depositType === 'percentage' ? 'Percentage (%)' : 'Amount ($)'}
+                              </Label>
+                              <Input
+                                type="number"
+                                min="0"
+                                step={depositType === 'percentage' ? '1' : '0.01'}
+                                value={depositAmount}
+                                onChange={e => setDepositAmount(e.target.value)}
+                                placeholder={depositType === 'percentage' ? 'e.g. 25' : 'e.g. 50'}
+                              />
+                            </div>
+                            {depositType === 'percentage' && (
+                              <div className="space-y-1">
+                                <Label className="text-xs">Minimum ($)</Label>
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  value={depositAmountFlat}
+                                  onChange={e => setDepositAmountFlat(e.target.value)}
+                                  placeholder="Optional"
+                                />
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               </form>

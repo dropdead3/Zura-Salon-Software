@@ -950,6 +950,12 @@ export type Database = {
           created_at: string | null
           deleted_at: string | null
           deleted_by: string | null
+          deposit_amount: number | null
+          deposit_applied_to_total: boolean
+          deposit_collected_at: string | null
+          deposit_required: boolean
+          deposit_status: string | null
+          deposit_stripe_payment_id: string | null
           duration_minutes: number | null
           end_time: string
           external_id: string | null
@@ -991,6 +997,12 @@ export type Database = {
           created_at?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
+          deposit_amount?: number | null
+          deposit_applied_to_total?: boolean
+          deposit_collected_at?: string | null
+          deposit_required?: boolean
+          deposit_status?: string | null
+          deposit_stripe_payment_id?: string | null
           duration_minutes?: number | null
           end_time: string
           external_id?: string | null
@@ -1032,6 +1044,12 @@ export type Database = {
           created_at?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
+          deposit_amount?: number | null
+          deposit_applied_to_total?: boolean
+          deposit_collected_at?: string | null
+          deposit_required?: boolean
+          deposit_status?: string | null
+          deposit_stripe_payment_id?: string | null
           duration_minutes?: number | null
           end_time?: string
           external_id?: string | null
@@ -3119,6 +3137,63 @@ export type Database = {
           },
           {
             foreignKeyName: "client_balances_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_cards_on_file: {
+        Row: {
+          card_brand: string | null
+          card_exp_month: number | null
+          card_exp_year: number | null
+          card_last4: string | null
+          client_id: string
+          created_at: string
+          id: string
+          is_default: boolean
+          organization_id: string
+          stripe_customer_id: string
+          stripe_payment_method_id: string
+        }
+        Insert: {
+          card_brand?: string | null
+          card_exp_month?: number | null
+          card_exp_year?: number | null
+          card_last4?: string | null
+          client_id: string
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          organization_id: string
+          stripe_customer_id: string
+          stripe_payment_method_id: string
+        }
+        Update: {
+          card_brand?: string | null
+          card_exp_month?: number | null
+          card_exp_year?: number | null
+          card_last4?: string | null
+          client_id?: string
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          organization_id?: string
+          stripe_customer_id?: string
+          stripe_payment_method_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_cards_on_file_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "phorest_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_cards_on_file_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -9520,6 +9595,12 @@ export type Database = {
           created_by: string | null
           deleted_at: string | null
           deleted_by: string | null
+          deposit_amount: number | null
+          deposit_applied_to_total: boolean
+          deposit_collected_at: string | null
+          deposit_required: boolean
+          deposit_status: string | null
+          deposit_stripe_payment_id: string | null
           end_time: string
           id: string
           is_new_client: boolean | null
@@ -9559,6 +9640,12 @@ export type Database = {
           created_by?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
+          deposit_amount?: number | null
+          deposit_applied_to_total?: boolean
+          deposit_collected_at?: string | null
+          deposit_required?: boolean
+          deposit_status?: string | null
+          deposit_stripe_payment_id?: string | null
           end_time: string
           id?: string
           is_new_client?: boolean | null
@@ -9598,6 +9685,12 @@ export type Database = {
           created_by?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
+          deposit_amount?: number | null
+          deposit_applied_to_total?: boolean
+          deposit_collected_at?: string | null
+          deposit_required?: boolean
+          deposit_status?: string | null
+          deposit_stripe_payment_id?: string | null
           end_time?: string
           id?: string
           is_new_client?: boolean | null
@@ -14767,6 +14860,9 @@ export type Database = {
           content_creation_time_minutes: number
           cost: number | null
           created_at: string | null
+          deposit_amount: number | null
+          deposit_amount_flat: number | null
+          deposit_type: string
           description: string | null
           display_order: number | null
           duration_minutes: number
@@ -14785,6 +14881,7 @@ export type Database = {
           organization_id: string | null
           price: number | null
           processing_time_minutes: number
+          requires_deposit: boolean
           requires_new_client_consultation: boolean
           requires_qualification: boolean | null
           same_day_restriction_reason: string | null
@@ -14799,6 +14896,9 @@ export type Database = {
           content_creation_time_minutes?: number
           cost?: number | null
           created_at?: string | null
+          deposit_amount?: number | null
+          deposit_amount_flat?: number | null
+          deposit_type?: string
           description?: string | null
           display_order?: number | null
           duration_minutes?: number
@@ -14817,6 +14917,7 @@ export type Database = {
           organization_id?: string | null
           price?: number | null
           processing_time_minutes?: number
+          requires_deposit?: boolean
           requires_new_client_consultation?: boolean
           requires_qualification?: boolean | null
           same_day_restriction_reason?: string | null
@@ -14831,6 +14932,9 @@ export type Database = {
           content_creation_time_minutes?: number
           cost?: number | null
           created_at?: string | null
+          deposit_amount?: number | null
+          deposit_amount_flat?: number | null
+          deposit_type?: string
           description?: string | null
           display_order?: number | null
           duration_minutes?: number
@@ -14849,6 +14953,7 @@ export type Database = {
           organization_id?: string | null
           price?: number | null
           processing_time_minutes?: number
+          requires_deposit?: boolean
           requires_new_client_consultation?: boolean
           requires_qualification?: boolean | null
           same_day_restriction_reason?: string | null
