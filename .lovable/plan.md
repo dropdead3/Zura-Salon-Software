@@ -1,48 +1,67 @@
 
 
-## Analytics Gaps to Fix
+## Tips Data Integrity: Findings and Fixes
 
-### 1. Per-Stylist Retail Attachment Rate (Same Root Cause)
+### Investigation Results
 
-**File: `src/hooks/useIndividualStaffReport.ts` (lines 322-348)**
+**Tip Duplication: No Issue Found**
+Confirmed via database query -- there are zero transactions where tips are spread across multiple line items within the same transaction. The `useTipsDrilldown` hook correctly sources from `phorest_appointments.tip_amount` (one row per appointment), so tips are not double-counted anywhere.
 
-The individual staff report calculates retail attachment rate by matching `transaction_id` between service and product rows -- the exact same bug we just fixed in the global hooks. Since Phorest uses separate transaction IDs for services and products, this always produces 0%.
+**Payment Method: Missing from Both Sync Paths**
+The `payment_method` column exists on both `phorest_appointments` and `phorest_transaction_items`, but is NULL across all records:
+- **CSV path**: The parser extracts `stafftips` but does not look for `paymenttype` or `paymenttypenames` columns
+- **API path**: The code maps `purchase.paymentMethod`, but the Phorest API does not appear to return this field in the current data
 
-**Fix:** Replace `transaction_id`-based Sets with `phorest_client_id|transaction_date` composite keys:
-- Update the query on line 232 to also select `phorest_client_id`
-- Build service and product Sets using `${phorest_client_id}|${transaction_date}` instead of `transaction_id`
-- Match on composite keys instead of transaction IDs
+### Proposed Changes
 
----
+#### 1. Extract Payment Type from CSV (Sync Engine)
 
-### 2. Rebooking Rate Missing Pagination
+**File: `supabase/functions/sync-phorest-data/index.ts`**
 
-**File: `src/hooks/useRebookingRate.ts`**
+Add `paymenttype` / `paymenttypenames` column detection in the CSV parser (around line 1393):
+- Add a new `idxPaymentType` index lookup for columns: `paymenttype`, `paymenttypenames`, `paymentmethod`
+- Include the extracted value in the transaction object as `paymentMethod`
+- This flows through to `payment_method` on `phorest_transaction_items` during upsert
 
-This hook fetches all completed appointments for a date range with no pagination. The default query limit is 1,000 rows. For busy salons or longer date ranges (e.g., 90 days), this silently truncates results, producing an inaccurate rebooking rate.
+#### 2. Propagate Payment Method to Appointments
 
-**Fix:** Add manual pagination using `.range()` in 1,000-row batches (same pattern used in the retail attachment hooks). Accumulate all rows before calculating the rate.
+**File: `supabase/functions/sync-phorest-data/index.ts`**
 
----
+After transaction items are synced, update `phorest_appointments.payment_method` by joining on `phorest_staff_id + transaction_date + phorest_client_id` where the appointment currently has no payment method. This ensures the tips drilldown can show card vs cash breakdown.
 
-### 3. Individual Staff Report Missing Pagination
+Alternatively: query `phorest_transaction_items` in the drilldown hook to get payment method alongside the tip.
 
-**File: `src/hooks/useIndividualStaffReport.ts` (line 230)**
+#### 3. Add Payment Method Breakdown to Tips Drilldown
 
-The transaction items query for a single stylist has no pagination. High-volume stylists with more than 1,000 transaction items in the period will have truncated data, affecting revenue totals, product counts, and attachment rates.
+**File: `src/hooks/useTipsDrilldown.ts`**
 
-**Fix:** Wrap the transaction items fetch in a paginated loop using `.range()` in batches of 1,000.
+- Add a secondary query against `phorest_transaction_items` to fetch `payment_method` and `tip_amount` for the same date range
+- Aggregate tips by payment method (Card, Cash, Other/Unknown)
+- Export a new `byPaymentMethod` field: `Record<string, { totalTips: number; count: number }>`
 
----
+**New UI Component: `TipPaymentMethodBreakdown.tsx`**
+
+- Small donut or horizontal bar showing Card vs Cash vs Unknown tip distribution
+- Rendered inside the existing Tips drilldown card
+- Follows the donut chart standard (paddingAngle=0, stroke with border color, strokeWidth=1)
+- Uses design tokens for typography and layout
 
 ### What Does NOT Need Fixing
 
-- **`useRetailAttachmentRate.ts`** -- Already fixed (client+date matching with pagination)
-- **`useServiceRetailAttachment.ts`** -- Already fixed
-- **`useStylistAddonAttachment.ts`** -- Uses a different data source (`booking_addon_events`), not affected by the transaction_id issue
-- **`useRebookingRate.ts` logic** -- The rebooking logic itself (checking `rebooked_at_checkout`) is correct; only the pagination is missing
+- **Tip duplication** -- not occurring, verified in database
+- **`useTipsDrilldown` data source** -- correctly uses `phorest_appointments`, no change needed for core tip calculation
+- **`PayrollKPICards` tips** -- uses payroll analytics hook, separate data path, not affected
 
-### Technical Details
+### Important Caveat
 
-All pagination will follow the established `fetchAllPages` pattern: fetch in batches of 1,000 using `.range(offset, offset + 999)`, continue until a batch returns fewer than 1,000 rows.
+The payment method extraction depends on whether the Phorest CSV export actually includes `paymenttype` columns. If it does not, the column will remain NULL and the breakdown will show "Unknown" for all tips. A next sync after this change will confirm whether the data populates. The UI will gracefully handle this by showing "Payment method data not yet available" if all values are NULL.
+
+### Technical Sequence
+
+1. Update CSV parser to extract payment type
+2. Update transaction-to-appointment payment method propagation
+3. Deploy edge function
+4. Add `byPaymentMethod` aggregation to `useTipsDrilldown`
+5. Create `TipPaymentMethodBreakdown` UI component
+6. Trigger a re-sync to populate the data
 
