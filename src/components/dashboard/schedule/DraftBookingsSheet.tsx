@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { Search, FileText, Trash2, Play, Clock, User, Scissors, ChevronDown, ChevronRight, GitCompareArrows } from 'lucide-react';
+import { Search, FileText, Trash2, Play, Clock, User, Scissors, ChevronDown, ChevronRight, GitCompareArrows, CheckCircle2, AlertTriangle, Loader2 } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
@@ -17,7 +17,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { useDraftBookings, useDeleteDraft, useBatchDeleteDrafts, type DraftBooking } from '@/hooks/useDraftBookings';
+import { useDraftBookings, useDeleteDraft, useBatchDeleteDrafts, useSaveDraft, type DraftBooking } from '@/hooks/useDraftBookings';
+import { useDraftAvailabilityCheck, formatTimeDisplay } from '@/hooks/useDraftAvailabilityCheck';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -226,7 +227,7 @@ interface ClientGroupProps {
   onCloseSheet: () => void;
 }
 
-function ClientGroup({ clientKey, drafts, onResume, onDiscard, onDiscardAll, onCloseSheet }: ClientGroupProps) {
+function ClientGroup({ clientKey, drafts, orgId, onResume, onDiscard, onDiscardAll, onCloseSheet }: ClientGroupProps) {
   const [isOpen, setIsOpen] = useState(true);
   const [compareIds, setCompareIds] = useState<Set<string>>(new Set());
   const showCompare = drafts.length >= 2;
@@ -299,6 +300,7 @@ function ClientGroup({ clientKey, drafts, onResume, onDiscard, onDiscardAll, onC
                 <DraftCard
                   key={draft.id}
                   draft={draft}
+                  orgId={orgId}
                   isMostRecent={index === 0}
                   onResume={onResume}
                   onDiscard={onDiscard}
@@ -329,6 +331,7 @@ function ClientGroup({ clientKey, drafts, onResume, onDiscard, onDiscardAll, onC
 
 interface DraftCardProps {
   draft: DraftBooking;
+  orgId: string | undefined;
   isMostRecent: boolean;
   onResume: (draft: DraftBooking) => void;
   onDiscard: (draft: DraftBooking) => void;
@@ -338,7 +341,37 @@ interface DraftCardProps {
   compareDisabled?: boolean;
 }
 
-function DraftCard({ draft, isMostRecent, onResume, onDiscard, showCompare, isCompareSelected, onToggleCompare, compareDisabled }: DraftCardProps) {
+function DraftCard({ draft, orgId, isMostRecent, onResume, onDiscard, showCompare, isCompareSelected, onToggleCompare, compareDisabled }: DraftCardProps) {
+  const { status, nextSlots, isLoading: availabilityLoading } = useDraftAvailabilityCheck(draft);
+  const saveDraft = useSaveDraft();
+
+  const handleQuickRebook = (newTime: string) => {
+    if (!orgId) return;
+    saveDraft.mutate({
+      id: draft.id,
+      organization_id: draft.organization_id,
+      location_id: draft.location_id || undefined,
+      appointment_date: draft.appointment_date || undefined,
+      start_time: newTime,
+      client_id: draft.client_id,
+      client_name: draft.client_name,
+      staff_user_id: draft.staff_user_id,
+      staff_name: draft.staff_name,
+      selected_services: draft.selected_services,
+      notes: draft.notes || undefined,
+      step_reached: draft.step_reached || undefined,
+      is_redo: draft.is_redo,
+      redo_metadata: draft.redo_metadata,
+    }, {
+      onSuccess: () => {
+        toast.success('Time updated', {
+          description: `Moved to ${formatTimeDisplay(newTime)}`,
+        });
+        onResume({ ...draft, start_time: newTime });
+      },
+    });
+  };
+
   return (
     <div className="rounded-lg border border-border/40 bg-background/60 p-3 space-y-2">
       {/* Top row: badges + time + compare checkbox */}
@@ -390,11 +423,52 @@ function DraftCard({ draft, isMostRecent, onResume, onDiscard, showCompare, isCo
           </span>
         )}
         {draft.appointment_date && <span>{draft.appointment_date}</span>}
-        {draft.start_time && <span>{draft.start_time}</span>}
+        {draft.start_time && <span>{formatTimeDisplay(draft.start_time)}</span>}
         {draft.created_by_name && (
           <span className="text-muted-foreground/70">by {draft.created_by_name}</span>
         )}
       </div>
+
+      {/* Availability indicator */}
+      {draft.appointment_date && draft.start_time && draft.staff_user_id && (
+        <div className="text-[11px]">
+          {availabilityLoading ? (
+            <div className="flex items-center gap-1.5 text-muted-foreground">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              <span>Checking availability...</span>
+            </div>
+          ) : status === 'available' ? (
+            <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+              <CheckCircle2 className="h-3 w-3" />
+              <span>Slot still open</span>
+            </div>
+          ) : status === 'conflict' ? (
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
+                <AlertTriangle className="h-3 w-3" />
+                <span>Original slot taken</span>
+              </div>
+              {nextSlots.length > 0 && (
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-muted-foreground text-[10px]">Next available:</span>
+                  {nextSlots.map((slot) => (
+                    <button
+                      key={slot}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleQuickRebook(slot);
+                      }}
+                      className="px-2 py-0.5 rounded-full text-[10px] bg-primary/10 text-primary hover:bg-primary/20 transition-colors border border-primary/20"
+                    >
+                      {formatTimeDisplay(slot)}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : null}
+        </div>
+      )}
 
       {/* Actions */}
       <div className="flex items-center gap-2 pt-0.5">
@@ -404,7 +478,7 @@ function DraftCard({ draft, isMostRecent, onResume, onDiscard, showCompare, isCo
           className="gap-1.5 flex-1"
         >
           <Play className="h-3.5 w-3.5" />
-          Resume
+          {status === 'conflict' ? 'Resume & Adjust' : 'Resume'}
         </Button>
         <Button
           variant="outline"
