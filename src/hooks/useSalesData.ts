@@ -211,51 +211,95 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
   return useQuery({
     queryKey: ['sales-metrics-from-appointments', filters],
     queryFn: async () => {
-      let query = supabase
+      // Build appointment query
+      let apptQuery = supabase
         .from('phorest_appointments')
         .select('id, total_price, tip_amount, service_name, phorest_staff_id, location_id, appointment_date, start_time, end_time')
         .not('total_price', 'is', null);
 
       if (filters.dateFrom) {
-        query = query.gte('appointment_date', filters.dateFrom);
+        apptQuery = apptQuery.gte('appointment_date', filters.dateFrom);
       }
       if (filters.dateTo) {
-        query = query.lte('appointment_date', filters.dateTo);
+        apptQuery = apptQuery.lte('appointment_date', filters.dateTo);
       }
       if (filters.locationId && filters.locationId !== 'all') {
         const ids = filters.locationId.split(',').filter(Boolean);
         if (ids.length === 1) {
-          query = query.eq('location_id', ids[0]);
+          apptQuery = apptQuery.eq('location_id', ids[0]);
         } else if (ids.length > 1) {
-          query = query.in('location_id', ids);
+          apptQuery = apptQuery.in('location_id', ids);
         }
       }
 
-      const { data, error } = await query;
-      if (error) throw error;
+      // Build transaction items query for product revenue and tips
+      let prodQuery = supabase
+        .from('phorest_transaction_items')
+        .select('total_amount, item_type, tip_amount')
+        .not('total_amount', 'is', null);
+
+      if (filters.dateFrom) {
+        prodQuery = prodQuery.gte('transaction_date', filters.dateFrom);
+      }
+      if (filters.dateTo) {
+        prodQuery = prodQuery.lte('transaction_date', filters.dateTo);
+      }
+      if (filters.locationId && filters.locationId !== 'all') {
+        const ids = filters.locationId.split(',').filter(Boolean);
+        if (ids.length === 1) {
+          prodQuery = prodQuery.eq('location_id', ids[0]);
+        } else if (ids.length > 1) {
+          prodQuery = prodQuery.in('location_id', ids);
+        }
+      }
+
+      const [apptResult, txResult] = await Promise.all([apptQuery, prodQuery]);
+      if (apptResult.error) throw apptResult.error;
+      if (txResult.error) throw txResult.error;
+
+      const data = apptResult.data;
+      const txItems = txResult.data || [];
+
+      // Aggregate product revenue and tips from transaction items
+      let productRevenue = 0;
+      let totalProducts = 0;
+      let totalTipsFromTx = 0;
+      const tipTxSeen = new Set<number>();
+
+      for (const item of txItems) {
+        const itemType = (item.item_type || '').toLowerCase();
+        if (['product', 'retail'].includes(itemType)) {
+          productRevenue += Number(item.total_amount) || 0;
+          totalProducts += 1;
+        }
+        // Sum tips (use Math.abs since they may be stored as negative)
+        const tipVal = Number(item.tip_amount) || 0;
+        if (tipVal !== 0) {
+          totalTipsFromTx += Math.abs(tipVal);
+        }
+      }
 
       if (!data || data.length === 0) {
         return {
-          totalRevenue: 0,
+          totalRevenue: productRevenue,
           serviceRevenue: 0,
-          productRevenue: 0,
+          productRevenue,
           totalServices: 0,
-          totalProducts: 0,
+          totalProducts,
           totalTransactions: 0,
           averageTicket: 0,
           totalDiscounts: 0,
           unmappedStaffRecords: 0,
           totalServiceHours: 0,
           daysWithSales: 0,
-          totalTips: 0,
+          totalTips: totalTipsFromTx,
           dataSource: 'appointments' as const,
         };
       }
 
-      const totalRevenue = data.reduce((sum, apt) => sum + (Number(apt.total_price) || 0), 0);
-      const totalTips = data.reduce((sum, apt) => sum + (Number(apt.tip_amount) || 0), 0);
+      const serviceRevenue = data.reduce((sum, apt) => sum + (Number(apt.total_price) || 0), 0);
+      const totalRevenue = serviceRevenue + productRevenue;
       const totalServices = data.length;
-      const uniqueStaff = new Set(data.map(d => d.phorest_staff_id).filter(Boolean));
       const daysWithSales = new Set(data.map(d => d.appointment_date).filter(Boolean)).size;
       
       // Calculate total service hours from appointment durations
@@ -268,17 +312,17 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
 
       return {
         totalRevenue,
-        serviceRevenue: totalRevenue,
-        productRevenue: 0,
+        serviceRevenue,
+        productRevenue,
         totalServices,
-        totalProducts: 0,
-        totalTransactions: totalServices,
-        averageTicket: totalServices > 0 ? totalRevenue / totalServices : 0,
+        totalProducts,
+        totalTransactions: totalServices + totalProducts,
+        averageTicket: (totalServices + totalProducts) > 0 ? totalRevenue / (totalServices + totalProducts) : 0,
         totalDiscounts: 0,
         unmappedStaffRecords: 0,
         totalServiceHours,
         daysWithSales,
-        totalTips,
+        totalTips: totalTipsFromTx,
         dataSource: 'appointments' as const,
       };
     },

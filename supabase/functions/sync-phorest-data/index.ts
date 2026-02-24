@@ -1428,7 +1428,7 @@ function parseSalesCsv(csvText: string, branchId: string): any[] {
         purchaseDate: transactionDate,
         purchaseTime: idxTime >= 0 ? values[idxTime] : null,
         total: netTotal,
-        tipAmount: idxTip >= 0 ? parseFloat(values[idxTip]?.replace(/[^0-9.-]/g, '')) || 0 : 0,
+        tipAmount: idxTip >= 0 ? Math.abs(parseFloat(values[idxTip]?.replace(/[^0-9.-]/g, '')) || 0) : 0,
         clientId: idxClientId >= 0 ? values[idxClientId] : null,
         clientName: idxClientName >= 0 ? values[idxClientName] : null,
         items: [{
@@ -1439,7 +1439,7 @@ function parseSalesCsv(csvText: string, branchId: string): any[] {
           quantity: idxQuantity >= 0 ? parseInt(values[idxQuantity]) || 1 : 1,
           discount: idxDiscount >= 0 ? parseFloat(values[idxDiscount]?.replace(/[^0-9.-]/g, '')) || 0 : 0,
           tax: idxTax >= 0 ? parseFloat(values[idxTax]?.replace(/[^0-9.-]/g, '')) || 0 : 0,
-          tip: idxTip >= 0 ? parseFloat(values[idxTip]?.replace(/[^0-9.-]/g, '')) || 0 : 0,
+          tip: idxTip >= 0 ? Math.abs(parseFloat(values[idxTip]?.replace(/[^0-9.-]/g, '')) || 0) : 0,
         }]
       };
       
