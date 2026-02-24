@@ -226,14 +226,25 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
       const priorApts = priorAptsRes.data || [];
       const twoPriorApts = twoPriorAptsRes.data || [];
 
-      // ── Fetch transaction items for services/products ──
-      const { data: txItems } = await supabase
-        .from('phorest_transaction_items')
-        .select('item_name, item_type, item_category, quantity, total_amount, transaction_id, transaction_date')
-        .eq('phorest_staff_id', phorestStaffId)
-        .gte('transaction_date', dateFrom).lte('transaction_date', dateTo);
-
-      const items = txItems || [];
+      // ── Fetch transaction items for services/products (paginated) ──
+      const PAGE_SIZE = 1000;
+      const items: any[] = [];
+      {
+        let offset = 0;
+        let hasMore = true;
+        while (hasMore) {
+          const { data, error } = await supabase
+            .from('phorest_transaction_items')
+            .select('item_name, item_type, item_category, quantity, total_amount, phorest_client_id, transaction_date')
+            .eq('phorest_staff_id', phorestStaffId)
+            .gte('transaction_date', dateFrom).lte('transaction_date', dateTo)
+            .range(offset, offset + PAGE_SIZE - 1);
+          if (error) throw error;
+          items.push(...(data || []));
+          hasMore = (data?.length || 0) === PAGE_SIZE;
+          offset += PAGE_SIZE;
+        }
+      }
 
       // ── Fetch performance metrics ──
       const [currentMetricsRes, priorMetricsRes, twoPriorMetricsRes] = await Promise.all([
@@ -319,21 +330,24 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
       let serviceRevenue = 0;
       let productRevenue = 0;
       let productUnits = 0;
-      const serviceTxIds = new Set<string>();
-      const productTxIds = new Set<string>();
+      const serviceVisitKeys = new Set<string>();
+      const productVisitKeys = new Set<string>();
       const serviceMap = new Map<string, { count: number; revenue: number }>();
 
       items.forEach((item: any) => {
         const isProduct = PRODUCT_TYPES.includes(item.item_type);
         const isService = SERVICE_TYPES.includes(item.item_type);
+        const visitKey = item.phorest_client_id && item.transaction_date
+          ? `${item.phorest_client_id}|${item.transaction_date}`
+          : null;
         if (isProduct) {
           productRevenue += Number(item.total_amount) || 0;
           productUnits += item.quantity || 1;
-          if (item.transaction_id) productTxIds.add(item.transaction_id);
+          if (visitKey) productVisitKeys.add(visitKey);
         }
         if (isService) {
           serviceRevenue += Number(item.total_amount) || 0;
-          if (item.transaction_id) serviceTxIds.add(item.transaction_id);
+          if (visitKey) serviceVisitKeys.add(visitKey);
           const sName = item.item_name || 'Unknown Service';
           if (!serviceMap.has(sName)) serviceMap.set(sName, { count: 0, revenue: 0 });
           const s = serviceMap.get(sName)!;
@@ -342,10 +356,10 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
         }
       });
 
-      // Attachment rate for this stylist
+      // Attachment rate for this stylist (client+date composite key matching)
       let attachedCount = 0;
-      serviceTxIds.forEach(tx => { if (productTxIds.has(tx)) attachedCount++; });
-      const attachmentRate = serviceTxIds.size > 0 ? Math.round((attachedCount / serviceTxIds.size) * 100) : 0;
+      serviceVisitKeys.forEach(key => { if (productVisitKeys.has(key)) attachedCount++; });
+      const attachmentRate = serviceVisitKeys.size > 0 ? Math.round((attachedCount / serviceVisitKeys.size) * 100) : 0;
 
       // ── Client metrics from performance_metrics ──
       const avgRebook = currentMetrics.length > 0
@@ -368,7 +382,7 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
 
       // ── Experience score ──
       const tipRate = totalRevenue > 0 ? (totalTips / totalRevenue) * 100 : 0;
-      const retailAtt = serviceTxIds.size > 0 ? (attachedCount / serviceTxIds.size) * 100 : 0;
+      const retailAtt = serviceVisitKeys.size > 0 ? (attachedCount / serviceVisitKeys.size) * 100 : 0;
       const compositeScore = totalAppointments >= 5
         ? Math.round(
             avgRebook * EXP_WEIGHTS.rebookRate +
