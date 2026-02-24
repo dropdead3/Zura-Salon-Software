@@ -263,21 +263,18 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
       // Aggregate product revenue and tips from transaction items
       let productRevenue = 0;
       let totalProducts = 0;
-      let totalTipsFromTx = 0;
-      const tipTxSeen = new Set<number>();
-
       for (const item of txItems) {
         const itemType = (item.item_type || '').toLowerCase();
         if (['product', 'retail'].includes(itemType)) {
           productRevenue += Number(item.total_amount) || 0;
           totalProducts += 1;
         }
-        // Sum tips (use Math.abs since they may be stored as negative)
-        const tipVal = Number(item.tip_amount) || 0;
-        if (tipVal !== 0) {
-          totalTipsFromTx += Math.abs(tipVal);
-        }
       }
+
+      // Sum tips from appointments (not transaction items, which duplicate tips per line item)
+      const totalTipsFromAppointments = (data ?? []).reduce(
+        (sum, apt) => sum + (Number(apt.tip_amount) || 0), 0
+      );
 
       if (!data || data.length === 0) {
         return {
@@ -292,7 +289,7 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
           unmappedStaffRecords: 0,
           totalServiceHours: 0,
           daysWithSales: 0,
-          totalTips: totalTipsFromTx,
+          totalTips: 0,
           dataSource: 'appointments' as const,
         };
       }
@@ -322,7 +319,7 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
         unmappedStaffRecords: 0,
         totalServiceHours,
         daysWithSales,
-        totalTips: totalTipsFromTx,
+        totalTips: totalTipsFromAppointments,
         dataSource: 'appointments' as const,
       };
     },
