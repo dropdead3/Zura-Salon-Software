@@ -728,8 +728,11 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
       </nav>
       </ScrollArea>
 
+      {/* Separator */}
+      <div className="mx-3 border-t border-border/40" />
+
       {/* Fixed Footer Navigation - always at bottom */}
-      <div className="mt-auto shrink-0 flex flex-col gap-2 border-t border-border/40 pt-2">
+      <div className="mt-auto shrink-0 flex flex-col gap-2 pt-2">
         {/* Beta Badge */}
         {isCollapsed ? (
           <Tooltip>
