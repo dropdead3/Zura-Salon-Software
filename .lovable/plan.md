@@ -1,38 +1,41 @@
 
 
-## Add "Expected Revenue" Clarity to Simple Sales Overview Card
+## Add On-Track / Off-Track Status Indicator to Goal Tracker Card
 
-Good catch -- the compact Sales Overview card on the dashboard home currently labels its figure as "Total revenue across all services and retail for today," which doesn't distinguish between actual (completed) and expected (scheduled). Since the full Sales Overview card already makes this distinction, the compact version should too.
+The compact Goal Tracker card currently shows "On track to hit goal" or "Falling behind target pace" as plain text. This change adds a visual status icon inline with that label to reinforce the signal at a glance.
 
 ### What Changes
 
-**File:** `src/components/dashboard/PinnedAnalyticsCard.tsx` (lines 348-352)
+**File:** `src/components/dashboard/PinnedAnalyticsCard.tsx`
 
-When the date filter is set to `today`, update the `sales_overview` case to:
+Two changes in the `goal_tracker` case and the compact card rendering area:
 
-1. Change the `metricLabel` from the generic "Total revenue across all services and retail for today" to **"Today's expected revenue across all services and retail"**
-2. For non-today periods, keep the existing label pattern using `getPeriodLabel()`
+1. **Store pace status for rendering** (line 444-447): Add a variable `goalPaceStatus` alongside the existing `metricValue`/`metricLabel` so the rendering block can conditionally show an icon.
+
+2. **Render status icon** (line 512-514): When rendering the `metricLabel` for `goal_tracker`, prepend a small icon:
+   - **On track / Ahead**: Green `CheckCircle2` icon (from lucide-react) with `text-emerald-500`
+   - **Behind**: Amber `AlertTriangle` icon with `text-amber-500`
+
+### Visual Result
+
+```
+83%
+[green check] On track to hit goal
+
+-- or --
+
+63%
+[amber warning] Falling behind target pace
+```
 
 ### Technical Detail
 
-In the compact card switch block (line 348-352):
-
-```
-// Before
-case 'sales_overview':
-  metricValue = formatCurrencyWhole(salesData?.totalRevenue ?? 0);
-  metricLabel = `Total revenue across all services and retail for ${getPeriodLabel(filters.dateRange)}`;
-  break;
-
-// After
-case 'sales_overview':
-  metricValue = formatCurrencyWhole(salesData?.totalRevenue ?? 0);
-  metricLabel = filters.dateRange === 'today'
-    ? "Today's expected revenue across all services and retail"
-    : `Total revenue across all services and retail for ${getPeriodLabel(filters.dateRange)}`;
-  break;
-```
+- Declare a `goalPaceIcon` variable in the switch block alongside `metricValue`/`metricLabel`
+- In the render section (line 512-514), check if `goalPaceIcon` is set and render it as a small inline icon (`w-3.5 h-3.5`) to the left of the label text using `flex items-center gap-1`
+- Icons used: `CheckCircle2` (already available in lucide-react) for ahead/on-track, `AlertTriangle` for behind
+- No new dependencies, hooks, or props required
+- Follows the design token typography rules (no bold, muted-foreground for the label text)
 
 ### Scope
 
-Single file, single line change. No new hooks, props, or data fetching required -- the value displayed ($1,640) is already the expected/scheduled total from `salesData.totalRevenue`.
+Single file edit. Approximately 10 lines added.
