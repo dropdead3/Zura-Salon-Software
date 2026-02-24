@@ -39,6 +39,8 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
@@ -856,39 +858,85 @@ export function AppointmentDetailSheet({
                   </div>
                   <div className="flex-1 min-w-0 pr-8">
                   {/* Overflow menu (Delete + Revert) */}
-                  {(canDelete || (isManagerOrAdmin && appointment.status === 'confirmed') || !!resolvedClientId) && (
-                    <div className="absolute top-4 right-12 z-10">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          {resolvedClientId && (
-                            <DropdownMenuItem onClick={() => {
-                              handleClose();
-                              navigate(`/dashboard/clients?clientId=${resolvedClientId}`);
-                            }}>
-                              <ExternalLink className="h-3.5 w-3.5 mr-2" />
-                              View in Client Directory
-                            </DropdownMenuItem>
-                          )}
-                          {/* Reassign Stylist (manager/admin only) */}
-                          {isManagerOrAdmin && !['completed', 'cancelled', 'no_show'].includes(appointment.status) && (
-                            <DropdownMenuItem onClick={() => setShowReassignDialog(true)}>
-                              <ArrowRightLeft className="h-3.5 w-3.5 mr-2" />
-                              Reassign Stylist
-                            </DropdownMenuItem>
-                          )}
-                          {/* Revert to Booked (admin/manager only, confirmed status) */}
-                          {isManagerOrAdmin && appointment.status === 'confirmed' && (
-                            <DropdownMenuItem onClick={handleRevertToBooked}>
-                              <RotateCcw className="h-3.5 w-3.5 mr-2" />
-                              Revert to Booked
-                            </DropdownMenuItem>
-                          )}
-                          {canDelete && (
+                  <div className="absolute top-4 right-12 z-10">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-52">
+                        {/* ── Actions ── */}
+                        <DropdownMenuLabel className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider">Actions</DropdownMenuLabel>
+                        {onReschedule && !['completed', 'cancelled', 'no_show'].includes(appointment.status) && (
+                          <DropdownMenuItem onClick={() => onReschedule(appointment)}>
+                            <CalendarClock className="h-3.5 w-3.5 mr-2" />
+                            Reschedule
+                          </DropdownMenuItem>
+                        )}
+                        {onRebook && (
+                          <DropdownMenuItem onClick={() => onRebook(appointment)}>
+                            <RefreshCw className="h-3.5 w-3.5 mr-2" />
+                            Rebook
+                          </DropdownMenuItem>
+                        )}
+                        {isManagerOrAdmin && !['completed', 'cancelled', 'no_show'].includes(appointment.status) && (
+                          <DropdownMenuItem onClick={() => setShowReassignDialog(true)}>
+                            <ArrowRightLeft className="h-3.5 w-3.5 mr-2" />
+                            Reassign Stylist
+                          </DropdownMenuItem>
+                        )}
+
+                        {/* ── Navigate ── */}
+                        <DropdownMenuSeparator />
+                        <DropdownMenuLabel className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider">Navigate</DropdownMenuLabel>
+                        {resolvedClientId && (
+                          <DropdownMenuItem onClick={() => {
+                            handleClose();
+                            navigate(`/dashboard/clients?clientId=${resolvedClientId}`);
+                          }}>
+                            <ExternalLink className="h-3.5 w-3.5 mr-2" />
+                            View in Client Directory
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem asChild>
+                          <Link to="/dashboard/appointments-hub">
+                            <Receipt className="h-3.5 w-3.5 mr-2" />
+                            Transactions
+                          </Link>
+                        </DropdownMenuItem>
+
+                        {/* ── Status Override ── */}
+                        {(availableTransitions.includes('no_show') || (availableTransitions.includes('cancelled') && canCancel) || (isManagerOrAdmin && appointment.status === 'confirmed')) && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuLabel className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider">Status Override</DropdownMenuLabel>
+                            {availableTransitions.includes('no_show') && (
+                              <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => handleStatusChange('no_show')} disabled={isUpdating}>
+                                <AlertTriangle className="h-3.5 w-3.5 mr-2" />
+                                No Show
+                              </DropdownMenuItem>
+                            )}
+                            {availableTransitions.includes('cancelled') && canCancel && (
+                              <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => handleStatusChange('cancelled')} disabled={isUpdating}>
+                                <XCircle className="h-3.5 w-3.5 mr-2" />
+                                Cancel
+                              </DropdownMenuItem>
+                            )}
+                            {isManagerOrAdmin && appointment.status === 'confirmed' && (
+                              <DropdownMenuItem onClick={handleRevertToBooked}>
+                                <RotateCcw className="h-3.5 w-3.5 mr-2" />
+                                Revert to Booked
+                              </DropdownMenuItem>
+                            )}
+                          </>
+                        )}
+
+                        {/* ── Admin ── */}
+                        {canDelete && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuLabel className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider">Admin</DropdownMenuLabel>
                             <DropdownMenuItem
                               className="text-destructive focus:text-destructive"
                               onClick={handleDeleteAppointment}
@@ -896,11 +944,11 @@ export function AppointmentDetailSheet({
                               <Trash2 className="h-3.5 w-3.5 mr-2" />
                               Delete Appointment
                             </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  )}
+                          </>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                     <div className="flex items-center gap-2">
                       <h2 className="font-display text-lg font-medium tracking-wide truncate">{appointment.client_name}</h2>
                       {/* Walk-in badge (#7) */}
@@ -1636,65 +1684,37 @@ export function AppointmentDetailSheet({
                 </ScrollArea>
               </Tabs>
 
-              {/* ─── Footer Action Bar ────────────────────────── */}
-              <div className="p-4 border-t border-border/60 bg-card/60 backdrop-blur-md shrink-0">
-                <div className={cn("flex items-center gap-2 flex-wrap", isMobile && "flex-col")}>
-                  {/* Confirm (#13) */}
-                  {availableTransitions.includes('confirmed') && (
-                    <Button size={tokens.button.card} onClick={() => handleStatusChange('confirmed')} disabled={isUpdating}>
-                      <CheckCircle className="h-3.5 w-3.5 mr-1" /> Confirm
-                    </Button>
-                  )}
-                  {/* Check In */}
-                  {availableTransitions.includes('checked_in') && (
-                    <Button size={tokens.button.card} onClick={() => handleStatusChange('checked_in')} disabled={isUpdating}>
-                      <UserCheck className="h-3.5 w-3.5 mr-1" /> Check In
-                    </Button>
-                  )}
-                  {/* Pay / Checkout */}
-                  {availableTransitions.includes('completed') && onPay && (
-                    <Button size={tokens.button.card} onClick={() => onPay(appointment)} disabled={isUpdating}>
-                      <CreditCard className="h-3.5 w-3.5 mr-1" /> Pay
-                    </Button>
-                  )}
-                  {/* Complete (if no pay handler) */}
-                  {availableTransitions.includes('completed') && !onPay && (
-                    <Button size={tokens.button.card} onClick={() => handleStatusChange('completed')} disabled={isUpdating}>
-                      <CheckCircle className="h-3.5 w-3.5 mr-1" /> Complete
-                    </Button>
-                  )}
-                  {/* Reschedule */}
-                  {onReschedule && !['completed', 'cancelled', 'no_show'].includes(appointment.status) && (
-                    <Button variant="outline" size={tokens.button.card} onClick={() => onReschedule(appointment)}>
-                      <CalendarClock className="h-3.5 w-3.5 mr-1" /> Reschedule
-                    </Button>
-                  )}
-                  {/* Rebook */}
-                  {onRebook && (
-                    <Button variant="outline" size={tokens.button.card} onClick={() => onRebook(appointment)}>
-                      <RefreshCw className="h-3.5 w-3.5 mr-1" /> Rebook
-                    </Button>
-                  )}
-                  {/* Transactions link */}
-                  <Button variant="outline" size={tokens.button.card} asChild>
-                    <Link to="/dashboard/appointments-hub">
-                      <Receipt className="h-3.5 w-3.5 mr-1" /> Transactions
-                    </Link>
-                  </Button>
-                  {/* No Show (#14) */}
-                  {availableTransitions.includes('no_show') && (
-                    <Button variant="outline" size={tokens.button.card} className="text-destructive hover:text-destructive" onClick={() => handleStatusChange('no_show')} disabled={isUpdating}>
-                      <AlertTriangle className="h-3.5 w-3.5 mr-1" /> No Show
-                    </Button>
-                  )}
-                  {/* Cancel (ownership-gated for stylists) */}
-                  {availableTransitions.includes('cancelled') && canCancel && (
-                    <Button variant="outline" size={tokens.button.card} className="text-destructive hover:text-destructive" onClick={() => handleStatusChange('cancelled')} disabled={isUpdating}>
-                      <XCircle className="h-3.5 w-3.5 mr-1" /> Cancel
-                    </Button>
-                  )}
+              {/* ─── Footer Action Bar (Lifecycle Only) ────────── */}
+              {(availableTransitions.includes('confirmed') || availableTransitions.includes('checked_in') || availableTransitions.includes('completed')) && (
+                <div className="p-4 border-t border-border/60 bg-card/60 backdrop-blur-md shrink-0">
+                  <div className="flex items-center gap-2">
+                    {/* Confirm */}
+                    {availableTransitions.includes('confirmed') && (
+                      <Button size={tokens.button.card} onClick={() => handleStatusChange('confirmed')} disabled={isUpdating} className="flex-1">
+                        <CheckCircle className="h-3.5 w-3.5 mr-1" /> Confirm
+                      </Button>
+                    )}
+                    {/* Check In */}
+                    {availableTransitions.includes('checked_in') && (
+                      <Button size={tokens.button.card} onClick={() => handleStatusChange('checked_in')} disabled={isUpdating} className="flex-1">
+                        <UserCheck className="h-3.5 w-3.5 mr-1" /> Check In
+                      </Button>
+                    )}
+                    {/* Pay / Checkout */}
+                    {availableTransitions.includes('completed') && onPay && (
+                      <Button size={tokens.button.card} onClick={() => onPay(appointment)} disabled={isUpdating} className="flex-1">
+                        <CreditCard className="h-3.5 w-3.5 mr-1" /> Pay
+                      </Button>
+                    )}
+                    {/* Complete (if no pay handler) */}
+                    {availableTransitions.includes('completed') && !onPay && (
+                      <Button size={tokens.button.card} onClick={() => handleStatusChange('completed')} disabled={isUpdating} className="flex-1">
+                        <CheckCircle className="h-3.5 w-3.5 mr-1" /> Complete
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
             </PremiumFloatingPanel>
 
       {/* Confirmation Dialog (Cancel / No Show) */}
