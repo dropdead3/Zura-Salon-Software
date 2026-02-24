@@ -206,59 +206,76 @@ function getAppointmentDurationHours(startTime: string, endTime: string): number
   return Math.max(0, (endMinutes - startMinutes) / 60);
 }
 
+/** Fetch all rows in batches to bypass the 1,000-row default limit. */
+async function fetchAllBatched<T>(
+  buildQuery: (from: number, to: number) => any,
+  batchSize = 1000,
+): Promise<T[]> {
+  const allData: T[] = [];
+  let from = 0;
+  let hasMore = true;
+  while (hasMore) {
+    const { data, error } = await buildQuery(from, from + batchSize - 1);
+    if (error) throw error;
+    if (data && data.length > 0) {
+      allData.push(...data);
+      from += batchSize;
+      hasMore = data.length === batchSize;
+    } else {
+      hasMore = false;
+    }
+  }
+  return allData;
+}
+
 // Get aggregated sales metrics for dashboard from appointments (since sales API is not available)
 export function useSalesMetrics(filters: SalesFilters = {}) {
   return useQuery({
     queryKey: ['sales-metrics-from-appointments', filters],
     queryFn: async () => {
-      // Build appointment query
-      let apptQuery = supabase
-        .from('phorest_appointments')
-        .select('id, total_price, tip_amount, service_name, phorest_staff_id, location_id, appointment_date, start_time, end_time')
-        .not('total_price', 'is', null);
+      // Build appointment query with batch fetching
+      const data = await fetchAllBatched<{
+        id: string; total_price: number | null; tip_amount: number | null;
+        service_name: string | null; phorest_staff_id: string | null;
+        location_id: string | null; appointment_date: string;
+        start_time: string | null; end_time: string | null;
+      }>((from, to) => {
+        let q = supabase
+          .from('phorest_appointments')
+          .select('id, total_price, tip_amount, service_name, phorest_staff_id, location_id, appointment_date, start_time, end_time')
+          .not('total_price', 'is', null)
+          .not('status', 'in', '("cancelled","no_show")')
+          .range(from, to);
 
-      if (filters.dateFrom) {
-        apptQuery = apptQuery.gte('appointment_date', filters.dateFrom);
-      }
-      if (filters.dateTo) {
-        apptQuery = apptQuery.lte('appointment_date', filters.dateTo);
-      }
-      if (filters.locationId && filters.locationId !== 'all') {
-        const ids = filters.locationId.split(',').filter(Boolean);
-        if (ids.length === 1) {
-          apptQuery = apptQuery.eq('location_id', ids[0]);
-        } else if (ids.length > 1) {
-          apptQuery = apptQuery.in('location_id', ids);
+        if (filters.dateFrom) q = q.gte('appointment_date', filters.dateFrom);
+        if (filters.dateTo) q = q.lte('appointment_date', filters.dateTo);
+        if (filters.locationId && filters.locationId !== 'all') {
+          const ids = filters.locationId.split(',').filter(Boolean);
+          if (ids.length === 1) q = q.eq('location_id', ids[0]);
+          else if (ids.length > 1) q = q.in('location_id', ids);
         }
-      }
+        return q;
+      });
 
       // Build transaction items query for product revenue and tips
-      let prodQuery = supabase
-        .from('phorest_transaction_items')
-        .select('total_amount, item_type, tip_amount')
-        .not('total_amount', 'is', null);
+      const txItems = await fetchAllBatched<{
+        total_amount: number | null; item_type: string | null; tip_amount: number | null;
+      }>((from, to) => {
+        let q = supabase
+          .from('phorest_transaction_items')
+          .select('total_amount, item_type, tip_amount')
+          .not('total_amount', 'is', null)
+          .range(from, to);
 
-      if (filters.dateFrom) {
-        prodQuery = prodQuery.gte('transaction_date', filters.dateFrom);
-      }
-      if (filters.dateTo) {
-        prodQuery = prodQuery.lte('transaction_date', filters.dateTo);
-      }
-      if (filters.locationId && filters.locationId !== 'all') {
-        const ids = filters.locationId.split(',').filter(Boolean);
-        if (ids.length === 1) {
-          prodQuery = prodQuery.eq('location_id', ids[0]);
-        } else if (ids.length > 1) {
-          prodQuery = prodQuery.in('location_id', ids);
+        if (filters.dateFrom) q = q.gte('transaction_date', filters.dateFrom);
+        if (filters.dateTo) q = q.lte('transaction_date', filters.dateTo);
+        if (filters.locationId && filters.locationId !== 'all') {
+          const ids = filters.locationId.split(',').filter(Boolean);
+          if (ids.length === 1) q = q.eq('location_id', ids[0]);
+          else if (ids.length > 1) q = q.in('location_id', ids);
         }
-      }
-
-      const [apptResult, txResult] = await Promise.all([apptQuery, prodQuery]);
-      if (apptResult.error) throw apptResult.error;
-      if (txResult.error) throw txResult.error;
-
-      const data = apptResult.data;
-      const txItems = txResult.data || [];
+        return q;
+      });
 
       // Aggregate product revenue and tips from transaction items
       let productRevenue = 0;
@@ -272,11 +289,11 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
       }
 
       // Sum tips from appointments (not transaction items, which duplicate tips per line item)
-      const totalTipsFromAppointments = (data ?? []).reduce(
+      const totalTipsFromAppointments = data.reduce(
         (sum, apt) => sum + (Number(apt.tip_amount) || 0), 0
       );
 
-      if (!data || data.length === 0) {
+      if (data.length === 0) {
         return {
           totalRevenue: productRevenue,
           serviceRevenue: 0,
@@ -355,28 +372,28 @@ export function useSalesByStylist(dateFrom?: string, dateTo?: string) {
         };
       });
 
-      // Fetch appointments
-      let query = supabase
-        .from('phorest_appointments')
-        .select('phorest_staff_id, total_price, service_name')
-        .not('phorest_staff_id', 'is', null)
-        .not('total_price', 'is', null);
+      // Fetch appointments with batch fetching + status filter
+      const data = await fetchAllBatched<{
+        phorest_staff_id: string | null; total_price: number | null; service_name: string | null;
+      }>((from, to) => {
+        let q = supabase
+          .from('phorest_appointments')
+          .select('phorest_staff_id, total_price, service_name')
+          .not('phorest_staff_id', 'is', null)
+          .not('total_price', 'is', null)
+          .not('status', 'in', '("cancelled","no_show")')
+          .range(from, to);
 
-      if (dateFrom) {
-        query = query.gte('appointment_date', dateFrom);
-      }
-      if (dateTo) {
-        query = query.lte('appointment_date', dateTo);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
+        if (dateFrom) q = q.gte('appointment_date', dateFrom);
+        if (dateTo) q = q.lte('appointment_date', dateTo);
+        return q;
+      });
 
       // Aggregate by user (via phorest_staff_id mapping)
       const byUser: Record<string, any> = {};
-      data?.forEach(apt => {
+      data.forEach(apt => {
         const mapping = mappingLookup[apt.phorest_staff_id!];
-        if (!mapping) return; // Skip unmapped staff for this view
+        if (!mapping) return;
         
         const userId = mapping.userId;
         if (!byUser[userId]) {
@@ -409,26 +426,26 @@ export function useSalesByLocation(dateFrom?: string, dateTo?: string) {
     queryKey: ['sales-by-location-from-appointments', dateFrom, dateTo],
     queryFn: async () => {
       // First fetch locations to map IDs to names
-      // Fetch only active locations
       const { data: locations } = await supabase
         .from('locations')
         .select('id, name, is_active')
         .eq('is_active', true);
 
-      let query = supabase
-        .from('phorest_appointments')
-        .select('location_id, total_price')
-        .not('total_price', 'is', null);
+      // Fetch appointments with batch fetching + status filter
+      const data = await fetchAllBatched<{
+        location_id: string | null; total_price: number | null;
+      }>((from, to) => {
+        let q = supabase
+          .from('phorest_appointments')
+          .select('location_id, total_price')
+          .not('total_price', 'is', null)
+          .not('status', 'in', '("cancelled","no_show")')
+          .range(from, to);
 
-      if (dateFrom) {
-        query = query.gte('appointment_date', dateFrom);
-      }
-      if (dateTo) {
-        query = query.lte('appointment_date', dateTo);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
+        if (dateFrom) q = q.gte('appointment_date', dateFrom);
+        if (dateTo) q = q.lte('appointment_date', dateTo);
+        return q;
+      });
 
       // Pre-populate ALL active locations with zero values
       const byLocation: Record<string, any> = {};
@@ -446,7 +463,7 @@ export function useSalesByLocation(dateFrom?: string, dateTo?: string) {
       });
 
       // Add revenue data from appointments to existing location entries
-      data?.forEach(apt => {
+      data.forEach(apt => {
         const key = apt.location_id;
         if (key && byLocation[key]) {
           byLocation[key].totalRevenue += Number(apt.total_price) || 0;
