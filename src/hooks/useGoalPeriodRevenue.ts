@@ -28,7 +28,8 @@ export function useGoalPeriodRevenue(period: GoalPeriod, locationId?: string) {
         .select('total_price')
         .gte('appointment_date', dateFrom)
         .lte('appointment_date', dateTo)
-        .not('status', 'in', '("cancelled","no_show")');
+        .not('status', 'in', '("cancelled","no_show")')
+        .not('total_price', 'is', null);
 
       if (locationId && locationId !== 'all') {
         query = query.eq('location_id', locationId);
