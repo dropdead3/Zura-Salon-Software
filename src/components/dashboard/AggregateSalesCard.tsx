@@ -238,7 +238,7 @@ export function AggregateSalesCard({
   const { data: tomorrowData } = useTomorrowRevenue();
   const { goals } = useSalesGoals();
   const { data: locations } = useActiveLocations();
-  const { data: todayActual, locationActuals, isLoading: todayActualLoading } = useTodayActualRevenue(dateRange === 'today');
+  const { data: todayActual, locationActuals, isLoading: todayActualLoading, dataUpdatedAt: todayDataUpdatedAt } = useTodayActualRevenue(dateRange === 'today');
   const { data: attachmentData, isLoading: attachmentLoading } = useRetailAttachmentRate({
     dateFrom: dateFilters.dateFrom,
     dateTo: dateFilters.dateTo,
@@ -673,6 +673,19 @@ export function AggregateSalesCard({
                       </span>
                     </p>
                   )}
+
+                  {/* Last updated timestamp */}
+                  {todayDataUpdatedAt && (
+                    <p className="text-[10px] text-muted-foreground/50 text-center">
+                      Updated {(() => {
+                        const diffMs = Date.now() - todayDataUpdatedAt;
+                        const diffMin = Math.round(diffMs / 60000);
+                        if (diffMin < 1) return 'just now';
+                        if (diffMin === 1) return '1 min ago';
+                        return `${diffMin} min ago`;
+                      })()}
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -696,10 +709,19 @@ export function AggregateSalesCard({
 
               {showTrendIndicators && (
                 <div className="mt-2">
-                  <SalesTrendIndicator 
-                    current={comparison.current.totalRevenue}
-                    previous={comparison.previous.totalRevenue} 
-                  />
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div>
+                        <SalesTrendIndicator 
+                          current={comparison.current.totalRevenue}
+                          previous={comparison.previous.totalRevenue} 
+                        />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="max-w-[220px] text-xs">
+                      Trend based on completed transactions (checked-out sales). May differ slightly from scheduled appointment totals shown above.
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
               )}
               {/* Bottom center chevron indicator */}
@@ -1027,8 +1049,8 @@ export function AggregateSalesCard({
             />
           </div>
           <RevenueDonutChart
-            serviceRevenue={displayMetrics.serviceRevenue} 
-            productRevenue={displayMetrics.productRevenue}
+            serviceRevenue={isToday && todayActual?.hasActualData ? todayActual.actualServiceRevenue : displayMetrics.serviceRevenue} 
+            productRevenue={isToday && todayActual?.hasActualData ? todayActual.actualProductRevenue : displayMetrics.productRevenue}
             size={64}
             
             retailAttachmentRate={attachmentData?.attachmentRate}
@@ -1165,13 +1187,18 @@ export function AggregateSalesCard({
                         <div className="flex items-center gap-3 shrink-0">
                           <span className="text-sm font-display tabular-nums">
                             <BlurredAmount>
-                              {locationSortField === 'totalTransactions'
-                                ? location.totalTransactions.toLocaleString()
-                                : locationSortField === 'avgTicket'
-                                  ? formatCurrency(avgTicket)
-                                  : locationSortField === 'name' || locationSortField === 'totalRevenue'
-                                    ? formatCurrency(location.totalRevenue)
-                                    : formatCurrency(location[locationSortField] ?? 0)}
+                              {(() => {
+                                // On today view, show actual revenue as primary value when available
+                                const locActual = isToday ? locationActuals[location.location_id || ''] : null;
+                                const useActual = locActual?.hasActualData && (locationSortField === 'totalRevenue' || locationSortField === 'name');
+                                
+                                if (locationSortField === 'totalTransactions') return location.totalTransactions.toLocaleString();
+                                if (locationSortField === 'avgTicket') return formatCurrency(avgTicket);
+                                if (locationSortField === 'name' || locationSortField === 'totalRevenue') {
+                                  return useActual ? formatCurrency(locActual!.actualRevenue) : formatCurrency(location.totalRevenue);
+                                }
+                                return formatCurrency(location[locationSortField] ?? 0);
+                              })()}
                             </BlurredAmount>
                           </span>
                           <ChevronRight className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`} />
