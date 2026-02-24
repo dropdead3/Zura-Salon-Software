@@ -1,47 +1,68 @@
 
 
-## Fix: Delete Button Not Showing for Account Owners
+## Fix: Slow Drag-and-Drop Feedback with Optimistic Updates
 
-### Root Cause
+### Problem
 
-The `canDelete` logic on line 526 of `AppointmentDetailSheet.tsx` restricts deletion to only `booked` or `pending` status appointments:
+When dragging an appointment to a new time slot, the UI waits ~3 seconds for the full round-trip:
+1. Edge function call to `update-phorest-appointment-time`
+2. Query invalidation of `phorest-appointments`
+3. Re-fetch and re-render
 
+During this time, the appointment snaps back to its original position, then jumps to the new one. There are also **duplicate toasts** -- one from `useRescheduleAppointment.onSuccess` ("Appointment rescheduled locally") and another from `DayView.handleDragEnd` ("Moved to 2:00 PM").
+
+### Solution
+
+Add optimistic cache updates so the appointment visually moves **instantly** on drop, before the server responds.
+
+### Changes
+
+#### 1. `src/hooks/useRescheduleAppointment.ts` -- Add Optimistic Update
+
+- Add an `onMutate` handler that:
+  - Cancels in-flight `phorest-appointments` queries (prevents race conditions)
+  - Snapshots current cache data for rollback
+  - Immediately updates the appointment's `start_time` (and `stylist_user_id` if staff changed) in the query cache
+  - Stores the previous snapshot in mutation context
+
+- Update `onError` to restore the snapshot if the mutation fails
+
+- **Remove the duplicate toast** from `onSuccess` -- let the caller (`DayView`) control the toast message (it already shows "Moved to 2:00 PM" with an Undo button, which is better UX)
+
+- Keep the `invalidateQueries` call in `onSuccess` to ensure the cache stays fresh after server confirmation
+
+#### 2. `src/components/dashboard/schedule/DayView.tsx` -- Add Instant Drop Toast
+
+- Show an **immediate** info toast on drop (before server response): "Moving appointment..." -- this gives instant confirmation that the action was registered
+- On success: replace with the existing "Moved to [time]" toast with Undo button
+- On error: the `useRescheduleAppointment` hook handles the error toast and rollback
+
+### Technical Detail
+
+The optimistic update modifies all cached queries matching the `phorest-appointments` prefix. Since the query key includes date range and filters, we use `queryClient.setQueriesData` with a partial key match to update all relevant caches.
+
+```text
+User drops appointment
+  |
+  +---> [Instant] Cache updated, appointment visually moves
+  +---> [Instant] "Moving..." toast shown
+  |
+  +---> [~2-3s] Edge function completes
+  |       |
+  |       +---> Success: "Moved to 2:00 PM" toast with Undo
+  |       +---> Failure: Cache rolled back, error toast
+  |
+  +---> [Background] Query refetch confirms final state
 ```
-if (!['booked', 'pending'].includes(appointment.status)) return false;
-```
 
-The appointment in the screenshot has `confirmed` status, so this check returns `false` before the admin/owner check on line 527 ever runs. The delete overflow menu is hidden entirely.
+### Files Modified
 
-### Fix
+- `src/hooks/useRescheduleAppointment.ts` -- Add `onMutate` optimistic update, remove duplicate toast
+- `src/components/dashboard/schedule/DayView.tsx` -- Minor: no structural changes needed since the optimistic update handles the visual snap
 
-**File: `src/components/dashboard/schedule/AppointmentDetailSheet.tsx`** (lines 524-534)
+### What This Fixes
 
-Restructure the `canDelete` logic so that:
-
-1. **Block deletion of completed/checked-in appointments** for everyone (financial records must remain)
-2. **Admins/managers/super_admins (account owners)**: Can delete any appointment that is not completed or checked-in -- including `confirmed`, `booked`, `pending`, and `no_show` statuses
-3. **Stylists**: Same 10-minute window rule, but only on `booked` or `pending` (not confirmed, since confirmation implies client interaction)
-
-Updated logic:
-
-```
-const canDelete = useMemo(() => {
-  if (!appointment || ['completed', 'checked_in'].includes(appointment.status)) return false;
-  if (isManagerOrAdmin) return true;
-  if (isStylistOnly && ['booked', 'pending'].includes(appointment.status) && appointment.created_by === user?.id) {
-    const createdAt = new Date(appointment.created_at);
-    const minutesSinceCreation = (Date.now() - createdAt.getTime()) / 60000;
-    return minutesSinceCreation <= 10;
-  }
-  return false;
-}, [appointment, isManagerOrAdmin, isStylistOnly, user?.id]);
-```
-
-### What Changes
-
-- The `['booked', 'pending']` status gate is moved from the global check to only apply to the stylist branch
-- Admins/owners now see the three-dot overflow menu with "Delete Appointment" on any non-completed appointment
-- No other files need changes
-
-### Single file edit, one logic block.
-
+- Appointment moves visually **on drop** instead of after 3+ seconds
+- No more duplicate toasts
+- Automatic rollback if server fails
+- Undo still works (re-invokes the mutation with original time)
