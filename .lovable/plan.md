@@ -1,40 +1,84 @@
 
-## Add Main Tab Favoriting to Analytics Hub Sidebar
 
-### What Changes
+## Hierarchical Favorite Pinning in Analytics Sidebar
 
-Extend the existing subtab favoriting system to also support main analytics tabs (Executive Summary, Sales, Operations, Marketing, Campaigns, Program, Reports). When a main tab is favorited, it appears as a sidebar quick link under Analytics Hub -- same as subtab favorites but navigating to just `?tab=X` (no subtab).
+### Problem
+
+Currently, main tab favorites (e.g., "Sales") and subtab favorites (e.g., "Sales > Goals") render as a flat list under Analytics Hub in the sidebar. This creates visual confusion -- you can't tell which subtabs belong to which category, and the hierarchy is lost.
+
+### Proposed Solution: Grouped Tree Structure
+
+Favorites in the sidebar will render as a **two-level tree** grouped by their parent category:
+
+```text
+  [icon] Analytics Hub
+           Sales                  (category header, clickable)
+             → Goals              (subtab shortcut)
+             → Commission         (subtab shortcut)
+           Operations             (category header, clickable)
+             → Staff Utilization  (subtab shortcut)
+```
+
+**Key behaviors:**
+
+- When you favorite a **main tab only** (e.g., "Sales" with no subtabs favorited under it), it renders as a single indented link -- same as today but grouped.
+- When you favorite **subtabs under a category**, the category name automatically appears as a parent header. You don't need to separately favorite the category for it to show.
+- If you favorite both a main tab AND subtabs under it, the category header is clickable (navigates to `?tab=sales`) and subtabs nest below it.
+- Unfavoriting all items under a category removes that category header automatically.
+
+### Sidebar Visual Hierarchy
+
+| Element | Indentation | Style |
+|---|---|---|
+| Analytics Hub | `pl-9` (standard nav item) | Normal nav link with icon |
+| Category header (e.g., Sales) | `pl-12` | `text-xs font-display uppercase tracking-wide text-muted-foreground`, clickable |
+| Subtab shortcut (e.g., Goals) | `pl-14` | `text-xs font-sans` with `ChevronRight` arrow |
+
+Category headers use `font-display` (Termina, uppercase) to visually distinguish them from subtab links which use `font-sans` (Aeonik Pro). This creates a clear parent-child relationship without needing extra icons.
 
 ### Files to Modify
 
-**1. `src/hooks/useAnalyticsSubtabFavorites.ts`**
-- No structural changes needed. Main tab favorites use the same shape: `{ tab: "sales", subtab: "", label: "Sales" }`. The empty `subtab` string distinguishes them from subtab favorites.
+**1. `src/components/dashboard/CollapsibleNavGroup.tsx`**
+- Replace the flat `analyticsSubLinks.map()` rendering (lines 275-325) with grouped rendering logic
+- Group favorites by `tab` field, preserving insertion order of the first item per group
+- Render each group as: category header (clickable, navigates to `?tab=X`) followed by subtab links (if any)
+- Category-only favorites (subtab is empty) render just the header as a clickable link
+- Subtab-only favorites auto-generate a non-starred category header above them
 
-**2. `src/pages/dashboard/admin/AnalyticsHub.tsx`**
-- Add `SubtabFavoriteStar` next to each main `TabsTrigger` inside the `analyticsCategories.map()` loop (lines 355-373)
-- Wrap each trigger + star in a `group/subtab` container (same pattern as SalesTabContent subtabs)
-- Pass `tab={cat.id}`, `subtab=""`, `label={cat.label}`
+**2. `src/hooks/useAnalyticsSubtabFavorites.ts`**
+- Add a `getGroupedFavorites()` helper that returns favorites organized by tab:
+  ```
+  { tab: "sales", label: "Sales", hasTabFavorite: true, subtabs: [{ subtab: "goals", label: "Goals" }, ...] }
+  ```
+- Import `baseCategories` labels to resolve the parent category label when only subtabs are favorited (the category label comes from the `analyticsCategories` config, not from the subtab favorite data)
+- Export a `ANALYTICS_TAB_LABELS` map so the sidebar can resolve tab IDs to display names
 
-**3. `src/components/dashboard/CollapsibleNavGroup.tsx`**
-- Update the `subHref` construction (line 278) to conditionally omit `&subtab=` when `subLink.subtab` is empty
-- Update the `isSubActive` check (lines 279-281) to handle main-tab-only favorites (match on `tab=X` without requiring `subtab=`)
+**3. `src/components/dashboard/analytics/SubtabFavoriteStar.tsx`**
+- No changes needed -- it already works with both `subtab=""` (main tabs) and specific subtab values
 
-**4. `src/components/dashboard/analytics/SubtabFavoriteStar.tsx`**
-- Minor: ensure the component works with `subtab=""` (it already should since it compares exact strings)
+**4. `src/pages/dashboard/admin/AnalyticsHub.tsx`**
+- No changes needed -- main tab starring is already wired up
 
-### Sidebar Link Behavior
+### Data Model
 
-| Favorite Type | Sidebar Link URL | Active When |
-|---|---|---|
-| Main tab (e.g., Sales) | `?tab=sales` | URL has `tab=sales` and no `subtab` param |
-| Subtab (e.g., Sales > Goals) | `?tab=sales&subtab=goals` | URL has both `tab=sales` and `subtab=goals` |
+No changes to the stored data shape. The flat array `[{ tab, subtab, label }]` is grouped at render time. This keeps persistence simple and avoids migration.
 
-### Sort Order in Sidebar
+### Edge Cases
 
-Main tab favorites and subtab favorites are stored in the same array and rendered in insertion order. This means a user who favorites "Sales" then "Staff Performance" sees them in that order. This feels natural -- no separate grouping needed.
+- **Subtab favorited without its parent tab**: The category header appears automatically (derived from the tab ID + a label lookup map). It's clickable but doesn't have a star (it wasn't explicitly favorited).
+- **Only a main tab favorited**: Renders as a single clickable link at the category level -- no subtab section below it.
+- **MAX_FAVORITES = 6**: Still applies across all favorites combined (main tabs + subtabs). The limit prevents sidebar bloat regardless of hierarchy.
+- **Removal**: Unfavoriting via the sidebar star removes only that specific item. If it was the last item under a category, the category header disappears too.
 
-### Technical Details
+### Technical Detail: Grouping Logic
 
-- The `MAX_FAVORITES = 6` cap applies across both main tabs and subtabs combined
-- The star on main tabs uses the same hover-reveal pattern as subtab stars
-- No new components or hooks needed -- this is purely extending existing infrastructure
+```text
+Input:  [{ tab:"sales", subtab:"", label:"Sales" }, { tab:"sales", subtab:"goals", label:"Goals" }, { tab:"operations", subtab:"staff-utilization", label:"Staff Utilization" }]
+
+Grouped output (ordered by first appearance):
+  1. sales -> { tabLabel: "Sales", hasTabFavorite: true, subtabs: [{ subtab:"goals", label:"Goals" }] }
+  2. operations -> { tabLabel: "Operations", hasTabFavorite: false, subtabs: [{ subtab:"staff-utilization", label:"Staff Utilization" }] }
+```
+
+The grouping preserves insertion order of the first item per tab, so the sidebar reflects the order in which the user added favorites.
+
