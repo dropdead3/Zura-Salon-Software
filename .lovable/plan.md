@@ -1,54 +1,24 @@
 
 
-## Make Category Headers Non-Clickable with Auto-Generated "Overview" Link
+## Remove Unfavorite Stars from Sidebar Navigation
 
-### Problem
+### What Changes
 
-When "Sales" is favorited as a main tab, the sidebar renders "SALES" as a clickable link. But clicking it navigates to `?tab=sales`, which is the same destination as the "Overview" subtab. This creates a UX redundancy.
+Remove all three unpin/unfavorite star buttons from the sidebar analytics favorites section. Users will only be able to unfavorite items from within the Analytics Hub pages themselves (using the existing star buttons on the tab/subtab triggers).
 
-### Solution
+### File to Modify
 
-When a main tab is favorited, the sidebar should render:
+**`src/components/dashboard/CollapsibleNavGroup.tsx`**
 
-```text
-  SALES              (non-clickable label, visual grouper only)
-    → Overview       (clickable, navigates to ?tab=sales)
-```
+Remove three star button blocks:
 
-The category header becomes a static label. The "Overview" link beneath it is the actual clickable navigation target. This eliminates the redundancy while preserving the hierarchical visual structure.
+1. **Category header star** (lines 296-308) -- the hover-reveal star next to "SALES" header
+2. **Overview link star** (lines 331-343) -- the hover-reveal star on the auto-generated "Overview" link
+3. **Subtab link star** (lines 374-386) -- the hover-reveal star on each subtab link (e.g., "Goals")
 
-### Behavior Matrix
+After removal, the `onRemoveSubLink` prop will no longer be used in this rendering section. The prop can remain on the component interface since it may be used elsewhere, but these three render blocks will be deleted.
 
-| What's favorited | Sidebar renders |
-|---|---|
-| Sales (main tab only) | SALES header (static) + Overview link |
-| Sales subtab (e.g., Goals) | SALES header (static) + Goals link |
-| Sales main tab + Goals subtab | SALES header (static) + Overview link + Goals link |
-| Only Goals subtab (no main tab) | SALES header (static) + Goals link |
+### Result
 
-In all cases, the category header is **never clickable**. When the main tab is favorited, an "Overview" link is injected as the first child. This "Overview" link navigates to `?tab=sales` (equivalent to the main tab view).
+The sidebar favorites become pure navigation shortcuts -- clean links without inline management controls. All favoriting/unfavoriting is managed exclusively on the Analytics Hub pages via the existing `SubtabFavoriteStar` components on the tab triggers.
 
-### File Changes
-
-**`src/components/dashboard/CollapsibleNavGroup.tsx`** (lines ~284-317)
-
-Change the category header from an `<a>` tag to a `<div>` (or `<span>`):
-- Remove `href`, `onClick` navigation, and `cursor-pointer`
-- Keep the existing styling: `font-display uppercase tracking-wide text-muted-foreground`
-- Remove the active-state highlight (it's no longer clickable, so no active state needed)
-- Keep the unpin star button on hover (so users can still unfavorite the main tab)
-
-Add an "Overview" link when `group.hasTabFavorite` is true:
-- Render it as the first item before `group.subtabs.map()`
-- Same style as existing subtab links (`pl-14`, `ChevronRight` icon, `font-sans text-xs`)
-- Navigates to `?tab={group.tab}` (no subtab param)
-- Active state: matches when URL has `tab=X` and no `subtab=` param
-- Include an unpin button (unfavorites the main tab, same as the star on the header)
-
-No other files need changes. The hook, data model, and AnalyticsHub star buttons remain the same.
-
-### Technical Details
-
-The "Overview" link for a main-tab favorite is synthesized at render time in CollapsibleNavGroup -- it is not stored as a separate favorite entry. The stored favorite `{ tab: "sales", subtab: "", label: "Sales" }` triggers the Overview link to appear.
-
-The unpin star can appear on either the category header or the Overview link (or both). Clicking it calls `onRemoveSubLink(group.tab, '')` to remove the main tab favorite.
