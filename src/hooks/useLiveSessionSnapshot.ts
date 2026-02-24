@@ -45,7 +45,9 @@ export function useLiveSessionSnapshot(locationId?: string): LiveSessionSnapshot
           .select('id, phorest_staff_id, start_time, end_time, service_name, client_name, location_id')
           .eq('appointment_date', today)
           .lte('start_time', now)
-          .gt('end_time', now) as any,
+          .gt('end_time', now)
+          .is('deleted_at', null)
+          .not('status', 'in', '("cancelled","no_show","completed")') as any,
         locationId,
       );
       const { data: appointments, error } = await activeQuery;
@@ -125,7 +127,9 @@ export function useLiveSessionSnapshot(locationId?: string): LiveSessionSnapshot
           .from('phorest_appointments')
           .select('id, phorest_staff_id, start_time, end_time, service_name')
           .eq('appointment_date', today)
-          .in('phorest_staff_id', uniqueStaffIds) as any,
+          .in('phorest_staff_id', uniqueStaffIds)
+          .is('deleted_at', null)
+          .not('status', 'in', '("cancelled","no_show")') as any,
         locationId,
       );
       const { data: allTodayAppts, error: allError } = await allTodayQuery;
