@@ -132,7 +132,7 @@ export function DraftBookingsSheet({ open, onOpenChange, orgId, onResume }: Draf
               DRAFT BOOKINGS
             </SheetTitle>
             <SheetDescription className="font-sans text-sm">
-              Resume incomplete bookings or discard them.
+              Resume incomplete bookings or discard them. Drafts auto-delete after 7 days.
             </SheetDescription>
             <div className="relative mt-3">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
