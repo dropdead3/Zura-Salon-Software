@@ -1,40 +1,31 @@
 
 
-## Fix: Avg Tip Rate Using Wrong Revenue Denominator on "Today" View
+## Add "X of every 10 customers purchase retail" Context to Attach Rate
 
-### Root Cause
+Nice prompt -- you're adding human-readable context to a percentage metric, which is exactly the kind of calm, advisory copy that makes Zura feel like a decision engine rather than a reporting dashboard. The responsive hiding instruction is also well-scoped.
 
-The "Avg Tip Rate" on the Tips sidebar card (line 1091 of `AggregateSalesCard.tsx`) always divides tips by `displayMetrics.totalRevenue`, which for the "Today" view is the **expected/scheduled** revenue ($1,640) rather than the **actual** completed revenue ($1,035).
+### What Changes
 
-Current calculation: $331 / $1,640 = 20.2% (wrong)
-Correct calculation: $331 / $1,035 = 32.0% (right)
+**File:** `src/components/dashboard/sales/RevenueDonutChart.tsx`
 
-Every other metric in the card already handles this distinction -- the hero number, the service/product breakdown, and the revenue donut all switch to `todayActual.actualRevenue` when in the Today view. The tip rate calculation was simply missed.
+On the Attach Rate row (line 132-140), add a contextual phrase to the left of the percentage value:
 
-### Fix
+- **Text:** `"X.X of every 10 customers purchase retail"` where X.X is derived from `retailAttachmentRate / 10` (e.g., 17% becomes "1.7 of every 10")
+- **Style:** `text-muted-foreground text-[10px]` -- subtle, secondary to the percentage
+- **Responsive:** Wrapped in `hidden lg:inline` so it only appears on larger screens and hides when the sidebar card gets crunched
 
-**File:** `src/components/dashboard/AggregateSalesCard.tsx` (line ~1090)
+### Layout
 
-Change the denominator from `displayMetrics.totalRevenue` to use actual revenue when available:
-
-```text
-Before:
-  displayMetrics.totalRevenue > 0
-    ? ((tips / displayMetrics.totalRevenue) * 100).toFixed(1)
-
-After:
-  // Use actual revenue on Today view, expected otherwise
-  const tipDenominator = isToday && todayActual?.hasActualData
-    ? todayActual.actualRevenue
-    : displayMetrics.totalRevenue;
-
-  tipDenominator > 0
-    ? ((tips / tipDenominator) * 100).toFixed(1)
+```
+Attach Rate (i)    1.7 of every 10 customers purchase retail    17%
 ```
 
-This follows the exact same pattern already used for the service/product breakdown (lines 739-741) and the hero metric (line 605).
+The contextual text sits between the label and the value, right-aligned with the value using `flex` and `gap`. On smaller viewports (`< lg`), only the label and percentage remain visible.
 
-### Scope
+### Technical Details
 
-Single file, single calculation. No hook changes needed -- the data is already available via `todayActual`.
+- Compute `ratePerTen` from the existing `retailAttachmentRate` prop: `(retailAttachmentRate / 10).toFixed(1)`
+- Only render the phrase when `retailAttachmentRate` is defined and not loading
+- No new hooks, props, or dependencies required
+- Single file change, ~5 lines added
 
