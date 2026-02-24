@@ -867,6 +867,13 @@ export function AppointmentDetailSheet({
                   <Badge className={cn(statusConfig.bg, statusConfig.text)}>
                     <StatusIcon className="h-3.5 w-3.5 mr-1" /> {statusConfig.label}
                   </Badge>
+                  {appointment.status === 'confirmed' && (
+                    <span className="text-xs text-muted-foreground">
+                      {confirmationSource?.method && CONFIRM_METHOD_DISPLAY[confirmationSource.method]
+                        ? `via ${CONFIRM_METHOD_DISPLAY[confirmationSource.method].label}`
+                        : '(method unknown)'}
+                    </span>
+                  )}
 
                   {appointment.is_redo && (
                     <Badge variant="outline" className="text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700">
@@ -884,26 +891,6 @@ export function AppointmentDetailSheet({
                     </Badge>
                   )}
                 </div>
-
-                {/* Confirmation Source Display */}
-                {appointment.status === 'confirmed' && (
-                  <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-                    {confirmationSource?.method && CONFIRM_METHOD_DISPLAY[confirmationSource.method] ? (
-                      <>
-                        {(() => {
-                          const MethodIcon = CONFIRM_METHOD_DISPLAY[confirmationSource.method].icon;
-                          return <MethodIcon className="h-3.5 w-3.5 text-green-600 dark:text-green-400 shrink-0" />;
-                        })()}
-                        <span>Confirmed via {CONFIRM_METHOD_DISPLAY[confirmationSource.method].label}</span>
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle className="h-3.5 w-3.5 text-green-600 dark:text-green-400 shrink-0" />
-                        <span>Confirmed (method unknown)</span>
-                      </>
-                    )}
-                  </div>
-                )}
 
                 {/* Status Lifecycle Timeline */}
                 {!isTerminal && (
