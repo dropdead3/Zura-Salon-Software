@@ -1331,7 +1331,7 @@ async function fetchSalesViaCsvExport(
   throw lastError || new Error('All CSV export job types failed');
 }
 
-// Parse CSV text into transaction records with flexible column mapping
+// Parse CSV text into transaction records with exact Phorest column mapping
 function parseSalesCsv(csvText: string, branchId: string): any[] {
   const lines = csvText.split('\n').filter(line => line.trim());
   if (lines.length < 2) {
@@ -1343,35 +1343,56 @@ function parseSalesCsv(csvText: string, branchId: string): any[] {
   const headerLine = lines[0];
   const headers = parseCSVLine(headerLine).map(h => h.toLowerCase().trim().replace(/[^a-z0-9]/g, ''));
   
-  console.log(`[CSV Parser] Headers found: ${headers.join(', ')}`);
+  console.log(`[CSV Parser] Headers found (${headers.length}): ${headers.join(', ')}`);
   
-  // Flexible column mapping - try multiple possible names
+  // Priority-based column matching: exact > starts-with > contains
+  // This prevents "amount" from matching "purchaseonlinediscountamount" before "nettotalamount"
   const getIndex = (possibleNames: string[]): number => {
     for (const name of possibleNames) {
-      const normalizedName = name.toLowerCase().replace(/[^a-z0-9]/g, '');
-      const idx = headers.findIndex(h => h.includes(normalizedName) || normalizedName.includes(h));
-      if (idx !== -1) return idx;
+      const norm = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+      // Priority 1: Exact match
+      const exact = headers.findIndex(h => h === norm);
+      if (exact !== -1) return exact;
+    }
+    for (const name of possibleNames) {
+      const norm = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+      // Priority 2: Header starts with search term
+      const startsWith = headers.findIndex(h => h.startsWith(norm));
+      if (startsWith !== -1) return startsWith;
+    }
+    for (const name of possibleNames) {
+      const norm = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+      // Priority 3: Search term starts with header (header is substring prefix)
+      const reverseStartsWith = headers.findIndex(h => norm.startsWith(h));
+      if (reverseStartsWith !== -1) return reverseStartsWith;
     }
     return -1;
   };
   
-  // Column mappings with multiple possible Phorest CSV header names
-  const idxTransactionId = getIndex(['transactionid', 'transaction', 'purchaseid', 'purchase', 'saleid', 'sale', 'id', 'receiptno', 'invoiceno']);
-  const idxStaffId = getIndex(['staffid', 'staff', 'employeeid', 'employee', 'therapistid', 'therapist', 'stylistid', 'stylist']);
-  const idxStaffName = getIndex(['staffname', 'employeename', 'therapistname', 'stylistname']);
-  const idxDate = getIndex(['date', 'transactiondate', 'purchasedate', 'saledate', 'completeddate', 'created']);
-  const idxTime = getIndex(['time', 'transactiontime']);
-  const idxAmount = getIndex(['amount', 'total', 'price', 'revenue', 'value', 'nettotal', 'grosstotal', 'totalamount']);
-  const idxType = getIndex(['type', 'itemtype', 'category', 'producttype', 'servicetype', 'linetype']);
-  const idxName = getIndex(['name', 'description', 'item', 'service', 'product', 'itemname', 'servicename', 'productname']);
-  const idxClientId = getIndex(['clientid', 'client', 'customerid', 'customer']);
-  const idxClientName = getIndex(['clientname', 'customername', 'firstname', 'fullname']);
+  // Use exact Phorest CSV column names for critical fields
+  const idxTransactionId = getIndex(['transactionitemid', 'transactionid', 'purchaseid', 'receiptno', 'invoiceno']);
+  const idxStaffId = getIndex(['staffid', 'employeeid', 'therapistid', 'stylistid']);
+  const idxStaffName = getIndex(['staffname', 'employeename', 'therapistname']);
+  const idxDate = getIndex(['purchaseddate', 'completeddate', 'transactiondate', 'purchasedate', 'saledate', 'date']);
+  const idxTime = getIndex(['purchasetime', 'completedtime', 'transactiontime', 'time']);
+  // Amount: use nettotalamount (net revenue, what we want for "Revenue basis: Net")
+  const idxAmount = getIndex(['nettotalamount', 'totalamount', 'netprice', 'grossprice']);
+  const idxType = getIndex(['itemtype', 'type', 'linetype', 'producttype', 'servicetype', 'category']);
+  // Name: use description (the actual item/service name in Phorest CSVs)
+  const idxName = getIndex(['description', 'servicename', 'productname', 'itemname']);
+  const idxClientId = getIndex(['clientid', 'customerid']);
+  const idxClientName = getIndex(['clientname', 'customername']);
   const idxQuantity = getIndex(['quantity', 'qty', 'count']);
-  const idxDiscount = getIndex(['discount', 'discountamount', 'discountvalue']);
-  const idxTax = getIndex(['tax', 'taxamount', 'vat']);
-  const idxTip = getIndex(['tip', 'tipamount', 'gratuity', 'tips']);
+  // Discount: use exact column
+  const idxDiscount = getIndex(['discountamount', 'simplediscountamount', 'discount']);
+  // Tax: use taxamount specifically (not taxrate)
+  const idxTax = getIndex(['taxamount']);
+  // Tip: use stafftips specifically (not other tip-like columns)
+  const idxTip = getIndex(['stafftips', 'phoresttips', 'tipamount', 'gratuity']);
+  // Unit price
+  const idxUnitPrice = getIndex(['unitprice', 'price']);
   
-  console.log(`[CSV Parser] Column indices: transactionId=${idxTransactionId}, staffId=${idxStaffId}, date=${idxDate}, amount=${idxAmount}, type=${idxType}, name=${idxName}, tip=${idxTip}, tax=${idxTax}`);
+  console.log(`[CSV Parser] Column indices: transactionId=${idxTransactionId}, staffId=${idxStaffId}, date=${idxDate}, amount=${idxAmount}, type=${idxType}, name=${idxName}, tip=${idxTip}, tax=${idxTax}, unitPrice=${idxUnitPrice}, discount=${idxDiscount}`);
   
   const transactions: any[] = [];
   
@@ -1383,11 +1404,9 @@ function parseSalesCsv(csvText: string, branchId: string): any[] {
       // Extract date - handle various formats
       let transactionDate = idxDate >= 0 ? values[idxDate] : null;
       if (transactionDate) {
-        // Try to normalize date format (could be DD/MM/YYYY, MM/DD/YYYY, YYYY-MM-DD, etc.)
         if (transactionDate.includes('/')) {
           const parts = transactionDate.split('/');
           if (parts.length === 3) {
-            // Assume DD/MM/YYYY for UK/EU or MM/DD/YYYY for US
             // Phorest is Irish, so likely DD/MM/YYYY
             if (parseInt(parts[2]) > 100) {
               transactionDate = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
@@ -1395,6 +1414,10 @@ function parseSalesCsv(csvText: string, branchId: string): any[] {
           }
         }
       }
+
+      // Parse the net total directly from CSV (don't re-derive)
+      const netTotal = idxAmount >= 0 ? parseFloat(values[idxAmount]?.replace(/[^0-9.-]/g, '')) || 0 : 0;
+      const unitPrice = idxUnitPrice >= 0 ? parseFloat(values[idxUnitPrice]?.replace(/[^0-9.-]/g, '')) || 0 : netTotal;
       
       const transaction = {
         purchaseId: idxTransactionId >= 0 && values[idxTransactionId] 
@@ -1404,14 +1427,15 @@ function parseSalesCsv(csvText: string, branchId: string): any[] {
         staffName: idxStaffName >= 0 ? values[idxStaffName] : null,
         purchaseDate: transactionDate,
         purchaseTime: idxTime >= 0 ? values[idxTime] : null,
-        total: idxAmount >= 0 ? parseFloat(values[idxAmount]?.replace(/[^0-9.-]/g, '')) || 0 : 0,
+        total: netTotal,
         tipAmount: idxTip >= 0 ? parseFloat(values[idxTip]?.replace(/[^0-9.-]/g, '')) || 0 : 0,
         clientId: idxClientId >= 0 ? values[idxClientId] : null,
         clientName: idxClientName >= 0 ? values[idxClientName] : null,
         items: [{
           type: idxType >= 0 ? (values[idxType]?.toLowerCase() || 'service') : 'service',
           name: idxName >= 0 ? (values[idxName] || 'Transaction') : 'Transaction',
-          price: idxAmount >= 0 ? parseFloat(values[idxAmount]?.replace(/[^0-9.-]/g, '')) || 0 : 0,
+          price: unitPrice,
+          totalPrice: netTotal,
           quantity: idxQuantity >= 0 ? parseInt(values[idxQuantity]) || 1 : 1,
           discount: idxDiscount >= 0 ? parseFloat(values[idxDiscount]?.replace(/[^0-9.-]/g, '')) || 0 : 0,
           tax: idxTax >= 0 ? parseFloat(values[idxTax]?.replace(/[^0-9.-]/g, '')) || 0 : 0,
@@ -1425,7 +1449,6 @@ function parseSalesCsv(csvText: string, branchId: string): any[] {
       }
     } catch (lineError: any) {
       console.log(`[CSV Parser] Error parsing line ${i}: ${lineError.message}`);
-      // Continue with next line
     }
   }
   
@@ -1504,6 +1527,10 @@ async function saveTransactionItems(
     if (!transactionDate) continue;
     
     for (const item of transaction.items || []) {
+      // Use the parsed net total directly instead of re-deriving
+      const totalAmount = item.totalPrice !== undefined ? item.totalPrice : 
+        ((item.price || 0) * (item.quantity || 1) - (item.discount || 0));
+      
       const itemRecord = {
         transaction_id: transaction.purchaseId,
         phorest_staff_id: staffId,
@@ -1521,7 +1548,7 @@ async function saveTransactionItems(
         discount: item.discount || 0,
         tax_amount: item.tax || 0,
         tip_amount: item.tip || transaction.tipAmount || 0,
-        total_amount: (item.price || 0) * (item.quantity || 1) - (item.discount || 0),
+        total_amount: totalAmount,
       };
       
       const { error } = await supabase
@@ -1672,7 +1699,10 @@ serve(async (req: Request) => {
         let salesTo: string;
         
         if (quick) {
-          salesFrom = todayStr;
+          // Sync yesterday + today: yesterday's sales may finalize after midnight
+          const yesterday = new Date(today);
+          yesterday.setDate(yesterday.getDate() - 1);
+          salesFrom = yesterday.toISOString().split('T')[0];
           salesTo = todayStr;
         } else {
           const thirtyDaysAgo = new Date();

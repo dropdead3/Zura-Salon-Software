@@ -133,12 +133,12 @@ export function PhorestSyncPopout({ asMenuItem = false }: { asMenuItem?: boolean
       if (lastSync < tenMinsAgo) return 'stale';
     }
     
-    // Check for any failures
+    // Check for any failures (no_data is not a failure)
     if (appointmentSync?.status === 'failed' || salesSync?.status === 'failed') {
       return 'error';
     }
     
-    if (appointmentSync?.status === 'success') return 'healthy';
+    if (appointmentSync?.status === 'success' || appointmentSync?.status === 'no_data') return 'healthy';
     return 'unknown';
   };
 
@@ -158,7 +158,7 @@ export function PhorestSyncPopout({ asMenuItem = false }: { asMenuItem?: boolean
   };
 
   const getStatusIcon = (status: string | undefined) => {
-    if (status === 'success') {
+    if (status === 'success' || status === 'no_data') {
       return <CheckCircle2 className="w-3.5 h-3.5 text-primary" />;
     }
     if (status === 'failed') {
