@@ -32,7 +32,8 @@ import {
   Info,
   User,
   Sparkles,
-  Users
+  Users,
+  FileText,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -2261,20 +2262,60 @@ export function QuickBookingPopover({
                 </Tooltip>
               </div>
             </div>
-            <Button
-              className="w-full h-10 font-medium"
-              disabled={!canBook || createBooking.isPending}
-              onClick={() => createBooking.mutate()}
-            >
-              {createBooking.isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Booking...
-                </>
-              ) : (
-                'Confirm Booking'
-              )}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                className="flex-1 h-10 gap-2"
+                disabled={saveDraft.isPending || createBooking.isPending}
+                onClick={() => {
+                  if (!effectiveOrganization?.id) return;
+                  const serviceDetails = services
+                    .filter(s => selectedServices.filter(id => !id.startsWith('addon:')).includes(s.phorest_service_id))
+                    .map(s => ({ id: s.phorest_service_id, name: s.name }));
+                  const addonDetails = selectedAddonDetails.map(a => ({ id: `addon:${a.id}`, name: a.name }));
+                  saveDraft.mutate({
+                    id: draftId || undefined,
+                    organization_id: effectiveOrganization.id,
+                    location_id: selectedLocation || undefined,
+                    appointment_date: format(date, 'yyyy-MM-dd'),
+                    start_time: time,
+                    client_id: selectedClient?.id || null,
+                    client_name: selectedClient?.name || null,
+                    staff_user_id: selectedStylist || null,
+                    staff_name: selectedStylistData?.employee_profiles?.display_name || selectedStylistData?.employee_profiles?.full_name || null,
+                    selected_services: [...serviceDetails, ...addonDetails],
+                    notes: bookingNotes || undefined,
+                    step_reached: step,
+                    is_redo: isRedo,
+                    redo_metadata: isRedo ? { reason: redoReason, originalAppointmentId } : undefined,
+                  }, {
+                    onSuccess: () => {
+                      toast.success('Draft saved', {
+                        description: `${selectedClient?.name || 'No client'} · ${selectedServices.length} service(s)`,
+                      });
+                      handleClose(true);
+                    },
+                  });
+                }}
+              >
+                {saveDraft.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
+                Save for Later
+              </Button>
+              <Button
+                className="flex-1 h-10 font-medium"
+                disabled={!canBook || createBooking.isPending}
+                onClick={() => createBooking.mutate()}
+              >
+                {createBooking.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Booking...
+                  </>
+                ) : (
+                  'Confirm Booking'
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       )}
