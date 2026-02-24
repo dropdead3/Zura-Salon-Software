@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { ChevronRight, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { type GroupedFavorite } from '@/hooks/useAnalyticsSubtabFavorites';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { PopoverTrigger } from '@/components/ui/popover';
@@ -41,7 +42,7 @@ interface CollapsibleNavGroupProps {
   onNavClick: () => void;
   getNavLabel?: (item: NavItem) => string;
   hiddenLinks?: string[];
-  analyticsSubLinks?: AnalyticsSubLink[];
+  groupedFavorites?: GroupedFavorite[];
   analyticsHubHref?: string;
   onRemoveSubLink?: (tab: string, subtab: string) => void;
 }
@@ -55,7 +56,7 @@ export function CollapsibleNavGroup({
   onNavClick,
   getNavLabel,
   hiddenLinks = [],
-  analyticsSubLinks = [],
+  groupedFavorites = [],
   analyticsHubHref = '/dashboard/admin/analytics',
   onRemoveSubLink,
 }: CollapsibleNavGroupProps) {
@@ -272,51 +273,93 @@ export function CollapsibleNavGroup({
                   <div key={item.href}>
                     <NavLink item={item} isNested />
                     {/* Render favorited subtab sublinks beneath Analytics Hub */}
-                    {item.href === analyticsHubHref && analyticsSubLinks.length > 0 && (
+                    {item.href === analyticsHubHref && groupedFavorites.length > 0 && (
                       <div className="space-y-0.5 mt-0.5">
-                        {analyticsSubLinks.map(subLink => {
-                          const subHref = subLink.subtab 
-                            ? `${analyticsHubHref}?tab=${subLink.tab}&subtab=${subLink.subtab}`
-                            : `${analyticsHubHref}?tab=${subLink.tab}`;
-                          const isSubActive = location.pathname === analyticsHubHref 
-                            && location.search.includes(`tab=${subLink.tab}`) 
-                            && (subLink.subtab 
-                              ? location.search.includes(`subtab=${subLink.subtab}`)
-                              : !location.search.includes('subtab='));
+                        {groupedFavorites.map(group => {
+                          const categoryHref = `${analyticsHubHref}?tab=${group.tab}`;
+                          const isCategoryActive = location.pathname === analyticsHubHref
+                            && location.search.includes(`tab=${group.tab}`)
+                            && !location.search.includes('subtab=');
+
                           return (
-                            <a
-                              key={`${subLink.tab}-${subLink.subtab}`}
-                              href={subHref}
-                              onClick={(e) => {
-                                e.preventDefault();
-                                navigate(subHref, { state: { navTimestamp: Date.now() } });
-                                onNavClick();
-                              }}
-                              className={cn(
-                                "flex items-center gap-2 text-xs font-sans cursor-pointer group/sublink",
-                                "transition-all duration-200 ease-out rounded-lg",
-                                "px-3 py-1.5 mx-3 pl-14",
-                                isSubActive
-                                  ? "bg-foreground text-background shadow-sm dark:bg-muted dark:text-foreground dark:shadow-none"
-                                  : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
-                              )}
-                            >
-                              <ChevronRight className={cn("w-3 h-3 flex-shrink-0", isSubActive ? "" : "text-muted-foreground/50")} />
-                              <span className="flex-1">{subLink.label}</span>
-                              {onRemoveSubLink && (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    e.preventDefault();
-                                    onRemoveSubLink(subLink.tab, subLink.subtab);
-                                  }}
-                                  className="opacity-0 group-hover/sublink:opacity-100 transition-opacity"
-                                  aria-label={`Unpin ${subLink.label}`}
-                                >
-                                  <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
-                                </button>
-                              )}
-                            </a>
+                            <div key={group.tab}>
+                              {/* Category header */}
+                              <a
+                                href={categoryHref}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  navigate(categoryHref, { state: { navTimestamp: Date.now() } });
+                                  onNavClick();
+                                }}
+                                className={cn(
+                                  "flex items-center gap-2 text-xs font-display uppercase tracking-wide cursor-pointer group/catlink",
+                                  "transition-all duration-200 ease-out rounded-lg",
+                                  "px-3 py-1.5 mx-3 pl-12",
+                                  isCategoryActive
+                                    ? "bg-foreground text-background shadow-sm dark:bg-muted dark:text-foreground dark:shadow-none"
+                                    : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                                )}
+                              >
+                                <span className="flex-1">{group.tabLabel}</span>
+                                {group.hasTabFavorite && onRemoveSubLink && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      e.preventDefault();
+                                      onRemoveSubLink(group.tab, '');
+                                    }}
+                                    className="opacity-0 group-hover/catlink:opacity-100 transition-opacity"
+                                    aria-label={`Unpin ${group.tabLabel}`}
+                                  >
+                                    <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
+                                  </button>
+                                )}
+                              </a>
+
+                              {/* Nested subtabs */}
+                              {group.subtabs.map(sub => {
+                                const subHref = `${analyticsHubHref}?tab=${group.tab}&subtab=${sub.subtab}`;
+                                const isSubActive = location.pathname === analyticsHubHref
+                                  && location.search.includes(`tab=${group.tab}`)
+                                  && location.search.includes(`subtab=${sub.subtab}`);
+
+                                return (
+                                  <a
+                                    key={sub.subtab}
+                                    href={subHref}
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      navigate(subHref, { state: { navTimestamp: Date.now() } });
+                                      onNavClick();
+                                    }}
+                                    className={cn(
+                                      "flex items-center gap-2 text-xs font-sans cursor-pointer group/sublink",
+                                      "transition-all duration-200 ease-out rounded-lg",
+                                      "px-3 py-1.5 mx-3 pl-14",
+                                      isSubActive
+                                        ? "bg-foreground text-background shadow-sm dark:bg-muted dark:text-foreground dark:shadow-none"
+                                        : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                                    )}
+                                  >
+                                    <ChevronRight className={cn("w-3 h-3 flex-shrink-0", isSubActive ? "" : "text-muted-foreground/50")} />
+                                    <span className="flex-1">{sub.label}</span>
+                                    {onRemoveSubLink && (
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          e.preventDefault();
+                                          onRemoveSubLink(group.tab, sub.subtab);
+                                        }}
+                                        className="opacity-0 group-hover/sublink:opacity-100 transition-opacity"
+                                        aria-label={`Unpin ${sub.label}`}
+                                      >
+                                        <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
+                                      </button>
+                                    )}
+                                  </a>
+                                );
+                              })}
+                            </div>
                           );
                         })}
                       </div>

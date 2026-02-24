@@ -1,11 +1,30 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useMemo } from 'react';
 
 export interface SubtabFavorite {
   tab: string;
   subtab: string;
   label: string;
+}
+
+export const ANALYTICS_TAB_LABELS: Record<string, string> = {
+  leadership: 'Executive Summary',
+  sales: 'Sales',
+  operations: 'Operations',
+  marketing: 'Marketing',
+  campaigns: 'Campaigns',
+  program: 'Program',
+  reports: 'Reports',
+  rent: 'Rent',
+};
+
+export interface GroupedFavorite {
+  tab: string;
+  tabLabel: string;
+  hasTabFavorite: boolean;
+  subtabs: { subtab: string; label: string }[];
 }
 
 const MAX_FAVORITES = 6;
@@ -92,8 +111,38 @@ export function useAnalyticsSubtabFavorites() {
     }
   };
 
+  const groupedFavorites = useMemo((): GroupedFavorite[] => {
+    const orderMap = new Map<string, number>();
+    const groups = new Map<string, GroupedFavorite>();
+
+    favorites.forEach((fav, idx) => {
+      if (!groups.has(fav.tab)) {
+        orderMap.set(fav.tab, idx);
+        groups.set(fav.tab, {
+          tab: fav.tab,
+          tabLabel: ANALYTICS_TAB_LABELS[fav.tab] || fav.tab,
+          hasTabFavorite: false,
+          subtabs: [],
+        });
+      }
+      const group = groups.get(fav.tab)!;
+      if (fav.subtab === '') {
+        group.hasTabFavorite = true;
+        // Use the explicit label if available
+        group.tabLabel = fav.label || group.tabLabel;
+      } else {
+        group.subtabs.push({ subtab: fav.subtab, label: fav.label });
+      }
+    });
+
+    return Array.from(groups.values()).sort(
+      (a, b) => (orderMap.get(a.tab) ?? 0) - (orderMap.get(b.tab) ?? 0)
+    );
+  }, [favorites]);
+
   return {
     favorites,
+    groupedFavorites,
     isFavorited,
     toggleFavorite,
     isAtLimit: favorites.length >= MAX_FAVORITES,
