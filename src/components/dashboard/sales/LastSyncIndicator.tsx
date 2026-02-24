@@ -72,7 +72,8 @@ export function LastSyncIndicator({
     );
   }
 
-  const isSuccess = lastSync.status === 'completed';
+  const isNoData = lastSync.status === 'no_data';
+  const isSuccess = lastSync.status === 'completed' || lastSync.status === 'success' || isNoData;
   const timeAgo = lastSync.completed_at 
     ? formatDistanceToNow(new Date(lastSync.completed_at), { addSuffix: true })
     : 'Unknown';
@@ -88,7 +89,7 @@ export function LastSyncIndicator({
               <AlertCircle className="w-3 h-3 text-chart-4" />
             )}
             <span className="text-muted-foreground">
-              Synced {timeAgo}
+              {isNoData ? 'No sales yet' : `Synced ${timeAgo}`}
             </span>
             <Button 
               variant="ghost" 
