@@ -236,6 +236,30 @@ export function TipsDrilldownPanel({ isOpen, parentLocationId }: TipsDrilldownPa
             ) : (
               /* ── Leadership View ── */
               <>
+                {/* Summary Stats */}
+                {(() => {
+                  const totalTipsSum = filteredStylists.reduce((s, st) => s + st.totalTips, 0);
+                  const totalRevenueBase = filteredStylists.reduce((s, st) => {
+                    return s + (st.tipPercentage > 0 ? (st.totalTips / st.tipPercentage) * 100 : 0);
+                  }, 0);
+                  const avgTipRate = totalRevenueBase > 0 ? (totalTipsSum / totalRevenueBase) * 100 : 0;
+                  return (
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                      <span>
+                        Overall Avg Tip Rate:{' '}
+                        <span className="font-display text-foreground tracking-wide">{avgTipRate.toFixed(1)}%</span>
+                      </span>
+                      <span className="text-border">|</span>
+                      <span>
+                        Total Tips:{' '}
+                        <span className="font-display text-foreground tracking-wide">
+                          <BlurredAmount>{formatCurrencyWhole(Math.round(totalTipsSum))}</BlurredAmount>
+                        </span>
+                      </span>
+                    </div>
+                  );
+                })()}
+
                 {/* Top Tip Earners */}
                 <div>
                   <div className="flex items-center gap-2 mb-2">
