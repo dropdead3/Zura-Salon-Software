@@ -293,19 +293,6 @@ export function CollapsibleNavGroup({
                                 )}
                               >
                                 <span className="flex-1">{group.tabLabel}</span>
-                                {group.hasTabFavorite && onRemoveSubLink && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      e.preventDefault();
-                                      onRemoveSubLink(group.tab, '');
-                                    }}
-                                    className="opacity-0 group-hover/catlink:opacity-100 transition-opacity"
-                                    aria-label={`Unpin ${group.tabLabel}`}
-                                  >
-                                    <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
-                                  </button>
-                                )}
                               </div>
 
                               {/* Auto-generated Overview link when main tab is favorited */}
@@ -328,19 +315,6 @@ export function CollapsibleNavGroup({
                                 >
                                   <ChevronRight className={cn("w-3 h-3 flex-shrink-0", isCategoryActive ? "" : "text-muted-foreground/50")} />
                                   <span className="flex-1">Overview</span>
-                                  {onRemoveSubLink && (
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        e.preventDefault();
-                                        onRemoveSubLink(group.tab, '');
-                                      }}
-                                      className="opacity-0 group-hover/sublink:opacity-100 transition-opacity"
-                                      aria-label="Unpin Overview"
-                                    >
-                                      <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
-                                    </button>
-                                  )}
                                 </a>
                               )}
 
@@ -371,19 +345,6 @@ export function CollapsibleNavGroup({
                                   >
                                     <ChevronRight className={cn("w-3 h-3 flex-shrink-0", isSubActive ? "" : "text-muted-foreground/50")} />
                                     <span className="flex-1">{sub.label}</span>
-                                    {onRemoveSubLink && (
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          e.preventDefault();
-                                          onRemoveSubLink(group.tab, sub.subtab);
-                                        }}
-                                        className="opacity-0 group-hover/sublink:opacity-100 transition-opacity"
-                                        aria-label={`Unpin ${sub.label}`}
-                                      >
-                                        <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
-                                      </button>
-                                    )}
                                   </a>
                                 );
                               })}
