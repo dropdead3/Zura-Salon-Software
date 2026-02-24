@@ -1,24 +1,35 @@
 
 
-## Remove Unfavorite Stars from Sidebar Navigation
+## Add Decorative Star Icons to Sidebar Favorites (No Unpin)
 
 ### What Changes
 
-Remove all three unpin/unfavorite star buttons from the sidebar analytics favorites section. Users will only be able to unfavorite items from within the Analytics Hub pages themselves (using the existing star buttons on the tab/subtab triggers).
+Add non-interactive, decorative star icons back to all three favorite link types in the sidebar. These stars serve as visual indicators that the links are pinned favorites, but they are **not clickable** -- users can only manage favorites from the Analytics Hub pages.
 
 ### File to Modify
 
 **`src/components/dashboard/CollapsibleNavGroup.tsx`**
 
-Remove three star button blocks:
+Add a static `<Star>` icon (no button wrapper, no onClick) to three locations:
 
-1. **Category header star** (lines 296-308) -- the hover-reveal star next to "SALES" header
-2. **Overview link star** (lines 331-343) -- the hover-reveal star on the auto-generated "Overview" link
-3. **Subtab link star** (lines 374-386) -- the hover-reveal star on each subtab link (e.g., "Goals")
+1. **Category header** (line 295, after the `<span>` for the label):
+   ```tsx
+   <Star className="w-3 h-3 fill-amber-500 text-amber-500 opacity-50" />
+   ```
 
-After removal, the `onRemoveSubLink` prop will no longer be used in this rendering section. The prop can remain on the component interface since it may be used elsewhere, but these three render blocks will be deleted.
+2. **Overview link** (line 317, after the "Overview" span):
+   ```tsx
+   <Star className="w-3 h-3 fill-amber-500 text-amber-500 opacity-50" />
+   ```
+
+3. **Subtab links** (line 347, after the `{sub.label}` span):
+   ```tsx
+   <Star className="w-3 h-3 fill-amber-500 text-amber-500 opacity-50" />
+   ```
+
+All three use the same styling: filled amber star at 50% opacity. No `<button>` wrapper, no click handler, purely decorative. The `Star` import from `lucide-react` should already be present in the file.
 
 ### Result
 
-The sidebar favorites become pure navigation shortcuts -- clean links without inline management controls. All favoriting/unfavoriting is managed exclusively on the Analytics Hub pages via the existing `SubtabFavoriteStar` components on the tab triggers.
+Each favorited link in the sidebar shows a small amber star confirming it is pinned. The stars are visual-only -- all pin/unpin management happens exclusively on the Analytics Hub pages.
 
