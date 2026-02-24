@@ -991,7 +991,7 @@ export function AggregateSalesCard({
             serviceRevenue={displayMetrics.serviceRevenue} 
             productRevenue={displayMetrics.productRevenue}
             size={64}
-            filterContext={filterContext as any}
+            
             retailAttachmentRate={attachmentData?.attachmentRate}
             retailAttachmentLoading={attachmentLoading}
           />
