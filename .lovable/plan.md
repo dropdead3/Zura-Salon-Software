@@ -1,33 +1,20 @@
 
-
-## Move Confirmation Method Inline with Status Badge
-
-### Current State
-The confirmation method ("Confirmed via SMS" or "Confirmed (method unknown)") renders as a separate line below the status badges row, with its own redundant green checkmark icon -- duplicating the icon already inside the "Confirmed" badge.
+## Move "View in Client Directory" to Ellipsis Menu
 
 ### Change
 
 In `src/components/dashboard/schedule/AppointmentDetailSheet.tsx`:
 
-1. **Remove the standalone "Confirmation Source Display" block** (lines 888-906) -- the entire `div` with the icon and text below the badges.
+1. **Remove** the "View in Client Directory" button from the Client Contact section (lines 1195-1206).
 
-2. **Add the confirmation method as inline muted text** directly after the Confirmed badge inside the existing badges row (line 866-886). It will render as a small `span` with `text-xs text-muted-foreground` showing:
-   - "via SMS" / "via Email" / "via App" (when method is known)
-   - "(method unknown)" (when method is not known)
-   - No extra icon -- the badge already has the status icon.
+2. **Add** a "View in Client Directory" menu item to the existing ellipsis (three-dots) `DropdownMenuContent` (around line 809), conditionally rendered when `resolvedClientId` is truthy. It will use the `ExternalLink` icon and navigate via `handleClose()` + `navigate(...)`, same as current behavior.
 
-### Visual Result
+3. **Adjust ellipsis menu visibility**: The dropdown is currently gated by `canDelete || (isManagerOrAdmin && appointment.status === 'confirmed')`. Since "View in Client Directory" should be available to all users with a linked client, the gate condition will be expanded to also show when `resolvedClientId` is truthy:
+   ```
+   {(canDelete || (isManagerOrAdmin && ...) || !!resolvedClientId) && (
+   ```
 
-Before:
-```
-[Confirmed]  [Redo]  [New]
-(checkmark) Confirmed (method unknown)
-```
-
-After:
-```
-[Confirmed]  (method unknown)  [Redo]  [New]
-```
-
-### File
-- `src/components/dashboard/schedule/AppointmentDetailSheet.tsx`
+### Result
+- The Client Contact section will only show phone/email -- cleaner layout
+- The ellipsis menu gains a navigation item available to all users when the client is linked
+- Delete and Revert actions remain permission-gated within the menu
