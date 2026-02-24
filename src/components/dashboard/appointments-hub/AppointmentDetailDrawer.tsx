@@ -128,12 +128,19 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
   });
 
   // Fetch confirmation event from audit log
+  const CONFIRM_METHOD_LABELS: Record<string, string> = {
+    called: 'Phone Call',
+    texted: 'Text Message',
+    online: 'Online Confirmation',
+    in_person: 'In Person',
+  };
+
   const { data: confirmationEvent } = useQuery({
     queryKey: ['appointment-confirmation', appointment?.id],
     queryFn: async () => {
       const { data } = await supabase
         .from('appointment_audit_log')
-        .select('created_at, actor_name, event_type, new_value')
+        .select('created_at, actor_name, event_type, new_value, metadata')
         .eq('appointment_id', appointment!.id)
         .eq('event_type', 'status_changed')
         .order('created_at', { ascending: false })
@@ -145,10 +152,14 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
         return nv?.status === 'confirmed';
       });
       if (!confirmed) return null;
+      const meta = confirmed.metadata as any;
+      const confirmMethod = meta?.confirmation_method || null;
       return {
         confirmedAt: confirmed.created_at,
         confirmedBy: confirmed.actor_name || 'System',
-        method: confirmed.actor_name === 'System' || !confirmed.actor_name ? 'Auto-confirmed' : 'Manual',
+        method: confirmMethod
+          ? CONFIRM_METHOD_LABELS[confirmMethod] || confirmMethod
+          : (confirmed.actor_name === 'System' || !confirmed.actor_name ? 'Auto-confirmed' : 'Manual'),
       };
     },
     enabled: !!appointment?.id,
