@@ -134,9 +134,16 @@ export function RevenueDonutChart({
                   <span className="text-muted-foreground">Attach Rate</span>
                   <MetricInfoTooltip description="Percentage of service clients who also purchased a retail product in this period. A key indicator of cross-selling effectiveness." />
                 </div>
-                <span className="font-medium text-foreground tabular-nums">
-                  {retailAttachmentLoading ? '…' : retailAttachmentRate !== undefined ? `${retailAttachmentRate}%` : '—'}
-                </span>
+                <div className="flex items-center gap-1.5">
+                  {!retailAttachmentLoading && retailAttachmentRate !== undefined && (
+                    <span className="hidden lg:inline text-muted-foreground text-[10px]">
+                      {(retailAttachmentRate / 10).toFixed(1)} of every 10 purchase retail
+                    </span>
+                  )}
+                  <span className="font-medium text-foreground tabular-nums">
+                    {retailAttachmentLoading ? '…' : retailAttachmentRate !== undefined ? `${retailAttachmentRate}%` : '—'}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
