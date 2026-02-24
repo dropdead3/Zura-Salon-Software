@@ -26,6 +26,7 @@ import { useUserLocationAccess } from '@/hooks/useUserLocationAccess';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useTranslation } from 'react-i18next';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
+import { SubtabFavoriteStar } from '@/components/dashboard/analytics/SubtabFavoriteStar';
 
 // Tab content components
 import { SalesTabContent } from '@/components/dashboard/analytics/SalesTabContent';
@@ -360,15 +361,18 @@ export default function AnalyticsHub() {
                 elementName={t(`analytics.${cat.id}`, { defaultValue: cat.label })}
                 elementCategory="Page Tabs"
               >
-                <TabsTrigger
-                  value={cat.id}
-                  className="gap-2"
-                >
-                  <cat.icon className="w-4 h-4" />
-                  <span className="hidden sm:inline">
-                    {t(`analytics.${cat.id}`, { defaultValue: cat.label })}
-                  </span>
-                </TabsTrigger>
+                <div className="relative group/subtab inline-flex items-center">
+                  <TabsTrigger
+                    value={cat.id}
+                    className="gap-2"
+                  >
+                    <cat.icon className="w-4 h-4" />
+                    <span className="hidden sm:inline">
+                      {t(`analytics.${cat.id}`, { defaultValue: cat.label })}
+                    </span>
+                  </TabsTrigger>
+                  <SubtabFavoriteStar tab={cat.id} subtab="" label={cat.label} />
+                </div>
               </VisibilityGate>
             ))}
           </ResponsiveTabsList>
