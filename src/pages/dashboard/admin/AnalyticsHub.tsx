@@ -371,7 +371,9 @@ export default function AnalyticsHub() {
                       {t(`analytics.${cat.id}`, { defaultValue: cat.label })}
                     </span>
                   </TabsTrigger>
-                  <SubtabFavoriteStar tab={cat.id} subtab="" label={cat.label} />
+                  {cat.id !== 'leadership' && (
+                    <SubtabFavoriteStar tab={cat.id} subtab="" label={cat.label} />
+                  )}
                 </div>
               </VisibilityGate>
             ))}
