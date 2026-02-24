@@ -1,87 +1,108 @@
 
 
-## Appointment Detail Panel Enhancements
+## Partial Service Reassignment + Gap Analysis
 
-### Overview
-Four enhancements to the Appointment Detail Panel to improve client context, note management, new-client visibility, and stylist reassignment.
+### Context
+
+Currently, the appointment data model stores all services as a comma-separated `service_name` string with a single `stylist_user_id`. The "Reassign Stylist" action (just added) reassigns the entire appointment. There is no mechanism to assign individual services within a multi-service appointment to different stylists.
 
 ---
 
-### 1. Client Notes in Details Tab (Collapsible, Capped)
+### 1. New Database Table: `appointment_service_assignments`
 
-Move a **read-only summary** of client notes into the **Details tab**, below the Client Contact section. This gives stylists immediate context without switching to the Notes tab.
+A new table to track per-service stylist overrides within an appointment:
 
-- Uses a `Collapsible` component showing the **3 most recent** client notes by default
-- If more than 3 notes exist, a "Show all X notes" trigger expands the rest inside a `ScrollArea` capped at `max-h-48` (192px) to prevent the section from dominating the panel
-- Notes remain **read-only** in the Details tab -- adding/deleting stays in the Notes tab
-- Each note shows: author avatar, author name, date, private icon if applicable, and the note text (truncated to 2 lines with `line-clamp-2`)
-- Empty state: "No client notes" muted text
-- Hidden for walk-in appointments (consistent with existing pattern)
+| Column | Type | Purpose |
+|---|---|---|
+| `id` | uuid (PK) | Row identity |
+| `appointment_id` | uuid (FK) | Links to `phorest_appointments.id` |
+| `service_name` | text | The specific service being reassigned |
+| `assigned_user_id` | uuid | The stylist assigned to this service |
+| `assigned_staff_name` | text | Display name snapshot |
+| `organization_id` | uuid | Tenant scope |
+| `created_at` | timestamptz | Auto |
+| `created_by` | uuid | Who made the assignment |
 
-### 2. Appointment Notes Preview in Details Tab
+- RLS: org-member read, org-admin write (matching existing patterns)
+- Unique constraint on `(appointment_id, service_name)` -- one override per service
+- When no row exists for a service, the appointment-level `stylist_user_id` is the default
 
-Similarly, show the **2 most recent** appointment notes as a compact preview in the Details tab, below the client notes summary.
+---
 
-- Compact rendering: avatar + author + date + note text (line-clamp-2)
-- "View all in Notes tab" link at the bottom if more exist, which switches `activeTab` to `'notes'`
-- Keeps the Details tab as the single-glance view while Notes tab remains the full CRUD interface
+### 2. Reassign Dialog Enhancement
 
-### 3. New Client Indicator Enhancement
+The existing "Reassign Stylist" dialog gains a **mode toggle**:
 
-The `is_new_client` flag already exists and renders a green "New" badge in the status row. Enhancement:
+```text
+[ Entire Appointment ]  [ Individual Services ]
+```
 
-- If the client has **zero completed visits** in their history (determined from `visitStats.visitCount === 0`), render an additional subtle callout banner in the Details tab:
-  ```
-  [Star icon] First-time client -- no prior service history on file.
-  ```
-  - Styled as a soft emerald info banner (similar to linked-redo banner style)
-  - Only shown for non-walk-in appointments with a linked client
-  - This catches cases where `is_new_client` might not be set but the client genuinely has no history
+**Entire Appointment mode** (current behavior): Select one stylist, reassign all services.
 
-### 4. Reassign to Another Stylist
+**Individual Services mode** (new):
+- Lists each service from the comma-separated `service_name`
+- Each service row shows: service name, category badge, duration, and a stylist selector
+- The stylist selector defaults to the appointment-level stylist (shows "Default" badge)
+- Clicking a service row opens an inline picker (same team member list with conflict indicators)
+- Conflict check is shared -- uses the same `useAssistantConflictCheck` data
+- On save, inserts/upserts rows into `appointment_service_assignments`
+- Fires audit log with `{ service, oldStylist, newStylist }` per change
 
-Add a **"Reassign Stylist"** action to the ellipsis menu, available to managers/admins/primary owners.
+---
 
-- Clicking opens a `Dialog` with a team member picker (reusing the existing `teamMembers` data from `useTeamDirectory`)
-- Shows each stylist's avatar, name, and conflict status for that time slot (reusing `useAssistantConflictCheck` pattern)
-- On selection, updates the appointment's `stylist_user_id` (and `phorest_staff_id` via staff mapping lookup) and fires an audit log entry
-- Updates both `phorest_appointments` and `appointments` tables based on `_source`
-- Invalidates calendar queries on success
-- Permission-gated: only `isManagerOrAdmin` can see and use this action
+### 3. Services Breakdown UI Update
+
+In the Details tab, the "Services" section (lines 1070-1101) currently shows each service with name, category, duration, and price. Enhancement:
+
+- If `appointment_service_assignments` data exists for any service, show the assigned stylist's avatar + name inline on that service row
+- Services without overrides show nothing (inheriting the lead stylist)
+- Visual indicator: small avatar (h-4 w-4) + name to the right of the service name
+
+---
+
+### 4. First-Time Client Banner Fix (Gap)
+
+The first-time client banner added in the previous change uses `visitStats.visitCount === 0`. However, `visitStats` is computed from `visitHistory` which only loads when the History tab is active or the data is pre-fetched. If the user never opens History, this may not trigger correctly.
+
+Fix: Ensure `visitHistory` query runs regardless of active tab (it already does based on the code -- the query is not tab-gated, so this is actually fine).
+
+---
+
+### 5. Additional Gaps and Enhancements Identified
+
+**A. Client Notes Loading State**
+The client notes preview in the Details tab references `clientNotesLoading` and `clientNotes` -- need to verify these variables exist in scope. The existing Notes tab uses `useAppointmentNotes` for appointment notes and a separate client notes query. The client notes query must be extracted to a shared variable if not already available.
+
+**B. Reassign Audit Trail Visibility**
+The reassign action fires an audit log, but there is no UI to view reassignment history. Enhancement: Add a "Reassignment History" line in the Details tab (under Stylist section) showing when and by whom the stylist was changed. This pulls from `appointment_audit_log` where `action = 'stylist_reassigned'`.
+
+**C. Calendar Card Visual Indicator for Split-Staff Appointments**
+When services are assigned to different stylists, the appointment card on the calendar should show a subtle indicator (e.g., a small "split" icon or multi-avatar stack) so managers can see at a glance which appointments have mixed staffing.
+
+**D. Notification to Reassigned Stylist**
+Currently, reassignment is silent. Future enhancement: trigger an in-app notification or chat message to both the original and new stylist when their appointment is reassigned.
 
 ---
 
 ### Technical Details
 
-**File modified:** `src/components/dashboard/schedule/AppointmentDetailSheet.tsx`
+**Database migration:**
+- Create `appointment_service_assignments` table with RLS policies
+- Unique constraint on `(appointment_id, service_name)`
 
-**Changes by section:**
+**Files modified:**
 
-1. **Details Tab -- Client Notes Summary** (after Client Contact section, ~line 1206):
-   - Import `Collapsible`, `CollapsibleTrigger`, `CollapsibleContent` from UI
-   - Render top 3 client notes in compact format
-   - Collapsible "Show all" with ScrollArea max-h-48
+1. **`src/components/dashboard/schedule/AppointmentDetailSheet.tsx`**
+   - Add new hook to fetch `appointment_service_assignments` for current appointment
+   - Add mode toggle (Entire / Individual) to the Reassign Dialog
+   - In Individual mode, render service list with per-service stylist pickers
+   - New mutation for upserting service assignments
+   - Update Services Breakdown to show per-service stylist avatars when overrides exist
 
-2. **Details Tab -- Appointment Notes Preview** (after client notes summary):
-   - Render top 2 appointment notes in compact format
-   - "View all" button that calls `setActiveTab('notes')`
+2. **New hook: `src/hooks/useServiceAssignments.ts`**
+   - Fetches service assignment overrides for a given appointment ID
+   - Returns a `Map<serviceName, { userId, staffName }>` for easy lookup
+   - Upsert mutation for saving individual assignments
 
-3. **Details Tab -- First-time Client Banner** (after linked redos, ~line 969):
-   - Conditional on `!isWalkIn && visitStats.visitCount === 0 && !!appointment.phorest_client_id`
-   - Emerald info banner with Star icon
-
-4. **Ellipsis Menu -- Reassign Stylist** (~line 818):
-   - New `DropdownMenuItem` gated on `isManagerOrAdmin`
-   - New `showReassignDialog` state + `Dialog` component
-   - Team member list with conflict indicators
-   - Mutation to update stylist assignment + audit log
-
-5. **New State Variables:**
-   - `showReassignDialog: boolean`
-   - `selectedNewStylist: string | null`
-
-6. **New Mutation** for reassignment:
-   - Updates `stylist_user_id` and `staff_name` on the appropriate table
-   - Looks up `phorest_staff_id` from `phorest_staff_mapping` for phorest appointments
-   - Fires audit event with old/new stylist info
-
+3. **`src/components/dashboard/schedule/AppointmentCardContent.tsx`** (future)
+   - Show split-staff indicator when service assignments exist for different stylists
