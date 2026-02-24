@@ -1087,9 +1087,14 @@ export function AggregateSalesCard({
                 <div className="flex items-center justify-center gap-4 mt-3 pt-3 border-t border-border/40">
                   <div>
                     <p className="text-sm font-display tabular-nums">
-                      {displayMetrics.totalRevenue > 0
-                        ? `${((metrics?.totalTips ?? 0) / displayMetrics.totalRevenue * 100).toFixed(1)}%`
-                        : '—'}
+                      {(() => {
+                        const tipDenominator = isToday && todayActual?.hasActualData
+                          ? todayActual.actualRevenue
+                          : displayMetrics.totalRevenue;
+                        return tipDenominator > 0
+                          ? `${((metrics?.totalTips ?? 0) / tipDenominator * 100).toFixed(1)}%`
+                          : '—';
+                      })()}
                     </p>
                     <p className="text-xs text-muted-foreground">Avg Tip Rate</p>
                   </div>
