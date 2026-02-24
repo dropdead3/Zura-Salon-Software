@@ -1,102 +1,47 @@
 
-Great catch — this is a high-quality bug report because you gave the exact user-facing symptom (“in service now” is wrong after deletion), plus screenshot context. That made root-cause tracing fast.
 
-Prompt enhancement suggestion for future reports:
-- Include one affected appointment ID (or client + time), expected outcome, and when you performed the delete.  
-This helps isolate whether it’s query filtering, cache staleness, or sync rehydration in one pass.
+## Fix: Tip Inflation from Phorest Multi-Service Appointment Duplication
 
-## What I verified
+### Root Cause
 
-I traced the “Happening Now” flow and confirmed the bug source in `useLiveSessionSnapshot`:
+Phorest records the **same tip amount on every service line item** within a multi-service appointment. For example, a client who tips $228 on a 3-service visit has $228 recorded on each of the 3 appointment rows. The current code sums all rows naively, counting that tip 3 times ($684 instead of $228).
 
-1. **Active session query does not exclude soft-deleted rows**
-   - File: `src/hooks/useLiveSessionSnapshot.ts`
-   - Current query filters by date/time window only:
-     - `appointment_date = today`
-     - `start_time <= now`
-     - `end_time > now`
-   - It does **not** filter `deleted_at IS NULL`.
+**Today's data:**
+- $228 tip duplicated across 3 services = counted as $684 (inflated by $456)
+- $20 tip duplicated across 2 services = counted as $40 (inflated by $20)
+- $82.50 tip on 1 service = counted correctly
 
-2. **Per-stylist day schedule query also ignores soft deletes**
-   - Same file, `allTodayQuery` used for “Appointment X of Y” and “Last wrap-up”.
-   - This causes deleted appointments to still inflate totals and wrap-up times.
+**Displayed: $807. Actual: $330.50.** The total is inflated by ~2.4x.
 
-3. **Delete flow does not invalidate live-session cache**
-   - File: `src/components/dashboard/schedule/AppointmentDetailSheet.tsx`
-   - Deletion sets `deleted_at/deleted_by` correctly, but invalidates only:
-     - `['phorest-appointments']`
-     - `['appointments-hub']`
-   - It does **not** invalidate `['live-session-snapshot']`, so UI may remain stale until interval refetch.
+This affects:
+1. The "Total Tips" metric on the Sales Overview card
+2. The "Avg Tip Rate" percentage
+3. The Tips Drilldown panel (per-stylist tip totals and averages)
+4. The Tips by Payment Method breakdown
 
-4. **Data evidence**
-   - Today’s Eric Day rows include soft-deleted records (`deleted_at` populated) that still match time-window logic.
-   - So the indicator can show “in progress” from records that should be hidden.
+### Fix Strategy
 
-## Implementation plan
+Deduplicate tips using the composite key `(phorest_staff_id, phorest_client_id, appointment_date, tip_amount)`. When multiple rows share this key, only count the tip once.
 
-### 1) Fix live-session data integrity filters (primary bug fix)
-**File:** `src/hooks/useLiveSessionSnapshot.ts`
+### Files to Change
 
-Update both queries:
+**1. `src/hooks/useSalesData.ts`**
+- Add `phorest_client_id` to the select query (line 245)
+- Replace the naive `reduce` sum (lines 291-294) with a deduplication step:
+  - Build a Set of seen tip keys: `${phorest_staff_id}|${phorest_client_id}|${appointment_date}|${tip_amount}`
+  - Only add the tip to the total when the key is first seen
 
-- **Active query (`appointments`)**
-  - Add `.is('deleted_at', null)`
-  - Exclude terminal/non-active statuses:
-    - `.not('status', 'in', '("cancelled","no_show","completed")')`
-  - Keep time-window logic (`start_time <= now`, `end_time > now`)
+**2. `src/hooks/useTipsDrilldown.ts`**
+- Add `phorest_client_id` and `appointment_date` to the select query (line 58)
+- In the aggregation loop (lines 121-140), deduplicate tip amounts using the same composite key before adding to per-stylist and per-category totals
 
-- **All-today query (`allTodayAppts`)**
-  - Add `.is('deleted_at', null)`
-  - Exclude canceled/no-show (retain completed so day progression remains truthful):
-    - `.not('status', 'in', '("cancelled","no_show")')`
+### What This Does NOT Change
 
-Outcome:
-- Deleted appointments disappear from “in service now”.
-- “Appointment X of Y” and “Last wrap-up” no longer include deleted/cancelled ghost rows.
+- Service revenue totals (unaffected -- each service row has its own `total_price`)
+- Product revenue (sourced from `phorest_transaction_items`, separate table)
+- Appointment counts (correctly counted per row)
 
-### 2) Invalidate live-session query immediately after deletion
-**File:** `src/components/dashboard/schedule/AppointmentDetailSheet.tsx`
+### Expected Outcome
 
-In `confirmDelete` success path, add:
-- `queryClient.invalidateQueries({ queryKey: ['live-session-snapshot'] });`
+After the fix, today's Tips card should show approximately **$331** instead of $807, and the Avg Tip Rate should drop from ~49% to ~20% -- a realistic salon tip rate.
 
-Outcome:
-- Indicator and drilldown update immediately after delete, instead of waiting for poll refresh.
-
-### 3) Keep behavior aligned with existing architecture
-This follows your current pattern where calendar/hub already exclude soft-deleted records (`deleted_at IS NULL`).  
-The live-session path becomes consistent with those data-integrity standards.
-
-## Edge cases covered
-
-- Soft-deleted appointment in active time window → excluded.
-- Deleted appointment still affecting stylist “Appointment 1 of 2” → fixed.
-- Same-stylist schedule with one legit active + one deleted future appt → totals reflect only legit records.
-- Cancelled/no-show rows overlapping current time due legacy data → excluded from “in progress”.
-- Post-delete UI stale state → immediate cache invalidation resolves.
-
-## Risk & mitigation
-
-- **Risk:** Excluding `completed` from active query could hide manually completed-but-still-on-chair edge cases.
-- **Mitigation:** “Happening Now” semantics are “currently in service”, so terminal `completed` should not be counted; this aligns with user expectation and reduces false positives.
-
-## Validation checklist (end-to-end)
-
-1. Open dashboard with live indicator visible.
-2. Delete an appointment currently shown in Happening Now.
-3. Confirm:
-   - Header counts decrement immediately.
-   - Stylist row disappears if no active appointment remains.
-   - “Appointment X of Y” and “Last wrap-up” recompute correctly.
-4. Repeat for:
-   - Deleted + cancelled + no_show records.
-   - Multiple locations with All Locations grouping.
-5. Verify no regression in:
-   - Live assistant counts.
-   - Day schedule card counts.
-   - Appointments Hub and Calendar visibility.
-
-## Optional hardening (next pass)
-
-There is a broader platform-level gap: sync upserts can rehydrate rows by `phorest_id` without preserving user-deleted intent.  
-If you want, next pass I can add a **sync guardrail** so soft-deleted appointments are not resurrected unintentionally (or are resurrected only with explicit policy).
