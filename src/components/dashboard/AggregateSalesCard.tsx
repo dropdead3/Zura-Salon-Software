@@ -1,4 +1,4 @@
-import { Card } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { BlurredAmount, useHideNumbers } from '@/contexts/HideNumbersContext';
@@ -742,7 +742,7 @@ export function AggregateSalesCard({
               // 4 cards: single row
               return (
                 <div className="mt-6">
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     <div 
                       className={cn(
                         "text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg border transition-all cursor-pointer group",
@@ -798,25 +798,6 @@ export function AggregateSalesCard({
                         <p className="text-xs text-muted-foreground">{t('sales.rev_per_hour')}</p>
                         <ChevronDown className={cn("w-3 h-3 text-muted-foreground transition-transform duration-200", activeDrilldown === 'revPerHour' && "rotate-180")} />
                         <MetricInfoTooltip description="Total Revenue (excluding tips) ÷ Service Hours. Click for stylist breakdown." />
-                      </div>
-                    </div>
-                    <div 
-                      className={cn(
-                        "text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg border transition-all cursor-pointer group",
-                        tipsDrilldownOpen 
-                          ? "border-primary/50 ring-1 ring-primary/20" 
-                          : "border-border/60 dark:border-border/30 hover:border-primary/30 hover:bg-muted/50"
-                      )}
-                      onClick={handleTipsToggle}
-                    >
-                      <div className="flex justify-center mb-2">
-                        <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-                      </div>
-                      <AnimatedBlurredAmount value={metrics?.totalTips ?? 0} currency={currency} className="text-lg sm:text-xl md:text-2xl font-display tabular-nums" />
-                      <div className="flex items-center gap-1 justify-center mt-1">
-                        <p className="text-xs text-muted-foreground">{t('sales.tips')}</p>
-                        <ChevronDown className={cn("w-3 h-3 text-muted-foreground transition-transform duration-200", tipsDrilldownOpen && "rotate-180")} />
-                         <MetricInfoTooltip description="Total gratuities (staff tips) recorded across all transactions. Includes tips on both service and retail sales. Excludes Phorest-level tips if applicable. Click for stylist breakdown." />
                       </div>
                     </div>
                   </div>
@@ -885,7 +866,7 @@ export function AggregateSalesCard({
                     </div>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div>
                   <div className="text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg border border-border/60 dark:border-border/30">
                     <div className="flex justify-center mb-2">
                       <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
@@ -896,35 +877,11 @@ export function AggregateSalesCard({
                       <MetricInfoTooltip description="Average daily revenue across days with recorded sales." />
                     </div>
                   </div>
-                  <div 
-                    className={cn(
-                      "text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg border transition-all cursor-pointer group",
-                      tipsDrilldownOpen 
-                        ? "border-primary/50 ring-1 ring-primary/20" 
-: "border-border/60 dark:border-border/30 hover:border-primary/30 hover:bg-muted/50"
-                    )}
-                    onClick={handleTipsToggle}
-                  >
-                    <div className="flex justify-center mb-2">
-                      <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-                    </div>
-                    <AnimatedBlurredAmount value={metrics?.totalTips ?? 0} currency={currency} className="text-lg sm:text-xl md:text-2xl font-display tabular-nums" />
-                    <div className="flex items-center gap-1 justify-center mt-1">
-                      <p className="text-xs text-muted-foreground">{t('sales.tips')}</p>
-                      <ChevronDown className={cn("w-3 h-3 text-muted-foreground transition-transform duration-200", tipsDrilldownOpen && "rotate-180")} />
-                      <MetricInfoTooltip description="Total gratuities (staff tips) recorded across all transactions. Includes tips on both service and retail sales. Excludes Phorest-level tips if applicable. Click for stylist breakdown." />
-                    </div>
-                  </div>
                 </div>
               </div>
             );
           })()}
 
-          {/* Tips Drill-Down Panel */}
-          <TipsDrilldownPanel
-            isOpen={tipsDrilldownOpen}
-            parentLocationId={filterContext?.locationId}
-          />
 
           {/* Transactions by Hour Drill-Down */}
           <TransactionsByHourPanel
@@ -1038,6 +995,56 @@ export function AggregateSalesCard({
             retailAttachmentRate={attachmentData?.attachmentRate}
             retailAttachmentLoading={attachmentLoading}
           />
+
+          {/* Tips Summary Card */}
+          <Card className="bg-card/80 backdrop-blur-xl border-border">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+                    <DollarSign className="w-5 h-5 text-primary" />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CardTitle className="font-display text-base tracking-wide">TIPS</CardTitle>
+                    <MetricInfoTooltip description="Total gratuities (staff tips) recorded across all completed appointments. Not included in total revenue. Click for stylist breakdown." />
+                  </div>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div
+                className={cn(
+                  "text-center p-4 bg-muted/30 dark:bg-card rounded-lg border transition-all cursor-pointer",
+                  tipsDrilldownOpen
+                    ? "border-primary/50 ring-1 ring-primary/20"
+                    : "border-border/60 dark:border-border/30 hover:border-primary/30 hover:bg-muted/50"
+                )}
+                onClick={handleTipsToggle}
+              >
+                <AnimatedBlurredAmount value={metrics?.totalTips ?? 0} currency={currency} className="text-2xl md:text-3xl font-display tabular-nums" />
+                <p className="text-xs text-muted-foreground mt-1">Total Tips</p>
+                <div className="flex items-center justify-center gap-4 mt-3 pt-3 border-t border-border/40">
+                  <div>
+                    <p className="text-sm font-display tabular-nums">
+                      {displayMetrics.totalRevenue > 0
+                        ? `${((metrics?.totalTips ?? 0) / displayMetrics.totalRevenue * 100).toFixed(1)}%`
+                        : '—'}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Avg Tip Rate</p>
+                  </div>
+                </div>
+                <div className="flex items-center justify-center gap-1 mt-3">
+                  <p className="text-xs text-muted-foreground">Click for breakdown</p>
+                  <ChevronDown className={cn("w-3 h-3 text-muted-foreground transition-transform duration-200", tipsDrilldownOpen && "rotate-180")} />
+                </div>
+              </div>
+
+              <TipsDrilldownPanel
+                isOpen={tipsDrilldownOpen}
+                parentLocationId={filterContext?.locationId}
+              />
+            </CardContent>
+          </Card>
         </div>
       </div>
 
