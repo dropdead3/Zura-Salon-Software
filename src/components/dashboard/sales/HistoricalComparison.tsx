@@ -94,7 +94,7 @@ export function HistoricalComparison({
       format: (v: number) => formatCurrencyWhole(v),
     },
     { 
-      label: 'Products', 
+      label: 'Retail', 
       current: comparison?.current.productRevenue || 0,
       previous: comparison?.previous.productRevenue || 0,
       change: comparison?.percentChange.productRevenue || 0,

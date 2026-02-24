@@ -58,7 +58,7 @@ export function ComparisonChart({
       txnB: null,
     },
     {
-      name: 'Products',
+      name: 'Retail',
       periodA: data.periodA.productRevenue,
       periodB: data.periodB.productRevenue,
       txnA: null,

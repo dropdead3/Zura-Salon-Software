@@ -137,7 +137,7 @@ export function LocationComparisonTable({
               <TableHead>Location</TableHead>
               <TableHead className="text-right"><SortHeader label="Revenue" column="revenue" /></TableHead>
               <TableHead className="text-right hidden sm:table-cell"><SortHeader label="Services" column="services" /></TableHead>
-              <TableHead className="text-right hidden sm:table-cell"><SortHeader label="Products" column="products" /></TableHead>
+              <TableHead className="text-right hidden sm:table-cell"><SortHeader label="Retail" column="products" /></TableHead>
               <TableHead className="text-right hidden md:table-cell"><SortHeader label="Avg Ticket" column="avgTicket" /></TableHead>
               <TableHead className="text-right"><SortHeader label="Share" column="share" /></TableHead>
               <TableHead className="w-8" />

@@ -65,7 +65,7 @@ export function SalesSnapshotCard({
     if (total === 0) return [];
     return [
       { name: 'Services', value: serviceRevenue, color: 'hsl(var(--primary))' },
-      { name: 'Products', value: productRevenue, color: 'hsl(var(--chart-2))' },
+      { name: 'Retail', value: productRevenue, color: 'hsl(var(--chart-2))' },
     ].filter(d => d.value > 0);
   }, [serviceRevenue, productRevenue]);
 
