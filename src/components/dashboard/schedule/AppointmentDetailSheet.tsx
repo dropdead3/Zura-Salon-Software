@@ -523,9 +523,8 @@ export function AppointmentDetailSheet({
   // Delete: admins can delete booked/pending anytime; stylists can delete own creations within 10 min
   const canDelete = useMemo(() => {
     if (!appointment || ['completed', 'checked_in'].includes(appointment.status)) return false;
-    if (!['booked', 'pending'].includes(appointment.status)) return false;
     if (isManagerOrAdmin) return true;
-    if (isStylistOnly && appointment.created_by === user?.id) {
+    if (isStylistOnly && ['booked', 'pending'].includes(appointment.status) && appointment.created_by === user?.id) {
       const createdAt = new Date(appointment.created_at);
       const minutesSinceCreation = (Date.now() - createdAt.getTime()) / 60000;
       return minutesSinceCreation <= 10;
