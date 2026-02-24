@@ -55,7 +55,7 @@ export function useTipsDrilldown({ period, locationId, minAppointments = 10 }: U
     queryFn: async () => {
       let query = supabase
         .from('phorest_appointments')
-        .select('stylist_user_id, tip_amount, total_price, service_name, service_category, location_id')
+        .select('stylist_user_id, tip_amount, total_price, service_name, service_category, location_id, phorest_client_id, appointment_date, phorest_staff_id')
         .gte('appointment_date', dateFrom)
         .lte('appointment_date', dateTo)
         .not('status', 'in', '("cancelled","no_show")');
@@ -132,26 +132,40 @@ export function useTipsDrilldown({ period, locationId, minAppointments = 10 }: U
       count: number;
     }>();
 
+    // Deduplicate tips: Phorest duplicates the same tip on every service line item
+    const seenTipKeys = new Set<string>();
+
     for (const apt of appointments) {
-      const tip = apt.tip_amount ?? 0;
+      const tipRaw = apt.tip_amount ?? 0;
       const revenue = apt.total_price ?? 0;
       const category = apt.service_category || getServiceCategory(apt.service_name);
+
+      // Check if this tip was already counted for the same staff+client+date+amount
+      let dedupedTip = tipRaw;
+      if (tipRaw > 0) {
+        const key = `${apt.phorest_staff_id}|${apt.phorest_client_id}|${apt.appointment_date}|${tipRaw}`;
+        if (seenTipKeys.has(key)) {
+          dedupedTip = 0; // Already counted
+        } else {
+          seenTipKeys.add(key);
+        }
+      }
 
       // Stylist aggregation
       if (apt.stylist_user_id) {
         const existing = stylistMap.get(apt.stylist_user_id) ?? {
           totalTips: 0, totalRevenue: 0, noTipCount: 0, count: 0, locationId: apt.location_id
         };
-        existing.totalTips += tip;
+        existing.totalTips += dedupedTip;
         existing.totalRevenue += revenue;
-        existing.noTipCount += tip === 0 ? 1 : 0;
+        existing.noTipCount += tipRaw === 0 ? 1 : 0;
         existing.count += 1;
         stylistMap.set(apt.stylist_user_id, existing);
       }
 
       // Category aggregation
       const catExisting = categoryMap.get(category) ?? { totalTips: 0, totalRevenue: 0, count: 0 };
-      catExisting.totalTips += tip;
+      catExisting.totalTips += dedupedTip;
       catExisting.totalRevenue += revenue;
       catExisting.count += 1;
       categoryMap.set(category, catExisting);

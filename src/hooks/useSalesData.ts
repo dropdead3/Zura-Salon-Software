@@ -237,12 +237,13 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
       const data = await fetchAllBatched<{
         id: string; total_price: number | null; tip_amount: number | null;
         service_name: string | null; phorest_staff_id: string | null;
+        phorest_client_id: string | null;
         location_id: string | null; appointment_date: string;
         start_time: string | null; end_time: string | null;
       }>((from, to) => {
         let q = supabase
           .from('phorest_appointments')
-          .select('id, total_price, tip_amount, service_name, phorest_staff_id, location_id, appointment_date, start_time, end_time')
+          .select('id, total_price, tip_amount, service_name, phorest_staff_id, phorest_client_id, location_id, appointment_date, start_time, end_time')
           .not('total_price', 'is', null)
           .not('status', 'in', '("cancelled","no_show")')
           .range(from, to);
@@ -288,10 +289,19 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
         }
       }
 
-      // Sum tips from appointments (not transaction items, which duplicate tips per line item)
-      const totalTipsFromAppointments = data.reduce(
-        (sum, apt) => sum + (Number(apt.tip_amount) || 0), 0
-      );
+      // Sum tips from appointments, deduplicating multi-service appointments
+      // Phorest duplicates the same tip on every service line item within one visit
+      const seenTipKeys = new Set<string>();
+      let totalTipsFromAppointments = 0;
+      for (const apt of data) {
+        const tip = Number(apt.tip_amount) || 0;
+        if (tip === 0) continue;
+        const key = `${apt.phorest_staff_id}|${apt.phorest_client_id}|${apt.appointment_date}|${tip}`;
+        if (!seenTipKeys.has(key)) {
+          seenTipKeys.add(key);
+          totalTipsFromAppointments += tip;
+        }
+      }
 
       if (data.length === 0) {
         return {
