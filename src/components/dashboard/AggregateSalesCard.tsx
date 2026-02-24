@@ -602,18 +602,82 @@ export function AggregateSalesCard({
               onClick={() => toggleDrilldown('revenue')}
             >
               <AnimatedBlurredAmount
-                value={displayMetrics.totalRevenue}
+                value={isToday ? (todayActual?.actualRevenue ?? 0) : displayMetrics.totalRevenue}
                 currency={currency}
                 className="text-3xl sm:text-4xl md:text-5xl font-display tabular-nums"
               />
               <div className="flex flex-col items-center mt-2">
                 <div className="flex items-center gap-1">
-                  <p className="text-sm text-muted-foreground">{t('sales.total_revenue')}</p>
-                  <MetricInfoTooltip description="Combined net revenue from services and retail product sales for the selected period. Tips and gratuities are tracked separately and not included in this total." />
+                  <p className="text-sm text-muted-foreground">
+                    {isToday ? 'Revenue So Far Today' : t('sales.total_revenue')}
+                  </p>
+                  <MetricInfoTooltip description={isToday
+                    ? "Revenue from completed/checked-out transactions today. Updates every 5 minutes. Tips and gratuities are tracked separately."
+                    : "Combined net revenue from services and retail product sales for the selected period. Tips and gratuities are tracked separately and not included in this total."
+                  } />
                 </div>
                 <p className="text-xs text-muted-foreground/50">Excludes Tips</p>
               </div>
-              {(dateRange === 'today' || dateRange === 'todayToEom') && (
+
+              {/* Expected Revenue - secondary badge (today only) */}
+              {isToday && (
+                <div className="mt-4 mx-auto max-w-sm space-y-3">
+                  <div className="flex items-center justify-center gap-1.5">
+                    <Badge variant="outline" className="text-xs font-normal bg-warning/10 text-warning border-warning/30 gap-1">
+                      <Clock className="w-3 h-3" />
+                      <BlurredAmount>
+                        <span>{formatCurrency(displayMetrics.totalRevenue)}</span>
+                      </BlurredAmount>
+                      <span>Expected</span>
+                    </Badge>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="max-w-[200px] text-xs">
+                        Based on scheduled appointments. Final revenue may differ as appointments are completed, cancelled, or added.
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+
+                  {/* Progress bar: actual vs expected */}
+                  {todayActual?.hasActualData ? (
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-muted-foreground">{t('sales.actual_revenue')}</span>
+                        <BlurredAmount>
+                          <span className="font-medium">
+                            {formatCurrency(todayActual.actualRevenue)} of {formatCurrency(displayMetrics.totalRevenue)} expected
+                          </span>
+                        </BlurredAmount>
+                      </div>
+                      <Progress 
+                        value={displayMetrics.totalRevenue > 0 
+                          ? Math.min((todayActual.actualRevenue / displayMetrics.totalRevenue) * 100, 100) 
+                          : 0
+                        } 
+                        className="h-1.5"
+                      />
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground/70 text-center">
+                      {t('sales.actual_not_available')}
+                    </p>
+                  )}
+
+                  {todayActual?.lastAppointmentEndTime && (
+                    <p className="text-xs text-muted-foreground/70 text-center">
+                      {t('sales.estimated_final_at')}{' '}
+                      <span className="font-medium text-foreground/70">
+                        {formatEndTime(todayActual.lastAppointmentEndTime)}
+                      </span>
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Expected revenue badge for todayToEom (non-today future) */}
+              {dateRange === 'todayToEom' && (
                 <div className="flex items-center justify-center gap-1.5 mt-2">
                   <Badge variant="outline" className="text-xs font-normal bg-warning/10 text-warning border-warning/30">
                     <Clock className="w-3 h-3 mr-1" />
@@ -629,44 +693,7 @@ export function AggregateSalesCard({
                   </Tooltip>
                 </div>
               )}
-              {/* Actual vs Expected Revenue - Today only */}
-              {dateRange === 'today' && (
-                <div className="mt-4 mx-auto max-w-sm space-y-3">
-                  {todayActual?.hasActualData ? (
-                    <>
-                      <div className="space-y-1.5">
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="text-muted-foreground">{t('sales.actual_revenue')}</span>
-                          <BlurredAmount>
-                            <span className="font-medium">
-                              {formatCurrency(todayActual.actualRevenue)} of {formatCurrency(displayMetrics.totalRevenue)} expected
-                            </span>
-                          </BlurredAmount>
-                        </div>
-                        <Progress 
-                          value={displayMetrics.totalRevenue > 0 
-                            ? Math.min((todayActual.actualRevenue / displayMetrics.totalRevenue) * 100, 100) 
-                            : 0
-                          } 
-                          className="h-1.5"
-                        />
-                      </div>
-                    </>
-                  ) : (
-                    <p className="text-xs text-muted-foreground/70 text-center">
-                      {t('sales.actual_not_available')}
-                    </p>
-                  )}
-                  {todayActual?.lastAppointmentEndTime && (
-                    <p className="text-xs text-muted-foreground/70 text-center">
-                      {t('sales.estimated_final_at')}{' '}
-                      <span className="font-medium text-foreground/70">
-                        {formatEndTime(todayActual.lastAppointmentEndTime)}
-                      </span>
-                    </p>
-                  )}
-                </div>
-              )}
+
               {showTrendIndicators && (
                 <div className="mt-2">
                   <SalesTrendIndicator 
@@ -685,43 +712,55 @@ export function AggregateSalesCard({
             </div>
             
             {/* Services & Products Sub-cards */}
-            <div className="grid grid-cols-2 gap-6">
-              {/* Services */}
-              <div 
-                className="text-center p-3 sm:p-4 bg-background/50 dark:bg-muted/20 rounded-lg border border-border/60 dark:border-border/30 cursor-pointer transition-all hover:-translate-y-0.5 hover:border-border/80 dark:hover:border-border/60"
-                onClick={() => setDrilldownMode('services')}
-              >
-                <div className="flex items-center justify-center gap-1.5 mb-2">
-                  <Scissors className="w-3.5 h-3.5 text-primary" />
-                  <span className="text-xs text-muted-foreground">{t('sales.services')}</span>
-                  <MetricInfoTooltip description="Revenue from booked services. Tips are tracked separately." />
+            {(() => {
+              // When today + actual data, show actual breakdown; otherwise show expected
+              const showActual = isToday && todayActual?.hasActualData;
+              const svcRevenue = showActual ? todayActual.actualServiceRevenue : displayMetrics.serviceRevenue;
+              const prodRevenue = showActual ? todayActual.actualProductRevenue : displayMetrics.productRevenue;
+              const totalBrkdn = svcRevenue + prodRevenue;
+              const svcPct = totalBrkdn > 0 ? Math.round((svcRevenue / totalBrkdn) * 100) : 0;
+              const prodPct = totalBrkdn > 0 ? Math.round((prodRevenue / totalBrkdn) * 100) : 0;
+
+              return (
+                <div className="grid grid-cols-2 gap-6">
+                  {/* Services */}
+                  <div 
+                    className="text-center p-3 sm:p-4 bg-background/50 dark:bg-muted/20 rounded-lg border border-border/60 dark:border-border/30 cursor-pointer transition-all hover:-translate-y-0.5 hover:border-border/80 dark:hover:border-border/60"
+                    onClick={() => setDrilldownMode('services')}
+                  >
+                    <div className="flex items-center justify-center gap-1.5 mb-2">
+                      <Scissors className="w-3.5 h-3.5 text-primary" />
+                      <span className="text-xs text-muted-foreground">{t('sales.services')}</span>
+                      <MetricInfoTooltip description="Revenue from booked services. Tips are tracked separately." />
+                    </div>
+                    <AnimatedBlurredAmount 
+                      value={svcRevenue}
+                      currency={currency}
+                      className="text-xl sm:text-2xl font-display tabular-nums"
+                    />
+                    <p className="text-xs text-muted-foreground/70 mt-1">{svcPct}%</p>
+                  </div>
+                  
+                  {/* Products */}
+                  <div 
+                    className="text-center p-3 sm:p-4 bg-background/50 dark:bg-muted/20 rounded-lg border border-border/60 dark:border-border/30 cursor-pointer transition-all hover:-translate-y-0.5 hover:border-border/80 dark:hover:border-border/60"
+                    onClick={() => setDrilldownMode('products')}
+                  >
+                    <div className="flex items-center justify-center gap-1.5 mb-2">
+                      <ShoppingBag className="w-3.5 h-3.5 text-primary" />
+                       <span className="text-xs text-muted-foreground">{t('sales.products')}</span>
+                      <MetricInfoTooltip description="Net revenue from retail product sales (e.g. shampoo, styling products). Excludes services, tips, and discounted amounts. Sourced from Phorest transaction items where item type is Product or Retail." />
+                    </div>
+                    <AnimatedBlurredAmount 
+                      value={prodRevenue}
+                      currency={currency}
+                      className="text-xl sm:text-2xl font-display tabular-nums"
+                    />
+                    <p className="text-xs text-muted-foreground/70 mt-1">{prodPct}%</p>
+                  </div>
                 </div>
-                <AnimatedBlurredAmount 
-                  value={displayMetrics.serviceRevenue}
-                  currency={currency}
-                  className="text-xl sm:text-2xl font-display tabular-nums"
-                />
-                <p className="text-xs text-muted-foreground/70 mt-1">{servicePercent}%</p>
-              </div>
-              
-              {/* Products */}
-              <div 
-                className="text-center p-3 sm:p-4 bg-background/50 dark:bg-muted/20 rounded-lg border border-border/60 dark:border-border/30 cursor-pointer transition-all hover:-translate-y-0.5 hover:border-border/80 dark:hover:border-border/60"
-                onClick={() => setDrilldownMode('products')}
-              >
-                <div className="flex items-center justify-center gap-1.5 mb-2">
-                  <ShoppingBag className="w-3.5 h-3.5 text-primary" />
-                   <span className="text-xs text-muted-foreground">{t('sales.products')}</span>
-                  <MetricInfoTooltip description="Net revenue from retail product sales (e.g. shampoo, styling products). Excludes services, tips, and discounted amounts. Sourced from Phorest transaction items where item type is Product or Retail." />
-                </div>
-                <AnimatedBlurredAmount 
-                  value={displayMetrics.productRevenue}
-                  currency={currency}
-                  className="text-xl sm:text-2xl font-display tabular-nums"
-                />
-                <p className="text-xs text-muted-foreground/70 mt-1">{productPercent}%</p>
-              </div>
-            </div>
+              );
+            })()}
 
             {/* Revenue by Category Drill-Down */}
             <RevenueByCategoryPanel
