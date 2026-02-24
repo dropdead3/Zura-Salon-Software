@@ -1140,7 +1140,7 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
           hideFooter && headerHovered && "translate-y-0",
           hideFooter && "shrink-0"
         )}
-        style={hideFooter ? { left: sidebarCollapsed ? '88px' : '312px' } : undefined}
+        style={hideFooter ? { left: sidebarCollapsed ? '88px' : '344px' } : undefined}
         onMouseLeave={() => hideFooter && setHeaderHovered(false)}
       >
         {/* Extended blur zone -- blurs content around/below the bar */}
