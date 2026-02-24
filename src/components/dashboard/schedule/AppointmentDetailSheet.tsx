@@ -51,7 +51,7 @@ import {
   ChevronDown, Copy, Check, CheckCircle, UserCheck, XCircle, AlertTriangle,
   MessageSquare, Lock, Trash2, Loader2, UserPlus, X, Repeat, RotateCcw,
   CreditCard, CalendarClock, RefreshCw, Star, TrendingUp, ExternalLink,
-  UserX, ArrowRightLeft, Receipt,
+  UserX, ArrowRightLeft, Receipt, MoreHorizontal,
 } from 'lucide-react';
 import { cn, formatPhoneDisplay } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -279,12 +279,15 @@ export function AppointmentDetailSheet({
   const [cancellingFuture, setCancellingFuture] = useState(false);
   const [cancelFutureReason, setCancelFutureReason] = useState('');
   const [showCancelFutureConfirm, setShowCancelFutureConfirm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [newClientNote, setNewClientNote] = useState('');
   const [isPrivateClientNote, setIsPrivateClientNote] = useState(false);
   // Tab state -- resets to "details" when appointment changes (#10)
   const [activeTab, setActiveTab] = useState('details');
 
   const isManagerOrAdmin = roles.some(r => ['admin', 'super_admin', 'manager'].includes(r));
+  const isStylistOnly = roles.includes('stylist') && !isManagerOrAdmin;
   const canAddNotes = hasPermission('add_appointment_notes');
   const canManageAssistants = hasPermission('create_appointments') || hasPermission('view_team_appointments');
 
@@ -639,6 +642,68 @@ export function AppointmentDetailSheet({
     }
   };
 
+  // ─── Cancel & Delete Access Control ─────────────────────────
+  const isOwnAppointment = appointment ? appointment.stylist_user_id === user?.id : false;
+  const canCancel = isManagerOrAdmin || isOwnAppointment;
+
+  // Delete: admins can delete booked/pending anytime; stylists can delete own creations within 10 min
+  const canDelete = useMemo(() => {
+    if (!appointment || ['completed', 'checked_in'].includes(appointment.status)) return false;
+    if (!['booked', 'pending'].includes(appointment.status)) return false;
+    if (isManagerOrAdmin) return true;
+    if (isStylistOnly && appointment.created_by === user?.id) {
+      const createdAt = new Date(appointment.created_at);
+      const minutesSinceCreation = (Date.now() - createdAt.getTime()) / 60000;
+      return minutesSinceCreation <= 10;
+    }
+    return false;
+  }, [appointment, isManagerOrAdmin, isStylistOnly, user?.id]);
+
+  // Soft-delete handler
+  const handleDeleteAppointment = async () => {
+    if (!appointment || !user?.id) return;
+
+    // Stylist time-window toast warnings
+    if (isStylistOnly && appointment.created_by === user.id) {
+      const createdAt = new Date(appointment.created_at);
+      const minutesSinceCreation = (Date.now() - createdAt.getTime()) / 60000;
+      if (minutesSinceCreation > 10) {
+        toast.error('The 10-minute deletion window has expired. Contact a manager to remove this appointment.');
+        setShowDeleteConfirm(false);
+        return;
+      }
+      if (minutesSinceCreation >= 7) {
+        toast.warning('You have less than 3 minutes remaining to delete this appointment');
+      }
+    }
+
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!appointment || !user?.id) return;
+    setIsDeleting(true);
+    try {
+      const table = appointment._source === 'local' ? 'appointments' : 'phorest_appointments';
+      const { error } = await supabase
+        .from(table)
+        .update({ deleted_at: new Date().toISOString(), deleted_by: user.id } as any)
+        .eq('id', appointment.id);
+      if (error) throw error;
+
+      fireAuditLog('deleted', { status: appointment.status }, null, { deleted_by: user.id });
+      queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] });
+      queryClient.invalidateQueries({ queryKey: ['appointments-hub'] });
+      toast.success('Appointment deleted. This was removed as a data entry correction.');
+      setShowDeleteConfirm(false);
+      handleClose();
+    } catch (err: any) {
+      toast.error('Failed to delete appointment', { description: err.message });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   // ─── Lifecycle Step Indicator ────────────────────────────────
   const currentStepIndex = LIFECYCLE_STEPS.indexOf(appointment.status);
   const isTerminal = ['cancelled', 'no_show'].includes(appointment.status);
@@ -656,6 +721,27 @@ export function AppointmentDetailSheet({
                     {initials}
                   </div>
                   <div className="flex-1 min-w-0 pr-8">
+                  {/* Overflow menu (Delete) */}
+                  {canDelete && (
+                    <div className="absolute top-4 right-4 z-10">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onClick={handleDeleteAppointment}
+                          >
+                            <Trash2 className="h-3.5 w-3.5 mr-2" />
+                            Delete Appointment
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  )}
                     <div className="flex items-center gap-2">
                       <h2 className="font-display text-lg font-medium tracking-wide truncate">{appointment.client_name}</h2>
                       {/* Walk-in badge (#7) */}
@@ -1315,8 +1401,8 @@ export function AppointmentDetailSheet({
                       <AlertTriangle className="h-3.5 w-3.5 mr-1" /> No Show
                     </Button>
                   )}
-                  {/* Cancel */}
-                  {availableTransitions.includes('cancelled') && (
+                  {/* Cancel (ownership-gated for stylists) */}
+                  {availableTransitions.includes('cancelled') && canCancel && (
                     <Button variant="outline" size={tokens.button.card} className="text-destructive hover:text-destructive" onClick={() => handleStatusChange('cancelled')} disabled={isUpdating}>
                       <XCircle className="h-3.5 w-3.5 mr-1" /> Cancel
                     </Button>
@@ -1385,6 +1471,33 @@ export function AppointmentDetailSheet({
             <AlertDialogAction onClick={confirmCancelAllFuture} disabled={cancellingFuture}>
               {cancellingFuture && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
               Cancel All Future
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      </div>
+
+      {/* Delete Confirmation Dialog */}
+      <div>
+      <AlertDialog open={showDeleteConfirm} onOpenChange={(open) => { if (!open) setShowDeleteConfirm(false); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Appointment?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {isManagerOrAdmin
+                ? 'This will permanently remove this appointment from all records. This is not a cancellation — no fee or notification will be applied.'
+                : 'This will remove this appointment as a data entry correction. This action cannot be undone.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Go Back</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
+              Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -38,6 +38,12 @@ export interface PhorestAppointment {
   redo_pricing_override: number | null;
   redo_approved_by: string | null;
   original_price: number | null;
+  // Creator + soft-delete fields
+  created_by?: string | null;
+  deleted_at?: string | null;
+  deleted_by?: string | null;
+  // Source tag (set client-side when merging tables)
+  _source?: 'phorest' | 'local';
   // Joined data
   stylist_profile?: {
     display_name: string | null;
@@ -132,6 +138,7 @@ export function usePhorestCalendar() {
             photo_url
           )
         `)
+        .is('deleted_at', null)
         .gte('appointment_date', dateRange.start)
         .lte('appointment_date', dateRange.end)
         .order('appointment_date')
