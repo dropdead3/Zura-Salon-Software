@@ -291,12 +291,13 @@ export function CollapsibleNavGroup({
                               className={cn(
                                 "flex items-center gap-2 text-xs font-sans cursor-pointer group/sublink",
                                 "transition-all duration-200 ease-out rounded-lg",
-                                "px-3 py-1.5 mx-3 pl-12",
+                                "px-3 py-1.5 mx-3 pl-14",
                                 isSubActive
                                   ? "bg-foreground text-background shadow-sm dark:bg-muted dark:text-foreground dark:shadow-none"
                                   : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
                               )}
                             >
+                              <ChevronRight className={cn("w-3 h-3 flex-shrink-0", isSubActive ? "" : "text-muted-foreground/50")} />
                               <span className="flex-1">{subLink.label}</span>
                               {onRemoveSubLink && (
                                 <button
