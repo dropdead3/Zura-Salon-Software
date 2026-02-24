@@ -422,6 +422,8 @@ export function DayView({
     const previousTime = appointment.start_time;
     const previousStaff = appointment.stylist_user_id;
 
+    toast.info('Moving appointment...');
+
     reschedule.mutate(
       {
         appointmentId: appointment.id,
@@ -431,6 +433,7 @@ export function DayView({
       },
       {
         onSuccess: () => {
+          toast.dismiss();
           toast.success(`Moved to ${formatTime12h(time)}`, {
             action: {
               label: 'Undo',

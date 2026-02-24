@@ -28,17 +28,43 @@ export function useRescheduleAppointment() {
       
       return data;
     },
-    onSuccess: (data) => {
-      // Invalidate calendar queries to refresh the data
-      queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] });
-      
-      if (data.phorest_updated) {
-        toast.success('Appointment rescheduled and synced to Phorest');
-      } else {
-        toast.success('Appointment rescheduled locally');
-      }
+    onMutate: async ({ appointmentId, newTime, newStaffId }) => {
+      // Cancel in-flight fetches to prevent race conditions
+      await queryClient.cancelQueries({ queryKey: ['phorest-appointments'] });
+
+      // Snapshot all matching caches for rollback
+      const previousCaches: [readonly unknown[], unknown][] = [];
+      queryClient.getQueriesData({ queryKey: ['phorest-appointments'] }).forEach(([key, data]) => {
+        previousCaches.push([key, data]);
+      });
+
+      // Optimistically update the appointment in all matching caches
+      queryClient.setQueriesData({ queryKey: ['phorest-appointments'] }, (old: any) => {
+        if (!Array.isArray(old)) return old;
+        return old.map((appt: any) => {
+          if (appt.id !== appointmentId) return appt;
+          return {
+            ...appt,
+            start_time: newTime,
+            ...(newStaffId ? { stylist_user_id: newStaffId } : {}),
+          };
+        });
+      });
+
+      return { previousCaches };
     },
-    onError: (error: any) => {
+    onSuccess: () => {
+      // Refetch to confirm server state
+      queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] });
+      // Toast is handled by the caller (DayView) for better UX with Undo
+    },
+    onError: (error: any, _variables, context) => {
+      // Rollback all caches
+      if (context?.previousCaches) {
+        context.previousCaches.forEach(([key, data]) => {
+          queryClient.setQueryData(key, data);
+        });
+      }
       toast.error('Failed to reschedule: ' + error.message);
     },
   });
