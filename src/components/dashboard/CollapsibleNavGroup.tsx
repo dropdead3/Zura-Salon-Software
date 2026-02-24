@@ -293,7 +293,6 @@ export function CollapsibleNavGroup({
                                 )}
                               >
                                 <span className="flex-1">{group.tabLabel}</span>
-                                <Star className="w-3 h-3 fill-current opacity-40" />
                               </div>
 
                               {/* Auto-generated Overview link when main tab is favorited */}
