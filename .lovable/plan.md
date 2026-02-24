@@ -1,67 +1,71 @@
 
 
-## Tips Data Integrity: Findings and Fixes
+## Today's Revenue: Real-Time First
 
-### Investigation Results
+The current "today" view shows **expected revenue** (from scheduled appointments) as the hero number, with actual revenue as a small progress bar beneath it. This is backwards -- operators care most about what has actually come in. The screenshot reference confirms the desired hierarchy.
 
-**Tip Duplication: No Issue Found**
-Confirmed via database query -- there are zero transactions where tips are spread across multiple line items within the same transaction. The `useTipsDrilldown` hook correctly sources from `phorest_appointments.tip_amount` (one row per appointment), so tips are not double-counted anywhere.
+### What Changes
 
-**Payment Method: Missing from Both Sync Paths**
-The `payment_method` column exists on both `phorest_appointments` and `phorest_transaction_items`, but is NULL across all records:
-- **CSV path**: The parser extracts `stafftips` but does not look for `paymenttype` or `paymenttypenames` columns
-- **API path**: The code maps `purchase.paymentMethod`, but the Phorest API does not appear to return this field in the current data
+**File: `src/components/dashboard/AggregateSalesCard.tsx`**
 
-### Proposed Changes
+When `dateRange === 'today'`, restructure the hero section:
 
-#### 1. Extract Payment Type from CSV (Sync Engine)
+1. **Hero number becomes actual revenue** -- The large `text-5xl` number shows `todayActual.actualRevenue` (revenue from completed transactions / checked-out appointments via `phorest_daily_sales_summary`).
 
-**File: `supabase/functions/sync-phorest-data/index.ts`**
+2. **Expected revenue becomes secondary** -- Below the hero, show the "Expected Revenue" badge with the expected total from scheduled appointments (`displayMetrics.totalRevenue`) in a smaller format, similar to the screenshot reference.
 
-Add `paymenttype` / `paymenttypenames` column detection in the CSV parser (around line 1393):
-- Add a new `idxPaymentType` index lookup for columns: `paymenttype`, `paymenttypenames`, `paymentmethod`
-- Include the extracted value in the transaction object as `paymentMethod`
-- This flows through to `payment_method` on `phorest_transaction_items` during upsert
+3. **Progress bar stays** -- Shows actual as a percentage of expected, keeping the visual context.
 
-#### 2. Propagate Payment Method to Appointments
+4. **Before any actual data exists** (early morning, before first checkout), show `$0` as the hero with the expected revenue clearly labeled below, and the existing "Actual revenue not available until appointments check out" message.
 
-**File: `supabase/functions/sync-phorest-data/index.ts`**
+5. **Services and Products sub-cards** -- When on "today" and actual data exists, these should reflect actual service/product revenue (`todayActual.actualServiceRevenue`, `todayActual.actualProductRevenue`) instead of expected. The expected breakdown remains visible via the "Expected Revenue" secondary display.
 
-After transaction items are synced, update `phorest_appointments.payment_method` by joining on `phorest_staff_id + transaction_date + phorest_client_id` where the appointment currently has no payment method. This ensures the tips drilldown can show card vs cash breakdown.
+6. **Auto-refresh** -- `useTodayActualRevenue` already has a 5-minute refetch interval, which provides near real-time updates. No change needed.
 
-Alternatively: query `phorest_transaction_items` in the drilldown hook to get payment method alongside the tip.
+### Layout (Today View)
 
-#### 3. Add Payment Method Breakdown to Tips Drilldown
+```text
++------------------------------------------+
+| All locations combined                   |
+|                                          |
+|              $2,450                      |  <-- Actual revenue (hero, font-display)
+|         Revenue So Far Today             |
+|           Excludes Tips                  |
+|                                          |
+|     [clock] $4,200 Expected  (i)         |  <-- Secondary badge + amount
+|                                          |
+|   [$2,450 of $4,200 expected] ========   |  <-- Progress bar
+|                                          |
+|   Est. final transaction at 8:00 PM      |
+|                                          |
+| +------------------+------------------+  |
+| |  Services $1,890 |  Retail   $560   |  |  <-- Actual breakdown
+| |       77%        |       23%        |  |
+| +------------------+------------------+  |
++------------------------------------------+
+```
 
-**File: `src/hooks/useTipsDrilldown.ts`**
+### Technical Details
 
-- Add a secondary query against `phorest_transaction_items` to fetch `payment_method` and `tip_amount` for the same date range
-- Aggregate tips by payment method (Card, Cash, Other/Unknown)
-- Export a new `byPaymentMethod` field: `Record<string, { totalTips: number; count: number }>`
+**Conditional rendering in AggregateSalesCard.tsx (lines ~594-724):**
 
-**New UI Component: `TipPaymentMethodBreakdown.tsx`**
+- When `dateRange === 'today'`:
+  - Hero `AnimatedBlurredAmount` value changes from `displayMetrics.totalRevenue` to `todayActual.actualRevenue`
+  - Label changes from "Total Revenue" to "Revenue So Far Today"
+  - Below the label, add the expected revenue in a compact secondary layout: badge with clock icon + formatted expected amount + info tooltip
+  - Services sub-card value: `todayActual.actualServiceRevenue` instead of `displayMetrics.serviceRevenue`
+  - Products sub-card value: `todayActual.actualProductRevenue` instead of `displayMetrics.productRevenue`
+  - Percentages recalculated from actual totals
 
-- Small donut or horizontal bar showing Card vs Cash vs Unknown tip distribution
-- Rendered inside the existing Tips drilldown card
-- Follows the donut chart standard (paddingAngle=0, stroke with border color, strokeWidth=1)
-- Uses design tokens for typography and layout
+- When `dateRange !== 'today'`: No change -- existing behavior preserved.
 
-### What Does NOT Need Fixing
+- The existing "Actual vs Expected" block (lines 632-668) is replaced by the new integrated layout described above, eliminating the redundant section.
 
-- **Tip duplication** -- not occurring, verified in database
-- **`useTipsDrilldown` data source** -- correctly uses `phorest_appointments`, no change needed for core tip calculation
-- **`PayrollKPICards` tips** -- uses payroll analytics hook, separate data path, not affected
+- `useTodayActualRevenue` is already called with `enabled: dateRange === 'today'` -- no hook changes needed.
 
-### Important Caveat
+### What Does NOT Change
 
-The payment method extraction depends on whether the Phorest CSV export actually includes `paymenttype` columns. If it does not, the column will remain NULL and the breakdown will show "Unknown" for all tips. A next sync after this change will confirm whether the data populates. The UI will gracefully handle this by showing "Payment method data not yet available" if all values are NULL.
-
-### Technical Sequence
-
-1. Update CSV parser to extract payment type
-2. Update transaction-to-appointment payment method propagation
-3. Deploy edge function
-4. Add `byPaymentMethod` aggregation to `useTipsDrilldown`
-5. Create `TipPaymentMethodBreakdown` UI component
-6. Trigger a re-sync to populate the data
-
+- `useTodayActualRevenue` hook -- already provides all needed data (actualRevenue, actualServiceRevenue, actualProductRevenue, lastAppointmentEndTime)
+- Other date ranges (yesterday, 7d, 30d, etc.) -- completely unaffected
+- Location-level drilldowns -- `locationActuals` data is already available
+- Trend indicators -- continue using comparison data as-is
