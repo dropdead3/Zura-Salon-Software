@@ -408,8 +408,8 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
       {/* Phorest Sync Status Widget moved to header popout */}
 
       {/* Navigation */}
-      <ScrollArea className="flex-1 mb-3 min-h-0">
-        <nav ref={internalRef} className="sidebar-nav py-4 overscroll-none">
+      <ScrollArea className="flex-1 min-h-0">
+        <nav ref={internalRef} className="sidebar-nav pt-4 pb-2 overscroll-none">
         {/* START HERE Priority Section - Only shows when onboarding incomplete (not for super_admin/owners) */}
         {!isOnboardingComplete && !roles.includes('super_admin') && (
           <div className="mb-4">
@@ -728,7 +728,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
       </nav>
       </ScrollArea>
       {/* Separator */}
-      <div className="mx-3 border-t border-border/40 mt-0" />
+      <div className="mx-3 border-t border-border/40" />
 
       {/* Fixed Footer Navigation - always at bottom */}
       <div className="mt-auto shrink-0 flex flex-col gap-2 pt-2">
