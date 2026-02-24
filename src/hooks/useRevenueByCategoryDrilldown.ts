@@ -43,7 +43,8 @@ export function useRevenueByCategoryDrilldown({
         .select('service_name, total_price, phorest_staff_id, is_new_client, client_name')
         .gte('appointment_date', dateFrom)
         .lte('appointment_date', dateTo)
-        .not('status', 'in', '("cancelled","no_show")');
+        .not('status', 'in', '("cancelled","no_show")')
+        .not('total_price', 'is', null);
 
       if (locationId && locationId !== 'all') {
         query = query.eq('location_id', locationId);

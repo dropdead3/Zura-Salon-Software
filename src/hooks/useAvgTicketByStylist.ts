@@ -34,7 +34,8 @@ export function useAvgTicketByStylist({ dateFrom, dateTo, locationId, enabled = 
         .select('phorest_staff_id, total_price, service_name')
         .gte('appointment_date', dateFrom)
         .lte('appointment_date', dateTo)
-        .not('status', 'in', '("cancelled","no_show")');
+        .not('status', 'in', '("cancelled","no_show")')
+        .not('total_price', 'is', null);
 
       if (locationId && locationId !== 'all') {
         query = query.eq('location_id', locationId);

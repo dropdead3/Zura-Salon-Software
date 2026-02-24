@@ -29,7 +29,8 @@ export function useServiceProductDrilldown({ dateFrom, dateTo, locationId }: Use
         .select('phorest_staff_id, total_price, tip_amount, service_name')
         .gte('appointment_date', dateFrom)
         .lte('appointment_date', dateTo)
-        .not('status', 'in', '("cancelled","no_show","Cancelled","No Show")');
+        .not('status', 'in', '("cancelled","no_show","Cancelled","No Show")')
+        .not('total_price', 'is', null);
 
       if (locationId && locationId !== 'all') {
         query = query.eq('location_id', locationId);
