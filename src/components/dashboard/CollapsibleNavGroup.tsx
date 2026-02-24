@@ -293,6 +293,7 @@ export function CollapsibleNavGroup({
                                 )}
                               >
                                 <span className="flex-1">{group.tabLabel}</span>
+                                <Star className="w-3 h-3 fill-amber-500 text-amber-500 opacity-50" />
                               </div>
 
                               {/* Auto-generated Overview link when main tab is favorited */}
@@ -315,6 +316,7 @@ export function CollapsibleNavGroup({
                                 >
                                   <ChevronRight className={cn("w-3 h-3 flex-shrink-0", isCategoryActive ? "" : "text-muted-foreground/50")} />
                                   <span className="flex-1">Overview</span>
+                                  <Star className="w-3 h-3 fill-amber-500 text-amber-500 opacity-50" />
                                 </a>
                               )}
 
@@ -345,6 +347,7 @@ export function CollapsibleNavGroup({
                                   >
                                     <ChevronRight className={cn("w-3 h-3 flex-shrink-0", isSubActive ? "" : "text-muted-foreground/50")} />
                                     <span className="flex-1">{sub.label}</span>
+                                    <Star className="w-3 h-3 fill-amber-500 text-amber-500 opacity-50" />
                                   </a>
                                 );
                               })}
