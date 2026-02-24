@@ -891,6 +891,54 @@ export type Database = {
           },
         ]
       }
+      appointment_service_assignments: {
+        Row: {
+          appointment_id: string
+          assigned_staff_name: string
+          assigned_user_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          organization_id: string
+          service_name: string
+        }
+        Insert: {
+          appointment_id: string
+          assigned_staff_name: string
+          assigned_user_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          organization_id: string
+          service_name: string
+        }
+        Update: {
+          appointment_id?: string
+          assigned_staff_name?: string
+          assigned_user_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          organization_id?: string
+          service_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_service_assignments_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "phorest_appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_service_assignments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appointments: {
         Row: {
           appointment_date: string

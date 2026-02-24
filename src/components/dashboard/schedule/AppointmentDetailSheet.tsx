@@ -20,6 +20,8 @@ import { useAssistantConflictCheck } from '@/hooks/useAssistantConflictCheck';
 import { usePreferredStylist, getStylistDisplayName } from '@/hooks/usePreferredStylist';
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import { useServiceLookup } from '@/hooks/useServiceLookup';
+import { useServiceAssignments } from '@/hooks/useServiceAssignments';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useIsPrimaryOwner } from '@/hooks/useIsPrimaryOwner';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -299,6 +301,8 @@ export function AppointmentDetailSheet({
   const [isPrivateClientNote, setIsPrivateClientNote] = useState(false);
   const [showReassignDialog, setShowReassignDialog] = useState(false);
   const [selectedNewStylist, setSelectedNewStylist] = useState<string | null>(null);
+  const [reassignMode, setReassignMode] = useState<'entire' | 'individual'>('entire');
+  const [perServiceSelections, setPerServiceSelections] = useState<Record<string, string>>({});
   // Confirmation gate state
   const [showConfirmGate, setShowConfirmGate] = useState(false);
   const [confirmMethod, setConfirmMethod] = useState('');
@@ -325,6 +329,8 @@ export function AppointmentDetailSheet({
     setShowAssistantPicker(false);
     setShowReassignDialog(false);
     setSelectedNewStylist(null);
+    setReassignMode('entire');
+    setPerServiceSelections({});
     setClientNotesExpanded(false);
     setShowConfirmGate(false);
     setConfirmMethod('');
@@ -357,6 +363,7 @@ export function AppointmentDetailSheet({
   const deleteClientNote = useDeleteClientNote();
   const { data: visitHistory = [], isLoading: historyLoading } = useClientVisitHistory(appointment?.phorest_client_id);
   const { data: serviceLookup } = useServiceLookup();
+  const { assignmentMap, upsertAssignments } = useServiceAssignments(appointment?.id || null);
 
   // Location name + org lookup
   const { data: locationData } = useQuery({
@@ -1071,24 +1078,37 @@ export function AppointmentDetailSheet({
                     <motion.div variants={staggerItem} className="space-y-2">
                       <h4 className={tokens.heading.subsection}>Services</h4>
                       <div className="space-y-1.5">
-                        {services.map((svc, i) => (
-                          <div key={i} className="flex items-center justify-between text-sm">
-                            <div className="flex items-center gap-2 min-w-0">
-                              <span className="truncate">{svc.name}</span>
-                              {svc.category && (
-                                <Badge variant="outline" className="text-[10px] shrink-0">{svc.category}</Badge>
-                              )}
+                        {services.map((svc, i) => {
+                          const override = assignmentMap.get(svc.name);
+                          return (
+                            <div key={i} className="flex items-center justify-between text-sm">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <span className="truncate">{svc.name}</span>
+                                {svc.category && (
+                                  <Badge variant="outline" className="text-[10px] shrink-0">{svc.category}</Badge>
+                                )}
+                                {override && (
+                                  <div className="flex items-center gap-1 shrink-0">
+                                    <Avatar className="h-4 w-4">
+                                      <AvatarFallback className="text-[7px]">
+                                        {override.assigned_staff_name.slice(0, 2).toUpperCase()}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                    <span className="text-[11px] text-muted-foreground">{override.assigned_staff_name}</span>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2 shrink-0 ml-2">
+                                {svc.duration && (
+                                  <span className="text-muted-foreground text-xs">{svc.duration}min</span>
+                                )}
+                                {svc.price != null && (
+                                  <span className="text-xs"><BlurredAmount>{formatCurrency(svc.price)}</BlurredAmount></span>
+                                )}
+                              </div>
                             </div>
-                            <div className="flex items-center gap-2 shrink-0 ml-2">
-                              {svc.duration && (
-                                <span className="text-muted-foreground text-xs">{svc.duration}min</span>
-                              )}
-                              {svc.price != null && (
-                                <span className="text-xs"><BlurredAmount>{formatCurrency(svc.price)}</BlurredAmount></span>
-                              )}
-                            </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                       {appointment.total_price != null && (
                         <div className="flex items-center justify-between pt-2 border-t border-dashed">
@@ -1825,64 +1845,193 @@ export function AppointmentDetailSheet({
       </Dialog>
 
       {/* Reassign Stylist Dialog */}
-      <Dialog open={showReassignDialog} onOpenChange={(open) => { if (!open) { setShowReassignDialog(false); setSelectedNewStylist(null); } }}>
+      <Dialog open={showReassignDialog} onOpenChange={(open) => { if (!open) { setShowReassignDialog(false); setSelectedNewStylist(null); setReassignMode('entire'); setPerServiceSelections({}); } }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="font-display text-base tracking-wide">Reassign Stylist</DialogTitle>
-            <DialogDescription>Select a new stylist for this appointment.</DialogDescription>
+            <DialogDescription>
+              {services.length > 1
+                ? 'Reassign the entire appointment or individual services.'
+                : 'Select a new stylist for this appointment.'}
+            </DialogDescription>
           </DialogHeader>
-          <ScrollArea className="max-h-[400px]">
-            <div className="space-y-1 p-1">
-              {teamMembers
-                .filter(m =>
-                  m.user_id !== appointment.stylist_user_id &&
-                  (m.roles?.includes('stylist') || m.roles?.includes('admin'))
-                )
-                .map(member => {
-                  const conflicts = conflictMap.get(member.user_id) || [];
-                  const isSelected = selectedNewStylist === member.user_id;
-                  return (
-                    <button
-                      key={member.user_id}
-                      className={cn(
-                        'flex flex-col w-full p-3 rounded-lg text-left text-sm transition-colors',
-                        isSelected ? 'bg-primary/10 ring-1 ring-primary' : 'hover:bg-muted',
-                      )}
-                      onClick={() => setSelectedNewStylist(member.user_id)}
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <Avatar className="h-7 w-7">
-                          <AvatarImage src={member.photo_url || undefined} />
-                          <AvatarFallback className="text-[9px]">{(member.display_name || member.full_name || '?').slice(0, 2).toUpperCase()}</AvatarFallback>
-                        </Avatar>
-                        <span className="font-medium">{member.display_name || member.full_name}</span>
-                        {conflicts.length > 0 && (
-                          <Badge variant="outline" className="text-[10px] text-amber-700 dark:text-amber-300 border-amber-300 ml-auto shrink-0">
-                            <AlertTriangle className="h-2.5 w-2.5 mr-0.5" /> {conflicts.length} conflict{conflicts.length > 1 ? 's' : ''}
-                          </Badge>
-                        )}
-                      </div>
-                      {conflicts.map((c, i) => (
-                        <span key={i} className="text-[11px] text-amber-600 dark:text-amber-400 pl-9 leading-tight mt-0.5">
-                          {c.role === 'assistant' ? 'Assisting' : 'Busy'} {formatTime12h(c.startTime)}–{formatTime12h(c.endTime)} ({c.serviceName})
-                        </span>
-                      ))}
-                    </button>
-                  );
-                })}
-            </div>
-          </ScrollArea>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setShowReassignDialog(false); setSelectedNewStylist(null); }}>Cancel</Button>
-            <Button
-              onClick={() => selectedNewStylist && reassignStylist.mutate({ newStylistUserId: selectedNewStylist })}
-              disabled={!selectedNewStylist || reassignStylist.isPending}
+
+          {/* Mode toggle -- only show for multi-service appointments */}
+          {services.length > 1 && (
+            <ToggleGroup
+              type="single"
+              value={reassignMode}
+              onValueChange={(v) => { if (v) setReassignMode(v as 'entire' | 'individual'); }}
+              className="w-full border rounded-lg p-1"
             >
-              {reassignStylist.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
-              <ArrowRightLeft className="h-3.5 w-3.5 mr-1" />
-              Reassign
-            </Button>
-          </DialogFooter>
+              <ToggleGroupItem value="entire" className="flex-1 text-xs data-[state=on]:bg-primary/10">
+                Entire Appointment
+              </ToggleGroupItem>
+              <ToggleGroupItem value="individual" className="flex-1 text-xs data-[state=on]:bg-primary/10">
+                Individual Services
+              </ToggleGroupItem>
+            </ToggleGroup>
+          )}
+
+          {reassignMode === 'entire' ? (
+            <>
+              <ScrollArea className="max-h-[400px]">
+                <div className="space-y-1 p-1">
+                  {teamMembers
+                    .filter(m =>
+                      m.user_id !== appointment.stylist_user_id &&
+                      (m.roles?.includes('stylist') || m.roles?.includes('admin'))
+                    )
+                    .map(member => {
+                      const conflicts = conflictMap.get(member.user_id) || [];
+                      const isSelected = selectedNewStylist === member.user_id;
+                      return (
+                        <button
+                          key={member.user_id}
+                          className={cn(
+                            'flex flex-col w-full p-3 rounded-lg text-left text-sm transition-colors',
+                            isSelected ? 'bg-primary/10 ring-1 ring-primary' : 'hover:bg-muted',
+                          )}
+                          onClick={() => setSelectedNewStylist(member.user_id)}
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <Avatar className="h-7 w-7">
+                              <AvatarImage src={member.photo_url || undefined} />
+                              <AvatarFallback className="text-[9px]">{(member.display_name || member.full_name || '?').slice(0, 2).toUpperCase()}</AvatarFallback>
+                            </Avatar>
+                            <span className="font-medium">{member.display_name || member.full_name}</span>
+                            {conflicts.length > 0 && (
+                              <Badge variant="outline" className="text-[10px] text-amber-700 dark:text-amber-300 border-amber-300 ml-auto shrink-0">
+                                <AlertTriangle className="h-2.5 w-2.5 mr-0.5" /> {conflicts.length} conflict{conflicts.length > 1 ? 's' : ''}
+                              </Badge>
+                            )}
+                          </div>
+                          {conflicts.map((c, ci) => (
+                            <span key={ci} className="text-[11px] text-amber-600 dark:text-amber-400 pl-9 leading-tight mt-0.5">
+                              {c.role === 'assistant' ? 'Assisting' : 'Busy'} {formatTime12h(c.startTime)}–{formatTime12h(c.endTime)} ({c.serviceName})
+                            </span>
+                          ))}
+                        </button>
+                      );
+                    })}
+                </div>
+              </ScrollArea>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => { setShowReassignDialog(false); setSelectedNewStylist(null); }}>Cancel</Button>
+                <Button
+                  onClick={() => selectedNewStylist && reassignStylist.mutate({ newStylistUserId: selectedNewStylist })}
+                  disabled={!selectedNewStylist || reassignStylist.isPending}
+                >
+                  {reassignStylist.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
+                  <ArrowRightLeft className="h-3.5 w-3.5 mr-1" />
+                  Reassign
+                </Button>
+              </DialogFooter>
+            </>
+          ) : (
+            <>
+              {/* Individual Services mode */}
+              <ScrollArea className="max-h-[400px]">
+                <div className="space-y-3 p-1">
+                  {services.map((svc, si) => {
+                    const currentOverride = assignmentMap.get(svc.name);
+                    const selectedId = perServiceSelections[svc.name] || currentOverride?.assigned_user_id || appointment.stylist_user_id;
+                    const isDefault = selectedId === appointment.stylist_user_id && !perServiceSelections[svc.name] && !currentOverride;
+
+                    return (
+                      <div key={si} className="border rounded-lg p-3 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium">{svc.name}</span>
+                            {svc.category && <Badge variant="outline" className="text-[10px]">{svc.category}</Badge>}
+                            {svc.duration && <span className="text-xs text-muted-foreground">{svc.duration}min</span>}
+                          </div>
+                          {isDefault && <Badge variant="secondary" className="text-[10px]">Default</Badge>}
+                        </div>
+                        <div className="space-y-0.5">
+                          {teamMembers
+                            .filter(m => m.roles?.includes('stylist') || m.roles?.includes('admin'))
+                            .slice(0, 8)
+                            .map(member => {
+                              const conflicts = conflictMap.get(member.user_id) || [];
+                              const isActive = selectedId === member.user_id;
+                              return (
+                                <button
+                                  key={member.user_id}
+                                  className={cn(
+                                    'flex items-center gap-2 w-full p-2 rounded-md text-left text-sm transition-colors',
+                                    isActive ? 'bg-primary/10 ring-1 ring-primary' : 'hover:bg-muted',
+                                  )}
+                                  onClick={() => setPerServiceSelections(prev => ({ ...prev, [svc.name]: member.user_id }))}
+                                >
+                                  <Avatar className="h-6 w-6">
+                                    <AvatarImage src={member.photo_url || undefined} />
+                                    <AvatarFallback className="text-[8px]">{(member.display_name || member.full_name || '?').slice(0, 2).toUpperCase()}</AvatarFallback>
+                                  </Avatar>
+                                  <span className="text-sm">{member.display_name || member.full_name}</span>
+                                  {member.user_id === appointment.stylist_user_id && (
+                                    <Badge variant="outline" className="text-[9px] ml-auto">Lead</Badge>
+                                  )}
+                                  {conflicts.length > 0 && (
+                                    <Badge variant="outline" className="text-[9px] text-amber-700 dark:text-amber-300 border-amber-300 ml-auto shrink-0">
+                                      <AlertTriangle className="h-2 w-2 mr-0.5" />{conflicts.length}
+                                    </Badge>
+                                  )}
+                                </button>
+                              );
+                            })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </ScrollArea>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => { setShowReassignDialog(false); setPerServiceSelections({}); }}>Cancel</Button>
+                <Button
+                  onClick={async () => {
+                    if (!resolvedOrgId || !appointment.id) return;
+                    const assignments = Object.entries(perServiceSelections)
+                      .filter(([, userId]) => userId !== appointment.stylist_user_id)
+                      .map(([serviceName, userId]) => {
+                        const member = teamMembers.find(m => m.user_id === userId);
+                        return {
+                          serviceName,
+                          userId,
+                          staffName: member?.display_name || member?.full_name || 'Unknown',
+                        };
+                      });
+                    if (assignments.length === 0) {
+                      toast.info('No changes to save');
+                      return;
+                    }
+                    try {
+                      await upsertAssignments.mutateAsync({
+                        appointmentId: appointment.id,
+                        organizationId: resolvedOrgId,
+                        assignments,
+                      });
+                      for (const a of assignments) {
+                        const oldAssignment = assignmentMap.get(a.serviceName);
+                        const oldName = oldAssignment?.assigned_staff_name || appointment.stylist_profile?.display_name || 'Default';
+                        fireAuditLog('service_reassigned', { service: a.serviceName, stylist: oldName }, { service: a.serviceName, stylist: a.staffName });
+                      }
+                      toast.success(`${assignments.length} service${assignments.length > 1 ? 's' : ''} reassigned`);
+                      setShowReassignDialog(false);
+                      setPerServiceSelections({});
+                    } catch (err: any) {
+                      toast.error('Failed to save service assignments', { description: err.message });
+                    }
+                  }}
+                  disabled={Object.keys(perServiceSelections).length === 0 || upsertAssignments.isPending}
+                >
+                  {upsertAssignments.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
+                  <ArrowRightLeft className="h-3.5 w-3.5 mr-1" />
+                  Save Assignments
+                </Button>
+              </DialogFooter>
+            </>
+          )}
         </DialogContent>
       </Dialog>
     </>
