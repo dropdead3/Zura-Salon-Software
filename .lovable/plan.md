@@ -1,48 +1,73 @@
 
 
-## Fix: Tips Calculation Bug -- Switch to Appointments Source
+## Move Tips to a Standalone Card in the Right Sidebar
 
-### Problem
+### What Changes
 
-The Tips metric in the Aggregate Sales Card shows $25,335 -- nearly 50% of total revenue ($54,541). This is clearly wrong.
+Remove the "Tips" sub-card from the secondary KPIs row (where it sits alongside Transactions, Avg Ticket, etc.) and create a new standalone Tips card in the right sidebar column -- below the Revenue Donut Chart. This separates tips from revenue visually, reinforcing that tips are not part of total revenue.
 
-**Root cause**: Tips are being summed from `phorest_transaction_items`, where Phorest's CSV export duplicates the same tip amount across every line item within a single checkout. A single $88 tip appears on 3 separate rows (service item, sale fee, add-on service), inflating the total by 3-4x.
+The new Tips card will display:
+- **Total Tips** (hero number)
+- **Average Tip Rate** (tips as % of revenue)
+- Clickable to expand the existing Tips drilldown panel
 
-**Evidence from database investigation**:
-- `phorest_transaction_items` with `Math.abs()` on all rows: $25,335 (the incorrect number shown)
-- `phorest_appointments.tip_amount` (already fetched but unused): $6,572 (~12% of revenue -- realistic for a salon)
+### Layout Change
 
-### Fix
+Current right sidebar (lines 1024-1041):
+1. Top Performers Card
+2. Revenue Donut Chart
 
-**File: `src/hooks/useSalesData.ts` (~lines 263-325)**
+Updated right sidebar:
+1. Top Performers Card
+2. Revenue Donut Chart
+3. **Tips Summary Card** (new)
 
-Change the `totalTips` calculation in `useSalesMetrics` to use `phorest_appointments.tip_amount` instead of `phorest_transaction_items.tip_amount`:
+### Implementation Details
 
-1. **Remove** the tip accumulation from the transaction items loop (lines 275-279) -- stop summing `tip_amount` from `phorest_transaction_items`
-2. **Add** tip summation from the already-fetched appointment data: `data.reduce((sum, apt) => sum + (Number(apt.tip_amount) || 0), 0)`
-3. **Return** this appointment-based tip total as `totalTips`
+**File: `src/components/dashboard/AggregateSalesCard.tsx`**
 
-### Technical Detail
+**1. Remove Tips sub-card from the 4-card KPI grid (lines 803-821)**
 
-The appointment query (line 217) already selects `tip_amount`:
+The 4-card grid (`grid-cols-2 sm:grid-cols-4`) currently has: Transactions, Avg Ticket, Rev/Hour, Tips. Remove the Tips card, making it a 3-card grid (`grid-cols-3 sm:grid-cols-3`).
+
+**2. Remove Tips sub-card from the 5-card KPI grid (lines 899-917)**
+
+The 5-card layout (when Daily Avg is shown) has a second row with Daily Avg and Tips in a `grid-cols-2`. Remove the Tips card from this row, leaving only Daily Avg as a single full-width card.
+
+**3. Move the TipsDrilldownPanel render (lines 923-927)**
+
+Move it from the main content column to inside the new Tips card in the sidebar, so the drilldown expands below the Tips card.
+
+**4. Add new Tips Summary Card in the right sidebar (after line 1040)**
+
+```text
++-------------------------------------+
+|  TIPS                          (i)  |
+|                                     |
+|        $6,572                       |
+|      Total Tips                     |
+|                                     |
+|   Avg Tip Rate: 12.1%              |
+|                                     |
+|     [Click for breakdown v]         |
++-------------------------------------+
+|  (TipsDrilldownPanel expands here)  |
++-------------------------------------+
 ```
-.select('id, total_price, tip_amount, service_name, ...')
-```
 
-So no additional database query is needed. We simply sum from the data we already have:
-```typescript
-const totalTipsFromAppointments = data.reduce(
-  (sum, apt) => sum + (Number(apt.tip_amount) || 0), 0
-);
-```
+The card will:
+- Use the same glass aesthetic as siblings (`bg-card/80 backdrop-blur-xl rounded-xl border`)
+- Show a DollarSign icon in a `tokens.card.iconBox`
+- Display `metrics?.totalTips` as the hero number using `AnimatedBlurredAmount`
+- Calculate tip rate: `(totalTips / totalRevenue) * 100` -- both values available from `metrics`
+- Show the tip rate using `formatPercent` or inline formatting
+- Be clickable to toggle `tipsDrilldownOpen` (reusing existing state/handler)
+- Include `MetricInfoTooltip` with the existing description
+- Render `TipsDrilldownPanel` directly below it when expanded
 
-And use `totalTipsFromAppointments` for the `totalTips` return value instead of `totalTipsFromTx`.
+### Technical Notes
 
-The `tipTxSeen` Set and the `totalTipsFromTx` variable related to transaction items can be removed entirely.
-
-### Impact
-
-- Aggregate Sales Card tips display: corrected from ~$25K to ~$6.5K
-- Tips drilldown panel (which uses `useTipsDrilldown` hook): unaffected -- that hook reads from `phorest_appointments` already
-- No other hooks depend on `totalTips` from `useSalesMetrics` for secondary calculations
-
+- No new hooks or data fetching needed -- `metrics.totalTips` and `metrics.totalRevenue` are already available in scope
+- The `tipsDrilldownOpen` state and `handleTipsToggle` handler remain unchanged
+- The `TipsDrilldownPanel` component moves from the main column to the sidebar but its props stay the same
+- KPI grid layouts simplify: 4-card becomes 3-card, 5-card second row becomes single card
