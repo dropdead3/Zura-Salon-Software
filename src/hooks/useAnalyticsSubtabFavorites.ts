@@ -133,6 +133,8 @@ export function useAnalyticsSubtabFavorites() {
       }
     });
 
+    groups.delete('leadership');
+
     return Array.from(groups.values()).sort((a, b) => {
       const aIdx = TAB_ORDER.indexOf(a.tab);
       const bIdx = TAB_ORDER.indexOf(b.tab);
