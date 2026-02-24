@@ -21,6 +21,7 @@ import { usePreferredStylist, getStylistDisplayName } from '@/hooks/usePreferred
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import { useServiceLookup } from '@/hooks/useServiceLookup';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
+import { useIsPrimaryOwner } from '@/hooks/useIsPrimaryOwner';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -303,7 +304,8 @@ export function AppointmentDetailSheet({
   // Tab state -- resets to "details" when appointment changes (#10)
   const [activeTab, setActiveTab] = useState('details');
 
-  const isManagerOrAdmin = roles.some(r => ['admin', 'super_admin', 'manager'].includes(r));
+  const { data: isPrimaryOwner } = useIsPrimaryOwner();
+  const isManagerOrAdmin = roles.some(r => ['admin', 'super_admin', 'manager'].includes(r)) || isPrimaryOwner;
   const isStylistOnly = roles.includes('stylist') && !isManagerOrAdmin;
   const canAddNotes = hasPermission('add_appointment_notes');
   const canManageAssistants = hasPermission('create_appointments') || hasPermission('view_team_appointments');
