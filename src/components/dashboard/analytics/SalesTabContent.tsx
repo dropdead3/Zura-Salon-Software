@@ -211,10 +211,7 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
         <Tabs value={subTab} onValueChange={onSubTabChange}>
           <SubTabsList>
             <VisibilityGate elementKey="sales_overview_subtab" elementName="Overview" elementCategory="Page Tabs">
-              <div className="group/subtab relative inline-flex items-center">
-                <SubTabsTrigger value="overview">Overview</SubTabsTrigger>
-                <SubtabFavoriteStar tab="sales" subtab="overview" label="Overview" />
-              </div>
+              <SubTabsTrigger value="overview">Overview</SubTabsTrigger>
             </VisibilityGate>
             <VisibilityGate elementKey="sales_goals_subtab" elementName="Goals" elementCategory="Page Tabs">
               <div className="group/subtab relative inline-flex items-center">

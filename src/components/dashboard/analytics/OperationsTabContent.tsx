@@ -84,10 +84,7 @@ export function OperationsTabContent({ filters, subTab = 'overview', onSubTabCha
         <Tabs value={subTab} onValueChange={onSubTabChange}>
           <SubTabsList>
             <VisibilityGate elementKey="operations_overview_subtab" elementName="Overview" elementCategory="Page Tabs">
-              <div className="group/subtab relative inline-flex items-center">
-                <SubTabsTrigger value="overview">Overview</SubTabsTrigger>
-                <SubtabFavoriteStar tab="operations" subtab="overview" label="Overview" />
-              </div>
+              <SubTabsTrigger value="overview">Overview</SubTabsTrigger>
             </VisibilityGate>
             <VisibilityGate elementKey="operations_appointments_subtab" elementName="Appointments" elementCategory="Page Tabs">
               <div className="group/subtab relative inline-flex items-center">
