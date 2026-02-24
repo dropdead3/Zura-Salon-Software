@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { ChevronRight } from 'lucide-react';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { ChevronRight, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -21,6 +21,12 @@ interface NavItem {
   roles?: string[];
 }
 
+export interface AnalyticsSubLink {
+  tab: string;
+  subtab: string;
+  label: string;
+}
+
 export interface NavSubGroup {
   id: string;
   label: string;
@@ -35,6 +41,9 @@ interface CollapsibleNavGroupProps {
   onNavClick: () => void;
   getNavLabel?: (item: NavItem) => string;
   hiddenLinks?: string[];
+  analyticsSubLinks?: AnalyticsSubLink[];
+  analyticsHubHref?: string;
+  onRemoveSubLink?: (tab: string, subtab: string) => void;
 }
 
 const COLLAPSED_STATE_KEY = 'sidebar-nav-group-collapsed';
@@ -46,6 +55,9 @@ export function CollapsibleNavGroup({
   onNavClick,
   getNavLabel,
   hiddenLinks = [],
+  analyticsSubLinks = [],
+  analyticsHubHref = '/dashboard/admin/analytics',
+  onRemoveSubLink,
 }: CollapsibleNavGroupProps) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -257,7 +269,54 @@ export function CollapsibleNavGroup({
             <CollapsibleContent className="overflow-hidden data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up">
               <div className="pt-1 space-y-0.5">
                 {items.map(item => (
-                  <NavLink key={item.href} item={item} isNested />
+                  <div key={item.href}>
+                    <NavLink item={item} isNested />
+                    {/* Render favorited subtab sublinks beneath Analytics Hub */}
+                    {item.href === analyticsHubHref && analyticsSubLinks.length > 0 && (
+                      <div className="space-y-0.5 mt-0.5">
+                        {analyticsSubLinks.map(subLink => {
+                          const subHref = `${analyticsHubHref}?tab=${subLink.tab}&subtab=${subLink.subtab}`;
+                          const isSubActive = location.pathname === analyticsHubHref 
+                            && location.search.includes(`tab=${subLink.tab}`) 
+                            && location.search.includes(`subtab=${subLink.subtab}`);
+                          return (
+                            <a
+                              key={`${subLink.tab}-${subLink.subtab}`}
+                              href={subHref}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                navigate(subHref, { state: { navTimestamp: Date.now() } });
+                                onNavClick();
+                              }}
+                              className={cn(
+                                "flex items-center gap-2 text-xs font-sans cursor-pointer group/sublink",
+                                "transition-all duration-200 ease-out rounded-lg",
+                                "px-3 py-1.5 mx-3 pl-12",
+                                isSubActive
+                                  ? "bg-foreground text-background shadow-sm dark:bg-muted dark:text-foreground dark:shadow-none"
+                                  : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                              )}
+                            >
+                              <span className="flex-1">{subLink.label}</span>
+                              {onRemoveSubLink && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    e.preventDefault();
+                                    onRemoveSubLink(subLink.tab, subLink.subtab);
+                                  }}
+                                  className="opacity-0 group-hover/sublink:opacity-100 transition-opacity"
+                                  aria-label={`Unpin ${subLink.label}`}
+                                >
+                                  <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
+                                </button>
+                              )}
+                            </a>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 ))}
               </div>
             </CollapsibleContent>

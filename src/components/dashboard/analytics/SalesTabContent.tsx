@@ -72,6 +72,7 @@ import { CompareTabContent } from '@/components/dashboard/sales/compare/CompareT
 import { CorrelationsContent } from '@/components/dashboard/analytics/CorrelationsContent';
 import { RetailAnalyticsContent } from '@/components/dashboard/analytics/RetailAnalyticsContent';
 import { ServicesContent } from '@/components/dashboard/analytics/ServicesContent';
+import { SubtabFavoriteStar } from '@/components/dashboard/analytics/SubtabFavoriteStar';
 import type { AnalyticsFilters } from '@/pages/dashboard/admin/AnalyticsHub';
 
 interface SalesTabContentProps {
@@ -210,31 +211,58 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
         <Tabs value={subTab} onValueChange={onSubTabChange}>
           <SubTabsList>
             <VisibilityGate elementKey="sales_overview_subtab" elementName="Overview" elementCategory="Page Tabs">
-              <SubTabsTrigger value="overview">Overview</SubTabsTrigger>
+              <div className="group/subtab relative inline-flex items-center">
+                <SubTabsTrigger value="overview">Overview</SubTabsTrigger>
+                <SubtabFavoriteStar tab="sales" subtab="overview" label="Overview" />
+              </div>
             </VisibilityGate>
             <VisibilityGate elementKey="sales_goals_subtab" elementName="Goals" elementCategory="Page Tabs">
-              <SubTabsTrigger value="goals">Goals</SubTabsTrigger>
+              <div className="group/subtab relative inline-flex items-center">
+                <SubTabsTrigger value="goals">Goals</SubTabsTrigger>
+                <SubtabFavoriteStar tab="sales" subtab="goals" label="Goals" />
+              </div>
             </VisibilityGate>
             <VisibilityGate elementKey="sales_compare_subtab" elementName="Compare" elementCategory="Page Tabs">
-              <SubTabsTrigger value="compare">Compare</SubTabsTrigger>
+              <div className="group/subtab relative inline-flex items-center">
+                <SubTabsTrigger value="compare">Compare</SubTabsTrigger>
+                <SubtabFavoriteStar tab="sales" subtab="compare" label="Compare" />
+              </div>
             </VisibilityGate>
             <VisibilityGate elementKey="sales_staff_subtab" elementName="Staff Performance" elementCategory="Page Tabs">
-              <SubTabsTrigger value="staff">Staff Performance</SubTabsTrigger>
+              <div className="group/subtab relative inline-flex items-center">
+                <SubTabsTrigger value="staff">Staff Performance</SubTabsTrigger>
+                <SubtabFavoriteStar tab="sales" subtab="staff" label="Staff Performance" />
+              </div>
             </VisibilityGate>
             <VisibilityGate elementKey="sales_forecasting_subtab" elementName="Forecasting" elementCategory="Page Tabs">
-              <SubTabsTrigger value="forecasting">Forecasting</SubTabsTrigger>
+              <div className="group/subtab relative inline-flex items-center">
+                <SubTabsTrigger value="forecasting">Forecasting</SubTabsTrigger>
+                <SubtabFavoriteStar tab="sales" subtab="forecasting" label="Forecasting" />
+              </div>
             </VisibilityGate>
             <VisibilityGate elementKey="sales_commission_subtab" elementName="Commission" elementCategory="Page Tabs">
-              <SubTabsTrigger value="commission">Commission</SubTabsTrigger>
+              <div className="group/subtab relative inline-flex items-center">
+                <SubTabsTrigger value="commission">Commission</SubTabsTrigger>
+                <SubtabFavoriteStar tab="sales" subtab="commission" label="Commission" />
+              </div>
             </VisibilityGate>
             <VisibilityGate elementKey="sales_services_subtab" elementName="Services" elementCategory="Page Tabs">
-              <SubTabsTrigger value="services">Services</SubTabsTrigger>
+              <div className="group/subtab relative inline-flex items-center">
+                <SubTabsTrigger value="services">Services</SubTabsTrigger>
+                <SubtabFavoriteStar tab="sales" subtab="services" label="Services" />
+              </div>
             </VisibilityGate>
             <VisibilityGate elementKey="sales_retail_subtab" elementName="Retail" elementCategory="Page Tabs">
-              <SubTabsTrigger value="retail">Retail</SubTabsTrigger>
+              <div className="group/subtab relative inline-flex items-center">
+                <SubTabsTrigger value="retail">Retail</SubTabsTrigger>
+                <SubtabFavoriteStar tab="sales" subtab="retail" label="Retail" />
+              </div>
             </VisibilityGate>
             <VisibilityGate elementKey="sales_correlations_subtab" elementName="Correlations" elementCategory="Page Tabs">
-              <SubTabsTrigger value="correlations">Correlations</SubTabsTrigger>
+              <div className="group/subtab relative inline-flex items-center">
+                <SubTabsTrigger value="correlations">Correlations</SubTabsTrigger>
+                <SubtabFavoriteStar tab="sales" subtab="correlations" label="Correlations" />
+              </div>
             </VisibilityGate>
           </SubTabsList>
 

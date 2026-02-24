@@ -15,6 +15,7 @@ import { StaffingContent } from '@/components/dashboard/analytics/StaffingConten
 import { StaffUtilizationContent } from '@/components/dashboard/analytics/StaffUtilizationContent';
 import { BookingPipelineContent } from '@/components/dashboard/analytics/BookingPipelineContent';
 import { AssistantUtilizationCard } from '@/components/dashboard/analytics/AssistantUtilizationCard';
+import { SubtabFavoriteStar } from '@/components/dashboard/analytics/SubtabFavoriteStar';
 import type { AnalyticsFilters } from '@/pages/dashboard/admin/AnalyticsHub';
 
 interface OperationsTabContentProps {
@@ -83,25 +84,46 @@ export function OperationsTabContent({ filters, subTab = 'overview', onSubTabCha
         <Tabs value={subTab} onValueChange={onSubTabChange}>
           <SubTabsList>
             <VisibilityGate elementKey="operations_overview_subtab" elementName="Overview" elementCategory="Page Tabs">
-              <SubTabsTrigger value="overview">Overview</SubTabsTrigger>
+              <div className="group/subtab relative inline-flex items-center">
+                <SubTabsTrigger value="overview">Overview</SubTabsTrigger>
+                <SubtabFavoriteStar tab="operations" subtab="overview" label="Overview" />
+              </div>
             </VisibilityGate>
             <VisibilityGate elementKey="operations_appointments_subtab" elementName="Appointments" elementCategory="Page Tabs">
-              <SubTabsTrigger value="appointments">Appointments</SubTabsTrigger>
+              <div className="group/subtab relative inline-flex items-center">
+                <SubTabsTrigger value="appointments">Appointments</SubTabsTrigger>
+                <SubtabFavoriteStar tab="operations" subtab="appointments" label="Appointments" />
+              </div>
             </VisibilityGate>
             <VisibilityGate elementKey="operations_clients_subtab" elementName="Clients" elementCategory="Page Tabs">
-              <SubTabsTrigger value="clients">Clients</SubTabsTrigger>
+              <div className="group/subtab relative inline-flex items-center">
+                <SubTabsTrigger value="clients">Clients</SubTabsTrigger>
+                <SubtabFavoriteStar tab="operations" subtab="clients" label="Clients" />
+              </div>
             </VisibilityGate>
             <VisibilityGate elementKey="operations_staffing_subtab" elementName="Staffing" elementCategory="Page Tabs">
-              <SubTabsTrigger value="staffing">Staffing</SubTabsTrigger>
+              <div className="group/subtab relative inline-flex items-center">
+                <SubTabsTrigger value="staffing">Staffing</SubTabsTrigger>
+                <SubtabFavoriteStar tab="operations" subtab="staffing" label="Staffing" />
+              </div>
             </VisibilityGate>
             <VisibilityGate elementKey="operations_staff_utilization_subtab" elementName="Staff Utilization" elementCategory="Page Tabs">
-              <SubTabsTrigger value="staff-utilization">Staff Utilization</SubTabsTrigger>
+              <div className="group/subtab relative inline-flex items-center">
+                <SubTabsTrigger value="staff-utilization">Staff Utilization</SubTabsTrigger>
+                <SubtabFavoriteStar tab="operations" subtab="staff-utilization" label="Staff Utilization" />
+              </div>
             </VisibilityGate>
             <VisibilityGate elementKey="operations_booking_pipeline_subtab" elementName="Booking Pipeline" elementCategory="Page Tabs">
-              <SubTabsTrigger value="booking-pipeline">Booking Pipeline</SubTabsTrigger>
+              <div className="group/subtab relative inline-flex items-center">
+                <SubTabsTrigger value="booking-pipeline">Booking Pipeline</SubTabsTrigger>
+                <SubtabFavoriteStar tab="operations" subtab="booking-pipeline" label="Booking Pipeline" />
+              </div>
             </VisibilityGate>
             <VisibilityGate elementKey="operations_assistant_subtab" elementName="Assistant Coverage" elementCategory="Page Tabs">
-              <SubTabsTrigger value="assistant-coverage">Assistant Coverage</SubTabsTrigger>
+              <div className="group/subtab relative inline-flex items-center">
+                <SubTabsTrigger value="assistant-coverage">Assistant Coverage</SubTabsTrigger>
+                <SubtabFavoriteStar tab="operations" subtab="assistant-coverage" label="Assistant Coverage" />
+              </div>
             </VisibilityGate>
           </SubTabsList>
 

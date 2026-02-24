@@ -24,6 +24,7 @@ import { SidebarFeedbackButtons } from './SidebarFeedbackButtons';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useSidebarLayout, SECTION_LABELS, SECTION_ICONS, DEFAULT_SECTION_ORDER, DEFAULT_LINK_ORDER, MANAGEMENT_SUB_GROUPS, isBuiltInSection, getEffectiveHiddenSections, getEffectiveHiddenLinks, anyRoleHasOverrides } from '@/hooks/useSidebarLayout';
 import { CollapsibleNavGroup, type NavSubGroup } from './CollapsibleNavGroup';
+import { useAnalyticsSubtabFavorites } from '@/hooks/useAnalyticsSubtabFavorites';
 import { AccountOwnerOrgSwitcher } from './AccountOwnerOrgSwitcher';
 type PlatformRole = 'platform_owner' | 'platform_admin' | 'platform_support' | 'platform_developer';
 
@@ -104,6 +105,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
   const internalRef = useRef<HTMLElement>(null);
   const { data: businessSettings } = useBusinessSettings();
   const { data: sidebarLayout } = useSidebarLayout();
+  const { favorites: analyticsSubLinks, toggleFavorite: toggleSubtabFavorite } = useAnalyticsSubtabFavorites();
   
   // Map section IDs to nav items (for built-in sections)
   const sectionItemsMap = useMemo(() => ({
@@ -649,6 +651,8 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                   onNavClick={onNavClick}
                   getNavLabel={getNavLabel}
                   hiddenLinks={sectionHiddenLinks}
+                  analyticsSubLinks={analyticsSubLinks}
+                  onRemoveSubLink={(tab, subtab) => toggleSubtabFavorite(tab, subtab, '')}
                 />
               ) : isCollapsed && sectionId !== 'main' ? (
                 // Collapsed: single section icon with popover menu (skip for main section)
