@@ -112,12 +112,11 @@ export function useAnalyticsSubtabFavorites() {
   };
 
   const groupedFavorites = useMemo((): GroupedFavorite[] => {
-    const orderMap = new Map<string, number>();
+    const TAB_ORDER = Object.keys(ANALYTICS_TAB_LABELS);
     const groups = new Map<string, GroupedFavorite>();
 
-    favorites.forEach((fav, idx) => {
+    favorites.forEach((fav) => {
       if (!groups.has(fav.tab)) {
-        orderMap.set(fav.tab, idx);
         groups.set(fav.tab, {
           tab: fav.tab,
           tabLabel: ANALYTICS_TAB_LABELS[fav.tab] || fav.tab,
@@ -128,16 +127,17 @@ export function useAnalyticsSubtabFavorites() {
       const group = groups.get(fav.tab)!;
       if (fav.subtab === '') {
         group.hasTabFavorite = true;
-        // Use the explicit label if available
         group.tabLabel = fav.label || group.tabLabel;
       } else {
         group.subtabs.push({ subtab: fav.subtab, label: fav.label });
       }
     });
 
-    return Array.from(groups.values()).sort(
-      (a, b) => (orderMap.get(a.tab) ?? 0) - (orderMap.get(b.tab) ?? 0)
-    );
+    return Array.from(groups.values()).sort((a, b) => {
+      const aIdx = TAB_ORDER.indexOf(a.tab);
+      const bIdx = TAB_ORDER.indexOf(b.tab);
+      return (aIdx === -1 ? 999 : aIdx) - (bIdx === -1 ? 999 : bIdx);
+    });
   }, [favorites]);
 
   return {
