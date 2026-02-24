@@ -2,9 +2,9 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface RetailAttachmentData {
-  /** Total distinct transactions containing at least one service */
+  /** Total distinct client-visit combos that included at least one service */
   serviceTransactions: number;
-  /** Distinct service transactions that also included a retail product */
+  /** Distinct client-visits that also included a retail product */
   attachedTransactions: number;
   /** attachedTransactions / serviceTransactions × 100 */
   attachmentRate: number;
@@ -16,62 +16,80 @@ interface UseRetailAttachmentRateOptions {
   locationId?: string;
 }
 
+const PAGE_SIZE = 1000;
+
+async function fetchAllPages(
+  buildQuery: (offset: number) => any
+): Promise<any[]> {
+  const all: any[] = [];
+  let offset = 0;
+  let hasMore = true;
+  while (hasMore) {
+    const { data, error } = await buildQuery(offset);
+    if (error) throw error;
+    all.push(...(data || []));
+    hasMore = (data?.length || 0) === PAGE_SIZE;
+    offset += PAGE_SIZE;
+  }
+  return all;
+}
+
 export function useRetailAttachmentRate({ dateFrom, dateTo, locationId }: UseRetailAttachmentRateOptions) {
   return useQuery({
     queryKey: ['retail-attachment-rate', dateFrom, dateTo, locationId || 'all'],
     queryFn: async (): Promise<RetailAttachmentData> => {
-      let serviceQuery = supabase
-        .from('phorest_transaction_items')
-        .select('transaction_id')
-        .gte('transaction_date', dateFrom)
-        .lte('transaction_date', dateTo)
-        .not('transaction_id', 'is', null)
-        .in('item_type', ['Service', 'service', 'SERVICE']);
+      const buildLocationFilter = (q: any) => {
+        if (locationId && locationId !== 'all') {
+          const ids = locationId.split(',').filter(Boolean);
+          if (ids.length === 1) return q.eq('location_id', ids[0]);
+          if (ids.length > 1) return q.in('location_id', ids);
+        }
+        return q;
+      };
 
-      let productQuery = supabase
-        .from('phorest_transaction_items')
-        .select('transaction_id')
-        .gte('transaction_date', dateFrom)
-        .lte('transaction_date', dateTo)
-        .not('transaction_id', 'is', null)
-        .in('item_type', ['Product', 'product', 'PRODUCT', 'Retail', 'retail', 'RETAIL']);
+      const serviceItems = await fetchAllPages((offset) => {
+        let q = supabase
+          .from('phorest_transaction_items')
+          .select('phorest_client_id, transaction_date')
+          .gte('transaction_date', dateFrom)
+          .lte('transaction_date', dateTo)
+          .not('phorest_client_id', 'is', null)
+          .in('item_type', ['Service', 'service', 'SERVICE'])
+          .range(offset, offset + PAGE_SIZE - 1);
+        return buildLocationFilter(q);
+      });
 
-      if (locationId && locationId !== 'all') {
-        const ids = locationId.split(',').filter(Boolean);
-        if (ids.length === 1) {
-          serviceQuery = serviceQuery.eq('location_id', ids[0]);
-          productQuery = productQuery.eq('location_id', ids[0]);
-        } else if (ids.length > 1) {
-          serviceQuery = serviceQuery.in('location_id', ids);
-          productQuery = productQuery.in('location_id', ids);
+      const productItems = await fetchAllPages((offset) => {
+        let q = supabase
+          .from('phorest_transaction_items')
+          .select('phorest_client_id, transaction_date')
+          .gte('transaction_date', dateFrom)
+          .lte('transaction_date', dateTo)
+          .not('phorest_client_id', 'is', null)
+          .in('item_type', ['Product', 'product', 'PRODUCT', 'Retail', 'retail', 'RETAIL'])
+          .range(offset, offset + PAGE_SIZE - 1);
+        return buildLocationFilter(q);
+      });
+
+      // Build composite visit keys: clientId|date
+      const serviceVisitSet = new Set<string>();
+      for (const row of serviceItems) {
+        if (row.phorest_client_id && row.transaction_date) {
+          serviceVisitSet.add(`${row.phorest_client_id}|${row.transaction_date}`);
         }
       }
 
-      const [serviceResult, productResult] = await Promise.all([
-        serviceQuery,
-        productQuery,
-      ]);
+      const productVisitSet = new Set<string>();
+      for (const row of productItems) {
+        if (row.phorest_client_id && row.transaction_date) {
+          productVisitSet.add(`${row.phorest_client_id}|${row.transaction_date}`);
+        }
+      }
 
-      if (serviceResult.error) throw serviceResult.error;
-      if (productResult.error) throw productResult.error;
-
-      // Distinct service transactions
-      const serviceTxSet = new Set<string>();
-      (serviceResult.data || []).forEach(row => {
-        if (row.transaction_id) serviceTxSet.add(row.transaction_id);
-      });
-
-      // Distinct product transactions
-      const productTxSet = new Set<string>();
-      (productResult.data || []).forEach(row => {
-        if (row.transaction_id) productTxSet.add(row.transaction_id);
-      });
-
-      // Attachment = service transactions that also appear in product transactions
-      const serviceTransactions = serviceTxSet.size;
+      const serviceTransactions = serviceVisitSet.size;
       let attachedTransactions = 0;
-      serviceTxSet.forEach(txId => {
-        if (productTxSet.has(txId)) attachedTransactions++;
+      serviceVisitSet.forEach(key => {
+        if (productVisitSet.has(key)) attachedTransactions++;
       });
 
       const attachmentRate = serviceTransactions > 0

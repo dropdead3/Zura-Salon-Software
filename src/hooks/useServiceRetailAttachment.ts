@@ -40,73 +40,78 @@ export function useServiceRetailAttachment({ dateFrom, dateTo, locationId }: Use
   return useQuery({
     queryKey: ['service-retail-attachment', dateFrom, dateTo, locationId || 'all'],
     queryFn: async (): Promise<ServiceRetailRow[]> => {
+      const buildLocationFilter = (q: any) => {
+        if (locationId && locationId !== 'all') return q.eq('location_id', locationId);
+        return q;
+      };
+
       // 1. Fetch all service items in date range
       const serviceItems = await fetchAllPages((offset) => {
         let q = supabase
           .from('phorest_transaction_items')
-          .select('transaction_id, item_name, item_category')
+          .select('phorest_client_id, transaction_date, item_name, item_category')
           .gte('transaction_date', dateFrom)
           .lte('transaction_date', dateTo)
-          .not('transaction_id', 'is', null)
+          .not('phorest_client_id', 'is', null)
           .in('item_type', ['Service', 'service', 'SERVICE'])
           .range(offset, offset + PAGE_SIZE - 1);
-        if (locationId && locationId !== 'all') q = q.eq('location_id', locationId);
-        return q;
+        return buildLocationFilter(q);
       });
 
       // 2. Fetch all product items in date range
       const productItems = await fetchAllPages((offset) => {
         let q = supabase
           .from('phorest_transaction_items')
-          .select('transaction_id, total_amount')
+          .select('phorest_client_id, transaction_date, total_amount')
           .gte('transaction_date', dateFrom)
           .lte('transaction_date', dateTo)
-          .not('transaction_id', 'is', null)
+          .not('phorest_client_id', 'is', null)
           .in('item_type', ['Product', 'product', 'PRODUCT', 'Retail', 'retail', 'RETAIL'])
           .range(offset, offset + PAGE_SIZE - 1);
-        if (locationId && locationId !== 'all') q = q.eq('location_id', locationId);
-        return q;
+        return buildLocationFilter(q);
       });
 
-      // 3. Build product transaction map: txId -> total retail $
-      const productTxMap = new Map<string, number>();
+      // 3. Build product visit map: visitKey -> total retail $
+      const productVisitMap = new Map<string, number>();
       for (const p of productItems) {
-        if (!p.transaction_id) continue;
-        productTxMap.set(
-          p.transaction_id,
-          (productTxMap.get(p.transaction_id) || 0) + (Number(p.total_amount) || 0)
+        if (!p.phorest_client_id || !p.transaction_date) continue;
+        const key = `${p.phorest_client_id}|${p.transaction_date}`;
+        productVisitMap.set(
+          key,
+          (productVisitMap.get(key) || 0) + (Number(p.total_amount) || 0)
         );
       }
 
-      // 4. Group services by item_name
+      // 4. Group services by item_name, collecting visit keys
       const serviceMap = new Map<string, {
         category: string | null;
-        txIds: Set<string>;
+        visitKeys: Set<string>;
       }>();
 
       for (const s of serviceItems) {
-        if (!s.transaction_id || !s.item_name) continue;
-        const key = s.item_name;
-        let entry = serviceMap.get(key);
+        if (!s.phorest_client_id || !s.transaction_date || !s.item_name) continue;
+        const visitKey = `${s.phorest_client_id}|${s.transaction_date}`;
+        const name = s.item_name;
+        let entry = serviceMap.get(name);
         if (!entry) {
           entry = {
             category: s.item_category || getServiceCategory(s.item_name),
-            txIds: new Set(),
+            visitKeys: new Set(),
           };
-          serviceMap.set(key, entry);
+          serviceMap.set(name, entry);
         }
-        entry.txIds.add(s.transaction_id);
+        entry.visitKeys.add(visitKey);
       }
 
       // 5. Calculate attachment metrics per service
       const rows: ServiceRetailRow[] = [];
-      for (const [serviceName, { category, txIds }] of serviceMap) {
-        const totalTransactions = txIds.size;
+      for (const [serviceName, { category, visitKeys }] of serviceMap) {
+        const totalTransactions = visitKeys.size;
         let attachedTransactions = 0;
         let retailRevenue = 0;
 
-        txIds.forEach(txId => {
-          const retailAmount = productTxMap.get(txId);
+        visitKeys.forEach(key => {
+          const retailAmount = productVisitMap.get(key);
           if (retailAmount !== undefined && retailAmount > 0) {
             attachedTransactions++;
             retailRevenue += retailAmount;
