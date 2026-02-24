@@ -34,6 +34,7 @@ import { ClosedBadge } from '@/components/dashboard/ClosedBadge';
 import { useTomorrowRevenue } from '@/hooks/useTomorrowRevenue';
 import { useSalesComparison } from '@/hooks/useSalesComparison';
 import { useTodayActualRevenue } from '@/hooks/useTodayActualRevenue';
+import { useRetailAttachmentRate } from '@/hooks/useRetailAttachmentRate';
 import { useSalesGoals } from '@/hooks/useSalesGoals';
 import { useGoalPeriodRevenue } from '@/hooks/useGoalPeriodRevenue';
 import { format, subDays, startOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, subYears } from 'date-fns';
@@ -238,6 +239,11 @@ export function AggregateSalesCard({
   const { goals } = useSalesGoals();
   const { data: locations } = useActiveLocations();
   const { data: todayActual, locationActuals, isLoading: todayActualLoading } = useTodayActualRevenue(dateRange === 'today');
+  const { data: attachmentData, isLoading: attachmentLoading } = useRetailAttachmentRate({
+    dateFrom: dateFilters.dateFrom,
+    dateTo: dateFilters.dateTo,
+    locationId: filterContext?.locationId,
+  });
   // Drilldown data now fetched inside the dialog component itself
   const isToday = dateRange === 'today';
 
@@ -1024,6 +1030,9 @@ export function AggregateSalesCard({
             serviceRevenue={displayMetrics.serviceRevenue} 
             productRevenue={displayMetrics.productRevenue}
             size={64}
+            filterContext={filterContext as any}
+            retailAttachmentRate={attachmentData?.attachmentRate}
+            retailAttachmentLoading={attachmentLoading}
           />
         </div>
       </div>
