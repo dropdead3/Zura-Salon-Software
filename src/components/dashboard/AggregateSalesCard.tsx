@@ -611,7 +611,7 @@ export function AggregateSalesCard({
                   <p className="text-sm text-muted-foreground">{t('sales.total_revenue')}</p>
                   <MetricInfoTooltip description="Combined net revenue from services and retail product sales for the selected period. Tips and gratuities are tracked separately and not included in this total." />
                 </div>
-                <p className="text-xs text-muted-foreground/50">Excludes tips</p>
+                <p className="text-xs text-muted-foreground/50">Excludes Tips</p>
               </div>
               {(dateRange === 'today' || dateRange === 'todayToEom') && (
                 <div className="flex items-center justify-center gap-1.5 mt-2">
