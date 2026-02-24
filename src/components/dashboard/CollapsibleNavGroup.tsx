@@ -275,10 +275,14 @@ export function CollapsibleNavGroup({
                     {item.href === analyticsHubHref && analyticsSubLinks.length > 0 && (
                       <div className="space-y-0.5 mt-0.5">
                         {analyticsSubLinks.map(subLink => {
-                          const subHref = `${analyticsHubHref}?tab=${subLink.tab}&subtab=${subLink.subtab}`;
+                          const subHref = subLink.subtab 
+                            ? `${analyticsHubHref}?tab=${subLink.tab}&subtab=${subLink.subtab}`
+                            : `${analyticsHubHref}?tab=${subLink.tab}`;
                           const isSubActive = location.pathname === analyticsHubHref 
                             && location.search.includes(`tab=${subLink.tab}`) 
-                            && location.search.includes(`subtab=${subLink.subtab}`);
+                            && (subLink.subtab 
+                              ? location.search.includes(`subtab=${subLink.subtab}`)
+                              : !location.search.includes('subtab='));
                           return (
                             <a
                               key={`${subLink.tab}-${subLink.subtab}`}
