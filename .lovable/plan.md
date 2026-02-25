@@ -1,46 +1,27 @@
 
 
-## Transactions Drill-Down: Design Rule Violations
+## Update Confirmation Method Options
 
-The screenshot shows several violations of the typography and design token rules in the transactions drill-down panels. Here is what needs to be fixed.
+Good prompt -- you correctly identified a logical inconsistency. If a client confirmed online, the system should auto-confirm without manual intervention. Replacing it with "Emailed Client" and adding an "Other" option makes the list represent outbound communication methods the staff actually performs.
 
-### Violations Identified
+### Changes
 
-**1. ClientTypeSplitPanel -- Uppercase on font-sans (3 instances)**
+**File:** `src/components/dashboard/schedule/AppointmentDetailSheet.tsx`
 
-Lines 44, 48, 54 in `ClientTypeSplitPanel.tsx`: The KPI sub-labels ("VISITS", "AVG TICKET", "REVENUE") use `text-[10px] uppercase tracking-wide text-muted-foreground` without `font-display`. The design system rule states: uppercase is only permitted with `font-display` (Termina). Using uppercase on the default `font-sans` (Aeonik Pro) is prohibited.
+Around line 1850, replace the confirmation method options:
 
-**Fix:** Add `font-display` to these labels, or use `tokens.kpi.label` which already includes `font-display text-[11px] font-medium text-muted-foreground uppercase tracking-wider`.
-
-**2. ClientTypeSplitPanel -- Section header uses font-sans with uppercase**
-
-Line 92: `text-xs tracking-[0.15em] uppercase text-muted-foreground font-medium` -- missing `font-display`. Section headers that are uppercase must use Termina.
-
-**Fix:** Add `font-display` class.
-
-**3. TransactionsByHourPanel -- Section header uses font-sans with uppercase**
-
-Line 48: `text-xs tracking-wide uppercase text-muted-foreground font-medium` -- same violation. Missing `font-display`.
-
-**Fix:** Add `font-display` class.
-
-**4. ClientTypeSplitPanel -- Segment title uses plain font-medium**
-
-Line 38: `text-sm font-medium` on segment labels ("New Clients", "Returning Clients"). This is technically allowed (font-medium is max weight), but these are card-level subheadings and would benefit from `font-display` for consistency with the rest of the dashboard card hierarchy.
-
-**Fix:** Optional -- add `font-display` to segment titles for visual consistency.
-
-### Files Changed
-
-| File | Change |
+| Current | New |
 |---|---|
-| `src/components/dashboard/sales/ClientTypeSplitPanel.tsx` | Add `font-display` to section header (line 92), KPI sub-labels (lines 44, 48, 54), and optionally segment titles (line 38) |
-| `src/components/dashboard/sales/TransactionsByHourPanel.tsx` | Add `font-display` to section header (line 48) |
+| `{ value: 'online', icon: Globe, label: 'Client Confirmed Online' }` | `{ value: 'emailed', icon: Mail, label: 'Emailed Client' }` |
+| *(none)* | `{ value: 'other', icon: MoreHorizontal, label: 'Other' }` |
+
+The `Mail` and `MoreHorizontal` icons are from `lucide-react` (already imported in this file -- will verify and add if missing).
+
+Values stored in audit metadata change from `'online'` to `'emailed'` / `'other'`. Existing historical `'online'` entries in the audit log remain untouched and will still display correctly if referenced.
 
 ### What Does NOT Change
 
-- Data logic, hooks, and filter propagation remain untouched
-- Layout structure (grid, spacing, progress bars) stays the same
-- BlurredAmount privacy wrapping stays intact
-- Animation behavior stays the same
+- Dialog layout, checkbox, notes textarea, and button behavior stay identical
+- Other three options (Called, Texted, In Person) are unchanged
+- Audit log storage format and confirmation gate logic are unaffected
 
