@@ -42,7 +42,7 @@ export function TipPaymentMethodBreakdown({ byPaymentMethod }: TipPaymentMethodB
     <div>
       <div className="flex items-center gap-2 mb-2">
         <CreditCard className="w-3.5 h-3.5 text-primary" />
-        <span className="text-xs tracking-wide uppercase text-muted-foreground font-medium">
+        <span className="font-display text-xs tracking-wide uppercase text-muted-foreground font-medium">
           Tips by Payment Method
         </span>
       </div>
