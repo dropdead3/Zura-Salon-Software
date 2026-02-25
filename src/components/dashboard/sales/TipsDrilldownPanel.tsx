@@ -361,24 +361,34 @@ function SelfMetricCard({ label, value, alert = false }: { label: string; value:
 function StylistAppointmentList({ stylistKey, rawAppointments }: { stylistKey: string; rawAppointments: RawTipAppointment[] }) {
   const { formatCurrency: fmtCurrency } = useFormatCurrency();
 
-  const appointments = useMemo(() => {
+  const visits = useMemo(() => {
     const filtered = rawAppointments.filter(a => {
       const key = a.stylist_user_id || (a.phorest_staff_id ? `phorest:${a.phorest_staff_id}` : null);
       return key === stylistKey;
     });
-    // Deduplicate by composite key
-    const seen = new Set<string>();
-    const deduped = filtered.filter(a => {
+    // Group by visit (same staff + client + date + tip) and merge service names
+    const visitMap = new Map<string, { services: string[]; tip: number; date: string }>();
+    for (const a of filtered) {
       const tip = a.tip_amount ?? 0;
       const k = `${a.phorest_staff_id}|${a.phorest_client_id}|${a.appointment_date}|${tip}`;
-      if (seen.has(k)) return false;
-      seen.add(k);
-      return true;
-    });
-    return deduped.sort((a, b) => b.appointment_date.localeCompare(a.appointment_date));
+      const existing = visitMap.get(k);
+      if (existing) {
+        if (a.service_name && !existing.services.includes(a.service_name)) {
+          existing.services.push(a.service_name);
+        }
+      } else {
+        visitMap.set(k, {
+          services: a.service_name ? [a.service_name] : [],
+          tip,
+          date: a.appointment_date,
+        });
+      }
+    }
+    return Array.from(visitMap.values())
+      .sort((a, b) => b.date.localeCompare(a.date));
   }, [stylistKey, rawAppointments]);
 
-  if (appointments.length === 0) return null;
+  if (visits.length === 0) return null;
 
   return (
     <motion.div
@@ -389,17 +399,16 @@ function StylistAppointmentList({ stylistKey, rawAppointments }: { stylistKey: s
       className="overflow-hidden"
     >
       <div className="pl-12 pr-2 py-1 space-y-0.5">
-        {appointments.map((apt, i) => {
-          const tip = apt.tip_amount ?? 0;
-          const dateStr = new Date(apt.appointment_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+        {visits.map((visit, i) => {
+          const dateStr = new Date(visit.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
           return (
             <div key={i} className="flex items-center gap-2 py-0.5 text-xs">
               <span className="text-muted-foreground min-w-[50px]">{dateStr}</span>
-              <span className="text-foreground truncate flex-1">{apt.service_name || 'Service'}</span>
+              <span className="text-foreground truncate flex-1">{visit.services.join(', ') || 'Service'}</span>
               <span className="font-display tabular-nums min-w-[45px] text-right">
-                <BlurredAmount>{fmtCurrency(tip)}</BlurredAmount>
+                <BlurredAmount>{fmtCurrency(visit.tip)}</BlurredAmount>
               </span>
-              {tip === 0 && (
+              {visit.tip === 0 && (
                 <span className="text-destructive text-[10px] min-w-[35px]">no tip</span>
               )}
             </div>
