@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { TrendingUp, TrendingDown, Users, User, DollarSign, ChevronRight, ChevronDown, Clock, MapPin } from 'lucide-react';
+import { TrendingUp, TrendingDown, Users, User, DollarSign, ChevronRight, ChevronDown, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { tokens } from '@/lib/design-tokens';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -220,12 +220,12 @@ export function TipsDrilldownPanel({ isOpen, parentLocationId, dateFrom, dateTo 
                     <div className="flex items-center gap-3 text-xs text-muted-foreground">
                       <span>
                         Overall Avg Tip Rate:{' '}
-                        <span className="font-display text-foreground tracking-wide">{avgTipRate.toFixed(1)}%</span>
+                        <span className="font-sans tabular-nums text-foreground">{avgTipRate.toFixed(1)}%</span>
                       </span>
                       <span className="text-border">|</span>
                       <span>
                         Total Tips:{' '}
-                        <span className="font-display text-foreground tracking-wide">
+                        <span className="font-sans tabular-nums text-foreground">
                           <BlurredAmount>{formatCurrencyWhole(Math.round(totalTipsSum))}</BlurredAmount>
                         </span>
                       </span>
@@ -371,6 +371,7 @@ interface VisitGroup {
   startTime: string | null;
   locationId: string | null;
   totalPrice: number;
+  totalPayment: number;
   clientName: string | null;
 }
 
@@ -400,6 +401,7 @@ function StylistAppointmentList({ stylistKey, rawAppointments, locations, client
         if (a.service_name && !existing.services.some(s => s.name === a.service_name)) {
           existing.services.push({ name: a.service_name, price });
           existing.totalPrice += price;
+          existing.totalPayment += price;
         }
       } else {
         const clientId = a.phorest_client_id;
@@ -411,6 +413,7 @@ function StylistAppointmentList({ stylistKey, rawAppointments, locations, client
           startTime: a.start_time ?? null,
           locationId: a.location_id ?? null,
           totalPrice: price,
+          totalPayment: price + tip,
           clientName,
         });
       }
@@ -438,36 +441,41 @@ function StylistAppointmentList({ stylistKey, rawAppointments, locations, client
           const locName = visit.locationId ? locationMap.get(visit.locationId) : null;
 
           return (
-            <div key={i} className="rounded-lg bg-muted/20 border border-border/20 px-3 py-2">
-              {/* Visit header */}
-              <div className="flex items-center justify-between gap-2 text-xs">
-                <div className="flex items-center gap-1.5 text-muted-foreground min-w-0">
-                  <Clock className="w-3 h-3 flex-shrink-0" />
-                   <span>{dateStr}</span>
-                   {timeStr && <span>{timeStr}</span>}
-                   {visit.clientName && (
-                     <>
-                       <span className="text-border">·</span>
-                       <User className="w-3 h-3 flex-shrink-0" />
-                       <span className="truncate text-foreground">{visit.clientName}</span>
-                     </>
-                   )}
-                   {locName && (
-                     <>
-                       <span className="text-border">·</span>
-                       <MapPin className="w-3 h-3 flex-shrink-0" />
-                       <span className="truncate">{locName}</span>
-                     </>
-                   )}
-                </div>
-                <div className="flex items-center gap-3 flex-shrink-0 font-display tabular-nums">
-                  <span className="text-muted-foreground">
-                    Total: <BlurredAmount>{fmtCurrency(visit.totalPrice)}</BlurredAmount>
-                  </span>
-                  <span className={visit.tip === 0 ? 'text-destructive' : 'text-foreground'}>
-                    Tip: <BlurredAmount>{fmtCurrency(visit.tip)}</BlurredAmount>
-                  </span>
-                </div>
+            <div key={i} className="rounded-lg bg-muted/20 border border-border/20 px-3 py-2 font-sans">
+              {/* Row 1: Date · Time · Client · Location */}
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0 flex-wrap">
+                <Clock className="w-3 h-3 flex-shrink-0" />
+                <span>{dateStr}</span>
+                {timeStr && (
+                  <>
+                    <span className="text-border">·</span>
+                    <span>{timeStr}</span>
+                  </>
+                )}
+                {visit.clientName && (
+                  <>
+                    <span className="text-border">·</span>
+                    <span className="truncate text-foreground">{visit.clientName}</span>
+                  </>
+                )}
+                {locName && (
+                  <>
+                    <span className="text-border">·</span>
+                    <span className="truncate">{locName}</span>
+                  </>
+                )}
+              </div>
+              {/* Row 2: Services total · Tip · Total Paid */}
+              <div className="flex items-center gap-4 mt-1 text-xs tabular-nums">
+                <span className="text-muted-foreground">
+                  Services: <span className="text-foreground"><BlurredAmount>{fmtCurrency(visit.totalPrice)}</BlurredAmount></span>
+                </span>
+                <span className={visit.tip === 0 ? 'text-destructive' : 'text-muted-foreground'}>
+                  Tip: <span className={visit.tip > 0 ? 'text-foreground' : ''}><BlurredAmount>{fmtCurrency(visit.tip)}</BlurredAmount></span>
+                </span>
+                <span className="text-muted-foreground">
+                  Total Paid: <span className="text-foreground font-medium"><BlurredAmount>{fmtCurrency(visit.totalPayment)}</BlurredAmount></span>
+                </span>
               </div>
               {/* Service line items */}
               {visit.services.length > 0 && (
@@ -531,7 +539,7 @@ function StylistTipRow({ stylist, index, isCoaching = false, isExpanded, onToggl
         <span className="text-sm text-foreground font-medium min-w-[90px] truncate">
           {stylist.displayName}
         </span>
-        <span className="text-sm font-display tabular-nums min-w-[55px] text-right">
+        <span className="text-sm font-sans tabular-nums min-w-[55px] text-right">
           <BlurredAmount>{fmtCurrency(stylist.avgTip)}</BlurredAmount>
         </span>
         <span className="text-xs text-muted-foreground tabular-nums min-w-[40px] text-right">
@@ -593,7 +601,7 @@ function TotalTipRow({ stylist, index, isExpanded, onToggle, rawAppointments, lo
         <span className="text-sm text-foreground font-medium min-w-[90px] truncate">
           {stylist.displayName}
         </span>
-        <span className="text-sm font-display tabular-nums min-w-[55px] text-right">
+        <span className="text-sm font-sans tabular-nums min-w-[55px] text-right">
           <BlurredAmount>{fmtWhole(Math.round(stylist.totalTips))}</BlurredAmount>
         </span>
         <span className="text-xs text-muted-foreground tabular-nums min-w-[40px] text-right">
