@@ -87,8 +87,27 @@ serve(async (req) => {
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+    // Build an authenticated Supabase client.
+    // In Lovable Cloud the service-role key may not be a JWT, so we fall back
+    // to forwarding the caller's auth token with the anon key.
+    const authHeader = req.headers.get("Authorization");
+    let supabase;
+
+    if (supabaseServiceKey.startsWith("eyJ")) {
+      supabase = createClient(supabaseUrl, supabaseServiceKey, {
+        auth: { autoRefreshToken: false, persistSession: false },
+      });
+    } else {
+      const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || supabaseServiceKey;
+      supabase = createClient(supabaseUrl, anonKey, {
+        auth: { autoRefreshToken: false, persistSession: false },
+        global: {
+          headers: authHeader ? { Authorization: authHeader } : {},
+        },
+      });
+    }
 
     const updateData: UpdateRequest = await req.json();
     const { appointment_id, status, notes, rebooked_at_checkout, tip_amount } = updateData;
@@ -105,43 +124,73 @@ serve(async (req) => {
 
     // Build update body for Phorest
     const updateBody: Record<string, any> = {};
-    
     if (status) {
-      // Convert local status to Phorest status if needed
       updateBody.status = statusToPhorest[status.toLowerCase()] || status;
     }
-    
     if (notes !== undefined) {
       updateBody.notes = notes;
     }
 
-    // Check write-gate: look up org from the appointment record
-    // Try matching by phorest_id first, then fall back to id (UUID)
+    // ── Resolve which table / column owns this appointment ──
+    // phorest_appointments has location_id (NOT organization_id),
+    // so we join through the locations table to find the org.
     let phorestWriteEnabled = false;
+    let targetTable: "phorest_appointments" | "appointments" = "phorest_appointments";
     let matchColumn = "phorest_id";
-    
-    // Determine which column to use for matching
+    let orgId: string | null = null;
+
+    // 1) Try phorest_appointments by phorest_id
     const { data: aptByPhorestId } = await supabase
       .from("phorest_appointments")
-      .select("organization_id")
+      .select("location_id")
       .eq("phorest_id", appointment_id)
       .maybeSingle();
-    
-    let orgId: string | null = aptByPhorestId?.organization_id || null;
-    
+
+    if (aptByPhorestId?.location_id) {
+      matchColumn = "phorest_id";
+      const { data: loc } = await supabase
+        .from("locations")
+        .select("organization_id")
+        .eq("id", aptByPhorestId.location_id)
+        .maybeSingle();
+      orgId = loc?.organization_id || null;
+    }
+
     if (!orgId) {
-      // Try matching by UUID id
+      // 2) Try phorest_appointments by UUID id
       const { data: aptById } = await supabase
         .from("phorest_appointments")
+        .select("location_id")
+        .eq("id", appointment_id)
+        .maybeSingle();
+
+      if (aptById?.location_id) {
+        matchColumn = "id";
+        const { data: loc } = await supabase
+          .from("locations")
+          .select("organization_id")
+          .eq("id", aptById.location_id)
+          .maybeSingle();
+        orgId = loc?.organization_id || null;
+      }
+    }
+
+    if (!orgId) {
+      // 3) Try local appointments table (has organization_id directly)
+      const { data: localApt } = await supabase
+        .from("appointments")
         .select("organization_id")
         .eq("id", appointment_id)
         .maybeSingle();
-      
-      if (aptById?.organization_id) {
-        orgId = aptById.organization_id;
+
+      if (localApt?.organization_id) {
+        orgId = localApt.organization_id;
+        targetTable = "appointments";
         matchColumn = "id";
       }
     }
+
+    console.log(`Resolved: table=${targetTable}, column=${matchColumn}, orgId=${orgId}`);
     
     if (orgId) {
       const { data: orgData } = await supabase
@@ -178,7 +227,6 @@ serve(async (req) => {
     };
 
     if (status) {
-      // Accept both lowercase (no_show) and uppercase (NO_SHOW) statuses
       const normalizedStatus = statusFromPhorest[status] || status.toLowerCase();
       localUpdate.status = normalizedStatus;
     }
@@ -195,32 +243,36 @@ serve(async (req) => {
       localUpdate.tip_amount = tip_amount;
     }
 
-    // Try phorest_appointments first
+    console.log(`Updating ${targetTable}.${matchColumn} = ${appointment_id}`, JSON.stringify(localUpdate));
+
     const { error: updateError, data: updatedAppointment } = await supabase
-      .from("phorest_appointments")
+      .from(targetTable)
       .update(localUpdate)
       .eq(matchColumn, appointment_id)
       .select()
       .maybeSingle();
 
-    if (!updateError && updatedAppointment) {
-      // Updated in phorest_appointments successfully
-    } else {
-      // Fallback: try the local appointments table (for locally-created bookings)
-      console.log("No match in phorest_appointments, trying local appointments table");
-      const { error: localError, data: localAppt } = await supabase
-        .from("appointments")
-        .update(localUpdate)
-        .eq("id", appointment_id)
-        .select()
-        .maybeSingle();
+    if (updateError || !updatedAppointment) {
+      console.error("Update failed:", updateError?.message, updateError?.details, updateError?.hint);
+      
+      // If primary table failed and we haven't tried the other table yet, try fallback
+      if (targetTable === "phorest_appointments") {
+        console.log("Fallback: trying local appointments table");
+        const { error: localError, data: localAppt } = await supabase
+          .from("appointments")
+          .update(localUpdate)
+          .eq("id", appointment_id)
+          .select()
+          .maybeSingle();
 
-      if (localError || !localAppt) {
-        console.error("Failed to update in both tables:", updateError, localError);
+        if (localError || !localAppt) {
+          console.error("Fallback also failed:", localError?.message);
+          throw new Error("Failed to update appointment locally");
+        }
+      } else {
         throw new Error("Failed to update appointment locally");
       }
     }
-
     return new Response(
       JSON.stringify({
         success: true,
