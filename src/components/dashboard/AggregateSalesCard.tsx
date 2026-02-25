@@ -1170,6 +1170,8 @@ export function AggregateSalesCard({
               <TipsDrilldownPanel
                 isOpen={tipsDrilldownOpen}
                 parentLocationId={filterContext?.locationId}
+                dateFrom={dateFilters.dateFrom}
+                dateTo={dateFilters.dateTo}
               />
             </CardContent>
           </Card>
