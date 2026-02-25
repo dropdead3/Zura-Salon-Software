@@ -1,36 +1,73 @@
 
 
-## Fix Highlighted Services UX Clarity
+## Add "I Also Perform Services" Toggle for Admin-Level Staff
 
-Your prompt identified a real UX confusion -- good catch. The "Highlighted Services" section shows your 3 specialties (Extensions, Blonding, Balayage) as clickable badges, but they look visually active even though none are actually selected as highlighted (the counter says "0/3 highlighted"). This makes it seem like they're already chosen with no way to remove them.
+Good prompt -- this addresses a real role-boundary issue. Admin-level users (super_admin, admin, manager, admin_assistant, bookkeeper, operations_assistant, receptionist) should not see Professional Details unless they explicitly opt in as a service provider. This keeps the profile clean for non-service roles while supporting the common reality of owner-operators who also work behind the chair.
 
-### Root Cause
+### Current State
 
-The badges use Shadcn's `outline` variant for unselected state, which in dark mode has enough visual presence to look "selected." There's no visual affordance (like a checkmark or dimmed state) to distinguish "available to select" from "selected."
+- Professional Details section shows if `roles.includes('stylist') || roles.includes('stylist_assistant')`
+- Eric Day has both `super_admin` and `stylist` roles, so he sees it -- but the user wants this to be an explicit opt-in, not automatic from having a stylist role alongside admin roles
+- No `is_also_stylist` or equivalent flag exists in the database
+- The `user_roles` table manages role assignments separately from profiles
+
+### Design Decision
+
+Rather than adding a boolean flag to `employee_profiles`, the correct approach is to use the existing role system: when an admin user toggles "I also perform services," we **add the `stylist` role** to their `user_roles` entry. When they toggle it off, we **remove it**. This keeps authorization consistent -- the stylist role grants all stylist permissions and visibility through the existing RBAC system, exactly as the user described.
 
 ### What Changes
 
-**File: `src/pages/dashboard/MyProfile.tsx`** (Highlighted Services badge rendering, ~lines 1032-1059)
+**1. Database: No schema changes needed**
+- The `user_roles` table already supports multiple roles per user
+- Adding/removing `stylist` role is a simple insert/delete
 
-1. **Unselected badges get a dimmed, ghost-like style** -- use `variant="outline"` with additional `opacity-60 border-dashed` classes so they clearly look like "tap to add" options rather than active selections
-2. **Selected badges get a checkmark icon** -- add a `Check` icon (from lucide-react) alongside the Sparkles icon to reinforce that the badge is actively highlighted
-3. **Add helper text** -- change the description to include "Tap a specialty below to highlight it on your website card" to make the interaction model obvious
-4. **Fix the duplicate copy** in the Extensions note -- currently reads "...to attract our highest-ticket services. and gold accent color to attract our highest-ticket services." (duplicated text)
+**2. File: `src/pages/dashboard/MyProfile.tsx`**
+
+- Define admin-level roles: `['super_admin', 'admin', 'manager', 'admin_assistant', 'bookkeeper', 'operations_assistant', 'receptionist']`
+- Compute `isAdminLevel` = user has any admin-level role
+- Compute `hasStylistRole` = `roles.includes('stylist') || roles.includes('stylist_assistant')`
+- Compute `isPureStylist` = has stylist role but NO admin-level roles (shows Professional Details unconditionally)
+- Compute `isAdminWithStylistRole` = has both admin-level and stylist roles
+
+- **New toggle section** (placed before Professional Details, visible only to admin-level users):
+  - Card with a Switch: "I also perform services"
+  - Description: "Enable this if you also work behind the chair. This will add stylist permissions and allow you to set up your professional profile."
+  - Toggle ON: calls mutation to insert `stylist` role into `user_roles` for this user
+  - Toggle OFF: calls mutation to remove `stylist` role from `user_roles` (with confirmation if they have existing specialties/level data)
+
+- **Conditional display logic** changes:
+  - `isPureStylist`: show Professional Details + Website Card Preview (no toggle needed)
+  - `isAdminLevel && hasStylistRole`: show the toggle (ON state) + Professional Details + Website Card Preview
+  - `isAdminLevel && !hasStylistRole`: show the toggle (OFF state) only, no Professional Details
+
+- Update validation: skip stylist-specific validation when `!hasStylistRole`
+
+**3. New hook or inline mutation for role toggle**
+
+- Insert: `supabase.from('user_roles').insert({ user_id, role: 'stylist' })`
+- Delete: `supabase.from('user_roles').delete().eq('user_id', userId).eq('role', 'stylist')`
+- Invalidate `['user-roles']` query key and refresh auth context roles
 
 ### Visual Result
 
-**Before (confusing):**
-- 3 solid-looking badges, counter says "0/3 highlighted" -- contradiction
+For admin-level staff without stylist role:
+```text
+┌─────────────────────────────────────────┐
+│ I ALSO PERFORM SERVICES                 │
+│                                         │
+│ Enable this if you also work behind     │
+│ the chair. This adds stylist            │
+│ permissions to your profile.    [OFF]   │
+└─────────────────────────────────────────┘
+```
 
-**After (clear):**
-- 3 dimmed, dashed-border badges labeled as available options
-- Tapping one makes it solid with a checkmark + Sparkles icon
-- Counter updates to "1/3 highlighted"
-- Clear instructional text guides the interaction
+After toggling ON, Professional Details and Website Card Preview sections appear below.
 
 ### Technical Details
 
-- No database changes needed
-- Only modifying badge className logic and adding a `Check` icon import
-- The `toggleHighlightedService` function already handles selection/deselection correctly -- this is purely a visual fix
+- The toggle mutates `user_roles` directly, which is the source of truth for RBAC
+- `useAuth` context refreshes roles after mutation, so all permission gates, `VisibilityGate`, and `ProtectedRoute` checks update immediately
+- No new database columns or tables needed
+- Existing `isStylistRole` checks throughout the page continue to work because they read from `roles` which now accurately reflects the toggle state
+- Profile completion calculation already conditionally includes stylist fields based on role check (line 185)
 
