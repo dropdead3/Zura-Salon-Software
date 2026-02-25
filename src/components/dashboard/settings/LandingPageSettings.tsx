@@ -82,9 +82,6 @@ export function LandingPageSettings() {
                       </Badge>
                     )}
                   </div>
-                  <span className="text-xs text-muted-foreground font-mono">
-                    {option.path}
-                  </span>
                 </Label>
               </div>
             );
