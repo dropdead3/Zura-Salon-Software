@@ -36,7 +36,11 @@ import {
   FileText,
   Settings,
   LayoutTemplate,
+  ChevronsRight,
+  Search,
+  Layers,
 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   useWebsiteSections,
   useUpdateWebsiteSections,
@@ -115,6 +119,7 @@ interface WebsiteEditorSidebarProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
   collapsed?: boolean;
+  onToggleCollapse?: () => void;
   onSectionsChange?: (sections: SectionConfig[]) => void;
   selectedPageId?: string;
   onPageChange?: (pageId: string) => void;
@@ -133,6 +138,7 @@ export function WebsiteEditorSidebar({
   activeTab,
   onTabChange,
   collapsed = false,
+  onToggleCollapse,
   onSectionsChange,
   selectedPageId = 'home',
   onPageChange,
@@ -347,7 +353,98 @@ export function WebsiteEditorSidebar({
   // Non-home page delete target
   const [pageDeleteTarget, setPageDeleteTarget] = useState<SectionConfig | null>(null);
 
-  if (collapsed) return null;
+  if (collapsed) {
+    return (
+      <div className="h-full flex flex-col bg-background border-r py-2">
+        {/* Collapsed page icon */}
+        <div className="px-2 mb-2">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={onToggleCollapse}
+                className="w-full flex items-center justify-center p-2 rounded-lg hover:bg-muted/60 text-muted-foreground"
+              >
+                <FileText className="h-4 w-4" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              {selectedPage?.title ?? 'Pages'}
+            </TooltipContent>
+          </Tooltip>
+        </div>
+
+        {/* Collapsed search icon */}
+        <div className="px-2 mb-2">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={onToggleCollapse}
+                className="w-full flex items-center justify-center p-2 rounded-lg hover:bg-muted/60 text-muted-foreground"
+              >
+                <Search className="h-4 w-4" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right">Search</TooltipContent>
+          </Tooltip>
+        </div>
+
+        <Separator className="my-1 mx-2" />
+
+        {/* Site Content icons */}
+        {isHomePage && (
+          <div className="px-2 space-y-0.5 mb-2">
+            {SITE_CONTENT_ITEMS.map(item => (
+              <ContentNavItem
+                key={item.tab}
+                label={item.label}
+                icon={item.icon}
+                isActive={activeTab === item.tab}
+                onSelect={() => onTabChange(item.tab)}
+                collapsed
+              />
+            ))}
+          </div>
+        )}
+
+        {isHomePage && <Separator className="my-1 mx-2" />}
+
+        {/* Homepage Layout icon */}
+        {isHomePage && (
+          <div className="px-2 mb-1">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={onToggleCollapse}
+                  className="w-full flex items-center justify-center p-2 rounded-lg hover:bg-muted/60 text-muted-foreground"
+                >
+                  <Layers className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right">Homepage Layout</TooltipContent>
+            </Tooltip>
+          </div>
+        )}
+
+        {/* Spacer */}
+        <div className="flex-1" />
+
+        {/* Expand toggle */}
+        <div className="px-2 pt-2 border-t">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={onToggleCollapse}
+                className="w-full flex items-center justify-center p-2 rounded-lg hover:bg-muted/60 text-muted-foreground"
+              >
+                <ChevronsRight className="h-4 w-4" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right">Expand sidebar</TooltipContent>
+          </Tooltip>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (

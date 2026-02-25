@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { Button } from '@/components/ui/button';
 import { tokens } from '@/lib/design-tokens';
+import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { 
   LayoutGrid,
@@ -185,7 +186,19 @@ export default function WebsiteSectionsHub() {
   const orgSlug = contextSlug || fallbackSlug;
   const defaultTab = searchParams.get('tab') || 'hero';
   const [activeTab, setActiveTab] = useState(defaultTab);
-  const [showSidebar, setShowSidebar] = useState(true);
+  const [sidebarMode, setSidebarMode] = useState<'expanded' | 'collapsed'>(() => {
+    const saved = localStorage.getItem('website-editor-sidebar-mode');
+    return saved === 'collapsed' ? 'collapsed' : 'expanded';
+  });
+
+  // Persist sidebar mode
+  useEffect(() => {
+    localStorage.setItem('website-editor-sidebar-mode', sidebarMode);
+  }, [sidebarMode]);
+
+  const toggleSidebarMode = useCallback(() => {
+    setSidebarMode(prev => prev === 'expanded' ? 'collapsed' : 'expanded');
+  }, []);
   
   const [pendingTab, setPendingTab] = useState<string | null>(null);
   const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
@@ -194,6 +207,7 @@ export default function WebsiteSectionsHub() {
   const [isSaving, setIsSaving] = useState(false);
   const dirtyToastShownRef = useRef(false);
   const isMobile = useIsMobile();
+  const [showMobileSidebar, setShowMobileSidebar] = useState(false);
 
   // Multi-page state
   const [selectedPageId, setSelectedPageId] = useState('home');
@@ -726,11 +740,16 @@ export default function WebsiteSectionsHub() {
     <DashboardLayout hideFooter hideTopBar>
       <div className="h-[calc(100vh-8rem)] flex">
         {/* Fixed-width Sidebar */}
-        {!isMobile && showSidebar && (
-          <div className="w-[300px] flex-shrink-0 border-r overflow-auto">
+        {!isMobile && (
+          <div className={cn(
+            'flex-shrink-0 border-r overflow-auto transition-all duration-200',
+            sidebarMode === 'expanded' ? 'w-[300px]' : 'w-14'
+          )}>
             <WebsiteEditorSidebar
               activeTab={activeTab}
               onTabChange={handleTabChange}
+              collapsed={sidebarMode === 'collapsed'}
+              onToggleCollapse={toggleSidebarMode}
               onSectionsChange={handleSectionsChange}
               selectedPageId={selectedPageId}
               onPageChange={handlePageChange}
@@ -752,22 +771,22 @@ export default function WebsiteSectionsHub() {
             variant="default"
             size={tokens.button.card}
             className="fixed bottom-20 right-4 z-50 rounded-full shadow-lg h-12 w-12 p-0"
-            onClick={() => setShowSidebar(prev => !prev)}
+            onClick={() => setShowMobileSidebar(prev => !prev)}
           >
             <LayoutGrid className="h-5 w-5" />
           </Button>
         )}
 
         {/* Mobile sidebar drawer */}
-        {isMobile && showSidebar && (
-          <div className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm" onClick={() => setShowSidebar(false)}>
+        {isMobile && showMobileSidebar && (
+          <div className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm" onClick={() => setShowMobileSidebar(false)}>
             <div
               className="absolute left-0 top-0 bottom-0 w-[320px] bg-background border-r shadow-xl overflow-auto"
               onClick={e => e.stopPropagation()}
             >
               <WebsiteEditorSidebar
                 activeTab={activeTab}
-                onTabChange={(tab) => { handleTabChange(tab); setShowSidebar(false); }}
+                onTabChange={(tab) => { handleTabChange(tab); setShowMobileSidebar(false); }}
                 onSectionsChange={handleSectionsChange}
                 selectedPageId={selectedPageId}
                 onPageChange={handlePageChange}
@@ -796,10 +815,10 @@ export default function WebsiteSectionsHub() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => setShowSidebar(prev => !prev)}
+                      onClick={toggleSidebarMode}
                       className="h-8 w-8 flex-shrink-0"
                     >
-                      {showSidebar ? (
+                      {sidebarMode === 'expanded' ? (
                         <PanelLeftClose className="h-4 w-4" />
                       ) : (
                         <PanelLeftOpen className="h-4 w-4" />

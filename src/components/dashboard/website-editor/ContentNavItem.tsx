@@ -1,5 +1,6 @@
 import { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface ContentNavItemProps {
   label: string;
@@ -7,6 +8,7 @@ interface ContentNavItemProps {
   icon: LucideIcon;
   isActive: boolean;
   onSelect: () => void;
+  collapsed?: boolean;
 }
 
 export function ContentNavItem({
@@ -15,7 +17,29 @@ export function ContentNavItem({
   icon: Icon,
   isActive,
   onSelect,
+  collapsed = false,
 }: ContentNavItemProps) {
+  if (collapsed) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            onClick={onSelect}
+            className={cn(
+              'w-full flex items-center justify-center p-2 rounded-lg cursor-pointer transition-all',
+              isActive
+                ? 'bg-primary/10 text-primary'
+                : 'hover:bg-muted/60 text-muted-foreground'
+            )}
+          >
+            <Icon className="h-4 w-4" />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="right">{label}</TooltipContent>
+      </Tooltip>
+    );
+  }
+
   return (
     <button
       onClick={onSelect}
