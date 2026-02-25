@@ -1,61 +1,88 @@
 
 
-## "I Am On-Site Staff" Toggle for Admin Profiles
+## Enhance Toasts and Floating Save Bars to Luxury Glass Styling
 
-Great thinking. You're right that the Preferred Work Schedule section assumes everyone with assigned locations works on-site during operating hours. But admin-level staff (owners, bookkeepers, operations assistants, etc.) may work remotely or outside operating hours, making a location-constrained day picker irrelevant or misleading.
+Your prompt is well-targeted -- the screenshot shows the MyProfile floating save bar which uses a solid `bg-primary` pill that doesn't match the glass aesthetic used everywhere else. Good eye for consistency.
 
-### Current Behavior
+There are **four distinct surfaces** that need the luxury treatment, spread across multiple files:
 
-- The Preferred Work Schedule card appears for **anyone** who has `location_ids` assigned (line 873: `formData.location_ids.length > 0`).
-- It enforces location operating hours constraints (closed days are blocked).
-- Admin-level users who manage locations but don't physically work there are forced into a schedule that doesn't reflect their reality.
+### 1. Sonner Toasts (Global -- already partially glass)
 
-### Proposed Solution
+**File: `src/components/ui/sonner.tsx`**
 
-Add an **"I work on-site"** toggle for admin-level users. This controls whether the Preferred Work Schedule section is shown.
+The Sonner toaster is already using `bg-background/70 backdrop-blur-xl rounded-xl` which is close, but needs:
+- Upgrade `rounded-xl` to `rounded-full` for the pill shape matching the platform's top nav and button aesthetics
+- Enhance shadow to the luxury depth shadow used on floating panels
+- Add subtle border glow: `border-border/40`
+- Action buttons: upgrade from `rounded-lg` to `rounded-full` to match pill style
 
-**File: `src/pages/dashboard/MyProfile.tsx`**
+### 2. Radix Toast (Legacy -- fully unstyled)
 
-1. **New state field**: Add `is_onsite_staff: boolean` to `formData`, defaulting to `true` for users with stylist roles, `false` for pure admins.
-2. **New toggle card** (placed before the Preferred Work Schedule card, after Location assignment): For admin-level users, show a toggle:
-   - Label: **"I WORK ON-SITE"** (font-display, tracking-wide)
-   - Description: "Enable this if you work at a location during operating hours. This lets you set your preferred work schedule."
-   - When OFF: hide the Preferred Work Schedule card entirely and clear any saved schedule data on save.
-3. **Conditional rendering**: The Preferred Work Schedule card shows only when `formData.location_ids.length > 0 && (!isAdminLevel || formData.is_onsite_staff)`.
-4. **Pure stylists**: The toggle is hidden -- they are always on-site by definition. `is_onsite_staff` defaults to `true` for them.
-5. **Profile completion**: The "Work Days" field in `profileFields` only counts as required when the user is on-site staff.
+**File: `src/components/ui/toast.tsx`**
 
-**Database: `employee_profiles` table**
+The radix toast variants use `rounded-md` and flat `bg-background`. Update:
+- Base variant: `rounded-full bg-background/70 backdrop-blur-xl shadow-[0_16px_40px_-18px_hsl(var(--foreground)/0.25)] border-border/40`
+- Destructive variant: same glass treatment with destructive color accents
+- Action button: `rounded-full`
+- Close button: `rounded-full`
 
-- Add column `is_onsite_staff BOOLEAN NOT NULL DEFAULT true` -- defaults to true so existing staff are unaffected.
-- Saved alongside other profile fields on form submit.
+### 3. MyProfile Floating Save Bar (the one in the screenshot)
 
-### Implications and Cascading Effects
+**File: `src/pages/dashboard/MyProfile.tsx` (lines 1382-1433)**
 
-| Area | Impact | Action |
-|---|---|---|
-| **Work Schedule Widget** (`WorkScheduleWidgetCompact`) | Shows schedule for all users -- remote admins would see empty/irrelevant data | Conditionally hide or show "Not on-site" state when `is_onsite_staff = false` |
-| **Schedule/Calendar views** | Staff without on-site designation shouldn't appear in provider columns | Filter schedule views by `is_onsite_staff` when listing available providers |
-| **Profile completion %** | "Work Days" field shouldn't be required for remote admins | Make work_days conditional on `is_onsite_staff` |
-| **Team Directory** | Could surface on-site vs remote status for leadership visibility | Future enhancement: badge or indicator |
-| **Booking flow** | Only on-site staff should be bookable | Already gated by `is_booking` flag + stylist role, so no conflict |
+Currently: `bg-primary text-primary-foreground rounded-xl` -- solid, opaque, no glass.
 
-### What Changes
+Update to:
+- Outer container: `bg-card/80 backdrop-blur-xl rounded-full shadow-[0_16px_40px_-18px_hsl(var(--foreground)/0.25)] border border-border/40`
+- Text color: `text-foreground` (not primary-foreground)
+- Pulse dot: `bg-primary animate-pulse`
+- Discard button: ghost with `rounded-full hover:bg-muted/60`
+- Save button: `bg-primary text-primary-foreground rounded-full` (primary pill CTA)
 
-**Database migration:**
-- Add `is_onsite_staff` column to `employee_profiles`
+### 4. NotificationPreferences Floating Save Bar
 
-**File: `src/pages/dashboard/MyProfile.tsx`:**
-- Add `is_onsite_staff` to form state, load from profile
-- Add "I Work On-Site" toggle card for admin-level users (between Location and Work Schedule cards)
-- Gate Preferred Work Schedule visibility on `is_onsite_staff` for admins
-- Update `profileFields` to make work_days conditional
+**File: `src/pages/dashboard/NotificationPreferences.tsx` (lines 407-436)**
 
-**File: `src/components/dashboard/WorkScheduleWidgetCompact.tsx`:**
-- Show a clean "Not on-site" state when `profile.is_onsite_staff === false`
+Currently: `bg-background/95 backdrop-blur border-t shadow-lg` -- uses a full-width bar with hard border-top. Doesn't match the floating pill aesthetic.
+
+Update to match the same floating centered pill pattern as MyProfile:
+- Remove `border-t` full-width approach
+- Wrap in a centered max-width container
+- Apply: `bg-card/80 backdrop-blur-xl rounded-full shadow-[0_16px_40px_-18px_hsl(var(--foreground)/0.25)] border border-border/40`
+- Buttons: `rounded-full` pill style
+
+### 5. SmartActionToast Container
+
+**File: `src/components/team-chat/SmartActionToast.tsx`**
+
+The Card uses standard `rounded-xl shadow-lg border-l-4`. Update:
+- Remove `border-l-4` accent (doesn't match glass aesthetic)
+- Apply: `bg-card/80 backdrop-blur-xl rounded-2xl shadow-[0_16px_40px_-18px_hsl(var(--foreground)/0.25)] border border-border/40`
+- Action buttons: `rounded-full`
+
+### 6. Inline Unsaved Changes Bars (secondary priority)
+
+Two additional inline bars that should get the glass treatment for consistency:
+
+- **`ReorderableStylistList.tsx`** (line 207): `bg-muted rounded-lg` -- update to `bg-card/80 backdrop-blur-xl rounded-full border border-border/40`
+- **`PlatformAppearanceTab.tsx`** (lines 214-243): amber conditional bar -- update to glass pill with amber accent dot instead of full amber background
 
 ### What Does Not Change
-- Pure stylists always see the schedule picker (they're on-site by definition)
-- No changes to booking flow or calendar provider filtering (those use separate flags)
-- Existing profiles default to `is_onsite_staff = true` so nothing breaks
+- Toast logic, hooks, or state management
+- Animation physics (framer-motion springs stay the same)
+- Save/discard functionality
+- No new components -- all updates are in-place styling
+
+### Technical Detail
+
+The consistent glass floating pill recipe across all surfaces:
+
+```text
+Container:  bg-card/80 backdrop-blur-xl rounded-full border border-border/40
+Shadow:     shadow-[0_16px_40px_-18px_hsl(var(--foreground)/0.25)]
+Text:       text-foreground / text-muted-foreground
+CTA Button: bg-primary text-primary-foreground rounded-full
+Ghost Btn:  rounded-full hover:bg-muted/60
+Pulse Dot:  w-2 h-2 rounded-full bg-primary animate-pulse
+```
 
