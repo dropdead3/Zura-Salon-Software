@@ -1,26 +1,64 @@
 
 
-## Add Role Icons to Role Badges in Team Directory
+## Organize View As Team List by Location and Role Hierarchy
 
-The role badges on team member cards currently show only the role label text (e.g., "Stylist", "Receptionist"). The Super Admin and Account Owner badges already include the Crown icon. This change adds the corresponding role icon to all other role badges, using the existing `useRoleUtils` hook which dynamically resolves icons from the database.
+The Team tab in the "View Dashboard As" dropdown currently renders a flat alphabetical list of staff. This change groups members by location first, then sorts by role hierarchy (using `sort_order` from the `roles` table) within each group.
+
+### Current State
+
+- `realUsers` is filtered from `teamMembers` (from `useTeamDirectory`), then sliced to 10
+- Each member has `location_id` (single, nullable) and `location_ids` (array) plus `roles` array
+- Rendered as a flat list with name + primary role label
+- Roles table has `sort_order`: super_admin(1), admin(2), admin_assistant(3), manager(4), bookkeeper(5), operations_assistant(6), receptionist(7), stylist(8), booth_renter(9), stylist_assistant(10)
+- Two locations exist: "North Mesa" and "Val Vista Lakes" -- most staff currently have `location_id: null`
 
 ### What Changes
 
-**File: `src/pages/dashboard/TeamDirectory.tsx`**
+**File: `src/components/dashboard/DashboardLayout.tsx`**
 
-1. Import `useRoleUtils` and `getIconComponent` from `@/hooks/useRoleUtils`
-2. Inside `TeamMemberCard`, call `useRoleUtils()` to get `getRoleIcon`, `getRoleLabel`, and `getRoleBadgeWithBorderClasses`
-3. Update the primary role badge (lines 894-901) to include the role icon component inline before the label, matching the same `w-3 h-3` sizing used by Crown icons on the Super Admin badge
-4. Replace the hardcoded `roleLabels` and `roleColors` maps with the dynamic `useRoleUtils` functions for the primary role badge, so badge colors and labels stay in sync with the database role configuration
+1. Import `useLocations` from `@/hooks/useLocations`
+2. Fetch locations inside `ViewAsToggle` (or use the already-available data)
+3. Replace the flat `realUsers.map(...)` rendering (lines 763-801) with a grouped structure:
+   - Build a role hierarchy map from `ALL_ROLES` (already ordered by `sort_order` from the database)
+   - Group `realUsers` by their `location_id` (members with null location_id go into an "Unassigned" group)
+   - Within each location group, sort members by their highest-priority role (lowest `sort_order`), then alphabetically by name
+   - Render each location as a section header label, followed by its members
+4. Remove the `.slice(0, 10)` limit since grouped display benefits from showing all members (the container already scrolls)
+5. Location section headers: small muted text label (e.g., "North Mesa", "Unassigned") with a subtle top border separator between groups
 
 ### Visual Result
 
-Each role badge will show: `[icon] Label` -- for example, a Scissors icon before "Stylist" and a Phone icon before "Receptionist", consistent with the icon+label pattern already established by the Account Owner and Super Admin badges.
+```text
+┌─────────────────────────────┐
+│ Search team members...      │
+├─────────────────────────────┤
+│ NORTH MESA                  │
+│  👤 Eric Day                │
+│     Super Admin             │
+├─────────────────────────────┤
+│ UNASSIGNED                  │
+│  👤 Alex Day                │
+│     Director Of Operations  │
+│  👤 Kristi Day              │
+│     Super Admin             │
+│  👤 Mallori Schwab          │
+│     Front Desk              │
+│  👤 Julia Gross             │
+│     Front Desk              │
+│  👤 Alexis Heasley          │
+│     Stylist                 │
+│  👤 Brooklyn Colvin         │
+│     Stylist                 │
+│  ...                        │
+└─────────────────────────────┘
+```
 
 ### Technical Details
 
-- The `useRoleUtils` hook already provides `getRoleIcon(roleName)` which returns a Lucide component, and `getRoleBadgeWithBorderClasses(roleName)` for consistent badge styling
-- The hardcoded `roleLabels`, `roleColors` maps at the top of the file are still needed for sorting/filtering logic, but the badge rendering will use the dynamic hook values
-- Icon size: `w-3 h-3` to match existing Crown icons on Super Admin/Owner badges
-- No database changes required -- role icons are already stored in the `roles` table
+- Role sort order is derived from the index position in `ALL_ROLES` (which comes from `useRoleUtils` and is already database-ordered by `sort_order`)
+- For members with multiple roles, the highest-priority role (lowest index in `ALL_ROLES`) determines sort position
+- Location groups are ordered: named locations first (alphabetically), then "Unassigned" last
+- The search filter still applies across all groups
+- Section header uses `font-display text-[10px] tracking-wider text-muted-foreground` (Termina, uppercase per UI Canon)
+- No database changes required
 
