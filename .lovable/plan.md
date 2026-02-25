@@ -1,40 +1,28 @@
 
 
-## Fix: Stale Status Badge After Cancellation
+## Fix: Cancelled Badge Should Use Red/Destructive Styling
 
-The issue is straightforward. `selectedAppointment` in `Schedule.tsx` (line 108) is stored as a `useState` snapshot. When you cancel, the edge function updates the DB and `queryClient.invalidateQueries` refetches the `appointments` array -- but the `selectedAppointment` state object still holds the old data with `status: 'checked_in'`. The detail panel renders from this stale prop.
+The issue is in `src/lib/design-tokens.ts` line 225. The `cancelled` entry in `APPOINTMENT_STATUS_BADGE` uses gray colors (`bg-gray-100`, `text-gray-600`), making it look neutral instead of alerting. It should use red/destructive colors to match the semantic meaning of a cancellation.
 
-### Fix
+### Change
 
-Add a `useEffect` in `Schedule.tsx` that syncs `selectedAppointment` with the live query data whenever `appointments` changes. If the selected appointment exists in the refreshed array, replace the state with the fresh copy. If it no longer appears (e.g., filtered out), keep the current reference so the panel doesn't blank out mid-transition.
+**File:** `src/lib/design-tokens.ts` (line 225)
 
-**File:** `src/pages/dashboard/Schedule.tsx`
-
-After line ~108 (`const [selectedAppointment, setSelectedAppointment] = ...`), add:
+Update the `cancelled` entry from gray to red:
 
 ```typescript
-// Keep selectedAppointment in sync with latest query data
-useEffect(() => {
-  if (selectedAppointment && appointments.length > 0) {
-    const fresh = appointments.find(a => a.id === selectedAppointment.id);
-    if (fresh && fresh.status !== selectedAppointment.status) {
-      setSelectedAppointment(fresh);
-    }
-  }
-}, [appointments]);
+// Before
+cancelled:  { bg: 'bg-gray-100 dark:bg-gray-800/30',   text: 'text-gray-600 dark:text-gray-400',   border: 'border-gray-600/30 dark:border-gray-400/30',   label: 'Cancelled' },
+
+// After
+cancelled:  { bg: 'bg-red-100 dark:bg-red-900/30',    text: 'text-red-800 dark:text-red-300',    border: 'border-red-800/30 dark:border-red-300/30',    label: 'Cancelled' },
 ```
 
-This compares the `status` field specifically to avoid unnecessary re-renders on every query refetch. When the mutation completes and the query invalidates, the fresh appointment object (with `status: 'cancelled'`) replaces the stale one, and the detail panel badge updates immediately.
+This propagates automatically to the Appointments Hub table, the detail drawer, and any other surface consuming `APPOINTMENT_STATUS_BADGE` -- no other files need changes.
 
-### What Does NOT Change
-
-- Mutation logic in `usePhorestCalendar.ts` -- already correctly invalidates queries
-- Edge function -- no changes needed
-- `AppointmentDetailSheet.tsx` -- it correctly reads from the `appointment` prop; the prop was just stale
-
-### One file changed
+### One file, one line changed
 
 | File | Change |
 |---|---|
-| `src/pages/dashboard/Schedule.tsx` | Add useEffect to sync `selectedAppointment` with live query data |
+| `src/lib/design-tokens.ts` | Update `cancelled` badge colors from gray to red |
 
