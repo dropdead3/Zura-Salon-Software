@@ -373,22 +373,38 @@ export function useSalesByStylist(dateFrom?: string, dateTo?: string) {
         .eq('is_active', true);
 
       const mappingLookup: Record<string, { userId: string; name: string; photo?: string }> = {};
+      // Also build a name-only lookup for staff IDs that have a name but no user_id mapping
+      const staffNameLookup: Record<string, string> = {};
       mappings?.forEach(m => {
         const profile = m.employee_profiles as any;
-        mappingLookup[m.phorest_staff_id] = {
-          userId: m.user_id,
-          name: profile?.display_name || profile?.full_name || 'Unknown',
-          photo: profile?.photo_url,
-        };
+        if (m.user_id) {
+          mappingLookup[m.phorest_staff_id] = {
+            userId: m.user_id,
+            name: profile?.display_name || profile?.full_name || 'Unknown',
+            photo: profile?.photo_url,
+          };
+        }
+        // Always store phorest_staff_name for fallback resolution
+      });
+
+      // Fetch all staff names (including unmapped) for fallback name resolution
+      const { data: allStaffMappings } = await supabase
+        .from('phorest_staff_mapping')
+        .select('phorest_staff_id, phorest_staff_name');
+      allStaffMappings?.forEach(m => {
+        if (m.phorest_staff_name) {
+          staffNameLookup[m.phorest_staff_id] = m.phorest_staff_name;
+        }
       });
 
       // Fetch appointments with batch fetching + status filter
       const data = await fetchAllBatched<{
         phorest_staff_id: string | null; total_price: number | null; service_name: string | null;
+        phorest_staff_name: string | null;
       }>((from, to) => {
         let q = supabase
           .from('phorest_appointments')
-          .select('phorest_staff_id, total_price, service_name')
+          .select('phorest_staff_id, total_price, service_name, phorest_staff_name')
           .not('phorest_staff_id', 'is', null)
           .not('total_price', 'is', null)
           .not('status', 'in', '("cancelled","no_show")')
@@ -399,18 +415,24 @@ export function useSalesByStylist(dateFrom?: string, dateTo?: string) {
         return q;
       });
 
-      // Aggregate by user (via phorest_staff_id mapping)
+      // Aggregate by user (via phorest_staff_id mapping), with fallback for unmapped staff
       const byUser: Record<string, any> = {};
       data.forEach(apt => {
-        const mapping = mappingLookup[apt.phorest_staff_id!];
-        if (!mapping) return;
+        const staffId = apt.phorest_staff_id!;
+        const mapping = mappingLookup[staffId];
         
-        const userId = mapping.userId;
+        // Determine aggregation key and display name
+        const userId = mapping ? mapping.userId : `phorest:${staffId}`;
+        const displayName = mapping
+          ? mapping.name
+          : (apt.phorest_staff_name || staffNameLookup[staffId] || `Staff ${staffId.slice(0, 4)}`);
+        const photo = mapping?.photo;
+
         if (!byUser[userId]) {
           byUser[userId] = {
             user_id: userId,
-            name: mapping.name,
-            photo_url: mapping.photo,
+            name: displayName,
+            photo_url: photo,
             totalRevenue: 0,
             serviceRevenue: 0,
             productRevenue: 0,
