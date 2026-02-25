@@ -948,6 +948,7 @@ export type Database = {
           client_notes: string | null
           client_phone: string | null
           created_at: string | null
+          created_by: string | null
           deleted_at: string | null
           deleted_by: string | null
           deposit_amount: number | null
@@ -963,6 +964,7 @@ export type Database = {
           import_job_id: string | null
           import_source: string | null
           imported_at: string | null
+          is_new_client: boolean | null
           is_redo: boolean
           location_id: string | null
           notes: string | null
@@ -970,12 +972,21 @@ export type Database = {
           original_appointment_id: string | null
           original_price: number | null
           payment_method: string | null
+          phorest_client_id: string | null
+          phorest_staff_id: string | null
+          rebook_declined_reason: string | null
           rebooked_at_checkout: boolean | null
+          recurrence_group_id: string | null
+          recurrence_index: number | null
+          recurrence_rule: Json | null
           redo_approved_by: string | null
           redo_pricing_override: number | null
           redo_reason: string | null
           reminder_24h_sent: boolean | null
           reminder_2h_sent: boolean | null
+          rescheduled_at: string | null
+          rescheduled_from_date: string | null
+          rescheduled_from_time: string | null
           service_category: string | null
           service_id: string | null
           service_name: string | null
@@ -995,6 +1006,7 @@ export type Database = {
           client_notes?: string | null
           client_phone?: string | null
           created_at?: string | null
+          created_by?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
           deposit_amount?: number | null
@@ -1010,6 +1022,7 @@ export type Database = {
           import_job_id?: string | null
           import_source?: string | null
           imported_at?: string | null
+          is_new_client?: boolean | null
           is_redo?: boolean
           location_id?: string | null
           notes?: string | null
@@ -1017,12 +1030,21 @@ export type Database = {
           original_appointment_id?: string | null
           original_price?: number | null
           payment_method?: string | null
+          phorest_client_id?: string | null
+          phorest_staff_id?: string | null
+          rebook_declined_reason?: string | null
           rebooked_at_checkout?: boolean | null
+          recurrence_group_id?: string | null
+          recurrence_index?: number | null
+          recurrence_rule?: Json | null
           redo_approved_by?: string | null
           redo_pricing_override?: number | null
           redo_reason?: string | null
           reminder_24h_sent?: boolean | null
           reminder_2h_sent?: boolean | null
+          rescheduled_at?: string | null
+          rescheduled_from_date?: string | null
+          rescheduled_from_time?: string | null
           service_category?: string | null
           service_id?: string | null
           service_name?: string | null
@@ -1042,6 +1064,7 @@ export type Database = {
           client_notes?: string | null
           client_phone?: string | null
           created_at?: string | null
+          created_by?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
           deposit_amount?: number | null
@@ -1057,6 +1080,7 @@ export type Database = {
           import_job_id?: string | null
           import_source?: string | null
           imported_at?: string | null
+          is_new_client?: boolean | null
           is_redo?: boolean
           location_id?: string | null
           notes?: string | null
@@ -1064,12 +1088,21 @@ export type Database = {
           original_appointment_id?: string | null
           original_price?: number | null
           payment_method?: string | null
+          phorest_client_id?: string | null
+          phorest_staff_id?: string | null
+          rebook_declined_reason?: string | null
           rebooked_at_checkout?: boolean | null
+          recurrence_group_id?: string | null
+          recurrence_index?: number | null
+          recurrence_rule?: Json | null
           redo_approved_by?: string | null
           redo_pricing_override?: number | null
           redo_reason?: string | null
           reminder_24h_sent?: boolean | null
           reminder_2h_sent?: boolean | null
+          rescheduled_at?: string | null
+          rescheduled_from_date?: string | null
+          rescheduled_from_time?: string | null
           service_category?: string | null
           service_id?: string | null
           service_name?: string | null
@@ -3716,9 +3749,16 @@ export type Database = {
         Row: {
           address_line1: string | null
           address_line2: string | null
+          archived_at: string | null
+          archived_by: string | null
           average_spend: number | null
+          ban_reason: string | null
+          banned_at: string | null
+          banned_by: string | null
           birthday: string | null
+          branch_name: string | null
           city: string | null
+          client_category: string | null
           client_since: string | null
           country: string | null
           created_at: string | null
@@ -3727,14 +3767,18 @@ export type Database = {
           email_normalized: string | null
           external_id: string | null
           first_name: string
+          first_visit: string | null
           gender: string | null
           id: string
           import_job_id: string | null
           import_source: string | null
           imported_at: string | null
           is_active: boolean | null
+          is_archived: boolean | null
+          is_banned: boolean | null
           is_placeholder: boolean
           is_vip: boolean | null
+          landline: string | null
           last_name: string
           last_visit_date: string | null
           lead_source: string | null
@@ -3748,7 +3792,11 @@ export type Database = {
           phone: string | null
           phone_normalized: string | null
           phorest_client_id: string | null
+          preferred_services: string[] | null
           preferred_stylist_id: string | null
+          prompt_appointment_notes: boolean | null
+          prompt_client_notes: boolean | null
+          referred_by: string | null
           reminder_email_opt_in: boolean | null
           reminder_sms_opt_in: boolean | null
           state: string | null
@@ -3762,9 +3810,16 @@ export type Database = {
         Insert: {
           address_line1?: string | null
           address_line2?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           average_spend?: number | null
+          ban_reason?: string | null
+          banned_at?: string | null
+          banned_by?: string | null
           birthday?: string | null
+          branch_name?: string | null
           city?: string | null
+          client_category?: string | null
           client_since?: string | null
           country?: string | null
           created_at?: string | null
@@ -3773,14 +3828,18 @@ export type Database = {
           email_normalized?: string | null
           external_id?: string | null
           first_name: string
+          first_visit?: string | null
           gender?: string | null
           id?: string
           import_job_id?: string | null
           import_source?: string | null
           imported_at?: string | null
           is_active?: boolean | null
+          is_archived?: boolean | null
+          is_banned?: boolean | null
           is_placeholder?: boolean
           is_vip?: boolean | null
+          landline?: string | null
           last_name: string
           last_visit_date?: string | null
           lead_source?: string | null
@@ -3794,7 +3853,11 @@ export type Database = {
           phone?: string | null
           phone_normalized?: string | null
           phorest_client_id?: string | null
+          preferred_services?: string[] | null
           preferred_stylist_id?: string | null
+          prompt_appointment_notes?: boolean | null
+          prompt_client_notes?: boolean | null
+          referred_by?: string | null
           reminder_email_opt_in?: boolean | null
           reminder_sms_opt_in?: boolean | null
           state?: string | null
@@ -3808,9 +3871,16 @@ export type Database = {
         Update: {
           address_line1?: string | null
           address_line2?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           average_spend?: number | null
+          ban_reason?: string | null
+          banned_at?: string | null
+          banned_by?: string | null
           birthday?: string | null
+          branch_name?: string | null
           city?: string | null
+          client_category?: string | null
           client_since?: string | null
           country?: string | null
           created_at?: string | null
@@ -3819,14 +3889,18 @@ export type Database = {
           email_normalized?: string | null
           external_id?: string | null
           first_name?: string
+          first_visit?: string | null
           gender?: string | null
           id?: string
           import_job_id?: string | null
           import_source?: string | null
           imported_at?: string | null
           is_active?: boolean | null
+          is_archived?: boolean | null
+          is_banned?: boolean | null
           is_placeholder?: boolean
           is_vip?: boolean | null
+          landline?: string | null
           last_name?: string
           last_visit_date?: string | null
           lead_source?: string | null
@@ -3840,7 +3914,11 @@ export type Database = {
           phone?: string | null
           phone_normalized?: string | null
           phorest_client_id?: string | null
+          preferred_services?: string[] | null
           preferred_stylist_id?: string | null
+          prompt_appointment_notes?: boolean | null
+          prompt_client_notes?: boolean | null
+          referred_by?: string | null
           reminder_email_opt_in?: boolean | null
           reminder_sms_opt_in?: boolean | null
           state?: string | null
@@ -4303,6 +4381,84 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "daily_completions"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      daily_sales_summary: {
+        Row: {
+          average_ticket: number | null
+          branch_name: string | null
+          created_at: string
+          external_id: string | null
+          id: string
+          import_source: string | null
+          location_id: string | null
+          organization_id: string
+          product_revenue: number | null
+          service_revenue: number | null
+          staff_user_id: string | null
+          summary_date: string
+          total_discounts: number | null
+          total_products: number | null
+          total_revenue: number | null
+          total_services: number | null
+          total_transactions: number | null
+          updated_at: string
+        }
+        Insert: {
+          average_ticket?: number | null
+          branch_name?: string | null
+          created_at?: string
+          external_id?: string | null
+          id?: string
+          import_source?: string | null
+          location_id?: string | null
+          organization_id: string
+          product_revenue?: number | null
+          service_revenue?: number | null
+          staff_user_id?: string | null
+          summary_date: string
+          total_discounts?: number | null
+          total_products?: number | null
+          total_revenue?: number | null
+          total_services?: number | null
+          total_transactions?: number | null
+          updated_at?: string
+        }
+        Update: {
+          average_ticket?: number | null
+          branch_name?: string | null
+          created_at?: string
+          external_id?: string | null
+          id?: string
+          import_source?: string | null
+          location_id?: string | null
+          organization_id?: string
+          product_revenue?: number | null
+          service_revenue?: number | null
+          staff_user_id?: string | null
+          summary_date?: string
+          total_discounts?: number | null
+          total_products?: number | null
+          total_revenue?: number | null
+          total_services?: number | null
+          total_transactions?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_sales_summary_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_sales_summary_staff_user_id_fkey"
+            columns: ["staff_user_id"]
+            isOneToOne: false
+            referencedRelation: "employee_profiles"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -16822,6 +16978,121 @@ export type Database = {
           video_url?: string | null
         }
         Relationships: []
+      }
+      transaction_items: {
+        Row: {
+          appointment_id: string | null
+          branch_name: string | null
+          client_id: string | null
+          client_name: string | null
+          created_at: string
+          discount: number | null
+          external_id: string | null
+          id: string
+          import_source: string | null
+          imported_at: string | null
+          item_category: string | null
+          item_name: string
+          item_type: string
+          location_id: string | null
+          organization_id: string
+          payment_method: string | null
+          promotion_id: string | null
+          quantity: number | null
+          sale_classification: string | null
+          staff_name: string | null
+          staff_user_id: string | null
+          tax_amount: number | null
+          tip_amount: number | null
+          total_amount: number
+          transaction_date: string
+          transaction_id: string
+          unit_price: number | null
+          updated_at: string
+        }
+        Insert: {
+          appointment_id?: string | null
+          branch_name?: string | null
+          client_id?: string | null
+          client_name?: string | null
+          created_at?: string
+          discount?: number | null
+          external_id?: string | null
+          id?: string
+          import_source?: string | null
+          imported_at?: string | null
+          item_category?: string | null
+          item_name: string
+          item_type: string
+          location_id?: string | null
+          organization_id: string
+          payment_method?: string | null
+          promotion_id?: string | null
+          quantity?: number | null
+          sale_classification?: string | null
+          staff_name?: string | null
+          staff_user_id?: string | null
+          tax_amount?: number | null
+          tip_amount?: number | null
+          total_amount: number
+          transaction_date: string
+          transaction_id: string
+          unit_price?: number | null
+          updated_at?: string
+        }
+        Update: {
+          appointment_id?: string | null
+          branch_name?: string | null
+          client_id?: string | null
+          client_name?: string | null
+          created_at?: string
+          discount?: number | null
+          external_id?: string | null
+          id?: string
+          import_source?: string | null
+          imported_at?: string | null
+          item_category?: string | null
+          item_name?: string
+          item_type?: string
+          location_id?: string | null
+          organization_id?: string
+          payment_method?: string | null
+          promotion_id?: string | null
+          quantity?: number | null
+          sale_classification?: string | null
+          staff_name?: string | null
+          staff_user_id?: string | null
+          tax_amount?: number | null
+          tip_amount?: number | null
+          total_amount?: number
+          transaction_date?: string
+          transaction_id?: string
+          unit_price?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transaction_items_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transaction_items_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transaction_items_staff_user_id_fkey"
+            columns: ["staff_user_id"]
+            isOneToOne: false
+            referencedRelation: "employee_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       usage_metrics: {
         Row: {
