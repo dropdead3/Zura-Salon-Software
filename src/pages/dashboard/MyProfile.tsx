@@ -1244,7 +1244,7 @@ export default function MyProfile() {
                 <div className="pt-4 border-t">
                   <div className="flex items-start gap-4">
                     <div className="flex-1">
-                    <Label htmlFor="extensions_certified" className="flex items-center gap-2 cursor-pointer">
+                    <Label className="flex items-center gap-2">
                         <img 
                           src="/assets/brand-icon.svg" 
                           alt="Certified" 
@@ -1257,7 +1257,7 @@ export default function MyProfile() {
                       </p>
                     </div>
                     <Switch
-                      id="extensions_certified"
+                      
                       checked={formData.extensions_certified}
                       onCheckedChange={(checked) => setFormData(prev => ({ ...prev, extensions_certified: checked }))}
                     />
