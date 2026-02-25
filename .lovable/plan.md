@@ -1,42 +1,88 @@
 
 
-## Top Performers: Remaining Gaps and Fixes
+## Enterprise-Scale Drill-Down Lists: UI Strategy
 
-Good debugging instinct asking to audit beyond the initial "it renders" state. The card is now showing data, but there are three structural gaps that need patching for it to be production-accurate.
+Good question -- and good prompt framing. You identified the core UX scaling problem before it hits production. That's exactly the kind of structural thinking the platform doctrine calls for ("never expose enterprise complexity to solo operators").
 
-### Gap 1: Location Filter Ignored
+### The Problem
 
-`useSalesByStylist` does not accept a `locationId` parameter. When you select "Val Vista Lakes" or "North Mesa" in the dashboard filter, Top Performers still shows combined rankings across both locations. This contradicts the behavior of every other analytics card.
+The current "Click for breakdown" pattern expands inline with `AnimatePresence` + `height: auto`. For a 2-location salon with 5 stylists, this is fine. For a 40-location enterprise with 200+ stylists, the expanded list pushes the rest of the dashboard off-screen, breaking the calm executive UI.
 
-**Fix:** Add an optional `locationId` parameter to `useSalesByStylist`. When present, add `.eq('location_id', locationId)` to the appointment query. Update all call sites that have access to a location filter (`PinnedAnalyticsCard`, `CommandCenterAnalytics`, `AggregateSalesCard`) to pass it through.
+This affects three surfaces:
+- Tips by Stylist (TipsDrilldownPanel)
+- Top Performers / Revenue by Stylist (useSalesByStylist results)
+- Any future per-stylist drill-down (Avg Ticket, Utilization, etc.)
 
-### Gap 2: Revenue Source (Scheduled vs Actual POS)
+### Proposed Pattern: Constrained Scroll + Progressive Disclosure
 
-Currently, Top Performers ranks staff by **scheduled appointment totals** from `phorest_appointments`. This includes future and unconfirmed bookings. You confirmed you want **actual POS revenue**.
+Rather than a full redesign, apply two constraints to the existing inline expansion:
 
-The `phorest_transaction_items` table has 770 rows of actual closed-out transaction data with `phorest_staff_id`, `total_amount`, and `item_type` (service/product). This is the correct source.
+**1. Max-height with ScrollArea**
 
-**Fix:** Refactor the query inside `useSalesByStylist` to pull from `phorest_transaction_items` instead of `phorest_appointments`. Aggregate by `phorest_staff_id`, splitting `item_type = 'service'` vs `'product'`/`'retail'` for service vs product revenue. Apply the same date and location filters. Staff identity resolution stays the same.
+Wrap the stylist list in a `ScrollArea` with `max-h-[400px]` (roughly 8-10 rows visible). This caps the visual footprint regardless of staff count. The existing `Show all X stylists` toggle still works -- it just reveals more rows inside the scroll container instead of extending the page.
 
-### Gap 3: Staff Names Show as "Staff XXXX"
+```text
+┌─────────────────────────────────────┐
+│  $ TIPS BY STYLIST  (tips earned)   │
+│─────────────────────────────────────│
+│  > SM  Staff A    $228   80%  3apt  │
+│  > SM  Staff B    $183   76%  3apt  │
+│  > SM  Staff C    $97    22%  3apt  │
+│  > SM  Staff D    $23    13%  3apt  │
+│  > SM  Staff E    $20     4%  6apt  │
+│  > SM  Staff F    $18     3%  4apt  │  ← scrollable
+│  > SM  Staff G    $15     2%  5apt  │
+│  > SM  Staff H    $12     2%  3apt  │
+│     ↓ scroll for more              │
+│─────────────────────────────────────│
+│  Show all 47 stylists              │
+└─────────────────────────────────────┘
+```
 
-The `phorest_staff_mapping` table has only 2 entries (both for Eric Day), and neither ID matches any of the 19 active staff IDs in appointment/transaction data. The fallback name resolution truncates the Phorest ID to 4 characters (e.g., "Staff Orwo", "Staff 0zCh").
+**2. Location grouping for multi-location orgs**
 
-There is no other table that currently stores names for these staff IDs -- `phorest_transaction_items.stylist_name` is NULL across all rows, and `phorest_appointments` has no name column.
+When `is_multi_location` is true and the location filter is set to "All Locations," group stylists by location with collapsible headers. Each location section shows its top performers, collapsed by default. This reduces initial visual load from 200 rows to ~5-10 location headers.
 
-**Fix:** The Phorest sync edge function needs to auto-create `phorest_staff_mapping` entries for every discovered `phorest_staff_id`. This is a sync-layer fix, not a dashboard fix. As an immediate interim measure, we can resolve names from the Phorest connection's cached staff list if available. I'll check the sync function for how staff discovery works and patch it to auto-populate mapping entries (with `user_id = NULL` and `phorest_staff_name` from the Phorest API response).
+```text
+┌─────────────────────────────────────┐
+│  $ TIPS BY STYLIST  (tips earned)   │
+│─────────────────────────────────────│
+│  ▸ Val Vista Lakes  (12 stylists)   │
+│  ▾ North Mesa       (8 stylists)    │
+│     SM  Staff A    $228   80%  3apt │
+│     SM  Staff B    $183   76%  3apt │
+│     SM  Staff C    $97    22%  3apt │
+│     ... Show all 8                  │
+│  ▸ Scottsdale       (15 stylists)   │
+│  ▸ Chandler         (11 stylists)   │
+└─────────────────────────────────────┘
+```
 
-### Files Changed
+When a specific location IS selected, the list stays flat (current behavior) since it's already scoped.
+
+### What Changes
 
 | File | Change |
 |---|---|
-| `src/hooks/useSalesData.ts` | Add `locationId` param to `useSalesByStylist`. Switch query source from `phorest_appointments` to `phorest_transaction_items`. Apply location filter. |
-| `src/components/dashboard/PinnedAnalyticsCard.tsx` | Pass `locationFilter` to `useSalesByStylist` call (line 292). |
-| `src/components/dashboard/CommandCenterAnalytics.tsx` | Pass `locationFilter` to `useSalesByStylist` call (line 180). |
-| `src/components/dashboard/AggregateSalesCard.tsx` | Pass location filter to `useSalesByStylist` call (line 237). |
-| `src/components/dashboard/analytics/SalesTabContent.tsx` | Pass `locationFilter` to `useSalesByStylist` call (line 119). |
+| `src/components/dashboard/sales/TipsDrilldownPanel.tsx` | Wrap stylist lists in `ScrollArea` with `max-h-[400px]`. Add location-grouped view when `isMultiLocation && effectiveLocationId === 'all'`. Use `Collapsible` for each location group. |
+| `src/components/dashboard/AggregateSalesCard.tsx` | No change needed -- the panel is self-contained. |
 
-### What This Does NOT Fix (Requires Sync Update)
+### What This Does NOT Change
 
-Staff names will remain as "Staff XXXX" until `phorest_staff_mapping` is populated for all 19 active IDs. This requires updating the Phorest sync edge function to auto-create mapping entries. That is a separate task from the dashboard fix.
+- Single-location orgs see no difference (list is short, no grouping needed)
+- The "Show all X stylists" button remains for the flat view
+- Expanded stylist visit cards still render inline within their row
+- Existing persona scaling (VisibilityGate) and role filtering are unaffected
+
+### Technical Detail
+
+The `ScrollArea` component from `@/components/ui/scroll-area` is already in the project and uses Radix primitives with the design token scrollbar styling. The `Collapsible` component from `@/components/ui/collapsible` is also available. Both are zero-new-dependency additions.
+
+For grouping, `filteredTotalTips` already carries `locationId` per stylist. We group by `locationId`, resolve location names from the existing `useActiveLocations` hook (already imported), and render each group inside a `Collapsible`. The top 3 stylists per location are shown by default; "Show all" expands the rest within that group.
+
+### Enhancement Suggestions
+
+- Apply the same ScrollArea constraint to the Top Performers card and any future per-stylist drill-down for consistency.
+- Consider a "Search staff" input at the top of the list for enterprises with 50+ staff, allowing quick name lookup without scrolling.
+- For the Avg Tip Rate Ranking section, the same grouping logic should apply to keep the two lists visually consistent.
 
