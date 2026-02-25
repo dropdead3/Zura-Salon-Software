@@ -31,8 +31,8 @@ export function RevenueDonutChart({
     const total = serviceRevenue + productRevenue;
     if (total === 0) return [];
     return [
-      { name: 'Services', value: serviceRevenue, color: 'hsl(var(--primary))' },
-      { name: 'Retail', value: productRevenue, color: 'hsl(var(--chart-2))' },
+      { name: 'Services', value: serviceRevenue, color: 'hsl(var(--foreground))' },
+      { name: 'Retail', value: productRevenue, color: 'hsl(var(--oat))' },
     ].filter(d => d.value > 0);
   }, [serviceRevenue, productRevenue]);
 
@@ -107,14 +107,14 @@ export function RevenueDonutChart({
           <div className="flex-1 min-w-0 text-xs space-y-1">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-primary shrink-0" />
+                <div className="w-2 h-2 rounded-full bg-foreground shrink-0" />
                 <span className="text-muted-foreground">Services</span>
               </div>
               <span className="font-medium tabular-nums">{servicePercent}%</span>
             </div>
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-chart-2 shrink-0" />
+                <div className="w-2 h-2 rounded-full bg-oat shrink-0" />
                 <span className="text-muted-foreground">Retail</span>
               </div>
               <span className="font-medium tabular-nums">{100 - servicePercent}%</span>
