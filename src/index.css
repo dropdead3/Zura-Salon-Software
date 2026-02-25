@@ -192,8 +192,8 @@ html, body, #root {
     --sidebar-border: 40 15% 85%;
     --sidebar-ring: 0 0% 8%;
 
-    --card-inner: 40 20% 93%;
-    --card-inner-deep: 40 15% 90%;
+    --card-inner: 40 20% 99%;
+    --card-inner-deep: 40 15% 100%;
   }
 
   .dark.theme-cream,
@@ -307,8 +307,8 @@ html, body, #root {
     --sidebar-border: 350 15% 88%;
     --sidebar-ring: 350 60% 55%;
 
-    --card-inner: 350 15% 93%;
-    --card-inner-deep: 350 10% 90%;
+    --card-inner: 350 15% 99%;
+    --card-inner-deep: 350 10% 100%;
   }
 
   .dark.theme-rose {
@@ -418,8 +418,8 @@ html, body, #root {
     --sidebar-border: 145 12% 85%;
     --sidebar-ring: 145 45% 42%;
 
-    --card-inner: 145 12% 93%;
-    --card-inner-deep: 145 8% 90%;
+    --card-inner: 145 12% 99%;
+    --card-inner-deep: 145 8% 100%;
   }
 
   .dark.theme-sage {
@@ -529,8 +529,8 @@ html, body, #root {
     --sidebar-border: 210 15% 88%;
     --sidebar-ring: 210 60% 50%;
 
-    --card-inner: 210 15% 93%;
-    --card-inner-deep: 210 10% 90%;
+    --card-inner: 210 15% 99%;
+    --card-inner-deep: 210 10% 100%;
   }
 
   .dark.theme-ocean {
