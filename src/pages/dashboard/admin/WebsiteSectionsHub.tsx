@@ -184,6 +184,18 @@ export default function WebsiteSectionsHub() {
   const orgSlug = contextSlug || fallbackSlug;
   const defaultTab = searchParams.get('tab') || 'hero';
   const [activeTab, setActiveTab] = useState(defaultTab);
+  const [sidebarMode, setSidebarMode] = useState<'expanded' | 'collapsed'>(() => {
+    const saved = localStorage.getItem('website-editor-sidebar-mode');
+    return saved === 'collapsed' ? 'collapsed' : 'expanded';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('website-editor-sidebar-mode', sidebarMode);
+  }, [sidebarMode]);
+
+  const toggleSidebarMode = useCallback(() => {
+    setSidebarMode(prev => prev === 'expanded' ? 'collapsed' : 'expanded');
+  }, []);
   
   const [pendingTab, setPendingTab] = useState<string | null>(null);
   const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
@@ -727,11 +739,14 @@ export default function WebsiteSectionsHub() {
         {/* Fixed-width Sidebar */}
         {!isMobile && (
           <div className={cn(
-            'flex-shrink-0 border-r overflow-auto w-[300px]'
+            'flex-shrink-0 border-r overflow-auto transition-all duration-200',
+            sidebarMode === 'expanded' ? 'w-[300px]' : 'w-14'
           )}>
             <WebsiteEditorSidebar
               activeTab={activeTab}
               onTabChange={handleTabChange}
+              collapsed={sidebarMode === 'collapsed'}
+              onToggleCollapse={toggleSidebarMode}
               onSectionsChange={handleSectionsChange}
               selectedPageId={selectedPageId}
               onPageChange={handlePageChange}

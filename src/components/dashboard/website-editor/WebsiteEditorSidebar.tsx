@@ -36,6 +36,8 @@ import {
   FileText,
   Settings,
   LayoutTemplate,
+  ChevronsRight,
+  ChevronsLeft,
   Search,
   Layers,
 } from 'lucide-react';
@@ -118,6 +120,8 @@ interface WebsiteEditorSidebarProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
   onSectionsChange?: (sections: SectionConfig[]) => void;
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
   selectedPageId?: string;
   onPageChange?: (pageId: string) => void;
   onAddPage?: () => void;
@@ -135,6 +139,8 @@ export function WebsiteEditorSidebar({
   activeTab,
   onTabChange,
   onSectionsChange,
+  collapsed = false,
+  onToggleCollapse,
   selectedPageId = 'home',
   onPageChange,
   onAddPage,
@@ -349,6 +355,81 @@ export function WebsiteEditorSidebar({
   const [pageDeleteTarget, setPageDeleteTarget] = useState<SectionConfig | null>(null);
 
 
+  if (collapsed) {
+    return (
+      <div className="h-full flex flex-col bg-card/60 backdrop-blur-xl border-r border-border/40 py-2 w-full">
+        {/* Expand toggle */}
+        <div className="px-2 mb-2 pb-2 border-b border-border/30">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={onToggleCollapse}
+                className="w-full flex items-center justify-center p-2 rounded-lg hover:bg-muted/60 text-muted-foreground transition-colors"
+              >
+                <ChevronsRight className="h-4 w-4" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right">Expand sidebar</TooltipContent>
+          </Tooltip>
+        </div>
+
+        {/* Collapsed page icon */}
+        <div className="px-2 mb-1">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={onToggleCollapse}
+                className="w-full flex items-center justify-center p-2 rounded-lg hover:bg-muted/60 text-muted-foreground transition-colors"
+              >
+                <FileText className="h-4 w-4" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right">{selectedPage?.title ?? 'Pages'}</TooltipContent>
+          </Tooltip>
+        </div>
+
+        <Separator className="my-1 mx-2" />
+
+        {/* Site Content icons */}
+        {isHomePage && (
+          <div className="px-2 space-y-0.5 mb-2">
+            {SITE_CONTENT_ITEMS.map(item => (
+              <ContentNavItem
+                key={item.tab}
+                label={item.label}
+                icon={item.icon}
+                isActive={activeTab === item.tab}
+                onSelect={() => onTabChange(item.tab)}
+                collapsed
+              />
+            ))}
+          </div>
+        )}
+
+        {isHomePage && <Separator className="my-1 mx-2" />}
+
+        {/* Homepage Layout icon */}
+        {isHomePage && (
+          <div className="px-2 mb-1">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={onToggleCollapse}
+                  className="w-full flex items-center justify-center p-2 rounded-lg hover:bg-muted/60 text-muted-foreground transition-colors"
+                >
+                  <Layers className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right">Homepage Layout</TooltipContent>
+            </Tooltip>
+          </div>
+        )}
+
+        <div className="flex-1" />
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="h-full flex items-center justify-center">
@@ -359,7 +440,22 @@ export function WebsiteEditorSidebar({
 
   return (
     <div className="h-full flex flex-col bg-card/60 backdrop-blur-xl border-r border-border/40">
-      {/* Page Selector */}
+      {/* Collapse toggle */}
+      <div className="px-3 py-2 border-b border-border/30 flex-shrink-0">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={onToggleCollapse}
+              className="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-muted/60 text-muted-foreground text-xs transition-colors"
+            >
+              <ChevronsLeft className="h-4 w-4" />
+              <span>Collapse</span>
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="right">Collapse sidebar</TooltipContent>
+        </Tooltip>
+      </div>
+
       <div className="p-3 border-b space-y-2">
         <div className="flex items-center gap-2">
           <Select value={selectedPageId} onValueChange={v => onPageChange?.(v)}>
