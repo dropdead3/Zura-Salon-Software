@@ -204,7 +204,7 @@ export function ReorderableStylistList({
     <div className="space-y-4">
       {/* Action Bar */}
       {hasChanges && (
-        <div className="flex items-center justify-between p-3 bg-muted rounded-lg animate-fade-in">
+        <div className="flex items-center justify-between p-3 bg-card/80 backdrop-blur-xl rounded-full border border-border/40 shadow-[0_16px_40px_-18px_hsl(var(--foreground)/0.25)] animate-fade-in">
           <p className="text-sm text-muted-foreground">
             You have unsaved changes to the display order.
           </p>

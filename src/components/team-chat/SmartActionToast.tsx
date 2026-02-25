@@ -71,7 +71,7 @@ export function SmartActionToast({
   if (service) details.push(`(${service})`);
 
   return (
-    <Card className="w-full max-w-sm p-4 shadow-lg border-l-4 border-l-primary animate-in slide-in-from-right-5 duration-300">
+    <Card className="w-full max-w-sm p-4 bg-card/80 backdrop-blur-xl rounded-2xl shadow-[0_16px_40px_-18px_hsl(var(--foreground)/0.25)] border border-border/40 animate-in slide-in-from-right-5 duration-300">
       <div className="flex items-start gap-3">
         <div className={cn('p-2 rounded-lg', config.color)}>
           <Icon className="h-4 w-4" />
@@ -107,7 +107,7 @@ export function SmartActionToast({
               size="sm"
               onClick={() => onAccept(action.id)}
               disabled={isAccepting || isDeclining}
-              className="flex-1"
+              className="flex-1 rounded-full"
             >
               <Check className="h-3.5 w-3.5 mr-1" />
               Accept
@@ -117,7 +117,7 @@ export function SmartActionToast({
               variant="outline"
               onClick={() => onDecline(action.id)}
               disabled={isAccepting || isDeclining}
-              className="flex-1"
+              className="flex-1 rounded-full"
             >
               <X className="h-3.5 w-3.5 mr-1" />
               Decline
