@@ -14,6 +14,7 @@ import {
 } from '@/hooks/useWebsiteMenus';
 import { useWebsitePages } from '@/hooks/useWebsitePages';
 import { useMenuValidation } from './useMenuValidation';
+import { MobileNavConfig } from './MobileNavConfig';
 
 export function NavigationManager() {
   const { data: menus, isLoading: menusLoading } = useWebsiteMenus();
@@ -99,6 +100,11 @@ export function NavigationManager() {
               menuId={selectedMenuId}
               pagesConfig={pagesConfig}
             />
+          )}
+
+          {/* Mobile Settings (primary menu only) */}
+          {selectedMenu?.slug === 'primary' && selectedMenu && (
+            <MobileNavConfig menu={selectedMenu} />
           )}
 
           {/* Publish Bar */}

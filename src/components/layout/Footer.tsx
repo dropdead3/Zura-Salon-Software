@@ -5,6 +5,7 @@ import Logo from "@/assets/brand-logo-secondary.svg";
 import { useActiveLocations, formatHoursForDisplay, isClosedForHoliday, isClosedToday } from "@/hooks/useLocations";
 import { useOrgPath } from "@/hooks/useOrgPath";
 import { usePublicMenuBySlug } from "@/hooks/useWebsiteMenus";
+import { emitNavEvent } from "@/lib/nav-tracking";
 
 const FALLBACK_FOOTER_LINKS = [
   { href: "/services", label: "Services" },
@@ -64,6 +65,11 @@ export function Footer() {
                 <Link
                   key={link.href}
                   to={orgPath(link.href)}
+                  onClick={() => emitNavEvent('nav_item_clicked', {
+                    label: link.label,
+                    href: link.href,
+                    menu_location: 'footer',
+                  })}
                   className="text-sm font-sans font-light text-foreground/70 hover:text-foreground transition-colors"
                 >
                   {link.label}

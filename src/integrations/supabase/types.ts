@@ -17779,6 +17779,50 @@ export type Database = {
           },
         ]
       }
+      website_page_versions: {
+        Row: {
+          change_summary: string | null
+          id: string
+          organization_id: string
+          page_id: string
+          saved_at: string
+          saved_by: string | null
+          snapshot: Json
+          status: string
+          version_number: number
+        }
+        Insert: {
+          change_summary?: string | null
+          id?: string
+          organization_id: string
+          page_id: string
+          saved_at?: string
+          saved_by?: string | null
+          snapshot?: Json
+          status?: string
+          version_number?: number
+        }
+        Update: {
+          change_summary?: string | null
+          id?: string
+          organization_id?: string
+          page_id?: string
+          saved_at?: string
+          saved_by?: string | null
+          snapshot?: Json
+          status?: string
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "website_page_versions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       website_themes: {
         Row: {
           color_scheme: string
