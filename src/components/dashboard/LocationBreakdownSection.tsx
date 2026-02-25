@@ -54,7 +54,7 @@ export function LocationBreakdownSection({
     <div className={cn('mt-4', className)}>
       <div className="flex items-center gap-2 mb-2">
         <MapPin className="w-4 h-4 text-muted-foreground" />
-        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+        <span className="text-xs font-display text-muted-foreground tracking-wide">
           By Location
         </span>
       </div>
@@ -62,7 +62,7 @@ export function LocationBreakdownSection({
         {sortedData.map((loc) => (
           <div
             key={loc.locationId}
-            className="flex items-center justify-between p-2 bg-muted/20 rounded-md border border-border/30"
+            className="flex items-center justify-between p-2 bg-card-inner rounded-md border border-border/30"
           >
             <div className="flex items-center gap-1.5 min-w-0">
               <span className="text-sm truncate max-w-[150px]">{loc.locationName}</span>
