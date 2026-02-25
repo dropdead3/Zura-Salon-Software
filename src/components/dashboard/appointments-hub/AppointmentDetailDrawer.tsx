@@ -271,18 +271,20 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
                 })()}
               </div>
               {resolvedClientId && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full mt-2 gap-1.5 rounded-xl border-border/60"
-                  onClick={() => {
-                    onOpenChange(false);
-                    navigate(`/dashboard/clients?clientId=${resolvedClientId}`);
-                  }}
-                >
-                  <ExternalLink className="w-3.5 h-3.5" />
-                  View in Client Directory
-                </Button>
+                <div className="flex justify-end mt-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-auto py-1 px-2 gap-1 text-xs text-muted-foreground hover:text-foreground"
+                    onClick={() => {
+                      onOpenChange(false);
+                      navigate(`/dashboard/clients?clientId=${resolvedClientId}`);
+                    }}
+                  >
+                    View in Directory
+                    <ExternalLink className="w-3 h-3" />
+                  </Button>
+                </div>
               )}
             </div>
 
