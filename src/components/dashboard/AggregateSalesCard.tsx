@@ -30,7 +30,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 import { useSalesMetrics, useSalesByStylist, useSalesByLocation, useSalesTrend } from '@/hooks/useSalesData';
-import { useActiveLocations, isClosedOnDate } from '@/hooks/useLocations';
+import { useActiveLocations, isClosedOnDate, getLocationHoursForDate } from '@/hooks/useLocations';
 import { ClosedBadge } from '@/components/dashboard/ClosedBadge';
 import { useTomorrowRevenue } from '@/hooks/useTomorrowRevenue';
 import { useSalesComparison } from '@/hooks/useSalesComparison';
@@ -429,6 +429,32 @@ export function AggregateSalesCard({
     navigate(`/dashboard/admin/sales?${params.toString()}`);
   };
 
+  // Determine if all revenue is finalized (operating hours passed OR last appointment ended)
+  const allAppointmentsComplete = useMemo(() => {
+    if (!isToday) return false;
+    const now = new Date();
+
+    // Path 1: All locations are past their closing time
+    if (locations && locations.length > 0) {
+      const allPastClose = locations.every(loc => {
+        const hoursInfo = getLocationHoursForDate(loc.hours_json, loc.holiday_closures, now);
+        if (hoursInfo.isClosed) return true; // closed today = no more revenue
+        if (!hoursInfo.closeTime) return false; // no hours defined = can't determine
+        const [h, m] = hoursInfo.closeTime.split(':').map(Number);
+        return now.getHours() > h || (now.getHours() === h && now.getMinutes() >= m);
+      });
+      if (allPastClose) return true;
+    }
+
+    // Path 2: Last appointment has ended (fallback for when hours aren't configured)
+    if (todayActual?.lastAppointmentEndTime && todayActual.hasActualData) {
+      const [h, m] = todayActual.lastAppointmentEndTime.split(':').map(Number);
+      return now.getHours() > h || (now.getHours() === h && now.getMinutes() >= m);
+    }
+
+    return false;
+  }, [isToday, locations, todayActual]);
+
   if (isLoading) {
     return (
       <Card className="p-6">
@@ -611,26 +637,13 @@ export function AggregateSalesCard({
                 <div className="flex items-center gap-1">
                   <p className="text-sm text-muted-foreground">
                     {isToday 
-                      ? (() => {
-                          if (!todayActual?.lastAppointmentEndTime || !todayActual.hasActualData) return 'Revenue So Far Today';
-                          const [h, m] = todayActual.lastAppointmentEndTime.split(':').map(Number);
-                          const now = new Date();
-                          const complete = now.getHours() > h || (now.getHours() === h && now.getMinutes() >= m);
-                          return complete ? 'Final Revenue Today' : 'Revenue So Far Today';
-                        })()
+                      ? (allAppointmentsComplete ? 'Final Revenue Today' : 'Revenue So Far Today')
                       : t('sales.total_revenue')}
                   </p>
                   <MetricInfoTooltip description={isToday
-                    ? (() => {
-                        if (!todayActual?.lastAppointmentEndTime || !todayActual.hasActualData) 
-                          return "Revenue from completed/checked-out transactions today. Updates every 5 minutes. Tips and gratuities are tracked separately.";
-                        const [h, m] = todayActual.lastAppointmentEndTime.split(':').map(Number);
-                        const now = new Date();
-                        const complete = now.getHours() > h || (now.getHours() === h && now.getMinutes() >= m);
-                        return complete 
-                          ? "All scheduled appointments have concluded. This is today's final revenue figure. Tips and gratuities are tracked separately."
-                          : "Revenue from completed/checked-out transactions today. Updates every 5 minutes. Tips and gratuities are tracked separately.";
-                      })()
+                    ? (allAppointmentsComplete 
+                        ? "All scheduled appointments have concluded. This is today's final revenue figure. Tips and gratuities are tracked separately."
+                        : "Revenue from completed/checked-out transactions today. Updates every 5 minutes. Tips and gratuities are tracked separately.")
                     : "Combined net revenue from services and retail product sales for the selected period. Tips and gratuities are tracked separately and not included in this total."
                   } />
                 </div>
@@ -694,27 +707,19 @@ export function AggregateSalesCard({
                           </p>
                         )}
 
-                        {todayActual?.lastAppointmentEndTime && (() => {
-                          const [h, m] = todayActual.lastAppointmentEndTime.split(':').map(Number);
-                          const now = new Date();
-                          const allComplete = now.getHours() > h || (now.getHours() === h && now.getMinutes() >= m);
-                          if (allComplete && todayActual.hasActualData) {
-                            return (
-                              <div className="flex items-center justify-center gap-1.5 text-xs text-success-foreground">
-                                <CheckCircle2 className="w-3.5 h-3.5" />
-                                <span>All appointments complete</span>
-                              </div>
-                            );
-                          }
-                          return (
-                            <p className="text-xs text-muted-foreground/70 text-center">
-                              {t('sales.estimated_final_at')}{' '}
-                              <span className="font-medium text-foreground/70">
-                                {formatEndTime(todayActual.lastAppointmentEndTime)}
-                              </span>
-                            </p>
-                          );
-                        })()}
+                        {allAppointmentsComplete ? (
+                          <div className="flex items-center justify-center gap-1.5 text-xs text-success-foreground">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>All appointments complete</span>
+                          </div>
+                        ) : todayActual?.lastAppointmentEndTime ? (
+                          <p className="text-xs text-muted-foreground/70 text-center">
+                            {t('sales.estimated_final_at')}{' '}
+                            <span className="font-medium text-foreground/70">
+                              {formatEndTime(todayActual.lastAppointmentEndTime)}
+                            </span>
+                          </p>
+                        ) : null}
 
                         {/* Last updated timestamp */}
                         {todayDataUpdatedAt && (
