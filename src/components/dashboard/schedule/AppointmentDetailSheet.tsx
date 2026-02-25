@@ -63,7 +63,7 @@ import {
 } from '@/components/ui/dialog';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Globe } from 'lucide-react';
+// Globe removed — no longer used for confirmation methods
 import {
   Phone, Mail, Calendar, Clock, User, MapPin, DollarSign,
   ChevronDown, ChevronRight, Copy, Check, CheckCircle, UserCheck, XCircle, AlertTriangle,
@@ -613,8 +613,9 @@ export function AppointmentDetailSheet({
   const CONFIRM_METHOD_DISPLAY: Record<string, { icon: React.ElementType; label: string }> = {
     called: { icon: Phone, label: 'Phone Call' },
     texted: { icon: MessageSquare, label: 'Text Message' },
-    online: { icon: Globe, label: 'Online' },
+    emailed: { icon: Mail, label: 'Email' },
     in_person: { icon: User, label: 'In Person' },
+    other: { icon: MoreHorizontal, label: 'Other' },
   };
 
   // ─── Cancel & Delete Access Control (must be before early return) ─────
@@ -1847,8 +1848,9 @@ export function AppointmentDetailSheet({
               {[
                 { value: 'called', icon: Phone, label: 'Called Client' },
                 { value: 'texted', icon: MessageSquare, label: 'Texted Client' },
-                { value: 'online', icon: Globe, label: 'Client Confirmed Online' },
+                { value: 'emailed', icon: Mail, label: 'Emailed Client' },
                 { value: 'in_person', icon: User, label: 'Spoke In Person' },
+                { value: 'other', icon: MoreHorizontal, label: 'Other' },
               ].map(opt => (
                 <label key={opt.value} className="flex items-center gap-3 rounded-lg border border-border p-3 cursor-pointer hover:bg-muted/50 transition-colors">
                   <RadioGroupItem value={opt.value} id={`confirm-${opt.value}`} />
