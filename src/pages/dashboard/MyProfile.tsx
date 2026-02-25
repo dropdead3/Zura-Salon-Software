@@ -75,7 +75,7 @@ const formatSocialHandle = (value: string) => {
 };
 
 export default function MyProfile() {
-  const { user } = useAuth();
+  const { user, refreshRoles } = useAuth();
   const roles = useEffectiveRoles();
   const { isImpersonating, impersonatedUser } = useEffectiveUserContext();
   
@@ -118,18 +118,10 @@ export default function MyProfile() {
       }
     },
     onSuccess: async (_, addRole) => {
-      // Invalidate role queries and refresh auth context
-      queryClient.invalidateQueries({ queryKey: ['user-roles'] });
-      // Refresh auth roles from context
-      const { refreshRoles } = await import('@/contexts/AuthContext').then(m => {
-        // We need to trigger a re-fetch; the simplest way is to reload roles
-        return { refreshRoles: null };
-      });
-      // Force page reload of roles by invalidating everything
-      queryClient.invalidateQueries({ queryKey: ['effective-user-roles'] });
+      await queryClient.invalidateQueries({ queryKey: ['user-roles'] });
+      await queryClient.invalidateQueries({ queryKey: ['effective-user-roles'] });
+      await refreshRoles();
       toast.success(addRole ? 'Stylist role added — you can now set up your professional profile.' : 'Stylist role removed.');
-      // Reload to refresh auth context roles
-      window.location.reload();
     },
     onError: (error) => {
       toast.error('Failed to update role: ' + error.message);
