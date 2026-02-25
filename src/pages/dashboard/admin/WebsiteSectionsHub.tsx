@@ -10,8 +10,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { 
   LayoutGrid,
   ExternalLink,
-  PanelLeftClose,
-  PanelLeftOpen,
   Loader2,
   Save,
   Undo2,
@@ -186,19 +184,6 @@ export default function WebsiteSectionsHub() {
   const orgSlug = contextSlug || fallbackSlug;
   const defaultTab = searchParams.get('tab') || 'hero';
   const [activeTab, setActiveTab] = useState(defaultTab);
-  const [sidebarMode, setSidebarMode] = useState<'expanded' | 'collapsed'>(() => {
-    const saved = localStorage.getItem('website-editor-sidebar-mode');
-    return saved === 'collapsed' ? 'collapsed' : 'expanded';
-  });
-
-  // Persist sidebar mode
-  useEffect(() => {
-    localStorage.setItem('website-editor-sidebar-mode', sidebarMode);
-  }, [sidebarMode]);
-
-  const toggleSidebarMode = useCallback(() => {
-    setSidebarMode(prev => prev === 'expanded' ? 'collapsed' : 'expanded');
-  }, []);
   
   const [pendingTab, setPendingTab] = useState<string | null>(null);
   const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
@@ -742,14 +727,11 @@ export default function WebsiteSectionsHub() {
         {/* Fixed-width Sidebar */}
         {!isMobile && (
           <div className={cn(
-            'flex-shrink-0 border-r overflow-auto transition-all duration-200',
-            sidebarMode === 'expanded' ? 'w-[300px]' : 'w-14'
+            'flex-shrink-0 border-r overflow-auto w-[300px]'
           )}>
             <WebsiteEditorSidebar
               activeTab={activeTab}
               onTabChange={handleTabChange}
-              collapsed={sidebarMode === 'collapsed'}
-              onToggleCollapse={toggleSidebarMode}
               onSectionsChange={handleSectionsChange}
               selectedPageId={selectedPageId}
               onPageChange={handlePageChange}
@@ -811,20 +793,6 @@ export default function WebsiteSectionsHub() {
               {/* Compact Toolbar */}
               <div className="flex-shrink-0 px-3 py-3 border-b border-border/40 bg-card/80 backdrop-blur-md flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0">
-                  {!isMobile && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={toggleSidebarMode}
-                      className="h-8 w-8 flex-shrink-0"
-                    >
-                      {sidebarMode === 'expanded' ? (
-                        <PanelLeftClose className="h-4 w-4" />
-                      ) : (
-                        <PanelLeftOpen className="h-4 w-4" />
-                      )}
-                    </Button>
-                  )}
                   <span className="text-sm font-medium truncate">
                     {selectedPage && selectedPageId !== 'home' ? `${selectedPage.title} › ` : ''}
                     {getTabLabel()}
