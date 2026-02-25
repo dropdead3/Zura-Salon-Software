@@ -1,66 +1,54 @@
 
 
-## Fix Tips Drilldown: Show Tips by Staff Even Without User Mapping
+## Replace 30/90 Day Toggle with Page Date Filter on Tips Drilldown
 
-### Root Cause
+Good instinct — the 30/90 day toggle is the only drilldown that ignores the page-level date filter. Every other drilldown (Revenue by Category, Transactions by Hour, Ticket Distribution, etc.) receives `dateFrom`/`dateTo` from the parent `AggregateSalesCard`. The tips drilldown should follow the same pattern.
 
-The `$551` in total tips is real — the parent card sums `tip_amount` from all `phorest_appointments` regardless of staff identity. But the drilldown groups by `stylist_user_id`, and **100% of tip-bearing appointments have `stylist_user_id = NULL`** because the `phorest_staff_mapping` table only contains 2 entries (both for a single user), while ~10 different `phorest_staff_id` values have tips.
+**No issues with this approach.** When viewing "today," the data will be smaller and the 10-appointment minimum for the Avg Tip Rate Ranking will naturally filter most stylists out — but that's fine because the "Tips by Stylist (total earned)" section has no minimum and will show today's earners. The coaching section will simply be empty on short date ranges, which is correct behavior (you can't coach on a single day's tip rate).
 
-The drilldown's line `if (apt.stylist_user_id)` skips every row, producing empty `byStylist` and `byTotalTips` arrays, which triggers the "No tip data recorded" empty state.
+### Changes
 
-### Plan
+**1. Pass `dateFrom`/`dateTo` into the drilldown panel — `AggregateSalesCard.tsx` (~line 1170)**
 
-**1. Fetch staff names from `phorest_staff_mapping`** — `useTipsDrilldown.ts`
+Add `dateFrom` and `dateTo` props to `TipsDrilldownPanel`, matching the pattern used by every other drilldown:
 
-Add a query to `phorest_staff_mapping` (which has `phorest_staff_id` → `phorest_staff_name` + `user_id`). This gives name resolution for any staff ID, even when `stylist_user_id` is null on the appointment.
-
-**2. Use `phorest_staff_id` as fallback grouping key** — `useTipsDrilldown.ts`
-
-Change the stylist aggregation logic:
-- Primary key: `stylist_user_id` (when available)
-- Fallback key: `phorest_staff_id` prefixed with `phorest:` to distinguish from UUIDs
-- Name resolution: `employee_profiles` for mapped users, `phorest_staff_mapping.phorest_staff_name` for unmapped, `"Staff Member"` as last resort
-
-Concretely, replace the `if (apt.stylist_user_id)` guard (line 156) with:
-
-```typescript
-const staffKey = apt.stylist_user_id || (apt.phorest_staff_id ? `phorest:${apt.phorest_staff_id}` : null);
-if (staffKey) {
-  // ...aggregate into stylistMap using staffKey
-}
+```tsx
+<TipsDrilldownPanel
+  isOpen={tipsDrilldownOpen}
+  parentLocationId={filterContext?.locationId}
+  dateFrom={dateFilters.dateFrom}
+  dateTo={dateFilters.dateTo}
+/>
 ```
 
-**3. Resolve names from both sources** — `useTipsDrilldown.ts`
+**2. Accept date props and remove the 30/90 toggle — `TipsDrilldownPanel.tsx`**
 
-Build a combined name map:
-- From `employee_profiles`: `user_id` → `{ name, photo }`
-- From `phorest_staff_mapping`: `phorest:${phorest_staff_id}` → `{ name: phorest_staff_name, photo: null }`
+- Add `dateFrom` and `dateTo` to the props interface
+- Remove the `period` state and the 30/90 toggle UI (lines 30, 139-158)
+- Pass `dateFrom`/`dateTo` to the hook instead of `period`
 
-When building the `byStylist` and `byTotalTips` arrays, look up names using the combined map.
+**3. Update the hook to accept `dateFrom`/`dateTo` directly — `useTipsDrilldown.ts`**
 
-**4. No changes needed in `TipsDrilldownPanel.tsx`**
+- Change `UseTipsDrilldownParams` from `{ period: 30 | 90 }` to `{ dateFrom: string; dateTo: string }`
+- Remove the internal `dateFrom`/`dateTo` calculation (lines 47-51) and use the passed values directly
+- Query keys already include `dateFrom`/`dateTo`, so caching works correctly
 
-The panel already renders whatever `byTotalTips` contains. Once the hook populates it, the UI will show the data.
+### Behavior by Date Range
 
-### Technical Details
+| Page Filter | Tips by Stylist | Avg Tip Rate Ranking | Coaching |
+|---|---|---|---|
+| Today | Shows today's tip earners | Likely empty (no one has 10+ appts today) | Empty |
+| This Week | Shows week's earners | May show some stylists | Minimal |
+| This Month | Full distribution | Full ranking | Full coaching |
+| Custom range | Matches exactly | Matches exactly | Matches exactly |
 
-**File: `src/hooks/useTipsDrilldown.ts`**
+### What Gets Removed
 
-- Add a new query for `phorest_staff_mapping` (select `phorest_staff_id, phorest_staff_name, user_id`)
-- Build a `staffNameMap` that maps `phorest:${phorest_staff_id}` → name, and also maps any `user_id` from the mapping into the `profileMap`
-- Change line 156 from `if (apt.stylist_user_id)` to use the fallback key logic above
-- Update the `byStylist` and `byTotalTips` array builders to resolve names from the combined map
-- Appointments where both `stylist_user_id` and `phorest_staff_id` are null remain excluded (these shouldn't exist in practice)
-
-### What Changes for the User
-
-| Before | After |
-|---|---|
-| "$551 total tips" at top, "No tip data" below | **Tips by Stylist** section shows all 10+ staff members who earned tips |
-| Staff names unavailable for unmapped IDs | Shows `phorest_staff_name` from mapping, or "Staff Member" as fallback |
-| Avg Rate Ranking also empty | Populated for staff with 10+ appointments (several qualify) |
+- The `period` state variable (30/90)
+- The 30/90 toggle pill UI
+- The internal date calculation in the hook
 
 ### Scope
 
-~25 lines changed in 1 file (`useTipsDrilldown.ts`). One additional lightweight query added.
+~15 lines removed, ~5 lines added across 3 files. Net reduction in code.
 
