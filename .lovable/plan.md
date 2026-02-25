@@ -1,51 +1,30 @@
 
 
-## Responsive Optimization for Website Editor Content Panels
+## Fix Editor Panel Padding and Tab Bar Overflow
 
-Your prompt correctly identifies a real enterprise scaling problem — when the editor panel is narrow (especially with sidebar + preview open), every card inside it gets squeezed. The screenshot shows badges wrapping awkwardly, the sample cards settings row cramming toggle + location counts + spinner onto one line, and stylist cards compressing the drag handle + avatar + name + badges + edit + toggle into a tight horizontal strip. An enterprise org with 15+ stylists across 5 locations would make this unusable.
+The screenshot confirms two remaining issues: the tab bar ("Pending Requests", "Currently Visible", "Specialty Options") extends edge-to-edge with no breathing room, and the overall content still feels dense in the narrow editor panel.
 
-### Problems Identified
+### Root Causes
 
-1. **Editor content padding too generous for narrow panels**: `p-6` (24px) on both sides when the panel might only be 400-500px wide wastes ~10% of usable width
-2. **Sample Cards Settings**: The toggle, location badges, and loading spinner are in a single `flex justify-between` row that crunches when narrow
-3. **SortableStylistCard**: All elements (drag handle, avatar, name, badges, edit button, visible toggle) are in one horizontal flex row — no breakpoint to stack
-4. **StylistCard (pending requests)**: Same horizontal crunch — avatar, name, badges, approve/deny buttons all in one row
-5. **No scroll containment**: Enterprise orgs with 30+ stylists will push the page very long with no virtualization hint
+1. **TabsList overflow**: The three tab triggers contain long labels that fill the full width. The `TabsList` component renders `inline-flex` by default, so in a narrow panel (~400px after padding), the three triggers butt up against the container edges with no margin.
 
-### Plan
+2. **Padding still tight at `p-3`**: On the narrowest breakpoint, `p-3` (12px) is not enough horizontal breathing room for cards and the tab bar. The tab bar visually touches the panel edge because the `TabsList` background extends to the padding boundary.
 
-**File: `src/pages/dashboard/admin/WebsiteSectionsHub.tsx`**
-1. Reduce editor content padding from `p-6` to `p-4 sm:p-6` (line 846) — reclaims 16px on narrow panels
+### Changes
 
 **File: `src/components/dashboard/website-editor/StylistsContent.tsx`**
-2. **Sample Cards Settings card** (lines 348-375): Change the settings row from single-line `flex justify-between` to a stacked layout:
-   - Toggle + label on one row
-   - Location badges wrap below on a second row with `flex-wrap gap-2`
-   - Preview button stays in its own bordered section (already is)
 
-3. **StylistCard component** (lines 238-322): Make the card layout responsive:
-   - Wrap the main flex in `flex-col sm:flex-row` so on narrow widths, avatar+info stack above the action buttons
-   - Action buttons (Approve/Deny or Visible toggle) move to bottom-right with `self-end`
+1. **Make TabsList full-width and scrollable** (line 402): Wrap the `TabsList` in a horizontal scroll container so on narrow panels the tabs don't crunch. Add `w-full` to `TabsList` and use smaller text on triggers at narrow widths. Alternatively, shorten the trigger labels at narrow widths — "Pending", "Visible", "Specialties" instead of the longer versions.
 
-**File: `src/components/dashboard/ReorderableStylistList.tsx`**
-4. **SortableStylistCard** (lines 74-159): Restructure for narrow panels:
-   - Split into two rows: Row 1 = drag handle + avatar + name/level; Row 2 = badges + edit + visible toggle
-   - Use `flex-wrap` so badges naturally flow to a second line when space is tight
-   - Move the Edit button and Visible toggle into a `flex items-center gap-2 ml-auto` group that can wrap below
-   - Reduce avatar from `w-12 h-12` to `w-10 h-10` to save horizontal space
+2. **Reduce trigger text length**: Change "Pending Requests" → "Pending", "Currently Visible" → "Visible", "Specialty Options" → "Specialties" — these are already contextually clear within the "Homepage Stylists" section. This alone solves the overflow without needing horizontal scroll.
 
-5. **Unsaved changes bar** (lines 206-235): Change from horizontal `justify-between` to stacked on narrow — text above, buttons below, with `flex-col sm:flex-row` and centered alignment
+3. **Tighten section header spacing** (lines 332-340): Reduce `space-y-6` to `space-y-4` on the root container so the gaps between the header, settings card, and tab bar are less cavernous in a narrow panel.
 
-6. **Scroll containment**: Wrap the stylist list in a `ScrollArea` with `max-h-[60vh]` so enterprise orgs with 30+ stylists don't push the entire editor into an endless scroll — the tabs and settings card remain visible above
+**File: `src/pages/dashboard/admin/WebsiteSectionsHub.tsx`**
 
-### Technical Details
-
-The editor panel width depends on three factors: viewport width, sidebar visibility (300px), and resizable panel split. On a 1366px laptop with sidebar open and 55/45 split, the editor panel is roughly `(1366 - 300) * 0.55 = 586px`. After `p-6` padding, only ~538px remains for content. Reducing to `p-4` reclaims 16px. Making cards stack vertically below ~500px prevents the horizontal crunch entirely.
-
-The `ScrollArea` with `max-h-[60vh]` ensures that even with 50 stylists across 8 locations, the Sample Cards Settings and tab bar remain pinned at the top for quick access.
+4. **Bump minimum padding from `p-3` to `p-4`** (line 846): Change `p-3 sm:p-4 lg:p-6` to `p-4 sm:p-5 lg:p-6`. The extra 4px at the smallest breakpoint prevents the tab bar from visually touching the edges, while the `sm` breakpoint gets a slight bump too.
 
 ### Files Changed
-- `src/pages/dashboard/admin/WebsiteSectionsHub.tsx` — responsive padding
-- `src/components/dashboard/website-editor/StylistsContent.tsx` — responsive settings card and stylist cards
-- `src/components/dashboard/ReorderableStylistList.tsx` — responsive sortable cards, scroll containment, stacked layout
+- `src/components/dashboard/website-editor/StylistsContent.tsx` — shorter tab labels, tighter spacing
+- `src/pages/dashboard/admin/WebsiteSectionsHub.tsx` — bump minimum padding
 
