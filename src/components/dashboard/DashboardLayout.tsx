@@ -51,6 +51,7 @@ import { OrganizationSwitcher } from '@/components/platform/OrganizationSwitcher
 import { PlatformContextBanner } from '@/components/platform/PlatformContextBanner';
 import { useRoleUtils, getIconComponent } from '@/hooks/useRoleUtils';
 import { useTeamDirectory, useEmployeeProfile } from '@/hooks/useEmployeeProfile';
+import { useLocations } from '@/hooks/useLocations';
 import { isTestAccount } from '@/utils/testAccounts';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
@@ -349,6 +350,7 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
   
   // Fetch team members for user impersonation picker - include test accounts for admin View As feature
   const { data: teamMembers = [] } = useTeamDirectory(undefined, { includeTestAccounts: true });
+  const { data: locations = [] } = useLocations();
 
   // Use simulated role if viewing as a role, or the impersonated user's roles
   const roles = isViewingAsUser && viewAsUser 
@@ -540,8 +542,7 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
         !userSearch || 
         member.full_name?.toLowerCase().includes(userSearch.toLowerCase()) ||
         member.email?.toLowerCase().includes(userSearch.toLowerCase())
-      )
-      .slice(0, 10);
+      );
 
     // Get display text for button
     const getButtonText = () => {
@@ -760,45 +761,101 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
                       {userSearch ? 'No team members found' : 'No team members available'}
                     </p>
                   ) : (
-                    realUsers.map(member => {
-                      const isSelected = viewAsUser?.id === member.user_id;
-                      const memberRoles = member.roles as AppRole[];
-                      const primaryRole = memberRoles[0];
+                    (() => {
+                      // Build location lookup
+                      const locationMap = new Map(locations.map(l => [l.id, l.name]));
                       
-                      return (
-                        <DropdownMenuItem
-                          key={member.user_id}
-                          onClick={() => setViewAsUser({
-                            id: member.user_id,
-                            full_name: member.full_name,
-                            photo_url: member.photo_url,
-                            roles: memberRoles,
-                          })}
-                          className={cn(
-                            "flex items-center gap-3 px-3 py-2 cursor-pointer transition-all",
-                            isSelected && "bg-accent"
-                          )}
-                        >
-                          <Avatar className="h-8 w-8">
-                            <AvatarImage src={member.photo_url || undefined} />
-                            <AvatarFallback className="text-xs">
-                              {member.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">{member.full_name}</p>
-                            <p className="text-xs text-muted-foreground truncate">
-                              {primaryRole ? ROLE_LABELS[primaryRole] : 'No role'}
-                            </p>
-                          </div>
-                          {isSelected && (
-                            <div className="p-1 bg-amber-500 text-white">
-                              <Eye className="w-3 h-3" />
+                      // Group users by location_id
+                      const groups = new Map<string, typeof realUsers>();
+                      realUsers.forEach(member => {
+                        const key = member.location_id || '__unassigned__';
+                        if (!groups.has(key)) groups.set(key, []);
+                        groups.get(key)!.push(member);
+                      });
+
+                      // Sort members within each group by role hierarchy then name
+                      const getRoleSortOrder = (memberRoles: string[]) => {
+                        if (!memberRoles.length) return 999;
+                        return Math.min(...memberRoles.map(r => {
+                          const idx = ALL_ROLES.indexOf(r);
+                          return idx === -1 ? 999 : idx;
+                        }));
+                      };
+
+                      groups.forEach((members) => {
+                        members.sort((a, b) => {
+                          const aOrder = getRoleSortOrder(a.roles as string[]);
+                          const bOrder = getRoleSortOrder(b.roles as string[]);
+                          if (aOrder !== bOrder) return aOrder - bOrder;
+                          return (a.full_name || '').localeCompare(b.full_name || '');
+                        });
+                      });
+
+                      // Order groups: named locations alphabetically, then unassigned last
+                      const sortedKeys = Array.from(groups.keys()).sort((a, b) => {
+                        if (a === '__unassigned__') return 1;
+                        if (b === '__unassigned__') return -1;
+                        const nameA = locationMap.get(a) || '';
+                        const nameB = locationMap.get(b) || '';
+                        return nameA.localeCompare(nameB);
+                      });
+
+                      return sortedKeys.map((key, groupIdx) => {
+                        const groupName = key === '__unassigned__' ? 'Unassigned' : (locationMap.get(key) || 'Unknown');
+                        const members = groups.get(key)!;
+                        return (
+                          <div key={key}>
+                            {/* Section header */}
+                            <div className={cn(
+                              "font-display text-[10px] tracking-wider text-muted-foreground px-3 py-1.5",
+                              groupIdx > 0 && "border-t border-border mt-2 pt-2"
+                            )}>
+                              {groupName.toUpperCase()}
                             </div>
-                          )}
-                        </DropdownMenuItem>
-                      );
-                    })
+                            {/* Members */}
+                            {members.map(member => {
+                              const isSelected = viewAsUser?.id === member.user_id;
+                              const memberRoles = member.roles as AppRole[];
+                              const primaryRole = memberRoles[0];
+                              
+                              return (
+                                <DropdownMenuItem
+                                  key={member.user_id}
+                                  onClick={() => setViewAsUser({
+                                    id: member.user_id,
+                                    full_name: member.full_name,
+                                    photo_url: member.photo_url,
+                                    roles: memberRoles,
+                                  })}
+                                  className={cn(
+                                    "flex items-center gap-3 px-3 py-2 cursor-pointer transition-all",
+                                    isSelected && "bg-accent"
+                                  )}
+                                >
+                                  <Avatar className="h-8 w-8">
+                                    <AvatarImage src={member.photo_url || undefined} />
+                                    <AvatarFallback className="text-xs">
+                                      {member.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium truncate">{member.full_name}</p>
+                                    <p className="text-xs text-muted-foreground truncate">
+                                      {primaryRole ? ROLE_LABELS[primaryRole] : 'No role'}
+                                    </p>
+                                  </div>
+                                  {isSelected && (
+                                    <div className="p-1 bg-amber-500 text-white">
+                                      <Eye className="w-3 h-3" />
+                                    </div>
+                                  )}
+                                </DropdownMenuItem>
+                              );
+                            })}
+                          </div>
+                        );
+                      });
+                    })()
                   )}
                 </div>
               </TabsContent>
