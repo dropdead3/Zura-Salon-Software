@@ -109,7 +109,7 @@ export function TodaysQueueSection({
     }
   };
 
-  const handleCheckoutConfirm = () => {
+  const handleCheckoutConfirm = (tipAmount: number, rebooked: boolean, promoResult?: any, declineReason?: string) => {
     if (checkoutAppointment) {
       updateStatus.mutate({ 
         appointmentId: checkoutAppointment.id, 

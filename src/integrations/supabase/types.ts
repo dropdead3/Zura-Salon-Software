@@ -9613,6 +9613,7 @@ export type Database = {
           phorest_client_id: string | null
           phorest_id: string
           phorest_staff_id: string | null
+          rebook_declined_reason: string | null
           rebooked_at_checkout: boolean | null
           recurrence_group_id: string | null
           recurrence_index: number | null
@@ -9658,6 +9659,7 @@ export type Database = {
           phorest_client_id?: string | null
           phorest_id: string
           phorest_staff_id?: string | null
+          rebook_declined_reason?: string | null
           rebooked_at_checkout?: boolean | null
           recurrence_group_id?: string | null
           recurrence_index?: number | null
@@ -9703,6 +9705,7 @@ export type Database = {
           phorest_client_id?: string | null
           phorest_id?: string
           phorest_staff_id?: string | null
+          rebook_declined_reason?: string | null
           rebooked_at_checkout?: boolean | null
           recurrence_group_id?: string | null
           recurrence_index?: number | null

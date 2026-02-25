@@ -135,6 +135,7 @@ export default function Schedule() {
   const [initialTab, setInitialTab] = useState<string | undefined>(undefined);
   const [bookingOpen, setBookingOpen] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [checkoutRebookCompleted, setCheckoutRebookCompleted] = useState(false);
   const [copilotOpen, setCopilotOpen] = useState(false);
   const [closedDayWarning, setClosedDayWarning] = useState<{
     open: boolean;
@@ -451,7 +452,7 @@ export default function Schedule() {
     setBookingOpen(true);
   };
 
-  const handleStatusChange = (status: any, options?: { rebooked_at_checkout?: boolean; tip_amount?: number }) => {
+  const handleStatusChange = (status: any, options?: { rebooked_at_checkout?: boolean; tip_amount?: number; rebook_declined_reason?: string | null }) => {
     if (selectedAppointment) {
       updateStatus({ appointmentId: selectedAppointment.id, status, ...options });
     }
@@ -465,13 +466,30 @@ export default function Schedule() {
       setCheckoutOpen(true);
     }
   };
-  const handleCheckoutConfirm = (tipAmount: number, rebooked: boolean) => {
+  const handleCheckoutConfirm = (tipAmount: number, rebooked: boolean, promoResult?: any, declineReason?: string) => {
     handleStatusChange('completed', { 
       rebooked_at_checkout: rebooked, 
-      tip_amount: tipAmount 
+      tip_amount: tipAmount,
+      rebook_declined_reason: declineReason || null,
     });
     setCheckoutOpen(false);
+    setCheckoutRebookCompleted(false);
     setSelectedAppointment(null);
+  };
+
+  // Triggered from CheckoutSummarySheet "Schedule Next" button
+  const handleCheckoutScheduleNext = (apt: PhorestAppointment) => {
+    // Pre-fill rebook data and open the booking popover
+    setBookingDefaults({ date: currentDate, stylistId: apt.stylist_user_id || undefined });
+    setActiveDraft(null);
+    setRebookData({
+      clientId: apt.phorest_client_id || undefined,
+      clientName: apt.client_name || undefined,
+      staffUserId: apt.stylist_user_id || undefined,
+      staffName: apt.stylist_profile?.display_name || apt.stylist_profile?.full_name || undefined,
+      selectedServices: [], // service IDs resolved in QuickBookingPopover if needed
+    });
+    setBookingOpen(true);
   };
 
   // FIX #3: Action bar cancel now opens reason dialog instead of direct cancel
@@ -755,7 +773,10 @@ export default function Schedule() {
       <CheckoutSummarySheet
         appointment={selectedAppointment}
         open={checkoutOpen}
-        onOpenChange={setCheckoutOpen}
+        onOpenChange={(open) => {
+          setCheckoutOpen(open);
+          if (!open) setCheckoutRebookCompleted(false);
+        }}
         onConfirm={handleCheckoutConfirm}
         isUpdating={isUpdating}
         taxRate={effectiveTaxRate}
@@ -763,6 +784,8 @@ export default function Schedule() {
         locationName={selectedLocationData?.name || ''}
         locationAddress={selectedLocationData?.address}
         locationPhone={selectedLocationData?.phone}
+        onScheduleNext={handleCheckoutScheduleNext}
+        rebookCompleted={checkoutRebookCompleted}
       />
 
       <QuickBookingPopover
@@ -779,7 +802,13 @@ export default function Schedule() {
         time={bookingDefaults.time || '09:00'}
         defaultLocationId={selectedLocation}
         defaultStylistId={bookingDefaults.stylistId}
-        onBookingComplete={(bookedDate) => setCurrentDate(bookedDate)}
+        onBookingComplete={(bookedDate) => {
+          setCurrentDate(bookedDate);
+          // If checkout is open, signal that rebook completed
+          if (checkoutOpen) {
+            setCheckoutRebookCompleted(true);
+          }
+        }}
         draftId={activeDraft?.id}
         initialDraftData={activeDraft ? {
           locationId: activeDraft.location_id || undefined,
