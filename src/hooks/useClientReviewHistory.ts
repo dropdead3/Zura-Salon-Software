@@ -47,3 +47,29 @@ export function useClientReviewHistory(clientId: string | null | undefined) {
     staleTime: 2 * 60 * 1000,
   });
 }
+
+/** Check if a feedback request already exists for a given appointment */
+export function useAppointmentFeedbackStatus(appointmentId: string | null | undefined) {
+  return useQuery({
+    queryKey: ['appointment-feedback-status', appointmentId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('client_feedback_responses')
+        .select('id, responded_at, token')
+        .eq('appointment_id', appointmentId!)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (error) throw error;
+      if (!data || data.length === 0) return { exists: false, responded: false } as const;
+
+      return {
+        exists: true,
+        responded: !!data[0].responded_at,
+        token: data[0].token,
+      } as const;
+    },
+    enabled: !!appointmentId,
+    staleTime: 2 * 60 * 1000,
+  });
+}

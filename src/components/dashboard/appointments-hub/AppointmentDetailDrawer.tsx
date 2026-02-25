@@ -15,14 +15,14 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Calendar, Clock, User, MapPin, DollarSign, MessageSquare, Tag, Percent, Phone, Mail, FileText, UserCheck, Info, ExternalLink, XCircle, Hash, Copy, Star } from 'lucide-react';
+import { Calendar, Clock, User, MapPin, DollarSign, MessageSquare, Tag, Percent, Phone, Mail, FileText, UserCheck, Info, ExternalLink, XCircle, Hash, Copy, Star, Send, Loader2, CheckCircle2 } from 'lucide-react';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { cn } from '@/lib/utils';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { format, parseISO, differenceInCalendarDays } from 'date-fns';
-import { useClientReviewHistory } from '@/hooks/useClientReviewHistory';
+import { useClientReviewHistory, useAppointmentFeedbackStatus } from '@/hooks/useClientReviewHistory';
 import { toast } from 'sonner';
 
 interface AppointmentDetailDrawerProps {
@@ -107,6 +107,43 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
   // Client review history
   const { data: reviewSummary } = useClientReviewHistory(resolvedClientId);
 
+  // Feedback status for THIS appointment
+  const { data: feedbackStatus } = useAppointmentFeedbackStatus(appointment?.id);
+  const [sendingFeedback, setSendingFeedback] = useState(false);
+
+  const handleRequestFeedback = async () => {
+    if (!appointment || !resolvedClientId || !orgId) return;
+    const clientEmail = appointment.client_email;
+    const clientName = appointment.client_name || 'Client';
+    if (!clientEmail) {
+      toast.error('No email on file for this client');
+      return;
+    }
+    setSendingFeedback(true);
+    try {
+      const { error } = await supabase.functions.invoke('send-feedback-request', {
+        body: {
+          organizationId: orgId,
+          clientId: resolvedClientId,
+          clientEmail,
+          clientName,
+          appointmentId: appointment.id,
+          staffUserId: appointment.staff_user_id || null,
+          staffName: appointment.stylist_name || appointment.staff_name || null,
+          serviceName: appointment.service_name || null,
+          baseUrl: window.location.origin,
+        },
+      });
+      if (error) throw error;
+      toast.success('Feedback request sent', { description: `Email sent to ${clientEmail}` });
+      queryClient.invalidateQueries({ queryKey: ['appointment-feedback-status', appointment.id] });
+      queryClient.invalidateQueries({ queryKey: ['client-reviews', resolvedClientId] });
+    } catch (err: any) {
+      toast.error('Failed to send feedback request', { description: err.message });
+    } finally {
+      setSendingFeedback(false);
+    }
+  };
 
   // Fetch promo details if transaction items exist for this appointment
   const { data: promoInfo } = useQuery({
@@ -294,43 +331,103 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
             </div>
 
             {/* ── Client Reviews ── */}
-            {reviewSummary && reviewSummary.totalReviews > 0 ? (
-              <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-1.5">
-                <div className="flex items-center gap-2 text-sm">
-                  <Star className="w-4 h-4 text-amber-500 shrink-0" />
-                  <span className="text-foreground">
-                    {reviewSummary.totalReviews} {reviewSummary.totalReviews === 1 ? 'Review' : 'Reviews'}
-                    {reviewSummary.averageRating !== null && (
-                      <span className="text-muted-foreground"> · Avg {reviewSummary.averageRating} ★</span>
-                    )}
-                  </span>
+            {(() => {
+              // Find if THIS appointment has a specific review
+              const thisApptReview = reviewSummary?.reviews.find(
+                (r) => r.appointment_id === appointment.id
+              );
+
+              return (
+                <div className="space-y-2">
+                  {/* Appointment-specific review highlight */}
+                  {thisApptReview && (
+                    <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-1.5">
+                      <div className="flex items-center gap-2 text-sm">
+                        <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
+                        <span className="text-foreground">
+                          Review for this visit
+                          {thisApptReview.overall_rating !== null && (
+                            <span className="text-muted-foreground"> · {thisApptReview.overall_rating} ★</span>
+                          )}
+                        </span>
+                      </div>
+                      <div className="text-xs text-muted-foreground pl-6">
+                        {format(parseISO(thisApptReview.responded_at), 'MMM d, yyyy')}
+                        {thisApptReview.nps_score !== null && ` · NPS: ${thisApptReview.nps_score}`}
+                      </div>
+                      {thisApptReview.comments && (
+                        <p className="text-xs text-muted-foreground/80 pl-6 italic line-clamp-2">
+                          "{thisApptReview.comments}"
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Overall client review summary */}
+                  {reviewSummary && reviewSummary.totalReviews > 0 ? (
+                    <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-1.5">
+                      <div className="flex items-center gap-2 text-sm">
+                        <Star className="w-4 h-4 text-amber-500 shrink-0" />
+                        <span className="text-foreground">
+                          {reviewSummary.totalReviews} {reviewSummary.totalReviews === 1 ? 'Review' : 'Reviews'}
+                          {reviewSummary.averageRating !== null && (
+                            <span className="text-muted-foreground"> · Avg {reviewSummary.averageRating} ★</span>
+                          )}
+                        </span>
+                      </div>
+                      {reviewSummary.lastReviewDate && (
+                        <div className="text-xs text-muted-foreground pl-6">
+                          Last: {format(parseISO(reviewSummary.lastReviewDate), 'MMM d, yyyy')}
+                          {appointment.appointment_date && (() => {
+                            const days = differenceInCalendarDays(
+                              parseISO(reviewSummary.lastReviewDate!),
+                              parseISO(appointment.appointment_date)
+                            );
+                            if (days === 0) return ' · Same day as visit';
+                            if (days > 0) return ` · ${days} day${days !== 1 ? 's' : ''} after visit`;
+                            return ` · ${Math.abs(days)} day${Math.abs(days) !== 1 ? 's' : ''} before visit`;
+                          })()}
+                        </div>
+                      )}
+                      {!thisApptReview && reviewSummary.reviews[0]?.comments && (
+                        <p className="text-xs text-muted-foreground/80 pl-6 italic line-clamp-2">
+                          "{reviewSummary.reviews[0].comments}"
+                        </p>
+                      )}
+                    </div>
+                  ) : reviewSummary ? (
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground/60">
+                      <Star className="w-3 h-3" />
+                      No reviews on file
+                    </div>
+                  ) : null}
+
+                  {/* Request Feedback button — show for completed appointments without feedback */}
+                  {status === 'completed' && feedbackStatus && !feedbackStatus.exists && appointment.client_email && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full gap-1.5 text-xs text-muted-foreground hover:text-foreground border border-dashed border-border"
+                      onClick={handleRequestFeedback}
+                      disabled={sendingFeedback}
+                    >
+                      {sendingFeedback ? (
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                      ) : (
+                        <Send className="w-3 h-3" />
+                      )}
+                      Request Feedback
+                    </Button>
+                  )}
+                  {status === 'completed' && feedbackStatus?.exists && !feedbackStatus.responded && (
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground/60">
+                      <Send className="w-3 h-3" />
+                      Feedback requested · Awaiting response
+                    </div>
+                  )}
                 </div>
-                {reviewSummary.lastReviewDate && (
-                  <div className="text-xs text-muted-foreground pl-6">
-                    Last: {format(parseISO(reviewSummary.lastReviewDate), 'MMM d, yyyy')}
-                    {appointment.appointment_date && (() => {
-                      const days = differenceInCalendarDays(
-                        parseISO(reviewSummary.lastReviewDate!),
-                        parseISO(appointment.appointment_date)
-                      );
-                      if (days === 0) return ' · Same day as visit';
-                      if (days > 0) return ` · ${days} day${days !== 1 ? 's' : ''} after visit`;
-                      return ` · ${Math.abs(days)} day${Math.abs(days) !== 1 ? 's' : ''} before visit`;
-                    })()}
-                  </div>
-                )}
-                {reviewSummary.reviews[0]?.comments && (
-                  <p className="text-xs text-muted-foreground/80 pl-6 italic line-clamp-2">
-                    "{reviewSummary.reviews[0].comments}"
-                  </p>
-                )}
-              </div>
-            ) : reviewSummary ? (
-              <div className="flex items-center gap-2 text-xs text-muted-foreground/60">
-                <Star className="w-3 h-3" />
-                No reviews on file
-              </div>
-            ) : null}
+              );
+            })()}
 
             <Separator />
 
