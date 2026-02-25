@@ -6,7 +6,7 @@ import { tokens } from '@/lib/design-tokens';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useTipsDrilldown, type StylistTipMetrics } from '@/hooks/useTipsDrilldown';
-import { TipPaymentMethodBreakdown } from './TipPaymentMethodBreakdown';
+
 import { useActiveLocations } from '@/hooks/useLocations';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -78,7 +78,7 @@ export function TipsDrilldownPanel({ isOpen, parentLocationId, dateFrom, dateTo 
     return locationFilter;
   }, [locationFilter, regionFilter, locationRegionMap]);
 
-  const { byStylist, byTotalTips, byCategory, byPaymentMethod, isLoading } = useTipsDrilldown({
+  const { byStylist, byTotalTips, isLoading } = useTipsDrilldown({
     dateFrom,
     dateTo,
     locationId: effectiveLocationId !== 'all' ? effectiveLocationId : undefined,
@@ -116,14 +116,6 @@ export function TipsDrilldownPanel({ isOpen, parentLocationId, dateFrom, dateTo 
   const topEarners = showAll ? filteredStylists : filteredStylists.slice(0, 10);
   const coachingOpportunities = filteredStylists.slice(-5).reverse().filter(s => s.avgTip < (filteredStylists[0]?.avgTip ?? 0));
 
-  // Category sorted by avg tip desc
-  const sortedCategories = useMemo(() => {
-    return Object.entries(byCategory)
-      .map(([name, data]) => ({ name, ...data }))
-      .sort((a, b) => b.avgTip - a.avgTip);
-  }, [byCategory]);
-
-  const totalCategoryTips = sortedCategories.reduce((s, c) => s + c.totalTips, 0);
 
   return (
     <AnimatePresence mode="wait">
@@ -199,18 +191,6 @@ export function TipsDrilldownPanel({ isOpen, parentLocationId, dateFrom, dateTo 
                     <SelfMetricCard label="Total Tips" value={formatCurrencyWhole(Math.round(selfStylist.totalTips))} />
                   </div>
 
-                  {/* Category breakdown for self */}
-                  {sortedCategories.length > 0 && (
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                        <span className="font-display text-xs tracking-wide uppercase text-muted-foreground font-medium">
-                          Tips by Service Category
-                        </span>
-                      </div>
-                      <CategoryRows categories={sortedCategories} totalCategoryTips={totalCategoryTips} />
-                    </div>
-                  )}
                 </div>
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
@@ -332,21 +312,6 @@ export function TipsDrilldownPanel({ isOpen, parentLocationId, dateFrom, dateTo 
                   </div>
                 )}
 
-                {/* By Service Category */}
-                {sortedCategories.length > 0 && (
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                      <span className="font-display text-xs tracking-wide uppercase text-muted-foreground font-medium">
-                        Tips by Service Category
-                      </span>
-                    </div>
-                    <CategoryRows categories={sortedCategories} totalCategoryTips={totalCategoryTips} />
-                  </div>
-                )}
-
-                {/* Payment Method Breakdown */}
-                <TipPaymentMethodBreakdown byPaymentMethod={byPaymentMethod} />
               </>
             )}
           </div>
@@ -368,47 +333,6 @@ function SelfMetricCard({ label, value, alert = false }: { label: string; value:
   );
 }
 
-/* ── Category rows (shared between self & leadership views) ── */
-function CategoryRows({ categories, totalCategoryTips }: { 
-  categories: Array<{ name: string; avgTip: number; tipRate: number; totalTips: number; count: number }>;
-  totalCategoryTips: number;
-}) {
-  const { formatCurrency: fmtCurrency } = useFormatCurrency();
-  return (
-    <div className="space-y-1.5">
-      {categories.map((cat, index) => {
-        const pct = totalCategoryTips > 0 ? (cat.totalTips / totalCategoryTips) * 100 : 0;
-        return (
-          <motion.div
-            key={cat.name}
-            initial={{ opacity: 0, x: -8 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: index * 0.04 }}
-            className="flex items-center gap-3 py-1.5 px-2 rounded-md hover:bg-muted/30 transition-colors"
-          >
-            <span className="text-sm text-foreground font-medium min-w-[100px] truncate">
-              {cat.name}
-            </span>
-            <div className="flex-1 h-2 bg-muted/50 rounded-full overflow-hidden">
-              <motion.div
-                className="h-full bg-primary/70 rounded-full"
-                initial={{ width: 0 }}
-                animate={{ width: `${pct}%` }}
-                transition={{ duration: 0.5, delay: index * 0.04, ease: 'easeOut' }}
-              />
-            </div>
-            <span className="text-xs text-muted-foreground tabular-nums min-w-[60px] text-right">
-              <BlurredAmount>{fmtCurrency(cat.avgTip)} avg</BlurredAmount>
-            </span>
-            <span className="text-xs text-muted-foreground tabular-nums min-w-[55px] text-right">
-              {cat.tipRate.toFixed(0)}% rate
-            </span>
-          </motion.div>
-        );
-      })}
-    </div>
-  );
-}
 
 /* ── Stylist row for leadership table ── */
 function StylistTipRow({ stylist, index, isCoaching = false }: { stylist: StylistTipMetrics; index: number; isCoaching?: boolean }) {
