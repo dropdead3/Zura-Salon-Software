@@ -1,34 +1,25 @@
 
 
-## Fix: KPI Tile Icon Colors Violating Design Rules
+## Fix: Revenue Breakdown Donut Chart Colors
 
-The screenshot shows the Forecasting card's three KPI tiles with inconsistent icon colors. The `TrendingUp` (7-Day Total) correctly uses `text-primary`, but `Calendar` (Daily Operating Avg) uses `text-chart-2` (green) and `Users` (Appointments) uses `text-chart-3` (teal). Per the design token system, all KPI tile icons must use `text-primary`.
-
-An audit of other dashboard KPI tile icons found the same violation in two additional components.
+The screenshot shows the donut chart using white for Services and green (`chart-2`) for Retail. The user wants to replace green with the theme's `oat` color, and keep Services as white (foreground).
 
 ### Changes
 
-**File 1: `src/components/dashboard/sales/ForecastingCard.tsx`**
+**File: `src/components/dashboard/sales/RevenueDonutChart.tsx`**
 
-- **Line 698**: `Calendar` icon — change `text-chart-2` to `text-primary`
-- **Line 720**: `Users` icon — change `text-chart-3` to `text-primary`
-
-**File 2: `src/components/dashboard/analytics/StaffUtilizationContent.tsx`**
-
-- **Line 115**: `CheckCircle` icon — change `text-chart-2` to `text-primary`
-- **Line 135**: `TrendingUp` icon — change `text-chart-3` to `text-primary`
-
-**File 3: `src/components/dashboard/analytics/CapacityUtilizationSection.tsx`**
-
-- **Line 271**: `Clock` icon — change `text-chart-3` to `text-primary`
+1. **Line 34**: Change Services color from `hsl(var(--primary))` to `hsl(var(--foreground))` (white in dark mode)
+2. **Line 35**: Change Retail color from `hsl(var(--chart-2))` to `hsl(var(--oat))` (warm neutral that adapts per theme)
+3. **Line 110**: Change Services legend dot from `bg-primary` to `bg-foreground`
+4. **Line 117**: Change Retail legend dot from `bg-chart-2` to `bg-oat`
 
 ### What stays the same
 
-- Status-indicator colors (e.g., `text-destructive` on `XCircle` for no-shows, goal tracker pace colors) are intentional semantic signals and remain unchanged
-- Chart data colors (`text-chart-*` on values, legends, badges) are data-visualization uses, not icon violations
-- The `TrendingDown` icon in CapacityUtilization already correctly uses `text-muted-foreground` (contextual)
+- Card header layout, icon, title, filter badge — all correct
+- Donut geometry (inner/outer radius, paddingAngle, stroke)
+- Tooltip styling, Retail % and Attach Rate metrics below
 
 ### Scope
 
-5 class string changes across 3 files. No structural or logic changes.
+4 color class/value changes in 1 file. No structural changes.
 
