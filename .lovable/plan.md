@@ -1,47 +1,28 @@
 
 
-## Elevate Kristi Day to Super Admin and Organization Owner
+## Update Mallori Schwab's Role: Stylist → Receptionist
 
-Kristi's current state confirms she still needs the elevation -- she has only the `stylist` role, no super admin flag, and no entry in `organization_admins`.
+Mallori Schwab (`45cffbfe-bbb1-4ea9-b17b-745fcf0d75c7`) currently has the `stylist` role. She needs to be changed to `receptionist` (front desk).
 
 ### What Will Be Executed
 
-Three data updates (no schema changes):
+Two data updates (no schema changes):
 
-1. **Set `is_super_admin = true`** on her `employee_profiles` record
-2. **Add `super_admin` and `admin` roles** to `user_roles` (keeping `stylist` since she also does hair -- if she doesn't, we can remove it after)
-3. **Insert into `organization_admins`** with `role = 'owner'` for Drop Dead Hair Studio
-
-### What This Grants
-
-- Full dashboard access (all admin surfaces, team management, financial visibility)
-- Equivalent permissions to Eric's account, minus Primary Owner PIN protection
-- Passes `is_org_admin()` and `is_org_member()` RLS checks
-- The `ensure_super_admin_has_role` trigger will auto-add `admin` role if not already present
-
-### After Elevation
-
-Kristi's auth account was created with a random password during the bulk staff import. She will need a **password reset** to set her own password before she can log in at `kristi@dropdeadsalon.com`.
-
-### Technical Details
+1. **Remove `stylist` role** from `user_roles`
+2. **Add `receptionist` role** to `user_roles`
 
 ```sql
--- 1. Upgrade employee profile
-UPDATE employee_profiles SET is_super_admin = true
-WHERE user_id = '4f9562e9-925c-4037-bfaa-728f18afdefa';
+DELETE FROM user_roles 
+WHERE user_id = '45cffbfe-bbb1-4ea9-b17b-745fcf0d75c7' AND role = 'stylist';
 
--- 2. Add super_admin and admin roles (keep stylist)
-INSERT INTO user_roles (user_id, role) VALUES
-  ('4f9562e9-925c-4037-bfaa-728f18afdefa', 'super_admin'),
-  ('4f9562e9-925c-4037-bfaa-728f18afdefa', 'admin')
+INSERT INTO user_roles (user_id, role) 
+VALUES ('45cffbfe-bbb1-4ea9-b17b-745fcf0d75c7', 'receptionist')
 ON CONFLICT (user_id, role) DO NOTHING;
-
--- 3. Add to organization_admins as owner
-INSERT INTO organization_admins (user_id, organization_id, role)
-SELECT '4f9562e9-925c-4037-bfaa-728f18afdefa', organization_id, 'owner'
-FROM employee_profiles
-WHERE user_id = '4f9562e9-925c-4037-bfaa-728f18afdefa';
 ```
 
-All three are idempotent. No risk of duplication.
+This changes her dashboard access from stylist surfaces (personal performance, commission) to front desk surfaces (check-in, scheduling, client lookup).
+
+### Prompt Feedback
+
+Good, concise correction. When updating roles for multiple staff members, you can batch them in a single message -- for example: "Mallori Schwab is front desk, Julia Gross is an assistant, Kitty Vargas is inactive." That way we handle all corrections in one pass.
 
