@@ -37,6 +37,7 @@ import {
   Settings,
   LayoutTemplate,
   ChevronsRight,
+  ChevronsLeft,
   Search,
   Layers,
 } from 'lucide-react';
@@ -667,6 +668,22 @@ export function WebsiteEditorSidebar({
         onAdd={handleAddSection}
         onAddFromTemplate={handleAddFromTemplate}
       />
+
+      {/* Collapse toggle at bottom of expanded sidebar */}
+      <div className="px-3 py-2 border-t flex-shrink-0">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={onToggleCollapse}
+              className="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-muted/60 text-muted-foreground text-xs transition-colors"
+            >
+              <ChevronsLeft className="h-4 w-4" />
+              <span>Collapse</span>
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="right">Collapse sidebar</TooltipContent>
+        </Tooltip>
+      </div>
 
       {/* Delete Confirmation (home page sections) */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
