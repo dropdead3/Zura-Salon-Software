@@ -35,23 +35,23 @@ function SegmentCard({ segment, total, icon, color, delay }: {
     >
       <div className="flex items-center gap-2">
         {icon}
-        <span className="text-sm font-medium">{segment.label}</span>
+        <span className="text-sm font-medium font-display">{segment.label}</span>
         <span className="text-xs text-muted-foreground ml-auto">{pct}%</span>
       </div>
       <Progress value={pct} className="h-1.5" indicatorClassName={color} />
       <div className="grid grid-cols-3 gap-2 text-center">
         <div>
-          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Visits</p>
+          <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-display">Visits</p>
           <p className="text-sm font-display tabular-nums">{formatNumber(segment.count)}</p>
         </div>
         <div>
-          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Avg Ticket</p>
+          <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-display">Avg Ticket</p>
           <p className="text-sm font-display tabular-nums">
             <BlurredAmount>{formatCurrencyWhole(Math.round(segment.avgTicket))}</BlurredAmount>
           </p>
         </div>
         <div>
-          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Revenue</p>
+          <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-display">Revenue</p>
           <p className="text-sm font-display tabular-nums">
             <BlurredAmount>{formatCurrencyWhole(Math.round(segment.revenue))}</BlurredAmount>
           </p>
@@ -89,7 +89,7 @@ export function ClientTypeSplitPanel({ isOpen, dateFrom, dateTo, locationId }: C
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                <span className="text-xs tracking-[0.15em] uppercase text-muted-foreground font-medium">
+                <span className="text-xs tracking-[0.15em] uppercase text-muted-foreground font-medium font-display">
                   Client Type Breakdown
                 </span>
               </div>
