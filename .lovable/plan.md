@@ -1,36 +1,39 @@
 
 
-## Visual Indicator When Actual Revenue Exceeds Expected
+## Bug: "Happening Now" Shows Cancelled Appointments
 
-Great observation — you've surpassed the expected revenue and the UI gives no signal of that win. The progress bar just fills to 100% and the text reads "$2,271.00 of $1,883.00 expected" with no celebration or color change. This is a missed opportunity for a high-signal, calm indicator.
+### Root Cause
 
-### Current Behavior
+When you cancel an appointment via the detail panel, `usePhorestCalendar.ts` fires the `updateStatus` mutation. On success (line 223), it only invalidates `['phorest-appointments']`:
 
-In `AggregateSalesCard.tsx` (lines 644-661):
-- Progress bar is capped at `Math.min(..., 100)` — so it fills fully but looks identical to exactly meeting target
-- Text shows actual vs expected in neutral styling — no color differentiation
-- No icon or label signals the over-performance
+```ts
+onSuccess: () => {
+  queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] });
+  toast.success('Appointment updated');
+},
+```
 
-### Proposed Changes
+It does **not** invalidate `['live-session-snapshot']`. The "Happening Now" indicator has a 60-second refetch interval (`refetchInterval: 60_000`), so it continues showing the cancelled appointment as "in progress" until the next automatic refetch.
 
-**File: `src/components/dashboard/AggregateSalesCard.tsx`**
+The delete flow already handles this correctly (line 833 of `AppointmentDetailSheet.tsx` invalidates `live-session-snapshot`), but the status change flow was missed.
 
-1. **Detect exceeded state**: Add a boolean `const exceededExpected = todayActual.actualRevenue > displayMetrics.totalRevenue`
+### Fix
 
-2. **Color the progress bar green when exceeded**: Apply `indicatorClassName="bg-success-foreground"` to the `<Progress>` component when `exceededExpected` is true (default is `bg-primary`)
+**File: `src/hooks/usePhorestCalendar.ts`** (line 223-226)
 
-3. **Color the "actual of expected" text**: When exceeded, apply `text-success-foreground` to the amount text so it visually pops as a positive outcome
+Add `live-session-snapshot` invalidation to the `updateStatus` mutation's `onSuccess`:
 
-4. **Add a subtle check icon + label**: When exceeded, show a small `CheckCircle2` icon with text like "Exceeded" next to the progress summary, styled with `text-success-foreground`
+```ts
+onSuccess: () => {
+  queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] });
+  queryClient.invalidateQueries({ queryKey: ['live-session-snapshot'] });
+  toast.success('Appointment updated');
+},
+```
 
-5. **Allow progress bar to show overshoot**: Instead of capping at 100, keep the bar at 100% visually but the text and color convey the overshoot — the bar turns green and the text shows the surplus
-
-### Visual Result
-
-- **At or below target**: Bar fills proportionally in `primary` color, neutral text
-- **Exceeded target**: Bar is full in `success-foreground` green, text turns green, small "Exceeded" label with check icon appears
+This ensures that any status change (cancel, no-show, complete, confirm, check-in) immediately refreshes the live session indicator. Cancel and no-show will remove the appointment from "Happening Now"; complete will too. Confirm and check-in won't change visibility but the refetch is harmless.
 
 ### Scope
 
-~15 lines changed in 1 file. No structural or data changes.
+1 line added in 1 file.
 
