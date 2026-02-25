@@ -9,27 +9,30 @@ import {
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
-import { ZoomIn, ZoomOut, RotateCw, Move, Crop, Info, AlertTriangle, Maximize2 } from 'lucide-react';
+import { ZoomIn, ZoomOut, RotateCw, Move, Crop, Info, AlertTriangle, Maximize2, RefreshCw } from 'lucide-react';
 
 interface ImageCropModalProps {
   open: boolean;
   onClose: () => void;
   imageFile: File | null;
+  imageUrl?: string;
   onCropComplete: (croppedBlob: Blob) => void;
-  aspectRatio?: number; // width/height, e.g., 1 for square
-  maxOutputSize?: number; // max width/height in pixels
+  aspectRatio?: number;
+  maxOutputSize?: number;
 }
 
 export const ImageCropModal: React.FC<ImageCropModalProps> = ({
   open,
   onClose,
   imageFile,
+  imageUrl,
   onCropComplete,
   aspectRatio,
   maxOutputSize = 400,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const replaceInputRef = useRef<HTMLInputElement>(null);
   const [imageSrc, setImageSrc] = useState<string>('');
   const [imageElement, setImageElement] = useState<HTMLImageElement | null>(null);
   const [zoom, setZoom] = useState(1);
@@ -39,42 +42,59 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [cropShape, setCropShape] = useState<'circle' | 'square'>('circle');
+  const [localFile, setLocalFile] = useState<File | null>(null);
 
-  // Load image when file changes
+  // Determine the effective file (prop or locally replaced)
+  const effectiveFile = localFile || imageFile;
+
+  // Reset local file when modal closes
   useEffect(() => {
-    if (imageFile) {
-      const url = URL.createObjectURL(imageFile);
-      setImageSrc(url);
-      
-      const img = document.createElement('img');
-      img.onload = () => {
-        setImageElement(img);
-        
-        const canvasSize = 280;
-        const cropSize = canvasSize * 0.75; // 210px crop area
-        
-        // Calculate zoom needed to fit the LONG side into the canvas
-        // This ensures the entire image is visible initially
-        const longSide = Math.max(img.width, img.height);
-        const fitZoom = canvasSize / longSide;
-        
-        // Calculate minimum zoom (show full image in canvas)
-        const calculatedMinZoom = Math.max(0.01, fitZoom * 0.5);
-        setMinZoom(calculatedMinZoom);
-        
-        // Set initial zoom to fit the short side into crop area, but not below minimum
-        const shortSide = Math.min(img.width, img.height);
-        const initialZoom = Math.max(calculatedMinZoom, cropSize / shortSide);
-        
-        setZoom(Math.min(3, initialZoom));
-        setRotation(0);
-        setPosition({ x: 0, y: 0 });
-      };
-      img.src = url;
-
-      return () => URL.revokeObjectURL(url);
+    if (!open) {
+      setLocalFile(null);
     }
-  }, [imageFile]);
+  }, [open]);
+
+  // Load image from file or URL
+  useEffect(() => {
+    const src = effectiveFile ? URL.createObjectURL(effectiveFile) : imageUrl || '';
+    if (!src) return;
+
+    setImageSrc(src);
+
+    const img = document.createElement('img');
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      setImageElement(img);
+
+      const canvasSize = 280;
+      const cropSize = canvasSize * 0.75;
+      const longSide = Math.max(img.width, img.height);
+      const fitZoom = canvasSize / longSide;
+      const calculatedMinZoom = Math.max(0.01, fitZoom * 0.5);
+      setMinZoom(calculatedMinZoom);
+
+      const shortSide = Math.min(img.width, img.height);
+      const initialZoom = Math.max(calculatedMinZoom, cropSize / shortSide);
+
+      setZoom(Math.min(3, initialZoom));
+      setRotation(0);
+      setPosition({ x: 0, y: 0 });
+    };
+    img.src = src;
+
+    return () => {
+      if (effectiveFile) URL.revokeObjectURL(src);
+    };
+  }, [effectiveFile, imageUrl]);
+
+  // Handle replace photo file selection
+  const handleReplacePhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setLocalFile(file);
+    }
+    e.target.value = '';
+  };
 
   // Draw preview on canvas
   useEffect(() => {
@@ -92,11 +112,9 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
     const cropX = (size - cropSize) / 2;
     const cropY = (size - cropSize) / 2;
 
-    // Clear canvas with dark background
     ctx.fillStyle = '#1a1a1a';
     ctx.fillRect(0, 0, size, size);
 
-    // Helper function to draw the image with current transforms
     const drawImage = () => {
       ctx.save();
       ctx.translate(size / 2, size / 2);
@@ -113,14 +131,11 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
       ctx.restore();
     };
 
-    // First, draw the image with a dark overlay for the outer area
     drawImage();
     
-    // Apply semi-transparent overlay to the entire canvas
     ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
     ctx.fillRect(0, 0, size, size);
 
-    // Now clip to the crop shape and redraw the image clearly
     ctx.save();
     ctx.beginPath();
     if (cropShape === 'circle') {
@@ -130,15 +145,12 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
     }
     ctx.clip();
     
-    // Clear the clipped area
     ctx.fillStyle = '#1a1a1a';
     ctx.fillRect(0, 0, size, size);
     
-    // Redraw the image inside the crop area (clear, no overlay)
     drawImage();
     ctx.restore();
 
-    // Draw crop border
     ctx.strokeStyle = 'hsl(32, 30%, 20%)';
     ctx.lineWidth = 2;
     
@@ -172,7 +184,6 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
   const handleCropComplete = useCallback(() => {
     if (!imageElement) return;
 
-    // Create output canvas
     const outputCanvas = document.createElement('canvas');
     const outputSize = maxOutputSize;
     outputCanvas.width = outputSize;
@@ -181,15 +192,12 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
     const ctx = outputCanvas.getContext('2d');
     if (!ctx) return;
 
-    // Calculate the visible crop area relative to the preview
     const previewSize = 280;
     const cropSize = previewSize * 0.75;
     const cropOffset = (previewSize - cropSize) / 2;
 
-    // Scale factor between preview and output
     const scaleFactor = outputSize / cropSize;
 
-    // Apply transformations
     ctx.save();
     
     if (cropShape === 'circle') {
@@ -201,14 +209,9 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
     ctx.translate(outputSize / 2, outputSize / 2);
     ctx.rotate((rotation * Math.PI) / 180);
 
-    // Calculate scaled dimensions for output
     const scale = zoom * scaleFactor;
     const imgWidth = imageElement.width * scale;
     const imgHeight = imageElement.height * scale;
-
-    // Adjust position for crop offset and scale
-    const adjustedX = (position.x - cropOffset + previewSize / 2 - cropSize / 2) * scaleFactor;
-    const adjustedY = (position.y - cropOffset + previewSize / 2 - cropSize / 2) * scaleFactor;
 
     ctx.drawImage(
       imageElement,
@@ -220,7 +223,6 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
 
     ctx.restore();
 
-    // Convert to blob
     outputCanvas.toBlob(
       (blob) => {
         if (blob) {
@@ -240,7 +242,6 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
   const handleFitToView = () => {
     if (!imageElement) return;
     const canvasSize = 280;
-    // Fit the long side into the canvas so the entire image is visible
     const longSide = Math.max(imageElement.width, imageElement.height);
     const fitZoom = canvasSize / longSide;
     setZoom(Math.max(minZoom, Math.min(3, fitZoom)));
@@ -285,11 +286,11 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
           )}
 
           {/* Warning for large file size */}
-          {imageFile && imageFile.size > 5 * 1024 * 1024 && (
+          {effectiveFile && effectiveFile.size > 5 * 1024 * 1024 && (
             <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-2.5 flex items-start gap-2">
               <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
               <p className="text-xs text-amber-600 dark:text-amber-400">
-                Large file ({(imageFile.size / (1024 * 1024)).toFixed(1)}MB). For better performance, consider using an image under 5MB.
+                Large file ({(effectiveFile.size / (1024 * 1024)).toFixed(1)}MB). For better performance, consider using an image under 5MB.
               </p>
             </div>
           )}
@@ -398,6 +399,24 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
         </div>
 
         <DialogFooter className="gap-2 sm:gap-0">
+          {/* Hidden file input for replace */}
+          <input
+            ref={replaceInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleReplacePhoto}
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="mr-auto gap-1"
+            onClick={() => replaceInputRef.current?.click()}
+          >
+            <RefreshCw className="h-4 w-4" />
+            Replace Photo
+          </Button>
           <Button type="button" variant="outline" onClick={onClose}>
             Cancel
           </Button>

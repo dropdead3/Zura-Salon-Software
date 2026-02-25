@@ -357,7 +357,13 @@ export default function MyProfile() {
   };
 
   const handlePhotoClick = () => {
-    fileInputRef.current?.click();
+    if (profile?.photo_url) {
+      // Open crop modal with existing photo
+      setCropImageFile(null);
+      setCropModalOpen(true);
+    } else {
+      fileInputRef.current?.click();
+    }
   };
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -673,6 +679,7 @@ export default function MyProfile() {
                 open={cropModalOpen}
                 onClose={() => setCropModalOpen(false)}
                 imageFile={cropImageFile}
+                imageUrl={profile?.photo_url || undefined}
                 onCropComplete={handleCroppedPhotoUpload}
                 maxOutputSize={800}
               />
