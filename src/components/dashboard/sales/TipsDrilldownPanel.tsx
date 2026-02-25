@@ -24,10 +24,11 @@ import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 interface TipsDrilldownPanelProps {
   isOpen: boolean;
   parentLocationId?: string;
+  dateFrom: string;
+  dateTo: string;
 }
 
-export function TipsDrilldownPanel({ isOpen, parentLocationId }: TipsDrilldownPanelProps) {
-  const [period, setPeriod] = useState<30 | 90>(30);
+export function TipsDrilldownPanel({ isOpen, parentLocationId, dateFrom, dateTo }: TipsDrilldownPanelProps) {
   const [regionFilter, setRegionFilter] = useState('all');
   const [locationFilter, setLocationFilter] = useState(parentLocationId || 'all');
   const [showAll, setShowAll] = useState(false);
@@ -78,7 +79,8 @@ export function TipsDrilldownPanel({ isOpen, parentLocationId }: TipsDrilldownPa
   }, [locationFilter, regionFilter, locationRegionMap]);
 
   const { byStylist, byTotalTips, byCategory, byPaymentMethod, isLoading } = useTipsDrilldown({
-    period,
+    dateFrom,
+    dateTo,
     locationId: effectiveLocationId !== 'all' ? effectiveLocationId : undefined,
   });
 
@@ -136,26 +138,6 @@ export function TipsDrilldownPanel({ isOpen, parentLocationId }: TipsDrilldownPa
           <div className="pt-4 pb-2 space-y-4 border-t border-border/30 mt-4">
             {/* Filter Bar */}
             <div className="flex flex-wrap items-center gap-2">
-              <div className="flex rounded-full bg-muted/50 p-0.5">
-                <button
-                  onClick={() => setPeriod(30)}
-                  className={cn(
-                    "px-3 py-1 rounded-full text-xs font-medium transition-colors",
-                    period === 30 ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  30 Days
-                </button>
-                <button
-                  onClick={() => setPeriod(90)}
-                  className={cn(
-                    "px-3 py-1 rounded-full text-xs font-medium transition-colors",
-                    period === 90 ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  90 Days
-                </button>
-              </div>
 
               {/* Region/Location filters — only for multi-location orgs with leadership roles */}
               {isMultiLocation && isLeadership && availableRegions.length > 1 && (

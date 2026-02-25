@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useMemo } from 'react';
-import { format, subDays } from 'date-fns';
 import { getServiceCategory } from '@/utils/serviceCategorization';
 
 export interface StylistTipMetrics {
@@ -38,17 +37,13 @@ export interface TipsDrilldownData {
 }
 
 interface UseTipsDrilldownParams {
-  period: 30 | 90;
+  dateFrom: string;
+  dateTo: string;
   locationId?: string;
   minAppointments?: number;
 }
 
-export function useTipsDrilldown({ period, locationId, minAppointments = 10 }: UseTipsDrilldownParams): TipsDrilldownData {
-  const dateFrom = useMemo(() => {
-    return format(subDays(new Date(), period), 'yyyy-MM-dd');
-  }, [period]);
-
-  const dateTo = useMemo(() => format(new Date(), 'yyyy-MM-dd'), []);
+export function useTipsDrilldown({ dateFrom, dateTo, locationId, minAppointments = 10 }: UseTipsDrilldownParams): TipsDrilldownData {
 
   // Fetch appointments with tips data
   const { data: appointments, isLoading: aptsLoading, error: aptsError } = useQuery({
