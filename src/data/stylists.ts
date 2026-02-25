@@ -16,6 +16,8 @@ export interface Stylist {
   locations: Location[];
   isBooking?: boolean; // false = not currently booking
   bio?: string; // short bio for card flip
+  card_focal_x?: number; // focal point X for card display (0-100)
+  card_focal_y?: number; // focal point Y for card display (0-100)
 }
 
 // Helper to get location display name
