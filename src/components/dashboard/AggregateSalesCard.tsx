@@ -747,7 +747,7 @@ export function AggregateSalesCard({
                 <div className="grid grid-cols-2 gap-6">
                   {/* Services */}
                   <div 
-                    className="text-center p-3 sm:p-4 bg-card-inner rounded-lg border border-border/40 cursor-pointer transition-all hover:-translate-y-0.5 hover:border-border/80 dark:hover:border-border/60"
+                    className="text-center p-3 sm:p-4 bg-card-inner-deep rounded-lg border border-border/40 cursor-pointer transition-all hover:-translate-y-0.5 hover:border-border/80 dark:hover:border-border/60"
                     onClick={() => setDrilldownMode('services')}
                   >
                     <div className="flex items-center justify-center gap-1.5 mb-2">
@@ -765,7 +765,7 @@ export function AggregateSalesCard({
                   
                   {/* Products */}
                   <div 
-                    className="text-center p-3 sm:p-4 bg-card-inner rounded-lg border border-border/40 cursor-pointer transition-all hover:-translate-y-0.5 hover:border-border/80 dark:hover:border-border/60"
+                    className="text-center p-3 sm:p-4 bg-card-inner-deep rounded-lg border border-border/40 cursor-pointer transition-all hover:-translate-y-0.5 hover:border-border/80 dark:hover:border-border/60"
                     onClick={() => setDrilldownMode('products')}
                   >
                     <div className="flex items-center justify-center gap-1.5 mb-2">

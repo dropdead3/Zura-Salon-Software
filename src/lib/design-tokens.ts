@@ -70,8 +70,10 @@ export const tokens = {
   card: {
     /** Standard dashboard card wrapper */
     wrapper: 'rounded-xl',
-    /** Nested card / subcard inside a parent card */
+    /** Nested card / subcard inside a parent card (level 2) */
     inner: 'bg-card-inner rounded-lg border border-border/40',
+    /** Deeply nested card inside an already-nested card (level 3) */
+    innerDeep: 'bg-card-inner-deep rounded-lg border border-border/40',
     /** Standard icon container (10×10, muted bg, rounded) */
     iconBox: 'w-10 h-10 bg-muted flex items-center justify-center rounded-lg shrink-0',
     /** Standard icon inside the icon box */
