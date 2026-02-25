@@ -1,68 +1,45 @@
 
 
-## Three-Level Card Depth System
+## Light Mode: Lighter Nested Cards (Cream Direction)
 
-The screenshot confirms the problem: the Services/Retail tiles sit inside the hero section (which is already `bg-card-inner`), but they use the same `bg-card-inner` shade -- no visible separation at level 3.
+The screenshot shows the current light mode where nested cards at 93% and 90% lightness look too dark/grey against the cream parent card (98%). The fix is to flip the light-mode direction so nested cards get *lighter* (closer to white), while keeping dark mode as-is (darker/recessed).
 
-### Depth Architecture
+### Depth Architecture (Light Mode)
 
 ```text
-Dark mode lightness:
-┌─────────────────────────────────────────┐  bg-card         (11%)
-│  ┌───────────────────────────────────┐  │  bg-card-inner   (8%)
-│  │  ┌─────────┐  ┌─────────┐        │  │  bg-card-inner-deep (5%)
+Light mode lightness (Cream theme):
+┌─────────────────────────────────────────┐  bg-card         (98%)
+│  ┌───────────────────────────────────┐  │  bg-card-inner   (99%)  ← lighter
+│  │  ┌─────────┐  ┌─────────┐        │  │  bg-card-inner-deep (100%)  ← lightest
 │  │  │Services │  │ Retail  │        │  │
 │  │  └─────────┘  └─────────┘        │  │
 │  └───────────────────────────────────┘  │
-│  ┌─────────┐ ┌─────────┐ ┌─────────┐   │  bg-card-inner   (8%)
+│  ┌─────────┐ ┌─────────┐ ┌─────────┐   │  bg-card-inner   (99%)
 │  │ Trans.  │ │AvgTicket│ │Rev/Hour │   │
 │  └─────────┘ └─────────┘ └─────────┘   │
 └─────────────────────────────────────────┘
 ```
 
+Dark mode stays the same (darker = recessed). Light mode goes lighter = elevated/airy.
+
 ### Changes
 
-**1. `src/index.css` -- Add `--card-inner-deep` variable + utility class**
+**File: `src/index.css`** -- Update only the **light mode** `--card-inner` and `--card-inner-deep` values across all 4 themes:
 
-8 new variable declarations (4 themes x light/dark):
+| Theme | Variable | Current (darker) | New (lighter) |
+|-------|----------|-------------------|---------------|
+| Cream | `--card-inner` | `40 20% 93%` | `40 20% 99%` |
+| Cream | `--card-inner-deep` | `40 15% 90%` | `40 15% 100%` |
+| Rose | `--card-inner` | `350 15% 93%` | `350 15% 99%` |
+| Rose | `--card-inner-deep` | `350 10% 90%` | `350 10% 100%` |
+| Sage | `--card-inner` | `145 12% 93%` | `145 12% 99%` |
+| Sage | `--card-inner-deep` | `145 8% 90%` | `145 8% 100%` |
+| Ocean | `--card-inner` | `210 15% 93%` | `210 15% 99%` |
+| Ocean | `--card-inner-deep` | `210 10% 90%` | `210 10% 100%` |
 
-| Theme | Light `--card-inner-deep` | Dark `--card-inner-deep` |
-|-------|--------------------------|--------------------------|
-| Cream | `40 15% 90%` | `0 0% 5%` |
-| Rose  | `350 10% 90%` | `350 3% 5%` |
-| Sage  | `145 8% 90%` | `145 3% 5%` |
-| Ocean | `210 10% 90%` | `210 3% 5%` |
-
-Plus a new utility:
-```css
-.bg-card-inner-deep {
-  background-color: hsl(var(--card-inner-deep));
-}
-```
-
-**2. `src/lib/design-tokens.ts` -- Add `card.innerDeep` token**
-
-```typescript
-card: {
-  wrapper: 'rounded-xl',
-  inner: 'bg-card-inner rounded-lg border border-border/40',
-  innerDeep: 'bg-card-inner-deep rounded-lg border border-border/40',  // NEW
-}
-```
-
-**3. `src/components/dashboard/AggregateSalesCard.tsx` -- Services/Retail tiles**
-
-Lines 750 and 768: Change `bg-card-inner` to `bg-card-inner-deep` on the Services and Retail tiles, since they're nested inside the hero section which is already `bg-card-inner`.
-
-These are the only two instances that need the deep level -- the Transactions/Avg Ticket/Rev/Hour tiles sit directly inside the outer card (level 2, correctly `bg-card-inner`).
-
-### What stays the same
-
-All other `bg-card-inner` usages remain unchanged -- they're all level 2 (directly inside a parent card). The triple-nesting only occurs in the AggregateSalesCard hero section where Services/Retail are nested inside it.
+Dark mode values remain untouched (8%/5% recessed pattern stays).
 
 ### Scope
 
-- `src/index.css` -- 8 new variable lines + 3-line utility class
-- `src/lib/design-tokens.ts` -- 1 new token
-- `src/components/dashboard/AggregateSalesCard.tsx` -- 2 class string changes
+8 single-line value changes in `src/index.css`, light-mode blocks only. No other files change.
 
