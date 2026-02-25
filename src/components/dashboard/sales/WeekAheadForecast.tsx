@@ -15,7 +15,8 @@ import { CalendarRange, TrendingUp, Calendar, Users, ChevronDown } from 'lucide-
 import { CategoryBreakdownPanel, BreakdownMode } from './CategoryBreakdownPanel';
 import { ServiceMixLegend } from '@/components/dashboard/analytics/ServiceMixLegend';
 import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
-import { isGradientMarker, getGradientFromMarker } from '@/utils/categoryColors';
+import { isGradientMarker, getGradientFromMarker, getDarkCategoryStyle } from '@/utils/categoryColors';
+import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
 import { useForecastChartMode } from '@/hooks/useForecastChartMode';
 import { Tabs, FilterTabsList, FilterTabsTrigger } from '@/components/ui/tabs';
 
@@ -210,6 +211,8 @@ export function WeekAheadForecast() {
   const { data, isLoading, error } = useWeekAheadRevenue(selectedLocation);
   const { data: locations = [] } = useLocations();
   const { colorMap } = useServiceCategoryColorsMap();
+  const { resolvedTheme } = useDashboardTheme();
+  const isDark = resolvedTheme === 'dark';
 
   // Compute closed dates for the selected location
   const closedDates = useMemo(() => {
@@ -519,6 +522,9 @@ export function WeekAheadForecast() {
                     allCategories.map((cat, catIndex) => {
                       const isTopBar = catIndex === allCategories.length - 1;
                       const solidColor = resolveHexColor(colorMap[cat.toLowerCase()]?.bg || '#888888');
+                      const darkStyle = isDark ? getDarkCategoryStyle(solidColor) : null;
+                      const barFill = isDark ? darkStyle!.fill : solidColor;
+                      const barStroke = isDark ? darkStyle!.stroke : solidColor;
                       return (
                         <Bar
                           key={cat}
@@ -530,7 +536,7 @@ export function WeekAheadForecast() {
                           animationEasing="ease-out"
                           onClick={(data: any) => handleBarClick(data.name)}
                           cursor="pointer"
-                          fill={solidColor}
+                          fill={barFill}
                         >
                           {isTopBar && (
                             <LabelList 
@@ -543,8 +549,8 @@ export function WeekAheadForecast() {
                             return (
                               <Cell
                                 key={`${cat}-${index}`}
-                                fill={solidColor}
-                                stroke={isSelected ? 'hsl(var(--foreground))' : solidColor}
+                                fill={barFill}
+                                stroke={isSelected ? 'hsl(var(--foreground))' : barStroke}
                                 strokeOpacity={isSelected ? 1 : 0.2}
                                 strokeWidth={isSelected ? 1.5 : 0.5}
                               />
