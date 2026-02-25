@@ -166,14 +166,19 @@ export function useAppointmentsHub(filters: HubFilters) {
       const appointmentDates = [...new Set(paged.map((a: any) => a.appointment_date).filter(Boolean))] as string[];
 
       let transactionClientIds = new Set<string>();
+      const transactionTotalMap: Record<string, number> = {};
       if (phorestClientIdsForTx.length > 0 && appointmentDates.length > 0) {
         const { data: txMatches } = await supabase
           .from('phorest_transaction_items')
-          .select('phorest_client_id')
+          .select('phorest_client_id, transaction_date, total_amount')
           .in('phorest_client_id', phorestClientIdsForTx)
           .in('transaction_date', appointmentDates);
         txMatches?.forEach((t: any) => {
-          if (t.phorest_client_id) transactionClientIds.add(t.phorest_client_id);
+          if (t.phorest_client_id) {
+            transactionClientIds.add(t.phorest_client_id);
+            const key = `${t.phorest_client_id}|${t.transaction_date}`;
+            transactionTotalMap[key] = (transactionTotalMap[key] || 0) + (Number(t.total_amount) || 0);
+          }
         });
       }
 
@@ -197,6 +202,9 @@ export function useAppointmentsHub(filters: HubFilters) {
               : null,
           location_name: locationMap[a.location_id] || null,
           has_transaction: a.phorest_client_id ? transactionClientIds.has(a.phorest_client_id) : false,
+          total_paid: a.phorest_client_id && a.appointment_date
+            ? transactionTotalMap[`${a.phorest_client_id}|${a.appointment_date}`] ?? null
+            : null,
         };
       });
 

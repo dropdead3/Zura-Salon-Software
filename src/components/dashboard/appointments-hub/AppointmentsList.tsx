@@ -206,7 +206,7 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
 
   const handleExportCSV = () => {
     if (appointments.length === 0) return;
-    const headers = ['Date', 'Time', 'Client', 'Phone', 'Email', 'Service', 'Stylist', 'Status', 'Price', 'Created', 'Created By'];
+    const headers = ['Date', 'Time', 'Client', 'Phone', 'Email', 'Service', 'Stylist', 'Status', 'Price', 'Total Paid'];
     const rows = appointments.map((a: any) => [
       formatDateDisplay(a.appointment_date),
       `${a.start_time}-${a.end_time}`,
@@ -217,8 +217,7 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
       a.stylist_name || '',
       a.status || '',
       a.total_price ?? '',
-      formatCreatedAt(a.created_at),
-      a.created_by_name || '',
+      a.total_paid ?? '',
     ]);
     const csv = [headers, ...rows].map(r => r.map((c: any) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
@@ -239,7 +238,7 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
     }
   };
 
-  const COL_COUNT = 13;
+  const COL_COUNT = 12;
 
   const allSelected = appointments.length > 0 && selectedIds.size === appointments.length;
   const someSelected = selectedIds.size > 0 && selectedIds.size < appointments.length;
@@ -369,8 +368,7 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
               <TableHead className={tokens.table.columnHeader}>Stylist</TableHead>
               <TableHead className={cn(tokens.table.columnHeader, 'whitespace-nowrap')}>Status</TableHead>
               <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden lg:table-cell')}>Price</TableHead>
-              <TableHead className={cn(tokens.table.columnHeader, 'hidden 2xl:table-cell')}>Created</TableHead>
-              <TableHead className={cn(tokens.table.columnHeader, 'hidden 2xl:table-cell')}>Created By</TableHead>
+              <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden lg:table-cell')}>Total Paid</TableHead>
               <TableHead className="w-8" />
             </TableRow>
           </TableHeader>
@@ -388,8 +386,7 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
                   <TableCell><Skeleton className="h-5 w-full" /></TableCell>
                   <TableCell><Skeleton className="h-5 w-full" /></TableCell>
                   <TableCell className="hidden lg:table-cell"><Skeleton className="h-5 w-full" /></TableCell>
-                  <TableCell className="hidden 2xl:table-cell"><Skeleton className="h-5 w-full" /></TableCell>
-                   <TableCell className="hidden 2xl:table-cell"><Skeleton className="h-5 w-full" /></TableCell>
+                  <TableCell className="hidden lg:table-cell"><Skeleton className="h-5 w-full" /></TableCell>
                    <TableCell className="w-8" />
                 </TableRow>
               ))
@@ -457,10 +454,11 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
                         <BlurredAmount>${appt.total_price}</BlurredAmount>
                       ) : '—'}
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground whitespace-nowrap hidden 2xl:table-cell">
-                      {formatCreatedAt(appt.created_at)}
+                    <TableCell className="text-sm text-right hidden lg:table-cell whitespace-nowrap">
+                      {appt.total_paid != null ? (
+                        <BlurredAmount>${appt.total_paid.toFixed(2)}</BlurredAmount>
+                      ) : '—'}
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground hidden 2xl:table-cell">{appt.created_by_name || '—'}</TableCell>
                     <TableCell className="w-8 pr-2">
                       <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                     </TableCell>
