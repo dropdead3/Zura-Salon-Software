@@ -39,12 +39,15 @@ export interface RawTipAppointment {
   start_time: string | null;
 }
 
+export type ClientMap = Map<string, string>;
+
 export interface TipsDrilldownData {
   byStylist: StylistTipMetrics[];
   byTotalTips: StylistTipMetrics[];
   byCategory: Record<string, CategoryTipMetrics>;
   byPaymentMethod: Record<string, PaymentMethodTipMetrics>;
   rawAppointments: RawTipAppointment[];
+  clientMap: ClientMap;
   isLoading: boolean;
   error: Error | null;
 }
@@ -106,6 +109,33 @@ export function useTipsDrilldown({ dateFrom, dateTo, locationId, minAppointments
     },
     staleTime: 1000 * 60 * 10,
   });
+
+  // Fetch client names for visit-level resolution
+  const { data: clientsData, isLoading: clientsLoading } = useQuery({
+    queryKey: ['tips-drilldown-clients'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('phorest_clients')
+        .select('phorest_client_id, first_name, last_name');
+      if (error) throw error;
+      return data;
+    },
+    staleTime: 1000 * 60 * 10,
+  });
+
+  // Build client name map
+  const clientMap = useMemo<ClientMap>(() => {
+    const map = new Map<string, string>();
+    if (clientsData) {
+      for (const c of clientsData) {
+        if (c.phorest_client_id) {
+          const name = [c.first_name, c.last_name].filter(Boolean).join(' ').trim();
+          if (name) map.set(c.phorest_client_id, name);
+        }
+      }
+    }
+    return map;
+  }, [clientsData]);
 
   // Fetch payment method data from transaction items
   const { data: transactionItems, isLoading: txLoading } = useQuery({
@@ -292,7 +322,8 @@ export function useTipsDrilldown({ dateFrom, dateTo, locationId, minAppointments
   return {
     ...result,
     rawAppointments: (appointments ?? []) as RawTipAppointment[],
-    isLoading: aptsLoading || profilesLoading || staffMappingLoading || txLoading,
+    clientMap,
+    isLoading: aptsLoading || profilesLoading || staffMappingLoading || txLoading || clientsLoading,
     error: aptsError as Error | null,
   };
 }
