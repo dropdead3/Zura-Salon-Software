@@ -1,56 +1,46 @@
 
 
-## Enhance Top Performers Card UI
+## Transactions Drill-Down: Design Rule Violations
 
-The current card is functional but visually flat -- every rank row looks nearly identical, and the layout doesn't leverage the luxury depth system or progressive disclosure that the rest of the dashboard uses. Here's what changes.
+The screenshot shows several violations of the typography and design token rules in the transactions drill-down panels. Here is what needs to be fixed.
 
-### Visual Enhancements
+### Violations Identified
 
-**1. Podium-style rank differentiation**
+**1. ClientTypeSplitPanel -- Uppercase on font-sans (3 instances)**
 
-Replace the small `Badge variant="outline"` rank pills with larger, more expressive rank indicators. The #1 row gets a subtle gold gradient left-border accent. #2 gets silver. #3 gets bronze. Rows 4+ (when "View all" is expanded) get no accent -- just the inner card background.
+Lines 44, 48, 54 in `ClientTypeSplitPanel.tsx`: The KPI sub-labels ("VISITS", "AVG TICKET", "REVENUE") use `text-[10px] uppercase tracking-wide text-muted-foreground` without `font-display`. The design system rule states: uppercase is only permitted with `font-display` (Termina). Using uppercase on the default `font-sans` (Aeonik Pro) is prohibited.
 
-**2. Revenue progress bar (relative)**
+**Fix:** Add `font-display` to these labels, or use `tokens.kpi.label` which already includes `font-display text-[11px] font-medium text-muted-foreground uppercase tracking-wider`.
 
-Add a thin horizontal bar under each performer's revenue showing their share relative to the top performer (top performer = 100% width). This immediately communicates the gap between positions without requiring mental math. Uses `bg-primary/20` track with `bg-primary` fill, height `h-1 rounded-full`.
+**2. ClientTypeSplitPanel -- Section header uses font-sans with uppercase**
 
-**3. Service vs Retail inline split**
+Line 92: `text-xs tracking-[0.15em] uppercase text-muted-foreground font-medium` -- missing `font-display`. Section headers that are uppercase must use Termina.
 
-When sorted by Total Revenue, show a subtle two-tone micro-bar or small text split: `$400 service · $175 retail`. This surfaces the retail contribution without requiring a sort toggle, giving operators instant visibility into revenue composition.
+**Fix:** Add `font-display` class.
 
-**4. "View all" expansion with ScrollArea**
+**3. TransactionsByHourPanel -- Section header uses font-sans with uppercase**
 
-Currently hard-capped at 3 entries. Add a "View all X stylists" button at the bottom (using `tokens.button.cardFooter` pattern) that expands the list inside a `ScrollArea` with `max-h-[320px]`. This aligns with the enterprise scaling pattern just implemented for Tips.
+Line 48: `text-xs tracking-wide uppercase text-muted-foreground font-medium` -- same violation. Missing `font-display`.
 
-**5. Rank badge refinement**
+**Fix:** Add `font-display` class.
 
-Replace the generic `Badge variant="outline"` with a styled circle: `w-7 h-7 rounded-full flex items-center justify-center` with rank-specific background tints (gold/silver/bronze for 1-3, `bg-muted` for 4+). The number uses `font-display text-xs` for consistency.
+**4. ClientTypeSplitPanel -- Segment title uses plain font-medium**
 
-**6. Subtle entry animation**
+Line 38: `text-sm font-medium` on segment labels ("New Clients", "Returning Clients"). This is technically allowed (font-medium is max weight), but these are card-level subheadings and would benefit from `font-display` for consistency with the rest of the dashboard card hierarchy.
 
-Use `framer-motion` `AnimatePresence` with staggered `initial={{ opacity: 0, y: 8 }}` for each row on mount. Keeps the calm aesthetic while adding polish.
-
-### Technical Detail
-
-| Area | Change |
-|---|---|
-| Rank indicator | `w-7 h-7 rounded-full` with semantic gold/silver/bronze bg tints using chart tokens |
-| Revenue bar | `h-1 rounded-full bg-primary` width as percentage of top performer's value |
-| Revenue split | Conditional inline `service · retail` text when both values > 0 |
-| View all | `ScrollArea max-h-[320px]` + toggle button for entries beyond top 3 |
-| Animation | `motion.div` with `initial/animate` opacity+y, stagger via `transition.delay` |
-| Sort dropdown | Close on outside click via `useEffect` with `mousedown` listener |
+**Fix:** Optional -- add `font-display` to segment titles for visual consistency.
 
 ### Files Changed
 
 | File | Change |
 |---|---|
-| `src/components/dashboard/sales/TopPerformersCard.tsx` | All visual and interaction enhancements above |
+| `src/components/dashboard/sales/ClientTypeSplitPanel.tsx` | Add `font-display` to section header (line 92), KPI sub-labels (lines 44, 48, 54), and optionally segment titles (line 38) |
+| `src/components/dashboard/sales/TransactionsByHourPanel.tsx` | Add `font-display` to section header (line 48) |
 
 ### What Does NOT Change
 
-- Data source (already using `phorest_transaction_items` from prior fix)
-- Location filter propagation (already wired)
-- Card header canonical layout (icon box + Termina title + info tooltip + filter badge)
-- Privacy wrapping (`BlurredAmount`)
+- Data logic, hooks, and filter propagation remain untouched
+- Layout structure (grid, spacing, progress bars) stays the same
+- BlurredAmount privacy wrapping stays intact
+- Animation behavior stays the same
 
