@@ -222,6 +222,7 @@ export function usePhorestCalendar() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] });
+      queryClient.invalidateQueries({ queryKey: ['live-session-snapshot'] });
       toast.success('Appointment updated');
     },
     onError: (error: Error) => {
