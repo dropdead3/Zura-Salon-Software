@@ -254,6 +254,7 @@ export default function MyProfile() {
   const missingFields = profileFields.filter(f => !f.filled);
 
   const isStylistRole = roles.includes('stylist') || roles.includes('stylist_assistant');
+  const isPhotoLocked = isStylistRole && !isAdminLevel;
 
   // Validation for required fields
   const validationErrors = useMemo(() => {
@@ -532,17 +533,17 @@ export default function MyProfile() {
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 Profile Photo
-                {isStylistRole && <Lock className="w-4 h-4 text-muted-foreground" />}
+                {isPhotoLocked && <Lock className="w-4 h-4 text-muted-foreground" />}
               </CardTitle>
               <CardDescription>
-                {isStylistRole 
+                {isPhotoLocked 
                   ? 'Your headshot is managed by admin and displayed on the website.'
                   : 'Your photo will be visible to the team.'
                 }
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {isStylistRole ? (
+              {isPhotoLocked ? (
                 // Locked state for stylists/stylist assistants
                 <div className="space-y-4">
                   <div className="flex items-center gap-6">
