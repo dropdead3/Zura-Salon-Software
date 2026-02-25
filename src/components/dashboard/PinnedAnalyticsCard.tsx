@@ -41,6 +41,7 @@ import { ServiceMixCard } from '@/components/dashboard/analytics/ServiceMixCard'
 import { RetailEffectivenessCard } from '@/components/dashboard/analytics/RetailEffectivenessCard';
 import { RebookingCard } from '@/components/dashboard/analytics/RebookingCard';
 import { useSalesMetrics, useSalesByStylist, useServiceMix } from '@/hooks/useSalesData';
+import { useTodayActualRevenue } from '@/hooks/useTodayActualRevenue';
 import { useRetailAttachmentRate } from '@/hooks/useRetailAttachmentRate';
 import { useStaffUtilization } from '@/hooks/useStaffUtilization';
 import { useLocations } from '@/hooks/useLocations';
@@ -314,6 +315,8 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
   const { orgMetrics: goalOrgMetrics } = useGoalTrackerData('monthly');
   const { data: weekAheadData, isLoading: weekAheadLoading } = useWeekAheadRevenue(locationFilter);
   const { data: queueData } = useTodaysQueue(locationFilter);
+  const isToday = filters.dateRange === 'today';
+  const { data: todayActualData } = useTodayActualRevenue(isToday);
   const selectedLocationName = locationFilter
     ? locations?.find(l => l.id === locationFilter)?.name || 'Unknown'
     : 'All Locations';
@@ -343,15 +346,27 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
     // Extract primary metric per card
     let metricValue = '';
     let metricLabel = '';
+    let metricSubtext = '';
     let goalPaceIcon: React.ReactNode = null;
     
     switch (cardId) {
       case 'executive_summary':
-      case 'sales_overview':
         metricValue = formatCurrencyWhole(salesData?.totalRevenue ?? 0);
         metricLabel = filters.dateRange === 'today'
           ? "Today's expected revenue across all services and retail"
           : `Total revenue across all services and retail for ${getPeriodLabel(filters.dateRange)}`;
+        break;
+      case 'sales_overview':
+        if (isToday && todayActualData?.hasActualData) {
+          metricValue = formatCurrencyWhole(todayActualData.actualRevenue);
+          metricLabel = 'Sales so far today';
+          metricSubtext = `${formatCurrencyWhole(salesData?.totalRevenue ?? 0)} expected today`;
+        } else {
+          metricValue = formatCurrencyWhole(salesData?.totalRevenue ?? 0);
+          metricLabel = isToday
+            ? "Today's expected revenue across all services and retail"
+            : `Total revenue across all services and retail for ${getPeriodLabel(filters.dateRange)}`;
+        }
         break;
       case 'daily_brief':
         metricValue = formatCurrencyWhole(salesData?.totalRevenue ?? 0);
@@ -518,6 +533,11 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
                 <p className="text-xs text-muted-foreground/80 mt-1 flex items-center gap-1">
                   {goalPaceIcon}
                   {metricLabel}
+                </p>
+              )}
+              {metricSubtext && (
+                <p className="text-[10px] text-muted-foreground/60 mt-0.5 font-sans">
+                  {metricSubtext}
                 </p>
               )}
             </div>
