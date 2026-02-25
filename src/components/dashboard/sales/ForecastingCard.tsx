@@ -24,7 +24,8 @@ import { Tooltip as UITooltip, TooltipContent, TooltipTrigger } from '@/componen
 import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
 import { cn } from '@/lib/utils';
 import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
-import { isGradientMarker, getGradientFromMarker } from '@/utils/categoryColors';
+import { isGradientMarker, getGradientFromMarker, getDarkCategoryStyle } from '@/utils/categoryColors';
+import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
 import { useForecastChartMode } from '@/hooks/useForecastChartMode';
 
 function resolveHexColor(colorHex: string): string {
@@ -448,6 +449,8 @@ export function ForecastingCard() {
     locationId: selectedLocation === 'all' ? undefined : selectedLocation,
   });
   const { hideNumbers, requestUnhide } = useHideNumbers();
+  const { resolvedTheme } = useDashboardTheme();
+  const isDark = resolvedTheme === 'dark';
   const { formatCurrency, currency } = useFormatCurrency();
   const { formatDate } = useFormatDate();
   const { colorMap } = useServiceCategoryColorsMap();
@@ -891,6 +894,9 @@ export function ForecastingCard() {
                     allCategories.map((cat, catIndex) => {
                       const isTopBar = catIndex === allCategories.length - 1;
                       const solidColor = resolveHexColor(colorMap[cat.toLowerCase()]?.bg || '#888888');
+                      const darkStyle = isDark ? getDarkCategoryStyle(solidColor) : null;
+                      const barFill = isDark ? darkStyle!.fill : solidColor;
+                      const barStroke = isDark ? darkStyle!.stroke : solidColor;
                       return (
                         <Bar
                           key={cat}
@@ -902,7 +908,7 @@ export function ForecastingCard() {
                           animationEasing="ease-out"
                           onClick={(data: any) => !showWeeklyChart && handleBarClick(data.name)}
                           cursor={showWeeklyChart ? undefined : "pointer"}
-                          fill={solidColor}
+                          fill={barFill}
                         >
                           {isTopBar && (
                             <LabelList 
@@ -915,8 +921,8 @@ export function ForecastingCard() {
                             return (
                               <Cell
                                 key={`${cat}-${index}`}
-                                fill={solidColor}
-                                stroke={isSelected ? 'hsl(var(--foreground))' : solidColor}
+                                fill={barFill}
+                                stroke={isSelected ? 'hsl(var(--foreground))' : barStroke}
                                 strokeOpacity={isSelected ? 1 : 0.2}
                                 strokeWidth={isSelected ? 1.5 : 0.5}
                               />
