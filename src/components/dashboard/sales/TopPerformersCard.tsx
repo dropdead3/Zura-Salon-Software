@@ -1,19 +1,21 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Trophy, Medal, ChevronDown } from 'lucide-react';
+import { Trophy, ChevronDown, ChevronUp } from 'lucide-react';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { AnalyticsFilterBadge, type FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface Performer {
   user_id: string;
   name: string;
   photo_url?: string;
   totalRevenue: number;
+  serviceRevenue?: number;
   productRevenue?: number;
 }
 
@@ -26,29 +28,28 @@ interface TopPerformersCardProps {
   filterContext?: FilterContext;
 }
 
-const getRankIcon = (rank: number) => {
+const getRankStyles = (rank: number) => {
   switch (rank) {
     case 1:
-      return <Trophy className="w-4 h-4 text-chart-4" />;
+      return {
+        badge: 'bg-chart-4/15 text-chart-4 border border-chart-4/30',
+        row: 'border-l-2 border-l-chart-4/60',
+      };
     case 2:
-      return <Medal className="w-4 h-4 text-muted-foreground" />;
+      return {
+        badge: 'bg-muted text-muted-foreground border border-border',
+        row: 'border-l-2 border-l-muted-foreground/40',
+      };
     case 3:
-      return <Medal className="w-4 h-4 text-chart-3" />;
+      return {
+        badge: 'bg-chart-3/15 text-chart-3 border border-chart-3/30',
+        row: 'border-l-2 border-l-chart-3/40',
+      };
     default:
-      return null;
-  }
-};
-
-const getRankBg = (rank: number) => {
-  switch (rank) {
-    case 1:
-      return 'bg-chart-4/10 border-chart-4/20';
-    case 2:
-      return 'bg-card-inner border-muted-foreground/20';
-    case 3:
-      return 'bg-chart-3/10 border-chart-3/20';
-    default:
-      return 'bg-card-inner';
+      return {
+        badge: 'bg-muted/50 text-muted-foreground',
+        row: 'border-l-2 border-l-transparent',
+      };
   }
 };
 
@@ -57,19 +58,41 @@ const SORT_OPTIONS: { value: SortMode; label: string }[] = [
   { value: 'retail', label: 'Retail Sales' },
 ];
 
+const INITIAL_COUNT = 3;
+
 export function TopPerformersCard({ performers, isLoading, showInfoTooltip = false, filterContext }: TopPerformersCardProps) {
   const [sortMode, setSortMode] = useState<SortMode>('totalRevenue');
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showAll, setShowAll] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const { formatCurrencyWhole } = useFormatCurrency();
 
-  const sorted = [...performers].sort((a, b) => {
+  // Close dropdown on outside click
+  useEffect(() => {
+    if (!showDropdown) return;
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showDropdown]);
+
+  const sorted = useMemo(() => [...performers].sort((a, b) => {
     if (sortMode === 'retail') {
       return (b.productRevenue ?? 0) - (a.productRevenue ?? 0);
     }
     return b.totalRevenue - a.totalRevenue;
-  });
+  }), [performers, sortMode]);
+
+  const topRevenue = sorted[0]
+    ? (sortMode === 'retail' ? (sorted[0].productRevenue ?? 0) : sorted[0].totalRevenue)
+    : 0;
 
   const currentLabel = SORT_OPTIONS.find(o => o.value === sortMode)?.label ?? 'Total Revenue';
+  const displayList = showAll ? sorted : sorted.slice(0, INITIAL_COUNT);
+  const hasMore = sorted.length > INITIAL_COUNT;
 
   const headerContent = (
     <div className="flex items-center justify-between w-full">
@@ -123,14 +146,12 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
     );
   }
 
-  const topThree = sorted.slice(0, 3);
-
   return (
     <Card className="h-full flex flex-col overflow-hidden border-border/40">
       <CardHeader className="px-4 pt-4 pb-1">{headerContent}</CardHeader>
-      <CardContent className="px-4 pb-2 pt-0 flex-1">
+      <CardContent className="px-4 pb-3 pt-0 flex-1 flex flex-col">
         {/* Sort toggle */}
-        <div className="relative mb-2">
+        <div className="relative mb-2" ref={dropdownRef}>
           <button
             onClick={() => setShowDropdown(!showDropdown)}
             className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
@@ -156,45 +177,103 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
           )}
         </div>
 
-        <div className="space-y-2">
-          {topThree.map((performer, idx) => {
-            const rank = idx + 1;
-            const initials = performer.name
-              ?.split(' ')
-              .map(n => n[0])
-              .join('')
-              .toUpperCase() || '?';
-            const displayValue = sortMode === 'retail' 
-              ? (performer.productRevenue ?? 0) 
-              : performer.totalRevenue;
+        {/* Performer list */}
+        <ScrollArea className={cn("flex-1", showAll && sorted.length > 6 && "max-h-[320px]")}>
+          <div className="space-y-2">
+            <AnimatePresence mode="popLayout">
+              {displayList.map((performer, idx) => {
+                const rank = idx + 1;
+                const styles = getRankStyles(rank);
+                const initials = performer.name
+                  ?.split(' ')
+                  .map(n => n[0])
+                  .join('')
+                  .toUpperCase() || '?';
+                const displayValue = sortMode === 'retail'
+                  ? (performer.productRevenue ?? 0)
+                  : performer.totalRevenue;
+                const progressPercent = topRevenue > 0 ? (displayValue / topRevenue) * 100 : 0;
 
-            return (
-              <div
-                key={performer.user_id}
-                className={`flex items-center gap-3 p-2 rounded-lg border ${getRankBg(rank)}`}
-              >
-                <div className="relative">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={performer.photo_url} alt={performer.name} />
-                    <AvatarFallback className="text-xs">{initials}</AvatarFallback>
-                  </Avatar>
-                  <div className="absolute -top-1 -right-1">
-                    {getRankIcon(rank)}
-                  </div>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{performer.name}</p>
-                  <BlurredAmount className="text-xs text-muted-foreground">
-                    {formatCurrencyWhole(displayValue)}
-                  </BlurredAmount>
-                </div>
-                <Badge variant="outline" className="text-xs">
-                  #{rank}
-                </Badge>
-              </div>
-            );
-          })}
-        </div>
+                const serviceRev = performer.serviceRevenue ?? (performer.totalRevenue - (performer.productRevenue ?? 0));
+                const retailRev = performer.productRevenue ?? 0;
+                const showSplit = sortMode === 'totalRevenue' && serviceRev > 0 && retailRev > 0;
+
+                return (
+                  <motion.div
+                    key={performer.user_id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.25, delay: idx * 0.05 }}
+                    className={cn(
+                      "flex items-center gap-3 p-2.5 rounded-lg bg-card-inner",
+                      styles.row
+                    )}
+                  >
+                    {/* Rank badge */}
+                    <span className={cn(
+                      "w-7 h-7 rounded-full flex items-center justify-center font-display text-xs shrink-0",
+                      styles.badge
+                    )}>
+                      {rank}
+                    </span>
+
+                    {/* Avatar */}
+                    <Avatar className="h-9 w-9 shrink-0">
+                      <AvatarImage src={performer.photo_url} alt={performer.name} />
+                      <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+                    </Avatar>
+
+                    {/* Name, revenue, progress bar */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-0.5">
+                        <p className="text-sm font-medium truncate">{performer.name}</p>
+                        <BlurredAmount className="font-display text-sm shrink-0 ml-2">
+                          {formatCurrencyWhole(displayValue)}
+                        </BlurredAmount>
+                      </div>
+
+                      {/* Revenue progress bar */}
+                      <div className="h-1 w-full bg-primary/15 rounded-full overflow-hidden">
+                        <motion.div
+                          className="h-full bg-primary rounded-full"
+                          initial={{ width: 0 }}
+                          animate={{ width: `${progressPercent}%` }}
+                          transition={{ duration: 0.6, delay: 0.15 + idx * 0.05, ease: 'easeOut' }}
+                        />
+                      </div>
+
+                      {/* Service · Retail split */}
+                      {showSplit && (
+                        <div className="flex items-center gap-1 mt-1 text-[10px] text-muted-foreground">
+                          <BlurredAmount>{formatCurrencyWhole(serviceRev)}</BlurredAmount>
+                          <span>service</span>
+                          <span className="text-border">·</span>
+                          <BlurredAmount>{formatCurrencyWhole(retailRev)}</BlurredAmount>
+                          <span>retail</span>
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+          </div>
+        </ScrollArea>
+
+        {/* View all toggle */}
+        {hasMore && (
+          <button
+            onClick={() => setShowAll(!showAll)}
+            className="w-full mt-2 py-2 text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center gap-1 border-t border-border/40"
+          >
+            {showAll ? (
+              <>Show less <ChevronUp className="w-3 h-3" /></>
+            ) : (
+              <>View all {sorted.length} stylists <ChevronDown className="w-3 h-3" /></>
+            )}
+          </button>
+        )}
       </CardContent>
     </Card>
   );
