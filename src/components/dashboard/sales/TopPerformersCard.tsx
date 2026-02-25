@@ -44,11 +44,11 @@ const getRankBg = (rank: number) => {
     case 1:
       return 'bg-chart-4/10 border-chart-4/20';
     case 2:
-      return 'bg-muted/50 dark:bg-card border-muted-foreground/20';
+      return 'bg-card-inner border-muted-foreground/20';
     case 3:
       return 'bg-chart-3/10 border-chart-3/20';
     default:
-      return 'bg-muted/30 dark:bg-card';
+      return 'bg-card-inner';
   }
 };
 

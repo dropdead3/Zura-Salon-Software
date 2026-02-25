@@ -70,9 +70,7 @@ export function LocationComparisonCard({
         'p-4 rounded-lg border relative overflow-hidden transition-colors cursor-pointer',
         location.isLeader
           ? 'bg-primary/5 border-primary/20'
-          : location.isLowest
-            ? 'bg-muted/20 border-border/40'
-            : 'bg-muted/30 border-border/40',
+          : 'bg-card-inner border-border/40',
       )}
       onClick={() => setExpanded(!expanded)}
     >

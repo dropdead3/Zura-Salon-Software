@@ -549,7 +549,7 @@ export function AggregateSalesCard({
       </div>
 
       {allLocationsClosed ? (
-        <div className="bg-muted/30 dark:bg-card rounded-xl border border-border/40 py-16 text-center">
+        <div className="bg-card-inner rounded-xl border border-border/40 py-16 text-center">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-border/60 bg-muted/40">
             <Moon className="h-6 w-6 text-muted-foreground" />
           </div>
@@ -567,7 +567,7 @@ export function AggregateSalesCard({
         {/* KPIs with Trends */}
         <div className="xl:col-span-2">
           {/* Hero: Total Revenue with Breakdown */}
-          <div className="bg-muted/30 dark:bg-card rounded-xl p-4 sm:p-6 border border-border/40">
+          <div className="bg-card-inner rounded-xl p-4 sm:p-6 border border-border/40">
             <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1.5">
               <span>{isAllLocations ? t('sales.all_locations') : selectedLocationName || tc('loading')}</span>
               {/* Closed locations summary — single-day views only */}
@@ -1075,7 +1075,7 @@ export function AggregateSalesCard({
             <CardContent>
               <div
                 className={cn(
-                  "text-center p-4 bg-muted/30 dark:bg-card rounded-lg border transition-all cursor-pointer",
+                  "text-center p-4 bg-card-inner rounded-lg border transition-all cursor-pointer",
                   tipsDrilldownOpen
                     ? "border-primary/50 ring-1 ring-primary/20"
                     : "border-border/60 dark:border-border/30 hover:border-primary/30 hover:bg-muted/50"

@@ -336,7 +336,7 @@ export function TipsDrilldownPanel({ isOpen, parentLocationId }: TipsDrilldownPa
 /* ── Self-view metric card ── */
 function SelfMetricCard({ label, value, alert = false }: { label: string; value: string; alert?: boolean }) {
   return (
-    <div className="text-center p-3 bg-muted/30 rounded-lg border border-border/30">
+    <div className="text-center p-3 bg-card-inner rounded-lg border border-border/30">
       <span className="text-lg font-display tabular-nums">
         <BlurredAmount>{value}</BlurredAmount>
       </span>

@@ -164,7 +164,7 @@ export function PeakHoursHeatmap({ dateFrom, dateTo, locationId, filterContext }
 
             {/* Peak summary */}
             {peakTime.count > 0 && (
-              <div className="mt-4 p-3 bg-muted/30 rounded-lg text-center">
+              <div className="mt-4 p-3 bg-card-inner rounded-lg text-center">
                 <p className="text-sm">
                   <span className="text-muted-foreground">Busiest time: </span>
                   <span className="font-medium">

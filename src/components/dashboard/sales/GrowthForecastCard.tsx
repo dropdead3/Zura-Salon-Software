@@ -274,7 +274,7 @@ function GrowthInsightsPanel({ insights }: { insights: string[] }) {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.3, duration: 0.4 }}
-      className="space-y-2 p-4 rounded-lg bg-muted/20 border border-border/50"
+      className="space-y-2 p-4 rounded-lg bg-card-inner border border-border/50"
     >
       <div className="flex items-center gap-2 mb-2">
         <Sparkles className="w-4 h-4 text-primary" />
@@ -298,7 +298,7 @@ function ForecastAccuracyTracker({ history, average }: { history: AccuracyDataPo
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4, duration: 0.4 }}
-        className="space-y-3 p-4 rounded-lg bg-muted/20 border border-border/50"
+        className="space-y-3 p-4 rounded-lg bg-card-inner border border-border/50"
       >
         <div className="flex items-center gap-2">
           <Target className="w-4 h-4 text-primary" />
@@ -328,7 +328,7 @@ function ForecastAccuracyTracker({ history, average }: { history: AccuracyDataPo
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.4, duration: 0.4 }}
-      className="space-y-3 p-4 rounded-lg bg-muted/20 border border-border/50"
+      className="space-y-3 p-4 rounded-lg bg-card-inner border border-border/50"
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
