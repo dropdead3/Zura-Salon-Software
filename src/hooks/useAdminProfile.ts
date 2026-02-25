@@ -138,7 +138,7 @@ export function useUploadUserProfilePhoto(userId: string | undefined) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ file, focalX, focalY }: { file: File; focalX?: number; focalY?: number }) => {
+    mutationFn: async ({ file, focalX, focalY, cardFocalX, cardFocalY }: { file: File; focalX?: number; focalY?: number; cardFocalX?: number; cardFocalY?: number }) => {
       if (!userId) throw new Error('User ID required');
       
       const fileExt = file.name.split('.').pop();
@@ -159,10 +159,12 @@ export function useUploadUserProfilePhoto(userId: string | undefined) {
         .from('employee-photos')
         .getPublicUrl(filePath);
 
-      // Update profile with new photo URL and focal point
+      // Update profile with new photo URL and focal points
       const updatePayload: Record<string, any> = { photo_url: publicUrl };
       if (focalX !== undefined) updatePayload.photo_focal_x = focalX;
       if (focalY !== undefined) updatePayload.photo_focal_y = focalY;
+      if (cardFocalX !== undefined) updatePayload.card_focal_x = cardFocalX;
+      if (cardFocalY !== undefined) updatePayload.card_focal_y = cardFocalY;
 
       const { error: updateError } = await supabase
         .from('employee_profiles')

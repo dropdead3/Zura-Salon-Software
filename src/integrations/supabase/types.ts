@@ -5367,6 +5367,8 @@ export type Database = {
           approved_by: string | null
           bio: string | null
           birthday: string | null
+          card_focal_x: number | null
+          card_focal_y: number | null
           chat_enabled: boolean | null
           created_at: string
           departure_notes: string | null
@@ -5417,6 +5419,8 @@ export type Database = {
           approved_by?: string | null
           bio?: string | null
           birthday?: string | null
+          card_focal_x?: number | null
+          card_focal_y?: number | null
           chat_enabled?: boolean | null
           created_at?: string
           departure_notes?: string | null
@@ -5467,6 +5471,8 @@ export type Database = {
           approved_by?: string | null
           bio?: string | null
           birthday?: string | null
+          card_focal_x?: number | null
+          card_focal_y?: number | null
           chat_enabled?: boolean | null
           created_at?: string
           departure_notes?: string | null

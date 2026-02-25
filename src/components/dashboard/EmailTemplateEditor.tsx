@@ -2639,7 +2639,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
   };
 
   // Handle cropped image upload
-  const handleCroppedImageUpload = async (croppedBlob: Blob) => {
+  const handleCroppedImageUpload = async (croppedBlob: Blob, _focalX?: number, _focalY?: number, _cardFocalX?: number, _cardFocalY?: number) => {
     if (!cropTargetBlockId) return;
     
     setIsUploading(true);
