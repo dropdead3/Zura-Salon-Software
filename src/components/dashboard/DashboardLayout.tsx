@@ -153,6 +153,7 @@ import { TopBarSearch } from '@/components/dashboard/TopBarSearch';
 interface DashboardLayoutProps {
   children: React.ReactNode;
   hideFooter?: boolean;
+  hideTopBar?: boolean;
 }
 
 type PlatformRole = 'platform_owner' | 'platform_admin' | 'platform_support' | 'platform_developer';
@@ -217,7 +218,7 @@ function NavHistoryArrows() {
   );
 }
 
-function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
+function DashboardLayoutInner({ children, hideFooter, hideTopBar }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [headerScrolled, setHeaderScrolled] = useState(false);
   const [headerHovered, setHeaderHovered] = useState(false);
@@ -1178,8 +1179,8 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
       {/* Custom Landing Page Banner - hide in full-screen mode */}
       {!hideFooter && <CustomLandingPageBanner sidebarCollapsed={sidebarCollapsed} />}
 
-      {/* Hot zone trigger for auto-hide header */}
-      {hideFooter && (
+      {/* Hot zone trigger for auto-hide header — suppressed when hideTopBar is true */}
+      {hideFooter && !hideTopBar && (
         <div
           className="hidden lg:block fixed top-0 left-0 right-0 h-10 z-50"
           onMouseEnter={() => setHeaderHovered(true)}
@@ -1187,6 +1188,7 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
       )}
 
       {/* Desktop Top Bar - Single unified bar */}
+      {!hideTopBar && (
       <div
         className={cn(
           "dashboard-top-bar hidden lg:block z-30 px-3 pt-3 pb-3",
@@ -1321,6 +1323,7 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
           </div>
         </div>
       </div>
+      )}
 
       {/* Main Content */}
       <main className={cn(
