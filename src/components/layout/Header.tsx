@@ -7,7 +7,8 @@ import LogoIcon from "@/assets/brand-logo-secondary.svg";
 import { cn } from "@/lib/utils";
 import { useAnnouncementBarSettings } from "@/hooks/useAnnouncementBar";
 import { useOrgPath } from "@/hooks/useOrgPath";
-import { usePublicMenuBySlug, buildMenuTree, type MenuItem } from "@/hooks/useWebsiteMenus";
+import { usePublicMenuBySlug, buildMenuTree, type MenuItem, type MenuConfig } from "@/hooks/useWebsiteMenus";
+import { emitNavEvent } from "@/lib/nav-tracking";
 
 function isColorDark(color: string): boolean {
   if (!color) return false;
@@ -442,6 +443,12 @@ export function Header() {
                   >
                     <Link
                       to={item.href}
+                      onClick={() => emitNavEvent('nav_item_clicked', {
+                        label: item.label,
+                        href: item.href,
+                        item_type: 'link',
+                        menu_location: 'header',
+                      })}
                       className={cn(
                         "group relative flex items-center gap-1 text-sm tracking-wide font-sans font-medium transition-opacity leading-none whitespace-nowrap",
                         location.pathname === item.href
@@ -543,6 +550,12 @@ export function Header() {
                   <TooltipTrigger asChild>
                     <Link
                       to={ctaItem.href}
+                      onClick={() => emitNavEvent('cta_clicked', {
+                        label: ctaItem.label,
+                        href: ctaItem.href,
+                        cta_style: 'primary',
+                        menu_location: 'header',
+                      })}
                       className={cn(
                         "inline-flex items-center gap-2 px-5 py-2.5 text-sm font-sans font-medium rounded-full border transition-all duration-300 active:scale-[0.98] hover:scale-105 hover:-translate-y-0.5 hover:shadow-lg",
                         isOverDark 

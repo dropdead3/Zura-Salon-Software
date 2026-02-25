@@ -367,6 +367,33 @@ export function useReorderMenuItems() {
   });
 }
 
+// ─── Menu Config ─────────────────────────────────────────────────────────────
+
+export interface MenuConfig {
+  mobile_menu_style?: 'overlay' | 'drawer';
+  mobile_cta_visible?: boolean;
+}
+
+/** Update menu-level config (JSONB) */
+export function useUpdateMenuConfig() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ menuId, config }: { menuId: string; config: MenuConfig }) => {
+      const { error } = await supabase
+        .from('website_menus')
+        .update({ config: config as never })
+        .eq('id', menuId);
+      if (error) throw error;
+      return menuId;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['website-menus'] });
+      queryClient.invalidateQueries({ queryKey: ['public-menu'] });
+    },
+  });
+}
+
 /** Publish a menu: validate, snapshot, set all items as published */
 export function usePublishMenu() {
   const queryClient = useQueryClient();
