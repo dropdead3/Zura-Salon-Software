@@ -23,6 +23,7 @@ import { useViewAs } from '@/contexts/ViewAsContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useStrikeCounts } from '@/hooks/useStaffStrikes';
 import { ResponsibilityBadges } from '@/components/access-hub/ResponsibilityBadges';
+import { useRoleUtils, getIconComponent } from '@/hooks/useRoleUtils';
 
 const roleLabels: Record<string, string> = {
   super_admin: 'Super Admin',
@@ -722,6 +723,7 @@ interface TeamMemberCardProps {
 
 function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strikeCount = 0, onViewProfile }: TeamMemberCardProps) {
   const navigate = useNavigate();
+  const { getRoleIcon } = useRoleUtils();
   const timeAtCompany = getTimeAtCompany(member.hire_date);
   const memberLocations = member.location_ids || [];
   const hasSchedules = Object.keys(member.location_schedules).length > 0;
@@ -891,14 +893,18 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
                   </Badge>
                 )}
                 {/* Other role badges */}
-                {primaryRole && !member.is_super_admin && (
-                  <Badge 
-                    variant="outline" 
-                    className={cn("text-[10px] font-medium h-5 px-2", primaryRole.color)}
-                  >
-                    {primaryRole.label}
-                  </Badge>
-                )}
+                {primaryRole && !member.is_super_admin && (() => {
+                  const RoleIcon = getRoleIcon(primaryRole.key);
+                  return (
+                    <Badge 
+                      variant="outline" 
+                      className={cn("text-[10px] font-medium h-5 px-2 gap-1", primaryRole.color)}
+                    >
+                      <RoleIcon className="w-3 h-3" />
+                      {primaryRole.label}
+                    </Badge>
+                  );
+                })()}
                 <ResponsibilityBadges userId={member.user_id} size="sm" />
                 {hasSchedules && (
                   <HoverCard openDelay={100} closeDelay={50}>
