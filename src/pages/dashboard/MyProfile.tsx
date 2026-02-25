@@ -1024,10 +1024,10 @@ export default function MyProfile() {
                     <span className="text-muted-foreground text-xs font-normal">(select 2-3 from your specialties)</span>
                   </Label>
                   <p className="text-xs text-muted-foreground">
-                    These will appear as badges on your stylist card on the website homepage. Choose from your specialties above.
+                    Tap a specialty below to highlight it on your website card. Choose up to 3 from your specialties above.
                   </p>
                   <p className="text-xs text-muted-foreground/80 italic">
-                    Note: Extensions is the only badge displayed with a <Sparkles className="w-3 h-3 inline text-[hsl(35,30%,50%)]" /> and gold accent color to attract our highest-ticket services. and gold accent color to attract our highest-ticket services.
+                    Note: Extensions is the only badge displayed with a <Sparkles className="w-3 h-3 inline text-[hsl(35,30%,50%)]" /> and gold accent color to attract our highest-ticket services.
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {formData.specialties.map(specialty => {
@@ -1039,11 +1039,15 @@ export default function MyProfile() {
                           variant={isSelected ? 'default' : 'outline'}
                           className={cn(
                             "cursor-pointer transition-all",
-                            isDisabled && "opacity-50 cursor-not-allowed"
+                            isSelected
+                              ? "bg-primary/80 text-primary-foreground"
+                              : "opacity-60 border-dashed",
+                            isDisabled && "opacity-40 cursor-not-allowed"
                           )}
                           onClick={() => !isDisabled && toggleHighlightedService(specialty)}
                         >
-                          {isSelected && <Sparkles className="w-3 h-3 mr-1" />}
+                          {isSelected ? <Check className="w-3 h-3 mr-1" /> : null}
+                          {isSelected && specialty.toLowerCase() === 'extensions' && <Sparkles className="w-3 h-3 mr-1" />}
                           {specialty.charAt(0).toUpperCase() + specialty.slice(1).toLowerCase()}
                         </Badge>
                       );
