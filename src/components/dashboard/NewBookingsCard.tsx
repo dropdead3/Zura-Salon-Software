@@ -119,7 +119,7 @@ export function NewBookingsCard({ filterContext }: NewBookingsCardProps) {
           className="text-center p-4 bg-card-inner rounded-lg border border-border/50 cursor-pointer transition-transform hover:-translate-y-0.5"
         >
           <div className="flex justify-center mb-2">
-            <UserPlus className="w-5 h-5 text-emerald-600" />
+            <UserPlus className="w-5 h-5 text-primary" />
           </div>
           {isLoading ? (
             <Skeleton className="h-7 w-10 mx-auto" />
@@ -138,7 +138,7 @@ export function NewBookingsCard({ filterContext }: NewBookingsCardProps) {
           className="text-center p-4 bg-card-inner rounded-lg border border-border/50 cursor-pointer transition-transform hover:-translate-y-0.5"
         >
           <div className="flex justify-center mb-2">
-            <RefreshCw className="w-5 h-5 text-purple-600" />
+            <RefreshCw className="w-5 h-5 text-primary" />
           </div>
           {isLoading ? (
             <Skeleton className="h-7 w-10 mx-auto" />
@@ -156,11 +156,7 @@ export function NewBookingsCard({ filterContext }: NewBookingsCardProps) {
       {!isLoading && data?.rebookRate !== undefined && (
         <div className="mb-4 p-4 bg-card-inner rounded-lg border border-border/50">
           <div className="flex items-center gap-2 mb-2">
-            <CalendarCheck className={`w-5 h-5 ${
-              data.rebookRate !== null && data.rebookRate >= 70 ? 'text-emerald-600' 
-              : data.rebookRate !== null && data.rebookRate >= 40 ? 'text-amber-500' 
-              : 'text-red-500'
-            }`} />
+            <CalendarCheck className="w-5 h-5 text-primary" />
             <span className="text-sm font-medium">After-Service Rebook</span>
             <MetricInfoTooltip description="Percentage of returning clients serviced in this period who rebooked their next appointment." />
           </div>
@@ -196,7 +192,7 @@ export function NewBookingsCard({ filterContext }: NewBookingsCardProps) {
         <div className="mb-4">
           <div className="flex items-center gap-2 mb-2">
             <MapPin className="w-4 h-4 text-muted-foreground" />
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            <span className="text-xs font-display text-muted-foreground tracking-wide">
               By Location
             </span>
           </div>
@@ -204,7 +200,7 @@ export function NewBookingsCard({ filterContext }: NewBookingsCardProps) {
             {data.locationBreakdown.map(loc => (
               <div
                 key={loc.locationId}
-                className="flex items-center justify-between p-2 bg-muted/20 rounded-md border border-border/30"
+                className="flex items-center justify-between p-2 bg-card-inner rounded-md border border-border/30"
               >
                 <div className="flex items-center gap-2">
                   <span className="text-sm">{loc.name}</span>
