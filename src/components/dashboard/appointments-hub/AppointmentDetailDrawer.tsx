@@ -15,13 +15,14 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Calendar, Clock, User, MapPin, DollarSign, MessageSquare, Tag, Percent, Phone, Mail, FileText, UserCheck, Info, ExternalLink, XCircle, Hash, Copy } from 'lucide-react';
+import { Calendar, Clock, User, MapPin, DollarSign, MessageSquare, Tag, Percent, Phone, Mail, FileText, UserCheck, Info, ExternalLink, XCircle, Hash, Copy, Star } from 'lucide-react';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { cn } from '@/lib/utils';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, differenceInCalendarDays } from 'date-fns';
+import { useClientReviewHistory } from '@/hooks/useClientReviewHistory';
 import { toast } from 'sonner';
 
 interface AppointmentDetailDrawerProps {
@@ -102,6 +103,10 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
     enabled: !!phorestClientId,
     staleTime: 5 * 60 * 1000,
   });
+
+  // Client review history
+  const { data: reviewSummary } = useClientReviewHistory(resolvedClientId);
+
 
   // Fetch promo details if transaction items exist for this appointment
   const { data: promoInfo } = useQuery({
@@ -287,6 +292,45 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
                 </div>
               )}
             </div>
+
+            {/* ── Client Reviews ── */}
+            {reviewSummary && reviewSummary.totalReviews > 0 ? (
+              <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-1.5">
+                <div className="flex items-center gap-2 text-sm">
+                  <Star className="w-4 h-4 text-amber-500 shrink-0" />
+                  <span className="text-foreground">
+                    {reviewSummary.totalReviews} {reviewSummary.totalReviews === 1 ? 'Review' : 'Reviews'}
+                    {reviewSummary.averageRating !== null && (
+                      <span className="text-muted-foreground"> · Avg {reviewSummary.averageRating} ★</span>
+                    )}
+                  </span>
+                </div>
+                {reviewSummary.lastReviewDate && (
+                  <div className="text-xs text-muted-foreground pl-6">
+                    Last: {format(parseISO(reviewSummary.lastReviewDate), 'MMM d, yyyy')}
+                    {appointment.appointment_date && (() => {
+                      const days = differenceInCalendarDays(
+                        parseISO(reviewSummary.lastReviewDate!),
+                        parseISO(appointment.appointment_date)
+                      );
+                      if (days === 0) return ' · Same day as visit';
+                      if (days > 0) return ` · ${days} day${days !== 1 ? 's' : ''} after visit`;
+                      return ` · ${Math.abs(days)} day${Math.abs(days) !== 1 ? 's' : ''} before visit`;
+                    })()}
+                  </div>
+                )}
+                {reviewSummary.reviews[0]?.comments && (
+                  <p className="text-xs text-muted-foreground/80 pl-6 italic line-clamp-2">
+                    "{reviewSummary.reviews[0].comments}"
+                  </p>
+                )}
+              </div>
+            ) : reviewSummary ? (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground/60">
+                <Star className="w-3 h-3" />
+                No reviews on file
+              </div>
+            ) : null}
 
             <Separator />
 
