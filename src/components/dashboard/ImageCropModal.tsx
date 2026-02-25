@@ -271,8 +271,8 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
 
       outputCanvas.toBlob(
         (blob) => resolve(blob),
-        'image/jpeg',
-        0.9
+        'image/webp',
+        0.82
       );
     });
   }, [imageElement, zoom, rotation, position, cropShape, maxOutputSize]);
