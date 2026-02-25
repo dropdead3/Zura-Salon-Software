@@ -1,18 +1,15 @@
 
 
-## Adjust Default Editor/Preview Panel Split
+## Remove Redundant Inline Live Preview from Announcement Bar Editor
 
-The editor panel currently defaults to 55% width with the preview at 45%. The screenshot shows this makes the editor too wide — wasting horizontal space on the content side while squeezing the live preview. Since the editor content is optimized for narrow panels now, it doesn't need 55%.
+You're exactly right. The inline "Live Preview" card (lines 102-140) duplicates what's already visible in the resizable Live Preview panel on the right. It wastes vertical space in the editor and forces users to scroll past it to reach the actual settings. Removing it streamlines the editor.
 
 ### Change
 
-**File: `src/pages/dashboard/admin/WebsiteSectionsHub.tsx`**
+**File: `src/components/dashboard/website-editor/AnnouncementBarContent.tsx`**
 
-- **Line 790**: Change editor panel `defaultSize` from `55` to `42` (non-mobile)
-- **Line 856**: Change preview panel `defaultSize` from `45` to `58`
-
-This gives the live preview the majority of the space (58%) while the editor gets 42% — still plenty for single-column form inputs, and the preview becomes much more useful for seeing actual layout changes.
+- **Remove lines 102-140**: Delete the entire "Live Preview" `<Card>` block containing the mock announcement bar render. The real live preview iframe already shows the announcement bar in context on the actual website, which is more accurate and useful than a static replica.
 
 ### Files Changed
-- `src/pages/dashboard/admin/WebsiteSectionsHub.tsx` — default panel split adjustment
+- `src/components/dashboard/website-editor/AnnouncementBarContent.tsx` — remove inline live preview card
 
