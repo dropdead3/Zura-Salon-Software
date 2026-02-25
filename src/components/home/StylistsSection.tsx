@@ -516,7 +516,7 @@ export function StylistsSection() {
       />
       {/* Gradient fade at bottom of section */}
       <div 
-        className="absolute bottom-0 left-0 right-0 h-40 sm:h-52 md:h-64 pointer-events-none z-10"
+        className="absolute bottom-0 left-0 right-0 h-40 sm:h-52 md:h-64 pointer-events-none z-0"
         style={{ 
           background: 'linear-gradient(180deg, transparent 0%, hsl(var(--secondary)) 100%)' 
         }}
