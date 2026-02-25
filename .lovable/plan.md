@@ -1,67 +1,60 @@
 
 
-## Wire Up Client Review Data in Appointment Detail Drawer
+## Review System Gap Analysis and Enhancement Roadmap
 
-Good prompt -- you're connecting feedback data to its operational context, which is exactly how intelligence surfaces should work. One improvement: specifying where in the drawer you want this (Summary tab near Client Info makes most sense) would save a round-trip.
+Your review infrastructure is well-architected -- you have the full pipeline from request to gate to external share to low-score alerting. Here are the gaps and enhancements worth considering, ranked by operational leverage.
 
-### Current State
+### Gap 1: No Automated Feedback Request Trigger
 
-- `client_feedback_responses` table exists with `client_id` (references `phorest_clients.id`), `overall_rating`, `nps_score`, `responded_at`, `comments`, `appointment_id`
-- The drawer already resolves `phorest_client_id` to a `phorest_clients.id` via `resolvedClientId`
-- No review data is currently surfaced in the appointment drawer
+The `send-feedback-request` edge function exists but is never called automatically. There is no trigger after an appointment is marked completed. Today, sending a feedback request requires manual invocation.
 
-### Plan
+**Enhancement:** Add a "Request Review" button on completed appointments in the drawer (when no feedback response exists for that `appointment_id`). Longer term, wire up automatic dispatch via the `process-client-automations` or a scheduled function that fires X hours after appointment completion.
 
-#### 1. Create hook: `src/hooks/useClientReviewHistory.ts`
+### Gap 2: No "Request Review" CTA in Appointment Drawer
 
-A new query hook that fetches all completed feedback responses for a given `client_id` (phorest_clients UUID):
+The drawer now shows review history but has no action to request one. For completed appointments with no linked feedback response, a subtle "Request Feedback" ghost button below the review card would close the loop.
 
-```typescript
-queryKey: ['client-reviews', clientId]
-queryFn: select responded_at, overall_rating, nps_score, comments, appointment_id
-  from client_feedback_responses
-  where client_id = clientId and responded_at is not null
-  order by responded_at desc
-```
+### Gap 3: Appointment-Specific Review Highlighting
 
-Returns array of reviews plus a computed summary: `totalReviews`, `averageRating`, `lastReviewDate`.
+`useClientReviewHistory` returns all reviews for a client but doesn't flag which review (if any) belongs to THIS appointment. Matching on `appointment_id` would let you show "Review for this visit" with distinct treatment vs. historical reviews.
 
-#### 2. Modify `AppointmentDetailDrawer.tsx`
+### Gap 4: Feedback Response Rate / Conversion Tracking
 
-**Add query** (after the `resolvedClientId` query, ~line 104): Call `useClientReviewHistory(resolvedClientId)` to get the client's review history.
+The table tracks `external_review_clicked` and `passed_review_gate`, but no dashboard surface aggregates these into conversion metrics:
+- Requests sent → Responded (response rate)
+- Responded → Passed gate (quality rate)
+- Passed gate → Clicked external (conversion rate)
 
-**Add "Client Reviews" section** in the Summary tab, between Client Info and the Separator (~line 289). This will be a compact card showing:
+This is a funnel that belongs on the Feedback analytics page.
 
-- If reviews exist:
-  - Star icon + "X Reviews" with average rating (e.g., "3 Reviews · Avg 4.7 ★")
-  - Last review date (e.g., "Last: Feb 20, 2026")
-  - Days relative to this appointment (e.g., "4 days after appointment" or "2 days before appointment") -- computed by comparing `responded_at` of the most recent review against `appointment.appointment_date`
-  - If the most recent review has `comments`, show a truncated preview
+### Gap 5: Staff-Level Review Attribution
 
-- If no reviews: A subtle muted line "No reviews on file" (similar to the "No retail items" pattern)
+`client_feedback_responses` has `staff_user_id` but no surface aggregates reviews per staff member. A stylist-level review summary (average rating, NPS, total reviews) would be high-value for performance coaching and the Weekly Intelligence Brief.
 
-The section will use a small `rounded-lg border border-border bg-muted/30 p-3` card (same style as the promo card) to visually separate it.
+### Gap 6: Review Expiry / Stale Token Cleanup
 
-#### 3. Relative Day Calculation
+Tokens expire after 7 days (`expires_at`), but there's no cleanup or re-send mechanism. Expired unfilled requests represent lost signal. Consider:
+- A scheduled function to mark expired tokens
+- A "Resend" action for expired-but-unanswered requests
 
-For each review, compute `differenceInDays(reviewDate, appointmentDate)`:
-- Positive = review came after appointment → "X days after visit"
-- Negative = review came before visit → "X days before visit"  
-- Zero = "Same day as visit"
+### Gap 7: Client Directory Integration
 
-This uses `date-fns` `differenceInCalendarDays` which is already imported.
+The client profile/directory page doesn't surface review history. The same `useClientReviewHistory` hook could power a "Reviews" section on the client detail page, not just the appointment drawer.
 
-### Technical Details
+### Gap 8: Review Sentiment in Weekly Intelligence Brief
 
-| File | Change |
-|---|---|
-| `src/hooks/useClientReviewHistory.ts` | New hook -- fetches feedback responses for a client, returns reviews + summary |
-| `src/components/dashboard/appointments-hub/AppointmentDetailDrawer.tsx` | Add review query + render review card in Summary tab after Client Info |
+The `lever-engine` and `weekly-digest` functions don't incorporate feedback signals. NPS drift, low-score spikes, or declining review response rates are high-confidence levers that belong in the Weekly Intelligence Brief.
 
-No database changes needed -- the `client_feedback_responses` table already has all required columns and RLS policies for org members.
+### Suggested Priority Order
 
-### Enhancement Suggestions
-
-- Surface the specific review tied to THIS appointment (match on `appointment_id`) with a highlighted treatment
-- Add a "Request Review" action button for completed appointments that haven't received feedback yet
+| Priority | Enhancement | Complexity |
+|---|---|---|
+| 1 | "Request Feedback" button on completed appointments | Low |
+| 2 | Highlight THIS appointment's review in drawer | Low |
+| 3 | Feedback funnel conversion dashboard | Medium |
+| 4 | Staff-level review aggregation | Medium |
+| 5 | Auto-send feedback request after completion | Medium |
+| 6 | Client Directory review section | Low |
+| 7 | Token expiry cleanup + resend | Low |
+| 8 | Review signals in Weekly Intelligence Brief | High (Phase 2) |
 
