@@ -1,50 +1,42 @@
 
 
-## Why Top Performers Shows Empty
+## Top Performers: Remaining Gaps and Fixes
 
-Good catch. The root cause is a data mapping gap.
+Good debugging instinct asking to audit beyond the initial "it renders" state. The card is now showing data, but there are three structural gaps that need patching for it to be production-accurate.
 
-### Diagnosis
+### Gap 1: Location Filter Ignored
 
-The `useSalesByStylist` hook (line 357 of `useSalesData.ts`) fetches appointments, then tries to resolve each `phorest_staff_id` through the `phorest_staff_mapping` table. If there's no match, it silently drops the appointment (`if (!mapping) return;` at line 406).
+`useSalesByStylist` does not accept a `locationId` parameter. When you select "Val Vista Lakes" or "North Mesa" in the dashboard filter, Top Performers still shows combined rankings across both locations. This contradicts the behavior of every other analytics card.
 
-**Current state:**
-- `phorest_staff_mapping` has 2 entries, both for the same user ("Eric Day") with IDs `4jTo1SI4WSBx2vPb04V-TA` and `Hf5ZjWjkGzHng_HDPX5HiA`
-- Actual appointments use 19 completely different `phorest_staff_id` values (e.g. `gqB7ijXMpf7uYTp7ML61QQ`)
-- None of the 19 IDs exist in `phorest_staff_mapping`
-- Result: every appointment is dropped → empty leaderboard
+**Fix:** Add an optional `locationId` parameter to `useSalesByStylist`. When present, add `.eq('location_id', locationId)` to the appointment query. Update all call sites that have access to a location filter (`PinnedAnalyticsCard`, `CommandCenterAnalytics`, `AggregateSalesCard`) to pass it through.
 
-The tips drill-down works because it uses a different strategy: it uses `stylist_user_id` first, then falls back to `phorest:${phorest_staff_id}` as a synthetic key and resolves names from `phorest_staff_mapping.phorest_staff_name`.
+### Gap 2: Revenue Source (Scheduled vs Actual POS)
 
-### Fix
+Currently, Top Performers ranks staff by **scheduled appointment totals** from `phorest_appointments`. This includes future and unconfirmed bookings. You confirmed you want **actual POS revenue**.
 
-Update `useSalesByStylist` to stop silently dropping unmapped staff. Instead, use the same fallback pattern as the tips hook:
+The `phorest_transaction_items` table has 770 rows of actual closed-out transaction data with `phorest_staff_id`, `total_amount`, and `item_type` (service/product). This is the correct source.
 
-1. Try to resolve via `phorest_staff_mapping` → `user_id` → `employee_profiles` (current behavior, keeps working for mapped staff)
-2. If no mapping exists, use `phorest:${phorest_staff_id}` as the aggregation key
-3. For the display name, try `phorest_staff_mapping.phorest_staff_name` first, then fall back to a truncated staff ID label (e.g. "Staff gqB7")
+**Fix:** Refactor the query inside `useSalesByStylist` to pull from `phorest_transaction_items` instead of `phorest_appointments`. Aggregate by `phorest_staff_id`, splitting `item_type = 'service'` vs `'product'`/`'retail'` for service vs product revenue. Apply the same date and location filters. Staff identity resolution stays the same.
 
-**File changed:** `src/hooks/useSalesData.ts` — `useSalesByStylist` function (lines 357-431)
+### Gap 3: Staff Names Show as "Staff XXXX"
 
-### Technical Detail
+The `phorest_staff_mapping` table has only 2 entries (both for Eric Day), and neither ID matches any of the 19 active staff IDs in appointment/transaction data. The fallback name resolution truncates the Phorest ID to 4 characters (e.g., "Staff Orwo", "Staff 0zCh").
 
-```text
-Current flow:
-  appointment.phorest_staff_id → mappingLookup[id]
-  → if no match → DROPPED (line 406)
+There is no other table that currently stores names for these staff IDs -- `phorest_transaction_items.stylist_name` is NULL across all rows, and `phorest_appointments` has no name column.
 
-New flow:
-  appointment.phorest_staff_id → mappingLookup[id]
-  → if match → aggregate by user_id (existing behavior)
-  → if no match → aggregate by "phorest:{staff_id}"
-     → name from phorest_staff_mapping.phorest_staff_name
-     → fallback: "Staff {first 4 chars of ID}"
-```
+**Fix:** The Phorest sync edge function needs to auto-create `phorest_staff_mapping` entries for every discovered `phorest_staff_id`. This is a sync-layer fix, not a dashboard fix. As an immediate interim measure, we can resolve names from the Phorest connection's cached staff list if available. I'll check the sync function for how staff discovery works and patch it to auto-populate mapping entries (with `user_id = NULL` and `phorest_staff_name` from the Phorest API response).
 
-The `phorest_staff_mapping` query already runs (line 362); we just need to also build a secondary name-only lookup for unmapped IDs and remove the early `return` on line 406.
+### Files Changed
 
-### Enhancement Suggestions
+| File | Change |
+|---|---|
+| `src/hooks/useSalesData.ts` | Add `locationId` param to `useSalesByStylist`. Switch query source from `phorest_appointments` to `phorest_transaction_items`. Apply location filter. |
+| `src/components/dashboard/PinnedAnalyticsCard.tsx` | Pass `locationFilter` to `useSalesByStylist` call (line 292). |
+| `src/components/dashboard/CommandCenterAnalytics.tsx` | Pass `locationFilter` to `useSalesByStylist` call (line 180). |
+| `src/components/dashboard/AggregateSalesCard.tsx` | Pass location filter to `useSalesByStylist` call (line 237). |
+| `src/components/dashboard/analytics/SalesTabContent.tsx` | Pass `locationFilter` to `useSalesByStylist` call (line 119). |
 
-- Run a full staff sync from Phorest to populate `phorest_staff_mapping` for all 19 active staff IDs so names resolve properly across all surfaces.
-- Add a "Staff Mapping" admin alert that flags when appointments reference unmapped staff IDs.
+### What This Does NOT Fix (Requires Sync Update)
+
+Staff names will remain as "Staff XXXX" until `phorest_staff_mapping` is populated for all 19 active IDs. This requires updating the Phorest sync edge function to auto-create mapping entries. That is a separate task from the dashboard fix.
 
