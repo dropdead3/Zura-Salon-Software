@@ -136,6 +136,10 @@ html, body, #root {
     --success: 145 40% 85%;
     --success-foreground: 145 50% 30%;
 
+    /* Warning - amber */
+    --warning: 38 92% 50%;
+    --warning-foreground: 32 80% 30%;
+
     /* Chart colors for data visualization */
     --chart-1: 0 0% 25%;
     --chart-2: 145 60% 40%;
@@ -228,6 +232,10 @@ html, body, #root {
     --success: 145 35% 25%;
     --success-foreground: 145 45% 75%;
 
+    /* Warning - amber */
+    --warning: 38 85% 55%;
+    --warning-foreground: 38 90% 75%;
+
     /* Chart colors for data visualization */
     --chart-1: 40 25% 75%;
     --chart-2: 145 55% 55%;
@@ -291,6 +299,12 @@ html, body, #root {
     --chart-4: 43 96% 50%;
     --chart-5: 280 87% 55%;
 
+    --success: 145 40% 85%;
+    --success-foreground: 145 50% 30%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 32 80% 30%;
+
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
@@ -345,6 +359,12 @@ html, body, #root {
     --chart-3: 217 85% 65%;
     --chart-4: 43 95% 60%;
     --chart-5: 280 75% 70%;
+
+    --success: 145 35% 25%;
+    --success-foreground: 145 45% 75%;
+
+    --warning: 38 85% 55%;
+    --warning-foreground: 38 90% 75%;
 
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
@@ -402,6 +422,12 @@ html, body, #root {
     --chart-4: 43 96% 50%;
     --chart-5: 280 87% 55%;
 
+    --success: 145 40% 85%;
+    --success-foreground: 145 50% 30%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 32 80% 30%;
+
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
@@ -456,6 +482,12 @@ html, body, #root {
     --chart-3: 217 85% 65%;
     --chart-4: 43 95% 60%;
     --chart-5: 280 75% 70%;
+
+    --success: 145 35% 25%;
+    --success-foreground: 145 45% 75%;
+
+    --warning: 38 85% 55%;
+    --warning-foreground: 38 90% 75%;
 
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
@@ -513,6 +545,12 @@ html, body, #root {
     --chart-4: 43 96% 50%;
     --chart-5: 280 87% 55%;
 
+    --success: 145 40% 85%;
+    --success-foreground: 145 50% 30%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 32 80% 30%;
+
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
@@ -567,6 +605,12 @@ html, body, #root {
     --chart-3: 217 85% 65%;
     --chart-4: 43 95% 60%;
     --chart-5: 280 75% 70%;
+
+    --success: 145 35% 25%;
+    --success-foreground: 145 45% 75%;
+
+    --warning: 38 85% 55%;
+    --warning-foreground: 38 90% 75%;
 
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;

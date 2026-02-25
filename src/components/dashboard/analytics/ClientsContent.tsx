@@ -113,23 +113,23 @@ export function ClientsContent({ retention, isLoading, dateRange, locationName }
             <div className="flex items-center gap-3">
               <div className={cn(
                 "p-2 rounded-lg",
-                retentionStatus === 'healthy' && "bg-green-100 dark:bg-green-900/30",
-                retentionStatus === 'warning' && "bg-amber-100 dark:bg-amber-900/30",
-                retentionStatus === 'critical' && "bg-red-100 dark:bg-red-900/30"
+                retentionStatus === 'healthy' && "bg-success/30 dark:bg-success/20",
+                retentionStatus === 'warning' && "bg-warning/20 dark:bg-warning/10",
+                retentionStatus === 'critical' && "bg-destructive/10 dark:bg-destructive/15"
               )}>
                 <RefreshCw className={cn(
                   "w-5 h-5",
-                  retentionStatus === 'healthy' && "text-green-600",
-                  retentionStatus === 'warning' && "text-amber-600",
-                  retentionStatus === 'critical' && "text-red-600"
+                  retentionStatus === 'healthy' && "text-success-foreground",
+                  retentionStatus === 'warning' && "text-warning-foreground",
+                  retentionStatus === 'critical' && "text-destructive"
                 )} />
               </div>
               <div>
                 <p className={cn(
                   "font-display text-2xl",
-                  retentionStatus === 'healthy' && "text-green-600",
-                  retentionStatus === 'warning' && "text-amber-600",
-                  retentionStatus === 'critical' && "text-red-600"
+                  retentionStatus === 'healthy' && "text-success-foreground",
+                  retentionStatus === 'warning' && "text-warning-foreground",
+                  retentionStatus === 'critical' && "text-destructive"
                 )}>
                   {retention.retentionRate.toFixed(1)}%
                 </p>
@@ -142,18 +142,18 @@ export function ClientsContent({ retention, isLoading, dateRange, locationName }
               <div className={cn(
                 "p-2 rounded-lg",
                 retention.atRiskClients > 10 
-                  ? "bg-red-100 dark:bg-red-900/30"
-                  : "bg-amber-100 dark:bg-amber-900/30"
+                  ? "bg-destructive/10 dark:bg-destructive/15"
+                  : "bg-warning/20 dark:bg-warning/10"
               )}>
                 <AlertTriangle className={cn(
                   "w-5 h-5",
-                  retention.atRiskClients > 10 ? "text-red-600" : "text-amber-600"
+                  retention.atRiskClients > 10 ? "text-destructive" : "text-warning-foreground"
                 )} />
               </div>
               <div>
                 <p className={cn(
                   "font-display text-2xl",
-                  retention.atRiskClients > 10 && "text-red-600"
+                  retention.atRiskClients > 10 && "text-destructive"
                 )}>
                   {retention.atRiskClients}
                 </p>
@@ -189,11 +189,11 @@ export function ClientsContent({ retention, isLoading, dateRange, locationName }
                   <div>
                     <div className="flex justify-between text-sm mb-1">
                       <span>Returning Clients</span>
-                      <span className="text-green-600">{retention.returningClients}</span>
+                      <span className="text-success-foreground">{retention.returningClients}</span>
                     </div>
                     <div className="h-3 bg-muted rounded-full overflow-hidden">
                       <div 
-                        className="h-full bg-green-500 rounded-full transition-all"
+                        className="h-full bg-success-foreground rounded-full transition-all"
                         style={{ width: `${retention.totalClients > 0 ? (retention.returningClients / retention.totalClients) * 100 : 0}%` }}
                       />
                     </div>
@@ -201,11 +201,11 @@ export function ClientsContent({ retention, isLoading, dateRange, locationName }
                   <div>
                     <div className="flex justify-between text-sm mb-1">
                       <span>New Clients</span>
-                      <span className="text-blue-600">{retention.newClients}</span>
+                      <span className="text-primary">{retention.newClients}</span>
                     </div>
                     <div className="h-3 bg-muted rounded-full overflow-hidden">
                       <div 
-                        className="h-full bg-blue-500 rounded-full transition-all"
+                        className="h-full bg-primary rounded-full transition-all"
                         style={{ width: `${retention.totalClients > 0 ? (retention.newClients / retention.totalClients) * 100 : 0}%` }}
                       />
                     </div>
@@ -221,9 +221,9 @@ export function ClientsContent({ retention, isLoading, dateRange, locationName }
                     <p className="text-sm font-medium">Retention Health</p>
                     <p className={cn(
                       "text-sm",
-                      retentionStatus === 'healthy' && "text-green-600",
-                      retentionStatus === 'warning' && "text-amber-600",
-                      retentionStatus === 'critical' && "text-red-600"
+                      retentionStatus === 'healthy' && "text-success-foreground",
+                      retentionStatus === 'warning' && "text-warning-foreground",
+                      retentionStatus === 'critical' && "text-destructive"
                     )}>
                       {retentionStatus === 'healthy' && "Excellent client retention rate. Keep up the great work!"}
                       {retentionStatus === 'warning' && "Retention rate is below average. Focus on follow-ups."}
@@ -231,12 +231,12 @@ export function ClientsContent({ retention, isLoading, dateRange, locationName }
                     </p>
                   </div>
                   {retention.atRiskClients > 0 && (
-                    <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+                    <div className="p-3 rounded-lg bg-warning/10 dark:bg-warning/5 border border-warning/30 dark:border-warning/20">
                       <div className="flex items-center gap-2 mb-1">
-                        <AlertTriangle className="w-4 h-4 text-amber-600" />
-                        <p className="text-sm font-medium text-amber-700 dark:text-amber-400">At-Risk Alert</p>
+                        <AlertTriangle className="w-4 h-4 text-warning-foreground" />
+                        <p className="text-sm font-medium text-warning-foreground">At-Risk Alert</p>
                       </div>
-                      <p className="text-sm text-amber-600 dark:text-amber-400">
+                      <p className="text-sm text-warning-foreground">
                         {retention.atRiskClients} clients with 2+ visits haven't returned in 60+ days.
                       </p>
                     </div>
