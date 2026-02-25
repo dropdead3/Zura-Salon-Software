@@ -1,35 +1,21 @@
 
 
-## Fix Crowded Tab Bar in Appointment Detail Drawer
+## De-emphasize "View in Client Directory" Button
 
-The screenshot shows 5 tabs (Summary, Transaction, Notes, Audit Trail, Comms) crammed into a single row, with "Comms" getting cut off. The icons and badge on "Transaction" add to the width pressure.
+The screenshot shows a full-width outline button taking up significant visual real estate in the Client Info section. Per the memory context, this link belongs in the ellipsis menu, but since it's currently inline, the quickest fix is to make it a subtle inline text link rather than a prominent full-width button.
 
-### Changes to `AppointmentDetailDrawer.tsx` (lines 207-225)
+### Change in `AppointmentDetailDrawer.tsx` (lines 273-286)
 
-**Approach: Convert to compact underline-style sub-tabs**
+Replace the full-width `Button variant="outline"` with a small ghost text link:
+- Change from `w-full mt-2 gap-1.5 rounded-xl border-border/60` to an inline `text-xs text-muted-foreground hover:text-foreground` link
+- Remove the full-width treatment -- render it as a small right-aligned link below the client info fields
+- Keep the `ExternalLink` icon but shrink to `w-3 h-3`
+- Use `variant="ghost"` with `size="sm"` and `h-auto py-1 px-2` for minimal footprint
 
-The drawer already has `SubTabsList` / `SubTabsTrigger` available (from `tabs.tsx`) which use an underline style that takes less horizontal space than the pill-style `TabsList`. This is the correct pattern for nested navigation inside a panel.
-
-- Replace `TabsList` with `SubTabsList` and `TabsTrigger` with `SubTabsTrigger`
-- Remove the `Receipt` and `StickyNote` icons from tab labels -- they add width without adding meaning when labels are already clear
-- Keep the item-count badge on "Transaction" but make it smaller
-- Shorten "Transaction" to "Payment" and "Audit Trail" to "Activity" to reduce character count
-- Add `overflow-x-auto` and `scrollbar-hide` as a safety net so tabs never clip
-
-**Before:**
-```
-[  Summary  ] [📄 Transaction ①] [📝 Notes ] [ Audit Trail ] [ Comms ]
-```
-
-**After:**
-```
-Summary    Payment ①    Notes    Activity    Comms
-─────────────────────────────────────────────────
-```
-
-The underline style is more space-efficient and appropriate for in-panel navigation per the existing sub-tab pattern.
+**Before:** Full-width outlined button dominating the section
+**After:** Small subtle "View in Directory →" text link, right-aligned
 
 | File | Change |
 |---|---|
-| `src/components/dashboard/appointments-hub/AppointmentDetailDrawer.tsx` | Switch TabsList/TabsTrigger to SubTabsList/SubTabsTrigger, remove icons, shorten labels |
+| `src/components/dashboard/appointments-hub/AppointmentDetailDrawer.tsx` | Lines 273-286: Replace prominent button with subtle ghost link |
 
