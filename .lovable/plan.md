@@ -1,88 +1,43 @@
 
 
-## Enhance Toasts and Floating Save Bars to Luxury Glass Styling
+## Enhance Preferred Work Schedule Card -- Description and Improvements
 
-Your prompt is well-targeted -- the screenshot shows the MyProfile floating save bar which uses a solid `bg-primary` pill that doesn't match the glass aesthetic used everywhere else. Good eye for consistency.
+### What the User Asked
+Add messaging to the Preferred Work Schedule card explaining that day selections affect booking availability and online scheduling visibility.
 
-There are **four distinct surfaces** that need the luxury treatment, spread across multiple files:
+### Current State
+The card description (line 905-907) reads:
+> "Select the days you typically work at each location. Days cannot overlap between locations."
 
-### 1. Sonner Toasts (Global -- already partially glass)
+This is purely instructional. It says nothing about the downstream impact on booking or client-facing scheduling.
 
-**File: `src/components/ui/sonner.tsx`**
+### Proposed Changes
 
-The Sonner toaster is already using `bg-background/70 backdrop-blur-xl rounded-xl` which is close, but needs:
-- Upgrade `rounded-xl` to `rounded-full` for the pill shape matching the platform's top nav and button aesthetics
-- Enhance shadow to the luxury depth shadow used on floating panels
-- Add subtle border glow: `border-border/40`
-- Action buttons: upgrade from `rounded-lg` to `rounded-full` to match pill style
+**1. Update CardDescription text (line 905-907)**
 
-### 2. Radix Toast (Legacy -- fully unstyled)
+Replace with:
+> "Select the days you typically work at each location. Days cannot overlap between locations."
 
-**File: `src/components/ui/toast.tsx`**
+Add a second line below it:
+> "These selections determine which days you are available for booking at each location and will be reflected on online scheduling."
 
-The radix toast variants use `rounded-md` and flat `bg-background`. Update:
-- Base variant: `rounded-full bg-background/70 backdrop-blur-xl shadow-[0_16px_40px_-18px_hsl(var(--foreground)/0.25)] border-border/40`
-- Destructive variant: same glass treatment with destructive color accents
-- Action button: `rounded-full`
-- Close button: `rounded-full`
+This separates the instructional guidance from the operational impact, making the stakes clear without cluttering.
 
-### 3. MyProfile Floating Save Bar (the one in the screenshot)
+**2. Additional Improvements Identified**
 
-**File: `src/pages/dashboard/MyProfile.tsx` (lines 1382-1433)**
+| Gap | Suggestion |
+|---|---|
+| **No visual distinction for "no days selected" at a location** | When a location has zero days selected, show a subtle inline warning: "No availability set -- you won't appear in bookings for this location." This prevents accidental invisibility. |
+| **CardTitle not using design tokens** | The title uses `text-lg` with inline icon. Should use `font-display text-base tracking-wide` per the UI Canon for card titles (Termina, uppercase). |
+| **Day buttons use `rounded-lg`** | The rest of the platform uses `rounded-full` for pill-style interactive elements. These day toggle buttons should match. |
+| **Missing info tooltip** | Per UI Canon, card titles should include a `MetricInfoTooltip`. A brief explanation like "Your work schedule controls when clients can book appointments with you" would reinforce the operational significance. |
 
-Currently: `bg-primary text-primary-foreground rounded-xl` -- solid, opaque, no glass.
+### Files Changed
 
-Update to:
-- Outer container: `bg-card/80 backdrop-blur-xl rounded-full shadow-[0_16px_40px_-18px_hsl(var(--foreground)/0.25)] border border-border/40`
-- Text color: `text-foreground` (not primary-foreground)
-- Pulse dot: `bg-primary animate-pulse`
-- Discard button: ghost with `rounded-full hover:bg-muted/60`
-- Save button: `bg-primary text-primary-foreground rounded-full` (primary pill CTA)
+**`src/pages/dashboard/MyProfile.tsx`**
 
-### 4. NotificationPreferences Floating Save Bar
-
-**File: `src/pages/dashboard/NotificationPreferences.tsx` (lines 407-436)**
-
-Currently: `bg-background/95 backdrop-blur border-t shadow-lg` -- uses a full-width bar with hard border-top. Doesn't match the floating pill aesthetic.
-
-Update to match the same floating centered pill pattern as MyProfile:
-- Remove `border-t` full-width approach
-- Wrap in a centered max-width container
-- Apply: `bg-card/80 backdrop-blur-xl rounded-full shadow-[0_16px_40px_-18px_hsl(var(--foreground)/0.25)] border border-border/40`
-- Buttons: `rounded-full` pill style
-
-### 5. SmartActionToast Container
-
-**File: `src/components/team-chat/SmartActionToast.tsx`**
-
-The Card uses standard `rounded-xl shadow-lg border-l-4`. Update:
-- Remove `border-l-4` accent (doesn't match glass aesthetic)
-- Apply: `bg-card/80 backdrop-blur-xl rounded-2xl shadow-[0_16px_40px_-18px_hsl(var(--foreground)/0.25)] border border-border/40`
-- Action buttons: `rounded-full`
-
-### 6. Inline Unsaved Changes Bars (secondary priority)
-
-Two additional inline bars that should get the glass treatment for consistency:
-
-- **`ReorderableStylistList.tsx`** (line 207): `bg-muted rounded-lg` -- update to `bg-card/80 backdrop-blur-xl rounded-full border border-border/40`
-- **`PlatformAppearanceTab.tsx`** (lines 214-243): amber conditional bar -- update to glass pill with amber accent dot instead of full amber background
-
-### What Does Not Change
-- Toast logic, hooks, or state management
-- Animation physics (framer-motion springs stay the same)
-- Save/discard functionality
-- No new components -- all updates are in-place styling
-
-### Technical Detail
-
-The consistent glass floating pill recipe across all surfaces:
-
-```text
-Container:  bg-card/80 backdrop-blur-xl rounded-full border border-border/40
-Shadow:     shadow-[0_16px_40px_-18px_hsl(var(--foreground)/0.25)]
-Text:       text-foreground / text-muted-foreground
-CTA Button: bg-primary text-primary-foreground rounded-full
-Ghost Btn:  rounded-full hover:bg-muted/60
-Pulse Dot:  w-2 h-2 rounded-full bg-primary animate-pulse
-```
+1. **Lines 905-907**: Update `CardDescription` to add booking/scheduling impact messaging.
+2. **Lines 901-903**: Update `CardTitle` to use `font-display text-base tracking-wide` token pattern.
+3. **Lines 980-986**: Update day button `rounded-lg` to `rounded-full` for pill consistency.
+4. **After line 938** (inside each location block): Add a conditional warning when `currentSchedule.length === 0` -- a subtle `text-xs text-amber-500` note: "No days selected -- you won't appear in bookings for this location."
 
