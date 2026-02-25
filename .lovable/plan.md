@@ -1,43 +1,26 @@
 
 
-## Dark Mode Category Colors for Forecast Bars
+## Fix: New Bookings Card Design Rule Violations
 
-Both forecast bar charts (`WeekAheadForecast.tsx` and `ForecastingCard.tsx`) currently use the raw light-mode hex color for category bar fills regardless of theme. The appointment card system already uses `getDarkCategoryStyle()` from `src/utils/categoryColors.ts` which produces translucent rgba fills, strokes matching the original hex, and text colors tuned for dark backgrounds. The forecast bars should use the same system.
+The screenshot reveals several styling inconsistencies compared to the canonical card UI standards:
 
-### What Changes
+### Issues Found
 
-**Both files need the same pattern:**
+1. **Icon colors**: `UserPlus` uses `text-emerald-600`, `RefreshCw` uses `text-purple-600`, `CalendarCheck` uses conditional emerald/amber/red. Per UI Canon, icons inside card content tiles should use `text-primary` for consistency with other cards.
+2. **"By Location" label** (line 199): Uses `font-medium text-muted-foreground uppercase tracking-wide` (font-sans). Must use `font-display` (Termina) per the fix we just applied to `LocationBreakdownSection`.
+3. **Location rows** (line 207): Use `bg-muted/20` instead of `bg-card-inner` -- same issue we just fixed elsewhere.
 
-1. Import `useDashboardTheme` and `getDarkCategoryStyle`
-2. In the category bar rendering loop, when dark mode is active, use `getDarkCategoryStyle(solidColor)` to get the dark-mode fill and stroke instead of the raw hex
+### Changes
 
-### File 1: `src/components/dashboard/sales/WeekAheadForecast.tsx`
+**File: `src/components/dashboard/NewBookingsCard.tsx`**
 
-- **Add imports**: `useDashboardTheme` from `@/contexts/DashboardThemeContext`, `getDarkCategoryStyle` from `@/utils/categoryColors`
-- **Add hook call** inside `WeekAheadForecast`: `const { resolvedTheme } = useDashboardTheme(); const isDark = resolvedTheme === 'dark';`
-- **Lines 519-554** (category bar rendering): When `isDark`, derive fill/stroke from `getDarkCategoryStyle(solidColor)` instead of using `solidColor` directly:
-  ```tsx
-  const darkStyle = isDark ? getDarkCategoryStyle(solidColor) : null;
-  const barFill = isDark ? darkStyle!.fill : solidColor;
-  const barStroke = isDark ? darkStyle!.stroke : solidColor;
-  ```
-  Update `fill={barFill}` on `<Bar>` and `<Cell>`, and use `barStroke` for the non-selected stroke
-
-### File 2: `src/components/dashboard/sales/ForecastingCard.tsx`
-
-- **Add imports**: `useDashboardTheme` from `@/contexts/DashboardThemeContext`, `getDarkCategoryStyle` from `@/utils/categoryColors`
-- **Add hook call** inside the component: `const { resolvedTheme } = useDashboardTheme(); const isDark = resolvedTheme === 'dark';`
-- **Lines 891-925** (category bar rendering): Same pattern as above -- derive dark-mode fill/stroke when `isDark`
-
-### What stays the same
-
-- "Solid" mode bars (the glass gradient) are unaffected
-- Light mode category bars remain unchanged (raw hex)
-- The `ServiceMixLegend` legend dots stay as-is (small dots don't need the dark treatment)
-- The tooltip category dots stay as-is
+1. **Line 122**: Change `UserPlus` icon from `text-emerald-600` to `text-primary`
+2. **Line 142**: Change `RefreshCw` icon from `text-purple-600` to `text-primary`
+3. **Lines 159-163**: Change `CalendarCheck` icon from conditional emerald/amber/red to `text-primary` (the rebook health signal is already conveyed by the progress bar color)
+4. **Line 199**: Change "By Location" label from `text-xs font-medium text-muted-foreground uppercase tracking-wide` to `text-xs font-display text-muted-foreground tracking-wide`
+5. **Line 207**: Change location row background from `bg-muted/20` to `bg-card-inner`
 
 ### Scope
 
-- `src/components/dashboard/sales/WeekAheadForecast.tsx` -- 2 import lines, 1 hook line, ~6 lines in category bar loop
-- `src/components/dashboard/sales/ForecastingCard.tsx` -- 2 import lines, 1 hook line, ~6 lines in category bar loop
+5 class string changes in 1 file. No structural or logic changes.
 
