@@ -356,7 +356,7 @@ export function WebsiteEditorSidebar({
 
   if (collapsed) {
     return (
-      <div className="h-full flex flex-col bg-background border-r py-2">
+      <div className="h-full flex flex-col bg-card/60 backdrop-blur-xl border-r border-border/40 py-2">
         {/* Expand toggle at top */}
         <div className="px-2 mb-2 pb-2 border-b">
           <Tooltip>
@@ -456,7 +456,7 @@ export function WebsiteEditorSidebar({
   }
 
   return (
-    <div className="h-full flex flex-col bg-background border-r">
+    <div className="h-full flex flex-col bg-card/60 backdrop-blur-xl border-r border-border/40">
       {/* Collapse toggle at top of expanded sidebar */}
       <div className="px-3 py-2 border-b flex-shrink-0">
         <Tooltip>

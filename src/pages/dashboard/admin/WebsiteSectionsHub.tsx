@@ -809,7 +809,7 @@ export default function WebsiteSectionsHub() {
           <ResizablePanel defaultSize={isMobile ? 100 : 42} minSize={30}>
             <div className="h-full flex flex-col overflow-hidden">
               {/* Compact Toolbar */}
-              <div className="flex-shrink-0 px-3 py-3 border-b bg-background flex items-center justify-between gap-2">
+              <div className="flex-shrink-0 px-3 py-3 border-b border-border/40 bg-card/80 backdrop-blur-md flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0">
                   {!isMobile && (
                     <Button
@@ -862,7 +862,7 @@ export default function WebsiteSectionsHub() {
               </div>
 
               {/* Editor Content */}
-              <div className="flex-1 overflow-auto p-4 sm:p-5 lg:p-6">
+              <div className="flex-1 overflow-auto p-4 sm:p-5 lg:p-6 bg-muted/30">
                 {renderEditor()}
               </div>
             </div>

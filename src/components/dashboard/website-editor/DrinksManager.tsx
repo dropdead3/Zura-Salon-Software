@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import { tokens } from '@/lib/design-tokens';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -14,6 +13,7 @@ import { SliderInput } from './inputs/SliderInput';
 import { supabase } from '@/integrations/supabase/client';
 import { useDebounce } from '@/hooks/use-debounce';
 import { triggerPreviewRefresh } from './LivePreviewPanel';
+import { EditorCard } from './EditorCard';
 import {
   DndContext,
   closestCenter,
@@ -67,10 +67,9 @@ function SortableDrinkItem({ drink, onUpdate, onDelete, onImageUpload, isUploadi
     <div
       ref={setNodeRef}
       style={style}
-      className="bg-card border rounded-xl p-4 space-y-4"
+      className="bg-card/60 border border-border/40 rounded-xl p-4 space-y-4"
     >
       <div className="flex items-start gap-3">
-        {/* Drag Handle */}
         <button
           {...attributes}
           {...listeners}
@@ -78,10 +77,7 @@ function SortableDrinkItem({ drink, onUpdate, onDelete, onImageUpload, isUploadi
         >
           <GripVertical className="h-5 w-5 text-muted-foreground" />
         </button>
-
-        {/* Stacked content: image above fields */}
         <div className="flex-1 space-y-3">
-          {/* Image Preview/Upload */}
           <div className="relative w-20 h-24 bg-muted rounded-lg overflow-hidden group">
             {drink.image_url ? (
               <>
@@ -117,8 +113,6 @@ function SortableDrinkItem({ drink, onUpdate, onDelete, onImageUpload, isUploadi
               </label>
             )}
           </div>
-
-          {/* Content Fields */}
           <div>
             <Label className="text-xs text-muted-foreground">Drink Name</Label>
             <Input
@@ -138,8 +132,6 @@ function SortableDrinkItem({ drink, onUpdate, onDelete, onImageUpload, isUploadi
             />
           </div>
         </div>
-
-        {/* Delete Button */}
         <Button
           variant="ghost"
           size="icon"
@@ -222,17 +214,13 @@ export function DrinksManager() {
     try {
       const fileExt = file.name.split('.').pop();
       const filePath = `drinks/drink-${drinkId}-${Date.now()}.${fileExt}`;
-
       const { error: uploadError } = await supabase.storage
         .from('business-logos')
         .upload(filePath, file, { upsert: true });
-
       if (uploadError) throw uploadError;
-
       const { data: urlData } = supabase.storage
         .from('business-logos')
         .getPublicUrl(filePath);
-
       handleUpdateDrink(drinkId, { image_url: urlData.publicUrl });
       toast.success('Image uploaded successfully');
     } catch (error) {
@@ -267,146 +255,121 @@ export function DrinksManager() {
 
   return (
     <div className="space-y-6">
-      <div className="space-y-6">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-4 border-b">
-          <CardTitle className="text-lg">Drink Menu Section</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6 pt-6">
-          <p className="text-sm text-muted-foreground">
-            Configure the header text and carousel behavior for the drink menu section.
-          </p>
-
-          {/* Eyebrow toggle */}
-          <ToggleInput
-            label="Show Eyebrow Header"
-            value={localConfig.show_eyebrow}
-            onChange={(val) => updateField('show_eyebrow', val)}
-            description="Display the header text above the drink carousel"
-          />
-          {localConfig.show_eyebrow && (
-            <div className="grid gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="eyebrow">Eyebrow Start</Label>
-                <Input
-                  id="eyebrow"
-                  value={localConfig.eyebrow}
-                  onChange={(e) => updateField('eyebrow', e.target.value)}
-                  placeholder="Drinks on us. We have an exclusive menu of"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="highlight">Highlighted Word (underlined)</Label>
-                <Input
-                  id="highlight"
-                  value={localConfig.eyebrow_highlight}
-                  onChange={(e) => updateField('eyebrow_highlight', e.target.value)}
-                  placeholder="complimentary"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="suffix">Eyebrow End</Label>
-                <Input
-                  id="suffix"
-                  value={localConfig.eyebrow_suffix}
-                  onChange={(e) => updateField('eyebrow_suffix', e.target.value)}
-                  placeholder="options for your appointment."
-                />
-              </div>
+      <EditorCard title="Drink Menu Section" icon={Coffee} description="Configure the header text and carousel behavior for the drink menu section.">
+        <ToggleInput
+          label="Show Eyebrow Header"
+          value={localConfig.show_eyebrow}
+          onChange={(val) => updateField('show_eyebrow', val)}
+          description="Display the header text above the drink carousel"
+        />
+        {localConfig.show_eyebrow && (
+          <div className="grid gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="eyebrow">Eyebrow Start</Label>
+              <Input
+                id="eyebrow"
+                value={localConfig.eyebrow}
+                onChange={(e) => updateField('eyebrow', e.target.value)}
+                placeholder="Drinks on us. We have an exclusive menu of"
+              />
             </div>
-          )}
-
-          {/* Drink images toggle */}
-          <ToggleInput
-            label="Show Drink Images"
-            value={localConfig.show_drink_images}
-            onChange={(val) => updateField('show_drink_images', val)}
-            description="Display drink images in the carousel (text-only mode when off)"
+            <div className="space-y-2">
+              <Label htmlFor="highlight">Highlighted Word (underlined)</Label>
+              <Input
+                id="highlight"
+                value={localConfig.eyebrow_highlight}
+                onChange={(e) => updateField('eyebrow_highlight', e.target.value)}
+                placeholder="complimentary"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="suffix">Eyebrow End</Label>
+              <Input
+                id="suffix"
+                value={localConfig.eyebrow_suffix}
+                onChange={(e) => updateField('eyebrow_suffix', e.target.value)}
+                placeholder="options for your appointment."
+              />
+            </div>
+          </div>
+        )}
+        <ToggleInput
+          label="Show Drink Images"
+          value={localConfig.show_drink_images}
+          onChange={(val) => updateField('show_drink_images', val)}
+          description="Display drink images in the carousel (text-only mode when off)"
+        />
+        <div className="pt-4 border-t border-border/30 space-y-4">
+          <h4 className="text-sm font-medium text-muted-foreground">Carousel Settings</h4>
+          <SliderInput
+            label="Carousel Speed"
+            value={localConfig.carousel_speed}
+            onChange={(val) => updateField('carousel_speed', val)}
+            min={15}
+            max={60}
+            step={5}
+            unit=" px/s"
+            description="How fast drinks scroll across the screen"
           />
+          <SliderInput
+            label="Hover Slowdown"
+            value={localConfig.hover_slowdown_factor}
+            onChange={(val) => updateField('hover_slowdown_factor', val)}
+            min={0.05}
+            max={0.5}
+            step={0.05}
+            unit="x"
+            description="Speed multiplier when hovering (lower = slower)"
+          />
+        </div>
+      </EditorCard>
 
-          {/* Advanced Settings */}
-          <div className="pt-4 border-t space-y-4">
-            <h4 className="text-sm font-medium text-muted-foreground">Carousel Settings</h4>
-            
-            <SliderInput
-              label="Carousel Speed"
-              value={localConfig.carousel_speed}
-              onChange={(val) => updateField('carousel_speed', val)}
-              min={15}
-              max={60}
-              step={5}
-              unit=" px/s"
-              description="How fast drinks scroll across the screen"
-            />
-
-            <SliderInput
-              label="Hover Slowdown"
-              value={localConfig.hover_slowdown_factor}
-              onChange={(val) => updateField('hover_slowdown_factor', val)}
-              min={0.05}
-              max={0.5}
-              step={0.05}
-              unit="x"
-              description="Speed multiplier when hovering (lower = slower)"
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Drinks List */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-4 border-b">
-          <div className="flex items-center gap-2">
-            <Coffee className="h-5 w-5 text-muted-foreground" />
-            <CardTitle className="text-lg">Drinks ({localConfig.drinks.length})</CardTitle>
-          </div>
+      <EditorCard
+        title={`Drinks (${localConfig.drinks.length})`}
+        icon={Coffee}
+        headerActions={
           <Button onClick={handleAddDrink} size={tokens.button.card} variant="outline">
             <Plus className="h-4 w-4 mr-2" />
             Add Drink
           </Button>
-        </CardHeader>
-        <CardContent className="pt-6">
-          {localConfig.drinks.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <Coffee className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p className="text-sm">No drinks added yet.</p>
-              <p className="text-xs mt-1">Click "Add Drink" to create your first menu item.</p>
-            </div>
-          ) : (
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
+        }
+      >
+        {localConfig.drinks.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">
+            <Coffee className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <p className="text-sm">No drinks added yet.</p>
+            <p className="text-xs mt-1">Click "Add Drink" to create your first menu item.</p>
+          </div>
+        ) : (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={localConfig.drinks.map(d => d.id)}
+              strategy={verticalListSortingStrategy}
             >
-              <SortableContext
-                items={localConfig.drinks.map(d => d.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                <div className="space-y-3">
-                  {localConfig.drinks.map((drink) => (
-                    <SortableDrinkItem
-                      key={drink.id}
-                      drink={drink}
-                      onUpdate={handleUpdateDrink}
-                      onDelete={handleDeleteDrink}
-                      onImageUpload={handleImageUpload}
-                      isUploading={uploadingId === drink.id}
-                    />
-                  ))}
-                </div>
-              </SortableContext>
-            </DndContext>
-          )}
+              <div className="space-y-3">
+                {localConfig.drinks.map((drink) => (
+                  <SortableDrinkItem
+                    key={drink.id}
+                    drink={drink}
+                    onUpdate={handleUpdateDrink}
+                    onDelete={handleDeleteDrink}
+                    onImageUpload={handleImageUpload}
+                    isUploading={uploadingId === drink.id}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
+        )}
 
-          <p className="text-xs text-muted-foreground mt-4 pt-4 border-t">
-            <strong>Tip:</strong> Drag drinks to reorder them. Changes are saved when you click "Save Changes" above.
-          </p>
-        </CardContent>
-      </Card>
-      </div>
-
+        <p className="text-xs text-muted-foreground mt-4 pt-4 border-t border-border/30">
+          <strong>Tip:</strong> Drag drinks to reorder them. Changes are saved when you click "Save Changes" above.
+        </p>
+      </EditorCard>
     </div>
   );
 }

@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -12,6 +11,8 @@ import { toast } from 'sonner';
 import type { CustomSectionType, StyleOverrides } from '@/hooks/useWebsiteSections';
 import { SectionStyleEditor } from './SectionStyleEditor';
 import { ImageUploadInput } from './inputs/ImageUploadInput';
+import { EditorCard } from './EditorCard';
+import { FileText } from 'lucide-react';
 
 interface CustomSectionEditorProps {
   sectionId: string;
@@ -115,13 +116,11 @@ export function CustomSectionEditor({ sectionId, sectionType, sectionLabel, styl
       setIsDirty(false);
       window.dispatchEvent(new CustomEvent('editor-dirty-state', { detail: { dirty: false } }));
       toast.success('Section saved');
-      // Refresh live preview
       window.dispatchEvent(new CustomEvent('website-preview-refresh'));
     },
     onError: () => toast.error('Failed to save'),
   });
 
-  // Listen for save requests
   useEffect(() => {
     const handler = () => { if (isDirty) saveMutation.mutate(); };
     window.addEventListener('editor-save-request', handler);
@@ -279,32 +278,28 @@ export function CustomSectionEditor({ sectionId, sectionType, sectionLabel, styl
 
   return (
     <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          {onLabelChange ? (
-            <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">Section Label</Label>
-              <Input
-                value={editingLabel}
-                onChange={e => setEditingLabel(e.target.value)}
-                onBlur={() => {
-                  if (editingLabel.trim() && editingLabel !== sectionLabel) {
-                    onLabelChange(editingLabel.trim());
-                  }
-                }}
-                className="text-lg font-medium h-auto py-1 px-2"
-              />
-            </div>
-          ) : (
-            <CardTitle className="text-lg">{sectionLabel}</CardTitle>
-          )}
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {renderFields()}
-        </CardContent>
-      </Card>
+      <EditorCard
+        title={sectionLabel}
+        icon={FileText}
+        headerActions={
+          onLabelChange ? (
+            <Input
+              value={editingLabel}
+              onChange={e => setEditingLabel(e.target.value)}
+              onBlur={() => {
+                if (editingLabel.trim() && editingLabel !== sectionLabel) {
+                  onLabelChange(editingLabel.trim());
+                }
+              }}
+              className="text-sm h-8 w-40"
+              placeholder="Section label"
+            />
+          ) : undefined
+        }
+      >
+        {renderFields()}
+      </EditorCard>
 
-      {/* Section Style Overrides */}
       {onStyleChange && (
         <SectionStyleEditor
           value={styleOverrides ?? {}}

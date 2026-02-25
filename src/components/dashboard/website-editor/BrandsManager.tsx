@@ -1,10 +1,9 @@
 import { useState, useRef, useCallback } from 'react';
 import { tokens } from '@/lib/design-tokens';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Loader2, Plus, Trash2, GripVertical, Upload, X, ImageIcon } from 'lucide-react';
+import { Loader2, Plus, Trash2, GripVertical, Upload, X, ImageIcon, Tag } from 'lucide-react';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
 import { toast } from 'sonner';
 import { useBrandsConfig, type Brand, DEFAULT_BRANDS } from '@/hooks/useSectionConfig';
@@ -13,6 +12,7 @@ import { SliderInput } from './inputs/SliderInput';
 import { ToggleInput } from './inputs/ToggleInput';
 import { useDebounce } from '@/hooks/use-debounce';
 import { triggerPreviewRefresh } from './LivePreviewPanel';
+import { EditorCard } from './EditorCard';
 import {
   DndContext,
   closestCenter,
@@ -69,11 +69,10 @@ function SortableBrandItem({ brand, onUpdate, onRemove, onImageUpload, onImageRe
       ref={setNodeRef}
       style={style}
       className={cn(
-        "flex items-start gap-3 p-4 rounded-xl border bg-card transition-all",
+        "flex items-start gap-3 p-4 rounded-xl border border-border/40 bg-card/60 transition-all",
         isDragging && "opacity-50 shadow-lg ring-2 ring-primary"
       )}
     >
-      {/* Drag Handle */}
       <button
         className="mt-3 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors"
         {...attributes}
@@ -81,8 +80,6 @@ function SortableBrandItem({ brand, onUpdate, onRemove, onImageUpload, onImageRe
       >
         <GripVertical className="h-5 w-5" />
       </button>
-
-      {/* Logo Upload */}
       <div className="flex-shrink-0">
         <input
           ref={fileInputRef}
@@ -121,8 +118,6 @@ function SortableBrandItem({ brand, onUpdate, onRemove, onImageUpload, onImageRe
           </button>
         )}
       </div>
-
-      {/* Brand Details */}
       <div className="flex-1 space-y-3">
         <div className="grid grid-cols-1 gap-3">
           <div className="space-y-1">
@@ -158,8 +153,6 @@ function SortableBrandItem({ brand, onUpdate, onRemove, onImageUpload, onImageRe
           </Button>
         )}
       </div>
-
-      {/* Remove Button */}
       <Button
         type="button"
         variant="ghost"
@@ -180,7 +173,6 @@ export function BrandsManager() {
   const [hasInitialized, setHasInitialized] = useState(false);
   const debouncedConfig = useDebounce(localConfig, 300);
 
-  // Initialize local state when data loads
   if (data && !hasInitialized && !isLoading) {
     setLocalConfig(data);
     setHasInitialized(true);
@@ -195,11 +187,9 @@ export function BrandsManager() {
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-
     if (over && active.id !== over.id) {
       const oldIndex = localConfig.brands.findIndex((b) => b.id === active.id);
       const newIndex = localConfig.brands.findIndex((b) => b.id === over.id);
-
       setLocalConfig({
         ...localConfig,
         brands: arrayMove(localConfig.brands, oldIndex, newIndex),
@@ -239,25 +229,16 @@ export function BrandsManager() {
   const handleImageUpload = async (brandId: string, file: File) => {
     try {
       setUploadingBrandId(brandId);
-
-      // Generate unique filename
       const fileExt = file.name.split('.').pop();
       const fileName = `brand-${brandId}-${Date.now()}.${fileExt}`;
       const filePath = `brands/${fileName}`;
-
-      // Upload to Supabase Storage
       const { error: uploadError } = await supabase.storage
         .from('business-logos')
         .upload(filePath, file, { upsert: true });
-
       if (uploadError) throw uploadError;
-
-      // Get public URL
       const { data: urlData } = supabase.storage
         .from('business-logos')
         .getPublicUrl(filePath);
-
-      // Update brand with logo URL
       handleUpdateBrand(brandId, { logo_url: urlData.publicUrl });
       toast.success('Logo uploaded');
     } catch (error) {
@@ -274,7 +255,6 @@ export function BrandsManager() {
 
   const handleSave = useCallback(async () => {
     try {
-      // Filter out brands with empty names
       const validBrands = localConfig.brands.filter(
         (b) => b.name.trim() && b.display_text.trim()
       );
@@ -298,104 +278,85 @@ export function BrandsManager() {
 
   return (
     <div className="space-y-6">
-      <div className="space-y-6">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-4 border-b">
-          <CardTitle className="text-lg">Brands Section</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6 pt-6">
-          {/* Intro Text */}
-          <ToggleInput
-            label="Show Introduction Text"
-            description="Display the intro paragraph above the brand marquee"
-            value={localConfig.show_intro_text}
-            onChange={(value) => setLocalConfig({ ...localConfig, show_intro_text: value })}
-          />
-          {localConfig.show_intro_text && (
-            <div className="space-y-2">
-              <Label htmlFor="intro_text">Introduction Text</Label>
-              <Input
-                id="intro_text"
-                value={localConfig.intro_text}
-                onChange={(e) => setLocalConfig({ ...localConfig, intro_text: e.target.value })}
-                placeholder="Our favorite brands..."
-              />
-            </div>
-          )}
-
-          {/* Logo visibility toggle */}
-          <ToggleInput
-            label="Show Brand Logos"
-            description="Display logo images alongside brand text in the marquee"
-            value={localConfig.show_logos}
-            onChange={(value) => setLocalConfig({ ...localConfig, show_logos: value })}
-          />
-
-          {/* Marquee Speed */}
-          <SliderInput
-            label="Marquee Speed"
-            value={localConfig.marquee_speed}
-            onChange={(value) => setLocalConfig({ ...localConfig, marquee_speed: value })}
-            min={20}
-            max={80}
-            step={5}
-            unit="s"
-            description="Duration for one complete scroll cycle"
-          />
-        </CardContent>
-      </Card>
-
-      {/* Brands List Card */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-4 border-b">
-          <div>
-            <CardTitle className="text-lg">Brand Logos</CardTitle>
-            <p className="text-sm text-muted-foreground mt-1">
-              Drag to reorder. Logos are optional - text will display in the marquee.
-            </p>
+      <EditorCard title="Brands Section" icon={Tag}>
+        <ToggleInput
+          label="Show Introduction Text"
+          description="Display the intro paragraph above the brand marquee"
+          value={localConfig.show_intro_text}
+          onChange={(value) => setLocalConfig({ ...localConfig, show_intro_text: value })}
+        />
+        {localConfig.show_intro_text && (
+          <div className="space-y-2">
+            <Label htmlFor="intro_text">Introduction Text</Label>
+            <Input
+              id="intro_text"
+              value={localConfig.intro_text}
+              onChange={(e) => setLocalConfig({ ...localConfig, intro_text: e.target.value })}
+              placeholder="Our favorite brands..."
+            />
           </div>
+        )}
+        <ToggleInput
+          label="Show Brand Logos"
+          description="Display logo images alongside brand text in the marquee"
+          value={localConfig.show_logos}
+          onChange={(value) => setLocalConfig({ ...localConfig, show_logos: value })}
+        />
+        <SliderInput
+          label="Marquee Speed"
+          value={localConfig.marquee_speed}
+          onChange={(value) => setLocalConfig({ ...localConfig, marquee_speed: value })}
+          min={20}
+          max={80}
+          step={5}
+          unit="s"
+          description="Duration for one complete scroll cycle"
+        />
+      </EditorCard>
+
+      <EditorCard
+        title="Brand Logos"
+        description="Drag to reorder. Logos are optional - text will display in the marquee."
+        headerActions={
           <Button onClick={handleAddBrand} variant="outline" size={tokens.button.card}>
             <Plus className="h-4 w-4 mr-2" />
             Add Brand
           </Button>
-        </CardHeader>
-        <CardContent className="pt-6">
-          {localConfig.brands.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <ImageIcon className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p className="font-medium">No brands added yet</p>
-              <p className="text-sm">Click "Add Brand" to get started</p>
-            </div>
-          ) : (
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
+        }
+      >
+        {localConfig.brands.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">
+            <ImageIcon className="h-12 w-12 mx-auto mb-3 opacity-50" />
+            <p className="font-medium">No brands added yet</p>
+            <p className="text-sm">Click "Add Brand" to get started</p>
+          </div>
+        ) : (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={localConfig.brands.map((b) => b.id)}
+              strategy={verticalListSortingStrategy}
             >
-              <SortableContext
-                items={localConfig.brands.map((b) => b.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                <div className="space-y-3">
-                  {localConfig.brands.map((brand) => (
-                    <SortableBrandItem
-                      key={brand.id}
-                      brand={brand}
-                      onUpdate={handleUpdateBrand}
-                      onRemove={handleRemoveBrand}
-                      onImageUpload={handleImageUpload}
-                      onImageRemove={handleImageRemove}
-                      isUploading={uploadingBrandId === brand.id}
-                    />
-                  ))}
-                </div>
-              </SortableContext>
-            </DndContext>
-          )}
-        </CardContent>
-      </Card>
-      </div>
-
+              <div className="space-y-3">
+                {localConfig.brands.map((brand) => (
+                  <SortableBrandItem
+                    key={brand.id}
+                    brand={brand}
+                    onUpdate={handleUpdateBrand}
+                    onRemove={handleRemoveBrand}
+                    onImageUpload={handleImageUpload}
+                    onImageRemove={handleImageRemove}
+                    isUploading={uploadingBrandId === brand.id}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
+        )}
+      </EditorCard>
     </div>
   );
 }

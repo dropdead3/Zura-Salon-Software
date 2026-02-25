@@ -3,9 +3,7 @@ import { tokens } from '@/lib/design-tokens';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { Link2, Instagram, Facebook, Twitter, Youtube, Linkedin, Plus, Trash2 } from 'lucide-react';
+import { Link2, Instagram, Facebook, Twitter, Youtube, Linkedin, Plus, Trash2, PanelBottom } from 'lucide-react';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
 import { triggerPreviewRefresh } from './LivePreviewPanel';
 import { toast } from 'sonner';
@@ -13,6 +11,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useEditorDirtyState } from '@/hooks/useEditorDirtyState';
 import { ToggleInput } from './inputs/ToggleInput';
+import { EditorCard } from './EditorCard';
 
 interface FooterLink {
   href: string;
@@ -38,7 +37,6 @@ interface FooterConfig {
   nav_links: FooterLink[];
   bottom_links: FooterBottomLink[];
   powered_by_text: string;
-  // Visibility toggles
   show_tagline: boolean;
   show_social_links: boolean;
   show_nav_links: boolean;
@@ -183,154 +181,117 @@ export function FooterEditor() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-display">Footer Settings</h2>
-          <p className="text-sm text-muted-foreground">Manage footer content, links, and social profiles</p>
-        </div>
-      </div>
-
       {/* Brand & Contact */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Brand & Contact</CardTitle>
-          <CardDescription>Tagline, copyright, and contact information</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <ToggleInput
-            label="Show Tagline"
-            value={config.show_tagline}
-            onChange={(v) => handleChange('show_tagline', v)}
-            description="Display the brand tagline in the footer"
-          />
-          {config.show_tagline && (
-            <div className="space-y-2">
-              <Label>Tagline</Label>
-              <Input value={config.tagline} onChange={e => handleChange('tagline', e.target.value)} />
-            </div>
-          )}
+      <EditorCard title="Brand & Contact" icon={PanelBottom} description="Tagline, copyright, and contact information">
+        <ToggleInput
+          label="Show Tagline"
+          value={config.show_tagline}
+          onChange={(v) => handleChange('show_tagline', v)}
+          description="Display the brand tagline in the footer"
+        />
+        {config.show_tagline && (
           <div className="space-y-2">
-            <Label>Copyright Text</Label>
-            <Input value={config.copyright_text} onChange={e => handleChange('copyright_text', e.target.value)} />
-            <p className="text-xs text-muted-foreground">{'{year}'} will be replaced with the current year</p>
+            <Label>Tagline</Label>
+            <Input value={config.tagline} onChange={e => handleChange('tagline', e.target.value)} />
           </div>
+        )}
+        <div className="space-y-2">
+          <Label>Copyright Text</Label>
+          <Input value={config.copyright_text} onChange={e => handleChange('copyright_text', e.target.value)} />
+          <p className="text-xs text-muted-foreground">{'{year}'} will be replaced with the current year</p>
+        </div>
+        <div className="space-y-2">
+          <Label>Contact Email</Label>
+          <Input type="email" value={config.contact_email} onChange={e => handleChange('contact_email', e.target.value)} />
+        </div>
+        <ToggleInput
+          label="Show Powered By"
+          value={config.show_powered_by}
+          onChange={(v) => handleChange('show_powered_by', v)}
+          description="Display the 'Powered by' text at the bottom"
+        />
+        {config.show_powered_by && (
           <div className="space-y-2">
-            <Label>Contact Email</Label>
-            <Input type="email" value={config.contact_email} onChange={e => handleChange('contact_email', e.target.value)} />
+            <Label>Powered By Text</Label>
+            <Input value={config.powered_by_text} onChange={e => handleChange('powered_by_text', e.target.value)} />
           </div>
-          <ToggleInput
-            label="Show Powered By"
-            value={config.show_powered_by}
-            onChange={(v) => handleChange('show_powered_by', v)}
-            description="Display the 'Powered by' text at the bottom"
-          />
-          {config.show_powered_by && (
-            <div className="space-y-2">
-              <Label>Powered By Text</Label>
-              <Input value={config.powered_by_text} onChange={e => handleChange('powered_by_text', e.target.value)} />
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        )}
+      </EditorCard>
 
       {/* Social Links */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Instagram className="h-4 w-4" />
-            Social Media
-          </CardTitle>
-          <CardDescription>Social media links displayed in the footer</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <ToggleInput
-            label="Show Social Links"
-            value={config.show_social_links}
-            onChange={(v) => handleChange('show_social_links', v)}
-            description="Display social media icons in the footer"
-          />
-          {config.show_social_links && SOCIAL_PLATFORMS.map(({ key, icon: Icon, label, placeholder }) => (
-            <div key={key} className="flex items-center gap-3">
-              <div className="w-5 h-5 flex items-center justify-center text-muted-foreground shrink-0">
-                <Icon className="w-4 h-4" />
-              </div>
-              <Input
-                value={(config[key] as string) || ''}
-                onChange={e => handleChange(key, e.target.value)}
-                placeholder={placeholder}
-                autoCapitalize="off"
-              />
+      <EditorCard title="Social Media" icon={Instagram} description="Social media links displayed in the footer">
+        <ToggleInput
+          label="Show Social Links"
+          value={config.show_social_links}
+          onChange={(v) => handleChange('show_social_links', v)}
+          description="Display social media icons in the footer"
+        />
+        {config.show_social_links && SOCIAL_PLATFORMS.map(({ key, icon: Icon, label, placeholder }) => (
+          <div key={key} className="flex items-center gap-3">
+            <div className="w-5 h-5 flex items-center justify-center text-muted-foreground shrink-0">
+              <Icon className="w-4 h-4" />
             </div>
-          ))}
-        </CardContent>
-      </Card>
+            <Input
+              value={(config[key] as string) || ''}
+              onChange={e => handleChange(key, e.target.value)}
+              placeholder={placeholder}
+              autoCapitalize="off"
+            />
+          </div>
+        ))}
+      </EditorCard>
 
       {/* Navigation Links */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Link2 className="h-4 w-4" />
-            Navigation Links
-          </CardTitle>
-          <CardDescription>Main footer navigation links</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <ToggleInput
-            label="Show Navigation Links"
-            value={config.show_nav_links}
-            onChange={(v) => handleChange('show_nav_links', v)}
-            description="Display navigation links in the footer"
-          />
-          {config.show_nav_links && (
-            <>
-              {config.nav_links.map((link, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  <Input className="flex-1" placeholder="Label" value={link.label} onChange={e => updateNavLink(index, 'label', e.target.value)} />
-                  <Input className="flex-1" placeholder="/path" value={link.href} onChange={e => updateNavLink(index, 'href', e.target.value)} />
-                  <Button variant="ghost" size="icon" className="shrink-0 text-destructive hover:text-destructive" onClick={() => removeNavLink(index)}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-              <Button variant="outline" size={tokens.button.inline} onClick={addNavLink} className="gap-2">
-                <Plus className="h-4 w-4" /> Add Link
-              </Button>
-            </>
-          )}
-        </CardContent>
-      </Card>
+      <EditorCard title="Navigation Links" icon={Link2} description="Main footer navigation links">
+        <ToggleInput
+          label="Show Navigation Links"
+          value={config.show_nav_links}
+          onChange={(v) => handleChange('show_nav_links', v)}
+          description="Display navigation links in the footer"
+        />
+        {config.show_nav_links && (
+          <>
+            {config.nav_links.map((link, index) => (
+              <div key={index} className="flex items-center gap-2">
+                <Input className="flex-1" placeholder="Label" value={link.label} onChange={e => updateNavLink(index, 'label', e.target.value)} />
+                <Input className="flex-1" placeholder="/path" value={link.href} onChange={e => updateNavLink(index, 'href', e.target.value)} />
+                <Button variant="ghost" size="icon" className="shrink-0 text-destructive hover:text-destructive" onClick={() => removeNavLink(index)}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+            <Button variant="outline" size={tokens.button.inline} onClick={addNavLink} className="gap-2">
+              <Plus className="h-4 w-4" /> Add Link
+            </Button>
+          </>
+        )}
+      </EditorCard>
 
       {/* Bottom Links */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Bottom Bar Links</CardTitle>
-          <CardDescription>Links shown at the very bottom of the footer</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <ToggleInput
-            label="Show Bottom Links"
-            value={config.show_bottom_links}
-            onChange={(v) => handleChange('show_bottom_links', v)}
-            description="Display links at the very bottom of the footer"
-          />
-          {config.show_bottom_links && (
-            <>
-              {config.bottom_links.map((link, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  <Input className="flex-1" placeholder="Label" value={link.label} onChange={e => updateBottomLink(index, 'label', e.target.value)} />
-                  <Input className="flex-1" placeholder="/path" value={link.href} onChange={e => updateBottomLink(index, 'href', e.target.value)} />
-                  <Button variant="ghost" size="icon" className="shrink-0 text-destructive hover:text-destructive" onClick={() => removeBottomLink(index)}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-              <Button variant="outline" size={tokens.button.inline} onClick={addBottomLink} className="gap-2">
-                <Plus className="h-4 w-4" /> Add Link
-              </Button>
-            </>
-          )}
-        </CardContent>
-      </Card>
+      <EditorCard title="Bottom Bar Links" description="Links shown at the very bottom of the footer">
+        <ToggleInput
+          label="Show Bottom Links"
+          value={config.show_bottom_links}
+          onChange={(v) => handleChange('show_bottom_links', v)}
+          description="Display links at the very bottom of the footer"
+        />
+        {config.show_bottom_links && (
+          <>
+            {config.bottom_links.map((link, index) => (
+              <div key={index} className="flex items-center gap-2">
+                <Input className="flex-1" placeholder="Label" value={link.label} onChange={e => updateBottomLink(index, 'label', e.target.value)} />
+                <Input className="flex-1" placeholder="/path" value={link.href} onChange={e => updateBottomLink(index, 'href', e.target.value)} />
+                <Button variant="ghost" size="icon" className="shrink-0 text-destructive hover:text-destructive" onClick={() => removeBottomLink(index)}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+            <Button variant="outline" size={tokens.button.inline} onClick={addBottomLink} className="gap-2">
+              <Plus className="h-4 w-4" /> Add Link
+            </Button>
+          </>
+        )}
+      </EditorCard>
     </div>
   );
 }

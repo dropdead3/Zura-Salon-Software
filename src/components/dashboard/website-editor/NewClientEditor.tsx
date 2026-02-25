@@ -1,11 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { tokens } from '@/lib/design-tokens';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Loader2, RotateCcw } from 'lucide-react';
+import { Loader2, RotateCcw, UserPlus } from 'lucide-react';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
 import { toast } from 'sonner';
 import { useNewClientConfig, type NewClientConfig, DEFAULT_NEW_CLIENT } from '@/hooks/useSectionConfig';
@@ -16,6 +14,7 @@ import { UrlInput } from './inputs/UrlInput';
 import { CharCountInput } from './inputs/CharCountInput';
 import { useDebounce } from '@/hooks/use-debounce';
 import { triggerPreviewRefresh } from './LivePreviewPanel';
+import { EditorCard } from './EditorCard';
 
 export function NewClientEditor() {
   const { data, isLoading, isSaving, update } = useNewClientConfig();
@@ -59,108 +58,108 @@ export function NewClientEditor() {
 
   return (
     <div className="space-y-6 h-full">
-      <Card className="overflow-auto">
-        <CardHeader className="flex flex-row items-center justify-between pb-4 sticky top-0 bg-card z-10 border-b">
-          <CardTitle className="text-lg">New Client CTA</CardTitle>
+      <EditorCard
+        title="New Client CTA"
+        icon={UserPlus}
+        headerActions={
           <Button variant="ghost" size={tokens.button.inline} onClick={handleReset} className="text-muted-foreground gap-1.5">
             <RotateCcw className="h-3.5 w-3.5" />
             Reset
           </Button>
-        </CardHeader>
-        <CardContent className="space-y-6 pt-6">
-          {/* Headline */}
+        }
+      >
+        {/* Headline */}
+        <ToggleInput
+          label="Show Headline"
+          value={localConfig.show_headline}
+          onChange={(value) => updateField('show_headline', value)}
+          description="Display the headline prefix and rotating words"
+        />
+        {localConfig.show_headline && (
+          <>
+            <CharCountInput
+              label="Headline Prefix"
+              value={localConfig.headline_prefix}
+              onChange={(value) => updateField('headline_prefix', value)}
+              maxLength={30}
+              placeholder="New Clients"
+              description="Static text before the rotating words"
+            />
+            <RotatingWordsInput
+              words={localConfig.rotating_words}
+              onChange={(words) => updateField('rotating_words', words)}
+              label="Rotating Words"
+              placeholder="e.g. Start Here, Wanted..."
+            />
+          </>
+        )}
+
+        {/* Description */}
+        <ToggleInput
+          label="Show Description"
+          value={localConfig.show_description}
+          onChange={(value) => updateField('show_description', value)}
+          description="Display supporting text below the headline"
+        />
+        {localConfig.show_description && (
+          <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              value={localConfig.description}
+              onChange={(e) => updateField('description', e.target.value)}
+              rows={3}
+            />
+            <p className="text-xs text-muted-foreground">Supporting text displayed below the headline</p>
+          </div>
+        )}
+
+        {/* Benefits */}
+        <div className="pt-4 border-t border-border/30 space-y-4">
           <ToggleInput
-            label="Show Headline"
-            value={localConfig.show_headline}
-            onChange={(value) => updateField('show_headline', value)}
-            description="Display the headline prefix and rotating words"
+            label="Show Benefits"
+            value={localConfig.show_benefits}
+            onChange={(value) => updateField('show_benefits', value)}
+            description="Display benefit badges below the description"
           />
-          {localConfig.show_headline && (
+          {localConfig.show_benefits && (
+            <BenefitsListInput
+              benefits={localConfig.benefits}
+              onChange={(benefits) => updateField('benefits', benefits)}
+              label="Benefits (shown as badges)"
+              placeholder="Add a benefit..."
+            />
+          )}
+        </div>
+
+        {/* CTA */}
+        <div className="space-y-4 pt-4 border-t border-border/30">
+          <ToggleInput
+            label="Show CTA Button"
+            value={localConfig.show_cta}
+            onChange={(value) => updateField('show_cta', value)}
+            description="Display the call-to-action button"
+          />
+          {localConfig.show_cta && (
             <>
               <CharCountInput
-                label="Headline Prefix"
-                value={localConfig.headline_prefix}
-                onChange={(value) => updateField('headline_prefix', value)}
+                label="CTA Button Text"
+                value={localConfig.cta_text}
+                onChange={(value) => updateField('cta_text', value)}
                 maxLength={30}
-                placeholder="New Clients"
-                description="Static text before the rotating words"
+                description="Text displayed on the main call-to-action button"
               />
-              <RotatingWordsInput
-                words={localConfig.rotating_words}
-                onChange={(words) => updateField('rotating_words', words)}
-                label="Rotating Words"
-                placeholder="e.g. Start Here, Wanted..."
+              <UrlInput
+                label="CTA Button URL"
+                value={localConfig.cta_url}
+                onChange={(value) => updateField('cta_url', value)}
+                placeholder="Leave empty to open the default form"
+                description="Where the button links to. Leave empty to open the default form."
               />
             </>
           )}
-
-          {/* Description */}
-          <ToggleInput
-            label="Show Description"
-            value={localConfig.show_description}
-            onChange={(value) => updateField('show_description', value)}
-            description="Display supporting text below the headline"
-          />
-          {localConfig.show_description && (
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={localConfig.description}
-                onChange={(e) => updateField('description', e.target.value)}
-                rows={3}
-              />
-              <p className="text-xs text-muted-foreground">Supporting text displayed below the headline</p>
-            </div>
-          )}
-
-          {/* Benefits */}
-          <div className="pt-4 border-t space-y-4">
-            <ToggleInput
-              label="Show Benefits"
-              value={localConfig.show_benefits}
-              onChange={(value) => updateField('show_benefits', value)}
-              description="Display benefit badges below the description"
-            />
-            {localConfig.show_benefits && (
-              <BenefitsListInput
-                benefits={localConfig.benefits}
-                onChange={(benefits) => updateField('benefits', benefits)}
-                label="Benefits (shown as badges)"
-                placeholder="Add a benefit..."
-              />
-            )}
-          </div>
-
-          {/* CTA */}
-          <div className="space-y-4 pt-4 border-t">
-            <ToggleInput
-              label="Show CTA Button"
-              value={localConfig.show_cta}
-              onChange={(value) => updateField('show_cta', value)}
-              description="Display the call-to-action button"
-            />
-            {localConfig.show_cta && (
-              <>
-                <CharCountInput
-                  label="CTA Button Text"
-                  value={localConfig.cta_text}
-                  onChange={(value) => updateField('cta_text', value)}
-                  maxLength={30}
-                  description="Text displayed on the main call-to-action button"
-                />
-                <UrlInput
-                  label="CTA Button URL"
-                  value={localConfig.cta_url}
-                  onChange={(value) => updateField('cta_url', value)}
-                  placeholder="Leave empty to open the default form"
-                  description="Where the button links to. Leave empty to open the default form."
-                />
-              </>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+        </div>
+      </EditorCard>
     </div>
   );
 }
