@@ -104,7 +104,7 @@ export function ExtensionsEditor() {
             description="Display the main headline"
           />
           {localConfig.show_headline && (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               <CharCountInput
                 label="Headline Line 1"
                 value={localConfig.headline_line1}

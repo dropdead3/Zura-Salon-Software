@@ -240,12 +240,10 @@ export function GalleryContent() {
       ) : (
         <Tabs defaultValue="gallery">
           <TabsList>
-            <TabsTrigger value="gallery" className="gap-2">
-              <ImageIcon className="w-4 h-4" />
-              Gallery Images
+            <TabsTrigger value="gallery" className="gap-1.5 text-xs sm:text-sm">
+              Gallery
             </TabsTrigger>
-            <TabsTrigger value="transformations" className="gap-2">
-              <ArrowLeftRight className="w-4 h-4" />
+            <TabsTrigger value="transformations" className="gap-1.5 text-xs sm:text-sm">
               Before/After
             </TabsTrigger>
           </TabsList>
@@ -335,7 +333,7 @@ export function GalleryContent() {
                 onDragEnd={handleImageDragEnd}
               >
                 <SortableContext items={imageIds} strategy={rectSortingStrategy}>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 gap-4">
                     {galleryImages.map((image) => (
                       <SortableGalleryImage
                         key={image.id}
@@ -426,7 +424,7 @@ export function GalleryContent() {
                 onDragEnd={handleTransformationDragEnd}
               >
                 <SortableContext items={transformationIds} strategy={verticalListSortingStrategy}>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4">
                     {transformations.map((transform) => (
                       <SortableTransformation
                         key={transform.id}

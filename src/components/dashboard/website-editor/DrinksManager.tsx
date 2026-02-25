@@ -79,45 +79,46 @@ function SortableDrinkItem({ drink, onUpdate, onDelete, onImageUpload, isUploadi
           <GripVertical className="h-5 w-5 text-muted-foreground" />
         </button>
 
-        {/* Image Preview/Upload */}
-        <div className="relative w-20 h-24 bg-muted rounded-lg overflow-hidden flex-shrink-0 group">
-          {drink.image_url ? (
-            <>
-              <img
-                src={drink.image_url}
-                alt={drink.name}
-                className="w-full h-full object-contain"
-              />
-              <button
-                onClick={() => onUpdate(drink.id, { image_url: '' })}
-                className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                <X className="h-3 w-3" />
-              </button>
-            </>
-          ) : (
-            <label className="flex flex-col items-center justify-center w-full h-full cursor-pointer hover:bg-muted/80 transition-colors">
-              {isUploading ? (
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-              ) : (
-                <>
-                  <Upload className="h-5 w-5 text-muted-foreground mb-1" />
-                  <span className="text-[10px] text-muted-foreground">Upload</span>
-                </>
-              )}
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleFileChange}
-                className="hidden"
-                disabled={isUploading}
-              />
-            </label>
-          )}
-        </div>
-
-        {/* Content Fields */}
+        {/* Stacked content: image above fields */}
         <div className="flex-1 space-y-3">
+          {/* Image Preview/Upload */}
+          <div className="relative w-20 h-24 bg-muted rounded-lg overflow-hidden group">
+            {drink.image_url ? (
+              <>
+                <img
+                  src={drink.image_url}
+                  alt={drink.name}
+                  className="w-full h-full object-contain"
+                />
+                <button
+                  onClick={() => onUpdate(drink.id, { image_url: '' })}
+                  className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </>
+            ) : (
+              <label className="flex flex-col items-center justify-center w-full h-full cursor-pointer hover:bg-muted/80 transition-colors">
+                {isUploading ? (
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                ) : (
+                  <>
+                    <Upload className="h-5 w-5 text-muted-foreground mb-1" />
+                    <span className="text-[10px] text-muted-foreground">Upload</span>
+                  </>
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                  disabled={isUploading}
+                />
+              </label>
+            )}
+          </div>
+
+          {/* Content Fields */}
           <div>
             <Label className="text-xs text-muted-foreground">Drink Name</Label>
             <Input

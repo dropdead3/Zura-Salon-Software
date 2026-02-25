@@ -76,12 +76,12 @@ export function SectionDisplayEditor<T extends object>({
   }
 
   return (
-    <div className="max-w-2xl">
+    <div>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-4 sticky top-0 bg-card z-10 border-b">
           <CardTitle className="text-lg">{title}</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6 pt-6">
+        <CardContent className="space-y-4 pt-6">
           <p className="text-sm text-muted-foreground">{description}</p>
 
           {fields.map((field) => {

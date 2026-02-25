@@ -300,7 +300,7 @@ export function ServicesContent() {
       )}
 
       {/* Stats */}
-      <BentoGrid maxPerRow={3} gap="gap-3">
+      <BentoGrid maxPerRow={2} gap="gap-3">
         <Card>
           <CardContent className="p-3 flex items-center gap-3">
             <div className="p-2 rounded-full bg-blue-100 dark:bg-blue-900/30">
@@ -471,49 +471,73 @@ export function ServicesContent() {
                       <div 
                         key={item.id}
                         className={cn(
-                          "px-4 py-3 flex items-center gap-4 hover:bg-muted/30 transition-colors",
+                          "px-4 py-3 space-y-2 hover:bg-muted/30 transition-colors",
                           !item.bookableOnline && "opacity-50"
                         )}
                       >
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <h4 className="font-medium text-sm">{item.name}</h4>
-                            {item.isPopular && (
-                              <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 gap-1">
-                                <Star className="w-3 h-3 fill-current" />
-                                Popular
-                              </Badge>
-                            )}
-                            {!item.bookableOnline && (
-                              <Badge variant="outline" className="gap-1 text-xs text-muted-foreground">
-                                Hidden from website
-                              </Badge>
-                            )}
-                            {item.websiteDescription && (
-                              <Badge variant="outline" className="gap-1 text-xs">
-                                <Globe className="w-3 h-3" />
-                                Web Copy
-                              </Badge>
-                            )}
-                          </div>
-                          {item.description && (
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                              {item.description}
-                            </p>
+                        {/* Row 1: Name + badges */}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h4 className="font-medium text-sm">{item.name}</h4>
+                          {item.isPopular && (
+                            <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 gap-1">
+                              <Star className="w-3 h-3 fill-current" />
+                              Popular
+                            </Badge>
                           )}
-                          <div className="flex items-center gap-2 mt-2 flex-wrap">
-                            <span className="text-xs text-muted-foreground">Starts at:</span>
-                            <Badge variant="secondary" className="font-mono">
-                              ${getLowestPrice(item)}
+                          {!item.bookableOnline && (
+                            <Badge variant="outline" className="gap-1 text-xs text-muted-foreground">
+                              Hidden from website
                             </Badge>
-                            <ChevronRight className="w-3 h-3 text-muted-foreground" />
-                            <Badge variant="secondary" className="font-mono">
-                              ${getHighestPrice(item)}
+                          )}
+                          {item.websiteDescription && (
+                            <Badge variant="outline" className="gap-1 text-xs">
+                              <Globe className="w-3 h-3" />
+                              Web Copy
                             </Badge>
-                          </div>
+                          )}
+                        </div>
+                        {item.description && (
+                          <p className="text-xs text-muted-foreground">
+                            {item.description}
+                          </p>
+                        )}
+                        
+                        {/* Row 2: Price range */}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-xs text-muted-foreground">Starts at:</span>
+                          <Badge variant="secondary" className="font-mono">
+                            ${getLowestPrice(item)}
+                          </Badge>
+                          <ChevronRight className="w-3 h-3 text-muted-foreground" />
+                          <Badge variant="secondary" className="font-mono">
+                            ${getHighestPrice(item)}
+                          </Badge>
                         </div>
 
-                        <div className="flex items-center gap-2 shrink-0">
+                        {/* Row 3: Action controls */}
+                        <div className="flex items-center gap-3 flex-wrap pt-1 border-t">
+                          <div className="flex items-center gap-2">
+                            <Label htmlFor={`online-${item.id}`} className="text-xs text-muted-foreground">
+                              Online
+                            </Label>
+                            <Switch
+                              id={`online-${item.id}`}
+                              checked={item.bookableOnline}
+                              onCheckedChange={() => handleToggleBookableOnline(originalCategoryIndex, originalItemIndex)}
+                            />
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <Label htmlFor={`popular-${item.id}`} className="text-xs text-muted-foreground">
+                              Popular
+                            </Label>
+                            <Switch
+                              id={`popular-${item.id}`}
+                              checked={item.isPopular}
+                              onCheckedChange={() => handleTogglePopular(originalCategoryIndex, originalItemIndex)}
+                            />
+                          </div>
+
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -538,33 +562,12 @@ export function ServicesContent() {
                             </Tooltip>
                           </TooltipProvider>
                           
-                          <div className="flex items-center gap-2">
-                            <Label htmlFor={`online-${item.id}`} className="text-xs text-muted-foreground">
-                              Online
-                            </Label>
-                            <Switch
-                              id={`online-${item.id}`}
-                              checked={item.bookableOnline}
-                              onCheckedChange={() => handleToggleBookableOnline(originalCategoryIndex, originalItemIndex)}
-                            />
-                          </div>
-
-                          <div className="flex items-center gap-2">
-                            <Label htmlFor={`popular-${item.id}`} className="text-xs text-muted-foreground">
-                              Popular
-                            </Label>
-                            <Switch
-                              id={`popular-${item.id}`}
-                              checked={item.isPopular}
-                              onCheckedChange={() => handleTogglePopular(originalCategoryIndex, originalItemIndex)}
-                            />
-                          </div>
-                          
                           <Dialog>
                             <DialogTrigger asChild>
                               <Button
                                 variant="ghost"
                                 size="icon"
+                                className="h-8 w-8"
                                 onClick={() => setEditingService({ 
                                   categoryIndex: originalCategoryIndex, 
                                   itemIndex: originalItemIndex, 

@@ -124,7 +124,7 @@ function SortableBrandItem({ brand, onUpdate, onRemove, onImageUpload, onImageRe
 
       {/* Brand Details */}
       <div className="flex-1 space-y-3">
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3">
           <div className="space-y-1">
             <Label className="text-xs text-muted-foreground">Brand Name</Label>
             <Input
