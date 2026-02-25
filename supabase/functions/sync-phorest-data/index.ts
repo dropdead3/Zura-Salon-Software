@@ -233,36 +233,78 @@ async function syncAppointments(
                      (Array.isArray(branchData) ? branchData : []);
     console.log(`Found ${branches.length} branches for appointment sync`);
     
-    // Fetch appointments per branch
+    // Split date range into 30-day chunks (Phorest max is 31 days)
+    const dateChunks: { from: string; to: string }[] = [];
+    {
+      let chunkStart = new Date(dateFrom);
+      const endDate = new Date(dateTo);
+      while (chunkStart < endDate) {
+        const chunkEnd = new Date(chunkStart);
+        chunkEnd.setDate(chunkEnd.getDate() + 30);
+        if (chunkEnd > endDate) chunkEnd.setTime(endDate.getTime());
+        dateChunks.push({
+          from: chunkStart.toISOString().split('T')[0],
+          to: chunkEnd.toISOString().split('T')[0],
+        });
+        chunkStart = new Date(chunkEnd);
+        chunkStart.setDate(chunkStart.getDate() + 1);
+      }
+    }
+    if (dateChunks.length > 1) {
+      console.log(`Date range split into ${dateChunks.length} chunks (Phorest 31-day limit)`);
+    }
+
+    // Fetch appointments per branch with pagination, chunked by date range
     for (const branch of branches) {
       const branchId = branch.branchId || branch.id;
       console.log(`Fetching appointments for branch: ${branch.name} (${branchId})`);
       
       try {
-        const appointmentsData = await phorestRequest(
-          `/branch/${branchId}/appointment?from_date=${dateFrom}&to_date=${dateTo}`,
-          businessId,
-          username,
-          password
-        );
+        let branchTotal = 0;
         
-        const appointments = appointmentsData._embedded?.appointments || 
-                            appointmentsData.appointments || 
-                            appointmentsData.page?.content || [];
+        for (const chunk of dateChunks) {
+          let page = 0;
+          let hasMore = true;
+          
+          while (hasMore) {
+            const appointmentsData = await phorestRequest(
+              `/branch/${branchId}/appointment?from_date=${chunk.from}&to_date=${chunk.to}&size=100&page=${page}`,
+              businessId,
+              username,
+              password
+            );
+            
+            const appointments = appointmentsData._embedded?.appointments || 
+                                appointmentsData.appointments || 
+                                appointmentsData.page?.content || [];
+            
+            if (appointments.length > 0) {
+              const appointmentsWithBranch = appointments.map((apt: any) => ({
+                ...apt,
+                branchId,
+                branchName: branch.name
+              }));
+              allAppointments = [...allAppointments, ...appointmentsWithBranch];
+              branchTotal += appointments.length;
+            }
+            
+            // Check if more pages exist
+            const totalPages = appointmentsData.page?.totalPages || 1;
+            page++;
+            hasMore = page < totalPages;
+            
+            // Safety: also stop if we got fewer results than page size (last page)
+            if (appointments.length < 100) {
+              hasMore = false;
+            }
+          }
+        }
         
-        if (appointments.length > 0) {
-          console.log(`Found ${appointments.length} appointments in branch ${branch.name}`);
-          // Add branch info to each appointment
-          const appointmentsWithBranch = appointments.map((apt: any) => ({
-            ...apt,
-            branchId,
-            branchName: branch.name
-          }));
-          allAppointments = [...allAppointments, ...appointmentsWithBranch];
+        if (branchTotal > 0) {
+          console.log(`Found ${branchTotal} appointments in branch ${branch.name}`);
         }
       } catch (e: any) {
         console.log(`Appointments fetch failed for branch ${branchId}:`, e.message);
-        // Continue with other branches even if one fails
       }
     }
     
@@ -309,7 +351,28 @@ async function syncAppointments(
     );
     console.log(`Found ${deletedPhorestIds.size} soft-deleted appointments to protect`);
 
+    // Pre-fetch all known phorest client IDs in one batch query
+    const allClientIds = [...new Set(
+      allAppointments
+        .map((apt: any) => apt.clientId || apt.client?.clientId)
+        .filter(Boolean)
+    )];
+    
+    const knownClientIds = new Set<string>();
+    // Query in batches of 500 to avoid URL length limits
+    for (let i = 0; i < allClientIds.length; i += 500) {
+      const batch = allClientIds.slice(i, i + 500);
+      const { data: existingClients } = await supabase
+        .from("phorest_clients")
+        .select("phorest_client_id")
+        .in("phorest_client_id", batch);
+      existingClients?.forEach((c: any) => knownClientIds.add(c.phorest_client_id));
+    }
+
     let synced = 0;
+    let debugLogged = false;
+    const upsertBatch: any[] = [];
+    
     for (const apt of allAppointments) {
       const stylistUserId = staffMap.get(apt.staffId) || null;
       
@@ -318,25 +381,22 @@ async function syncAppointments(
 
       // Skip soft-deleted appointments to preserve local operational decisions
       if (phorestId && deletedPhorestIds.has(phorestId)) {
-        console.log(`Skipping soft-deleted appointment ${phorestId}`);
         continue;
       }
       
       if (!phorestId) {
-        console.log(`Skipping appointment with no ID:`, JSON.stringify(apt).substring(0, 200));
         continue;
       }
       
       // Parse date - can come from various fields
       let appointmentDate = apt.date || apt.appointmentDate;
       if (!appointmentDate && apt.startTime) {
-        // Check if startTime includes date (ISO format)
         if (apt.startTime.includes('T')) {
           appointmentDate = apt.startTime.split('T')[0];
         }
       }
       
-      // Parse time - handle both ISO datetime and plain time formats
+      // Parse time
       let startTime = '09:00';
       let endTime = '10:00';
       
@@ -357,14 +417,12 @@ async function syncAppointments(
       }
       
       if (!appointmentDate) {
-        console.log(`Skipping appointment ${phorestId} - no date found`);
         continue;
       }
       
       // Map Phorest branch name to location ID
       let locationId: string | null = null;
       if (apt.branchName) {
-        // Try to extract location from branch name like "Salon Name (North Mesa)"
         const match = apt.branchName.match(/\(([^)]+)\)/);
         if (match) {
           const extractedName = match[1].toLowerCase();
@@ -375,31 +433,19 @@ async function syncAppointments(
         }
       }
       
-      // Proactively look up if client exists in our database before inserting
       const phorestClientId = apt.clientId || apt.client?.clientId || null;
-      let localClientId: string | null = null;
-      
-      if (phorestClientId) {
-        const { data: existingClient } = await supabase
-          .from("phorest_clients")
-          .select("phorest_client_id")
-          .eq("phorest_client_id", phorestClientId)
-          .maybeSingle();
-        
-        if (existingClient) {
-          localClientId = phorestClientId;
-        } else {
-          console.log(`Client ${phorestClientId} not found in local DB - appointment will have null client link`);
-        }
-      }
 
-      // Debug: log first appointment's raw keys to identify available fields
-      if (synced === 0) {
+      // Debug: log first appointment's raw keys
+      if (!debugLogged) {
         console.log(`[DEBUG] First appointment raw keys:`, Object.keys(apt));
         console.log(`[DEBUG] First appointment activationState:`, apt.activationState, `status:`, apt.status);
+        if (apt.services && apt.services.length > 1) {
+          console.log(`[DEBUG] Multi-service appointment detected: ${apt.services.length} services in appointment ${phorestId}`);
+        }
+        debugLogged = true;
       }
 
-      // Map status using activationState (Phorest's actual field) with fallback to status
+      // Map status
       let mappedStatus = mapPhorestStatus(apt.activationState || apt.status);
       
       // Time-based inference: if appointment is ACTIVE but in the past, mark as completed
@@ -410,12 +456,12 @@ async function syncAppointments(
         }
       }
 
-      const appointmentRecord: any = {
+      upsertBatch.push({
         phorest_id: phorestId,
         stylist_user_id: stylistUserId,
         phorest_staff_id: apt.staffId || apt.staff?.staffId,
         location_id: locationId,
-        phorest_client_id: phorestClientId, // Always store raw Phorest client ID for analytics grouping
+        phorest_client_id: phorestClientId,
         client_name: apt.clientName || `${apt.client?.firstName || ''} ${apt.client?.lastName || ''}`.trim() || null,
         client_phone: apt.client?.mobile || apt.client?.phone || null,
         appointment_date: appointmentDate,
@@ -427,18 +473,26 @@ async function syncAppointments(
         total_price: apt.totalPrice || apt.price || null,
         notes: apt.notes || null,
         is_new_client: apt.isNewClient || false,
-      };
+      });
+    }
 
-      let { error } = await supabase
+    // Batch upsert in chunks of 200
+    for (let i = 0; i < upsertBatch.length; i += 200) {
+      const chunk = upsertBatch.slice(i, i + 200);
+      const { error } = await supabase
         .from("phorest_appointments")
-        .upsert(appointmentRecord, { onConflict: 'phorest_id' });
+        .upsert(chunk, { onConflict: 'phorest_id' });
 
       if (error) {
-        console.log(`Failed to upsert appointment ${phorestId}:`, error.message);
+        console.log(`Failed to batch upsert appointments (batch ${Math.floor(i/200)+1}):`, error.message);
       } else {
-        synced++;
+        synced += chunk.length;
       }
     }
+    
+    console.log(`Synced ${synced} of ${upsertBatch.length} appointments (${allAppointments.length} fetched from API)`);
+
+    return { total: allAppointments.length, synced };
 
     return { total: allAppointments.length, synced };
   } catch (error) {
