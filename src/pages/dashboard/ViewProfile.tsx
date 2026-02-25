@@ -286,7 +286,7 @@ export default function ViewProfile() {
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      uploadPhoto.mutate(file);
+      uploadPhoto.mutate({ file });
     }
   };
 

@@ -375,8 +375,8 @@ export default function MyProfile() {
     e.target.value = '';
   };
 
-  const handleCroppedPhotoUpload = (blob: Blob) => {
-    uploadPhoto.mutate(blob);
+  const handleCroppedPhotoUpload = (blob: Blob, focalX: number, focalY: number) => {
+    uploadPhoto.mutate({ input: blob, focalX, focalY });
   };
 
   const toggleSpecialty = (specialty: string) => {
@@ -681,7 +681,8 @@ export default function MyProfile() {
                 imageFile={cropImageFile}
                 imageUrl={profile?.photo_url || undefined}
                 onCropComplete={handleCroppedPhotoUpload}
-                maxOutputSize={800}
+                initialFocalX={(profile as any)?.photo_focal_x ?? 50}
+                initialFocalY={(profile as any)?.photo_focal_y ?? 50}
                 cardPreviewProps={showProfessionalDetails ? {
                   name: formData.full_name,
                   displayName: formData.display_name,
@@ -1301,6 +1302,8 @@ export default function MyProfile() {
                   displayName={formData.display_name}
                   level={formData.stylist_level}
                   photoUrl={profile?.photo_url || undefined}
+                  photoFocalX={(profile as any)?.photo_focal_x ?? 50}
+                  photoFocalY={(profile as any)?.photo_focal_y ?? 50}
                   instagram={formData.instagram}
                   tiktok={formData.tiktok}
                   preferredSocialHandle={formData.preferred_social_handle}

@@ -147,7 +147,7 @@ export function useUploadProfilePhoto() {
   const { user } = useAuth();
 
   return useMutation({
-    mutationFn: async (input: File | Blob) => {
+    mutationFn: async ({ input, focalX, focalY }: { input: File | Blob; focalX?: number; focalY?: number }) => {
       const isFile = input instanceof File && 'name' in input && input.name;
       const fileExt = isFile ? (input as File).name.split('.').pop() : 'webp';
       const fileName = `${user!.id}-${Date.now()}.${fileExt}`;
@@ -167,10 +167,14 @@ export function useUploadProfilePhoto() {
         .from('employee-photos')
         .getPublicUrl(filePath);
 
-      // Update profile with new photo URL
+      // Update profile with new photo URL and focal point
+      const updatePayload: Record<string, any> = { photo_url: publicUrl };
+      if (focalX !== undefined) updatePayload.photo_focal_x = focalX;
+      if (focalY !== undefined) updatePayload.photo_focal_y = focalY;
+
       const { error: updateError } = await supabase
         .from('employee_profiles')
-        .update({ photo_url: publicUrl })
+        .update(updatePayload)
         .eq('user_id', user!.id);
 
       if (updateError) throw updateError;
