@@ -100,7 +100,7 @@ export function useTipsDrilldown({ dateFrom, dateTo, locationId, minAppointments
     queryFn: async () => {
       let query = supabase
         .from('phorest_transaction_items')
-        .select('payment_method, tip_amount')
+        .select('payment_method, tip_amount, phorest_staff_id, phorest_client_id, transaction_date')
         .gte('transaction_date', dateFrom)
         .lte('transaction_date', dateTo)
         .gt('tip_amount', 0);
@@ -255,13 +255,19 @@ export function useTipsDrilldown({ dateFrom, dateTo, locationId, minAppointments
       };
     }
 
-    // Build payment method record from transaction items
+    // Build payment method record from transaction items (deduplicated)
     const byPaymentMethod: Record<string, PaymentMethodTipMetrics> = {};
     if (transactionItems) {
+      const seenTxTipKeys = new Set<string>();
       for (const ti of transactionItems) {
+        const tipAmt = ti.tip_amount ?? 0;
+        if (tipAmt === 0) continue;
+        const txKey = `${ti.phorest_staff_id}|${ti.phorest_client_id}|${ti.transaction_date}|${tipAmt}`;
+        if (seenTxTipKeys.has(txKey)) continue;
+        seenTxTipKeys.add(txKey);
         const method = ti.payment_method || 'Unknown';
         const existing = byPaymentMethod[method] ?? { totalTips: 0, count: 0 };
-        existing.totalTips += ti.tip_amount ?? 0;
+        existing.totalTips += tipAmt;
         existing.count += 1;
         byPaymentMethod[method] = existing;
       }

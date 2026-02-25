@@ -230,8 +230,8 @@ export function TipsDrilldownPanel({ isOpen, parentLocationId, dateFrom, dateTo 
               <>
                 {/* Summary Stats */}
                 {(() => {
-                  const totalTipsSum = filteredStylists.reduce((s, st) => s + st.totalTips, 0);
-                  const totalRevenueBase = filteredStylists.reduce((s, st) => {
+                  const totalTipsSum = filteredTotalTips.reduce((s, st) => s + st.totalTips, 0);
+                  const totalRevenueBase = filteredTotalTips.reduce((s, st) => {
                     return s + (st.tipPercentage > 0 ? (st.totalTips / st.tipPercentage) * 100 : 0);
                   }, 0);
                   const avgTipRate = totalRevenueBase > 0 ? (totalTipsSum / totalRevenueBase) * 100 : 0;
