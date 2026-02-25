@@ -51,12 +51,12 @@ export function AtRiskParticipantBadge({
   const config = {
     warning: {
       icon: Clock,
-      className: 'bg-amber-500/10 text-amber-600 border-amber-500/30',
+      className: 'bg-amber-500/10 text-amber-600 border-amber-500/30', // amber: categorical warning, no theme token yet
       label: 'At Risk',
     },
     critical: {
       icon: AlertTriangle,
-      className: 'bg-red-500/10 text-red-600 border-red-500/30',
+      className: 'bg-destructive/10 text-destructive border-destructive/30',
       label: 'Critical',
     },
   };
@@ -117,7 +117,7 @@ export function AtRiskSummary({ participants, className }: AtRiskSummaryProps) {
       className={cn(
         "flex items-center gap-2 p-3 rounded-lg border",
         criticalCount > 0
-          ? "bg-red-500/5 border-red-500/30"
+          ? "bg-destructive/5 border-destructive/30"
           : "bg-amber-500/5 border-amber-500/30",
         className
       )}
@@ -125,7 +125,7 @@ export function AtRiskSummary({ participants, className }: AtRiskSummaryProps) {
       <AlertTriangle
         className={cn(
           "w-5 h-5",
-          criticalCount > 0 ? "text-red-600" : "text-amber-600"
+          criticalCount > 0 ? "text-destructive" : "text-amber-600"
         )}
       />
       <div className="flex-1">

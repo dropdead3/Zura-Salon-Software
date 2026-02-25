@@ -38,7 +38,7 @@ export function SalesTrendIndicator({
   return (
     <div className={cn(
       'flex items-center gap-1',
-      isPositive ? 'text-chart-2' : 'text-destructive',
+      isPositive ? 'text-success-foreground' : 'text-destructive',
       className
     )}>
       {isPositive ? (

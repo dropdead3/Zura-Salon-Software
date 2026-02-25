@@ -35,7 +35,7 @@ export function SidebarClockButton({ isCollapsed = false, inFooter = true }: Sid
           ? cn("px-2 py-2.5 justify-center", inFooter ? "mx-0" : "mx-2")
           : cn("px-3 py-2.5", inFooter ? "mx-0" : "mx-3"),
         isClockedIn
-          ? "text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
+          ? "text-success-foreground hover:bg-success/30"
           : "text-muted-foreground hover:text-foreground hover:bg-muted/60",
         busy && "opacity-60 pointer-events-none"
       )}
@@ -43,7 +43,7 @@ export function SidebarClockButton({ isCollapsed = false, inFooter = true }: Sid
       {busy ? (
         <Loader2 className="w-4 h-4 shrink-0 animate-spin" />
       ) : (
-        <Clock className={cn("w-4 h-4 shrink-0", isClockedIn && "text-emerald-600 dark:text-emerald-400")} />
+        <Clock className={cn("w-4 h-4 shrink-0", isClockedIn && "text-success-foreground")} />
       )}
       {!isCollapsed && (
         <>

@@ -235,16 +235,16 @@ export function LocationDrilldownPanel({
                 ) : revenueChange !== undefined ? (
                   <div className="flex items-center gap-1.5">
                     {revenueChange > 0 ? (
-                      <TrendingUp className="w-4 h-4 text-emerald-500" />
+                      <TrendingUp className="w-4 h-4 text-success-foreground" />
                     ) : revenueChange < 0 ? (
-                      <TrendingDown className="w-4 h-4 text-red-400" />
+                      <TrendingDown className="w-4 h-4 text-destructive" />
                     ) : (
                       <Minus className="w-4 h-4 text-muted-foreground" />
                     )}
                     <span className={cn(
                       'text-lg font-display',
-                      revenueChange > 0 && 'text-emerald-500',
-                      revenueChange < 0 && 'text-red-400',
+                      revenueChange > 0 && 'text-success-foreground',
+                      revenueChange < 0 && 'text-destructive',
                     )}>
                       {revenueChange > 0 ? '+' : ''}{Math.round(revenueChange)}%
                     </span>

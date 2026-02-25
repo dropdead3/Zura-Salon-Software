@@ -12,7 +12,7 @@ export function BannedClientBadge({ className, size = 'sm' }: BannedClientBadgeP
     <Badge 
       variant="destructive" 
       className={cn(
-        "bg-red-600 text-white hover:bg-red-600",
+        "bg-destructive text-destructive-foreground hover:bg-destructive",
         size === 'sm' && "text-xs px-1.5 py-0",
         size === 'md' && "text-sm px-2 py-0.5",
         className

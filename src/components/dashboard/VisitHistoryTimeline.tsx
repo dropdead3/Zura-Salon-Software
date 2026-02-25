@@ -14,12 +14,12 @@ interface VisitHistoryTimelineProps {
 }
 
 const STATUS_CONFIG: Record<string, { icon: React.ElementType; color: string; label: string }> = {
-  completed: { icon: CheckCircle, color: 'text-green-600', label: 'Completed' },
-  confirmed: { icon: CheckCircle, color: 'text-blue-600', label: 'Confirmed' },
-  checked_in: { icon: CheckCircle, color: 'text-blue-600', label: 'Checked In' },
+  completed: { icon: CheckCircle, color: 'text-success-foreground', label: 'Completed' },
+  confirmed: { icon: CheckCircle, color: 'text-primary', label: 'Confirmed' },
+  checked_in: { icon: CheckCircle, color: 'text-primary', label: 'Checked In' },
   booked: { icon: Calendar, color: 'text-muted-foreground', label: 'Booked' },
   cancelled: { icon: XCircle, color: 'text-muted-foreground', label: 'Cancelled' },
-  no_show: { icon: AlertCircle, color: 'text-red-600', label: 'No Show' },
+  no_show: { icon: AlertCircle, color: 'text-destructive', label: 'No Show' },
 };
 
 function formatTime12h(time: string): string {
@@ -85,7 +85,7 @@ export function VisitHistoryTimeline({ visits, isLoading }: VisitHistoryTimeline
                 <Card key={visit.id} className={cn(
                   "p-3",
                   visit.status === 'cancelled' && "opacity-60",
-                  visit.status === 'no_show' && "border-red-200 dark:border-red-900"
+                  visit.status === 'no_show' && "border-destructive/20 dark:border-destructive/30"
                 )}>
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
