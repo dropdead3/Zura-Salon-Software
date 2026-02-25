@@ -197,16 +197,16 @@ export function PerformanceTrendChart({ userId, weeks = 8 }: PerformanceTrendCha
               <p className="font-display text-2xl">{formatCurrencyWhole(totalRevenue)}</p>
               <div className="flex items-center gap-1 justify-end">
                 {trend.direction === 'up' ? (
-                  <TrendingUp className="w-4 h-4 text-green-600" />
+                  <TrendingUp className="w-4 h-4 text-success-foreground" />
                 ) : trend.direction === 'down' ? (
-                  <TrendingDown className="w-4 h-4 text-red-600" />
+                  <TrendingDown className="w-4 h-4 text-destructive" />
                 ) : (
                   <Minus className="w-4 h-4 text-muted-foreground" />
                 )}
                 <span className={cn(
                   "text-sm font-medium",
-                  trend.direction === 'up' && "text-green-600",
-                  trend.direction === 'down' && "text-red-600"
+                  trend.direction === 'up' && "text-success-foreground",
+                  trend.direction === 'down' && "text-destructive"
                 )}>
                   {trend.percentage.toFixed(1)}% vs last week
                 </span>

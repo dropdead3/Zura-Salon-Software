@@ -66,7 +66,7 @@ function KPICard({ title, value, subtitle, trend, icon: Icon, iconClassName, isL
             {trend !== undefined && (
               <div className={cn(
                 'flex items-center gap-1 text-xs mt-1',
-                trend >= 0 ? 'text-emerald-600' : 'text-red-600'
+                trend >= 0 ? 'text-success-foreground' : 'text-destructive'
               )}>
                 {trend >= 0 ? (
                   <TrendingUp className="h-3 w-3" />

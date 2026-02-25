@@ -7,7 +7,7 @@ interface BannedClientAlertProps {
 
 export function BannedClientAlert({ reason }: BannedClientAlertProps) {
   return (
-    <Alert variant="destructive" className="bg-red-50 dark:bg-red-950/50 border-red-200 dark:border-red-900">
+    <Alert variant="destructive" className="bg-destructive/5 dark:bg-destructive/10 border-destructive/20 dark:border-destructive/30">
       <AlertCircle className="h-4 w-4" />
       <AlertTitle className="font-medium">Client Banned</AlertTitle>
       <AlertDescription className="text-sm">

@@ -60,8 +60,8 @@ const METRIC_CONFIG: Record<Exclude<ExperienceMetric, 'composite'>, {
 };
 
 const STATUS_CONFIG: Record<ExperienceStatus, { label: string; className: string }> = {
-  'strong': { label: 'Strong', className: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' },
-  'watch': { label: 'Watch', className: 'bg-amber-500/10 text-amber-600 border-amber-500/20' },
+  'strong': { label: 'Strong', className: 'bg-success/30 text-success-foreground border-success/40' },
+  'watch': { label: 'Watch', className: 'bg-amber-500/10 text-amber-600 border-amber-500/20' }, // amber: categorical warning
   'needs-attention': { label: 'Needs Attention', className: 'bg-destructive/10 text-destructive border-destructive/20' },
 };
 
@@ -79,7 +79,7 @@ function ChangeBadge({ value }: { value: number | null }) {
     <div className={cn(
       'flex items-center gap-0.5 mt-0.5',
       tokens.kpi.change,
-      value > 0 ? 'text-green-500' : value < 0 ? 'text-red-500' : 'text-muted-foreground',
+      value > 0 ? 'text-success-foreground' : value < 0 ? 'text-destructive' : 'text-muted-foreground',
     )}>
       {value > 0 ? <TrendingUp className="w-3 h-3" /> : value < 0 ? <TrendingDown className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
       <span>{Math.abs(value).toFixed(1)}%</span>

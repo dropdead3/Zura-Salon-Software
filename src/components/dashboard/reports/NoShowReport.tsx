@@ -196,7 +196,7 @@ export function NoShowReport({
         </div>
         <div className="p-4 rounded-lg bg-muted">
           <p className="text-sm text-muted-foreground">No-Show Rate</p>
-          <p className="text-2xl font-medium text-red-500">{noShowData.noShowRate.toFixed(1)}%</p>
+          <p className="text-2xl font-medium text-destructive">{noShowData.noShowRate.toFixed(1)}%</p>
         </div>
         <div className="p-4 rounded-lg bg-muted">
           <p className="text-sm text-muted-foreground">Cancellation Rate</p>
@@ -204,7 +204,7 @@ export function NoShowReport({
         </div>
         <div className="p-4 rounded-lg bg-muted">
           <p className="text-sm text-muted-foreground">Est. Revenue Lost</p>
-          <p className="text-2xl font-medium text-red-500">{formatCurrencyWhole(noShowData.revenueLost)}</p>
+          <p className="text-2xl font-medium text-destructive">{formatCurrencyWhole(noShowData.revenueLost)}</p>
         </div>
       </div>
 
@@ -232,7 +232,7 @@ export function NoShowReport({
                     <TableCell className="text-right">{day.total}</TableCell>
                     <TableCell className="text-right">{day.noShows}</TableCell>
                     <TableCell className="text-right">
-                      <span className={day.rate > 10 ? 'text-red-500' : day.rate > 5 ? 'text-amber-500' : ''}>
+                      <span className={day.rate > 10 ? 'text-destructive' : day.rate > 5 ? 'text-amber-500' : ''}>
                         {day.rate.toFixed(1)}%
                       </span>
                     </TableCell>
