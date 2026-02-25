@@ -1,81 +1,83 @@
 
 
-## Post-Migration Audit: Data Gaps and Issues
+## Diagnosis: Why Phorest Shows 801 Appointments but Zura Only Has 586
 
-### Migration Status: Complete with Known Gaps
+### Root Cause: Pagination Not Handled in Appointment Sync
 
-| Domain | Total | Migrated | Status |
-|---|---|---|---|
-| Clients | 3,091 | 2,586 inserted + 481 backfilled | Done |
-| Services | 76 | 8 inserted | Done |
-| Appointments | 585 | 458 inserted | Done |
-| Transactions | 772 | 772 inserted | Done |
-| Daily Sales | 173 | 173 inserted | Done |
+The `sync-phorest-data` edge function fetches appointments from the Phorest API using:
 
----
+```
+/branch/{branchId}/appointment?from_date=...&to_date=...
+```
 
-### Gap 1: Staff Attribution (Expected -- Option B)
+The latest sync log shows: **"Found 20 appointments in branch Drop Dead Hair Studio (North Mesa)"** and **"Found 20 appointments in branch Drop Dead Hair Studio (Val Vista Lakes)"** -- exactly 20 per branch.
 
-- **451 of 458** migrated appointments have `staff_user_id = NULL`
-- **All 772** transactions have `staff_user_id = NULL`
-- **All 173** daily sales have `staff_user_id = NULL`
-- **21 unmapped** Phorest staff IDs vs only **2 mapped**
+The Phorest API returns **paginated results with a default page size of 20**. The sync function never fetches page 2, 3, etc. It takes whatever the first API response returns and stops. Over multiple daily syncs (each fetching only the first 20 per branch), records accumulate -- but each sync window only captures a fraction of the actual appointments.
 
-This was the accepted tradeoff of Option B. To resolve: map the 19 remaining Phorest staff members in `phorest_staff_mapping`, then run a backfill query to populate `staff_user_id` on native records using `phorest_staff_id`.
+This is why we have 586 instead of 801. Each day's sync grabbed the first 20 appointments per branch for the date range, missing any beyond page 1.
 
----
+### Secondary Issue: Multi-Service Appointments
 
-### Gap 2: 197 Appointments with NULL client_id
+Line 424 in the sync function: `service_name: apt.services?.[0]?.name` -- only the first service is stored. If Phorest returns separate appointment objects per service line item (which the report's "801" count suggests), some may share the same `appointmentId` and get deduplicated by the upsert on `phorest_id`. This could also contribute to the count gap.
 
-These appointments have `external_id` (Phorest ID) but their `phorest_client_id` didn't resolve to a native client. Likely caused by the 101 orphaned Phorest clients that weren't migrated (all 101 have email/phone, so they should have matched -- possible edge case in the dedup logic, such as slightly different normalization).
+### Revenue Gap ($88,996 vs $65,055)
 
-**Fix:** Re-examine the 101 orphaned Phorest clients, insert them into native `clients`, then backfill `client_id` on the 197 appointments.
+The ~$24K revenue gap follows directly from the missing ~215 appointments. Those appointments have revenue that was never synced.
 
----
+### Fix Plan
 
-### Gap 3: 101 Orphaned Phorest Clients
+**1. Add pagination to `syncAppointments`** (lines 241-267 in `sync-phorest-data/index.ts`)
 
-101 Phorest clients exist in `phorest_clients` but have no matching record in native `clients` (no `phorest_client_id` link). All 101 have email (86) and/or phone (98). These likely failed the dedup match due to normalization differences or were genuinely new clients that the migration's INSERT batch missed.
+The Phorest API uses `page` and `size` parameters (or `_links.next` for HATEOAS pagination). The fix:
 
-**Fix:** Run a targeted insert for these 101 records into native `clients`.
+```typescript
+// Current (broken):
+const appointmentsData = await phorestRequest(
+  `/branch/${branchId}/appointment?from_date=${dateFrom}&to_date=${dateTo}`,
+  ...
+);
+const appointments = appointmentsData._embedded?.appointments || ...;
 
----
+// Fixed (paginated):
+let page = 0;
+let hasMore = true;
+while (hasMore) {
+  const appointmentsData = await phorestRequest(
+    `/branch/${branchId}/appointment?from_date=${dateFrom}&to_date=${dateTo}&size=100&page=${page}`,
+    ...
+  );
+  const appointments = appointmentsData._embedded?.appointments || ...;
+  // ... add to allAppointments
+  
+  // Check if more pages exist
+  const totalPages = appointmentsData.page?.totalPages || 1;
+  page++;
+  hasMore = page < totalPages;
+}
+```
 
-### Gap 4 (Critical): Frontend Still Reads from phorest_* Tables
+**2. Handle multi-service appointments**
 
-**117 files** across the frontend still query `phorest_appointments`, `phorest_transaction_items`, `phorest_daily_sales_summary`, `phorest_clients`, etc. directly. The migration copied data into native tables, but **no analytics surface, dashboard hook, or UI component has been updated to read from native tables yet**.
+Instead of storing only `services[0]`, if the Phorest API returns multiple services within a single appointment object, each service should either:
+- Be stored as a separate row (with a composite `phorest_id + service_index` key), or
+- Have the service details stored in a related table
 
-This means:
-- The migrated data in native tables is currently **unused by the frontend**
-- Both data sources (phorest_* and native) will drift apart over time if ongoing syncs write to phorest_* while manual operations write to native tables
-- The migration was a prerequisite for switching over, not the switch itself
+This needs investigation of the actual API response structure first. A pragmatic first step: log the `services` array length on the first appointment to determine if this is happening.
 
-This is the largest remaining effort. Switching 117 files is a significant refactor that should be planned carefully -- likely as a phased cutover rather than a big-bang rewrite.
+**3. After deploying the fix, run a full re-sync**
 
----
+Trigger a sync with the full date range (`2026-01-23` to `2026-03-04`) to backfill the missing appointments. The upsert on `phorest_id` ensures existing records are updated, not duplicated.
 
-### Gap 5: 116 Transactions with NULL client_id and NULL client_name
+**4. Verify counts match Phorest**
 
-These are transactions where neither the Phorest client ID resolved to a native client nor was there a `client_name` stored. These are likely walk-in or anonymous transactions -- acceptable as-is.
+After re-sync, compare appointment count and total revenue against the Phorest report to confirm parity.
 
----
+### Technical Details
 
-### Priority Ranking
+**Files Changed:**
+1. `supabase/functions/sync-phorest-data/index.ts` -- Add pagination loop in `syncAppointments` function (lines ~241-267), add logging for multi-service detection
 
-| Priority | Issue | Effort | Impact |
-|---|---|---|---|
-| P0 | Frontend still reads phorest_* tables (Gap 4) | Large (117 files) | Migrated data is unused until this is done |
-| P1 | 101 orphaned clients not migrated (Gap 3) | Small (one query) | 197 appointments missing client attribution |
-| P2 | 19 unmapped staff (Gap 1) | Medium (requires staff identification) | 98.8% of records lack staff attribution |
-| P3 | 116 transactions with no client (Gap 5) | None | Expected for walk-ins |
+**Risk:** Low. The upsert on `phorest_id` makes this idempotent. Existing records will be updated; new records will be inserted.
 
-### Recommendation
-
-Gap 4 is the elephant in the room. The migration moved data into the right tables, but the entire frontend still reads from the old Phorest tables. Before tackling the frontend cutover (which is a large effort), the immediate low-hanging fruit is:
-
-1. Fix the 101 orphaned clients (Gap 3) -- small targeted query
-2. Backfill client_id on the 197 appointments once those clients exist
-3. Then plan the frontend cutover as a separate phase
-
-The staff mapping (Gap 1) depends on you identifying who the 19 Phorest staff members are and whether they should get employee profiles in Zura.
+**Also affects:** The same pagination issue likely exists in the sales/transaction sync functions within this file. Those should be audited and fixed in the same pass.
 
