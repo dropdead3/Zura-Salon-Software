@@ -296,12 +296,31 @@ async function syncAppointments(
       }
     });
 
+    // Pre-fetch soft-deleted appointment IDs to prevent resurrection
+    const { data: deletedAppointments } = await supabase
+      .from("phorest_appointments")
+      .select("phorest_id")
+      .not("deleted_at", "is", null)
+      .gte("appointment_date", dateFrom)
+      .lte("appointment_date", dateTo);
+
+    const deletedPhorestIds = new Set(
+      deletedAppointments?.map((a: any) => a.phorest_id) || []
+    );
+    console.log(`Found ${deletedPhorestIds.size} soft-deleted appointments to protect`);
+
     let synced = 0;
     for (const apt of allAppointments) {
       const stylistUserId = staffMap.get(apt.staffId) || null;
       
       // Try different field names for appointment ID
       const phorestId = apt.appointmentId || apt.id || apt.appointmentid;
+
+      // Skip soft-deleted appointments to preserve local operational decisions
+      if (phorestId && deletedPhorestIds.has(phorestId)) {
+        console.log(`Skipping soft-deleted appointment ${phorestId}`);
+        continue;
+      }
       
       if (!phorestId) {
         console.log(`Skipping appointment with no ID:`, JSON.stringify(apt).substring(0, 200));
