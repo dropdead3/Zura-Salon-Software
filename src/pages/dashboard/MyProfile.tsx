@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,6 +14,8 @@ import { Camera, Loader2, Save, User, Phone, Mail, Instagram, MapPin, AlertCircl
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { useEmployeeProfile, useUpdateEmployeeProfile, useUploadProfilePhoto } from '@/hooks/useEmployeeProfile';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { useOnboardingProgress } from '@/hooks/useOnboardingProgress';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffectiveRoles, useEffectiveUserContext } from '@/hooks/useEffectiveUser';
@@ -38,6 +40,8 @@ const DAYS_OF_WEEK = [
   { key: 'Sat', label: 'Saturday' },
   { key: 'Sun', label: 'Sunday' },
 ];
+
+const ADMIN_LEVEL_ROLES = ['super_admin', 'admin', 'manager', 'admin_assistant', 'bookkeeper', 'operations_assistant', 'receptionist'] as const;
 
 
 // Format phone number as XXX-XXX-XXXX
@@ -87,7 +91,51 @@ export default function MyProfile() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showUnsavedToast, setShowUnsavedToast] = useState(false);
   const { isComplete: isOnboardingComplete } = useOnboardingProgress();
+  const queryClient = useQueryClient();
   
+  // Role-based logic for admin vs stylist
+  const isAdminLevel = roles.some(r => (ADMIN_LEVEL_ROLES as readonly string[]).includes(r));
+  const hasStylistRole = roles.includes('stylist') || roles.includes('stylist_assistant');
+  const isPureStylist = hasStylistRole && !isAdminLevel;
+  const showProfessionalDetails = isPureStylist || (isAdminLevel && hasStylistRole);
+
+  // Mutation to toggle stylist role
+  const toggleStylistRole = useMutation({
+    mutationFn: async (addRole: boolean) => {
+      if (!user?.id) throw new Error('No user');
+      if (addRole) {
+        const { error } = await supabase
+          .from('user_roles')
+          .insert({ user_id: user.id, role: 'stylist' as any });
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('user_roles')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('role', 'stylist' as any);
+        if (error) throw error;
+      }
+    },
+    onSuccess: async (_, addRole) => {
+      // Invalidate role queries and refresh auth context
+      queryClient.invalidateQueries({ queryKey: ['user-roles'] });
+      // Refresh auth roles from context
+      const { refreshRoles } = await import('@/contexts/AuthContext').then(m => {
+        // We need to trigger a re-fetch; the simplest way is to reload roles
+        return { refreshRoles: null };
+      });
+      // Force page reload of roles by invalidating everything
+      queryClient.invalidateQueries({ queryKey: ['effective-user-roles'] });
+      toast.success(addRole ? 'Stylist role added — you can now set up your professional profile.' : 'Stylist role removed.');
+      // Reload to refresh auth context roles
+      window.location.reload();
+    },
+    onError: (error) => {
+      toast.error('Failed to update role: ' + error.message);
+    },
+  });
+
   // When impersonating, the page is read-only
   const isReadOnly = isImpersonating;
 
@@ -940,8 +988,31 @@ export default function MyProfile() {
             </Card>
           )}
 
+          {/* "I Also Perform Services" Toggle - Only for admin-level users */}
+          {isAdminLevel && (
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <Label className="text-sm font-display tracking-wide">I ALSO PERFORM SERVICES</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Enable this if you also work behind the chair. This adds stylist permissions and allows you to set up your professional profile.
+                    </p>
+                  </div>
+                  <Switch
+                    checked={hasStylistRole}
+                    disabled={toggleStylistRole.isPending || isReadOnly}
+                    onCheckedChange={(checked) => {
+                      toggleStylistRole.mutate(checked);
+                    }}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Professional Info - For stylists and stylist assistants */}
-          {(roles.includes('stylist') || roles.includes('stylist_assistant')) && (
+          {showProfessionalDetails && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Professional Details</CardTitle>
@@ -1109,7 +1180,7 @@ export default function MyProfile() {
           )}
 
           {/* Stylist Card Preview - For stylists and stylist assistants */}
-          {(roles.includes('stylist') || roles.includes('stylist_assistant')) && (
+          {showProfessionalDetails && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
@@ -1143,7 +1214,7 @@ export default function MyProfile() {
           )}
 
           {/* Homepage Visibility - Only for stylists with complete profiles */}
-          {roles.includes('stylist') && (
+          {showProfessionalDetails && roles.includes('stylist') && (
             <Card className={cn(
               "border-2",
               profile?.homepage_visible 
