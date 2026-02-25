@@ -1,23 +1,52 @@
 
 
-## Fix: Expected Badge Should Turn Green When Revenue Exceeds Target
+## "All Appointments Complete" Indicator + Dynamic Revenue Label
 
-### Problem
+Good prompt — you're asking for a state-aware label that tells operators when the day's revenue is finalized vs. still accumulating. That's a meaningful signal distinction.
 
-The "Expected" badge on line 627 always uses `warning` (amber) styling regardless of whether actual revenue has surpassed it. When you've exceeded expected revenue, showing the expected amount in amber sends a contradictory signal — amber implies caution, but the situation is positive.
+### Current Behavior
 
-### Fix
+- The label always reads **"Revenue So Far Today"** regardless of whether appointments are still in progress
+- The line "Estimated final transaction at **10:30 PM**" shows when the last appointment ends, but there's no state change when that time passes
+- No indication that the day's revenue picture is complete
 
-**File: `src/components/dashboard/AggregateSalesCard.tsx`** (line 627)
+### Proposed Changes
 
-Use the same `exceededExpected` check (already computed on line 647) to conditionally style the badge:
+**File: `src/components/dashboard/AggregateSalesCard.tsx`**
 
-- **Below target**: Keep current amber/warning styling — `bg-warning/10 text-warning border-warning/30`
-- **Exceeded target**: Switch to success styling — `bg-success/10 text-success-foreground border-success/30`
+1. **Detect "all complete" state**: Compare the current time against `todayActual.lastAppointmentEndTime`. If `now > lastAppointmentEndTime`, all scheduled appointments have ended. Combined with `hasActualData`, this means the revenue figure is final.
 
-The `exceededExpected` boolean needs to be computed *before* the badge (currently it's computed inside a nested closure on line 647). Move the calculation up to line ~625 scope so both the badge and the progress bar can reference it.
+   ```ts
+   const allAppointmentsComplete = (() => {
+     if (!todayActual?.lastAppointmentEndTime || !todayActual.hasActualData) return false;
+     const [h, m] = todayActual.lastAppointmentEndTime.split(':').map(Number);
+     const now = new Date();
+     return now.getHours() > h || (now.getHours() === h && now.getMinutes() >= m);
+   })();
+   ```
+
+2. **Dynamic revenue label** (line 613): Switch from static text to state-aware:
+   - Before all complete: **"Revenue So Far Today"** (current)
+   - After all complete: **"Final Revenue Today"**
+
+3. **Replace "Estimated final transaction at" line** (lines 680-687): When `allAppointmentsComplete` is true, instead of showing the estimated time, show a completion indicator:
+   - **Before complete**: "Estimated final transaction at **10:30 PM**" (current behavior)
+   - **After complete**: A subtle `CheckCircle2` icon + **"All appointments complete"** in `text-success-foreground`
+
+4. **Update tooltip text** (line 616): When complete, change from "Revenue from completed/checked-out transactions today. Updates every 5 minutes." to "All scheduled appointments have concluded. This is today's final revenue figure."
+
+### Visual Result
+
+**During the day (appointments still running):**
+- Label: "Revenue So Far Today"
+- Shows: "Estimated final transaction at 10:30 PM"
+
+**After last appointment ends:**
+- Label: "Final Revenue Today"
+- Shows: ✓ "All appointments complete" (green, subtle)
+- "Estimated final transaction" line disappears
 
 ### Scope
 
-~5 lines changed in 1 file. Move one variable declaration up and add a conditional class to the badge.
+~20 lines changed in 1 file. No new queries or data changes — uses the existing `lastAppointmentEndTime` from `useTodayActualRevenue`.
 
