@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { cn } from '@/lib/utils';
@@ -13,12 +12,13 @@ import {
 } from '@/hooks/useAppointmentTransactionBreakdown';
 import { ShoppingBag, Scissors, Receipt, CreditCard, Undo2, Copy, DollarSign } from 'lucide-react';
 import { toast } from 'sonner';
+import { format } from 'date-fns';
 
 interface TransactionBreakdownPanelProps {
   breakdown: TransactionBreakdown | undefined;
   isLoading: boolean;
   organizationId: string | null;
-  clientId: string | null; // phorest_clients.id (UUID)
+  clientId: string | null;
   appointmentDate: string;
 }
 
@@ -40,23 +40,25 @@ const REFUND_STATUS_BADGE: Record<string, { bg: string; text: string; label: str
 function ItemRow({ item }: { item: TransactionLineItem }) {
   const hasDiscount = item.discount > 0;
   return (
-    <div className="flex items-center justify-between gap-2 py-1.5 text-sm">
+    <div className="flex items-center justify-between gap-2 py-1.5 px-1 border-b border-border/40 last:border-0">
       <div className="min-w-0 flex-1">
-        <span className="text-foreground">{item.itemName}</span>
+        <span className="text-sm text-foreground">{item.itemName}</span>
         {item.quantity > 1 && (
-          <span className="text-muted-foreground ml-1">×{item.quantity}</span>
+          <span className="text-muted-foreground text-xs ml-1">×{item.quantity}</span>
         )}
         {item.stylistName && (
-          <span className="text-muted-foreground text-xs ml-2">({item.stylistName})</span>
+          <span className="ml-2 inline-flex items-center rounded-full bg-muted/50 px-1.5 py-0.5 text-[10px] text-muted-foreground">
+            {item.stylistName}
+          </span>
         )}
       </div>
       <div className="text-right shrink-0 flex items-center gap-2">
         {hasDiscount && (
-          <span className="text-muted-foreground line-through text-xs">
+          <span className="text-muted-foreground/70 line-through text-xs">
             <BlurredAmount>${(item.unitPrice * item.quantity).toFixed(2)}</BlurredAmount>
           </span>
         )}
-        <span className="text-foreground">
+        <span className="text-sm text-foreground">
           <BlurredAmount>${item.totalAmount.toFixed(2)}</BlurredAmount>
         </span>
       </div>
@@ -70,16 +72,18 @@ function CategorySection({ categoryKey, items }: { categoryKey: string; items: T
   const Icon = config.icon;
 
   return (
-    <div className="space-y-1">
-      <div className="flex items-center gap-2 mb-1">
-        <Icon className="w-3.5 h-3.5 text-muted-foreground" />
-        <span className={cn(tokens.label.default, 'text-xs uppercase tracking-wide text-muted-foreground')}>
+    <div className="rounded-lg bg-muted/30 px-3 py-2.5">
+      <div className="flex items-center gap-2 mb-1.5">
+        <Icon className="w-3.5 h-3.5 text-primary" />
+        <span className="font-display text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
           {config.label}
         </span>
       </div>
-      {items.map((item) => (
-        <ItemRow key={item.id} item={item} />
-      ))}
+      <div>
+        {items.map((item) => (
+          <ItemRow key={item.id} item={item} />
+        ))}
+      </div>
     </div>
   );
 }
@@ -106,10 +110,10 @@ export function TransactionBreakdownPanel({
   if (!breakdown?.hasTransaction) {
     return (
       <div className={tokens.empty.container}>
-        <Receipt className={tokens.empty.icon} />
+        <Receipt className={cn(tokens.empty.icon, 'text-primary')} />
         <h3 className={tokens.empty.heading}>No Transaction Data</h3>
         <p className={tokens.empty.description}>
-          No POS transaction was found for this appointment.
+          Transaction data will appear after POS sync
         </p>
       </div>
     );
@@ -145,7 +149,7 @@ export function TransactionBreakdownPanel({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Line items by category */}
       <CategorySection categoryKey="services" items={breakdown.services} />
       <CategorySection categoryKey="products" items={breakdown.products} />
@@ -153,12 +157,10 @@ export function TransactionBreakdownPanel({
       <CategorySection categoryKey="deposits" items={breakdown.deposits} />
       <CategorySection categoryKey="other" items={breakdown.other} />
 
-      <Separator />
-
       {/* Summary totals */}
-      <div className="space-y-1.5 text-sm">
+      <div className="rounded-lg bg-muted/20 px-3 py-3 space-y-0">
         {summary.discountTotal > 0 && (
-          <div className="flex justify-between">
+          <div className="flex justify-between py-1 text-sm">
             <span className="text-muted-foreground">Discounts</span>
             <span className="text-amber-600">
               <BlurredAmount>-${summary.discountTotal.toFixed(2)}</BlurredAmount>
@@ -166,79 +168,97 @@ export function TransactionBreakdownPanel({
           </div>
         )}
         {summary.taxTotal > 0 && (
-          <div className="flex justify-between">
+          <div className="flex justify-between py-1 text-sm">
             <span className="text-muted-foreground">Tax</span>
-            <span><BlurredAmount>${summary.taxTotal.toFixed(2)}</BlurredAmount></span>
+            <span className="text-foreground"><BlurredAmount>${summary.taxTotal.toFixed(2)}</BlurredAmount></span>
           </div>
         )}
         {summary.tip > 0 && (
-          <div className="flex justify-between">
+          <div className="flex justify-between py-1 text-sm">
             <span className="text-muted-foreground">Tip</span>
-            <span><BlurredAmount>${summary.tip.toFixed(2)}</BlurredAmount></span>
+            <span className="text-foreground"><BlurredAmount>${summary.tip.toFixed(2)}</BlurredAmount></span>
           </div>
         )}
-        <Separator />
-        <div className="flex justify-between font-medium">
-          <span>Total Paid</span>
-          <span><BlurredAmount>${summary.grandTotal.toFixed(2)}</BlurredAmount></span>
+
+        {/* Total line */}
+        <div className="border-t-2 border-border mt-1.5 pt-2 flex justify-between items-center">
+          <span className="font-display text-base tracking-[0.08em] uppercase text-foreground">Total Paid</span>
+          <span className="font-display text-base tracking-[0.08em] text-foreground">
+            <BlurredAmount>${summary.grandTotal.toFixed(2)}</BlurredAmount>
+          </span>
         </div>
+
+        {/* Payment method pill */}
         {summary.paymentMethods.length > 0 && (
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <CreditCard className="w-3.5 h-3.5" />
-            Paid via: {summary.paymentMethods.join(', ')}
+          <div className="pt-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-muted/50 px-2.5 py-1 text-xs text-muted-foreground">
+              <CreditCard className="w-3 h-3" />
+              {summary.paymentMethods.join(', ')}
+            </span>
           </div>
         )}
       </div>
 
       {/* Existing refunds */}
       {refunds.length > 0 && (
-        <>
-          <Separator />
-          <div className="space-y-2">
-            <span className={cn(tokens.label.default, 'text-xs uppercase tracking-wide text-muted-foreground flex items-center gap-1.5')}>
-              <Undo2 className="w-3.5 h-3.5" />
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 px-1">
+            <Undo2 className="w-3.5 h-3.5 text-primary" />
+            <span className="font-display text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
               Refund History
             </span>
-            {refunds.map((r) => {
-              const badge = REFUND_STATUS_BADGE[r.status] || REFUND_STATUS_BADGE.pending;
-              return (
-                <div key={r.id} className="flex items-center justify-between text-sm py-1 rounded-lg">
-                  <div className="min-w-0">
-                    <span className="text-foreground">{r.originalItemName || 'Refund'}</span>
-                    <Badge variant="outline" className={cn('ml-2 text-[10px]', badge.bg, badge.text)}>
+          </div>
+          {refunds.map((r) => {
+            const badge = REFUND_STATUS_BADGE[r.status] || REFUND_STATUS_BADGE.pending;
+            return (
+              <div key={r.id} className="rounded-lg bg-muted/20 px-3 py-2">
+                <div className="flex items-center justify-between">
+                  <div className="min-w-0 flex items-center gap-2">
+                    <span className="text-sm text-foreground">{r.originalItemName || 'Refund'}</span>
+                    <Badge variant="outline" className={cn('text-[10px] px-2 py-0.5', badge.bg, badge.text)}>
                       {badge.label}
                     </Badge>
                   </div>
-                  <span className="text-destructive shrink-0">
+                  <span className="text-sm text-destructive shrink-0">
                     <BlurredAmount>-${r.refundAmount.toFixed(2)}</BlurredAmount>
                   </span>
                 </div>
-              );
-            })}
-          </div>
-        </>
+                {(r.reason || r.createdAt) && (
+                  <div className="flex items-center gap-2 mt-1">
+                    {r.reason && (
+                      <span className="text-xs text-muted-foreground">{r.reason}</span>
+                    )}
+                    {r.createdAt && (
+                      <span className="text-xs text-muted-foreground/60">
+                        {format(new Date(r.createdAt), 'MMM d, yyyy')}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
       )}
 
-      <Separator />
-
       {/* Actions */}
-      <div className="flex gap-2">
+      <div className="flex gap-2 pt-1">
         <Button
           variant="outline"
-          size="sm"
-          className="flex-1 gap-1.5"
+          size="default"
+          className="flex-[2] gap-1.5 rounded-xl h-10"
           onClick={() => setRefundOpen(true)}
         >
-          <Undo2 className="w-3.5 h-3.5" />
+          <Undo2 className="w-4 h-4" />
           Issue Refund
         </Button>
         <Button
           variant="ghost"
-          size="sm"
-          className="gap-1.5"
+          size="default"
+          className="flex-1 gap-1.5 rounded-xl h-10"
           onClick={handleCopyReceipt}
         >
-          <Copy className="w-3.5 h-3.5" />
+          <Copy className="w-4 h-4" />
           Copy Receipt
         </Button>
       </div>
