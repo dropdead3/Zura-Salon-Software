@@ -1,36 +1,36 @@
 
 
-## Remove Existing Test Accounts
+## Fix Highlighted Services UX Clarity
 
-Six test accounts currently exist in the system. The `generate-test-accounts` edge function and `isTestAccount` utility will be preserved so you can regenerate test accounts in the future.
+Your prompt identified a real UX confusion -- good catch. The "Highlighted Services" section shows your 3 specialties (Extensions, Blonding, Balayage) as clickable badges, but they look visually active even though none are actually selected as highlighted (the counter says "0/3 highlighted"). This makes it seem like they're already chosen with no way to remove them.
 
-### Accounts to Remove
+### Root Cause
 
-| Name | Email | Role | User ID |
-|------|-------|------|---------|
-| Admin Assistant Test Account | admin-assistant-test@test.com | admin_assistant | e3d18a69... |
-| Manager Test Account | manager-test@test.com | manager | 2a0e6cb6... |
-| Operations Assistant Test Account | operations-assistant-test@test.com | operations_assistant | edadc352... |
-| Receptionist Test Account | receptionist-test@test.com | receptionist | 2a6a80e3... |
-| Stylist Assistant Test Account | stylist-assistant-test@test.com | stylist_assistant | 81331092... |
-| Stylist Test Account | stylist-test@test.com | stylist | 58014e44... |
+The badges use Shadcn's `outline` variant for unselected state, which in dark mode has enough visual presence to look "selected." There's no visual affordance (like a checkmark or dimmed state) to distinguish "available to select" from "selected."
 
-### What Will Be Executed
+### What Changes
 
-1. **Delete from `user_roles`** -- remove role assignments for all 6 user IDs
-2. **Delete from `employee_profiles`** -- remove profile records (cascading from auth should handle related data, but we clean profiles explicitly)
-3. **Delete auth users** -- requires an edge function call (`supabase.auth.admin.deleteUser`) since auth users cannot be deleted via SQL
+**File: `src/pages/dashboard/MyProfile.tsx`** (Highlighted Services badge rendering, ~lines 1032-1059)
+
+1. **Unselected badges get a dimmed, ghost-like style** -- use `variant="outline"` with additional `opacity-60 border-dashed` classes so they clearly look like "tap to add" options rather than active selections
+2. **Selected badges get a checkmark icon** -- add a `Check` icon (from lucide-react) alongside the Sparkles icon to reinforce that the badge is actively highlighted
+3. **Add helper text** -- change the description to include "Tap a specialty below to highlight it on your website card" to make the interaction model obvious
+4. **Fix the duplicate copy** in the Extensions note -- currently reads "...to attract our highest-ticket services. and gold accent color to attract our highest-ticket services." (duplicated text)
+
+### Visual Result
+
+**Before (confusing):**
+- 3 solid-looking badges, counter says "0/3 highlighted" -- contradiction
+
+**After (clear):**
+- 3 dimmed, dashed-border badges labeled as available options
+- Tapping one makes it solid with a checkmark + Sparkles icon
+- Counter updates to "1/3 highlighted"
+- Clear instructional text guides the interaction
 
 ### Technical Details
 
-- A new edge function `delete-test-accounts` will be created (or the existing `generate-test-accounts` function will be extended with a `DELETE` action) to handle auth user deletion via the Admin API
-- The function will: find all profiles matching the test account pattern, delete their `user_roles` entries, delete their `employee_profiles` entries, and delete the `auth.users` records
-- Super admin authorization check will be enforced, same as the generate function
-- The `generate-test-accounts` edge function and `isTestAccount` utility remain intact for future use
-
-### What Stays Unchanged
-
-- `supabase/functions/generate-test-accounts/index.ts` -- kept for future use
-- `src/utils/testAccounts.ts` -- kept for test account filtering logic
-- Test account filtering in `useTeamDirectory` -- kept to handle future test accounts
+- No database changes needed
+- Only modifying badge className logic and adding a `Check` icon import
+- The `toggleHighlightedService` function already handles selection/deselection correctly -- this is purely a visual fix
 
