@@ -1,8 +1,8 @@
 
 
-## Update Mallori Schwab's Role: Stylist → Receptionist
+## Update Julia Gross's Role: Stylist → Receptionist
 
-Mallori Schwab (`45cffbfe-bbb1-4ea9-b17b-745fcf0d75c7`) currently has the `stylist` role. She needs to be changed to `receptionist` (front desk).
+**Julia Gross** (`a3c7baf9-e7b1-4755-ada0-22d2e567f923`) currently has the `stylist` role. She needs to be changed to `receptionist` (front desk), same as Mallori Schwab.
 
 ### What Will Be Executed
 
@@ -13,16 +13,16 @@ Two data updates (no schema changes):
 
 ```sql
 DELETE FROM user_roles 
-WHERE user_id = '45cffbfe-bbb1-4ea9-b17b-745fcf0d75c7' AND role = 'stylist';
+WHERE user_id = 'a3c7baf9-e7b1-4755-ada0-22d2e567f923' AND role = 'stylist';
 
 INSERT INTO user_roles (user_id, role) 
-VALUES ('45cffbfe-bbb1-4ea9-b17b-745fcf0d75c7', 'receptionist')
+VALUES ('a3c7baf9-e7b1-4755-ada0-22d2e567f923', 'receptionist')
 ON CONFLICT (user_id, role) DO NOTHING;
 ```
 
-This changes her dashboard access from stylist surfaces (personal performance, commission) to front desk surfaces (check-in, scheduling, client lookup).
+This changes her dashboard access from stylist surfaces to front desk surfaces (check-in, scheduling, client lookup) -- identical to Mallori's correction.
 
 ### Prompt Feedback
 
-Good, concise correction. When updating roles for multiple staff members, you can batch them in a single message -- for example: "Mallori Schwab is front desk, Julia Gross is an assistant, Kitty Vargas is inactive." That way we handle all corrections in one pass.
+Good catch, and nicely concise. For future reference, you can batch these corrections in a single message -- for example: "Mallori Schwab and Julia Gross are both front desk, not stylists." That way we handle both in one pass instead of two separate rounds.
 
