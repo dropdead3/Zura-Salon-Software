@@ -287,6 +287,16 @@ export default function Schedule() {
     return filtered;
   }, [allAppointments, selectedLocation, selectedStaffIds, calendarFilters]);
 
+  // Keep selectedAppointment in sync with latest query data
+  useEffect(() => {
+    if (selectedAppointment && appointments.length > 0) {
+      const fresh = appointments.find(a => a.id === selectedAppointment.id);
+      if (fresh && fresh.status !== selectedAppointment.status) {
+        setSelectedAppointment(fresh);
+      }
+    }
+  }, [appointments]);
+
   // Calculate today's appointment count for the selected location
   const todayAppointmentCount = useMemo(() => {
     const today = format(new Date(), 'yyyy-MM-dd');
