@@ -581,7 +581,8 @@ serve(async (req) => {
 
       const staffUserId = pt.phorest_staff_id ? staffMap.get(pt.phorest_staff_id) || null : null;
       const clientId = pt.phorest_client_id ? clientMapping.get(pt.phorest_client_id) || null : null;
-      const orgId = pt.location_id ? locationToOrg.get(pt.location_id) : defaultOrgId;
+      const nativeLocationId = pt.location_id ? branchToLocation.get(pt.location_id) || null : null;
+      const orgId = (nativeLocationId ? locationToOrg.get(nativeLocationId) : defaultOrgId) || defaultOrgId;
 
       txToInsert.push({
         organization_id: orgId,
@@ -590,7 +591,7 @@ serve(async (req) => {
         staff_name: pt.stylist_name || null,
         client_id: clientId === "dry-run-placeholder" ? null : clientId,
         client_name: pt.client_name || null,
-        location_id: pt.location_id || null,
+        location_id: nativeLocationId || pt.location_id || null,
         branch_name: pt.branch_name || null,
         transaction_date: pt.transaction_date,
         item_type: pt.item_type,
@@ -665,12 +666,13 @@ serve(async (req) => {
       }
 
       const staffUserId = ps.phorest_staff_id ? staffMap.get(ps.phorest_staff_id) || null : null;
-      const orgId = ps.location_id ? locationToOrg.get(ps.location_id) : defaultOrgId;
+      const nativeLocationId = ps.location_id ? branchToLocation.get(ps.location_id) || null : null;
+      const orgId = (nativeLocationId ? locationToOrg.get(nativeLocationId) : defaultOrgId) || defaultOrgId;
 
       salesToInsert.push({
         organization_id: orgId,
         staff_user_id: staffUserId,
-        location_id: ps.location_id || null,
+        location_id: nativeLocationId || ps.location_id || null,
         branch_name: ps.branch_name || null,
         summary_date: ps.summary_date,
         total_services: ps.total_services || 0,
