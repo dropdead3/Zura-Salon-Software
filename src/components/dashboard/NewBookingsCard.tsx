@@ -99,7 +99,7 @@ export function NewBookingsCard({ filterContext }: NewBookingsCardProps) {
                 "w-2 h-2 rounded-full shrink-0",
                 pipeline.status === 'healthy' && 'bg-emerald-500',
                 pipeline.status === 'slowing' && 'bg-amber-500',
-                pipeline.status === 'critical' && 'bg-red-500',
+                pipeline.status === 'critical' && 'bg-destructive',
               )} />
               <span className="text-sm font-medium">Pipeline: {pipeline.label}</span>
               <MetricInfoTooltip description="Compares confirmed appointments in the next 14 days against the trailing 14 days. Healthy ≥ 90%, Slowing ≥ 70%, Critical < 70%." />
@@ -166,7 +166,7 @@ export function NewBookingsCard({ filterContext }: NewBookingsCardProps) {
                 <span className="text-sm text-muted-foreground">
                   {data.rebookedAtCheckoutInRange} of {data.returningServicedInRange} rebooked
                   {(data.returningServicedInRange! - data.rebookedAtCheckoutInRange!) > 0 && (
-                    <span className="text-red-400"> · {data.returningServicedInRange! - data.rebookedAtCheckoutInRange!} did not</span>
+                    <span className="text-destructive"> · {data.returningServicedInRange! - data.rebookedAtCheckoutInRange!} did not</span>
                   )}
                 </span>
                 <span className="font-display tabular-nums text-lg">{data.rebookRate}%</span>
