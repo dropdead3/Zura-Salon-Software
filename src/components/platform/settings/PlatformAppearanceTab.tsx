@@ -211,15 +211,13 @@ export function PlatformAppearanceTab() {
     <div className="space-y-6">
       {/* Save Actions Header */}
       {hasChanges && (
-        <div className={cn(
-          'flex items-center justify-between p-4 rounded-lg border',
-          isDark 
-            ? 'bg-amber-500/10 border-amber-500/30' 
-            : 'bg-amber-50 border-amber-200'
-        )}>
-          <span className={cn('text-sm font-medium', isDark ? 'text-amber-300' : 'text-amber-700')}>
-            You have unsaved changes
-          </span>
+        <div className="flex items-center justify-between p-4 bg-card/80 backdrop-blur-xl rounded-full border border-border/40 shadow-[0_16px_40px_-18px_hsl(var(--foreground)/0.25)]">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+            <span className="text-sm font-medium text-foreground">
+              You have unsaved changes
+            </span>
+          </div>
           <div className="flex items-center gap-2">
             <PlatformButton
               variant="ghost"

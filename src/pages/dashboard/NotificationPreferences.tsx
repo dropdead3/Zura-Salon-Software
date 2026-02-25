@@ -411,24 +411,27 @@ export default function NotificationPreferences() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 20 }}
-              className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-background/95 backdrop-blur border-t shadow-lg lg:left-64"
+              className="fixed bottom-0 left-0 right-0 z-50 p-4 md:pl-[280px]"
             >
-              <div className="max-w-2xl mx-auto flex items-center justify-between gap-4">
-                <p className="text-sm text-muted-foreground">
-                  You have unsaved changes
-                </p>
-                <div className="flex gap-2">
-                  <Button variant="outline" onClick={handleDiscard}>
-                    Discard
-                  </Button>
-                  <Button onClick={handleSave} disabled={updatePreferences.isPending}>
-                    {updatePreferences.isPending ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <Save className="w-4 h-4 mr-2" />
-                    )}
-                    Save Preferences
-                  </Button>
+              <div className="max-w-2xl mx-auto">
+                <div className="bg-card/80 backdrop-blur-xl rounded-full shadow-[0_16px_40px_-18px_hsl(var(--foreground)/0.25)] border border-border/40 px-5 py-3 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                    <span className="text-sm font-medium text-foreground">You have unsaved changes</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="ghost" size="sm" className="rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/60" onClick={handleDiscard}>
+                      Discard
+                    </Button>
+                    <Button size="sm" className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90" onClick={handleSave} disabled={updatePreferences.isPending}>
+                      {updatePreferences.isPending ? (
+                        <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                      ) : (
+                        <Save className="w-4 h-4 mr-1" />
+                      )}
+                      Save Preferences
+                    </Button>
+                  </div>
                 </div>
               </div>
             </motion.div>

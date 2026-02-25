@@ -1390,17 +1390,17 @@ export default function MyProfile() {
               className="fixed bottom-0 left-0 right-0 z-50 p-4 md:pl-[280px]"
             >
               <div className="max-w-3xl mx-auto">
-                <div className="bg-primary text-primary-foreground rounded-xl shadow-lg px-4 py-3 flex items-center justify-between gap-4">
+                <div className="bg-card/80 backdrop-blur-xl rounded-full shadow-[0_16px_40px_-18px_hsl(var(--foreground)/0.25)] border border-border/40 px-5 py-3 flex items-center justify-between gap-4">
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-primary-foreground/80 animate-pulse" />
-                    <span className="text-sm font-medium">You have unsaved changes</span>
+                    <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                    <span className="text-sm font-medium text-foreground">You have unsaved changes</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Button
                       type="button"
                       size="sm"
                       variant="ghost"
-                      className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10"
+                      className="rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/60"
                       onClick={() => {
                         setFormData(initialFormData);
                         setHasUnsavedChanges(false);
@@ -1414,8 +1414,7 @@ export default function MyProfile() {
                     <Button
                       type="button"
                       size="sm"
-                      variant="secondary"
-                      className="bg-primary-foreground text-primary hover:bg-primary-foreground/90"
+                      className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
                       disabled={updateProfile.isPending || upsertSchedule.isPending}
                       onClick={(e) => handleSubmit(e as any)}
                     >
