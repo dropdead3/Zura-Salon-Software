@@ -1,65 +1,61 @@
 
 
-## Fix: Tip Drill-Down Should Show Visit-Level Detail, Not Single Line Item
+## Enrich Tip Drill-Down: Full Visit Detail with Service Breakdown
 
-### The Problem
+Your prompt is well-targeted — asking for verifiable detail per visit is exactly the right instinct for a data-integrity surface. One suggestion for future prompts: specifying the exact column order or layout you envision (e.g. "table vs stacked rows") helps eliminate ambiguity on the first pass.
 
-Phorest duplicates the tip amount across every service line item in a single client visit. For the stylist with `phorest_staff_id: isBQ0Ma-NprbGsIR52Elvw`, the raw data shows:
+### What Changes
 
-- Partial Balayage — $185 revenue — $228 tip
-- Root Smudge (Add on) — $50 revenue — $228 tip  
-- Haircut (Add On) — $50 revenue — $228 tip
+**1. Expand `RawTipAppointment` interface + query** (`src/hooks/useTipsDrilldown.ts`)
 
-All three are the same visit (same client, same date, same tip amount). The current deduplication in `StylistAppointmentList` keeps only the first record it encounters and discards the others. So you see "Haircut (Add On) — $228" which looks wrong.
+Add `start_time` and `end_time` to both the Supabase `.select()` call (line 66) and the `RawTipAppointment` interface (line 30). These columns exist on `phorest_appointments`.
 
-The aggregate totals ($228 total tips for this stylist) are correct — the bug is only in the expanded appointment sub-list.
+**2. Refactor `StylistAppointmentList`** (`src/components/dashboard/sales/TipsDrilldownPanel.tsx`, lines 360-419)
 
-### The Fix
+Replace the current single-line-per-visit layout with a structured visit card:
 
-**File: `src/components/dashboard/sales/TipsDrilldownPanel.tsx` — `StylistAppointmentList` component (lines 364-378)**
+- **Visit header row**: Date, time (start_time formatted as `h:mm a`), location name, visit total price, visit tip amount
+- **Service line items** (indented below header): Each service name with its individual `total_price`
+- Location name resolved from the `locations` data already fetched via `useActiveLocations` in the parent — pass it down as a prop (or use a small lookup map)
 
-Instead of deduplicating to a single row, group appointments by visit key (`staff_id|client_id|date|tip_amount`) and concatenate the service names. Each visit becomes one row showing all services performed.
+Layout per visit (stacked, not a table — fits the existing compact drill-down style):
 
-```typescript
-// Before (broken): keeps one arbitrary line item
-const deduped = filtered.filter(a => {
-  const k = `${a.phorest_staff_id}|${a.phorest_client_id}|${a.appointment_date}|${tip}`;
-  if (seen.has(k)) return false;
-  seen.add(k);
-  return true;
-});
-
-// After (fixed): group by visit, merge service names
-const visitMap = new Map<string, { services: string[]; tip: number; date: string }>();
-for (const a of filtered) {
-  const tip = a.tip_amount ?? 0;
-  const k = `${a.phorest_staff_id}|${a.phorest_client_id}|${a.appointment_date}|${tip}`;
-  const existing = visitMap.get(k);
-  if (existing) {
-    if (a.service_name && !existing.services.includes(a.service_name)) {
-      existing.services.push(a.service_name);
-    }
-  } else {
-    visitMap.set(k, {
-      services: a.service_name ? [a.service_name] : [],
-      tip,
-      date: a.appointment_date,
-    });
-  }
-}
-return Array.from(visitMap.values())
-  .sort((a, b) => b.date.localeCompare(a.date));
+```text
+┌─────────────────────────────────────────────────────┐
+│ Feb 23  10:30 AM  •  Location Name                  │
+│                            Total: $285   Tip: $228  │
+│   ├ Partial Balayage ........................ $185   │
+│   ├ Root Smudge (Add on) ................... $50    │
+│   └ Haircut (Add On) ....................... $50    │
+└─────────────────────────────────────────────────────┘
 ```
 
-The rendered row then shows: **Feb 23 — Partial Balayage, Root Smudge (Add on), Haircut (Add On) — $228.00**
+**3. Visit grouping logic update**
 
-This also fixes the appointment count shown in the row — "3 appts" is the raw line-item count from Phorest, which is technically correct (3 services were rendered). The drill-down now clarifies that those 3 services were part of fewer actual visits.
+The visit map currently stores `{ services: string[]; tip; date }`. This changes to:
+
+```typescript
+interface VisitGroup {
+  services: { name: string; price: number }[];
+  tip: number;
+  date: string;
+  startTime: string | null;
+  locationId: string | null;
+  totalPrice: number;
+}
+```
+
+Each raw appointment adds its `service_name` + `total_price` as a line item, and the visit-level `totalPrice` is the sum of all line-item prices. The tip is still deduplicated (taken once per visit key).
 
 ### Files Changed
 
 | File | Change |
 |---|---|
-| `src/components/dashboard/sales/TipsDrilldownPanel.tsx` | Refactor `StylistAppointmentList` to group by visit and concatenate service names instead of discarding duplicates |
+| `src/hooks/useTipsDrilldown.ts` | Add `start_time`, `end_time` to interface + select query |
+| `src/components/dashboard/sales/TipsDrilldownPanel.tsx` | Refactor `StylistAppointmentList` to show structured visit cards with individual service lines, prices, totals, time, and location |
 
-One component refactored, ~15 lines changed. No new queries, no schema changes.
+### Enhancement Suggestions
+
+- Consider adding the client name to each visit row for even faster cross-referencing with Phorest (would require adding `phorest_clients` join or `client_first_name`/`client_last_name` fields).
+- A "copy visit ID" button on each row would speed up lookup in external systems.
 
