@@ -98,7 +98,7 @@ function SortableTestimonialCard({ testimonial, onToggleVisibility, onEdit, onDe
       )}
     >
       <CardContent className="p-4">
-        <div className="flex items-start gap-4">
+        <div className="flex items-start gap-3">
           <div 
             className="p-1 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground"
             {...attributes}
@@ -133,53 +133,55 @@ function SortableTestimonialCard({ testimonial, onToggleVisibility, onEdit, onDe
             <p className="text-sm text-muted-foreground line-clamp-2">
               {testimonial.text}
             </p>
-          </div>
 
-          <div className="flex items-center gap-2 shrink-0">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onToggleVisibility(testimonial.id, !testimonial.is_visible)}
-            >
-              {testimonial.is_visible ? (
-                <Eye className="w-4 h-4" />
-              ) : (
-                <EyeOff className="w-4 h-4" />
-              )}
-            </Button>
-            
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onEdit(testimonial)}
-            >
-              <Pencil className="w-4 h-4" />
-            </Button>
-            
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Delete Testimonial?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This will permanently remove the testimonial from "{testimonial.author}". This action cannot be undone.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={() => onDelete(testimonial.id)}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  >
-                    Delete
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            <div className="flex justify-end gap-1 pt-2 border-t mt-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => onToggleVisibility(testimonial.id, !testimonial.is_visible)}
+              >
+                {testimonial.is_visible ? (
+                  <Eye className="w-4 h-4" />
+                ) : (
+                  <EyeOff className="w-4 h-4" />
+                )}
+              </Button>
+              
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => onEdit(testimonial)}
+              >
+                <Pencil className="w-4 h-4" />
+              </Button>
+              
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Testimonial?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will permanently remove the testimonial from "{testimonial.author}". This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => onDelete(testimonial.id)}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
           </div>
         </div>
       </CardContent>

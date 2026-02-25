@@ -218,7 +218,7 @@ export function AnnouncementBarContent() {
           <div className="space-y-4">
             <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Message Content</h3>
             
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 grid-cols-1">
               <div className="space-y-2">
                 <Label htmlFor="message_prefix">Message Prefix</Label>
                 <Input
@@ -263,7 +263,7 @@ export function AnnouncementBarContent() {
           <div className="space-y-4">
             <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Call-to-Action Button</h3>
             
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 grid-cols-1">
               <div className="space-y-2">
                 <Label htmlFor="cta_text">Button Text</Label>
                 <Input

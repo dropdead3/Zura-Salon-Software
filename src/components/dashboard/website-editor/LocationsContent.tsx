@@ -80,7 +80,7 @@ export function LocationsContent() {
           </p>
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Button 
             variant="outline" 
             size={tokens.button.card}
@@ -148,7 +148,7 @@ export function LocationsContent() {
                 !location.show_on_website && "opacity-70 bg-muted/30"
               )}
             >
-              <div className="flex items-start gap-4 p-4">
+              <div className="flex items-start gap-3 p-4">
                 {/* Reorder handle */}
                 <div className="flex flex-col items-center opacity-40 group-hover:opacity-100 transition-opacity pt-1">
                   <button
@@ -170,9 +170,9 @@ export function LocationsContent() {
                   </button>
                 </div>
 
-                {/* Location info */}
+                {/* Location info + toggle stacked */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <h3 className="font-display font-medium">{location.name}</h3>
                     {location.show_on_website ? (
                       <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20">
@@ -200,11 +200,8 @@ export function LocationsContent() {
                       {formatHoursForDisplay(location.hours_json) || location.hours || 'No hours set'}
                     </p>
                   </div>
-                </div>
-
-                {/* Website visibility toggle */}
-                <div className="flex flex-col items-end gap-2">
-                  <div className="flex items-center gap-2">
+                  {/* Toggle moved below info */}
+                  <div className="flex items-center gap-2 pt-2 mt-2 border-t">
                     <span className="text-xs text-muted-foreground">
                       Show on website
                     </span>
