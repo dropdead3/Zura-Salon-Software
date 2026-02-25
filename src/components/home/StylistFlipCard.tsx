@@ -72,7 +72,7 @@ export function StylistFlipCard({ stylist, index, selectedLocation, isPreview, p
             
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-500" />
             
-            <div className="absolute top-4 left-4 right-4 flex flex-wrap gap-2">
+            <div className="absolute top-4 left-4 right-4 flex flex-wrap gap-2 max-w-[calc(100%-2rem)]">
               {/* Display highlighted_services if available, otherwise fall back to specialties */}
               {(() => {
                 // Safely handle null/undefined specialties
@@ -111,7 +111,7 @@ export function StylistFlipCard({ stylist, index, selectedLocation, isPreview, p
               })()}
             </div>
             
-            <div className="absolute bottom-0 left-0 right-0 p-5 text-white transform translate-y-6 transition-transform duration-500 ease-out group-hover:translate-y-0">
+            <div className="absolute bottom-0 left-0 right-0 px-5 pb-5 pt-6 text-white transform translate-y-3 transition-transform duration-500 ease-out group-hover:translate-y-0">
               <div className="flex items-center gap-1.5 mb-1">
                 <p className="text-xs tracking-[0.2em] text-white/70 uppercase">{stylist.level}</p>
                 <TooltipProvider delayDuration={100}>
@@ -140,7 +140,7 @@ export function StylistFlipCard({ stylist, index, selectedLocation, isPreview, p
               <h3 className="text-xl font-display mb-1">{formatDisplayName(stylist.name, stylist.displayName)}</h3>
               
               {/* Social Link - Show preferred handle only, maintain consistent height */}
-              <div className="min-h-[24px] mb-4">
+              <div className="min-h-[24px] mb-3">
                 {(() => {
                   const preferred = stylist.preferred_social_handle || 'instagram';
                   const showInstagram = preferred === 'instagram' && stylist.instagram;
@@ -207,7 +207,7 @@ export function StylistFlipCard({ stylist, index, selectedLocation, isPreview, p
 
               {/* Tap hint - visible on hover */}
               {stylist.bio && (
-                <div className="mt-4 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 delay-150 translate-y-2 group-hover:translate-y-0">
+                <div className="mt-3 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 delay-150 translate-y-1 group-hover:translate-y-0">
                   <p className="text-xs text-white/80 tracking-wide font-aeonik animate-pulse">
                     Tap to learn more
                   </p>
