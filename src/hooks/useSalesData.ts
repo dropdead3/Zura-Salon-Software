@@ -400,11 +400,10 @@ export function useSalesByStylist(dateFrom?: string, dateTo?: string) {
       // Fetch appointments with batch fetching + status filter
       const data = await fetchAllBatched<{
         phorest_staff_id: string | null; total_price: number | null; service_name: string | null;
-        phorest_staff_name: string | null;
       }>((from, to) => {
         let q = supabase
           .from('phorest_appointments')
-          .select('phorest_staff_id, total_price, service_name, phorest_staff_name')
+          .select('phorest_staff_id, total_price, service_name')
           .not('phorest_staff_id', 'is', null)
           .not('total_price', 'is', null)
           .not('status', 'in', '("cancelled","no_show")')
@@ -425,7 +424,7 @@ export function useSalesByStylist(dateFrom?: string, dateTo?: string) {
         const userId = mapping ? mapping.userId : `phorest:${staffId}`;
         const displayName = mapping
           ? mapping.name
-          : (apt.phorest_staff_name || staffNameLookup[staffId] || `Staff ${staffId.slice(0, 4)}`);
+          : (staffNameLookup[staffId] || `Staff ${staffId.slice(0, 4)}`);
         const photo = mapping?.photo;
 
         if (!byUser[userId]) {
