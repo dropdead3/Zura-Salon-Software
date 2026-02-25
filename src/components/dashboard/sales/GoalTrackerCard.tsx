@@ -145,17 +145,24 @@ export function GoalTrackerCard() {
 
                 {/* Stats */}
                 <div className="flex-1 space-y-3">
-                  {/* Pace badge */}
-                  <div className={cn(
-                    'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium',
-                    orgMetrics.paceStatus === 'ahead' && 'bg-chart-2/10 text-chart-2',
-                    orgMetrics.paceStatus === 'on-track' && 'bg-primary/10 text-primary',
-                    orgMetrics.paceStatus === 'behind' && 'bg-destructive/10 text-destructive',
-                  )}>
-                    {orgMetrics.paceStatus === 'ahead' && <TrendingUp className="w-3 h-3" />}
-                    {orgMetrics.paceStatus === 'on-track' && <Target className="w-3 h-3" />}
-                    {orgMetrics.paceStatus === 'behind' && <TrendingDown className="w-3 h-3" />}
-                    {orgMetrics.paceStatus === 'ahead' ? 'Ahead of Pace' : orgMetrics.paceStatus === 'on-track' ? 'On Track' : 'Behind Pace'}
+                  {/* Pace badge + required daily rate */}
+                  <div className="space-y-1">
+                    <div className={cn(
+                      'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium',
+                      orgMetrics.paceStatus === 'ahead' && 'bg-chart-2/10 text-chart-2',
+                      orgMetrics.paceStatus === 'on-track' && 'bg-primary/10 text-primary',
+                      orgMetrics.paceStatus === 'behind' && 'bg-destructive/10 text-destructive',
+                    )}>
+                      {orgMetrics.paceStatus === 'ahead' && <TrendingUp className="w-3 h-3" />}
+                      {orgMetrics.paceStatus === 'on-track' && <Target className="w-3 h-3" />}
+                      {orgMetrics.paceStatus === 'behind' && <TrendingDown className="w-3 h-3" />}
+                      {orgMetrics.paceStatus === 'ahead' ? 'Ahead of Pace' : orgMetrics.paceStatus === 'on-track' ? 'On Track' : 'Behind Pace'}
+                    </div>
+                    {orgMetrics.daysRemaining > 0 && orgMetrics.target > orgMetrics.revenue && (
+                      <p className="text-[10px] text-muted-foreground pl-0.5">
+                        Need <BlurredAmount>{formatCurrencyWhole(Math.ceil((orgMetrics.target - orgMetrics.revenue) / orgMetrics.daysRemaining))}</BlurredAmount>/day to hit goal
+                      </p>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">
