@@ -28,10 +28,10 @@ export function ClientHealthSummaryCard() {
   }
 
   const metrics = [
-    { key: 'needs-rebooking' as const, label: 'Need Rebooking', icon: CalendarX, color: 'text-amber-600 dark:text-amber-400' },
-    { key: 'at-risk' as const, label: 'At-Risk', icon: AlertTriangle, color: 'text-orange-600 dark:text-orange-400' },
-    { key: 'win-back' as const, label: 'Win-Back', icon: UserX, color: 'text-red-600 dark:text-red-400' },
-    { key: 'high-value-quiet' as const, label: 'High-Value Quiet', icon: TrendingDown, color: 'text-purple-600 dark:text-purple-400' },
+    { key: 'needs-rebooking' as const, label: 'Need Rebooking', icon: CalendarX, color: 'text-warning-foreground' },
+    { key: 'at-risk' as const, label: 'At-Risk', icon: AlertTriangle, color: 'text-destructive' },
+    { key: 'win-back' as const, label: 'Win-Back', icon: UserX, color: 'text-destructive' },
+    { key: 'high-value-quiet' as const, label: 'High-Value Quiet', icon: TrendingDown, color: 'text-muted-foreground' },
   ];
 
   return (

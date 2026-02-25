@@ -118,10 +118,10 @@ export function DailyBriefCard({ filterContext, locationId }: DailyBriefCardProp
           </div>
           <div className="p-3 rounded-lg border border-border/50 bg-muted/30">
             <div className="flex items-center gap-2 mb-1">
-              <XCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
+              <XCircle className="w-4 h-4 text-destructive" />
               <span className="text-xs text-muted-foreground">No-Shows</span>
             </div>
-            <p className={cn('font-medium text-lg tabular-nums', noShow > 0 && 'text-red-600 dark:text-red-400')}>
+            <p className={cn('font-medium text-lg tabular-nums', noShow > 0 && 'text-destructive')}>
               {noShow}
             </p>
             {total > 0 && (
@@ -130,7 +130,7 @@ export function DailyBriefCard({ filterContext, locationId }: DailyBriefCardProp
           </div>
           <div className="p-3 rounded-lg border border-border/50 bg-muted/30">
             <div className="flex items-center gap-2 mb-1">
-              <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
+              <CheckCircle className="w-4 h-4 text-success-foreground" />
               <span className="text-xs text-muted-foreground">Completion</span>
             </div>
             <p className="font-medium text-lg tabular-nums">

@@ -100,7 +100,7 @@ export function ProductTable({ products, isLoading, onEdit }: ProductTableProps)
                         autoFocus
                       />
                       <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => handleSaveSku(product.id)}>
-                        <Check className="h-4 w-4 text-green-600" />
+                        <Check className="h-4 w-4 text-success-foreground" />
                       </Button>
                       <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditingSku(null)}>
                         <X className="h-4 w-4" />

@@ -168,9 +168,9 @@ export function ClientInsightsCard({
             <p className="font-display text-xl text-amber-700 dark:text-amber-400">{clientData.vipCount}</p>
             <p className="text-xs text-amber-600 dark:text-amber-500">VIP Clients</p>
           </div>
-          <div className="text-center p-3 bg-red-50 dark:bg-red-950/30 rounded-lg">
-            <p className="font-display text-xl text-red-700 dark:text-red-400">{clientData.atRiskClients.length}</p>
-            <p className="text-xs text-red-600 dark:text-red-500">At Risk</p>
+          <div className="text-center p-3 bg-destructive/10 rounded-lg">
+            <p className="font-display text-xl text-destructive">{clientData.atRiskClients.length}</p>
+            <p className="text-xs text-destructive">At Risk</p>
           </div>
         </div>
 
@@ -204,18 +204,18 @@ export function ClientInsightsCard({
 
         {/* At-Risk Alert */}
         {clientData.atRiskClients.length > 0 && (
-          <div className="p-3 bg-red-50 dark:bg-red-950/30 rounded-lg border border-red-200 dark:border-red-900">
+          <div className="p-3 bg-destructive/10 rounded-lg border border-destructive/20">
             <div className="flex items-center gap-2 mb-2">
-              <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400" />
-              <p className="text-sm font-medium text-red-700 dark:text-red-400">
+              <AlertTriangle className="w-4 h-4 text-destructive" />
+              <p className="text-sm font-medium text-destructive">
                 Clients Need Attention
               </p>
             </div>
             <div className="space-y-1">
               {clientData.atRiskClients.map(client => (
                 <div key={client.id} className="flex items-center justify-between text-xs">
-                  <span className="text-red-700 dark:text-red-400">{client.name}</span>
-                  <span className="text-red-600 dark:text-red-500">
+                  <span className="text-destructive">{client.name}</span>
+                  <span className="text-destructive/80">
                     Last visit: {client.last_visit ? formatDate(new Date(client.last_visit), 'MMM d') : 'Unknown'}
                   </span>
                 </div>

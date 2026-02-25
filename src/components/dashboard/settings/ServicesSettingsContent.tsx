@@ -95,7 +95,7 @@ function computeMargin(price: number, cost: number | null): number | null {
 
 function MarginBadge({ margin }: { margin: number | null }) {
   if (margin == null) return null;
-  const color = margin >= 50 ? 'text-emerald-600 bg-emerald-500/10' : margin >= 30 ? 'text-amber-600 bg-amber-500/10' : 'text-red-600 bg-red-500/10';
+  const color = margin >= 50 ? 'text-success-foreground bg-success/10' : margin >= 30 ? 'text-warning-foreground bg-warning/10' : 'text-destructive bg-destructive/10';
   return <Badge variant="outline" className={cn('text-[10px] font-medium border-0 px-1.5 py-0', color)}>{Math.round(margin)}%</Badge>;
 }
 

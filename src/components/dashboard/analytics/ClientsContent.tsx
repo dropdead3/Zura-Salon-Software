@@ -89,11 +89,11 @@ export function ClientsContent({ retention, isLoading, dateRange, locationName }
           </Card>
           <Card className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
-                <UserCheck className="w-5 h-5 text-green-600" />
+              <div className="p-2 rounded-lg bg-success/10">
+                <UserCheck className="w-5 h-5 text-success-foreground" />
               </div>
               <div>
-                <p className="font-display text-2xl text-green-600">{formatNumber(retention.returningClients)}</p>
+                <p className="font-display text-2xl text-success-foreground">{formatNumber(retention.returningClients)}</p>
                 <p className="text-xs text-muted-foreground">Returning</p>
               </div>
             </div>
@@ -270,26 +270,26 @@ export function ClientsContent({ retention, isLoading, dateRange, locationName }
                 <p className="font-display text-2xl">{retention.totalClients}</p>
                 <p className="text-xs text-muted-foreground">Total Clients</p>
               </div>
-              <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                <p className="font-display text-2xl text-green-700 dark:text-green-400">
+              <div className="text-center p-4 bg-success/10 rounded-lg">
+                <p className="font-display text-2xl text-success-foreground">
                   {retention.returningClients}
                 </p>
-                <p className="text-xs text-green-600">Returning</p>
+                <p className="text-xs text-success-foreground">Returning</p>
               </div>
-              <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                <p className="font-display text-2xl text-blue-700 dark:text-blue-400">
+              <div className="text-center p-4 bg-primary/10 rounded-lg">
+                <p className="font-display text-2xl text-primary">
                   {retention.newClients}
                 </p>
-                <p className="text-xs text-blue-600">New Clients</p>
+                <p className="text-xs text-primary">New Clients</p>
               </div>
-              <div className="text-center p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
+              <div className="text-center p-4 bg-destructive/10 rounded-lg">
                 <div className="flex items-center justify-center gap-1">
-                  <AlertTriangle className="w-4 h-4 text-red-600" />
-                  <p className="font-display text-2xl text-red-700 dark:text-red-400">
+                  <AlertTriangle className="w-4 h-4 text-destructive" />
+                  <p className="font-display text-2xl text-destructive">
                     {retention.atRiskClients}
                   </p>
                 </div>
-                <p className="text-xs text-red-600">At-Risk</p>
+                <p className="text-xs text-destructive">At-Risk</p>
               </div>
             </div>
           </CardContent>
@@ -307,7 +307,7 @@ export function ClientsContent({ retention, isLoading, dateRange, locationName }
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-red-500" />
+              <AlertTriangle className="w-5 h-5 text-destructive" />
               At-Risk Clients
               {retention.atRiskClientsList.length > 0 && (
                 <Badge variant="destructive" className="ml-2">

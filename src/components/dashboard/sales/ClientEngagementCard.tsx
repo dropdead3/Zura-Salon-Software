@@ -248,7 +248,7 @@ export function ClientEngagementCard({ dateFrom, dateTo, locationId, filterConte
             {percentChange !== null && (
               <div className={cn(
                 'flex items-center gap-1 mt-1 text-xs font-medium',
-                percentChange > 0 ? 'text-green-500' : percentChange < 0 ? 'text-red-500' : 'text-muted-foreground'
+                percentChange > 0 ? 'text-success-foreground' : percentChange < 0 ? 'text-destructive' : 'text-muted-foreground'
               )}>
                 {percentChange > 0 ? (
                   <TrendingUp className="w-3.5 h-3.5" />

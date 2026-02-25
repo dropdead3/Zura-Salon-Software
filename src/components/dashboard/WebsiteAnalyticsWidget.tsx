@@ -31,7 +31,7 @@ function TrendBadge({ value, inverted = false }: TrendBadgeProps) {
   }
 
   return (
-    <span className={`inline-flex items-center gap-1 text-xs ${isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-destructive'}`}>
+    <span className={`inline-flex items-center gap-1 text-xs ${isPositive ? 'text-success-foreground' : 'text-destructive'}`}>
       {isPositive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
       <span>{value > 0 ? '+' : ''}{value.toFixed(1)}%</span>
     </span>

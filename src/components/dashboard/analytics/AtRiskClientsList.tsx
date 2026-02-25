@@ -62,7 +62,7 @@ export function AtRiskClientsList({ clients }: AtRiskClientsListProps) {
     return (
       <div className="text-center py-8">
         <div className="text-4xl mb-2">🎉</div>
-        <p className="text-lg font-medium text-green-600">No at-risk clients!</p>
+        <p className="text-lg font-medium text-success-foreground">No at-risk clients!</p>
         <p className="text-sm text-muted-foreground">All your returning clients have visited recently.</p>
       </div>
     );
@@ -128,7 +128,7 @@ export function AtRiskClientsList({ clients }: AtRiskClientsListProps) {
                   title={client.email}
                 >
                   {copiedId === `${client.id}-email` ? (
-                    <Check className="h-4 w-4 text-green-600" />
+                    <Check className="h-4 w-4 text-success-foreground" />
                   ) : (
                     <Mail className="h-4 w-4 text-muted-foreground" />
                   )}
@@ -143,7 +143,7 @@ export function AtRiskClientsList({ clients }: AtRiskClientsListProps) {
                   title={client.phone}
                 >
                   {copiedId === `${client.id}-phone` ? (
-                    <Check className="h-4 w-4 text-green-600" />
+                    <Check className="h-4 w-4 text-success-foreground" />
                   ) : (
                     <Phone className="h-4 w-4 text-muted-foreground" />
                   )}

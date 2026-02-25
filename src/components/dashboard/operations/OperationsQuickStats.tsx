@@ -27,32 +27,32 @@ export function OperationsQuickStats({ locationId, hideRevenue, filterContext }:
       label: 'Waiting',
       value: queueData?.stats.waitingCount ?? 0,
       icon: Users,
-      bgColor: 'bg-amber-500/10',
-      iconColor: 'text-amber-600',
+      bgColor: 'bg-warning/10',
+      iconColor: 'text-warning-foreground',
       description: 'Confirmed, ready to check in',
     },
     {
       label: 'In Service',
       value: queueData?.stats.inServiceCount ?? 0,
       icon: Clock,
-      bgColor: 'bg-blue-500/10',
-      iconColor: 'text-blue-600',
+      bgColor: 'bg-primary/10',
+      iconColor: 'text-primary',
       description: 'Currently checked in',
     },
     {
       label: 'Completed',
       value: queueData?.stats.completedCount ?? 0,
       icon: CheckCircle2,
-      bgColor: 'bg-green-500/10',
-      iconColor: 'text-green-600',
+      bgColor: 'bg-success/10',
+      iconColor: 'text-success-foreground',
       description: 'Paid and finished',
     },
     {
       label: 'No-Shows',
       value: queueData?.stats.noShowCount ?? 0,
       icon: AlertTriangle,
-      bgColor: 'bg-red-500/10',
-      iconColor: 'text-red-600',
+      bgColor: 'bg-destructive/10',
+      iconColor: 'text-destructive',
       description: 'Missed appointments',
     },
   ];
@@ -103,16 +103,16 @@ export function OperationsQuickStats({ locationId, hideRevenue, filterContext }:
         
         {/* Revenue Card - Hidden for Front Desk */}
         {!hideRevenue && (
-          <Card className="p-4 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 border-green-200 dark:border-green-800">
+          <Card className="p-4 bg-gradient-to-br from-success/10 to-success/5 border-success/30">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-green-600/10 flex items-center justify-center rounded">
-                <DollarSign className="w-5 h-5 text-green-600" />
+              <div className="w-10 h-10 bg-success/10 flex items-center justify-center rounded">
+                <DollarSign className="w-5 h-5 text-success-foreground" />
               </div>
               <div>
-                <p className="text-2xl font-display text-green-700 dark:text-green-400">
+                <p className="text-2xl font-display text-success-foreground">
                   {formatCurrencyWhole(queueData?.stats.totalRevenue ?? 0)}
                 </p>
-                <p className="text-xs text-green-600/80 dark:text-green-500 font-sans">Today's Revenue</p>
+                <p className="text-xs text-success-foreground/80 font-sans">Today's Revenue</p>
               </div>
             </div>
           </Card>
