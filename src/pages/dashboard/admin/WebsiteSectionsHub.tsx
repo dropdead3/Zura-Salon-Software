@@ -723,11 +723,11 @@ export default function WebsiteSectionsHub() {
   }, [previewUrl]);
 
   return (
-    <DashboardLayout hideFooter>
+    <DashboardLayout hideFooter hideTopBar>
       <div className="h-[calc(100vh-8rem)] flex">
         {/* Fixed-width Sidebar */}
         {!isMobile && showSidebar && (
-          <div className="w-[380px] flex-shrink-0 border-r overflow-auto">
+          <div className="w-[300px] flex-shrink-0 border-r overflow-auto">
             <WebsiteEditorSidebar
               activeTab={activeTab}
               onTabChange={handleTabChange}
@@ -789,94 +789,62 @@ export default function WebsiteSectionsHub() {
           {/* Main Editor Panel */}
           <ResizablePanel defaultSize={isMobile ? 100 : 55} minSize={30}>
             <div className="h-full flex flex-col overflow-hidden">
-              {/* Header */}
-              <div className="flex-shrink-0 px-6 py-4 border-b bg-background">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-3">
-                      {!isMobile && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setShowSidebar(prev => !prev)}
-                          className="h-8 w-8"
-                        >
-                          {showSidebar ? (
-                            <PanelLeftClose className="h-4 w-4" />
-                          ) : (
-                            <PanelLeftOpen className="h-4 w-4" />
-                          )}
-                        </Button>
-                      )}
-                      <div className="p-2 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5">
-                        <LayoutGrid className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <h1 className="text-xl font-display font-medium">Website Editor</h1>
-                        <p className="text-xs text-muted-foreground">
-                          {selectedPage && selectedPageId !== 'home' ? `${selectedPage.title} › ` : ''}
-                          {getTabLabel()}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {/* Undo/Redo */}
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          disabled={!canUndo}
-                          onClick={handleUndo}
-                        >
-                          <Undo2 className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Undo (⌘Z)</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          disabled={!canRedo}
-                          onClick={handleRedo}
-                        >
-                          <Redo2 className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Redo (⌘⇧Z)</TooltipContent>
-                    </Tooltip>
-
-                    <Button 
-                      variant="outline" 
-                      size={tokens.button.card}
-                      onClick={() => window.open(openSiteUrl, '_blank')}
+              {/* Compact Toolbar */}
+              <div className="flex-shrink-0 px-3 py-2 border-b bg-background flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  {!isMobile && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setShowSidebar(prev => !prev)}
+                      className="h-8 w-8 flex-shrink-0"
                     >
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      Open Site
+                      {showSidebar ? (
+                        <PanelLeftClose className="h-4 w-4" />
+                      ) : (
+                        <PanelLeftOpen className="h-4 w-4" />
+                      )}
                     </Button>
-                  </div>
+                  )}
+                  <span className="text-sm font-medium truncate">
+                    {selectedPage && selectedPageId !== 'home' ? `${selectedPage.title} › ` : ''}
+                    {getTabLabel()}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" disabled={!canUndo} onClick={handleUndo}>
+                        <Undo2 className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Undo (⌘Z)</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" disabled={!canRedo} onClick={handleRedo}>
+                        <Redo2 className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Redo (⌘⇧Z)</TooltipContent>
+                  </Tooltip>
+                  <Button variant="outline" size="sm" className="h-8 px-3" onClick={() => window.open(openSiteUrl, '_blank')}>
+                    <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                    Open
+                  </Button>
+                  {isDirty && (
+                    <span className="w-2 h-2 rounded-full bg-amber-500 flex-shrink-0" title="Unsaved changes" />
+                  )}
+                  <Button size="sm" className="h-8 px-3" onClick={triggerSave} disabled={!isDirty || isSaving}>
+                    {isSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <Save className="h-3.5 w-3.5 mr-1.5" />}
+                    Save
+                  </Button>
                 </div>
               </div>
 
               {/* Editor Content */}
-              <div className="flex-1 overflow-auto p-6 pb-20">
+              <div className="flex-1 overflow-auto p-6">
                 {renderEditor()}
-              </div>
-
-              {/* Fixed Bottom Save Bar */}
-              <div className="flex-shrink-0 px-6 py-3 border-t bg-background/80 backdrop-blur flex items-center justify-end gap-3">
-                {isDirty && (
-                  <span className="text-sm text-amber-600 dark:text-amber-400">Unsaved changes</span>
-                )}
-                <Button onClick={triggerSave} disabled={!isDirty || isSaving} size={tokens.button.card}>
-                  {isSaving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-                  Save & Publish Changes
-                </Button>
               </div>
             </div>
           </ResizablePanel>
