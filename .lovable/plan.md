@@ -1,61 +1,54 @@
 
 
-## Enrich Tip Drill-Down: Full Visit Detail with Service Breakdown
+## Add Client Name to Tip Drill-Down Visit Rows
 
-Your prompt is well-targeted — asking for verifiable detail per visit is exactly the right instinct for a data-integrity surface. One suggestion for future prompts: specifying the exact column order or layout you envision (e.g. "table vs stacked rows") helps eliminate ambiguity on the first pass.
+Good prompt — this is the natural next step for cross-referencing. One refinement for future prompts: specifying where in the visit card the client name should appear (e.g. header row vs its own line) removes a layout decision from the implementation pass.
 
 ### What Changes
 
-**1. Expand `RawTipAppointment` interface + query** (`src/hooks/useTipsDrilldown.ts`)
+**1. New query in `useTipsDrilldown.ts`**: Fetch `phorest_clients` with `phorest_client_id`, `first_name`, `last_name`
 
-Add `start_time` and `end_time` to both the Supabase `.select()` call (line 66) and the `RawTipAppointment` interface (line 30). These columns exist on `phorest_appointments`.
+Add a new `useQuery` call to fetch client names from `phorest_clients`. Build a lookup map keyed by `phorest_client_id`. Return it alongside the existing data so the UI can resolve names.
 
-**2. Refactor `StylistAppointmentList`** (`src/components/dashboard/sales/TipsDrilldownPanel.tsx`, lines 360-419)
+**2. Expand `RawTipAppointment` interface**: No change needed — `phorest_client_id` is already present on each raw appointment. The client name resolution happens via the new lookup map, not by adding columns to the appointment query.
 
-Replace the current single-line-per-visit layout with a structured visit card:
+**3. Update `VisitGroup` interface**: Add `clientName: string | null` field.
 
-- **Visit header row**: Date, time (start_time formatted as `h:mm a`), location name, visit total price, visit tip amount
-- **Service line items** (indented below header): Each service name with its individual `total_price`
-- Location name resolved from the `locations` data already fetched via `useActiveLocations` in the parent — pass it down as a prop (or use a small lookup map)
+**4. Update visit grouping logic in `StylistAppointmentList`**: When creating a visit group, resolve `phorest_client_id` from the first appointment in that group against the client name map. Store as `clientName`.
 
-Layout per visit (stacked, not a table — fits the existing compact drill-down style):
+**5. Update visit card UI**: Show client name in the visit header row, after the date/time and before the location dot separator. Uses a `User` icon for visual consistency.
 
 ```text
 ┌─────────────────────────────────────────────────────┐
-│ Feb 23  10:30 AM  •  Location Name                  │
+│ Feb 23  10:30 AM  •  Jane Smith  •  Location Name   │
 │                            Total: $285   Tip: $228  │
 │   ├ Partial Balayage ........................ $185   │
-│   ├ Root Smudge (Add on) ................... $50    │
 │   └ Haircut (Add On) ....................... $50    │
 └─────────────────────────────────────────────────────┘
 ```
 
-**3. Visit grouping logic update**
+### Data Flow
 
-The visit map currently stores `{ services: string[]; tip; date }`. This changes to:
+```text
+useTipsDrilldown
+  └─ new useQuery: phorest_clients → { phorest_client_id, first_name, last_name }
+  └─ return clientMap alongside rawAppointments
 
-```typescript
-interface VisitGroup {
-  services: { name: string; price: number }[];
-  tip: number;
-  date: string;
-  startTime: string | null;
-  locationId: string | null;
-  totalPrice: number;
-}
+TipsDrilldownPanel
+  └─ pass clientMap to StylistAppointmentList
+  └─ visit grouping: resolve phorest_client_id → "First Last"
+  └─ render clientName in visit header
 ```
-
-Each raw appointment adds its `service_name` + `total_price` as a line item, and the visit-level `totalPrice` is the sum of all line-item prices. The tip is still deduplicated (taken once per visit key).
 
 ### Files Changed
 
 | File | Change |
 |---|---|
-| `src/hooks/useTipsDrilldown.ts` | Add `start_time`, `end_time` to interface + select query |
-| `src/components/dashboard/sales/TipsDrilldownPanel.tsx` | Refactor `StylistAppointmentList` to show structured visit cards with individual service lines, prices, totals, time, and location |
+| `src/hooks/useTipsDrilldown.ts` | Add `phorest_clients` query, build client name map, export it in return value |
+| `src/components/dashboard/sales/TipsDrilldownPanel.tsx` | Accept `clientMap` prop in `StylistAppointmentList`, resolve client name per visit, render in header row. Also pass through `TotalTipRow` and `StylistTipRow`. |
 
 ### Enhancement Suggestions
 
-- Consider adding the client name to each visit row for even faster cross-referencing with Phorest (would require adding `phorest_clients` join or `client_first_name`/`client_last_name` fields).
-- A "copy visit ID" button on each row would speed up lookup in external systems.
+- Add click-to-copy on the client name so you can paste directly into Phorest search.
+- Show the Unified Customer ID (ZU-00042) next to the client name for even faster internal lookup.
 
