@@ -151,6 +151,7 @@ export default function MyProfile() {
     emergency_phone: '',
     bio: '',
     work_days: [] as string[],
+    is_onsite_staff: true,
     // Location-specific schedules: { locationId: ['Mon', 'Tue', ...] }
     location_schedules: {} as Record<string, string[]>,
   });
@@ -195,6 +196,7 @@ export default function MyProfile() {
         emergency_phone: profile.emergency_phone || '',
         bio: (profile as any).bio || '',
         work_days: profile.work_days || [],
+        is_onsite_staff: (profile as any).is_onsite_staff ?? true,
         location_schedules: schedules,
       };
       setFormData(newFormData);
@@ -231,7 +233,8 @@ export default function MyProfile() {
       { key: 'phone', label: 'Phone', filled: !!formData.phone },
       { key: 'instagram', label: 'Instagram', filled: !!formData.instagram },
       { key: 'location_ids', label: 'Location', filled: formData.location_ids.length > 0 },
-      { key: 'work_days', label: 'Work Days', filled: formData.work_days.length > 0 },
+      // Work days only required for on-site staff
+      ...(formData.is_onsite_staff ? [{ key: 'work_days', label: 'Work Days', filled: formData.work_days.length > 0 }] : []),
       { key: 'emergency_contact', label: 'Emergency Contact', filled: !!formData.emergency_contact },
       { key: 'emergency_phone', label: 'Emergency Phone', filled: !!formData.emergency_phone },
     ];
@@ -331,6 +334,7 @@ export default function MyProfile() {
       emergency_contact: formData.emergency_contact,
       emergency_phone: formData.emergency_phone,
       bio: formData.bio,
+      is_onsite_staff: formData.is_onsite_staff,
     };
     
     updateProfile.mutate(profileUpdate as any, {
@@ -869,8 +873,29 @@ export default function MyProfile() {
             </CardContent>
           </Card>
 
+          {/* On-Site Staff Toggle - only for admin-level users */}
+          {isAdminLevel && formData.location_ids.length > 0 && (
+            <Card>
+              <CardContent className="p-5">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <Label className="font-display text-base tracking-wide">I WORK ON-SITE</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Enable this if you work at a location during operating hours. This lets you set your preferred work schedule.
+                    </p>
+                  </div>
+                  <Switch
+                    checked={formData.is_onsite_staff}
+                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_onsite_staff: checked }))}
+                    disabled={isReadOnly}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Work Days Selection - Per Location */}
-          {formData.location_ids.length > 0 && (
+          {formData.location_ids.length > 0 && (!isAdminLevel || formData.is_onsite_staff) && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">

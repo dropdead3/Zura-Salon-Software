@@ -22,6 +22,28 @@ export function WorkScheduleWidgetCompact() {
   const allWorkDays = allSchedules?.flatMap(s => s.work_days || []) || [];
   const uniqueWorkDays = [...new Set(allWorkDays)];
 
+  // Show "not on-site" state for remote admin staff
+  if (profile?.is_onsite_staff === false) {
+    return (
+      <Card className={cn(tokens.kpi.tile, 'justify-between min-h-[160px] p-5')}>
+        <div className="flex items-center gap-3">
+          <div className={tokens.card.iconBox}>
+            <Calendar className={tokens.card.icon} />
+          </div>
+          <span className={cn(tokens.kpi.label, 'flex-1')}>MY WORK DAYS</span>
+        </div>
+        <div className="mt-4 flex-1">
+          <p className="text-sm text-muted-foreground">
+            Not working on-site
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Update in your profile settings if this has changed.
+          </p>
+        </div>
+      </Card>
+    );
+  }
+
   if (userLocations.length === 0) {
     return (
       <Card className={cn(tokens.kpi.tile, 'justify-between min-h-[160px] p-5')}>
