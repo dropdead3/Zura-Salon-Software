@@ -68,7 +68,7 @@ import {
 
 // Site Content items (data managers - not part of homepage ordering)
 const SITE_CONTENT_ITEMS = [
-  { tab: 'banner', label: 'Announcement Bar', description: 'Site-wide banner', icon: Megaphone },
+  { tab: 'banner', label: 'Announcement Bar', description: 'Site-wide top banner', icon: Megaphone },
   { tab: 'services', label: 'Services', description: 'Manage service catalog', icon: Scissors },
   { tab: 'testimonials', label: 'Testimonials', description: 'Manage client reviews', icon: MessageSquareQuote },
   { tab: 'gallery', label: 'Gallery', description: 'Manage portfolio images', icon: Images },
