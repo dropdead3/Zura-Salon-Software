@@ -28,7 +28,8 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { motion, AnimatePresence } from 'framer-motion';
-import { StylistCardPreview } from '@/components/dashboard/StylistCardPreview';
+import { StylistFlipCard } from '@/components/home/StylistFlipCard';
+import type { Stylist, Location } from '@/data/stylists';
 import { LandingPageSettings } from '@/components/dashboard/settings/LandingPageSettings';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ImageCropModal } from '@/components/dashboard/ImageCropModal';
@@ -1299,25 +1300,34 @@ export default function MyProfile() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex justify-center">
-                <StylistCardPreview
-                  name={formData.full_name}
-                  displayName={formData.display_name}
-                  level={formData.stylist_level}
-                  photoUrl={profile?.photo_url || undefined}
-                  photoFocalX={(profile as any)?.photo_focal_x ?? 50}
-                  photoFocalY={(profile as any)?.photo_focal_y ?? 50}
-                  instagram={formData.instagram}
-                  tiktok={formData.tiktok}
-                  preferredSocialHandle={formData.preferred_social_handle}
-                  highlightedServices={formData.highlighted_services}
-                  specialties={formData.specialties}
-                  bio={formData.bio}
-                  isBooking={profile?.is_booking !== false}
-                  locations={formData.location_ids.map(id => {
-                    const loc = locations.find(l => l.id === id);
-                    return loc ? { id: loc.id, name: loc.name } : null;
-                  }).filter(Boolean) as { id: string; name: string }[]}
-                />
+                <div className="w-64">
+                  <StylistFlipCard
+                    stylist={{
+                      id: profile?.user_id || 'preview',
+                      name: formData.full_name || 'Your Name',
+                      displayName: formData.display_name || undefined,
+                      level: formData.stylist_level || 'LEVEL 1 STYLIST',
+                      imageUrl: profile?.photo_url || '',
+                      instagram: formData.instagram || '',
+                      tiktok: formData.tiktok || undefined,
+                      preferred_social_handle: formData.preferred_social_handle,
+                      specialties: formData.specialties,
+                      highlighted_services: formData.highlighted_services,
+                      bio: formData.bio || undefined,
+                      isBooking: profile?.is_booking !== false,
+                      locations: formData.location_ids.map(id => {
+                        const loc = locations.find(l => l.id === id);
+                        const staticLoc = staticLocations.find(sl => sl.id === id || sl.name === loc?.name);
+                        return (staticLoc?.id || id) as Location;
+                      }).filter(Boolean),
+                      card_focal_x: (profile as any)?.card_focal_x ?? 50,
+                      card_focal_y: (profile as any)?.card_focal_y ?? 50,
+                    }}
+                    index={0}
+                    selectedLocation="all"
+                    isPreview
+                  />
+                </div>
               </CardContent>
             </Card>
           )}

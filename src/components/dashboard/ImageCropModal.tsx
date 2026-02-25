@@ -9,7 +9,8 @@ import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { ZoomIn, ZoomOut, RotateCw, Image as ImageIcon, Info, AlertTriangle, RefreshCw, ArrowLeft, ArrowRight, Eye, Save, Crosshair, User } from 'lucide-react';
 import { DRILLDOWN_OVERLAY_CLASS } from '@/components/dashboard/drilldownDialogStyles';
-import { StylistCardPreview } from '@/components/dashboard/StylistCardPreview';
+import { StylistFlipCard } from '@/components/home/StylistFlipCard';
+import type { Location } from '@/data/stylists';
 
 export interface CardPreviewProps {
   name: string;
@@ -554,22 +555,28 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
                 {cardPreviewProps && (
                   <div className="flex flex-col items-center gap-2">
                     <span className="text-[10px] text-muted-foreground font-display tracking-wide uppercase">Card</span>
-                    <div className="transform scale-[0.55] origin-top">
-                      <StylistCardPreview
-                        name={cardPreviewProps.name}
-                        displayName={cardPreviewProps.displayName}
-                        level={cardPreviewProps.level}
-                        photoUrl={previewUrl}
+                    <div className="transform scale-[0.55] origin-top w-64">
+                      <StylistFlipCard
+                        stylist={{
+                          id: 'preview',
+                          name: cardPreviewProps.name || 'Your Name',
+                          displayName: cardPreviewProps.displayName || undefined,
+                          level: cardPreviewProps.level || 'LEVEL 1 STYLIST',
+                          imageUrl: previewUrl || '',
+                          instagram: cardPreviewProps.instagram || '',
+                          tiktok: cardPreviewProps.tiktok || undefined,
+                          preferred_social_handle: cardPreviewProps.preferredSocialHandle,
+                          specialties: cardPreviewProps.specialties,
+                          highlighted_services: cardPreviewProps.highlightedServices,
+                          bio: cardPreviewProps.bio || undefined,
+                          isBooking: cardPreviewProps.isBooking,
+                          locations: (cardPreviewProps.locations || []).map(l => l.id as Location),
+                        }}
+                        index={0}
+                        selectedLocation="all"
+                        isPreview
                         photoFocalX={cardFocalX}
                         photoFocalY={cardFocalY}
-                        instagram={cardPreviewProps.instagram}
-                        tiktok={cardPreviewProps.tiktok}
-                        preferredSocialHandle={cardPreviewProps.preferredSocialHandle}
-                        highlightedServices={cardPreviewProps.highlightedServices}
-                        specialties={cardPreviewProps.specialties}
-                        bio={cardPreviewProps.bio}
-                        isBooking={cardPreviewProps.isBooking}
-                        locations={cardPreviewProps.locations}
                       />
                     </div>
                   </div>
