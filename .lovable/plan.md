@@ -1,55 +1,73 @@
 
 
-## Prevent Soft-Deleted Appointments from Being Resurrected by Phorest Sync
+## Lighten Nested Cards (Cards Within Cards)
 
-Good structural guardrail request. The sync engine currently does a blind `upsert` on `phorest_id`, which means any appointment a manager soft-deleted locally (`deleted_at` set) gets overwritten and resurrected on the next sync cycle. This violates the principle that local operational decisions (deletions) take precedence over external sync data.
+Good eye for depth hierarchy. The screenshot shows the dark mode Sales Overview where subcards (Services, Retail, Transactions, Avg Ticket, Rev/Hour) blend too closely with the parent card background. The fix introduces a dedicated `--card-inner` CSS variable that's slightly lighter than `--card` in dark mode and slightly tinted in light mode, giving nested elements a clear visual lift.
 
-### Root Cause
+### Current Problem
 
-In `supabase/functions/sync-phorest-data/index.ts` (lines 413-415), the appointment sync loop calls:
+Nested cards use an inconsistent mix of:
+- `bg-muted/30` (barely visible in dark mode)
+- `bg-background/50 dark:bg-muted/20` (too dark, blends with parent)
+- `bg-muted/30 dark:bg-card` (same as parent card -- no depth at all)
 
+In dark mode, `--card` is `0 0% 11%` and `--muted` is `0 0% 20%`, so `bg-muted/30` only reaches about 14% lightness -- nearly invisible against the 11% card.
+
+### Solution
+
+**1. Add `--card-inner` CSS variable to every theme** (`src/index.css`)
+
+For each theme's light and dark variants, add a new variable that sits between `--card` and `--muted`:
+
+| Theme | Light `--card-inner` | Dark `--card-inner` |
+|-------|---------------------|---------------------|
+| Cream | `40 20% 95%` (slightly warm tint) | `0 0% 15%` (4% lighter than card) |
+| Rose | `350 20% 96%` | `350 10% 16%` |
+| Sage | `145 15% 95%` | `145 8% 16%` |
+| Ocean | `210 20% 96%` | `210 10% 16%` |
+
+**2. Add design token** (`src/lib/design-tokens.ts`)
+
+Add to the `card` token group:
 ```typescript
-await supabase
-  .from("phorest_appointments")
-  .upsert(appointmentRecord, { onConflict: 'phorest_id' });
-```
-
-This overwrites all fields on conflict, including clearing `deleted_at` back to `null` because the incoming record doesn't include it.
-
-### Fix
-
-Before the upsert loop processes each appointment, query for existing soft-deleted `phorest_id` values in the sync date range and skip them entirely.
-
-**File:** `supabase/functions/sync-phorest-data/index.ts`
-
-1. **Pre-fetch soft-deleted IDs** (insert before line 299): Query `phorest_appointments` for all records in the sync date range where `deleted_at IS NOT NULL`, collecting their `phorest_id` values into a `Set`.
-
-2. **Skip deleted records in the loop** (insert at line 306, before the existing null-ID check): If the incoming `phorestId` is in the deleted set, log a skip message and `continue`.
-
-### Technical Detail
-
-```typescript
-// Before the upsert loop (around line 299)
-const { data: deletedAppointments } = await supabase
-  .from("phorest_appointments")
-  .select("phorest_id")
-  .not("deleted_at", "is", null)
-  .gte("appointment_date", dateFrom)
-  .lte("appointment_date", dateTo);
-
-const deletedPhorestIds = new Set(
-  deletedAppointments?.map((a: any) => a.phorest_id) || []
-);
-console.log(`Found ${deletedPhorestIds.size} soft-deleted appointments to protect`);
-
-// Inside the loop, after phorestId is resolved (around line 309)
-if (deletedPhorestIds.has(phorestId)) {
-  console.log(`Skipping soft-deleted appointment ${phorestId}`);
-  continue;
+card: {
+  wrapper: 'rounded-xl',
+  inner: 'bg-card-inner rounded-lg border border-border/40',  // NEW
+  iconBox: '...',
+  // ...
 }
 ```
 
+**3. Register the Tailwind utility** (`src/index.css`)
+
+Add a utility class `.bg-card-inner` that references the new variable:
+```css
+.bg-card-inner {
+  background-color: hsl(var(--card-inner));
+}
+```
+
+**4. Update the AggregateSalesCard subcards** (`src/components/dashboard/AggregateSalesCard.tsx`)
+
+Replace the inconsistent background classes on nested stat tiles with the new `bg-card-inner` class. The primary targets are:
+- Services / Retail subcards (lines 750, 768): `bg-background/50 dark:bg-muted/20` → `bg-card-inner`
+- Transactions / Avg Ticket / Rev/Hour tiles (lines 809, 828, 847, 872, 893, 912): `bg-muted/30 dark:bg-card` → `bg-card-inner`
+- Tips / Monthly Goal nested stat (line 931): `bg-muted/30 dark:bg-card` → `bg-card-inner`
+
+### Technical Detail
+
+The CSS variable approach ensures:
+- Every theme (Cream, Rose, Sage, Ocean) gets a tuned value automatically
+- Dark mode gets meaningful visual lift (11% → 15% lightness)
+- Light mode gets a subtle warm tint that differentiates from the parent card
+- No hardcoded dark-mode overrides needed per component
+- Future nested cards just use `tokens.card.inner` or `bg-card-inner`
+
 ### Scope
 
-Single file edit in one edge function. Approximately 15 lines added. No schema changes, no new dependencies. The query runs once before the loop, so it adds one DB round-trip per sync cycle rather than one per appointment.
+- `src/index.css` -- Add `--card-inner` to 8 theme blocks (4 themes × light/dark) + utility class
+- `src/lib/design-tokens.ts` -- Add `card.inner` token
+- `src/components/dashboard/AggregateSalesCard.tsx` -- Update ~10 subcard class strings
+
+No new dependencies. No schema changes. Purely visual refinement.
 
