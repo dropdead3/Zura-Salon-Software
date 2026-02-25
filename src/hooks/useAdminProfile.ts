@@ -147,7 +147,11 @@ export function useUploadUserProfilePhoto(userId: string | undefined) {
 
       const { error: uploadError } = await supabase.storage
         .from('employee-photos')
-        .upload(filePath, file, { upsert: true });
+        .upload(filePath, file, {
+          upsert: true,
+          cacheControl: '31536000',
+          contentType: 'image/webp',
+        });
 
       if (uploadError) throw uploadError;
 

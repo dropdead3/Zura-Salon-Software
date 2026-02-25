@@ -149,13 +149,17 @@ export function useUploadProfilePhoto() {
   return useMutation({
     mutationFn: async (input: File | Blob) => {
       const isFile = input instanceof File && 'name' in input && input.name;
-      const fileExt = isFile ? (input as File).name.split('.').pop() : 'jpg';
+      const fileExt = isFile ? (input as File).name.split('.').pop() : 'webp';
       const fileName = `${user!.id}-${Date.now()}.${fileExt}`;
       const filePath = `${user!.id}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('employee-photos')
-        .upload(filePath, input, { upsert: true });
+        .upload(filePath, input, {
+          upsert: true,
+          cacheControl: '31536000',
+          contentType: 'image/webp',
+        });
 
       if (uploadError) throw uploadError;
 
