@@ -24,6 +24,7 @@ import { Button } from '@/components/ui/button';
 import { GripVertical, User, MapPin, Sparkles, RotateCcw, Save, Loader2, Pencil, Calendar, CalendarOff } from 'lucide-react';
 import { getLocationName, type Location } from '@/data/stylists';
 import { cn } from '@/lib/utils';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { EditStylistCardDialog } from './EditStylistCardDialog';
 
 interface StylistProfile {
@@ -74,77 +75,70 @@ function SortableStylistCard({ stylist, onToggleVisibility, onEdit, isUpdating }
   return (
     <div ref={setNodeRef} style={style} className={cn(isDragging && "opacity-50")}>
       <Card className={cn("transition-shadow", isDragging && "shadow-lg ring-2 ring-primary")}>
-        <CardContent className="p-4">
-          <div className="flex items-center gap-4">
-            {/* Drag Handle */}
-            <button
-              {...attributes}
-              {...listeners}
-              className="touch-none p-1 rounded hover:bg-muted cursor-grab active:cursor-grabbing"
-            >
-              <GripVertical className="w-5 h-5 text-muted-foreground" />
-            </button>
+        <CardContent className="p-3 sm:p-4">
+          <div className="flex flex-col gap-2">
+            {/* Row 1: Drag handle + avatar + name/level */}
+            <div className="flex items-center gap-2 sm:gap-3">
+              <button
+                {...attributes}
+                {...listeners}
+                className="touch-none p-1 rounded hover:bg-muted cursor-grab active:cursor-grabbing flex-shrink-0"
+              >
+                <GripVertical className="w-4 h-4 text-muted-foreground" />
+              </button>
 
-            <Avatar className="w-12 h-12">
-              <AvatarImage src={stylist.photo_url || undefined} alt={stylist.full_name} />
-              <AvatarFallback className="bg-muted">
-                {stylist.full_name?.charAt(0) || <User className="w-5 h-5" />}
-              </AvatarFallback>
-            </Avatar>
-            
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <h3 className="font-medium truncate">
+              <Avatar className="w-10 h-10 flex-shrink-0">
+                <AvatarImage src={stylist.photo_url || undefined} alt={stylist.full_name} />
+                <AvatarFallback className="bg-muted">
+                  {stylist.full_name?.charAt(0) || <User className="w-4 h-4" />}
+                </AvatarFallback>
+              </Avatar>
+              
+              <div className="flex-1 min-w-0">
+                <h3 className="font-medium truncate text-sm">
                   {stylist.display_name || stylist.full_name}
                 </h3>
-                {hasExtensions && (
-                  <Badge variant="secondary" className="text-xs gap-1 flex-shrink-0">
-                    <Sparkles className="w-3 h-3" />
-                    Extensions
-                  </Badge>
-                )}
-                {/* Booking Status Badge */}
-                <Badge 
-                  variant={stylist.is_booking ? "outline" : "secondary"} 
-                  className={cn("text-xs gap-1 flex-shrink-0", !stylist.is_booking && "opacity-60")}
-                >
-                  {stylist.is_booking ? (
-                    <><Calendar className="w-3 h-3" /> Booking</>
-                  ) : (
-                    <><CalendarOff className="w-3 h-3" /> Not Booking</>
-                  )}
-                </Badge>
-              </div>
-              <div className="flex flex-wrap items-center gap-2 mt-1">
                 {stylist.stylist_level && (
-                  <span className="text-sm text-muted-foreground">{stylist.stylist_level}</span>
-                )}
-                {stylist.location_id && (
-                  <Badge variant="outline" className="text-xs">
-                    <MapPin className="w-3 h-3 mr-1" />
-                    {getLocationName(stylist.location_id as Location)}
-                  </Badge>
+                  <span className="text-xs text-muted-foreground">{stylist.stylist_level}</span>
                 )}
               </div>
             </div>
 
-            <div className="flex items-center gap-3 flex-shrink-0">
-              {/* Edit Button */}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onEdit(stylist)}
-                className="gap-1"
+            {/* Row 2: Badges + actions */}
+            <div className="flex flex-wrap items-center gap-1.5 pl-7 sm:pl-9">
+              {stylist.location_id && (
+                <Badge variant="outline" className="text-xs">
+                  <MapPin className="w-3 h-3 mr-1" />
+                  {getLocationName(stylist.location_id as Location)}
+                </Badge>
+              )}
+              {hasExtensions && (
+                <Badge variant="secondary" className="text-xs gap-1">
+                  <Sparkles className="w-3 h-3" />
+                  Extensions
+                </Badge>
+              )}
+              <Badge 
+                variant={stylist.is_booking ? "outline" : "secondary"} 
+                className={cn("text-xs gap-1", !stylist.is_booking && "opacity-60")}
               >
-                <Pencil className="w-4 h-4" />
-                Edit
-              </Button>
-              
-              {/* Visibility Toggle */}
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">
-                  {stylist.homepage_visible ? 'Visible' : 'Hidden'}
-                </span>
+                {stylist.is_booking ? (
+                  <><Calendar className="w-3 h-3" /> Booking</>
+                ) : (
+                  <><CalendarOff className="w-3 h-3" /> Not Booking</>
+                )}
+              </Badge>
+
+              <div className="flex items-center gap-2 ml-auto">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onEdit(stylist)}
+                  className="gap-1 h-7 px-2 text-xs"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                  Edit
+                </Button>
                 <Switch
                   checked={stylist.homepage_visible ?? false}
                   onCheckedChange={(checked) => onToggleVisibility(stylist.user_id, checked)}
@@ -204,9 +198,9 @@ export function ReorderableStylistList({
     <div className="space-y-4">
       {/* Action Bar */}
       {hasChanges && (
-        <div className="flex items-center justify-between p-3 bg-card/80 backdrop-blur-xl rounded-full border border-border/40 shadow-[0_16px_40px_-18px_hsl(var(--foreground)/0.25)] animate-fade-in">
-          <p className="text-sm text-muted-foreground">
-            You have unsaved changes to the display order.
+        <div className="flex flex-col sm:flex-row items-center gap-2 sm:justify-between p-3 bg-card/80 backdrop-blur-xl rounded-xl sm:rounded-full border border-border/40 shadow-[0_16px_40px_-18px_hsl(var(--foreground)/0.25)] animate-fade-in">
+          <p className="text-sm text-muted-foreground text-center sm:text-left">
+            Unsaved order changes
           </p>
           <div className="flex items-center gap-2">
             <Button
@@ -238,28 +232,30 @@ export function ReorderableStylistList({
         Drag to reorder. Click "Edit" to modify card details. Stylists appear on the homepage in this order.
       </p>
 
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
-      >
-        <SortableContext
-          items={stylists.map(s => s.id)}
-          strategy={verticalListSortingStrategy}
+      <ScrollArea className="max-h-[60vh]">
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
         >
-          <div className="space-y-2">
-            {stylists.map((stylist) => (
-              <SortableStylistCard
-                key={stylist.id}
-                stylist={stylist}
-                onToggleVisibility={onToggleVisibility}
-                onEdit={setEditingStylist}
-                isUpdating={isUpdating}
-              />
-            ))}
-          </div>
-        </SortableContext>
-      </DndContext>
+          <SortableContext
+            items={stylists.map(s => s.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="space-y-2 pr-2">
+              {stylists.map((stylist) => (
+                <SortableStylistCard
+                  key={stylist.id}
+                  stylist={stylist}
+                  onToggleVisibility={onToggleVisibility}
+                  onEdit={setEditingStylist}
+                  isUpdating={isUpdating}
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
+      </ScrollArea>
 
       {/* Edit Dialog */}
       <EditStylistCardDialog

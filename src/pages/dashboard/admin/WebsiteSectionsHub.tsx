@@ -843,7 +843,7 @@ export default function WebsiteSectionsHub() {
               </div>
 
               {/* Editor Content */}
-              <div className="flex-1 overflow-auto p-6">
+              <div className="flex-1 overflow-auto p-3 sm:p-4 lg:p-6">
                 {renderEditor()}
               </div>
             </div>
