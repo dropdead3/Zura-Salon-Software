@@ -623,82 +623,84 @@ export function AggregateSalesCard({
               {/* Expected Revenue - secondary badge (today only) */}
               {isToday && (
                 <div className="mt-4 mx-auto max-w-sm space-y-3">
-                  <div className="flex items-center justify-center gap-1.5">
-                    <Badge variant="outline" className="text-xs font-normal bg-warning/10 text-warning border-warning/30 gap-1">
-                      <Clock className="w-3 h-3" />
-                      <BlurredAmount>
-                        <span>{formatCurrency(displayMetrics.totalRevenue)}</span>
-                      </BlurredAmount>
-                      <span>Expected</span>
-                    </Badge>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Info className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom" className="max-w-[200px] text-xs">
-                        Based on scheduled appointments. Final revenue may differ as appointments are completed, cancelled, or added.
-                      </TooltipContent>
-                    </Tooltip>
-                  </div>
-
-                  {/* Progress bar: actual vs expected */}
-                  {todayActual?.hasActualData ? (
-                    (() => {
-                      const exceededExpected = todayActual.actualRevenue > displayMetrics.totalRevenue && displayMetrics.totalRevenue > 0;
-                      return (
-                        <div className="space-y-1.5">
-                          <div className="flex items-center justify-between text-xs">
-                            <span className="text-muted-foreground">{t('sales.actual_revenue')}</span>
+                  {(() => {
+                    const exceededExpected = !!(todayActual?.hasActualData && todayActual.actualRevenue > displayMetrics.totalRevenue && displayMetrics.totalRevenue > 0);
+                    return (
+                      <>
+                        <div className="flex items-center justify-center gap-1.5">
+                          <Badge variant="outline" className={cn("text-xs font-normal gap-1", exceededExpected ? "bg-success/10 text-success-foreground border-success/30" : "bg-warning/10 text-warning border-warning/30")}>
+                            <Clock className="w-3 h-3" />
                             <BlurredAmount>
-                              <span className={cn("font-medium", exceededExpected && "text-success-foreground")}>
-                                {formatCurrency(todayActual.actualRevenue)} of {formatCurrency(displayMetrics.totalRevenue)} expected
-                              </span>
+                              <span>{formatCurrency(displayMetrics.totalRevenue)}</span>
                             </BlurredAmount>
-                          </div>
-                          <Progress 
-                            value={displayMetrics.totalRevenue > 0 
-                              ? Math.min((todayActual.actualRevenue / displayMetrics.totalRevenue) * 100, 100) 
-                              : 0
-                            } 
-                            className="h-1.5"
-                            indicatorClassName={exceededExpected ? "bg-success-foreground" : undefined}
-                          />
-                          {exceededExpected && (
-                            <div className="flex items-center justify-center gap-1 text-xs text-success-foreground">
-                              <CheckCircle2 className="w-3.5 h-3.5" />
-                              <span>Exceeded</span>
-                            </div>
-                          )}
+                            <span>Expected</span>
+                          </Badge>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Info className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom" className="max-w-[200px] text-xs">
+                              Based on scheduled appointments. Final revenue may differ as appointments are completed, cancelled, or added.
+                            </TooltipContent>
+                          </Tooltip>
                         </div>
-                      );
-                    })()
-                  ) : (
-                    <p className="text-xs text-muted-foreground/70 text-center">
-                      {t('sales.actual_not_available')}
-                    </p>
-                  )}
 
-                  {todayActual?.lastAppointmentEndTime && (
-                    <p className="text-xs text-muted-foreground/70 text-center">
-                      {t('sales.estimated_final_at')}{' '}
-                      <span className="font-medium text-foreground/70">
-                        {formatEndTime(todayActual.lastAppointmentEndTime)}
-                      </span>
-                    </p>
-                  )}
+                        {/* Progress bar: actual vs expected */}
+                        {todayActual?.hasActualData ? (
+                          <div className="space-y-1.5">
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="text-muted-foreground">{t('sales.actual_revenue')}</span>
+                              <BlurredAmount>
+                                <span className={cn("font-medium", exceededExpected && "text-success-foreground")}>
+                                  {formatCurrency(todayActual.actualRevenue)} of {formatCurrency(displayMetrics.totalRevenue)} expected
+                                </span>
+                              </BlurredAmount>
+                            </div>
+                            <Progress 
+                              value={displayMetrics.totalRevenue > 0 
+                                ? Math.min((todayActual.actualRevenue / displayMetrics.totalRevenue) * 100, 100) 
+                                : 0
+                              } 
+                              className="h-1.5"
+                              indicatorClassName={exceededExpected ? "bg-success-foreground" : undefined}
+                            />
+                            {exceededExpected && (
+                              <div className="flex items-center justify-center gap-1 text-xs text-success-foreground">
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                <span>Exceeded</span>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-muted-foreground/70 text-center">
+                            {t('sales.actual_not_available')}
+                          </p>
+                        )}
 
-                  {/* Last updated timestamp */}
-                  {todayDataUpdatedAt && (
-                    <p className="text-[10px] text-muted-foreground/50 text-center">
-                      Updated {(() => {
-                        const diffMs = Date.now() - todayDataUpdatedAt;
-                        const diffMin = Math.round(diffMs / 60000);
-                        if (diffMin < 1) return 'just now';
-                        if (diffMin === 1) return '1 min ago';
-                        return `${diffMin} min ago`;
-                      })()}
-                    </p>
-                  )}
+                        {todayActual?.lastAppointmentEndTime && (
+                          <p className="text-xs text-muted-foreground/70 text-center">
+                            {t('sales.estimated_final_at')}{' '}
+                            <span className="font-medium text-foreground/70">
+                              {formatEndTime(todayActual.lastAppointmentEndTime)}
+                            </span>
+                          </p>
+                        )}
+
+                        {/* Last updated timestamp */}
+                        {todayDataUpdatedAt && (
+                          <p className="text-[10px] text-muted-foreground/50 text-center">
+                            Updated {(() => {
+                              const diffMs = Date.now() - todayDataUpdatedAt;
+                              const diffMin = Math.round(diffMs / 60000);
+                              if (diffMin < 1) return 'just now';
+                              if (diffMin === 1) return '1 min ago';
+                              return `${diffMin} min ago`;
+                            })()}
+                          </p>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
               )}
 
