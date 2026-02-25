@@ -1,14 +1,22 @@
 
 
-## Swap "Exceeded" and "All appointments complete" Order
+## Remove Redundant "of $X expected" Text
 
-Tiny swap in `AggregateSalesCard.tsx` at lines 714-722. Currently shows "✓ Exceeded · ✓ All appointments complete" — will flip to "✓ All appointments complete · ✓ Exceeded".
+The line at line 700 currently reads `$2,271.00 of $1,883.00 expected`. Since the expected amount is already shown in the badge above, the ` of $1,883.00 expected` portion is redundant.
 
 ### Change
 
-**File: `src/components/dashboard/AggregateSalesCard.tsx` (lines 714-722)**
+**File: `src/components/dashboard/AggregateSalesCard.tsx` (line 700)**
 
-Swap the two `<span>` blocks so "All appointments complete" comes first and "Exceeded" comes second.
+Change:
+```
+{formatCurrency(todayActual.actualRevenue)} of {formatCurrency(displayMetrics.totalRevenue)} expected
+```
 
-One line group, ~10 lines touched. No logic changes.
+To:
+```
+{formatCurrency(todayActual.actualRevenue)}
+```
+
+One line, no logic changes.
 
