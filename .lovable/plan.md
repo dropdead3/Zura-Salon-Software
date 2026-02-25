@@ -1,39 +1,23 @@
 
 
-## Bug: "Happening Now" Shows Cancelled Appointments
+## Fix: Expected Badge Should Turn Green When Revenue Exceeds Target
 
-### Root Cause
+### Problem
 
-When you cancel an appointment via the detail panel, `usePhorestCalendar.ts` fires the `updateStatus` mutation. On success (line 223), it only invalidates `['phorest-appointments']`:
-
-```ts
-onSuccess: () => {
-  queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] });
-  toast.success('Appointment updated');
-},
-```
-
-It does **not** invalidate `['live-session-snapshot']`. The "Happening Now" indicator has a 60-second refetch interval (`refetchInterval: 60_000`), so it continues showing the cancelled appointment as "in progress" until the next automatic refetch.
-
-The delete flow already handles this correctly (line 833 of `AppointmentDetailSheet.tsx` invalidates `live-session-snapshot`), but the status change flow was missed.
+The "Expected" badge on line 627 always uses `warning` (amber) styling regardless of whether actual revenue has surpassed it. When you've exceeded expected revenue, showing the expected amount in amber sends a contradictory signal — amber implies caution, but the situation is positive.
 
 ### Fix
 
-**File: `src/hooks/usePhorestCalendar.ts`** (line 223-226)
+**File: `src/components/dashboard/AggregateSalesCard.tsx`** (line 627)
 
-Add `live-session-snapshot` invalidation to the `updateStatus` mutation's `onSuccess`:
+Use the same `exceededExpected` check (already computed on line 647) to conditionally style the badge:
 
-```ts
-onSuccess: () => {
-  queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] });
-  queryClient.invalidateQueries({ queryKey: ['live-session-snapshot'] });
-  toast.success('Appointment updated');
-},
-```
+- **Below target**: Keep current amber/warning styling — `bg-warning/10 text-warning border-warning/30`
+- **Exceeded target**: Switch to success styling — `bg-success/10 text-success-foreground border-success/30`
 
-This ensures that any status change (cancel, no-show, complete, confirm, check-in) immediately refreshes the live session indicator. Cancel and no-show will remove the appointment from "Happening Now"; complete will too. Confirm and check-in won't change visibility but the refetch is harmless.
+The `exceededExpected` boolean needs to be computed *before* the badge (currently it's computed inside a nested closure on line 647). Move the calculation up to line ~625 scope so both the badge and the progress bar can reference it.
 
 ### Scope
 
-1 line added in 1 file.
+~5 lines changed in 1 file. Move one variable declaration up and add a conditional class to the badge.
 
