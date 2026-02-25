@@ -1,10 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { tokens } from '@/lib/design-tokens';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Loader2, Settings2, Plus, Trash2, RotateCcw, GripVertical } from 'lucide-react';
+import { Loader2, Settings2, Plus, Trash2, RotateCcw, GripVertical, Type } from 'lucide-react';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
 import { toast } from 'sonner';
 import { useBrandStatementConfig, type BrandStatementConfig, DEFAULT_BRAND_STATEMENT } from '@/hooks/useSectionConfig';
@@ -15,6 +12,9 @@ import { CharCountInput } from './inputs/CharCountInput';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { triggerPreviewRefresh } from './LivePreviewPanel';
+import { EditorCard } from './EditorCard';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
   DndContext,
   closestCenter,
@@ -172,163 +172,161 @@ export function BrandStatementEditor() {
 
   return (
     <div className="space-y-6 h-full">
-      <Card className="overflow-auto">
-        <CardHeader className="flex flex-row items-center justify-between pb-4 sticky top-0 bg-card z-10 border-b">
-          <CardTitle className="text-lg">Brand Statement</CardTitle>
+      <EditorCard
+        title="Brand Statement"
+        icon={Type}
+        headerActions={
           <Button variant="ghost" size={tokens.button.card} onClick={handleReset} className="text-muted-foreground gap-1.5">
             <RotateCcw className="h-3.5 w-3.5" />
             Reset
           </Button>
-        </CardHeader>
-        <CardContent className="space-y-6 pt-6">
-          {/* Eyebrow */}
-          <ToggleInput
-            label="Show Eyebrow"
-            value={localConfig.show_eyebrow}
-            onChange={(value) => updateField('show_eyebrow', value)}
-            description="Display the small introductory text above the headline"
+        }
+      >
+        {/* Eyebrow */}
+        <ToggleInput
+          label="Show Eyebrow"
+          value={localConfig.show_eyebrow}
+          onChange={(value) => updateField('show_eyebrow', value)}
+          description="Display the small introductory text above the headline"
+        />
+        {localConfig.show_eyebrow && (
+          <CharCountInput
+            label="Eyebrow Text"
+            value={localConfig.eyebrow}
+            onChange={(value) => updateField('eyebrow', value)}
+            maxLength={40}
+            description="Small introductory text above the headline (e.g. 'Our Brand is')"
           />
-          {localConfig.show_eyebrow && (
-            <CharCountInput
-              label="Eyebrow Text"
-              value={localConfig.eyebrow}
-              onChange={(value) => updateField('eyebrow', value)}
-              maxLength={40}
-              description="Small introductory text above the headline (e.g. 'Our Brand is')"
-            />
-          )}
+        )}
 
-          {/* Headline */}
-          <ToggleInput
-            label="Show Headline"
-            value={localConfig.show_headline}
-            onChange={(value) => updateField('show_headline', value)}
-            description="Display the prefix/suffix/rotating headline block"
-          />
-          {localConfig.show_headline && (
-            <>
-              <div className="space-y-4">
-                <CharCountInput
-                  label="Headline Prefix"
-                  value={localConfig.headline_prefix}
-                  onChange={(value) => updateField('headline_prefix', value)}
-                  maxLength={30}
-                  placeholder="Not Your"
-                  description="Static text before the rotating words"
-                />
-                <CharCountInput
-                  label="Headline Suffix"
-                  value={localConfig.headline_suffix}
-                  onChange={(value) => updateField('headline_suffix', value)}
-                  maxLength={30}
-                  placeholder="Salon"
-                  description="Static text after the rotating words"
-                />
-              </div>
-
-              {/* Rotating Words */}
-              <RotatingWordsInput
-                words={localConfig.rotating_words}
-                onChange={(words) => updateField('rotating_words', words)}
-                label="Rotating Words (Between Prefix & Suffix)"
-                placeholder="e.g. Boring, Average..."
+        {/* Headline */}
+        <ToggleInput
+          label="Show Headline"
+          value={localConfig.show_headline}
+          onChange={(value) => updateField('show_headline', value)}
+          description="Display the prefix/suffix/rotating headline block"
+        />
+        {localConfig.show_headline && (
+          <>
+            <div className="space-y-4">
+              <CharCountInput
+                label="Headline Prefix"
+                value={localConfig.headline_prefix}
+                onChange={(value) => updateField('headline_prefix', value)}
+                maxLength={30}
+                placeholder="Not Your"
+                description="Static text before the rotating words"
               />
-            </>
-          )}
-
-          {/* Paragraphs with DnD */}
-          <ToggleInput
-            label="Show Paragraphs"
-            value={localConfig.show_paragraphs}
-            onChange={(value) => updateField('show_paragraphs', value)}
-            description="Display description paragraphs below the headline"
-          />
-          {localConfig.show_paragraphs && (
-            <div className="space-y-4 pt-4 border-t">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-medium text-sm">Description Paragraphs</h4>
-                  <p className="text-xs text-muted-foreground mt-0.5">Drag to reorder. These appear below the headline.</p>
-                </div>
-                {localConfig.paragraphs.length < 5 && (
-                  <Button type="button" variant="outline" size={tokens.button.card} onClick={addParagraph}>
-                    <Plus className="h-4 w-4 mr-1" />
-                    Add
-                  </Button>
-                )}
-              </div>
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
-              >
-                <SortableContext
-                  items={localConfig.paragraphs.map((_, i) => `para-${i}`)}
-                  strategy={verticalListSortingStrategy}
-                >
-                  {localConfig.paragraphs.map((paragraph, index) => (
-                    <SortableParagraph
-                      key={`para-${index}`}
-                      id={`para-${index}`}
-                      index={index}
-                      value={paragraph}
-                      onChange={(value) => updateParagraph(index, value)}
-                      onRemove={() => removeParagraph(index)}
-                      canRemove={localConfig.paragraphs.length > 1}
-                    />
-                  ))}
-                </SortableContext>
-              </DndContext>
+              <CharCountInput
+                label="Headline Suffix"
+                value={localConfig.headline_suffix}
+                onChange={(value) => updateField('headline_suffix', value)}
+                maxLength={30}
+                placeholder="Salon"
+                description="Static text after the rotating words"
+              />
             </div>
-          )}
+            <RotatingWordsInput
+              words={localConfig.rotating_words}
+              onChange={(words) => updateField('rotating_words', words)}
+              label="Rotating Words (Between Prefix & Suffix)"
+              placeholder="e.g. Boring, Average..."
+            />
+          </>
+        )}
 
-          {/* Advanced Settings */}
-          <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
-            <CollapsibleTrigger asChild>
-              <Button variant="outline" className="w-full justify-between mt-4">
-                <span className="flex items-center gap-2">
-                  <Settings2 className="h-4 w-4" />
-                  Advanced Settings
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {showAdvanced ? 'Hide' : 'Show'}
-                </span>
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="space-y-4 pt-4">
-              <div className="p-4 bg-muted/50 rounded-lg space-y-4">
-                <h4 className="font-medium text-sm">Typewriter Animation</h4>
-                <SliderInput
-                  label="Typing Speed"
-                  value={localConfig.typewriter_speed}
-                  onChange={(value) => updateField('typewriter_speed', value)}
-                  min={50}
-                  max={200}
-                  step={10}
-                  unit="ms"
-                  description="Time between each character appearing"
-                />
-                <SliderInput
-                  label="Pause Between Words"
-                  value={localConfig.typewriter_pause}
-                  onChange={(value) => updateField('typewriter_pause', value)}
-                  min={1}
-                  max={5}
-                  step={0.5}
-                  unit="s"
-                  description="How long to pause after completing a word"
-                />
-                <ToggleInput
-                  label="Show Blinking Cursor"
-                  value={localConfig.show_typewriter_cursor}
-                  onChange={(value) => updateField('show_typewriter_cursor', value)}
-                  description="Display the typewriter cursor animation"
-                />
+        {/* Paragraphs with DnD */}
+        <ToggleInput
+          label="Show Paragraphs"
+          value={localConfig.show_paragraphs}
+          onChange={(value) => updateField('show_paragraphs', value)}
+          description="Display description paragraphs below the headline"
+        />
+        {localConfig.show_paragraphs && (
+          <div className="space-y-4 pt-4 border-t border-border/30">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-medium text-sm">Description Paragraphs</h4>
+                <p className="text-xs text-muted-foreground mt-0.5">Drag to reorder. These appear below the headline.</p>
               </div>
-            </CollapsibleContent>
-          </Collapsible>
-        </CardContent>
-      </Card>
+              {localConfig.paragraphs.length < 5 && (
+                <Button type="button" variant="outline" size={tokens.button.card} onClick={addParagraph}>
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add
+                </Button>
+              )}
+            </div>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={localConfig.paragraphs.map((_, i) => `para-${i}`)}
+                strategy={verticalListSortingStrategy}
+              >
+                {localConfig.paragraphs.map((paragraph, index) => (
+                  <SortableParagraph
+                    key={`para-${index}`}
+                    id={`para-${index}`}
+                    index={index}
+                    value={paragraph}
+                    onChange={(value) => updateParagraph(index, value)}
+                    onRemove={() => removeParagraph(index)}
+                    canRemove={localConfig.paragraphs.length > 1}
+                  />
+                ))}
+              </SortableContext>
+            </DndContext>
+          </div>
+        )}
+
+        {/* Advanced Settings */}
+        <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
+          <CollapsibleTrigger asChild>
+            <Button variant="outline" className="w-full justify-between mt-4">
+              <span className="flex items-center gap-2">
+                <Settings2 className="h-4 w-4" />
+                Advanced Settings
+              </span>
+              <span className="text-xs text-muted-foreground">
+                {showAdvanced ? 'Hide' : 'Show'}
+              </span>
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="space-y-4 pt-4">
+            <div className="p-4 bg-muted/50 rounded-lg space-y-4">
+              <h4 className="font-medium text-sm">Typewriter Animation</h4>
+              <SliderInput
+                label="Typing Speed"
+                value={localConfig.typewriter_speed}
+                onChange={(value) => updateField('typewriter_speed', value)}
+                min={50}
+                max={200}
+                step={10}
+                unit="ms"
+                description="Time between each character appearing"
+              />
+              <SliderInput
+                label="Pause Between Words"
+                value={localConfig.typewriter_pause}
+                onChange={(value) => updateField('typewriter_pause', value)}
+                min={1}
+                max={5}
+                step={0.5}
+                unit="s"
+                description="How long to pause after completing a word"
+              />
+              <ToggleInput
+                label="Show Blinking Cursor"
+                value={localConfig.show_typewriter_cursor}
+                onChange={(value) => updateField('show_typewriter_cursor', value)}
+                description="Display the typewriter cursor animation"
+              />
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+      </EditorCard>
     </div>
   );
 }

@@ -1,17 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { useAnnouncementBarSettings, useUpdateAnnouncementBarSettings, type AnnouncementBarSettings } from '@/hooks/useAnnouncementBar';
 import { toast } from 'sonner';
-import { Megaphone, ExternalLink, ArrowRight, Loader2, Check } from 'lucide-react';
+import { Megaphone, ExternalLink, Loader2, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { EditorCard } from './EditorCard';
 
-// Theme-derived color presets for the banner
 const BANNER_COLOR_PRESETS = [
   { label: 'Default (Secondary)', value: '', color: 'hsl(40, 20%, 92%)' },
   { label: 'Warm Sand', value: 'hsl(40, 25%, 90%)', color: 'hsl(40, 25%, 90%)' },
@@ -24,7 +23,6 @@ const BANNER_COLOR_PRESETS = [
   { label: 'Slate Blue', value: 'hsl(210, 20%, 93%)', color: 'hsl(210, 20%, 93%)' },
 ];
 
-// Determine if a color is dark for text contrast
 function isDarkColor(color: string): boolean {
   if (!color) return false;
   const match = color.match(/hsl\((\d+),?\s*(\d+)%?,?\s*(\d+)%?\)/);
@@ -100,170 +98,156 @@ export function AnnouncementBarContent() {
       </div>
 
       {/* Settings Form */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Settings</CardTitle>
-          <CardDescription>
-            Configure the announcement bar content and behavior
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Visibility Toggle */}
-          <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-            <div>
-              <Label htmlFor="enabled" className="text-base font-medium">Show Announcement Bar</Label>
-              <p className="text-sm text-muted-foreground">
-                Toggle the visibility of the announcement bar on your website
-              </p>
-            </div>
-            <Switch
-              id="enabled"
-              checked={formData.enabled}
-              onCheckedChange={(checked) => handleChange('enabled', checked)}
-            />
+      <EditorCard title="Settings" icon={Megaphone} description="Configure the announcement bar content and behavior">
+        {/* Visibility Toggle */}
+        <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+          <div>
+            <Label htmlFor="enabled" className="text-base font-medium">Show Announcement Bar</Label>
+            <p className="text-sm text-muted-foreground">
+              Toggle the visibility of the announcement bar on your website
+            </p>
           </div>
+          <Switch
+            id="enabled"
+            checked={formData.enabled}
+            onCheckedChange={(checked) => handleChange('enabled', checked)}
+          />
+        </div>
 
-          <div className="elegant-divider" />
+        <div className="elegant-divider" />
 
-          {/* Banner Color */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Banner Color</h3>
-            <div className="flex flex-wrap gap-3">
-              {BANNER_COLOR_PRESETS.map((preset) => {
-                const isSelected = (formData.bg_color || '') === preset.value;
-                const isPresetDark = isDarkColor(preset.value || 'hsl(40, 20%, 92%)');
-                return (
-                  <button
-                    key={preset.label}
-                    type="button"
-                    onClick={() => handleChange('bg_color', preset.value)}
-                    className={cn(
-                      "relative w-10 h-10 rounded-lg border-2 transition-all duration-200 hover:scale-110",
-                      isSelected ? "border-primary ring-2 ring-primary/20" : "border-border"
-                    )}
-                    style={{ backgroundColor: preset.color }}
-                    title={preset.label}
-                  >
-                    {isSelected && (
-                      <Check className={cn("absolute inset-0 m-auto h-4 w-4", isPresetDark ? "text-white" : "text-foreground")} />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-            <div className="flex items-center gap-3">
-              <Label htmlFor="custom_color" className="text-sm whitespace-nowrap">Custom color</Label>
-              <div className="flex items-center gap-2 flex-1">
-                <input
-                  type="color"
-                  id="custom_color_picker"
-                  value={formData.bg_color || '#ebe6df'}
-                  onChange={(e) => handleChange('bg_color', e.target.value)}
-                  className="w-8 h-8 rounded border border-border cursor-pointer"
-                />
-                <Input
-                  id="custom_color"
-                  value={formData.bg_color || ''}
-                  onChange={(e) => handleChange('bg_color', e.target.value)}
-                  placeholder="e.g. hsl(40, 20%, 92%) or #ebe6df"
-                  className="max-w-xs"
-                />
-              </div>
-            </div>
+        {/* Banner Color */}
+        <div className="space-y-4">
+          <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Banner Color</h3>
+          <div className="flex flex-wrap gap-3">
+            {BANNER_COLOR_PRESETS.map((preset) => {
+              const isSelected = (formData.bg_color || '') === preset.value;
+              const isPresetDark = isDarkColor(preset.value || 'hsl(40, 20%, 92%)');
+              return (
+                <button
+                  key={preset.label}
+                  type="button"
+                  onClick={() => handleChange('bg_color', preset.value)}
+                  className={cn(
+                    "relative w-10 h-10 rounded-lg border-2 transition-all duration-200 hover:scale-110",
+                    isSelected ? "border-primary ring-2 ring-primary/20" : "border-border"
+                  )}
+                  style={{ backgroundColor: preset.color }}
+                  title={preset.label}
+                >
+                  {isSelected && (
+                    <Check className={cn("absolute inset-0 m-auto h-4 w-4", isPresetDark ? "text-white" : "text-foreground")} />
+                  )}
+                </button>
+              );
+            })}
           </div>
-
-          <div className="elegant-divider" />
-
-          {/* Message Fields */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Message Content</h3>
-            
-            <div className="grid gap-4 grid-cols-1">
-              <div className="space-y-2">
-                <Label htmlFor="message_prefix">Message Prefix</Label>
-                <Input
-                  id="message_prefix"
-                  value={formData.message_prefix}
-                  onChange={(e) => handleChange('message_prefix', e.target.value)}
-                  placeholder="Are you a salon"
-                  autoCapitalize="off"
-                />
-                <p className="text-xs text-muted-foreground">Text before the highlighted word</p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="message_highlight">Highlighted Word</Label>
-                <Input
-                  id="message_highlight"
-                  value={formData.message_highlight}
-                  onChange={(e) => handleChange('message_highlight', e.target.value)}
-                  placeholder="professional"
-                  autoCapitalize="off"
-                />
-                <p className="text-xs text-muted-foreground">Displayed in bold/medium weight</p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="message_suffix">Message Suffix</Label>
-                <Input
-                  id="message_suffix"
-                  value={formData.message_suffix}
-                  onChange={(e) => handleChange('message_suffix', e.target.value)}
-                  placeholder="looking for our extensions?"
-                  autoCapitalize="off"
-                />
-                <p className="text-xs text-muted-foreground">Text after the highlighted word</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="elegant-divider" />
-
-          {/* CTA Fields */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Call-to-Action Button</h3>
-            
-            <div className="grid gap-4 grid-cols-1">
-              <div className="space-y-2">
-                <Label htmlFor="cta_text">Button Text</Label>
-                <Input
-                  id="cta_text"
-                  value={formData.cta_text}
-                  onChange={(e) => handleChange('cta_text', e.target.value)}
-                  placeholder="Shop Our Extensions Here"
-                  autoCapitalize="off"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="cta_url">Button Link URL</Label>
-                <Input
-                  id="cta_url"
-                  type="url"
-                  value={formData.cta_url}
-                  onChange={(e) => handleChange('cta_url', e.target.value)}
-                  placeholder="https://example.com"
-                  autoCapitalize="off"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-              <div>
-                <Label htmlFor="open_in_new_tab" className="text-base font-medium">Open in New Tab</Label>
-                <p className="text-sm text-muted-foreground">
-                  When enabled, the link will open in a new browser tab
-                </p>
-              </div>
-              <Switch
-                id="open_in_new_tab"
-                checked={formData.open_in_new_tab}
-                onCheckedChange={(checked) => handleChange('open_in_new_tab', checked)}
+          <div className="flex items-center gap-3">
+            <Label htmlFor="custom_color" className="text-sm whitespace-nowrap">Custom color</Label>
+            <div className="flex items-center gap-2 flex-1">
+              <input
+                type="color"
+                id="custom_color_picker"
+                value={formData.bg_color || '#ebe6df'}
+                onChange={(e) => handleChange('bg_color', e.target.value)}
+                className="w-8 h-8 rounded border border-border cursor-pointer"
+              />
+              <Input
+                id="custom_color"
+                value={formData.bg_color || ''}
+                onChange={(e) => handleChange('bg_color', e.target.value)}
+                placeholder="e.g. hsl(40, 20%, 92%) or #ebe6df"
+                className="max-w-xs"
               />
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+
+        <div className="elegant-divider" />
+
+        {/* Message Fields */}
+        <div className="space-y-4">
+          <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Message Content</h3>
+          <div className="grid gap-4 grid-cols-1">
+            <div className="space-y-2">
+              <Label htmlFor="message_prefix">Message Prefix</Label>
+              <Input
+                id="message_prefix"
+                value={formData.message_prefix}
+                onChange={(e) => handleChange('message_prefix', e.target.value)}
+                placeholder="Are you a salon"
+                autoCapitalize="off"
+              />
+              <p className="text-xs text-muted-foreground">Text before the highlighted word</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="message_highlight">Highlighted Word</Label>
+              <Input
+                id="message_highlight"
+                value={formData.message_highlight}
+                onChange={(e) => handleChange('message_highlight', e.target.value)}
+                placeholder="professional"
+                autoCapitalize="off"
+              />
+              <p className="text-xs text-muted-foreground">Displayed in bold/medium weight</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="message_suffix">Message Suffix</Label>
+              <Input
+                id="message_suffix"
+                value={formData.message_suffix}
+                onChange={(e) => handleChange('message_suffix', e.target.value)}
+                placeholder="looking for our extensions?"
+                autoCapitalize="off"
+              />
+              <p className="text-xs text-muted-foreground">Text after the highlighted word</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="elegant-divider" />
+
+        {/* CTA Fields */}
+        <div className="space-y-4">
+          <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Call-to-Action Button</h3>
+          <div className="grid gap-4 grid-cols-1">
+            <div className="space-y-2">
+              <Label htmlFor="cta_text">Button Text</Label>
+              <Input
+                id="cta_text"
+                value={formData.cta_text}
+                onChange={(e) => handleChange('cta_text', e.target.value)}
+                placeholder="Shop Our Extensions Here"
+                autoCapitalize="off"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="cta_url">Button Link URL</Label>
+              <Input
+                id="cta_url"
+                type="url"
+                value={formData.cta_url}
+                onChange={(e) => handleChange('cta_url', e.target.value)}
+                placeholder="https://example.com"
+                autoCapitalize="off"
+              />
+            </div>
+          </div>
+          <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+            <div>
+              <Label htmlFor="open_in_new_tab" className="text-base font-medium">Open in New Tab</Label>
+              <p className="text-sm text-muted-foreground">
+                When enabled, the link will open in a new browser tab
+              </p>
+            </div>
+            <Switch
+              id="open_in_new_tab"
+              checked={formData.open_in_new_tab}
+              onCheckedChange={(checked) => handleChange('open_in_new_tab', checked)}
+            />
+          </div>
+        </div>
+      </EditorCard>
     </div>
   );
 }

@@ -1,15 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2 } from 'lucide-react';
+import { Loader2, LayoutGrid } from 'lucide-react';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
 import { toast } from 'sonner';
 import { triggerPreviewRefresh } from './LivePreviewPanel';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SliderInput } from './inputs/SliderInput';
 import { ToggleInput } from './inputs/ToggleInput';
+import { EditorCard } from './EditorCard';
 
 interface FieldConfig {
   key: string;
@@ -77,86 +77,83 @@ export function SectionDisplayEditor<T extends object>({
 
   return (
     <div>
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-4 sticky top-0 bg-card z-10 border-b">
-          <CardTitle className="text-lg">{title}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4 pt-6">
-          <p className="text-sm text-muted-foreground">{description}</p>
+      <EditorCard
+        title={title}
+        icon={LayoutGrid}
+        description={description}
+      >
+        {fields.map((field) => {
+          const value = localConfig[field.key as keyof T];
 
-          {fields.map((field) => {
-            const value = localConfig[field.key as keyof T];
-
-            switch (field.type) {
-              case 'text':
-                return (
-                  <div key={field.key} className="space-y-2">
-                    <Label>{field.label}</Label>
-                    <Input
-                      value={(value as string) || ''}
-                      onChange={(e) => updateField(field.key, e.target.value)}
-                      placeholder={field.placeholder}
-                    />
-                  </div>
-                );
-              case 'textarea':
-                return (
-                  <div key={field.key} className="space-y-2">
-                    <Label>{field.label}</Label>
-                    <Textarea
-                      value={(value as string) || ''}
-                      onChange={(e) => updateField(field.key, e.target.value)}
-                      placeholder={field.placeholder}
-                      rows={3}
-                    />
-                  </div>
-                );
-              case 'select':
-                return (
-                  <div key={field.key} className="space-y-2">
-                    <Label>{field.label}</Label>
-                    <Select value={value as string} onValueChange={(v) => updateField(field.key, v)}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {field.options?.map((opt) => (
-                          <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                );
-              case 'slider':
-                return (
-                  <SliderInput
-                    key={field.key}
-                    label={field.label}
-                    value={value as number}
-                    onChange={(v) => updateField(field.key, v)}
-                    min={field.min ?? 1}
-                    max={field.max ?? 20}
-                    step={field.step ?? 1}
-                    unit={field.unit}
-                    description={field.description}
+          switch (field.type) {
+            case 'text':
+              return (
+                <div key={field.key} className="space-y-2">
+                  <Label>{field.label}</Label>
+                  <Input
+                    value={(value as string) || ''}
+                    onChange={(e) => updateField(field.key, e.target.value)}
+                    placeholder={field.placeholder}
                   />
-                );
-              case 'toggle':
-                return (
-                  <ToggleInput
-                    key={field.key}
-                    label={field.label}
-                    value={value as boolean}
-                    onChange={(v) => updateField(field.key, v)}
-                    description={field.description}
+                </div>
+              );
+            case 'textarea':
+              return (
+                <div key={field.key} className="space-y-2">
+                  <Label>{field.label}</Label>
+                  <Textarea
+                    value={(value as string) || ''}
+                    onChange={(e) => updateField(field.key, e.target.value)}
+                    placeholder={field.placeholder}
+                    rows={3}
                   />
-                );
-              default:
-                return null;
-            }
-          })}
-        </CardContent>
-      </Card>
+                </div>
+              );
+            case 'select':
+              return (
+                <div key={field.key} className="space-y-2">
+                  <Label>{field.label}</Label>
+                  <Select value={value as string} onValueChange={(v) => updateField(field.key, v)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {field.options?.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              );
+            case 'slider':
+              return (
+                <SliderInput
+                  key={field.key}
+                  label={field.label}
+                  value={value as number}
+                  onChange={(v) => updateField(field.key, v)}
+                  min={field.min ?? 1}
+                  max={field.max ?? 20}
+                  step={field.step ?? 1}
+                  unit={field.unit}
+                  description={field.description}
+                />
+              );
+            case 'toggle':
+              return (
+                <ToggleInput
+                  key={field.key}
+                  label={field.label}
+                  value={value as boolean}
+                  onChange={(v) => updateField(field.key, v)}
+                  description={field.description}
+                />
+              );
+            default:
+              return null;
+          }
+        })}
+      </EditorCard>
     </div>
   );
 }
