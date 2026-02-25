@@ -1,11 +1,11 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { TrendingUp, TrendingDown, Users, User, DollarSign } from 'lucide-react';
+import { TrendingUp, TrendingDown, Users, User, DollarSign, ChevronRight, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { tokens } from '@/lib/design-tokens';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
-import { useTipsDrilldown, type StylistTipMetrics } from '@/hooks/useTipsDrilldown';
+import { useTipsDrilldown, type StylistTipMetrics, type RawTipAppointment } from '@/hooks/useTipsDrilldown';
 
 import { useActiveLocations } from '@/hooks/useLocations';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
@@ -33,6 +33,7 @@ export function TipsDrilldownPanel({ isOpen, parentLocationId, dateFrom, dateTo 
   const [locationFilter, setLocationFilter] = useState(parentLocationId || 'all');
   const [showAll, setShowAll] = useState(false);
   const [showAllTotalTips, setShowAllTotalTips] = useState(false);
+  const [expandedStylist, setExpandedStylist] = useState<string | null>(null);
 
   const { data: locations } = useActiveLocations();
   const { effectiveOrganization } = useOrganizationContext();
@@ -78,7 +79,7 @@ export function TipsDrilldownPanel({ isOpen, parentLocationId, dateFrom, dateTo 
     return locationFilter;
   }, [locationFilter, regionFilter, locationRegionMap]);
 
-  const { byStylist, byTotalTips, isLoading } = useTipsDrilldown({
+  const { byStylist, byTotalTips, rawAppointments, isLoading } = useTipsDrilldown({
     dateFrom,
     dateTo,
     locationId: effectiveLocationId !== 'all' ? effectiveLocationId : undefined,
@@ -246,7 +247,14 @@ export function TipsDrilldownPanel({ isOpen, parentLocationId, dateFrom, dateTo 
                     </div>
                     <div className="space-y-1">
                       {(showAllTotalTips ? filteredTotalTips : filteredTotalTips.slice(0, 10)).map((stylist, index) => (
-                        <TotalTipRow key={stylist.stylistUserId} stylist={stylist} index={index} />
+                        <TotalTipRow
+                          key={stylist.stylistUserId}
+                          stylist={stylist}
+                          index={index}
+                          isExpanded={expandedStylist === stylist.stylistUserId}
+                          onToggle={() => setExpandedStylist(expandedStylist === stylist.stylistUserId ? null : stylist.stylistUserId)}
+                          rawAppointments={rawAppointments}
+                        />
                       ))}
                     </div>
                     {filteredTotalTips.length > 10 && (
@@ -276,7 +284,14 @@ export function TipsDrilldownPanel({ isOpen, parentLocationId, dateFrom, dateTo 
                   </div>
                   <div className="space-y-1">
                     {topEarners.map((stylist, index) => (
-                      <StylistTipRow key={stylist.stylistUserId} stylist={stylist} index={index} />
+                      <StylistTipRow
+                        key={stylist.stylistUserId}
+                        stylist={stylist}
+                        index={index}
+                        isExpanded={expandedStylist === stylist.stylistUserId}
+                        onToggle={() => setExpandedStylist(expandedStylist === stylist.stylistUserId ? null : stylist.stylistUserId)}
+                        rawAppointments={rawAppointments}
+                      />
                     ))}
                   </div>
                   {filteredStylists.length > 10 && (
@@ -306,7 +321,15 @@ export function TipsDrilldownPanel({ isOpen, parentLocationId, dateFrom, dateTo 
                     </div>
                     <div className="space-y-1">
                       {coachingOpportunities.map((stylist, index) => (
-                        <StylistTipRow key={stylist.stylistUserId} stylist={stylist} index={index} isCoaching />
+                        <StylistTipRow
+                          key={stylist.stylistUserId}
+                          stylist={stylist}
+                          index={index}
+                          isCoaching
+                          isExpanded={expandedStylist === stylist.stylistUserId}
+                          onToggle={() => setExpandedStylist(expandedStylist === stylist.stylistUserId ? null : stylist.stylistUserId)}
+                          rawAppointments={rawAppointments}
+                        />
                       ))}
                     </div>
                   </div>
@@ -334,8 +357,68 @@ function SelfMetricCard({ label, value, alert = false }: { label: string; value:
 }
 
 
+/* ── Appointment sub-list for expanded stylist ── */
+function StylistAppointmentList({ stylistKey, rawAppointments }: { stylistKey: string; rawAppointments: RawTipAppointment[] }) {
+  const { formatCurrency: fmtCurrency } = useFormatCurrency();
+
+  const appointments = useMemo(() => {
+    const filtered = rawAppointments.filter(a => {
+      const key = a.stylist_user_id || (a.phorest_staff_id ? `phorest:${a.phorest_staff_id}` : null);
+      return key === stylistKey;
+    });
+    // Deduplicate by composite key
+    const seen = new Set<string>();
+    const deduped = filtered.filter(a => {
+      const tip = a.tip_amount ?? 0;
+      const k = `${a.phorest_staff_id}|${a.phorest_client_id}|${a.appointment_date}|${tip}`;
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+    return deduped.sort((a, b) => b.appointment_date.localeCompare(a.appointment_date));
+  }, [stylistKey, rawAppointments]);
+
+  if (appointments.length === 0) return null;
+
+  return (
+    <motion.div
+      initial={{ height: 0, opacity: 0 }}
+      animate={{ height: 'auto', opacity: 1 }}
+      exit={{ height: 0, opacity: 0 }}
+      transition={{ duration: 0.2, ease: 'easeInOut' }}
+      className="overflow-hidden"
+    >
+      <div className="pl-12 pr-2 py-1 space-y-0.5">
+        {appointments.map((apt, i) => {
+          const tip = apt.tip_amount ?? 0;
+          const dateStr = new Date(apt.appointment_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+          return (
+            <div key={i} className="flex items-center gap-2 py-0.5 text-xs">
+              <span className="text-muted-foreground min-w-[50px]">{dateStr}</span>
+              <span className="text-foreground truncate flex-1">{apt.service_name || 'Service'}</span>
+              <span className="font-display tabular-nums min-w-[45px] text-right">
+                <BlurredAmount>{fmtCurrency(tip)}</BlurredAmount>
+              </span>
+              {tip === 0 && (
+                <span className="text-destructive text-[10px] min-w-[35px]">no tip</span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </motion.div>
+  );
+}
+
 /* ── Stylist row for leadership table ── */
-function StylistTipRow({ stylist, index, isCoaching = false }: { stylist: StylistTipMetrics; index: number; isCoaching?: boolean }) {
+function StylistTipRow({ stylist, index, isCoaching = false, isExpanded, onToggle, rawAppointments }: {
+  stylist: StylistTipMetrics;
+  index: number;
+  isCoaching?: boolean;
+  isExpanded: boolean;
+  onToggle: () => void;
+  rawAppointments: RawTipAppointment[];
+}) {
   const { formatCurrency: fmtCurrency, formatCurrencyWhole: fmtWhole } = useFormatCurrency();
   const initials = stylist.displayName
     .split(' ')
@@ -344,41 +427,58 @@ function StylistTipRow({ stylist, index, isCoaching = false }: { stylist: Stylis
     .slice(0, 2)
     .toUpperCase();
 
+  const ChevronIcon = isExpanded ? ChevronDown : ChevronRight;
+
   return (
-    <motion.div
-      initial={{ opacity: 0, x: -8 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: index * 0.04 }}
-      className="flex items-center gap-3 py-1.5 px-2 rounded-md hover:bg-muted/30 transition-colors"
-    >
-      <Avatar className="w-7 h-7">
-        <AvatarImage src={stylist.photoUrl ?? undefined} />
-        <AvatarFallback className="text-[10px]">{initials}</AvatarFallback>
-      </Avatar>
-      <span className="text-sm text-foreground font-medium min-w-[90px] truncate">
-        {stylist.displayName}
-      </span>
-      <span className="text-sm font-display tabular-nums min-w-[55px] text-right">
-        <BlurredAmount>{fmtCurrency(stylist.avgTip)}</BlurredAmount>
-      </span>
-      <span className="text-xs text-muted-foreground tabular-nums min-w-[40px] text-right">
-        {stylist.tipPercentage.toFixed(0)}%
-      </span>
-      <span className={cn(
-        "text-xs tabular-nums min-w-[45px] text-right",
-        stylist.noTipRate > 30 ? "text-destructive" : "text-muted-foreground"
-      )}>
-        {stylist.noTipRate.toFixed(0)}% NT
-      </span>
-      <span className="text-xs text-muted-foreground tabular-nums min-w-[55px] text-right">
-        <BlurredAmount>{fmtWhole(Math.round(stylist.totalTips))}</BlurredAmount>
-      </span>
-    </motion.div>
+    <div>
+      <motion.div
+        initial={{ opacity: 0, x: -8 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: index * 0.04 }}
+        className="flex items-center gap-3 py-1.5 px-2 rounded-md hover:bg-muted/30 transition-colors cursor-pointer"
+        onClick={onToggle}
+      >
+        <ChevronIcon className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+        <Avatar className="w-7 h-7">
+          <AvatarImage src={stylist.photoUrl ?? undefined} />
+          <AvatarFallback className="text-[10px]">{initials}</AvatarFallback>
+        </Avatar>
+        <span className="text-sm text-foreground font-medium min-w-[90px] truncate">
+          {stylist.displayName}
+        </span>
+        <span className="text-sm font-display tabular-nums min-w-[55px] text-right">
+          <BlurredAmount>{fmtCurrency(stylist.avgTip)}</BlurredAmount>
+        </span>
+        <span className="text-xs text-muted-foreground tabular-nums min-w-[40px] text-right">
+          {stylist.tipPercentage.toFixed(0)}%
+        </span>
+        <span className={cn(
+          "text-xs tabular-nums min-w-[45px] text-right",
+          stylist.noTipRate > 30 ? "text-destructive" : "text-muted-foreground"
+        )}>
+          {stylist.noTipRate.toFixed(0)}% NT
+        </span>
+        <span className="text-xs text-muted-foreground tabular-nums min-w-[55px] text-right">
+          <BlurredAmount>{fmtWhole(Math.round(stylist.totalTips))}</BlurredAmount>
+        </span>
+      </motion.div>
+      <AnimatePresence>
+        {isExpanded && (
+          <StylistAppointmentList stylistKey={stylist.stylistUserId} rawAppointments={rawAppointments} />
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
 
 /* ── Total tip row (emphasizes total tips first) ── */
-function TotalTipRow({ stylist, index }: { stylist: StylistTipMetrics; index: number }) {
+function TotalTipRow({ stylist, index, isExpanded, onToggle, rawAppointments }: {
+  stylist: StylistTipMetrics;
+  index: number;
+  isExpanded: boolean;
+  onToggle: () => void;
+  rawAppointments: RawTipAppointment[];
+}) {
   const { formatCurrencyWhole: fmtWhole } = useFormatCurrency();
   const initials = stylist.displayName
     .split(' ')
@@ -387,29 +487,40 @@ function TotalTipRow({ stylist, index }: { stylist: StylistTipMetrics; index: nu
     .slice(0, 2)
     .toUpperCase();
 
+  const ChevronIcon = isExpanded ? ChevronDown : ChevronRight;
+
   return (
-    <motion.div
-      initial={{ opacity: 0, x: -8 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: index * 0.04 }}
-      className="flex items-center gap-3 py-1.5 px-2 rounded-md hover:bg-muted/30 transition-colors"
-    >
-      <Avatar className="w-7 h-7">
-        <AvatarImage src={stylist.photoUrl ?? undefined} />
-        <AvatarFallback className="text-[10px]">{initials}</AvatarFallback>
-      </Avatar>
-      <span className="text-sm text-foreground font-medium min-w-[90px] truncate">
-        {stylist.displayName}
-      </span>
-      <span className="text-sm font-display tabular-nums min-w-[55px] text-right">
-        <BlurredAmount>{fmtWhole(Math.round(stylist.totalTips))}</BlurredAmount>
-      </span>
-      <span className="text-xs text-muted-foreground tabular-nums min-w-[40px] text-right">
-        {stylist.tipPercentage.toFixed(0)}%
-      </span>
-      <span className="text-xs text-muted-foreground tabular-nums min-w-[55px] text-right">
-        {stylist.appointmentCount} appts
-      </span>
-    </motion.div>
+    <div>
+      <motion.div
+        initial={{ opacity: 0, x: -8 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: index * 0.04 }}
+        className="flex items-center gap-3 py-1.5 px-2 rounded-md hover:bg-muted/30 transition-colors cursor-pointer"
+        onClick={onToggle}
+      >
+        <ChevronIcon className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+        <Avatar className="w-7 h-7">
+          <AvatarImage src={stylist.photoUrl ?? undefined} />
+          <AvatarFallback className="text-[10px]">{initials}</AvatarFallback>
+        </Avatar>
+        <span className="text-sm text-foreground font-medium min-w-[90px] truncate">
+          {stylist.displayName}
+        </span>
+        <span className="text-sm font-display tabular-nums min-w-[55px] text-right">
+          <BlurredAmount>{fmtWhole(Math.round(stylist.totalTips))}</BlurredAmount>
+        </span>
+        <span className="text-xs text-muted-foreground tabular-nums min-w-[40px] text-right">
+          {stylist.tipPercentage.toFixed(0)}%
+        </span>
+        <span className="text-xs text-muted-foreground tabular-nums min-w-[55px] text-right">
+          {stylist.appointmentCount} appts
+        </span>
+      </motion.div>
+      <AnimatePresence>
+        {isExpanded && (
+          <StylistAppointmentList stylistKey={stylist.stylistUserId} rawAppointments={rawAppointments} />
+        )}
+      </AnimatePresence>
+    </div>
   );
 }

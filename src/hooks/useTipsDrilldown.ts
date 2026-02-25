@@ -27,11 +27,23 @@ export interface PaymentMethodTipMetrics {
   count: number;
 }
 
+export interface RawTipAppointment {
+  phorest_staff_id: string | null;
+  stylist_user_id: string | null;
+  tip_amount: number | null;
+  total_price: number | null;
+  service_name: string | null;
+  appointment_date: string;
+  phorest_client_id: string | null;
+  location_id: string | null;
+}
+
 export interface TipsDrilldownData {
   byStylist: StylistTipMetrics[];
   byTotalTips: StylistTipMetrics[];
   byCategory: Record<string, CategoryTipMetrics>;
   byPaymentMethod: Record<string, PaymentMethodTipMetrics>;
+  rawAppointments: RawTipAppointment[];
   isLoading: boolean;
   error: Error | null;
 }
@@ -278,6 +290,7 @@ export function useTipsDrilldown({ dateFrom, dateTo, locationId, minAppointments
 
   return {
     ...result,
+    rawAppointments: (appointments ?? []) as RawTipAppointment[],
     isLoading: aptsLoading || profilesLoading || staffMappingLoading || txLoading,
     error: aptsError as Error | null,
   };
