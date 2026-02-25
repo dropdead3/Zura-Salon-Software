@@ -1,60 +1,167 @@
 
 
-## Review System Gap Analysis and Enhancement Roadmap
+## Phorest Detachment: Full Standalone Migration Plan
 
-Your review infrastructure is well-architected -- you have the full pipeline from request to gate to external share to low-score alerting. Here are the gaps and enhancements worth considering, ranked by operational leverage.
+Yes, this is absolutely doable. The architecture is already partially there -- you have native `appointments`, `clients`, and `services` tables with the right columns. What's missing is: (1) native transaction tables, (2) a data migration to copy all Phorest data into native tables, and (3) redirecting ~130 files from `phorest_*` queries to native tables.
 
-### Gap 1: No Automated Feedback Request Trigger
+Here's the current state and the full plan.
 
-The `send-feedback-request` edge function exists but is never called automatically. There is no trigger after an appointment is marked completed. Today, sending a feedback request requires manual invocation.
+### Current Data Inventory
 
-**Enhancement:** Add a "Request Review" button on completed appointments in the drawer (when no feedback response exists for that `appointment_id`). Longer term, wire up automatic dispatch via the `process-client-automations` or a scheduled function that fires X hours after appointment completion.
+| Table | Phorest Rows | Native Rows | Gap |
+|---|---|---|---|
+| Appointments | 584 | 127 | Native exists, needs migration + column parity |
+| Clients | 3,166 | 505 | Native exists, needs migration + column parity |
+| Services | (phorest_services) | services table exists | Need data migration |
+| Transaction Items | 771 | **No native table** | Must create schema |
+| Daily Sales Summary | phorest_daily_sales_summary | **No native table** | Must create schema |
+| Staff Mapping | phorest_staff_mapping | employee_profiles | Staff identity already native via user_id |
 
-### Gap 2: No "Request Review" CTA in Appointment Drawer
+### Architecture: How It Will Work
 
-The drawer now shows review history but has no action to request one. For completed appointments with no linked feedback response, a subtle "Request Feedback" ghost button below the review card would close the loop.
+```text
+┌─────────────────────────────────────┐
+│         Feature Code (hooks/UI)      │
+│  Queries ONLY native tables:         │
+│  appointments, clients, services,    │
+│  transaction_items, daily_sales      │
+└──────────────┬───────────────────────┘
+               │
+    ┌──────────▼──────────────┐
+    │    Native Zura Tables    │
+    │  (source of truth)       │
+    └──────────▲──────────────┘
+               │
+    ┌──────────┴──────────────┐
+    │  Phorest Sync Adapter    │  ← Optional integration
+    │  Writes INTO native      │     that can be disconnected
+    │  tables via sync jobs    │     without losing data
+    └─────────────────────────┘
+```
 
-### Gap 3: Appointment-Specific Review Highlighting
+When Phorest is connected, sync jobs populate/update native tables. When disconnected, native tables retain all data and the platform runs standalone.
 
-`useClientReviewHistory` returns all reviews for a client but doesn't flag which review (if any) belongs to THIS appointment. Matching on `appointment_id` would let you show "Review for this visit" with distinct treatment vs. historical reviews.
+### Phase 1: Schema Completion (New Tables + Column Alignment)
 
-### Gap 4: Feedback Response Rate / Conversion Tracking
+**1a. Create `transaction_items` table** (native equivalent of `phorest_transaction_items`):
+- All columns from `phorest_transaction_items` mapped to native equivalents
+- `organization_id` for RLS scoping
+- `external_id` + `import_source` for provenance tracking
+- `staff_user_id` (UUID) instead of `phorest_staff_id` (text)
+- `client_id` (UUID FK to `clients`) instead of `phorest_client_id` (text)
+- RLS policies for org members
 
-The table tracks `external_review_clicked` and `passed_review_gate`, but no dashboard surface aggregates these into conversion metrics:
-- Requests sent → Responded (response rate)
-- Responded → Passed gate (quality rate)
-- Passed gate → Clicked external (conversion rate)
+**1b. Create `daily_sales_summary` table** (native equivalent of `phorest_daily_sales_summary`):
+- `organization_id`, `location_id`, `summary_date`
+- Revenue breakdowns, transaction counts
+- RLS policies
 
-This is a funnel that belongs on the Feedback analytics page.
+**1c. Align native table columns** -- add missing columns to existing native tables:
+- `appointments`: add `phorest_client_id`, `phorest_staff_id`, `phorest_id`, `is_new_client`, `rebook_declined_reason`, `rescheduled_from_date`, `rescheduled_from_time`, `rescheduled_at`, `created_by`, `recurrence_rule`, `recurrence_group_id`, `recurrence_index` (columns present in phorest_appointments but missing from native)
+- `clients`: add `referred_by`, `client_category`, `prompt_client_notes`, `prompt_appointment_notes`, `is_banned`, `ban_reason`, `banned_at`, `banned_by`, `is_archived`, `archived_at`, `archived_by`, `preferred_services`, `branch_name` (columns in phorest_clients not yet in native)
+- `services`: add `phorest_service_id`, `phorest_branch_id` for external ID tracking (some already have `external_id`)
 
-### Gap 5: Staff-Level Review Attribution
+### Phase 2: Data Migration (One-Time Copy)
 
-`client_feedback_responses` has `staff_user_id` but no surface aggregates reviews per staff member. A stylist-level review summary (average rating, NPS, total reviews) would be high-value for performance coaching and the Weekly Intelligence Brief.
+A database function + edge function that:
 
-### Gap 6: Review Expiry / Stale Token Cleanup
+1. **Migrates phorest_appointments → appointments**: Copies all 584 records, deduplicating against the 127 already in native (matching on `external_id` = `phorest_id` or date+time+client composite key). Sets `import_source = 'phorest'`, `external_id = phorest_id`.
 
-Tokens expire after 7 days (`expires_at`), but there's no cleanup or re-send mechanism. Expired unfilled requests represent lost signal. Consider:
-- A scheduled function to mark expired tokens
-- A "Resend" action for expired-but-unanswered requests
+2. **Migrates phorest_clients → clients**: Copies all 3,166 records, deduplicating against the 505 already native (matching on `phorest_client_id` or email/phone normalized). Maps `phorest_client_id` to `clients.phorest_client_id` for backward compatibility.
 
-### Gap 7: Client Directory Integration
+3. **Migrates phorest_services → services**: Copies active services, deduplicating on name + category. Sets `external_id = phorest_service_id`.
 
-The client profile/directory page doesn't surface review history. The same `useClientReviewHistory` hook could power a "Reviews" section on the client detail page, not just the appointment drawer.
+4. **Migrates phorest_transaction_items → transaction_items**: Copies all 771 records, resolving `phorest_staff_id` → `staff_user_id` via `phorest_staff_mapping`, and `phorest_client_id` → `client_id` via the client migration mapping.
 
-### Gap 8: Review Sentiment in Weekly Intelligence Brief
+5. **Migrates phorest_daily_sales_summary → daily_sales_summary**: Direct copy with org scoping.
 
-The `lever-engine` and `weekly-digest` functions don't incorporate feedback signals. NPS drift, low-score spikes, or declining review response rates are high-confidence levers that belong in the Weekly Intelligence Brief.
+6. **Staff identity resolution**: `phorest_staff_mapping` becomes a lookup table only. All migrated records use `staff_user_id` (the native employee_profiles UUID) directly. After migration, no feature code needs `phorest_staff_mapping`.
 
-### Suggested Priority Order
+### Phase 3: Hook Migration (Redirect Queries)
 
-| Priority | Enhancement | Complexity |
-|---|---|---|
-| 1 | "Request Feedback" button on completed appointments | Low |
-| 2 | Highlight THIS appointment's review in drawer | Low |
-| 3 | Feedback funnel conversion dashboard | Medium |
-| 4 | Staff-level review aggregation | Medium |
-| 5 | Auto-send feedback request after completion | Medium |
-| 6 | Client Directory review section | Low |
-| 7 | Token expiry cleanup + resend | Low |
-| 8 | Review signals in Weekly Intelligence Brief | High (Phase 2) |
+This is the largest phase -- redirecting ~130 files. Organized by domain:
+
+**3a. Appointments Domain (~76 files)**
+- All hooks querying `phorest_appointments` redirect to `appointments`
+- Column names are nearly identical; main change is removing `phorest_` prefix references
+- `phorest_client_id` lookups change to `client_id` (UUID FK)
+- `phorest_staff_id` lookups change to `staff_user_id` (already exists on native table)
+
+Key files: `useTodaysQueue`, `useCalendar`, `useAppointmentsHub`, `useOperationalAnalytics`, `useLiveSessionSnapshot`, `AppointmentDetailSheet`, `Schedule.tsx`
+
+**3b. Clients Domain (~37 files)**
+- All hooks querying `phorest_clients` redirect to `clients`
+- `phorest_client_id` becomes `external_id` or `phorest_client_id` (kept as optional column for backward compat)
+- `name` (single field) → `first_name` + `last_name` with computed `name`
+- Client detail sheets, directory, engagement hooks all redirect
+
+Key files: `ClientDetailSheet`, `ClientDirectory`, `useClientEngagement`, `useClientExperience`, `useTipsDrilldown`
+
+**3c. Transactions/Sales Domain (~16 files)**
+- All hooks querying `phorest_transaction_items` redirect to `transaction_items`
+- `phorest_staff_id` → `staff_user_id`, `phorest_client_id` → `client_id`
+- Staff name resolution uses `employee_profiles` directly (no more `phorest_staff_mapping` joins)
+
+Key files: `useSalesData`, `useRetailAnalytics`, `useTransactions`, `useProductSalesAnalytics`, `useAppointmentTransactionBreakdown`
+
+**3d. Services Domain (~14 files)**
+- All hooks querying `phorest_services` redirect to `services`
+- Column names align closely; `phorest_service_id` → `external_id`
+
+Key files: `usePhorestServices` → rename to `useServices`, `useServiceLookup`, `useServiceEfficiency`
+
+**3e. Staff Identity (~37 files)**
+- All `phorest_staff_mapping` joins eliminated
+- Direct query to `employee_profiles` for staff name/identity
+- This is the most cross-cutting change but also the simplest -- replace a 2-table join with a single-table query
+
+### Phase 4: Sync Adapter Update
+
+Update the Phorest sync functions to write INTO native tables instead of `phorest_*` tables:
+- `sync-phorest-data` → writes to `appointments`, `clients`, `services`, `transaction_items`
+- Sets `import_source = 'phorest'` and `external_id` for deduplication
+- When Phorest is disconnected, sync simply stops -- data persists in native tables
+
+The `phorest_*` tables become staging/archive tables that can eventually be dropped.
+
+### Phase 5: Cleanup
+
+- Remove or deprecate `phorest_*` table direct queries from all feature code
+- `phorest_staff_mapping` becomes optional (only needed during active Phorest connection for ID resolution)
+- Phorest settings UI gets a "Disconnect" action that disables sync without data loss
+- POS adapter interface updated to read from native tables (becomes a thin wrapper)
+
+### Execution Order (Recommended)
+
+| Step | What | Files Affected | Risk |
+|---|---|---|---|
+| 1 | Create native `transaction_items` + `daily_sales_summary` | DB migration only | Low |
+| 2 | Add missing columns to `appointments`, `clients` | DB migration only | Low |
+| 3 | Run data migration (copy phorest_* → native) | Edge function + DB function | Medium -- needs dedup logic |
+| 4 | Migrate staff identity queries (drop `phorest_staff_mapping` joins) | ~37 files | Medium |
+| 5 | Migrate appointments hooks | ~76 files | High -- core scheduling |
+| 6 | Migrate clients hooks | ~37 files | Medium |
+| 7 | Migrate transactions/sales hooks | ~16 files | Medium |
+| 8 | Migrate services hooks | ~14 files | Low |
+| 9 | Update Phorest sync to write to native tables | ~5 edge functions | Medium |
+| 10 | End-to-end testing | All surfaces | Critical |
+
+### What This Means for You
+
+After this migration:
+- **Disconnect Phorest → nothing breaks.** All data lives in native Zura tables.
+- **Reconnect Phorest later → sync resumes.** It writes into native tables using `external_id` dedup.
+- **Connect a different POS → same pattern.** The adapter writes to native tables.
+- **All analytics, history, transactions, reviews → preserved.** They query native tables.
+
+This is a substantial migration (~130 files + schema work + data migration), but the architecture supports it. The native tables already exist for appointments, clients, and services -- we're completing the picture with transactions and doing the query redirect.
+
+### Recommended Approach
+
+Given the scope, I recommend we execute this in batches:
+1. **Start with schema + data migration** (Steps 1-3) -- no feature code changes yet, just ensure all data exists in native tables
+2. **Then migrate by domain**, starting with staff identity (most cross-cutting, unblocks everything else)
+3. **Test each domain** before moving to the next
+
+Shall I begin with Step 1 (schema creation) and Step 3 (data migration function)?
 
