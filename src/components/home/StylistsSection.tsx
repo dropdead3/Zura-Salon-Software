@@ -29,6 +29,7 @@ import { useSpecialtyOptions } from "@/hooks/useSpecialtyOptions";
 import { sampleStylists } from "@/data/sampleStylists";
 
 import { locations as staticLocations, stylistLevels, getLocationName, type Stylist, type Location } from "@/data/stylists";
+import { useStylistLevels } from "@/hooks/useStylistLevels";
 
 // Helper to convert text to title case
 const toTitleCase = (str: string) => {
@@ -414,6 +415,9 @@ export function StylistsSection() {
   // Fetch specialty options from database
   const { data: specialtyOptionsData } = useSpecialtyOptions();
 
+  // Fetch stylist levels from database
+  const { data: dbLevels } = useStylistLevels();
+
   // Fetch locations from database
   const { data: dbLocations } = useActiveLocations();
   
@@ -605,10 +609,9 @@ export function StylistsSection() {
                     <TooltipContent side="top" className="max-w-[280px] p-4 bg-background text-foreground border border-border">
                       <p className="font-medium mb-2">Stylist Level System</p>
                       <ul className="text-xs space-y-1.5 text-foreground/80">
-                        <li><span className="font-medium text-foreground">Level 1 ($):</span> Rising talent building their craft</li>
-                        <li><span className="font-medium text-foreground">Level 2 ($$):</span> Skilled stylist with proven expertise</li>
-                        <li><span className="font-medium text-foreground">Level 3 ($$$):</span> Master artist & senior specialist</li>
-                        <li><span className="font-medium text-foreground">Level 4 ($$$$):</span> Elite specialist & industry leader</li>
+                        {dbLevels?.map((level) => (
+                          <li key={level.id}><span className="font-medium text-foreground">{level.client_label}:</span> {level.description || level.label}</li>
+                        ))}
                       </ul>
                       <p className="text-xs text-muted-foreground mt-2">Higher levels reflect experience, training, and demand.</p>
                     </TooltipContent>
@@ -673,7 +676,7 @@ export function StylistsSection() {
         {filteredStylists.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredStylists.map((stylist) => (
-              <StylistFlipCard key={stylist.id} stylist={stylist} index={0} selectedLocation={selectedLocation} />
+              <StylistFlipCard key={stylist.id} stylist={stylist} index={0} selectedLocation={selectedLocation} levels={dbLevels} />
             ))}
             
             {/* Join Our Team Card - dynamically spans remaining columns */}

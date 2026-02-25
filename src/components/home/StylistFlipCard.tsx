@@ -27,9 +27,11 @@ interface StylistFlipCardProps {
   photoFocalX?: number;
   /** Override focal point Y for the card image (0-100) */
   photoFocalY?: number;
+  /** Stylist levels from database for tooltip display */
+  levels?: Array<{ id: string; client_label: string; description: string | null; label: string }>;
 }
 
-export function StylistFlipCard({ stylist, index, selectedLocation, isPreview, photoFocalX, photoFocalY }: StylistFlipCardProps) {
+export function StylistFlipCard({ stylist, index, selectedLocation, isPreview, photoFocalX, photoFocalY, levels }: StylistFlipCardProps) {
   const [isFlipped, setIsFlipped] = useState(false);
 
   const handleFlip = () => {
@@ -125,10 +127,9 @@ export function StylistFlipCard({ stylist, index, selectedLocation, isPreview, p
                     <TooltipContent side="top" className="max-w-[280px] p-4 bg-background text-foreground border border-border">
                       <p className="font-medium mb-2">Stylist Level System</p>
                       <ul className="text-xs space-y-1.5 text-foreground/80">
-                        <li><span className="font-medium text-foreground">Level 1:</span> Rising talent building their craft</li>
-                        <li><span className="font-medium text-foreground">Level 2:</span> Skilled stylist with proven expertise</li>
-                        <li><span className="font-medium text-foreground">Level 3:</span> Master artist & senior specialist</li>
-                        <li><span className="font-medium text-foreground">Level 4:</span> Elite specialist & industry leader</li>
+                        {levels?.map((level) => (
+                          <li key={level.id}><span className="font-medium text-foreground">{level.client_label}:</span> {level.description || level.label}</li>
+                        ))}
                       </ul>
                       <p className="text-xs text-muted-foreground mt-2">Higher levels reflect experience, training, and demand.</p>
                     </TooltipContent>
