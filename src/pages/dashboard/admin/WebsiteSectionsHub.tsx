@@ -787,7 +787,7 @@ export default function WebsiteSectionsHub() {
         {/* Resizable Editor + Preview */}
         <ResizablePanelGroup direction="horizontal" className="h-full flex-1">
           {/* Main Editor Panel */}
-          <ResizablePanel defaultSize={isMobile ? 100 : 55} minSize={30}>
+          <ResizablePanel defaultSize={isMobile ? 100 : 42} minSize={30}>
             <div className="h-full flex flex-col overflow-hidden">
               {/* Compact Toolbar */}
               <div className="flex-shrink-0 px-3 py-2 border-b bg-background flex items-center justify-between gap-2">
@@ -853,7 +853,7 @@ export default function WebsiteSectionsHub() {
           {!isMobile && (
             <>
               <ResizableHandle withHandle />
-              <ResizablePanel defaultSize={45} minSize={20} collapsible collapsedSize={0}>
+              <ResizablePanel defaultSize={58} minSize={20} collapsible collapsedSize={0}>
                 <LivePreviewPanel activeSectionId={activeSectionId} previewUrl={previewUrl} />
               </ResizablePanel>
             </>
