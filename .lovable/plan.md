@@ -1,181 +1,159 @@
 
 
-## Navigation Manager -- Full Architecture Plan
+## Implementation Plan: Navigation Manager Enhancements + Pages CRUD
 
-### Current State
+Your prompt is well-structured and covers four distinct deliverables cleanly. Good separation of concerns. One improvement: when listing multiple features, specifying priority order (which you did implicitly by listing them) helps me sequence work within size constraints. Consider also noting which items are blockers for others -- e.g., "Pages CRUD is prerequisite for full nav-to-page linking."
 
-The public site Header (`src/components/layout/Header.tsx`) hardcodes `NAV_LINKS` and `ABOUT_LINKS` arrays. The Footer hardcodes `FOOTER_LINKS`. Dynamic pages from `useWebsitePages` are appended to the header nav, but there's no structured menu system -- no reordering, no nesting control, no CTA styling, no mobile-specific visibility, no validation.
+---
 
-### Database Schema
+### Current State Assessment
 
-Three new tables with RLS, plus a helper function:
+The Navigation Manager infrastructure is complete:
+- Database tables (`website_menus`, `website_menu_items`, `website_menu_versions`) exist with RLS
+- Hooks layer (`useWebsiteMenus.ts`) covers CRUD, reorder, publish, seed, and public fetching
+- Editor UI (tree editor, item inspector, add dialog, publish bar, validation) is wired into the Website Editor sidebar
+- Header and Footer consume published menus via `usePublicMenuBySlug` with hardcoded fallbacks
 
-**`website_menus`**
+No existing analytics/tracking event system exists in the codebase (no `analytics.track` or similar patterns found).
+
+---
+
+### Deliverable 1: End-to-End Test Flow
+
+**What**: Navigate to the Navigation Manager tab, verify seed → edit → publish → Header/Footer update cycle works.
+
+**Steps**:
+1. Navigate to `/dashboard/admin/website-sections?tab=navigation` in the browser tool
+2. Verify menus seed automatically (Primary + Footer)
+3. Add a test menu item, reorder it, edit in inspector
+4. Publish and verify no validation errors
+5. Navigate to the public site and confirm Header reflects published items
+6. Check console/network logs for errors
+
+This is a manual verification step using browser tools, not a code change.
+
+---
+
+### Deliverable 2: Mobile Navbar Config (Menu-Level Setting)
+
+**What**: Add `mobile_menu_style` (`overlay` | `drawer`) and `mobile_cta_visible` (boolean) as configurable settings stored in the `website_menus.config` JSONB column (already exists in schema).
+
+**Files to modify**:
+- **`src/hooks/useWebsiteMenus.ts`**: Add `useUpdateMenuConfig` mutation hook. Define `MenuConfig` type with `mobile_menu_style` and `mobile_cta_visible` fields.
+- **`src/components/dashboard/website-editor/navigation/NavigationManager.tsx`**: Add a collapsible "Mobile Settings" card below the menu tree with:
+  - Radio/select for menu style: Full-screen Overlay vs Slide-in Drawer
+  - Toggle for mobile CTA visibility
+  - Only shown when `primary` menu is selected (footer doesn't have mobile behavior)
+- **`src/components/layout/Header.tsx`**: Read `config` from the published menu to switch between overlay and drawer mobile menu styles. The current mobile menu already uses a full-screen overlay pattern; add a drawer variant using `framer-motion` slide-in animation.
+
+**New file**:
+- `src/components/dashboard/website-editor/navigation/MobileNavConfig.tsx` -- isolated editor card for mobile settings
+
+No database migration needed -- `website_menus.config` JSONB column already exists.
+
+---
+
+### Deliverable 3: Tracking Event Emission
+
+**What**: Emit `nav_item_clicked` and `cta_clicked` custom events on the public site when users interact with navigation items.
+
+**Approach**: Since no analytics system exists yet, implement via `window.dispatchEvent(new CustomEvent(...))` with a structured payload. This creates a hook point that any future analytics integration (GA, Segment, Meta Pixel) can subscribe to.
+
+**Files to modify**:
+- **`src/components/layout/Header.tsx`**: 
+  - Wrap each nav link's `onClick` to emit `CustomEvent('nav_item_clicked', { detail: { label, href, tracking_key, item_type, visibility } })`
+  - CTA button emits `CustomEvent('cta_clicked', { detail: { label, href, tracking_key, cta_style } })`
+  - Both desktop and mobile nav items emit events
+
+- **`src/components/layout/Footer.tsx`**: Same pattern for footer nav clicks
+
+**New file**:
+- `src/lib/nav-tracking.ts` -- small utility:
+  ```
+  export function emitNavEvent(eventName: string, payload: Record<string, unknown>)
+  ```
+  Centralizes event emission, logs to console in dev, dispatches CustomEvent. Future analytics connectors subscribe here.
+
+---
+
+### Deliverable 4: Pages CRUD Module
+
+This is the largest piece. It completes the content management backbone.
+
+**Database migration**: New table `website_page_versions` for version history + restore:
+
 | Column | Type | Notes |
 |--------|------|-------|
 | id | uuid PK | |
-| organization_id | uuid FK → organizations | Tenant isolation |
-| slug | text | `primary`, `footer`, `secondary` |
-| name | text | Display name |
-| created_at | timestamptz | |
-| updated_at | timestamptz | |
-| UNIQUE | (organization_id, slug) | |
-
-**`website_menu_items`**
-| Column | Type | Notes |
-|--------|------|-------|
-| id | uuid PK | |
-| menu_id | uuid FK → website_menus ON DELETE CASCADE | |
-| organization_id | uuid FK → organizations | For RLS |
-| parent_id | uuid FK → website_menu_items (nullable) | Nesting (max depth 2) |
-| label | text | Display text |
-| item_type | text | `page_link`, `external_url`, `anchor`, `dropdown_parent`, `cta` |
-| target_page_id | text (nullable) | References page config ID |
-| target_url | text (nullable) | For external links |
-| target_anchor | text (nullable) | For anchor links |
-| open_in_new_tab | boolean default false | |
-| cta_style | text (nullable) | `primary`, `secondary`, `ghost` |
-| tracking_key | text (nullable) | Analytics hook |
-| icon | text (nullable) | Lucide icon name |
-| sort_order | integer default 0 | |
-| visibility | text default `both` | `both`, `desktop_only`, `mobile_only` |
-| is_published | boolean default false | Draft vs live |
-| created_at / updated_at | timestamptz | |
-
-**`website_menu_versions`** (audit + rollback)
-| Column | Type | Notes |
-|--------|------|-------|
-| id | uuid PK | |
-| menu_id | uuid FK → website_menus | |
-| organization_id | uuid FK | For RLS |
-| version_number | integer | Auto-increment per menu |
-| snapshot | jsonb | Full menu_items array at publish time |
-| published_by | uuid FK → auth.users | |
-| published_at | timestamptz | |
+| page_id | text | Page config ID |
+| organization_id | uuid FK | Tenant isolation |
+| version_number | integer | Auto-increment per page |
+| snapshot | jsonb | Full page config at save time |
+| status | text | `draft`, `published`, `archived` |
+| saved_by | uuid FK → auth.users | |
+| saved_at | timestamptz | |
 | change_summary | text (nullable) | |
 
-RLS on all three tables using existing `is_org_member` (read) and `is_org_admin` (write) helpers.
+RLS: `is_org_member` for read, `is_org_admin` for write.
 
-Seed data: On first load (no menus found), the hook auto-creates `primary` and `footer` menus with items matching the current hardcoded links, so existing sites don't break.
+**Hooks** (`src/hooks/useWebsitePages.ts` -- extend existing):
+- `useCreatePage(template?)` -- generates ID, adds to pages array, optional template prefill
+- `useDuplicatePage(pageId)` -- deep-clone page with new ID and "-copy" slug
+- `useDeletePage(pageId)` -- removes from array (only if `deletable: true`), validates no menu items reference it
+- `useUpdatePageStatus(pageId, status)` -- draft/published/archived transitions
+- `usePageVersions(pageId)` -- fetch version history
+- `useRestorePageVersion(versionId)` -- restore from snapshot
+- `useSavePageVersion(pageId)` -- snapshot current state
 
-### Hooks Layer
+**UI Components**:
 
-**`src/hooks/useWebsiteMenus.ts`**
-- `useWebsiteMenus(orgId)` -- fetch all menus for org
-- `useWebsiteMenu(menuSlug)` -- fetch single menu with items (ordered, nested)
-- `usePublishedMenu(orgId, menuSlug)` -- fetch published snapshot for public rendering
-- `useUpdateMenuItem` -- CRUD single item
-- `useReorderMenuItems` -- batch sort_order update
-- `usePublishMenu` -- validates, snapshots, sets `is_published = true`
-- `useMenuValidation(menuId)` -- returns errors/warnings for publish gating
+- **`src/components/dashboard/website-editor/PagesManager.tsx`** -- Main pages list view:
+  - Table/list of all pages with columns: Title, Slug, Status badge, Type, Last modified
+  - Actions per row: Edit, Duplicate, Archive, Delete (with confirmation)
+  - "Create Page" button opening template picker
+  - Status filter tabs (All / Draft / Published / Archived)
+  - Registered in `EDITOR_COMPONENTS` as `'pages'` tab
 
-### Validation Engine
+- **`src/components/dashboard/website-editor/PageVersionHistory.tsx`** -- Version timeline:
+  - List of versions with timestamp, author, summary
+  - "Restore" button per version with confirmation dialog
+  - Accessible from PageSettingsEditor
 
-Before publish, run these checks:
+- **Modify `PageSettingsEditor.tsx`**:
+  - Add page status selector (Draft / Published / Archived) with visual badge
+  - Add "Version History" expandable section
+  - Add "Duplicate Page" and "Delete Page" actions (with guards for non-deletable pages)
+  - Add header/footer visibility toggles per page
+  - Add password protection toggle (stores hashed password in page config)
 
-**Errors (block publish):**
-- Menu item targets a page ID that doesn't exist in `website_pages`
-- Menu item targets a disabled/archived page
-- Nesting depth exceeds 2
-- CTA item count exceeds 2
-- External URL missing `https://`
-- Empty label
+- **Modify `WebsiteEditorSidebar.tsx`**:
+  - Add "Pages" tab in the Site Content group (above Navigation)
+  - Show page count badge
 
-**Warnings (allow publish):**
-- Label longer than 30 characters
-- More than 8 top-level items
-- Meaningless link text ("Click here", "Link")
-- Duplicate labels at same level
+- **Modify `WebsiteSectionsHub.tsx`**:
+  - Register `PagesManager` in `EDITOR_COMPONENTS`
+  - Add `'pages'` to `TAB_LABELS`
 
-### Navigation Manager UI
+**Validation on page operations**:
+- Delete blocked if menu items reference the page
+- Slug uniqueness enforced (already exists in PageSettingsEditor)
+- Archive warns if page is referenced in published menus
 
-New tab in the Website Editor sidebar: **"Navigation"** (between Site Content and Homepage Layout groups).
+---
 
-```text
-┌─────────────────────────────────────────────────┐
-│  NAVIGATION MANAGER                             │
-│                                                 │
-│  ┌──────────────────┐  ┌──────────────────────┐ │
-│  │ Menu Tree (Left) │  │ Item Inspector (Right)│ │
-│  │                  │  │                       │ │
-│  │ [Primary Menu]   │  │ Label: [Services    ] │ │
-│  │  ├ Services      │  │ Type:  [Page Link ▼ ] │ │
-│  │  ├ About ▾       │  │ Target: [/services ▼] │ │
-│  │  │  ├ About Us   │  │ New tab: [ ]          │ │
-│  │  │  └ Policies   │  │ Visibility: [Both ▼]  │ │
-│  │  ├ Extensions    │  │ CTA Style: [—]        │ │
-│  │  ├ Gallery       │  │ Tracking: [         ] │ │
-│  │  └ ★ Book Now    │  │                       │ │
-│  │                  │  │ [Delete Item]         │ │
-│  │ [+ Add Item]     │  │                       │ │
-│  │                  │  └──────────────────────┘ │
-│  │ [Footer Menu]    │                           │
-│  │  ├ Services      │  ┌──────────────────────┐ │
-│  │  └ Book          │  │ PUBLISH               │ │
-│  │                  │  │ ⚠ 1 warning           │ │
-│  │ [+ Add Item]     │  │ ✓ 0 errors            │ │
-│  └──────────────────┘  │ [Publish Navigation]  │ │
-│                        └──────────────────────┘ │
-└─────────────────────────────────────────────────┘
-```
+### Implementation Order
 
-**Left panel:** Menu selector (tabs or dropdown for Primary/Footer). Tree with drag-drop reorder using `@dnd-kit`. Items show type icon, label, and status badges (⚠ broken link, ★ CTA). Drag to nest (indent) creates parent-child. "Add Item" opens a picker: choose existing page (searchable), external URL, or dropdown parent.
+1. **Deliverable 2** (Mobile navbar config) -- smallest, isolated
+2. **Deliverable 3** (Tracking events) -- small, no backend
+3. **Deliverable 4** (Pages CRUD) -- largest, requires migration
+4. **Deliverable 1** (E2E test) -- done last after all code is in place
 
-**Right panel (Inspector):** Selected item's settings. Fields adapt by `item_type`. CTA items show style variant picker. Visibility toggle (desktop/mobile/both). Tracking key input.
+---
 
-**Bottom bar:** Validation summary + Publish button. Errors block, warnings inform.
+### Enhancement Suggestions
 
-### Mobile Navbar Controls
-
-A collapsible section in the Navigation Manager for mobile-specific settings:
-- Mobile menu style: `overlay` vs `drawer` (stored in `website_menus.config` jsonb or a site_setting)
-- Mobile CTA visibility toggle
-- Per-item `visibility` field already handles desktop/mobile filtering
-
-### Public Site Integration
-
-**`Header.tsx` changes:**
-- Replace hardcoded `NAV_LINKS`, `ABOUT_LINKS`, and dynamic page append logic
-- Call `usePublishedMenu('primary')` to get the published menu tree
-- Render items from the menu data, respecting `visibility`, `item_type`, nesting, and `cta_style`
-- Items with `item_type === 'dropdown_parent'` render the existing dropdown UI
-- CTA items render with distinct button styling (existing "Book Now" pattern)
-- Responsive hiding logic adapts to menu item count dynamically
-
-**`Footer.tsx` changes:**
-- Replace hardcoded `FOOTER_LINKS`
-- Call `usePublishedMenu('footer')` to render footer nav links
-
-**Fallback:** If no published menu exists, render the current hardcoded links (zero-downtime migration).
-
-### Files to Create/Modify
-
-**New files:**
-- `src/hooks/useWebsiteMenus.ts` -- all hooks
-- `src/components/dashboard/website-editor/navigation/NavigationManager.tsx` -- shell
-- `src/components/dashboard/website-editor/navigation/MenuTreeEditor.tsx` -- left panel
-- `src/components/dashboard/website-editor/navigation/MenuItemInspector.tsx` -- right panel
-- `src/components/dashboard/website-editor/navigation/MenuItemNode.tsx` -- tree node
-- `src/components/dashboard/website-editor/navigation/AddMenuItemDialog.tsx` -- item picker
-- `src/components/dashboard/website-editor/navigation/MenuPublishBar.tsx` -- validation + publish
-- `src/components/dashboard/website-editor/navigation/useMenuValidation.ts` -- validation logic
-
-**Modified files:**
-- `src/components/dashboard/website-editor/WebsiteEditorSidebar.tsx` -- add Navigation tab
-- `src/pages/dashboard/admin/WebsiteSectionsHub.tsx` -- register NavigationManager component
-- `src/components/layout/Header.tsx` -- consume published menu
-- `src/components/layout/Footer.tsx` -- consume published menu
-
-**Database migration:** Create `website_menus`, `website_menu_items`, `website_menu_versions` tables with RLS policies.
-
-### Phasing Note
-
-This plan covers Phase 1 (simple dropdowns, full CRUD, publish flow, validation). The `website_menu_items` schema already supports Phase 2 mega menus via additional columns (e.g., `mega_menu_columns` jsonb) without rewrite. Conditional visibility (logged-in vs logged-out) can be added later via a `visibility_rules` jsonb column.
-
-### What This Does NOT Include (Future Prompts)
-- Pages CRUD (create/duplicate/delete/archive) with version history
-- Theme/Design System editor
-- Full publish flow with changelog across pages + nav + theme
-- Permissions + audit log system
-- SEO/accessibility audit tooling
+- **Publish changelog**: When Pages CRUD is done, build a unified publish flow that shows a changelog summary across pages + navigation + theme changes before final publish
+- **Page-level SEO preview**: Add a Google SERP preview card in PageSettingsEditor showing how the page would appear in search results
+- **Bulk page operations**: Multi-select pages for bulk archive/publish/delete
+- **Menu item drag-to-nest**: Currently only top-level reorder works via dnd-kit; extend to support drag-indent for creating parent-child relationships visually
 
