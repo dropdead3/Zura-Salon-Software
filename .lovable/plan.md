@@ -1,54 +1,47 @@
 
 
-## Add Client Name to Tip Drill-Down Visit Rows
+## Improve Tips Drill-Down Visit Card Layout
 
-Good prompt — this is the natural next step for cross-referencing. One refinement for future prompts: specifying where in the visit card the client name should appear (e.g. header row vs its own line) removes a layout decision from the implementation pass.
+Good instinct to switch away from Termina in this dense data surface — it's too wide for compact tabular rows. Your prompt is clear on the "what"; one suggestion for next time: specifying whether "total payment" should be a single summed number or broken out (service + retail + tax + tip as separate columns) would remove ambiguity.
 
-### What Changes
+### Data Reality
 
-**1. New query in `useTipsDrilldown.ts`**: Fetch `phorest_clients` with `phorest_client_id`, `first_name`, `last_name`
+The `phorest_appointments` table has `total_price` (per service line) and `tip_amount` but **no separate retail or tax columns**. So "Total Payment" will be calculated as: `sum of all service line prices + tip`. If retail and tax data becomes available later, it can slot in. For now the layout will show:
 
-Add a new `useQuery` call to fetch client names from `phorest_clients`. Build a lookup map keyed by `phorest_client_id`. Return it alongside the existing data so the UI can resolve names.
+- **Services Total** (sum of line items)
+- **Tip**
+- **Total Payment** (services + tip)
 
-**2. Expand `RawTipAppointment` interface**: No change needed — `phorest_client_id` is already present on each raw appointment. The client name resolution happens via the new lookup map, not by adding columns to the appointment query.
+### Layout Changes
 
-**3. Update `VisitGroup` interface**: Add `clientName: string | null` field.
+**1. Switch from `font-display` (Termina) to `font-sans` (Aeonik Pro)** for all text inside the visit cards and stylist rows in the expanded drill-down. Termina stays only on the panel section headers.
 
-**4. Update visit grouping logic in `StylistAppointmentList`**: When creating a visit group, resolve `phorest_client_id` from the first appointment in that group against the client name map. Store as `clientName`.
-
-**5. Update visit card UI**: Show client name in the visit header row, after the date/time and before the location dot separator. Uses a `User` icon for visual consistency.
+**2. Redesign visit card layout** — two-row stacked header instead of cramming everything on one line:
 
 ```text
 ┌─────────────────────────────────────────────────────┐
-│ Feb 23  10:30 AM  •  Jane Smith  •  Location Name   │
-│                            Total: $285   Tip: $228  │
-│   ├ Partial Balayage ........................ $185   │
-│   └ Haircut (Add On) ....................... $50    │
+│ Feb 24 · 10:30 AM · Jane Smith · Downtown           │
+│ Services: $285    Tip: $228    Total Paid: $513     │
+│                                                     │
+│  Haircut (Add On) .......................... $50.00  │
+│  Root Smudge (Add on) ..................... $50.00  │
+│  Partial Balayage ........................ $185.00  │
 └─────────────────────────────────────────────────────┘
 ```
 
-### Data Flow
+- **Row 1**: Date, time, client name, location — all `text-xs font-sans text-muted-foreground`
+- **Row 2**: Three metrics in a flex row — Services total, Tip (highlighted if > 0, destructive if 0), Total Paid — `text-xs font-sans tabular-nums`
+- **Service lines**: Same tree-connector style but using `font-sans` instead of current `font-display`
 
-```text
-useTipsDrilldown
-  └─ new useQuery: phorest_clients → { phorest_client_id, first_name, last_name }
-  └─ return clientMap alongside rawAppointments
+**3. Update `VisitGroup` interface** — add `totalPayment` computed field (= `totalPrice + tip`).
 
-TipsDrilldownPanel
-  └─ pass clientMap to StylistAppointmentList
-  └─ visit grouping: resolve phorest_client_id → "First Last"
-  └─ render clientName in visit header
-```
+**4. Update `TotalTipRow` and `StylistTipRow`** — remove `font-display` from inline stat values, use `font-sans tabular-nums` instead for tighter spacing.
 
 ### Files Changed
 
 | File | Change |
 |---|---|
-| `src/hooks/useTipsDrilldown.ts` | Add `phorest_clients` query, build client name map, export it in return value |
-| `src/components/dashboard/sales/TipsDrilldownPanel.tsx` | Accept `clientMap` prop in `StylistAppointmentList`, resolve client name per visit, render in header row. Also pass through `TotalTipRow` and `StylistTipRow`. |
+| `src/components/dashboard/sales/TipsDrilldownPanel.tsx` | Refactor `StylistAppointmentList` visit card to two-row layout with Services/Tip/Total Paid. Switch all drill-down text from `font-display` to `font-sans`. Update `StylistTipRow` and `TotalTipRow` inline stats to `font-sans tabular-nums`. |
 
-### Enhancement Suggestions
-
-- Add click-to-copy on the client name so you can paste directly into Phorest search.
-- Show the Unified Customer ID (ZU-00042) next to the client name for even faster internal lookup.
+No data layer changes needed — all values are already available.
 
