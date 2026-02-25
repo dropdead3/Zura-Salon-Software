@@ -1,89 +1,48 @@
 
 
-## Phase 2: Data Migration Edge Function (Option B -- NULL staff_user_id)
+## Fix: Transaction & Daily Sales Migration (NULL organization_id)
 
-This builds the `migrate-phorest-data` edge function that copies all Phorest data into native Zura tables, with dry-run mode, rollback tagging, and NULL staff attribution for the 19 unmapped staff.
+### Root Cause
 
-### What Gets Built
+The migration succeeded for clients (2,586 inserted, 481 updated), services (8 inserted), and appointments (458 inserted). But **transactions (771) and daily sales (172) all failed** with:
 
-A single edge function (`supabase/functions/migrate-phorest-data/index.ts`) that:
-
-1. Accepts `{ dry_run: boolean }` parameter (defaults to `true` for safety)
-2. Migrates 5 domains in dependency order: Clients → Services → Appointments → Transactions → Daily Sales
-3. Tags all migrated records with `import_source = 'phorest_migration'`
-4. Returns detailed counts per domain (inserted, skipped/deduped, errors)
-
-### Migration Logic Per Domain
-
-**Clients (3,166 → native `clients`)**
-- First pass: backfill `phorest_client_id` on existing 505 native clients by matching `email_normalized` (410 matches expected)
-- Second pass: INSERT remaining Phorest clients that have no match, splitting `name` → `first_name` + `last_name`
-- Dedup key: `email_normalized`, then `phone_normalized`
-- All get `organization_id = 'fa23cd95-...'`, `import_source = 'phorest_migration'`
-- Builds a `phorest_client_id → clients.id` mapping table in memory for downstream use
-
-**Services (phorest_services → native `services`)**
-- Dedup by `name + category + location_id` (via phorest_branch_id → location mapping)
-- Sets `external_id = phorest_service_id`, `import_source = 'phorest_migration'`
-
-**Appointments (584 → native `appointments`)**
-- 127 already have `external_id` matching `phorest_id` -- skip those
-- Remaining ~457: INSERT with `external_id = phorest_id`
-- `staff_user_id`: resolve via the 2 mapped staff entries; NULL for the 19 unmapped (preserve `phorest_staff_id` as text)
-- `client_id`: resolve via the client mapping built in step 1
-- `organization_id`: resolve via `location_id → locations.organization_id`
-
-**Transaction Items (771 → native `transaction_items`)**
-- Dedup by `transaction_id` (external_id)
-- `staff_user_id`: same 2-entry resolution; NULL + `phorest_staff_id` preserved in `staff_name` for the rest
-- `client_id`: resolve via client mapping
-- `organization_id`: resolve via location
-
-**Daily Sales Summary → native `daily_sales_summary`**
-- Direct copy with `organization_id` resolved via location
-- `staff_user_id`: resolve where possible, NULL otherwise
-- `external_id` = composite key (`location_id + date + phorest_staff_id`)
-
-### Safety Features
-
-- **Dry-run mode** (default): Runs all queries as SELECTs, returns exact counts of what would be inserted/skipped/errored without touching data
-- **Rollback tag**: All records tagged `import_source = 'phorest_migration'` -- a single DELETE WHERE import_source = 'phorest_migration' rolls back everything
-- **Batch processing**: Processes in batches of 200 to avoid timeouts
-- **Idempotent**: Running twice won't create duplicates (dedup on external_id/phorest_client_id)
-
-### Config.toml Addition
-
-```toml
-[functions.migrate-phorest-data]
-verify_jwt = false
+```
+null value in column "organization_id" of relation "transaction_items" violates not-null constraint
 ```
 
-### Technical Details
+The bug is in the location → organization resolution. Both `phorest_transaction_items.location_id` and `phorest_daily_sales_summary.location_id` store **Phorest branch IDs** (e.g., `hYztERWvOdMpLUcvRSNbSA`), not native location IDs (e.g., `north-mesa`). The code does `locationToOrg.get(pt.location_id)` which returns `undefined` because `locationToOrg` is keyed by native IDs.
 
-- Single file: `supabase/functions/migrate-phorest-data/index.ts`
-- Auth required (checks for admin/platform role)
-- Organization ID: resolved from locations table, not hardcoded
-- Staff mapping: queries `phorest_staff_mapping` once at start, builds in-memory lookup `{ phorest_staff_id → user_id }`
-- Client mapping: built during client migration step, stored as `Map<string, string>` (phorest_client_id → native client UUID)
-- Branch-to-location mapping: `phorest_branch_id → locations.id` built from locations table
+### Fix (2 lines each, 2 domains)
 
-### Response Format
+**Transaction Items (line 584):**
+```typescript
+// BEFORE:
+const orgId = pt.location_id ? locationToOrg.get(pt.location_id) : defaultOrgId;
 
-```json
-{
-  "success": true,
-  "dry_run": true,
-  "results": {
-    "clients": { "total": 3166, "inserted": 2756, "updated": 410, "skipped": 0, "errors": 0 },
-    "services": { "total": 45, "inserted": 30, "skipped": 15, "errors": 0 },
-    "appointments": { "total": 584, "inserted": 457, "skipped": 127, "errors": 0 },
-    "transactions": { "total": 771, "inserted": 771, "skipped": 0, "errors": 0 },
-    "daily_sales": { "total": 120, "inserted": 120, "skipped": 0, "errors": 0 }
-  },
-  "warnings": [
-    "19 staff IDs unmapped - appointments will have NULL staff_user_id",
-    "phorest_staff_id preserved as text for future backfill"
-  ]
-}
+// AFTER:
+const nativeLocationId = pt.location_id ? branchToLocation.get(pt.location_id) || null : null;
+const orgId = nativeLocationId ? locationToOrg.get(nativeLocationId) : defaultOrgId;
 ```
+Also change the `location_id` field in the insert object from `pt.location_id` to `nativeLocationId || pt.location_id` and add `|| defaultOrgId` fallback on `orgId`.
+
+**Daily Sales Summary (line 668):**
+```typescript
+// BEFORE:
+const orgId = ps.location_id ? locationToOrg.get(ps.location_id) : defaultOrgId;
+
+// AFTER:
+const nativeLocationId = ps.location_id ? branchToLocation.get(ps.location_id) || null : null;
+const orgId = nativeLocationId ? locationToOrg.get(nativeLocationId) : defaultOrgId;
+```
+Same `location_id` and `orgId` fallback fix.
+
+### After Deploying the Fix
+
+Re-run the migration with `{ "dry_run": false }`. The function is idempotent:
+- Clients, services, appointments will all be **skipped** (already exist via external_id/phorest_client_id dedup)
+- Transactions and daily sales will be **inserted** (none exist yet since they all failed)
+
+### Files Changed
+
+1. `supabase/functions/migrate-phorest-data/index.ts` — Fix location resolution for transactions (lines ~582-594) and daily sales (lines ~666-674)
 
