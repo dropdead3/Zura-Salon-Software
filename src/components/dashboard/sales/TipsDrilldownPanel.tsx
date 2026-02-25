@@ -1,6 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { TrendingUp, TrendingDown, Users, User, DollarSign, ChevronRight, ChevronDown, Clock } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
+import { TrendingUp, TrendingDown, Users, User, DollarSign, ChevronRight, ChevronDown, Clock, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { tokens } from '@/lib/design-tokens';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -245,21 +247,36 @@ export function TipsDrilldownPanel({ isOpen, parentLocationId, dateFrom, dateTo 
                         (amount shown is tips earned)
                       </span>
                     </div>
-                    <div className="space-y-1">
-                      {(showAllTotalTips ? filteredTotalTips : filteredTotalTips.slice(0, 10)).map((stylist, index) => (
-                        <TotalTipRow
-                          key={stylist.stylistUserId}
-                          stylist={stylist}
-                          index={index}
-                          isExpanded={expandedStylist === stylist.stylistUserId}
-                          onToggle={() => setExpandedStylist(expandedStylist === stylist.stylistUserId ? null : stylist.stylistUserId)}
-                         rawAppointments={rawAppointments}
-                         locations={locations}
-                         clientMap={clientMap}
+                    <ScrollArea className="max-h-[400px]">
+                      {isMultiLocation && effectiveLocationId === 'all' && locations && locations.length > 1 ? (
+                        <LocationGroupedList
+                          stylists={filteredTotalTips}
+                          locations={locations}
+                          expandedStylist={expandedStylist}
+                          onToggleStylist={(id) => setExpandedStylist(expandedStylist === id ? null : id)}
+                          rawAppointments={rawAppointments}
+                          clientMap={clientMap}
+                          RowComponent={TotalTipRow}
                         />
-                      ))}
-                    </div>
-                    {filteredTotalTips.length > 10 && (
+                      ) : (
+                        <div className="space-y-1">
+                          {(showAllTotalTips ? filteredTotalTips : filteredTotalTips.slice(0, 10)).map((stylist, index) => (
+                            <TotalTipRow
+                              key={stylist.stylistUserId}
+                              stylist={stylist}
+                              index={index}
+                              isExpanded={expandedStylist === stylist.stylistUserId}
+                              onToggle={() => setExpandedStylist(expandedStylist === stylist.stylistUserId ? null : stylist.stylistUserId)}
+                              rawAppointments={rawAppointments}
+                              locations={locations}
+                              clientMap={clientMap}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </ScrollArea>
+                    {/* Show all toggle only in flat (non-grouped) mode */}
+                    {!(isMultiLocation && effectiveLocationId === 'all' && locations && locations.length > 1) && filteredTotalTips.length > 10 && (
                       <Button
                         variant="ghost"
                         size={tokens.button.inline}
@@ -284,21 +301,35 @@ export function TipsDrilldownPanel({ isOpen, parentLocationId, dateFrom, dateTo 
                       (10+ appointments)
                     </span>
                   </div>
-                  <div className="space-y-1">
-                    {topEarners.map((stylist, index) => (
-                      <StylistTipRow
-                        key={stylist.stylistUserId}
-                        stylist={stylist}
-                        index={index}
-                        isExpanded={expandedStylist === stylist.stylistUserId}
-                        onToggle={() => setExpandedStylist(expandedStylist === stylist.stylistUserId ? null : stylist.stylistUserId)}
-                         rawAppointments={rawAppointments}
-                         locations={locations}
-                         clientMap={clientMap}
-                       />
-                     ))}
-                   </div>
-                   {filteredStylists.length > 10 && (
+                  <ScrollArea className="max-h-[400px]">
+                    {isMultiLocation && effectiveLocationId === 'all' && locations && locations.length > 1 ? (
+                      <LocationGroupedList
+                        stylists={filteredStylists}
+                        locations={locations}
+                        expandedStylist={expandedStylist}
+                        onToggleStylist={(id) => setExpandedStylist(expandedStylist === id ? null : id)}
+                        rawAppointments={rawAppointments}
+                        clientMap={clientMap}
+                        RowComponent={StylistTipRow}
+                      />
+                    ) : (
+                      <div className="space-y-1">
+                        {topEarners.map((stylist, index) => (
+                          <StylistTipRow
+                            key={stylist.stylistUserId}
+                            stylist={stylist}
+                            index={index}
+                            isExpanded={expandedStylist === stylist.stylistUserId}
+                            onToggle={() => setExpandedStylist(expandedStylist === stylist.stylistUserId ? null : stylist.stylistUserId)}
+                            rawAppointments={rawAppointments}
+                            locations={locations}
+                            clientMap={clientMap}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </ScrollArea>
+                  {!(isMultiLocation && effectiveLocationId === 'all' && locations && locations.length > 1) && filteredStylists.length > 10 && (
                     <Button
                       variant="ghost"
                       size={tokens.button.inline}
@@ -347,6 +378,104 @@ export function TipsDrilldownPanel({ isOpen, parentLocationId, dateFrom, dateTo 
         </motion.div>
       )}
     </AnimatePresence>
+  );
+}
+
+/* ── Location-grouped list for multi-location enterprise view ── */
+function LocationGroupedList({ stylists, locations, expandedStylist, onToggleStylist, rawAppointments, clientMap, RowComponent }: {
+  stylists: StylistTipMetrics[];
+  locations: { id: string; name: string }[];
+  expandedStylist: string | null;
+  onToggleStylist: (id: string) => void;
+  rawAppointments: RawTipAppointment[];
+  clientMap?: ClientMap;
+  RowComponent: typeof TotalTipRow | typeof StylistTipRow;
+}) {
+  const grouped = useMemo(() => {
+    const map = new Map<string, { locationName: string; stylists: StylistTipMetrics[] }>();
+    const locMap = new Map(locations.map(l => [l.id, l.name]));
+    for (const s of stylists) {
+      const locId = s.locationId || 'unknown';
+      const existing = map.get(locId);
+      if (existing) {
+        existing.stylists.push(s);
+      } else {
+        map.set(locId, {
+          locationName: locMap.get(locId) || 'Unknown Location',
+          stylists: [s],
+        });
+      }
+    }
+    return Array.from(map.entries())
+      .sort((a, b) => b[1].stylists.length - a[1].stylists.length);
+  }, [stylists, locations]);
+
+  const [expandedLocations, setExpandedLocations] = useState<Set<string>>(new Set());
+  const [showAllByLocation, setShowAllByLocation] = useState<Set<string>>(new Set());
+
+  const toggleLocation = useCallback((locId: string) => {
+    setExpandedLocations(prev => {
+      const next = new Set(prev);
+      if (next.has(locId)) next.delete(locId);
+      else next.add(locId);
+      return next;
+    });
+  }, []);
+
+  const toggleShowAll = useCallback((locId: string) => {
+    setShowAllByLocation(prev => {
+      const next = new Set(prev);
+      if (next.has(locId)) next.delete(locId);
+      else next.add(locId);
+      return next;
+    });
+  }, []);
+
+  return (
+    <div className="space-y-1">
+      {grouped.map(([locId, group]) => {
+        const isOpen = expandedLocations.has(locId);
+        const showAll = showAllByLocation.has(locId);
+        const visibleStylists = isOpen ? (showAll ? group.stylists : group.stylists.slice(0, 3)) : [];
+
+        return (
+          <Collapsible key={locId} open={isOpen} onOpenChange={() => toggleLocation(locId)}>
+            <CollapsibleTrigger className="flex items-center gap-2 w-full py-1.5 px-2 rounded-md hover:bg-muted/30 transition-colors cursor-pointer text-left">
+              {isOpen ? <ChevronDown className="w-3 h-3 text-muted-foreground" /> : <ChevronRight className="w-3 h-3 text-muted-foreground" />}
+              <MapPin className="w-3 h-3 text-primary" />
+              <span className="text-sm text-foreground font-medium">{group.locationName}</span>
+              <span className="text-xs text-muted-foreground">({group.stylists.length} stylists)</span>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div className="pl-4 space-y-1">
+                {visibleStylists.map((stylist, index) => (
+                  <RowComponent
+                    key={stylist.stylistUserId}
+                    stylist={stylist}
+                    index={index}
+                    isExpanded={expandedStylist === stylist.stylistUserId}
+                    onToggle={() => onToggleStylist(stylist.stylistUserId)}
+                    rawAppointments={rawAppointments}
+                    locations={locations}
+                    clientMap={clientMap}
+                  />
+                ))}
+                {group.stylists.length > 3 && (
+                  <Button
+                    variant="ghost"
+                    size={tokens.button.inline}
+                    className="text-xs text-muted-foreground hover:text-foreground ml-2"
+                    onClick={(e) => { e.stopPropagation(); toggleShowAll(locId); }}
+                  >
+                    {showAll ? 'Show top 3' : `Show all ${group.stylists.length}`}
+                  </Button>
+                )}
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+        );
+      })}
+    </div>
   );
 }
 
