@@ -88,7 +88,7 @@ export function NewBookingsCard({ filterContext }: NewBookingsCardProps) {
       {/* Booking Pipeline Health */}
       <Link
         to="/dashboard/admin/analytics?tab=operations&subtab=booking-pipeline"
-        className="block p-3 bg-muted/30 rounded-lg border border-border/50 mb-4 hover:bg-muted/50 transition-colors"
+        className="block p-3 bg-card-inner rounded-lg border border-border/50 mb-4 hover:bg-muted/50 transition-colors"
       >
         {pipeline.isLoading ? (
           <Skeleton className="h-5 w-full" />
@@ -116,7 +116,7 @@ export function NewBookingsCard({ filterContext }: NewBookingsCardProps) {
         <button
           type="button"
           onClick={() => setDrilldown('new')}
-          className="text-center p-4 bg-muted/30 rounded-lg border border-border/50 cursor-pointer transition-transform hover:-translate-y-0.5"
+          className="text-center p-4 bg-card-inner rounded-lg border border-border/50 cursor-pointer transition-transform hover:-translate-y-0.5"
         >
           <div className="flex justify-center mb-2">
             <UserPlus className="w-5 h-5 text-emerald-600" />
@@ -135,7 +135,7 @@ export function NewBookingsCard({ filterContext }: NewBookingsCardProps) {
         <button
           type="button"
           onClick={() => setDrilldown('returning')}
-          className="text-center p-4 bg-muted/30 rounded-lg border border-border/50 cursor-pointer transition-transform hover:-translate-y-0.5"
+          className="text-center p-4 bg-card-inner rounded-lg border border-border/50 cursor-pointer transition-transform hover:-translate-y-0.5"
         >
           <div className="flex justify-center mb-2">
             <RefreshCw className="w-5 h-5 text-purple-600" />
@@ -154,7 +154,7 @@ export function NewBookingsCard({ filterContext }: NewBookingsCardProps) {
 
       {/* After-Service Rebook Rate */}
       {!isLoading && data?.rebookRate !== undefined && (
-        <div className="mb-4 p-4 bg-muted/30 rounded-lg border border-border/50">
+        <div className="mb-4 p-4 bg-card-inner rounded-lg border border-border/50">
           <div className="flex items-center gap-2 mb-2">
             <CalendarCheck className={`w-5 h-5 ${
               data.rebookRate !== null && data.rebookRate >= 70 ? 'text-emerald-600' 
@@ -232,7 +232,7 @@ export function NewBookingsCard({ filterContext }: NewBookingsCardProps) {
       )}
 
       {/* 30-Day Comparison */}
-      <div className="p-4 bg-muted/20 rounded-lg border border-border/50">
+      <div className="p-4 bg-card-inner rounded-lg border border-border/50">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">Last 30 Days:</span>

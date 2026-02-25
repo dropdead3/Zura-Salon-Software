@@ -351,7 +351,7 @@ export function WeekAheadForecast() {
           <div className="grid grid-cols-3 gap-3">
             <div
               className={cn(
-                "text-center p-3 bg-muted/30 rounded-lg border cursor-pointer transition-all hover:-translate-y-0.5",
+                "text-center p-3 bg-card-inner rounded-lg border cursor-pointer transition-all hover:-translate-y-0.5",
                 selectedStatCard === 'revenue' ? 'border-primary/50 ring-1 ring-primary/20' : 'border-border/30'
               )}
               onClick={() => handleStatCardClick('revenue')}
@@ -372,7 +372,7 @@ export function WeekAheadForecast() {
             </div>
             <div
               className={cn(
-                "text-center p-3 bg-muted/30 rounded-lg border cursor-pointer transition-all hover:-translate-y-0.5",
+                "text-center p-3 bg-card-inner rounded-lg border cursor-pointer transition-all hover:-translate-y-0.5",
                 selectedStatCard === 'dailyAvg' ? 'border-primary/50 ring-1 ring-primary/20' : 'border-border/30'
               )}
               onClick={() => handleStatCardClick('dailyAvg')}
@@ -391,7 +391,7 @@ export function WeekAheadForecast() {
             </div>
             <div
               className={cn(
-                "text-center p-3 bg-muted/30 rounded-lg border cursor-pointer transition-all hover:-translate-y-0.5",
+                "text-center p-3 bg-card-inner rounded-lg border cursor-pointer transition-all hover:-translate-y-0.5",
                 selectedStatCard === 'count' ? 'border-primary/50 ring-1 ring-primary/20' : 'border-border/30'
               )}
               onClick={() => handleStatCardClick('count')}

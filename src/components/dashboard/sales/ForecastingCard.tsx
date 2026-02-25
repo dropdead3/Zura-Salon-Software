@@ -359,7 +359,7 @@ function YearlyGoalProgressSection({ locationId }: { locationId?: string }) {
   const StatusIcon = isOnTrack ? TrendingUp : TrendingDown;
 
   return (
-    <div className="space-y-3 p-4 bg-muted/20 rounded-lg border border-border/50">
+    <div className="space-y-3 p-4 bg-card-inner rounded-lg border border-border/50">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Target className="w-4 h-4 text-primary" />
@@ -664,7 +664,7 @@ export function ForecastingCard() {
           <div className={cn("grid gap-3", period === 'tomorrow' ? 'grid-cols-2' : 'grid-cols-3')}>
             <div
               className={cn(
-                "text-center p-3 bg-muted/30 rounded-lg border cursor-pointer transition-all hover:-translate-y-0.5",
+                "text-center p-3 bg-card-inner rounded-lg border cursor-pointer transition-all hover:-translate-y-0.5",
                 selectedStatCard === 'revenue' ? 'border-primary/50 ring-1 ring-primary/20' : 'border-border/30'
               )}
               onClick={() => handleStatCardClick('revenue')}
@@ -686,7 +686,7 @@ export function ForecastingCard() {
             {period !== 'tomorrow' && (
               <div
                 className={cn(
-                  "text-center p-3 bg-muted/30 rounded-lg border cursor-pointer transition-all hover:-translate-y-0.5",
+                  "text-center p-3 bg-card-inner rounded-lg border cursor-pointer transition-all hover:-translate-y-0.5",
                   selectedStatCard === 'dailyAvg' ? 'border-primary/50 ring-1 ring-primary/20' : 'border-border/30'
                 )}
                 onClick={() => handleStatCardClick('dailyAvg')}
@@ -708,7 +708,7 @@ export function ForecastingCard() {
             )}
             <div
               className={cn(
-                "text-center p-3 bg-muted/30 rounded-lg border cursor-pointer transition-all hover:-translate-y-0.5",
+                "text-center p-3 bg-card-inner rounded-lg border cursor-pointer transition-all hover:-translate-y-0.5",
                 selectedStatCard === 'count' ? 'border-primary/50 ring-1 ring-primary/20' : 'border-border/30'
               )}
               onClick={() => handleStatCardClick('count')}
