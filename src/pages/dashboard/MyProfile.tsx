@@ -31,6 +31,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { StylistCardPreview } from '@/components/dashboard/StylistCardPreview';
 import { LandingPageSettings } from '@/components/dashboard/settings/LandingPageSettings';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { ImageCropModal } from '@/components/dashboard/ImageCropModal';
+import { Upload } from 'lucide-react';
 
 const DAYS_OF_WEEK = [
   { key: 'Mon', label: 'Monday' },
@@ -91,6 +93,8 @@ export default function MyProfile() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showUnsavedToast, setShowUnsavedToast] = useState(false);
+  const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [cropImageFile, setCropImageFile] = useState<File | null>(null);
   const { isComplete: isOnboardingComplete } = useOnboardingProgress();
   const queryClient = useQueryClient();
   
@@ -359,8 +363,14 @@ export default function MyProfile() {
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      uploadPhoto.mutate(file);
+      setCropImageFile(file);
+      setCropModalOpen(true);
     }
+    e.target.value = '';
+  };
+
+  const handleCroppedPhotoUpload = (blob: Blob) => {
+    uploadPhoto.mutate(blob);
   };
 
   const toggleSpecialty = (specialty: string) => {
@@ -536,16 +546,27 @@ export default function MyProfile() {
           {/* Photo Section */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                Profile Photo
-                {isPhotoLocked && <Lock className="w-4 h-4 text-muted-foreground" />}
-              </CardTitle>
-              <CardDescription>
-                {isPhotoLocked 
-                  ? 'Your headshot is managed by admin and displayed on the website.'
-                  : 'Your photo will be visible to the team.'
-                }
-              </CardDescription>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+                    <Camera className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <CardTitle className="font-display text-base tracking-wide">
+                        Profile Photo
+                      </CardTitle>
+                      {isPhotoLocked && <Lock className="w-4 h-4 text-muted-foreground" />}
+                    </div>
+                    <CardDescription>
+                      {isPhotoLocked 
+                        ? 'Your headshot is managed by admin and displayed on the website.'
+                        : 'Your photo will be visible to the team and used across the platform.'
+                      }
+                    </CardDescription>
+                  </div>
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
               {isPhotoLocked ? (
@@ -593,42 +614,68 @@ export default function MyProfile() {
                 </div>
               ) : (
                 // Normal upload state for other roles
-                <div className="flex items-center gap-6">
-                  <div className="relative group">
-                    <Avatar className="w-24 h-24">
-                      <AvatarImage src={profile?.photo_url || undefined} alt={profile?.full_name} />
-                      <AvatarFallback className="text-2xl bg-muted">
-                        {formData.full_name?.charAt(0) || <User className="w-8 h-8" />}
-                      </AvatarFallback>
-                    </Avatar>
-                    <button
+                <div className="flex flex-col items-center gap-4">
+                  {profile?.photo_url ? (
+                    <div className="relative group">
+                      <Avatar className="w-28 h-28 ring-2 ring-border/40">
+                        <AvatarImage src={profile.photo_url} alt={profile?.full_name} />
+                        <AvatarFallback className="text-3xl bg-muted">
+                          {formData.full_name?.charAt(0) || <User className="w-10 h-10" />}
+                        </AvatarFallback>
+                      </Avatar>
+                      <button
+                        type="button"
+                        onClick={handlePhotoClick}
+                        disabled={uploadPhoto.isPending}
+                        className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-full"
+                      >
+                        {uploadPhoto.isPending ? (
+                          <Loader2 className="w-6 h-6 text-white animate-spin" />
+                        ) : (
+                          <Camera className="w-6 h-6 text-white" />
+                        )}
+                      </button>
+                    </div>
+                  ) : (
+                    <div
+                      onClick={() => !uploadPhoto.isPending && handlePhotoClick()}
+                      className="w-28 h-28 rounded-full border-2 border-dashed border-muted-foreground/30 hover:border-primary/50 flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-colors bg-muted/30"
+                    >
+                      <Upload className="w-6 h-6 text-muted-foreground" />
+                      <span className="text-[10px] text-muted-foreground">Upload</span>
+                    </div>
+                  )}
+                  <div className="flex flex-col items-center gap-1.5">
+                    <Button
                       type="button"
+                      variant="outline"
+                      size="sm"
+                      className="rounded-full px-4"
                       onClick={handlePhotoClick}
                       disabled={uploadPhoto.isPending}
-                      className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-full"
                     >
-                      {uploadPhoto.isPending ? (
-                        <Loader2 className="w-6 h-6 text-white animate-spin" />
-                      ) : (
-                        <Camera className="w-6 h-6 text-white" />
-                      )}
-                    </button>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={handlePhotoChange}
-                      className="hidden"
-                    />
-                  </div>
-                  <div>
-                    <Button type="button" variant="outline" onClick={handlePhotoClick} disabled={uploadPhoto.isPending}>
-                      {uploadPhoto.isPending ? 'Uploading...' : 'Change Photo'}
+                      {uploadPhoto.isPending ? 'Uploading...' : profile?.photo_url ? 'Change Photo' : 'Upload Photo'}
                     </Button>
-                    <p className="text-xs text-muted-foreground mt-2">JPG, PNG. Max 5MB.</p>
+                    <p className="text-[10px] text-muted-foreground">JPG, PNG. Max 5MB.</p>
                   </div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePhotoChange}
+                    className="hidden"
+                  />
                 </div>
               )}
+
+              {/* Image Crop Modal */}
+              <ImageCropModal
+                open={cropModalOpen}
+                onClose={() => setCropModalOpen(false)}
+                imageFile={cropImageFile}
+                onCropComplete={handleCroppedPhotoUpload}
+                maxOutputSize={800}
+              />
             </CardContent>
           </Card>
 
