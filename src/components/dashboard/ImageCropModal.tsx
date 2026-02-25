@@ -2,14 +2,14 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
-import { ZoomIn, ZoomOut, RotateCw, Move, Crop, Info, AlertTriangle, Maximize2, RefreshCw } from 'lucide-react';
+import { TogglePill } from '@/components/ui/toggle-pill';
+import { ZoomIn, ZoomOut, RotateCw, Move, Crop, Info, AlertTriangle, Maximize2, RefreshCw, Circle, Square } from 'lucide-react';
+import { DRILLDOWN_OVERLAY_CLASS } from '@/components/dashboard/drilldownDialogStyles';
 
 interface ImageCropModalProps {
   open: boolean;
@@ -248,120 +248,123 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
     setPosition({ x: 0, y: 0 });
   };
 
+  const shapeOptions = [
+    { value: 'circle', label: 'Circle', icon: <Circle className="h-3.5 w-3.5" /> },
+    { value: 'square', label: 'Square', icon: <Square className="h-3.5 w-3.5" /> },
+  ];
+
   return (
     <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Crop className="h-5 w-5" />
-            Crop & Resize Signature Image
+      <DialogContent
+        className="sm:max-w-md p-0 overflow-hidden gap-0"
+        overlayClassName={DRILLDOWN_OVERLAY_CLASS}
+      >
+        {/* Header */}
+        <div className="px-6 pt-5 pb-4 border-b border-border/40">
+          <DialogTitle className="flex items-center gap-2.5 font-display text-base tracking-wide uppercase">
+            <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
+              <Crop className="h-4 w-4 text-primary" />
+            </div>
+            Crop & Resize
           </DialogTitle>
-        </DialogHeader>
+        </div>
 
-        <div className="space-y-4">
-          {/* Instructions Banner */}
-          <div className="bg-primary/10 border border-primary/20 rounded-lg p-3 space-y-2">
+        {/* Instructions Banner */}
+        <div className="px-5 pt-4">
+          <div className="bg-primary/5 border border-primary/15 rounded-xl p-3 space-y-1.5">
             <div className="flex items-start gap-2">
-              <Info className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-              <div className="text-xs text-foreground space-y-1">
-                <p className="font-medium">Recommended image guidelines:</p>
-                <ul className="list-disc list-inside text-muted-foreground space-y-0.5 ml-1">
-                  <li>Professional headshot or signature graphic</li>
-                  <li>High-quality image (at least 200×200px)</li>
-                  <li>Well-lit with clear facial features</li>
-                  <li>Output will be {maxOutputSize}×{maxOutputSize}px</li>
-                </ul>
+              <Info className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
+              <div className="text-xs text-muted-foreground space-y-0.5">
+                <p className="font-medium text-foreground">Image guidelines</p>
+                <p>Professional headshot · at least 200×200px · well-lit</p>
+                <p>Output: {maxOutputSize}×{maxOutputSize}px</p>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Warning for small images */}
-          {imageElement && (imageElement.width < 200 || imageElement.height < 200) && (
-            <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-2.5 flex items-start gap-2">
-              <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
-              <p className="text-xs text-amber-600 dark:text-amber-400">
-                Image is small ({imageElement.width}×{imageElement.height}px). For best quality, use an image at least 200×200px.
+        {/* Warning banners */}
+        {imageElement && (imageElement.width < 200 || imageElement.height < 200) && (
+          <div className="px-5 pt-2">
+            <div className="bg-warning/10 border border-warning/30 rounded-xl p-2.5 flex items-start gap-2">
+              <AlertTriangle className="h-3.5 w-3.5 text-warning mt-0.5 shrink-0" />
+              <p className="text-xs text-warning">
+                Image is small ({imageElement.width}×{imageElement.height}px). Use at least 200×200px for best quality.
               </p>
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Warning for large file size */}
-          {effectiveFile && effectiveFile.size > 5 * 1024 * 1024 && (
-            <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-2.5 flex items-start gap-2">
-              <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
-              <p className="text-xs text-amber-600 dark:text-amber-400">
-                Large file ({(effectiveFile.size / (1024 * 1024)).toFixed(1)}MB). For better performance, consider using an image under 5MB.
+        {effectiveFile && effectiveFile.size > 5 * 1024 * 1024 && (
+          <div className="px-5 pt-2">
+            <div className="bg-warning/10 border border-warning/30 rounded-xl p-2.5 flex items-start gap-2">
+              <AlertTriangle className="h-3.5 w-3.5 text-warning mt-0.5 shrink-0" />
+              <p className="text-xs text-warning">
+                Large file ({(effectiveFile.size / (1024 * 1024)).toFixed(1)}MB). Consider using an image under 5MB.
               </p>
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Canvas preview */}
+        {/* Cinematic Canvas Area */}
+        <div className="bg-black/90 mx-5 mt-4 rounded-xl overflow-hidden relative shadow-[inset_0_2px_8px_rgba(0,0,0,0.3)]">
           <div 
             ref={containerRef}
-            className="relative flex justify-center"
+            className="flex justify-center py-4"
           >
             <canvas
               ref={canvasRef}
-              className={`rounded-lg border border-border ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+              className={`rounded-lg ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
               onMouseLeave={handleMouseUp}
             />
-            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-background/80 backdrop-blur-sm px-2 py-1 rounded text-xs text-muted-foreground flex items-center gap-1">
-              <Move className="h-3 w-3" />
-              Drag to reposition
-            </div>
           </div>
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/50 backdrop-blur-sm px-2.5 py-1 rounded-full text-[10px] text-white/50 flex items-center gap-1">
+            <Move className="h-2.5 w-2.5" />
+            Drag to reposition
+          </div>
+        </div>
 
+        {/* Controls Section */}
+        <div className="mx-5 mt-3 mb-1 rounded-xl bg-muted/30 border border-border/30 p-4 space-y-4">
           {/* Shape toggle */}
-          <div className="flex items-center justify-center gap-2">
-            <Button
-              type="button"
-              variant={cropShape === 'circle' ? 'default' : 'outline'}
+          <div className="flex items-center justify-between">
+            <Label className="text-xs text-muted-foreground">Shape</Label>
+            <TogglePill
+              options={shapeOptions}
+              value={cropShape}
+              onChange={(v) => setCropShape(v as 'circle' | 'square')}
               size="sm"
-              onClick={() => setCropShape('circle')}
-            >
-              Circle
-            </Button>
-            <Button
-              type="button"
-              variant={cropShape === 'square' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setCropShape('square')}
-            >
-              Square
-            </Button>
+              variant="solid"
+            />
           </div>
 
           {/* Zoom control */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label className="text-sm">Zoom</Label>
+              <Label className="text-xs text-muted-foreground">Zoom</Label>
               <div className="flex items-center gap-2">
-                <Button
+                <button
                   type="button"
-                  variant="ghost"
-                  size="sm"
                   onClick={handleFitToView}
-                  className="h-6 text-xs gap-1 px-2"
+                  className="text-[10px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
                 >
-                  <Maximize2 className="h-3 w-3" />
-                  Fit to View
-                </Button>
-                <span className="text-xs text-muted-foreground">{Math.round(zoom * 100)}%</span>
+                  <Maximize2 className="h-2.5 w-2.5" />
+                  Fit
+                </button>
+                <span className="text-[10px] text-muted-foreground tabular-nums">{Math.round(zoom * 100)}%</span>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Button
+              <button
                 type="button"
-                variant="outline"
-                size="icon"
-                className="h-8 w-8"
+                className="h-7 w-7 rounded-full border border-border/50 bg-background flex items-center justify-center hover:bg-accent transition-colors"
                 onClick={handleZoomOut}
               >
-                <ZoomOut className="h-4 w-4" />
-              </Button>
+                <ZoomOut className="h-3 w-3 text-muted-foreground" />
+              </button>
               <Slider
                 value={[zoom]}
                 min={minZoom}
@@ -370,35 +373,32 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
                 onValueChange={([v]) => setZoom(v)}
                 className="flex-1"
               />
-              <Button
+              <button
                 type="button"
-                variant="outline"
-                size="icon"
-                className="h-8 w-8"
+                className="h-7 w-7 rounded-full border border-border/50 bg-background flex items-center justify-center hover:bg-accent transition-colors"
                 onClick={handleZoomIn}
               >
-                <ZoomIn className="h-4 w-4" />
-              </Button>
+                <ZoomIn className="h-3 w-3 text-muted-foreground" />
+              </button>
             </div>
           </div>
 
           {/* Rotation control */}
           <div className="flex items-center justify-between">
-            <Label className="text-sm">Rotation</Label>
-            <Button
+            <Label className="text-xs text-muted-foreground">Rotation</Label>
+            <button
               type="button"
-              variant="outline"
-              size="sm"
               onClick={handleRotate}
-              className="gap-1"
+              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors rounded-full border border-border/50 bg-background px-3 py-1.5"
             >
-              <RotateCw className="h-4 w-4" />
+              <RotateCw className="h-3 w-3" />
               {rotation}°
-            </Button>
+            </button>
           </div>
         </div>
 
-        <DialogFooter className="gap-2 sm:gap-0">
+        {/* Footer */}
+        <div className="px-5 py-4 border-t border-border/30 flex items-center gap-2">
           {/* Hidden file input for replace */}
           <input
             ref={replaceInputRef}
@@ -411,19 +411,19 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
             type="button"
             variant="ghost"
             size="sm"
-            className="mr-auto gap-1"
+            className="mr-auto gap-1.5 text-muted-foreground hover:text-foreground"
             onClick={() => replaceInputRef.current?.click()}
           >
-            <RefreshCw className="h-4 w-4" />
-            Replace Photo
+            <RefreshCw className="h-3.5 w-3.5" />
+            Replace
           </Button>
-          <Button type="button" variant="outline" onClick={onClose}>
+          <Button type="button" variant="outline" size="sm" onClick={onClose}>
             Cancel
           </Button>
-          <Button type="button" onClick={handleCropComplete}>
+          <Button type="button" size="sm" onClick={handleCropComplete}>
             Apply Crop
           </Button>
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );
