@@ -457,6 +457,22 @@ export function WebsiteEditorSidebar({
 
   return (
     <div className="h-full flex flex-col bg-background border-r">
+      {/* Collapse toggle at top of expanded sidebar */}
+      <div className="px-3 py-2 border-b flex-shrink-0">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={onToggleCollapse}
+              className="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-muted/60 text-muted-foreground text-xs transition-colors"
+            >
+              <ChevronsLeft className="h-4 w-4" />
+              <span>Collapse</span>
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="right">Collapse sidebar</TooltipContent>
+        </Tooltip>
+      </div>
+
       {/* Page Selector */}
       <div className="p-3 border-b space-y-2">
         <div className="flex items-center gap-2">
@@ -669,21 +685,6 @@ export function WebsiteEditorSidebar({
         onAddFromTemplate={handleAddFromTemplate}
       />
 
-      {/* Collapse toggle at bottom of expanded sidebar */}
-      <div className="px-3 py-2 border-t flex-shrink-0">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              onClick={onToggleCollapse}
-              className="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-muted/60 text-muted-foreground text-xs transition-colors"
-            >
-              <ChevronsLeft className="h-4 w-4" />
-              <span>Collapse</span>
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="right">Collapse sidebar</TooltipContent>
-        </Tooltip>
-      </div>
 
       {/* Delete Confirmation (home page sections) */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
