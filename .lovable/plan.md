@@ -1,59 +1,66 @@
 
 
-## Add "Tips by Stylist" Breakdown (Total Tips Earned)
-
-Great observation — the current drilldown only shows an **avg tip rate** ranking with a 10-appointment minimum, which filters out stylists who may have earned tips but haven't hit that threshold yet. That's why you see $551 in total tips at the top but "No tip data recorded" below. The drilldown should also show **who earned how much** in total tips.
+## Fix Tips Drilldown: Show Tips by Staff Even Without User Mapping
 
 ### Root Cause
 
-The `useTipsDrilldown` hook uses `minAppointments = 10` as a hard filter. Any stylist with fewer than 10 appointments is excluded from the `byStylist` array entirely. So even though $551 in tips exists in the data, no stylists qualify for the ranking view.
+The `$551` in total tips is real — the parent card sums `tip_amount` from all `phorest_appointments` regardless of staff identity. But the drilldown groups by `stylist_user_id`, and **100% of tip-bearing appointments have `stylist_user_id = NULL`** because the `phorest_staff_mapping` table only contains 2 entries (both for a single user), while ~10 different `phorest_staff_id` values have tips.
+
+The drilldown's line `if (apt.stylist_user_id)` skips every row, producing empty `byStylist` and `byTotalTips` arrays, which triggers the "No tip data recorded" empty state.
 
 ### Plan
 
-**1. Add a second stylist list with no minimum threshold** — `useTipsDrilldown` hook
+**1. Fetch staff names from `phorest_staff_mapping`** — `useTipsDrilldown.ts`
 
-Add an optional second output `allStylists` (or lower/remove the threshold for a separate list) that includes **all** stylists who received at least one tip, sorted by `totalTips` descending. This avoids changing the existing `byStylist` array which is used for the avg-rate coaching view.
+Add a query to `phorest_staff_mapping` (which has `phorest_staff_id` → `phorest_staff_name` + `user_id`). This gives name resolution for any staff ID, even when `stylist_user_id` is null on the appointment.
 
-Concretely, in `useTipsDrilldown.ts` (around line 174-193), build a parallel `byTotalTips` array with `minAppointments = 1` (at least 1 appointment with a tip), sorted by `totalTips` desc. Add it to the return type.
+**2. Use `phorest_staff_id` as fallback grouping key** — `useTipsDrilldown.ts`
 
-**2. Add "Tips by Stylist" section** — `TipsDrilldownPanel.tsx`
+Change the stylist aggregation logic:
+- Primary key: `stylist_user_id` (when available)
+- Fallback key: `phorest_staff_id` prefixed with `phorest:` to distinguish from UUIDs
+- Name resolution: `employee_profiles` for mapped users, `phorest_staff_mapping.phorest_staff_name` for unmapped, `"Staff Member"` as last resort
 
-Insert a new section **above** the existing "Top Tip Earners" section (which is the avg-rate ranking). This new section:
+Concretely, replace the `if (apt.stylist_user_id)` guard (line 156) with:
 
-- Header: `$ Tips by Stylist` (DollarSign icon)
-- Shows each stylist with: avatar, name, total tips earned, tip %, appointment count
-- Sorted by total tips descending
-- No 10-appointment minimum — if they got a tip, they appear
-- Capped at 10 rows with "Show all" toggle (reusing existing pattern)
+```typescript
+const staffKey = apt.stylist_user_id || (apt.phorest_staff_id ? `phorest:${apt.phorest_staff_id}` : null);
+if (staffKey) {
+  // ...aggregate into stylistMap using staffKey
+}
+```
 
-**3. Rename existing section for clarity**
+**3. Resolve names from both sources** — `useTipsDrilldown.ts`
 
-Rename "Top Tip Earners" → "Avg Tip Rate Ranking" (or "Tip Rate by Stylist") to differentiate from the new total-tips view. Keep the 10-appointment minimum on this section since rate metrics need statistical significance.
+Build a combined name map:
+- From `employee_profiles`: `user_id` → `{ name, photo }`
+- From `phorest_staff_mapping`: `phorest:${phorest_staff_id}` → `{ name: phorest_staff_name, photo: null }`
+
+When building the `byStylist` and `byTotalTips` arrays, look up names using the combined map.
+
+**4. No changes needed in `TipsDrilldownPanel.tsx`**
+
+The panel already renders whatever `byTotalTips` contains. Once the hook populates it, the UI will show the data.
 
 ### Technical Details
 
 **File: `src/hooks/useTipsDrilldown.ts`**
 
-- Around line 174, after building the filtered `byStylist` array, build a second array `byTotalTips` from the same `stylistMap` but with no `minAppointments` filter (only requiring `totalTips > 0`), sorted by `totalTips` desc
-- Add `byTotalTips: StylistTipMetrics[]` to the `TipsDrilldownData` interface
-
-**File: `src/components/dashboard/sales/TipsDrilldownPanel.tsx`**
-
-- Destructure `byTotalTips` from the hook (line 79)
-- Add a new "Tips by Stylist" section before the existing "Top Tip Earners" block (around line 264)
-- Reuse the existing `StylistTipRow` component but with a slightly modified layout emphasizing total tips first (or create a `TotalTipRow` variant)
-- Apply the same region/location filtering as `filteredStylists`
-- For the empty state (line 231-236), check `byTotalTips.length` as well — if `byTotalTips` has data but `filteredStylists` is empty, show the total tips section but note that the rate ranking needs more data
+- Add a new query for `phorest_staff_mapping` (select `phorest_staff_id, phorest_staff_name, user_id`)
+- Build a `staffNameMap` that maps `phorest:${phorest_staff_id}` → name, and also maps any `user_id` from the mapping into the `profileMap`
+- Change line 156 from `if (apt.stylist_user_id)` to use the fallback key logic above
+- Update the `byStylist` and `byTotalTips` array builders to resolve names from the combined map
+- Appointments where both `stylist_user_id` and `phorest_staff_id` are null remain excluded (these shouldn't exist in practice)
 
 ### What Changes for the User
 
 | Before | After |
 |---|---|
-| $551 total tips shown, but "No tip data" below | **Tips by Stylist** section shows exactly who earned that $551 |
-| Only avg-rate ranking (needs 10+ appointments) | Two views: total tips (no minimum) + rate ranking (10+ min) |
-| Can't see tip distribution when team is small | Always see tip distribution if any tips exist |
+| "$551 total tips" at top, "No tip data" below | **Tips by Stylist** section shows all 10+ staff members who earned tips |
+| Staff names unavailable for unmapped IDs | Shows `phorest_staff_name` from mapping, or "Staff Member" as fallback |
+| Avg Rate Ranking also empty | Populated for staff with 10+ appointments (several qualify) |
 
 ### Scope
 
-~40 lines added across 2 files. No new queries — reuses existing appointment data.
+~25 lines changed in 1 file (`useTipsDrilldown.ts`). One additional lightweight query added.
 
