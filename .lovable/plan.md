@@ -1,45 +1,30 @@
 
 
-## Light Mode: Lighter Nested Cards (Cream Direction)
+## Fix: Location Breakdown Section Styling Cohesion
 
-The screenshot shows the current light mode where nested cards at 93% and 90% lightness look too dark/grey against the cream parent card (98%). The fix is to flip the light-mode direction so nested cards get *lighter* (closer to white), while keeping dark mode as-is (darker/recessed).
+The screenshot shows two location display patterns with inconsistent styling:
 
-### Depth Architecture (Light Mode)
-
-```text
-Light mode lightness (Cream theme):
-┌─────────────────────────────────────────┐  bg-card         (98%)
-│  ┌───────────────────────────────────┐  │  bg-card-inner   (99%)  ← lighter
-│  │  ┌─────────┐  ┌─────────┐        │  │  bg-card-inner-deep (100%)  ← lightest
-│  │  │Services │  │ Retail  │        │  │
-│  │  └─────────┘  └─────────┘        │  │
-│  └───────────────────────────────────┘  │
-│  ┌─────────┐ ┌─────────┐ ┌─────────┐   │  bg-card-inner   (99%)
-│  │ Trans.  │ │AvgTicket│ │Rev/Hour │   │
-│  └─────────┘ └─────────┘ └─────────┘   │
-└─────────────────────────────────────────┘
-```
-
-Dark mode stays the same (darker = recessed). Light mode goes lighter = elevated/airy.
+1. **"By Location"** (left card) -- uses `font-medium text-muted-foreground uppercase` with `font-sans` (Aeonik Pro). Per UI Canon, uppercase labels must use `font-display` (Termina).
+2. **Location rows** use `bg-muted/20` instead of `bg-card-inner` (missed in the mass update).
 
 ### Changes
 
-**File: `src/index.css`** -- Update only the **light mode** `--card-inner` and `--card-inner-deep` values across all 4 themes:
+**File: `src/components/dashboard/LocationBreakdownSection.tsx`**
 
-| Theme | Variable | Current (darker) | New (lighter) |
-|-------|----------|-------------------|---------------|
-| Cream | `--card-inner` | `40 20% 93%` | `40 20% 99%` |
-| Cream | `--card-inner-deep` | `40 15% 90%` | `40 15% 100%` |
-| Rose | `--card-inner` | `350 15% 93%` | `350 15% 99%` |
-| Rose | `--card-inner-deep` | `350 10% 90%` | `350 10% 100%` |
-| Sage | `--card-inner` | `145 12% 93%` | `145 12% 99%` |
-| Sage | `--card-inner-deep` | `145 8% 90%` | `145 8% 100%` |
-| Ocean | `--card-inner` | `210 15% 93%` | `210 15% 99%` |
-| Ocean | `--card-inner-deep` | `210 10% 90%` | `210 10% 100%` |
+1. **Line 57**: Change the "By Location" label to use `font-display` (Termina) instead of default font-sans. This matches the "Location Scoreboard" header pattern.
+   ```
+   - <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+   + <span className="text-xs font-display text-muted-foreground tracking-wide">
+   ```
+   (`font-display` automatically applies uppercase + tracking, so we drop the redundant `uppercase` and `font-medium`.)
 
-Dark mode values remain untouched (8%/5% recessed pattern stays).
+2. **Line 65**: Change location row backgrounds from `bg-muted/20` to `bg-card-inner` for consistency with the mass update.
+   ```
+   - className="flex items-center justify-between p-2 bg-muted/20 rounded-md border border-border/30"
+   + className="flex items-center justify-between p-2 bg-card-inner rounded-md border border-border/30"
+   ```
 
 ### Scope
 
-8 single-line value changes in `src/index.css`, light-mode blocks only. No other files change.
+2 class string changes in 1 file. No structural changes.
 
