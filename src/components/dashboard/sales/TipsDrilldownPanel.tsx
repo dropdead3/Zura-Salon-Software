@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { TrendingUp, TrendingDown, Users, User } from 'lucide-react';
+import { TrendingUp, TrendingDown, Users, User, DollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { tokens } from '@/lib/design-tokens';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -31,6 +31,7 @@ export function TipsDrilldownPanel({ isOpen, parentLocationId }: TipsDrilldownPa
   const [regionFilter, setRegionFilter] = useState('all');
   const [locationFilter, setLocationFilter] = useState(parentLocationId || 'all');
   const [showAll, setShowAll] = useState(false);
+  const [showAllTotalTips, setShowAllTotalTips] = useState(false);
 
   const { data: locations } = useActiveLocations();
   const { effectiveOrganization } = useOrganizationContext();
@@ -76,7 +77,7 @@ export function TipsDrilldownPanel({ isOpen, parentLocationId }: TipsDrilldownPa
     return locationFilter;
   }, [locationFilter, regionFilter, locationRegionMap]);
 
-  const { byStylist, byCategory, byPaymentMethod, isLoading } = useTipsDrilldown({
+  const { byStylist, byTotalTips, byCategory, byPaymentMethod, isLoading } = useTipsDrilldown({
     period,
     locationId: effectiveLocationId !== 'all' ? effectiveLocationId : undefined,
   });
@@ -94,6 +95,14 @@ export function TipsDrilldownPanel({ isOpen, parentLocationId }: TipsDrilldownPa
     const regionLocationIds = new Set(filteredLocations.map(l => l.id));
     return byStylist.filter(s => s.locationId && regionLocationIds.has(s.locationId));
   }, [byStylist, regionFilter, effectiveLocationId, filteredLocations, isLeadership]);
+
+  // Filter byTotalTips the same way
+  const filteredTotalTips = useMemo(() => {
+    if (!isLeadership) return [];
+    if (regionFilter === 'all' || effectiveLocationId !== 'all') return byTotalTips;
+    const regionLocationIds = new Set(filteredLocations.map(l => l.id));
+    return byTotalTips.filter(s => s.locationId && regionLocationIds.has(s.locationId));
+  }, [byTotalTips, regionFilter, effectiveLocationId, filteredLocations, isLeadership]);
 
   // Find the current user's rank within filtered list (for self-view context)
   const selfRank = useMemo(() => {
@@ -228,11 +237,11 @@ export function TipsDrilldownPanel({ isOpen, parentLocationId }: TipsDrilldownPa
                   <p className="text-xs mt-1">You need at least 10 appointments to see your metrics</p>
                 </div>
               )
-            ) : filteredStylists.length === 0 ? (
+            ) : filteredStylists.length === 0 && filteredTotalTips.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <Users className="w-8 h-8 mx-auto mb-2 opacity-50" />
                 <p className="text-sm">No tip data recorded for this period</p>
-                <p className="text-xs mt-1">Stylists need at least 10 appointments to appear</p>
+                <p className="text-xs mt-1">Tips will appear once stylists have completed appointments</p>
               </div>
             ) : (
               /* ── Leadership View ── */
@@ -261,15 +270,46 @@ export function TipsDrilldownPanel({ isOpen, parentLocationId }: TipsDrilldownPa
                   );
                 })()}
 
-                {/* Top Tip Earners */}
+                {/* Tips by Stylist (total tips, no minimum) */}
+                {filteredTotalTips.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <DollarSign className="w-3.5 h-3.5 text-primary" />
+                      <span className="text-xs tracking-wide uppercase text-muted-foreground font-medium">
+                        Tips by Stylist
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        (total earned)
+                      </span>
+                    </div>
+                    <div className="space-y-1">
+                      {(showAllTotalTips ? filteredTotalTips : filteredTotalTips.slice(0, 10)).map((stylist, index) => (
+                        <TotalTipRow key={stylist.stylistUserId} stylist={stylist} index={index} />
+                      ))}
+                    </div>
+                    {filteredTotalTips.length > 10 && (
+                      <Button
+                        variant="ghost"
+                        size={tokens.button.inline}
+                        className="text-xs text-muted-foreground hover:text-foreground mt-1"
+                        onClick={() => setShowAllTotalTips(!showAllTotalTips)}
+                      >
+                        {showAllTotalTips ? 'Show top 10' : `Show all ${filteredTotalTips.length} stylists`}
+                      </Button>
+                    )}
+                  </div>
+                )}
+
+                {/* Avg Tip Rate Ranking (10+ appointments) */}
+                {filteredStylists.length > 0 && (
                 <div>
                   <div className="flex items-center gap-2 mb-2">
                     <TrendingUp className="w-3.5 h-3.5 text-primary" />
                     <span className="text-xs tracking-wide uppercase text-muted-foreground font-medium">
-                      Top Tip Earners
+                      Avg Tip Rate Ranking
                     </span>
                     <span className="text-xs text-muted-foreground">
-                      (avg per service)
+                      (10+ appointments)
                     </span>
                   </div>
                   <div className="space-y-1">
@@ -288,6 +328,7 @@ export function TipsDrilldownPanel({ isOpen, parentLocationId }: TipsDrilldownPa
                     </Button>
                   )}
                 </div>
+                )}
 
                 {/* Coaching Opportunities */}
                 {coachingOpportunities.length > 0 && (
@@ -425,6 +466,43 @@ function StylistTipRow({ stylist, index, isCoaching = false }: { stylist: Stylis
       </span>
       <span className="text-xs text-muted-foreground tabular-nums min-w-[55px] text-right">
         <BlurredAmount>{fmtWhole(Math.round(stylist.totalTips))}</BlurredAmount>
+      </span>
+    </motion.div>
+  );
+}
+
+/* ── Total tip row (emphasizes total tips first) ── */
+function TotalTipRow({ stylist, index }: { stylist: StylistTipMetrics; index: number }) {
+  const { formatCurrencyWhole: fmtWhole } = useFormatCurrency();
+  const initials = stylist.displayName
+    .split(' ')
+    .map(n => n[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: -8 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: index * 0.04 }}
+      className="flex items-center gap-3 py-1.5 px-2 rounded-md hover:bg-muted/30 transition-colors"
+    >
+      <Avatar className="w-7 h-7">
+        <AvatarImage src={stylist.photoUrl ?? undefined} />
+        <AvatarFallback className="text-[10px]">{initials}</AvatarFallback>
+      </Avatar>
+      <span className="text-sm text-foreground font-medium min-w-[90px] truncate">
+        {stylist.displayName}
+      </span>
+      <span className="text-sm font-display tabular-nums min-w-[55px] text-right">
+        <BlurredAmount>{fmtWhole(Math.round(stylist.totalTips))}</BlurredAmount>
+      </span>
+      <span className="text-xs text-muted-foreground tabular-nums min-w-[40px] text-right">
+        {stylist.tipPercentage.toFixed(0)}%
+      </span>
+      <span className="text-xs text-muted-foreground tabular-nums min-w-[55px] text-right">
+        {stylist.appointmentCount} appts
       </span>
     </motion.div>
   );

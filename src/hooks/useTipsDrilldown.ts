@@ -30,6 +30,7 @@ export interface PaymentMethodTipMetrics {
 
 export interface TipsDrilldownData {
   byStylist: StylistTipMetrics[];
+  byTotalTips: StylistTipMetrics[];
   byCategory: Record<string, CategoryTipMetrics>;
   byPaymentMethod: Record<string, PaymentMethodTipMetrics>;
   isLoading: boolean;
@@ -109,7 +110,7 @@ export function useTipsDrilldown({ period, locationId, minAppointments = 10 }: U
 
   const result = useMemo(() => {
     if (!appointments || !profiles) {
-      return { byStylist: [], byCategory: {}, byPaymentMethod: {} };
+      return { byStylist: [], byTotalTips: [], byCategory: {}, byPaymentMethod: {} };
     }
 
     const profileMap = new Map(
@@ -192,6 +193,25 @@ export function useTipsDrilldown({ period, locationId, minAppointments = 10 }: U
     // Sort by avg tip descending
     byStylist.sort((a, b) => b.avgTip - a.avgTip);
 
+    // Build byTotalTips: all stylists with any tips, sorted by total tips desc
+    const byTotalTips: StylistTipMetrics[] = [];
+    for (const [userId, data] of stylistMap) {
+      if (data.totalTips <= 0) continue;
+      const profile = profileMap.get(userId);
+      byTotalTips.push({
+        stylistUserId: userId,
+        displayName: profile?.name ?? 'Unknown',
+        photoUrl: profile?.photo ?? null,
+        avgTip: data.count > 0 ? data.totalTips / data.count : 0,
+        tipPercentage: data.totalRevenue > 0 ? (data.totalTips / data.totalRevenue) * 100 : 0,
+        noTipRate: data.count > 0 ? (data.noTipCount / data.count) * 100 : 0,
+        totalTips: data.totalTips,
+        appointmentCount: data.count,
+        locationId: data.locationId,
+      });
+    }
+    byTotalTips.sort((a, b) => b.totalTips - a.totalTips);
+
     // Build category record
     const byCategory: Record<string, CategoryTipMetrics> = {};
     for (const [name, data] of categoryMap) {
@@ -215,7 +235,7 @@ export function useTipsDrilldown({ period, locationId, minAppointments = 10 }: U
       }
     }
 
-    return { byStylist, byCategory, byPaymentMethod };
+    return { byStylist, byTotalTips, byCategory, byPaymentMethod };
   }, [appointments, profiles, transactionItems, minAppointments]);
 
   return {
