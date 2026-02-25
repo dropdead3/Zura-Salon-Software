@@ -694,12 +694,24 @@ export function AggregateSalesCard({
                               className="h-1.5"
                               indicatorClassName={exceededExpected ? "bg-success-foreground" : undefined}
                             />
-                            {exceededExpected && (
+                            {exceededExpected && allAppointmentsComplete ? (
+                              <div className="flex items-center justify-center gap-3 text-xs text-success-foreground">
+                                <span className="flex items-center gap-1">
+                                  <CheckCircle2 className="w-3.5 h-3.5" />
+                                  Exceeded
+                                </span>
+                                <span className="text-success-foreground/40">·</span>
+                                <span className="flex items-center gap-1">
+                                  <CheckCircle2 className="w-3.5 h-3.5" />
+                                  All appointments complete
+                                </span>
+                              </div>
+                            ) : exceededExpected ? (
                               <div className="flex items-center justify-center gap-1 text-xs text-success-foreground">
                                 <CheckCircle2 className="w-3.5 h-3.5" />
                                 <span>Exceeded</span>
                               </div>
-                            )}
+                            ) : null}
                           </div>
                         ) : (
                           <p className="text-xs text-muted-foreground/70 text-center">
@@ -707,12 +719,12 @@ export function AggregateSalesCard({
                           </p>
                         )}
 
-                        {allAppointmentsComplete ? (
+                        {!exceededExpected && allAppointmentsComplete ? (
                           <div className="flex items-center justify-center gap-1.5 text-xs text-success-foreground">
                             <CheckCircle2 className="w-3.5 h-3.5" />
                             <span>All appointments complete</span>
                           </div>
-                        ) : todayActual?.lastAppointmentEndTime ? (
+                        ) : !allAppointmentsComplete && todayActual?.lastAppointmentEndTime ? (
                           <p className="text-xs text-muted-foreground/70 text-center">
                             {t('sales.estimated_final_at')}{' '}
                             <span className="font-medium text-foreground/70">
