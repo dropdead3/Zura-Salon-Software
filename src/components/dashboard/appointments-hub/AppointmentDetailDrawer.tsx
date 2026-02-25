@@ -5,7 +5,7 @@ import { TransactionBreakdownPanel } from './TransactionBreakdownPanel';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, SubTabsList, SubTabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { tokens } from '@/lib/design-tokens';
 import { APPOINTMENT_STATUS_BADGE } from '@/lib/design-tokens';
@@ -15,7 +15,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Calendar, Clock, User, MapPin, DollarSign, MessageSquare, Tag, Percent, Phone, Mail, FileText, UserCheck, Info, StickyNote, ExternalLink, XCircle, Hash, Copy, Receipt } from 'lucide-react';
+import { Calendar, Clock, User, MapPin, DollarSign, MessageSquare, Tag, Percent, Phone, Mail, FileText, UserCheck, Info, ExternalLink, XCircle, Hash, Copy } from 'lucide-react';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { cn } from '@/lib/utils';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -205,24 +205,20 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
 
         {/* Tabs */}
         <Tabs defaultValue="summary" className="flex-1 flex flex-col overflow-hidden">
-          <TabsList className="mx-6 mt-3">
-            <TabsTrigger value="summary">Summary</TabsTrigger>
-            <TabsTrigger value="transaction" className="gap-1.5">
-              <Receipt className="h-3.5 w-3.5" />
-              Transaction
+          <SubTabsList className="mx-6 mt-3 overflow-x-auto scrollbar-hide border-b border-border w-auto">
+            <SubTabsTrigger value="summary">Summary</SubTabsTrigger>
+            <SubTabsTrigger value="transaction" className="gap-1.5">
+              Payment
               {txBreakdown?.hasTransaction && (
-                <Badge variant="secondary" className="ml-1 h-4 min-w-4 px-1 text-[10px]">
+                <Badge variant="secondary" className="ml-0.5 h-4 min-w-4 px-1 text-[10px]">
                   {txBreakdown.items.length}
                 </Badge>
               )}
-            </TabsTrigger>
-            <TabsTrigger value="notes" className="gap-1.5">
-              <StickyNote className="h-3.5 w-3.5" />
-              Notes
-            </TabsTrigger>
-            <TabsTrigger value="timeline">Audit Trail</TabsTrigger>
-            <TabsTrigger value="comms" disabled>Comms</TabsTrigger>
-          </TabsList>
+            </SubTabsTrigger>
+            <SubTabsTrigger value="notes">Notes</SubTabsTrigger>
+            <SubTabsTrigger value="timeline">Activity</SubTabsTrigger>
+            <SubTabsTrigger value="comms" disabled>Comms</SubTabsTrigger>
+          </SubTabsList>
 
           <TabsContent value="summary" className="flex-1 overflow-auto p-6 space-y-5">
             {/* ── Client Info ── */}
