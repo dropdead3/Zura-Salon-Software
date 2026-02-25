@@ -44,6 +44,7 @@ export function useProfileCompletion() {
     if (!profile) return { percentage: 0, missingCount: 0 };
 
     const isStylist = effectiveRoles.includes('stylist');
+    const isOnsiteStaff = (profile as any).is_onsite_staff !== false;
     
     const fields = [
       { filled: !!profile.photo_url },
@@ -62,6 +63,12 @@ export function useProfileCompletion() {
         { filled: !!profile.stylist_level },
         { filled: (profile.specialties?.length || 0) > 0 }
       );
+    }
+
+    // Work days only required for on-site staff
+    if (isOnsiteStaff) {
+      // Insert work_days check - we check location_schedules indirectly via work_days
+      fields.push({ filled: (profile.work_days?.length || 0) > 0 });
     }
 
     const filledCount = fields.filter(f => f.filled).length;
