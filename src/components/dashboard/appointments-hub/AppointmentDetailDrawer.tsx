@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
+import { useAppointmentTransactionBreakdown } from '@/hooks/useAppointmentTransactionBreakdown';
+import { TransactionBreakdownPanel } from './TransactionBreakdownPanel';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -13,7 +15,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Calendar, Clock, User, MapPin, DollarSign, MessageSquare, Tag, Percent, Phone, Mail, FileText, UserCheck, Info, StickyNote, ExternalLink, XCircle, Hash, Copy } from 'lucide-react';
+import { Calendar, Clock, User, MapPin, DollarSign, MessageSquare, Tag, Percent, Phone, Mail, FileText, UserCheck, Info, StickyNote, ExternalLink, XCircle, Hash, Copy, Receipt } from 'lucide-react';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { cn } from '@/lib/utils';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -73,6 +75,16 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   const [cancelling, setCancelling] = useState(false);
+
+  // Transaction breakdown hook
+  const phorestClientIdForTx = appointment?.phorest_client_id || appointment?.client_id;
+  const { data: txBreakdown, isLoading: txLoading } = useAppointmentTransactionBreakdown(
+    phorestClientIdForTx,
+    appointment?.appointment_date
+  );
+
+  // Resolve organization_id from the appointment
+  const orgId = appointment?.organization_id || null;
 
   // Resolve phorest_client_id to client directory ID
   const phorestClientId = appointment?.phorest_client_id || appointment?.client_id;
@@ -195,6 +207,15 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
         <Tabs defaultValue="summary" className="flex-1 flex flex-col overflow-hidden">
           <TabsList className="mx-6 mt-3">
             <TabsTrigger value="summary">Summary</TabsTrigger>
+            <TabsTrigger value="transaction" className="gap-1.5">
+              <Receipt className="h-3.5 w-3.5" />
+              Transaction
+              {txBreakdown?.hasTransaction && (
+                <Badge variant="secondary" className="ml-1 h-4 min-w-4 px-1 text-[10px]">
+                  {txBreakdown.items.length}
+                </Badge>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="notes" className="gap-1.5">
               <StickyNote className="h-3.5 w-3.5" />
               Notes
@@ -433,6 +454,17 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
                 </Button>
               </>
             )}
+          </TabsContent>
+
+          {/* Transaction Tab */}
+          <TabsContent value="transaction" className="flex-1 overflow-auto p-6">
+            <TransactionBreakdownPanel
+              breakdown={txBreakdown}
+              isLoading={txLoading}
+              organizationId={orgId}
+              clientId={resolvedClientId || null}
+              appointmentDate={appointment.appointment_date}
+            />
           </TabsContent>
 
           {/* Notes Tab */}
