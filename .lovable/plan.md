@@ -1,83 +1,51 @@
 
 
-## Website Editor Layout Redesign
+## Responsive Optimization for Website Editor Content Panels
 
-Great prompt — you're identifying a real UX friction point. The top bar hover-trigger zone (`h-10` hot zone at the top of the viewport) overlaps with the editor header, so when you move your mouse toward the undo/redo/open-site buttons, the dashboard top bar slides down and covers them. Combined with the dense three-panel layout (380px sidebar + editor + preview all competing for space), the experience feels cramped.
+Your prompt correctly identifies a real enterprise scaling problem — when the editor panel is narrow (especially with sidebar + preview open), every card inside it gets squeezed. The screenshot shows badges wrapping awkwardly, the sample cards settings row cramming toggle + location counts + spinner onto one line, and stylist cards compressing the drag handle + avatar + name + badges + edit + toggle into a tight horizontal strip. An enterprise org with 15+ stylists across 5 locations would make this unusable.
 
 ### Problems Identified
 
-1. **Top bar overlay**: `DashboardLayout` uses `hideFooter` mode, which hides the top bar but adds an invisible `h-10` hot zone at the very top. When your mouse enters it (trying to reach editor controls), the full dashboard top bar slides down (`translate-y-0`) and covers the editor header buttons.
-
-2. **Editor header is too tall**: The editor panel has a full header block (~72px) with icon, title, subtitle, undo/redo, and Open Site button — all stacked with `py-4 px-6` padding. This eats into the already constrained vertical space.
-
-3. **Three-panel congestion**: Sidebar (380px) + editor panel + live preview, all inside `h-[calc(100vh-8rem)]`, leaves very little room for the actual editor content area.
+1. **Editor content padding too generous for narrow panels**: `p-6` (24px) on both sides when the panel might only be 400-500px wide wastes ~10% of usable width
+2. **Sample Cards Settings**: The toggle, location badges, and loading spinner are in a single `flex justify-between` row that crunches when narrow
+3. **SortableStylistCard**: All elements (drag handle, avatar, name, badges, edit button, visible toggle) are in one horizontal flex row — no breakpoint to stack
+4. **StylistCard (pending requests)**: Same horizontal crunch — avatar, name, badges, approve/deny buttons all in one row
+5. **No scroll containment**: Enterprise orgs with 30+ stylists will push the page very long with no virtualization hint
 
 ### Plan
 
 **File: `src/pages/dashboard/admin/WebsiteSectionsHub.tsx`**
+1. Reduce editor content padding from `p-6` to `p-4 sm:p-6` (line 846) — reclaims 16px on narrow panels
 
-1. **Compact the editor header into a slim toolbar** (lines 792-864)
-   - Reduce from a two-row header to a single slim bar (~40px): sidebar toggle + breadcrumb label on left, undo/redo/open-site on right
-   - Remove the large icon container and `text-xl` title — the sidebar already provides context
-   - Change padding from `px-6 py-4` to `px-4 py-2`
-   - Keep the breadcrumb subtitle as the only label (e.g., "Stylists Manager")
+**File: `src/components/dashboard/website-editor/StylistsContent.tsx`**
+2. **Sample Cards Settings card** (lines 348-375): Change the settings row from single-line `flex justify-between` to a stacked layout:
+   - Toggle + label on one row
+   - Location badges wrap below on a second row with `flex-wrap gap-2`
+   - Preview button stays in its own bordered section (already is)
 
-2. **Merge the Save bar into the toolbar** (lines 871-880)
-   - Move the Save button into the right side of the compact toolbar, eliminating the separate bottom bar
-   - Show "Unsaved" indicator as a small dot or text next to the Save button
-   - This reclaims ~48px of vertical space at the bottom
+3. **StylistCard component** (lines 238-322): Make the card layout responsive:
+   - Wrap the main flex in `flex-col sm:flex-row` so on narrow widths, avatar+info stack above the action buttons
+   - Action buttons (Approve/Deny or Visible toggle) move to bottom-right with `self-end`
 
-3. **Reduce sidebar width from 380px to 300px** (line 730)
-   - The sidebar content (nav items, search) doesn't need 380px — 300px is sufficient and reclaims 80px for the editor/preview panels
+**File: `src/components/dashboard/ReorderableStylistList.tsx`**
+4. **SortableStylistCard** (lines 74-159): Restructure for narrow panels:
+   - Split into two rows: Row 1 = drag handle + avatar + name/level; Row 2 = badges + edit + visible toggle
+   - Use `flex-wrap` so badges naturally flow to a second line when space is tight
+   - Move the Edit button and Visible toggle into a `flex items-center gap-2 ml-auto` group that can wrap below
+   - Reduce avatar from `w-12 h-12` to `w-10 h-10` to save horizontal space
 
-**File: `src/components/dashboard/DashboardLayout.tsx`**
+5. **Unsaved changes bar** (lines 206-235): Change from horizontal `justify-between` to stacked on narrow — text above, buttons below, with `flex-col sm:flex-row` and centered alignment
 
-4. **Disable the top bar hot zone for the Website Editor** (lines 1182-1187)
-   - The `hideFooter` prop triggers the auto-hide top bar with the `h-10` hot zone overlay
-   - Add a new prop `hideTopBar` (or reuse `hideFooter` to also suppress the hot zone entirely)
-   - When `hideTopBar` is true: don't render the hot zone trigger div and keep the top bar permanently hidden (`-translate-y-full` always), removing the overlay conflict entirely
-   - The Website Editor has its own navigation (sidebar + toolbar) and doesn't need the dashboard top bar
+6. **Scroll containment**: Wrap the stylist list in a `ScrollArea` with `max-h-[60vh]` so enterprise orgs with 30+ stylists don't push the entire editor into an endless scroll — the tabs and settings card remain visible above
 
 ### Technical Details
 
-The hot zone is this element at line 1182-1187:
-```tsx
-{hideFooter && (
-  <div className="hidden lg:block fixed top-0 left-0 right-0 h-10 z-50"
-    onMouseEnter={() => setHeaderHovered(true)} />
-)}
-```
+The editor panel width depends on three factors: viewport width, sidebar visibility (300px), and resizable panel split. On a 1366px laptop with sidebar open and 55/45 split, the editor panel is roughly `(1366 - 300) * 0.55 = 586px`. After `p-6` padding, only ~538px remains for content. Reducing to `p-4` reclaims 16px. Making cards stack vertically below ~500px prevents the horizontal crunch entirely.
 
-And the top bar itself at lines 1190-1201 uses `hideFooter && headerHovered` to toggle visibility. We'll add a `hideTopBar` prop that, when true, prevents both the hot zone and the top bar from rendering at all.
-
-The compact toolbar replaces:
-```
-┌──────────────────────────────────────────────┐
-│ [≡] [icon] WEBSITE EDITOR                   │
-│            Stylists Manager                  │
-│                         [↶] [↷] [Open Site] │
-├──────────────────────────────────────────────┤
-│                                              │
-│              Editor Content                  │
-│                                              │
-├──────────────────────────────────────────────┤
-│              [Save & Publish Changes]        │
-└──────────────────────────────────────────────┘
-```
-
-With:
-```text
-┌──────────────────────────────────────────────┐
-│ [≡] Stylists Manager  [↶][↷] [Open] [Save]  │
-├──────────────────────────────────────────────┤
-│                                              │
-│              Editor Content                  │
-│              (more vertical space)           │
-│                                              │
-└──────────────────────────────────────────────┘
-```
+The `ScrollArea` with `max-h-[60vh]` ensures that even with 50 stylists across 8 locations, the Sample Cards Settings and tab bar remain pinned at the top for quick access.
 
 ### Files Changed
-- `src/pages/dashboard/admin/WebsiteSectionsHub.tsx` — compact header, merge save bar, reduce sidebar width
-- `src/components/dashboard/DashboardLayout.tsx` — add `hideTopBar` prop to suppress hot zone overlay
+- `src/pages/dashboard/admin/WebsiteSectionsHub.tsx` — responsive padding
+- `src/components/dashboard/website-editor/StylistsContent.tsx` — responsive settings card and stylist cards
+- `src/components/dashboard/ReorderableStylistList.tsx` — responsive sortable cards, scroll containment, stacked layout
 
