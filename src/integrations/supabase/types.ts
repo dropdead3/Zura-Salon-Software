@@ -17608,6 +17608,177 @@ export type Database = {
         }
         Relationships: []
       }
+      website_menu_items: {
+        Row: {
+          created_at: string
+          cta_style: string | null
+          icon: string | null
+          id: string
+          is_published: boolean
+          item_type: string
+          label: string
+          menu_id: string
+          open_in_new_tab: boolean
+          organization_id: string
+          parent_id: string | null
+          sort_order: number
+          target_anchor: string | null
+          target_page_id: string | null
+          target_url: string | null
+          tracking_key: string | null
+          updated_at: string
+          visibility: string
+        }
+        Insert: {
+          created_at?: string
+          cta_style?: string | null
+          icon?: string | null
+          id?: string
+          is_published?: boolean
+          item_type?: string
+          label: string
+          menu_id: string
+          open_in_new_tab?: boolean
+          organization_id: string
+          parent_id?: string | null
+          sort_order?: number
+          target_anchor?: string | null
+          target_page_id?: string | null
+          target_url?: string | null
+          tracking_key?: string | null
+          updated_at?: string
+          visibility?: string
+        }
+        Update: {
+          created_at?: string
+          cta_style?: string | null
+          icon?: string | null
+          id?: string
+          is_published?: boolean
+          item_type?: string
+          label?: string
+          menu_id?: string
+          open_in_new_tab?: boolean
+          organization_id?: string
+          parent_id?: string | null
+          sort_order?: number
+          target_anchor?: string | null
+          target_page_id?: string | null
+          target_url?: string | null
+          tracking_key?: string | null
+          updated_at?: string
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "website_menu_items_menu_id_fkey"
+            columns: ["menu_id"]
+            isOneToOne: false
+            referencedRelation: "website_menus"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "website_menu_items_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "website_menu_items_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "website_menu_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      website_menu_versions: {
+        Row: {
+          change_summary: string | null
+          id: string
+          menu_id: string
+          organization_id: string
+          published_at: string
+          published_by: string | null
+          snapshot: Json
+          version_number: number
+        }
+        Insert: {
+          change_summary?: string | null
+          id?: string
+          menu_id: string
+          organization_id: string
+          published_at?: string
+          published_by?: string | null
+          snapshot?: Json
+          version_number?: number
+        }
+        Update: {
+          change_summary?: string | null
+          id?: string
+          menu_id?: string
+          organization_id?: string
+          published_at?: string
+          published_by?: string | null
+          snapshot?: Json
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "website_menu_versions_menu_id_fkey"
+            columns: ["menu_id"]
+            isOneToOne: false
+            referencedRelation: "website_menus"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "website_menu_versions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      website_menus: {
+        Row: {
+          config: Json | null
+          created_at: string
+          id: string
+          name: string
+          organization_id: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          config?: Json | null
+          created_at?: string
+          id?: string
+          name: string
+          organization_id: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          config?: Json | null
+          created_at?: string
+          id?: string
+          name?: string
+          organization_id?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "website_menus_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       website_themes: {
         Row: {
           color_scheme: string

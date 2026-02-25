@@ -1,0 +1,115 @@
+import { useState, useEffect } from 'react';
+import { Loader2, Navigation } from 'lucide-react';
+import { EditorCard } from '../EditorCard';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { MenuTreeEditor } from './MenuTreeEditor';
+import { MenuItemInspector } from './MenuItemInspector';
+import { MenuPublishBar } from './MenuPublishBar';
+import {
+  useWebsiteMenus,
+  useWebsiteMenu,
+  useSeedMenus,
+  type MenuItem,
+  type WebsiteMenu,
+} from '@/hooks/useWebsiteMenus';
+import { useWebsitePages } from '@/hooks/useWebsitePages';
+import { useMenuValidation } from './useMenuValidation';
+
+export function NavigationManager() {
+  const { data: menus, isLoading: menusLoading } = useWebsiteMenus();
+  const seedMenus = useSeedMenus();
+  const { data: pagesConfig } = useWebsitePages();
+
+  const [selectedMenuId, setSelectedMenuId] = useState<string | null>(null);
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+
+  // Auto-seed on first load if no menus
+  useEffect(() => {
+    if (menus && menus.length === 0 && !seedMenus.isPending) {
+      seedMenus.mutate();
+    }
+  }, [menus, seedMenus]);
+
+  // Auto-select first menu
+  useEffect(() => {
+    if (menus && menus.length > 0 && !selectedMenuId) {
+      const primary = menus.find(m => m.slug === 'primary');
+      setSelectedMenuId(primary?.id ?? menus[0].id);
+    }
+  }, [menus, selectedMenuId]);
+
+  const { data: menuItems, isLoading: itemsLoading } = useWebsiteMenu(selectedMenuId);
+  const { errors, warnings } = useMenuValidation(menuItems, pagesConfig);
+
+  const selectedItem = menuItems?.find(i => i.id === selectedItemId) ?? null;
+  const selectedMenu = menus?.find(m => m.id === selectedMenuId) ?? null;
+
+  if (menusLoading || seedMenus.isPending) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <EditorCard
+        title="Navigation Manager"
+        icon={Navigation}
+        description="Configure header and footer navigation menus"
+      >
+        {/* Menu Selector */}
+        <div className="space-y-1.5">
+          <label className="text-xs text-muted-foreground font-medium">Select Menu</label>
+          <Select
+            value={selectedMenuId ?? ''}
+            onValueChange={(v) => { setSelectedMenuId(v); setSelectedItemId(null); }}
+          >
+            <SelectTrigger className="h-9 text-sm">
+              <SelectValue placeholder="Choose menu..." />
+            </SelectTrigger>
+            <SelectContent>
+              {menus?.map((menu: WebsiteMenu) => (
+                <SelectItem key={menu.id} value={menu.id}>
+                  {menu.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </EditorCard>
+
+      {selectedMenuId && (
+        <>
+          {/* Menu Tree */}
+          <MenuTreeEditor
+            menuId={selectedMenuId}
+            items={menuItems ?? []}
+            isLoading={itemsLoading}
+            selectedItemId={selectedItemId}
+            onSelectItem={setSelectedItemId}
+            pagesConfig={pagesConfig}
+          />
+
+          {/* Item Inspector */}
+          {selectedItem && (
+            <MenuItemInspector
+              item={selectedItem}
+              menuId={selectedMenuId}
+              pagesConfig={pagesConfig}
+            />
+          )}
+
+          {/* Publish Bar */}
+          <MenuPublishBar
+            menuId={selectedMenuId}
+            menuName={selectedMenu?.name ?? ''}
+            errors={errors}
+            warnings={warnings}
+          />
+        </>
+      )}
+    </div>
+  );
+}

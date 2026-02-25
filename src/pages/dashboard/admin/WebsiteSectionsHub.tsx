@@ -39,6 +39,7 @@ import { StylistsContent } from '@/components/dashboard/website-editor/StylistsC
 import { LocationsContent } from '@/components/dashboard/website-editor/LocationsContent';
 import { ServicesContent } from '@/components/dashboard/website-editor/ServicesContent';
 import { AnnouncementBarContent } from '@/components/dashboard/website-editor/AnnouncementBarContent';
+import { NavigationManager } from '@/components/dashboard/website-editor/navigation/NavigationManager';
 
 // Multi-page components
 import { PageSettingsEditor } from '@/components/dashboard/website-editor/PageSettingsEditor';
@@ -117,6 +118,7 @@ const EDITOR_COMPONENTS: Record<string, React.ComponentType> = {
   'drinks': DrinksManager,
   'footer-cta': FooterCTAEditor,
   'footer': FooterEditor,
+  'navigation': NavigationManager,
 };
 
 // Map editor tabs to homepage section IDs for scroll-to-section
@@ -160,6 +162,7 @@ const TAB_LABELS: Record<string, string> = {
   'footer-cta': 'Footer CTA',
   'footer': 'Footer Settings',
   'page-settings': 'Page Settings',
+  'navigation': 'Navigation Manager',
 };
 
 export default function WebsiteSectionsHub() {
