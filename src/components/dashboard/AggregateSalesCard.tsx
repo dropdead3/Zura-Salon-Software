@@ -713,12 +713,12 @@ export function AggregateSalesCard({
                               <div className="flex items-center justify-center gap-3 text-xs text-success-foreground">
                                 <span className="flex items-center gap-1">
                                   <CheckCircle2 className="w-3.5 h-3.5" />
-                                  Exceeded
+                                  All appointments complete
                                 </span>
                                 <span className="text-success-foreground/40">·</span>
                                 <span className="flex items-center gap-1">
                                   <CheckCircle2 className="w-3.5 h-3.5" />
-                                  All appointments complete
+                                  Exceeded
                                 </span>
                               </div>
                             ) : exceededExpected ? (
