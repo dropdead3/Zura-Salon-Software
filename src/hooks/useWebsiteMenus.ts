@@ -176,6 +176,37 @@ export function usePublishedMenu(orgId: string | undefined, menuSlug: string) {
   });
 }
 
+/** Fetch published menu by slug without requiring org context (for public site) */
+export function usePublicMenuBySlug(menuSlug: string) {
+  return useQuery({
+    queryKey: ['public-menu', menuSlug],
+    queryFn: async () => {
+      // Get the first menu matching this slug (single-tenant public site)
+      const { data: menu, error: menuError } = await supabase
+        .from('website_menus')
+        .select('id')
+        .eq('slug', menuSlug)
+        .limit(1)
+        .maybeSingle();
+
+      if (menuError) throw menuError;
+      if (!menu) return null;
+
+      // Get published items (public SELECT policy allows this)
+      const { data: items, error } = await supabase
+        .from('website_menu_items')
+        .select('*')
+        .eq('menu_id', menu.id)
+        .eq('is_published', true)
+        .order('sort_order');
+
+      if (error) throw error;
+      return buildMenuTree((items ?? []) as MenuItem[]);
+    },
+    staleTime: 60_000,
+  });
+}
+
 /** Seed default menus if none exist */
 export function useSeedMenus() {
   const orgId = useResolvedOrgId();

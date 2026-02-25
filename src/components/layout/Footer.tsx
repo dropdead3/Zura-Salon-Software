@@ -1,10 +1,12 @@
+import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Instagram, ArrowUpRight, MapPin, Phone, AlertCircle } from "lucide-react";
 import Logo from "@/assets/brand-logo-secondary.svg";
 import { useActiveLocations, formatHoursForDisplay, isClosedForHoliday, isClosedToday } from "@/hooks/useLocations";
 import { useOrgPath } from "@/hooks/useOrgPath";
+import { usePublicMenuBySlug } from "@/hooks/useWebsiteMenus";
 
-const FOOTER_LINKS = [
+const FALLBACK_FOOTER_LINKS = [
   { href: "/services", label: "Services" },
   { href: "/booking", label: "Book" },
 ];
@@ -12,7 +14,19 @@ const FOOTER_LINKS = [
 export function Footer() {
   const { data: locations = [] } = useActiveLocations();
   const orgPath = useOrgPath();
+  const { data: publishedFooter } = usePublicMenuBySlug('footer');
   
+  const footerLinks = useMemo(() => {
+    if (!publishedFooter || publishedFooter.length === 0) {
+      return FALLBACK_FOOTER_LINKS;
+    }
+    return publishedFooter.map(item => ({
+      href: item.target_url
+        ? (item.target_url.startsWith('http') ? item.target_url : item.target_url)
+        : '#',
+      label: item.label,
+    }));
+  }, [publishedFooter]);
   // Get hours from the first location for display
   const hours = locations.length > 0 ? formatHoursForDisplay(locations[0].hours_json) : '';
 
@@ -46,7 +60,7 @@ export function Footer() {
               Navigate
             </h4>
             <nav className="flex flex-row justify-center md:justify-start md:flex-col gap-6 md:gap-3">
-              {FOOTER_LINKS.map((link) => (
+              {footerLinks.map((link) => (
                 <Link
                   key={link.href}
                   to={orgPath(link.href)}

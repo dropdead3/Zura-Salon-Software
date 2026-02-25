@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X, ArrowRight, ChevronDown, MoreHorizontal, UserRound } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -7,14 +7,12 @@ import LogoIcon from "@/assets/brand-logo-secondary.svg";
 import { cn } from "@/lib/utils";
 import { useAnnouncementBarSettings } from "@/hooks/useAnnouncementBar";
 import { useOrgPath } from "@/hooks/useOrgPath";
-import { useWebsitePages, getNavPages } from "@/hooks/useWebsitePages";
+import { usePublicMenuBySlug, buildMenuTree, type MenuItem } from "@/hooks/useWebsiteMenus";
 
 function isColorDark(color: string): boolean {
   if (!color) return false;
-  // Handle HSL
   const hslMatch = color.match(/hsl\((\d+),?\s*(\d+)%?,?\s*(\d+)%?\)/);
   if (hslMatch) return parseInt(hslMatch[3]) < 40;
-  // Handle hex
   if (color.startsWith('#')) {
     const hex = color.replace('#', '');
     const r = parseInt(hex.substring(0, 2), 16);
@@ -37,20 +35,57 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-// Priority: lower number = higher priority (hidden last)
-const NAV_LINKS = [
-  { href: "/services", label: "Services", priority: 1 },
-  { href: "/extensions", label: "Hair Extensions", priority: 3 },
-  { href: "/careers", label: "Join The Team", priority: 4 },
-  { href: "/gallery", label: "Gallery", priority: 5 },
+// Fallback hardcoded links (used when no published menu exists)
+const FALLBACK_NAV_ITEMS = [
+  { href: "/services", label: "Services", priority: 1, type: "link" as const },
+  { href: "/about", label: "About", priority: 2, type: "dropdown" as const, children: [
+    { href: "/about", label: "About Us" },
+    { href: "/policies", label: "Salon Policies" },
+  ]},
+  { href: "/extensions", label: "Hair Extensions", priority: 3, type: "link" as const },
+  { href: "/careers", label: "Join The Team", priority: 4, type: "link" as const },
+  { href: "/gallery", label: "Gallery", priority: 5, type: "link" as const },
 ];
 
-const ABOUT_LINKS = [
-  { href: "/about", label: "About Us" },
-  { href: "/policies", label: "Salon Policies" },
-];
+const FALLBACK_CTA = { href: "/booking", label: "Book Consult" };
 
-// About dropdown has priority 2 (between Services and Hair Extensions)
+/** Transform published menu items into the nav format used by the Header */
+function menuItemToNavItem(item: MenuItem, index: number, orgPath: (p: string) => string): {
+  href: string;
+  label: string;
+  priority: number;
+  type: 'link' | 'dropdown' | 'cta';
+  children?: { href: string; label: string }[];
+  openInNewTab?: boolean;
+  ctaStyle?: string;
+  visibility?: string;
+} {
+  const href = item.target_url
+    ? (item.target_url.startsWith('http') ? item.target_url : orgPath(item.target_url))
+    : item.target_page_id
+      ? orgPath(`/${item.target_page_id}`)
+      : '#';
+
+  const type = item.item_type === 'cta' ? 'cta' as const
+    : item.item_type === 'dropdown_parent' ? 'dropdown' as const
+    : 'link' as const;
+
+  return {
+    href,
+    label: item.label,
+    priority: index + 1,
+    type,
+    children: item.children?.map(child => ({
+      href: child.target_url
+        ? (child.target_url.startsWith('http') ? child.target_url : orgPath(child.target_url))
+        : '#',
+      label: child.label,
+    })),
+    openInNewTab: item.open_in_new_tab,
+    ctaStyle: item.cta_style ?? undefined,
+    visibility: item.visibility,
+  };
+}
 
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -67,76 +102,110 @@ export function Header() {
   const location = useLocation();
   const { data: announcementSettings } = useAnnouncementBarSettings();
   const orgPath = useOrgPath();
-  const { data: pagesConfig } = useWebsitePages();
-  const dynamicNavPages = getNavPages(pagesConfig);
+
+  // Fetch published primary menu
+  const { data: publishedMenu } = usePublicMenuBySlug('primary');
+
+  // Build nav items from published menu or fallback
+  const { navItems, ctaItem } = useMemo(() => {
+    if (!publishedMenu || publishedMenu.length === 0) {
+      return {
+        navItems: FALLBACK_NAV_ITEMS.map(item => ({
+          ...item,
+          href: orgPath(item.href),
+          children: item.children?.map(c => ({ ...c, href: orgPath(c.href) })),
+        })),
+        ctaItem: { ...FALLBACK_CTA, href: orgPath(FALLBACK_CTA.href) },
+      };
+    }
+
+    const nonCta: typeof FALLBACK_NAV_ITEMS = [];
+    let cta = { href: orgPath('/booking'), label: 'Book Consult' };
+
+    publishedMenu.forEach((item, idx) => {
+      if (item.visibility === 'mobile_only') return; // Skip mobile-only in desktop nav
+      const nav = menuItemToNavItem(item, idx, orgPath);
+      if (nav.type === 'cta') {
+        cta = { href: nav.href, label: nav.label };
+      } else {
+        nonCta.push(nav as typeof FALLBACK_NAV_ITEMS[0]);
+      }
+    });
+
+    return { navItems: nonCta, ctaItem: cta };
+  }, [publishedMenu, orgPath]);
+
+  // Mobile nav items (include mobile_only, exclude desktop_only)
+  const mobileNavItems = useMemo(() => {
+    if (!publishedMenu || publishedMenu.length === 0) {
+      // Flatten fallback items for mobile
+      const items: { href: string; label: string; type: string }[] = [];
+      FALLBACK_NAV_ITEMS.forEach(item => {
+        if (item.type === 'dropdown' && item.children) {
+          items.push({ href: orgPath(item.href), label: item.label, type: 'link' });
+          item.children.forEach(c => items.push({ href: orgPath(c.href), label: c.label, type: 'child' }));
+        } else {
+          items.push({ href: orgPath(item.href), label: item.label, type: 'link' });
+        }
+      });
+      return items;
+    }
+
+    const items: { href: string; label: string; type: string }[] = [];
+    publishedMenu.forEach((item) => {
+      if (item.visibility === 'desktop_only') return;
+      if (item.item_type === 'cta') return; // CTA rendered separately
+      const nav = menuItemToNavItem(item, 0, orgPath);
+      if (nav.type === 'dropdown' && nav.children) {
+        nav.children.forEach(c => items.push({ href: c.href, label: c.label, type: 'child' }));
+      } else {
+        items.push({ href: nav.href, label: nav.label, type: 'link' });
+      }
+    });
+    return items;
+  }, [publishedMenu, orgPath]);
 
   // Track desktop breakpoint for sticky effects
   useEffect(() => {
     const checkDesktop = () => {
-      setIsDesktop(window.innerWidth >= 1024); // lg breakpoint
+      setIsDesktop(window.innerWidth >= 1024);
     };
-    
     checkDesktop();
     window.addEventListener("resize", checkDesktop);
     return () => window.removeEventListener("resize", checkDesktop);
   }, []);
 
-  // Desktop-only scroll state - sticky effects only apply on lg+
   const isScrolledDesktop = isScrolled && isDesktop;
 
-  // All nav items with their priorities for responsive hiding
-  // Priority: higher number = hidden first
-  const allNavItems = [
-    { href: orgPath("/services"), label: "Services", priority: 1, type: "link" as const },
-    { href: orgPath("/about"), label: "About", priority: 2, type: "dropdown" as const },
-    { href: orgPath("/extensions"), label: "Hair Extensions", priority: 3, type: "link" as const },
-    { href: orgPath("/careers"), label: "Join The Team", priority: 4, type: "link" as const },
-    { href: orgPath("/gallery"), label: "Gallery", priority: 5, type: "link" as const },
-    // Dynamic pages from the website pages system
-    ...dynamicNavPages.map((p, i) => ({
-      href: orgPath(`/${p.slug}`),
-      label: p.title,
-      priority: 6 + i,
-      type: "link" as const,
-    })),
-  ];
-
   // Calculate which items should be hidden based on window width
-  // Using fixed breakpoints for more reliable behavior
   const calculateHiddenItems = useCallback(() => {
     const windowWidth = window.innerWidth;
+    const allPriorities = navItems.map(i => i.priority).sort((a, b) => b - a);
     
-    // All priorities from highest number (hidden first) to lowest
-    const allPriorities = allNavItems.map(i => i.priority).sort((a, b) => b - a);
-    
-    // Define breakpoints where items start hiding (from right to left by priority)
     if (windowWidth >= 1400) {
-      setHiddenNavItems([]); // Show all
+      setHiddenNavItems([]);
     } else if (windowWidth >= 1280) {
-      setHiddenNavItems(allPriorities.slice(0, 1 + dynamicNavPages.length));
+      setHiddenNavItems(allPriorities.slice(0, 1));
     } else if (windowWidth >= 1180) {
-      setHiddenNavItems(allPriorities.slice(0, 2 + dynamicNavPages.length));
+      setHiddenNavItems(allPriorities.slice(0, 2));
     } else if (windowWidth >= 1100) {
-      setHiddenNavItems(allPriorities.slice(0, 3 + dynamicNavPages.length));
+      setHiddenNavItems(allPriorities.slice(0, 3));
     } else if (windowWidth >= 1024) {
-      setHiddenNavItems(allPriorities.slice(0, 4 + dynamicNavPages.length));
+      setHiddenNavItems(allPriorities.slice(0, 4));
     } else {
-      setHiddenNavItems(allPriorities); // Below lg breakpoint, mobile takes over
+      setHiddenNavItems(allPriorities);
     }
-  }, [allNavItems, dynamicNavPages.length]);
+  }, [navItems]);
 
   // ResizeObserver for responsive nav
   useEffect(() => {
     calculateHiddenItems();
-
     const resizeObserver = new ResizeObserver(() => {
       calculateHiddenItems();
     });
-
     if (navContainerRef.current?.parentElement) {
       resizeObserver.observe(navContainerRef.current.parentElement);
     }
-
     window.addEventListener("resize", calculateHiddenItems);
     return () => {
       resizeObserver.disconnect();
@@ -151,7 +220,6 @@ export function Header() {
         setIsStaffMenuOpen(false);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isStaffMenuOpen]);
@@ -159,65 +227,43 @@ export function Header() {
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
-      
-      // Determine scroll direction
       if (currentScrollY < lastScrollY.current || currentScrollY < 50) {
         setIsScrollingUp(true);
       } else if (currentScrollY > lastScrollY.current && currentScrollY > 100) {
         setIsScrollingUp(false);
       }
-      
       lastScrollY.current = currentScrollY;
       setIsScrolled(currentScrollY > 50);
     };
-    
     window.addEventListener("scroll", handleScroll, { passive: true });
     handleScroll();
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Section theme detection using data-theme attributes
+  // Section theme detection
   useEffect(() => {
     const detectTheme = () => {
       const headerEl = headerRef.current;
       if (!headerEl) return;
-
-      // Get the header's bounding box
       const headerRect = headerEl.getBoundingClientRect();
-      
-      // Sample Y below the header to hit the content behind it
-      // Add extra offset to ensure we're sampling content, not the header itself
       const sampleY = headerRect.bottom + 50;
-      
-      // Sample at center of viewport
       const sampleX = window.innerWidth / 2;
-
       const elBehind = document.elementFromPoint(sampleX, sampleY);
-      
-      // Walk up to find nearest ancestor with data-theme
       let foundDark = false;
       let cur: Element | null = elBehind;
       while (cur && cur !== document.body) {
         if (cur instanceof HTMLElement && cur.hasAttribute("data-theme")) {
           const theme = cur.getAttribute("data-theme");
-          if (theme === "dark") {
-            foundDark = true;
-          }
-          break; // Found a theme, stop walking up
+          if (theme === "dark") foundDark = true;
+          break;
         }
         cur = cur.parentElement;
       }
-
       setIsOverDark(foundDark);
     };
-
     window.addEventListener("scroll", detectTheme, { passive: true });
-    // Run immediately
     detectTheme();
-    
-    return () => {
-      window.removeEventListener("scroll", detectTheme);
-    };
+    return () => window.removeEventListener("scroll", detectTheme);
   }, []);
 
   useEffect(() => {
@@ -286,13 +332,12 @@ export function Header() {
             isOverDark ? "text-white [&_svg]:text-white" : "text-foreground"
           )}>
             <div className="flex items-center justify-between h-16 lg:h-20 gap-4">
-            {/* Logo with scroll transition - responsive width to give nav more room */}
+            {/* Logo */}
             <div className="w-40 lg:w-40 xl:w-56 shrink-0 flex items-center">
               <Link
                 to={orgPath("/")}
                 className="flex items-center hover:opacity-70 transition-opacity relative h-12"
               >
-                {/* Primary Logo - shows when not scrolled OR scrolling up (desktop only for transition) */}
                 <img
                   src={Logo}
                   alt="Salon"
@@ -306,7 +351,6 @@ export function Header() {
                     isOverDark && "invert"
                   )}
                 />
-                {/* Secondary Logo - shows when scrolled AND scrolling down (desktop only) */}
                 <img
                   src={LogoIcon}
                   alt="Salon"
@@ -323,7 +367,7 @@ export function Header() {
               </Link>
             </div>
 
-            {/* Desktop Navigation - Center with Responsive Hiding */}
+            {/* Desktop Navigation */}
             <motion.nav 
               ref={navContainerRef}
               className="hidden lg:flex items-center gap-4 xl:gap-8 shrink-0"
@@ -333,38 +377,31 @@ export function Header() {
               }}
               transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
             >
-              {/* Visible Nav Items - rendered in priority order */}
-              {allNavItems.map((item, index) => {
+              {navItems.map((item, index) => {
                 const isHidden = hiddenNavItems.includes(item.priority);
-                
                 if (isHidden) return null;
                 
-                if (item.type === "dropdown") {
-                  // About Dropdown
+                if (item.type === "dropdown" && item.children) {
                   return (
                     <motion.div
-                      key={item.href}
+                      key={item.href + item.label}
                       data-nav-item
                       data-priority={item.priority}
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ 
-                        duration: 0.4, 
-                        delay: 0.1 + index * 0.05,
-                        ease: [0.25, 0.1, 0.25, 1] 
-                      }}
+                      transition={{ duration: 0.4, delay: 0.1 + index * 0.05, ease: [0.25, 0.1, 0.25, 1] }}
                       className="relative shrink-0"
                     >
                       <DropdownMenu>
                         <DropdownMenuTrigger 
                           className={cn(
                             "flex items-center gap-1 text-sm tracking-wide font-sans font-medium transition-opacity leading-none outline-none whitespace-nowrap",
-                            (location.pathname === "/about" || location.pathname === "/policies")
+                            item.children.some(c => location.pathname === c.href)
                               ? "opacity-100"
                               : "opacity-70 hover:opacity-100"
                           )}
                         >
-                          About
+                          {item.label}
                           <ChevronDown size={14} className="transition-transform duration-200" />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent 
@@ -372,13 +409,13 @@ export function Header() {
                           sideOffset={12}
                           className="w-[180px] rounded-lg border border-border/50 bg-background/95 backdrop-blur-xl shadow-xl p-1.5"
                         >
-                          {ABOUT_LINKS.map((link) => (
+                          {item.children.map((link) => (
                             <DropdownMenuItem key={link.href} asChild>
                               <Link
-                                to={orgPath(link.href)}
+                                to={link.href}
                                 className={cn(
                                   "flex items-center gap-3 select-none rounded-md px-3 py-2.5 text-sm font-medium leading-none cursor-pointer transition-all duration-200",
-                                  location.pathname === orgPath(link.href)
+                                  location.pathname === link.href
                                     ? "bg-accent text-accent-foreground" 
                                     : "text-foreground/80"
                                 )}
@@ -393,19 +430,14 @@ export function Header() {
                   );
                 }
 
-                // Regular link
                 return (
                   <motion.div
-                    key={item.href}
+                    key={item.href + item.label}
                     data-nav-item
                     data-priority={item.priority}
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ 
-                      duration: 0.4, 
-                      delay: 0.1 + index * 0.05,
-                      ease: [0.25, 0.1, 0.25, 1] 
-                    }}
+                    transition={{ duration: 0.4, delay: 0.1 + index * 0.05, ease: [0.25, 0.1, 0.25, 1] }}
                     className="shrink-0"
                   >
                     <Link
@@ -429,7 +461,7 @@ export function Header() {
                 );
               })}
 
-              {/* Overflow Dropdown - shows hidden items */}
+              {/* Overflow Dropdown */}
               {hiddenNavItems.length > 0 && (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}
@@ -447,18 +479,17 @@ export function Header() {
                       sideOffset={12}
                       className="w-[200px] rounded-lg border border-border/50 bg-background/95 backdrop-blur-xl shadow-xl p-1.5"
                     >
-                      {allNavItems
+                      {navItems
                         .filter(item => hiddenNavItems.includes(item.priority))
                         .map((item) => {
-                          if (item.type === "dropdown") {
-                            // Render about links as individual menu items
-                            return ABOUT_LINKS.map((link) => (
+                          if (item.type === "dropdown" && item.children) {
+                            return item.children.map((link) => (
                               <DropdownMenuItem key={link.href} asChild>
                                 <Link
-                                  to={orgPath(link.href)}
+                                  to={link.href}
                                   className={cn(
                                     "flex items-center gap-3 select-none rounded-md px-3 py-2.5 text-sm font-medium leading-none cursor-pointer transition-all duration-200",
-                                    location.pathname === orgPath(link.href)
+                                    location.pathname === link.href
                                       ? "bg-accent text-accent-foreground" 
                                       : "text-foreground/80"
                                   )}
@@ -511,7 +542,7 @@ export function Header() {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Link
-                      to={orgPath("/booking")}
+                      to={ctaItem.href}
                       className={cn(
                         "inline-flex items-center gap-2 px-5 py-2.5 text-sm font-sans font-medium rounded-full border transition-all duration-300 active:scale-[0.98] hover:scale-105 hover:-translate-y-0.5 hover:shadow-lg",
                         isOverDark 
@@ -519,7 +550,7 @@ export function Header() {
                           : "bg-transparent border-foreground/30 text-foreground hover:bg-foreground/5 hover:border-foreground/50"
                       )}
                     >
-                      Book Consult
+                      {ctaItem.label}
                     </Link>
                   </TooltipTrigger>
                   <TooltipContent side="bottom" className="max-w-[320px] p-5 bg-background text-foreground border border-border shadow-lg">
@@ -528,7 +559,7 @@ export function Header() {
                 </Tooltip>
               </TooltipProvider>
               
-              {/* 3-Dot Menu Button - Hide when staff menu is open */}
+              {/* Staff Menu Button */}
               <AnimatePresence>
                 {!isStaffMenuOpen && (
                   <motion.button 
@@ -615,63 +646,21 @@ export function Header() {
               className="lg:hidden bg-background border-t border-border overflow-hidden"
             >
               <nav className="container mx-auto px-6 py-8 flex flex-col gap-6">
-                <Link
-                  to={orgPath("/services")}
-                  className={cn(
-                    "text-xl font-display uppercase tracking-wide transition-opacity",
-                    location.pathname === orgPath("/services")
-                      ? "opacity-100"
-                      : "opacity-60"
-                  )}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Services
-                </Link>
-                {ABOUT_LINKS.map((link) => (
+                {mobileNavItems.map((item) => (
                   <Link
-                    key={link.href}
-                    to={orgPath(link.href)}
+                    key={item.href + item.label}
+                    to={item.href}
                     className={cn(
                       "text-xl font-display uppercase tracking-wide transition-opacity flex items-center gap-2",
-                      location.pathname === orgPath(link.href)
-                        ? "opacity-100"
-                        : "opacity-60"
+                      location.pathname === item.href ? "opacity-100" : "opacity-60",
+                      item.type === 'child' && "pl-4"
                     )}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    <ArrowRight size={16} className="text-muted-foreground" />
-                    {link.label}
-                  </Link>
-                ))}
-                {NAV_LINKS.slice(1).map((link) => (
-                  <Link
-                    key={link.href}
-                    to={orgPath(link.href)}
-                    className={cn(
-                      "text-xl font-display uppercase tracking-wide transition-opacity",
-                      location.pathname === orgPath(link.href)
-                        ? "opacity-100"
-                        : "opacity-60"
+                    {item.type === 'child' && (
+                      <ArrowRight size={16} className="text-muted-foreground" />
                     )}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    {link.label}
-                  </Link>
-                ))}
-                {/* Dynamic pages from website builder */}
-                {dynamicNavPages.map((p) => (
-                  <Link
-                    key={p.slug}
-                    to={orgPath(`/${p.slug}`)}
-                    className={cn(
-                      "text-xl font-display uppercase tracking-wide transition-opacity",
-                      location.pathname === orgPath(`/${p.slug}`)
-                        ? "opacity-100"
-                        : "opacity-60"
-                    )}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    {p.title}
+                    {item.label}
                   </Link>
                 ))}
                 <Link
@@ -689,11 +678,11 @@ export function Header() {
                   Login
                 </Link>
                 <Link
-                  to={orgPath("/booking")}
+                  to={ctaItem.href}
                   className="mt-4 w-full text-center inline-flex items-center justify-center gap-2 px-6 py-4 text-sm font-display uppercase tracking-wide bg-foreground text-background rounded-full"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
-                  Book consult
+                  {ctaItem.label}
                 </Link>
               </nav>
             </motion.div>
