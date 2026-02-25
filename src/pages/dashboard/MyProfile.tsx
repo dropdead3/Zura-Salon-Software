@@ -1462,8 +1462,8 @@ export default function MyProfile() {
               <div className="max-w-3xl mx-auto">
                 <div className="bg-card/80 backdrop-blur-xl rounded-full shadow-[0_16px_40px_-18px_hsl(var(--foreground)/0.25)] border border-border/40 px-5 py-3 flex items-center justify-between gap-4">
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                    <span className="text-sm font-medium text-foreground">You have unsaved changes</span>
+                    <div className="w-2 h-2 rounded-full bg-warning animate-pulse" />
+                    <span className="text-sm font-medium text-warning-foreground dark:text-warning">You have unsaved changes</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Button
