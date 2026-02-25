@@ -99,46 +99,6 @@ export function AnnouncementBarContent() {
         </Button>
       </div>
 
-      {/* Live Preview */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Live Preview</CardTitle>
-          <CardDescription>
-            This is how the announcement bar will appear on your website
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div 
-            className={cn(
-              "py-4 md:py-2.5 px-4 md:px-6 rounded-lg transition-colors",
-              !formData.bg_color && "bg-secondary",
-              !formData.enabled && "opacity-50"
-            )}
-            style={formData.bg_color ? { backgroundColor: formData.bg_color } : undefined}
-          >
-            <div className="flex flex-col md:flex-row items-center justify-center md:justify-between gap-1 md:gap-0">
-              <p className={cn("text-sm text-center md:text-left", isDark ? "text-white/80" : "text-foreground/80")}>
-                {formData.message_prefix}{' '}
-                <span className="font-medium">{formData.message_highlight}</span>{' '}
-                {formData.message_suffix}
-              </p>
-              <span className={cn(
-                "group inline-flex items-center gap-1.5 text-sm font-sans font-medium uppercase tracking-wider",
-                isDark ? "text-white" : "text-foreground"
-              )}>
-                {formData.cta_text}
-                <ArrowRight size={14} className="transition-transform duration-300 group-hover:translate-x-1" />
-              </span>
-            </div>
-          </div>
-          {!formData.enabled && (
-            <p className="text-sm text-muted-foreground mt-2 text-center">
-              The announcement bar is currently hidden
-            </p>
-          )}
-        </CardContent>
-      </Card>
-
       {/* Settings Form */}
       <Card>
         <CardHeader>
