@@ -1477,7 +1477,7 @@ export default function MyProfile() {
                     <Button
                       type="button"
                       size="sm"
-                      className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
+                      className="rounded-full bg-foreground text-background hover:bg-foreground/80 transition-colors"
                       disabled={updateProfile.isPending || upsertSchedule.isPending}
                       onClick={(e) => handleSubmit(e as any)}
                     >
