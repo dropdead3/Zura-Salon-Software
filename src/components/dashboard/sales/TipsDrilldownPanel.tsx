@@ -204,7 +204,7 @@ export function TipsDrilldownPanel({ isOpen, parentLocationId, dateFrom, dateTo 
                     <div>
                       <div className="flex items-center gap-2 mb-2">
                         <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                        <span className="text-xs tracking-wide uppercase text-muted-foreground font-medium">
+                        <span className="font-display text-xs tracking-wide uppercase text-muted-foreground font-medium">
                           Tips by Service Category
                         </span>
                       </div>
@@ -257,7 +257,7 @@ export function TipsDrilldownPanel({ isOpen, parentLocationId, dateFrom, dateTo 
                   <div>
                     <div className="flex items-center gap-2 mb-2">
                       <DollarSign className="w-3.5 h-3.5 text-primary" />
-                      <span className="text-xs tracking-wide uppercase text-muted-foreground font-medium">
+                      <span className="font-display text-xs tracking-wide uppercase text-muted-foreground font-medium">
                         Tips by Stylist
                       </span>
                       <span className="text-xs text-muted-foreground">
@@ -287,7 +287,7 @@ export function TipsDrilldownPanel({ isOpen, parentLocationId, dateFrom, dateTo 
                 <div>
                   <div className="flex items-center gap-2 mb-2">
                     <TrendingUp className="w-3.5 h-3.5 text-primary" />
-                    <span className="text-xs tracking-wide uppercase text-muted-foreground font-medium">
+                    <span className="font-display text-xs tracking-wide uppercase text-muted-foreground font-medium">
                       Avg Tip Rate Ranking
                     </span>
                     <span className="text-xs text-muted-foreground">
@@ -337,7 +337,7 @@ export function TipsDrilldownPanel({ isOpen, parentLocationId, dateFrom, dateTo 
                   <div>
                     <div className="flex items-center gap-2 mb-2">
                       <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                      <span className="text-xs tracking-wide uppercase text-muted-foreground font-medium">
+                      <span className="font-display text-xs tracking-wide uppercase text-muted-foreground font-medium">
                         Tips by Service Category
                       </span>
                     </div>
