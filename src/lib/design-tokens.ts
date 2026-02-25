@@ -122,7 +122,7 @@ export const tokens = {
     confirmed: 'bg-green-100 text-green-800',
     checked_in: 'bg-blue-100 text-blue-800',
     completed: 'bg-purple-100 text-purple-800',
-    cancelled: 'bg-gray-100 text-gray-600',
+    cancelled: 'bg-red-100 text-red-800',
     no_show: 'bg-red-100 text-red-800',
   },
 
@@ -222,7 +222,7 @@ export const APPOINTMENT_STATUS_BADGE: Record<AppointmentStatusKey, { bg: string
   confirmed:  { bg: 'bg-green-100 dark:bg-green-900/30',  text: 'text-green-800 dark:text-green-300',  border: 'border-green-800/30 dark:border-green-300/30',  label: 'Confirmed' },
   checked_in: { bg: 'bg-blue-100 dark:bg-blue-900/30',   text: 'text-blue-800 dark:text-blue-300',   border: 'border-blue-800/30 dark:border-blue-300/30',   label: 'Checked In' },
   completed:  { bg: 'bg-purple-100 dark:bg-purple-900/30', text: 'text-purple-800 dark:text-purple-300', border: 'border-purple-800/30 dark:border-purple-300/30', label: 'Completed' },
-  cancelled:  { bg: 'bg-gray-100 dark:bg-gray-800/30',   text: 'text-gray-600 dark:text-gray-400',   border: 'border-gray-600/30 dark:border-gray-400/30',   label: 'Cancelled' },
+  cancelled:  { bg: 'bg-red-100 dark:bg-red-900/30',    text: 'text-red-800 dark:text-red-300',    border: 'border-red-800/30 dark:border-red-300/30',    label: 'Cancelled' },
   no_show:    { bg: 'bg-red-100 dark:bg-red-900/30',    text: 'text-red-800 dark:text-red-300',    border: 'border-red-800/30 dark:border-red-300/30',    label: 'No Show' },
 };
 
@@ -238,7 +238,7 @@ export const APPOINTMENT_STATUS_CONFIG: Record<AppointmentStatusKey, {
   confirmed:  { color: 'text-green-900',  bgColor: 'bg-green-200',  borderColor: 'border-green-500',  label: 'Confirmed' },
   checked_in: { color: 'text-blue-900',   bgColor: 'bg-blue-200',   borderColor: 'border-blue-500',   label: 'Checked In' },
   completed:  { color: 'text-purple-900', bgColor: 'bg-purple-200', borderColor: 'border-purple-500', label: 'Completed' },
-  cancelled:  { color: 'text-gray-600',   bgColor: 'bg-gray-100',   borderColor: 'border-gray-300',   label: 'Cancelled' },
+  cancelled:  { color: 'text-red-900',    bgColor: 'bg-red-200',    borderColor: 'border-red-500',    label: 'Cancelled' },
   no_show:    { color: 'text-red-900',    bgColor: 'bg-red-200',    borderColor: 'border-red-500',     label: 'No Show' },
 };
 
