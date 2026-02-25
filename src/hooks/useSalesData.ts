@@ -353,10 +353,10 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
   });
 }
 
-// Get sales by stylist for leaderboard (from appointments with staff mapping)
-export function useSalesByStylist(dateFrom?: string, dateTo?: string) {
+// Get sales by stylist for leaderboard (from actual POS transaction data)
+export function useSalesByStylist(dateFrom?: string, dateTo?: string, locationId?: string) {
   return useQuery({
-    queryKey: ['sales-by-stylist-from-appointments', dateFrom, dateTo],
+    queryKey: ['sales-by-stylist-from-transactions', dateFrom, dateTo, locationId],
     queryFn: async () => {
       // Get staff mappings to link phorest_staff_id to user_id
       const { data: mappings } = await supabase
@@ -364,6 +364,7 @@ export function useSalesByStylist(dateFrom?: string, dateTo?: string) {
         .select(`
           phorest_staff_id,
           user_id,
+          phorest_staff_name,
           employee_profiles:user_id (
             full_name,
             display_name,
@@ -373,54 +374,50 @@ export function useSalesByStylist(dateFrom?: string, dateTo?: string) {
         .eq('is_active', true);
 
       const mappingLookup: Record<string, { userId: string; name: string; photo?: string }> = {};
-      // Also build a name-only lookup for staff IDs that have a name but no user_id mapping
       const staffNameLookup: Record<string, string> = {};
       mappings?.forEach(m => {
         const profile = m.employee_profiles as any;
         if (m.user_id) {
           mappingLookup[m.phorest_staff_id] = {
             userId: m.user_id,
-            name: profile?.display_name || profile?.full_name || 'Unknown',
+            name: profile?.display_name || profile?.full_name || m.phorest_staff_name || 'Unknown',
             photo: profile?.photo_url,
           };
         }
-        // Always store phorest_staff_name for fallback resolution
-      });
-
-      // Fetch all staff names (including unmapped) for fallback name resolution
-      const { data: allStaffMappings } = await supabase
-        .from('phorest_staff_mapping')
-        .select('phorest_staff_id, phorest_staff_name');
-      allStaffMappings?.forEach(m => {
         if (m.phorest_staff_name) {
           staffNameLookup[m.phorest_staff_id] = m.phorest_staff_name;
         }
       });
 
-      // Fetch appointments with batch fetching + status filter
+      // Fetch actual POS transaction items with batch fetching
       const data = await fetchAllBatched<{
-        phorest_staff_id: string | null; total_price: number | null; service_name: string | null;
+        phorest_staff_id: string | null;
+        total_amount: number | null;
+        item_type: string | null;
       }>((from, to) => {
         let q = supabase
-          .from('phorest_appointments')
-          .select('phorest_staff_id, total_price, service_name')
+          .from('phorest_transaction_items')
+          .select('phorest_staff_id, total_amount, item_type')
           .not('phorest_staff_id', 'is', null)
-          .not('total_price', 'is', null)
-          .not('status', 'in', '("cancelled","no_show")')
+          .not('total_amount', 'is', null)
           .range(from, to);
 
-        if (dateFrom) q = q.gte('appointment_date', dateFrom);
-        if (dateTo) q = q.lte('appointment_date', dateTo);
+        if (dateFrom) q = q.gte('transaction_date', dateFrom);
+        if (dateTo) q = q.lte('transaction_date', dateTo);
+        if (locationId && locationId !== 'all') {
+          const ids = locationId.split(',').filter(Boolean);
+          if (ids.length === 1) q = q.eq('location_id', ids[0]);
+          else if (ids.length > 1) q = q.in('location_id', ids);
+        }
         return q;
       });
 
-      // Aggregate by user (via phorest_staff_id mapping), with fallback for unmapped staff
+      // Aggregate by staff, splitting service vs product revenue
       const byUser: Record<string, any> = {};
-      data.forEach(apt => {
-        const staffId = apt.phorest_staff_id!;
+      data.forEach(item => {
+        const staffId = item.phorest_staff_id!;
         const mapping = mappingLookup[staffId];
         
-        // Determine aggregation key and display name
         const userId = mapping ? mapping.userId : `phorest:${staffId}`;
         const displayName = mapping
           ? mapping.name
@@ -440,9 +437,19 @@ export function useSalesByStylist(dateFrom?: string, dateTo?: string) {
             totalTransactions: 0,
           };
         }
-        byUser[userId].totalRevenue += Number(apt.total_price) || 0;
-        byUser[userId].serviceRevenue += Number(apt.total_price) || 0;
-        byUser[userId].totalServices += 1;
+
+        const amount = Number(item.total_amount) || 0;
+        const itemType = (item.item_type || '').toLowerCase();
+        const isProduct = ['product', 'retail'].includes(itemType);
+
+        byUser[userId].totalRevenue += amount;
+        if (isProduct) {
+          byUser[userId].productRevenue += amount;
+          byUser[userId].totalProducts += 1;
+        } else {
+          byUser[userId].serviceRevenue += amount;
+          byUser[userId].totalServices += 1;
+        }
         byUser[userId].totalTransactions += 1;
       });
 

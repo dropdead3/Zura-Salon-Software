@@ -179,7 +179,8 @@ export function CommandCenterAnalytics() {
   });
   const { data: performers, isLoading: isLoadingPerformers } = useSalesByStylist(
     dateFilters.dateFrom, 
-    dateFilters.dateTo
+    dateFilters.dateTo,
+    locationFilter
   );
   const { workload, isLoading: isLoadingWorkload } = useStaffUtilization(undefined, '30days');
   const { data: attachmentData, isLoading: isLoadingAttachment } = useRetailAttachmentRate({

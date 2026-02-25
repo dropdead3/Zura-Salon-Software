@@ -116,7 +116,7 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
     locationFilter
   );
   
-  const { data: stylistData, isLoading: stylistLoading } = useSalesByStylist(filters.dateFrom, filters.dateTo);
+  const { data: stylistData, isLoading: stylistLoading } = useSalesByStylist(filters.dateFrom, filters.dateTo, locationFilter);
   const { data: locationData, isLoading: locationLoading } = useSalesByLocation(filters.dateFrom, filters.dateTo);
 
   // Calculate goal based on date range

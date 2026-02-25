@@ -291,7 +291,8 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
   });
   const { data: performers, isLoading: isLoadingPerformers } = useSalesByStylist(
     filters.dateFrom, 
-    filters.dateTo
+    filters.dateTo,
+    locationFilter
   );
   const { workload, isLoading: isLoadingWorkload } = useStaffUtilization(undefined, '30days');
   const { data: attachmentData, isLoading: isLoadingAttachment } = useRetailAttachmentRate({
