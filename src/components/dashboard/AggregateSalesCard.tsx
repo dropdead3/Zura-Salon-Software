@@ -24,6 +24,7 @@ import {
   ArrowUp,
   ArrowDown,
   Check,
+  CheckCircle2,
   Moon,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -642,23 +643,35 @@ export function AggregateSalesCard({
 
                   {/* Progress bar: actual vs expected */}
                   {todayActual?.hasActualData ? (
-                    <div className="space-y-1.5">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-muted-foreground">{t('sales.actual_revenue')}</span>
-                        <BlurredAmount>
-                          <span className="font-medium">
-                            {formatCurrency(todayActual.actualRevenue)} of {formatCurrency(displayMetrics.totalRevenue)} expected
-                          </span>
-                        </BlurredAmount>
-                      </div>
-                      <Progress 
-                        value={displayMetrics.totalRevenue > 0 
-                          ? Math.min((todayActual.actualRevenue / displayMetrics.totalRevenue) * 100, 100) 
-                          : 0
-                        } 
-                        className="h-1.5"
-                      />
-                    </div>
+                    (() => {
+                      const exceededExpected = todayActual.actualRevenue > displayMetrics.totalRevenue && displayMetrics.totalRevenue > 0;
+                      return (
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-muted-foreground">{t('sales.actual_revenue')}</span>
+                            <BlurredAmount>
+                              <span className={cn("font-medium", exceededExpected && "text-success-foreground")}>
+                                {formatCurrency(todayActual.actualRevenue)} of {formatCurrency(displayMetrics.totalRevenue)} expected
+                              </span>
+                            </BlurredAmount>
+                          </div>
+                          <Progress 
+                            value={displayMetrics.totalRevenue > 0 
+                              ? Math.min((todayActual.actualRevenue / displayMetrics.totalRevenue) * 100, 100) 
+                              : 0
+                            } 
+                            className="h-1.5"
+                            indicatorClassName={exceededExpected ? "bg-success-foreground" : undefined}
+                          />
+                          {exceededExpected && (
+                            <div className="flex items-center justify-center gap-1 text-xs text-success-foreground">
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              <span>Exceeded</span>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()
                   ) : (
                     <p className="text-xs text-muted-foreground/70 text-center">
                       {t('sales.actual_not_available')}
