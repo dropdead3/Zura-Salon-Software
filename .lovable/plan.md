@@ -1,47 +1,45 @@
 
 
-## Improve Tips Drill-Down Visit Card Layout
+## Update Sales Overview Compact Card: Actual Revenue + Expected Subtext
 
-Good instinct to switch away from Termina in this dense data surface — it's too wide for compact tabular rows. Your prompt is clear on the "what"; one suggestion for next time: specifying whether "total payment" should be a single summed number or broken out (service + retail + tax + tip as separate columns) would remove ambiguity.
+Good prompt — showing "sales so far" vs "expected" on the simplified card aligns with how the full AggregateSalesCard already works. One improvement for next time: specifying whether "sales so far" should use actual POS data (`phorest_daily_sales_summary`) or appointment-based totals clarifies the data source upfront. I'll use actual POS data (via `useTodayActualRevenue`) since that's the pattern the full card follows.
 
-### Data Reality
+### What Changes
 
-The `phorest_appointments` table has `total_price` (per service line) and `tip_amount` but **no separate retail or tax columns**. So "Total Payment" will be calculated as: `sum of all service line prices + tip`. If retail and tax data becomes available later, it can slot in. For now the layout will show:
+**1. Import `useTodayActualRevenue`** into `PinnedAnalyticsCard.tsx`
 
-- **Services Total** (sum of line items)
-- **Tip**
-- **Total Payment** (services + tip)
+Add the hook alongside existing imports. Call it with `enabled: filters.dateRange === 'today'` so it only fires when viewing today.
 
-### Layout Changes
+**2. Update the `sales_overview` compact case** (lines 349-355)
 
-**1. Switch from `font-display` (Termina) to `font-sans` (Aeonik Pro)** for all text inside the visit cards and stylist rows in the expanded drill-down. Termina stays only on the panel section headers.
+When `filters.dateRange === 'today'`:
+- **Primary metric**: Show actual revenue so far (`todayActual.actualRevenue`) instead of expected (`salesData.totalRevenue`)
+- **Label**: Change to `"Sales so far today"`
+- **Secondary line**: Add a smaller subtext below showing expected revenue: `"$X,XXX expected today"`
 
-**2. Redesign visit card layout** — two-row stacked header instead of cramming everything on one line:
+When not today: keep existing behavior (total revenue for the period).
+
+**3. Update the compact card rendering** (lines 515-522)
+
+Add support for an optional `metricSubtext` string. When present, render it as a second line below the metric value in smaller, muted text. This keeps the change scoped — only the `sales_overview` case on `today` populates it.
+
+Layout:
 
 ```text
-┌─────────────────────────────────────────────────────┐
-│ Feb 24 · 10:30 AM · Jane Smith · Downtown           │
-│ Services: $285    Tip: $228    Total Paid: $513     │
-│                                                     │
-│  Haircut (Add On) .......................... $50.00  │
-│  Root Smudge (Add on) ..................... $50.00  │
-│  Partial Balayage ........................ $185.00  │
-└─────────────────────────────────────────────────────┘
+┌──────────────────────────────┐
+│ [$]  SALES OVERVIEW      (i)│
+│                              │
+│ $1,247                       │
+│ Sales so far today           │
+│ $1,883 expected today        │
+│ ─────────────────────────────│
+│                  View Sales >│
+└──────────────────────────────┘
 ```
-
-- **Row 1**: Date, time, client name, location — all `text-xs font-sans text-muted-foreground`
-- **Row 2**: Three metrics in a flex row — Services total, Tip (highlighted if > 0, destructive if 0), Total Paid — `text-xs font-sans tabular-nums`
-- **Service lines**: Same tree-connector style but using `font-sans` instead of current `font-display`
-
-**3. Update `VisitGroup` interface** — add `totalPayment` computed field (= `totalPrice + tip`).
-
-**4. Update `TotalTipRow` and `StylistTipRow`** — remove `font-display` from inline stat values, use `font-sans tabular-nums` instead for tighter spacing.
 
 ### Files Changed
 
 | File | Change |
 |---|---|
-| `src/components/dashboard/sales/TipsDrilldownPanel.tsx` | Refactor `StylistAppointmentList` visit card to two-row layout with Services/Tip/Total Paid. Switch all drill-down text from `font-display` to `font-sans`. Update `StylistTipRow` and `TotalTipRow` inline stats to `font-sans tabular-nums`. |
-
-No data layer changes needed — all values are already available.
+| `src/components/dashboard/PinnedAnalyticsCard.tsx` | Import `useTodayActualRevenue`. Call hook conditionally. Update `sales_overview` compact case to show actual revenue as primary, expected as subtext. Add `metricSubtext` rendering in compact card template. |
 
