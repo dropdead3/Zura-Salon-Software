@@ -695,7 +695,7 @@ export function ForecastingCard() {
                 onClick={() => handleStatCardClick('dailyAvg')}
               >
                 <div className="flex justify-center mb-1">
-                  <Calendar className="w-4 h-4 text-chart-2" />
+                  <Calendar className="w-4 h-4 text-primary" />
                 </div>
                 <AnimatedBlurredAmount 
                   value={avgValue}
@@ -717,7 +717,7 @@ export function ForecastingCard() {
               onClick={() => handleStatCardClick('count')}
             >
               <div className="flex justify-center mb-1">
-                <Users className="w-4 h-4 text-chart-3" />
+                <Users className="w-4 h-4 text-primary" />
               </div>
               <span className="text-lg font-display tabular-nums">{totalAppointments}</span>
               <div className="flex items-center gap-1 justify-center">
