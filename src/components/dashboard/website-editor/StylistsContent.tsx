@@ -328,7 +328,7 @@ export function StylistsContent() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div>
         <h2 className="text-xl font-display font-medium flex items-center gap-2">
           <Globe className="w-5 h-5" />
@@ -400,16 +400,16 @@ export function StylistsContent() {
 
       <Tabs defaultValue="pending" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="pending" className="gap-2">
-            Pending Requests
+          <TabsTrigger value="pending" className="gap-1.5 text-xs sm:text-sm">
+            Pending
             {pendingRequests.length > 0 && (
-              <Badge variant="secondary" className="ml-1 h-5 w-5 p-0 justify-center">
+              <Badge variant="secondary" className="ml-0.5 h-5 w-5 p-0 justify-center text-xs">
                 {pendingRequests.length}
               </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="visible">Currently Visible</TabsTrigger>
-          <TabsTrigger value="specialties">Specialty Options</TabsTrigger>
+          <TabsTrigger value="visible" className="text-xs sm:text-sm">Visible</TabsTrigger>
+          <TabsTrigger value="specialties" className="text-xs sm:text-sm">Specialties</TabsTrigger>
         </TabsList>
 
         <TabsContent value="pending" className="space-y-4">
