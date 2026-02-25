@@ -1,0 +1,3 @@
+ALTER TABLE public.employee_profiles
+  ADD COLUMN IF NOT EXISTS photo_focal_x SMALLINT DEFAULT 50,
+  ADD COLUMN IF NOT EXISTS photo_focal_y SMALLINT DEFAULT 50;

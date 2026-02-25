@@ -18,6 +18,8 @@ interface StylistCardPreviewProps {
   displayName?: string;
   level: string;
   photoUrl?: string;
+  photoFocalX?: number;
+  photoFocalY?: number;
   instagram?: string;
   tiktok?: string;
   preferredSocialHandle?: 'instagram' | 'tiktok';
@@ -33,6 +35,8 @@ export function StylistCardPreview({
   displayName,
   level,
   photoUrl,
+  photoFocalX = 50,
+  photoFocalY = 50,
   instagram,
   tiktok,
   preferredSocialHandle = 'instagram',
@@ -97,6 +101,7 @@ export function StylistCardPreview({
                   src={photoUrl}
                   alt={showName}
                   className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  style={{ objectPosition: `${photoFocalX}% ${photoFocalY}%` }}
                 />
               ) : (
                 <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-muted to-muted-foreground/20 flex items-center justify-center transition-transform duration-700 group-hover:scale-110">

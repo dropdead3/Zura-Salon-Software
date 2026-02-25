@@ -5396,6 +5396,8 @@ export type Database = {
           login_pin: string | null
           organization_id: string | null
           phone: string | null
+          photo_focal_x: number | null
+          photo_focal_y: number | null
           photo_url: string | null
           planned_departure_date: string | null
           preferred_social_handle: string | null
@@ -5444,6 +5446,8 @@ export type Database = {
           login_pin?: string | null
           organization_id?: string | null
           phone?: string | null
+          photo_focal_x?: number | null
+          photo_focal_y?: number | null
           photo_url?: string | null
           planned_departure_date?: string | null
           preferred_social_handle?: string | null
@@ -5492,6 +5496,8 @@ export type Database = {
           login_pin?: string | null
           organization_id?: string | null
           phone?: string | null
+          photo_focal_x?: number | null
+          photo_focal_y?: number | null
           photo_url?: string | null
           planned_departure_date?: string | null
           preferred_social_handle?: string | null

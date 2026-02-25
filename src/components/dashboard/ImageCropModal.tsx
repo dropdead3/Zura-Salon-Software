@@ -7,8 +7,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
-import { TogglePill } from '@/components/ui/toggle-pill';
-import { ZoomIn, ZoomOut, RotateCw, Move, Crop, Info, AlertTriangle, Maximize2, RefreshCw, Circle, Square, ArrowLeft, ArrowRight, Eye, Save } from 'lucide-react';
+import { ZoomIn, ZoomOut, RotateCw, Move, Image as ImageIcon, Info, AlertTriangle, Maximize2, RefreshCw, ArrowLeft, ArrowRight, Eye, Save, Crosshair } from 'lucide-react';
 import { DRILLDOWN_OVERLAY_CLASS } from '@/components/dashboard/drilldownDialogStyles';
 import { StylistCardPreview } from '@/components/dashboard/StylistCardPreview';
 
@@ -31,11 +30,17 @@ interface ImageCropModalProps {
   onClose: () => void;
   imageFile: File | null;
   imageUrl?: string;
-  onCropComplete: (croppedBlob: Blob) => void;
+  /** Called with the resized blob and focal point coordinates (0-100) */
+  onCropComplete: (blob: Blob, focalX: number, focalY: number) => void;
   aspectRatio?: number;
   maxOutputSize?: number;
   cardPreviewProps?: CardPreviewProps;
+  /** Initial focal point from the database */
+  initialFocalX?: number;
+  initialFocalY?: number;
 }
+
+const MAX_RESIZE = 1200;
 
 export const ImageCropModal: React.FC<ImageCropModalProps> = ({
   open,
@@ -43,39 +48,39 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
   imageFile,
   imageUrl,
   onCropComplete,
-  aspectRatio,
-  maxOutputSize = 400,
   cardPreviewProps,
+  initialFocalX = 50,
+  initialFocalY = 50,
 }) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const frameRef = useRef<HTMLDivElement>(null);
   const replaceInputRef = useRef<HTMLInputElement>(null);
   const [imageSrc, setImageSrc] = useState<string>('');
   const [imageElement, setImageElement] = useState<HTMLImageElement | null>(null);
   const [zoom, setZoom] = useState(1);
-  const [minZoom, setMinZoom] = useState(0.1);
+  const [minZoom, setMinZoom] = useState(0.5);
   const [rotation, setRotation] = useState(0);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [focalX, setFocalX] = useState(initialFocalX);
+  const [focalY, setFocalY] = useState(initialFocalY);
   const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const [cropShape, setCropShape] = useState<'circle' | 'square'>('circle');
   const [localFile, setLocalFile] = useState<File | null>(null);
 
   // Wizard state
   const isWizard = !!cardPreviewProps;
-  const [step, setStep] = useState<'crop' | 'preview'>('crop');
+  const [step, setStep] = useState<'compose' | 'preview'>('compose');
   const [previewBlob, setPreviewBlob] = useState<Blob | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>('');
 
-  // Determine the effective file (prop or locally replaced)
   const effectiveFile = localFile || imageFile;
 
   // Reset when modal closes
   useEffect(() => {
     if (!open) {
       setLocalFile(null);
-      setStep('crop');
+      setStep('compose');
       setPreviewBlob(null);
+      setFocalX(initialFocalX);
+      setFocalY(initialFocalY);
       if (previewUrl) {
         URL.revokeObjectURL(previewUrl);
         setPreviewUrl('');
@@ -83,23 +88,22 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
     }
   }, [open]);
 
-  // Cleanup preview URL when going back to crop
+  // Cleanup preview URL when going back
   useEffect(() => {
-    if (step === 'crop' && previewUrl) {
+    if (step === 'compose' && previewUrl) {
       URL.revokeObjectURL(previewUrl);
       setPreviewUrl('');
       setPreviewBlob(null);
     }
   }, [step]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (previewUrl) URL.revokeObjectURL(previewUrl);
     };
   }, [previewUrl]);
 
-  // Load image from file or URL
+  // Load image
   useEffect(() => {
     const src = effectiveFile ? URL.createObjectURL(effectiveFile) : imageUrl || '';
     if (!src) return;
@@ -110,20 +114,11 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
     img.crossOrigin = 'anonymous';
     img.onload = () => {
       setImageElement(img);
-
-      const canvasSize = 280;
-      const cropSize = canvasSize * 0.75;
-      const longSide = Math.max(img.width, img.height);
-      const fitZoom = canvasSize / longSide;
-      const calculatedMinZoom = Math.max(0.01, fitZoom * 0.5);
+      // Calculate min zoom so image fills the 3:4 frame
+      const calculatedMinZoom = Math.max(0.1, 0.5);
       setMinZoom(calculatedMinZoom);
-
-      const shortSide = Math.min(img.width, img.height);
-      const initialZoom = Math.max(calculatedMinZoom, cropSize / shortSide);
-
-      setZoom(Math.min(3, initialZoom));
+      setZoom(1);
       setRotation(0);
-      setPosition({ x: 0, y: 0 });
     };
     img.src = src;
 
@@ -132,196 +127,126 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
     };
   }, [effectiveFile, imageUrl]);
 
-  // Handle replace photo file selection
   const handleReplacePhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setLocalFile(file);
+      setFocalX(50);
+      setFocalY(50);
     }
     e.target.value = '';
   };
 
-  // Draw preview on canvas
-  useEffect(() => {
-    if (!canvasRef.current || !imageElement) return;
+  // Handle focal point click/drag on the compose frame
+  const handleFrameInteraction = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const frame = frameRef.current;
+    if (!frame) return;
 
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    const rect = frame.getBoundingClientRect();
+    const x = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
+    const y = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
+    setFocalX(Math.round(x));
+    setFocalY(Math.round(y));
+  }, []);
 
-    const size = 280;
-    canvas.width = size;
-    canvas.height = size;
-
-    const cropSize = size * 0.75;
-    const cropX = (size - cropSize) / 2;
-    const cropY = (size - cropSize) / 2;
-
-    ctx.fillStyle = '#1a1a1a';
-    ctx.fillRect(0, 0, size, size);
-
-    const drawImage = () => {
-      ctx.save();
-      ctx.translate(size / 2, size / 2);
-      ctx.rotate((rotation * Math.PI) / 180);
-      const imgWidth = imageElement.width * zoom;
-      const imgHeight = imageElement.height * zoom;
-      ctx.drawImage(
-        imageElement,
-        -imgWidth / 2 + position.x,
-        -imgHeight / 2 + position.y,
-        imgWidth,
-        imgHeight
-      );
-      ctx.restore();
-    };
-
-    drawImage();
-    
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-    ctx.fillRect(0, 0, size, size);
-
-    ctx.save();
-    ctx.beginPath();
-    if (cropShape === 'circle') {
-      ctx.arc(size / 2, size / 2, cropSize / 2, 0, Math.PI * 2);
-    } else {
-      ctx.rect(cropX, cropY, cropSize, cropSize);
-    }
-    ctx.clip();
-    
-    ctx.fillStyle = '#1a1a1a';
-    ctx.fillRect(0, 0, size, size);
-    
-    drawImage();
-    ctx.restore();
-
-    ctx.strokeStyle = 'hsl(32, 30%, 20%)';
-    ctx.lineWidth = 2;
-    
-    if (cropShape === 'circle') {
-      ctx.beginPath();
-      ctx.arc(size / 2, size / 2, cropSize / 2, 0, Math.PI * 2);
-      ctx.stroke();
-    } else {
-      ctx.strokeRect(cropX, cropY, cropSize, cropSize);
-    }
-
-  }, [imageElement, zoom, rotation, position, cropShape]);
-
-  const handleMouseDown = (e: React.MouseEvent) => {
+  const handleFrameMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     setIsDragging(true);
-    setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
-  };
+    handleFrameInteraction(e);
+  }, [handleFrameInteraction]);
 
-  const handleMouseMove = (e: React.MouseEvent) => {
+  const handleFrameMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (!isDragging) return;
-    setPosition({
-      x: e.clientX - dragStart.x,
-      y: e.clientY - dragStart.y,
-    });
-  };
+    handleFrameInteraction(e);
+  }, [isDragging, handleFrameInteraction]);
 
-  const handleMouseUp = () => {
+  const handleFrameMouseUp = useCallback(() => {
     setIsDragging(false);
-  };
+  }, []);
 
-  // Generate cropped blob (reused for both direct apply and wizard next)
-  const generateCroppedBlob = useCallback((): Promise<Blob | null> => {
+  // Generate resized blob (full image, no crop)
+  const generateResizedBlob = useCallback((): Promise<Blob | null> => {
     return new Promise((resolve) => {
       if (!imageElement) { resolve(null); return; }
 
-      const outputCanvas = document.createElement('canvas');
-      const outputSize = maxOutputSize;
-      outputCanvas.width = outputSize;
-      outputCanvas.height = outputSize;
-      
-      const ctx = outputCanvas.getContext('2d');
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
       if (!ctx) { resolve(null); return; }
 
-      const previewSize = 280;
-      const cropSize = previewSize * 0.75;
+      // Calculate rotated dimensions
+      const isRotated90 = rotation % 180 !== 0;
+      const srcW = isRotated90 ? imageElement.height : imageElement.width;
+      const srcH = isRotated90 ? imageElement.width : imageElement.height;
 
-      const scaleFactor = outputSize / cropSize;
-
-      ctx.save();
-      
-      if (cropShape === 'circle') {
-        ctx.beginPath();
-        ctx.arc(outputSize / 2, outputSize / 2, outputSize / 2, 0, Math.PI * 2);
-        ctx.clip();
+      // Scale to fit within MAX_RESIZE
+      let outW = srcW;
+      let outH = srcH;
+      const longestSide = Math.max(outW, outH);
+      if (longestSide > MAX_RESIZE) {
+        const scale = MAX_RESIZE / longestSide;
+        outW = Math.round(outW * scale);
+        outH = Math.round(outH * scale);
       }
 
-      ctx.translate(outputSize / 2, outputSize / 2);
+      canvas.width = outW;
+      canvas.height = outH;
+
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+
+      // Apply rotation
+      ctx.save();
+      ctx.translate(outW / 2, outH / 2);
       ctx.rotate((rotation * Math.PI) / 180);
 
-      const scale = zoom * scaleFactor;
-      const imgWidth = imageElement.width * scale;
-      const imgHeight = imageElement.height * scale;
-
-      ctx.drawImage(
-        imageElement,
-        -imgWidth / 2 + position.x * scaleFactor,
-        -imgHeight / 2 + position.y * scaleFactor,
-        imgWidth,
-        imgHeight
-      );
-
+      const drawW = isRotated90 ? outH : outW;
+      const drawH = isRotated90 ? outW : outH;
+      ctx.drawImage(imageElement, -drawW / 2, -drawH / 2, drawW, drawH);
       ctx.restore();
 
-      outputCanvas.toBlob(
+      canvas.toBlob(
         (blob) => resolve(blob),
         'image/webp',
         0.82
       );
     });
-  }, [imageElement, zoom, rotation, position, cropShape, maxOutputSize]);
+  }, [imageElement, rotation]);
 
   // Direct apply (non-wizard mode)
-  const handleCropComplete = useCallback(async () => {
-    const blob = await generateCroppedBlob();
+  const handleApply = useCallback(async () => {
+    const blob = await generateResizedBlob();
     if (blob) {
-      onCropComplete(blob);
+      onCropComplete(blob, focalX, focalY);
       onClose();
     }
-  }, [generateCroppedBlob, onCropComplete, onClose]);
+  }, [generateResizedBlob, onCropComplete, onClose, focalX, focalY]);
 
   // Wizard: go to preview step
   const handleNextToPreview = useCallback(async () => {
-    const blob = await generateCroppedBlob();
+    const blob = await generateResizedBlob();
     if (blob) {
       setPreviewBlob(blob);
       const url = URL.createObjectURL(blob);
       setPreviewUrl(url);
       setStep('preview');
     }
-  }, [generateCroppedBlob]);
+  }, [generateResizedBlob]);
 
   // Wizard: final save from preview step
   const handleSaveFromPreview = useCallback(() => {
     if (previewBlob) {
-      onCropComplete(previewBlob);
+      onCropComplete(previewBlob, focalX, focalY);
       onClose();
     }
-  }, [previewBlob, onCropComplete, onClose]);
+  }, [previewBlob, onCropComplete, onClose, focalX, focalY]);
 
   const handleZoomIn = () => setZoom(prev => Math.min(prev * 1.2, 3));
   const handleZoomOut = () => setZoom(prev => Math.max(prev / 1.2, minZoom));
   const handleRotate = () => setRotation(prev => (prev + 90) % 360);
-  
-  const handleFitToView = () => {
-    if (!imageElement) return;
-    const canvasSize = 280;
-    const longSide = Math.max(imageElement.width, imageElement.height);
-    const fitZoom = canvasSize / longSide;
-    setZoom(Math.max(minZoom, Math.min(3, fitZoom)));
-    setPosition({ x: 0, y: 0 });
-  };
 
-  const shapeOptions = [
-    { value: 'circle', label: 'Circle', icon: <Circle className="h-3.5 w-3.5" /> },
-    { value: 'square', label: 'Square', icon: <Square className="h-3.5 w-3.5" /> },
-  ];
+  const handleResetFocal = () => {
+    setFocalX(50);
+    setFocalY(50);
+  };
 
   return (
     <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
@@ -333,34 +258,32 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
         <div className="px-6 pt-5 pb-4 border-b border-border/40">
           <DialogTitle className="flex items-center gap-2.5 font-display text-base tracking-wide uppercase">
             <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
-              {step === 'crop' ? (
-                <Crop className="h-4 w-4 text-primary" />
+              {step === 'compose' ? (
+                <ImageIcon className="h-4 w-4 text-primary" />
               ) : (
                 <Eye className="h-4 w-4 text-primary" />
               )}
             </div>
-            {step === 'crop' ? 'Crop & Resize' : 'Card Preview'}
+            {step === 'compose' ? 'Compose Photo' : 'Card Preview'}
           </DialogTitle>
-          {/* Step indicator for wizard mode */}
           {isWizard && (
             <div className="flex items-center gap-2 mt-3">
-              <div className={`h-1 flex-1 rounded-full transition-colors ${step === 'crop' ? 'bg-primary' : 'bg-primary/30'}`} />
+              <div className={`h-1 flex-1 rounded-full transition-colors ${step === 'compose' ? 'bg-primary' : 'bg-primary/30'}`} />
               <div className={`h-1 flex-1 rounded-full transition-colors ${step === 'preview' ? 'bg-primary' : 'bg-border'}`} />
             </div>
           )}
         </div>
 
-        {step === 'crop' ? (
+        {step === 'compose' ? (
           <>
-            {/* Instructions Banner */}
+            {/* Instructions */}
             <div className="px-5 pt-4">
               <div className="bg-primary/5 border border-primary/15 rounded-xl p-3 space-y-1.5">
                 <div className="flex items-start gap-2">
                   <Info className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
                   <div className="text-xs text-muted-foreground space-y-0.5">
-                    <p className="font-medium text-foreground">Image guidelines</p>
-                    <p>Professional headshot · at least 200×200px · well-lit</p>
-                    <p>Output: {maxOutputSize}×{maxOutputSize}px</p>
+                    <p className="font-medium text-foreground">Photo composition</p>
+                    <p>Click or drag within the frame to set the focal point. The full image is preserved — this controls how it appears on cards.</p>
                   </div>
                 </div>
               </div>
@@ -389,56 +312,76 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
               </div>
             )}
 
-            {/* Cinematic Canvas Area */}
+            {/* Compose Frame — 3:4 aspect ratio card preview */}
             <div className="bg-black/90 mx-5 mt-4 rounded-xl overflow-hidden relative shadow-[inset_0_2px_8px_rgba(0,0,0,0.3)]">
-              <div 
-                ref={containerRef}
-                className="flex justify-center py-4"
-              >
-                <canvas
-                  ref={canvasRef}
-                  className={`rounded-lg ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
-                  onMouseDown={handleMouseDown}
-                  onMouseMove={handleMouseMove}
-                  onMouseUp={handleMouseUp}
-                  onMouseLeave={handleMouseUp}
-                />
+              <div ref={containerRef} className="flex justify-center py-4">
+                <div
+                  ref={frameRef}
+                  className={`relative overflow-hidden rounded-lg ${isDragging ? 'cursor-crosshair' : 'cursor-crosshair'}`}
+                  style={{ width: 210, height: 280 }}
+                  onMouseDown={handleFrameMouseDown}
+                  onMouseMove={handleFrameMouseMove}
+                  onMouseUp={handleFrameMouseUp}
+                  onMouseLeave={handleFrameMouseUp}
+                >
+                  {imageSrc && (
+                    <img
+                      src={imageSrc}
+                      alt="Preview"
+                      className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+                      style={{
+                        objectPosition: `${focalX}% ${focalY}%`,
+                        transform: `scale(${zoom}) rotate(${rotation}deg)`,
+                        transformOrigin: `${focalX}% ${focalY}%`,
+                        transition: isDragging ? 'none' : 'transform 0.2s ease',
+                      }}
+                      draggable={false}
+                    />
+                  )}
+                  {/* Focal point indicator */}
+                  <div
+                    className="absolute w-6 h-6 pointer-events-none"
+                    style={{
+                      left: `${focalX}%`,
+                      top: `${focalY}%`,
+                      transform: 'translate(-50%, -50%)',
+                    }}
+                  >
+                    <Crosshair className="w-6 h-6 text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]" />
+                  </div>
+                  {/* Border overlay */}
+                  <div className="absolute inset-0 rounded-lg border-2 border-white/20 pointer-events-none" />
+                </div>
               </div>
               <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/50 backdrop-blur-sm px-2.5 py-1 rounded-full text-[10px] text-white/50 flex items-center gap-1">
-                <Move className="h-2.5 w-2.5" />
-                Drag to reposition
+                <Crosshair className="h-2.5 w-2.5" />
+                Click to set focal point
               </div>
             </div>
 
-            {/* Controls Section */}
+            {/* Controls */}
             <div className="mx-5 mt-3 mb-1 rounded-xl bg-muted/30 border border-border/30 p-4 space-y-4">
-              {/* Shape toggle */}
+              {/* Focal point display + reset */}
               <div className="flex items-center justify-between">
-                <Label className="text-xs text-muted-foreground">Shape</Label>
-                <TogglePill
-                  options={shapeOptions}
-                  value={cropShape}
-                  onChange={(v) => setCropShape(v as 'circle' | 'square')}
-                  size="sm"
-                  variant="solid"
-                />
+                <Label className="text-xs text-muted-foreground">Focal Point</Label>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] text-muted-foreground tabular-nums">{focalX}%, {focalY}%</span>
+                  <button
+                    type="button"
+                    onClick={handleResetFocal}
+                    className="text-[10px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+                  >
+                    <Crosshair className="h-2.5 w-2.5" />
+                    Center
+                  </button>
+                </div>
               </div>
 
               {/* Zoom control */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label className="text-xs text-muted-foreground">Zoom</Label>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={handleFitToView}
-                      className="text-[10px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
-                    >
-                      <Maximize2 className="h-2.5 w-2.5" />
-                      Fit
-                    </button>
-                    <span className="text-[10px] text-muted-foreground tabular-nums">{Math.round(zoom * 100)}%</span>
-                  </div>
+                  <span className="text-[10px] text-muted-foreground tabular-nums">{Math.round(zoom * 100)}%</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
@@ -466,7 +409,7 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
                 </div>
               </div>
 
-              {/* Rotation control */}
+              {/* Rotation */}
               <div className="flex items-center justify-between">
                 <Label className="text-xs text-muted-foreground">Rotation</Label>
                 <button
@@ -480,7 +423,7 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
               </div>
             </div>
 
-            {/* Footer - Crop Step */}
+            {/* Footer */}
             <div className="px-5 py-4 border-t border-border/30 flex items-center gap-2">
               <input
                 ref={replaceInputRef}
@@ -508,8 +451,8 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
                   <ArrowRight className="h-3.5 w-3.5" />
                 </Button>
               ) : (
-                <Button type="button" size="sm" onClick={handleCropComplete}>
-                  Apply Crop
+                <Button type="button" size="sm" onClick={handleApply}>
+                  Save Photo
                 </Button>
               )}
             </div>
@@ -537,6 +480,8 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
                   displayName={cardPreviewProps.displayName}
                   level={cardPreviewProps.level}
                   photoUrl={previewUrl}
+                  photoFocalX={focalX}
+                  photoFocalY={focalY}
                   instagram={cardPreviewProps.instagram}
                   tiktok={cardPreviewProps.tiktok}
                   preferredSocialHandle={cardPreviewProps.preferredSocialHandle}
@@ -556,10 +501,10 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
                 variant="ghost"
                 size="sm"
                 className="mr-auto gap-1.5 text-muted-foreground hover:text-foreground"
-                onClick={() => setStep('crop')}
+                onClick={() => setStep('compose')}
               >
                 <ArrowLeft className="h-3.5 w-3.5" />
-                Back to Crop
+                Back to Compose
               </Button>
               <Button type="button" size="sm" onClick={handleSaveFromPreview} className="gap-1.5">
                 <Save className="h-3.5 w-3.5" />
