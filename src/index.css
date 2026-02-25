@@ -192,7 +192,7 @@ html, body, #root {
     --sidebar-border: 40 15% 85%;
     --sidebar-ring: 0 0% 8%;
 
-    --card-inner: 40 20% 95%;
+    --card-inner: 40 20% 93%;
   }
 
   .dark.theme-cream,
@@ -250,7 +250,7 @@ html, body, #root {
     --sidebar-border: 0 0% 26%;
     --sidebar-ring: 40 20% 92%;
 
-    --card-inner: 0 0% 15%;
+    --card-inner: 0 0% 8%;
   }
 
   /* ===== THEME: ROSE (Blush Pink Pastel) ===== */
@@ -305,7 +305,7 @@ html, body, #root {
     --sidebar-border: 350 15% 88%;
     --sidebar-ring: 350 60% 55%;
 
-    --card-inner: 350 20% 96%;
+    --card-inner: 350 15% 93%;
   }
 
   .dark.theme-rose {
@@ -359,7 +359,7 @@ html, body, #root {
     --sidebar-border: 350 10% 28%;
     --sidebar-ring: 350 55% 60%;
 
-    --card-inner: 350 10% 16%;
+    --card-inner: 350 5% 8%;
   }
 
   /* ===== THEME: SAGE (Mint Green Pastel) ===== */
@@ -414,7 +414,7 @@ html, body, #root {
     --sidebar-border: 145 12% 85%;
     --sidebar-ring: 145 45% 42%;
 
-    --card-inner: 145 15% 95%;
+    --card-inner: 145 12% 93%;
   }
 
   .dark.theme-sage {
@@ -468,7 +468,7 @@ html, body, #root {
     --sidebar-border: 145 8% 28%;
     --sidebar-ring: 145 40% 50%;
 
-    --card-inner: 145 8% 16%;
+    --card-inner: 145 4% 8%;
   }
 
   /* ===== THEME: OCEAN (Soft Blue Pastel) ===== */
@@ -523,7 +523,7 @@ html, body, #root {
     --sidebar-border: 210 15% 88%;
     --sidebar-ring: 210 60% 50%;
 
-    --card-inner: 210 20% 96%;
+    --card-inner: 210 15% 93%;
   }
 
   .dark.theme-ocean {
@@ -577,7 +577,7 @@ html, body, #root {
     --sidebar-border: 210 10% 28%;
     --sidebar-ring: 210 55% 55%;
 
-    --card-inner: 210 10% 16%;
+    --card-inner: 210 5% 8%;
   }
 }
 
