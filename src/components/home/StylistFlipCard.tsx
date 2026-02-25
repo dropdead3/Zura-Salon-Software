@@ -72,7 +72,7 @@ export function StylistFlipCard({ stylist, index, selectedLocation, isPreview, p
             
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-500" />
             
-            <div className="absolute top-4 left-4 right-4 flex flex-wrap gap-2 max-w-[calc(100%-2rem)]">
+            <div className="absolute top-5 left-5 right-5 flex flex-wrap gap-2 max-w-[calc(100%-2.5rem)]">
               {/* Display highlighted_services if available, otherwise fall back to specialties */}
               {(() => {
                 // Safely handle null/undefined specialties
@@ -111,7 +111,7 @@ export function StylistFlipCard({ stylist, index, selectedLocation, isPreview, p
               })()}
             </div>
             
-            <div className="absolute bottom-0 left-0 right-0 px-5 pb-5 pt-6 text-white transform translate-y-3 transition-transform duration-500 ease-out group-hover:translate-y-0">
+            <div className="absolute bottom-0 left-0 right-0 px-6 pb-7 pt-6 text-white transform translate-y-3 transition-transform duration-500 ease-out group-hover:translate-y-0">
               <div className="flex items-center gap-1.5 mb-1">
                 <p className="text-xs tracking-[0.2em] text-white/70 uppercase">{stylist.level}</p>
                 <TooltipProvider delayDuration={100}>
