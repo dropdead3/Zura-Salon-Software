@@ -682,6 +682,22 @@ export default function MyProfile() {
                 imageUrl={profile?.photo_url || undefined}
                 onCropComplete={handleCroppedPhotoUpload}
                 maxOutputSize={800}
+                cardPreviewProps={showProfessionalDetails ? {
+                  name: formData.full_name,
+                  displayName: formData.display_name,
+                  level: formData.stylist_level,
+                  instagram: formData.instagram,
+                  tiktok: formData.tiktok,
+                  preferredSocialHandle: formData.preferred_social_handle,
+                  highlightedServices: formData.highlighted_services,
+                  specialties: formData.specialties,
+                  bio: formData.bio,
+                  isBooking: profile?.is_booking !== false,
+                  locations: formData.location_ids.map(id => {
+                    const loc = locations.find(l => l.id === id);
+                    return loc ? { id: loc.id, name: loc.name } : null;
+                  }).filter(Boolean) as { id: string; name: string }[],
+                } : undefined}
               />
             </CardContent>
           </Card>
