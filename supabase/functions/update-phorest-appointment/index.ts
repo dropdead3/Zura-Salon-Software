@@ -195,23 +195,36 @@ serve(async (req) => {
       localUpdate.tip_amount = tip_amount;
     }
 
+    // Try phorest_appointments first
     const { error: updateError, data: updatedAppointment } = await supabase
       .from("phorest_appointments")
       .update(localUpdate)
       .eq(matchColumn, appointment_id)
       .select()
-      .single();
+      .maybeSingle();
 
-    if (updateError) {
-      console.error("Failed to update local record:", updateError);
-      throw new Error("Failed to update appointment locally");
+    if (!updateError && updatedAppointment) {
+      // Updated in phorest_appointments successfully
+    } else {
+      // Fallback: try the local appointments table (for locally-created bookings)
+      console.log("No match in phorest_appointments, trying local appointments table");
+      const { error: localError, data: localAppt } = await supabase
+        .from("appointments")
+        .update(localUpdate)
+        .eq("id", appointment_id)
+        .select()
+        .maybeSingle();
+
+      if (localError || !localAppt) {
+        console.error("Failed to update in both tables:", updateError, localError);
+        throw new Error("Failed to update appointment locally");
+      }
     }
 
     return new Response(
       JSON.stringify({
         success: true,
         message: "Appointment updated successfully",
-        appointment: updatedAppointment,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
