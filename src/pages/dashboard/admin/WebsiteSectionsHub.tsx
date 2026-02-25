@@ -41,6 +41,7 @@ import { ServicesContent } from '@/components/dashboard/website-editor/ServicesC
 import { AnnouncementBarContent } from '@/components/dashboard/website-editor/AnnouncementBarContent';
 import { NavigationManager } from '@/components/dashboard/website-editor/navigation/NavigationManager';
 import { PagesManager } from '@/components/dashboard/website-editor/PagesManager';
+import { PublishChangesButton } from '@/components/dashboard/website-editor/PublishChangelog';
 
 // Multi-page components
 import { PageSettingsEditor } from '@/components/dashboard/website-editor/PageSettingsEditor';
@@ -847,6 +848,7 @@ export default function WebsiteSectionsHub() {
                     {isSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <Save className="h-3.5 w-3.5 mr-1.5" />}
                     Save
                   </Button>
+                  <PublishChangesButton />
                 </div>
               </div>
 

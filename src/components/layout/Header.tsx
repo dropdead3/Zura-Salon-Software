@@ -105,7 +105,11 @@ export function Header() {
   const orgPath = useOrgPath();
 
   // Fetch published primary menu
-  const { data: publishedMenu } = usePublicMenuBySlug('primary');
+  const { data: publishedMenuData } = usePublicMenuBySlug('primary');
+  const publishedMenu = publishedMenuData?.items ?? null;
+  const menuConfig = publishedMenuData?.config;
+  const mobileMenuStyle = menuConfig?.mobile_menu_style ?? 'overlay';
+  const mobileCTAVisible = menuConfig?.mobile_cta_visible ?? true;
 
   // Build nav items from published menu or fallback
   const { navItems, ctaItem } = useMemo(() => {
@@ -124,7 +128,7 @@ export function Header() {
     let cta = { href: orgPath('/booking'), label: 'Book Consult' };
 
     publishedMenu.forEach((item, idx) => {
-      if (item.visibility === 'mobile_only') return; // Skip mobile-only in desktop nav
+      if (item.visibility === 'mobile_only') return;
       const nav = menuItemToNavItem(item, idx, orgPath);
       if (nav.type === 'cta') {
         cta = { href: nav.href, label: nav.label };
@@ -139,7 +143,6 @@ export function Header() {
   // Mobile nav items (include mobile_only, exclude desktop_only)
   const mobileNavItems = useMemo(() => {
     if (!publishedMenu || publishedMenu.length === 0) {
-      // Flatten fallback items for mobile
       const items: { href: string; label: string; type: string }[] = [];
       FALLBACK_NAV_ITEMS.forEach(item => {
         if (item.type === 'dropdown' && item.children) {
@@ -155,7 +158,7 @@ export function Header() {
     const items: { href: string; label: string; type: string }[] = [];
     publishedMenu.forEach((item) => {
       if (item.visibility === 'desktop_only') return;
-      if (item.item_type === 'cta') return; // CTA rendered separately
+      if (item.item_type === 'cta') return;
       const nav = menuItemToNavItem(item, 0, orgPath);
       if (nav.type === 'dropdown' && nav.children) {
         nav.children.forEach(c => items.push({ href: c.href, label: c.label, type: 'child' }));
@@ -648,9 +651,9 @@ export function Header() {
           </div>
         </motion.div>
 
-        {/* Mobile Menu */}
+        {/* Mobile Menu — Overlay Style */}
         <AnimatePresence>
-          {isMobileMenuOpen && (
+          {isMobileMenuOpen && mobileMenuStyle === 'overlay' && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
@@ -690,15 +693,97 @@ export function Header() {
                 >
                   Login
                 </Link>
-                <Link
-                  to={ctaItem.href}
-                  className="mt-4 w-full text-center inline-flex items-center justify-center gap-2 px-6 py-4 text-sm font-display uppercase tracking-wide bg-foreground text-background rounded-full"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  {ctaItem.label}
-                </Link>
+                {mobileCTAVisible && (
+                  <Link
+                    to={ctaItem.href}
+                    className="mt-4 w-full text-center inline-flex items-center justify-center gap-2 px-6 py-4 text-sm font-display uppercase tracking-wide bg-foreground text-background rounded-full"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    {ctaItem.label}
+                  </Link>
+                )}
               </nav>
             </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Mobile Menu — Drawer Style */}
+        <AnimatePresence>
+          {isMobileMenuOpen && mobileMenuStyle === 'drawer' && (
+            <>
+              {/* Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+                onClick={() => setIsMobileMenuOpen(false)}
+              />
+              {/* Drawer panel */}
+              <motion.div
+                initial={{ x: '100%' }}
+                animate={{ x: 0 }}
+                exit={{ x: '100%' }}
+                transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+                className="fixed top-0 right-0 z-50 h-full w-[85vw] max-w-sm bg-background border-l border-border shadow-2xl lg:hidden flex flex-col"
+              >
+                <div className="flex items-center justify-between px-6 py-5 border-b border-border">
+                  <span className="text-sm font-display uppercase tracking-wide text-muted-foreground">Menu</span>
+                  <button
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="p-2 rounded-full hover:bg-muted transition-colors"
+                    aria-label="Close menu"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+                <nav className="flex-1 overflow-y-auto px-6 py-8 flex flex-col gap-5">
+                  {mobileNavItems.map((item) => (
+                    <Link
+                      key={item.href + item.label}
+                      to={item.href}
+                      className={cn(
+                        "text-lg font-display uppercase tracking-wide transition-opacity flex items-center gap-2",
+                        location.pathname === item.href ? "opacity-100" : "opacity-60",
+                        item.type === 'child' && "pl-4 text-base"
+                      )}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      {item.type === 'child' && (
+                        <ArrowRight size={14} className="text-muted-foreground" />
+                      )}
+                      {item.label}
+                    </Link>
+                  ))}
+                  <Link
+                    to="/contact"
+                    className="text-lg font-display uppercase tracking-wide opacity-60"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Contact Us
+                  </Link>
+                  <Link
+                    to="/login"
+                    className="text-sm font-sans text-muted-foreground hover:text-foreground transition-colors"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Login
+                  </Link>
+                </nav>
+                {mobileCTAVisible && (
+                  <div className="px-6 py-5 border-t border-border">
+                    <Link
+                      to={ctaItem.href}
+                      className="w-full text-center inline-flex items-center justify-center gap-2 px-6 py-4 text-sm font-display uppercase tracking-wide bg-foreground text-background rounded-full"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      {ctaItem.label}
+                    </Link>
+                  </div>
+                )}
+              </motion.div>
+            </>
           )}
         </AnimatePresence>
       </header>

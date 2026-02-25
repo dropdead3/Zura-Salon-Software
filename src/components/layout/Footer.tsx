@@ -15,19 +15,20 @@ const FALLBACK_FOOTER_LINKS = [
 export function Footer() {
   const { data: locations = [] } = useActiveLocations();
   const orgPath = useOrgPath();
-  const { data: publishedFooter } = usePublicMenuBySlug('footer');
+  const { data: publishedFooterData } = usePublicMenuBySlug('footer');
   
   const footerLinks = useMemo(() => {
-    if (!publishedFooter || publishedFooter.length === 0) {
+    const items = publishedFooterData?.items;
+    if (!items || items.length === 0) {
       return FALLBACK_FOOTER_LINKS;
     }
-    return publishedFooter.map(item => ({
+    return items.map(item => ({
       href: item.target_url
         ? (item.target_url.startsWith('http') ? item.target_url : item.target_url)
         : '#',
       label: item.label,
     }));
-  }, [publishedFooter]);
+  }, [publishedFooterData]);
   // Get hours from the first location for display
   const hours = locations.length > 0 ? formatHoursForDisplay(locations[0].hours_json) : '';
 

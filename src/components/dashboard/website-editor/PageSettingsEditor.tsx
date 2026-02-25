@@ -150,6 +150,27 @@ export function PageSettingsEditor({ page, allPages, onUpdate }: PageSettingsEdi
             />
           </div>
 
+          {/* SERP Preview */}
+          <div className="space-y-2">
+            <Label className="text-muted-foreground text-[11px]">Search Preview</Label>
+            <div className="rounded-lg border border-border bg-card p-4 space-y-1">
+              <p className="text-xs font-sans text-muted-foreground truncate">
+                getzura.com
+                {page.page_type !== 'home' && (
+                  <> › {local.slug || 'untitled'}</>
+                )}
+              </p>
+              <p className="text-sm font-sans text-primary truncate leading-snug">
+                {(local.seo_title || local.title || 'Untitled Page').slice(0, 60)}
+                {(local.seo_title || local.title || '').length > 60 && '…'}
+              </p>
+              <p className="text-xs font-sans text-muted-foreground line-clamp-2 leading-relaxed">
+                {(local.seo_description || 'No description provided. Add an SEO description to improve your search appearance.').slice(0, 160)}
+                {(local.seo_description || '').length > 160 && '…'}
+              </p>
+            </div>
+          </div>
+
           <div className="flex items-center justify-between">
             <div>
               <Label>Show in Navigation</Label>
