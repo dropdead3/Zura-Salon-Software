@@ -86,6 +86,19 @@ export function useTipsDrilldown({ period, locationId, minAppointments = 10 }: U
     staleTime: 1000 * 60 * 10,
   });
 
+  // Fetch phorest staff mapping for name resolution of unmapped staff
+  const { data: staffMapping, isLoading: staffMappingLoading } = useQuery({
+    queryKey: ['tips-drilldown-staff-mapping'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('phorest_staff_mapping')
+        .select('phorest_staff_id, phorest_staff_name, user_id');
+      if (error) throw error;
+      return data;
+    },
+    staleTime: 1000 * 60 * 10,
+  });
+
   // Fetch payment method data from transaction items
   const { data: transactionItems, isLoading: txLoading } = useQuery({
     queryKey: ['tips-drilldown-payment-methods', dateFrom, dateTo, locationId],
@@ -113,9 +126,23 @@ export function useTipsDrilldown({ period, locationId, minAppointments = 10 }: U
       return { byStylist: [], byTotalTips: [], byCategory: {}, byPaymentMethod: {} };
     }
 
+    // Build profile map from employee_profiles
     const profileMap = new Map(
       profiles.map(p => [p.user_id, { name: p.display_name || p.full_name || 'Unknown', photo: p.photo_url }])
     );
+
+    // Build staff name map from phorest_staff_mapping for unmapped staff
+    const staffNameMap = new Map<string, { name: string; photo: string | null }>();
+    if (staffMapping) {
+      for (const sm of staffMapping) {
+        const key = `phorest:${sm.phorest_staff_id}`;
+        staffNameMap.set(key, { name: sm.phorest_staff_name || 'Staff Member', photo: null });
+        // If this mapping has a user_id, ensure profileMap has the name too
+        if (sm.user_id && !profileMap.has(sm.user_id)) {
+          profileMap.set(sm.user_id, { name: sm.phorest_staff_name || 'Staff Member', photo: null });
+        }
+      }
+    }
 
     // Aggregate by stylist
     const stylistMap = new Map<string, {
@@ -152,16 +179,17 @@ export function useTipsDrilldown({ period, locationId, minAppointments = 10 }: U
         }
       }
 
-      // Stylist aggregation
-      if (apt.stylist_user_id) {
-        const existing = stylistMap.get(apt.stylist_user_id) ?? {
+      // Stylist aggregation — use phorest_staff_id as fallback key
+      const staffKey = apt.stylist_user_id || (apt.phorest_staff_id ? `phorest:${apt.phorest_staff_id}` : null);
+      if (staffKey) {
+        const existing = stylistMap.get(staffKey) ?? {
           totalTips: 0, totalRevenue: 0, noTipCount: 0, count: 0, locationId: apt.location_id
         };
         existing.totalTips += dedupedTip;
         existing.totalRevenue += revenue;
         existing.noTipCount += tipRaw === 0 ? 1 : 0;
         existing.count += 1;
-        stylistMap.set(apt.stylist_user_id, existing);
+        stylistMap.set(staffKey, existing);
       }
 
       // Category aggregation
@@ -172,15 +200,26 @@ export function useTipsDrilldown({ period, locationId, minAppointments = 10 }: U
       categoryMap.set(category, catExisting);
     }
 
-    // Build stylist array
+    // Helper to resolve name/photo from combined maps
+    const resolveStaff = (key: string) => {
+      // Try employee profile first (for user_id keys)
+      const profile = profileMap.get(key);
+      if (profile) return profile;
+      // Try phorest staff mapping (for phorest: prefixed keys)
+      const staffInfo = staffNameMap.get(key);
+      if (staffInfo) return staffInfo;
+      return { name: 'Staff Member', photo: null };
+    };
+
+    // Build stylist array (avg-rate ranking, minAppointments threshold)
     const byStylist: StylistTipMetrics[] = [];
-    for (const [userId, data] of stylistMap) {
+    for (const [staffKey, data] of stylistMap) {
       if (data.count < minAppointments) continue;
-      const profile = profileMap.get(userId);
+      const resolved = resolveStaff(staffKey);
       byStylist.push({
-        stylistUserId: userId,
-        displayName: profile?.name ?? 'Unknown',
-        photoUrl: profile?.photo ?? null,
+        stylistUserId: staffKey,
+        displayName: resolved.name,
+        photoUrl: resolved.photo,
         avgTip: data.count > 0 ? data.totalTips / data.count : 0,
         tipPercentage: data.totalRevenue > 0 ? (data.totalTips / data.totalRevenue) * 100 : 0,
         noTipRate: data.count > 0 ? (data.noTipCount / data.count) * 100 : 0,
@@ -189,19 +228,17 @@ export function useTipsDrilldown({ period, locationId, minAppointments = 10 }: U
         locationId: data.locationId,
       });
     }
-
-    // Sort by avg tip descending
     byStylist.sort((a, b) => b.avgTip - a.avgTip);
 
-    // Build byTotalTips: all stylists with any tips, sorted by total tips desc
+    // Build byTotalTips: all staff with any tips, no minimum threshold
     const byTotalTips: StylistTipMetrics[] = [];
-    for (const [userId, data] of stylistMap) {
+    for (const [staffKey, data] of stylistMap) {
       if (data.totalTips <= 0) continue;
-      const profile = profileMap.get(userId);
+      const resolved = resolveStaff(staffKey);
       byTotalTips.push({
-        stylistUserId: userId,
-        displayName: profile?.name ?? 'Unknown',
-        photoUrl: profile?.photo ?? null,
+        stylistUserId: staffKey,
+        displayName: resolved.name,
+        photoUrl: resolved.photo,
         avgTip: data.count > 0 ? data.totalTips / data.count : 0,
         tipPercentage: data.totalRevenue > 0 ? (data.totalTips / data.totalRevenue) * 100 : 0,
         noTipRate: data.count > 0 ? (data.noTipCount / data.count) * 100 : 0,
@@ -236,11 +273,11 @@ export function useTipsDrilldown({ period, locationId, minAppointments = 10 }: U
     }
 
     return { byStylist, byTotalTips, byCategory, byPaymentMethod };
-  }, [appointments, profiles, transactionItems, minAppointments]);
+  }, [appointments, profiles, staffMapping, transactionItems, minAppointments]);
 
   return {
     ...result,
-    isLoading: aptsLoading || profilesLoading || txLoading,
+    isLoading: aptsLoading || profilesLoading || staffMappingLoading || txLoading,
     error: aptsError as Error | null,
   };
 }
