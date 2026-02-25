@@ -1,52 +1,66 @@
 
 
-## "All Appointments Complete" Indicator + Dynamic Revenue Label
+## Fix: Use Operating Hours (Not Just Appointments) to Determine "Final Revenue"
 
-Good prompt — you're asking for a state-aware label that tells operators when the day's revenue is finalized vs. still accumulating. That's a meaningful signal distinction.
+You're absolutely right. The current logic only checks `lastAppointmentEndTime`, so when there are zero appointments, it never triggers the "final" state. But if the location has closed for the day, no more revenue is coming — appointment or walk-in.
 
-### Current Behavior
+### Root Cause
 
-- The label always reads **"Revenue So Far Today"** regardless of whether appointments are still in progress
-- The line "Estimated final transaction at **10:30 PM**" shows when the last appointment ends, but there's no state change when that time passes
-- No indication that the day's revenue picture is complete
+The completion check relies solely on `todayActual.lastAppointmentEndTime`. When there are no appointments, that value is `null`, and the code falls through to the default "Revenue So Far Today" label with no completion indicator.
 
-### Proposed Changes
+### Fix
 
 **File: `src/components/dashboard/AggregateSalesCard.tsx`**
 
-1. **Detect "all complete" state**: Compare the current time against `todayActual.lastAppointmentEndTime`. If `now > lastAppointmentEndTime`, all scheduled appointments have ended. Combined with `hasActualData`, this means the revenue figure is final.
+Compute `allAppointmentsComplete` once (around line 464, near the existing `allLocationsClosed` logic) using a two-path check:
 
-   ```ts
-   const allAppointmentsComplete = (() => {
-     if (!todayActual?.lastAppointmentEndTime || !todayActual.hasActualData) return false;
-     const [h, m] = todayActual.lastAppointmentEndTime.split(':').map(Number);
-     const now = new Date();
-     return now.getHours() > h || (now.getHours() === h && now.getMinutes() >= m);
-   })();
-   ```
+```ts
+const allAppointmentsComplete = useMemo(() => {
+  if (!isToday) return false;
+  const now = new Date();
 
-2. **Dynamic revenue label** (line 613): Switch from static text to state-aware:
-   - Before all complete: **"Revenue So Far Today"** (current)
-   - After all complete: **"Final Revenue Today"**
+  // Path 1: All locations are past their closing time
+  if (locations && locations.length > 0) {
+    const allPastClose = locations.every(loc => {
+      const hoursInfo = getLocationHoursForDate(loc.hours_json, loc.holiday_closures, now);
+      if (hoursInfo.isClosed) return true; // closed today = no more revenue
+      if (!hoursInfo.closeTime) return false; // no hours defined = can't determine
+      const [h, m] = hoursInfo.closeTime.split(':').map(Number);
+      return now.getHours() > h || (now.getHours() === h && now.getMinutes() >= m);
+    });
+    if (allPastClose) return true;
+  }
 
-3. **Replace "Estimated final transaction at" line** (lines 680-687): When `allAppointmentsComplete` is true, instead of showing the estimated time, show a completion indicator:
-   - **Before complete**: "Estimated final transaction at **10:30 PM**" (current behavior)
-   - **After complete**: A subtle `CheckCircle2` icon + **"All appointments complete"** in `text-success-foreground`
+  // Path 2: Last appointment has ended (existing logic, as fallback)
+  if (todayActual?.lastAppointmentEndTime && todayActual.hasActualData) {
+    const [h, m] = todayActual.lastAppointmentEndTime.split(':').map(Number);
+    return now.getHours() > h || (now.getHours() === h && now.getMinutes() >= m);
+  }
 
-4. **Update tooltip text** (line 616): When complete, change from "Revenue from completed/checked-out transactions today. Updates every 5 minutes." to "All scheduled appointments have concluded. This is today's final revenue figure."
+  return false;
+}, [isToday, locations, todayActual]);
+```
 
-### Visual Result
+Then replace the three inline IIFEs (lines 613-619, 624-632, 697-717) with references to this single `allAppointmentsComplete` boolean:
 
-**During the day (appointments still running):**
-- Label: "Revenue So Far Today"
-- Shows: "Estimated final transaction at 10:30 PM"
+1. **Label** (line 613): `allAppointmentsComplete ? 'Final Revenue Today' : 'Revenue So Far Today'`
+2. **Tooltip** (line 623): Use `allAppointmentsComplete` to pick tooltip text
+3. **Footer indicator** (line 697): When `allAppointmentsComplete` is true, show the green checkmark + "All appointments complete". Otherwise show the estimated final time (or nothing if no appointments exist).
 
-**After last appointment ends:**
-- Label: "Final Revenue Today"
-- Shows: ✓ "All appointments complete" (green, subtle)
-- "Estimated final transaction" line disappears
+### Additional Import
+
+Add `getLocationHoursForDate` to the existing import from `useLocations` (line 33 already imports `useActiveLocations` and `isClosedOnDate`).
+
+### What Changes for the User
+
+| Scenario | Before | After |
+|---|---|---|
+| No appointments, past closing time | "Revenue So Far Today" forever | **"Final Revenue Today"** + ✓ All appointments complete |
+| No appointments, still open | "Revenue So Far Today" | "Revenue So Far Today" (unchanged) |
+| Appointments exist, all ended | "Final Revenue Today" | "Final Revenue Today" (unchanged) |
+| All locations closed today | "Revenue So Far Today" | **"Final Revenue Today"** + ✓ All appointments complete |
 
 ### Scope
 
-~20 lines changed in 1 file. No new queries or data changes — uses the existing `lastAppointmentEndTime` from `useTodayActualRevenue`.
+~25 lines changed in 1 file. Replaces 3 duplicated inline IIFEs with 1 shared `useMemo`. Adds `getLocationHoursForDate` to an existing import.
 
