@@ -10,7 +10,7 @@ import {
   type TransactionBreakdown,
   type TransactionLineItem,
 } from '@/hooks/useAppointmentTransactionBreakdown';
-import { ShoppingBag, Scissors, Receipt, CreditCard, Undo2, Copy, DollarSign } from 'lucide-react';
+import { ShoppingBag, Scissors, Receipt, CreditCard, Undo2, Copy, DollarSign, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
@@ -152,6 +152,12 @@ export function TransactionBreakdownPanel({
     <div className="space-y-3">
       {/* Line items by category */}
       <CategorySection categoryKey="services" items={breakdown.services} />
+      {breakdown.services.length > 0 && breakdown.products.length === 0 && (
+        <div className="flex items-center gap-2 px-3 py-1.5 text-xs text-muted-foreground/60">
+          <ShoppingBag className="w-3 h-3" />
+          No retail items purchased
+        </div>
+      )}
       <CategorySection categoryKey="products" items={breakdown.products} />
       <CategorySection categoryKey="fees" items={breakdown.fees} />
       <CategorySection categoryKey="deposits" items={breakdown.deposits} />
@@ -186,6 +192,12 @@ export function TransactionBreakdownPanel({
           <span className="font-display text-base tracking-[0.08em] text-foreground">
             <BlurredAmount>${summary.grandTotal.toFixed(2)}</BlurredAmount>
           </span>
+        </div>
+
+        {/* Paid in full indicator */}
+        <div className="flex items-center gap-1.5 pt-1.5 text-xs text-emerald-600">
+          <CheckCircle2 className="w-3.5 h-3.5" />
+          Paid in full · No outstanding balance
         </div>
 
         {/* Payment method pill */}
