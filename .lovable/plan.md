@@ -1,27 +1,75 @@
 
 
-## Invert Nested Card Depth: Darker Instead of Lighter
+## Mass Update: Nested Cards to Use `bg-card-inner`
 
-The current `--card-inner` values make subcards lighter than their parent. This plan flips that so nested cards are slightly darker, creating a "sunken" depth effect that better separates inner content from the parent card surface.
+Good instinct to systematize this. The audit found **12 files** with genuine nested subcard patterns (stat tiles, drilldown panels, info sections inside parent Card components) that should use `bg-card-inner` instead of the inconsistent `bg-muted/30`, `bg-muted/20`, or `bg-muted/30 dark:bg-card` patterns.
 
-### What Changes
+### Files and Changes
 
-**File: `src/index.css`** -- Update all 8 `--card-inner` values (4 themes x light/dark):
+**1. `src/components/dashboard/AggregateSalesCard.tsx`** (3 remaining instances)
+- Line 552: `bg-muted/30 dark:bg-card` → `bg-card-inner` (closed-locations banner)
+- Line 570: `bg-muted/30 dark:bg-card` → `bg-card-inner` (hero total revenue section)
+- Line 1078: `bg-muted/30 dark:bg-card` → `bg-card-inner` (tips stat tile)
 
-| Theme | Mode | Current (lighter) | New (darker) |
-|-------|------|--------------------|--------------|
-| Cream | Light | `40 20% 95%` | `40 20% 93%` |
-| Cream | Dark | `0 0% 15%` | `0 0% 8%` |
-| Rose | Light | `350 20% 96%` | `350 15% 93%` |
-| Rose | Dark | `350 10% 16%` | `350 5% 8%` |
-| Sage | Light | `145 15% 95%` | `145 12% 93%` |
-| Sage | Dark | `145 8% 16%` | `145 4% 8%` |
-| Ocean | Light | `210 20% 96%` | `210 15% 93%` |
-| Ocean | Dark | `210 10% 16%` | `210 5% 8%` |
+**2. `src/components/dashboard/NewBookingsCard.tsx`** (5 instances)
+- Line 91: `bg-muted/30` → `bg-card-inner` (pipeline summary link)
+- Line 119: `bg-muted/30` → `bg-card-inner` (new clients tile)
+- Line 138: `bg-muted/30` → `bg-card-inner` (returning clients tile)
+- Line 157: `bg-muted/30` → `bg-card-inner` (rebook rate section)
+- Line 235: `bg-muted/20` → `bg-card-inner` (30-day comparison section)
 
-In light mode, subcards drop ~5% lightness from the parent card (~98% → 93%), giving a subtle inset feel. In dark mode, subcards drop from 11% to 8% (close to background), creating a clear recessed appearance.
+**3. `src/components/dashboard/sales/ForecastingCard.tsx`** (4 instances)
+- Line 362: `bg-muted/20` → `bg-card-inner` (forecast detail panel)
+- Line 667: `bg-muted/30` → `bg-card-inner` (revenue stat tile)
+- Line 689: `bg-muted/30` → `bg-card-inner` (daily avg stat tile)
+- Line 711: `bg-muted/30` → `bg-card-inner` (count stat tile)
+
+**4. `src/components/dashboard/sales/WeekAheadForecast.tsx`** (3 instances)
+- Line 354: `bg-muted/30` → `bg-card-inner` (revenue stat tile)
+- Line 375: `bg-muted/30` → `bg-card-inner` (daily avg stat tile)
+- Line 394: `bg-muted/30` → `bg-card-inner` (count stat tile)
+
+**5. `src/components/dashboard/sales/TipsDrilldownPanel.tsx`** (1 instance)
+- Line 339: `bg-muted/30` → `bg-card-inner` (SelfMetricCard component)
+
+**6. `src/components/dashboard/sales/GrowthForecastCard.tsx`** (3 instances)
+- Line 277: `bg-muted/20` → `bg-card-inner` (growth detail panel)
+- Line 301: `bg-muted/20` → `bg-card-inner` (expansion panel)
+- Line 331: `bg-muted/20` → `bg-card-inner` (contraction panel)
+
+**7. `src/components/dashboard/sales/location-comparison/LocationDrilldownPanel.tsx`** (5 instances)
+- Lines 187, 200, 215, 228, 258: `bg-muted/20` → `bg-card-inner` (all 5 KPI stat tiles: Team Size, Rev/Provider, Peak Hour, Period Comparison, Retail Attach Rate)
+
+**8. `src/components/dashboard/sales/location-comparison/LocationComparisonCard.tsx`** (2 instances)
+- Lines 74-75: `bg-muted/20` and `bg-muted/30` in the ternary → `bg-card-inner` (location card backgrounds for lowest/default states)
+
+**9. `src/components/dashboard/sales/TopPerformersCard.tsx`** (2 instances)
+- Line 47: `bg-muted/50 dark:bg-card` → `bg-card-inner` (silver rank background)
+- Line 51: `bg-muted/30 dark:bg-card` → `bg-card-inner` (default rank background)
+
+**10. `src/components/dashboard/AnnouncementsBento.tsx`** (2 instances)
+- Line 149: `bg-muted/50 dark:bg-card` → `bg-card-inner` (announcement items)
+- Line 206: `bg-muted/50 dark:bg-card` → `bg-card-inner` (empty state item)
+
+**11. `src/components/dashboard/analytics/AtRiskClientsList.tsx`** (1 instance)
+- Line 88: `bg-muted/30 dark:bg-card` → `bg-card-inner` (client row)
+
+**12. `src/components/dashboard/sales/PeakHoursHeatmap.tsx`** (1 instance)
+- Line 167: `bg-muted/30` → `bg-card-inner` (peak time summary)
+
+### What Is NOT Changed
+
+These use `bg-muted/30` for purposes other than nested subcards and should stay as-is:
+- **Hover states** (`hover:bg-muted/30`) -- interactive feedback, not subcard background
+- **Collapsible triggers** (`KioskSettingsContent.tsx`) -- hover affordance on list items
+- **Table row expansions** (`PayrollHistoryTable.tsx`) -- table UI, not a card
+- **Image placeholders** (`ProductDetailModal.tsx`, `ProductCard.tsx`) -- image container backgrounds
+- **Filter badges** (`AnalyticsFilterBadge.tsx`) -- tiny inline pill, not a subcard
+- **Form input containers** (`CategoryAddonManager.tsx`, `SmsTemplateEditor.tsx`) -- form UI
+- **Disabled toggle states** (`KioskFeatureToggles.tsx`) -- state indicator, not depth
+- **Full-page backgrounds** (`ReviewShareScreen.tsx`) -- page-level background
 
 ### Scope
 
-8 single-line value changes in `src/index.css`. No other files need to change -- the `bg-card-inner` utility class and `tokens.card.inner` token already reference the variable, and `AggregateSalesCard.tsx` already uses them.
+~32 class string replacements across 12 files. All are simple `bg-muted/XX` → `bg-card-inner` swaps (dropping the `dark:bg-card` override where present since the CSS variable handles both modes). No structural changes, no new dependencies.
 
