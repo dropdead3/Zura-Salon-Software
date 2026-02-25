@@ -237,85 +237,91 @@ export function StylistsContent() {
 
   const StylistCard = ({ stylist, showActions = false }: { stylist: StylistProfile; showActions?: boolean }) => (
     <Card>
-      <CardContent className="p-4">
-        <div className="flex items-start gap-4">
-          <Avatar className="w-14 h-14">
-            <AvatarImage src={stylist.photo_url || undefined} alt={stylist.full_name} />
-            <AvatarFallback className="bg-muted text-lg">
-              {stylist.full_name?.charAt(0) || <User className="w-6 h-6" />}
-            </AvatarFallback>
-          </Avatar>
-          
-          <div className="flex-1 min-w-0">
-            <h3 className="font-medium">
-              {stylist.display_name || stylist.full_name}
-            </h3>
-            {stylist.stylist_level && (
-              <p className="text-sm text-muted-foreground">{stylist.stylist_level}</p>
-            )}
-            <div className="flex flex-wrap gap-2 mt-2">
-              {stylist.location_id && (
-                <Badge variant="outline" className="text-xs">
-                  <MapPin className="w-3 h-3 mr-1" />
-                  {getLocationName(stylist.location_id as Location)}
-                </Badge>
+      <CardContent className="p-3 sm:p-4">
+        <div className="flex flex-col gap-3">
+          {/* Top row: Avatar + Info */}
+          <div className="flex items-start gap-3">
+            <Avatar className="w-10 h-10 flex-shrink-0">
+              <AvatarImage src={stylist.photo_url || undefined} alt={stylist.full_name} />
+              <AvatarFallback className="bg-muted">
+                {stylist.full_name?.charAt(0) || <User className="w-5 h-5" />}
+              </AvatarFallback>
+            </Avatar>
+            
+            <div className="flex-1 min-w-0">
+              <h3 className="font-medium truncate">
+                {stylist.display_name || stylist.full_name}
+              </h3>
+              {stylist.stylist_level && (
+                <p className="text-sm text-muted-foreground">{stylist.stylist_level}</p>
               )}
-              {stylist.instagram && (
-                <Badge variant="outline" className="text-xs">
-                  {stylist.instagram}
-                </Badge>
-              )}
-            </div>
-            {stylist.specialties && stylist.specialties.length > 0 && (
-              <div className="flex flex-wrap gap-1 mt-2">
-                {stylist.specialties.slice(0, 4).map(s => (
-                  <Badge key={s} variant="secondary" className="text-xs">{s}</Badge>
-                ))}
-                {stylist.specialties.length > 4 && (
-                  <Badge variant="secondary" className="text-xs">+{stylist.specialties.length - 4}</Badge>
+              <div className="flex flex-wrap gap-1.5 mt-1.5">
+                {stylist.location_id && (
+                  <Badge variant="outline" className="text-xs">
+                    <MapPin className="w-3 h-3 mr-1" />
+                    {getLocationName(stylist.location_id as Location)}
+                  </Badge>
+                )}
+                {stylist.instagram && (
+                  <Badge variant="outline" className="text-xs">
+                    {stylist.instagram}
+                  </Badge>
                 )}
               </div>
-            )}
-            {showActions && stylist.homepage_requested_at && (
-              <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-                <Clock className="w-3 h-3" />
-                Requested {formatDate(new Date(stylist.homepage_requested_at), 'MMM d, yyyy')}
-              </p>
-            )}
+              {stylist.specialties && stylist.specialties.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-1.5">
+                  {stylist.specialties.slice(0, 3).map(s => (
+                    <Badge key={s} variant="secondary" className="text-xs">{s}</Badge>
+                  ))}
+                  {stylist.specialties.length > 3 && (
+                    <Badge variant="secondary" className="text-xs">+{stylist.specialties.length - 3}</Badge>
+                  )}
+                </div>
+              )}
+              {showActions && stylist.homepage_requested_at && (
+                <p className="text-xs text-muted-foreground mt-1.5 flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  Requested {formatDate(new Date(stylist.homepage_requested_at), 'MMM d, yyyy')}
+                </p>
+              )}
+            </div>
           </div>
 
-          {showActions ? (
-            <div className="flex flex-col gap-2">
-              <Button
-                size={tokens.button.card}
-                onClick={() => updateVisibility.mutate({ userId: stylist.user_id, visible: true })}
-                disabled={updateVisibility.isPending}
-              >
-                <Check className="w-4 h-4 mr-1" />
-                Approve
-              </Button>
-              <Button
-                size={tokens.button.card}
-                variant="outline"
-                onClick={() => denyRequest.mutate(stylist.user_id)}
-                disabled={denyRequest.isPending}
-              >
-                <X className="w-4 h-4 mr-1" />
-                Deny
-              </Button>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">
-                {stylist.homepage_visible ? 'Visible' : 'Hidden'}
-              </span>
-              <Switch
-                checked={stylist.homepage_visible ?? false}
-                onCheckedChange={(checked) => updateVisibility.mutate({ userId: stylist.user_id, visible: checked })}
-                disabled={updateVisibility.isPending}
-              />
-            </div>
-          )}
+          {/* Bottom row: Actions */}
+          <div className="flex items-center justify-end gap-2">
+            {showActions ? (
+              <>
+                <Button
+                  size={tokens.button.card}
+                  variant="outline"
+                  onClick={() => denyRequest.mutate(stylist.user_id)}
+                  disabled={denyRequest.isPending}
+                >
+                  <X className="w-4 h-4 mr-1" />
+                  Deny
+                </Button>
+                <Button
+                  size={tokens.button.card}
+                  onClick={() => updateVisibility.mutate({ userId: stylist.user_id, visible: true })}
+                  disabled={updateVisibility.isPending}
+                >
+                  <Check className="w-4 h-4 mr-1" />
+                  Approve
+                </Button>
+              </>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">
+                  {stylist.homepage_visible ? 'Visible' : 'Hidden'}
+                </span>
+                <Switch
+                  checked={stylist.homepage_visible ?? false}
+                  onCheckedChange={(checked) => updateVisibility.mutate({ userId: stylist.user_id, visible: checked })}
+                  disabled={updateVisibility.isPending}
+                />
+              </div>
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>
@@ -344,34 +350,30 @@ export function StylistsContent() {
             Show placeholder stylist cards when no real stylists are visible on the homepage.
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Switch
-                  id="sample-cards"
-                  checked={showSampleCards}
-                  onCheckedChange={handleToggleSampleCards}
-                  disabled={settingsLoading || updateSettings.isPending}
-                />
-                <label htmlFor="sample-cards" className="text-sm font-medium cursor-pointer">
-                  Show sample stylist cards
-                </label>
-              </div>
-              {(settingsLoading || updateSettings.isPending) && (
-                <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-              )}
-            </div>
-            <div className="flex items-center gap-3 text-sm text-muted-foreground">
-              <Badge variant="outline" className="gap-1">
-                <Users className="w-3 h-3" />
-                {northMesaCount} North Mesa
-              </Badge>
-              <Badge variant="outline" className="gap-1">
-                <Users className="w-3 h-3" />
-                {valVistaCount} Val Vista
-              </Badge>
-            </div>
+        <CardContent className="space-y-3">
+          <div className="flex items-center gap-3">
+            <Switch
+              id="sample-cards"
+              checked={showSampleCards}
+              onCheckedChange={handleToggleSampleCards}
+              disabled={settingsLoading || updateSettings.isPending}
+            />
+            <label htmlFor="sample-cards" className="text-sm font-medium cursor-pointer">
+              Show sample stylist cards
+            </label>
+            {(settingsLoading || updateSettings.isPending) && (
+              <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+            )}
+          </div>
+          <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+            <Badge variant="outline" className="gap-1">
+              <Users className="w-3 h-3" />
+              {northMesaCount} North Mesa
+            </Badge>
+            <Badge variant="outline" className="gap-1">
+              <Users className="w-3 h-3" />
+              {valVistaCount} Val Vista
+            </Badge>
           </div>
           {showSampleCards && visibleStylists.length > 0 && (
             <div className="flex items-start gap-2 mt-3 p-3 bg-destructive/10 border border-destructive/30 rounded-lg">
