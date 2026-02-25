@@ -242,7 +242,7 @@ export function TipsDrilldownPanel({ isOpen, parentLocationId, dateFrom, dateTo 
                         Tips by Stylist
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        (total earned)
+                        (amount shown is tips earned)
                       </span>
                     </div>
                     <div className="space-y-1">
