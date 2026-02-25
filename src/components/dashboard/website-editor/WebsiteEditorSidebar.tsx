@@ -357,6 +357,21 @@ export function WebsiteEditorSidebar({
   if (collapsed) {
     return (
       <div className="h-full flex flex-col bg-background border-r py-2">
+        {/* Expand toggle at top */}
+        <div className="px-2 mb-2 pb-2 border-b">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={onToggleCollapse}
+                className="w-full flex items-center justify-center p-2 rounded-lg hover:bg-muted/60 text-muted-foreground"
+              >
+                <ChevronsRight className="h-4 w-4" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right">Expand sidebar</TooltipContent>
+          </Tooltip>
+        </div>
+
         {/* Collapsed page icon */}
         <div className="px-2 mb-2">
           <Tooltip>
@@ -428,21 +443,6 @@ export function WebsiteEditorSidebar({
 
         {/* Spacer */}
         <div className="flex-1" />
-
-        {/* Expand toggle */}
-        <div className="px-2 pt-2 border-t">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={onToggleCollapse}
-                className="w-full flex items-center justify-center p-2 rounded-lg hover:bg-muted/60 text-muted-foreground"
-              >
-                <ChevronsRight className="h-4 w-4" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="right">Expand sidebar</TooltipContent>
-          </Tooltip>
-        </div>
       </div>
     );
   }
