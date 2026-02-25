@@ -956,6 +956,37 @@ async function syncSalesTransactions(
         } catch (pmErr: any) {
           console.error(`Payment method propagation failed for ${branchName}:`, pmErr.message);
         }
+
+        // Reconcile appointment statuses: if a client has transactions on a date,
+        // their appointment should be marked completed
+        try {
+          const uniqueClientDates = [...new Set(
+            purchases
+              .filter((p: any) => p.clientId && p.purchaseDate)
+              .map((p: any) => `${p.clientId}|${p.purchaseDate?.split('T')[0]}`)
+          )];
+
+          let reconciled = 0;
+          for (const key of uniqueClientDates) {
+            const [clientId, txDate] = key.split('|');
+            if (!clientId || !txDate) continue;
+
+            const { data: updated } = await supabase
+              .from('phorest_appointments')
+              .update({ status: 'completed' })
+              .eq('phorest_client_id', clientId)
+              .eq('appointment_date', txDate)
+              .in('status', ['booked', 'confirmed', 'checked_in'])
+              .select('id');
+
+            reconciled += (updated?.length || 0);
+          }
+          if (reconciled > 0) {
+            console.log(`Reconciled ${reconciled} appointments to completed via transaction match for ${branchName}`);
+          }
+        } catch (reconErr: any) {
+          console.error(`Transaction-based status reconciliation failed for ${branchName}:`, reconErr.message);
+        }
       }
 
       // Collect all transaction records in memory first, then batch upsert

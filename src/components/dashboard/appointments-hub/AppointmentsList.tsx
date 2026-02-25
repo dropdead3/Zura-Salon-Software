@@ -436,9 +436,21 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
                     <TableCell className="text-sm text-muted-foreground truncate max-w-[200px] hidden xl:table-cell">{appt.service_name || '—'}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">{appt.stylist_name || '—'}</TableCell>
                     <TableCell className="whitespace-nowrap">
-                      <Badge variant="outline" className={cn('text-[10px]', statusBadge.bg, statusBadge.text, statusBadge.border)}>
-                        {statusBadge.label}
-                      </Badge>
+                      <div className="flex items-center gap-1.5">
+                        <Badge variant="outline" className={cn('text-[10px]', statusBadge.bg, statusBadge.text, statusBadge.border)}>
+                          {statusBadge.label}
+                        </Badge>
+                        {appt.has_transaction && appt.status !== 'completed' && appt.status !== 'cancelled' && appt.status !== 'no_show' && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Badge variant="outline" className="text-[9px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20">
+                                Paid
+                              </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent>Transaction found in POS — this appointment was likely completed</TooltipContent>
+                          </Tooltip>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="text-sm text-right hidden lg:table-cell whitespace-nowrap">
                       {appt.total_price != null ? (
