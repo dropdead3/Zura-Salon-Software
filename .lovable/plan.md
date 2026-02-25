@@ -1,45 +1,18 @@
 
 
-## Fix: Section Headers Must Use Termina (`font-display`)
+## Remove "Tips by Service Category" and "Tips by Payment Method" from Tips Drilldown
 
-You're right, and I appreciate the consistency enforcement. The rule is clear: **all uppercase labels must use `font-display` (Termina)**. These four section headers are using `uppercase` with the default `font-sans` (Aeonik Pro), which violates the design system.
+The screenshot confirms these two sections at the bottom of the drilldown. Three blocks to remove:
 
-### What's Wrong
+### Changes in `src/components/dashboard/sales/TipsDrilldownPanel.tsx`
 
-All section headers in the Tips Drilldown use this class string:
-```
-text-xs tracking-wide uppercase text-muted-foreground font-medium
-```
+1. **Lines 202-213** — Remove "Tips by Service Category" block from the **self-view**
+2. **Lines 335-346** — Remove "Tips by Service Category" block from the **leadership view**
+3. **Line 349** — Remove `<TipPaymentMethodBreakdown>` from the **leadership view**
 
-Missing: `font-display`. Without it, the text renders in Aeonik Pro (the sans default), which should never be uppercased per the typography rules.
+Also clean up any now-unused imports (`TipPaymentMethodBreakdown`, `CategoryRows`, and related variables like `sortedCategories`, `totalCategoryTips`, `byPaymentMethod` if they become orphaned).
 
-### Files & Lines to Fix
+### Scope
 
-**`src/components/dashboard/sales/TipsDrilldownPanel.tsx`** — 4 occurrences:
-
-| Line | Header Text | Fix |
-|---|---|---|
-| 207 | "Tips by Service Category" (self-view) | Add `font-display` |
-| 260 | "Tips by Stylist" | Add `font-display` |
-| 290 | "Avg Tip Rate Ranking" | Add `font-display` |
-| 340 | "Tips by Service Category" (leadership view) | Add `font-display` |
-
-**`src/components/dashboard/sales/TipPaymentMethodBreakdown.tsx`** — 1 occurrence:
-
-| Line | Header Text | Fix |
-|---|---|---|
-| 45 | "Tips by Payment Method" | Add `font-display` |
-
-### The Change
-
-Each `<span>` goes from:
-```
-text-xs tracking-wide uppercase text-muted-foreground font-medium
-```
-To:
-```
-font-display text-xs tracking-wide uppercase text-muted-foreground font-medium
-```
-
-5 one-word additions across 2 files. No structural changes.
+~30 lines removed, 0 added. The drilldown will show only: Summary Stats → Tips by Stylist → Avg Tip Rate Ranking → Coaching Opportunities.
 
