@@ -697,7 +697,7 @@ export function AggregateSalesCard({
                               <span className="text-muted-foreground">{t('sales.actual_revenue')}</span>
                               <BlurredAmount>
                                 <span className={cn("font-medium", exceededExpected && "text-success-foreground")}>
-                                  {formatCurrency(todayActual.actualRevenue)} of {formatCurrency(displayMetrics.totalRevenue)} expected
+                                  {formatCurrency(todayActual.actualRevenue)}
                                 </span>
                               </BlurredAmount>
                             </div>
