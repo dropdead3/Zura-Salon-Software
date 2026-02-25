@@ -447,7 +447,7 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
         const ps = goalOrgMetrics.paceStatus;
         metricLabel = ps === 'ahead' ? 'Ahead of target pace' : ps === 'behind' ? 'Falling behind target pace' : 'On track to hit goal';
         goalPaceIcon = ps === 'behind'
-          ? <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+          ? <AlertTriangle className="w-3.5 h-3.5 text-warning-foreground shrink-0" />
           : <CheckCircle2 className="w-3.5 h-3.5 text-success-foreground shrink-0" />;
         break;
       }
