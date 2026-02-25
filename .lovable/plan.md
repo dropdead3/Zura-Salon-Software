@@ -1,26 +1,34 @@
 
 
-## Fix: New Bookings Card Design Rule Violations
+## Fix: KPI Tile Icon Colors Violating Design Rules
 
-The screenshot reveals several styling inconsistencies compared to the canonical card UI standards:
+The screenshot shows the Forecasting card's three KPI tiles with inconsistent icon colors. The `TrendingUp` (7-Day Total) correctly uses `text-primary`, but `Calendar` (Daily Operating Avg) uses `text-chart-2` (green) and `Users` (Appointments) uses `text-chart-3` (teal). Per the design token system, all KPI tile icons must use `text-primary`.
 
-### Issues Found
-
-1. **Icon colors**: `UserPlus` uses `text-emerald-600`, `RefreshCw` uses `text-purple-600`, `CalendarCheck` uses conditional emerald/amber/red. Per UI Canon, icons inside card content tiles should use `text-primary` for consistency with other cards.
-2. **"By Location" label** (line 199): Uses `font-medium text-muted-foreground uppercase tracking-wide` (font-sans). Must use `font-display` (Termina) per the fix we just applied to `LocationBreakdownSection`.
-3. **Location rows** (line 207): Use `bg-muted/20` instead of `bg-card-inner` -- same issue we just fixed elsewhere.
+An audit of other dashboard KPI tile icons found the same violation in two additional components.
 
 ### Changes
 
-**File: `src/components/dashboard/NewBookingsCard.tsx`**
+**File 1: `src/components/dashboard/sales/ForecastingCard.tsx`**
 
-1. **Line 122**: Change `UserPlus` icon from `text-emerald-600` to `text-primary`
-2. **Line 142**: Change `RefreshCw` icon from `text-purple-600` to `text-primary`
-3. **Lines 159-163**: Change `CalendarCheck` icon from conditional emerald/amber/red to `text-primary` (the rebook health signal is already conveyed by the progress bar color)
-4. **Line 199**: Change "By Location" label from `text-xs font-medium text-muted-foreground uppercase tracking-wide` to `text-xs font-display text-muted-foreground tracking-wide`
-5. **Line 207**: Change location row background from `bg-muted/20` to `bg-card-inner`
+- **Line 698**: `Calendar` icon — change `text-chart-2` to `text-primary`
+- **Line 720**: `Users` icon — change `text-chart-3` to `text-primary`
+
+**File 2: `src/components/dashboard/analytics/StaffUtilizationContent.tsx`**
+
+- **Line 115**: `CheckCircle` icon — change `text-chart-2` to `text-primary`
+- **Line 135**: `TrendingUp` icon — change `text-chart-3` to `text-primary`
+
+**File 3: `src/components/dashboard/analytics/CapacityUtilizationSection.tsx`**
+
+- **Line 271**: `Clock` icon — change `text-chart-3` to `text-primary`
+
+### What stays the same
+
+- Status-indicator colors (e.g., `text-destructive` on `XCircle` for no-shows, goal tracker pace colors) are intentional semantic signals and remain unchanged
+- Chart data colors (`text-chart-*` on values, legends, badges) are data-visualization uses, not icon violations
+- The `TrendingDown` icon in CapacityUtilization already correctly uses `text-muted-foreground` (contextual)
 
 ### Scope
 
-5 class string changes in 1 file. No structural or logic changes.
+5 class string changes across 3 files. No structural or logic changes.
 
