@@ -26,6 +26,7 @@ import { useStylistLevels } from '@/hooks/useStylistLevels';
 import { locations as staticLocations } from '@/data/stylists';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { motion, AnimatePresence } from 'framer-motion';
 import { StylistCardPreview } from '@/components/dashboard/StylistCardPreview';
 import { LandingPageSettings } from '@/components/dashboard/settings/LandingPageSettings';
@@ -898,13 +899,25 @@ export default function MyProfile() {
           {formData.location_ids.length > 0 && (!isAdminLevel || formData.is_onsite_staff) && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  Preferred Work Schedule
-                </CardTitle>
-                <CardDescription>
-                  Select the days you typically work at each location. Days cannot overlap between locations.
-                </CardDescription>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+                    <Calendar className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <CardTitle className="font-display text-base tracking-wide">
+                        Preferred Work Schedule
+                      </CardTitle>
+                      <MetricInfoTooltip description="Your work schedule controls when clients can book appointments with you at each location. Changes here are reflected on online scheduling." />
+                    </div>
+                    <CardDescription>
+                      Select the days you typically work at each location. Days cannot overlap between locations.
+                    </CardDescription>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      These selections determine which days you are available for booking and will be reflected on online scheduling.
+                    </p>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent className="space-y-6">
                 {formData.location_ids.map(locationId => {
@@ -937,6 +950,9 @@ export default function MyProfile() {
                           </span>
                         )}
                       </div>
+                      {currentSchedule.length === 0 && (
+                        <p className="text-xs text-amber-500">No days selected — you won't appear in bookings for this location.</p>
+                      )}
                       <div className="grid grid-cols-7 gap-2">
                         {DAYS_OF_WEEK.map(day => {
                           const isSelected = currentSchedule.includes(day.key);
@@ -978,7 +994,7 @@ export default function MyProfile() {
                               }}
                               title={tooltipText}
                               className={cn(
-                                "flex flex-col items-center justify-center p-2.5 rounded-lg border-2 transition-all text-xs",
+                                "flex flex-col items-center justify-center p-2.5 rounded-full border-2 transition-all text-xs",
                                 isSelected && "border-primary bg-primary/10 text-primary font-medium",
                                 !isSelected && !isDisabled && "border-border hover:border-primary/50",
                                 isLocationClosed && "border-muted bg-muted/30 text-muted-foreground/50 cursor-not-allowed line-through",
