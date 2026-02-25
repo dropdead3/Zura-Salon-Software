@@ -100,9 +100,9 @@ export function SalesGoalsDialog({ trigger }: SalesGoalsDialogProps) {
   };
 
   const getProgressColor = (percent: number) => {
-    if (percent >= 100) return 'text-green-600';
+    if (percent >= 100) return 'text-success-foreground';
     if (percent >= 75) return 'text-primary';
-    if (percent >= 50) return 'text-yellow-600';
+    if (percent >= 50) return 'text-warning-foreground';
     return 'text-muted-foreground';
   };
 

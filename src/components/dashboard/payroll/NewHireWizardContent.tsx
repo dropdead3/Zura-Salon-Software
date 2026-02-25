@@ -270,7 +270,7 @@ export function NewHireWizardContent() {
                 )}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <Sparkles className={cn("w-5 h-5", payrollConnected ? "text-emerald-500" : "text-amber-500")} />
+                      <Sparkles className={cn("w-5 h-5", payrollConnected ? "text-success-foreground" : "text-warning-foreground")} />
                       <div>
                         <div className="flex items-center gap-2">
                           <p className="font-medium text-sm">
@@ -390,7 +390,7 @@ export function NewHireWizardContent() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <CheckCircle className="w-5 h-5 text-emerald-500" />
+              <CheckCircle className="w-5 h-5 text-success-foreground" />
               Employee Hired Successfully
             </DialogTitle>
           </DialogHeader>
@@ -410,18 +410,18 @@ export function NewHireWizardContent() {
                   <p><span className="text-muted-foreground">Email:</span> {hireResult.email}</p>
                   <p><span className="text-muted-foreground">Password:</span> <code className="bg-background px-1.5 py-0.5 rounded text-xs">{hireResult.password}</code></p>
                 </div>
-                <p className="text-xs text-amber-600">⚠️ Share these credentials securely. They won't be shown again.</p>
+                <p className="text-xs text-warning-foreground">⚠️ Share these credentials securely. They won't be shown again.</p>
               </div>
 
               {/* Status */}
               <div className="space-y-2 text-sm">
                 <div className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-emerald-500" />
+                  <CheckCircle className="w-4 h-4 text-success-foreground" />
                   <span>{hireResult.assignedTaskCount} onboarding tasks assigned</span>
                 </div>
                 {hireResult.payrollStatus && (
                   <div className="flex items-center gap-2">
-                    <AlertTriangle className="w-4 h-4 text-amber-500" />
+                    <AlertTriangle className="w-4 h-4 text-warning-foreground" />
                     <span>{hireResult.payrollMessage}</span>
                   </div>
                 )}

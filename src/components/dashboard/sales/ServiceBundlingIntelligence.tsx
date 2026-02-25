@@ -215,16 +215,16 @@ export function ServiceBundlingIntelligence({
                             <TableCell className="font-medium">
                               <div className="flex items-center gap-2">
                                 {r.category}
-                                {r.liftPct >= 50 && <Badge variant="outline" className="text-[10px] border-emerald-500/30 text-emerald-600 dark:text-emerald-400">Strong</Badge>}
+                                {r.liftPct >= 50 && <Badge variant="outline" className="text-[10px] border-success/30 text-success-foreground">Strong</Badge>}
                                 <ChevronDown className={cn('w-3 h-3 text-muted-foreground transition-transform', isExp && 'rotate-180')} />
                               </div>
                             </TableCell>
                             <TableCell className="text-right tabular-nums"><BlurredAmount>{formatCurrency(r.avgTicketSolo)}</BlurredAmount></TableCell>
                             <TableCell className="text-right tabular-nums"><BlurredAmount>{formatCurrency(r.avgTicketGrouped)}</BlurredAmount></TableCell>
-                            <TableCell className="text-right tabular-nums font-medium text-emerald-600 dark:text-emerald-400">
+                            <TableCell className="text-right tabular-nums font-medium text-success-foreground">
                               <BlurredAmount>+{formatCurrency(r.liftDollars)}</BlurredAmount>
                             </TableCell>
-                            <TableCell className="text-right tabular-nums font-medium text-emerald-600 dark:text-emerald-400">
+                            <TableCell className="text-right tabular-nums font-medium text-success-foreground">
                               +{Math.round(r.liftPct)}%
                             </TableCell>
                           </TableRow>

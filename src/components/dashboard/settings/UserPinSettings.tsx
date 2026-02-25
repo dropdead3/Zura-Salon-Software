@@ -167,7 +167,7 @@ export function UserPinSettings() {
             )}
 
             {pinsMatch && (
-              <div className="flex items-center gap-2 text-sm text-green-600">
+              <div className="flex items-center gap-2 text-sm text-success-foreground">
                 <Check className="w-4 h-4" />
                 PINs match
               </div>

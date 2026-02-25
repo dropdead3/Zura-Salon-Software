@@ -141,19 +141,19 @@ export function CalendarSyncModal({ startDate, programName = 'Client Engine' }: 
             <h4 className="font-medium text-sm">What's Included</h4>
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div className="flex items-center gap-2 text-muted-foreground">
-                <CheckCircle2 className="w-4 h-4 text-green-600" />
+                <CheckCircle2 className="w-4 h-4 text-success-foreground" />
                 Daily task reminders
               </div>
               <div className="flex items-center gap-2 text-muted-foreground">
-                <CheckCircle2 className="w-4 h-4 text-green-600" />
+                <CheckCircle2 className="w-4 h-4 text-success-foreground" />
                 Weekly wins prompts
               </div>
               <div className="flex items-center gap-2 text-muted-foreground">
-                <CheckCircle2 className="w-4 h-4 text-green-600" />
+                <CheckCircle2 className="w-4 h-4 text-success-foreground" />
                 30-min reminder alerts
               </div>
               <div className="flex items-center gap-2 text-muted-foreground">
-                <CheckCircle2 className="w-4 h-4 text-green-600" />
+                <CheckCircle2 className="w-4 h-4 text-success-foreground" />
                 Graduation celebration
               </div>
             </div>

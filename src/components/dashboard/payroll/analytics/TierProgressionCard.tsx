@@ -115,7 +115,7 @@ export function TierProgressionCard({ opportunities, impactAnalysis, isLoading }
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground uppercase tracking-wide">If All Hit Next Tier</p>
-                  <p className="text-lg font-medium text-emerald-600">
+                  <p className="text-lg font-medium text-success-foreground">
                     +{formatCurrency(impactAnalysis.potentialAdditional)}
                   </p>
                   <p className="text-xs text-muted-foreground">

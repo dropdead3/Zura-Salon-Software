@@ -38,9 +38,9 @@ interface Announcement {
 
 const priorityConfig: Record<Priority, { label: string; icon: React.ReactNode; color: string }> = {
   low: { label: 'Low', icon: <Info className="w-4 h-4" />, color: 'text-muted-foreground' },
-  normal: { label: 'Normal', icon: <Bell className="w-4 h-4" />, color: 'text-blue-600' },
-  high: { label: 'High', icon: <AlertCircle className="w-4 h-4" />, color: 'text-orange-600' },
-  urgent: { label: 'Urgent', icon: <AlertTriangle className="w-4 h-4" />, color: 'text-red-600' },
+  normal: { label: 'Normal', icon: <Bell className="w-4 h-4" />, color: 'text-primary' },
+  high: { label: 'High', icon: <AlertCircle className="w-4 h-4" />, color: 'text-warning-foreground' },
+  urgent: { label: 'Urgent', icon: <AlertTriangle className="w-4 h-4" />, color: 'text-destructive' },
 };
 
 const normalizeUrl = (url: string): string => {

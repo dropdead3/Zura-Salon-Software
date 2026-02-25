@@ -170,9 +170,9 @@ export function ReviewStep({
             {formatCurrency(totals.employerTaxes)}
           </p>
         </div>
-        <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4">
+        <div className="bg-success/10 border border-success/20 rounded-lg p-4">
           <p className="text-sm text-muted-foreground mb-1">Total Net Pay</p>
-          <p className="text-2xl font-medium text-green-600 dark:text-green-400">
+          <p className="text-2xl font-medium text-success-foreground">
             {formatCurrency(totals.netPay)}
           </p>
         </div>
@@ -244,7 +244,7 @@ export function ReviewStep({
                     </div>
                     <div className="text-right">
                       <p className="text-sm text-muted-foreground">Net</p>
-                      <p className="font-medium text-green-600 dark:text-green-400">
+                      <p className="font-medium text-success-foreground">
                         {formatCurrency(comp.netPay)}
                       </p>
                     </div>

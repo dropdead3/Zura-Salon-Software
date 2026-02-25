@@ -206,9 +206,9 @@ export function PersonalGoalsCard({
                     </div>
                     <Progress
                       value={Math.min(monthlyProgress, 100)}
-                      className={cn('h-2', monthlyProgress >= 100 && 'bg-green-100 [&>div]:bg-green-500')}
+                      className={cn('h-2', monthlyProgress >= 100 && 'bg-success/20 [&>div]:bg-success-foreground')}
                     />
-                    {monthlyProgress >= 100 && <p className="text-xs text-green-600 font-medium">🎉 Goal achieved!</p>}
+                    {monthlyProgress >= 100 && <p className="text-xs text-success-foreground font-medium">🎉 Goal achieved!</p>}
                   </div>
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
@@ -219,9 +219,9 @@ export function PersonalGoalsCard({
                     </div>
                     <Progress
                       value={Math.min(weeklyProgress, 100)}
-                      className={cn('h-2', weeklyProgress >= 100 && 'bg-green-100 [&>div]:bg-green-500')}
+                      className={cn('h-2', weeklyProgress >= 100 && 'bg-success/20 [&>div]:bg-success-foreground')}
                     />
-                    {weeklyProgress >= 100 && <p className="text-xs text-green-600 font-medium">🎉 Goal achieved!</p>}
+                    {weeklyProgress >= 100 && <p className="text-xs text-success-foreground font-medium">🎉 Goal achieved!</p>}
                   </div>
                 </div>
               )}
@@ -242,9 +242,9 @@ export function PersonalGoalsCard({
                     </div>
                     <Progress
                       value={Math.min(retailMonthlyProgress, 100)}
-                      className={cn('h-2', retailMonthlyProgress >= 100 && 'bg-green-100 [&>div]:bg-green-500')}
+                      className={cn('h-2', retailMonthlyProgress >= 100 && 'bg-success/20 [&>div]:bg-success-foreground')}
                     />
-                    {retailMonthlyProgress >= 100 && <p className="text-xs text-green-600 font-medium">🎉 Goal achieved!</p>}
+                    {retailMonthlyProgress >= 100 && <p className="text-xs text-success-foreground font-medium">🎉 Goal achieved!</p>}
                   </div>
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
@@ -255,9 +255,9 @@ export function PersonalGoalsCard({
                     </div>
                     <Progress
                       value={Math.min(retailWeeklyProgress, 100)}
-                      className={cn('h-2', retailWeeklyProgress >= 100 && 'bg-green-100 [&>div]:bg-green-500')}
+                      className={cn('h-2', retailWeeklyProgress >= 100 && 'bg-success/20 [&>div]:bg-success-foreground')}
                     />
-                    {retailWeeklyProgress >= 100 && <p className="text-xs text-green-600 font-medium">🎉 Goal achieved!</p>}
+                    {retailWeeklyProgress >= 100 && <p className="text-xs text-success-foreground font-medium">🎉 Goal achieved!</p>}
                   </div>
                 </div>
               )}
