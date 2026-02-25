@@ -1,66 +1,61 @@
 
 
-## Fix: Use Operating Hours (Not Just Appointments) to Determine "Final Revenue"
+## Inline "Exceeded" + "All Appointments Complete" Indicators
 
-You're absolutely right. The current logic only checks `lastAppointmentEndTime`, so when there are zero appointments, it never triggers the "final" state. But if the location has closed for the day, no more revenue is coming — appointment or walk-in.
+The screenshot shows these as two separate centered rows stacked vertically. The fix merges them into a single row when both are true.
 
-### Root Cause
+### Change
 
-The completion check relies solely on `todayActual.lastAppointmentEndTime`. When there are no appointments, that value is `null`, and the code falls through to the default "Revenue So Far Today" label with no completion indicator.
+**File: `src/components/dashboard/AggregateSalesCard.tsx` (lines 697-714)**
 
-### Fix
+Replace the separate "Exceeded" block (lines 697-702) and the separate "All appointments complete" block (lines 710-714) with a combined inline layout when both conditions are true:
 
-**File: `src/components/dashboard/AggregateSalesCard.tsx`**
-
-Compute `allAppointmentsComplete` once (around line 464, near the existing `allLocationsClosed` logic) using a two-path check:
-
-```ts
-const allAppointmentsComplete = useMemo(() => {
-  if (!isToday) return false;
-  const now = new Date();
-
-  // Path 1: All locations are past their closing time
-  if (locations && locations.length > 0) {
-    const allPastClose = locations.every(loc => {
-      const hoursInfo = getLocationHoursForDate(loc.hours_json, loc.holiday_closures, now);
-      if (hoursInfo.isClosed) return true; // closed today = no more revenue
-      if (!hoursInfo.closeTime) return false; // no hours defined = can't determine
-      const [h, m] = hoursInfo.closeTime.split(':').map(Number);
-      return now.getHours() > h || (now.getHours() === h && now.getMinutes() >= m);
-    });
-    if (allPastClose) return true;
-  }
-
-  // Path 2: Last appointment has ended (existing logic, as fallback)
-  if (todayActual?.lastAppointmentEndTime && todayActual.hasActualData) {
-    const [h, m] = todayActual.lastAppointmentEndTime.split(':').map(Number);
-    return now.getHours() > h || (now.getHours() === h && now.getMinutes() >= m);
-  }
-
-  return false;
-}, [isToday, locations, todayActual]);
+```tsx
+{/* Combined status line when both exceeded AND all complete */}
+{exceededExpected && allAppointmentsComplete ? (
+  <div className="flex items-center justify-center gap-3 text-xs text-success-foreground">
+    <span className="flex items-center gap-1">
+      <CheckCircle2 className="w-3.5 h-3.5" />
+      Exceeded
+    </span>
+    <span className="text-success-foreground/40">·</span>
+    <span className="flex items-center gap-1">
+      <CheckCircle2 className="w-3.5 h-3.5" />
+      All appointments complete
+    </span>
+  </div>
+) : (
+  <>
+    {exceededExpected && (
+      <div className="flex items-center justify-center gap-1 text-xs text-success-foreground">
+        <CheckCircle2 className="w-3.5 h-3.5" />
+        <span>Exceeded</span>
+      </div>
+    )}
+  </>
+)}
 ```
 
-Then replace the three inline IIFEs (lines 613-619, 624-632, 697-717) with references to this single `allAppointmentsComplete` boolean:
+And for the standalone "All appointments complete" block (lines 710-722), only render it when `exceededExpected` is false (since the combined line already covers the dual case):
 
-1. **Label** (line 613): `allAppointmentsComplete ? 'Final Revenue Today' : 'Revenue So Far Today'`
-2. **Tooltip** (line 623): Use `allAppointmentsComplete` to pick tooltip text
-3. **Footer indicator** (line 697): When `allAppointmentsComplete` is true, show the green checkmark + "All appointments complete". Otherwise show the estimated final time (or nothing if no appointments exist).
+```tsx
+{!exceededExpected && allAppointmentsComplete ? (
+  <div className="flex items-center justify-center gap-1.5 text-xs text-success-foreground">
+    <CheckCircle2 className="w-3.5 h-3.5" />
+    <span>All appointments complete</span>
+  </div>
+) : !allAppointmentsComplete && todayActual?.lastAppointmentEndTime ? (
+  <p className="text-xs text-muted-foreground/70 text-center">...</p>
+) : null}
+```
 
-### Additional Import
+### Result
 
-Add `getLocationHoursForDate` to the existing import from `useLocations` (line 33 already imports `useActiveLocations` and `isClosedOnDate`).
-
-### What Changes for the User
-
-| Scenario | Before | After |
+| State | Before | After |
 |---|---|---|
-| No appointments, past closing time | "Revenue So Far Today" forever | **"Final Revenue Today"** + ✓ All appointments complete |
-| No appointments, still open | "Revenue So Far Today" | "Revenue So Far Today" (unchanged) |
-| Appointments exist, all ended | "Final Revenue Today" | "Final Revenue Today" (unchanged) |
-| All locations closed today | "Revenue So Far Today" | **"Final Revenue Today"** + ✓ All appointments complete |
+| Exceeded + all complete | Two stacked rows | Single row: `✓ Exceeded · ✓ All appointments complete` |
+| Exceeded only (still open) | "Exceeded" row + estimated time row | Same (unchanged) |
+| Not exceeded + all complete | "All appointments complete" row | Same (unchanged) |
 
-### Scope
-
-~25 lines changed in 1 file. Replaces 3 duplicated inline IIFEs with 1 shared `useMemo`. Adds `getLocationHoursForDate` to an existing import.
+~15 lines changed, 1 file.
 
