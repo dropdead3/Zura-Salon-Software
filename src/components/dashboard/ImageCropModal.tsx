@@ -64,7 +64,8 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
   const replaceInputRef = useRef<HTMLInputElement>(null);
   const [imageSrc, setImageSrc] = useState<string>('');
   const [imageElement, setImageElement] = useState<HTMLImageElement | null>(null);
-  const [zoom, setZoom] = useState(1);
+  const [avatarZoom, setAvatarZoom] = useState(1);
+  const [cardZoom, setCardZoom] = useState(1);
   const [minZoom, setMinZoom] = useState(0.5);
   const [rotation, setRotation] = useState(0);
   // Avatar focal point
@@ -94,7 +95,8 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
       setFocalY(initialFocalY);
       setCardFocalX(initialCardFocalX);
       setCardFocalY(initialCardFocalY);
-      setZoom(1);
+      setAvatarZoom(1);
+      setCardZoom(1);
       setRotation(0);
       if (previewUrl) {
         URL.revokeObjectURL(previewUrl);
@@ -122,7 +124,8 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
       setImageElement(img);
       const calculatedMinZoom = Math.max(0.1, 0.5);
       setMinZoom(calculatedMinZoom);
-      setZoom(1);
+      setAvatarZoom(1);
+      setCardZoom(1);
       setRotation(0);
     };
     img.src = src;
@@ -149,6 +152,8 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
   const currentFocalY = step === 'card' ? cardFocalY : focalY;
   const setCurrentFocalX = step === 'card' ? setCardFocalX : setFocalX;
   const setCurrentFocalY = step === 'card' ? setCardFocalY : setFocalY;
+  const currentZoom = step === 'card' ? cardZoom : avatarZoom;
+  const setCurrentZoom = step === 'card' ? setCardZoom : setAvatarZoom;
 
   // Handle focal point click/drag on the compose frame
   const handleFrameInteraction = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
@@ -250,8 +255,8 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
     }
   }, [previewBlob, onCropComplete, onClose, focalX, focalY, cardFocalX, cardFocalY]);
 
-  const handleZoomIn = () => setZoom(prev => Math.min(prev * 1.2, 3));
-  const handleZoomOut = () => setZoom(prev => Math.max(prev / 1.2, minZoom));
+  const handleZoomIn = () => setCurrentZoom(prev => Math.min(prev * 1.2, 3));
+  const handleZoomOut = () => setCurrentZoom(prev => Math.max(prev / 1.2, minZoom));
   const handleRotate = () => setRotation(prev => (prev + 90) % 360);
 
   const handleResetFocal = () => {
@@ -291,7 +296,7 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
                 className="absolute inset-0 w-full h-full object-cover pointer-events-none"
                 style={{
                   objectPosition: `${currentFocalX}% ${currentFocalY}%`,
-                  transform: `scale(${zoom}) rotate(${rotation}deg)`,
+                  transform: `scale(${currentZoom}) rotate(${rotation}deg)`,
                   transformOrigin: `${currentFocalX}% ${currentFocalY}%`,
                   transition: isDragging ? 'none' : 'transform 0.2s ease',
                 }}
@@ -343,7 +348,7 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <Label className="text-xs text-muted-foreground">Zoom</Label>
-          <span className="text-[10px] text-muted-foreground tabular-nums">{Math.round(zoom * 100)}%</span>
+          <span className="text-[10px] text-muted-foreground tabular-nums">{Math.round(currentZoom * 100)}%</span>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -354,11 +359,11 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
             <ZoomOut className="h-3 w-3 text-muted-foreground" />
           </button>
           <Slider
-            value={[zoom]}
+            value={[currentZoom]}
             min={minZoom}
             max={3}
             step={0.01}
-            onValueChange={([v]) => setZoom(v)}
+            onValueChange={([v]) => setCurrentZoom(v)}
             className="flex-1"
           />
           <button
