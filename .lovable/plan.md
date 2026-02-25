@@ -1,83 +1,69 @@
 
 
-## Diagnosis: Why Phorest Shows 801 Appointments but Zura Only Has 586
+## Staff Mapping: Complete Picture and Next Steps
 
-### Root Cause: Pagination Not Handled in Appointment Sync
+### What We Found
 
-The `sync-phorest-data` edge function fetches appointments from the Phorest API using:
+The Phorest API returned **27 unmapped staff members** with full names and emails. Here they are, grouped by what we can do with them:
 
-```
-/branch/{branchId}/appointment?from_date=...&to_date=...
-```
+### Group A: Can Auto-Map Now (match by email/name to existing Zura profiles)
 
-The latest sync log shows: **"Found 20 appointments in branch Drop Dead Hair Studio (North Mesa)"** and **"Found 20 appointments in branch Drop Dead Hair Studio (Val Vista Lakes)"** -- exactly 20 per branch.
+| Phorest Name | Phorest ID | Zura Match | Confidence |
+|---|---|---|---|
+| Kristi Day | `G-2ZTL3-nlcvpNsdGySVUQ` (North Mesa) | No email match, but she's the owner | Needs your confirmation |
+| Kristi Day | `vbgizbOuPwmEO0VCWxjHeA` (Val Vista) | Same person, second branch | Needs your confirmation |
 
-The Phorest API returns **paginated results with a default page size of 20**. The sync function never fetches page 2, 3, etc. It takes whatever the first API response returns and stops. Over multiple daily syncs (each fetching only the first 20 per branch), records accumulate -- but each sync window only captures a fraction of the actual appointments.
+Kristi Day has two Phorest staff IDs (one per branch) but no Zura employee profile yet. Alex Day (`alexmaxday@gmail.com`) is in Zura but doesn't appear in the Phorest staff list.
 
-This is why we have 586 instead of 801. Each day's sync grabbed the first 20 appointments per branch for the date range, missing any beyond page 1.
+### Group B: 25 Staff Without Zura Accounts
 
-### Secondary Issue: Multi-Service Appointments
+These are real stylists/staff in Phorest who need employee profiles created in Zura before they can be mapped:
 
-Line 424 in the sync function: `service_name: apt.services?.[0]?.name` -- only the first service is stored. If Phorest returns separate appointment objects per service line item (which the report's "801" count suggests), some may share the same `appointmentId` and get deduplicated by the upsert on `phorest_id`. This could also contribute to the count gap.
+| Name | Email | Phorest ID(s) | Appointment Count |
+|---|---|---|---|
+| Rubie Guerrero | alteredhueaz@gmail.com | `OrwoPcDijr4EtrCC87TIWw` | 61 |
+| Jamie Vieira | Jamiebaird00@gmail.com | `MtsEB9DLwhqoZkHtbokQVg`, `eaPLYyNzfGKTAhS36xvdFQ` | 50+ |
+| Gavin Eagan | gavin.eagan1@gmail.com | `CEJCM1rVldGkgzfWb6ytlQ` | 46 |
+| Cienna Ruthem | Ruthemcienna@gmail.com | `sc-q41_Z0hYTwPCIe7Gqew` | 46 |
+| Chelsea Wright | chelseajwright21@gmail.com | `zV5m_FyFDmbgoXHG8Mqw9A` | ~40 |
+| Hayleigh Hoy | hayleighhhair@gmail.com | `MwO7nCebhjUTLQAZz3zm6Q` | ~35 |
+| Trinity Graves | cottamsrose@gmail.com | `rsGkXObj0hZnjy3oD3oBBQ` | ~30 |
+| Alexis Heasley | lexhea2@gmail.com | `yrxmWjnW8cwQ1Ok_4dNx8w` | ~25 |
+| Lex Feddern | Lexfeddern@gmail.com | `rM5HsHjKVu830QEbx9H6LA`, `0zCh_r8TcL06Qw0o_t3jRg` | ~20 |
+| Brooklyn Colvin | brcolvin19@cox.net | `wrEL4mFEGMSfX3va0aczsw` | ~15 |
+| Leslei Botello | Lesleistyled222@gmail.com | `bGYaKRR7h7puSB7y1B5y4Q` | ~10 |
+| Kylie Walstad | drty_blnd@outlook.com | `fsswT6HTZ7sjgjpaYReotw` | ~10 |
+| Mallori Schwab | (no email) | `okFio2OdqJaslQjudENerg`, `YiPQjZ-Ck9wMZ33KJcH8Tg` | ~10 |
+| Julia Gross | (no email) | `JBIpYAt3DR85aHvHucHlcg` | ~5 |
+| Kitty Vargas | kitty@palerabbit.io | `UpCncTTqXkoDS-irO7awlw` | ~5 |
+| DROP DEAD (salon account) | kristi@dropdeadsalon.com | `DghGuOph2ZxCmit1L1Ir2A`, `oJt8KVaMuMXjfeVQEfHpaA` | — |
 
-### Revenue Gap ($88,996 vs $65,055)
+Note: Several staff have **two Phorest IDs** because they appear in both branches.
 
-The ~$24K revenue gap follows directly from the missing ~215 appointments. Those appointments have revenue that was never synced.
+### Group C: "DROP DEAD" Entries
 
-### Fix Plan
+Two Phorest staff entries named "DROP DEAD" with Kristi's salon email. These are likely the salon's generic/walk-in account, not a real person. These can either be mapped to Kristi or left unmapped.
 
-**1. Add pagination to `syncAppointments`** (lines 241-267 in `sync-phorest-data/index.ts`)
+---
 
-The Phorest API uses `page` and `size` parameters (or `_links.next` for HATEOAS pagination). The fix:
+### What You Need to Decide
 
-```typescript
-// Current (broken):
-const appointmentsData = await phorestRequest(
-  `/branch/${branchId}/appointment?from_date=${dateFrom}&to_date=${dateTo}`,
-  ...
-);
-const appointments = appointmentsData._embedded?.appointments || ...;
+1. **Which of these 25 staff should get Zura employee profiles?** All of them? Only currently active ones? You know your team -- some of these might be former employees still in Phorest.
 
-// Fixed (paginated):
-let page = 0;
-let hasMore = true;
-while (hasMore) {
-  const appointmentsData = await phorestRequest(
-    `/branch/${branchId}/appointment?from_date=${dateFrom}&to_date=${dateTo}&size=100&page=${page}`,
-    ...
-  );
-  const appointments = appointmentsData._embedded?.appointments || ...;
-  // ... add to allAppointments
-  
-  // Check if more pages exist
-  const totalPages = appointmentsData.page?.totalPages || 1;
-  page++;
-  hasMore = page < totalPages;
-}
-```
+2. **Should Kristi Day get an employee profile in Zura?** She's the owner but doesn't have one yet. If yes, we need her to sign up or we create a profile for her.
 
-**2. Handle multi-service appointments**
+3. **What about the "DROP DEAD" generic accounts?** Map to Kristi, ignore, or create a placeholder?
 
-Instead of storing only `services[0]`, if the Phorest API returns multiple services within a single appointment object, each service should either:
-- Be stored as a separate row (with a composite `phorest_id + service_index` key), or
-- Have the service details stored in a related table
+### Implementation Plan (Once You Confirm)
 
-This needs investigation of the actual API response structure first. A pragmatic first step: log the `services` array length on the first appointment to determine if this is happening.
+1. **Create employee profiles** for confirmed staff (either via the invite flow or direct database insert for historical mapping purposes)
+2. **Insert mappings** into `phorest_staff_mapping` with `phorest_staff_id`, `phorest_staff_name`, `phorest_staff_email`, and `user_id`
+3. **Backfill `staff_user_id`** across `phorest_appointments`, `appointments`, `transactions`, and `daily_sales_summary` using the new mappings
+4. **Backfill `stylist_name`** on `phorest_transaction_items` from the mapping table
 
-**3. After deploying the fix, run a full re-sync**
+This would resolve Gap 1 (staff attribution) and enable per-stylist analytics, commission tracking, and performance dashboards.
 
-Trigger a sync with the full date range (`2026-01-23` to `2026-03-04`) to backfill the missing appointments. The upsert on `phorest_id` ensures existing records are updated, not duplicated.
+### Technical Detail
 
-**4. Verify counts match Phorest**
-
-After re-sync, compare appointment count and total revenue against the Phorest report to confirm parity.
-
-### Technical Details
-
-**Files Changed:**
-1. `supabase/functions/sync-phorest-data/index.ts` -- Add pagination loop in `syncAppointments` function (lines ~241-267), add logging for multi-service detection
-
-**Risk:** Low. The upsert on `phorest_id` makes this idempotent. Existing records will be updated; new records will be inserted.
-
-**Also affects:** The same pagination issue likely exists in the sales/transaction sync functions within this file. Those should be audited and fixed in the same pass.
+For staff with two Phorest IDs (one per branch), both IDs map to the same `user_id`. The mapping table already supports this -- each row is a `phorest_staff_id -> user_id` pair, so one user can have multiple Phorest IDs.
 
