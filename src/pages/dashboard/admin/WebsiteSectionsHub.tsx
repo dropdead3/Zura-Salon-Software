@@ -790,7 +790,7 @@ export default function WebsiteSectionsHub() {
           <ResizablePanel defaultSize={isMobile ? 100 : 42} minSize={30}>
             <div className="h-full flex flex-col overflow-hidden">
               {/* Compact Toolbar */}
-              <div className="flex-shrink-0 px-3 py-2 border-b bg-background flex items-center justify-between gap-2">
+              <div className="flex-shrink-0 px-3 py-3 border-b bg-background flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0">
                   {!isMobile && (
                     <Button
