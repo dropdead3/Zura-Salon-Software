@@ -1,22 +1,38 @@
 
 
-## Fix: Remove Full Page Reload on Service Provider Toggle
+## Allow Admin-Level Staff to Upload Their Own Profile Photo
 
-### Problem
-Line 132 in `MyProfile.tsx` calls `window.location.reload()` after toggling the stylist role. This causes a full server/page refresh, losing scroll position and providing a jarring experience.
+Good catch -- as the account owner / highest admin, you should absolutely be able to manage your own headshot. The current logic locks the photo section for anyone with the `stylist` role, even if they're also an admin or super_admin. The "Admin Managed" lockdown should only apply to pure stylists who don't have administrative privileges.
 
 ### Root Cause
-The original implementation couldn't find a way to refresh the auth context roles, so it fell back to a hard reload. However, `AuthContext` already exposes a `refreshRoles()` function that re-fetches roles from the database and updates state in place.
+
+Line 545 in `MyProfile.tsx` uses `isStylistRole` (true if user has `stylist` or `stylist_assistant` role) to decide whether to show the locked "Admin Managed" state or the self-upload UI. Since you have both `super_admin` and `stylist` roles, you get the locked state.
 
 ### Fix
-**File: `src/pages/dashboard/MyProfile.tsx`** — `toggleStylistRole` mutation `onSuccess` handler (lines 120-133)
 
-Replace the dead-end dynamic import and `window.location.reload()` with a direct call to `refreshRoles()` from the existing `useAuth()` hook:
+**File: `src/pages/dashboard/MyProfile.tsx`**
 
-1. Destructure `refreshRoles` from the `useAuth()` hook (already imported at top of component)
-2. In `onSuccess`, call `await refreshRoles()` instead of `window.location.reload()`
-3. Keep the `queryClient.invalidateQueries` calls for any React Query caches
-4. Remove the dead import attempt code (lines 124-128)
+Change the photo section's conditional from `isStylistRole` to a new computed value that means "has stylist role but is NOT admin-level":
 
-Result: toggling the switch updates roles in-place with no page reload, no scroll loss, and immediate UI response.
+```
+const isPhotoLocked = isStylistRole && !isAdminLevel;
+```
+
+Then replace all photo-section references to `isStylistRole` with `isPhotoLocked`:
+
+1. **Line 535**: Lock icon next to "Profile Photo" title -- show only when `isPhotoLocked`
+2. **Lines 538-540**: Card description -- use `isPhotoLocked` to choose between "managed by admin" vs "visible to the team"
+3. **Line 545**: The main conditional that switches between locked state and upload state -- use `isPhotoLocked`
+
+This means:
+- **Pure stylists** (no admin roles): see the locked "Admin Managed" state with "Schedule Headshot" button -- unchanged
+- **Admin-level staff with stylist role** (like you): see the normal upload UI with "Change Photo" button
+- **Admin-level staff without stylist role**: already see the upload UI -- unchanged
+
+### What Does Not Change
+
+- No database changes
+- No new hooks or mutations
+- The `isStylistRole` variable remains for all other uses (Professional Details visibility, validation, etc.)
+- Only the photo section's lock/unlock logic is affected
 
