@@ -308,7 +308,7 @@ export function SalesGoalProgress({
           {paceStatus === 'on-track' && (
             <>
               <Target className="w-3 h-3" />
-              <span>On track</span>
+              <span>On track{daysLeft > 0 && remaining > 0 ? <> · <BlurredAmount>{formatCurrencyWhole(Math.ceil(neededPerDay))}/day</BlurredAmount> needed</> : null}</span>
             </>
           )}
           {paceStatus === 'behind' && (
