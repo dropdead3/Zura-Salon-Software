@@ -30,6 +30,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 import { useSalesMetrics, useSalesByStylist, useSalesByLocation, useSalesTrend } from '@/hooks/useSalesData';
+import { useTipsDrilldown } from '@/hooks/useTipsDrilldown';
 import { useActiveLocations, isClosedOnDate, getLocationHoursForDate } from '@/hooks/useLocations';
 import { ClosedBadge } from '@/components/dashboard/ClosedBadge';
 import { useTomorrowRevenue } from '@/hooks/useTomorrowRevenue';
@@ -245,7 +246,21 @@ export function AggregateSalesCard({
     dateTo: dateFilters.dateTo,
     locationId: filterContext?.locationId,
   });
-  // Drilldown data now fetched inside the dialog component itself
+  // Tip attach rate from drilldown data (react-query deduplicates the fetch)
+  const { byTotalTips: tipsByTotal } = useTipsDrilldown({
+    dateFrom: dateFilters.dateFrom,
+    dateTo: dateFilters.dateTo,
+    locationId: filterContext?.locationId,
+  });
+  const tipAttachRate = useMemo(() => {
+    if (!tipsByTotal?.length) return null;
+    const totalAppts = tipsByTotal.reduce((s, st) => s + st.appointmentCount, 0);
+    const tippedAppts = tipsByTotal.reduce((s, st) => {
+      const noTipCount = Math.round((st.noTipRate * st.appointmentCount) / 100);
+      return s + (st.appointmentCount - noTipCount);
+    }, 0);
+    return totalAppts > 0 ? (tippedAppts / totalAppts) * 100 : null;
+  }, [tipsByTotal]);
   const isToday = dateRange === 'today';
 
   // Location display logic
@@ -1147,7 +1162,7 @@ export function AggregateSalesCard({
                 <AnimatedBlurredAmount value={metrics?.totalTips ?? 0} currency={currency} className="text-2xl md:text-3xl font-display tabular-nums" />
                 <p className="text-xs text-muted-foreground mt-1">Total Tips</p>
                 <div className="flex items-center justify-center gap-4 mt-3 pt-3 border-t border-border/40">
-                  <div>
+                  <div className="pr-4 border-r border-border/40">
                     <p className="text-sm font-display tabular-nums">
                       {(() => {
                         const tipDenominator = isToday && todayActual?.hasActualData
@@ -1159,6 +1174,12 @@ export function AggregateSalesCard({
                       })()}
                     </p>
                     <p className="text-xs text-muted-foreground">Avg Tip Rate</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-display tabular-nums">
+                      {tipAttachRate !== null ? `${tipAttachRate.toFixed(0)}%` : '—'}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Tip Attach</p>
                   </div>
                 </div>
                 <div className="flex items-center justify-center gap-1 mt-3">
