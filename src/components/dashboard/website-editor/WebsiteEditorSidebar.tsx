@@ -456,7 +456,8 @@ export function WebsiteEditorSidebar({
         </Tooltip>
       </div>
 
-      <div className="p-3 border-b space-y-2">
+      <div className="p-3 border-b border-border/30 space-y-2">
+        <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider px-1">Editing Page</p>
         <div className="flex items-center gap-2">
           <Select value={selectedPageId} onValueChange={v => onPageChange?.(v)}>
             <SelectTrigger className="h-8 text-xs flex-1">
