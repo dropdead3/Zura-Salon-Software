@@ -375,8 +375,8 @@ export default function MyProfile() {
     e.target.value = '';
   };
 
-  const handleCroppedPhotoUpload = (blob: Blob, focalX: number, focalY: number) => {
-    uploadPhoto.mutate({ input: blob, focalX, focalY });
+  const handleCroppedPhotoUpload = (blob: Blob, focalX: number, focalY: number, cardFocalX: number, cardFocalY: number) => {
+    uploadPhoto.mutate({ input: blob, focalX, focalY, cardFocalX, cardFocalY });
   };
 
   const toggleSpecialty = (specialty: string) => {
@@ -683,6 +683,8 @@ export default function MyProfile() {
                 onCropComplete={handleCroppedPhotoUpload}
                 initialFocalX={(profile as any)?.photo_focal_x ?? 50}
                 initialFocalY={(profile as any)?.photo_focal_y ?? 50}
+                initialCardFocalX={(profile as any)?.card_focal_x ?? 50}
+                initialCardFocalY={(profile as any)?.card_focal_y ?? 50}
                 cardPreviewProps={showProfessionalDetails ? {
                   name: formData.full_name,
                   displayName: formData.display_name,
