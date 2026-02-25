@@ -1,64 +1,36 @@
 
 
-## Organize View As Team List by Location and Role Hierarchy
+## Remove Existing Test Accounts
 
-The Team tab in the "View Dashboard As" dropdown currently renders a flat alphabetical list of staff. This change groups members by location first, then sorts by role hierarchy (using `sort_order` from the `roles` table) within each group.
+Six test accounts currently exist in the system. The `generate-test-accounts` edge function and `isTestAccount` utility will be preserved so you can regenerate test accounts in the future.
 
-### Current State
+### Accounts to Remove
 
-- `realUsers` is filtered from `teamMembers` (from `useTeamDirectory`), then sliced to 10
-- Each member has `location_id` (single, nullable) and `location_ids` (array) plus `roles` array
-- Rendered as a flat list with name + primary role label
-- Roles table has `sort_order`: super_admin(1), admin(2), admin_assistant(3), manager(4), bookkeeper(5), operations_assistant(6), receptionist(7), stylist(8), booth_renter(9), stylist_assistant(10)
-- Two locations exist: "North Mesa" and "Val Vista Lakes" -- most staff currently have `location_id: null`
+| Name | Email | Role | User ID |
+|------|-------|------|---------|
+| Admin Assistant Test Account | admin-assistant-test@test.com | admin_assistant | e3d18a69... |
+| Manager Test Account | manager-test@test.com | manager | 2a0e6cb6... |
+| Operations Assistant Test Account | operations-assistant-test@test.com | operations_assistant | edadc352... |
+| Receptionist Test Account | receptionist-test@test.com | receptionist | 2a6a80e3... |
+| Stylist Assistant Test Account | stylist-assistant-test@test.com | stylist_assistant | 81331092... |
+| Stylist Test Account | stylist-test@test.com | stylist | 58014e44... |
 
-### What Changes
+### What Will Be Executed
 
-**File: `src/components/dashboard/DashboardLayout.tsx`**
-
-1. Import `useLocations` from `@/hooks/useLocations`
-2. Fetch locations inside `ViewAsToggle` (or use the already-available data)
-3. Replace the flat `realUsers.map(...)` rendering (lines 763-801) with a grouped structure:
-   - Build a role hierarchy map from `ALL_ROLES` (already ordered by `sort_order` from the database)
-   - Group `realUsers` by their `location_id` (members with null location_id go into an "Unassigned" group)
-   - Within each location group, sort members by their highest-priority role (lowest `sort_order`), then alphabetically by name
-   - Render each location as a section header label, followed by its members
-4. Remove the `.slice(0, 10)` limit since grouped display benefits from showing all members (the container already scrolls)
-5. Location section headers: small muted text label (e.g., "North Mesa", "Unassigned") with a subtle top border separator between groups
-
-### Visual Result
-
-```text
-┌─────────────────────────────┐
-│ Search team members...      │
-├─────────────────────────────┤
-│ NORTH MESA                  │
-│  👤 Eric Day                │
-│     Super Admin             │
-├─────────────────────────────┤
-│ UNASSIGNED                  │
-│  👤 Alex Day                │
-│     Director Of Operations  │
-│  👤 Kristi Day              │
-│     Super Admin             │
-│  👤 Mallori Schwab          │
-│     Front Desk              │
-│  👤 Julia Gross             │
-│     Front Desk              │
-│  👤 Alexis Heasley          │
-│     Stylist                 │
-│  👤 Brooklyn Colvin         │
-│     Stylist                 │
-│  ...                        │
-└─────────────────────────────┘
-```
+1. **Delete from `user_roles`** -- remove role assignments for all 6 user IDs
+2. **Delete from `employee_profiles`** -- remove profile records (cascading from auth should handle related data, but we clean profiles explicitly)
+3. **Delete auth users** -- requires an edge function call (`supabase.auth.admin.deleteUser`) since auth users cannot be deleted via SQL
 
 ### Technical Details
 
-- Role sort order is derived from the index position in `ALL_ROLES` (which comes from `useRoleUtils` and is already database-ordered by `sort_order`)
-- For members with multiple roles, the highest-priority role (lowest index in `ALL_ROLES`) determines sort position
-- Location groups are ordered: named locations first (alphabetically), then "Unassigned" last
-- The search filter still applies across all groups
-- Section header uses `font-display text-[10px] tracking-wider text-muted-foreground` (Termina, uppercase per UI Canon)
-- No database changes required
+- A new edge function `delete-test-accounts` will be created (or the existing `generate-test-accounts` function will be extended with a `DELETE` action) to handle auth user deletion via the Admin API
+- The function will: find all profiles matching the test account pattern, delete their `user_roles` entries, delete their `employee_profiles` entries, and delete the `auth.users` records
+- Super admin authorization check will be enforced, same as the generate function
+- The `generate-test-accounts` edge function and `isTestAccount` utility remain intact for future use
+
+### What Stays Unchanged
+
+- `supabase/functions/generate-test-accounts/index.ts` -- kept for future use
+- `src/utils/testAccounts.ts` -- kept for test account filtering logic
+- Test account filtering in `useTeamDirectory` -- kept to handle future test accounts
 
