@@ -14,6 +14,7 @@ interface UpdateRequest {
   notes?: string;
   rebooked_at_checkout?: boolean;
   tip_amount?: number;
+  rebook_declined_reason?: string | null;
 }
 
 // Map our local status names to Phorest status names
@@ -110,7 +111,7 @@ serve(async (req) => {
     }
 
     const updateData: UpdateRequest = await req.json();
-    const { appointment_id, status, notes, rebooked_at_checkout, tip_amount } = updateData;
+    const { appointment_id, status, notes, rebooked_at_checkout, tip_amount, rebook_declined_reason } = updateData;
 
     if (!appointment_id) {
       throw new Error("Missing required field: appointment_id");
@@ -241,6 +242,10 @@ serve(async (req) => {
 
     if (tip_amount !== undefined) {
       localUpdate.tip_amount = tip_amount;
+    }
+
+    if (rebook_declined_reason !== undefined) {
+      localUpdate.rebook_declined_reason = rebook_declined_reason;
     }
 
     console.log(`Updating ${targetTable}.${matchColumn} = ${appointment_id}`, JSON.stringify(localUpdate));

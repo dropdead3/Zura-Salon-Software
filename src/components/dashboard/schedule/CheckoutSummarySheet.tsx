@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { format, differenceInMinutes, parseISO } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
-import { Copy, CreditCard, Info, Receipt, Download, Eye, DollarSign, CalendarCheck, Sparkles } from 'lucide-react';
+import { Copy, CreditCard, Info, Receipt, Download, Eye, DollarSign, CalendarCheck, Sparkles, CalendarPlus, XCircle, ChevronDown, MessageSquare } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
@@ -9,8 +9,10 @@ import { Button } from '@/components/ui/button';
 import { tokens } from '@/lib/design-tokens';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
-import { Switch } from '@/components/ui/switch';
+// Switch removed - rebook toggle replaced by rebooking gate
 import {
   Sheet,
   SheetContent,
@@ -25,11 +27,20 @@ import { PromoCodeInput } from '@/components/dashboard/checkout/PromoCodeInput';
 import type { PromoValidationResult } from '@/hooks/usePromoCodeValidation';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
+/** Default reasons a client may decline rebooking */
+const DECLINE_REASONS = [
+  'Wants to check their schedule first',
+  'Prefers to book online later',
+  'Budget concerns',
+  'Trying a different salon',
+  'Other',
+] as const;
+
 interface CheckoutSummarySheetProps {
   appointment: PhorestAppointment | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onConfirm: (tipAmount: number, rebooked: boolean, promoResult?: PromoValidationResult | null) => void;
+  onConfirm: (tipAmount: number, rebooked: boolean, promoResult?: PromoValidationResult | null, declineReason?: string) => void;
   isUpdating?: boolean;
   taxRate: number;
   businessSettings: BusinessSettings | null;
@@ -37,6 +48,10 @@ interface CheckoutSummarySheetProps {
   locationAddress?: string;
   locationPhone?: string;
   organizationId?: string;
+  /** Called when user wants to schedule next appointment (opens booking popover) */
+  onScheduleNext?: (apt: PhorestAppointment) => void;
+  /** Externally set when rebook completes via QuickBookingPopover callback */
+  rebookCompleted?: boolean;
 }
 
 const TIP_PRESETS = [
@@ -58,6 +73,8 @@ export function CheckoutSummarySheet({
   locationAddress,
   locationPhone,
   organizationId,
+  onScheduleNext,
+  rebookCompleted = false,
 }: CheckoutSummarySheetProps) {
   const [tipAmount, setTipAmount] = useState<number>(0);
   const [customTip, setCustomTip] = useState<string>('');
@@ -65,6 +82,30 @@ export function CheckoutSummarySheet({
   const [appliedPromo, setAppliedPromo] = useState<PromoValidationResult | null>(null);
   const { formatCurrency, currency } = useFormatCurrency();
   const { formatDate: formatDateLocale } = useFormatDate();
+
+  // Rebooking gate state
+  type GatePhase = 'gate' | 'declining' | 'checkout';
+  const [gatePhase, setGatePhase] = useState<GatePhase>('gate');
+  const [declineReason, setDeclineReason] = useState<string>('');
+  const [declineOtherText, setDeclineOtherText] = useState<string>('');
+
+  // Reset gate when sheet opens/closes
+  useEffect(() => {
+    if (open) {
+      setGatePhase('gate');
+      setDeclineReason('');
+      setDeclineOtherText('');
+      setRebooked(false);
+    }
+  }, [open]);
+
+  // When rebook completes externally, advance past the gate
+  useEffect(() => {
+    if (rebookCompleted && open) {
+      setRebooked(true);
+      setGatePhase('checkout');
+    }
+  }, [rebookCompleted, open]);
 
   // Fetch add-on events for this appointment
   const { data: addonEvents = [] } = useQuery({
@@ -303,13 +344,30 @@ export function CheckoutSummarySheet({
   };
 
   const handleConfirm = () => {
-    onConfirm(tipAmount, rebooked, appliedPromo);
+    const finalReason = declineReason === 'Other' ? declineOtherText.trim() : declineReason;
+    onConfirm(tipAmount, rebooked, appliedPromo, rebooked ? undefined : finalReason || undefined);
     // Reset state for next use
     setTipAmount(0);
     setCustomTip('');
     setRebooked(false);
     setAppliedPromo(null);
+    setGatePhase('gate');
+    setDeclineReason('');
+    setDeclineOtherText('');
   };
+
+  const handleDeclineConfirm = () => {
+    setRebooked(false);
+    setGatePhase('checkout');
+  };
+
+  const handleScheduleNextClick = () => {
+    if (onScheduleNext && appointment) {
+      onScheduleNext(appointment);
+    }
+  };
+
+  const isDeclineValid = declineReason !== '' && (declineReason !== 'Other' || declineOtherText.trim().length >= 3);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -535,67 +593,176 @@ export function CheckoutSummarySheet({
 
           <Separator />
 
-          {/* Rebook Toggle */}
-          <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border">
-            <div className="flex items-center gap-3">
-              <CalendarCheck className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <p className="text-sm font-medium">Client Rebooked?</p>
-                <p className="text-xs text-muted-foreground">Did client book their next appointment?</p>
+          {/* Rebooking Gate or Rebook Status */}
+          {gatePhase === 'gate' && (
+            <div className="space-y-4 p-5 bg-primary/5 rounded-xl border border-primary/20">
+              <div className="text-center space-y-1">
+                <CalendarPlus className="h-8 w-8 text-primary mx-auto" />
+                <h3 className="font-medium text-base">Schedule Next Appointment</h3>
+                <p className="text-xs text-muted-foreground">
+                  Before completing checkout, let's get {appointment.client_name || 'the client'} booked for next time.
+                </p>
+              </div>
+
+              <Button
+                className="w-full gap-2"
+                variant="default"
+                size="lg"
+                onClick={handleScheduleNextClick}
+                disabled={!onScheduleNext}
+              >
+                <CalendarPlus className="h-4 w-4" />
+                Schedule Next Appointment
+              </Button>
+
+              <button
+                type="button"
+                className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center gap-1.5 pt-1"
+                onClick={() => setGatePhase('declining')}
+              >
+                <XCircle className="h-3.5 w-3.5" />
+                Client doesn't want to rebook
+              </button>
+            </div>
+          )}
+
+          {gatePhase === 'declining' && (
+            <div className="space-y-4 p-5 bg-muted/50 rounded-xl border">
+              <div className="space-y-1">
+                <h3 className="text-sm font-medium flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                  Why isn't the client rebooking?
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  Select a reason to continue to payment.
+                </p>
+              </div>
+
+              <RadioGroup
+                value={declineReason}
+                onValueChange={(val) => {
+                  setDeclineReason(val);
+                  if (val !== 'Other') setDeclineOtherText('');
+                }}
+                className="space-y-2"
+              >
+                {DECLINE_REASONS.map((reason) => (
+                  <div key={reason} className="flex items-center space-x-3 p-3 rounded-lg border bg-background hover:bg-accent/50 transition-colors cursor-pointer">
+                    <RadioGroupItem value={reason} id={`decline-${reason}`} />
+                    <Label htmlFor={`decline-${reason}`} className="cursor-pointer flex-1 text-sm">
+                      {reason}
+                    </Label>
+                  </div>
+                ))}
+              </RadioGroup>
+
+              {declineReason === 'Other' && (
+                <Textarea
+                  placeholder="Please specify the reason..."
+                  value={declineOtherText}
+                  onChange={(e) => setDeclineOtherText(e.target.value)}
+                  className="min-h-[60px]"
+                />
+              )}
+
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => {
+                    setGatePhase('gate');
+                    setDeclineReason('');
+                    setDeclineOtherText('');
+                  }}
+                >
+                  Back
+                </Button>
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="flex-1"
+                  disabled={!isDeclineValid}
+                  onClick={handleDeclineConfirm}
+                >
+                  Continue to Payment
+                </Button>
               </div>
             </div>
-            <Switch
-              checked={rebooked}
-              onCheckedChange={setRebooked}
-              aria-label="Client rebooked"
-            />
-          </div>
+          )}
 
-          <Separator />
+          {gatePhase === 'checkout' && (
+            <>
+              {/* Rebook Status Indicator (read-only) */}
+              <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border">
+                <div className="flex items-center gap-3">
+                  <CalendarCheck className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium">
+                      {rebooked ? 'Next appointment scheduled' : 'Client declined rebooking'}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {rebooked
+                        ? 'Great work! Next visit is on the books.'
+                        : declineReason === 'Other'
+                          ? declineOtherText
+                          : declineReason}
+                    </p>
+                  </div>
+                </div>
+                <div className={cn(
+                  'h-3 w-3 rounded-full',
+                  rebooked ? 'bg-emerald-500' : 'bg-amber-500'
+                )} />
+              </div>
 
-          {/* Info Banner */}
-          <div className="flex items-start gap-3 p-4 bg-muted rounded-lg border">
-            <Info className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-muted-foreground">
-              Process payment on PhorestPay terminal, then confirm below.
-            </p>
-          </div>
+              <Separator />
 
-          {/* Receipt Buttons */}
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size={tokens.button.inline}
-              className="flex-1 gap-2"
-              onClick={() => generateReceiptPDF(true)}
-            >
-              <Eye className="h-4 w-4" />
-              Preview
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size={tokens.button.inline}
-              className="flex-1 gap-2"
-              onClick={() => generateReceiptPDF(false)}
-            >
-              <Download className="h-4 w-4" />
-              Download
-            </Button>
-          </div>
+              {/* Info Banner */}
+              <div className="flex items-start gap-3 p-4 bg-muted rounded-lg border">
+                <Info className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-muted-foreground">
+                  Process payment on PhorestPay terminal, then confirm below.
+                </p>
+              </div>
 
-          {/* Confirm Button */}
-          <Button
-            className="w-full gap-2"
-            variant="default"
-            size="lg"
-            onClick={handleConfirm}
-            disabled={isUpdating}
-          >
-            <Receipt className="h-4 w-4" />
-            {isUpdating ? 'Processing...' : 'Mark as Paid'}
-          </Button>
+              {/* Receipt Buttons */}
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size={tokens.button.inline}
+                  className="flex-1 gap-2"
+                  onClick={() => generateReceiptPDF(true)}
+                >
+                  <Eye className="h-4 w-4" />
+                  Preview
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size={tokens.button.inline}
+                  className="flex-1 gap-2"
+                  onClick={() => generateReceiptPDF(false)}
+                >
+                  <Download className="h-4 w-4" />
+                  Download
+                </Button>
+              </div>
+
+              {/* Confirm Button */}
+              <Button
+                className="w-full gap-2"
+                variant="default"
+                size="lg"
+                onClick={handleConfirm}
+                disabled={isUpdating}
+              >
+                <Receipt className="h-4 w-4" />
+                {isUpdating ? 'Processing...' : 'Mark as Paid'}
+              </Button>
+            </>
+          )}
         </div>
       </SheetContent>
     </Sheet>
