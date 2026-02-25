@@ -176,15 +176,19 @@ export function usePublishedMenu(orgId: string | undefined, menuSlug: string) {
   });
 }
 
+export interface PublicMenuResult {
+  items: MenuItem[];
+  config: MenuConfig | null;
+}
+
 /** Fetch published menu by slug without requiring org context (for public site) */
 export function usePublicMenuBySlug(menuSlug: string) {
   return useQuery({
     queryKey: ['public-menu', menuSlug],
-    queryFn: async () => {
-      // Get the first menu matching this slug (single-tenant public site)
+    queryFn: async (): Promise<PublicMenuResult | null> => {
       const { data: menu, error: menuError } = await supabase
         .from('website_menus')
-        .select('id')
+        .select('id, config')
         .eq('slug', menuSlug)
         .limit(1)
         .maybeSingle();
@@ -192,7 +196,6 @@ export function usePublicMenuBySlug(menuSlug: string) {
       if (menuError) throw menuError;
       if (!menu) return null;
 
-      // Get published items (public SELECT policy allows this)
       const { data: items, error } = await supabase
         .from('website_menu_items')
         .select('*')
@@ -201,7 +204,10 @@ export function usePublicMenuBySlug(menuSlug: string) {
         .order('sort_order');
 
       if (error) throw error;
-      return buildMenuTree((items ?? []) as MenuItem[]);
+      return {
+        items: buildMenuTree((items ?? []) as MenuItem[]),
+        config: (menu.config as MenuConfig) ?? null,
+      };
     },
     staleTime: 60_000,
   });
