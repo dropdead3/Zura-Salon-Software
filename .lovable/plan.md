@@ -1,21 +1,38 @@
 
 
-## De-emphasize "View in Client Directory" Button
+## Add Contextual Indicators to Payment Tab
 
-The screenshot shows a full-width outline button taking up significant visual real estate in the Client Info section. Per the memory context, this link belongs in the ellipsis menu, but since it's currently inline, the quickest fix is to make it a subtle inline text link rather than a prominent full-width button.
+Two small additions to `TransactionBreakdownPanel.tsx`:
 
-### Change in `AppointmentDetailDrawer.tsx` (lines 273-286)
+### 1. "No retail purchased" context (after the services category, lines 154-158)
 
-Replace the full-width `Button variant="outline"` with a small ghost text link:
-- Change from `w-full mt-2 gap-1.5 rounded-xl border-border/60` to an inline `text-xs text-muted-foreground hover:text-foreground` link
-- Remove the full-width treatment -- render it as a small right-aligned link below the client info fields
-- Keep the `ExternalLink` icon but shrink to `w-3 h-3`
-- Use `variant="ghost"` with `size="sm"` and `h-auto py-1 px-2` for minimal footprint
+When `breakdown.products.length === 0`, render a subtle muted line below the services section:
 
-**Before:** Full-width outlined button dominating the section
-**After:** Small subtle "View in Directory →" text link, right-aligned
+```
+<div className="flex items-center gap-2 px-3 py-1.5 text-xs text-muted-foreground/60">
+  <ShoppingBag className="w-3 h-3" />
+  No retail items purchased
+</div>
+```
+
+This only shows when there ARE services but NO products -- if the entire transaction is empty, the existing empty state handles it.
+
+### 2. "Paid in full" confirmation (below the Total Paid line, around line 189)
+
+Add a small emerald confirmation line after the total:
+
+```
+<div className="flex items-center gap-1.5 pt-1.5 text-xs text-emerald-600">
+  <CheckCircle2 className="w-3.5 h-3.5" />
+  Paid in full · No outstanding balance
+</div>
+```
+
+This renders when `hasTransaction` is true (meaning the POS recorded payment). It sits between the Total Paid amount and the payment method pill.
+
+### Summary
 
 | File | Change |
 |---|---|
-| `src/components/dashboard/appointments-hub/AppointmentDetailDrawer.tsx` | Lines 273-286: Replace prominent button with subtle ghost link |
+| `TransactionBreakdownPanel.tsx` | Add "No retail items purchased" note when products array is empty; add "Paid in full" indicator below total |
 
