@@ -738,7 +738,7 @@ export default function WebsiteSectionsHub() {
 
   return (
     <DashboardLayout hideFooter hideTopBar>
-      <div className="h-[calc(100vh-8rem)] flex">
+      <div className="h-screen flex">
         {/* Fixed-width Sidebar */}
         {!isMobile && (
           <div className={cn(
