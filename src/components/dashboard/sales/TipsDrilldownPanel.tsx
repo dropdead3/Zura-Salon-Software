@@ -1,12 +1,12 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { TrendingUp, TrendingDown, Users, User, DollarSign, ChevronRight, ChevronDown } from 'lucide-react';
+import { TrendingUp, TrendingDown, Users, User, DollarSign, ChevronRight, ChevronDown, Clock, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { tokens } from '@/lib/design-tokens';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useTipsDrilldown, type StylistTipMetrics, type RawTipAppointment } from '@/hooks/useTipsDrilldown';
-
+import { format, parseISO } from 'date-fns';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -253,7 +253,8 @@ export function TipsDrilldownPanel({ isOpen, parentLocationId, dateFrom, dateTo 
                           index={index}
                           isExpanded={expandedStylist === stylist.stylistUserId}
                           onToggle={() => setExpandedStylist(expandedStylist === stylist.stylistUserId ? null : stylist.stylistUserId)}
-                          rawAppointments={rawAppointments}
+                         rawAppointments={rawAppointments}
+                         locations={locations}
                         />
                       ))}
                     </div>
@@ -290,11 +291,12 @@ export function TipsDrilldownPanel({ isOpen, parentLocationId, dateFrom, dateTo 
                         index={index}
                         isExpanded={expandedStylist === stylist.stylistUserId}
                         onToggle={() => setExpandedStylist(expandedStylist === stylist.stylistUserId ? null : stylist.stylistUserId)}
-                        rawAppointments={rawAppointments}
-                      />
-                    ))}
-                  </div>
-                  {filteredStylists.length > 10 && (
+                         rawAppointments={rawAppointments}
+                         locations={locations}
+                       />
+                     ))}
+                   </div>
+                   {filteredStylists.length > 10 && (
                     <Button
                       variant="ghost"
                       size={tokens.button.inline}
@@ -328,7 +330,8 @@ export function TipsDrilldownPanel({ isOpen, parentLocationId, dateFrom, dateTo 
                           isCoaching
                           isExpanded={expandedStylist === stylist.stylistUserId}
                           onToggle={() => setExpandedStylist(expandedStylist === stylist.stylistUserId ? null : stylist.stylistUserId)}
-                          rawAppointments={rawAppointments}
+                         rawAppointments={rawAppointments}
+                         locations={locations}
                         />
                       ))}
                     </div>
@@ -357,30 +360,51 @@ function SelfMetricCard({ label, value, alert = false }: { label: string; value:
 }
 
 
+/* ── Visit group interface ── */
+interface VisitGroup {
+  services: { name: string; price: number }[];
+  tip: number;
+  date: string;
+  startTime: string | null;
+  locationId: string | null;
+  totalPrice: number;
+}
+
 /* ── Appointment sub-list for expanded stylist ── */
-function StylistAppointmentList({ stylistKey, rawAppointments }: { stylistKey: string; rawAppointments: RawTipAppointment[] }) {
+function StylistAppointmentList({ stylistKey, rawAppointments, locations }: { stylistKey: string; rawAppointments: RawTipAppointment[]; locations?: { id: string; name: string }[] | null }) {
   const { formatCurrency: fmtCurrency } = useFormatCurrency();
+
+  const locationMap = useMemo(() => {
+    const map = new Map<string, string>();
+    locations?.forEach(l => map.set(l.id, l.name));
+    return map;
+  }, [locations]);
 
   const visits = useMemo(() => {
     const filtered = rawAppointments.filter(a => {
       const key = a.stylist_user_id || (a.phorest_staff_id ? `phorest:${a.phorest_staff_id}` : null);
       return key === stylistKey;
     });
-    // Group by visit (same staff + client + date + tip) and merge service names
-    const visitMap = new Map<string, { services: string[]; tip: number; date: string }>();
+    // Group by visit (same staff + client + date + tip) and merge service names + prices
+    const visitMap = new Map<string, VisitGroup>();
     for (const a of filtered) {
       const tip = a.tip_amount ?? 0;
+      const price = a.total_price ?? 0;
       const k = `${a.phorest_staff_id}|${a.phorest_client_id}|${a.appointment_date}|${tip}`;
       const existing = visitMap.get(k);
       if (existing) {
-        if (a.service_name && !existing.services.includes(a.service_name)) {
-          existing.services.push(a.service_name);
+        if (a.service_name && !existing.services.some(s => s.name === a.service_name)) {
+          existing.services.push({ name: a.service_name, price });
+          existing.totalPrice += price;
         }
       } else {
         visitMap.set(k, {
-          services: a.service_name ? [a.service_name] : [],
+          services: a.service_name ? [{ name: a.service_name, price }] : [],
           tip,
           date: a.appointment_date,
+          startTime: a.start_time ?? null,
+          locationId: a.location_id ?? null,
+          totalPrice: price,
         });
       }
     }
@@ -398,18 +422,54 @@ function StylistAppointmentList({ stylistKey, rawAppointments }: { stylistKey: s
       transition={{ duration: 0.2, ease: 'easeInOut' }}
       className="overflow-hidden"
     >
-      <div className="pl-12 pr-2 py-1 space-y-0.5">
+      <div className="pl-10 pr-2 py-1.5 space-y-1.5">
         {visits.map((visit, i) => {
-          const dateStr = new Date(visit.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+          const dateStr = format(parseISO(visit.date), 'MMM d');
+          const timeStr = visit.startTime
+            ? format(parseISO(`${visit.date}T${visit.startTime}`), 'h:mm a')
+            : null;
+          const locName = visit.locationId ? locationMap.get(visit.locationId) : null;
+
           return (
-            <div key={i} className="flex items-center gap-2 py-0.5 text-xs">
-              <span className="text-muted-foreground min-w-[50px]">{dateStr}</span>
-              <span className="text-foreground truncate flex-1">{visit.services.join(', ') || 'Service'}</span>
-              <span className="font-display tabular-nums min-w-[45px] text-right">
-                <BlurredAmount>{fmtCurrency(visit.tip)}</BlurredAmount>
-              </span>
-              {visit.tip === 0 && (
-                <span className="text-destructive text-[10px] min-w-[35px]">no tip</span>
+            <div key={i} className="rounded-lg bg-muted/20 border border-border/20 px-3 py-2">
+              {/* Visit header */}
+              <div className="flex items-center justify-between gap-2 text-xs">
+                <div className="flex items-center gap-1.5 text-muted-foreground min-w-0">
+                  <Clock className="w-3 h-3 flex-shrink-0" />
+                  <span>{dateStr}</span>
+                  {timeStr && <span>{timeStr}</span>}
+                  {locName && (
+                    <>
+                      <span className="text-border">·</span>
+                      <MapPin className="w-3 h-3 flex-shrink-0" />
+                      <span className="truncate">{locName}</span>
+                    </>
+                  )}
+                </div>
+                <div className="flex items-center gap-3 flex-shrink-0 font-display tabular-nums">
+                  <span className="text-muted-foreground">
+                    Total: <BlurredAmount>{fmtCurrency(visit.totalPrice)}</BlurredAmount>
+                  </span>
+                  <span className={visit.tip === 0 ? 'text-destructive' : 'text-foreground'}>
+                    Tip: <BlurredAmount>{fmtCurrency(visit.tip)}</BlurredAmount>
+                  </span>
+                </div>
+              </div>
+              {/* Service line items */}
+              {visit.services.length > 0 && (
+                <div className="mt-1.5 pl-1 space-y-0.5">
+                  {visit.services.map((svc, j) => (
+                    <div key={j} className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span className="text-border/60">
+                        {j === visit.services.length - 1 ? '└' : '├'}
+                      </span>
+                      <span className="truncate flex-1">{svc.name}</span>
+                      <span className="tabular-nums text-right min-w-[50px]">
+                        <BlurredAmount>{fmtCurrency(svc.price)}</BlurredAmount>
+                      </span>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           );
@@ -420,13 +480,14 @@ function StylistAppointmentList({ stylistKey, rawAppointments }: { stylistKey: s
 }
 
 /* ── Stylist row for leadership table ── */
-function StylistTipRow({ stylist, index, isCoaching = false, isExpanded, onToggle, rawAppointments }: {
+function StylistTipRow({ stylist, index, isCoaching = false, isExpanded, onToggle, rawAppointments, locations }: {
   stylist: StylistTipMetrics;
   index: number;
   isCoaching?: boolean;
   isExpanded: boolean;
   onToggle: () => void;
   rawAppointments: RawTipAppointment[];
+  locations?: { id: string; name: string }[] | null;
 }) {
   const { formatCurrency: fmtCurrency, formatCurrencyWhole: fmtWhole } = useFormatCurrency();
   const initials = stylist.displayName
@@ -473,7 +534,7 @@ function StylistTipRow({ stylist, index, isCoaching = false, isExpanded, onToggl
       </motion.div>
       <AnimatePresence>
         {isExpanded && (
-          <StylistAppointmentList stylistKey={stylist.stylistUserId} rawAppointments={rawAppointments} />
+          <StylistAppointmentList stylistKey={stylist.stylistUserId} rawAppointments={rawAppointments} locations={locations} />
         )}
       </AnimatePresence>
     </div>
@@ -481,12 +542,13 @@ function StylistTipRow({ stylist, index, isCoaching = false, isExpanded, onToggl
 }
 
 /* ── Total tip row (emphasizes total tips first) ── */
-function TotalTipRow({ stylist, index, isExpanded, onToggle, rawAppointments }: {
+function TotalTipRow({ stylist, index, isExpanded, onToggle, rawAppointments, locations }: {
   stylist: StylistTipMetrics;
   index: number;
   isExpanded: boolean;
   onToggle: () => void;
   rawAppointments: RawTipAppointment[];
+  locations?: { id: string; name: string }[] | null;
 }) {
   const { formatCurrencyWhole: fmtWhole } = useFormatCurrency();
   const initials = stylist.displayName
@@ -527,7 +589,7 @@ function TotalTipRow({ stylist, index, isExpanded, onToggle, rawAppointments }: 
       </motion.div>
       <AnimatePresence>
         {isExpanded && (
-          <StylistAppointmentList stylistKey={stylist.stylistUserId} rawAppointments={rawAppointments} />
+          <StylistAppointmentList stylistKey={stylist.stylistUserId} rawAppointments={rawAppointments} locations={locations} />
         )}
       </AnimatePresence>
     </div>

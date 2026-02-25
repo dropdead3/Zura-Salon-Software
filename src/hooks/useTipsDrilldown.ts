@@ -36,6 +36,7 @@ export interface RawTipAppointment {
   appointment_date: string;
   phorest_client_id: string | null;
   location_id: string | null;
+  start_time: string | null;
 }
 
 export interface TipsDrilldownData {
@@ -63,7 +64,7 @@ export function useTipsDrilldown({ dateFrom, dateTo, locationId, minAppointments
     queryFn: async () => {
       let query = supabase
         .from('phorest_appointments')
-        .select('stylist_user_id, tip_amount, total_price, service_name, service_category, location_id, phorest_client_id, appointment_date, phorest_staff_id')
+        .select('stylist_user_id, tip_amount, total_price, service_name, service_category, location_id, phorest_client_id, appointment_date, phorest_staff_id, start_time')
         .gte('appointment_date', dateFrom)
         .lte('appointment_date', dateTo)
         .not('status', 'in', '("cancelled","no_show")');
