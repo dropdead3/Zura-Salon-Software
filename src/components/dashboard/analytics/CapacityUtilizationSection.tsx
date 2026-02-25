@@ -268,7 +268,7 @@ export function CapacityUtilizationSection({
           <div className="text-center p-4 bg-card border border-border/40 rounded-xl">
             <div className="flex justify-center mb-2">
               <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
-                <Clock className="w-4 h-4 text-chart-3" />
+                <Clock className="w-4 h-4 text-primary" />
               </div>
             </div>
             <span className="text-xl font-display tabular-nums">{gapHours}h</span>

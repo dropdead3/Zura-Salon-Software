@@ -112,7 +112,7 @@ export function StaffUtilizationContent({ locationId, dateRange }: StaffUtilizat
               </div>
               <div className="text-center p-3 bg-muted/30 rounded-lg">
                 <div className="flex justify-center mb-1">
-                  <CheckCircle className="w-4 h-4 text-chart-2" />
+                  <CheckCircle className="w-4 h-4 text-primary" />
                 </div>
                 <span className="text-lg font-display tabular-nums">{totalCompleted}</span>
                 <div className="flex items-center gap-1 justify-center">
@@ -132,7 +132,7 @@ export function StaffUtilizationContent({ locationId, dateRange }: StaffUtilizat
               </div>
               <div className="text-center p-3 bg-muted/30 rounded-lg">
                 <div className="flex justify-center mb-1">
-                  <TrendingUp className="w-4 h-4 text-chart-3" />
+                  <TrendingUp className="w-4 h-4 text-primary" />
                 </div>
                 <span className="text-lg font-display tabular-nums">{avgPerStylist}</span>
                 <div className="flex items-center gap-1 justify-center">
