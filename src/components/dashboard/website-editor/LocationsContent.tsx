@@ -69,6 +69,7 @@ export function LocationsContent() {
 
   return (
     <EditorCard
+      className="overflow-hidden"
       title="Website Locations"
       icon={MapPin}
       description="Control which locations appear on the public website"
@@ -167,7 +168,7 @@ export function LocationsContent() {
 
                 {/* Location info + toggle stacked */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5 mb-1 min-w-0">
+                  <div className="flex items-center gap-1.5 mb-1 min-w-0 overflow-hidden">
                     <h3 className="font-sans font-medium text-sm truncate">{location.name}</h3>
                     {location.show_on_website ? (
                       <Badge variant="secondary" className="text-[10px] bg-primary/10 text-primary border-primary/20 shrink-0">
