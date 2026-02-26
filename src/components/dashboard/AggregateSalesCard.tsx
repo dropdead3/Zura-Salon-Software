@@ -644,7 +644,7 @@ export function AggregateSalesCard({
             {/* Total Revenue - Hero */}
             <div
               className={cn(
-                "text-center mb-4 sm:mb-6 cursor-pointer transition-all rounded-lg p-2 -m-2 group/revenue",
+                "text-center mb-4 sm:mb-6 cursor-pointer transition-all rounded-lg p-4 -mx-4 sm:p-6 sm:-mx-6 -mb-4 sm:-mb-6 group/revenue",
                 activeDrilldown === 'revenue'
                   ? "ring-1 ring-primary/20 bg-primary/5"
                   : ""
