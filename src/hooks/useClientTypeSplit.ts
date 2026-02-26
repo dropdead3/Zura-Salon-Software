@@ -30,7 +30,7 @@ export function useClientTypeSplit({ dateFrom, dateTo, locationId, enabled = tru
     queryFn: async (): Promise<ClientTypeSplitData> => {
       let query = supabase
         .from('phorest_appointments')
-        .select('is_new_client, total_price, rebooked_at_checkout')
+        .select('phorest_client_id, is_new_client, total_price, rebooked_at_checkout, appointment_date')
         .gte('appointment_date', dateFrom)
         .lte('appointment_date', dateTo)
         .not('status', 'in', '("cancelled","no_show")');
@@ -42,22 +42,36 @@ export function useClientTypeSplit({ dateFrom, dateTo, locationId, enabled = tru
       const { data: appointments, error } = await query;
       if (error) throw error;
 
+      // Group by unique client visit (phorest_client_id + appointment_date)
+      const visitMap = new Map<string, { revenue: number; isNew: boolean; rebooked: boolean }>();
+      (appointments || []).forEach(apt => {
+        const clientId = apt.phorest_client_id || `unknown-${Math.random()}`;
+        const visitKey = `${clientId}|${apt.appointment_date}`;
+        const existing = visitMap.get(visitKey);
+        if (existing) {
+          existing.revenue += Number(apt.total_price) || 0;
+          // Keep isNew/rebooked from first row (consistent per visit)
+        } else {
+          visitMap.set(visitKey, {
+            revenue: Number(apt.total_price) || 0,
+            isNew: apt.is_new_client === true,
+            rebooked: apt.rebooked_at_checkout === true,
+          });
+        }
+      });
+
       const newData = { count: 0, revenue: 0, rebooked: 0 };
       const retData = { count: 0, revenue: 0, rebooked: 0 };
 
-      (appointments || []).forEach(apt => {
-        const price = Number(apt.total_price) || 0;
-        const isNew = apt.is_new_client === true;
-        const rebooked = apt.rebooked_at_checkout === true;
-
-        if (isNew) {
+      visitMap.forEach(visit => {
+        if (visit.isNew) {
           newData.count += 1;
-          newData.revenue += price;
-          if (rebooked) newData.rebooked += 1;
+          newData.revenue += visit.revenue;
+          if (visit.rebooked) newData.rebooked += 1;
         } else {
           retData.count += 1;
-          retData.revenue += price;
-          if (rebooked) retData.rebooked += 1;
+          retData.revenue += visit.revenue;
+          if (visit.rebooked) retData.rebooked += 1;
         }
       });
 

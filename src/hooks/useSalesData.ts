@@ -327,6 +327,7 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
       // derive service-only revenue by subtracting product revenue (for breakdown display)
       const serviceRevenue = Math.max(0, appointmentRevenue - productRevenue);
       const totalServices = data.length;
+      const uniqueVisits = new Set(data.map(d => `${d.phorest_client_id}|${d.appointment_date}`).filter(k => !k.startsWith('null'))).size;
       const daysWithSales = new Set(data.map(d => d.appointment_date).filter(Boolean)).size;
       
       // Calculate total service hours from appointment durations
@@ -343,8 +344,8 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
         productRevenue,
         totalServices,
         totalProducts,
-        totalTransactions: totalServices,
-        averageTicket: totalServices > 0 ? totalRevenue / totalServices : 0,
+        totalTransactions: uniqueVisits || totalServices,
+        averageTicket: uniqueVisits > 0 ? totalRevenue / uniqueVisits : (totalServices > 0 ? totalRevenue / totalServices : 0),
         totalDiscounts: 0,
         unmappedStaffRecords: 0,
         totalServiceHours,
@@ -474,11 +475,11 @@ export function useSalesByLocation(dateFrom?: string, dateTo?: string) {
 
       // Fetch appointments with batch fetching + status filter
       const data = await fetchAllBatched<{
-        location_id: string | null; total_price: number | null;
+        location_id: string | null; total_price: number | null; phorest_client_id: string | null;
       }>((from, to) => {
         let q = supabase
           .from('phorest_appointments')
-          .select('location_id, total_price')
+          .select('location_id, total_price, phorest_client_id')
           .not('total_price', 'is', null)
           .not('status', 'in', '("cancelled","no_show")')
           .range(from, to);
@@ -504,14 +505,23 @@ export function useSalesByLocation(dateFrom?: string, dateTo?: string) {
       });
 
       // Add revenue data from appointments to existing location entries
+      // Track unique client visits per location
+      const locationVisitSets: Record<string, Set<string>> = {};
       data.forEach(apt => {
         const key = apt.location_id;
         if (key && byLocation[key]) {
           byLocation[key].totalRevenue += Number(apt.total_price) || 0;
           byLocation[key].serviceRevenue += Number(apt.total_price) || 0;
           byLocation[key].totalServices += 1;
-          byLocation[key].totalTransactions += 1;
+          if (!locationVisitSets[key]) locationVisitSets[key] = new Set();
+          const clientKey = (apt as any).phorest_client_id;
+          if (clientKey) locationVisitSets[key].add(clientKey);
+          else byLocation[key].totalTransactions += 1;
         }
+      });
+      // Set totalTransactions from unique visits
+      Object.entries(locationVisitSets).forEach(([locId, visits]) => {
+        if (byLocation[locId]) byLocation[locId].totalTransactions = visits.size;
       });
 
       return Object.values(byLocation).sort((a, b) => b.totalRevenue - a.totalRevenue);
@@ -684,7 +694,7 @@ export function useSalesByPhorestStaff(dateFrom?: string, dateTo?: string) {
       // Fetch appointments with phorest_staff_id
       let query = supabase
         .from('phorest_appointments')
-        .select('phorest_staff_id, total_price, service_name, location_id')
+        .select('phorest_staff_id, total_price, service_name, location_id, phorest_client_id, appointment_date')
         .not('phorest_staff_id', 'is', null)
         .not('total_price', 'is', null);
 
@@ -708,6 +718,7 @@ export function useSalesByPhorestStaff(dateFrom?: string, dateTo?: string) {
 
       // Aggregate by phorest_staff_id
       const byStaff: Record<string, PhorestStaffSalesData> = {};
+      const staffVisitSets: Record<string, Set<string>> = {};
       
       data?.forEach(apt => {
         const phorestId = apt.phorest_staff_id!;
@@ -734,7 +745,15 @@ export function useSalesByPhorestStaff(dateFrom?: string, dateTo?: string) {
         byStaff[phorestId].totalRevenue += Number(apt.total_price) || 0;
         byStaff[phorestId].serviceRevenue += Number(apt.total_price) || 0;
         byStaff[phorestId].totalServices += 1;
-        byStaff[phorestId].totalTransactions += 1;
+        // Track unique client visits per staff
+        if (!staffVisitSets[phorestId]) staffVisitSets[phorestId] = new Set();
+        const visitKey = `${(apt as any).phorest_client_id}|${(apt as any).appointment_date}`;
+        staffVisitSets[phorestId].add(visitKey);
+      });
+
+      // Set totalTransactions from unique visits
+      Object.entries(staffVisitSets).forEach(([phorestId, visits]) => {
+        if (byStaff[phorestId]) byStaff[phorestId].totalTransactions = visits.size;
       });
 
       const results = Object.values(byStaff).sort((a, b) => b.totalRevenue - a.totalRevenue);
