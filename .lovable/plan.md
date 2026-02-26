@@ -1,75 +1,82 @@
 
 
-## Polish Zura Insights Panel: Better Space Utilization and Bento Layout
+## Enhance AI Insights: Financial Impact, Trends, Benchmarks, Urgency, Effort, and Staff Callouts
 
-### Current Issues (from screenshot)
-- Single-column stacked list wastes horizontal space on wide screens
-- Insight cards are visually uniform — no hierarchy between critical vs info severity
-- Summary area at top is text-heavy, not scannable
-- No visual density differentiation — all cards same size regardless of importance
-- Footer feels disconnected
-- Tabs area could be more compact
-
-### Changes
-
-**File: `src/components/dashboard/AIInsightsDrawer.tsx`**
-
-1. **Summary Header Redesign**
-   - Replace text-only summary with a compact glass strip: sentiment icon + summary line + metadata (updated time) all in one row
-   - Move refresh/close buttons inline with title row (already done, keep)
-   - Add a subtle severity count bar: colored dots showing count of critical/warning/info items at a glance
-
-2. **Insight Cards → 2-Column Bento Grid**
-   - On `lg+` screens, render insight cards in a 2-column CSS grid (`grid grid-cols-1 lg:grid-cols-2 gap-3`)
-   - Critical severity cards span full width (`lg:col-span-2`) to draw attention
-   - Warning and info cards flow naturally into the 2-col grid
-   - Each card gets a left-edge severity accent bar (3px colored left border: red for critical, amber for warning, blue/muted for info)
-
-3. **InsightCard Visual Hierarchy**
-   - Critical cards: subtle red-tinted background (`bg-red-500/5`), thicker left accent, slightly larger title
-   - Warning cards: amber tint (`bg-amber-500/5`)
-   - Info cards: neutral (current styling)
-   - Category eyebrow + icon stay but get tighter spacing
-
-4. **Action Items Tab**
-   - Use a numbered compact list with priority pills right-aligned
-   - Add alternating subtle row backgrounds for scannability
-
-5. **Panel Container**
-   - Inner padding increase from `p-4` to `p-5` for breathing room
-   - Reduce max-h from `65vh` to `60vh` to keep it contained
-   - Add subtle inner shadow at scroll edges (top/bottom fade indicators via pseudo-elements)
-
-6. **Footer**
-   - Make footer stickier and more minimal — just the "Powered by" line with no extra padding
-
-### Layout Structure (After)
-```text
-┌─────────────────────────────────────────────────────────────┐
-│ ZURA BUSINESS INSIGHTS                    [↻] [✕]          │
-│                                                             │
-│ ⚠ Summary line here...              Updated 5m ago         │
-│ ●●● 2 critical · 1 warning · 1 info                        │
-│                                                             │
-│ [  Key Insights  |  Action Items  |  More suggestions  ]    │
-│                                                             │
-│ ┌─────────────────────────────────────────────────────────┐ │
-│ │ CRITICAL: Full-width card spanning both columns         │ │
-│ └─────────────────────────────────────────────────────────┘ │
-│ ┌──────────────────────┐  ┌──────────────────────┐         │
-│ │ WARNING card         │  │ INFO card            │         │
-│ └──────────────────────┘  └──────────────────────┘         │
-│ ┌──────────────────────┐  ┌──────────────────────┐         │
-│ │ INFO card            │  │ INFO card            │         │
-│ └──────────────────────┘  └──────────────────────┘         │
-│                                                             │
-│              Powered by Zura AI · Based on your data        │
-└─────────────────────────────────────────────────────────────┘
-```
+### Overview
+Enrich each insight with six new data dimensions so salon owners can instantly see dollar impact, direction, context, urgency, effort, and who to talk to. Requires changes to both the backend (AI prompt + tool schema) and frontend (InsightCard rendering).
 
 ### Files Changed
 
 | File | Action |
 |------|--------|
-| `src/components/dashboard/AIInsightsDrawer.tsx` | Refactor panel layout: 2-col grid, severity hierarchy, summary strip, severity counts |
+| `supabase/functions/ai-business-insights/index.ts` | Extend tool schema with 6 new optional fields per insight; update AI prompt to generate them |
+| `src/hooks/useAIInsights.ts` | Extend `InsightItem` type with new fields |
+| `src/components/dashboard/AIInsightsDrawer.tsx` | Render new fields in InsightCard: impact badge, trend arrow, benchmark bar, urgency tag, effort pill, staff names |
+
+### Schema Additions (per insight object)
+
+```text
+estimatedImpact     string | null   "$2,246/week lost" or "$800/month opportunity"
+trendDirection      "improving" | "declining" | "stable" | null
+comparisonContext   string | null   "Industry avg: 30% · You: 17%"
+actByDate           string | null   "Within 3 days" or "This week"
+effortLevel         "quick_win" | "strategic" | null
+staffMentions       string[] | null  ["Sarah M.", "Jake R."]
+```
+
+### Backend Changes (`ai-business-insights/index.ts`)
+
+1. **Tool schema** — Add 6 optional properties to the `insights` array item schema
+2. **System prompt** — Add instructions:
+   - Always estimate dollar impact when revenue/cost data supports it (use weekly or monthly framing)
+   - Include trend direction based on week-over-week or period comparison
+   - Add comparison context: cite industry benchmarks or the salon's own historical average
+   - Set `actByDate` for time-sensitive issues (cancellation spikes, no-show patterns, upcoming capacity gaps)
+   - Tag `effortLevel`: "quick_win" for <30 min actions, "strategic" for multi-week initiatives
+   - Include `staffMentions` when insight relates to specific team members (from staff data cross-referenced with appointments)
+
+### Frontend Changes (`AIInsightsDrawer.tsx` — `InsightCard`)
+
+Below the description, render a compact metadata row:
+
+```text
+┌─────────────────────────────────────────────────────┐
+│ ↗ REVENUE PULSE                                     │
+│ Rebooking Rate Dropping Below Target                │
+│ Only 42% of clients rebooked vs 65% industry avg... │
+│                                                     │
+│ ↓ Declining · ~$2,246/wk lost · Industry: 65%       │
+│ ⚡ Quick Win · Act within 3 days · Sarah M., Jake R. │
+│                                                     │
+│ [How to improve]  [See in Analytics]                │
+└─────────────────────────────────────────────────────┘
+```
+
+- **Row 1**: Trend arrow (colored: green ↑, red ↓, gray →) + `estimatedImpact` in a subtle pill + `comparisonContext`
+- **Row 2**: Effort pill (⚡ Quick Win = green-tinted, 🎯 Strategic = blue-tinted) + `actByDate` with clock icon + staff names as subtle chips
+- All fields are optional — only render when non-null
+- Financial values wrapped in `BlurredAmount`
+
+### Type Changes (`useAIInsights.ts`)
+
+```typescript
+export interface InsightItem {
+  // existing fields...
+  estimatedImpact?: string | null;
+  trendDirection?: 'improving' | 'declining' | 'stable' | null;
+  comparisonContext?: string | null;
+  actByDate?: string | null;
+  effortLevel?: 'quick_win' | 'strategic' | null;
+  staffMentions?: string[] | null;
+}
+```
+
+### AI Prompt Additions (key excerpts)
+
+- "For every insight, estimate the weekly or monthly dollar impact. Use actual numbers from the data snapshot. Frame as loss ('~$X/wk lost') or opportunity ('~$X/mo opportunity')."
+- "Set trendDirection by comparing this week vs last week for the relevant metric."
+- "Include comparisonContext citing industry benchmarks: rebooking 65%, retail attachment 30%, no-show rate <5%, cancellation <10%."
+- "Set actByDate for insights where delay worsens the problem. Use 'Today', 'Within 3 days', 'This week', or 'This month'."
+- "Tag effortLevel: quick_win for actions completable in one session (<30 min), strategic for multi-week initiatives."
+- "When specific staff members are underperforming or excelling on the metric, include their display_name in staffMentions (max 3)."
 
