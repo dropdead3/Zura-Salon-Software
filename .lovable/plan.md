@@ -1,21 +1,54 @@
 
 
-## Fix: Edit/Preview Toggle Sizing in Canvas Header
+## Bug Fix: Editor Reload + Sidebar Collapse on Section Click
 
-### Problem
-The Edit/Preview segmented toggle appears oversized relative to the viewport and zoom controls in the same header strip. The screenshot shows large icon containers with text labels that break the visual rhythm of the 12px-tall control strip.
+Two root causes identified, both in the editor's state management.
 
-### Root Cause
-The toggle buttons use `px-2.5 gap-1.5` with both an icon (`h-3.5 w-3.5`) and a text label, making them wider and taller-feeling than the adjacent viewport buttons which are icon-only at `px-2`. The two controls should share the same visual density.
+### Bug 1: Collapsed State Never Restored from localStorage
 
-### Fix
+**File:** `src/hooks/useEditorLayout.ts`, lines 47-52
 
-**File: `src/components/dashboard/website-editor/panels/CanvasHeader.tsx`**
+The `loadPrefs()` function **hardcodes** `structureCollapsed: false` and `inspectorCollapsed: false` — it never reads the saved values from localStorage, even though `savePrefs` writes them correctly. This means:
 
-1. **Match viewport button sizing** — Change Edit/Preview buttons from `px-2.5 gap-1.5` to `px-2 gap-1` to match the viewport toggles
-2. **Shrink icons** — Reduce from `h-3.5 w-3.5` to `h-3 w-3` for tighter proportions inside the segmented control
-3. **Always show labels** — Remove `hidden sm:inline` so the labels are always visible (they're short enough), and keep them at `text-[11px]` but tighten up
-4. **Reduce label size** — Use `text-[10px]` to match the zoom controls' text sizing for visual consistency across the strip
+- User collapses a panel → saved to localStorage as `true`
+- Component re-initializes → `loadPrefs()` returns `false` (ignoring stored value)
+- Visual state and logical state become desynchronized
+- Clicking "expand" toggles `false → true`, which collapses instead of expanding — hence "won't expand"
 
-The result: Edit/Preview toggle matches the compact density of the viewport and zoom controls, fitting cleanly in the header bar without dominating it.
+**Fix:** Read `parsed.structureCollapsed` and `parsed.inspectorCollapsed` from the stored JSON instead of hardcoding `false`.
+
+### Bug 2: `setSearchParams` in useEffect Triggers Unnecessary Navigation
+
+**File:** `src/pages/dashboard/admin/WebsiteSectionsHub.tsx`, lines 266-268
+
+```tsx
+useEffect(() => {
+  setSearchParams({ tab: activeTab }, { replace: true });
+}, [activeTab, setSearchParams]);
+```
+
+Every tab change triggers `setSearchParams`, which performs a React Router navigation (even with `replace: true`). This can cause the `ProtectedRoute` wrapper to briefly re-evaluate its permission hooks, potentially triggering a loading state that unmounts and remounts the editor — which resets `useEditorLayout` and calls the broken `loadPrefs()`.
+
+**Fix:** Remove this `useEffect` entirely. Instead, update the URL directly inside `handleTabChange` and `setActiveTab` calls. This eliminates the navigation side-effect from the render cycle.
+
+### Changes
+
+| File | Change |
+|------|--------|
+| `src/hooks/useEditorLayout.ts` | Fix `loadPrefs()` to read `structureCollapsed` and `inspectorCollapsed` from stored JSON |
+| `src/pages/dashboard/admin/WebsiteSectionsHub.tsx` | Remove `useEffect` that syncs `activeTab` → search params; move URL update into `handleTabChange` callback |
+
+### Technical Detail
+
+```text
+loadPrefs() currently:
+  parsed.structureWidth  ──→ ✓ restored
+  parsed.inspectorWidth  ──→ ✓ restored
+  parsed.structureCollapsed ──→ ✗ hardcoded false
+  parsed.inspectorCollapsed ──→ ✗ hardcoded false
+
+loadPrefs() fixed:
+  parsed.structureCollapsed ──→ ✓ restored (defaults to false if missing)
+  parsed.inspectorCollapsed ──→ ✓ restored (defaults to false if missing)
+```
 
