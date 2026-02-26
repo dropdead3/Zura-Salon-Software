@@ -1,54 +1,46 @@
 
 
-## Fix Preview & Publish Button Sizing + Remove Dot Indicator
+## Fix: Preview Button 404 — Missing Public RLS Policy on Organizations
 
 ### Problem
 
-From the screenshot:
-1. **Preview** button uses `h-8 px-3` with `size="sm"` — compact
-2. **Publish** button (from `PublishChangesButton`) uses `size="sm"` with default Button padding — slightly different sizing
-3. The **pulsing dot** (`animate-pulse` circle at `-top-1 -right-1`) on the Publish button has no tooltip or context — it looks like a rendering artifact
+When clicking **Preview** in the editor, the button opens `/org/drop-dead-salons` in a new tab. The `OrgPublicRoute` component calls `useOrganizationBySlug('drop-dead-salons')`, which queries the `organizations` table. However, all existing RLS policies on that table require `auth.uid()` (authenticated users only):
 
-### Changes
+- "Platform users can view all organizations" — requires platform role
+- "Users can view their own organization" — requires membership
 
-#### 1. `PublishChangelog.tsx` — `PublishChangesButton` (lines 108-125)
+An unauthenticated visitor (or a new tab without an active session) gets a Postgres RLS denial, which surfaces as an error in `OrgPublicRoute`, triggering the `<NotFound />` fallback — the exact 404 you see.
 
-Update the Publish button to match Preview's exact sizing (`h-8 px-3`) and remove the dot indicator entirely:
+### Root Cause
 
-```tsx
-<Button
-  variant="outline"
-  size="sm"
-  onClick={() => setOpen(true)}
-  className="h-8 px-3 gap-1.5"
->
-  <Globe className="h-3.5 w-3.5" />
-  Publish
-</Button>
+The `/org/:orgSlug` routes are **public-facing pages** (the salon's website for their clients), but the database has no anonymous/public SELECT policy on the `organizations` table.
+
+### Fix
+
+Add a **narrowly scoped** RLS policy that allows anonymous SELECT access to **only** the columns needed for public site rendering, restricted to **active** organizations. This is the standard pattern for public storefronts.
+
+#### 1. Database Migration
+
+```sql
+CREATE POLICY "Public can view active organizations by slug"
+  ON public.organizations
+  FOR SELECT
+  USING (status = 'active');
 ```
 
-Removed:
-- `relative` class (no longer needed without dot)
-- The entire `{hasChanges && <span className="absolute ..." />}` dot indicator block
-- `totalChanges` can stay in the destructured hook for the dialog, but is no longer used in the button
+This allows unauthenticated requests to read organization rows, but **only** active ones. Combined with the existing authenticated policies, this is additive and does not weaken any existing access control.
 
-#### 2. `CanvasHeader.tsx` — Preview button (line 199)
+**Security note**: The `organizations` table contains fields like `name`, `slug`, `logo_url`, `business_type`, `settings`, and `timezone` — all of which are already displayed on the public site. Sensitive fields like `primary_contact_email`, `primary_contact_phone`, and `legal_name` are present but are not used by public components. If desired, a database view could further restrict columns, but this is a Phase 2 concern and matches the current public site architecture.
 
-Minor cleanup — add `gap-1.5` and remove the manual `mr-1.5` on the icon for consistency with Publish:
+#### 2. No Code Changes
 
-```tsx
-<Button variant="outline" size="sm" className="h-8 px-3 gap-1.5" onClick={onPreview}>
-  <ExternalLink className="h-3.5 w-3.5" />
-  <span className="hidden sm:inline">Preview</span>
-</Button>
-```
+The `useOrganizationBySlug` hook, `OrgPublicRoute`, and all public page components are already correct. They just need the database to allow the query to succeed for anonymous users.
 
 ### Files
 
 | File | Change |
 |---|---|
-| `src/components/dashboard/website-editor/PublishChangelog.tsx` | Match button size to `h-8 px-3`, remove dot indicator |
-| `src/components/dashboard/website-editor/panels/CanvasHeader.tsx` | Normalize Preview button gap styling |
+| Database migration | Add public SELECT policy for active organizations |
 
-Two small edits. Both buttons will render identically sized with consistent icon spacing.
+One migration. No code file changes.
 
