@@ -95,6 +95,7 @@ import { LoyaltySettingsContent } from '@/components/dashboard/settings/LoyaltyS
 import { TeamRewardsConfigurator } from '@/components/dashboard/settings/TeamRewardsConfigurator';
 import { UserPinSettings } from '@/components/dashboard/settings/UserPinSettings';
 import { SoundSettingsSection } from '@/components/dashboard/settings/SoundSettingsSection';
+import { CheckoutAlertsSection } from '@/components/dashboard/settings/CheckoutAlertsSection';
 import { ReviewThresholdSettings } from '@/components/feedback/ReviewThresholdSettings';
 import { EmailBrandingSettings } from '@/components/dashboard/settings/EmailBrandingSettings';
 import { KioskSettingsContent } from '@/components/dashboard/settings/KioskSettingsContent';
@@ -1342,6 +1343,7 @@ export default function Settings() {
                 </Card>
 
                 <SoundSettingsSection />
+                <CheckoutAlertsSection />
 
                 {/* Help & Guidance */}
                 <InfotainerToggleCard />

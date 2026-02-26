@@ -5,14 +5,11 @@ import { Label } from '@/components/ui/label';
 import { Volume2 } from 'lucide-react';
 import { useSoundSettings } from '@/contexts/SoundSettingsContext';
 import { useNotificationSound } from '@/hooks/useNotificationSound';
-import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { Button } from '@/components/ui/button';
 
 export function SoundSettingsSection() {
-  const { enabled, setEnabled, chaChingEnabled, setChaChingEnabled } = useSoundSettings();
+  const { enabled, setEnabled } = useSoundSettings();
   const { playSuccess, playError } = useNotificationSound();
-  const { data: profile } = useEmployeeProfile();
-  const isEligible = profile?.is_primary_owner || profile?.is_super_admin;
 
   return (
     <Card>
@@ -34,18 +31,6 @@ export function SoundSettingsSection() {
             <Switch checked={enabled} onCheckedChange={setEnabled} />
           </div>
         </div>
-        {isEligible && (
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium">Checkout notifications</p>
-              <p className="text-xs text-muted-foreground">Show a cha-ching alert when a client checks out.</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <Label className="text-xs text-muted-foreground">{chaChingEnabled ? 'On' : 'Off'}</Label>
-              <Switch checked={chaChingEnabled} onCheckedChange={setChaChingEnabled} />
-            </div>
-          </div>
-        )}
         <div className="flex items-center gap-2">
           <Button type="button" variant="outline" size={tokens.button.card} onClick={playSuccess} disabled={!enabled}>
             Preview success
