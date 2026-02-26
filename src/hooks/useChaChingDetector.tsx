@@ -5,6 +5,7 @@ import { useNotificationSound } from '@/hooks/useNotificationSound';
 import { useSoundSettings } from '@/contexts/SoundSettingsContext';
 import { useChaChingHistorySafe } from '@/hooks/useChaChingHistory';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
+import { useCheckoutAlertSettings } from '@/hooks/useCheckoutAlertSettings';
 import { ChaChingToast } from '@/components/dashboard/ChaChingToast';
 import { format } from 'date-fns';
 
@@ -19,7 +20,12 @@ export function useChaChingDetector() {
   const { chaChingEnabled } = useSoundSettings();
   const chaChingHistory = useChaChingHistorySafe();
   const { data: profile } = useEmployeeProfile();
-  const isEligible = profile?.is_primary_owner || profile?.is_super_admin;
+  const { superAdminsEnabled } = useCheckoutAlertSettings();
+
+  const isPrimaryOwner = !!profile?.is_primary_owner;
+  const isSuperAdmin = !!profile?.is_super_admin;
+  const isEligible = isPrimaryOwner || (isSuperAdmin && superAdminsEnabled);
+
   const prevRevenueRef = useRef<number | null>(null);
 
   const today = format(new Date(), 'yyyy-MM-dd');

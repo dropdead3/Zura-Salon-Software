@@ -7,6 +7,7 @@ import { tokens } from '@/lib/design-tokens';
 import { useSoundSettings } from '@/contexts/SoundSettingsContext';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { useNotificationSound } from '@/hooks/useNotificationSound';
+import { useCheckoutAlertSettings } from '@/hooks/useCheckoutAlertSettings';
 import { toast } from 'sonner';
 import { ChaChingToast } from '@/components/dashboard/ChaChingToast';
 
@@ -14,7 +15,11 @@ export function CheckoutAlertsSection() {
   const { chaChingEnabled, setChaChingEnabled } = useSoundSettings();
   const { data: profile } = useEmployeeProfile();
   const { playChaChing } = useNotificationSound();
-  const isEligible = profile?.is_primary_owner || profile?.is_super_admin;
+  const { superAdminsEnabled, setSuperAdminsEnabled, isSaving } = useCheckoutAlertSettings();
+
+  const isPrimaryOwner = !!profile?.is_primary_owner;
+  const isSuperAdmin = !!profile?.is_super_admin;
+  const isEligible = isPrimaryOwner || (isSuperAdmin && superAdminsEnabled);
 
   if (!isEligible) return null;
 
@@ -22,6 +27,10 @@ export function CheckoutAlertsSection() {
     playChaChing();
     toast.custom((id) => <ChaChingToast amount={125} toastId={id} />, { duration: 5000 });
   };
+
+  const visibilityLabel = superAdminsEnabled
+    ? 'Visible to Primary Owner and Super Admins.'
+    : 'Visible to Primary Owner only.';
 
   return (
     <Card>
@@ -33,7 +42,7 @@ export function CheckoutAlertsSection() {
         <CardDescription>Get notified when a client checks out.</CardDescription>
         <div className="flex items-center gap-1.5 mt-1 text-xs text-muted-foreground">
           <Shield className="w-3 h-3" />
-          <span>Visible to Primary Owner and Super Admins only.</span>
+          <span>{visibilityLabel}</span>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -47,6 +56,24 @@ export function CheckoutAlertsSection() {
             <Switch checked={chaChingEnabled} onCheckedChange={setChaChingEnabled} />
           </div>
         </div>
+
+        {isPrimaryOwner && (
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium">Allow Super Admins</p>
+              <p className="text-xs text-muted-foreground">Let Super Admins also receive checkout alerts.</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <Label className="text-xs text-muted-foreground">{superAdminsEnabled ? 'On' : 'Off'}</Label>
+              <Switch
+                checked={superAdminsEnabled}
+                onCheckedChange={setSuperAdminsEnabled}
+                disabled={isSaving}
+              />
+            </div>
+          </div>
+        )}
+
         <Button type="button" variant="outline" size={tokens.button.card} onClick={handlePreview} disabled={!chaChingEnabled}>
           Preview cha-ching
         </Button>
