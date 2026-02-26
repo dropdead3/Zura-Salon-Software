@@ -1,14 +1,16 @@
-import { tokens } from '@/lib/design-tokens';
+import { tokens, APPOINTMENT_STATUS_BADGE } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ClipboardCheck, ChevronRight, Sparkles, UserPlus } from 'lucide-react';
+import { ClipboardCheck, ChevronRight, UserPlus, Phone } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { VisibilityGate } from '@/components/visibility';
 import { useTodayPrep } from '@/hooks/useTodayPrep';
 import { CLV_TIERS, type CLVTier } from '@/lib/clv-calculator';
+
+const NEEDS_CONFIRM = new Set(['booked', 'pending']);
 
 function formatTime(time: string | null): string {
   if (!time) return '';
@@ -66,12 +68,30 @@ export function TodaysPrepSection() {
                 return (
                   <div
                     key={appt.id}
-                    className="flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-muted/50 transition-colors"
+                    className="flex items-center gap-2 py-2 px-2 rounded-lg hover:bg-muted/50 transition-colors"
                   >
                     {/* Time */}
                     <span className="font-display text-xs tracking-wide text-muted-foreground w-[72px] shrink-0">
                       {formatTime(appt.startTime)}
                     </span>
+
+                    {/* Status badge */}
+                    {(() => {
+                      const statusKey = (appt.status || 'booked') as keyof typeof APPOINTMENT_STATUS_BADGE;
+                      const statusConfig = APPOINTMENT_STATUS_BADGE[statusKey] || APPOINTMENT_STATUS_BADGE.booked;
+                      return (
+                        <span
+                          className={cn(
+                            'text-[10px] px-2 py-0.5 rounded-full border font-sans whitespace-nowrap shrink-0',
+                            statusConfig.bg,
+                            statusConfig.text,
+                            statusConfig.border
+                          )}
+                        >
+                          {statusConfig.label}
+                        </span>
+                      );
+                    })()}
 
                     {/* Client name */}
                     <span className="font-sans text-sm truncate flex-1 min-w-0">
@@ -96,12 +116,17 @@ export function TodaysPrepSection() {
                       </Badge>
                     )}
 
-                    {/* Visit count */}
-                    {appt.visitCount > 0 && (
-                      <span className="text-xs text-muted-foreground font-sans whitespace-nowrap">
+                    {/* Action prompt or visit count */}
+                    {NEEDS_CONFIRM.has(appt.status || '') ? (
+                      <span className="flex items-center gap-1 text-xs text-amber-700 dark:text-amber-400 font-sans whitespace-nowrap shrink-0">
+                        <Phone className="w-3 h-3" />
+                        Confirm
+                      </span>
+                    ) : appt.visitCount > 0 ? (
+                      <span className="text-xs text-muted-foreground font-sans whitespace-nowrap shrink-0">
                         {appt.visitCount} visits
                       </span>
-                    )}
+                    ) : null}
                   </div>
                 );
               })}
