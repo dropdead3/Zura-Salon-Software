@@ -113,21 +113,22 @@ export function LocationsContent() {
       </div>
 
       {/* Locations List */}
-      <div className="space-y-3">
+      <div className="space-y-2.5">
         {isLoading ? (
-          <Card className="p-8 text-center text-muted-foreground">
+          <Card className="p-6 text-center text-muted-foreground text-sm">
             Loading locations...
           </Card>
         ) : activeLocations.length === 0 ? (
-          <Card className="p-8 text-center">
-            <MapPin className="w-8 h-8 mx-auto mb-2 text-muted-foreground/50" />
-            <p className="text-muted-foreground">No active locations</p>
-            <p className="text-sm text-muted-foreground mt-1">
+          <Card className="p-6 text-center">
+            <MapPin className="w-6 h-6 mx-auto mb-2 text-muted-foreground/50" />
+            <p className="text-sm text-muted-foreground">No active locations</p>
+            <p className="text-xs text-muted-foreground mt-1">
               Add locations in Settings → Locations
             </p>
             <Button 
               variant="outline" 
-              className="mt-4"
+              size="sm"
+              className="mt-3"
               onClick={() => navigate('/dashboard/admin/settings')}
             >
               Go to Settings
@@ -142,59 +143,59 @@ export function LocationsContent() {
                 !location.show_on_website && "opacity-70 bg-muted/30"
               )}
             >
-              <div className="flex items-start gap-2.5 p-3">
+              <div className="flex items-start gap-2 p-2.5">
                 {/* Reorder handle */}
-                <div className="flex flex-col items-center opacity-40 group-hover:opacity-100 transition-opacity pt-1">
+                <div className="flex flex-col items-center opacity-40 group-hover:opacity-100 transition-opacity pt-0.5">
                   <button
                     className="p-0.5 hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed"
                     disabled={index === 0}
                     onClick={() => handleMoveUp(index)}
                     title="Move up"
                   >
-                    <ChevronUp className="w-4 h-4" />
+                    <ChevronUp className="w-3.5 h-3.5" />
                   </button>
-                  <GripVertical className="w-4 h-4 text-muted-foreground/50" />
+                  <GripVertical className="w-3.5 h-3.5 text-muted-foreground/50" />
                   <button
                     className="p-0.5 hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed"
                     disabled={index === activeLocations.length - 1}
                     onClick={() => handleMoveDown(index)}
                     title="Move down"
                   >
-                    <ChevronDown className="w-4 h-4" />
+                    <ChevronDown className="w-3.5 h-3.5" />
                   </button>
                 </div>
 
                 {/* Location info + toggle stacked */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <h3 className="font-display font-medium">{location.name}</h3>
+                  <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                    <h3 className="font-sans font-medium text-sm truncate">{location.name}</h3>
                     {location.show_on_website ? (
-                      <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20">
-                        <Eye className="w-3 h-3 mr-1" />
+                      <Badge variant="secondary" className="text-[10px] bg-primary/10 text-primary border-primary/20">
+                        <Eye className="w-2.5 h-2.5 mr-0.5" />
                         Visible
                       </Badge>
                     ) : (
-                      <Badge variant="secondary" className="text-xs">
-                        <EyeOff className="w-3 h-3 mr-1" />
+                      <Badge variant="secondary" className="text-[10px]">
+                        <EyeOff className="w-2.5 h-2.5 mr-0.5" />
                         Hidden
                       </Badge>
                     )}
                   </div>
-                  <div className="space-y-1 text-sm text-muted-foreground">
-                    <p className="flex items-center gap-2">
+                  <div className="space-y-0.5 text-xs text-muted-foreground">
+                    <p className="flex items-center gap-1.5 truncate">
                       <MapPin className="w-3 h-3 shrink-0" />
-                      {location.address}, {location.city}
+                      <span className="truncate">{location.address}, {location.city}</span>
                     </p>
-                    <p className="flex items-center gap-2">
+                    <p className="flex items-center gap-1.5">
                       <Phone className="w-3 h-3 shrink-0" />
                       {location.phone}
                     </p>
-                    <p className="flex items-center gap-2">
+                    <p className="flex items-center gap-1.5 truncate">
                       <Clock className="w-3 h-3 shrink-0" />
-                      {formatHoursForDisplay(location.hours_json) || location.hours || 'No hours set'}
+                      <span className="truncate">{formatHoursForDisplay(location.hours_json) || location.hours || 'No hours set'}</span>
                     </p>
                   </div>
-                  {/* Toggle moved below info */}
+                  {/* Toggle */}
                   <div className="flex items-center gap-2 pt-2 mt-2 border-t">
                     <span className="text-xs text-muted-foreground">
                       Show on website
