@@ -8,15 +8,17 @@
 
 export const editorTokens = {
   // ========================================
-  // PANEL TOKENS (fixed-width glass bento)
+  // PANEL TOKENS (glass bento — width set via layout manager)
   // ========================================
   panel: {
-    /** Structure panel (left, 280px fixed) */
-    structure: 'w-[280px] flex-shrink-0 bg-card/80 backdrop-blur-xl border border-border/30 rounded-xl shadow-[0_1px_3px_0_rgba(0,0,0,0.04)]',
+    /** Structure panel (left — width from useEditorLayout) */
+    structure: 'flex-shrink-0 bg-card/80 backdrop-blur-xl border border-border/30 rounded-xl shadow-[0_1px_3px_0_rgba(0,0,0,0.04)]',
     /** Canvas panel (center, flexible) */
     canvas: 'flex-1 min-w-0 bg-muted/20 backdrop-blur-sm rounded-xl overflow-hidden border border-border/30 shadow-[0_1px_3px_0_rgba(0,0,0,0.04)]',
-    /** Inspector panel (right, 320px fixed) */
-    inspector: 'w-[320px] flex-shrink-0 bg-card/80 backdrop-blur-xl border border-border/30 rounded-xl shadow-[0_1px_3px_0_rgba(0,0,0,0.04)]',
+    /** Inspector panel (right — width from useEditorLayout) */
+    inspector: 'flex-shrink-0 bg-card/80 backdrop-blur-xl border border-border/30 rounded-xl shadow-[0_1px_3px_0_rgba(0,0,0,0.04)]',
+    /** Collapsed icon rail */
+    collapsedRail: 'w-10 flex-shrink-0 bg-card/80 backdrop-blur-xl border border-border/30 rounded-xl shadow-[0_1px_3px_0_rgba(0,0,0,0.04)] flex flex-col items-center py-3 gap-2',
     /** Shared panel header */
     header: 'h-12 px-4 border-b border-border/30 bg-card/90 backdrop-blur-md flex items-center',
   },
