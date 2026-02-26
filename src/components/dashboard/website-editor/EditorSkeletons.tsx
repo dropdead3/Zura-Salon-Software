@@ -94,7 +94,7 @@ export function CanvasPanelSkeleton() {
       </div>
 
       {/* Canvas surface with section card skeletons */}
-      <div className={cn(editorTokens.canvas.surface, 'flex-1 p-6 overflow-auto')}>
+      <div className={cn(editorTokens.canvas.surface, 'flex-1 p-6 overflow-auto scrollbar-thin')}>
         <div className="max-w-3xl mx-auto space-y-5">
           {/* Hero card */}
           <div className="rounded-[20px] bg-card/80 border border-border/30 p-6 space-y-4" style={{ minHeight: 200 }}>
