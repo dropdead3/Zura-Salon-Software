@@ -190,7 +190,7 @@ function AboveBarLabel({ x, y, width, value, ...rest }: any) {
         x={x + width / 2}
         y={y - 8}
         textAnchor="middle"
-        className={cn("text-xs tabular-nums", isPeak ? "fill-chart-2" : "fill-foreground")}
+        className={cn("text-sm tabular-nums", isPeak ? "fill-chart-2" : "fill-foreground")}
         style={{ fontWeight: isPeak ? 700 : 500, filter: isBlurred ? 'blur(8px)' : 'none' }}
       >
         {value >= 10000
