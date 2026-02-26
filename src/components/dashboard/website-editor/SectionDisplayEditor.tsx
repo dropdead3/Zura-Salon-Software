@@ -2,14 +2,13 @@ import { useState, useEffect, useCallback } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, LayoutGrid } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
 import { toast } from 'sonner';
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SliderInput } from './inputs/SliderInput';
 import { ToggleInput } from './inputs/ToggleInput';
-import { EditorCard } from './EditorCard';
 
 interface FieldConfig {
   key: string;
@@ -76,84 +75,78 @@ export function SectionDisplayEditor<T extends object>({
   }
 
   return (
-    <div>
-      <EditorCard
-        title={title}
-        icon={LayoutGrid}
-        description={description}
-      >
-        {fields.map((field) => {
-          const value = localConfig[field.key as keyof T];
+    <div className="space-y-5">
+      {fields.map((field) => {
+        const value = localConfig[field.key as keyof T];
 
-          switch (field.type) {
-            case 'text':
-              return (
-                <div key={field.key} className="space-y-2">
-                  <Label>{field.label}</Label>
-                  <Input
-                    value={(value as string) || ''}
-                    onChange={(e) => updateField(field.key, e.target.value)}
-                    placeholder={field.placeholder}
-                  />
-                </div>
-              );
-            case 'textarea':
-              return (
-                <div key={field.key} className="space-y-2">
-                  <Label>{field.label}</Label>
-                  <Textarea
-                    value={(value as string) || ''}
-                    onChange={(e) => updateField(field.key, e.target.value)}
-                    placeholder={field.placeholder}
-                    rows={3}
-                  />
-                </div>
-              );
-            case 'select':
-              return (
-                <div key={field.key} className="space-y-2">
-                  <Label>{field.label}</Label>
-                  <Select value={value as string} onValueChange={(v) => updateField(field.key, v)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {field.options?.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              );
-            case 'slider':
-              return (
-                <SliderInput
-                  key={field.key}
-                  label={field.label}
-                  value={value as number}
-                  onChange={(v) => updateField(field.key, v)}
-                  min={field.min ?? 1}
-                  max={field.max ?? 20}
-                  step={field.step ?? 1}
-                  unit={field.unit}
-                  description={field.description}
+        switch (field.type) {
+          case 'text':
+            return (
+              <div key={field.key} className="space-y-2">
+                <Label>{field.label}</Label>
+                <Input
+                  value={(value as string) || ''}
+                  onChange={(e) => updateField(field.key, e.target.value)}
+                  placeholder={field.placeholder}
                 />
-              );
-            case 'toggle':
-              return (
-                <ToggleInput
-                  key={field.key}
-                  label={field.label}
-                  value={value as boolean}
-                  onChange={(v) => updateField(field.key, v)}
-                  description={field.description}
+              </div>
+            );
+          case 'textarea':
+            return (
+              <div key={field.key} className="space-y-2">
+                <Label>{field.label}</Label>
+                <Textarea
+                  value={(value as string) || ''}
+                  onChange={(e) => updateField(field.key, e.target.value)}
+                  placeholder={field.placeholder}
+                  rows={3}
                 />
-              );
-            default:
-              return null;
-          }
-        })}
-      </EditorCard>
+              </div>
+            );
+          case 'select':
+            return (
+              <div key={field.key} className="space-y-2">
+                <Label>{field.label}</Label>
+                <Select value={value as string} onValueChange={(v) => updateField(field.key, v)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {field.options?.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            );
+          case 'slider':
+            return (
+              <SliderInput
+                key={field.key}
+                label={field.label}
+                value={value as number}
+                onChange={(v) => updateField(field.key, v)}
+                min={field.min ?? 1}
+                max={field.max ?? 20}
+                step={field.step ?? 1}
+                unit={field.unit}
+                description={field.description}
+              />
+            );
+          case 'toggle':
+            return (
+              <ToggleInput
+                key={field.key}
+                label={field.label}
+                value={value as boolean}
+                onChange={(v) => updateField(field.key, v)}
+                description={field.description}
+              />
+            );
+          default:
+            return null;
+        }
+      })}
     </div>
   );
 }

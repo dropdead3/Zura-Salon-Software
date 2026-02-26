@@ -585,26 +585,54 @@ export default function WebsiteSectionsHub() {
     if (activeTab === 'page-settings' && selectedPage) {
       return <PageSettingsEditor page={selectedPage} allPages={pagesConfig ?? undefined} onUpdate={handleUpdatePageSettings} />;
     }
+    // Resolve the section for Zone A (SectionStyleEditor)
+    let resolvedSection: SectionConfig | null = null;
+    let EditorComponent: React.ComponentType | null = null;
+
     if (isHomePage) {
-      const EditorComponent = EDITOR_COMPONENTS[activeTab];
-      if (EditorComponent) {
-        const sectionId = TAB_TO_SECTION[activeTab];
-        const section = sectionId ? sectionsConfig?.homepage.find(s => s.id === sectionId) : null;
-        return (
-          <div className="space-y-4">
-            <EditorComponent />
-            {section && <SectionStyleEditor value={section.style_overrides ?? {}} onChange={(overrides) => handleStyleOverrideChange(section.id, overrides)} sectionId={section.id} />}
-          </div>
-        );
-      }
+      EditorComponent = EDITOR_COMPONENTS[activeTab] ?? null;
+      const sectionId = TAB_TO_SECTION[activeTab];
+      resolvedSection = sectionId ? (sectionsConfig?.homepage.find(s => s.id === sectionId) ?? null) : null;
     }
+
     if (activeTab.startsWith('custom-')) {
       const sectionId = activeTab.replace('custom-', '');
       const section = getSelectedPageSections().find(s => s.id === sectionId);
       if (section) {
-        return <CustomSectionEditor sectionId={section.id} sectionType={section.type as CustomSectionType} sectionLabel={section.label} styleOverrides={section.style_overrides} onStyleChange={(overrides) => handleStyleOverrideChange(section.id, overrides)} onLabelChange={(newLabel) => handleSectionLabelChange(section.id, newLabel)} />;
+        resolvedSection = section;
       }
     }
+
+    // Render Zone A + divider + Zone B
+    return (
+      <div className="space-y-0">
+        {/* Zone A: Section-level controls */}
+        {resolvedSection && (
+          <SectionStyleEditor
+            value={resolvedSection.style_overrides ?? {}}
+            onChange={(overrides) => handleStyleOverrideChange(resolvedSection!.id, overrides)}
+            sectionId={resolvedSection.id}
+          />
+        )}
+
+        {/* Divider between zones */}
+        {resolvedSection && (
+          <div className="mx-1 my-1 border-t border-border/20" />
+        )}
+
+        {/* Zone B: Content controls */}
+        {EditorComponent ? (
+          <EditorComponent />
+        ) : activeTab.startsWith('custom-') && resolvedSection ? (
+          <CustomSectionEditor
+            sectionId={resolvedSection.id}
+            sectionType={resolvedSection.type as CustomSectionType}
+            sectionLabel={resolvedSection.label}
+            onLabelChange={(newLabel) => handleSectionLabelChange(resolvedSection!.id, newLabel)}
+          />
+        ) : null}
+      </div>
+    );
     return null;
   };
 
