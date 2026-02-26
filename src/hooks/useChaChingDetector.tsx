@@ -15,7 +15,7 @@ import { format } from 'date-fns';
  */
 export function useChaChingDetector() {
   const queryClient = useQueryClient();
-  const { playAchievement } = useNotificationSound();
+  const { playChaChing } = useNotificationSound();
   const { chaChingEnabled } = useSoundSettings();
   const chaChingHistory = useChaChingHistorySafe();
   const { data: profile } = useEmployeeProfile();
@@ -51,12 +51,12 @@ export function useChaChingDetector() {
         toast.custom((t) => <ChaChingToast amount={delta} toastId={t} />, {
           duration: 3000,
         });
-        playAchievement();
+        playChaChing();
       }
 
       prevRevenueRef.current = currentRevenue;
     });
 
     return unsubscribe;
-  }, [queryClient, today, chaChingEnabled, isEligible, playAchievement, chaChingHistory]);
+  }, [queryClient, today, chaChingEnabled, isEligible, playChaChing, chaChingHistory]);
 }

@@ -13,13 +13,13 @@ import { ChaChingToast } from '@/components/dashboard/ChaChingToast';
 export function CheckoutAlertsSection() {
   const { chaChingEnabled, setChaChingEnabled } = useSoundSettings();
   const { data: profile } = useEmployeeProfile();
-  const { playAchievement } = useNotificationSound();
+  const { playChaChing } = useNotificationSound();
   const isEligible = profile?.is_primary_owner || profile?.is_super_admin;
 
   if (!isEligible) return null;
 
   const handlePreview = () => {
-    playAchievement();
+    playChaChing();
     toast.custom((id) => <ChaChingToast amount={125} toastId={id} />, { duration: 5000 });
   };
 
