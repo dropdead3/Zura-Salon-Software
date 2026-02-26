@@ -14,7 +14,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { Check, ChevronRight, ChevronDown, ArrowLeft } from 'lucide-react';
+import { Check, ChevronRight, ChevronDown, ArrowLeft, Sparkles } from 'lucide-react';
 import {
   GOAL_TEMPLATES,
   GOAL_CATEGORY_LABELS,
@@ -44,6 +44,8 @@ function groupByCategory(templates: GoalTemplate[]): Record<GoalCategory, GoalTe
 }
 
 const CATEGORY_ORDER: GoalCategory[] = ['revenue', 'profitability', 'client', 'efficiency', 'team'];
+
+const RECOMMENDED_KEYS = ['monthly_revenue', 'labor_cost_pct', 'client_retention', 'utilization_rate', 'revenue_per_stylist'];
 
 function formatTarget(template: GoalTemplate): string {
   if (template.suggested_target === null) return '—';
@@ -200,6 +202,65 @@ export function GoalSetupDialog({
           /* ─── STEP 1: TEMPLATE PICKER ─── */
           <ScrollArea className="flex-1 min-h-0">
             <div className="px-6 pb-4 space-y-5">
+              {/* Quick Setup Banner */}
+              {(() => {
+                const availableRecommended = RECOMMENDED_KEYS.filter(k => !existingMetricKeys.includes(k));
+                if (availableRecommended.length === 0) return null;
+                const allSelected = availableRecommended.every(k => selectedKeys.has(k));
+                return (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const next = new Set(selectedKeys);
+                      const newStates = new Map(goalStates);
+                      availableRecommended.forEach(key => {
+                        if (allSelected) {
+                          next.delete(key);
+                        } else {
+                          next.add(key);
+                          if (!newStates.has(key)) {
+                            const tmpl = GOAL_TEMPLATES.find(t => t.metric_key === key);
+                            if (tmpl) {
+                              newStates.set(key, {
+                                metric_key: key,
+                                target_value: tmpl.suggested_target !== null ? String(tmpl.suggested_target) : '',
+                                warning_threshold: tmpl.suggested_warning !== null ? String(tmpl.suggested_warning) : '',
+                                critical_threshold: tmpl.suggested_critical !== null ? String(tmpl.suggested_critical) : '',
+                              });
+                            }
+                          }
+                        }
+                      });
+                      setSelectedKeys(next);
+                      setGoalStates(newStates);
+                    }}
+                    className={cn(
+                      'w-full flex items-center gap-3 rounded-xl border-2 p-4 transition-all text-left',
+                      allSelected
+                        ? 'border-primary bg-primary/5'
+                        : 'border-dashed border-primary/40 bg-primary/[0.02] hover:border-primary/60',
+                    )}
+                  >
+                    <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                      <Sparkles className="w-4.5 h-4.5 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="font-sans text-sm font-medium text-foreground block">
+                        Quick Setup — Recommended Goals
+                      </span>
+                      <span className="font-sans text-xs text-muted-foreground">
+                        Select the {availableRecommended.length} most impactful goals for your salon with one tap.
+                      </span>
+                    </div>
+                    <div className={cn(
+                      'w-5 h-5 rounded-full flex items-center justify-center shrink-0',
+                      allSelected ? 'bg-primary text-primary-foreground' : 'border border-border/60',
+                    )}>
+                      {allSelected && <Check className="w-3 h-3" />}
+                    </div>
+                  </button>
+                );
+              })()}
               {CATEGORY_ORDER.map(cat => {
                 const templates = grouped[cat];
                 if (!templates?.length) return null;

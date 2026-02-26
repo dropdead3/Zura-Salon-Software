@@ -2,7 +2,7 @@ import { tokens } from '@/lib/design-tokens';
 
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
-import { GoalCard } from './GoalCard';
+import { GoalCardWithData } from './GoalCardWithData';
 import type { OrganizationGoal, GoalCategory } from '@/hooks/useOrganizationGoals';
 import { GOAL_CATEGORY_LABELS, GOAL_CATEGORY_DESCRIPTIONS } from '@/hooks/useOrganizationGoals';
 
@@ -59,10 +59,9 @@ export function GoalCategorySection({
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {goals.map(goal => (
-            <GoalCard
+            <GoalCardWithData
               key={goal.id}
               goal={goal}
-              currentValue={null}
               onEdit={onEditGoal}
               onDelete={onDeleteGoal}
             />
