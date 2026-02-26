@@ -25,4 +25,3 @@ You're right to push back. The Sales Overview card should reflect what actually 
 - If POS has synced: all metrics reflect real transaction data
 - If POS hasn't synced: metrics show $0 / 0 transactions -- an honest signal that sync is pending
 - No more mixing appointment estimates into "actual" sales figures
-
