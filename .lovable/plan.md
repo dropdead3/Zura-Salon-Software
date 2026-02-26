@@ -1,26 +1,30 @@
 
 
-## Make Forecast Bar Labels More Accurate
+## Fix Bar Labels in ForecastingCard
 
-The `AboveBarLabel` component in `WeekAheadForecast.tsx` (line 64) currently formats all values with compact notation (`$4.00k`), which obscures precision. Values like $3,987 or $4,123 both display as "$4.00k" or "$4.12k" — losing meaningful detail.
+The change was applied to the wrong file. The chart visible on your dashboard is `ForecastingCard.tsx`, not `WeekAheadForecast.tsx`. The `AboveBarLabel` in `ForecastingCard.tsx` (line 195) uses a manual compact formatter that always rounds to thousands.
 
 ### Change
 
-**File: `src/components/dashboard/sales/WeekAheadForecast.tsx`** — line 64
+**File: `src/components/dashboard/sales/ForecastingCard.tsx`** — line 195
 
-Replace the compact formatting with a conditional approach:
-- Values under $10,000: show full dollar amount with no cents (e.g., `$3,987`, `$4,123`)
-- Values >= $10,000: keep compact notation with 2 decimals (e.g., `$12.35k`)
+Replace the manual `k` formatting with the same conditional approach:
 
 ```tsx
-// Line 64 — replace:
-{formatCurrencyPrecise(value, { compact: true, decimals: 2 })}
+// Current (line 195):
+{value >= 1000 ? formatCurrencyWholeUtil(Math.round(value / 1000)) + 'k' : formatCurrencyWholeUtil(value)}
 
-// With:
+// Replace with:
 {value >= 10000
   ? formatCurrencyPrecise(value, { compact: true, decimals: 2 })
   : formatCurrencyPrecise(value, { decimals: 0 })}
 ```
 
-This gives exact visibility for typical daily salon revenue ($1k–$9k range) while keeping compact notation for higher values to avoid label crowding.
+This requires adding the import for `formatCurrency as formatCurrencyPrecise` from `@/lib/format` (if not already present).
+
+- Values under $10,000: full dollar amount, no cents (e.g., `$3,411`, `$4,333`)
+- Values >= $10,000: compact with 2 decimals (e.g., `$12.35k`)
+
+### Files
+- **Edit**: `src/components/dashboard/sales/ForecastingCard.tsx` (line 195 + import)
 
