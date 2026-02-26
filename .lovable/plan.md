@@ -1,71 +1,43 @@
 
 
-## Analysis: Sync Performance Bottlenecks & Optimization Options
+## Fix: Non-Currency Counts Showing Decimal Places
 
-Good question. The sync is slow because of several compounding architectural choices. Here's what's happening and what we can do about it.
+Good catch. The penny-precision fix changed `AnimatedBlurredAmount`'s default `decimals` from `0` to `2`, which correctly shows `$4,050.00` for currency but incorrectly shows `36.00` for transaction counts, visit counts, and other integer metrics.
 
-### Current Bottlenecks (in order of impact)
+### Root Cause
 
-**1. CSV Export Polling (biggest delay: 4-30 seconds per branch)**
-The Phorest CSV export is a 3-step process: create job → poll every 2 seconds until done → download. For 2 branches, that's 2 sequential CSV jobs, each taking 4-10+ seconds of pure wait time. The logs show the job completing on attempt 1, meaning the 2-second initial delay is wasted -- we could poll sooner.
+`AnimatedBlurredAmount` (line 25) defaults `decimals = 2` regardless of whether the value is currency or a count. When no `currency` prop is passed, counts like Transactions, Total Visits, and New Bookings get formatted with `.00`.
 
-**2. Sequential Branch Processing**
-Sales, appointments, and clients all loop through branches one at a time. With 2 branches, each CSV export blocks the next. These could run in parallel using `Promise.all`.
+### Fix
 
-**3. Sequential Payment Method Propagation (lines 996-1008)**
-After syncing sales, the function iterates every transaction item and does an individual `UPDATE` query per row to propagate payment methods. For today's 44 items, that's 44 separate DB round trips.
+**File: `src/components/ui/AnimatedBlurredAmount.tsx`** (1 line change)
 
-**4. Sequential Appointment Status Reconciliation (lines 1024-1036)**
-Individual `UPDATE` per unique client+date combination. Another N queries where a single batch update would suffice.
+Change the default `decimals` to be context-aware: default to `2` when `currency` is provided, `0` when it's a plain count.
 
-**5. Sequential Tip Backfill (lines 1256-1272)**
-Individual `UPDATE` per tip group. Same N-query pattern.
+```typescript
+// Line 25, change:
+decimals = 2,
 
-**6. Client Sync: Individual Upserts + Duplicate Checks (lines 697-723)**
-Each client triggers an RPC call (`find_duplicate_phorest_clients`) then a separate upsert. For hundreds of clients, this is hundreds of sequential DB round trips.
+// To:
+decimals,
 
-**7. `all` Sync Type Runs Everything Sequentially (lines 1777-1863)**
-Staff → Appointments → Clients → Reports → Sales all run one after another. Independent sync types could run concurrently.
+// Then at line 76, resolve the default based on context:
+const resolvedDecimals = decimals ?? (currency ? 2 : 0);
+```
 
-### Proposed Optimizations
+Use `resolvedDecimals` in the formatting logic (lines 76-80) instead of `decimals`. This is a single-file, 3-line change that fixes every caller automatically -- no need to touch the ~12 component files that use `AnimatedBlurredAmount` without `currency`.
 
-| Optimization | Estimated Speedup | Complexity |
-|---|---|---|
-| **A. Parallel branch CSV exports** | 2x for sales sync | Low |
-| **B. Reduce CSV poll interval** (2s → 500ms initial, backoff) | 2-4s per branch | Low |
-| **C. Batch payment method propagation** (single SQL update with join) | Eliminates ~50 queries | Low |
-| **D. Batch tip backfill** (single update with join) | Eliminates ~20 queries | Low |
-| **E. Batch appointment reconciliation** (single update with `IN` clause) | Eliminates ~20 queries | Low |
-| **F. Parallel independent sync types** (appointments + sales concurrently) | ~40% total time reduction | Medium |
-| **G. Batch client upserts with dedup** (batch of 200 instead of 1-by-1) | Major for full client syncs | Medium |
-| **H. Skip unchanged data** (conditional sync based on Phorest `updatedAt`) | Avoids re-processing | Medium |
+### What changes
 
-### Recommended Implementation (Phase 1: Quick Wins)
+| Metric | Before | After |
+|--------|--------|-------|
+| Transactions | 36.00 | 36 |
+| Total Visits | 22.00 | 22 |
+| New Bookings | 5.00 | 5 |
+| Revenue | $4,050.00 | $4,050.00 (unchanged) |
+| Avg Ticket | $176.00 | $176.00 (unchanged) |
 
-Focus on A-E first -- they're all low-complexity changes to the edge function that compound together:
+### What stays the same
 
-**File: `supabase/functions/sync-phorest-data/index.ts`**
-
-1. **Parallel branch CSV exports**: Wrap the per-branch sales loop in `Promise.all` so both branches fetch CSV simultaneously
-2. **Faster CSV polling**: Start at 500ms, double each attempt (500ms → 1s → 2s → 4s), cap at 4s
-3. **Batch payment propagation**: Replace the per-row UPDATE loop with a single SQL join-update
-4. **Batch tip backfill**: Same pattern -- replace per-key loop with a single batch update
-5. **Batch appointment reconciliation**: Replace per-client loop with a single `IN` clause update
-
-Combined, these should cut the sales sync from ~30s to ~10-12s.
-
-### Phase 2 (If needed): Structural Changes
-
-6. **Run appointments + sales in parallel** when `sync_type === 'all'` (they're independent)
-7. **Batch client upserts** with in-memory dedup instead of per-client RPC
-
-### What We Won't Change
-
-- The CSV export approach itself is correct -- it's Phorest's recommended method
-- Quick mode (2-day window) is already the right optimization for scheduled syncs
-- Batch sizes of 200 for DB upserts are appropriate
-
-### Prompt Feedback
-
-Strong question. Asking "what could we do?" rather than prescribing a solution is the right approach for performance work -- it opens the door for architectural analysis rather than point fixes. One enhancement: if you can note approximately how long the sync takes (e.g., "it takes about 30 seconds"), that gives a baseline to measure improvements against.
+All currency-formatted values (anything with `currency` prop) remain at 2 decimal places. Only plain numeric counts revert to whole numbers.
 
