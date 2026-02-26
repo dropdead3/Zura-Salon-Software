@@ -1,68 +1,30 @@
 
-Great prompt direction — you identified the right problem space (data gap vs UI rendering). A tighter prompt next time would specify scope as: “fix data retrieval + rendering + row-limit handling for Products by Stylist.”
 
-## Goal
-Make retail transaction data consistently appear in **Products by Stylist** using existing synced transaction data, with no false empty state.
+## Add Product Line-Item Drilldown per Stylist
 
-## Findings (from code)
-- `useServiceProductDrilldown` now fetches product data correctly.
-- `ServiceProductDrilldown.tsx` still hardcodes product mode to always show:
-  - “Product data not yet available” empty state.
-- Product-mode row copy still says “service(s)” and includes tips text.
-- Hook does not handle comma-separated multi-location IDs (region filter path).
-- Hook queries are not paginated, so datasets over 1000 rows can silently truncate.
+**Goal**: When viewing "Products by Stylist," clicking a stylist row expands to show the individual products they sold (name + amount).
 
-## Implementation Plan
+### 1. Update the hook to return per-staff product line items
 
-1. **Fix product-mode rendering logic**
-   - File: `src/components/dashboard/ServiceProductDrilldown.tsx`
-   - Replace unconditional `!isServices` empty-state branch with:
-     - show empty state only when `sorted.length === 0`
-     - otherwise render list for both modes.
-   - Keep service and product empty-state messages mode-specific.
+**File**: `src/hooks/useServiceProductDrilldown.ts`
 
-2. **Fix mode-specific row labels**
-   - File: `src/components/dashboard/ServiceProductDrilldown.tsx`
-   - In product mode, change row subtitle to:
-     - `{productCount} product(s) · {sharePercent}% of total`
-   - Show tips only for services mode.
+- Add a new field to `StaffServiceProduct`: `productItems: Array<{ itemName: string; amount: number }>`.
+- While aggregating `productItems` in the product loop, also push each `{ itemName: item.item_name, amount: (total_amount + tax_amount) }` into a per-staff array.
+- Return these arrays so the UI can render them.
 
-3. **Support multi-location filters in hook**
-   - File: `src/hooks/useServiceProductDrilldown.ts`
-   - Update location filter handling to support:
-     - single ID via `.eq`
-     - comma-separated IDs via `.in`
-   - Apply same logic to both appointments and transaction-item queries.
+### 2. Add expandable product list to the drilldown UI
 
-4. **Add pagination for data integrity**
-   - File: `src/hooks/useServiceProductDrilldown.ts`
-   - Add `fetchAllPages` batching for:
-     - `phorest_appointments`
-     - `phorest_transaction_items`
-   - Prevent 1000-row truncation from causing missing retail totals/staff rows.
+**File**: `src/components/dashboard/ServiceProductDrilldown.tsx`
 
-5. **Stabilize date filtering**
-   - File: `src/hooks/useServiceProductDrilldown.ts`
-   - Normalize transaction date bounds to full-day timestamps for accuracy:
-     - start `T00:00:00`
-     - end `T23:59:59.999`
-   - Keep appointment date filters as-is if date-only schema.
+- Track `expandedStaffId` state (single string or null).
+- On staff row click (product mode only), toggle expanded state.
+- When expanded, render a list of `staff.productItems` below the row summary showing each product name and its tax-inclusive amount.
+- Add a subtle chevron indicator on product-mode rows to signal expandability.
+- Service-mode rows remain non-expandable (no change).
 
-6. **Optional resilience layer (only if gaps persist)**
-   - Add backend function fallback to provider reports endpoint for daily retail totals/staff splits when local transaction sync is temporarily stale.
-   - Use only as secondary fallback; local synced transaction table remains primary source.
+### Technical details
+- Product items are already fetched with `item_name` — no additional query needed.
+- Tax-inclusive per-item: `(total_amount + tax_amount)`.
+- Items sorted by amount descending within each staff expansion.
+- Styling: indented list within the `bg-muted/30 rounded-xl` card, separated by thin borders, using `text-xs` for item names and `tabular-nums` for amounts.
 
-## Technical Details
-- Keep tax-inclusive retail math everywhere in this flow:
-  - `amount = total_amount + tax_amount`
-- Preserve current output contract:
-  - `staffData`, `totalServiceRevenue`, `totalProductRevenue`
-- Maintain staff union merge behavior so product-only staff still render.
-
-## Validation Checklist
-- Open Products by Stylist with known product sales:
-  - rows render (not empty message),
-  - totals match expected tax-inclusive value.
-- Test `All Locations`, specific location, and region-filtered (multi-ID) paths.
-- Test high-volume date range to confirm no 1000-row clipping.
-- Confirm service mode remains unchanged and still shows tips.
