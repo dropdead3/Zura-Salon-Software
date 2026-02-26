@@ -1,4 +1,4 @@
-import { useMemo, useEffect } from 'react';
+import { useMemo, useEffect, useState, useCallback } from 'react';
 import React from 'react';
 import { HeroSection } from '@/components/home/HeroSection';
 import { BrandStatement } from '@/components/home/BrandStatement';
@@ -33,12 +33,22 @@ const BUILTIN_COMPONENTS: Record<BuiltinSectionType, React.ReactNode> = {
   drink_menu: <DrinkMenuSection />,
 };
 
+// Detect editor preview mode (inside iframe)
+const isEditorPreview = typeof window !== 'undefined'
+  && new URLSearchParams(window.location.search).has('preview');
+
 interface PageSectionRendererProps {
   sections: SectionConfig[];
 }
 
 export function PageSectionRenderer({ sections }: PageSectionRendererProps) {
+  const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
+
   const enabledSections = useMemo(() => {
+    if (isEditorPreview) {
+      // In editor, show all sections (enabled and disabled) so user can toggle
+      return [...sections].sort((a, b) => a.order - b.order);
+    }
     return [...sections]
       .filter(s => s.enabled)
       .sort((a, b) => a.order - b.order);
@@ -63,12 +73,55 @@ export function PageSectionRenderer({ sections }: PageSectionRendererProps) {
           setTimeout(() => el.classList.remove('preview-highlight'), 1000);
         }
       }
+
+      if (msg.type === 'PREVIEW_SET_ACTIVE_SECTION') {
+        setSelectedSectionId(msg.sectionId || null);
+      }
     };
 
     window.addEventListener('message', handler);
     return () => window.removeEventListener('message', handler);
   }, []);
 
+  // Editor preview: floating bento cards
+  if (isEditorPreview) {
+    // Lazy load editor-only components
+    const EditorSectionCard = React.lazy(() => import('@/components/home/EditorSectionCard').then(m => ({ default: m.EditorSectionCard })));
+    const InsertionLine = React.lazy(() => import('@/components/home/InsertionLine').then(m => ({ default: m.InsertionLine })));
+
+    return (
+      <div className="zura-editor-preview px-4 sm:px-6 lg:px-8 py-6 space-y-0">
+        <React.Suspense fallback={null}>
+          {enabledSections.map((section, index) => (
+            <React.Fragment key={section.id}>
+              {index > 0 && <InsertionLine afterSectionId={enabledSections[index - 1].id} />}
+              <EditorSectionCard
+                sectionId={section.id}
+                sectionLabel={section.label}
+                enabled={section.enabled}
+                isSelected={selectedSectionId === section.id}
+              >
+                <div id={`section-${section.id}`}>
+                  <SectionStyleWrapper styleOverrides={section.style_overrides}>
+                    {isBuiltinSection(section.type)
+                      ? BUILTIN_COMPONENTS[section.type]
+                      : <CustomSectionRenderer sectionId={section.id} sectionType={section.type as CustomSectionType} />
+                    }
+                  </SectionStyleWrapper>
+                </div>
+              </EditorSectionCard>
+            </React.Fragment>
+          ))}
+          {/* Insertion line after last section */}
+          {enabledSections.length > 0 && (
+            <InsertionLine afterSectionId={enabledSections[enabledSections.length - 1].id} />
+          )}
+        </React.Suspense>
+      </div>
+    );
+  }
+
+  // Public site: render flat (unchanged)
   return (
     <>
       {enabledSections.map((section) => (
