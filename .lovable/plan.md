@@ -1,41 +1,32 @@
 
 
-## Replace Cha-Ching Drawer with Apple-Style Notification Stack
+## Fix: Triplicate Cha-Ching Notifications
 
-**Problem**: The current implementation uses a Sheet drawer to show cha-ching history. The user wants Apple Notification Center-style behavior — individual glass cards that stack vertically on the right edge, expandable/collapsible, not a drawer.
+**Root Cause**: `useTodayActualRevenue` contains the cha-ching notification logic (toast + `addNotification` + sound). This hook is mounted by both `AggregateSalesCard` and `PinnedAnalyticsCard` simultaneously. Each instance has its own `prevRevenueRef`, so each independently detects the revenue increase and fires a separate notification — producing 3 identical entries.
 
-### Approach
+**Fix**: Extract the cha-ching detection logic out of `useTodayActualRevenue` and into a **single dedicated component** that mounts once in `DashboardLayout`.
 
-Replace the `ChaChingDrawer` (Sheet-based) with a `ChaChingNotificationCenter` — a fixed overlay panel on the right side that shows stacked glass bento notification cards, Apple-style.
+### 1. Create `src/hooks/useChaChingDetector.ts`
 
-### 1. Replace `ChaChingDrawer.tsx` with `ChaChingNotificationCenter.tsx`
+A new hook that:
+- Subscribes to the `['today-actual-revenue']` query cache via `useQueryClient().getQueryData()`
+- Tracks `prevRevenueRef` in a single place
+- Fires `addNotification`, `toast.custom(ChaChingToast)`, and `playAchievement()` exactly once per revenue increase
 
-**Delete the Sheet-based drawer. Create new component:**
+### 2. Remove cha-ching logic from `useTodayActualRevenue.tsx`
 
-- **Sticky tab** (keep): Fixed right-edge tab with `DollarSign` icon + unread badge. Clicking toggles the notification stack open/closed.
-- **Notification stack**: A fixed-position panel (`fixed right-4 top-20 z-50 w-[340px]`) that renders notification cards stacked vertically with `space-y-2`, newest on top.
-- Each card is a `SilverShineWrapper` glass bento card (`bg-card/80 backdrop-blur-xl rounded-xl border-border/40`) — same styling as the toast.
-- Cards show: icon, amount, relative time, dismiss (X) button on hover.
-- **Grouped summary**: When more than 3 notifications exist, collapse older ones into a summary card ("+ N more checkouts") that expands on click — like Apple groups notifications.
-- **Clear all** button at bottom when expanded.
-- **Click outside** or tab button again to collapse.
-- Animate cards in with `framer-motion` (`AnimatePresence` + slide-in from right).
+- Delete the `useEffect` at lines 144–163 that detects revenue changes
+- Remove imports: `toast`, `ChaChingToast`, `useNotificationSound`, `useSoundSettings`, `useChaChingHistorySafe`
+- Remove `prevRevenueRef`
+- This hook becomes purely a data-fetching hook (its proper responsibility)
 
-### 2. Update `useChaChingHistory.tsx`
+### 3. Mount the detector once in `DashboardLayout.tsx`
 
-- Add `dismissNotification(id: string)` to remove individual items.
-- Add `clearAll()` to remove everything.
-
-### 3. Update `DashboardLayout.tsx`
-
-- Replace `ChaChingDrawer` import/render with `ChaChingNotificationCenter`.
-
-### 4. Keep `ChaChingToast.tsx` unchanged
-
-- The sonner toast still fires on new checkouts (the ephemeral popup). The notification center is the persistent history view — they complement each other.
+- Call `useChaChingDetector()` inside `DashboardLayout` (which already provides `ChaChingHistoryProvider`)
+- This guarantees exactly one instance regardless of how many components consume `useTodayActualRevenue`
 
 ### Files
-- **Rewrite**: `src/components/dashboard/ChaChingDrawer.tsx` → `src/components/dashboard/ChaChingNotificationCenter.tsx`
-- **Edit**: `src/hooks/useChaChingHistory.tsx` — add `dismissNotification`, `clearAll`
-- **Edit**: `src/components/dashboard/DashboardLayout.tsx` — swap component import
+- **Create**: `src/hooks/useChaChingDetector.ts`
+- **Edit**: `src/hooks/useTodayActualRevenue.tsx` — remove notification side effects
+- **Edit**: `src/components/dashboard/DashboardLayout.tsx` — mount detector hook
 
