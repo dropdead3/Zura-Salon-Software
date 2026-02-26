@@ -150,6 +150,14 @@ import { TopBarSearch } from '@/components/dashboard/TopBarSearch';
 import { SuperAdminTopBar } from '@/components/dashboard/SuperAdminTopBar';
 import { ChaChingNotificationCenter } from '@/components/dashboard/ChaChingNotificationCenter';
 import { ChaChingHistoryProvider } from '@/hooks/useChaChingHistory';
+import { useChaChingDetector } from '@/hooks/useChaChingDetector';
+
+
+/** Mounts the cha-ching detector exactly once inside the ChaChingHistoryProvider */
+function ChaChingDetectorMount() {
+  useChaChingDetector();
+  return null;
+}
 
 // Role colors/icons now come from useRoleUtils hook
 
@@ -1333,6 +1341,7 @@ export function DashboardLayout(props: DashboardLayoutProps) {
               isPlatformRoute && 'platform-theme platform-gradient-radial min-h-screen'
             )}>
               <DashboardLayoutWithLock {...props} />
+              <ChaChingDetectorMount />
               <ChaChingNotificationCenter />
               <ZuraStickyGuidance />
             </div>
