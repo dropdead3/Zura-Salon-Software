@@ -1,94 +1,164 @@
 
 
-## Luxury Skeleton Loaders for Website Editor
+## Refactor Inspector Panel — Promote Section Styling, Remove Card-in-Card
 
-### Approach
+### What I Found
 
-Create a single `EditorSkeletons.tsx` file containing three skeleton components (Structure, Canvas, Inspector) that match the exact dimensions and glass styling of the real panels. Wire them into `WebsiteSectionsHub.tsx` using the existing `isLoading` state from `useWebsiteSections` and `useWebsitePages`.
+The inspector currently has a **card-within-card** problem. Here's the nesting chain:
 
-The animation uses a subtle opacity pulse (1.0 → 0.94 → 1.0, 2s duration) via a custom Tailwind animation -- no shimmer gradients.
-
----
-
-### Technical Details
-
-#### New file: `src/components/dashboard/website-editor/EditorSkeletons.tsx`
-
-Three exported components:
-
-**`StructurePanelSkeleton`**
-- Glass container matching `editorTokens.panel.structure`
-- Segmented control placeholder (3 pill shapes in `bg-muted/60` container)
-- Search bar placeholder
-- 8 rows: each with a 20px circle + text bar (60-80% width, varying), correct 8px vertical gap
-- Row indentation for 2-3 rows to simulate hierarchy
-
-**`CanvasPanelSkeleton`**
-- Glass container matching `editorTokens.panel.canvas`
-- Header strip matching `editorTokens.canvas.controlStrip` with placeholder blocks for back button, site name, viewport toggle, action buttons
-- 4 floating section card skeletons inside the canvas area:
-  - Card 1 (Hero): tall (200px), full-width title bar (65%), subtitle bar (45%), pill button shape
-  - Card 2 (Text): medium (120px), 4 text bars of varying widths
-  - Card 3 (Gallery): medium (140px), 3 rectangular image placeholders in a row
-  - Card 4 (CTA): short (80px), centered title bar + button pill
-- Cards use `rounded-[20px]`, `bg-card/80`, `border-border/30` -- matching `EditorSectionCard`
-- Vertical spacing: `space-y-5` matching the real layout
-
-**`InspectorPanelSkeleton`**
-- Glass container matching `editorTokens.panel.inspector`
-- Header bar placeholder
-- 3 collapsible group sections, each with:
-  - Group header bar (uppercase-width placeholder)
-  - 2-3 input field rows (label bar + input rectangle)
-  - 1 toggle switch placeholder
-- 32px group spacing, 16px field spacing
-
-All skeleton shapes use `bg-muted/60 rounded-md` with the custom pulse animation.
-
-#### Custom animation (added to `tailwind.config.ts`):
-
-```
-"skeleton-pulse": "skeleton-pulse 2s ease-in-out infinite"
-```
-Keyframes: `0%,100% { opacity: 1 } 50% { opacity: 0.94 }`
-
-#### Modified: `src/pages/dashboard/admin/WebsiteSectionsHub.tsx`
-
-Add loading gate near the top of the render:
-
-```typescript
-const { data: sectionsConfig, isLoading: sectionsLoading } = useWebsiteSections();
-const { data: pagesConfig, isLoading: pagesLoading } = useWebsitePages();
-const isEditorLoading = sectionsLoading || pagesLoading;
+```text
+InspectorPanel (glass bento panel — bg-card/80, border, rounded-xl)
+  └─ ScrollArea
+       └─ PanelSlideIn (animation wrapper)
+            └─ div.space-y-4
+                 ├─ EditorCard (SECOND card — bg-card/80, border, rounded-xl, sticky header)
+                 │    └─ Content fields (inputs, toggles, etc.)
+                 └─ SectionStyleEditor (THIRD card — border rounded-lg collapsible)
 ```
 
-When `isEditorLoading` is true, render the skeleton shell instead of real panels:
+Three nested containers. The `EditorCard` inside the inspector is redundant — the inspector panel itself already provides the glass bento container, header, and scrolling. And `SectionStyleEditor` sits at the very bottom, after all content fields, buried beneath CTAs and advanced settings.
 
-```tsx
-{isEditorLoading ? (
-  <>
-    <StructurePanelSkeleton width={layout.structureWidth} visible={layout.structureVisible} />
-    <CanvasPanelSkeleton />
-    <InspectorPanelSkeleton width={layout.inspectorWidth} visible={layout.inspectorVisible} />
-  </>
-) : (
-  // existing panel rendering
-)}
-```
+### Architecture of the Fix
 
-Skeleton panels accept `width` and `visible` props to match the layout manager's computed sizes, ensuring zero layout shift when content resolves.
+**Zone A — Section-Level Controls** (top of inspector, directly under breadcrumb header):
+- `SectionStyleEditor` (collapsible, default collapsed, borderless)
+- Subtle divider
 
-Content crossfade: wrap the real panels in a `motion.div` with `initial={{ opacity: 0 }}` and `animate={{ opacity: 1 }}` over 200ms when loading completes.
+**Zone B — Content Controls** (everything below):
+- Editor fields directly rendered (no `EditorCard` wrapper)
 
----
+### Files to Change
 
-### Files Summary
-
-| Action | File |
+| File | Change |
 |---|---|
-| Create | `src/components/dashboard/website-editor/EditorSkeletons.tsx` |
-| Modify | `src/pages/dashboard/admin/WebsiteSectionsHub.tsx` |
-| Modify | `tailwind.config.ts` (add skeleton-pulse keyframe) |
+| `WebsiteSectionsHub.tsx` | Restructure `renderEditor()` to render `SectionStyleEditor` first (Zone A), then a divider, then the editor component (Zone B). |
+| `HeroEditor.tsx` | Remove `EditorCard` wrapper. Return fields directly. Move reset button to a prop/callback system or keep inline without card chrome. |
+| `SectionDisplayEditor.tsx` | Remove `EditorCard` wrapper. Return fields directly in a `space-y-5` div. |
+| `CustomSectionEditor.tsx` | Remove `EditorCard` wrapper. Return fields directly. Remove its own `SectionStyleEditor` (now handled by parent). |
+| `SectionStyleEditor.tsx` | Remove `border rounded-lg` container styling. Use borderless collapsible with subtle group-header typography matching `editorTokens.inspector.groupHeader`. |
 
-No public site files modified. No database changes.
+### Detailed Changes
+
+#### 1. `WebsiteSectionsHub.tsx` — `renderEditor()` (lines 584-609)
+
+Current:
+```tsx
+const renderEditor = () => {
+  // ...
+  return (
+    <div className="space-y-4">
+      <EditorComponent />  {/* ← contains EditorCard */}
+      {section && <SectionStyleEditor ... />}  {/* ← at bottom */}
+    </div>
+  );
+};
+```
+
+New:
+```tsx
+const renderEditor = () => {
+  // ...
+  const sectionId = TAB_TO_SECTION[activeTab];
+  const section = sectionId ? sectionsConfig?.homepage.find(s => s.id === sectionId) : null;
+
+  return (
+    <div className="space-y-0">
+      {/* Zone A: Section-level controls */}
+      {section && (
+        <SectionStyleEditor
+          value={section.style_overrides ?? {}}
+          onChange={(overrides) => handleStyleOverrideChange(section.id, overrides)}
+          sectionId={section.id}
+        />
+      )}
+
+      {/* Divider between zones */}
+      {section && (
+        <div className="mx-1 my-1 border-t border-border/20" />
+      )}
+
+      {/* Zone B: Content controls */}
+      <EditorComponent />
+    </div>
+  );
+};
+```
+
+Same pattern applied to the `custom-` branch: move `SectionStyleEditor` above `renderFields()`.
+
+#### 2. `HeroEditor.tsx`
+
+Remove `EditorCard` wrapper entirely. The component currently returns:
+```tsx
+<div className="space-y-6 h-full">
+  <EditorCard title="Hero Section" icon={Sparkles} headerActions={resetButton}>
+    {/* all fields */}
+  </EditorCard>
+</div>
+```
+
+Replace with:
+```tsx
+<div className="space-y-5">
+  {/* all fields directly — no EditorCard */}
+</div>
+```
+
+The reset button moves to a small inline row at the top (or stays as a ghost button within the field flow). The title/icon are redundant because the `InspectorPanel` breadcrumb already shows "Home → Hero Section".
+
+#### 3. `SectionDisplayEditor.tsx`
+
+Same pattern — remove `EditorCard` wrapper. Return fields in a flat `space-y-5` div. The `title` and `description` props become unused (already displayed in the inspector breadcrumb). Keep the loading spinner as-is.
+
+#### 4. `CustomSectionEditor.tsx`
+
+Remove `EditorCard` wrapper. Remove the `SectionStyleEditor` render at the bottom (lines 303-309) — this is now handled by `renderEditor()` in the parent. Keep the label-editing input as a standalone row at the top of the fields.
+
+#### 5. `SectionStyleEditor.tsx`
+
+Current styling: `border rounded-lg` on the Collapsible root, full-width ghost Button trigger.
+
+New styling:
+- Remove `border rounded-lg` from the Collapsible container
+- Style the trigger to match `editorTokens.inspector.groupHeader` (uppercase tracking, subtle border-t)
+- Keep `CollapsibleContent` padding as-is but remove boxing
+- This makes it feel like a native inspector group, not a separate card
+
+### Visual Result
+
+```text
+┌─────────────────────────────┐
+│ Home → Hero Section     [▸] │  ← breadcrumb header (existing)
+├─────────────────────────────┤
+│                             │
+│ SECTION STYLING      [▸]   │  ← Zone A: collapsible, collapsed by default
+│   (Background, Padding,    │     expands inline, no card border
+│    Max Width, Radius)       │
+│                             │
+│ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ │  ← subtle divider (border-border/20)
+│                             │
+│ Show Eyebrow        [    ] │  ← Zone B: content fields, flat
+│ Eyebrow Text    [________] │
+│ Show Rotating   [    ]     │
+│ Rotating Words  [________] │
+│ Show Subheadline [    ]    │
+│                             │
+│ ─ Call to Action ────────── │
+│ Primary Button  [________] │
+│ Primary URL     [________] │
+│                             │
+│ ⚙ Advanced Settings  Show  │
+│                             │
+└─────────────────────────────┘
+```
+
+No card-within-card. Section Styling is immediately discoverable at the top. Content fields flow naturally with typographic hierarchy and spacing as structure.
+
+### Scope
+
+- 5 files modified
+- No public site changes
+- No database changes
+- No canvas or theme changes
+- Strictly editor inspector panel UX
 
