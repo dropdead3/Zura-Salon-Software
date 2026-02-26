@@ -200,7 +200,10 @@ export function PhorestSyncPopout({ asMenuItem = false }: { asMenuItem?: boolean
                 <span 
                   className={cn(
                     "absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-background",
-                    getHealthColor()
+                    getHealthColor(),
+                    health === 'healthy' && "shadow-[0_0_4px_hsl(var(--primary))]",
+                    health === 'error' && "shadow-[0_0_4px_hsl(var(--destructive))]",
+                    health === 'stale' && "shadow-[0_0_4px_hsl(var(--warning))]",
                   )} 
                 />
               </Button>
@@ -212,15 +215,15 @@ export function PhorestSyncPopout({ asMenuItem = false }: { asMenuItem?: boolean
         </TooltipContent>
       </Tooltip>
       
-      <PopoverContent align="end" className="w-72 p-0">
+      <PopoverContent align="end" className="w-80 p-0 bg-card/80 backdrop-blur-xl border-border/30 rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-border/20">
           <h4 className="font-display text-xs uppercase tracking-wider text-foreground">
             {syncLabel}
           </h4>
           <Link 
             to="/dashboard/admin/phorest-settings" 
-            className="flex items-center gap-1 text-xs text-primary hover:underline"
+            className="flex items-center gap-1 font-display text-[10px] uppercase tracking-wider text-primary hover:text-primary/80 transition-colors"
           >
             Settings
             <ChevronRight className="w-3 h-3" />
@@ -228,16 +231,16 @@ export function PhorestSyncPopout({ asMenuItem = false }: { asMenuItem?: boolean
         </div>
         
         {/* Sync Status List */}
-        <div className="p-4 space-y-3">
+        <div className="px-5 py-4 space-y-2">
           {/* Appointments */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between bg-card-inner/50 rounded-lg px-3 py-2.5">
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm font-medium">Appointments</span>
+              <span className="text-sm">Appointments</span>
             </div>
             <div className="flex items-center gap-2">
               <span className={cn(
-                "text-xs",
+                "text-[11px]",
                 appointmentSync?.status === 'failed' ? "text-destructive" : "text-muted-foreground"
               )}>
                 {getTimeAgo(appointmentSync?.completed_at || null)}
@@ -247,14 +250,14 @@ export function PhorestSyncPopout({ asMenuItem = false }: { asMenuItem?: boolean
           </div>
           
           {/* Sales */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between bg-card-inner/50 rounded-lg px-3 py-2.5">
             <div className="flex items-center gap-2">
               <DollarSign className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm font-medium">Sales</span>
+              <span className="text-sm">Sales</span>
             </div>
             <div className="flex items-center gap-2">
               <span className={cn(
-                "text-xs",
+                "text-[11px]",
                 salesSync?.status === 'failed' ? "text-destructive" : "text-muted-foreground"
               )}>
                 {getTimeAgo(salesSync?.completed_at || null)}
@@ -265,11 +268,11 @@ export function PhorestSyncPopout({ asMenuItem = false }: { asMenuItem?: boolean
         </div>
         
         {/* Sync Now Button */}
-        <div className="px-4 pb-4">
+        <div className="px-5 pb-5 pt-2">
           <Button 
             onClick={handleSyncNow} 
             disabled={isSyncing}
-            className="w-full"
+            className="w-full rounded-full bg-foreground text-background hover:bg-foreground/80"
             size={tokens.button.card}
           >
             {isSyncing ? (
@@ -287,8 +290,8 @@ export function PhorestSyncPopout({ asMenuItem = false }: { asMenuItem?: boolean
         </div>
         
         {/* Footer hint */}
-        <div className="px-4 py-2 bg-muted/50 border-t border-border">
-          <p className="text-xs text-muted-foreground text-center">
+        <div className="px-5 py-2 border-t border-border/10">
+          <p className="text-[11px] text-muted-foreground/50 text-center">
             Auto-syncs every 5 minutes
           </p>
         </div>
