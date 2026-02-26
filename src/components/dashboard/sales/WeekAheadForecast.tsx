@@ -5,7 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
-import { formatCurrencyWhole as formatCurrencyWholeUtil } from '@/lib/formatCurrency';
+import { formatCurrency as formatCurrencyPrecise } from '@/lib/format';
 import { useWeekAheadRevenue, DayForecast } from '@/hooks/useWeekAheadRevenue';
 import { LocationSelect } from '@/components/ui/location-select';
 import { DayAppointmentsSheet } from './DayAppointmentsSheet';
@@ -61,7 +61,7 @@ function AboveBarLabel({ x, y, width, value, ...rest }: any) {
         className={cn("text-xs tabular-nums", isPeak ? "fill-chart-2" : "fill-foreground")}
         style={{ fontWeight: isPeak ? 700 : 500 }}
       >
-        {formatCurrencyWholeUtil(value)}
+        {formatCurrencyPrecise(value, { compact: true, decimals: 2 })}
       </text>
     </g>
   );
