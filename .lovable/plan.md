@@ -1,32 +1,39 @@
 
 
-## Add cha-ching notification toggle setting
+## Fix: Revenue display falls back to transaction items when daily summary is empty
 
-**Approach**: Extend the existing `SoundSettingsContext` with a dedicated `chaChingEnabled` flag (separate from the general sounds toggle), and gate the toast + sound in `useTodayActualRevenue.ts` behind it. Add the toggle to the existing `SoundSettingsSection`.
+**Problem**: `useTodayActualRevenue` only queries `phorest_daily_sales_summary`. When the daily aggregation hasn't synced yet, it shows $0 — even though raw transaction data exists in `phorest_transaction_items` (which is why Top Performers shows $162).
 
-### 1. Extend `SoundSettingsContext` (`src/contexts/SoundSettingsContext.tsx`)
+**Solution**: Add a fallback query to `phorest_transaction_items` inside `useTodayActualRevenue.ts`. When the daily summary returns no rows for today, sum revenue directly from transaction items instead.
 
-- Add `chaChingEnabled` boolean + `setChaChingEnabled` setter to the context value
-- New localStorage key: `dashboard-cha-ching-enabled`, defaulting to `true`
-- Same pattern as the existing `enabled` / `setEnabled`
+### File: `src/hooks/useTodayActualRevenue.ts`
 
-### 2. Gate the cha-ching effect (`src/hooks/useTodayActualRevenue.ts`)
+**Change the `actualRevenueQuery` (lines 64-92)**:
 
-- Import `useSoundSettings` from `SoundSettingsContext`
-- Read `chaChingEnabled` from the context
-- Wrap the toast + `playAchievement()` call inside the existing `useEffect` with `if (!chaChingEnabled) return;` before the delta check
-- Still track `prevRevenueRef` regardless (so toggling on mid-session doesn't fire a false delta)
+1. Keep the existing `phorest_daily_sales_summary` query as the primary source.
+2. After checking `if (!data || data.length === 0)`, instead of returning zeros, query `phorest_transaction_items` for today's date:
+   - Sum `total_amount` grouped by `item_type` (service vs product)
+   - Count distinct `phorest_client_id` for transaction count
+   - Return these as the fallback values with `hasData: true` if revenue > 0
+3. Mark the result with a `source: 'summary' | 'transactions'` flag (optional, for debugging clarity).
 
-### 3. Add toggle to Sound Settings UI (`src/components/dashboard/settings/SoundSettingsSection.tsx`)
+**Same pattern for `locationActualRevenueQuery` (lines 134-160)**:
+- Apply the same fallback: if `phorest_daily_sales_summary` returns no rows, query `phorest_transaction_items` grouped by `location_id`.
 
-- Read `chaChingEnabled` / `setChaChingEnabled` from `useSoundSettings()`
-- Add a new row below the existing "Enable notification sounds" toggle:
-  - Label: "Checkout notifications"
-  - Description: "Show a cha-ching alert when a client checks out"
-  - Switch bound to `chaChingEnabled` / `setChaChingEnabled`
+**Also subscribe to realtime on `phorest_transaction_items`** (lines 42-56):
+- Add a second `.on()` listener for `phorest_transaction_items` table changes so the cha-ching notification fires even when the daily summary hasn't synced.
+
+### Technical detail
+
+```text
+Primary path:   phorest_daily_sales_summary (today)
+                  ↓ empty?
+Fallback path:  phorest_transaction_items (today)
+                  → SUM total_amount WHERE item_type = 'service'  → serviceRevenue
+                  → SUM total_amount WHERE item_type = 'product'  → productRevenue
+                  → COUNT DISTINCT phorest_client_id              → transactions
+```
 
 ### Files changed
-- `src/contexts/SoundSettingsContext.tsx` — add `chaChingEnabled` state + localStorage persistence
-- `src/hooks/useTodayActualRevenue.ts` — gate toast/sound behind `chaChingEnabled`
-- `src/components/dashboard/settings/SoundSettingsSection.tsx` — add toggle row
+- `src/hooks/useTodayActualRevenue.ts` — add transaction items fallback + realtime listener
 
