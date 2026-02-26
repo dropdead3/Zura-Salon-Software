@@ -54,7 +54,21 @@ export const TYPOGRAPHY_RULES = {
     'Import tokens from @/lib/design-tokens for consistent class strings',
     'KPI tile labels MUST use tokens.kpi.label (Termina) — never font-sans for uppercase metric labels',
     'Table column headers MUST use tokens.table.columnHeader (Aeonik Pro, Title Case) — NEVER uppercase',
+    'All Sheet/Drawer components inherit glass bento defaults from primitives — DO NOT override with bg-background or bg-card',
+    'Drawer/Sheet tokens: tokens.drawer.overlay, tokens.drawer.content, tokens.drawer.header, tokens.drawer.title',
   ],
+
+  DRAWER_SHEET_RULES: {
+    aesthetic: 'Luxury Glass Bento — bg-card/80, backdrop-blur-xl, border-border, shadow-2xl',
+    overlay: 'backdrop-blur-sm bg-black/40 (NOT bg-black/80)',
+    header: 'p-5 pb-3 border-b border-border/40 — text-left by default',
+    title: 'font-display text-sm tracking-wide uppercase (Termina)',
+    closeButton: 'rounded-full bg-muted/60 hover:bg-muted',
+    body: 'p-5 — no p-6, no raw padding overrides',
+    footer: 'p-5 pt-3 border-t border-border/40',
+    prohibited: ['bg-background on SheetContent', 'bg-black/80 overlay', 'p-6 shadow-lg', 'font-bold on titles'],
+    token: 'tokens.drawer.*',
+  },
 
   TABLE_COLUMN_HEADER_RULES: {
     font: 'Aeonik Pro (font-sans)',
