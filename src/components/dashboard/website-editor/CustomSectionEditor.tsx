@@ -9,10 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Slider } from '@/components/ui/slider';
 import { toast } from 'sonner';
 import type { CustomSectionType, StyleOverrides } from '@/hooks/useWebsiteSections';
-import { SectionStyleEditor } from './SectionStyleEditor';
 import { ImageUploadInput } from './inputs/ImageUploadInput';
-import { EditorCard } from './EditorCard';
-import { FileText } from 'lucide-react';
 
 interface CustomSectionEditorProps {
   sectionId: string;
@@ -277,36 +274,24 @@ export function CustomSectionEditor({ sectionId, sectionType, sectionLabel, styl
   };
 
   return (
-    <div className="space-y-4">
-      <EditorCard
-        title={sectionLabel}
-        icon={FileText}
-        headerActions={
-          onLabelChange ? (
-            <Input
-              value={editingLabel}
-              onChange={e => setEditingLabel(e.target.value)}
-              onBlur={() => {
-                if (editingLabel.trim() && editingLabel !== sectionLabel) {
-                  onLabelChange(editingLabel.trim());
-                }
-              }}
-              className="text-sm h-8 w-40"
-              placeholder="Section label"
-            />
-          ) : undefined
-        }
-      >
-        {renderFields()}
-      </EditorCard>
-
-      {onStyleChange && (
-        <SectionStyleEditor
-          value={styleOverrides ?? {}}
-          onChange={onStyleChange}
-          sectionId={sectionId}
-        />
+    <div className="space-y-5">
+      {onLabelChange && (
+        <div className="space-y-2">
+          <Label>Section Label</Label>
+          <Input
+            value={editingLabel}
+            onChange={e => setEditingLabel(e.target.value)}
+            onBlur={() => {
+              if (editingLabel.trim() && editingLabel !== sectionLabel) {
+                onLabelChange(editingLabel.trim());
+              }
+            }}
+            className="text-sm h-8"
+            placeholder="Section label"
+          />
+        </div>
       )}
+      {renderFields()}
     </div>
   );
 }

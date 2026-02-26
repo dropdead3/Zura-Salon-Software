@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Slider } from '@/components/ui/slider';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, ChevronRight, Paintbrush } from 'lucide-react';
+import { ChevronRight, Paintbrush } from 'lucide-react';
 import type { StyleOverrides } from '@/components/home/SectionStyleWrapper';
 import { DEFAULT_STYLE_OVERRIDES } from '@/components/home/SectionStyleWrapper';
 import { ImageUploadInput } from './inputs/ImageUploadInput';
@@ -32,23 +32,18 @@ export function SectionStyleEditor({ value, onChange, sectionId }: SectionStyleE
   });
 
   return (
-    <Collapsible open={open} onOpenChange={setOpen} className="border rounded-lg">
-      <CollapsibleTrigger asChild>
-        <Button
-          variant="ghost"
-          className="w-full flex items-center justify-between px-4 py-3 h-auto"
-        >
-          <div className="flex items-center gap-2 text-sm">
-            <Paintbrush className="h-4 w-4 text-muted-foreground" />
-            <span className="font-medium">Section Styling</span>
-            {hasOverrides && (
-              <span className="text-[10px] text-primary bg-primary/10 px-1.5 py-0.5 rounded">Active</span>
-            )}
-          </div>
-          {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-        </Button>
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <CollapsibleTrigger className="flex items-center justify-between w-full py-3 px-1 text-xs font-medium text-muted-foreground uppercase tracking-[0.15em] hover:text-foreground transition-colors duration-150">
+        <div className="flex items-center gap-2">
+          <Paintbrush className="h-3.5 w-3.5" />
+          <span>Section Styling</span>
+          {hasOverrides && (
+            <span className="text-[10px] text-primary bg-primary/10 px-1.5 py-0.5 rounded normal-case tracking-normal">Active</span>
+          )}
+        </div>
+        <ChevronRight className="h-3.5 w-3.5 transition-transform duration-150 ease-[cubic-bezier(0.25,0.1,0.25,1)] data-[state=open]:rotate-90 [[data-state=open]>&]:rotate-90" />
       </CollapsibleTrigger>
-      <CollapsibleContent className="px-4 pb-4 space-y-5">
+      <CollapsibleContent className="pb-4 space-y-5">
         {/* Background Type */}
         <div className="space-y-2">
           <Label className="text-xs">Background</Label>

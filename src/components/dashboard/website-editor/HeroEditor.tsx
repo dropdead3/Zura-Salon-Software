@@ -3,7 +3,7 @@ import { tokens } from '@/lib/design-tokens';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Loader2, Settings2, RotateCcw, Sparkles } from 'lucide-react';
+import { Loader2, Settings2, RotateCcw } from 'lucide-react';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
 import { toast } from 'sonner';
 import { useHeroConfig, type HeroConfig, DEFAULT_HERO } from '@/hooks/useSectionConfig';
@@ -15,7 +15,7 @@ import { CharCountInput } from './inputs/CharCountInput';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
-import { EditorCard } from './EditorCard';
+import { SectionGroupHeader } from './SectionGroupHeader';
 
 export function HeroEditor() {
   const { data, isLoading, isSaving, update } = useHeroConfig();
@@ -59,211 +59,208 @@ export function HeroEditor() {
   }
 
   return (
-    <div className="space-y-6 h-full">
-      <EditorCard
-        title="Hero Section"
-        icon={Sparkles}
-        headerActions={
-          <Button variant="ghost" size={tokens.button.inline} onClick={handleReset} className="text-muted-foreground gap-1.5">
-            <RotateCcw className="h-3.5 w-3.5" />
-            Reset
-          </Button>
-        }
-      >
-        {/* Eyebrow */}
-        <ToggleInput
-          label="Show Eyebrow"
-          value={localConfig.show_eyebrow}
-          onChange={(value) => updateField('show_eyebrow', value)}
-          description="Display the small text above the main headline"
+    <div className="space-y-5">
+      {/* Reset row */}
+      <div className="flex justify-end">
+        <Button variant="ghost" size={tokens.button.inline} onClick={handleReset} className="text-muted-foreground gap-1.5">
+          <RotateCcw className="h-3.5 w-3.5" />
+          Reset
+        </Button>
+      </div>
+
+      {/* Eyebrow */}
+      <ToggleInput
+        label="Show Eyebrow"
+        value={localConfig.show_eyebrow}
+        onChange={(value) => updateField('show_eyebrow', value)}
+        description="Display the small text above the main headline"
+      />
+      {localConfig.show_eyebrow && (
+        <CharCountInput
+          label="Eyebrow Text"
+          value={localConfig.eyebrow}
+          onChange={(value) => updateField('eyebrow', value)}
+          maxLength={40}
+          placeholder="Hair • Color • Artistry"
         />
-        {localConfig.show_eyebrow && (
+      )}
+
+      {/* Rotating Words */}
+      <ToggleInput
+        label="Show Rotating Words"
+        value={localConfig.show_rotating_words}
+        onChange={(value) => updateField('show_rotating_words', value)}
+        description="Toggle the animated rotating headline words"
+      />
+      {localConfig.show_rotating_words && (
+        <RotatingWordsInput
+          words={localConfig.rotating_words}
+          onChange={(words) => updateField('rotating_words', words)}
+          label="Headline Rotating Words"
+          placeholder="e.g. Salon, Extensions..."
+        />
+      )}
+
+      {/* Subheadline */}
+      <ToggleInput
+        label="Show Subheadline"
+        value={localConfig.show_subheadline}
+        onChange={(value) => updateField('show_subheadline', value)}
+        description="Display supporting text below the main headline"
+      />
+      {localConfig.show_subheadline && (
+        <div className="space-y-4">
           <CharCountInput
-            label="Eyebrow Text"
-            value={localConfig.eyebrow}
-            onChange={(value) => updateField('eyebrow', value)}
-            maxLength={40}
-            placeholder="Hair • Color • Artistry"
+            label="Subheadline Line 1"
+            value={localConfig.subheadline_line1}
+            onChange={(value) => updateField('subheadline_line1', value)}
+            maxLength={60}
+            description="First line of supporting text below the headline"
           />
-        )}
-
-        {/* Rotating Words */}
-        <ToggleInput
-          label="Show Rotating Words"
-          value={localConfig.show_rotating_words}
-          onChange={(value) => updateField('show_rotating_words', value)}
-          description="Toggle the animated rotating headline words"
-        />
-        {localConfig.show_rotating_words && (
-          <RotatingWordsInput
-            words={localConfig.rotating_words}
-            onChange={(words) => updateField('rotating_words', words)}
-            label="Headline Rotating Words"
-            placeholder="e.g. Salon, Extensions..."
+          <CharCountInput
+            label="Subheadline Line 2"
+            value={localConfig.subheadline_line2}
+            onChange={(value) => updateField('subheadline_line2', value)}
+            maxLength={60}
+            description="Second line of supporting text"
           />
-        )}
+        </div>
+      )}
 
-        {/* Subheadline */}
-        <ToggleInput
-          label="Show Subheadline"
-          value={localConfig.show_subheadline}
-          onChange={(value) => updateField('show_subheadline', value)}
-          description="Display supporting text below the main headline"
+      {/* CTAs */}
+      <div className="space-y-4 pt-4 border-t border-border/30">
+        <h4 className="font-medium text-sm">Call to Action Buttons</h4>
+        <CharCountInput
+          label="Primary Button Text"
+          value={localConfig.cta_new_client}
+          onChange={(value) => updateField('cta_new_client', value)}
+          maxLength={30}
+          description="Main call-to-action button"
         />
-        {localConfig.show_subheadline && (
-          <div className="space-y-4">
+        <UrlInput
+          label="Primary Button URL"
+          value={localConfig.cta_new_client_url}
+          onChange={(value) => updateField('cta_new_client_url', value)}
+          placeholder="Leave empty to open the default form"
+          description="Leave empty to open the default form dialog"
+        />
+
+        {/* Secondary Button with visibility toggle */}
+        <ToggleInput
+          label="Show Secondary Button"
+          value={localConfig.show_secondary_button}
+          onChange={(value) => updateField('show_secondary_button', value)}
+          description="Display a second CTA button below the primary"
+        />
+        {localConfig.show_secondary_button && (
+          <>
             <CharCountInput
-              label="Subheadline Line 1"
-              value={localConfig.subheadline_line1}
-              onChange={(value) => updateField('subheadline_line1', value)}
-              maxLength={60}
-              description="First line of supporting text below the headline"
+              label="Secondary Button Text"
+              value={localConfig.cta_returning_client}
+              onChange={(value) => updateField('cta_returning_client', value)}
+              maxLength={30}
             />
-            <CharCountInput
-              label="Subheadline Line 2"
-              value={localConfig.subheadline_line2}
-              onChange={(value) => updateField('subheadline_line2', value)}
-              maxLength={60}
-              description="Second line of supporting text"
+            <UrlInput
+              label="Secondary Button URL"
+              value={localConfig.cta_returning_client_url}
+              onChange={(value) => updateField('cta_returning_client_url', value)}
+              placeholder="/booking"
+            />
+          </>
+        )}
+      </div>
+
+      {/* Below-Button Notes */}
+      <div className="space-y-4 pt-4 border-t border-border/30">
+        <ToggleInput
+          label="Show Below-Button Notes"
+          value={localConfig.show_consultation_notes}
+          onChange={(value) => updateField('show_consultation_notes', value)}
+          description="Display helper text below the CTA buttons"
+        />
+        {localConfig.show_consultation_notes && (
+          <>
+            <div className="space-y-2">
+              <Label htmlFor="note1">Note Line 1</Label>
+              <Input
+                id="note1"
+                value={localConfig.consultation_note_line1}
+                onChange={(e) => updateField('consultation_note_line1', e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="note2">Note Line 2</Label>
+              <Input
+                id="note2"
+                value={localConfig.consultation_note_line2}
+                onChange={(e) => updateField('consultation_note_line2', e.target.value)}
+              />
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Advanced Settings */}
+      <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
+        <CollapsibleTrigger asChild>
+          <Button variant="outline" className="w-full justify-between mt-4">
+            <span className="flex items-center gap-2">
+              <Settings2 className="h-4 w-4" />
+              Advanced Settings
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {showAdvanced ? 'Hide' : 'Show'}
+            </span>
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="space-y-6 pt-4">
+          {/* Animation Timing */}
+          <div className="space-y-4 p-4 bg-muted/50 rounded-lg">
+            <h4 className="font-medium text-sm">Animation Timing</h4>
+            <SliderInput
+              label="Animation Start Delay"
+              value={localConfig.animation_start_delay}
+              onChange={(value) => updateField('animation_start_delay', value)}
+              min={1}
+              max={8}
+              step={0.5}
+              unit="s"
+              description="When word rotation begins after page load"
+            />
+            <SliderInput
+              label="Word Rotation Interval"
+              value={localConfig.word_rotation_interval}
+              onChange={(value) => updateField('word_rotation_interval', value)}
+              min={2}
+              max={10}
+              step={0.5}
+              unit="s"
+              description="How long each rotating word displays"
             />
           </div>
-        )}
 
-        {/* CTAs */}
-        <div className="space-y-4 pt-4 border-t border-border/30">
-          <h4 className="font-medium text-sm">Call to Action Buttons</h4>
-          <CharCountInput
-            label="Primary Button Text"
-            value={localConfig.cta_new_client}
-            onChange={(value) => updateField('cta_new_client', value)}
-            maxLength={30}
-            description="Main call-to-action button"
-          />
-          <UrlInput
-            label="Primary Button URL"
-            value={localConfig.cta_new_client_url}
-            onChange={(value) => updateField('cta_new_client_url', value)}
-            placeholder="Leave empty to open the default form"
-            description="Leave empty to open the default form dialog"
-          />
-
-          {/* Secondary Button with visibility toggle */}
-          <ToggleInput
-            label="Show Secondary Button"
-            value={localConfig.show_secondary_button}
-            onChange={(value) => updateField('show_secondary_button', value)}
-            description="Display a second CTA button below the primary"
-          />
-          {localConfig.show_secondary_button && (
-            <>
-              <CharCountInput
-                label="Secondary Button Text"
-                value={localConfig.cta_returning_client}
-                onChange={(value) => updateField('cta_returning_client', value)}
-                maxLength={30}
-              />
-              <UrlInput
-                label="Secondary Button URL"
-                value={localConfig.cta_returning_client_url}
-                onChange={(value) => updateField('cta_returning_client_url', value)}
-                placeholder="/booking"
-              />
-            </>
-          )}
-        </div>
-
-        {/* Below-Button Notes */}
-        <div className="space-y-4 pt-4 border-t border-border/30">
-          <ToggleInput
-            label="Show Below-Button Notes"
-            value={localConfig.show_consultation_notes}
-            onChange={(value) => updateField('show_consultation_notes', value)}
-            description="Display helper text below the CTA buttons"
-          />
-          {localConfig.show_consultation_notes && (
-            <>
+          {/* Scroll Indicator */}
+          <div className="space-y-4 p-4 bg-muted/50 rounded-lg">
+            <h4 className="font-medium text-sm">Scroll Indicator</h4>
+            <ToggleInput
+              label="Show Scroll Indicator"
+              value={localConfig.show_scroll_indicator}
+              onChange={(value) => updateField('show_scroll_indicator', value)}
+              description="Show the scroll arrow at the bottom"
+            />
+            {localConfig.show_scroll_indicator && (
               <div className="space-y-2">
-                <Label htmlFor="note1">Note Line 1</Label>
+                <Label>Scroll Indicator Text</Label>
                 <Input
-                  id="note1"
-                  value={localConfig.consultation_note_line1}
-                  onChange={(e) => updateField('consultation_note_line1', e.target.value)}
+                  value={localConfig.scroll_indicator_text}
+                  onChange={(e) => updateField('scroll_indicator_text', e.target.value)}
+                  placeholder="Scroll"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="note2">Note Line 2</Label>
-                <Input
-                  id="note2"
-                  value={localConfig.consultation_note_line2}
-                  onChange={(e) => updateField('consultation_note_line2', e.target.value)}
-                />
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* Advanced Settings */}
-        <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
-          <CollapsibleTrigger asChild>
-            <Button variant="outline" className="w-full justify-between mt-4">
-              <span className="flex items-center gap-2">
-                <Settings2 className="h-4 w-4" />
-                Advanced Settings
-              </span>
-              <span className="text-xs text-muted-foreground">
-                {showAdvanced ? 'Hide' : 'Show'}
-              </span>
-            </Button>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="space-y-6 pt-4">
-            {/* Animation Timing */}
-            <div className="space-y-4 p-4 bg-muted/50 rounded-lg">
-              <h4 className="font-medium text-sm">Animation Timing</h4>
-              <SliderInput
-                label="Animation Start Delay"
-                value={localConfig.animation_start_delay}
-                onChange={(value) => updateField('animation_start_delay', value)}
-                min={1}
-                max={8}
-                step={0.5}
-                unit="s"
-                description="When word rotation begins after page load"
-              />
-              <SliderInput
-                label="Word Rotation Interval"
-                value={localConfig.word_rotation_interval}
-                onChange={(value) => updateField('word_rotation_interval', value)}
-                min={2}
-                max={10}
-                step={0.5}
-                unit="s"
-                description="How long each rotating word displays"
-              />
-            </div>
-
-            {/* Scroll Indicator */}
-            <div className="space-y-4 p-4 bg-muted/50 rounded-lg">
-              <h4 className="font-medium text-sm">Scroll Indicator</h4>
-              <ToggleInput
-                label="Show Scroll Indicator"
-                value={localConfig.show_scroll_indicator}
-                onChange={(value) => updateField('show_scroll_indicator', value)}
-                description="Show the scroll arrow at the bottom"
-              />
-              {localConfig.show_scroll_indicator && (
-                <div className="space-y-2">
-                  <Label>Scroll Indicator Text</Label>
-                  <Input
-                    value={localConfig.scroll_indicator_text}
-                    onChange={(e) => updateField('scroll_indicator_text', e.target.value)}
-                    placeholder="Scroll"
-                  />
-                </div>
-              )}
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
-      </EditorCard>
+            )}
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
     </div>
   );
 }
