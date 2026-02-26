@@ -59,8 +59,8 @@ export const editorTokens = {
     emptyIcon: 'w-10 h-10 text-muted-foreground/20 mb-3',
     /** Empty state text */
     emptyText: 'text-sm text-muted-foreground/60',
-    /** Inspector content area */
-    content: 'px-6 pt-4 pb-8 space-y-4 max-w-full overflow-hidden',
+    /** Inspector content area — symmetric insets, single envelope */
+    content: 'px-5 pt-4 pb-8 space-y-4 max-w-full box-border overflow-hidden',
     /** Collapsible group header */
     groupHeader: 'flex items-center justify-between w-full py-3 px-1 text-xs font-medium text-muted-foreground uppercase tracking-[0.15em] hover:text-foreground transition-colors duration-120 border-t border-border/20 first:border-t-0',
     /** Collapsible group content */
