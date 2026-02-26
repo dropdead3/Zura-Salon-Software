@@ -147,6 +147,7 @@ import LogoIconWhite from '@/assets/brand-logo-secondary-white.svg';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { NextClientIndicator } from '@/components/dashboard/NextClientIndicator';
 import { TopBarSearch } from '@/components/dashboard/TopBarSearch';
+import { SuperAdminTopBar } from '@/components/dashboard/SuperAdminTopBar';
 
 // Role colors/icons now come from useRoleUtils hook
 
@@ -1192,142 +1193,26 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
         />
       )}
 
-      {/* Desktop Top Bar - Single unified bar */}
+      {/* Desktop Top Bar - Extracted Super Admin Console */}
       {!hideTopBar && (
-      <div
-        className={cn(
-          "dashboard-top-bar hidden lg:block z-30 px-3 pt-3 pb-3",
-          hideFooter
-            ? "fixed top-0 right-0 z-50 transition-transform duration-300 ease-in-out"
-            : "sticky top-0",
-          hideFooter && !headerHovered && "-translate-y-full",
-          hideFooter && headerHovered && "translate-y-0",
-          hideFooter && "shrink-0"
-        )}
-        style={hideFooter ? { left: sidebarCollapsed ? '88px' : '344px' } : undefined}
-        onMouseLeave={() => hideFooter && setHeaderHovered(false)}
-      >
-        {/* Extended blur zone -- blurs content around/below the bar */}
-        <div 
-          className="absolute inset-0 -bottom-8 backdrop-blur-md pointer-events-none"
-          style={{
-            maskImage: 'linear-gradient(to bottom, black 60%, transparent 100%)',
-            WebkitMaskImage: 'linear-gradient(to bottom, black 60%, transparent 100%)',
-          }}
+        <SuperAdminTopBar
+          sidebarCollapsed={sidebarCollapsed}
+          hideFooter={hideFooter}
+          headerHovered={headerHovered}
+          onHeaderHoverEnd={() => hideFooter && setHeaderHovered(false)}
+          filterNavItems={filterNavItems}
+          ViewAsToggle={ViewAsToggle}
+          HideNumbersToggle={HideNumbersToggle}
+          getAccessLabel={getAccessLabel}
+          getAccessBadgeColor={getAccessBadgeColor}
+          AccessIcon={AccessIcon}
+          isAdmin={isAdmin}
+          isPlatformUser={isPlatformUser}
+          isStylistRole={isStylistRole}
+          isStylistAssistantRole={isStylistAssistantRole}
+          isViewingAsUser={isViewingAsUser}
+          viewAsUser={isViewingAsUser && viewAsUser ? { id: viewAsUser.id, full_name: viewAsUser.full_name, photo_url: viewAsUser.photo_url } : null}
         />
-        <div className="relative w-full max-w-none flex items-center justify-between h-14 px-6 bg-card/80 backdrop-blur-xl backdrop-saturate-150 border border-border rounded-full">
-          {/* Left side - Sidebar toggle + Org Switcher */}
-          <div className="flex items-center gap-3">
-            <NavHistoryArrows />
-            {isPlatformUser && location.pathname.startsWith('/dashboard/platform') && <OrganizationSwitcher compact />}
-          </div>
-
-          {/* Center - Search Bar */}
-          <div className="flex-1 flex justify-center px-4">
-            <TopBarSearch filterNavItems={filterNavItems} />
-          </div>
-
-          {/* Next Client Indicator - Stylists and Assistants only */}
-          {(isStylistRole || isStylistAssistantRole) && (
-            <NextClientIndicator userId={isViewingAsUser && viewAsUser ? viewAsUser.id : user?.id} />
-          )}
-          
-          {/* Right side - User controls */}
-          <div className="flex items-center gap-3">
-            {/* View As - keep visible below xl for admins */}
-            {isAdmin && (
-              <div className="flex items-center xl:hidden">
-                <ViewAsToggle />
-              </div>
-            )}
-
-            {/* Secondary items - visible on xl+, hidden below */}
-            {(isPlatformUser || isAdmin) && (
-              <div className="hidden xl:flex items-center gap-3">
-                <HideNumbersToggle />
-                <div className={cn("h-9 rounded-full px-4 inline-flex items-center gap-1.5 text-xs font-medium border", getAccessBadgeColor())}>
-                  <AccessIcon className="w-3 h-3" />
-                  {getAccessLabel()}
-                </div>
-                {isAdmin && <ViewAsToggle />}
-              </div>
-            )}
-
-            {/* Ellipsis overflow dropdown - visible below xl */}
-            {(isPlatformUser || isAdmin) && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground xl:hidden">
-                    <MoreHorizontal className="w-4 h-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel className="flex items-center justify-between">
-                    <span>Quick Actions</span>
-                    <span className={cn(
-                      'inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium tracking-wide rounded-full border',
-                      getAccessBadgeColor()
-                    )}>
-                      <AccessIcon className="w-3 h-3" />
-                      {getAccessLabel()}
-                    </span>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  
-                  {/* Show/Hide Numbers */}
-                  <DropdownMenuItem onClick={(e) => { e.preventDefault(); toggleHideNumbers(); }} className="gap-2 cursor-pointer">
-                    {hideNumbers ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    {hideNumbers ? 'Show Numbers' : 'Hide Numbers'}
-                  </DropdownMenuItem>
-                  
-                  <DropdownMenuSeparator />
-                  
-                  {/* View As */}
-                  {isAdmin && <ViewAsToggle asMenuItem />}
-                  
-                  
-                  <DropdownMenuSeparator />
-                  
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-
-
-
-            <ThemeToggle />
-            <NotificationsPanel unreadCount={unreadCount} />
-            <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
-                {employeeProfile?.photo_url ? (
-                  <Avatar className="h-7 w-7">
-                    <AvatarImage src={employeeProfile.photo_url} alt="Profile" />
-                    <AvatarFallback><UserCircle className="w-4 h-4" /></AvatarFallback>
-                  </Avatar>
-                ) : (
-                  <UserCircle className="w-4 h-4" />
-                )}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link to="/dashboard/profile" className="flex items-center gap-2 cursor-pointer">
-                  <UserCircle className="w-4 h-4" />
-                  View/Edit Profile
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={signOut} className="flex items-center gap-2 cursor-pointer text-destructive focus:text-destructive">
-                <LogOut className="w-4 h-4" />
-                Logout
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          </div>
-        </div>
-      </div>
       )}
 
       {/* Main Content */}
