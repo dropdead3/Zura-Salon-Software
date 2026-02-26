@@ -275,6 +275,59 @@ export function useUpsertOrganizationGoal() {
   });
 }
 
+export function useBatchUpsertOrganizationGoals() {
+  const queryClient = useQueryClient();
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id;
+
+  return useMutation({
+    mutationFn: async (goals: Array<{
+      metric_key: string;
+      display_name: string;
+      description?: string;
+      category: string;
+      target_value: number;
+      warning_threshold?: number;
+      critical_threshold?: number;
+      goal_period?: string;
+      unit?: string;
+      location_id?: string;
+    }>) => {
+      const rows = goals.map(goal => ({
+        organization_id: orgId!,
+        metric_key: goal.metric_key,
+        display_name: goal.display_name,
+        description: goal.description || null,
+        category: goal.category,
+        target_value: goal.target_value,
+        warning_threshold: goal.warning_threshold ?? null,
+        critical_threshold: goal.critical_threshold ?? null,
+        goal_period: goal.goal_period || 'monthly',
+        unit: goal.unit || '$',
+        location_id: goal.location_id || null,
+        is_active: true,
+      }));
+
+      const { data, error } = await supabase
+        .from('organization_goals')
+        .upsert(rows as any[], {
+          onConflict: 'organization_id,location_id,metric_key,goal_period',
+        })
+        .select();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['organization-goals', orgId] });
+      toast.success(`${variables.length} goal${variables.length === 1 ? '' : 's'} saved`);
+    },
+    onError: (error: Error) => {
+      toast.error('Failed to save goals', { description: error.message });
+    },
+  });
+}
+
 export function useDeleteOrganizationGoal() {
   const queryClient = useQueryClient();
   const { effectiveOrganization } = useOrganizationContext();
