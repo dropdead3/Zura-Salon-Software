@@ -130,13 +130,10 @@ export function PublishChangesButton() {
         variant="outline"
         size="sm"
         onClick={() => setOpen(true)}
-        className="relative gap-1.5"
+        className="h-8 px-3 gap-1.5"
       >
         <Globe className="w-3.5 h-3.5" />
         Publish
-        {hasChanges && (
-          <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-primary animate-pulse" />
-        )}
       </Button>
       <PublishChangelog open={open} onOpenChange={setOpen} />
     </>
