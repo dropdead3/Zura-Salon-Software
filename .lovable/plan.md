@@ -1,18 +1,20 @@
 
 
-## Replace Sort Dropdown with Tab Toggle on Top Performers Card
+## Restrict Cha-Ching Notifications to Owners and Super Admins
 
-**File: `src/components/dashboard/sales/TopPerformersCard.tsx`**
+### Changes
 
-1. Remove the dropdown state (`showDropdown`, `dropdownRef`, outside-click `useEffect`), the `ChevronDown` import (keep `ChevronUp`), and the dropdown JSX block (lines 154-178)
+**File: `src/hooks/useChaChingDetector.tsx`**
+- Import `useEmployeeProfile` 
+- Read `is_primary_owner` and `is_super_admin` from the profile
+- Add a guard: only fire cha-ching toast/sound when `is_primary_owner || is_super_admin` is true
+- Add profile fields to the effect dependency array
 
-2. Move the sort toggle into the card header as a `FilterTabsList`/`FilterTabsTrigger` on the right side (before `AnalyticsFilterBadge`), using the existing compact filter tab components from `@/components/ui/tabs`
+**File: `src/components/dashboard/settings/SoundSettingsSection.tsx`**
+- Import `useEmployeeProfile`
+- Read `is_primary_owner` and `is_super_admin` from the profile
+- Conditionally render the "Checkout notifications" toggle row only when `is_primary_owner || is_super_admin`
+- No change to sound preview buttons or general sound toggle (those remain for all users)
 
-3. Updated header layout:
-   - Left: Icon + Title + InfoTooltip (unchanged)
-   - Right: `FilterTabsList` with two `FilterTabsTrigger` options ("Revenue" / "Retail"), then `AnalyticsFilterBadge`
-
-4. Replace `useState`-based sort with `Tabs` component wrapping the card, using `onValueChange` to set `sortMode`
-
-**Result**: Clean pill-toggle in the header right column instead of the current "Sorted by: X" dropdown below the header.
+Both changes use the existing `useEmployeeProfile` hook which already returns `is_super_admin` and `is_primary_owner` from `employee_profiles`. No database changes needed -- the setting toggle (`chaChingEnabled` in localStorage) already exists and continues to function as the on/off control for eligible users.
 
