@@ -148,7 +148,7 @@ import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { NextClientIndicator } from '@/components/dashboard/NextClientIndicator';
 import { TopBarSearch } from '@/components/dashboard/TopBarSearch';
 import { SuperAdminTopBar } from '@/components/dashboard/SuperAdminTopBar';
-import { ChaChingDrawer } from '@/components/dashboard/ChaChingDrawer';
+import { ChaChingNotificationCenter } from '@/components/dashboard/ChaChingNotificationCenter';
 import { ChaChingHistoryProvider } from '@/hooks/useChaChingHistory';
 
 // Role colors/icons now come from useRoleUtils hook
@@ -1333,7 +1333,7 @@ export function DashboardLayout(props: DashboardLayoutProps) {
               isPlatformRoute && 'platform-theme platform-gradient-radial min-h-screen'
             )}>
               <DashboardLayoutWithLock {...props} />
-              <ChaChingDrawer />
+              <ChaChingNotificationCenter />
               <ZuraStickyGuidance />
             </div>
           </NavigationHistoryProvider>
