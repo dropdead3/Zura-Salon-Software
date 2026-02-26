@@ -1,28 +1,58 @@
 
 
-## Real-time sales updates via database subscriptions
+## Add "Cha-Ching" Toast on New Transactions
 
-**Problem**: Sales data only refreshes on a 5-minute polling interval or manual sync. When POS transactions land in `phorest_daily_sales_summary`, the UI stays stale until the next poll.
+**Approach**: Enhance the existing realtime subscription in `useTodayActualRevenue.ts` to detect when revenue *increases* (not just any change) and fire a tasteful sonner toast with a cha-ching sound effect via `useNotificationSound`.
 
-**Solution**: Subscribe to Postgres realtime changes on `phorest_daily_sales_summary` and invalidate the relevant TanStack Query caches immediately when rows are inserted or updated.
+Since `useTodayActualRevenue` is a data hook (not a component), and sonner's `toast()` is callable anywhere, we'll track the previous revenue total via a ref and compare after each realtime-triggered refetch.
 
-### 1. Enable realtime on the table (database migration)
+### File: `src/hooks/useTodayActualRevenue.ts`
 
-```sql
-ALTER PUBLICATION supabase_realtime ADD TABLE public.phorest_daily_sales_summary;
+1. **Track previous revenue** — Add a `useRef` to store the last-known `actualRevenue` value.
+
+2. **Detect revenue increase** — In a `useEffect` watching `actualRevenueQuery.data`, compare the new total against the ref. If it increased and `hasData` is true, calculate the delta and fire a toast + sound.
+
+3. **Toast + Sound** — Import `toast` from `sonner` and `useNotificationSound`. Show a custom toast like:
+   ```
+   💰 Cha-ching! — A client just checked out for $125.00
+   ```
+   Play the `playSuccess` sound (or a new `'achievement'` sound for the cha-ching feel). The delta (`newRevenue - prevRevenue`) is the checkout amount displayed.
+
+4. **Guard against initial load** — The ref starts as `null` so the first data load sets the baseline without triggering a toast.
+
+### Changes
+
+```tsx
+// New imports
+import { useRef } from 'react'; // already have useEffect
+import { toast } from 'sonner';
+import { formatCurrency } from '@/lib/format';
+
+// Inside the hook, after actualRevenueQuery definition:
+const prevRevenueRef = useRef<number | null>(null);
+
+useEffect(() => {
+  const currentRevenue = actualRevenueQuery.data?.totalRevenue ?? 0;
+  const hasData = actualRevenueQuery.data?.hasData ?? false;
+
+  if (prevRevenueRef.current === null) {
+    // First load — set baseline, no toast
+    prevRevenueRef.current = currentRevenue;
+    return;
+  }
+
+  if (hasData && currentRevenue > prevRevenueRef.current) {
+    const delta = currentRevenue - prevRevenueRef.current;
+    toast('💰 Cha-ching!', {
+      description: `A client just checked out for ${formatCurrency(delta)}`,
+      duration: 5000,
+    });
+  }
+
+  prevRevenueRef.current = currentRevenue;
+}, [actualRevenueQuery.data]);
 ```
 
-### 2. Add realtime subscription in `useTodayActualRevenue` hook
-
-**File: `src/hooks/useTodayActualRevenue.ts`**
-
-- Import `useEffect` and `useQueryClient`
-- Add a `useEffect` that subscribes to `postgres_changes` on `phorest_daily_sales_summary` filtered to today's `summary_date`
-- On any `INSERT` or `UPDATE` event, call `queryClient.invalidateQueries` for keys: `today-actual-revenue`, `today-actual-revenue-by-location`
-- Clean up the channel subscription on unmount
-- Keep the existing 5-minute polling as a fallback safety net
-
 ### Files changed
-- Database migration: enable realtime on `phorest_daily_sales_summary`
-- `src/hooks/useTodayActualRevenue.ts` — add realtime subscription + query invalidation
+- `src/hooks/useTodayActualRevenue.ts` — add revenue delta detection + sonner toast notification
 
