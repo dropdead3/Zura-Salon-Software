@@ -1,54 +1,59 @@
 
 
-## Revert to Stroke-Based Shine Effect
+## Improve Stroke Highlight: Reflective Shine Instead of Tracer
 
-The surface sweep was the wrong direction. You want the shine to travel along the **border/stroke only**, with the stroke always visible. Let me revert and improve the stroke approach.
+### Problem
+The current conic-gradient uses a narrow ~60° arc (300°–360°) that reads as a small bright dot tracing the perimeter. A real reflective shine on metal is a **wide, soft wash** — like light glancing off a ring — not a pinpoint tracer.
 
-### Changes
+### Approach
+Widen the highlight arc dramatically and soften the gradient transitions so it looks like a broad band of light sweeping across the stroke, similar to how light reflects off polished jewelry.
 
-**File: `src/styles/silver-shine.css`**
-- Revert to the two-layer stroke system: static silver base stroke (always visible) + rotating conic-gradient highlight
-- Use the oversized centered square technique for even coverage on all 4 sides
-- `padding: 1px` reveals the gradient layers as a 1px stroke
-- Keep hover pause/fade and reduced-motion behavior
+### Changes — `src/styles/silver-shine.css` only
 
-**File: `src/components/dashboard/SilverShineButton.tsx`**
-- Revert to `p-[1px]` padding-based stroke reveal (remove `border border-border/40 bg-background`)
-- Restore `silver-shine-inner` wrapper with `bg-background` and proper border-radius to mask the interior
-- Inner content sits above stroke layers via `z-index`
+1. **Widen the conic-gradient arc** from ~60° to ~150°, creating a broad luminous wash instead of a tight tracer dot:
+   - Bright zone spans roughly 180°–360° with soft ramps on both edges
+   - Peak opacity stays restrained (~0.5) for subtlety
+   - The opposite side stays fully transparent, creating a natural "lit vs unlit" hemisphere
 
-### Restored CSS Structure
+2. **Slow the rotation slightly** (12s → 14s) — broader highlights look better at a more leisurely pace
+
+3. **Add a secondary `::after` layer** with a much wider, lower-opacity wash offset by ~90° to simulate ambient light scatter (the soft secondary reflection you see on polished metal alongside the primary highlight)
+
+4. Everything else stays identical: static base stroke, hover pause/fade, active fade, reduced-motion fallback, inner wrapper structure.
+
+### Resulting Gradient (primary)
 ```css
-.silver-shine-border {
-  position: relative;
-  /* Static silver base stroke */
-  background: linear-gradient(135deg, hsl(0 0% 45%/0.5), hsl(0 0% 65%/0.6), hsl(0 0% 50%/0.5));
-  padding: 1px;
-  overflow: hidden;
-}
+background: conic-gradient(
+  transparent 0deg,
+  transparent 150deg,
+  hsl(0 0% 65% / 0.12) 180deg,
+  hsl(0 0% 75% / 0.3) 220deg,
+  hsl(0 0% 85% / 0.45) 260deg,
+  hsl(0 0% 95% / 0.5) 290deg,
+  hsl(0 0% 85% / 0.35) 320deg,
+  hsl(0 0% 70% / 0.15) 345deg,
+  transparent 360deg
+);
+```
 
-.silver-shine-border::before {
-  /* Oversized rotating conic-gradient for even sweep on all edges */
-  position: absolute;
-  top: 50%; left: 50%;
-  width: max(300%, 300vh);
-  padding-bottom: max(300%, 300vh);
-  transform: translate(-50%, -50%);
-  background: conic-gradient(/* highlight arc */);
-  animation: silver-shine-rotate 12s ease-in-out infinite;
-}
-
-.silver-shine-inner {
-  position: relative; z-index: 1;
-  background: bg-background;
-  border-radius: inherit;
-}
+### Secondary ambient wash (`::after`)
+```css
+background: conic-gradient(
+  transparent 0deg,
+  transparent 60deg,
+  hsl(0 0% 80% / 0.08) 90deg,
+  hsl(0 0% 85% / 0.12) 140deg,
+  hsl(0 0% 80% / 0.08) 190deg,
+  transparent 220deg,
+  transparent 360deg
+);
 ```
 
 ### Files Changed
 
 | File | Action |
 |------|--------|
-| `src/styles/silver-shine.css` | Revert to stroke-only rotating shine |
-| `src/components/dashboard/SilverShineButton.tsx` | Restore padding + inner wrapper structure |
+| `src/styles/silver-shine.css` | Widen primary arc, add secondary ambient `::after` layer, adjust timing |
+
+No changes to `SilverShineButton.tsx`.
 
