@@ -1,52 +1,63 @@
 
+You’re giving strong, concrete feedback (“still not fixed”, screenshot, and “needs padding on the right side”), which is exactly what helps isolate UI bugs quickly. Better prompt framing for next round: include one measurable acceptance criterion like “I need at least 16px visible space between the right edge of each card and the inspector border at 1366/1280/1024 widths.” That removes ambiguity between “overflow clipping” vs “insufficient breathing room.”
 
-## Fix: Inspector Right-Edge Padding (Final)
+Why the last fix did not solve it:
 
-### Why Previous Fixes Failed
+1) We fixed overflow containment, not visual gutter reservation  
+- The recent changes (`overflow-x-hidden`, `max-w-full`, wrapper constraints) prevent horizontal scroll bleed.  
+- But the inspector still uses a Radix scroll area with an overlaid vertical scrollbar track (`forceMount` in shared `ScrollArea`).  
+- That overlay sits on top of content on the right side, so cards can still appear visually “flush/cut” even when they are technically contained.
 
-The `[&>div]:!overflow-x-hidden` selector on ScrollArea targets the viewport div, but the Radix ScrollArea viewport uses `h-full w-full` without an explicit width constraint in pixels or percentage. In a flex column layout, `w-full` on the viewport resolves to the content's intrinsic width, not the parent's width. So `overflow-x-hidden` clips nothing because the viewport expands to fit its children.
+2) The Locations rows are tuned for compact single-line truncation  
+- In `LocationsContent.tsx`, several text nodes intentionally use `truncate`.  
+- In a narrow inspector width (~320px), text and badges consume line width aggressively, making right-side content look clipped/tight even when no true overflow occurs.
 
-The real fix requires two things the user's CSS correctly identifies:
-1. Force the viewport to actually constrain to the panel width (not expand with content)
-2. Increase right padding from 20px to 24px for a proper safe area
+3) We also reduced internal card content padding in the prior patch  
+- `EditorCard` changed from `p-4` to `p-3.5`.  
+- That reduction made the right breathing room visually worse in this compact panel.
 
-### Changes
+Implementation plan (next patch):
 
-#### 1. `src/components/dashboard/website-editor/editor-tokens.ts` (line 63)
+A) Reserve a dedicated right “safe gutter” inside inspector scroll viewport  
+- File: `src/components/dashboard/website-editor/panels/InspectorPanel.tsx`  
+- Add a viewport-targeted right padding class so content never sits under the scrollbar overlay.  
+- Keep overflow guards, but add explicit right gutter at the viewport/content envelope level (not just child cards).
 
-Increase horizontal padding from `px-5` (20px) to `px-6` (24px) matching the user's `padding: 16px 24px 32px 24px`. Also increase bottom padding to `pb-8` (32px).
+B) Restore content breathing room in editor card container  
+- File: `src/components/dashboard/website-editor/EditorCard.tsx`  
+- Revert content padding from `p-3.5` back to `p-4` (or equivalent tokenized spacing).  
+- Keep `overflow-hidden` safeguards.
 
-**Before:** `content: 'px-5 pt-4 pb-6 space-y-4 max-w-full overflow-hidden'`
-**After:** `content: 'px-6 pt-4 pb-8 space-y-4 max-w-full overflow-hidden'`
+C) Make location modules robust at narrow widths  
+- File: `src/components/dashboard/website-editor/LocationsContent.tsx`  
+- Increase module internal horizontal padding (especially right side).  
+- Replace/relax key `truncate` usages on long detail rows with wrap-safe behavior (`break-words` / `overflow-wrap:anywhere`) where appropriate.  
+- Keep title truncation if needed, but preserve right visual gutter in data rows.
 
-#### 2. `src/components/dashboard/website-editor/panels/InspectorPanel.tsx` (line 113)
+D) Validation checklist (must pass)  
+- Right-side visual gap remains visible for:  
+  - Outer “Website Locations” card  
+  - Info banner card  
+  - Each location card row  
+- Verify at 1366, 1280, 1024 widths with inspector expanded.  
+- Confirm no horizontal scrollbar, no clipped rounded corners, and no text hidden under scrollbar overlay.
 
-Replace the `[&>div]` approach with a more targeted selector that forces the Radix viewport to use `overflow-x: hidden` AND constrains its width to the parent. The key is adding `[&_[data-radix-scroll-area-viewport]]:!overflow-x-hidden` and wrapping the ScrollArea content in a div with `w-full min-w-0 overflow-hidden`.
+Technical detail (for implementation precision):
 
-```tsx
-<ScrollArea className="flex-1 overflow-hidden">
-  <div className="w-full min-w-0 overflow-x-hidden">
-    <PanelSlideIn motionKey={selectionKey} className={editorTokens.inspector.content}>
-      {children}
-    </PanelSlideIn>
-  </div>
-</ScrollArea>
-```
+- Current root issue is a UI layering problem (overlay scrollbar + compact truncation), not purely a width-overflow problem.  
+- Effective fix must combine:
+  1. viewport gutter reservation,
+  2. card/module inner right spacing,
+  3. selective text wrapping in dense rows.
+- This aligns with your desired CSS doctrine:
+  - inspector never allows horizontal overflow,
+  - single safe content envelope,
+  - modules stay within envelope,
+  - long strings cannot push layout.
 
-This wrapper div is the critical missing piece. It sits inside the ScrollArea viewport and forces a block formatting context with `overflow-x-hidden`, which makes `max-w-full` on children resolve to the actual available width rather than the intrinsic content width.
-
-#### 3. `src/components/dashboard/website-editor/EditorCard.tsx` (line 42)
-
-Reduce internal card content padding slightly so cards don't feel cramped inside the now-wider inspector padding. Change from `p-4` to `p-3.5` to compensate.
-
-**Before:** `<div className="p-4 space-y-4 max-w-full box-border overflow-hidden">`
-**After:** `<div className="p-3.5 space-y-4 max-w-full box-border overflow-hidden">`
-
-### Files Modified
-
-| File | Change |
-|------|--------|
-| `editor-tokens.ts` | Increase inspector content padding to `px-6 pb-8` (24px horizontal, 32px bottom) |
-| `InspectorPanel.tsx` | Add block-formatting-context wrapper div inside ScrollArea to force width constraint |
-| `EditorCard.tsx` | Adjust internal padding to `p-3.5` to balance with increased envelope padding |
-
+Enhancement suggestions for stronger bug prompts (applies to this thread):
+1) Include target spacing (“right safe area should be 16px/24px”).
+2) Include scope (“all inspector cards” vs “locations cards only”).
+3) Include breakpoint list (you already started this well).
+4) Include success screenshot annotation (arrow showing exact offending edge).
+5) Include “must not regress” note (“don’t reduce content density or typography hierarchy”).
