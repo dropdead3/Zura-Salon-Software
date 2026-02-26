@@ -1,37 +1,31 @@
 
 
-## Fix Footer CTA Editor Inspector Overflow
+## Fix Website Locations Inspector Overflow
 
-### Problems Visible in Screenshot
+### Problem
 
-1. **Header "Reset" button truncated** — The title "FOOTER CTA SECTION" (font-display, uppercase, wide tracking) plus the description consume too much width, pushing the "Reset" button off-screen. The `flex-shrink-0` on `headerActions` means the title side never compresses enough.
-
-2. **"CALL TO ACTION" sub-heading** — Uses `font-medium text-sm` but visually reads as very prominent. The section divider heading could be tighter.
-
-3. **Headline grid `grid-cols-2 gap-4`** — The `gap-4` (16px) is too generous in a ~290px content area, leaving cramped input fields.
+The address text (e.g., "3641 E Baseline Rd Suite Q-103, Gilbert, AZ 85234") is still running off the panel edge. The `truncate` class on the `<p>` flex containers doesn't propagate truncation to child text -- in a flex layout, `truncate` on the parent doesn't constrain children without explicit `min-w-0` + `overflow-hidden` on the flex container chain.
 
 ### Changes
 
-#### 1. `FooterCTAEditor.tsx` — Icon-only Reset button
-Replace the text-labeled "Reset" button with an icon-only button (matching the Locations fix pattern):
+**`src/components/dashboard/website-editor/LocationsContent.tsx`**
 
-```tsx
-<Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground" onClick={handleReset} title="Reset to defaults">
-  <RotateCcw className="h-3.5 w-3.5" />
-</Button>
-```
+1. **Address/phone/hours rows**: Each `<p>` is a flex row with an icon + text. Add `min-w-0 overflow-hidden` to each `<p>` and ensure the text `<span>` has `truncate`. For phone (line 189-191), wrap the text in a `<span className="truncate">` as well.
 
-This saves ~60px of horizontal space in the header.
+2. **Location name + badge row** (line 170): The `flex-wrap` causes the badge to drop below on narrow panels. Change to `overflow-hidden` with `truncate` on the name so it clips instead of wrapping, keeping the badge inline.
 
-#### 2. `FooterCTAEditor.tsx` — Tighten headline grid gap
-Change `grid grid-cols-2 gap-4` to `grid grid-cols-2 gap-2` for the headline line inputs, recovering 8px.
+3. **Parent `space-y-0.5` div** (line 184): Add `min-w-0 overflow-hidden` to ensure the detail block respects the card boundary.
 
-#### 3. `FooterCTAEditor.tsx` — Compact section divider headings
-Change the "Call to Action" `h4` from `font-medium text-sm` to `font-display text-xs tracking-wide text-muted-foreground` to match the section group header pattern used elsewhere, and reduce `space-y-4` to `space-y-3` inside the CTA settings block.
+### Specific Edits
 
-### Files Modified
+| Line(s) | Current | Fix |
+|---------|---------|-----|
+| 170 | `flex items-center gap-1.5 mb-1 flex-wrap` | `flex items-center gap-1.5 mb-1 min-w-0` (remove flex-wrap, add min-w-0) |
+| 184 | `space-y-0.5 text-xs text-muted-foreground` | `space-y-0.5 text-xs text-muted-foreground min-w-0 overflow-hidden` |
+| 185 | `flex items-center gap-1.5 truncate` | `flex items-center gap-1.5 min-w-0` (move truncate to inner span) |
+| 189-191 | Phone text is bare | Wrap in `<span className="truncate">` |
+| 193 | `flex items-center gap-1.5 truncate` | `flex items-center gap-1.5 min-w-0` (truncate already on inner span) |
 
-| File | Change |
-|------|--------|
-| `FooterCTAEditor.tsx` | Icon-only reset button, tighter headline grid gap, compact section divider |
+### Result
+All text lines clip cleanly within the inspector panel. No horizontal overflow on addresses, phone numbers, or hours.
 
