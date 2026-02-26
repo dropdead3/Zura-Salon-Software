@@ -50,6 +50,7 @@ import { KeyboardShortcutsDialog } from '@/components/KeyboardShortcutsDialog';
 import { OrganizationSwitcher } from '@/components/platform/OrganizationSwitcher';
 import { PlatformContextBanner } from '@/components/platform/PlatformContextBanner';
 import { useRoleUtils, getIconComponent } from '@/hooks/useRoleUtils';
+import { buildRoleBadges, type RoleBadgeConfig } from '@/lib/roleBadgeConfig';
 import { useTeamDirectory, useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { useLocations } from '@/hooks/useLocations';
 import { isTestAccount } from '@/utils/testAccounts';
@@ -465,38 +466,16 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
   
   // Team Tools items are now in managerNavItems (Management section) - no separate transformation needed
 
-  // Get the user's primary access level for display
-  const getAccessLabel = () => {
-    if (actualRoles.includes('super_admin')) return 'Super Admin';
-    if (actualRoles.includes('admin')) return 'General Manager';
-    if (actualRoles.includes('manager')) return 'Manager';
-    if (actualRoles.includes('stylist')) return 'Stylist';
-    if (actualRoles.includes('receptionist')) return 'Receptionist';
-    if (actualRoles.includes('assistant')) return 'Assistant';
-    return 'Team Member';
-  };
+  // Build multi-role badge array
+  const roleBadges = useMemo(
+    () => buildRoleBadges(actualRoles, !!employeeProfile?.is_primary_owner),
+    [actualRoles, employeeProfile?.is_primary_owner]
+  );
 
-  const getAccessIcon = () => {
-    if (actualRoles.includes('super_admin')) return Crown;
-    if (actualRoles.includes('admin')) return Crown;
-    if (actualRoles.includes('manager')) return Shield;
-    if (actualRoles.includes('stylist')) return Scissors;
-    if (actualRoles.includes('receptionist')) return Headset;
-    if (actualRoles.includes('assistant')) return HandHelping;
-    return User;
-  };
-
-  const getAccessBadgeColor = () => {
-    if (actualRoles.includes('super_admin')) return 'bg-gradient-to-r from-yellow-200 via-amber-100 to-yellow-200 text-yellow-900 border-yellow-400 dark:from-yellow-800/50 dark:via-amber-700/30 dark:to-yellow-800/50 dark:text-yellow-200 dark:border-yellow-600 bg-[length:200%_100%] animate-shine';
-    if (actualRoles.includes('admin')) return 'bg-gradient-to-r from-amber-200 via-orange-100 to-amber-200 text-amber-900 border-amber-400 dark:from-amber-800/50 dark:via-orange-700/30 dark:to-amber-800/50 dark:text-amber-200 dark:border-amber-600 bg-[length:200%_100%] animate-shine';
-    if (actualRoles.includes('manager')) return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 border-purple-200 dark:border-purple-800';
-    if (actualRoles.includes('stylist')) return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-800';
-    if (actualRoles.includes('receptionist')) return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800';
-    if (actualRoles.includes('assistant')) return 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-800';
-    return 'bg-muted text-muted-foreground border-border';
-  };
-
-  const AccessIcon = getAccessIcon();
+  // Legacy single-badge helpers kept for any remaining consumers
+  const getAccessLabel = () => roleBadges[0]?.label ?? 'Team Member';
+  const getAccessBadgeColor = () => roleBadges[0]?.colorClasses ?? '';
+  const AccessIcon = roleBadges[0]?.icon ?? User;
 
   const handleSignOut = async () => {
     clearViewAs(); // Clear all view as modes on sign out
@@ -1058,10 +1037,15 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          <Badge variant="outline" className={cn("text-xs font-medium gap-1.5", getAccessBadgeColor())}>
-            <AccessIcon className="w-3 h-3" />
-            <span className="hidden sm:inline">{getAccessLabel()}</span>
-          </Badge>
+          {roleBadges.map((badge, i) => {
+            const Icon = badge.icon;
+            return (
+              <Badge key={i} variant="outline" className={cn("text-xs font-medium gap-1.5", badge.colorClasses)}>
+                <Icon className="w-3 h-3" />
+                <span className="hidden sm:inline">{badge.label}</span>
+              </Badge>
+            );
+          })}
           <ViewAsToggle />
           <ThemeToggle />
           <NotificationsPanel unreadCount={unreadCount} />
@@ -1213,9 +1197,7 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
           filterNavItems={filterNavItems}
           ViewAsToggle={ViewAsToggle}
           HideNumbersToggle={HideNumbersToggle}
-          getAccessLabel={getAccessLabel}
-          getAccessBadgeColor={getAccessBadgeColor}
-          AccessIcon={AccessIcon}
+          roleBadges={roleBadges}
           isAdmin={isAdmin}
           isPlatformUser={isPlatformUser}
           isStylistRole={isStylistRole}
