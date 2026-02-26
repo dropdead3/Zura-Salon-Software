@@ -11,8 +11,13 @@
 .silver-shine-border::before {
   content: '';
   position: absolute;
-  inset: -1px;
-  border-radius: inherit;
+  top: 50%;
+  left: 50%;
+  width: max(200%, 200vh);
+  height: 0;
+  padding-bottom: max(200%, 200vh);
+  transform: translate(-50%, -50%);
+  border-radius: 0;
   background: conic-gradient(
     transparent 0deg,
     transparent 320deg,
