@@ -1,6 +1,7 @@
 import { type ReactNode } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 import '@/styles/silver-shine.css';
 
 interface SilverShineButtonProps {
@@ -19,11 +20,12 @@ export function SilverShineButton({ children, className, onClick }: SilverShineB
       transition={{ duration: 0.2, ease: 'easeOut' }}
       onClick={onClick}
       className={cn(
-        'silver-shine-border rounded-md cursor-pointer p-[1px]',
+        tokens.shine.borderButton,
+        'cursor-pointer',
         className,
       )}
     >
-      <span className="silver-shine-inner block bg-background rounded-[calc(theme(borderRadius.md)-1px)]">
+      <span className={tokens.shine.innerButton}>
         <span className="inline-flex items-center gap-2 h-9 px-4 w-full text-sm font-sans whitespace-nowrap">
           {children}
         </span>
