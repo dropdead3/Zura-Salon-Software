@@ -1,60 +1,48 @@
 
 
-## Fix: Silver Shine Stroke Not Visible
+## Fix: Silver Shine Stroke Visibility
 
 ### Diagnosis
 
-The shine is invisible because of two compounding issues:
+The component structure is correct (1px padding channel, inner mask, rotating conic gradient). The problem is pure **contrast**: the gradient peaks at `hsl(0 0% 85% / 0.18)` — on a 4% lightness dark background, that's nearly invisible. The arc is also too narrow (25° of 360°).
 
-1. **`overflow: hidden`** on `.silver-shine-border` clips the `::before` pseudo-element (which uses `inset: -1px`) back to the element bounds
-2. **Inner span uses `h-full w-full`** — it covers the entire button area, leaving zero gap for the gradient to show through along straight edges. The `border-radius` difference only creates a sub-pixel gap at corners, which is imperceptible.
+### Changes
 
-The conic-gradient border trick requires the inner content to be inset by 1px on all sides so the rotating gradient peeks through as a "stroke."
+**File: `src/styles/silver-shine.css`** — Increase gradient opacity and widen the arc
 
-### Fix
+```css
+/* Current (too faint): */
+background: conic-gradient(
+  transparent 0deg,
+  transparent 335deg,
+  hsl(0 0% 75% / 0.12) 345deg,
+  hsl(0 0% 85% / 0.18) 352deg,
+  hsl(0 0% 80% / 0.14) 356deg,
+  transparent 360deg
+);
 
-**File: `src/components/dashboard/SilverShineButton.tsx`**
-
-Change the outer container to use `p-[1px]` padding to create the 1px border channel, and update the inner span to fill naturally (remove explicit `h-full w-full`):
-
-```tsx
-export function SilverShineButton({ children, className, onClick }: SilverShineButtonProps) {
-  return (
-    <motion.button
-      key="collapsed"
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      transition={{ duration: 0.2, ease: 'easeOut' }}
-      onClick={onClick}
-      className={cn(
-        'silver-shine-border rounded-md cursor-pointer p-[1px]',
-        className,
-      )}
-    >
-      <span className="silver-shine-inner block bg-background rounded-[calc(theme(borderRadius.md)-1px)]">
-        <span className="inline-flex items-center gap-2 h-9 px-4 w-full text-sm font-sans whitespace-nowrap">
-          {children}
-        </span>
-      </span>
-    </motion.button>
-  );
-}
+/* Fixed (visible but still restrained): */
+background: conic-gradient(
+  transparent 0deg,
+  transparent 320deg,
+  hsl(0 0% 70% / 0.15) 332deg,
+  hsl(0 0% 80% / 0.35) 345deg,
+  hsl(0 0% 90% / 0.45) 352deg,
+  hsl(0 0% 80% / 0.35) 358deg,
+  transparent 360deg
+);
 ```
 
-Changes:
-- Add `p-[1px]` to the outer button — this creates a 1px inset channel between the button edge and the inner span, allowing the rotating conic gradient to show through as a border
-- Remove `h-full w-full` from the inner span — no longer needed since `p-[1px]` handles the spacing; the inner span fills naturally via block layout
+Key adjustments:
+- Peak opacity raised from 0.18 → 0.45 (still subtle on dark surfaces — yields ~40% of a white pixel)
+- Arc widened from ~25° to ~40° for a softer, more visible sweep
+- Gradient has a smoother bell-curve falloff (feathered edges)
 
-**File: `src/styles/silver-shine.css`** — no changes needed. The `overflow: hidden` is actually fine here because the gradient fills the button area and the 1px padding gap exposes it as a stroke.
-
-### Result
-
-The 1px channel between the outer edge and the inner `bg-background` span will reveal the slowly rotating conic gradient, creating the "occasional light catch on polished metal" effect as designed.
+No other files change.
 
 ### Files Changed
 
 | File | Action |
 |------|--------|
-| `src/components/dashboard/SilverShineButton.tsx` | Add `p-[1px]`, remove `h-full w-full` from inner span |
+| `src/styles/silver-shine.css` | Increase gradient opacity and widen arc |
 
