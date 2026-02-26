@@ -61,9 +61,8 @@ export function FooterCTAEditor() {
         icon={MousePointerClick}
         description="Configure the call-to-action section that appears before the footer."
         headerActions={
-          <Button variant="ghost" size={tokens.button.card} onClick={handleReset} className="text-muted-foreground gap-1.5">
+          <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground" onClick={handleReset} title="Reset to defaults">
             <RotateCcw className="h-3.5 w-3.5" />
-            Reset
           </Button>
         }
       >
@@ -93,7 +92,7 @@ export function FooterCTAEditor() {
           description="Display the main headline text"
         />
         {localConfig.show_headline && (
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-2">
             <CharCountInput
               label="Headline Line 1"
               value={localConfig.headline_line1}
@@ -132,8 +131,8 @@ export function FooterCTAEditor() {
         )}
 
         {/* CTA Settings */}
-        <div className="space-y-4 pt-4 border-t border-border/30">
-          <h4 className="font-medium text-sm">Call to Action</h4>
+        <div className="space-y-3 pt-4 border-t border-border/30">
+          <h4 className="font-display text-xs tracking-wide text-muted-foreground">Call to Action</h4>
           <ToggleInput
             label="Show CTA Button"
             value={localConfig.show_cta_button}
