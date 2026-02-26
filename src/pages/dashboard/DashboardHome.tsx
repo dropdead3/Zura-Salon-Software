@@ -63,6 +63,7 @@ import { useTranslation } from 'react-i18next';
 import { HubQuickLinks } from '@/components/dashboard/HubQuickLinks';
 import { AIInsightsDrawer } from '@/components/dashboard/AIInsightsDrawer';
 import { PersonalInsightsDrawer } from '@/components/dashboard/PersonalInsightsDrawer';
+import { TodaysPrepSection } from '@/components/dashboard/TodaysPrepSection';
 
 import { PaydayCountdownBanner } from '@/components/dashboard/mypay/PaydayCountdownBanner';
 import { InsightsNudgeBanner } from '@/components/dashboard/InsightsNudgeBanner';
@@ -557,6 +558,10 @@ function DashboardSections({
           </Card>
         </div>
       </VisibilityGate>
+    ),
+    
+    todays_prep: hasStylistRole && (
+      <TodaysPrepSection />
     ),
     
     schedule_tasks: (
