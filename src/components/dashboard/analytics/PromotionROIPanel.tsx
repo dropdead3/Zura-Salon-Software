@@ -193,7 +193,7 @@ export function PromotionROIPanel({ organizationId }: PromotionROIPanelProps) {
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={stats?.chartData || []} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis type="number" tickFormatter={(v) => formatCurrencyUtil(v, undefined, { maximumFractionDigits: 0, minimumFractionDigits: 0 })} className="text-xs" />
+                  <XAxis type="number" tickFormatter={(v) => formatCurrencyUtil(v, undefined, { maximumFractionDigits: 2, minimumFractionDigits: 2 })} className="text-xs" />
                   <YAxis type="category" dataKey="name" className="text-xs" width={100} />
                   <Tooltip 
                     formatter={(value: number) => formatCurrencyUtil(value)}

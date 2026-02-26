@@ -22,7 +22,7 @@ export function AnimatedBlurredAmount({
   prefix = '',
   suffix = '',
   duration = 1200,
-  decimals = 0,
+  decimals = 2,
   className = '',
 }: AnimatedBlurredAmountProps) {
   const { hideNumbers, requestUnhide, quickHide } = useHideNumbers();
@@ -74,7 +74,7 @@ export function AnimatedBlurredAmount({
   };
 
   const formattedValue = currency
-    ? formatCurrency(displayValue, currency, decimals > 0 ? { maximumFractionDigits: decimals, minimumFractionDigits: decimals } : { maximumFractionDigits: 0, minimumFractionDigits: 0 })
+    ? formatCurrency(displayValue, currency, { maximumFractionDigits: decimals, minimumFractionDigits: decimals })
     : decimals > 0
       ? displayValue.toFixed(decimals)
       : Math.round(displayValue).toLocaleString();

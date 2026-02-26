@@ -22,13 +22,13 @@ export function useFormatCurrency() {
   );
 
   const formatCurrencyWhole = useCallback(
-    (amount: number) => formatCurrencyUnified(amount, { currency, noCents: true }),
+    (amount: number) => formatCurrencyUnified(amount, { currency, decimals: 2 }),
     [currency]
   );
 
   const formatCurrencyCompact = useCallback(
     (amount: number, options?: { noCents?: boolean }) =>
-      formatCurrencyUnified(amount, { currency, compact: true, noCents: options?.noCents ?? true }),
+      formatCurrencyUnified(amount, { currency, compact: true, noCents: false }),
     [currency]
   );
 

@@ -137,7 +137,7 @@ export function RentersTabContent({ organizationId }: RentersTabContentProps) {
           <CardContent className="p-4">
             <p className="text-xs text-muted-foreground uppercase tracking-wider">Monthly Revenue</p>
             <p className="text-2xl font-medium mt-1 text-primary">
-              {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(
+              {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
                 renters?.reduce((sum, r) => sum + (r.active_contract?.rent_amount || 0), 0) || 0
               )}
             </p>

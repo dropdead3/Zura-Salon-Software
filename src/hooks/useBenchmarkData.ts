@@ -50,7 +50,8 @@ export function formatMetricValue(value: number, format: 'currency' | 'percent' 
       return new Intl.NumberFormat('en-US', {
         style: 'currency',
         currency: 'USD',
-        maximumFractionDigits: 0,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
       }).format(value);
     case 'percent':
       return `${value.toFixed(1)}%`;

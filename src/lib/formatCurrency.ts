@@ -24,8 +24,8 @@ export function formatCurrency(
   return formatCurrencyUnified(amount, {
     currency,
     decimals,
-    ...(options?.minimumFractionDigits === 0 && options?.maximumFractionDigits === 0
-      ? { noCents: true }
+    ...(options?.minimumFractionDigits !== undefined
+      ? { decimals: Math.max(0, options.minimumFractionDigits) }
       : null),
   });
 }
@@ -37,5 +37,5 @@ export function formatCurrencyWhole(
   amount: number,
   currency: string = DEFAULT_CURRENCY
 ): string {
-  return formatCurrencyUnified(amount, { currency, noCents: true });
+  return formatCurrencyUnified(amount, { currency, decimals: 2 });
 }
