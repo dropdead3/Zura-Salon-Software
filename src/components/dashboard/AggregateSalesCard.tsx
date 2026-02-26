@@ -1,5 +1,5 @@
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { TogglePill } from '@/components/ui/toggle-pill';
+import { Tabs, FilterTabsList, FilterTabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { LastSyncIndicator } from '@/components/dashboard/sales/LastSyncIndicator';
 import { Badge } from '@/components/ui/badge';
@@ -1220,16 +1220,12 @@ export function AggregateSalesCard({
             </div>
             <div className="flex items-center gap-2">
               {isToday && (
-                <TogglePill
-                  options={[
-                    { value: 'actual', label: 'Actual' },
-                    { value: 'expected', label: 'Expected' },
-                  ]}
-                  value={locationRevenueView}
-                  onChange={(v) => setLocationRevenueView(v as 'actual' | 'expected')}
-                  size="sm"
-                  variant="solid"
-                />
+                <Tabs value={locationRevenueView} onValueChange={(v) => setLocationRevenueView(v as 'actual' | 'expected')}>
+                  <FilterTabsList>
+                    <FilterTabsTrigger value="actual">Actual</FilterTabsTrigger>
+                    <FilterTabsTrigger value="expected">Expected</FilterTabsTrigger>
+                  </FilterTabsList>
+                </Tabs>
               )}
               {availableRegions.length >= 2 && (
                 <Select value={regionFilter} onValueChange={setRegionFilter}>
