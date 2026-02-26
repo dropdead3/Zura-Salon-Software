@@ -42,9 +42,18 @@ interface PersistedLayout {
 function loadPrefs(): PersistedLayout {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : {};
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return {
+        structureWidth: parsed.structureWidth,
+        inspectorWidth: parsed.inspectorWidth,
+        structureCollapsed: false,
+        inspectorCollapsed: false,
+      };
+    }
+    return { structureCollapsed: false, inspectorCollapsed: false };
   } catch {
-    return {};
+    return { structureCollapsed: false, inspectorCollapsed: false };
   }
 }
 
@@ -151,7 +160,7 @@ export function useEditorLayout(): EditorLayoutState {
   // ─── Toggles ───
   const toggleStructure = useCallback(() => {
     setPrefs((prev) => {
-      const next = { ...prev, structureCollapsed: !prev.structureCollapsed };
+      const next = { ...prev, structureCollapsed: prev.structureCollapsed === true ? false : true };
       savePrefs(next);
       return next;
     });
@@ -159,7 +168,7 @@ export function useEditorLayout(): EditorLayoutState {
 
   const toggleInspector = useCallback(() => {
     setPrefs((prev) => {
-      const next = { ...prev, inspectorCollapsed: !prev.inspectorCollapsed };
+      const next = { ...prev, inspectorCollapsed: prev.inspectorCollapsed === true ? false : true };
       savePrefs(next);
       return next;
     });
