@@ -92,7 +92,7 @@ function migrateLayout(layout: DashboardLayout, pinnedCards: string[]): Dashboar
   }
   
   // Ensure hub_quicklinks is added for existing layouts (migration for existing users)
-  if (!migrated.sections?.includes('hub_quicklinks')) {
+  if (!migrated.sectionOrder?.includes('hub_quicklinks')) {
     migrated = {
       ...migrated,
       sections: ['hub_quicklinks', ...(migrated.sections || [])],
@@ -101,7 +101,7 @@ function migrateLayout(layout: DashboardLayout, pinnedCards: string[]): Dashboar
   }
   
   // Ensure ai_insights is added for existing layouts (migration for existing users)
-  if (!migrated.sections?.includes('ai_insights')) {
+  if (!migrated.sectionOrder?.includes('ai_insights')) {
     migrated = {
       ...migrated,
       sections: ['ai_insights', ...(migrated.sections || [])],
@@ -110,7 +110,7 @@ function migrateLayout(layout: DashboardLayout, pinnedCards: string[]): Dashboar
   }
   
   // Ensure todays_prep is added for existing layouts (after ai_insights)
-  if (!migrated.sections?.includes('todays_prep')) {
+  if (!migrated.sectionOrder?.includes('todays_prep')) {
     const insightsIdx = migrated.sectionOrder?.indexOf('ai_insights');
     const insertIdx = insightsIdx !== undefined && insightsIdx >= 0 ? insightsIdx + 1 : 0;
     const newSections = [...(migrated.sections || [])];
@@ -125,7 +125,7 @@ function migrateLayout(layout: DashboardLayout, pinnedCards: string[]): Dashboar
   }
   
   // Ensure payroll sections are added for existing layouts
-  if (!migrated.sections?.includes('payroll_deadline')) {
+  if (!migrated.sectionOrder?.includes('payroll_deadline')) {
     const insertAfter = migrated.sectionOrder?.indexOf('hub_quicklinks');
     const idx = insertAfter !== undefined && insertAfter >= 0 ? insertAfter + 1 : 2;
     const newSections = [...(migrated.sections || [])];
