@@ -1,19 +1,27 @@
 
 
-## Simplify Cha-Ching to Toast-Only
+## Root Cause: Location ID Mismatch
 
-The `ChaChingToast` (sonner toast) already fires on every checkout via `useChaChingDetector`. The notification center, sticky tab, and history are unnecessary overhead. Strip them out.
+The "By Location" section shows `$0.00` because of an **ID namespace mismatch** between two data sources:
 
-### Changes
+| Table | `location_id` format | Example |
+|-------|---------------------|---------|
+| `phorest_appointments` | App location ID | `val-vista-lakes` |
+| `phorest_transaction_items` | Phorest branch ID | `6YPlWL5os-Fnj0MmifbvVA` |
+| `phorest_daily_sales_summary` | Phorest branch ID | `6YPlWL5os-Fnj0MmifbvVA` |
 
-1. **Delete `src/components/dashboard/ChaChingNotificationCenter.tsx`** — remove the entire component (sticky tab + notification stack panel).
+The `useSalesByLocation` hook (which builds the location list) uses `locations.id` as keys (`val-vista-lakes`). But `useTodayActualRevenue` queries POS tables, so `locationActuals` is keyed by Phorest branch IDs (`6YPlWL5os-Fnj0MmifbvVA`). When the card does `locationActuals["val-vista-lakes"]`, it finds nothing — so everything shows `$0.00`.
 
-2. **Edit `src/components/dashboard/DashboardLayout.tsx`**
-   - Remove `ChaChingNotificationCenter` import and `<ChaChingNotificationCenter />` render (line 1345).
-   - Keep `ChaChingDetectorMount` and `ChaChingHistoryProvider` (the detector fires the toast).
+## Fix
 
-3. **Edit `src/hooks/useChaChingDetector.tsx`**
-   - Change toast `duration` from `5000` to `3000` (3-second auto-dismiss).
+**Edit `src/hooks/useTodayActualRevenue.tsx`** — in the `locationActualRevenueQuery` (and the location last-appointment query), resolve Phorest branch IDs back to app location IDs:
 
-4. **No changes to `ChaChingToast.tsx`** — it already has the right glass bento styling and auto-dismisses with the sonner toast lifecycle.
+1. Fetch the `locations` table mapping (`phorest_branch_id` → `id`) at the start of the query function
+2. When building the `byLocation` map, use the resolved app location ID as the key instead of the raw Phorest branch ID
+3. Apply the same mapping in the `locationLastApptQuery`
+
+This ensures `locationActuals` is keyed by `val-vista-lakes` / `north-mesa`, matching what `AggregateSalesCard` looks up.
+
+### Files Changed
+- **Edit**: `src/hooks/useTodayActualRevenue.tsx` — add location ID resolution in both `locationActualRevenueQuery` and `locationLastApptQuery`
 
