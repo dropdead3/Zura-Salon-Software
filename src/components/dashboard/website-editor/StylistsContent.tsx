@@ -17,6 +17,7 @@ import { sampleStylists } from '@/data/sampleStylists';
 import { HomepagePreviewModal } from '@/components/dashboard/HomepagePreviewModal';
 import { ReorderableStylistList } from '@/components/dashboard/ReorderableStylistList';
 import { SpecialtyOptionsManager } from '@/components/dashboard/SpecialtyOptionsManager';
+import { EditorCard } from './EditorCard';
 
 interface StylistProfile {
   id: string;
@@ -328,16 +329,11 @@ export function StylistsContent() {
   );
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h2 className="text-xl font-display font-medium flex items-center gap-2">
-          <Globe className="w-5 h-5" />
-          Homepage Stylists
-        </h2>
-        <p className="text-muted-foreground text-sm">
-          Manage which stylists appear on the public website homepage.
-        </p>
-      </div>
+    <EditorCard
+      title="Homepage Stylists"
+      icon={Globe}
+      description="Manage which stylists appear on the public website homepage"
+    >
 
       {/* Sample Cards Settings */}
       <Card>
@@ -459,6 +455,6 @@ export function StylistsContent() {
       </Tabs>
 
       <HomepagePreviewModal open={previewOpen} onOpenChange={setPreviewOpen} />
-    </div>
+    </EditorCard>
   );
 }

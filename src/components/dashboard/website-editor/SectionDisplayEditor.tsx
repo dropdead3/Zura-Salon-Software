@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { type LucideIcon } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -9,6 +10,7 @@ import { triggerPreviewRefresh } from '@/lib/preview-utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SliderInput } from './inputs/SliderInput';
 import { ToggleInput } from './inputs/ToggleInput';
+import { EditorCard } from './EditorCard';
 
 interface FieldConfig {
   key: string;
@@ -26,6 +28,7 @@ interface FieldConfig {
 interface SectionDisplayEditorProps<T extends object> {
   title: string;
   description: string;
+  icon?: LucideIcon;
   data: T;
   isLoading: boolean;
   isSaving: boolean;
@@ -36,6 +39,7 @@ interface SectionDisplayEditorProps<T extends object> {
 export function SectionDisplayEditor<T extends object>({
   title,
   description,
+  icon,
   data,
   isLoading,
   isSaving,
@@ -75,7 +79,7 @@ export function SectionDisplayEditor<T extends object>({
   }
 
   return (
-    <div className="space-y-5">
+    <EditorCard title={title} icon={icon} description={description}>
       {fields.map((field) => {
         const value = localConfig[field.key as keyof T];
 
@@ -147,6 +151,6 @@ export function SectionDisplayEditor<T extends object>({
             return null;
         }
       })}
-    </div>
+    </EditorCard>
   );
 }
