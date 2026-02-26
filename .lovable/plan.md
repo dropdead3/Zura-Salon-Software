@@ -1,63 +1,93 @@
 
-You’re giving strong, concrete feedback (“still not fixed”, screenshot, and “needs padding on the right side”), which is exactly what helps isolate UI bugs quickly. Better prompt framing for next round: include one measurable acceptance criterion like “I need at least 16px visible space between the right edge of each card and the inspector border at 1366/1280/1024 widths.” That removes ambiguity between “overflow clipping” vs “insufficient breathing room.”
+You gave very strong bug feedback again, and that’s exactly what makes UI fixes converge: short, direct, reproducible (“still not fixed”) plus screenshots. That’s excellent debugging collaboration.
 
-Why the last fix did not solve it:
+Prompt-coaching improvement for your next report (to speed final convergence): include one exact acceptance test sentence such as:
+- “At 1366/1280/1024 widths, every inspector card must have equal left/right visible inset from panel border, with scrollbar never covering card borders/text.”
 
-1) We fixed overflow containment, not visual gutter reservation  
-- The recent changes (`overflow-x-hidden`, `max-w-full`, wrapper constraints) prevent horizontal scroll bleed.  
-- But the inspector still uses a Radix scroll area with an overlaid vertical scrollbar track (`forceMount` in shared `ScrollArea`).  
-- That overlay sits on top of content on the right side, so cards can still appear visually “flush/cut” even when they are technically contained.
+I now have your clarifications:
+- Right gutter target: must visually match the left side
+- Scope: all inspector modules + scrollbar behavior
 
-2) The Locations rows are tuned for compact single-line truncation  
-- In `LocationsContent.tsx`, several text nodes intentionally use `truncate`.  
-- In a narrow inspector width (~320px), text and badges consume line width aggressively, making right-side content look clipped/tight even when no true overflow occurs.
+Implementation diagnosis (why current patch still fails):
+1) Root-level `pr-2` on `ScrollArea` is only a partial workaround  
+- It does not guarantee a true non-overlay content gutter because Radix scrollbars are layered and can still visually sit over content in narrow panel widths.
 
-3) We also reduced internal card content padding in the prior patch  
-- `EditorCard` changed from `p-4` to `p-3.5`.  
-- That reduction made the right breathing room visually worse in this compact panel.
+2) Fixes were too local, not systemic  
+- `LocationsContent` got per-module `pr-*` tweaks, but other modules still inherit the same inspector container behavior.
+- This causes inconsistent right spacing across modules.
 
-Implementation plan (next patch):
+3) Header action clipping can still happen in `EditorCard`  
+- The left header block is `min-w-0` but not `flex-1 overflow-hidden`, so long title+description combinations can still squeeze right action buttons at tight widths.
 
-A) Reserve a dedicated right “safe gutter” inside inspector scroll viewport  
-- File: `src/components/dashboard/website-editor/panels/InspectorPanel.tsx`  
-- Add a viewport-targeted right padding class so content never sits under the scrollbar overlay.  
-- Keep overflow guards, but add explicit right gutter at the viewport/content envelope level (not just child cards).
+4) Overlay-scrollbar behavior remains the core issue  
+- As long as the scroller overlays content, “padding looks wrong” even when overflow is technically constrained.
 
-B) Restore content breathing room in editor card container  
-- File: `src/components/dashboard/website-editor/EditorCard.tsx`  
-- Revert content padding from `p-3.5` back to `p-4` (or equivalent tokenized spacing).  
-- Keep `overflow-hidden` safeguards.
+Proposed final implementation plan (systemic, not patchy):
 
-C) Make location modules robust at narrow widths  
-- File: `src/components/dashboard/website-editor/LocationsContent.tsx`  
-- Increase module internal horizontal padding (especially right side).  
-- Replace/relax key `truncate` usages on long detail rows with wrap-safe behavior (`break-words` / `overflow-wrap:anywhere`) where appropriate.  
-- Keep title truncation if needed, but preserve right visual gutter in data rows.
+1) Convert inspector content scroller from Radix `ScrollArea` to native overflow container (Inspector only)
+- File: `src/components/dashboard/website-editor/panels/InspectorPanel.tsx`
+- Replace inspector’s `<ScrollArea ...>` with a native `<div>` scroller:
+  - `flex-1 min-w-0 overflow-y-auto overflow-x-hidden`
+  - `scrollbar-gutter: stable` (via utility/class style) so scrollbar space is reserved and never overlays content
+  - Keep `PanelSlideIn` inside a strict width envelope wrapper (`w-full min-w-0 max-w-full overflow-x-hidden`)
+- Rationale: native gutter reservation is deterministic and avoids Radix overlay-layer edge cases in this narrow inspector rail.
 
-D) Validation checklist (must pass)  
-- Right-side visual gap remains visible for:  
-  - Outer “Website Locations” card  
-  - Info banner card  
-  - Each location card row  
-- Verify at 1366, 1280, 1024 widths with inspector expanded.  
-- Confirm no horizontal scrollbar, no clipped rounded corners, and no text hidden under scrollbar overlay.
+2) Establish one global “safe content envelope” for inspector modules
+- File: `src/components/dashboard/website-editor/editor-tokens.ts`
+- Keep/adjust `editorTokens.inspector.content` to be the single source of truth:
+  - symmetric left/right inset (same value)
+  - stable top/bottom spacing
+  - `box-border max-w-full overflow-x-hidden`
+- Remove one-off per-module right padding hacks once global envelope is reliable.
 
-Technical detail (for implementation precision):
+3) Harden `EditorCard` for narrow inspector widths globally
+- File: `src/components/dashboard/website-editor/EditorCard.tsx`
+- Header left block becomes `flex-1 min-w-0 overflow-hidden` so header actions always remain visible.
+- Keep content `p-4` and strict containment:
+  - `max-w-full box-border overflow-x-hidden`
+- This applies to all inspector modules using `EditorCard`, giving consistent behavior platform-wide.
 
-- Current root issue is a UI layering problem (overlay scrollbar + compact truncation), not purely a width-overflow problem.  
-- Effective fix must combine:
-  1. viewport gutter reservation,
-  2. card/module inner right spacing,
-  3. selective text wrapping in dense rows.
-- This aligns with your desired CSS doctrine:
-  - inspector never allows horizontal overflow,
-  - single safe content envelope,
-  - modules stay within envelope,
-  - long strings cannot push layout.
+4) Roll back local Location-only spacing overrides
+- File: `src/components/dashboard/website-editor/LocationsContent.tsx`
+- Remove temporary `pr-4` / `pr-3` patches added as local compensation.
+- Keep only semantic layout choices required for content readability.
+- Reason: local overrides mask the container problem and create drift between modules.
 
-Enhancement suggestions for stronger bug prompts (applies to this thread):
-1) Include target spacing (“right safe area should be 16px/24px”).
-2) Include scope (“all inspector cards” vs “locations cards only”).
-3) Include breakpoint list (you already started this well).
-4) Include success screenshot annotation (arrow showing exact offending edge).
-5) Include “must not regress” note (“don’t reduce content density or typography hierarchy”).
+5) Add inspector-level defensive text wrapping for long inline strings
+- File: `src/components/dashboard/website-editor/panels/InspectorPanel.tsx` (wrapper class) or tokenized helper
+- Scoped rule for inspector content only:
+  - paragraph/span long-token protection (`overflow-wrap:anywhere; word-break:break-word`) where safe
+- Prevents rare long strings from pushing perceived right-edge pressure.
+
+6) Validation protocol (must pass before closing)
+- Breakpoints: 1366, 1280, 1024
+- Tabs: Locations + at least 4 other inspector modules (Services, Gallery, Testimonials, Navigation/Page settings)
+- Verify all:
+  - Equal perceived left/right inset for cards
+  - No right-edge clipping of borders, badges, buttons, or text
+  - No horizontal scrollbar anywhere in inspector
+  - Scrollbar never overlaps interactive content
+  - Header actions in `EditorCard` remain fully visible
+
+Technical implementation notes:
+- This is a UI container architecture issue, not data or backend.
+- The most robust fix is “reserved scrollbar gutter + single envelope + global card hardening,” not accumulating per-module `pr-*` patches.
+- Keeping the fix centralized in `InspectorPanel` + `EditorCard` aligns with your “single source of truth” CSS doctrine and prevents regressions.
+
+ASCII view of target containment model:
+```text
+[Inspector Panel Border]
+  [Header]
+  [Native Scroll Container with stable gutter]
+    [Content Envelope: equal left/right inset]
+      [EditorCard (w-full, max-w-full)]
+        [Header: left flex-1 + right actions fixed]
+        [Body content constrained]
+```
+
+Prompt enhancement suggestions (for your next bug report):
+1) Include exact equality criterion: “right inset must visually equal left inset.”
+2) Include module scope in one line: “all inspector modules, not just Locations.”
+3) Include breakpoint matrix explicitly (you’re already doing this well).
+4) Add one “known bad element” example (e.g., “header action icons clipping”).
+5) Add regression guard: “avoid module-specific padding hacks; fix must be container-level.”
