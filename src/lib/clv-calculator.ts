@@ -120,7 +120,7 @@ export function assignCLVTier(
 }
 
 /**
- * Format CLV for display. Round to clean numbers.
+ * @deprecated Use useFormatCurrency().formatCurrencyCompact instead for proper locale/currency support.
  */
 export function formatCLVValue(value: number): string {
   if (value >= 10000) return `$${Math.round(value / 1000)}k`;

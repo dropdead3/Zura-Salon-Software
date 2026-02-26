@@ -48,7 +48,7 @@ import {
 } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn, formatPhoneDisplay } from '@/lib/utils';
-import { calculateCLV, assignCLVTier, formatCLVValue, type CLVTierConfig } from '@/lib/clv-calculator';
+import { calculateCLV, assignCLVTier, CLV_TIERS, type CLVTierConfig } from '@/lib/clv-calculator';
 import { LEAD_SOURCES, getLeadSourceLabel, getLeadSourceColor, isStandardSource } from '@/lib/leadSources';
 import { MergedProfileBanner } from './clients/merge/MergedProfileBanner';
 import { VisitHistoryTimeline } from './VisitHistoryTimeline';
@@ -648,22 +648,36 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
                         <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                           <DollarSign className="w-4 h-4 text-primary" />
                         </div>
-                        <div>
+                         <div>
                           <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-display">Lifetime Value</p>
-                          <p className="font-display text-xl tracking-wide">{formatCLVValue(clvResult.lifetimeValue)}</p>
-                        </div>
-                      </div>
-                      <div className="text-right space-y-0.5">
-                        <p className="text-xs text-muted-foreground">
-                          {formatCLVValue(clvResult.annualValue)}<span className="text-muted-foreground/60">/yr</span>
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {formatCurrencyWhole(Math.round(clvResult.avgTicket))}<span className="text-muted-foreground/60">/visit</span>
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {clvResult.annualFrequency.toFixed(1)}<span className="text-muted-foreground/60"> visits/yr</span>
-                        </p>
-                      </div>
+                          <div className="flex items-center gap-2">
+                            <p className="font-display text-xl tracking-wide">{formatCurrencyWhole(Math.round(clvResult.lifetimeValue))}</p>
+                            {(() => {
+                              // Simple tier assignment based on annual value thresholds
+                              const tier = clvResult.annualValue >= 2000 ? CLV_TIERS.platinum
+                                : clvResult.annualValue >= 1000 ? CLV_TIERS.gold
+                                : clvResult.annualValue >= 500 ? CLV_TIERS.silver
+                                : CLV_TIERS.bronze;
+                              return (
+                                <Badge className={cn("text-[10px] px-1.5 py-0", tier.color, tier.bgColor, "border-0")}>
+                                  {tier.label}
+                                </Badge>
+                              );
+                            })()}
+                          </div>
+                         </div>
+                       </div>
+                       <div className="text-right space-y-0.5">
+                         <p className="text-xs text-muted-foreground">
+                           {formatCurrencyWhole(Math.round(clvResult.annualValue))}<span className="text-muted-foreground/60">/yr</span>
+                         </p>
+                         <p className="text-xs text-muted-foreground">
+                           {formatCurrencyWhole(Math.round(clvResult.avgTicket))}<span className="text-muted-foreground/60">/visit</span>
+                         </p>
+                         <p className="text-xs text-muted-foreground">
+                           {clvResult.annualFrequency.toFixed(1)}<span className="text-muted-foreground/60"> visits/yr</span>
+                         </p>
+                       </div>
                     </div>
                   </Card>
                 )}

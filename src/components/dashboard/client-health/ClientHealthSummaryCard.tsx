@@ -70,7 +70,7 @@ export function ClientHealthSummaryCard() {
             let revenueAtRisk = 0;
             if (showDollarImpact && count > 0) {
               revenueAtRisk = segmentClients.reduce((sum, c) => {
-                const clv = calculateCLV(c.total_spend, c.visit_count, null, c.last_visit);
+                const clv = calculateCLV(c.total_spend, c.visit_count, c.first_visit, c.last_visit);
                 return sum + (clv.isReliable ? clv.annualValue : 0);
               }, 0);
             }
