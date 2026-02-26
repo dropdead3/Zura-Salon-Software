@@ -187,7 +187,10 @@ export default function WebsiteSectionsHub() {
     return `/org/${orgSlug}/${selectedPage.slug}?preview=true`;
   }, [orgSlug, selectedPageId, selectedPage]);
 
-  const openSiteUrl = useMemo(() => previewUrl.replace('?preview=true', ''), [previewUrl]);
+  const openSiteUrl = useMemo(() => {
+    const path = previewUrl.replace('?preview=true', '');
+    return `${window.location.origin}${path}`;
+  }, [previewUrl]);
 
   // ─── Undo/Redo ───
   const { state: undoState, setState: pushUndoState, undo, redo, canUndo, canRedo } = useUndoRedo<SectionConfig[] | null>(null);
