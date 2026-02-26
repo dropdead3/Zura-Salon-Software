@@ -1,14 +1,16 @@
 import { tokens, APPOINTMENT_STATUS_BADGE } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ClipboardCheck, ChevronRight, UserPlus, Phone } from 'lucide-react';
+import { ClipboardCheck, ChevronRight, UserPlus, Phone, Star, StickyNote } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { VisibilityGate } from '@/components/visibility';
 import { useTodayPrep } from '@/hooks/useTodayPrep';
 import { CLV_TIERS, type CLVTier } from '@/lib/clv-calculator';
+import { useMemo } from 'react';
+import { format } from 'date-fns';
 
 const NEEDS_CONFIRM = new Set(['booked', 'pending']);
 
@@ -28,8 +30,59 @@ const TIER_KEY_MAP: Record<string, CLVTier> = {
   Bronze: 'bronze',
 };
 
+function isBirthdayToday(birthday: string | null): boolean {
+  if (!birthday) return false;
+  const today = format(new Date(), 'MM-dd');
+  // birthday could be YYYY-MM-DD or MM-DD
+  const bday = birthday.length > 5 ? birthday.slice(5) : birthday;
+  return bday === today;
+}
+
+type TemporalTag = 'now' | 'next' | null;
+
+function getTemporalTags(appointments: { startTime: string; endTime: string; status: string | null }[]): Map<number, TemporalTag> {
+  const tags = new Map<number, TemporalTag>();
+  const now = new Date();
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
+  let foundNext = false;
+
+  for (let i = 0; i < appointments.length; i++) {
+    const appt = appointments[i];
+    if (appt.status === 'completed' || appt.status === 'checked_in') continue;
+
+    const [sh, sm] = (appt.startTime || '').split(':').map(Number);
+    const [eh, em] = (appt.endTime || '').split(':').map(Number);
+    const startMin = (sh || 0) * 60 + (sm || 0);
+    const endMin = (eh || 0) * 60 + (em || 0);
+
+    if (nowMinutes >= startMin && nowMinutes < endMin) {
+      tags.set(i, 'now');
+    } else if (!foundNext && nowMinutes < startMin) {
+      tags.set(i, 'next');
+      foundNext = true;
+    }
+  }
+
+  return tags;
+}
+
+function hasNotes(appt: { clientDirectoryNotes: any[]; previousAppointmentNotes: any[]; clientNotes: string | null }): boolean {
+  return (appt.clientDirectoryNotes?.length > 0) || (appt.previousAppointmentNotes?.length > 0) || !!appt.clientNotes;
+}
+
 export function TodaysPrepSection() {
   const { data: appointments, isLoading } = useTodayPrep();
+
+  const temporalTags = useMemo(() => {
+    if (!appointments) return new Map<number, TemporalTag>();
+    return getTemporalTags(appointments);
+  }, [appointments]);
+
+  const confirmCount = useMemo(() => {
+    if (!appointments) return 0;
+    return appointments.filter(a => NEEDS_CONFIRM.has(a.status || '')).length;
+  }, [appointments]);
 
   return (
     <VisibilityGate
@@ -44,6 +97,11 @@ export function TodaysPrepSection() {
           </div>
           <div className="flex-1 min-w-0">
             <CardTitle className={tokens.card.title}>TODAY'S PREP</CardTitle>
+            {appointments && appointments.length > 0 && (
+              <CardDescription className="font-sans text-xs text-muted-foreground">
+                {appointments.length} today{confirmCount > 0 ? ` · ${confirmCount} to confirm` : ''}
+              </CardDescription>
+            )}
           </div>
         </CardHeader>
         <CardContent className="pt-0">
@@ -61,14 +119,23 @@ export function TodaysPrepSection() {
             </div>
           ) : (
             <div className="space-y-1">
-              {appointments.slice(0, 5).map(appt => {
+              {appointments.slice(0, 5).map((appt, idx) => {
                 const tierKey = appt.clvTier ? TIER_KEY_MAP[appt.clvTier] : null;
                 const tierConfig = tierKey ? CLV_TIERS[tierKey] : null;
+                const tag = temporalTags.get(idx);
+                const isCompleted = appt.status === 'completed';
+                const birthdayToday = isBirthdayToday(appt.birthday);
+                const notesExist = hasNotes(appt);
 
                 return (
                   <div
                     key={appt.id}
-                    className="flex items-center gap-2 py-2 px-2 rounded-lg hover:bg-muted/50 transition-colors"
+                    className={cn(
+                      'flex items-center gap-2 py-2 px-2 rounded-lg hover:bg-muted/50 transition-colors',
+                      tag === 'now' && 'border-l-2 border-primary bg-primary/5',
+                      tag === 'next' && 'border-l-2 border-accent',
+                      isCompleted && 'opacity-50'
+                    )}
                   >
                     {/* Time */}
                     <span className="font-display text-xs tracking-wide text-muted-foreground w-[72px] shrink-0">
@@ -93,13 +160,31 @@ export function TodaysPrepSection() {
                       );
                     })()}
 
-                    {/* Client name */}
-                    <span className="font-sans text-sm truncate flex-1 min-w-0">
-                      {appt.clientName || 'Walk-in'}
-                      {appt.isNewClient && (
-                        <UserPlus className="inline w-3.5 h-3.5 ml-1.5 text-primary" />
+                    {/* Client name + indicators */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1">
+                        <span className="font-sans text-sm truncate">
+                          {appt.clientName || 'Walk-in'}
+                        </span>
+                        {appt.isNewClient && (
+                          <UserPlus className="w-3.5 h-3.5 text-primary shrink-0" />
+                        )}
+                        {appt.isVip && (
+                          <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500 shrink-0" />
+                        )}
+                        {birthdayToday && (
+                          <span className="text-xs shrink-0" title="Birthday today!">🎂</span>
+                        )}
+                        {notesExist && (
+                          <StickyNote className="w-3 h-3 text-muted-foreground shrink-0" />
+                        )}
+                      </div>
+                      {appt.serviceName && (
+                        <p className="font-sans text-[11px] text-muted-foreground truncate">
+                          {appt.serviceName}
+                        </p>
                       )}
-                    </span>
+                    </div>
 
                     {/* CLV tier badge */}
                     {tierConfig && (
