@@ -11,6 +11,7 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   const [footerHeight, setFooterHeight] = useState(0);
+  const [showFooter, setShowFooter] = useState(false);
   const footerRef = useRef<HTMLDivElement>(null);
 
   // Immediately force light mode during render (before useEffect) to prevent flash
@@ -46,24 +47,32 @@ export function Layout({ children }: LayoutProps) {
   }, []);
 
   useEffect(() => {
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      const windowHeight = window.innerHeight;
+      const documentHeight = document.documentElement.scrollHeight;
+      setShowFooter(scrollY + windowHeight > documentHeight - windowHeight * 2);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
     const updateFooterHeight = () => {
       if (footerRef.current) {
         setFooterHeight(footerRef.current.offsetHeight);
       }
     };
 
-    // Initial measurement after a brief delay to ensure content renders
     const initialTimeout = setTimeout(updateFooterHeight, 100);
     
-    // Use ResizeObserver for accurate dynamic measurements
     const resizeObserver = new ResizeObserver(updateFooterHeight);
     if (footerRef.current) {
       resizeObserver.observe(footerRef.current);
     }
 
     window.addEventListener("resize", updateFooterHeight);
-    
-    // Also update after fonts load
     document.fonts?.ready.then(updateFooterHeight);
 
     return () => {
@@ -78,7 +87,8 @@ export function Layout({ children }: LayoutProps) {
       {/* Fixed footer that reveals as content scrolls */}
       <div 
         ref={footerRef}
-        className="fixed bottom-0 left-0 right-0 z-0"
+        className="fixed bottom-0 left-0 right-0 z-0 transition-opacity duration-300"
+        style={{ opacity: showFooter ? 1 : 0, visibility: showFooter ? 'visible' : 'hidden' }}
       >
         <Footer />
       </div>
@@ -95,17 +105,6 @@ export function Layout({ children }: LayoutProps) {
         
         {/* CTA - part of scrolling content, NOT fixed footer */}
         <FooterCTA />
-        
-        {/* Bottom fade/blur edge for parallax reveal transition */}
-        <div 
-          className="absolute bottom-0 left-0 right-0 h-24 md:h-32 pointer-events-none"
-          style={{
-            background: 'linear-gradient(to bottom, transparent 0%, hsl(var(--background) / 0.5) 40%, hsl(var(--background)) 100%)',
-            backdropFilter: 'blur(2px)',
-            maskImage: 'linear-gradient(to bottom, transparent 0%, black 100%)',
-            WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 100%)',
-          }}
-        />
       </div>
 
       <StickyFooterBar />
