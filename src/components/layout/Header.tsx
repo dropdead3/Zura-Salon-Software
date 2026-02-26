@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X, ArrowRight, ChevronDown, MoreHorizontal, UserRound } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import Logo from "@/assets/brand-logo-secondary.svg";
+import Logo from "@/assets/brand-wordmark.svg";
 import LogoIcon from "@/assets/brand-logo-secondary.svg";
 import { cn } from "@/lib/utils";
 import { useAnnouncementBarSettings } from "@/hooks/useAnnouncementBar";
