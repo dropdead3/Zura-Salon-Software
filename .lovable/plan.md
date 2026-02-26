@@ -1,81 +1,57 @@
 
 
-## Investigation: Sales Overview Double Counting
+## Investigation: Sales Overview Card vs Phorest Report Discrepancy
 
-Good instinct flagging this. Here's what the data investigation revealed.
+Strong instinct again -- you were right that the numbers don't match. Here's exactly why.
 
-### What the data actually shows
+### Root Cause: Retail Product Tax Not Included in Revenue Totals
 
-| Source | Amount | What it represents |
-|--------|--------|--------------------|
-| `phorest_daily_sales_summary` (Actual) | **$3,675** | POS-confirmed revenue: $3,376 service + $299 retail |
-| `phorest_transaction_items` (cross-check) | **$3,675** | Matches exactly per staff member |
-| `phorest_appointments` (Expected) | **$4,050** | Scheduled appointment `total_price` sums |
-| UI "Expected" badge | **$4,349** | $4,050 appointments + $299 retail (double-counted) |
+Our sync stores product revenue **pre-tax**, but Phorest's "Total Retail Sales" report includes sales tax. Services have $0 tax (correct for Arizona), so service numbers match perfectly.
 
-### The actual problem: Expected badge inflates by double-counting products
+| Location | Our Product Revenue | Tax | With Tax | Phorest Retail |
+|----------|-------------------|-----|----------|----------------|
+| Val Vista Lakes | $259.00 | $21.50 | **$280.50** | **$280.50** |
+| North Mesa | $40.00 | $3.32 | **$43.32** | **$43.32** |
+| **Total** | **$299.00** | **$24.82** | **$323.82** | **$323.82** |
 
-In `useSalesMetrics` (src/hooks/useSalesData.ts, lines 324-325):
+Service revenue matches exactly: $2,666 + $710 = $3,376 in both systems.
+
+So Phorest says total = $3,699.82. Our card shows $3,675. The $24.82 gap is exactly the retail sales tax.
+
+### Fix
+
+**File: `supabase/functions/sync-phorest-data/index.ts` (~lines 1108-1121)**
+
+When building the daily summary, include `tax_amount` in the product revenue and total revenue:
 
 ```
-serviceRevenue = SUM(appointment.total_price)    // $4,050
-totalRevenue = serviceRevenue + productRevenue   // $4,050 + $299 = $4,349
-```
+// Current (pre-tax):
+summary.product_revenue += amount;
+summary.total_revenue += amount;
 
-The issue: `appointment.total_price` in Phorest already includes product purchases bundled into the visit. The hook then fetches product revenue separately from `phorest_transaction_items` and adds it again. Result: **$299 in retail revenue counted twice** in the Expected figure.
-
-### The "$3,675 Actual" is correct
-
-Cross-verified against `phorest_transaction_items` per staff member -- every row matches exactly. The `phorest_daily_sales_summary` upsert logic is clean (unique on `staff_id + location_id + date`). No duplication in the actual revenue figure.
-
-### The "$4,349 Expected" is inflated
-
-Should be either:
-- **$4,050** (appointment totals only, which already include products), or
-- **$3,751 + $299** if we strip products from appointments and re-add from transaction items (more accurate decomposition)
-
-### Proposed fix
-
-**File: `src/hooks/useSalesData.ts` (lines 261-325)**
-
-Stop adding `productRevenue` from transaction items to the `totalRevenue` calculation when the data source is appointments. The appointment `total_price` field already includes products sold during the visit. Instead:
-
-1. Keep fetching transaction items for the **breakdown** (service vs. product split display) but do NOT add product revenue on top of appointment totals for the headline figure.
-2. Calculate `totalRevenue` as just `serviceRevenue` (which is actually the sum of all appointment prices including products bundled in).
-3. Rename the internal variable from `serviceRevenue` to `appointmentRevenue` for clarity, since it includes both services and bundled products.
-4. Use transaction items only for the service/product **split percentages** in the breakdown cards.
-
-**Concrete change:**
-
-```typescript
-// Line 324-325 currently:
-const serviceRevenue = data.reduce((sum, apt) => sum + (Number(apt.total_price) || 0), 0);
-const totalRevenue = serviceRevenue + productRevenue;
-
-// Should become:
-const appointmentRevenue = data.reduce((sum, apt) => sum + (Number(apt.total_price) || 0), 0);
-const totalRevenue = appointmentRevenue; // total_price already includes products
-// serviceRevenue for breakdown = appointmentRevenue - productRevenue
-const serviceRevenue = Math.max(0, appointmentRevenue - productRevenue);
+// Fixed (tax-inclusive to match Phorest):
+const tax = parseFloat(transactionRecord.tax_amount) || 0;
+if (itemType === 'product') {
+  summary.product_revenue += amount + tax;
+} else {
+  summary.service_revenue += amount;
+}
+summary.total_revenue += amount + tax;
 ```
 
 This ensures:
-- Total Revenue (Expected) = sum of appointment prices = $4,050 (no inflation)
-- Service/Retail split still works correctly for the breakdown cards
-- The "Actual" figure from `phorest_daily_sales_summary` ($3,675) remains untouched
+- Product revenue includes tax (matching Phorest's "Total Retail Sales")
+- Service revenue stays pre-tax (services aren't taxed in AZ, so no change)
+- Total revenue = service + product (tax-inclusive) = matches Phorest exactly
 
-### Why the discrepancy between $4,050 expected and $3,675 actual
+After deploying the fix, a re-sync will rebuild the summary with correct tax-inclusive product figures.
 
-This is legitimate -- appointments are scheduled at list price, but POS actuals reflect discounts, package redemptions, and adjustments applied at checkout. The $375 gap ($4,050 - $3,675) represents normal checkout adjustments, which is healthy business context to display.
+### Technical Detail
+- The `tax_amount` data already exists in `phorest_transaction_items` -- it's captured during sync but just not added to the summary aggregation
+- Only retail products carry tax ($24.82 today); services are $0 tax
+- This is a one-line fix in the sync function's summary builder
+- The `useTodayActualRevenue` hook reads from `phorest_daily_sales_summary` so it will automatically reflect the corrected totals after re-sync
 
-### Technical detail
-
-- `totalTransactions` on line 343 also changes: currently `totalServices + totalProducts`, but `totalProducts` is from transaction items while `totalServices` is from appointments. These are different counting units. For the Expected view, transaction count should use appointment count only. For Actual view, it already uses the summary table's `total_transactions`.
-- The `averageTicket` on line 344 inherits the same issue.
-
-### Files to modify
-
-| File | Change |
-|------|--------|
-| `src/hooks/useSalesData.ts` | Fix `useSalesMetrics` to not double-add product revenue; derive service revenue by subtraction |
+### Prompt Feedback
+Excellent debugging instinct -- comparing against the source-of-truth system (Phorest's own report) is the strongest possible validation. Including the screenshot of Phorest's branch report gave me the exact numbers to cross-reference against our database. The only enhancement: specifying "the Actual number shows $X but Phorest shows $Y" would have let me skip a few investigation steps.
 
