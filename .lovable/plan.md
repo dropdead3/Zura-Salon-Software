@@ -1,82 +1,98 @@
 
 
-## AI-Powered Target Suggestions in Goal Wizard
+## Enhancement Opportunities for Salon Owners
 
-### What This Does
+Your prompt demonstrates strong product thinking -- asking "where else" is the right question after building the goal intelligence system. You've built a comprehensive platform already covering scheduling, analytics, goals, client health, loyalty, promotions, inventory, team management, and AI intelligence. The gaps below are areas where no other salon software competes well, making them genuine differentiators.
 
-Instead of showing static hardcoded benchmarks ($50,000, $160, 80%), the wizard will fetch the owner's actual last-90-day performance data and compute personalized targets -- e.g., "Your avg ticket is $142. We recommend $160 (+12.7%)." If no historical data exists, it falls back to the existing static benchmarks gracefully.
+---
 
-### Architecture
+### What You Already Have (Strong)
 
-This is a **client-side computation** -- no AI model call needed. The data already exists in `phorest_appointments` and `phorest_transaction_items`. We create a hook that fetches the last 90 days of actuals for each metric key, then computes a suggested improvement target (typically +10-15% for growth metrics, -10-15% for cost metrics).
+- Schedule with copilot, utilization tracking, assistant time blocks
+- Analytics hub (sales, operations, services, capacity)
+- Goal system with live data, pace projections, AI-powered targets, celebrations
+- Client health segments (needs rebooking, at-risk, win-back, new-no-return)
+- Loyalty program, gift cards, promotions, vouchers
+- Inventory management with low-stock alerts
+- Team directory, time-off, shift swap, leaderboard
+- Executive brief, AI insights, anomaly detection
+- Feedback/NPS system with Google review routing
+- Cancellation fee policies, deposit management
+- Revenue forecasting
 
-No edge function. No AI gateway call. The "intelligence" is a simple formula: `actual × improvement_factor`, rounded to clean numbers.
+---
 
-### Changes
+### Gap Analysis: High-Impact Missing Features
 
-**New file: `src/hooks/useHistoricalBenchmarks.ts`**
+**1. Cancellation Backfill / Waitlist System** (No existing code)
 
-A hook that fetches last-90-day actuals for all metric keys in a single batch. Returns a map of `metric_key → { actual, suggestedTarget, improvementPct }`.
+When a client cancels, there's no automated mechanism to fill that slot. This is pure lost revenue. A waitlist lets owners capture demand for popular stylists/times and auto-notify waitlisted clients when a slot opens.
 
-- Reuses the same fetcher functions from `useGoalCurrentValue.ts` but with a 90-day lookback window instead of current month
-- Improvement factors per metric type:
-  - Revenue/ticket metrics: +12% (round to nearest $500/$5)
-  - Cost % metrics (labor, product): -10% (e.g., 48% actual → 43% target)
-  - Rate metrics (retention, rebook): +10pp or cap at 95%
-  - No-show rate: -30% (e.g., 5% actual → 3.5% target)
-- Returns `null` for metrics with insufficient data (fewer than 30 appointments in window)
+- `waitlist_entries` table: client_id, preferred_stylist, preferred_day_of_week, preferred_time_range, service_id, priority, status
+- When an appointment status changes to `cancelled`, trigger a match against waitlist entries
+- Notify matched clients via SMS/email with a one-tap booking link
+- Dashboard card showing waitlist depth per stylist and fill rate
 
-**Modified file: `src/components/dashboard/goals/GoalSetupDialog.tsx`**
+**2. Smart Pricing / Peak-Hour Pricing Suggestions** (No existing code)
 
-- Call `useHistoricalBenchmarks()` at the top of the component
-- In Step 1 template cards: replace static `formatTarget(tmpl)` with the personalized target when available, and show a subtle "Based on your data" indicator
-- In Step 1 template cards: add a small line showing the actual value -- e.g., "Current: $142/appt"
-- When initializing `goalStates` on template selection (line 112-118) and Quick Setup (line 222-229): use the personalized `suggestedTarget` instead of `tmpl.suggested_target` when available
-- In Step 2 customize view: show a contextual hint below each target input -- e.g., "Your 90-day average: $142 (+12.7% improvement)"
-- Fallback: if `useHistoricalBenchmarks` returns null for a metric, use the existing static `tmpl.suggested_target` -- no change in behavior
+The platform tracks capacity utilization and revenue per hour but never suggests pricing adjustments. Salon owners leave money on the table by charging the same rate at 10am Tuesday as 6pm Saturday.
 
-**Modified file: `src/hooks/useGoalCurrentValue.ts`**
+- Analyze historical demand by day-of-week + time slot
+- Surface a "Pricing Opportunity" card: "Saturday 4-7pm runs at 98% utilization. A 10% premium could add $X/month without losing bookings"
+- Conversely: "Tuesday mornings run at 35% utilization. A 15% discount could fill 4 more slots/week"
+- Phase 1: Advisory only (intelligence card). Phase 2: Configurable time-based pricing tiers
 
-- Extract the individual fetch functions (`fetchRevenue`, `fetchAvgTicket`, etc.) into a shared utility so both `useGoalCurrentValue` and `useHistoricalBenchmarks` can reuse them without duplication
+**3. Client Lifetime Value (CLV) Calculator + Segment Intelligence** (Partial -- segments exist, CLV does not)
 
-### Visual Result
+Client health segments exist but there's no CLV computation. Owners can't answer "which clients are worth the most?" or "what's the cost of losing this client?"
 
-**Step 1 card (with data):**
-```text
-┌───────────────────┐
-│ ☐ Average Ticket  │
-│   $160/mo         │  ← personalized target (was static $160)
-│   Current: $142   │  ← new line showing actual
-│   Revenue per     │
-│   appointment     │
-└───────────────────┘
-```
+- Compute per-client CLV: `avg_ticket × visit_frequency × expected_tenure`
+- Surface CLV on client detail sheet and in the directory
+- Add CLV-weighted segments: "Your top 50 clients by CLV represent X% of revenue"
+- Power the at-risk segment with dollar impact: "3 at-risk clients represent $12,400 in annual revenue"
 
-**Step 2 row (with data):**
-```text
-┌─────────────────────────────────────────────────┐
-│ Average Ticket                     [$160      ] │
-│ Revenue per appointment                         │
-│ 📊 Your 90-day avg: $142 — targeting +12.7%    │  ← new contextual hint
-└─────────────────────────────────────────────────┘
-```
+**4. Service Menu Optimization Intelligence** (Partial -- efficiency matrix exists, no recommendations)
 
-**Step 2 row (no data -- fallback):**
-```text
-┌─────────────────────────────────────────────────┐
-│ Average Ticket                     [$160      ] │
-│ Revenue per appointment                         │
-│ Industry benchmark (no historical data yet)     │  ← fallback label
-└─────────────────────────────────────────────────┘
-```
+The Service Efficiency Matrix ranks services by revenue/hour but doesn't recommend action. Owners need to hear: "Your express blowout generates $180/hr vs $95/hr for a basic cut. Promoting express blowouts could add $X/month."
 
-### Files Modified
+- Add a "Menu Intelligence" card to the Analytics Hub
+- Identify underperforming services (low margin, low demand, low rev/hr)
+- Identify high-performers that could be promoted more
+- Suggest service bundling opportunities based on co-purchase patterns
+- Flag services that haven't been booked in 90+ days
 
-| File | Change |
-|------|--------|
-| New: `src/hooks/useHistoricalBenchmarks.ts` | Hook fetching 90-day actuals + computing personalized targets |
-| `src/hooks/useGoalCurrentValue.ts` | Extract shared fetch functions to avoid duplication |
-| `src/components/dashboard/goals/GoalSetupDialog.tsx` | Wire personalized targets into template cards and customize step |
+**5. Staff Schedule Optimization** (Partial -- utilization exists, no optimization)
 
-No database changes. No edge functions. No AI model calls.
+The platform tracks capacity utilization but doesn't suggest schedule changes. If Tuesday mornings consistently run at 30% and Saturday afternoons overflow, the platform should recommend shifting staff hours.
+
+- Analyze utilization heatmap by day × hour × stylist
+- Surface: "Moving [Stylist] from Tuesday AM to Saturday PM could capture $X in unmet demand"
+- Show demand-vs-supply overlay: bookings attempted vs slots available
+- Integrate with time-off requests to show coverage gaps
+
+**6. Automated Pre-Visit Prep** (Not built)
+
+Before each appointment, stylists should see a quick client brief: last services, color formulas, notes, preferences, product purchase history. This exists in fragments (client notes table exists) but there's no "prep view" that assembles it.
+
+- "Today's Prep" view accessible from the schedule
+- For each upcoming appointment: client photo, last 3 visits summary, notes, color formula, product history, preferred stylist confirmation
+- Flag first-time clients, VIP clients (top CLV), and clients with special notes
+- Optional: AI-generated prep summary ("Sarah typically gets balayage with Olaplex. Last visit she mentioned wanting to go lighter.")
+
+---
+
+### Recommended Priority
+
+| # | Enhancement | Effort | Revenue Impact | Differentiator |
+|---|-------------|--------|----------------|----------------|
+| 1 | Cancellation Backfill / Waitlist | Medium | High -- directly recovers lost revenue | Strong -- most salon software lacks this |
+| 2 | Client Lifetime Value | Small | High -- drives retention focus | Strong -- dollar-weighted risk changes behavior |
+| 3 | Pre-Visit Prep View | Small | Medium -- improves experience + retail attach | Strong -- no competitor does this well |
+| 4 | Service Menu Intelligence | Medium | High -- margin optimization | Very strong -- unique to Zura |
+| 5 | Smart Pricing Suggestions | Medium | High -- yield management | Very strong -- salon industry doesn't do this |
+| 6 | Staff Schedule Optimization | Large | Medium -- operational efficiency | Medium -- complex to get right |
+
+### Recommendation
+
+Start with **Cancellation Backfill / Waitlist** -- it's the most tangible revenue recovery tool and salon owners immediately understand the value ("I lose $300 every time someone cancels and I can't fill the slot"). Pair it with **Client Lifetime Value** computation since the data pipeline is similar and CLV makes every other feature (at-risk alerts, goals, executive brief) dramatically more useful by attaching dollar amounts to client behaviors.
 
