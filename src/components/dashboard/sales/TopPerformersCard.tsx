@@ -33,7 +33,7 @@ const getRankStyles = (rank: number) => {
     case 1:
       return {
         badge: 'bg-chart-4/15 text-chart-4 border border-chart-4/30',
-        row: 'border-l-2 border-l-chart-4/60 ring-1 ring-chart-4/10 shadow-sm py-0.5',
+        row: 'border-l-2 border-l-chart-4/60 ring-1 ring-chart-4/10 shadow-sm',
       };
     case 2:
       return {
