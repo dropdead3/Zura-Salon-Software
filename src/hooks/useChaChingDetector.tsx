@@ -46,7 +46,7 @@ export function useChaChingDetector() {
         const delta = currentRevenue - prevRevenueRef.current;
         chaChingHistory?.addNotification(delta);
         toast.custom((t) => <ChaChingToast amount={delta} toastId={t} />, {
-          duration: 5000,
+          duration: 3000,
         });
         playAchievement();
       }
