@@ -28,7 +28,28 @@ export function useClientTypeSplit({ dateFrom, dateTo, locationId, enabled = tru
   return useQuery({
     queryKey: ['client-type-split', dateFrom, dateTo, locationId || 'all'],
     queryFn: async (): Promise<ClientTypeSplitData> => {
-      let query = supabase
+      // Step 1: Get distinct POS client IDs (source of truth for transaction count)
+      let txQuery = supabase
+        .from('phorest_transaction_items')
+        .select('phorest_client_id')
+        .not('phorest_client_id', 'is', null)
+        .gte('transaction_date', dateFrom)
+        .lte('transaction_date', dateTo);
+
+      if (locationId && locationId !== 'all') {
+        txQuery = txQuery.eq('location_id', locationId);
+      }
+
+      const { data: txData, error: txError } = await txQuery;
+      if (txError) throw txError;
+
+      const posClientIds = new Set<string>();
+      txData?.forEach(row => {
+        if (row.phorest_client_id) posClientIds.add(row.phorest_client_id);
+      });
+
+      // Step 2: Get appointment data for new/returning classification + revenue
+      let aptQuery = supabase
         .from('phorest_appointments')
         .select('phorest_client_id, is_new_client, total_price, rebooked_at_checkout, appointment_date')
         .gte('appointment_date', dateFrom)
@@ -36,21 +57,23 @@ export function useClientTypeSplit({ dateFrom, dateTo, locationId, enabled = tru
         .not('status', 'in', '("cancelled","no_show")');
 
       if (locationId && locationId !== 'all') {
-        query = query.eq('location_id', locationId);
+        aptQuery = aptQuery.eq('location_id', locationId);
       }
 
-      const { data: appointments, error } = await query;
-      if (error) throw error;
+      const { data: appointments, error: aptError } = await aptQuery;
+      if (aptError) throw aptError;
 
       // Group by unique client visit (phorest_client_id + appointment_date)
+      // Only include clients present in POS data
       const visitMap = new Map<string, { revenue: number; isNew: boolean; rebooked: boolean }>();
       (appointments || []).forEach(apt => {
-        const clientId = apt.phorest_client_id || `unknown-${Math.random()}`;
+        const clientId = apt.phorest_client_id;
+        if (!clientId || !posClientIds.has(clientId)) return;
+        
         const visitKey = `${clientId}|${apt.appointment_date}`;
         const existing = visitMap.get(visitKey);
         if (existing) {
           existing.revenue += Number(apt.total_price) || 0;
-          // Keep isNew/rebooked from first row (consistent per visit)
         } else {
           visitMap.set(visitKey, {
             revenue: Number(apt.total_price) || 0,
@@ -60,10 +83,22 @@ export function useClientTypeSplit({ dateFrom, dateTo, locationId, enabled = tru
         }
       });
 
+      // Deduplicate to one entry per client (use first visit's classification)
+      const clientMap = new Map<string, { revenue: number; isNew: boolean; rebooked: boolean }>();
+      visitMap.forEach((visit, key) => {
+        const clientId = key.split('|')[0];
+        if (!clientMap.has(clientId)) {
+          clientMap.set(clientId, { ...visit });
+        } else {
+          const existing = clientMap.get(clientId)!;
+          existing.revenue += visit.revenue;
+        }
+      });
+
       const newData = { count: 0, revenue: 0, rebooked: 0 };
       const retData = { count: 0, revenue: 0, rebooked: 0 };
 
-      visitMap.forEach(visit => {
+      clientMap.forEach(visit => {
         if (visit.isNew) {
           newData.count += 1;
           newData.revenue += visit.revenue;
