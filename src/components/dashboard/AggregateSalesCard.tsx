@@ -638,7 +638,6 @@ export function AggregateSalesCard({
               </p>
               {isToday && !todayActual?.hasActualData && (
                 <div className="flex flex-col items-end gap-0.5 shrink-0">
-                  <p className="text-[10px] text-muted-foreground/60">{t('sales.actual_not_available')}</p>
                   <LastSyncIndicator syncType="sales" showAutoRefresh />
                 </div>
               )}
