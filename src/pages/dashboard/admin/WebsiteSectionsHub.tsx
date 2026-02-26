@@ -263,10 +263,6 @@ export default function WebsiteSectionsHub() {
 
   // (Editor canvas postMessage listener moved below after all handlers are defined)
 
-  useEffect(() => {
-    setSearchParams({ tab: activeTab }, { replace: true });
-  }, [activeTab, setSearchParams]);
-
   // ─── Tab change with dirty guard ───
   const handleTabChange = useCallback((tab: string) => {
     if (isDirtyRef.current) {
@@ -274,14 +270,19 @@ export default function WebsiteSectionsHub() {
       setShowUnsavedDialog(true);
     } else {
       setActiveTab(tab);
+      setSearchParams({ tab }, { replace: true });
     }
-  }, []);
+  }, [setSearchParams]);
 
   const handleDiscardAndSwitch = () => {
     isDirtyRef.current = false;
     window.dispatchEvent(new CustomEvent('editor-dirty-state', { detail: { dirty: false } }));
     setShowUnsavedDialog(false);
-    if (pendingTab) { setActiveTab(pendingTab); setPendingTab(null); }
+    if (pendingTab) {
+      setActiveTab(pendingTab);
+      setSearchParams({ tab: pendingTab }, { replace: true });
+      setPendingTab(null);
+    }
   };
 
   const triggerSave = useCallback(() => {
