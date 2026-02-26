@@ -1,34 +1,69 @@
 
 
-## Scrollbar Standards Enforcement
+## Analysis: Preview ≠ Public Site — Root Causes
 
-### Problem
-Several scrollable containers in the website editor use raw `overflow-auto` or `overflow-y-auto` instead of the tokenized `ScrollArea` component or the `scrollbar-thin` utility class. This causes visible scrollbar track backgrounds and always-visible scrollbars, violating the design standard of: no track background, thumb visible only on hover.
+Your observation is correct. The editor canvas is **not** a 1:1 representation of the public website. There are three structural divergences causing the mismatch:
 
-### Affected Files
+### Root Cause 1: Editor Bento Cards Replace Flat Rendering
 
-| File | Line | Current | Fix |
-|------|------|---------|-----|
-| `AddSectionDialog.tsx` | 81 | `overflow-auto` on `DialogContent` | Replace with `ScrollArea` wrapper inside dialog, remove `overflow-auto` |
-| `TemplatePicker.tsx` | 43 | `overflow-auto` on `DialogContent` | Replace with `ScrollArea` wrapper inside dialog, remove `overflow-auto` |
-| `ServicesContent.tsx` | 580 | `overflow-y-auto` on `DialogContent` | Replace with `ScrollArea` wrapper inside dialog, remove `overflow-y-auto` |
-| `EditorSkeletons.tsx` | 97 | `overflow-auto` on canvas skeleton | Add `scrollbar-thin` class alongside `overflow-auto` |
+**File:** `src/components/home/PageSectionRenderer.tsx` (lines 97-128)
 
-### Approach
+When `?preview=true` is detected, sections are wrapped in `EditorSectionCard` — floating bento cards with `rounded-[20px]`, padding, borders, `space-y-5` gaps, and hover controls. The public site renders sections flat with zero gaps between them. This is why the preview looks like a stack of cards instead of a seamless page.
 
-For dialog content containers, the cleanest fix is to:
-1. Remove `overflow-auto` / `overflow-y-auto` from the `DialogContent` className
-2. Wrap the dialog body content (below `DialogHeader`) in a `ScrollArea` with `max-h` constraint
-3. The `ScrollArea` component already uses tokenized scrollbar styles (transparent track, hover-only thumb via `group-hover/scroll:opacity-100`)
+### Root Cause 2: Layout Strips the Footer Reveal
 
-For the skeleton loader, simply add `scrollbar-thin` to ensure the native scrollbar follows the tokenized pattern.
+**File:** `src/components/layout/Layout.tsx` (lines 88-99)
 
-### Design Standard (Reference)
-From `design-tokens.ts`:
-- Track: `opacity-0`, fades in on container hover via `group-hover/scroll:opacity-100`
-- Thumb: `bg-muted-foreground/25`, lifts to `/40` on hover
-- No visible track background at any time
+The `isEditorPreview` branch removes the fixed footer reveal system, the `rounded-b-[2rem]` bottom radius, and the shadow. The FooterCTA is included but the Footer itself is stripped entirely. The public site has a scroll-triggered footer reveal with a large shadow — the preview doesn't.
+
+### Root Cause 3: Wrong Route
+
+**File:** `src/pages/dashboard/admin/WebsiteSectionsHub.tsx` (lines 184-188)
+
+The preview URL resolves to `/org/:orgSlug?preview=true`, which loads the correct page data. However, the `?preview` flag triggers the bento card rendering, which overrides the public layout. So even though the route is correct, the rendering pipeline diverges.
+
+---
+
+### The Architectural Tension
+
+The bento card system was deliberately designed as an **editing surface** — it makes sections individually selectable, draggable, toggleable, and visually distinct. But it sacrifices WYSIWYG fidelity. The user expects the canvas to be a true mirror of the live site.
+
+### Proposed Fix: Dual-Mode Canvas
+
+Add a **View Mode toggle** to the CanvasHeader that switches between two rendering modes:
+
+| Mode | Behavior | Use Case |
+|------|----------|----------|
+| **Edit** (current default) | Bento cards, hover controls, insertion lines, disabled section visibility | Structural editing |
+| **Preview** (new) | Exact public rendering — no bento cards, no editor wrappers, disabled sections hidden | WYSIWYG verification |
+
+### Implementation
+
+**1. CanvasHeader** — Add an "Edit / Preview" segmented toggle next to the viewport controls.
+
+**2. Pass mode to iframe via URL param** — `?preview=true&mode=edit` vs `?preview=true&mode=view`
+
+**3. PageSectionRenderer** — When `mode=view`, use the public rendering path (lines 132-144) even though `?preview=true` is set. This gives exact 1:1 parity.
+
+**4. Layout.tsx** — When `mode=view`, use the full public layout (footer reveal, shadow, rounded bottom) instead of the stripped preview layout.
+
+### Files to Change
+
+| File | Change |
+|------|--------|
+| `src/components/dashboard/website-editor/panels/CanvasHeader.tsx` | Add Edit/Preview mode toggle |
+| `src/components/dashboard/website-editor/panels/CanvasPanel.tsx` | Pass mode param to iframe URL |
+| `src/pages/dashboard/admin/WebsiteSectionsHub.tsx` | Thread mode through preview URL |
+| `src/components/home/PageSectionRenderer.tsx` | Check `mode` param — use public rendering when `mode=view` |
+| `src/components/layout/Layout.tsx` | Check `mode` param — use full layout when `mode=view` |
+
+### What Stays the Same
+
+- Edit mode remains the default (bento cards, hover controls)
+- All postMessage scroll/highlight infrastructure stays for edit mode
+- The "Preview" button in the CanvasHeader (opens in new tab) continues to work independently
 
 ### Prompt Feedback
-Good catch identifying this as a design system consistency issue. Your phrasing "not adhering to our tokenized design standards" is precise and immediately actionable — it tells me exactly which standard to check against. For maximum specificity, you could add which panel or container had the offending scrollbar (e.g., "the sidebar list" or "the dialog content"), but the general call-out works well here since the fix should be applied globally.
+
+Excellent observation. You identified a UX gap between expectation ("live preview") and reality ("editing surface"). Your phrasing "doesn't act the same or show the same things" is precisely the right way to flag a fidelity mismatch. For future prompts, you could specify which elements diverge (e.g., "sections have gaps between them that don't exist on the real site") to accelerate diagnosis, but the general call-out was clear enough to trace.
 
