@@ -2,6 +2,11 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { isAllLocations, parseLocationIds } from '@/lib/locationFilter';
 
+export interface ProductLineItem {
+  itemName: string;
+  amount: number;
+}
+
 export interface StaffServiceProduct {
   phorestStaffId: string;
   staffName: string;
@@ -12,6 +17,7 @@ export interface StaffServiceProduct {
   retailToServiceRatio: number;
   sharePercent: number;
   tipTotal: number;
+  productItems: ProductLineItem[];
 }
 
 interface UseServiceProductDrilldownOptions {
@@ -121,13 +127,15 @@ export function useServiceProductDrilldown({ dateFrom, dateTo, locationId }: Use
       });
 
       // --- Aggregate products by staff (tax-inclusive) ---
-      const productMap: Record<string, { productRevenue: number; productCount: number }> = {};
+      const productMap: Record<string, { productRevenue: number; productCount: number; items: ProductLineItem[] }> = {};
       productItems.forEach(item => {
         const sid = item.phorest_staff_id;
         if (!sid) return;
-        if (!productMap[sid]) productMap[sid] = { productRevenue: 0, productCount: 0 };
-        productMap[sid].productRevenue += (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
+        if (!productMap[sid]) productMap[sid] = { productRevenue: 0, productCount: 0, items: [] };
+        const amt = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
+        productMap[sid].productRevenue += amt;
         productMap[sid].productCount += 1;
+        productMap[sid].items.push({ itemName: item.item_name || 'Unknown Product', amount: amt });
       });
 
       // --- Merge ---
@@ -139,7 +147,8 @@ export function useServiceProductDrilldown({ dateFrom, dateTo, locationId }: Use
 
       const staffData: StaffServiceProduct[] = Array.from(allStaffIds).map(phorestStaffId => {
         const svc = serviceMap[phorestStaffId] || { serviceRevenue: 0, serviceCount: 0, tipTotal: 0 };
-        const prod = productMap[phorestStaffId] || { productRevenue: 0, productCount: 0 };
+        const prod = productMap[phorestStaffId] || { productRevenue: 0, productCount: 0, items: [] };
+        const sortedItems = [...prod.items].sort((a, b) => b.amount - a.amount);
         return {
           phorestStaffId,
           staffName: staffLookup[phorestStaffId] || 'Unknown',
@@ -150,6 +159,7 @@ export function useServiceProductDrilldown({ dateFrom, dateTo, locationId }: Use
           retailToServiceRatio: svc.serviceRevenue > 0 ? prod.productRevenue / svc.serviceRevenue : 0,
           sharePercent: totalProductRevenue > 0 ? (prod.productRevenue / totalProductRevenue) * 100 : 0,
           tipTotal: svc.tipTotal,
+          productItems: sortedItems,
         };
       });
 
