@@ -790,7 +790,7 @@ export function AggregateSalesCard({
                 </div>
               )}
 
-              {showTrendIndicators && (
+              {showTrendIndicators && (!isToday || allAppointmentsComplete) && (
                 <div className="mt-2 flex justify-center">
                   <Tooltip>
                     <TooltipTrigger asChild>
