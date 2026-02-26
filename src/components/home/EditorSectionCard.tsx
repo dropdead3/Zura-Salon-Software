@@ -15,6 +15,7 @@ interface EditorSectionCardProps {
   sectionLabel: string;
   enabled: boolean;
   isSelected: boolean;
+  fullBleed?: boolean;
   children: ReactNode;
 }
 
@@ -23,6 +24,7 @@ export function EditorSectionCard({
   sectionLabel,
   enabled,
   isSelected,
+  fullBleed = false,
   children,
 }: EditorSectionCardProps) {
   const [showOverflow, setShowOverflow] = useState(false);
@@ -61,7 +63,7 @@ export function EditorSectionCard({
         'shadow-[0_2px_12px_-4px_rgba(0,0,0,0.08)]',
         'border border-border/30',
         'bg-[hsl(0_0%_99%)] dark:bg-card/90',
-        'p-6 sm:p-7 lg:p-8',
+        fullBleed ? 'p-0 overflow-hidden' : 'p-6 sm:p-7 lg:p-8',
         'cursor-pointer',
         isSelected && 'ring-2 ring-primary/20 ring-offset-2 ring-offset-background',
         !enabled && 'opacity-50'

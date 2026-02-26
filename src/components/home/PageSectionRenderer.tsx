@@ -17,6 +17,8 @@ import { CustomSectionRenderer } from '@/components/home/CustomSectionRenderer';
 import { SectionStyleWrapper } from '@/components/home/SectionStyleWrapper';
 import { isBuiltinSection, type BuiltinSectionType, type CustomSectionType, type SectionConfig } from '@/hooks/useWebsiteSections';
 
+const FULL_BLEED_SECTIONS = new Set<string>(['hero', 'gallery', 'new_client', 'brand_statement', 'extensions']);
+
 const BUILTIN_COMPONENTS: Record<BuiltinSectionType, React.ReactNode> = {
   hero: <HeroSection />,
   brand_statement: <BrandStatement />,
@@ -90,7 +92,7 @@ export function PageSectionRenderer({ sections }: PageSectionRendererProps) {
     const InsertionLine = React.lazy(() => import('@/components/home/InsertionLine').then(m => ({ default: m.InsertionLine })));
 
     return (
-      <div className="zura-editor-preview px-4 sm:px-6 lg:px-8 py-6 space-y-0">
+      <div className="zura-editor-preview py-6 space-y-5">
         <React.Suspense fallback={null}>
           {enabledSections.map((section, index) => (
             <React.Fragment key={section.id}>
@@ -100,6 +102,7 @@ export function PageSectionRenderer({ sections }: PageSectionRendererProps) {
                 sectionLabel={section.label}
                 enabled={section.enabled}
                 isSelected={selectedSectionId === section.id}
+                fullBleed={FULL_BLEED_SECTIONS.has(section.type)}
               >
                 <div id={`section-${section.id}`}>
                   <SectionStyleWrapper styleOverrides={section.style_overrides}>
