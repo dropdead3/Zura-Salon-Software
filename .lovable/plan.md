@@ -1,58 +1,39 @@
 
 
-## Remove Today's Schedule Card — Merge Into Today's Prep
-
-### The Problem
-
-The "Today's Schedule" card inside the `schedule_tasks` section is a **static placeholder** that always renders "No appointments today / Enjoy your day off" — it fetches zero data. Meanwhile, the Today's Prep card already shows the full appointment list with status badges, service names, client context, VIP/birthday indicators, and action prompts.
-
-These two cards serve the same conceptual purpose: "What's on my plate today?" Having both is redundant and confusing. The prep card is strictly superior.
+## Move Today's Prep Card to Top of Command Center
 
 ### What Changes
 
-**Remove the Today's Schedule card from the `schedule_tasks` section**, so that section only contains the Tasks card. Since the schedule half of the 2-column grid disappears, the Tasks card will span full width (no more `lg:grid-cols-2` when only tasks remain).
+Move `todays_prep` from its current position (after `quick_stats`) to directly after `ai_insights` in the default section order, so it's the first content card stylists see after the intelligence brief.
 
 ### Changes Required
 
-**1. `src/pages/dashboard/DashboardHome.tsx`**
-- Remove the `todays_schedule` `VisibilityGate` block and its inner Card (lines ~569-585)
-- Remove the `lg:grid-cols-2` conditional on the grid wrapper — Tasks card stands alone, full width
-- Clean up any unused imports (`Clock` if only used there)
-
-**2. `src/components/dashboard/DashboardCustomizeMenu.tsx`**
-- The `schedule_tasks` section entry stays (it still wraps Tasks)
-- Remove or update the description/label if it references "Schedule" — rename to just "Tasks" since the schedule half is gone
-- Remove the `todays_schedule` visibility entry if it exists as a standalone toggle
-
-**3. `src/hooks/useDashboardLayout.ts`**
-- No structural changes needed — `schedule_tasks` stays in the default layout since it still contains the Tasks card
-
-**4. Locale cleanup** — `src/locales/en.json`
-- The `todays_schedule` key can remain (harmless), or be removed for cleanliness
+**1. `src/hooks/useDashboardLayout.ts`**
+- Update `DEFAULT_LAYOUT.sections` and `DEFAULT_LAYOUT.sectionOrder` arrays to place `todays_prep` immediately after `ai_insights`
+- Current order: `ai_insights, hub_quicklinks, payroll_deadline, ..., quick_stats, todays_prep, ...`
+- New order: `ai_insights, todays_prep, hub_quicklinks, payroll_deadline, ..., quick_stats, ...`
+- Update the migration block that inserts `todays_prep` for existing layouts — change the fallback insertion point from "after quick_stats" to "after ai_insights"
 
 ### Result
 
 ```text
 ┌─────────────────────────────────┐
-│ Quick Stats (4 tiles)           │
+│ Zura Insights                   │
 ├─────────────────────────────────┤
-│ Today's Prep (full-width)       │
+│ Today's Prep (moved here)       │
 │  9:00  [Booked]  Jane D. ...    │
 │ 10:30  [Confirmed] Mark T. ...  │
-│        View Full Prep →         │
 ├─────────────────────────────────┤
-│ My Tasks (full-width)           │  ← was 2-col with schedule, now standalone
-│  □ Follow up with Sarah         │
-│  □ Restock retail products      │
+│ Hub Quick Links                 │
+│ Quick Stats                     │
+│ Tasks                           │
+│ ...                             │
 └─────────────────────────────────┘
 ```
-
-No data loss. No hook changes. The prep card already provides everything the schedule card was supposed to (and more).
 
 ### Files Changed
 
 | File | Action |
 |------|--------|
-| `src/pages/dashboard/DashboardHome.tsx` | Remove Today's Schedule card block, simplify grid |
-| `src/components/dashboard/DashboardCustomizeMenu.tsx` | Update section label from "Schedule & Tasks" to "Tasks" |
+| `src/hooks/useDashboardLayout.ts` | Reorder `todays_prep` to position after `ai_insights` in both arrays + update migration fallback |
 
