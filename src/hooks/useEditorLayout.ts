@@ -15,7 +15,7 @@ const STRUCTURE_MIN = 260;
 const STRUCTURE_MAX = 320;
 const INSPECTOR_MIN = 320;
 const INSPECTOR_MAX = 380;
-const CANVAS_MIN = 820;
+const CANVAS_MIN = 480;
 const GUTTERS_AND_PADDING = 48; // 3 gaps × 12px + 2 × 12px outer padding (approx)
 
 const STORAGE_KEY = 'editor-panel-layout';
@@ -120,22 +120,26 @@ export function useEditorLayout(): EditorLayoutState {
   let structureVisible = !isMobile && !isTablet && !prefs.structureCollapsed;
   let inspectorVisible = !isMobile && !isTablet && !prefs.inspectorCollapsed;
 
-  // For compact breakpoint, auto-collapse inspector unless user explicitly expanded
-  if (isCompact && prefs.inspectorCollapsed !== false) {
+  // For compact breakpoint, auto-collapse inspector only if user hasn't explicitly expanded
+  if (isCompact && prefs.inspectorCollapsed === undefined) {
     inspectorVisible = false;
   }
 
-  // Space check: collapse if canvas would be crushed
+  // Space check: only auto-collapse if user hasn't explicitly set the pref
   const spaceWithBoth =
     containerWidth - GUTTERS_AND_PADDING - idealStructureWidth - idealInspectorWidth;
   const spaceWithStructureOnly =
     containerWidth - GUTTERS_AND_PADDING - idealStructureWidth;
 
   if (structureVisible && inspectorVisible && spaceWithBoth < CANVAS_MIN) {
-    inspectorVisible = false; // collapse inspector first
+    if (prefs.inspectorCollapsed === undefined) {
+      inspectorVisible = false;
+    }
   }
   if (structureVisible && !inspectorVisible && spaceWithStructureOnly < CANVAS_MIN) {
-    structureVisible = false; // then collapse structure
+    if (prefs.structureCollapsed === undefined) {
+      structureVisible = false;
+    }
   }
 
   // ─── Final widths ───
