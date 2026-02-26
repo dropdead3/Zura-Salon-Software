@@ -1,58 +1,32 @@
 
 
-## Add "Cha-Ching" Toast on New Transactions
+## Add cha-ching notification toggle setting
 
-**Approach**: Enhance the existing realtime subscription in `useTodayActualRevenue.ts` to detect when revenue *increases* (not just any change) and fire a tasteful sonner toast with a cha-ching sound effect via `useNotificationSound`.
+**Approach**: Extend the existing `SoundSettingsContext` with a dedicated `chaChingEnabled` flag (separate from the general sounds toggle), and gate the toast + sound in `useTodayActualRevenue.ts` behind it. Add the toggle to the existing `SoundSettingsSection`.
 
-Since `useTodayActualRevenue` is a data hook (not a component), and sonner's `toast()` is callable anywhere, we'll track the previous revenue total via a ref and compare after each realtime-triggered refetch.
+### 1. Extend `SoundSettingsContext` (`src/contexts/SoundSettingsContext.tsx`)
 
-### File: `src/hooks/useTodayActualRevenue.ts`
+- Add `chaChingEnabled` boolean + `setChaChingEnabled` setter to the context value
+- New localStorage key: `dashboard-cha-ching-enabled`, defaulting to `true`
+- Same pattern as the existing `enabled` / `setEnabled`
 
-1. **Track previous revenue** — Add a `useRef` to store the last-known `actualRevenue` value.
+### 2. Gate the cha-ching effect (`src/hooks/useTodayActualRevenue.ts`)
 
-2. **Detect revenue increase** — In a `useEffect` watching `actualRevenueQuery.data`, compare the new total against the ref. If it increased and `hasData` is true, calculate the delta and fire a toast + sound.
+- Import `useSoundSettings` from `SoundSettingsContext`
+- Read `chaChingEnabled` from the context
+- Wrap the toast + `playAchievement()` call inside the existing `useEffect` with `if (!chaChingEnabled) return;` before the delta check
+- Still track `prevRevenueRef` regardless (so toggling on mid-session doesn't fire a false delta)
 
-3. **Toast + Sound** — Import `toast` from `sonner` and `useNotificationSound`. Show a custom toast like:
-   ```
-   💰 Cha-ching! — A client just checked out for $125.00
-   ```
-   Play the `playSuccess` sound (or a new `'achievement'` sound for the cha-ching feel). The delta (`newRevenue - prevRevenue`) is the checkout amount displayed.
+### 3. Add toggle to Sound Settings UI (`src/components/dashboard/settings/SoundSettingsSection.tsx`)
 
-4. **Guard against initial load** — The ref starts as `null` so the first data load sets the baseline without triggering a toast.
-
-### Changes
-
-```tsx
-// New imports
-import { useRef } from 'react'; // already have useEffect
-import { toast } from 'sonner';
-import { formatCurrency } from '@/lib/format';
-
-// Inside the hook, after actualRevenueQuery definition:
-const prevRevenueRef = useRef<number | null>(null);
-
-useEffect(() => {
-  const currentRevenue = actualRevenueQuery.data?.totalRevenue ?? 0;
-  const hasData = actualRevenueQuery.data?.hasData ?? false;
-
-  if (prevRevenueRef.current === null) {
-    // First load — set baseline, no toast
-    prevRevenueRef.current = currentRevenue;
-    return;
-  }
-
-  if (hasData && currentRevenue > prevRevenueRef.current) {
-    const delta = currentRevenue - prevRevenueRef.current;
-    toast('💰 Cha-ching!', {
-      description: `A client just checked out for ${formatCurrency(delta)}`,
-      duration: 5000,
-    });
-  }
-
-  prevRevenueRef.current = currentRevenue;
-}, [actualRevenueQuery.data]);
-```
+- Read `chaChingEnabled` / `setChaChingEnabled` from `useSoundSettings()`
+- Add a new row below the existing "Enable notification sounds" toggle:
+  - Label: "Checkout notifications"
+  - Description: "Show a cha-ching alert when a client checks out"
+  - Switch bound to `chaChingEnabled` / `setChaChingEnabled`
 
 ### Files changed
-- `src/hooks/useTodayActualRevenue.ts` — add revenue delta detection + sonner toast notification
+- `src/contexts/SoundSettingsContext.tsx` — add `chaChingEnabled` state + localStorage persistence
+- `src/hooks/useTodayActualRevenue.ts` — gate toast/sound behind `chaChingEnabled`
+- `src/components/dashboard/settings/SoundSettingsSection.tsx` — add toggle row
 
