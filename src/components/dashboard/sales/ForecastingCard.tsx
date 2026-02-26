@@ -10,6 +10,7 @@ import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
 import { BlurredAmount, useHideNumbers } from '@/contexts/HideNumbersContext';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { formatCurrencyWhole as formatCurrencyWholeUtil } from '@/lib/formatCurrency';
+import { formatCurrency as formatCurrencyPrecise } from '@/lib/format';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useForecastRevenue, ForecastPeriod, DayForecast, WeekForecast, CategoryBreakdown } from '@/hooks/useForecastRevenue';
 import { CategoryBreakdownPanel, BreakdownMode, BreakdownType } from './CategoryBreakdownPanel';
@@ -192,7 +193,9 @@ function AboveBarLabel({ x, y, width, value, ...rest }: any) {
         className={cn("text-xs tabular-nums", isPeak ? "fill-chart-2" : "fill-foreground")}
         style={{ fontWeight: isPeak ? 700 : 500, filter: isBlurred ? 'blur(8px)' : 'none' }}
       >
-        {value >= 1000 ? formatCurrencyWholeUtil(Math.round(value / 1000)) + 'k' : formatCurrencyWholeUtil(value)}
+        {value >= 10000
+          ? formatCurrencyPrecise(value, { compact: true, decimals: 2 })
+          : formatCurrencyPrecise(value, { decimals: 0 })}
       </text>
     </g>
   );
