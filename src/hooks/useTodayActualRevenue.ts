@@ -26,6 +26,7 @@ export function useTodayActualRevenue(enabled: boolean) {
   const actualRevenueQuery = useQuery({
     queryKey: ['today-actual-revenue', today],
     queryFn: async () => {
+      // Try POS summary first
       const { data, error } = await supabase
         .from('phorest_daily_sales_summary')
         .select('total_revenue, service_revenue, product_revenue, total_transactions')
@@ -33,21 +34,44 @@ export function useTodayActualRevenue(enabled: boolean) {
 
       if (error) throw error;
 
-      if (!data || data.length === 0) {
-        return { totalRevenue: 0, serviceRevenue: 0, productRevenue: 0, totalTransactions: 0, hasData: false };
+      if (data && data.length > 0) {
+        const totals = data.reduce(
+          (acc, row) => ({
+            totalRevenue: acc.totalRevenue + (Number(row.total_revenue) || 0),
+            serviceRevenue: acc.serviceRevenue + (Number(row.service_revenue) || 0),
+            productRevenue: acc.productRevenue + (Number(row.product_revenue) || 0),
+            totalTransactions: acc.totalTransactions + (Number(row.total_transactions) || 0),
+          }),
+          { totalRevenue: 0, serviceRevenue: 0, productRevenue: 0, totalTransactions: 0 }
+        );
+        if (totals.totalRevenue > 0) {
+          return { ...totals, hasData: true, source: 'pos' as const };
+        }
       }
 
-      const totals = data.reduce(
-        (acc, row) => ({
-          totalRevenue: acc.totalRevenue + (Number(row.total_revenue) || 0),
-          serviceRevenue: acc.serviceRevenue + (Number(row.service_revenue) || 0),
-          productRevenue: acc.productRevenue + (Number(row.product_revenue) || 0),
-          totalTransactions: acc.totalTransactions + (Number(row.total_transactions) || 0),
-        }),
-        { totalRevenue: 0, serviceRevenue: 0, productRevenue: 0, totalTransactions: 0 }
-      );
+      // Fallback: sum completed appointments for "sales so far"
+      const { data: apptData, error: apptError } = await supabase
+        .from('phorest_appointments')
+        .select('total_price')
+        .eq('appointment_date', today)
+        .eq('status', 'completed')
+        .not('total_price', 'is', null);
 
-      return { ...totals, hasData: totals.totalRevenue > 0 };
+      if (apptError) throw apptError;
+
+      const completedRevenue = (apptData || []).reduce(
+        (sum, row) => sum + (Number(row.total_price) || 0), 0
+      );
+      const completedCount = apptData?.length || 0;
+
+      return {
+        totalRevenue: completedRevenue,
+        serviceRevenue: completedRevenue, // completed appts are predominantly service revenue
+        productRevenue: 0,
+        totalTransactions: completedCount,
+        hasData: completedRevenue > 0,
+        source: 'appointments' as const,
+      };
     },
     enabled,
     refetchInterval: 5 * 60 * 1000,
