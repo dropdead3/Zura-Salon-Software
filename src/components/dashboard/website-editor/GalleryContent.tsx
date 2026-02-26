@@ -202,26 +202,26 @@ export function GalleryContent() {
     >
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-3">
         <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 rounded-full bg-blue-100 dark:bg-blue-900/30">
-              <ImageIcon className="w-5 h-5 text-blue-600" />
+          <CardContent className="p-3 flex items-center gap-2.5">
+            <div className="p-1.5 rounded-full bg-blue-100 dark:bg-blue-900/30">
+              <ImageIcon className="w-4 h-4 text-blue-600" />
             </div>
-            <div>
-              <p className="text-2xl font-medium">{galleryImages.length}</p>
-              <p className="text-sm text-muted-foreground">Gallery Images ({visibleImages} visible)</p>
+            <div className="min-w-0">
+              <p className="text-lg font-medium">{galleryImages.length}</p>
+              <p className="text-xs text-muted-foreground truncate">Gallery Images ({visibleImages} visible)</p>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 rounded-full bg-purple-100 dark:bg-purple-900/30">
-              <ArrowLeftRight className="w-5 h-5 text-purple-600" />
+          <CardContent className="p-3 flex items-center gap-2.5">
+            <div className="p-1.5 rounded-full bg-purple-100 dark:bg-purple-900/30">
+              <ArrowLeftRight className="w-4 h-4 text-purple-600" />
             </div>
-            <div>
-              <p className="text-2xl font-medium">{transformations.length}</p>
-              <p className="text-sm text-muted-foreground">Before/After ({visibleTransforms} visible)</p>
+            <div className="min-w-0">
+              <p className="text-lg font-medium">{transformations.length}</p>
+              <p className="text-xs text-muted-foreground truncate">Before/After ({visibleTransforms} visible)</p>
             </div>
           </CardContent>
         </Card>
@@ -327,7 +327,7 @@ export function GalleryContent() {
                 onDragEnd={handleImageDragEnd}
               >
                 <SortableContext items={imageIds} strategy={rectSortingStrategy}>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-2">
                     {galleryImages.map((image) => (
                       <SortableGalleryImage
                         key={image.id}

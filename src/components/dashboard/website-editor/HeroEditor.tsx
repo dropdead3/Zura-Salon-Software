@@ -219,7 +219,7 @@ export function HeroEditor() {
         </CollapsibleTrigger>
         <CollapsibleContent className="space-y-6 pt-4">
           {/* Animation Timing */}
-          <div className="space-y-4 p-4 bg-muted/50 rounded-lg">
+          <div className="space-y-4 p-3 bg-muted/50 rounded-lg">
             <h4 className="font-medium text-sm">Animation Timing</h4>
             <SliderInput
               label="Animation Start Delay"
@@ -244,7 +244,7 @@ export function HeroEditor() {
           </div>
 
           {/* Scroll Indicator */}
-          <div className="space-y-4 p-4 bg-muted/50 rounded-lg">
+          <div className="space-y-4 p-3 bg-muted/50 rounded-lg">
             <h4 className="font-medium text-sm">Scroll Indicator</h4>
             <ToggleInput
               label="Show Scroll Indicator"

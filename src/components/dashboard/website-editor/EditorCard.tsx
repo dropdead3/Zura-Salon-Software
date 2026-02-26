@@ -18,11 +18,11 @@ export function EditorCard({ title, icon: Icon, description, headerActions, chil
       className
     )}>
       {/* Sticky frosted-glass header */}
-      <div className="sticky top-0 z-10 flex items-center justify-between gap-3 px-5 py-3.5 bg-card/90 backdrop-blur-md border-b border-border/30">
-        <div className="flex items-center gap-3 min-w-0">
+      <div className="sticky top-0 z-10 flex items-center justify-between gap-2 px-4 py-3 bg-card/90 backdrop-blur-md border-b border-border/30">
+        <div className="flex items-center gap-2.5 min-w-0">
           {Icon && (
-            <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
-              <Icon className="w-4 h-4 text-primary" />
+            <div className="w-7 h-7 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
+              <Icon className="w-3.5 h-3.5 text-primary" />
             </div>
           )}
           <div className="min-w-0">
@@ -39,7 +39,7 @@ export function EditorCard({ title, icon: Icon, description, headerActions, chil
         )}
       </div>
       {/* Content */}
-      <div className="p-5 space-y-5">
+      <div className="p-4 space-y-4">
         {children}
       </div>
     </div>
