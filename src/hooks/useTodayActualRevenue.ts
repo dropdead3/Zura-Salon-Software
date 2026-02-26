@@ -86,7 +86,7 @@ export function useTodayActualRevenue(enabled: boolean) {
         // Fallback: query raw transaction items
         const { data: txnData, error: txnError } = await supabase
           .from('phorest_transaction_items')
-          .select('item_type, total_amount, phorest_client_id')
+          .select('item_type, total_amount, tax_amount, phorest_client_id')
           .gte('transaction_date', `${today}T00:00:00`)
           .lte('transaction_date', `${today}T23:59:59`);
 
@@ -101,7 +101,7 @@ export function useTodayActualRevenue(enabled: boolean) {
         const clientIds = new Set<string>();
 
         for (const row of txnData) {
-          const amount = Number(row.total_amount) || 0;
+          const amount = (Number(row.total_amount) || 0) + (Number(row.tax_amount) || 0);
           if (row.item_type === 'service') {
             serviceRevenue += amount;
           } else {
@@ -190,7 +190,7 @@ export function useTodayActualRevenue(enabled: boolean) {
         // Fallback: query raw transaction items grouped by location
         const { data: txnData, error: txnError } = await supabase
           .from('phorest_transaction_items')
-          .select('location_id, item_type, total_amount, phorest_client_id')
+          .select('location_id, item_type, total_amount, tax_amount, phorest_client_id')
           .gte('transaction_date', `${today}T00:00:00`)
           .lte('transaction_date', `${today}T23:59:59`);
 
@@ -206,7 +206,7 @@ export function useTodayActualRevenue(enabled: boolean) {
             byLocation[locId] = { actualRevenue: 0, actualServiceRevenue: 0, actualProductRevenue: 0, actualTransactions: 0 };
             clientsByLoc[locId] = new Set();
           }
-          const amount = Number(row.total_amount) || 0;
+          const amount = (Number(row.total_amount) || 0) + (Number(row.tax_amount) || 0);
           byLocation[locId].actualRevenue += amount;
           if (row.item_type === 'service') {
             byLocation[locId].actualServiceRevenue += amount;
