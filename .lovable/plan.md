@@ -1,23 +1,24 @@
 
 
-## Fix: Center highlighted revenue area within the Sales Overview card
+## Fix: Center the revenue highlight area properly
 
-The highlighted (drilldown-active) revenue area uses `p-2 -m-2` for its padding/negative-margin trick, but the parent card has `p-4 sm:p-6` padding. This means the highlight ring doesn't extend to the card edges -- it sits as a smaller inset box, making the centered content look off-center relative to the overall card.
+**Root cause**: The clickable revenue `div` uses negative margins to stretch to the card edges, but only horizontally and at the bottom -- not the top. The "All locations combined" label sits above the highlight, making the ring visually lopsided. The content looks shifted down within the overall card.
 
-### Change
+**Solution**: Revert the negative margin approach. Use a contained highlight with modest padding (`p-4 rounded-xl`) that sits naturally within the card. This keeps the ring symmetric around the content and visually centered.
+
+### Changes
 
 **File: `src/components/dashboard/AggregateSalesCard.tsx` (line 647)**
 
-Update the negative margin on the clickable revenue `div` to match the parent card's padding so the highlight ring spans the full inner width:
+Revert the class back to a symmetric, self-contained highlight:
 
-- Change `p-2 -m-2` to `p-4 -m-4 sm:p-6 sm:-m-6` (matching the parent's `p-4 sm:p-6`)
-- Also add `mt-0` to prevent the negative top margin from collapsing into the location label above -- or alternatively, keep a smaller top offset (`-mt-2`) so the highlight doesn't overlap the "All locations combined" text
-
-Specifically:
 ```
-- "text-center mb-4 sm:mb-6 cursor-pointer transition-all rounded-lg p-2 -m-2 group/revenue"
-+ "text-center mb-4 sm:mb-6 cursor-pointer transition-all rounded-lg p-4 -mx-4 sm:p-6 sm:-mx-6 -mb-4 sm:-mb-6 group/revenue"
+// Before (current)
+"text-center mb-4 sm:mb-6 cursor-pointer transition-all rounded-lg p-4 -mx-4 sm:p-6 sm:-mx-6 -mb-4 sm:-mb-6 group/revenue"
+
+// After
+"text-center mb-4 sm:mb-6 cursor-pointer transition-all rounded-xl p-4 sm:p-6 group/revenue"
 ```
 
-The key insight: use `-mx-4 sm:-mx-6` (horizontal only) to extend the highlight to the card edges, and `-mb-4 sm:-mb-6` to reach the bottom, but keep the top margin at `0` so it doesn't overlap the location label. This keeps the ring flush with the card boundaries horizontally while the content stays centered.
+This gives the highlight its own contained box with equal padding on all sides -- no negative margins, no asymmetry. The ring sits centered between the location label above and the Services/Retail sub-cards below.
 
