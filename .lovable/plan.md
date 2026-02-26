@@ -1,19 +1,14 @@
 
 
-## Fix: Retail showing 100% when no sales data
+## Change Retail color to light gray
 
-**Root cause**: The Retail percentage is calculated as `100 - servicePercent`. When total is 0, `servicePercent` defaults to 0, so Retail becomes `100 - 0 = 100%`.
+**File: `src/components/dashboard/sales/RevenueDonutChart.tsx`**
 
-**Fix in `src/components/dashboard/sales/RevenueDonutChart.tsx`**:
+Two changes:
 
-Derive `retailPercent` independently instead of using `100 - servicePercent`:
+1. **Donut segment color** (line 37): Change `'hsla(35, 70%, 45%, 0.55)'` to `'hsl(var(--muted-foreground) / 0.4)'` — a subtle light gray that works in both light and dark mode.
 
-```tsx
-const retailPercent = total > 0 ? Math.round((productRevenue / total) * 100) : 0;
-```
+2. **Legend indicator dot** (line 109): Change the inline `backgroundColor: 'hsla(35, 70%, 45%, 0.55)'` to match the same gray value.
 
-Then replace all three instances of `{100 - servicePercent}` with `{retailPercent}`.
-
-### File changed
-- `src/components/dashboard/sales/RevenueDonutChart.tsx` — add `retailPercent` variable, replace 3 occurrences of `{100 - servicePercent}%`
+This replaces the amber-orange retail color with a muted gray, keeping the foreground (Services) as the dominant visual element.
 
