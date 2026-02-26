@@ -57,8 +57,8 @@ export function AchievementProgressCard({
       className={cn(
         'relative rounded-xl border p-4 transition-all duration-200',
         isEarned
-          ? 'bg-gradient-to-br from-background to-muted/50 border-border/50'
-          : 'bg-muted/30 border-border/30',
+          ? 'bg-gradient-to-br from-background to-muted/50 border-border/60'
+          : 'bg-muted/30 border-border/40',
         className
       )}
     >

@@ -31,7 +31,7 @@ function SegmentCard({ segment, total, icon, color, delay }: {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay }}
-      className="rounded-lg border border-border/30 bg-muted/20 p-3 space-y-2"
+      className="rounded-lg border border-border/40 bg-muted/20 p-3 space-y-2"
     >
       <div className="flex items-center gap-2">
         {icon}
@@ -58,7 +58,7 @@ function SegmentCard({ segment, total, icon, color, delay }: {
         </div>
       </div>
       {/* Rebooking rate */}
-      <div className="flex items-center gap-2 pt-1 border-t border-border/20">
+      <div className="flex items-center gap-2 pt-1 border-t border-border/30">
         <RefreshCw className="w-3 h-3 text-muted-foreground" />
         <span className="text-xs text-muted-foreground">Rebooking Rate</span>
         <span className="text-xs font-medium ml-auto tabular-nums">

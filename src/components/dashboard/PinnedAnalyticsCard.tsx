@@ -534,7 +534,7 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
                 </p>
               )}
             </div>
-            <div className="flex justify-between items-center mt-2 pt-2 border-t border-border/30 min-h-[28px]">
+            <div className="flex justify-between items-center mt-2 pt-2 border-t border-border/40 min-h-[28px]">
               {TIME_INDEPENDENT_CARDS.has(cardId) && filters.dateRange !== 'today' ? (
                 <span className="text-[10px] italic text-muted-foreground/50">
                   Time filter n/a

@@ -299,7 +299,7 @@ export function DrinksManager() {
           onChange={(val) => updateField('show_drink_images', val)}
           description="Display drink images in the carousel (text-only mode when off)"
         />
-        <div className="pt-4 border-t border-border/30 space-y-4">
+        <div className="pt-4 border-t border-border/40 space-y-4">
           <h4 className="text-sm font-medium text-muted-foreground">Carousel Settings</h4>
           <SliderInput
             label="Carousel Speed"
@@ -366,7 +366,7 @@ export function DrinksManager() {
           </DndContext>
         )}
 
-        <p className="text-xs text-muted-foreground mt-4 pt-4 border-t border-border/30">
+        <p className="text-xs text-muted-foreground mt-4 pt-4 border-t border-border/40">
           <strong>Tip:</strong> Drag drinks to reorder them. Changes are saved when you click "Save Changes" above.
         </p>
       </EditorCard>

@@ -625,7 +625,7 @@ export default function WebsiteSectionsHub() {
 
         {/* Divider between zones */}
         {resolvedSection && (
-          <div className="mx-1 my-1 border-t border-border/20" />
+          <div className="mx-1 my-1 border-t border-border/30" />
         )}
 
         {/* Zone B: Content controls */}

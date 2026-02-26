@@ -279,7 +279,7 @@ export function StructureLayersTab({
       </ScrollArea>
 
       {/* Add Section */}
-      <div className="p-3 border-t border-border/30">
+      <div className="p-3 border-t border-border/40">
         <Button
           variant="outline"
           size="sm"

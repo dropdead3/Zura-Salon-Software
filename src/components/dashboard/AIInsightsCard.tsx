@@ -407,7 +407,7 @@ export function AIInsightsCard() {
                         {data.actionItems.length > 0 && (
                           <div>
                             <SectionHeader icon={CheckCircle2} label="Action Items" />
-                            <div className="space-y-1 rounded-lg border border-border/30 bg-muted/10 px-6 py-4">
+                            <div className="space-y-1 rounded-lg border border-border/40 bg-muted/10 px-6 py-4">
                               {data.actionItems.map((item, i) => (
                                 <ActionItemCard key={i} item={item} index={i} onRequestGuidance={handleRequestGuidance} />
                               ))}

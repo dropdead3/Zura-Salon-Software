@@ -119,7 +119,7 @@ export function RecoveryPlanActions({
 
 
   return (
-    <div className="flex items-center gap-2 pt-3 border-t border-border/30">
+    <div className="flex items-center gap-2 pt-3 border-t border-border/40">
       {/* Save Plan */}
       <Button
         variant="outline"
@@ -158,7 +158,7 @@ export function RecoveryPlanActions({
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="center">
-          <div className="p-2 space-y-1 border-b border-border/30">
+          <div className="p-2 space-y-1 border-b border-border/40">
             <p className="text-xs font-medium px-1">Quick reminders</p>
             <div className="flex gap-1">
               {[1, 3, 7].map((days) => (

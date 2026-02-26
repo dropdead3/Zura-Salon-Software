@@ -140,7 +140,7 @@ export function ServiceProductDrilldown({
         </div>
 
         {/* Filter Row */}
-        <div className="px-6 py-3 border-b border-border/30 flex items-center gap-2 flex-wrap">
+        <div className="px-6 py-3 border-b border-border/40 flex items-center gap-2 flex-wrap">
           {showRegionFilter && (
             <Select value={filterRegion} onValueChange={(v) => { setFilterRegion(v); setFilterLocationId('all'); }}>
               <SelectTrigger className="h-8 w-auto min-w-[120px] text-xs gap-1.5">

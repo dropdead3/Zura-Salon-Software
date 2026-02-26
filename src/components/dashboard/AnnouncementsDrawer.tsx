@@ -300,7 +300,7 @@ export function AnnouncementsPanel({ isLeadership, onClose }: AnnouncementsPanel
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.05 + i * 0.04, duration: 0.25 }}
-                className={`group relative p-4 rounded-xl bg-muted/30 border border-border/30 border-l-[3px] ${priorityColors[announcement.priority || 'normal']} hover:bg-muted/50 transition-all duration-200`}
+                className={`group relative p-4 rounded-xl bg-muted/30 border border-border/40 border-l-[3px] ${priorityColors[announcement.priority || 'normal']} hover:bg-muted/50 transition-all duration-200`}
               >
                 <div className="flex items-start gap-2">
                   <div className="flex-1 min-w-0">

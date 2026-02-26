@@ -132,7 +132,7 @@ export function HeroEditor() {
       )}
 
       {/* CTAs */}
-      <div className="space-y-4 pt-4 border-t border-border/30">
+      <div className="space-y-4 pt-4 border-t border-border/40">
         <h4 className="font-medium text-sm">Call to Action Buttons</h4>
         <CharCountInput
           label="Primary Button Text"
@@ -175,7 +175,7 @@ export function HeroEditor() {
       </div>
 
       {/* Below-Button Notes */}
-      <div className="space-y-4 pt-4 border-t border-border/30">
+      <div className="space-y-4 pt-4 border-t border-border/40">
         <ToggleInput
           label="Show Below-Button Notes"
           value={localConfig.show_consultation_notes}

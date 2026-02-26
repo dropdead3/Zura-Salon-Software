@@ -43,7 +43,7 @@ export function TopBarOverflowMenu({
         align="end"
         sideOffset={8}
         className={cn(
-          "w-72 p-0 bg-card/80 backdrop-blur-xl backdrop-saturate-150 border border-border/20 rounded-xl shadow-2xl",
+          "w-72 p-0 bg-card/80 backdrop-blur-xl backdrop-saturate-150 border border-border/30 rounded-xl shadow-2xl",
           "data-[state=open]:animate-in data-[state=closed]:animate-out",
           "data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0",
           "data-[state=open]:zoom-in-[0.98] data-[state=closed]:zoom-out-[0.98]",

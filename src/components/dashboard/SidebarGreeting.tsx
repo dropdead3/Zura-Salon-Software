@@ -29,7 +29,7 @@ export function SidebarGreeting({ greeting, subtitle, firstName }: SidebarGreeti
           transition={{ duration: 0.5, ease: 'easeInOut' }}
           className="overflow-hidden"
         >
-          <div className="px-6 py-4 border-b border-border/30">
+          <div className="px-6 py-4 border-b border-border/40">
             <p className="text-sm font-display font-medium tracking-wide text-foreground">
               {greeting} <span className="text-foreground/70">{firstName}</span>
             </p>

@@ -200,7 +200,7 @@ export function NewBookingsCard({ filterContext }: NewBookingsCardProps) {
             {data.locationBreakdown.map(loc => (
               <div
                 key={loc.locationId}
-                className="flex items-center justify-between p-2 bg-card-inner rounded-md border border-border/30"
+                className="flex items-center justify-between p-2 bg-card-inner rounded-md border border-border/40"
               >
                 <div className="flex items-center gap-2">
                   <span className="text-sm">{loc.name}</span>
@@ -213,7 +213,7 @@ export function NewBookingsCard({ filterContext }: NewBookingsCardProps) {
                       critical: { dot: 'bg-destructive', label: 'Critical' },
                     }[ploc.status];
                     return (
-                      <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground px-1.5 py-0.5 rounded bg-muted/50 border border-border/30">
+                      <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground px-1.5 py-0.5 rounded bg-muted/50 border border-border/40">
                         <span className={cn('w-1.5 h-1.5 rounded-full', badgeConfig.dot)} />
                         {badgeConfig.label}
                       </span>

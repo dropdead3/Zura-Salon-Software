@@ -227,7 +227,7 @@ export default function AuditLogPage() {
             <tbody>
               {isLoading ? (
                 [...Array(10)].map((_, i) => (
-                  <tr key={i} className="border-b border-border/30">
+                  <tr key={i} className="border-b border-border/40">
                     <td className="px-4 py-3"><Skeleton className="h-6 w-32" /></td>
                     <td className="px-4 py-3"><Skeleton className="h-6 w-28" /></td>
                     <td className="px-4 py-3"><Skeleton className="h-6 w-28" /></td>
@@ -256,7 +256,7 @@ export default function AuditLogPage() {
                   return (
                     <tr 
                       key={log.id} 
-                      className="border-b border-border/30 hover:bg-muted/50 cursor-pointer transition-colors"
+                      className="border-b border-border/40 hover:bg-muted/50 cursor-pointer transition-colors"
                       onClick={() => setSelectedLog(log)}
                     >
                       <td className="px-4 py-3">

@@ -71,9 +71,9 @@ export const tokens = {
     /** Standard dashboard card wrapper */
     wrapper: 'rounded-xl',
     /** Nested card / subcard inside a parent card (level 2) */
-    inner: 'bg-card-inner rounded-lg border border-border/40',
+    inner: 'bg-card-inner rounded-lg border border-border/50',
     /** Deeply nested card inside an already-nested card (level 3) */
-    innerDeep: 'bg-card-inner-deep rounded-lg border border-border/40',
+    innerDeep: 'bg-card-inner-deep rounded-lg border border-border/50',
     /** Standard icon container (10×10, muted bg, rounded) */
     iconBox: 'w-10 h-10 bg-muted flex items-center justify-center rounded-lg shrink-0',
     /** Standard icon inside the icon box */
@@ -191,11 +191,11 @@ export const tokens = {
     /** Content panel: glass bento aesthetic */
     content: 'bg-card/80 backdrop-blur-xl border-border shadow-2xl',
     /** Header: bottom-bordered with consistent padding */
-    header: 'p-5 pb-3 border-b border-border/40',
+    header: 'p-5 pb-3 border-b border-border/50',
     /** Scrollable body area */
     body: 'p-5 flex-1 min-h-0 overflow-y-auto',
     /** Footer: top-bordered with consistent padding */
-    footer: 'p-5 pt-3 border-t border-border/40',
+    footer: 'p-5 pt-3 border-t border-border/50',
     /** Title: Termina, uppercase, tracked */
     title: 'font-display text-sm tracking-wide uppercase',
     /** Close button styling */

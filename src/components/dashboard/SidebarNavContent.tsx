@@ -328,7 +328,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
   return (
     <div className={cn("flex flex-col h-full", isCollapsed && resolvedTheme === 'dark' && "sidebar-dark")}>
       {/* Logo & Collapse Toggle */}
-      <div className={cn("border-b border-border/30", isCollapsed ? "p-3" : "px-5 py-4")}>
+      <div className={cn("border-b border-border/40", isCollapsed ? "p-3" : "px-5 py-4")}>
         <div className={cn("flex items-center", isCollapsed ? "flex-col-reverse gap-2" : "justify-between")}>
           <Link to="/dashboard" className="block min-w-0">
             {isCollapsed ? (

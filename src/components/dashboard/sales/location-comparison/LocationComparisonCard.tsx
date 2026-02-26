@@ -70,7 +70,7 @@ export function LocationComparisonCard({
         'p-4 rounded-lg border relative overflow-hidden transition-colors cursor-pointer',
         location.isLeader
           ? 'bg-primary/5 border-primary/20'
-          : 'bg-card-inner border-border/40',
+          : 'bg-card-inner border-border/50',
       )}
       onClick={() => setExpanded(!expanded)}
     >
@@ -94,7 +94,7 @@ export function LocationComparisonCard({
                 Leader
               </Badge>
             ) : location.isLowest ? (
-              <Badge variant="outline" className="text-xs text-muted-foreground border-border/40">
+              <Badge variant="outline" className="text-xs text-muted-foreground border-border/50">
                 Opportunity
               </Badge>
             ) : null}
@@ -150,7 +150,7 @@ export function LocationComparisonCard({
         )}
 
         {/* Metric grid */}
-        <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-border/30 text-center">
+        <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-border/40 text-center">
           <div>
             <p className="text-lg font-display">{location.totalServices}</p>
             <p className="text-xs text-muted-foreground">Services</p>

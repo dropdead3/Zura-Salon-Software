@@ -327,7 +327,7 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
   };
 
   const renderControls = () => (
-    <div className="mx-5 mt-3 mb-1 rounded-xl bg-muted/30 border border-border/30 p-4 space-y-4">
+    <div className="mx-5 mt-3 mb-1 rounded-xl bg-muted/30 border border-border/40 p-4 space-y-4">
       {/* Focal point display + reset */}
       <div className="flex items-center justify-between">
         <Label className="text-xs text-muted-foreground">Focal Point</Label>
@@ -463,7 +463,7 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
             {renderControls()}
 
             {/* Footer */}
-            <div className="px-5 py-4 border-t border-border/30 flex items-center gap-2">
+            <div className="px-5 py-4 border-t border-border/40 flex items-center gap-2">
               <input
                 ref={replaceInputRef}
                 type="file"
@@ -590,7 +590,7 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
             </div>
 
             {/* Footer - Review Step */}
-            <div className="px-5 py-4 border-t border-border/30 flex items-center gap-2">
+            <div className="px-5 py-4 border-t border-border/40 flex items-center gap-2">
               <Button
                 type="button"
                 variant="ghost"

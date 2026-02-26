@@ -81,7 +81,7 @@ export function ZuraStickyGuidance() {
           {/* Top gradient border */}
           <div className="h-px bg-gradient-to-r from-transparent via-border/60 to-transparent" />
 
-          <div className="bg-card/95 backdrop-blur-xl border-t border-border/30 shadow-[0_-8px_30px_-12px_rgba(0,0,0,0.15)]">
+          <div className="bg-card/95 backdrop-blur-xl border-t border-border/40 shadow-[0_-8px_30px_-12px_rgba(0,0,0,0.15)]">
             {/* Collapsed bar */}
             <div className="flex items-center gap-3 px-4 lg:px-6 h-12">
               <button
@@ -123,7 +123,7 @@ export function ZuraStickyGuidance() {
                   transition={{ type: 'spring', stiffness: 400, damping: 35 }}
                   className="overflow-hidden"
                 >
-                  <div className="border-t border-border/30">
+                  <div className="border-t border-border/40">
                     <ScrollArea className="max-h-[35vh]">
                       <div className="px-4 lg:px-6 py-4">
                         <div className="max-w-none text-sm text-foreground/90">

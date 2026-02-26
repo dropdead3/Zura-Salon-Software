@@ -50,7 +50,7 @@ export function InspectorPanel({
             <TooltipContent side="left">Expand Inspector</TooltipContent>
           </Tooltip>
         )}
-        <div className="w-full border-t border-border/20 my-1" />
+        <div className="w-full border-t border-border/30 my-1" />
         <Tooltip>
           <TooltipTrigger asChild>
             <button

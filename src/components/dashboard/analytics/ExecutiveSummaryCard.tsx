@@ -499,7 +499,7 @@ export function ExecutiveSummaryCard() {
                   <div
                     key={loc.location_id}
                     className={`flex items-center justify-between py-3 px-1 ${
-                      idx < arr.length - 1 ? 'border-b border-border/30' : ''
+                      idx < arr.length - 1 ? 'border-b border-border/40' : ''
                     }`}
                   >
                     <span className="text-sm truncate mr-4">{loc.name}</span>
@@ -520,7 +520,7 @@ export function ExecutiveSummaryCard() {
             </div>
           </div>
         )}
-        <div className="mt-4 pt-3 border-t border-border/20 flex items-center justify-end">
+        <div className="mt-4 pt-3 border-t border-border/30 flex items-center justify-end">
           <span className="text-[10px] text-muted-foreground/50">
             Updated {format(new Date(), 'h:mm a')}
           </span>
