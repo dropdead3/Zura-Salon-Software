@@ -1,7 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
+import { formatCurrency } from '@/lib/format';
+import { useNotificationSound } from '@/hooks/useNotificationSound';
 
 interface TodayActualRevenueData {
   actualRevenue: number;
@@ -26,6 +29,9 @@ interface LocationActualData {
 export function useTodayActualRevenue(enabled: boolean) {
   const today = format(new Date(), 'yyyy-MM-dd');
   const queryClient = useQueryClient();
+  const { playAchievement } = useNotificationSound();
+  const prevRevenueRef = useRef<number | null>(null);
+
 
   // Realtime subscription: invalidate queries when POS sales data changes
   useEffect(() => {
@@ -82,6 +88,28 @@ export function useTodayActualRevenue(enabled: boolean) {
     enabled,
     refetchInterval: 5 * 60 * 1000,
   });
+
+  // Cha-ching toast when revenue increases
+  useEffect(() => {
+    const currentRevenue = actualRevenueQuery.data?.totalRevenue ?? 0;
+    const hasData = actualRevenueQuery.data?.hasData ?? false;
+
+    if (prevRevenueRef.current === null) {
+      prevRevenueRef.current = currentRevenue;
+      return;
+    }
+
+    if (hasData && currentRevenue > prevRevenueRef.current) {
+      const delta = currentRevenue - prevRevenueRef.current;
+      toast('💰 Cha-ching!', {
+        description: `A client just checked out for ${formatCurrency(delta)}`,
+        duration: 5000,
+      });
+      playAchievement();
+    }
+
+    prevRevenueRef.current = currentRevenue;
+  }, [actualRevenueQuery.data, playAchievement]);
 
   const lastAppointmentQuery = useQuery({
     queryKey: ['today-last-appointment', today],
