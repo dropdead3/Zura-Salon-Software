@@ -140,7 +140,7 @@ export function LocationsContent() {
             <Card
               key={location.id}
               className={cn(
-                "group transition-all duration-200 hover:shadow-sm overflow-hidden",
+                "group transition-all duration-200 hover:shadow-sm overflow-hidden max-w-full",
                 !location.show_on_website && "opacity-70 bg-muted/30"
               )}
             >

@@ -110,7 +110,7 @@ export function InspectorPanel({
 
       {/* Content */}
       {hasSelection ? (
-        <ScrollArea className="flex-1">
+        <ScrollArea className="flex-1 [&>div]:!overflow-x-hidden">
           <PanelSlideIn motionKey={selectionKey} className={editorTokens.inspector.content}>
             {children}
           </PanelSlideIn>
