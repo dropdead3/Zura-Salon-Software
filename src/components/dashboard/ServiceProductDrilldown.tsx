@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Scissors, ShoppingBag, MapPin, Globe } from 'lucide-react';
+import { Scissors, ShoppingBag, MapPin, Globe, ChevronDown } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -88,6 +88,8 @@ export function ServiceProductDrilldown({
   const staffData = drilldownData?.staffData || [];
   const totalServiceRevenue = drilldownData?.totalServiceRevenue || 0;
   const totalProductRevenue = drilldownData?.totalProductRevenue || 0;
+
+  const [expandedStaffId, setExpandedStaffId] = useState<string | null>(null);
 
   const sorted = useMemo(() => {
     if (!staffData?.length) return [];
@@ -182,30 +184,48 @@ export function ServiceProductDrilldown({
             </div>
           ) : (
             <div className="space-y-3">
-              {sorted.map((staff) => (
-                <div
-                  key={staff.phorestStaffId}
-                  className="p-4 bg-muted/30 rounded-xl"
-                >
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-9 w-9">
-                      <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
-                        {getInitials(staff.staffName)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{staff.staffName}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {isServices
-                          ? <>{staff.primaryCount} service{staff.primaryCount !== 1 ? 's' : ''} · {staff.sharePercent}% of total{staff.tipTotal > 0 && ` · ${fmt(staff.tipTotal)} tips`}</>
-                          : <>{staff.primaryCount} product{staff.primaryCount !== 1 ? 's' : ''} · {staff.sharePercent}% of total</>
-                        }
-                      </p>
+              {sorted.map((staff) => {
+                const isExpanded = !isServices && expandedStaffId === staff.phorestStaffId;
+                const canExpand = !isServices && staff.productItems && staff.productItems.length > 0;
+                return (
+                  <div
+                    key={staff.phorestStaffId}
+                    className={`p-4 bg-muted/30 rounded-xl ${canExpand ? 'cursor-pointer transition-colors hover:bg-muted/50' : ''}`}
+                    onClick={() => canExpand && setExpandedStaffId(isExpanded ? null : staff.phorestStaffId)}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-9 w-9">
+                        <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
+                          {getInitials(staff.staffName)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{staff.staffName}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {isServices
+                            ? <>{staff.primaryCount} service{staff.primaryCount !== 1 ? 's' : ''} · {staff.sharePercent}% of total{staff.tipTotal > 0 && ` · ${fmt(staff.tipTotal)} tips`}</>
+                            : <>{staff.primaryCount} product{staff.primaryCount !== 1 ? 's' : ''} · {staff.sharePercent}% of total</>
+                          }
+                        </p>
+                      </div>
+                      <span className="font-display text-lg tabular-nums">{fmt(staff.primaryRevenue)}</span>
+                      {canExpand && (
+                        <ChevronDown className={`w-4 h-4 text-muted-foreground shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
+                      )}
                     </div>
-                    <span className="font-display text-lg tabular-nums">{fmt(staff.primaryRevenue)}</span>
+                    {isExpanded && staff.productItems && (
+                      <div className="mt-3 pt-3 border-t border-border/40 space-y-1.5">
+                        {staff.productItems.map((item, idx) => (
+                          <div key={idx} className="flex items-center justify-between pl-12 pr-1">
+                            <span className="text-xs text-muted-foreground truncate">{item.itemName}</span>
+                            <span className="text-xs tabular-nums text-foreground shrink-0 ml-2">{fmt(item.amount)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
