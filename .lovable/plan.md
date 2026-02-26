@@ -1,42 +1,31 @@
 
 
-## Add "Day Concluded" State to LiveSessionIndicator
+## Fix: Forecast Bar Labels Show Rounded Compact Amounts
 
-The `LiveSessionIndicator` currently returns `null` when `inSessionCount === 0`, meaning it vanishes entirely after the last appointment ends. The fix adds a "day concluded" state that appears when:
-- No stylists are currently in session (`inSessionCount === 0`)
-- BUT the day has had appointments (so it's not just an empty day)
+The bar labels on the Week Ahead Forecast card currently display `$4.00k`, `$3.00k` — compact notation that rounds to the nearest thousand, hiding the actual scheduled amounts. They should show precise compact values like `$4.23k`, `$3.87k`.
 
-### Changes
+### Root Cause
 
-**File: `src/hooks/useLiveSessionSnapshot.ts`**
+The `AboveBarLabel` component in `WeekAheadForecast.tsx` (line 64) calls `formatCurrencyWholeUtil(value)` which formats with 2 decimals but no compact notation. If the displayed output is actually compact (as shown in the screenshot), the values are being rounded to whole-K amounts, losing precision.
 
-- Add a `dayHadAppointments` boolean to the return interface and query result
-- When `inSessionCount === 0`, run an additional lightweight check: query `phorest_appointments` for today with `status` in `('completed', 'checked_in')` and `limit(1)` to confirm whether any appointments were serviced today
-- Return `dayHadAppointments: true/false` alongside the existing fields
+### Fix
 
-**File: `src/components/dashboard/LiveSessionIndicator.tsx`**
+**File: `src/components/dashboard/sales/WeekAheadForecast.tsx`**
 
-- Destructure `dayHadAppointments` from the hook
-- Change the early return: instead of returning `null` when `inSessionCount === 0`, check `dayHadAppointments`
-- If `dayHadAppointments` is true and `inSessionCount === 0`, render a "concluded" pill:
-  - Same `rounded-full bg-background border border-border` container as the active state
-  - Replace the pulsing green dot with a static `Moon` icon (matches the existing `ClosedBadge` pattern) in `text-muted-foreground`
-  - Text: `"Day concluded"` in `text-xs font-medium text-muted-foreground`
-  - No avatars, no click-to-drilldown — purely informational
-  - No animation (the lack of pulse signals inactivity)
-- If `dayHadAppointments` is false and `inSessionCount === 0`, continue returning `null` (no appointments at all today)
+Update the `AboveBarLabel` component (line 48-68) to use a compact formatter that preserves meaningful decimal precision:
 
-### Visual Comparison
+- For values >= $1,000: use `Intl.NumberFormat` with `notation: 'compact'` and 2 decimal digits so `$4,230` renders as `$4.23k` and `$3,000` renders as `$3.00k`
+- For values < $1,000: use standard formatting with 2 decimals (e.g., `$327.00`) — no compact suffix needed
 
-```text
-Active state:   [🟢 pulse]  3 stylists, 1 assistant in service now  [avatars]
-Concluded state: [🌙 static]  Day concluded
-No appts:        (nothing rendered)
-```
+This will be done by replacing the `formatCurrencyWholeUtil(value)` call with the org-aware `formatCurrencyCompact` or a local compact formatter that uses `maximumFractionDigits: 2` and `minimumFractionDigits: 2` with `notation: 'compact'`.
 
-### What Stays the Same
+Since `AboveBarLabel` is a plain function (not a hook), the simplest approach is to use `formatCurrency` from `@/lib/format.ts` directly with `{ compact: true, decimals: 2 }`.
 
-- All active-session logic, avatar rendering, drilldown behavior unchanged
-- Enterprise threshold logic unchanged
-- Placement in `DashboardHome.tsx` unchanged — same flex container, same position
+### What Changes
+
+| Value | Before | After |
+|-------|--------|-------|
+| $4,230 | $4.00k | $4.23k |
+| $3,870 | $4.00k | $3.87k |
+| $327 | $327.00 | $327.00 |
 
