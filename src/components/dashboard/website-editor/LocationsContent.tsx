@@ -76,21 +76,21 @@ export function LocationsContent() {
         <div className="flex items-center gap-1">
           <Button 
             variant="ghost" 
-            size={tokens.button.inline}
+            size="icon"
             onClick={() => setPreviewOpen(true)}
-            className="gap-1.5 text-muted-foreground"
+            className="h-7 w-7 text-muted-foreground"
+            title="Preview"
           >
             <Eye className="w-3.5 h-3.5" />
-            Preview
           </Button>
           <Button 
             variant="ghost" 
-            size={tokens.button.inline}
+            size="icon"
             onClick={() => navigate('/dashboard/admin/settings')}
-            className="gap-1.5 text-muted-foreground"
+            className="h-7 w-7 text-muted-foreground"
+            title="Settings"
           >
             <Settings className="w-3.5 h-3.5" />
-            Settings
           </Button>
         </div>
       }
@@ -101,7 +101,7 @@ export function LocationsContent() {
         <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
           <MapPin className="w-3.5 h-3.5 text-primary" />
         </div>
-        <div>
+        <div className="min-w-0 flex-1">
           <p className="text-sm font-medium">
             {websiteVisibleCount} of {activeLocations.length} locations visible on website
           </p>
@@ -139,7 +139,7 @@ export function LocationsContent() {
             <Card
               key={location.id}
               className={cn(
-                "group transition-all duration-200 hover:shadow-sm",
+                "group transition-all duration-200 hover:shadow-sm overflow-hidden",
                 !location.show_on_website && "opacity-70 bg-muted/30"
               )}
             >
