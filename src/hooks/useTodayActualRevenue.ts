@@ -200,8 +200,8 @@ export function useTodayActualRevenue(enabled: boolean) {
 
   const result: TodayActualRevenueData = {
     actualRevenue,
-    actualServiceRevenue: actualRevenueQuery.data?.serviceRevenue ?? 0,
-    actualProductRevenue: actualRevenueQuery.data?.productRevenue ?? 0,
+    actualServiceRevenue: posHasData ? (actualRevenueQuery.data?.serviceRevenue ?? 0) : actualRevenue,
+    actualProductRevenue: posHasData ? (actualRevenueQuery.data?.productRevenue ?? 0) : 0,
     actualTransactions,
     actualServiceHours,
     actualAverageTicket: actualTransactions > 0 ? actualRevenue / actualTransactions : 0,
