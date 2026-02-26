@@ -1,26 +1,22 @@
 
 
-## Show Visibility Info on Checkout Alerts Card
+## Remove Emoji from Cha-Ching Toast
 
-The checkout alerts feature is currently restricted to Primary Owners and Super Admins (line 17-19 of `CheckoutAlertsSection.tsx`). The user wants this eligibility scope displayed on the card so account owners understand who receives these alerts.
+The money bag emoji (💰) in `ChaChingToast.tsx` breaks the luxury aesthetic. Replace it with a subtle, on-brand visual element.
 
-### File: `src/components/dashboard/settings/CheckoutAlertsSection.tsx`
+### File: `src/components/dashboard/ChaChingToast.tsx`
 
-- Add a subtle info line below the card description (inside `CardHeader` or at the top of `CardContent`) that reads:
-  **"Visible to Primary Owner and Super Admins only."**
-- Use `text-xs text-muted-foreground` with a `Users` or `Shield` icon from lucide-react for visual context
-- Follows the existing pattern of descriptive helper text already in the card
-- No new data fetching needed — the eligibility rule is already hardcoded to `is_primary_owner || is_super_admin`
+- Remove the `<span>💰</span>` emoji accent entirely
+- Replace with a second subtle icon or simply let the layout breathe without a right-side element — the dollar-sign icon on the left + the silver shine wrapper already carry enough visual weight
+- Option: Add a small animated green dot or a subtle checkmark circle on the right to signal "completed transaction" without kitsch
 
-### Example output
-```
-🔔 CHECKOUT ALERTS
-Get notified when a client checks out.
-🛡 Visible to Primary Owner and Super Admins only.
+**Recommended approach**: Remove the emoji entirely. The SilverShineWrapper + DollarSign icon + Termina typography already convey premium. Less is more.
 
-Cha-ching notifications                          On [toggle]
-Show a toast and play a sound when revenue comes in.
+### Change
 
-[Preview cha-ching]
+Line 37 — delete the emoji span:
+```tsx
+// REMOVE:
+<span className="text-2xl flex-shrink-0" aria-hidden>💰</span>
 ```
 
