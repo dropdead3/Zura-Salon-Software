@@ -8,6 +8,10 @@ import { PageTransition } from "./PageTransition";
 const isEditorPreview = typeof window !== 'undefined'
   && new URLSearchParams(window.location.search).has('preview');
 
+// mode=view means "render exactly like public site" even inside editor iframe
+const isViewMode = typeof window !== 'undefined'
+  && new URLSearchParams(window.location.search).get('mode') === 'view';
+
 interface LayoutProps {
   children: ReactNode;
 }
@@ -85,8 +89,8 @@ export function Layout({ children }: LayoutProps) {
     };
   }, []);
 
-  // Editor preview: simplified layout without fixed footer or overflow-hidden
-  if (isEditorPreview) {
+  // Editor preview in edit mode: simplified layout without fixed footer
+  if (isEditorPreview && !isViewMode) {
     return (
       <div className="min-h-screen flex flex-col relative theme-cream" style={{ colorScheme: 'light' }}>
         <div className="relative z-10 flex flex-col min-h-screen bg-background">
@@ -99,6 +103,8 @@ export function Layout({ children }: LayoutProps) {
       </div>
     );
   }
+
+  // Editor preview in view mode OR public site: full layout with footer reveal
 
   return (
     <div className="min-h-screen flex flex-col relative theme-cream" style={{ colorScheme: 'light' }}>
