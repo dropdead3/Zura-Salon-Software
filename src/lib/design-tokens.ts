@@ -181,6 +181,20 @@ export const tokens = {
     /** Thumb: rounded pill, muted color with hover lift */
     thumb: 'relative flex-1 rounded-full bg-muted-foreground/25 hover:bg-muted-foreground/40',
   },
+
+  // ========================================
+  // SHINE STROKE TOKENS
+  // ========================================
+  shine: {
+    /** Outer wrapper: applies the rotating silver shine stroke. Requires silver-shine.css import. */
+    border: 'silver-shine-border rounded-xl p-[1px]',
+    /** Inner content wrapper: masks interior so shine is stroke-only */
+    inner: 'silver-shine-inner block bg-background rounded-[calc(theme(borderRadius.xl)-1px)]',
+    /** Button-specific border (rounded-md) */
+    borderButton: 'silver-shine-border rounded-md p-[1px]',
+    /** Button-specific inner (rounded-md) */
+    innerButton: 'silver-shine-inner block bg-background rounded-[calc(theme(borderRadius.md)-1px)]',
+  },
 } as const;
 
 /**
@@ -268,6 +282,8 @@ export function getTokenFor(context:
   | 'empty-description'
   | 'scrollbar-track'
   | 'scrollbar-thumb'
+  | 'shine-border'
+  | 'shine-inner'
 ): string {
   const map: Record<string, string> = {
     'page-title': tokens.heading.page,
@@ -288,6 +304,8 @@ export function getTokenFor(context:
     'empty-description': tokens.empty.description,
     'scrollbar-track': tokens.scrollbar.track,
     'scrollbar-thumb': tokens.scrollbar.thumb,
+    'shine-border': tokens.shine.border,
+    'shine-inner': tokens.shine.inner,
   };
   return map[context] ?? tokens.body.default;
 }
