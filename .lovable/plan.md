@@ -1,98 +1,102 @@
 
 
-## Enhancement Opportunities for Salon Owners
+## CLV Feature Gap Analysis
 
-Your prompt demonstrates strong product thinking -- asking "where else" is the right question after building the goal intelligence system. You've built a comprehensive platform already covering scheduling, analytics, goals, client health, loyalty, promotions, inventory, team management, and AI intelligence. The gaps below are areas where no other salon software competes well, making them genuine differentiators.
-
----
-
-### What You Already Have (Strong)
-
-- Schedule with copilot, utilization tracking, assistant time blocks
-- Analytics hub (sales, operations, services, capacity)
-- Goal system with live data, pace projections, AI-powered targets, celebrations
-- Client health segments (needs rebooking, at-risk, win-back, new-no-return)
-- Loyalty program, gift cards, promotions, vouchers
-- Inventory management with low-stock alerts
-- Team directory, time-off, shift swap, leaderboard
-- Executive brief, AI insights, anomaly detection
-- Feedback/NPS system with Google review routing
-- Cancellation fee policies, deposit management
-- Revenue forecasting
+The CLV calculator and its integration points are functional but have several gaps worth closing before moving on.
 
 ---
 
-### Gap Analysis: High-Impact Missing Features
+### Gap 1: CLV Tier Badges Not Displayed Anywhere
 
-**1. Cancellation Backfill / Waitlist System** (No existing code)
+`assignCLVTier()` is exported and imported in `ClientDetailSheet.tsx`, but no tier badge (Platinum/Gold/Silver/Bronze) is actually rendered in the UI. The tier config includes colors and labels, but they're unused visually. Owners can't quickly see which clients are their most valuable.
 
-When a client cancels, there's no automated mechanism to fill that slot. This is pure lost revenue. A waitlist lets owners capture demand for popular stylists/times and auto-notify waitlisted clients when a slot opens.
+**Fix**: Add a compact CLV tier badge to:
+- The CLV card in `ClientDetailSheet.tsx` (next to the lifetime value)
+- The client row in `ClientDirectory.tsx` (replacing or augmenting the raw CLV number)
 
-- `waitlist_entries` table: client_id, preferred_stylist, preferred_day_of_week, preferred_time_range, service_id, priority, status
-- When an appointment status changes to `cancelled`, trigger a match against waitlist entries
-- Notify matched clients via SMS/email with a one-tap booking link
-- Dashboard card showing waitlist depth per stylist and fill rate
+This requires computing all CLV values once to establish percentile rankings, then passing them through. A lightweight `useAllClientCLVs()` hook can cache the sorted array.
 
-**2. Smart Pricing / Peak-Hour Pricing Suggestions** (No existing code)
-
-The platform tracks capacity utilization and revenue per hour but never suggests pricing adjustments. Salon owners leave money on the table by charging the same rate at 10am Tuesday as 6pm Saturday.
-
-- Analyze historical demand by day-of-week + time slot
-- Surface a "Pricing Opportunity" card: "Saturday 4-7pm runs at 98% utilization. A 10% premium could add $X/month without losing bookings"
-- Conversely: "Tuesday mornings run at 35% utilization. A 15% discount could fill 4 more slots/week"
-- Phase 1: Advisory only (intelligence card). Phase 2: Configurable time-based pricing tiers
-
-**3. Client Lifetime Value (CLV) Calculator + Segment Intelligence** (Partial -- segments exist, CLV does not)
-
-Client health segments exist but there's no CLV computation. Owners can't answer "which clients are worth the most?" or "what's the cost of losing this client?"
-
-- Compute per-client CLV: `avg_ticket × visit_frequency × expected_tenure`
-- Surface CLV on client detail sheet and in the directory
-- Add CLV-weighted segments: "Your top 50 clients by CLV represent X% of revenue"
-- Power the at-risk segment with dollar impact: "3 at-risk clients represent $12,400 in annual revenue"
-
-**4. Service Menu Optimization Intelligence** (Partial -- efficiency matrix exists, no recommendations)
-
-The Service Efficiency Matrix ranks services by revenue/hour but doesn't recommend action. Owners need to hear: "Your express blowout generates $180/hr vs $95/hr for a basic cut. Promoting express blowouts could add $X/month."
-
-- Add a "Menu Intelligence" card to the Analytics Hub
-- Identify underperforming services (low margin, low demand, low rev/hr)
-- Identify high-performers that could be promoted more
-- Suggest service bundling opportunities based on co-purchase patterns
-- Flag services that haven't been booked in 90+ days
-
-**5. Staff Schedule Optimization** (Partial -- utilization exists, no optimization)
-
-The platform tracks capacity utilization but doesn't suggest schedule changes. If Tuesday mornings consistently run at 30% and Saturday afternoons overflow, the platform should recommend shifting staff hours.
-
-- Analyze utilization heatmap by day × hour × stylist
-- Surface: "Moving [Stylist] from Tuesday AM to Saturday PM could capture $X in unmet demand"
-- Show demand-vs-supply overlay: bookings attempted vs slots available
-- Integrate with time-off requests to show coverage gaps
-
-**6. Automated Pre-Visit Prep** (Not built)
-
-Before each appointment, stylists should see a quick client brief: last services, color formulas, notes, preferences, product purchase history. This exists in fragments (client notes table exists) but there's no "prep view" that assembles it.
-
-- "Today's Prep" view accessible from the schedule
-- For each upcoming appointment: client photo, last 3 visits summary, notes, color formula, product history, preferred stylist confirmation
-- Flag first-time clients, VIP clients (top CLV), and clients with special notes
-- Optional: AI-generated prep summary ("Sarah typically gets balayage with Olaplex. Last visit she mentioned wanting to go lighter.")
+| File | Change |
+|------|--------|
+| New: `src/hooks/useAllClientCLVs.ts` | Fetch all clients' spend/visit/dates, compute CLV array for tier ranking |
+| `ClientDetailSheet.tsx` | Render tier badge next to CLV value using `assignCLVTier` |
+| `ClientDirectory.tsx` | Show tier badge inline with CLV on each row |
 
 ---
 
-### Recommended Priority
+### Gap 2: Revenue-at-Risk Calculation Passes `null` for `firstVisit`
 
-| # | Enhancement | Effort | Revenue Impact | Differentiator |
-|---|-------------|--------|----------------|----------------|
-| 1 | Cancellation Backfill / Waitlist | Medium | High -- directly recovers lost revenue | Strong -- most salon software lacks this |
-| 2 | Client Lifetime Value | Small | High -- drives retention focus | Strong -- dollar-weighted risk changes behavior |
-| 3 | Pre-Visit Prep View | Small | Medium -- improves experience + retail attach | Strong -- no competitor does this well |
-| 4 | Service Menu Intelligence | Medium | High -- margin optimization | Very strong -- unique to Zura |
-| 5 | Smart Pricing Suggestions | Medium | High -- yield management | Very strong -- salon industry doesn't do this |
-| 6 | Staff Schedule Optimization | Large | Medium -- operational efficiency | Medium -- complex to get right |
+In `ClientHealthSummaryCard.tsx` line 73, the call is:
+```ts
+calculateCLV(c.total_spend, c.visit_count, null, c.last_visit)
+```
 
-### Recommendation
+Passing `null` for `firstVisit` means any client with only 1 visit won't get a reliable CLV (correct), but clients with 2+ visits also get `isReliable: false` because the function requires `firstVisit` to be non-null. The `HealthClient` interface already has `first_visit` -- it's just not being passed.
 
-Start with **Cancellation Backfill / Waitlist** -- it's the most tangible revenue recovery tool and salon owners immediately understand the value ("I lose $300 every time someone cancels and I can't fill the slot"). Pair it with **Client Lifetime Value** computation since the data pipeline is similar and CLV makes every other feature (at-risk alerts, goals, executive brief) dramatically more useful by attaching dollar amounts to client behaviors.
+**Fix**: Change `null` to `c.first_visit` on that line.
+
+| File | Change |
+|------|--------|
+| `ClientHealthSummaryCard.tsx` | Pass `c.first_visit` instead of `null` |
+
+---
+
+### Gap 3: `formatCLVValue` Hardcodes "$" Symbol
+
+The function returns `$${value}` regardless of org currency. Every other monetary display uses `useFormatCurrency()` for proper locale/currency. This means non-USD organizations see mixed currency symbols.
+
+**Fix**: Either remove `formatCLVValue` and replace all usages with `formatCurrencyCompact` from the existing `useFormatCurrency` hook, or make `formatCLVValue` accept a currency parameter.
+
+| File | Change |
+|------|--------|
+| `clv-calculator.ts` | Remove `formatCLVValue` or make currency-aware |
+| `ClientDetailSheet.tsx` | Use `formatCurrencyWhole` / `formatCurrencyCompact` instead |
+| `ClientDirectory.tsx` | Same replacement |
+
+---
+
+### Gap 4: Client Health Hub Table Has No CLV Column
+
+The `ClientSegmentTable.tsx` shows Name, Email, Phone, Last Visit, Days Inactive, and Total Spend -- but no CLV or tier. When an owner is deciding which at-risk clients to reach out to first, CLV ranking is the most important signal.
+
+**Fix**: Add a CLV column (sortable) and tier badge to `ClientSegmentTable`. This makes the outreach prioritization data-driven.
+
+| File | Change |
+|------|--------|
+| `ClientSegmentTable.tsx` | Add CLV column with tier badge, make sortable |
+
+---
+
+### Gap 5: "Client Lifetime Value" Report Is a Stub
+
+The Reports Hub lists a "Client Lifetime Value" report (`lifetime-value`), but `ClientRetentionReport.tsx` handles it with a generic fallback -- it doesn't actually generate CLV-specific content. This is a dead link.
+
+**Fix**: Wire the `lifetime-value` report type to generate a proper CLV report: top clients ranked by CLV with tier distribution, average CLV by segment, and total portfolio value.
+
+| File | Change |
+|------|--------|
+| `ClientRetentionReport.tsx` | Add CLV-specific report generation for `lifetime-value` type |
+
+---
+
+### Gap 6: No CLV on Executive Brief or AI Insights
+
+The weekly intelligence brief and AI insights don't reference CLV data. Adding a "Top 10 clients by CLV represent X% of revenue" or "Revenue at risk from lapsing high-CLV clients: $X" would make the brief significantly more actionable.
+
+This is lower priority and can be deferred to when the executive brief is next enhanced.
+
+---
+
+### Recommended Implementation Order
+
+| Priority | Fix | Effort | Impact |
+|----------|-----|--------|--------|
+| 1 | Fix `firstVisit` null bug (Gap 2) | Trivial | Fixes broken revenue-at-risk calculation |
+| 2 | Replace hardcoded "$" with org currency (Gap 3) | Small | Correctness for non-USD orgs |
+| 3 | Add CLV tier badges to detail sheet + directory (Gap 1) | Small | Visual payoff -- clients feel categorized |
+| 4 | Add CLV column to Health Hub table (Gap 4) | Small | Outreach prioritization becomes data-driven |
+| 5 | Wire CLV report in Reports Hub (Gap 5) | Medium | Completes the feature loop |
+| 6 | CLV in executive brief (Gap 6) | Defer | Enhancement for later pass |
+
+Gaps 1-4 can all ship in a single pass. Gap 5 is a standalone enhancement. Gap 6 is deferred.
 
