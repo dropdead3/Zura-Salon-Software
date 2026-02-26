@@ -26,7 +26,7 @@ import { NewBookingsCard } from '@/components/dashboard/NewBookingsCard';
 import { TopPerformersCard } from '@/components/dashboard/sales/TopPerformersCard';
 import { RevenueDonutChart } from '@/components/dashboard/sales/RevenueDonutChart';
 import { ClientFunnelCard } from '@/components/dashboard/sales/ClientFunnelCard';
-import { TeamGoalsCard } from '@/components/dashboard/sales/TeamGoalsCard';
+
 import { GoalTrackerCard } from '@/components/dashboard/sales/GoalTrackerCard';
 import { HiringCapacityCard } from '@/components/dashboard/HiringCapacityCard';
 import { StaffingTrendChart } from '@/components/dashboard/StaffingTrendChart';
@@ -80,7 +80,6 @@ const CARD_TO_TAB_MAP: Record<string, string> = {
   'sales_overview': 'analytics_sales_tab',
   'top_performers': 'analytics_sales_tab',
   'revenue_breakdown': 'analytics_sales_tab',
-  'team_goals': 'analytics_sales_tab',
   'goal_tracker': 'analytics_sales_tab',
   'week_ahead_forecast': 'analytics_sales_tab',
   'capacity_utilization': 'analytics_operations_tab',
@@ -202,7 +201,6 @@ const CARD_META: Record<string, { icon: React.ElementType; label: string }> = {
   service_mix: { icon: Scissors, label: 'Service Mix' },
   retail_effectiveness: { icon: ShoppingBag, label: 'Retail Effectiveness' },
   rebooking: { icon: CalendarCheck, label: 'Rebooking Rate' },
-  team_goals: { icon: Target, label: 'Team Goals' },
   goal_tracker: { icon: Target, label: 'Goal Tracker' },
   capacity_utilization: { icon: Gauge, label: 'Capacity Utilization' },
   week_ahead_forecast: { icon: LineChart, label: 'Week Ahead Forecast' },
@@ -228,7 +226,6 @@ const CARD_DESCRIPTIONS: Record<string, string> = {
   service_mix: 'Highest-revenue service category in the period.',
   retail_effectiveness: 'Percentage of service transactions that include a retail purchase.',
   rebooking: 'Percentage of clients who rebooked before leaving.',
-  team_goals: 'Team revenue progress toward the current period target.',
   goal_tracker: 'Organization-wide goal completion percentage.',
   capacity_utilization: 'Average chair utilization across all providers.',
   week_ahead_forecast: 'Projected total revenue for the next 7 days.',
@@ -258,7 +255,6 @@ const CARD_LINKS: Record<string, { label: string; href: string }> = {
   week_ahead_forecast: { label: 'Forecast', href: '/dashboard/admin/analytics?tab=sales' },
   daily_brief: { label: 'Brief', href: '/dashboard/admin/analytics?tab=leadership' },
   revenue_breakdown: { label: 'Revenue', href: '/dashboard/admin/analytics?tab=sales' },
-  team_goals: { label: 'Goals', href: '/dashboard/admin/analytics?tab=sales&subtab=goals' },
   locations_rollup: { label: 'Locations', href: '/dashboard/admin/analytics?tab=sales' },
   hiring_capacity: { label: 'Hiring', href: '/dashboard/admin/analytics?tab=operations' },
   operations_stats: { label: 'Queue', href: '/dashboard/admin/analytics?tab=operations' },
@@ -402,10 +398,6 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
       case 'rebooking':
         metricValue = rebookData ? formatPercent(rebookData.rebookRate) : '--';
         metricLabel = `Clients who rebooked before leaving (${getPeriodLabel(filters.dateRange)})`;
-        break;
-      case 'team_goals':
-        metricValue = formatCurrencyWhole(salesData?.totalRevenue ?? 0);
-        metricLabel = `Combined team revenue toward goal (${getPeriodLabel(filters.dateRange)})`;
         break;
       case 'capacity_utilization': {
         const avgUtil = workload?.length
@@ -732,23 +724,6 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
             <ClientFunnelCard 
               dateFrom={filters.dateFrom} 
               dateTo={filters.dateTo}
-              filterContext={filterContext}
-            />
-          </PinnableCard>
-        </VisibilityGate>
-      );
-    case 'team_goals':
-      return (
-        <VisibilityGate elementKey="team_goals">
-          <PinnableCard elementKey="team_goals" elementName="Team Goals" category="Command Center"
-            metricData={{
-              "Current Revenue": salesData?.totalRevenue || 0,
-            }}
-            dateRange={filters.dateRange}
-            locationName={selectedLocationName}
-          >
-            <TeamGoalsCard 
-              currentRevenue={salesData?.totalRevenue || 0}
               filterContext={filterContext}
             />
           </PinnableCard>

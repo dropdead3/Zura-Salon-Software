@@ -71,7 +71,7 @@ import { PeakHoursHeatmap } from '@/components/dashboard/sales/PeakHoursHeatmap'
 import { CommissionCalculator } from '@/components/dashboard/sales/CommissionCalculator';
 import { SalesReportPDF } from '@/components/dashboard/sales/SalesReportPDF';
 // CommissionTiersEditor removed — rates now managed via Stylist Levels in Settings
-import { TeamGoalsCard } from '@/components/dashboard/sales/TeamGoalsCard';
+
 import { RevenueForecast } from '@/components/dashboard/sales/RevenueForecast';
 import { YearOverYearComparison } from '@/components/dashboard/sales/YearOverYearComparison';
 import { GoogleSheetsExport } from '@/components/dashboard/sales/GoogleSheetsExport';

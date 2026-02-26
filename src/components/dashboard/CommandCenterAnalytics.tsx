@@ -9,7 +9,7 @@ import { NewBookingsCard } from '@/components/dashboard/NewBookingsCard';
 import { TopPerformersCard } from '@/components/dashboard/sales/TopPerformersCard';
 import { RevenueDonutChart } from '@/components/dashboard/sales/RevenueDonutChart';
 import { ClientFunnelCard } from '@/components/dashboard/sales/ClientFunnelCard';
-import { TeamGoalsCard } from '@/components/dashboard/sales/TeamGoalsCard';
+
 import { GoalTrackerCard } from '@/components/dashboard/sales/GoalTrackerCard';
 import { HiringCapacityCard } from '@/components/dashboard/HiringCapacityCard';
 import { StaffingTrendChart } from '@/components/dashboard/StaffingTrendChart';
@@ -330,14 +330,6 @@ export function CommandCenterAnalytics() {
                 dateTo={dateFilters.dateTo}
                 locationId={locationId}
               />
-            </PinnableCard>
-          </VisibilityGate>
-        );
-      case 'team_goals':
-        return (
-          <VisibilityGate key={cardId} elementKey="team_goals">
-            <PinnableCard elementKey="team_goals" elementName="Team Goals" category="Command Center">
-              <TeamGoalsCard currentRevenue={salesData?.totalRevenue || 0} />
             </PinnableCard>
           </VisibilityGate>
         );

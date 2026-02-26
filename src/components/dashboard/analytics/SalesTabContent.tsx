@@ -61,7 +61,7 @@ import { PeakHoursHeatmap } from '@/components/dashboard/sales/PeakHoursHeatmap'
 import { CommissionSummaryCard } from '@/components/dashboard/sales/CommissionSummaryCard';
 import { StaffCommissionTable } from '@/components/dashboard/sales/StaffCommissionTable';
 import { SalesReportPDF } from '@/components/dashboard/sales/SalesReportPDF';
-import { TeamGoalsCard } from '@/components/dashboard/sales/TeamGoalsCard';
+
 import { GoalTrackerCard } from '@/components/dashboard/sales/GoalTrackerCard';
 import { RevenueForecast } from '@/components/dashboard/sales/RevenueForecast';
 import { ForecastingCard } from '@/components/dashboard/sales/ForecastingCard';
@@ -393,9 +393,6 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
 
         <TabsContent value="goals" className="mt-6 space-y-6">
           <GoalTrackerCard />
-          <PinnableCard elementKey="team_goals" elementName="Team Goals" category="Analytics Hub - Sales" dateRange={filters.dateRange} locationName={selectedLocationName}>
-            <TeamGoalsCard currentRevenue={metrics?.totalRevenue || 0} />
-          </PinnableCard>
         </TabsContent>
 
         <TabsContent value="compare" className="mt-6">
