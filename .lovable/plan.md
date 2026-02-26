@@ -1,81 +1,27 @@
 
 
-## Fix: Enable Scrolling in Editor Canvas Preview
+## Fix: Navbar Logo Using Wrong Asset
 
 ### Problem
-
-The editor's live preview iframe cannot be scrolled to see the full site. The user sees the Header and some sections but can't scroll down to view all content.
+The main website navbar is displaying the secondary icon logo (`brand-logo-secondary.svg` — the compact "DD" mark) instead of the primary wordmark (`brand-wordmark.svg` — the full "DROPEAD" logotype). Both `Logo` and `LogoIcon` imports on lines 5-6 point to the same secondary file.
 
 ### Root Cause
-
-In `src/components/layout/Layout.tsx` (line 98), the main content wrapper has `overflow-hidden`:
-
+Lines 5-6 of `src/components/layout/Header.tsx`:
 ```tsx
-<div 
-  className="relative z-10 flex flex-col min-h-screen bg-background rounded-b-[2rem] md:rounded-b-[3rem] shadow-[...] overflow-hidden"
-  style={{ marginBottom: footerHeight }}
->
+import Logo from "@/assets/brand-logo-secondary.svg";       // Wrong — should be wordmark
+import LogoIcon from "@/assets/brand-logo-secondary.svg";    // Correct for compact icon
 ```
-
-This `overflow-hidden` is needed for the public site to clip content cleanly against the rounded bottom corners and the fixed-footer reveal effect. However, inside the editor preview iframe, this creates a scrolling conflict:
-
-- The iframe viewport is smaller than the full page
-- The div has `min-h-screen` (which resolves to the iframe's viewport height)
-- Content is longer than the iframe viewport
-- `overflow-hidden` clips that excess content
-- The fixed footer architecture adds `marginBottom: footerHeight`, pushing content further
-
-Additionally, the `CanvasPanel.tsx` canvas surface container (line 134) uses `overflow-hidden` with padding (`p-6 lg:p-8`), which reduces the iframe's visible area and clips its edges.
 
 ### Fix
 
-Two targeted changes:
+**File: `src/components/layout/Header.tsx`** — one line change:
 
-#### 1. `src/components/layout/Layout.tsx`
-When in editor preview mode (`?preview=true`), remove `overflow-hidden` from the main content wrapper and disable the fixed footer reveal effect (since the user doesn't need to see the footer reveal animation in the editor). This allows the iframe document to scroll naturally.
+| Line | Current | Fixed |
+|------|---------|-------|
+| 5 | `import Logo from "@/assets/brand-logo-secondary.svg"` | `import Logo from "@/assets/brand-wordmark.svg"` |
 
-- Detect `isEditorPreview` via `?preview` URL param (same pattern used in `PageSectionRenderer`)
-- When in preview mode:
-  - Remove `overflow-hidden` from the main content wrapper
-  - Remove `rounded-b-*` (no need for rounded corners in editor)
-  - Remove `marginBottom: footerHeight` (no fixed footer reveal)
-  - Hide the fixed `<Footer />` element entirely (not needed in editor)
-  - Keep the `<FooterCTA />` visible (it's part of the content flow)
-- Public site rendering remains completely unchanged
+Line 6 (`LogoIcon`) stays as `brand-logo-secondary.svg` since that's the compact icon used for collapsed/mobile states.
 
-#### 2. `src/components/dashboard/website-editor/panels/CanvasPanel.tsx`
-Change the canvas surface container from `overflow-hidden` to `overflow-auto` to allow the preview frame to fill the full available space without clipping. Also remove the padding (`p-6 lg:p-8`) when in desktop mode so the iframe gets maximum space — or reduce it to minimal padding.
-
-Actually, the iframe scrolls internally so the outer container padding is fine. The key change is ensuring the iframe container fills the available height properly. Currently `items-start` aligns the frame to the top which is correct. The `overflow-hidden` on this container is fine because the iframe handles its own scrolling — the real fix is inside the iframe (Layout.tsx).
-
-### Files
-
-| File | Change |
-|---|---|
-| `src/components/layout/Layout.tsx` | In preview mode: remove `overflow-hidden`, disable fixed footer, remove `marginBottom` |
-
-One file. The iframe scrolls internally — the fix is inside the rendered content, not the iframe container.
-
-### Technical Detail
-
-The `isEditorPreview` detection uses the same module-level pattern already established in `PageSectionRenderer.tsx`:
-
-```tsx
-const isEditorPreview = typeof window !== 'undefined'
-  && new URLSearchParams(window.location.search).has('preview');
-```
-
-In preview mode, the Layout simplifies to:
-```tsx
-// No fixed footer, no overflow-hidden, no bottom margin
-<div className="relative z-10 flex flex-col min-h-screen bg-background">
-  <Header />
-  <main className="flex-1 bg-background">
-    <PageTransition>{children}</PageTransition>
-  </main>
-  <FooterCTA />
-</div>
-```
-
-Public site layout remains completely untouched.
+### Prompt Feedback
+Good catch identifying this visually. Your screenshot made it immediately clear which logo was wrong. One refinement for next time: specifying "the full wordmark is showing as the compact icon" would let me skip the investigation step entirely — but the screenshot did the job well here.
 
