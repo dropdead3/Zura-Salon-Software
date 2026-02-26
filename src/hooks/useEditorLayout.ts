@@ -47,8 +47,8 @@ function loadPrefs(): PersistedLayout {
       return {
         structureWidth: parsed.structureWidth,
         inspectorWidth: parsed.inspectorWidth,
-        structureCollapsed: false,
-        inspectorCollapsed: false,
+        structureCollapsed: parsed.structureCollapsed ?? false,
+        inspectorCollapsed: parsed.inspectorCollapsed ?? false,
       };
     }
     return { structureCollapsed: false, inspectorCollapsed: false };
