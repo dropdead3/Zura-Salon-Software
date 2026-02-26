@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback, type ReactNode } from 'react'
 import { cn } from '@/lib/utils';
 import { AIInsightsDrawer, AIInsightsPanel } from '@/components/dashboard/AIInsightsDrawer';
 import { PersonalInsightsDrawer, PersonalInsightsPanel } from '@/components/dashboard/PersonalInsightsDrawer';
-import { AnnouncementsDrawer } from '@/components/dashboard/AnnouncementsDrawer';
+import { AnnouncementsDrawer, AnnouncementsPanel } from '@/components/dashboard/AnnouncementsDrawer';
 import { LiveSessionIndicator } from '@/components/dashboard/LiveSessionIndicator';
 import { PhorestSyncPopout } from '@/components/dashboard/PhorestSyncPopout';
 import { DashboardCustomizeMenu } from '@/components/dashboard/DashboardCustomizeMenu';
@@ -61,6 +61,8 @@ interface CommandCenterControlRowProps {
   roleContext: RoleContext;
 }
 
+type ExpansionPanel = 'insights' | 'announcements' | null;
+
 export function CommandCenterControlRow({
   isLeadership,
   analyticsFilters,
@@ -74,19 +76,22 @@ export function CommandCenterControlRow({
 }: CommandCenterControlRowProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const density = useControlRowDensity(containerRef);
-  const [insightsExpanded, setInsightsExpanded] = useState(false);
+  const [activePanel, setActivePanel] = useState<ExpansionPanel>(null);
 
   const isShort = density === 'short' || density === 'icon-some';
   const announcementsIconOnly = density === 'icon-some';
-
   const gapClass = density === 'full' ? 'gap-2' : 'gap-1.5';
 
   const toggleInsights = useCallback(() => {
-    setInsightsExpanded(prev => !prev);
+    setActivePanel(prev => prev === 'insights' ? null : 'insights');
   }, []);
 
-  const closeInsights = useCallback(() => {
-    setInsightsExpanded(false);
+  const toggleAnnouncements = useCallback(() => {
+    setActivePanel(prev => prev === 'announcements' ? null : 'announcements');
+  }, []);
+
+  const closePanel = useCallback(() => {
+    setActivePanel(null);
   }, []);
 
   return (
@@ -101,13 +106,13 @@ export function CommandCenterControlRow({
           {isLeadership ? (
             <AIInsightsDrawer
               label={isShort ? 'Insights' : undefined}
-              expanded={insightsExpanded}
+              expanded={activePanel === 'insights'}
               onToggle={toggleInsights}
             />
           ) : (
             <PersonalInsightsDrawer
               label={isShort ? 'Insights' : undefined}
-              expanded={insightsExpanded}
+              expanded={activePanel === 'insights'}
               onToggle={toggleInsights}
             />
           )}
@@ -115,6 +120,8 @@ export function CommandCenterControlRow({
             isLeadership={isLeadership}
             label={isShort ? 'Announce' : undefined}
             iconOnly={announcementsIconOnly}
+            expanded={activePanel === 'announcements'}
+            onToggle={toggleAnnouncements}
           />
           <LiveSessionIndicator
             locationId={analyticsFilters.locationId}
@@ -147,9 +154,9 @@ export function CommandCenterControlRow({
         </div>
       </div>
 
-      {/* Insights Expansion Row — full-width, below controls, in document flow */}
+      {/* Expansion Row — full-width, below controls, in document flow */}
       <AnimatePresence>
-        {insightsExpanded && (
+        {activePanel === 'insights' && (
           <motion.div
             key="insights-expansion"
             initial={{ height: 0, opacity: 0 }}
@@ -160,10 +167,24 @@ export function CommandCenterControlRow({
           >
             <div className="pt-3">
               {isLeadership ? (
-                <AIInsightsPanel onClose={closeInsights} />
+                <AIInsightsPanel onClose={closePanel} />
               ) : (
-                <PersonalInsightsPanel onClose={closeInsights} />
+                <PersonalInsightsPanel onClose={closePanel} />
               )}
+            </div>
+          </motion.div>
+        )}
+        {activePanel === 'announcements' && (
+          <motion.div
+            key="announcements-expansion"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+            className="overflow-hidden"
+          >
+            <div className="pt-3">
+              <AnnouncementsPanel isLeadership={isLeadership} onClose={closePanel} />
             </div>
           </motion.div>
         )}
