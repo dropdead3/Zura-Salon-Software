@@ -1,20 +1,24 @@
 
 
-## Fix: Live Session Indicator Showing "Day Concluded" Incorrectly
+## Fix: Sales Overview Compact Card Data Source
 
-### Root Cause
+### Problem
+The Sales Overview compact card shows "Today's expected revenue" ($3,036) instead of "Sales so far today" because `useTodayActualRevenue` only queries `phorest_daily_sales_summary`, which has no rows for today. The database confirms 18 completed appointments worth $2,268 and 4 booked worth $768 -- but the hook never sees them.
 
-The `useLiveSessionSnapshot` hook filters out appointments with `status: completed` from the active session query (line 51). However, Phorest marks appointments as `completed` once they're processed/paid -- often while the stylist is still physically working on the client.
+### Changes
 
-Database evidence: All appointments currently within their time window (start_time <= now < end_time) have `status: completed`. The query excludes them, finds 0 active sessions, sees that completed appointments exist for today, and renders "Day concluded."
+**File 1: `src/hooks/useTodayActualRevenue.ts`**
+- Add a fallback query to `phorest_appointments` for completed appointments when `phorest_daily_sales_summary` returns no data
+- Query: sum `total_price` from today's appointments where `status = 'completed'` (these are confirmed sales)
+- Set `hasActualData = true` when completed appointment revenue > 0, even without POS summary data
+- This gives "sales so far" = $2,268 (completed) while the full $3,036 remains as "expected"
 
-### Fix
+**File 2: `src/components/dashboard/PinnedAnalyticsCard.tsx`** (lines 356-366)
+- Update the `sales_overview` compact case sublabel from `"$X expected today"` to `"$X expected in services today"` using `salesData?.serviceRevenue` instead of `totalRevenue`
+- This matches the user's request: primary = actual sales so far, sublabel = expected service revenue
 
-**File: `src/hooks/useLiveSessionSnapshot.ts`**
-
-Change the active session query to only exclude `cancelled` and `no_show` -- not `completed`. The time window filter (`start_time <= now AND end_time > now`) is already the authoritative signal for whether a stylist is currently in service. Status should not override the time-based determination.
-
-- Line 51: Change `.not('status', 'in', '("cancelled","no_show","completed")')` to `.not('status', 'in', '("cancelled","no_show")')`
-
-This is a one-line fix. The time window remains the source of truth for "currently in service."
+### Result
+- Primary metric: "$2,268.00" with label "Sales so far today"
+- Sublabel: "$3,036.00 expected in services today"
+- When POS summary data exists (e.g., end of day sync), it takes priority over the appointment fallback
 
