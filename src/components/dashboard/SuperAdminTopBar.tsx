@@ -30,17 +30,12 @@ import {
   LogOut,
   Eye,
   EyeOff,
-  Crown,
-  Shield,
-  Scissors,
-  Headset,
-  HandHelping,
-  User,
   Bell,
   ChevronDown,
   X,
 } from 'lucide-react';
 import { useNavigationHistory } from '@/contexts/NavigationHistoryContext';
+import type { RoleBadgeConfig } from '@/lib/roleBadgeConfig';
 import type { Database } from '@/integrations/supabase/types';
 import type React from 'react';
 
@@ -62,12 +57,9 @@ interface SuperAdminTopBarProps {
   headerHovered: boolean;
   onHeaderHoverEnd: () => void;
   filterNavItems: (items: NavItem[]) => NavItem[];
-  // Internal components passed from DashboardLayout
   ViewAsToggle: React.ComponentType<{ asMenuItem?: boolean }>;
   HideNumbersToggle: React.ComponentType;
-  getAccessLabel: () => string;
-  getAccessBadgeColor: () => string;
-  AccessIcon: React.ComponentType<{ className?: string }>;
+  roleBadges: RoleBadgeConfig[];
   // State
   isAdmin: boolean;
   isPlatformUser: boolean;
@@ -123,9 +115,7 @@ export function SuperAdminTopBar({
   filterNavItems,
   ViewAsToggle,
   HideNumbersToggle,
-  getAccessLabel,
-  getAccessBadgeColor,
-  AccessIcon,
+  roleBadges,
   isAdmin,
   isPlatformUser,
   isStylistRole,
@@ -215,28 +205,28 @@ export function SuperAdminTopBar({
             </div>
           )}
 
-          {/* Role badge — responsive density */}
-          {(isPlatformUser || isAdmin) && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className={cn(
-                  "h-9 rounded-full inline-flex items-center gap-1.5 text-xs font-medium border transition-all duration-150",
-                  "px-3 xl:px-4",
-                  getAccessBadgeColor()
-                )}>
-                  <AccessIcon className="w-3 h-3" />
-                  {/* Full label ≥2xl, short ≥xl, icon-only below xl */}
-                  <span className="hidden 2xl:inline">{getAccessLabel()}</span>
-                  <span className="hidden xl:inline 2xl:hidden">
-                    {getAccessLabel() === 'Super Admin' ? 'Admin' : getAccessLabel()}
-                  </span>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="xl:hidden">
-                {getAccessLabel()}
-              </TooltipContent>
-            </Tooltip>
-          )}
+          {/* Role badges — responsive density */}
+          {(isPlatformUser || isAdmin) && roleBadges.map((badge, i) => {
+            const Icon = badge.icon;
+            return (
+              <Tooltip key={i}>
+                <TooltipTrigger asChild>
+                  <div className={cn(
+                    "h-9 rounded-full inline-flex items-center gap-1.5 text-xs font-medium border transition-all duration-150",
+                    "px-3 xl:px-4",
+                    badge.colorClasses
+                  )}>
+                    <Icon className="w-3 h-3" />
+                    <span className="hidden 2xl:inline">{badge.label}</span>
+                    <span className="hidden xl:inline 2xl:hidden">{badge.shortLabel}</span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="xl:hidden">
+                  {badge.label}
+                </TooltipContent>
+              </Tooltip>
+            );
+          })}
 
           {/* View As — Tier 0, always visible */}
           {isAdmin && <ViewAsToggle />}
