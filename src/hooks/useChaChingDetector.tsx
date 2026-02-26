@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { useNotificationSound } from '@/hooks/useNotificationSound';
 import { useSoundSettings } from '@/contexts/SoundSettingsContext';
 import { useChaChingHistorySafe } from '@/hooks/useChaChingHistory';
+import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { ChaChingToast } from '@/components/dashboard/ChaChingToast';
 import { format } from 'date-fns';
 
@@ -17,6 +18,8 @@ export function useChaChingDetector() {
   const { playAchievement } = useNotificationSound();
   const { chaChingEnabled } = useSoundSettings();
   const chaChingHistory = useChaChingHistorySafe();
+  const { data: profile } = useEmployeeProfile();
+  const isEligible = profile?.is_primary_owner || profile?.is_super_admin;
   const prevRevenueRef = useRef<number | null>(null);
 
   const today = format(new Date(), 'yyyy-MM-dd');
@@ -42,7 +45,7 @@ export function useChaChingDetector() {
         return;
       }
 
-      if (chaChingEnabled && hasData && currentRevenue > prevRevenueRef.current) {
+      if (isEligible && chaChingEnabled && hasData && currentRevenue > prevRevenueRef.current) {
         const delta = currentRevenue - prevRevenueRef.current;
         chaChingHistory?.addNotification(delta);
         toast.custom((t) => <ChaChingToast amount={delta} toastId={t} />, {
@@ -55,5 +58,5 @@ export function useChaChingDetector() {
     });
 
     return unsubscribe;
-  }, [queryClient, today, chaChingEnabled, playAchievement, chaChingHistory]);
+  }, [queryClient, today, chaChingEnabled, isEligible, playAchievement, chaChingHistory]);
 }
