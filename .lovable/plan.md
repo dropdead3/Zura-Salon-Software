@@ -1,30 +1,52 @@
 
 
-## Add Product Line-Item Drilldown per Stylist
+## Enhance Cha-Ching Notifications: Glass Bento + History Drawer
 
-**Goal**: When viewing "Products by Stylist," clicking a stylist row expands to show the individual products they sold (name + amount).
+### Current state
+Cha-ching fires a plain `sonner` toast with text "💰 Cha-ching!" and a description. No history, no custom styling, stacks poorly (as shown in screenshot).
 
-### 1. Update the hook to return per-staff product line items
+### Plan
 
-**File**: `src/hooks/useServiceProductDrilldown.ts`
+#### 1. Create a cha-ching notification store
+**New file**: `src/hooks/useChaChingHistory.ts`
+- React context + provider with state: `notifications: Array<{ id, amount, timestamp }>` (max 50, session-only).
+- `addNotification(amount)` pushes to array.
+- `unreadCount` derived from items added since last drawer open.
+- `markAllRead()` resets unread count.
+- Export `useChaChingHistory` hook.
 
-- Add a new field to `StaffServiceProduct`: `productItems: Array<{ itemName: string; amount: number }>`.
-- While aggregating `productItems` in the product loop, also push each `{ itemName: item.item_name, amount: (total_amount + tax_amount) }` into a per-staff array.
-- Return these arrays so the UI can render them.
+#### 2. Create custom cha-ching toast component
+**New file**: `src/components/dashboard/ChaChingToast.tsx`
+- Glass bento card: `bg-card/80 backdrop-blur-xl border border-border/40 rounded-xl shadow-2xl`.
+- Wrapped in `SilverShineWrapper` for the silver shine stroke effect.
+- Layout: money bag icon left, "Cha-ching!" title (font-display), amount below (font-display text-xl tabular-nums), timestamp in muted text.
+- Renders via `toast.custom()` from sonner instead of `toast()`.
+- Auto-dismiss after 5s with smooth exit animation.
 
-### 2. Add expandable product list to the drilldown UI
+#### 3. Create sticky cha-ching tab + drawer
+**New file**: `src/components/dashboard/ChaChingDrawer.tsx`
+- **Sticky tab**: Fixed to right edge of screen, vertically centered. Small pill/tab shape (`rounded-l-xl`) with money bag icon + unread count badge. Uses `bg-card/80 backdrop-blur-xl border-border/40`.
+- **On click**: Opens a right-side sheet/drawer (using Vaul or Radix Dialog) listing all session notifications in reverse chronological order.
+- Each history item: glass bento mini-card with amount, relative timestamp ("2m ago"), silver shine border.
+- Empty state if no notifications yet.
+- "Mark all read" clears the badge count.
 
-**File**: `src/components/dashboard/ServiceProductDrilldown.tsx`
+#### 4. Wire into existing cha-ching trigger
+**File**: `src/hooks/useTodayActualRevenue.ts`
+- Replace `toast('💰 Cha-ching!', ...)` with:
+  - `addNotification(delta)` to push to history store.
+  - `toast.custom((t) => <ChaChingToast amount={delta} toastId={t} />)` for the styled notification.
+- Keep `playAchievement()` call unchanged.
 
-- Track `expandedStaffId` state (single string or null).
-- On staff row click (product mode only), toggle expanded state.
-- When expanded, render a list of `staff.productItems` below the row summary showing each product name and its tax-inclusive amount.
-- Add a subtle chevron indicator on product-mode rows to signal expandability.
-- Service-mode rows remain non-expandable (no change).
+#### 5. Mount providers and components
+**File**: `src/App.tsx` (or layout wrapper)
+- Wrap with `ChaChingHistoryProvider`.
+- Render `ChaChingDrawer` inside the dashboard layout so the sticky tab appears on all dashboard pages.
 
-### Technical details
-- Product items are already fetched with `item_name` — no additional query needed.
-- Tax-inclusive per-item: `(total_amount + tax_amount)`.
-- Items sorted by amount descending within each staff expansion.
-- Styling: indented list within the `bg-muted/30 rounded-xl` card, separated by thin borders, using `text-xs` for item names and `tabular-nums` for amounts.
+### Files
+- **New**: `src/hooks/useChaChingHistory.tsx` — notification store + context
+- **New**: `src/components/dashboard/ChaChingToast.tsx` — custom glass bento toast
+- **New**: `src/components/dashboard/ChaChingDrawer.tsx` — sticky tab + history drawer
+- **Edit**: `src/hooks/useTodayActualRevenue.ts` — swap plain toast for custom toast + history push
+- **Edit**: Dashboard layout — mount provider + drawer
 
