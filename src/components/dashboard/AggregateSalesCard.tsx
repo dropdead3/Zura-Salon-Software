@@ -818,9 +818,12 @@ export function AggregateSalesCard({
             {/* Services & Products Sub-cards */}
             {(() => {
               // When today + actual data, show actual breakdown; otherwise show expected
-              const showActual = isToday && todayActual?.hasActualData;
-              const svcRevenue = showActual ? todayActual.actualServiceRevenue : displayMetrics.serviceRevenue;
-              const prodRevenue = showActual ? todayActual.actualProductRevenue : displayMetrics.productRevenue;
+              const svcRevenue = isToday
+                ? (todayActual?.hasActualData ? todayActual.actualServiceRevenue : 0)
+                : displayMetrics.serviceRevenue;
+              const prodRevenue = isToday
+                ? (todayActual?.hasActualData ? todayActual.actualProductRevenue : 0)
+                : displayMetrics.productRevenue;
               const totalBrkdn = svcRevenue + prodRevenue;
               const svcPct = totalBrkdn > 0 ? Math.round((svcRevenue / totalBrkdn) * 100) : 0;
               const prodPct = totalBrkdn > 0 ? Math.round((prodRevenue / totalBrkdn) * 100) : 0;
