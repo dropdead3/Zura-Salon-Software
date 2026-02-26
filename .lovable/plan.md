@@ -1,29 +1,19 @@
 
 
-## Show gray donut when no actual POS sales exist (today only)
+## Fix: Retail showing 100% when no sales data
 
-**Root cause**: The `RevenueDonutChart` receives appointment-based (expected) revenue as a fallback when no POS data exists. Since appointments have service revenue, `total > 0` and the gray empty state never triggers.
+**Root cause**: The Retail percentage is calculated as `100 - servicePercent`. When total is 0, `servicePercent` defaults to 0, so Retail becomes `100 - 0 = 100%`.
 
-**Fix**: When viewing today and no actual POS data is available, pass `0` for both service and product revenue so the donut renders as gray with 0% metrics. This signals "no sales recorded yet" visually.
+**Fix in `src/components/dashboard/sales/RevenueDonutChart.tsx`**:
 
-### Change
-
-**File: `src/components/dashboard/AggregateSalesCard.tsx` (lines 1133-1135)**
+Derive `retailPercent` independently instead of using `100 - servicePercent`:
 
 ```tsx
-// Before
-<RevenueDonutChart
-  serviceRevenue={isToday && todayActual?.hasActualData ? todayActual.actualServiceRevenue : displayMetrics.serviceRevenue} 
-  productRevenue={isToday && todayActual?.hasActualData ? todayActual.actualProductRevenue : displayMetrics.productRevenue}
-
-// After
-<RevenueDonutChart
-  serviceRevenue={isToday ? (todayActual?.hasActualData ? todayActual.actualServiceRevenue : 0) : displayMetrics.serviceRevenue} 
-  productRevenue={isToday ? (todayActual?.hasActualData ? todayActual.actualProductRevenue : 0) : displayMetrics.productRevenue}
+const retailPercent = total > 0 ? Math.round((productRevenue / total) * 100) : 0;
 ```
 
-When viewing today with no POS data: both values = 0, triggering the gray donut with 0% metrics. When viewing past dates: appointment-based revenue displays as before.
+Then replace all three instances of `{100 - servicePercent}` with `{retailPercent}`.
 
-### Files changed
-- `src/components/dashboard/AggregateSalesCard.tsx` (2 lines)
+### File changed
+- `src/components/dashboard/sales/RevenueDonutChart.tsx` — add `retailPercent` variable, replace 3 occurrences of `{100 - servicePercent}%`
 
