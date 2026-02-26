@@ -871,7 +871,8 @@ async function syncSalesTransactions(
     let syncedTransactions = 0;
     const dailySummaries = new Map<string, any>();
 
-    for (const branch of branches) {
+    // Process all branches in parallel for CSV export
+    const branchResults = await Promise.all(branches.map(async (branch: any) => {
       const branchId = branch.branchId || branch.id;
       const branchName = branch.name || 'Unknown';
       
@@ -879,10 +880,7 @@ async function syncSalesTransactions(
 
       let purchases: any[] = [];
       
-      // Phorest confirmed CSV export is the supported method for transaction data.
-      // Try CSV export first, then fall back to other endpoints.
-      
-      // 1. Try CSV export job (Phorest-confirmed primary method)
+      // Try CSV export first, then fall back to other endpoints
       try {
         console.log(`Trying CSV export job for branch ${branchId}...`);
         purchases = await fetchSalesViaCsvExport(branchId, businessId, username, password, dateFrom, dateTo);
@@ -894,7 +892,6 @@ async function syncSalesTransactions(
       } catch (e1: any) {
         console.log(`CSV export failed: ${e1.message}`);
         
-        // 2. Fallback: Try /purchase/search POST endpoint
         try {
           console.log(`Trying /purchase/search POST endpoint for branch ${branchId}...`);
           const purchaseData = await phorestPostRequest(
@@ -902,12 +899,7 @@ async function syncSalesTransactions(
             businessId,
             username,
             password,
-            { 
-              startDate: dateFrom, 
-              endDate: dateTo,
-              page: 0,
-              size: 500
-            }
+            { startDate: dateFrom, endDate: dateTo, page: 0, size: 500 }
           );
           purchases = purchaseData._embedded?.purchases || purchaseData.purchases || 
                      purchaseData.page?.content || purchaseData.content || [];
@@ -915,7 +907,6 @@ async function syncSalesTransactions(
         } catch (e2: any) {
           console.log(`/purchase/search endpoint failed: ${e2.message}`);
           
-          // 3. Fallback: Try /report/sales endpoint 
           try {
             console.log(`Trying /report/sales endpoint for branch ${branchId}...`);
             const reportData = await phorestRequest(
@@ -941,7 +932,6 @@ async function syncSalesTransactions(
           } catch (e3: any) {
             console.log(`/report/sales endpoint failed: ${e3.message}`);
             
-            // 4. Try /staffperformance for aggregated sales data
             try {
               console.log(`Trying /staffperformance endpoint for branch ${branchId}...`);
               const perfData = await phorestRequest(
@@ -951,8 +941,6 @@ async function syncSalesTransactions(
                 password
               );
               const staffPerf = perfData._embedded?.staffPerformances || perfData.staffPerformances || perfData.data || [];
-              // staffperformance gives aggregates per staff, not individual transactions
-              // But we can still track retail revenue per staff
               for (const perf of staffPerf) {
                 if (perf.productRevenue > 0 || perf.retailRevenue > 0) {
                   purchases.push({
@@ -977,15 +965,20 @@ async function syncSalesTransactions(
         }
       }
       
+      return { branchId, branchName, purchases };
+    }));
+
+    // Process results from all branches
+    for (const { branchId, branchName, purchases } of branchResults) {
       console.log(`Processing ${purchases.length} transactions for ${branchName}`);
       totalTransactions += purchases.length;
       
-      // Also save to detailed transaction items table
+      // Save to detailed transaction items table (batched)
       if (purchases.length > 0) {
         const itemsSaved = await saveTransactionItems(supabase, purchases, branchId, branchName, staffMap);
         console.log(`Saved ${itemsSaved} items to phorest_transaction_items for ${branchName}`);
         
-        // Propagate payment method from transaction items to appointments
+        // Batch payment method propagation (single query instead of per-row)
         try {
           const { data: paymentData, error: pmError } = await supabase
             .from('phorest_transaction_items')
@@ -994,16 +987,31 @@ async function syncSalesTransactions(
             .not('payment_method', 'is', null);
           
           if (!pmError && paymentData && paymentData.length > 0) {
-            let pmUpdated = 0;
+            // Group by unique staff+date+client to minimize updates
+            const uniquePM = new Map<string, string>();
             for (const ti of paymentData) {
-              const { error: upErr } = await supabase
-                .from('phorest_appointments')
-                .update({ payment_method: ti.payment_method })
-                .eq('phorest_staff_id', ti.phorest_staff_id)
-                .eq('appointment_date', ti.transaction_date)
-                .eq('phorest_client_id', ti.phorest_client_id)
-                .is('payment_method', null);
-              if (!upErr) pmUpdated++;
+              const key = `${ti.phorest_staff_id}|${ti.transaction_date}|${ti.phorest_client_id}`;
+              uniquePM.set(key, ti.payment_method);
+            }
+            
+            // Batch update: collect all client+date+staff combos, update in one go per combo
+            let pmUpdated = 0;
+            const pmEntries = Array.from(uniquePM.entries());
+            // Process in batches of 50 to avoid overwhelming DB
+            for (let i = 0; i < pmEntries.length; i += 50) {
+              const batch = pmEntries.slice(i, i + 50);
+              const updates = batch.map(([key, pm]) => {
+                const [staffId, date, clientId] = key.split('|');
+                return supabase
+                  .from('phorest_appointments')
+                  .update({ payment_method: pm })
+                  .eq('phorest_staff_id', staffId)
+                  .eq('appointment_date', date)
+                  .eq('phorest_client_id', clientId)
+                  .is('payment_method', null);
+              });
+              const results = await Promise.all(updates);
+              pmUpdated += results.filter(r => !r.error).length;
             }
             console.log(`Propagated payment method to ${pmUpdated} appointments for ${branchName}`);
           }
@@ -1011,8 +1019,7 @@ async function syncSalesTransactions(
           console.error(`Payment method propagation failed for ${branchName}:`, pmErr.message);
         }
 
-        // Reconcile appointment statuses: if a client has transactions on a date,
-        // their appointment should be marked completed
+        // Batch appointment status reconciliation (parallel updates instead of sequential)
         try {
           const uniqueClientDates = [...new Set(
             purchases
@@ -1020,23 +1027,28 @@ async function syncSalesTransactions(
               .map((p: any) => `${p.clientId}|${p.purchaseDate?.split('T')[0]}`)
           )];
 
-          let reconciled = 0;
-          for (const key of uniqueClientDates) {
-            const [clientId, txDate] = key.split('|');
-            if (!clientId || !txDate) continue;
-
-            const { data: updated } = await supabase
-              .from('phorest_appointments')
-              .update({ status: 'completed' })
-              .eq('phorest_client_id', clientId)
-              .eq('appointment_date', txDate)
-              .in('status', ['booked', 'confirmed', 'checked_in'])
-              .select('id');
-
-            reconciled += (updated?.length || 0);
-          }
-          if (reconciled > 0) {
-            console.log(`Reconciled ${reconciled} appointments to completed via transaction match for ${branchName}`);
+          if (uniqueClientDates.length > 0) {
+            let reconciled = 0;
+            // Process in parallel batches of 50
+            for (let i = 0; i < uniqueClientDates.length; i += 50) {
+              const batch = uniqueClientDates.slice(i, i + 50);
+              const updates = batch.map(key => {
+                const [clientId, txDate] = key.split('|');
+                if (!clientId || !txDate) return Promise.resolve({ data: null });
+                return supabase
+                  .from('phorest_appointments')
+                  .update({ status: 'completed' })
+                  .eq('phorest_client_id', clientId)
+                  .eq('appointment_date', txDate)
+                  .in('status', ['booked', 'confirmed', 'checked_in'])
+                  .select('id');
+              });
+              const results = await Promise.all(updates);
+              reconciled += results.reduce((sum, r) => sum + (r.data?.length || 0), 0);
+            }
+            if (reconciled > 0) {
+              console.log(`Reconciled ${reconciled} appointments to completed via transaction match for ${branchName}`);
+            }
           }
         } catch (reconErr: any) {
           console.error(`Transaction-based status reconciliation failed for ${branchName}:`, reconErr.message);
@@ -1052,7 +1064,6 @@ async function syncSalesTransactions(
         const transactionDate = purchase.purchaseDate?.split('T')[0] || purchase.createdAt?.split('T')[0] || purchase.date;
         const transactionTime = purchase.purchaseDate?.split('T')[1]?.substring(0, 8) || null;
 
-        // Process line items
         const items = purchase.items || purchase.lineItems || purchase.services || [];
         
         for (const item of items) {
@@ -1085,7 +1096,7 @@ async function syncSalesTransactions(
 
           allTransactionRecords.push(transactionRecord);
 
-          // Aggregate for daily summary - store for ALL staff, not just mapped ones
+          // Aggregate for daily summary
           if (staffId && transactionDate) {
             const summaryKey = `${staffId}:${branchId}:${transactionDate}`;
             if (!dailySummaries.has(summaryKey)) {
@@ -1110,7 +1121,6 @@ async function syncSalesTransactions(
             const amount = parseFloat(transactionRecord.total_amount) || 0;
             const discount = parseFloat(transactionRecord.discount_amount as any) || 0;
             
-            // Track unique client visits instead of counting every line item
             const clientId = purchase.clientId || purchase.client?.clientId || transactionRecord.client_name || 'unknown';
             summary.clientVisits.add(clientId);
             
@@ -1154,7 +1164,6 @@ async function syncSalesTransactions(
 
           allTransactionRecords.push(transactionRecord);
           
-          // Also add to daily summary
           if (staffId && transactionDate) {
             const summaryKey = `${staffId}:${branchId}:${transactionDate}`;
             if (!dailySummaries.has(summaryKey)) {
@@ -1182,7 +1191,7 @@ async function syncSalesTransactions(
         }
       }
 
-      // Deduplicate by phorest_transaction_id + item_name (last wins)
+      // Deduplicate by phorest_transaction_id + item_name
       const deduped = new Map<string, any>();
       for (const rec of allTransactionRecords) {
         deduped.set(`${rec.phorest_transaction_id}::${rec.item_name}`, rec);
@@ -1190,7 +1199,7 @@ async function syncSalesTransactions(
       const uniqueRecords = Array.from(deduped.values());
       console.log(`Deduped to ${uniqueRecords.length} unique transaction records`);
       
-      // Batch upsert transaction records in chunks of 200
+      // Batch upsert in chunks of 200
       const TX_BATCH_SIZE = 200;
       for (let i = 0; i < uniqueRecords.length; i += TX_BATCH_SIZE) {
         const batch = uniqueRecords.slice(i, i + TX_BATCH_SIZE);
@@ -1253,22 +1262,28 @@ async function syncSalesTransactions(
             tipMap.set(key, (tipMap.get(key) || 0) + Number(t.tip_amount));
           }
 
-          for (const [key, tipTotal] of tipMap) {
-            const [date, staffId, clientId] = key.split(':');
-            if (!date || !staffId) continue;
+          // Batch tip backfill: parallel updates in batches of 50
+          const tipEntries = Array.from(tipMap.entries());
+          for (let i = 0; i < tipEntries.length; i += 50) {
+            const batch = tipEntries.slice(i, i + 50);
+            const updates = batch.map(([key, tipTotal]) => {
+              const [date, staffId, clientId] = key.split(':');
+              if (!date || !staffId) return Promise.resolve({ error: null, count: 0 });
 
-            const updateQuery = supabase
-              .from('phorest_appointments')
-              .update({ tip_amount: tipTotal })
-              .eq('appointment_date', date)
-              .eq('phorest_staff_id', staffId);
-            
-            if (clientId && clientId !== 'null') {
-              updateQuery.eq('phorest_client_id', clientId);
-            }
-            
-            const { error: tipError, count } = await updateQuery;
-            if (!tipError) tipsBackfilled += (count || 0);
+              let query = supabase
+                .from('phorest_appointments')
+                .update({ tip_amount: tipTotal })
+                .eq('appointment_date', date)
+                .eq('phorest_staff_id', staffId);
+              
+              if (clientId && clientId !== 'null') {
+                query = query.eq('phorest_client_id', clientId);
+              }
+              
+              return query;
+            });
+            const results = await Promise.all(updates);
+            tipsBackfilled += results.filter(r => !r.error).length;
           }
           console.log(`Backfilled tips to ${tipsBackfilled} appointments`);
         }
@@ -1338,14 +1353,16 @@ async function fetchSalesViaCsvExport(
       
       console.log(`[CSV Export] Job created successfully: ${jobId} (type: ${jobType})`);
       
-      // Step 2: Poll for completion with enhanced logging
+      // Step 2: Poll for completion with exponential backoff (500ms → 1s → 2s → 4s cap)
       let status = "PENDING";
       let attempts = 0;
-      const maxAttempts = 60; // 2 minutes max (60 * 2s)
+      const maxAttempts = 60;
       let jobStatusResponse: any = null;
+      let pollDelay = 500; // Start at 500ms
       
       while (!["DONE", "COMPLETED", "READY"].includes(status.toUpperCase()) && attempts < maxAttempts) {
-        await new Promise(r => setTimeout(r, 2000)); // Wait 2 seconds
+        await new Promise(r => setTimeout(r, pollDelay));
+        pollDelay = Math.min(pollDelay * 2, 4000); // Double each time, cap at 4s
         
         try {
           jobStatusResponse = await phorestRequest(
@@ -1648,7 +1665,7 @@ async function logSync(
   });
 }
 
-// Helper function to save transaction items to the new detailed table
+// Helper function to save transaction items to the new detailed table (batched)
 async function saveTransactionItems(
   supabase: any,
   transactions: any[],
@@ -1656,7 +1673,7 @@ async function saveTransactionItems(
   branchName: string,
   staffMap: Map<string, string>
 ): Promise<number> {
-  let savedCount = 0;
+  const allRecords: any[] = [];
   
   for (const transaction of transactions) {
     const staffId = transaction.staffId;
@@ -1666,11 +1683,10 @@ async function saveTransactionItems(
     if (!transactionDate) continue;
     
     for (const item of transaction.items || []) {
-      // Use the parsed net total directly instead of re-deriving
       const totalAmount = item.totalPrice !== undefined ? item.totalPrice : 
         ((item.price || 0) * (item.quantity || 1) - (item.discount || 0));
       
-      const itemRecord = {
+      allRecords.push({
         transaction_id: transaction.purchaseId,
         phorest_staff_id: staffId,
         stylist_user_id: stylistUserId,
@@ -1689,14 +1705,20 @@ async function saveTransactionItems(
         tip_amount: item.tip || transaction.tipAmount || 0,
         total_amount: totalAmount,
         payment_method: transaction.paymentMethod || null,
-      };
-      
-      const { error } = await supabase
-        .from('phorest_transaction_items')
-        .upsert(itemRecord, { onConflict: 'transaction_id,item_name,item_type' });
-      
-      if (!error) savedCount++;
+      });
     }
+  }
+  
+  // Batch upsert in chunks of 200
+  let savedCount = 0;
+  for (let i = 0; i < allRecords.length; i += 200) {
+    const batch = allRecords.slice(i, i + 200);
+    const { error } = await supabase
+      .from('phorest_transaction_items')
+      .upsert(batch, { onConflict: 'transaction_id,item_name,item_type' });
+    
+    if (!error) savedCount += batch.length;
+    else console.error(`Transaction items batch upsert error: ${error.message}`);
   }
   
   return savedCount;
