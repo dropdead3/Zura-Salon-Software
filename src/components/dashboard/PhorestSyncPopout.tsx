@@ -215,9 +215,9 @@ export function PhorestSyncPopout({ asMenuItem = false }: { asMenuItem?: boolean
         </TooltipContent>
       </Tooltip>
       
-      <PopoverContent align="end" className="w-80 p-0 bg-card/80 backdrop-blur-xl border-border/30 rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] overflow-hidden">
+      <PopoverContent align="end" className="w-80 p-0 bg-card/60 backdrop-blur-xl backdrop-saturate-150 border-border/20 rounded-xl shadow-[0_12px_40px_-8px_rgba(0,0,0,0.3)] overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-border/20">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-border/15">
           <h4 className="font-display text-xs uppercase tracking-wider text-foreground">
             {syncLabel}
           </h4>
@@ -233,7 +233,7 @@ export function PhorestSyncPopout({ asMenuItem = false }: { asMenuItem?: boolean
         {/* Sync Status List */}
         <div className="px-5 py-4 space-y-2">
           {/* Appointments */}
-          <div className="flex items-center justify-between bg-card-inner/50 rounded-lg px-3 py-2.5">
+          <div className="flex items-center justify-between bg-card-inner/30 rounded-lg px-3 py-2.5">
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-muted-foreground" />
               <span className="text-sm">Appointments</span>
@@ -250,7 +250,7 @@ export function PhorestSyncPopout({ asMenuItem = false }: { asMenuItem?: boolean
           </div>
           
           {/* Sales */}
-          <div className="flex items-center justify-between bg-card-inner/50 rounded-lg px-3 py-2.5">
+          <div className="flex items-center justify-between bg-card-inner/30 rounded-lg px-3 py-2.5">
             <div className="flex items-center gap-2">
               <DollarSign className="w-4 h-4 text-muted-foreground" />
               <span className="text-sm">Sales</span>
