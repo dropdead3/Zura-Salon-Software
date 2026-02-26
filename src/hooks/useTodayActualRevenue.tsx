@@ -154,6 +154,23 @@ export function useTodayActualRevenue(enabled: boolean) {
   const locationActualRevenueQuery = useQuery({
     queryKey: ['today-actual-revenue-by-location', today],
     queryFn: async () => {
+      // Fetch location mapping: phorest_branch_id → app location id
+      const { data: locations } = await supabase
+        .from('locations')
+        .select('id, phorest_branch_id');
+      const branchToAppId: Record<string, string> = {};
+      if (locations) {
+        for (const loc of locations) {
+          if (loc.phorest_branch_id) {
+            branchToAppId[loc.phorest_branch_id] = loc.id;
+          }
+        }
+      }
+      const resolveLocId = (rawId: string | null) => {
+        const key = rawId || 'unknown';
+        return branchToAppId[key] || key;
+      };
+
       const { data, error } = await supabase
         .from('phorest_daily_sales_summary')
         .select('location_id, total_revenue, service_revenue, product_revenue, total_transactions')
@@ -175,7 +192,7 @@ export function useTodayActualRevenue(enabled: boolean) {
         const clientsByLoc: Record<string, Set<string>> = {};
 
         for (const row of txnData) {
-          const locId = row.location_id || 'unknown';
+          const locId = resolveLocId(row.location_id);
           if (!byLocation[locId]) {
             byLocation[locId] = { actualRevenue: 0, actualServiceRevenue: 0, actualProductRevenue: 0, actualTransactions: 0 };
             clientsByLoc[locId] = new Set();
@@ -199,7 +216,7 @@ export function useTodayActualRevenue(enabled: boolean) {
 
       const byLocation: Record<string, { actualRevenue: number; actualServiceRevenue: number; actualProductRevenue: number; actualTransactions: number }> = {};
       for (const row of data) {
-        const locId = row.location_id || 'unknown';
+        const locId = resolveLocId(row.location_id);
         if (!byLocation[locId]) {
           byLocation[locId] = { actualRevenue: 0, actualServiceRevenue: 0, actualProductRevenue: 0, actualTransactions: 0 };
         }
@@ -218,6 +235,19 @@ export function useTodayActualRevenue(enabled: boolean) {
   const locationLastApptQuery = useQuery({
     queryKey: ['today-last-appointment-by-location', today],
     queryFn: async () => {
+      // Fetch location mapping for consistency
+      const { data: locations } = await supabase
+        .from('locations')
+        .select('id, phorest_branch_id');
+      const branchToAppId: Record<string, string> = {};
+      if (locations) {
+        for (const loc of locations) {
+          if (loc.phorest_branch_id) {
+            branchToAppId[loc.phorest_branch_id] = loc.id;
+          }
+        }
+      }
+
       const { data, error } = await supabase
         .from('phorest_appointments')
         .select('location_id, end_time')
@@ -228,10 +258,11 @@ export function useTodayActualRevenue(enabled: boolean) {
       if (error) throw error;
       if (!data || data.length === 0) return {};
 
-      // Get max end_time per location
+      // Get max end_time per location (resolve branch IDs if needed)
       const byLocation: Record<string, string> = {};
       for (const row of data) {
-        const locId = row.location_id || 'unknown';
+        const rawId = row.location_id || 'unknown';
+        const locId = branchToAppId[rawId] || rawId;
         if (!byLocation[locId]) {
           byLocation[locId] = row.end_time;
         }
