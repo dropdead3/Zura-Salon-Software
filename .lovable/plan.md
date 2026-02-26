@@ -1,39 +1,43 @@
 
 
-## Fix: Revenue display falls back to transaction items when daily summary is empty
+## Root Cause: Tax Amount Not Included in Revenue Totals
 
-**Problem**: `useTodayActualRevenue` only queries `phorest_daily_sales_summary`. When the daily aggregation hasn't synced yet, it shows $0 — even though raw transaction data exists in `phorest_transaction_items` (which is why Top Performers shows $162).
+**The problem**: Phorest reports **$175.45** (tax-inclusive). Zura reports **$162.00** (tax-exclusive). The `phorest_transaction_items` table stores `total_amount` (pre-tax) and `tax_amount` separately. Every revenue calculation in the codebase sums only `total_amount`, missing the `tax_amount` column entirely.
 
-**Solution**: Add a fallback query to `phorest_transaction_items` inside `useTodayActualRevenue.ts`. When the daily summary returns no rows for today, sum revenue directly from transaction items instead.
+Breakdown from today's 3 transactions:
+- `total_amount`: $72 + $74 + $16 = **$162.00**
+- `tax_amount`: $5.98 + $6.14 + $1.33 = **$13.45**
+- Phorest total (tax-inclusive): **$175.45** ✓
 
-### File: `src/hooks/useTodayActualRevenue.ts`
+## Plan
 
-**Change the `actualRevenueQuery` (lines 64-92)**:
+### 1. Add tax to the fallback query in `useTodayActualRevenue.ts`
 
-1. Keep the existing `phorest_daily_sales_summary` query as the primary source.
-2. After checking `if (!data || data.length === 0)`, instead of returning zeros, query `phorest_transaction_items` for today's date:
-   - Sum `total_amount` grouped by `item_type` (service vs product)
-   - Count distinct `phorest_client_id` for transaction count
-   - Return these as the fallback values with `hasData: true` if revenue > 0
-3. Mark the result with a `source: 'summary' | 'transactions'` flag (optional, for debugging clarity).
+Both fallback queries (lines ~87-121 and ~189-230) currently select only `total_amount`. Change them to also select `tax_amount` and add it to each line item's amount:
 
-**Same pattern for `locationActualRevenueQuery` (lines 134-160)**:
-- Apply the same fallback: if `phorest_daily_sales_summary` returns no rows, query `phorest_transaction_items` grouped by `location_id`.
-
-**Also subscribe to realtime on `phorest_transaction_items`** (lines 42-56):
-- Add a second `.on()` listener for `phorest_transaction_items` table changes so the cha-ching notification fires even when the daily summary hasn't synced.
-
-### Technical detail
-
-```text
-Primary path:   phorest_daily_sales_summary (today)
-                  ↓ empty?
-Fallback path:  phorest_transaction_items (today)
-                  → SUM total_amount WHERE item_type = 'service'  → serviceRevenue
-                  → SUM total_amount WHERE item_type = 'product'  → productRevenue
-                  → COUNT DISTINCT phorest_client_id              → transactions
+```typescript
+const amount = (Number(row.total_amount) || 0) + (Number(row.tax_amount) || 0);
 ```
 
+This affects:
+- The main `actualRevenueQuery` fallback (product revenue for today)
+- The `locationActualRevenueQuery` fallback (by-location breakdown)
+
+### 2. Add tax to `useSalesData.ts` — the primary analytics hook
+
+This hook powers Sales Overview, Top Performers, and all analytics cards. Two key query sites:
+
+- **`useSalesOverview`** (line ~262): The transaction items query selects `total_amount, item_type, tip_amount` — add `tax_amount` to the select and include it in the product revenue sum.
+- **`useSalesByStylist`** (line ~402): Same pattern — add `tax_amount` and include it when summing `total_amount` per staff member.
+
+### 3. Verify `phorest_daily_sales_summary` values
+
+Check whether the `total_revenue`, `service_revenue`, and `product_revenue` columns in `phorest_daily_sales_summary` already include tax (set by the sync edge function). If they do, only the transaction-item fallback paths need fixing. If they don't, the sync function also needs updating.
+
 ### Files changed
-- `src/hooks/useTodayActualRevenue.ts` — add transaction items fallback + realtime listener
+- `src/hooks/useTodayActualRevenue.ts` — add `tax_amount` to both fallback queries
+- `src/hooks/useSalesData.ts` — add `tax_amount` to `useSalesOverview` and `useSalesByStylist` transaction item sums
+
+### Technical note
+This aligns retail revenue with Phorest's default "Exclude Tax: No" view (tax-inclusive). Service revenue in `phorest_appointments.total_price` is already tax-inclusive per POS convention, so only transaction item queries need the fix.
 
