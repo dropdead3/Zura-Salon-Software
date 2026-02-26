@@ -1,102 +1,125 @@
 
 
-## Redesign Goal Wizard: Template-First "Done for You" Experience
+## Goals System Enhancement Analysis
 
-You're absolutely right to push on this. The current dialog is a configuration form -- it asks the owner to navigate dropdowns, understand thresholds, and fill 7 fields. That's not fun or intuitive. The best approach is to flip the model: show the owner a visual menu of pre-built goals, let them tap to select, and auto-fill everything. Two taps and they're done.
+Your prompt is well-scoped and shows strong product instinct -- you're asking the right question at the right time. The wizard is now functional, but the broader goals *system* has several gaps and opportunities. Here's the full analysis.
 
-### Current Problem
+---
 
-The dialog has sequential dropdowns (Category → Template → fields), exposes "Warning Threshold" and "Critical Threshold" upfront, and treats every goal as a one-at-a-time affair. A salon owner opening this for the first time has to make 7+ decisions to add a single goal. That's friction, not fun.
+### Gap 1: Goal Cards Show No Live Data
 
-### Solution: Two-Step Visual Wizard
+Every `GoalCard` receives `currentValue={null}`, so every card displays "—" with a "No Data" badge and an empty progress bar. The templates and wizard are polished, but the payoff -- seeing actual progress -- is completely absent.
 
-**Step 1 -- Pick Your Goals** (the fun part)
+**Fix**: Create a `useGoalCurrentValue(metric_key)` hook that maps each `metric_key` to its real data source:
+- `monthly_revenue` → `useGoalPeriodRevenue('monthly')`
+- `avg_ticket` → appointment revenue / appointment count
+- `client_retention` → retention query from `phorest_appointments`
+- `utilization_rate` → booked slots / available slots
+- For metrics without live data yet, return `null` gracefully
 
-A visual grid of selectable template cards grouped by category. Each card shows the goal name, a short description, and the suggested target as a preview. Tap to select, tap again to deselect. Already-existing goals show as disabled with a checkmark. A counter at the bottom shows "X selected" with a "Next" button.
-
-**Step 2 -- Customize Targets** (the quick part)
-
-A compact list of selected goals with pre-filled industry benchmarks. Each row shows the goal name, description, and an editable target input. Warning/critical thresholds are auto-filled but hidden behind a collapsible "Advanced" toggle -- most owners will never touch them.
-
-The owner can add 3-5 goals in under 30 seconds by tapping cards and hitting Save.
-
-**Edit mode**: When editing an existing goal, skip Step 1 and go straight to the single-goal edit form (current Step 2 layout with one item).
-
-### Visual Layout
-
-```text
-Step 1: Choose Your Goals
-─────────────────────────────────────────────────
-
-REVENUE
-┌───────────────────┐ ┌───────────────────┐ ┌───────────────────┐
-│ ✓ Monthly Revenue │ │   Average Ticket  │ │   Retail Revenue  │
-│   $50,000/mo      │ │   $160/appt       │ │   $8,000/mo       │
-│   Total monthly   │ │   Revenue per     │ │   Product sales   │
-│   revenue target  │ │   appointment     │ │   target          │
-└───────────────────┘ └───────────────────┘ └───────────────────┘
-
-PROFITABILITY
-┌───────────────────┐ ┌───────────────────┐ ┌───────────────────┐
-│   Labor Cost %    │ │   Net Margin      │ │   Product Cost %  │
-│   ≤ 45%           │ │   ≥ 20%           │ │   ≤ 10%           │
-└───────────────────┘ └───────────────────┘ └───────────────────┘
-
-CLIENT HEALTH  ·  EFFICIENCY  ·  TEAM  (continues below)
-
-                    3 selected          [ Next → ]
-
-─────────────────────────────────────────────────
-
-Step 2: Set Your Targets
-─────────────────────────────────────────────────
-┌─────────────────────────────────────────────────┐
-│ Monthly Revenue                    [$50,000   ] │
-│ Total monthly revenue target              $/mo  │
-├─────────────────────────────────────────────────┤
-│ Average Ticket                     [$160      ] │
-│ Revenue per appointment                   $/mo  │
-├─────────────────────────────────────────────────┤
-│ Client Retention                   [80%       ] │
-│ Clients returning within window           %/mo  │
-└─────────────────────────────────────────────────┘
-
-  [▸ Advanced: Warning & Critical Thresholds]
-
-              [← Back]        [Save 3 Goals]
-```
-
-### Technical Details
-
-**File: `src/components/dashboard/goals/GoalSetupDialog.tsx`** -- Full rewrite
-
-- Internal `step` state: `'select' | 'customize'`
-- When `editGoal` is provided, skip to step `'customize'` with just that goal
-- Step 1 renders `GOAL_TEMPLATES` grouped by category using `Object.entries(groupBy(GOAL_TEMPLATES, 'category'))`
-- Each template card is a `button` with `border-2 rounded-xl` that toggles between `border-transparent` and `border-primary bg-primary/5`
-- Already-existing goals (in `existingMetricKeys`) render with a check badge and `pointer-events-none opacity-60`
-- Category headers use `tokens.heading.subsection`
-- Selected count + "Next" button in sticky footer
-- Step 2 renders selected templates as a list with inline editable `Input` for target value
-- Collapsible "Advanced" section per goal for warning/critical thresholds (using Collapsible component)
-- "Save All" button triggers batch mutation
-- Dialog uses `sm:max-w-2xl` to accommodate the grid (wider than current `sm:max-w-md`)
-- Scroll area inside dialog content for many templates
-
-**File: `src/hooks/useOrganizationGoals.ts`** -- Add batch upsert mutation
-
-- New `useBatchUpsertOrganizationGoals()` hook
-- Accepts array of goal objects, upserts all in a single Supabase call
-- Uses the same `onConflict` key as the single upsert
-- Single success toast: "X goals saved"
-- Keeps existing single `useUpsertOrganizationGoal` for the edit flow
-
-### Files Modified
+Then wire it into `GoalCategorySection` so each `GoalCard` gets its actual `currentValue`.
 
 | File | Change |
 |------|--------|
-| `GoalSetupDialog.tsx` | Full rewrite: two-step wizard with visual template grid + target customization |
-| `useOrganizationGoals.ts` | Add `useBatchUpsertOrganizationGoals` batch mutation |
+| New: `src/hooks/useGoalCurrentValue.ts` | Hook that switches on `metric_key` and returns the live value |
+| `GoalCategorySection.tsx` | Pass `currentValue` from the hook into each `GoalCard` |
 
-No database changes. No new files.
+---
+
+### Gap 2: No "Quick Setup" / Recommended Goals
+
+The wizard shows all 12 templates equally. A first-time salon owner still has to decide which ones matter. No other salon software pre-selects for them.
+
+**Fix**: Add a "Recommended for You" banner at the top of Step 1 that pre-selects the 5 most impactful goals for a typical salon owner (Monthly Revenue, Labor Cost %, Client Retention, Utilization Rate, Revenue per Stylist). One tap to accept all five.
+
+| File | Change |
+|------|--------|
+| `GoalSetupDialog.tsx` | Add a "Quick Setup" button at the top of Step 1 that toggles all 5 recommended keys |
+
+---
+
+### Gap 3: No Goal Progress Over Time (Trend Line)
+
+Currently the card shows a single progress bar -- a point-in-time snapshot. Owners can't see if they're trending toward or away from the target across the month.
+
+**Fix**: Add a compact sparkline inside each `GoalCard` that shows daily values for the current period. This is the kind of micro-visualization that makes the system feel alive.
+
+| File | Change |
+|------|--------|
+| New: `src/hooks/useGoalTrendData.ts` | Hook that fetches daily aggregates for a given metric + period |
+| `GoalCard.tsx` | Add a small Recharts `<Line>` sparkline below the progress bar with a target reference line |
+
+---
+
+### Gap 4: No Pace / Projection Indicator
+
+The `GoalCard` shows current vs target but doesn't answer: "Am I on pace to hit this by end of month?" The `useGoalTrackerData` hook already has pace logic (`ahead`, `on-track`, `behind`) but it's not connected to the goals system.
+
+**Fix**: Add a pace indicator to each goal card -- a single line like "Projected: $47.2k" or "On pace to miss by $2.8k" beneath the progress bar. Reuse the `computePaceStatus` function from `useGoalTrackerData.ts`.
+
+| File | Change |
+|------|--------|
+| `GoalCard.tsx` | Add projected value + pace badge using elapsed/remaining day ratio |
+| `useGoalCurrentValue.ts` | Return both `currentValue` and `projectedValue` |
+
+---
+
+### Gap 5: No Location-Level Goal Breakdown
+
+The `organization_goals` table has a `location_id` column, but the UI is entirely org-level. Multi-location owners can't set per-location targets or see which location is underperforming.
+
+**Fix** (Phase 2 -- design now, build later): Add a location dropdown or breakdown view within each goal card for multi-location orgs. When a goal has `location_id = null`, it's org-wide. When set, it's location-specific.
+
+---
+
+### Gap 6: No Goal Milestones or Celebrations
+
+When an owner hits a goal, nothing happens. No confetti, no toast, no recognition. This is a missed opportunity for emotional engagement -- the "fun" factor you're asking about.
+
+**Fix**: When `currentValue >= target_value` (or `<=` for inversed metrics), trigger a celebration micro-interaction:
+- First-time achievement: `canvas-confetti` burst (already installed) + a congratulatory toast
+- Persistent: The goal card gets a subtle gold/emerald accent border and a "Goal Hit" badge
+- Store achievement timestamps in a new `goal_achievements` table for historical recognition
+
+| File | Change |
+|------|--------|
+| `GoalCard.tsx` | Add achievement state detection + confetti trigger + visual badge |
+| New: DB migration | `goal_achievements` table (goal_id, achieved_at, value_at_achievement) |
+
+---
+
+### Gap 7: No Goal History / Streak Tracking
+
+When a month ends, goals reset but there's no record of whether the owner hit them. Over time, this data becomes incredibly valuable -- "You've hit your retention target 4 months in a row."
+
+**Fix**: Add a `goal_period_snapshots` table that records end-of-period values. Display streak badges on goal cards ("3-month streak" with a flame icon).
+
+---
+
+### Enhancement: AI-Powered Target Suggestions
+
+Instead of static industry benchmarks, use the owner's actual historical data to suggest targets. "Based on your last 90 days, your average ticket is $142. We recommend targeting $160 -- a 12.7% improvement."
+
+This requires the metrics pipeline to be connected first (Gap 1), then the wizard's `suggested_target` values can be dynamically computed instead of hardcoded.
+
+---
+
+### Recommended Implementation Order
+
+| Priority | Enhancement | Effort | Impact |
+|----------|-------------|--------|--------|
+| 1 | Live data in goal cards (Gap 1) | Medium | Critical -- without this, goals are decorative |
+| 2 | Quick Setup / Recommended Goals (Gap 2) | Small | High -- reduces time-to-value |
+| 3 | Pace / Projection indicator (Gap 4) | Small | High -- answers "will I make it?" |
+| 4 | Goal celebrations (Gap 6) | Small | Medium -- emotional engagement |
+| 5 | Trend sparklines (Gap 3) | Medium | Medium -- visual richness |
+| 6 | Streak tracking (Gap 7) | Medium | Medium -- long-term stickiness |
+| 7 | Location breakdown (Gap 5) | Large | High for multi-location only |
+| 8 | AI target suggestions | Large | High -- true differentiator |
+
+### Recommendation
+
+Start with **Priority 1 (live data)** -- it unlocks the value of everything else. Without it, the entire goals system is a static configuration screen. Once live data flows, Priorities 2-4 can all ship in a single pass and will transform the experience from "goal management" to "real-time performance intelligence."
+
+Which priorities would you like to tackle first?
 
