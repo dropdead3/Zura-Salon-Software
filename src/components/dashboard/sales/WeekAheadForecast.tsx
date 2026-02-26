@@ -61,7 +61,9 @@ function AboveBarLabel({ x, y, width, value, ...rest }: any) {
         className={cn("text-xs tabular-nums", isPeak ? "fill-chart-2" : "fill-foreground")}
         style={{ fontWeight: isPeak ? 700 : 500 }}
       >
-        {formatCurrencyPrecise(value, { compact: true, decimals: 2 })}
+        {value >= 10000
+          ? formatCurrencyPrecise(value, { compact: true, decimals: 2 })
+          : formatCurrencyPrecise(value, { decimals: 0 })}
       </text>
     </g>
   );
