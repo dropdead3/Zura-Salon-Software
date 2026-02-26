@@ -54,7 +54,7 @@ export const CanvasPanel = memo(function CanvasPanel({
     return (localStorage.getItem('editor-viewport') as ViewportMode) || 'desktop';
   });
   const [zoomLevel, setZoomLevel] = useState<ZoomLevel>('fit');
-  const [canvasMode, setCanvasMode] = useState<CanvasMode>('edit');
+  const [canvasMode, setCanvasMode] = useState<CanvasMode>(() => (localStorage.getItem('editor-canvas-mode') as CanvasMode) || 'edit');
   const [refreshKey, setRefreshKey] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -63,6 +63,7 @@ export const CanvasPanel = memo(function CanvasPanel({
 
   const handleCanvasModeChange = useCallback((mode: CanvasMode) => {
     setCanvasMode(mode);
+    localStorage.setItem('editor-canvas-mode', mode);
     // Refresh iframe when switching modes so it re-renders with the new param
     setRefreshKey(prev => prev + 1);
     setIsLoading(true);
