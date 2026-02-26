@@ -9,7 +9,7 @@ import { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { cn } from '@/lib/utils';
 import { RefreshCw } from 'lucide-react';
 import { editorTokens } from '../editor-tokens';
-import { CanvasHeader, type ViewportMode, type ZoomLevel } from './CanvasHeader';
+import { CanvasHeader, type ViewportMode, type ZoomLevel, type CanvasMode } from './CanvasHeader';
 
 interface CanvasPanelProps {
   activeSectionId?: string;
@@ -54,11 +54,20 @@ export const CanvasPanel = memo(function CanvasPanel({
     return (localStorage.getItem('editor-viewport') as ViewportMode) || 'desktop';
   });
   const [zoomLevel, setZoomLevel] = useState<ZoomLevel>('fit');
+  const [canvasMode, setCanvasMode] = useState<CanvasMode>('edit');
   const [refreshKey, setRefreshKey] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const iframeReadyRef = useRef(false);
   const pendingSectionRef = useRef<string | undefined>(undefined);
+
+  const handleCanvasModeChange = useCallback((mode: CanvasMode) => {
+    setCanvasMode(mode);
+    // Refresh iframe when switching modes so it re-renders with the new param
+    setRefreshKey(prev => prev + 1);
+    setIsLoading(true);
+    iframeReadyRef.current = false;
+  }, []);
 
   const handleViewportChange = useCallback((mode: ViewportMode) => {
     setViewportMode(mode);
@@ -122,8 +131,10 @@ export const CanvasPanel = memo(function CanvasPanel({
         canRedo={canRedo}
         viewportMode={viewportMode}
         zoomLevel={zoomLevel}
+        canvasMode={canvasMode}
         onViewportChange={handleViewportChange}
         onZoomChange={setZoomLevel}
+        onCanvasModeChange={handleCanvasModeChange}
         onUndo={onUndo}
         onRedo={onRedo}
         onSave={onSave}
@@ -147,7 +158,11 @@ export const CanvasPanel = memo(function CanvasPanel({
           <iframe
             ref={iframeRef}
             key={refreshKey}
-            src={previewUrl || '/?preview=true'}
+            src={(() => {
+              const base = previewUrl || '/?preview=true';
+              const separator = base.includes('?') ? '&' : '?';
+              return `${base}${separator}mode=${canvasMode}`;
+            })()}
             className="w-full h-full border-0"
             title="Website Preview"
             onLoad={handleIframeLoad}

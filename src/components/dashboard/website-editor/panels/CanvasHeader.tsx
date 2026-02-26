@@ -21,6 +21,8 @@ import {
   ExternalLink,
   Save,
   Loader2,
+  Pencil,
+  Eye,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { editorTokens } from '../editor-tokens';
@@ -29,6 +31,7 @@ import { PublishChangesButton } from '../PublishChangelog';
 
 export type ViewportMode = 'desktop' | 'tablet' | 'mobile';
 export type ZoomLevel = 'fit' | '100' | '75';
+export type CanvasMode = 'edit' | 'view';
 
 interface CanvasHeaderProps {
   siteName?: string;
@@ -38,8 +41,10 @@ interface CanvasHeaderProps {
   canRedo: boolean;
   viewportMode: ViewportMode;
   zoomLevel: ZoomLevel;
+  canvasMode: CanvasMode;
   onViewportChange: (mode: ViewportMode) => void;
   onZoomChange: (zoom: ZoomLevel) => void;
+  onCanvasModeChange: (mode: CanvasMode) => void;
   onUndo: () => void;
   onRedo: () => void;
   onSave: () => void;
@@ -54,8 +59,10 @@ export function CanvasHeader({
   canRedo,
   viewportMode,
   zoomLevel,
+  canvasMode,
   onViewportChange,
   onZoomChange,
+  onCanvasModeChange,
   onUndo,
   onRedo,
   onSave,
@@ -137,8 +144,46 @@ export function CanvasHeader({
         </div>
       </div>
 
-      {/* Center: Viewport + Zoom */}
+      {/* Center: Canvas Mode + Viewport + Zoom */}
       <div className="flex items-center gap-2">
+        {/* Edit / Preview mode toggle */}
+        <div className={editorTokens.segmented.container}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => onCanvasModeChange('edit')}
+                className={cn(
+                  editorTokens.segmented.button,
+                  'px-2.5 gap-1.5 flex-initial',
+                  canvasMode === 'edit' && editorTokens.segmented.active
+                )}
+              >
+                <Pencil className="h-3.5 w-3.5" />
+                <span className="text-[11px] hidden sm:inline">Edit</span>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Edit mode — section cards &amp; controls</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => onCanvasModeChange('view')}
+                className={cn(
+                  editorTokens.segmented.button,
+                  'px-2.5 gap-1.5 flex-initial',
+                  canvasMode === 'view' && editorTokens.segmented.active
+                )}
+              >
+                <Eye className="h-3.5 w-3.5" />
+                <span className="text-[11px] hidden sm:inline">Preview</span>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Preview mode — exact public site</TooltipContent>
+          </Tooltip>
+        </div>
+
+        <div className="border-r border-border/40 h-5 flex-shrink-0" />
+
         <div className={editorTokens.segmented.container}>
           {viewports.map(({ mode, icon: Icon, label }) => (
             <Tooltip key={mode}>

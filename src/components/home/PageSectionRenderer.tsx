@@ -47,6 +47,10 @@ const BUILTIN_COMPONENTS: Record<BuiltinSectionType, React.ReactNode> = {
 const isEditorPreview = typeof window !== 'undefined'
   && new URLSearchParams(window.location.search).has('preview');
 
+// When mode=view, render the public site exactly (no bento cards)
+const isViewMode = typeof window !== 'undefined'
+  && new URLSearchParams(window.location.search).get('mode') === 'view';
+
 interface PageSectionRendererProps {
   sections: SectionConfig[];
 }
@@ -55,8 +59,8 @@ export function PageSectionRenderer({ sections }: PageSectionRendererProps) {
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
 
   const enabledSections = useMemo(() => {
-    if (isEditorPreview) {
-      // In editor, show all sections (enabled and disabled) so user can toggle
+    if (isEditorPreview && !isViewMode) {
+      // In editor edit mode, show all sections (enabled and disabled) so user can toggle
       return [...sections].sort((a, b) => a.order - b.order);
     }
     return [...sections]
@@ -93,7 +97,26 @@ export function PageSectionRenderer({ sections }: PageSectionRendererProps) {
     return () => window.removeEventListener('message', handler);
   }, []);
 
-  // Editor preview: floating bento cards
+  // View mode inside editor: render exact public layout (no bento cards)
+  // Also used for the public site (non-preview)
+  if (!isEditorPreview || isViewMode) {
+    return (
+      <>
+        {enabledSections.map((section) => (
+          <SectionStyleWrapper key={section.id} styleOverrides={section.style_overrides}>
+            <div id={`section-${section.id}`}>
+              {isBuiltinSection(section.type)
+                ? BUILTIN_COMPONENTS[section.type]
+                : <CustomSectionRenderer sectionId={section.id} sectionType={section.type as CustomSectionType} />
+              }
+            </div>
+          </SectionStyleWrapper>
+        ))}
+      </>
+    );
+  }
+
+  // Edit mode inside editor: floating bento cards
   if (isEditorPreview) {
     return (
       <div className="zura-editor-preview py-6 space-y-5">
@@ -128,19 +151,6 @@ export function PageSectionRenderer({ sections }: PageSectionRendererProps) {
     );
   }
 
-  // Public site: render flat (unchanged)
-  return (
-    <>
-      {enabledSections.map((section) => (
-        <SectionStyleWrapper key={section.id} styleOverrides={section.style_overrides}>
-          <div id={`section-${section.id}`}>
-            {isBuiltinSection(section.type)
-              ? BUILTIN_COMPONENTS[section.type]
-              : <CustomSectionRenderer sectionId={section.id} sectionType={section.type as CustomSectionType} />
-            }
-          </div>
-        </SectionStyleWrapper>
-      ))}
-    </>
-  );
+  // Fallback (should not reach here)
+  return null;
 }
