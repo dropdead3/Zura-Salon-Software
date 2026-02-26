@@ -33,8 +33,6 @@ export function ChaChingToast({ amount, toastId }: ChaChingToastProps) {
           </p>
         </div>
 
-        {/* Emoji accent */}
-        <span className="text-2xl flex-shrink-0" aria-hidden>💰</span>
       </div>
     </SilverShineWrapper>
   );
