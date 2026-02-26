@@ -1,44 +1,63 @@
-@keyframes silver-shine-sweep {
-  0%   { transform: translateX(-100%) skewX(-15deg); }
-  30%  { transform: translateX(200%) skewX(-15deg); }
-  100% { transform: translateX(200%) skewX(-15deg); }
+@keyframes silver-shine-rotate {
+  0% { transform: translate(-50%, -50%) rotate(0deg); }
+  100% { transform: translate(-50%, -50%) rotate(360deg); }
 }
 
 .silver-shine-border {
   position: relative;
+  background:
+    linear-gradient(
+      135deg,
+      hsl(0 0% 45% / 0.5),
+      hsl(0 0% 65% / 0.6),
+      hsl(0 0% 50% / 0.5)
+    );
+  padding: 1px;
   overflow: hidden;
 }
 
-.silver-shine-border::after {
+.silver-shine-border::before {
   content: '';
   position: absolute;
-  inset: 0;
-  width: 60%;
-  background: linear-gradient(
-    105deg,
-    transparent 20%,
-    hsl(0 0% 100% / 0.08) 40%,
-    hsl(0 0% 100% / 0.15) 50%,
-    hsl(0 0% 100% / 0.08) 60%,
-    transparent 80%
+  top: 50%;
+  left: 50%;
+  width: max(300%, 300vh);
+  height: 0;
+  padding-bottom: max(300%, 300vh);
+  transform: translate(-50%, -50%) rotate(0deg);
+  border-radius: 0;
+  background: conic-gradient(
+    transparent 0deg,
+    transparent 300deg,
+    hsl(0 0% 70% / 0.25) 325deg,
+    hsl(0 0% 85% / 0.55) 345deg,
+    hsl(0 0% 95% / 0.7) 352deg,
+    hsl(0 0% 85% / 0.55) 358deg,
+    transparent 360deg
   );
-  animation: silver-shine-sweep 5s ease-in-out infinite;
+  animation: silver-shine-rotate 12s ease-in-out infinite;
   pointer-events: none;
-  z-index: 1;
-}
-
-.silver-shine-border:hover::after {
-  animation-play-state: paused;
-  opacity: 0;
+  z-index: 0;
   transition: opacity 0.3s ease;
 }
 
-.silver-shine-border:active::after {
+.silver-shine-border:hover::before {
+  animation-play-state: paused;
   opacity: 0;
 }
 
+.silver-shine-border:active::before {
+  opacity: 0;
+}
+
+.silver-shine-inner {
+  position: relative;
+  z-index: 1;
+  border-radius: inherit;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .silver-shine-border::after {
+  .silver-shine-border::before {
     animation: none !important;
     opacity: 0 !important;
   }
