@@ -7,7 +7,6 @@
 
 import { type ReactNode } from 'react';
 import { MousePointerClick, ChevronRight, ChevronLeft } from 'lucide-react';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { editorTokens } from '../editor-tokens';
 import { PanelSlideIn } from '../EditorMotion';
 import { cn } from '@/lib/utils';
@@ -110,13 +109,16 @@ export function InspectorPanel({
 
       {/* Content */}
       {hasSelection ? (
-        <ScrollArea className="flex-1 pr-2 overflow-hidden">
-          <div className="w-full min-w-0 overflow-x-hidden">
+        <div
+          className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden"
+          style={{ scrollbarGutter: 'stable' }}
+        >
+          <div className="w-full min-w-0 max-w-full overflow-x-hidden" style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
             <PanelSlideIn motionKey={selectionKey} className={editorTokens.inspector.content}>
               {children}
             </PanelSlideIn>
           </div>
-        </ScrollArea>
+        </div>
       ) : (
         <div className={editorTokens.inspector.empty}>
           <MousePointerClick className={editorTokens.inspector.emptyIcon} />

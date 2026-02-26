@@ -19,7 +19,7 @@ export function EditorCard({ title, icon: Icon, description, headerActions, chil
     )}>
       {/* Sticky frosted-glass header */}
       <div className="sticky top-0 z-10 flex items-center justify-between gap-2 px-4 py-3 bg-card/90 backdrop-blur-md border-b border-border/30">
-        <div className="flex items-center gap-2.5 min-w-0">
+        <div className="flex items-center gap-2.5 min-w-0 flex-1 overflow-hidden">
           {Icon && (
             <div className="w-7 h-7 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
               <Icon className="w-3.5 h-3.5 text-primary" />
