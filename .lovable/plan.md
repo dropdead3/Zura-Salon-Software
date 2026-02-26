@@ -1,56 +1,47 @@
 
 
-## Fix Inspector Content Envelope -- Prevent Right-Edge Clipping
-
-### Problem
-The inspector panel's content wrapper uses `p-3` (12px) padding, which is insufficient to keep cards from touching/clipping the right edge. Combined with missing `overflow-x-hidden` at the content level, child cards (especially Locations) bleed past the panel boundary.
+## Fix: Inspector Cards Clipping Right Edge
 
 ### Root Cause
-The single source of truth for inspector inner padding is `editorTokens.inspector.content` in `editor-tokens.ts`, currently set to `'p-3 space-y-4'`. This 12px padding is too tight for the card widths rendered inside. The `InspectorPanel` uses `ScrollArea` for vertical scroll but has no horizontal overflow constraint on the content envelope.
+
+The `ScrollArea` component wraps content in a viewport div that has `h-full w-full` but no overflow-x constraint. Inside it, the `PanelSlideIn` (a `motion.div`) has no explicit width — it expands to fit its children. Even though `max-w-full` and `overflow-hidden` are set via the token, `max-w-full` resolves to the parent's width, which in a scroll viewport is unconstrained horizontally.
+
+The fix requires constraining width at multiple levels so the content envelope is airtight.
 
 ### Changes
 
-#### 1. `src/components/dashboard/website-editor/editor-tokens.ts` (line 63)
+#### 1. `src/components/dashboard/website-editor/panels/InspectorPanel.tsx` (line 113)
 
-Update the inspector content token from `p-3` to `px-5 pt-4 pb-6` (20px horizontal, 16px top, 24px bottom), and add `max-w-full box-border overflow-hidden`.
+Add `overflow-x-hidden` to the `ScrollArea` so its viewport never allows horizontal expansion.
 
-**Before:** `content: 'p-3 space-y-4'`
-**After:** `content: 'px-5 pt-4 pb-6 space-y-4 max-w-full overflow-hidden'`
+**Before:** `<ScrollArea className="flex-1">`
+**After:** `<ScrollArea className="flex-1 [&>div]:!overflow-x-hidden">`
 
-This is the single source of truth -- every inspector module (Locations, Testimonials, Gallery, Hero, Services, Stylists, Footer CTA, Announcement Bar) will inherit the corrected padding automatically since they all render as children of `PanelSlideIn` with this token.
+This targets the Radix ScrollArea viewport div and forces it to clip horizontally, which makes `max-w-full` on children resolve correctly.
 
-#### 2. `src/components/dashboard/website-editor/panels/InspectorPanel.tsx` (line 72)
+#### 2. `src/components/dashboard/website-editor/EditorCard.tsx` (line 17)
 
-Add `overflow-x-hidden overflow-y-auto` to the expanded panel root div to prevent any horizontal scroll at the panel shell level.
+The outer div already has `overflow-hidden` in its base classes. But the content div (line 42) needs `overflow-hidden` added to enforce clipping on its children too.
 
-**Before:** `cn(editorTokens.panel.inspector, 'h-full flex flex-col', className)`
-**After:** `cn(editorTokens.panel.inspector, 'h-full flex flex-col overflow-hidden', className)`
+**Before:** `<div className="p-4 space-y-4 max-w-full box-border">`
+**After:** `<div className="p-4 space-y-4 max-w-full box-border overflow-hidden">`
 
-#### 3. `src/components/dashboard/website-editor/EditorCard.tsx` (line 42)
+#### 3. `src/components/dashboard/website-editor/LocationsContent.tsx` (line 142-143)
 
-Add `max-w-full box-border` to the EditorCard content div to enforce that all card children respect the parent envelope width.
+Add `max-w-full` to each location `Card` so it never exceeds its parent.
 
-**Before:** `<div className="p-4 space-y-4">`
-**After:** `<div className="p-4 space-y-4 max-w-full box-border">`
-
-#### 4. `src/components/dashboard/website-editor/LocationsContent.tsx` (lines 185-198)
-
-Add `break-words [overflow-wrap:anywhere]` to the address, phone, and hours text spans to handle long strings that may resist `truncate` in edge cases.
+**Before:** `"group transition-all duration-200 hover:shadow-sm overflow-hidden"`
+**After:** `"group transition-all duration-200 hover:shadow-sm overflow-hidden max-w-full"`
 
 ### Why This Works
 
-- **Single source of truth**: The `editorTokens.inspector.content` token applies to all inspector modules via `PanelSlideIn`. Updating it once fixes padding for every section.
-- **20px horizontal padding** provides the 16px+ safe area the bento standard requires, with room to breathe.
-- **`overflow-hidden`** at both the panel root and content envelope level eliminates any horizontal scroll.
-- **`max-w-full box-border`** on EditorCard content ensures cards never exceed their parent width regardless of inner content.
-- No typography or card sizes are changed -- this is purely an envelope/containment fix.
+The overflow chain is: `InspectorPanel` (overflow-hidden) → `ScrollArea` viewport (now overflow-x-hidden) → `PanelSlideIn` (max-w-full overflow-hidden) → `EditorCard` (overflow-hidden) → content div (overflow-hidden) → `Card` (max-w-full overflow-hidden). Every level now clips horizontally, so no child can push past the panel edge.
 
 ### Files Modified
 
 | File | Change |
 |------|--------|
-| `editor-tokens.ts` | Update `inspector.content` padding from `p-3` to `px-5 pt-4 pb-6` + overflow containment |
-| `InspectorPanel.tsx` | Add `overflow-hidden` to panel root |
-| `EditorCard.tsx` | Add `max-w-full box-border` to content div |
-| `LocationsContent.tsx` | Add `overflow-wrap: anywhere` to long text fields |
+| `InspectorPanel.tsx` | Force ScrollArea viewport to clip horizontally |
+| `EditorCard.tsx` | Add `overflow-hidden` to content div |
+| `LocationsContent.tsx` | Add `max-w-full` to location Cards |
 
