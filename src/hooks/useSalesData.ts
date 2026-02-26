@@ -462,7 +462,61 @@ export function useSalesByStylist(dateFrom?: string, dateTo?: string, locationId
         byUser[userId].totalTransactions += 1;
       });
 
-      return Object.values(byUser).sort((a, b) => b.totalRevenue - a.totalRevenue);
+      // If POS transaction items returned no data, fallback to completed appointments
+      const results = Object.values(byUser);
+      if (results.length === 0 && dateFrom) {
+        let apptQuery = supabase
+          .from('phorest_appointments')
+          .select('phorest_staff_id, total_price, start_time, end_time')
+          .eq('status', 'completed')
+          .not('phorest_staff_id', 'is', null)
+          .not('total_price', 'is', null)
+          .gte('appointment_date', dateFrom);
+
+        if (dateTo) apptQuery = apptQuery.lte('appointment_date', dateTo);
+        if (locationId && locationId !== 'all') {
+          const ids = locationId.split(',').filter(Boolean);
+          if (ids.length === 1) apptQuery = apptQuery.eq('location_id', ids[0]);
+          else if (ids.length > 1) apptQuery = apptQuery.in('location_id', ids);
+        }
+
+        const { data: apptData } = await apptQuery;
+        const byUserFallback: Record<string, any> = {};
+
+        apptData?.forEach(appt => {
+          const staffId = appt.phorest_staff_id!;
+          const mapping = mappingLookup[staffId];
+          const userId = mapping ? mapping.userId : `phorest:${staffId}`;
+          const displayName = mapping
+            ? mapping.name
+            : (staffNameLookup[staffId] || `Staff ${staffId.slice(0, 4)}`);
+          const photo = mapping?.photo;
+
+          if (!byUserFallback[userId]) {
+            byUserFallback[userId] = {
+              user_id: userId,
+              name: displayName,
+              photo_url: photo,
+              totalRevenue: 0,
+              serviceRevenue: 0,
+              productRevenue: 0,
+              totalServices: 0,
+              totalProducts: 0,
+              totalTransactions: 0,
+            };
+          }
+
+          const amount = Number(appt.total_price) || 0;
+          byUserFallback[userId].totalRevenue += amount;
+          byUserFallback[userId].serviceRevenue += amount;
+          byUserFallback[userId].totalServices += 1;
+          byUserFallback[userId].totalTransactions += 1;
+        });
+
+        return Object.values(byUserFallback).sort((a, b) => b.totalRevenue - a.totalRevenue);
+      }
+
+      return results.sort((a, b) => b.totalRevenue - a.totalRevenue);
     },
   });
 }
