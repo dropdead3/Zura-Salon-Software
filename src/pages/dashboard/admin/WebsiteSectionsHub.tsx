@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
@@ -129,7 +128,6 @@ const TAB_TO_SECTION: Record<string, string> = {
 };
 
 export default function WebsiteSectionsHub() {
-  const [searchParams, setSearchParams] = useSearchParams();
   const { effectiveOrganization, currentOrganization, selectedOrganization } = useOrganizationContext();
   const contextSlug = effectiveOrganization?.slug || selectedOrganization?.slug || currentOrganization?.slug;
   const queryClient = useQueryClient();
@@ -149,8 +147,7 @@ export default function WebsiteSectionsHub() {
   const orgName = effectiveOrganization?.name || selectedOrganization?.name || currentOrganization?.name || 'Website';
 
   // ─── State ───
-  const defaultTab = searchParams.get('tab') || 'hero';
-  const [activeTab, setActiveTab] = useState(defaultTab);
+  const [activeTab, setActiveTab] = useState(() => new URLSearchParams(window.location.search).get('tab') || 'hero');
   const [structureMode, setStructureMode] = useState<StructureMode>('layers');
   const [selectedPageId, setSelectedPageId] = useState('home');
   const [pendingTab, setPendingTab] = useState<string | null>(null);
@@ -263,6 +260,13 @@ export default function WebsiteSectionsHub() {
 
   // (Editor canvas postMessage listener moved below after all handlers are defined)
 
+  const replaceTabInUrl = useCallback((tab: string) => {
+    const nextSearchParams = new URLSearchParams(window.location.search);
+    nextSearchParams.set('tab', tab);
+    const nextUrl = `${window.location.pathname}?${nextSearchParams.toString()}${window.location.hash}`;
+    window.history.replaceState(window.history.state, '', nextUrl);
+  }, []);
+
   // ─── Tab change with dirty guard ───
   const handleTabChange = useCallback((tab: string) => {
     if (isDirtyRef.current) {
@@ -270,9 +274,9 @@ export default function WebsiteSectionsHub() {
       setShowUnsavedDialog(true);
     } else {
       setActiveTab(tab);
-      setSearchParams({ tab }, { replace: true });
+      replaceTabInUrl(tab);
     }
-  }, [setSearchParams]);
+  }, [replaceTabInUrl]);
 
   const handleDiscardAndSwitch = () => {
     isDirtyRef.current = false;
@@ -280,7 +284,7 @@ export default function WebsiteSectionsHub() {
     setShowUnsavedDialog(false);
     if (pendingTab) {
       setActiveTab(pendingTab);
-      setSearchParams({ tab: pendingTab }, { replace: true });
+      replaceTabInUrl(pendingTab);
       setPendingTab(null);
     }
   };
