@@ -500,6 +500,61 @@ export default function WebsiteSectionsHub() {
     if (pendingTemplate) { await handleApplyPageTemplate(pendingTemplate); setPendingTemplate(null); }
   }, [pendingTemplate, handleApplyPageTemplate]);
 
+  // ─── Iframe editor card actions ───
+  useEffect(() => {
+    const handler = (event: MessageEvent) => {
+      const msg = event.data;
+      if (!msg || typeof msg !== 'object') return;
+
+      switch (msg.type) {
+        case 'EDITOR_SELECT_SECTION': {
+          const sectionId = msg.sectionId as string;
+          // Find the matching tab for this section
+          const tabEntry = Object.entries(TAB_TO_SECTION).find(([, v]) => v === sectionId);
+          if (tabEntry) {
+            handleTabChange(tabEntry[0]);
+          } else {
+            // Custom section
+            handleTabChange(`custom-${sectionId}`);
+          }
+          break;
+        }
+        case 'EDITOR_TOGGLE_SECTION': {
+          if (isHomePage) {
+            handleHomeSectionToggle(msg.sectionId, msg.enabled);
+          } else {
+            handlePageSectionToggle(msg.sectionId, msg.enabled);
+          }
+          break;
+        }
+        case 'EDITOR_DUPLICATE_SECTION': {
+          const sections = isHomePage ? orderedHomeSections : orderedPageSections;
+          const section = sections.find(s => s.id === msg.sectionId);
+          if (section) {
+            if (isHomePage) handleHomeSectionDuplicate(section);
+            else handlePageSectionDuplicate(section);
+          }
+          break;
+        }
+        case 'EDITOR_DELETE_SECTION': {
+          if (isHomePage) {
+            const section = orderedHomeSections.find(s => s.id === msg.sectionId);
+            if (section) setDeleteTarget(section);
+          } else {
+            handlePageSectionDelete(msg.sectionId);
+          }
+          break;
+        }
+        case 'EDITOR_ADD_SECTION_AT': {
+          setShowAddDialog(true);
+          break;
+        }
+      }
+    };
+    window.addEventListener('message', handler);
+    return () => window.removeEventListener('message', handler);
+  }, [isHomePage, orderedHomeSections, orderedPageSections, handleTabChange, handleHomeSectionToggle, handlePageSectionToggle, handleHomeSectionDuplicate, handlePageSectionDuplicate, handlePageSectionDelete]);
+
   // ─── Structure mode change ───
   const handleStructureModeChange = useCallback((mode: StructureMode) => {
     setStructureMode(mode);

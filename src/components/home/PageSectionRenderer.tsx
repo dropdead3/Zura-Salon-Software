@@ -15,7 +15,10 @@ import { BrandsSection } from '@/components/home/BrandsSection';
 import { DrinkMenuSection } from '@/components/home/DrinkMenuSection';
 import { CustomSectionRenderer } from '@/components/home/CustomSectionRenderer';
 import { SectionStyleWrapper } from '@/components/home/SectionStyleWrapper';
+import { EditorSectionCard } from '@/components/home/EditorSectionCard';
+import { InsertionLine } from '@/components/home/InsertionLine';
 import { isBuiltinSection, type BuiltinSectionType, type CustomSectionType, type SectionConfig } from '@/hooks/useWebsiteSections';
+import { cn } from '@/lib/utils';
 
 const BUILTIN_COMPONENTS: Record<BuiltinSectionType, React.ReactNode> = {
   hero: <HeroSection />,
@@ -38,6 +41,11 @@ interface PageSectionRendererProps {
 }
 
 export function PageSectionRenderer({ sections }: PageSectionRendererProps) {
+  const isEditorPreview = useMemo(
+    () => new URLSearchParams(window.location.search).has('preview'),
+    []
+  );
+
   const enabledSections = useMemo(() => {
     return [...sections]
       .filter(s => s.enabled)
@@ -47,7 +55,7 @@ export function PageSectionRenderer({ sections }: PageSectionRendererProps) {
   // Listen for postMessage from parent (Website Editor) for scroll & highlight
   useEffect(() => {
     const handler = (event: MessageEvent) => {
-      if (event.origin !== window.location.origin) return;
+      if (!isEditorPreview && event.origin !== window.location.origin) return;
       const msg = event.data;
       if (!msg || typeof msg !== 'object') return;
 
@@ -67,20 +75,52 @@ export function PageSectionRenderer({ sections }: PageSectionRendererProps) {
 
     window.addEventListener('message', handler);
     return () => window.removeEventListener('message', handler);
-  }, []);
+  }, [isEditorPreview]);
 
+  // Public site: render flat (unchanged)
+  if (!isEditorPreview) {
+    return (
+      <>
+        {enabledSections.map((section) => (
+          <SectionStyleWrapper key={section.id} styleOverrides={section.style_overrides}>
+            <div id={`section-${section.id}`}>
+              {isBuiltinSection(section.type)
+                ? BUILTIN_COMPONENTS[section.type]
+                : <CustomSectionRenderer sectionId={section.id} sectionType={section.type as CustomSectionType} />
+              }
+            </div>
+          </SectionStyleWrapper>
+        ))}
+      </>
+    );
+  }
+
+  // Editor preview: floating bento cards
   return (
-    <>
-      {enabledSections.map((section) => (
-        <SectionStyleWrapper key={section.id} styleOverrides={section.style_overrides}>
-          <div id={`section-${section.id}`}>
-            {isBuiltinSection(section.type)
-              ? BUILTIN_COMPONENTS[section.type]
-              : <CustomSectionRenderer sectionId={section.id} sectionType={section.type as CustomSectionType} />
-            }
-          </div>
-        </SectionStyleWrapper>
+    <div className={cn('px-4 sm:px-6 lg:px-8 py-6')}>
+      {enabledSections.map((section, index) => (
+        <React.Fragment key={section.id}>
+          {index > 0 && <InsertionLine afterSectionId={enabledSections[index - 1].id} />}
+          <EditorSectionCard
+            sectionId={section.id}
+            label={section.label}
+            enabled={section.enabled}
+          >
+            <div id={`section-${section.id}`}>
+              <SectionStyleWrapper styleOverrides={section.style_overrides}>
+                {isBuiltinSection(section.type)
+                  ? BUILTIN_COMPONENTS[section.type]
+                  : <CustomSectionRenderer sectionId={section.id} sectionType={section.type as CustomSectionType} />
+                }
+              </SectionStyleWrapper>
+            </div>
+          </EditorSectionCard>
+        </React.Fragment>
       ))}
-    </>
+      {/* Final insertion line after last card */}
+      {enabledSections.length > 0 && (
+        <InsertionLine afterSectionId={enabledSections[enabledSections.length - 1].id} />
+      )}
+    </div>
   );
 }

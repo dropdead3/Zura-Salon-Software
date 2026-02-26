@@ -1524,7 +1524,6 @@ html, body, #root {
 
 /* ===== PREVIEW HIGHLIGHT ===== */
 .preview-highlight {
-  outline: 2px solid hsl(var(--primary));
-  outline-offset: -2px;
-  transition: outline-color 0.3s ease;
+  box-shadow: 0 0 0 2px hsl(var(--primary) / 0.2);
+  transition: box-shadow 0.3s ease;
 }
