@@ -1,26 +1,37 @@
 
 
-## Disco Ball Animation for PixelZMark
+## Fix: Security Toggles Not Persisting State
 
-The user wants the Z-shaped cells in `PixelZMark` to animate with a "disco ball" lighting-up effect — individual squares randomly brightening and dimming, creating a shimmering sparkle pattern.
+The "Require Email Verification" and "Restrict Sign-ups" toggles in the Security card are **completely uncontrolled** — they have no `checked` prop, no `onCheckedChange` handler, and no persistence logic. They render as bare `<Switch />` elements that flip visually but lose state on navigation.
 
-**Note:** The screenshot shows a `getAccessBadgeColor is not a function` crash. I reviewed the codebase and this function is defined but never called in current code — this is likely a stale build cache issue. If the error persists after this change, we can investigate further.
+### Root Cause (lines 1366 and 1373 of Settings.tsx)
 
-### File: `src/components/ui/PixelZMark.tsx`
+```tsx
+<Switch />  // No checked, no handler — purely decorative
+<Switch />  // Same issue
+```
 
-**Current behavior:** Z-cells gently bob up/down with a slow wave (3.2s cycle, sequential delay).
+### Solution
 
-**New behavior:** Z-cells ("1" cells) randomly pulse between low and high opacity/brightness with staggered, randomized timing — mimicking light reflecting off a disco ball.
+Follow the same pattern used by the Help & Guidance toggle (`useInfotainerSettings`) — persist these two booleans to the `organizations.settings` JSONB column.
 
-- Replace the current `y: [0, -2, 0]` wave animation with a brightness/opacity shimmer:
-  - `opacity: [0.3, 1, 0.5, 1, 0.3]` — irregular flicker pattern
-  - `scale: [1, 1.1, 1, 1.05, 1]` — subtle size pulse for "glow" feel
-- Randomize each cell's `duration` (1.5–3.5s range) and `delay` (0–2s range) using a seeded random per cell index, so the pattern feels organic and non-uniform
-- Add a subtle `boxShadow` animation on lit cells for a glow halo effect
-- Keep `useReducedMotion` guard — falls back to static rendering
+### Step 1: Create `src/hooks/useOrgSecuritySettings.ts`
 
-### Technical detail
+- Read `require_email_verification` and `restrict_signups` from `organizations.settings` JSONB (defaults: both `false`)
+- Provide individual toggle mutation functions that merge into the existing settings object
+- Use `useOrganizationContext` for org scoping
+- Invalidate query cache on success
 
-- Use a deterministic pseudo-random (based on cell index) so the pattern is consistent across renders but still looks randomized
-- No new dependencies needed — framer-motion handles all animation
+### Step 2: Update Security Card in `Settings.tsx` (lines 1352-1376)
+
+- Extract the inline Security card into a `SecuritySettingsCard` component (same pattern as `InfotainerToggleCard`)
+- Import and use the new hook
+- Wire `checked` and `onCheckedChange` to the hook's state and mutators
+- Add `disabled` prop during save to prevent double-toggling
+
+### Technical Notes
+
+- No database migration needed — `organizations.settings` is already a JSONB column used for `show_infotainers`
+- The two new keys (`require_email_verification`, `restrict_signups`) merge safely alongside existing settings keys
+- Optimistic updates via `onMutate` for instant UI feedback
 
