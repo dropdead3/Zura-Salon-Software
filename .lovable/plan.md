@@ -1,81 +1,60 @@
 
 
-## Silver Shine Stroke on Insights Buttons
+## Fix: Silver Shine Stroke Not Visible
 
-Both `AIInsightsDrawer` and `PersonalInsightsDrawer` use identical collapsed trigger buttons — plain `motion.button` elements with `border border-border` styling. These are standard HTML buttons, not SVG-based, so the cleanest approach is a **CSS-only conic-gradient border animation** using a pseudo-element.
+### Diagnosis
 
-### Approach: Shared `SilverShineButton` Wrapper Component
+The shine is invisible because of two compounding issues:
 
-Create a reusable component that wraps the collapsed button content and provides the silver shine effect via CSS `@keyframes` on a pseudo-element.
+1. **`overflow: hidden`** on `.silver-shine-border` clips the `::before` pseudo-element (which uses `inset: -1px`) back to the element bounds
+2. **Inner span uses `h-full w-full`** — it covers the entire button area, leaving zero gap for the gradient to show through along straight edges. The `border-radius` difference only creates a sub-pixel gap at corners, which is imperceptible.
 
-**How it works:**
-1. An outer `div` with `position: relative` and `overflow: hidden` acts as the border container
-2. A `::before` pseudo-element carries a subtle conic gradient (transparent → silver → transparent) that rotates slowly via `@keyframes`
-3. An inner `div` with the background covers everything except the 1px border area, creating a "stroke-only" shine
-4. The shine cycle runs on a 12s loop with the gradient visible for only ~20-25% of the rotation (rest is transparent)
-5. `prefers-reduced-motion` disables the animation entirely
+The conic-gradient border trick requires the inner content to be inset by 1px on all sides so the rotating gradient peeks through as a "stroke."
 
-### Files
+### Fix
 
-**New: `src/components/dashboard/SilverShineButton.tsx`**
+**File: `src/components/dashboard/SilverShineButton.tsx`**
 
-A wrapper component that:
-- Accepts `children`, `onClick`, `className` props
-- Renders the outer container with `::before` conic gradient rotation
-- Inner content div masks everything except the 1px border
-- Exports as a drop-in replacement for the current `motion.button`
+Change the outer container to use `p-[1px]` padding to create the 1px border channel, and update the inner span to fill naturally (remove explicit `h-full w-full`):
 
-**New: `src/styles/silver-shine.css`** (or inline via Tailwind arbitrary values)
-
-```css
-@keyframes silver-shine-rotate {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .silver-shine-border::before {
-    animation: none !important;
-    opacity: 0 !important;
-  }
+```tsx
+export function SilverShineButton({ children, className, onClick }: SilverShineButtonProps) {
+  return (
+    <motion.button
+      key="collapsed"
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ duration: 0.2, ease: 'easeOut' }}
+      onClick={onClick}
+      className={cn(
+        'silver-shine-border rounded-md cursor-pointer p-[1px]',
+        className,
+      )}
+    >
+      <span className="silver-shine-inner block bg-background rounded-[calc(theme(borderRadius.md)-1px)]">
+        <span className="inline-flex items-center gap-2 h-9 px-4 w-full text-sm font-sans whitespace-nowrap">
+          {children}
+        </span>
+      </span>
+    </motion.button>
+  );
 }
 ```
 
-Key CSS properties on `::before`:
-- `background: conic-gradient(transparent 0deg, transparent 340deg, hsl(0 0% 75% / 0.15) 350deg, hsl(0 0% 85% / 0.18) 355deg, transparent 360deg)`
-- `animation: silver-shine-rotate 12s ease-in-out infinite`
-- `position: absolute; inset: -1px; border-radius: inherit`
+Changes:
+- Add `p-[1px]` to the outer button — this creates a 1px inset channel between the button edge and the inner span, allowing the rotating conic gradient to show through as a border
+- Remove `h-full w-full` from the inner span — no longer needed since `p-[1px]` handles the spacing; the inner span fills naturally via block layout
 
-The gradient occupies only ~20° of the 360° sweep — so for most of the 12s cycle, nothing is visible. The peak opacity of 0.18 keeps it ultra-subtle.
+**File: `src/styles/silver-shine.css`** — no changes needed. The `overflow: hidden` is actually fine here because the gradient fills the button area and the 1px padding gap exposes it as a stroke.
 
-**Modified: `src/components/dashboard/AIInsightsDrawer.tsx`**
-- Line 309-323: Replace the `motion.button` with `SilverShineButton` wrapping the same children
-- The `motion` animation (scale in/out) moves to an outer wrapper or is handled by `SilverShineButton` accepting framer-motion props
+### Result
 
-**Modified: `src/components/dashboard/PersonalInsightsDrawer.tsx`**
-- Line 203-222: Same replacement — use `SilverShineButton` for the collapsed trigger
+The 1px channel between the outer edge and the inner `bg-background` span will reveal the slowly rotating conic gradient, creating the "occasional light catch on polished metal" effect as designed.
 
-### Hover/Active States
+### Files Changed
 
-- **Hover**: `animation-play-state: paused` on the `::before` — shine freezes and fades to 0 opacity over 300ms
-- **Active/Pressed**: No shine, standard pressed state (existing `active:scale-[0.98]` or similar)
-- **Focus**: Separate `focus-visible:ring-2` ring, independent of the shine pseudo-element
-
-### Motion Timing Summary
-
-| Parameter | Value |
-|-----------|-------|
-| Full cycle | 12s |
-| Gradient arc | ~20° of 360° |
-| Peak opacity | 0.18 |
-| Easing | ease-in-out |
-| Hover behavior | Pause + fade out |
-| Reduced motion | Animation disabled, static border |
-
-### What Does NOT Change
-
-- Button dimensions, padding, typography
-- Expanded drawer behavior
-- Icon styling
-- Layout of the `CommandCenterControlRow`
+| File | Action |
+|------|--------|
+| `src/components/dashboard/SilverShineButton.tsx` | Add `p-[1px]`, remove `h-full w-full` from inner span |
 
