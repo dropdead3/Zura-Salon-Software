@@ -173,18 +173,11 @@ export function ServiceProductDrilldown({
 
         {/* Content */}
         <div className="p-6 flex-1 min-h-0 overflow-y-auto">
-          {!isServices ? (
+          {sorted.length === 0 ? (
             <div className="py-14 text-center">
-              <ShoppingBag className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
-              <p className="text-sm font-medium text-foreground mb-1">Product data not yet available</p>
-              <p className="text-xs text-muted-foreground max-w-[280px] mx-auto">
-                Product sales tracking requires the transaction data sync to be operational. Service data is available from the scheduling API.
-              </p>
-            </div>
-          ) : sorted.length === 0 ? (
-            <div className="py-14 text-center">
+              {!isServices && <ShoppingBag className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />}
               <p className="text-sm text-muted-foreground">
-                No service data in this period
+                {isServices ? 'No service data in this period' : 'No product sales in this period'}
               </p>
             </div>
           ) : (
@@ -203,15 +196,14 @@ export function ServiceProductDrilldown({
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{staff.staffName}</p>
                       <p className="text-xs text-muted-foreground">
-                        {staff.primaryCount} service{staff.primaryCount !== 1 ? 's' : ''} · {staff.sharePercent}% of total
-                        {staff.tipTotal > 0 && ` · ${fmt(staff.tipTotal)} tips`}
+                        {isServices
+                          ? <>{staff.primaryCount} service{staff.primaryCount !== 1 ? 's' : ''} · {staff.sharePercent}% of total{staff.tipTotal > 0 && ` · ${fmt(staff.tipTotal)} tips`}</>
+                          : <>{staff.primaryCount} product{staff.primaryCount !== 1 ? 's' : ''} · {staff.sharePercent}% of total</>
+                        }
                       </p>
                     </div>
                     <span className="font-display text-lg tabular-nums">{fmt(staff.primaryRevenue)}</span>
                   </div>
-
-
-
                 </div>
               ))}
             </div>
