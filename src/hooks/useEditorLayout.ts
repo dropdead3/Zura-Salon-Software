@@ -116,14 +116,12 @@ export function useEditorLayout(): EditorLayoutState {
         : INSPECTOR_MIN;
 
   // ─── Auto-collapse logic ───
-  // Start with user preference, then override if space is insufficient
-  let structureVisible = !isMobile && !isTablet && !prefs.structureCollapsed;
-  let inspectorVisible = !isMobile && !isTablet && !prefs.inspectorCollapsed;
+  // Default to expanded when user has no stored preference
+  const userWantsStructureCollapsed = prefs.structureCollapsed === true;
+  const userWantsInspectorCollapsed = prefs.inspectorCollapsed === true;
 
-  // For compact breakpoint, auto-collapse inspector only if user hasn't explicitly expanded
-  if (isCompact && prefs.inspectorCollapsed === undefined) {
-    inspectorVisible = false;
-  }
+  let structureVisible = !isMobile && !isTablet && !userWantsStructureCollapsed;
+  let inspectorVisible = !isMobile && !isTablet && !userWantsInspectorCollapsed;
 
   // Space check: only auto-collapse if user hasn't explicitly set the pref
   const spaceWithBoth =
