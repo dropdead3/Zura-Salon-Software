@@ -16,6 +16,7 @@
   overflow: hidden;
 }
 
+/* Primary highlight — broad reflective wash */
 .silver-shine-border::before {
   content: '';
   position: absolute;
@@ -28,25 +29,55 @@
   border-radius: 0;
   background: conic-gradient(
     transparent 0deg,
-    transparent 300deg,
-    hsl(0 0% 70% / 0.25) 325deg,
-    hsl(0 0% 85% / 0.55) 345deg,
-    hsl(0 0% 95% / 0.7) 352deg,
-    hsl(0 0% 85% / 0.55) 358deg,
+    transparent 150deg,
+    hsl(0 0% 65% / 0.12) 180deg,
+    hsl(0 0% 75% / 0.3) 220deg,
+    hsl(0 0% 85% / 0.45) 260deg,
+    hsl(0 0% 95% / 0.5) 290deg,
+    hsl(0 0% 85% / 0.35) 320deg,
+    hsl(0 0% 70% / 0.15) 345deg,
     transparent 360deg
   );
-  animation: silver-shine-rotate 12s ease-in-out infinite;
+  animation: silver-shine-rotate 14s ease-in-out infinite;
   pointer-events: none;
   z-index: 0;
   transition: opacity 0.3s ease;
 }
 
-.silver-shine-border:hover::before {
+/* Secondary ambient wash — soft scatter offset ~90° */
+.silver-shine-border::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: max(300%, 300vh);
+  height: 0;
+  padding-bottom: max(300%, 300vh);
+  transform: translate(-50%, -50%) rotate(0deg);
+  border-radius: 0;
+  background: conic-gradient(
+    transparent 0deg,
+    transparent 60deg,
+    hsl(0 0% 80% / 0.08) 90deg,
+    hsl(0 0% 85% / 0.12) 140deg,
+    hsl(0 0% 80% / 0.08) 190deg,
+    transparent 220deg,
+    transparent 360deg
+  );
+  animation: silver-shine-rotate 14s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 0;
+  transition: opacity 0.3s ease;
+}
+
+.silver-shine-border:hover::before,
+.silver-shine-border:hover::after {
   animation-play-state: paused;
   opacity: 0;
 }
 
-.silver-shine-border:active::before {
+.silver-shine-border:active::before,
+.silver-shine-border:active::after {
   opacity: 0;
 }
 
@@ -57,7 +88,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .silver-shine-border::before {
+  .silver-shine-border::before,
+  .silver-shine-border::after {
     animation: none !important;
     opacity: 0 !important;
   }
