@@ -154,12 +154,12 @@ export function CanvasHeader({
                 onClick={() => onCanvasModeChange('edit')}
                 className={cn(
                   editorTokens.segmented.button,
-                  'px-2.5 gap-1.5 flex-initial',
+                  'px-2 gap-1 flex-initial',
                   canvasMode === 'edit' && editorTokens.segmented.active
                 )}
               >
-                <Pencil className="h-3.5 w-3.5" />
-                <span className="text-[11px] hidden sm:inline">Edit</span>
+                <Pencil className="h-3 w-3" />
+                <span className="text-[10px]">Edit</span>
               </button>
             </TooltipTrigger>
             <TooltipContent>Edit mode — section cards &amp; controls</TooltipContent>
@@ -170,12 +170,12 @@ export function CanvasHeader({
                 onClick={() => onCanvasModeChange('view')}
                 className={cn(
                   editorTokens.segmented.button,
-                  'px-2.5 gap-1.5 flex-initial',
+                  'px-2 gap-1 flex-initial',
                   canvasMode === 'view' && editorTokens.segmented.active
                 )}
               >
-                <Eye className="h-3.5 w-3.5" />
-                <span className="text-[11px] hidden sm:inline">Preview</span>
+                <Eye className="h-3 w-3" />
+                <span className="text-[10px]">Preview</span>
               </button>
             </TooltipTrigger>
             <TooltipContent>Preview mode — exact public site</TooltipContent>
