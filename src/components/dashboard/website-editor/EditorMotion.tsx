@@ -8,6 +8,7 @@
 import { type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { editorMotion } from './editor-tokens';
+import { cn } from '@/lib/utils';
 
 interface MotionProps {
   children: ReactNode;
@@ -32,7 +33,7 @@ export function PanelSlideIn({ children, motionKey, className }: MotionProps) {
           duration: editorMotion.panelMs,
           ease: editorMotion.easing,
         }}
-        className={className}
+        className={cn('w-full min-w-0', className)}
       >
         {children}
       </motion.div>
