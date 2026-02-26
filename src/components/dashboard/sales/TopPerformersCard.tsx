@@ -147,7 +147,7 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
   }
 
   return (
-    <Card className="h-full flex flex-col overflow-hidden border-border/40">
+    <Card className="@container h-full flex flex-col overflow-hidden border-border/40">
       <CardHeader className="px-4 pt-4 pb-1">{headerContent}</CardHeader>
       <CardContent className="px-4 pb-3 pt-0 flex-1 flex flex-col">
         {/* Sort toggle */}
@@ -219,8 +219,8 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
                         {rank}
                       </span>
 
-                      {/* Avatar - hidden below xl */}
-                      <Avatar className="h-9 w-9 shrink-0 hidden xl:flex mt-0.5">
+                      {/* Avatar - hidden when card is narrow, shown at ≥400px */}
+                      <Avatar className="h-9 w-9 shrink-0 hidden @[400px]:flex mt-0.5">
                         <AvatarImage src={performer.photo_url} alt={performer.name} />
                         <AvatarFallback className="text-xs">{initials}</AvatarFallback>
                       </Avatar>
