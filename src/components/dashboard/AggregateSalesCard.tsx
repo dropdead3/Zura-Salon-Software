@@ -1131,8 +1131,8 @@ export function AggregateSalesCard({
             />
           </div>
           <RevenueDonutChart
-            serviceRevenue={isToday && todayActual?.hasActualData ? todayActual.actualServiceRevenue : displayMetrics.serviceRevenue} 
-            productRevenue={isToday && todayActual?.hasActualData ? todayActual.actualProductRevenue : displayMetrics.productRevenue}
+            serviceRevenue={isToday ? (todayActual?.hasActualData ? todayActual.actualServiceRevenue : 0) : displayMetrics.serviceRevenue} 
+            productRevenue={isToday ? (todayActual?.hasActualData ? todayActual.actualProductRevenue : 0) : displayMetrics.productRevenue}
             size={64}
             
             retailAttachmentRate={attachmentData?.attachmentRate}
