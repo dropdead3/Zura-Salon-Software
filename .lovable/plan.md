@@ -1,60 +1,70 @@
 
 
-## Fix: Editor Preview Sections Not Rendering
+## Fix: Editor Sidebars Always Start Expanded + Toggle Actually Works
 
-### Root Cause
+### Root Cause Analysis
 
-In `PageSectionRenderer.tsx` (lines 91-92), `React.lazy()` is called **inside the component's render body**:
+**Two interconnected bugs:**
 
-```tsx
-if (isEditorPreview) {
-  const EditorSectionCard = React.lazy(() => import(...));
-  const InsertionLine = React.lazy(() => import(...));
-  return (...);
-}
-```
+1. **Stale localStorage**: Previous sessions save `structureCollapsed: true` or `inspectorCollapsed: true`. On reload, `loadPrefs()` reads these values, so panels start collapsed despite the user expectation of "always expanded on load."
 
-Every render creates a **new** lazy component reference. React treats each as a brand-new component type, which triggers `Suspense` to re-suspend immediately. Since the fallback is `null`, the sections never appear — only the Header and FooterCTA (rendered by `Layout.tsx` outside `PageSectionRenderer`) are visible.
-
-This is a known React anti-pattern: `React.lazy()` must be called at **module level**, not inside a render function.
-
-### Confirmed via debugging
-
-- Network request for `website_pages` returns 200 with all 13 home sections, all enabled
-- No console errors related to section rendering
-- The Header, announcement bar, and FooterCTA all render (they live in `Layout.tsx`, outside the broken component)
-- The empty space between the header and FooterCTA is exactly where `PageSectionRenderer` should render content
+2. **Toggle defeated by space-check**: When clicking "Expand" on the collapsed rail, `toggleStructure` flips `structureCollapsed` from `true` to `false`. But the space-check logic (lines 132-141) immediately re-evaluates and can set `structureVisible = false` again if `prefs.inspectorCollapsed === undefined`. The toggle "works" in state but the computed visibility overrides it.
 
 ### Fix
 
-Move the two `React.lazy()` calls from inside the component body to module-level constants at the top of the file.
+#### File: `src/hooks/useEditorLayout.ts`
 
-#### File: `src/components/home/PageSectionRenderer.tsx`
+**Change 1 — Always start expanded on mount.** Do not read `structureCollapsed` or `inspectorCollapsed` from localStorage. Only persist/restore panel widths. This matches the user's explicit preference: "Always force expanded."
 
-**Before** (lines 91-92, inside component body):
 ```tsx
-const EditorSectionCard = React.lazy(() => import('@/components/home/EditorSectionCard').then(m => ({ default: m.EditorSectionCard })));
-const InsertionLine = React.lazy(() => import('@/components/home/InsertionLine').then(m => ({ default: m.InsertionLine })));
+// loadPrefs: only restore widths, never collapse state
+function loadPrefs(): PersistedLayout {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      // Only restore width preferences, not collapse state
+      return {
+        structureWidth: parsed.structureWidth,
+        inspectorWidth: parsed.inspectorWidth,
+        structureCollapsed: false,
+        inspectorCollapsed: false,
+      };
+    }
+    return {};
+  } catch {
+    return {};
+  }
+}
 ```
 
-**After** (at module level, outside the component):
+**Change 2 — Fix toggle to use explicit booleans.** The current toggle `!prev.structureCollapsed` is ambiguous when the value is `undefined` (`!undefined = true` → collapses instead of expanding). Use explicit boolean flipping:
+
 ```tsx
-// At top of file, after imports
-const EditorSectionCard = React.lazy(() =>
-  import('@/components/home/EditorSectionCard').then(m => ({ default: m.EditorSectionCard }))
-);
-const InsertionLine = React.lazy(() =>
-  import('@/components/home/InsertionLine').then(m => ({ default: m.InsertionLine }))
-);
+const toggleStructure = useCallback(() => {
+  setPrefs((prev) => {
+    const next = { ...prev, structureCollapsed: prev.structureCollapsed === true ? false : true };
+    savePrefs(next);
+    return next;
+  });
+}, []);
+
+const toggleInspector = useCallback(() => {
+  setPrefs((prev) => {
+    const next = { ...prev, inspectorCollapsed: prev.inspectorCollapsed === true ? false : true };
+    savePrefs(next);
+    return next;
+  });
+}, []);
 ```
 
-Then remove the two `const` lines from inside the `if (isEditorPreview)` block.
+**Change 3 — Space-check should not silently override explicit user toggles.** Currently, the space check collapses panels when `prefs.inspectorCollapsed === undefined`. After the fix, prefs will always be explicit booleans (`true`/`false`), so the `=== undefined` check will never match, which means the space check won't override user intent. This is the correct behavior — if the user explicitly expands a panel, it stays expanded even if space is tight.
 
 ### Files
 
 | File | Change |
 |---|---|
-| `src/components/home/PageSectionRenderer.tsx` | Move `React.lazy` calls to module level |
+| `src/hooks/useEditorLayout.ts` | Always init collapse state as `false`, fix toggle to use explicit booleans |
 
-One file, one structural move. No logic changes.
+One file. Three targeted changes.
 
