@@ -20,7 +20,7 @@ import {
   ChevronRight,
   Users,
   DollarSign,
-  Clock,
+  
   Flame,
   Hourglass,
   HandHelping,
@@ -565,42 +565,21 @@ function DashboardSections({
     ),
     
     schedule_tasks: (
-      <div className={cn("grid gap-6", hasStylistRole && "lg:grid-cols-2")}>
-        {hasStylistRole && (
-          <VisibilityGate elementKey="todays_schedule">
-            <Card className="relative overflow-hidden p-6 rounded-xl backdrop-blur-sm transition-all duration-300">
-              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border/40 to-transparent" />
-              <div className="flex items-center justify-between mb-4 pb-3 border-b border-border/50">
-                <h2 className="font-display text-xs tracking-[0.15em]">{t('home.todays_schedule')}</h2>
-                <Clock className="w-4 h-4 text-muted-foreground" />
-              </div>
-              <div className="space-y-3">
-                <div className="text-center py-14 text-muted-foreground">
-                  <Calendar className="w-7 h-7 mx-auto mb-3 opacity-20" />
-                  <p className="text-sm font-display">{t('home.no_appointments')}</p>
-                  <p className="text-xs mt-1 text-muted-foreground/60">{t('home.enjoy_day_off')}</p>
-                </div>
-              </div>
-            </Card>
-          </VisibilityGate>
-        )}
-
-        <VisibilityGate elementKey="my_tasks">
-          <TasksCard
-            tasks={tasks}
-            createTask={createTask}
-            toggleTask={toggleTask}
-            deleteTask={deleteTask}
-            updateTask={updateTask}
-            snoozeTask={snoozeTask}
-            isImpersonating={isImpersonating}
-            editingTask={editingTask}
-            onEditTask={onEditTask}
-            viewingTask={viewingTask}
-            onViewTask={onViewTask}
-          />
-        </VisibilityGate>
-      </div>
+      <VisibilityGate elementKey="my_tasks">
+        <TasksCard
+          tasks={tasks}
+          createTask={createTask}
+          toggleTask={toggleTask}
+          deleteTask={deleteTask}
+          updateTask={updateTask}
+          snoozeTask={snoozeTask}
+          isImpersonating={isImpersonating}
+          editingTask={editingTask}
+          onEditTask={onEditTask}
+          viewingTask={viewingTask}
+          onViewTask={onViewTask}
+        />
+      </VisibilityGate>
     ),
     
     // announcements moved to floating AnnouncementsDrawer
