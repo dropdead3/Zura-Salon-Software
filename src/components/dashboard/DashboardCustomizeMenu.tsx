@@ -32,6 +32,7 @@ import {
   LineChart,
   Briefcase,
   CalendarPlus,
+  ClipboardCheck,
 } from 'lucide-react';
 import { 
   useDashboardLayout, 
@@ -106,6 +107,13 @@ const getSections = (): SectionConfig[] => [
     label: 'Quick Stats', 
     icon: <LayoutDashboard className="w-4 h-4" />, 
     description: 'Today\'s performance overview',
+    isVisible: (ctx) => ctx.hasStylistRole,
+  },
+  { 
+    id: 'todays_prep', 
+    label: "Today's Prep", 
+    icon: <ClipboardCheck className="w-4 h-4" />, 
+    description: 'Pre-visit client prep',
     isVisible: (ctx) => ctx.hasStylistRole,
   },
   { 

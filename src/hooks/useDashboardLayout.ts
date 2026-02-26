@@ -56,8 +56,8 @@ export const PINNABLE_CARD_IDS = [
 ];
 
 const DEFAULT_LAYOUT: DashboardLayout = {
-  sections: ['ai_insights', 'hub_quicklinks', 'payroll_deadline', 'payday_countdown', 'active_campaigns', 'quick_actions', 'todays_queue', 'quick_stats', 'schedule_tasks', 'announcements', 'client_engine', 'widgets'],
-  sectionOrder: ['ai_insights', 'hub_quicklinks', 'payroll_deadline', 'payday_countdown', 'active_campaigns', 'quick_actions', 'todays_queue', 'quick_stats', 'schedule_tasks', 'announcements', 'client_engine', 'widgets'],
+  sections: ['ai_insights', 'hub_quicklinks', 'payroll_deadline', 'payday_countdown', 'active_campaigns', 'quick_actions', 'todays_queue', 'quick_stats', 'todays_prep', 'schedule_tasks', 'announcements', 'client_engine', 'widgets'],
+  sectionOrder: ['ai_insights', 'hub_quicklinks', 'payroll_deadline', 'payday_countdown', 'active_campaigns', 'quick_actions', 'todays_queue', 'quick_stats', 'todays_prep', 'schedule_tasks', 'announcements', 'client_engine', 'widgets'],
   pinnedCards: [],
   widgets: ['changelog', 'birthdays', 'anniversaries', 'schedule'],
   hasCompletedSetup: false,
@@ -106,6 +106,21 @@ function migrateLayout(layout: DashboardLayout, pinnedCards: string[]): Dashboar
       ...migrated,
       sections: ['ai_insights', ...(migrated.sections || [])],
       sectionOrder: ['ai_insights', ...(migrated.sectionOrder || [])],
+    };
+  }
+  
+  // Ensure todays_prep is added for existing layouts (after quick_stats)
+  if (!migrated.sections?.includes('todays_prep')) {
+    const statsIdx = migrated.sectionOrder?.indexOf('quick_stats');
+    const insertIdx = statsIdx !== undefined && statsIdx >= 0 ? statsIdx + 1 : migrated.sectionOrder.length;
+    const newSections = [...(migrated.sections || [])];
+    const newOrder = [...(migrated.sectionOrder || [])];
+    newSections.splice(insertIdx, 0, 'todays_prep');
+    newOrder.splice(insertIdx, 0, 'todays_prep');
+    migrated = {
+      ...migrated,
+      sections: newSections,
+      sectionOrder: newOrder,
     };
   }
   
