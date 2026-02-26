@@ -12,11 +12,11 @@ export const editorTokens = {
   // ========================================
   panel: {
     /** Structure panel (left, 280px fixed) */
-    structure: 'w-[280px] flex-shrink-0 bg-card/80 backdrop-blur-xl border-r border-border/40 shadow-sm',
+    structure: 'w-[280px] flex-shrink-0 bg-card/80 backdrop-blur-xl border border-border/30 rounded-xl shadow-[0_1px_3px_0_rgba(0,0,0,0.04)]',
     /** Canvas panel (center, flexible) */
-    canvas: 'flex-1 min-w-0 bg-muted/20 backdrop-blur-sm',
+    canvas: 'flex-1 min-w-0 bg-muted/20 backdrop-blur-sm rounded-xl overflow-hidden border border-border/30 shadow-[0_1px_3px_0_rgba(0,0,0,0.04)]',
     /** Inspector panel (right, 320px fixed) */
-    inspector: 'w-[320px] flex-shrink-0 bg-card/80 backdrop-blur-xl border-l border-border/40 shadow-sm',
+    inspector: 'w-[320px] flex-shrink-0 bg-card/80 backdrop-blur-xl border border-border/30 rounded-xl shadow-[0_1px_3px_0_rgba(0,0,0,0.04)]',
     /** Shared panel header */
     header: 'h-12 px-4 border-b border-border/30 bg-card/90 backdrop-blur-md flex items-center',
   },
@@ -58,11 +58,11 @@ export const editorTokens = {
     /** Empty state text */
     emptyText: 'text-sm text-muted-foreground/60',
     /** Inspector content area */
-    content: 'p-4 space-y-4',
+    content: 'p-5 space-y-5',
     /** Collapsible group header */
-    groupHeader: 'flex items-center justify-between w-full py-2.5 px-1 text-xs font-medium text-muted-foreground uppercase tracking-[0.15em] hover:text-foreground transition-colors duration-120',
+    groupHeader: 'flex items-center justify-between w-full py-3 px-1 text-xs font-medium text-muted-foreground uppercase tracking-[0.15em] hover:text-foreground transition-colors duration-120 border-t border-border/20 first:border-t-0',
     /** Collapsible group content */
-    groupContent: 'pb-4 space-y-3',
+    groupContent: 'pb-5 space-y-4',
     /** Group divider */
     groupDivider: 'border-b border-border/30',
   },

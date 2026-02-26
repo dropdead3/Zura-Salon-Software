@@ -254,6 +254,8 @@ export default function WebsiteSectionsHub() {
     };
   }, []);
 
+  // (Editor canvas postMessage listener moved below after all handlers are defined)
+
   useEffect(() => {
     setSearchParams({ tab: activeTab }, { replace: true });
   }, [activeTab, setSearchParams]);
@@ -512,7 +514,64 @@ export default function WebsiteSectionsHub() {
     setActiveTab('page-settings');
   }, []);
 
-  // ─── Inspector rendering ───
+  // ─── Editor canvas postMessage listener ───
+  useEffect(() => {
+    const handler = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      const msg = event.data;
+      if (!msg || typeof msg !== 'object') return;
+
+      const sectionId = msg.sectionId as string | undefined;
+      if (!sectionId) return;
+
+      switch (msg.type) {
+        case 'EDITOR_SELECT_SECTION': {
+          const tabEntry = Object.entries(TAB_TO_SECTION).find(([, v]) => v === sectionId);
+          if (tabEntry) {
+            handleTabChange(tabEntry[0]);
+          } else {
+            handleTabChange(`custom-${sectionId}`);
+          }
+          break;
+        }
+        case 'EDITOR_TOGGLE_SECTION': {
+          const enabled = msg.enabled as boolean;
+          if (isHomePage) {
+            handleHomeSectionToggle(sectionId, enabled);
+          } else {
+            handlePageSectionToggle(sectionId, enabled);
+          }
+          break;
+        }
+        case 'EDITOR_DUPLICATE_SECTION': {
+          const sections = isHomePage ? orderedHomeSections : orderedPageSections;
+          const section = sections.find(s => s.id === sectionId);
+          if (section) {
+            if (isHomePage) handleHomeSectionDuplicate(section);
+            else handlePageSectionDuplicate(section);
+          }
+          break;
+        }
+        case 'EDITOR_DELETE_SECTION': {
+          const sections = isHomePage ? orderedHomeSections : orderedPageSections;
+          const section = sections.find(s => s.id === sectionId);
+          if (section) {
+            if (isHomePage) setDeleteTarget(section);
+            else handlePageSectionDelete(sectionId);
+          }
+          break;
+        }
+        case 'EDITOR_ADD_SECTION_AT': {
+          setShowAddDialog(true);
+          break;
+        }
+      }
+    };
+
+    window.addEventListener('message', handler);
+    return () => window.removeEventListener('message', handler);
+  }, [isHomePage, orderedHomeSections, orderedPageSections, handleTabChange, handleHomeSectionToggle, handlePageSectionToggle, handleHomeSectionDuplicate, handlePageSectionDuplicate, handlePageSectionDelete]);
+
   const getSelectedPageSections = useCallback((): SectionConfig[] => {
     if (isHomePage) return sectionsConfig?.homepage ?? [];
     return selectedPage?.sections ?? [];
@@ -585,7 +644,7 @@ export default function WebsiteSectionsHub() {
   // ─── Render ───
   return (
     <DashboardLayout hideFooter hideTopBar hideSidebar>
-      <div className="h-screen flex">
+      <div className="h-screen flex gap-3 p-3 bg-muted/30">
         {/* Structure Panel (280px) */}
         {!isMobile && (
           <StructurePanel
