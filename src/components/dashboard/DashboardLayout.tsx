@@ -154,6 +154,7 @@ interface DashboardLayoutProps {
   children: React.ReactNode;
   hideFooter?: boolean;
   hideTopBar?: boolean;
+  hideSidebar?: boolean;
 }
 
 type PlatformRole = 'platform_owner' | 'platform_admin' | 'platform_support' | 'platform_developer';
@@ -218,7 +219,7 @@ function NavHistoryArrows() {
   );
 }
 
-function DashboardLayoutInner({ children, hideFooter, hideTopBar }: DashboardLayoutProps) {
+function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [headerScrolled, setHeaderScrolled] = useState(false);
   const [headerHovered, setHeaderHovered] = useState(false);
@@ -922,6 +923,7 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar }: DashboardLay
   return (
     <div className={cn("bg-background", hideFooter ? "h-screen overflow-hidden" : "min-h-screen")}>
       {/* Desktop Sidebar */}
+      {!hideSidebar && (
       <aside 
         className={cn(
           "hidden lg:fixed lg:top-3 lg:bottom-3 lg:left-3 lg:z-50 lg:block lg:border lg:backdrop-blur-xl lg:overflow-hidden lg:shadow-sm transition-[width,background-color,border-color,border-radius] duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]",
@@ -956,16 +958,18 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar }: DashboardLay
           firstName={firstName}
         />
       </aside>
+      )}
 
       {/* Content wrapper - flex column when hideFooter for proper height chain */}
       <div className={cn(
         "w-full transition-[padding-left] duration-200 ease-in-out min-w-0 overflow-x-clip",
-        sidebarCollapsed ? "lg:pl-[88px]" : "lg:pl-[344px]",
+        hideSidebar ? "lg:pl-0" : (sidebarCollapsed ? "lg:pl-[88px]" : "lg:pl-[344px]"),
         hideFooter && "h-screen flex flex-col"
       )}>
       {/* Platform Incident Banner - above everything */}
       <IncidentBanner />
       {/* Mobile Header */}
+      {!hideSidebar && (
       <header className={cn(
         "lg:hidden sticky top-0 z-40 flex items-center justify-between h-16 px-4 border-b border-border bg-background",
         hideFooter && "shrink-0"
@@ -1087,6 +1091,7 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar }: DashboardLay
           </DropdownMenu>
         </div>
       </header>
+      )}
 
       {/* Impersonation Indicator Banner */}
       <AnimatePresence>

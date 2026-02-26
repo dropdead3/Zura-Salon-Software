@@ -14,7 +14,7 @@ import { ToggleInput } from './inputs/ToggleInput';
 import { CharCountInput } from './inputs/CharCountInput';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { triggerPreviewRefresh } from './LivePreviewPanel';
+import { triggerPreviewRefresh } from '@/lib/preview-utils';
 import { EditorCard } from './EditorCard';
 
 export function HeroEditor() {

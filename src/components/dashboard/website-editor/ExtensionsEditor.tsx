@@ -13,7 +13,7 @@ import { UrlInput } from './inputs/UrlInput';
 import { CharCountInput } from './inputs/CharCountInput';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { triggerPreviewRefresh } from './LivePreviewPanel';
+import { triggerPreviewRefresh } from '@/lib/preview-utils';
 import { EditorCard } from './EditorCard';
 
 const ICON_OPTIONS = [

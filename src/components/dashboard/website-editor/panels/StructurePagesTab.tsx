@@ -25,6 +25,7 @@ interface StructurePagesTabProps {
   onAddPage: () => void;
   onDeletePage?: (pageId: string) => void;
   onPageSettings?: (pageId: string) => void;
+  onDuplicatePage?: (pageId: string) => void;
 }
 
 export function StructurePagesTab({
@@ -34,6 +35,7 @@ export function StructurePagesTab({
   onAddPage,
   onDeletePage,
   onPageSettings,
+  onDuplicatePage,
 }: StructurePagesTabProps) {
   return (
     <div className="flex flex-col h-full">
@@ -88,6 +90,12 @@ export function StructurePagesTab({
                     <Settings className="h-3.5 w-3.5 mr-2" />
                     Settings
                   </DropdownMenuItem>
+                  {page.page_type !== 'home' && (
+                    <DropdownMenuItem onClick={() => onDuplicatePage?.(page.id)}>
+                      <Copy className="h-3.5 w-3.5 mr-2" />
+                      Duplicate
+                    </DropdownMenuItem>
+                  )}
                   {page.deletable && (
                     <DropdownMenuItem
                       className="text-destructive focus:text-destructive"

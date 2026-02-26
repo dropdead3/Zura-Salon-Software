@@ -34,7 +34,7 @@ import { PageSettingsEditor } from '@/components/dashboard/website-editor/PageSe
 import { PageTemplatePicker } from '@/components/dashboard/website-editor/PageTemplatePicker';
 import { SectionStyleEditor } from '@/components/dashboard/website-editor/SectionStyleEditor';
 import { AddSectionDialog } from '@/components/dashboard/website-editor/AddSectionDialog';
-import { triggerPreviewRefresh } from '@/components/dashboard/website-editor/LivePreviewPanel';
+import { triggerPreviewRefresh } from '@/lib/preview-utils';
 
 // Three-panel layout
 import { StructurePanel, type StructureMode } from '@/components/dashboard/website-editor/panels/StructurePanel';
@@ -70,6 +70,8 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { LayoutGrid } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -454,6 +456,28 @@ export default function WebsiteSectionsHub() {
     catch { toast.error('Failed to delete page'); }
   }, [pagesConfig, updatePages]);
 
+  const handleDuplicatePage = useCallback(async (pageId: string) => {
+    if (!pagesConfig) return;
+    const page = pagesConfig.pages.find(p => p.id === pageId);
+    if (!page || page.page_type === 'home') return;
+    const newId = generatePageId();
+    const newPage: PageConfig = {
+      ...page,
+      id: newId,
+      slug: `${page.slug}-copy`,
+      title: `${page.title} (Copy)`,
+      deletable: true,
+      sections: page.sections.map(s => ({ ...s, id: generateSectionId() })),
+    };
+    try {
+      await updatePages.mutateAsync({ pages: [...pagesConfig.pages, newPage] });
+      toast.success(`"${page.title}" duplicated`);
+      setSelectedPageId(newId);
+      setActiveTab('page-settings');
+      setStructureMode('layers');
+    } catch { toast.error('Failed to duplicate page'); }
+  }, [pagesConfig, updatePages]);
+
   const handleUpdatePageSettings = useCallback(async (updatedPage: PageConfig) => {
     if (!pagesConfig) return;
     await updatePages.mutateAsync({ pages: pagesConfig.pages.map(p => p.id === updatedPage.id ? updatedPage : p) });
@@ -527,9 +551,40 @@ export default function WebsiteSectionsHub() {
     activeTab.startsWith('custom-')
   );
 
+  // ─── Inspector breadcrumb ───
+  const inspectorBreadcrumb = useMemo(() => {
+    const pageName = selectedPage?.title || 'Home';
+    if (activeTab === 'page-settings') return [pageName, 'Page Settings'];
+    if (activeTab === 'navigation') return ['Navigation'];
+    // Find section label
+    const sections = isHomePage ? orderedHomeSections : orderedPageSections;
+    if (activeTab.startsWith('custom-')) {
+      const sectionId = activeTab.replace('custom-', '');
+      const section = sections.find(s => s.id === sectionId);
+      return section ? [pageName, section.label] : [pageName];
+    }
+    // Built-in section
+    const sectionId = TAB_TO_SECTION[activeTab];
+    if (sectionId) {
+      const section = sections.find(s => s.id === sectionId);
+      return section ? [pageName, section.label] : [pageName, activeTab];
+    }
+    return [];
+  }, [activeTab, selectedPage, isHomePage, orderedHomeSections, orderedPageSections]);
+
+  // Mobile inspector state
+  const [showMobileInspector, setShowMobileInspector] = useState(false);
+
+  // Auto-show mobile inspector when a section is selected
+  useEffect(() => {
+    if (isMobile && hasInspectorContent) {
+      setShowMobileInspector(true);
+    }
+  }, [activeTab, isMobile, hasInspectorContent]);
+
   // ─── Render ───
   return (
-    <DashboardLayout hideFooter hideTopBar>
+    <DashboardLayout hideFooter hideTopBar hideSidebar>
       <div className="h-screen flex">
         {/* Structure Panel (280px) */}
         {!isMobile && (
@@ -546,6 +601,7 @@ export default function WebsiteSectionsHub() {
                 onAddPage={handleAddPage}
                 onDeletePage={handleDeletePage}
                 onPageSettings={handlePageSettings}
+                onDuplicatePage={handleDuplicatePage}
               />
             )}
             {structureMode === 'layers' && (
@@ -594,7 +650,7 @@ export default function WebsiteSectionsHub() {
             <div className="absolute left-0 top-0 bottom-0 w-[300px] bg-background border-r shadow-xl overflow-auto" onClick={e => e.stopPropagation()}>
               <StructurePanel mode={structureMode} onModeChange={handleStructureModeChange} onSearchSelect={(tab) => { handleTabChange(tab); setShowMobileStructure(false); }}>
                 {structureMode === 'pages' && (
-                  <StructurePagesTab pages={pagesConfig?.pages ?? []} selectedPageId={selectedPageId} onSelectPage={(id) => { handlePageChange(id); setShowMobileStructure(false); }} onAddPage={handleAddPage} onDeletePage={handleDeletePage} onPageSettings={handlePageSettings} />
+                  <StructurePagesTab pages={pagesConfig?.pages ?? []} selectedPageId={selectedPageId} onSelectPage={(id) => { handlePageChange(id); setShowMobileStructure(false); }} onAddPage={handleAddPage} onDeletePage={handleDeletePage} onPageSettings={handlePageSettings} onDuplicatePage={handleDuplicatePage} />
                 )}
                 {structureMode === 'layers' && (
                   <StructureLayersTab isHomePage={isHomePage} activeTab={activeTab} onTabChange={(tab) => { handleTabChange(tab); setShowMobileStructure(false); }} homeSections={orderedHomeSections} onHomeSectionsReorder={saveSections} onHomeSectionToggle={handleHomeSectionToggle} onHomeSectionDuplicate={handleHomeSectionDuplicate} onHomeSectionDelete={(section) => setDeleteTarget(section)} pageSections={orderedPageSections} onPageSectionsReorder={handlePageSectionReorder} onPageSectionToggle={handlePageSectionToggle} onPageSectionDuplicate={handlePageSectionDuplicate} onPageSectionDelete={(section) => handlePageSectionDelete(section.id)} pageTitle={selectedPage?.title} onAddSection={() => setShowAddDialog(true)} />
@@ -622,14 +678,31 @@ export default function WebsiteSectionsHub() {
           onPreview={() => window.open(openSiteUrl, '_blank')}
         />
 
-        {/* Inspector Panel (320px) */}
+        {/* Inspector Panel (320px) - Desktop */}
         {!isMobile && (
           <InspectorPanel
             hasSelection={!!hasInspectorContent}
             selectionKey={activeTab}
+            breadcrumb={inspectorBreadcrumb}
           >
             {renderEditor()}
           </InspectorPanel>
+        )}
+
+        {/* Inspector Panel - Mobile Bottom Sheet */}
+        {isMobile && (
+          <Drawer open={showMobileInspector} onOpenChange={setShowMobileInspector}>
+            <DrawerContent className="max-h-[80vh]">
+              <DrawerHeader className="pb-2">
+                <DrawerTitle className="text-sm font-sans">
+                  {inspectorBreadcrumb.join(' → ') || 'Inspector'}
+                </DrawerTitle>
+              </DrawerHeader>
+              <ScrollArea className="flex-1 px-4 pb-4 max-h-[65vh]">
+                {renderEditor()}
+              </ScrollArea>
+            </DrawerContent>
+          </Drawer>
         )}
 
         {/* Unsaved Changes Dialog */}

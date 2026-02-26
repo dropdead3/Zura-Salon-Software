@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Link2, Instagram, Facebook, Twitter, Youtube, Linkedin, Plus, Trash2, PanelBottom } from 'lucide-react';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
-import { triggerPreviewRefresh } from './LivePreviewPanel';
+import { triggerPreviewRefresh } from '@/lib/preview-utils';
 import { toast } from 'sonner';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';

@@ -13,7 +13,7 @@ import { ToggleInput } from './inputs/ToggleInput';
 import { UrlInput } from './inputs/UrlInput';
 import { CharCountInput } from './inputs/CharCountInput';
 import { useDebounce } from '@/hooks/use-debounce';
-import { triggerPreviewRefresh } from './LivePreviewPanel';
+import { triggerPreviewRefresh } from '@/lib/preview-utils';
 import { EditorCard } from './EditorCard';
 
 export function NewClientEditor() {
