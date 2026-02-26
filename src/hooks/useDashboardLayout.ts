@@ -139,6 +139,10 @@ function migrateLayout(layout: DashboardLayout, pinnedCards: string[]): Dashboar
     };
   }
   
+  // Deduplicate sections and sectionOrder to clean up any dirty stored data
+  migrated.sections = [...new Set(migrated.sections)];
+  migrated.sectionOrder = [...new Set(migrated.sectionOrder)];
+
   return migrated;
 }
 

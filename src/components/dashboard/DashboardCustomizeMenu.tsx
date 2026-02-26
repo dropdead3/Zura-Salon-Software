@@ -255,6 +255,7 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
     
     // Add items from saved order that are valid (either a section or a pinned card entry)
     for (const id of savedOrder) {
+      if (result.includes(id)) continue;
       if (sectionIds.includes(id)) {
         result.push(id);
       } else if (isPinnedCardEntry(id)) {
