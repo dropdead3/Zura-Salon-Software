@@ -1,82 +1,79 @@
 
 
-## Enhance AI Insights: Financial Impact, Trends, Benchmarks, Urgency, Effort, and Staff Callouts
+## Prompt Review: Zura Insights Intelligence Engine Build Spec
 
-### Overview
-Enrich each insight with six new data dimensions so salon owners can instantly see dollar impact, direction, context, urgency, effort, and who to talk to. Requires changes to both the backend (AI prompt + tool schema) and frontend (InsightCard rendering).
+### What's Good About This Prompt
 
-### Files Changed
+Strong structural thinking. The "brick by brick" layered approach is exactly right -- building logic before UI prevents the most common mistake in dashboard projects. The insight object model is well-conceived, and the priority scoring formula with weighted factors is a solid decision-making framework. The emphasis on dollarized impact over vague advisory statements aligns perfectly with Zura's doctrine of "ranked leverage is value."
 
-| File | Action |
+### Why There's a Better Way
+
+This prompt has a fundamental architecture problem: **it conflates server-side computation with AI-generated output**. Your current system sends raw business data to an LLM and gets back structured insights via tool calling. This prompt asks the LLM to also compute priority scores, run linear regressions, track state transitions, and maintain longitudinal patterns -- tasks that LLMs should never own.
+
+Here's the split that would produce better results:
+
+**What the AI should do**: Pattern recognition, natural language framing, connecting dots across domains, identifying which levers matter based on contextual judgment.
+
+**What deterministic code should do**: Priority scoring, dollar calculations, trend projections, state management, feedback loops, confidence scoring from data volume.
+
+### Specific Issues
+
+1. **Priority Scoring Engine (Brick 2)**: The weighted formula is good but should be computed server-side in the edge function *after* the AI returns insights, not by the AI. LLMs are unreliable at consistent math. The formula should live in TypeScript.
+
+2. **Impact Calculation Modules (Brick 3)**: The rebooking gap, retail gap, and utilization loss formulas are already partially computed in your edge function's data context (attachment rate, rebook rate, staff count). These should be pre-computed *before* the AI call and passed as enrichment context, then the AI assigns them to relevant insights.
+
+3. **Forecast Projection (Brick 4)**: Linear regression doesn't belong in an LLM call. You already have `revenue-forecasting` edge function and `revenue_forecasts` table. Wire the existing forecast data into insights rather than building a parallel system.
+
+4. **Action Object Model (Brick 6)**: The action types (marketing_campaign, training, pricing_adjustment) and execution paths are good, but the "execute directly" CTA is Phase 4 automation territory. Your doctrine says Phase 1 is structured visibility. Don't overbuild.
+
+5. **Tracking Mode (Brick 7)**: Requires persistent state (insight status, activation timestamps, recovery deltas). This needs a database table, not just a richer AI prompt. The current `ai_business_insights` table caches ephemeral AI output -- tracking requires a separate `insight_actions` table.
+
+6. **Feedback Loop (Brick 10)**: Good idea, but it's Phase 3+. Your doctrine explicitly says to not imply intelligence beyond current architecture.
+
+7. **Longitudinal Intelligence (Phase 6)**: Seasonal detection and behavioral correlation require months of accumulated data and statistical models -- not LLM calls. This is Phase 3 at earliest.
+
+### What Already Exists That This Prompt Ignores
+
+The prompt reads like it was written without knowledge of your codebase:
+- `InsightItem` type already has `estimatedImpact`, `trendDirection`, `comparisonContext`, `actByDate`, `effortLevel`, `staffMentions`
+- The edge function already gathers 12 parallel data queries (sales, appointments, forecasts, anomalies, staff, transactions, etc.)
+- The AI prompt already includes enrichment rules, industry benchmarks, and route references
+- Priority sorting by severity already exists in the drawer
+- The 2-column bento grid with severity-based visual hierarchy is already built
+
+### Recommended Approach
+
+Instead of this prompt, here's what would actually move the needle -- broken into what's buildable now vs. later:
+
+**Now (extends current architecture):**
+1. Add a deterministic `computePriorityScore()` function in the edge function that runs *after* AI returns insights, using the formula from Brick 2
+2. Pre-compute dollar impact values (rebooking gap, retail gap, utilization loss) from the data snapshot and pass them to the AI as context so it references real numbers
+3. Add `impact_estimate_numeric` (number) alongside the existing string `estimatedImpact` so the priority formula can use it
+4. Add a Business Health Summary Strip to the UI (5 category health indicators derived from active insights)
+5. Restructure InsightCard to lead with impact amount (large) instead of title
+
+**Later (requires new infrastructure):**
+6. `insight_actions` table for tracking state (active/tracking/resolved/dismissed)
+7. Action execution paths (marketing campaigns, training triggers)
+8. Feedback capture and weighting adjustment
+9. Longitudinal pattern detection
+
+### Files That Would Change
+
+| File | Change |
 |------|--------|
-| `supabase/functions/ai-business-insights/index.ts` | Extend tool schema with 6 new optional fields per insight; update AI prompt to generate them |
-| `src/hooks/useAIInsights.ts` | Extend `InsightItem` type with new fields |
-| `src/components/dashboard/AIInsightsDrawer.tsx` | Render new fields in InsightCard: impact badge, trend arrow, benchmark bar, urgency tag, effort pill, staff names |
+| `supabase/functions/ai-business-insights/index.ts` | Add pre-computed impact values, post-AI priority scoring, numeric impact field |
+| `src/hooks/useAIInsights.ts` | Extend InsightItem with `priorityScore`, `impactEstimateNumeric`, `impactType`, `forecastDelta7d` |
+| `src/components/dashboard/AIInsightsDrawer.tsx` | Add Business Health Strip, restructure InsightCard to lead with impact, sort by priorityScore |
+| New migration | `insight_actions` table for tracking state (Phase 2) |
 
-### Schema Additions (per insight object)
+### Prompting Advice
 
-```text
-estimatedImpact     string | null   "$2,246/week lost" or "$800/month opportunity"
-trendDirection      "improving" | "declining" | "stable" | null
-comparisonContext   string | null   "Industry avg: 30% · You: 17%"
-actByDate           string | null   "Within 3 days" or "This week"
-effortLevel         "quick_win" | "strategic" | null
-staffMentions       string[] | null  ["Sarah M.", "Jake R."]
-```
+When writing build specs for AI-assisted platforms:
+- **Separate deterministic logic from AI judgment** -- formulas, scoring, and state machines belong in code, not prompts
+- **Reference what exists** -- always audit the current codebase before speccing. Half of this spec re-invents existing functionality
+- **Phase-gate ruthlessly** -- your own doctrine says don't overbuild. Bricks 7-10 are Phase 3+ but the prompt presents them as immediate work
+- **Be specific about data flow** -- "compute real dollar impact" is vague. "Multiply `completedCount * avgTicket * (0.65 - rebookRate)` to get rebooking gap" is buildable
 
-### Backend Changes (`ai-business-insights/index.ts`)
-
-1. **Tool schema** — Add 6 optional properties to the `insights` array item schema
-2. **System prompt** — Add instructions:
-   - Always estimate dollar impact when revenue/cost data supports it (use weekly or monthly framing)
-   - Include trend direction based on week-over-week or period comparison
-   - Add comparison context: cite industry benchmarks or the salon's own historical average
-   - Set `actByDate` for time-sensitive issues (cancellation spikes, no-show patterns, upcoming capacity gaps)
-   - Tag `effortLevel`: "quick_win" for <30 min actions, "strategic" for multi-week initiatives
-   - Include `staffMentions` when insight relates to specific team members (from staff data cross-referenced with appointments)
-
-### Frontend Changes (`AIInsightsDrawer.tsx` — `InsightCard`)
-
-Below the description, render a compact metadata row:
-
-```text
-┌─────────────────────────────────────────────────────┐
-│ ↗ REVENUE PULSE                                     │
-│ Rebooking Rate Dropping Below Target                │
-│ Only 42% of clients rebooked vs 65% industry avg... │
-│                                                     │
-│ ↓ Declining · ~$2,246/wk lost · Industry: 65%       │
-│ ⚡ Quick Win · Act within 3 days · Sarah M., Jake R. │
-│                                                     │
-│ [How to improve]  [See in Analytics]                │
-└─────────────────────────────────────────────────────┘
-```
-
-- **Row 1**: Trend arrow (colored: green ↑, red ↓, gray →) + `estimatedImpact` in a subtle pill + `comparisonContext`
-- **Row 2**: Effort pill (⚡ Quick Win = green-tinted, 🎯 Strategic = blue-tinted) + `actByDate` with clock icon + staff names as subtle chips
-- All fields are optional — only render when non-null
-- Financial values wrapped in `BlurredAmount`
-
-### Type Changes (`useAIInsights.ts`)
-
-```typescript
-export interface InsightItem {
-  // existing fields...
-  estimatedImpact?: string | null;
-  trendDirection?: 'improving' | 'declining' | 'stable' | null;
-  comparisonContext?: string | null;
-  actByDate?: string | null;
-  effortLevel?: 'quick_win' | 'strategic' | null;
-  staffMentions?: string[] | null;
-}
-```
-
-### AI Prompt Additions (key excerpts)
-
-- "For every insight, estimate the weekly or monthly dollar impact. Use actual numbers from the data snapshot. Frame as loss ('~$X/wk lost') or opportunity ('~$X/mo opportunity')."
-- "Set trendDirection by comparing this week vs last week for the relevant metric."
-- "Include comparisonContext citing industry benchmarks: rebooking 65%, retail attachment 30%, no-show rate <5%, cancellation <10%."
-- "Set actByDate for insights where delay worsens the problem. Use 'Today', 'Within 3 days', 'This week', or 'This month'."
-- "Tag effortLevel: quick_win for actions completable in one session (<30 min), strategic for multi-week initiatives."
-- "When specific staff members are underperforming or excelling on the metric, include their display_name in staffMentions (max 3)."
+Would you like me to implement the "Now" items (priority scoring, pre-computed impacts, health summary strip, impact-led card layout)?
 
