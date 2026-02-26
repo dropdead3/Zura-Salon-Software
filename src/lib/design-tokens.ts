@@ -183,6 +183,26 @@ export const tokens = {
   },
 
   // ========================================
+  // DRAWER / SHEET TOKENS (Luxury Glass Bento)
+  // ========================================
+  drawer: {
+    /** Overlay: soft blur with reduced opacity black */
+    overlay: 'backdrop-blur-sm bg-black/40',
+    /** Content panel: glass bento aesthetic */
+    content: 'bg-card/80 backdrop-blur-xl border-border shadow-2xl',
+    /** Header: bottom-bordered with consistent padding */
+    header: 'p-5 pb-3 border-b border-border/40',
+    /** Scrollable body area */
+    body: 'p-5 flex-1 min-h-0 overflow-y-auto',
+    /** Footer: top-bordered with consistent padding */
+    footer: 'p-5 pt-3 border-t border-border/40',
+    /** Title: Termina, uppercase, tracked */
+    title: 'font-display text-sm tracking-wide uppercase',
+    /** Close button styling */
+    closeButton: 'rounded-full bg-muted/60 hover:bg-muted transition-colors',
+  },
+
+  // ========================================
   // SHINE STROKE TOKENS
   // ========================================
   shine: {
@@ -284,6 +304,12 @@ export function getTokenFor(context:
   | 'scrollbar-thumb'
   | 'shine-border'
   | 'shine-inner'
+  | 'drawer-overlay'
+  | 'drawer-content'
+  | 'drawer-header'
+  | 'drawer-body'
+  | 'drawer-footer'
+  | 'drawer-title'
 ): string {
   const map: Record<string, string> = {
     'page-title': tokens.heading.page,
@@ -306,6 +332,12 @@ export function getTokenFor(context:
     'scrollbar-thumb': tokens.scrollbar.thumb,
     'shine-border': tokens.shine.border,
     'shine-inner': tokens.shine.inner,
+    'drawer-overlay': tokens.drawer.overlay,
+    'drawer-content': tokens.drawer.content,
+    'drawer-header': tokens.drawer.header,
+    'drawer-body': tokens.drawer.body,
+    'drawer-footer': tokens.drawer.footer,
+    'drawer-title': tokens.drawer.title,
   };
   return map[context] ?? tokens.body.default;
 }

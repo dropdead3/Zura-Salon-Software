@@ -58,7 +58,7 @@ export function MobileSubmitDrawer({ open, onOpenChange }: MobileSubmitDrawerPro
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="max-h-[90vh]">
-        <DrawerHeader className="text-left">
+        <DrawerHeader>
           <DrawerTitle>Submit a Feature Request</DrawerTitle>
           <DrawerDescription>
             Have an idea to improve {PLATFORM_NAME}? Share it with us!

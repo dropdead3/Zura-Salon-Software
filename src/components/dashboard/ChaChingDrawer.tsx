@@ -1,12 +1,11 @@
 import { useState } from 'react';
-import { DollarSign, X } from 'lucide-react';
+import { DollarSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { formatCurrency, formatRelativeTime } from '@/lib/format';
 import { useChaChingHistory } from '@/hooks/useChaChingHistory';
 import { SilverShineWrapper } from '@/components/ui/SilverShineWrapper';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 export function ChaChingDrawer() {
@@ -41,19 +40,16 @@ export function ChaChingDrawer() {
         )}
       </button>
 
-      {/* History drawer */}
+      {/* History drawer — inherits glass bento from Sheet primitive */}
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent
-          side="right"
-          className="bg-card/80 backdrop-blur-xl border-border/40 p-0 w-[360px] sm:max-w-[360px]"
-        >
-          <SheetHeader className="p-5 pb-3 border-b border-border/40">
+        <SheetContent side="right" className="w-[360px] sm:max-w-[360px]">
+          <SheetHeader>
             <div className="flex items-center gap-3">
               <div className={tokens.card.iconBox}>
                 <DollarSign className={tokens.card.icon} />
               </div>
               <div>
-                <SheetTitle className="font-display text-sm tracking-wide uppercase">
+                <SheetTitle>
                   Cha-Ching History
                 </SheetTitle>
                 <p className="text-xs text-muted-foreground mt-0.5">
@@ -76,7 +72,7 @@ export function ChaChingDrawer() {
               ) : (
                 notifications.map((item) => (
                   <SilverShineWrapper key={item.id} variant="card">
-                    <div className="flex items-center gap-3 bg-card/80 backdrop-blur-xl rounded-xl p-3">
+                    <div className="flex items-center gap-3 bg-card-inner rounded-xl p-3">
                       <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-success/15 flex items-center justify-center">
                         <DollarSign className="w-4 h-4 text-success" />
                       </div>
