@@ -1,62 +1,51 @@
 
 
-## Add Today's Prep as a Default Stylist Dashboard Section
+## Add Status Badges and Action Prompts to Today's Prep Card
 
 ### What This Does
-Adds a "Today's Prep" card directly on the Command Center dashboard for stylists, showing a compact preview of their upcoming appointments with client context (visit count, CLV tier, last service). This eliminates the need to navigate to a separate page for quick pre-appointment awareness.
+Each appointment row in the compact Today's Prep dashboard card will now display the appointment status (Booked, Confirmed, Checked In, etc.) as a colored badge, along with a contextual action prompt for unconfirmed appointments telling the stylist what to do next (e.g., "Call to confirm").
 
-### Changes Required
+### Current State
+- The `useTodayPrep` hook already fetches `status` for every appointment and filters out cancelled/no-show
+- The `TodaysPrepSection` component currently shows: time, client name, CLV tier, visit count
+- `APPOINTMENT_STATUS_BADGE` tokens already exist in `design-tokens.ts` with `bg`, `text`, `border`, and `label` for each status
 
-**1. Dashboard Section Definition** — `src/components/dashboard/DashboardCustomizeMenu.tsx`
-- Add a new section entry `todays_prep` with `ClipboardCheck` icon, description "Pre-visit client prep", and `isVisible: (ctx) => ctx.hasStylistRole`
-- Place it after `quick_stats` in the sections list (natural flow: stats → prep → schedule)
+### Changes
 
-**2. Default Layout Updates** — `src/hooks/useDashboardLayout.ts`
-- Add `'todays_prep'` to `DEFAULT_LAYOUT.sections` and `DEFAULT_LAYOUT.sectionOrder` (after `quick_stats`)
-- Add migration logic: if existing layout doesn't include `todays_prep`, splice it in after `quick_stats` (so existing users get it automatically)
+**Single file edit**: `src/components/dashboard/TodaysPrepSection.tsx`
 
-**3. Stylist Template Update** — Database migration
-- Update the `dashboard_layout_templates` row for `role_name = 'stylist'` to include `todays_prep` in its sections array (after `quick_actions`)
+1. Import `APPOINTMENT_STATUS_BADGE` from `@/lib/design-tokens` and `Phone, MessageSquare` icons from `lucide-react`
 
-**4. Compact Prep Component** — New: `src/components/dashboard/TodaysPrepSection.tsx`
-- A compact card that reuses the existing `useTodayPrep` hook
-- Shows a summary list of today's appointments: time, client name, CLV tier badge, visit count, last service
-- "View Full Prep" link at the bottom navigates to `/dashboard/today-prep`
-- Wrapped in `VisibilityGate` with `elementKey="todays_prep"`
-- Styled consistently with other dashboard sections (Card with rounded-xl, font-display header)
+2. Add a status-to-action mapping:
+   - `booked` → "Confirm" with Phone icon (amber accent, most urgent)
+   - `pending` → "Confirm" with Phone icon
+   - `confirmed` → No action needed (green checkmark feel)
+   - `checked_in` → No action needed
+   - `completed` → No action needed
 
-**5. Dashboard Rendering** — `src/pages/dashboard/DashboardHome.tsx`
-- Add `todays_prep` entry to the section renderer map
-- Conditionally render only for stylist roles (`hasStylistRole`)
-- Import and render `TodaysPrepSection`
+3. For each appointment row, add:
+   - A compact status badge using `APPOINTMENT_STATUS_BADGE` colors (after the time, before client name) — `text-[10px]` pill style matching existing badge pattern
+   - For `booked`/`pending` status: a small "Confirm" action hint text with Phone icon, placed at the right side of the row, replacing the visit count position to keep the row clean
 
-### Layout Preview (Stylist Dashboard)
-
+4. Row layout becomes:
 ```text
-┌─────────────────────────────────┐
-│ Quick Actions                   │
-├─────────────────────────────────┤
-│ Quick Stats (4 tiles)           │
-├─────────────────────────────────┤
-│ Today's Prep  ← NEW            │
-│  9:00  Jane D.  Gold · 12 visits│
-│ 10:30  Mark T.  Silver · 4 vis  │
-│ 11:00  Sarah K. Bronze · 2 vis  │
-│        View Full Prep →         │
-├─────────────────────────────────┤
-│ Schedule & Tasks                │
-├─────────────────────────────────┤
-│ Client Engine                   │
-└─────────────────────────────────┘
+9:00 AM  [Booked]  Jane Doe  ★NEW  Gold  📞 Confirm
+10:30 AM [Confirmed] Mark T.        Silver  12 visits
 ```
+
+- Unconfirmed appointments get the action prompt instead of visit count (visit count is still visible on the full prep page)
+- Confirmed/checked-in appointments show visit count as before
+- The status badge is always visible regardless of confirmation state
+
+### No hook changes needed
+The `status` field is already available in the `PrepAppointment` interface and populated by the hook. The hook currently filters out `cancelled` and `no_show`, so the statuses that will appear are: `booked`, `pending`, `confirmed`, `checked_in`, `completed`.
+
+### Note on the filter
+The current hook filters `not('status', 'in', '("cancelled","no_show")')`. Since we want to show status context, this is correct — we only show actionable appointments. If you later want cancelled appointments visible for awareness, that would be a separate change to the hook.
 
 ### Files Changed
 
 | File | Action |
 |------|--------|
-| `src/components/dashboard/TodaysPrepSection.tsx` | Create — compact prep card component |
-| `src/components/dashboard/DashboardCustomizeMenu.tsx` | Edit — add `todays_prep` section config |
-| `src/hooks/useDashboardLayout.ts` | Edit — add to defaults + migration |
-| `src/pages/dashboard/DashboardHome.tsx` | Edit — render `todays_prep` section |
-| Database migration | Update stylist template to include `todays_prep` |
+| `src/components/dashboard/TodaysPrepSection.tsx` | Edit — add status badge + action prompt per row |
 
