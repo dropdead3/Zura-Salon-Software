@@ -17740,6 +17740,90 @@ export type Database = {
           },
         ]
       }
+      waitlist_entries: {
+        Row: {
+          client_email: string | null
+          client_id: string | null
+          client_name: string
+          client_phone: string | null
+          created_at: string
+          created_by: string
+          id: string
+          notes: string | null
+          offered_at: string | null
+          organization_id: string
+          preferred_date_end: string | null
+          preferred_date_start: string
+          preferred_stylist_id: string | null
+          preferred_time_end: string | null
+          preferred_time_start: string | null
+          priority: number
+          resolved_at: string | null
+          service_name: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          client_email?: string | null
+          client_id?: string | null
+          client_name: string
+          client_phone?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          notes?: string | null
+          offered_at?: string | null
+          organization_id: string
+          preferred_date_end?: string | null
+          preferred_date_start: string
+          preferred_stylist_id?: string | null
+          preferred_time_end?: string | null
+          preferred_time_start?: string | null
+          priority?: number
+          resolved_at?: string | null
+          service_name?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          client_email?: string | null
+          client_id?: string | null
+          client_name?: string
+          client_phone?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          notes?: string | null
+          offered_at?: string | null
+          organization_id?: string
+          preferred_date_end?: string | null
+          preferred_date_start?: string
+          preferred_stylist_id?: string | null
+          preferred_time_end?: string | null
+          preferred_time_start?: string | null
+          priority?: number
+          resolved_at?: string | null
+          service_name?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "waitlist_entries_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "phorest_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_entries_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       walk_in_queue: {
         Row: {
           assigned_at: string | null

@@ -16,6 +16,7 @@ import {
   Sparkles,
   FileText,
   Users,
+  ClipboardCheck,
 } from 'lucide-react';
 import { NavBadge } from '@/components/dashboard/NavBadge';
 import { Button } from '@/components/ui/button';
@@ -309,7 +310,24 @@ export function ScheduleHeader({
             </Tooltip>
           )}
 
-          {/* Settings Icon */}
+          {/* Today's Prep Button — only when viewing today */}
+          {isToday(currentDate) && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-[hsl(40,20%,92%)]/70 hover:text-[hsl(40,20%,92%)] hover:bg-[hsl(40,20%,92%)]/10"
+                  onClick={() => navigate('/dashboard/today-prep')}
+                >
+                  <ClipboardCheck className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                <p>Today's Prep</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
           <Tooltip>
             <TooltipTrigger asChild>
               <Button

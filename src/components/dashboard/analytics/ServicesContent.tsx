@@ -15,7 +15,7 @@ import {
 import {
   DollarSign, Scissors, TrendingUp, TrendingDown, Minus, Clock, Receipt,
   ArrowUpDown, BarChart3, Loader2, Target, Users, RefreshCw, ChevronDown,
-  AlertTriangle, Layers, Heart, ShoppingBag,
+  AlertTriangle, Layers, Heart, ShoppingBag, Sparkles,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -30,6 +30,7 @@ import { RevPerHourByCategoryChart } from '@/components/dashboard/sales/RevPerHo
 import { useServiceDemandTrend } from '@/hooks/useServiceDemandTrend';
 import { useServiceClientAnalysis } from '@/hooks/useServiceClientAnalysis';
 import { ServiceBundlingIntelligence } from '@/components/dashboard/sales/ServiceBundlingIntelligence';
+import { ServiceMenuIntelligence } from '@/components/dashboard/sales/ServiceMenuIntelligence';
 import { NewClientConversionCard } from '@/components/dashboard/analytics/NewClientConversionCard';
 import { ServiceCostsProfitsCard } from '@/components/dashboard/sales/ServiceCostsProfitsCard';
 import { useServiceRetailAttachment } from '@/hooks/useServiceRetailAttachment';
@@ -153,6 +154,7 @@ const SERVICES_SECTION_DEFS: CardDefinition[] = [
   { id: 'price_realization', label: 'Price Realization', icon: <DollarSign className="w-4 h-4" /> },
   { id: 'demand_trends', label: 'Service Demand Trends', icon: <TrendingUp className="w-4 h-4" /> },
   { id: 'service_pairings', label: 'Service Bundling Intelligence', icon: <Layers className="w-4 h-4" /> },
+  { id: 'service_menu_intelligence', label: 'Service Menu Intelligence', icon: <Sparkles className="w-4 h-4" /> },
   { id: 'service_costs_profits', label: 'Service Costs & Sales Profits', icon: <DollarSign className="w-4 h-4" /> },
   { id: 'retail_pairing', label: 'Retail Pairing Strength', icon: <ShoppingBag className="w-4 h-4" /> },
   { id: 'new_client_conversion', label: 'New Client Conversion', icon: <Users className="w-4 h-4" /> },
@@ -990,6 +992,12 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
       dateRange={dateRange}
       locationName={locationName}
     />
+  );
+
+  sections.service_menu_intelligence = (
+    <PinnableCard key="service_menu_intelligence" elementKey="services_menu_intelligence" elementName="Service Menu Intelligence" category="Analytics Hub - Services">
+      <ServiceMenuIntelligence locationId={locationId} />
+    </PinnableCard>
   );
 
   sections.service_costs_profits = (
