@@ -1,0 +1,286 @@
+import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { useViewAs } from '@/contexts/ViewAsContext';
+import { useHideNumbers } from '@/contexts/HideNumbersContext';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
+import { useUnreadAnnouncements } from '@/hooks/useUnreadAnnouncements';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { NotificationsPanel } from '@/components/dashboard/NotificationsPanel';
+import { ThemeToggle } from '@/components/dashboard/ThemeToggle';
+import { NextClientIndicator } from '@/components/dashboard/NextClientIndicator';
+import { TopBarSearch } from '@/components/dashboard/TopBarSearch';
+import { TopBarOverflowMenu } from '@/components/dashboard/TopBarOverflowMenu';
+import { OrganizationSwitcher } from '@/components/platform/OrganizationSwitcher';
+import {
+  ArrowLeft,
+  ArrowRight,
+  UserCircle,
+  LogOut,
+  Eye,
+  EyeOff,
+  Crown,
+  Shield,
+  Scissors,
+  Headset,
+  HandHelping,
+  User,
+  Bell,
+  ChevronDown,
+  X,
+} from 'lucide-react';
+import { useNavigationHistory } from '@/contexts/NavigationHistoryContext';
+import type { Database } from '@/integrations/supabase/types';
+import type React from 'react';
+
+type AppRole = Database['public']['Enums']['app_role'];
+
+// ─── Types ──────────────────────────────────────────────────
+interface NavItem {
+  href: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  permission?: string;
+  roles?: AppRole[];
+  platformRoles?: string[];
+}
+
+interface SuperAdminTopBarProps {
+  sidebarCollapsed: boolean;
+  hideFooter?: boolean;
+  headerHovered: boolean;
+  onHeaderHoverEnd: () => void;
+  filterNavItems: (items: NavItem[]) => NavItem[];
+  // Internal components passed from DashboardLayout
+  ViewAsToggle: React.ComponentType<{ asMenuItem?: boolean }>;
+  HideNumbersToggle: React.ComponentType;
+  getAccessLabel: () => string;
+  getAccessBadgeColor: () => string;
+  AccessIcon: React.ComponentType<{ className?: string }>;
+  // State
+  isAdmin: boolean;
+  isPlatformUser: boolean;
+  isStylistRole: boolean;
+  isStylistAssistantRole: boolean;
+  isViewingAsUser: boolean;
+  viewAsUser: { id: string; full_name: string; photo_url?: string | null } | null;
+}
+
+// ─── Nav History Arrows ─────────────────────────────────────
+function NavHistoryArrows() {
+  const { canGoBack, canGoForward, goBack, goForward } = useNavigationHistory();
+  return (
+    <>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-muted-foreground hover:text-foreground transition-all duration-150"
+            disabled={!canGoBack}
+            onClick={goBack}
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">Back</TooltipContent>
+      </Tooltip>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-muted-foreground hover:text-foreground transition-all duration-150"
+            disabled={!canGoForward}
+            onClick={goForward}
+          >
+            <ArrowRight className="w-4 h-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">Forward</TooltipContent>
+      </Tooltip>
+    </>
+  );
+}
+
+// ─── SuperAdminTopBar ───────────────────────────────────────
+export function SuperAdminTopBar({
+  sidebarCollapsed,
+  hideFooter,
+  headerHovered,
+  onHeaderHoverEnd,
+  filterNavItems,
+  ViewAsToggle,
+  HideNumbersToggle,
+  getAccessLabel,
+  getAccessBadgeColor,
+  AccessIcon,
+  isAdmin,
+  isPlatformUser,
+  isStylistRole,
+  isStylistAssistantRole,
+  isViewingAsUser,
+  viewAsUser,
+}: SuperAdminTopBarProps) {
+  const { user, signOut } = useAuth();
+  const { data: employeeProfile } = useEmployeeProfile();
+  const { data: unreadCount = 0 } = useUnreadAnnouncements();
+  const { hideNumbers, toggleHideNumbers } = useHideNumbers();
+  const { isViewingAs } = useViewAs();
+  const location = useLocation();
+
+  const showNextClient = isStylistRole || isStylistAssistantRole;
+  const currentUserId = isViewingAsUser && viewAsUser ? viewAsUser.id : user?.id;
+
+  return (
+    <div
+      className={cn(
+        "dashboard-top-bar hidden lg:block z-30 px-3 pt-3 pb-3",
+        hideFooter
+          ? "fixed top-0 right-0 z-50 transition-transform duration-300 ease-in-out"
+          : "sticky top-0",
+        hideFooter && !headerHovered && "-translate-y-full",
+        hideFooter && headerHovered && "translate-y-0",
+        hideFooter && "shrink-0"
+      )}
+      style={hideFooter ? { left: sidebarCollapsed ? '88px' : '344px' } : undefined}
+      onMouseLeave={onHeaderHoverEnd}
+    >
+      {/* Extended blur zone */}
+      <div
+        className="absolute inset-0 -bottom-8 backdrop-blur-md pointer-events-none"
+        style={{
+          maskImage: 'linear-gradient(to bottom, black 60%, transparent 100%)',
+          WebkitMaskImage: 'linear-gradient(to bottom, black 60%, transparent 100%)',
+        }}
+      />
+
+      {/* ── Three-Zone Bar ── */}
+      <div className="relative w-full max-w-none flex items-center h-14 px-6 bg-card/80 backdrop-blur-xl backdrop-saturate-150 border border-border rounded-full overflow-x-hidden">
+
+        {/* ── LEFT ZONE: Nav + Search ── */}
+        <div className="flex items-center gap-3 min-w-0 shrink">
+          <NavHistoryArrows />
+          {isPlatformUser && location.pathname.startsWith('/dashboard/platform') && (
+            <OrganizationSwitcher compact />
+          )}
+        </div>
+
+        {/* ── CENTER ZONE: Search + Status ── */}
+        <div className="flex-1 flex items-center justify-center gap-3 min-w-0 px-4" style={{ flexShrink: 2 }}>
+          {/* Search — responsive max-width */}
+          <div className="min-w-0 w-full max-w-2xl 2xl:max-w-2xl xl:max-w-xl lg:max-w-[320px]">
+            <TopBarSearch filterNavItems={filterNavItems} />
+          </div>
+
+          {/* Next Client — visible ≥1280 only */}
+          {showNextClient && (
+            <div className="hidden 2xl:flex items-center min-w-0">
+              <NextClientIndicator userId={currentUserId} />
+            </div>
+          )}
+        </div>
+
+        {/* ── RIGHT ZONE: Admin Controls (never wraps) ── */}
+        <div className="flex items-center gap-2 shrink-0 flex-nowrap">
+
+          {/* Overflow menu — visible below 2xl, carries collapsed items */}
+          {(isPlatformUser || isAdmin) && (
+            <div className="2xl:hidden">
+              <TopBarOverflowMenu
+                userId={currentUserId}
+                showNextClient={showNextClient}
+                hideNumbers={hideNumbers}
+                toggleHideNumbers={toggleHideNumbers}
+                showThemeToggle={false}
+              />
+            </div>
+          )}
+
+          {/* Show/Hide $ — visible ≥2xl */}
+          {(isPlatformUser || isAdmin) && (
+            <div className="hidden 2xl:flex">
+              <HideNumbersToggle />
+            </div>
+          )}
+
+          {/* Role badge — responsive density */}
+          {(isPlatformUser || isAdmin) && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className={cn(
+                  "h-9 rounded-full inline-flex items-center gap-1.5 text-xs font-medium border transition-all duration-150",
+                  "px-3 xl:px-4",
+                  getAccessBadgeColor()
+                )}>
+                  <AccessIcon className="w-3 h-3" />
+                  {/* Full label ≥2xl, short ≥xl, icon-only below xl */}
+                  <span className="hidden 2xl:inline">{getAccessLabel()}</span>
+                  <span className="hidden xl:inline 2xl:hidden">
+                    {getAccessLabel() === 'Super Admin' ? 'Admin' : getAccessLabel()}
+                  </span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="xl:hidden">
+                {getAccessLabel()}
+              </TooltipContent>
+            </Tooltip>
+          )}
+
+          {/* View As — Tier 0, always visible */}
+          {isAdmin && <ViewAsToggle />}
+
+          {/* Theme toggle — visible ≥xl, in overflow below */}
+          <div className="hidden xl:flex">
+            <ThemeToggle />
+          </div>
+
+          {/* Notifications — Tier 0 */}
+          <NotificationsPanel unreadCount={unreadCount} />
+
+          {/* Avatar menu — Tier 0 */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full transition-all duration-150">
+                {employeeProfile?.photo_url ? (
+                  <Avatar className="h-7 w-7">
+                    <AvatarImage src={employeeProfile.photo_url} alt="Profile" />
+                    <AvatarFallback><UserCircle className="w-4 h-4" /></AvatarFallback>
+                  </Avatar>
+                ) : (
+                  <UserCircle className="w-4 h-4" />
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48 bg-popover border border-border">
+              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link to="/dashboard/profile" className="flex items-center gap-2 cursor-pointer">
+                  <UserCircle className="w-4 h-4" />
+                  View/Edit Profile
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={signOut} className="flex items-center gap-2 cursor-pointer text-destructive focus:text-destructive">
+                <LogOut className="w-4 h-4" />
+                Logout
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -53,6 +53,7 @@ import { TodaysQueueSection } from '@/components/dashboard/TodaysQueueSection';
 import { OperationsQuickStats } from '@/components/dashboard/operations/OperationsQuickStats';
 import { PinnedAnalyticsCard, getDateRange, type AnalyticsFilters, type DateRangeType } from '@/components/dashboard/PinnedAnalyticsCard';
 import { AnalyticsFilterBar } from '@/components/dashboard/AnalyticsFilterBar';
+import { CommandCenterControlRow } from '@/components/dashboard/CommandCenterControlRow';
 import { useDashboardVisibility } from '@/hooks/useDashboardVisibility';
 import { useUserLocationAccess } from '@/hooks/useUserLocationAccess';
 import { useQuickStats } from '@/hooks/useQuickStats';
@@ -720,33 +721,17 @@ function DashboardSections({
               return (
                 <React.Fragment key="compact-analytics-grid">
                   {hasPinnedAnalytics && (
-                    <div className="pt-6 pb-2">
-                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                        <div className="flex items-center gap-3">
-                          {isLeadership ? <AIInsightsDrawer /> : <PersonalInsightsDrawer />}
-                          <AnnouncementsDrawer isLeadership={isLeadership} />
-                          <LiveSessionIndicator locationId={analyticsFilters.locationId} />
-                        </div>
-                        <AnalyticsFilterBar
-                          locationId={analyticsFilters.locationId}
-                          onLocationChange={onLocationChange}
-                          dateRange={analyticsFilters.dateRange}
-                          onDateRangeChange={onDateRangeChange}
-                          accessibleLocations={accessibleLocations}
-                          canViewAggregate={canViewAggregate}
-                          compact={compact}
-                          onCompactChange={onCompactChange}
-                          leadingContent={
-                            <div className="flex items-center gap-1">
-                              {isLeadership && <PhorestSyncPopout />}
-                              <DashboardCustomizeMenu
-                                roleContext={{ isLeadership, hasStylistRole, isFrontDesk, isReceptionist }}
-                              />
-                            </div>
-                          }
-                        />
-                      </div>
-                    </div>
+                    <CommandCenterControlRow
+                      isLeadership={isLeadership}
+                      analyticsFilters={analyticsFilters}
+                      onLocationChange={onLocationChange}
+                      onDateRangeChange={onDateRangeChange}
+                      accessibleLocations={accessibleLocations}
+                      canViewAggregate={canViewAggregate}
+                      compact={compact}
+                      onCompactChange={onCompactChange}
+                      roleContext={{ isLeadership, hasStylistRole, isFrontDesk, isReceptionist }}
+                    />
                   )}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {pinnedCardIds.map(cId => (
@@ -790,33 +775,17 @@ function DashboardSections({
             return (
               <React.Fragment key="detailed-analytics-grid">
                 {hasPinnedAnalytics && (
-                  <div className="pt-6 pb-2">
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                      <div className="flex items-center gap-3">
-                        {isLeadership ? <AIInsightsDrawer /> : <PersonalInsightsDrawer />}
-                        <AnnouncementsDrawer isLeadership={isLeadership} />
-                        <LiveSessionIndicator locationId={analyticsFilters.locationId} />
-                      </div>
-                      <AnalyticsFilterBar
-                        locationId={analyticsFilters.locationId}
-                        onLocationChange={onLocationChange}
-                        dateRange={analyticsFilters.dateRange}
-                        onDateRangeChange={onDateRangeChange}
-                        accessibleLocations={accessibleLocations}
-                        canViewAggregate={canViewAggregate}
-                        compact={compact}
-                        onCompactChange={onCompactChange}
-                        leadingContent={
-                          <div className="flex items-center gap-1">
-                            {isLeadership && <PhorestSyncPopout />}
-                            <DashboardCustomizeMenu
-                              roleContext={{ isLeadership, hasStylistRole, isFrontDesk, isReceptionist }}
-                            />
-                          </div>
-                        }
-                      />
-                    </div>
-                  </div>
+                    <CommandCenterControlRow
+                      isLeadership={isLeadership}
+                      analyticsFilters={analyticsFilters}
+                      onLocationChange={onLocationChange}
+                      onDateRangeChange={onDateRangeChange}
+                      accessibleLocations={accessibleLocations}
+                      canViewAggregate={canViewAggregate}
+                      compact={compact}
+                      onCompactChange={onCompactChange}
+                      roleContext={{ isLeadership, hasStylistRole, isFrontDesk, isReceptionist }}
+                    />
                 )}
                 {groups.map((group, gi) => {
                   if (group.type === 'pair') {
