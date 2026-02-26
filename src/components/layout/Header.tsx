@@ -335,7 +335,7 @@ export function Header() {
             "container mx-auto px-6 lg:px-8 transition-colors duration-300",
             isOverDark ? "text-white [&_svg]:text-white" : "text-foreground"
           )}>
-            <div className="flex items-center justify-between h-14 lg:h-16 gap-4">
+            <div className="flex items-center justify-between h-9 lg:h-11 gap-4">
             {/* Logo */}
             <div className="w-40 lg:w-40 xl:w-56 shrink-0 flex items-center">
               <Link
