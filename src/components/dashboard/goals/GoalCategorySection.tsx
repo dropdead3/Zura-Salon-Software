@@ -1,5 +1,5 @@
 import { tokens } from '@/lib/design-tokens';
-import { cn } from '@/lib/utils';
+
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { GoalCard } from './GoalCard';
@@ -42,18 +42,18 @@ export function GoalCategorySection({
       </div>
 
       {goals.length === 0 ? (
-        <div className={cn(tokens.empty.container, 'py-8')}>
-          <p className={tokens.empty.description}>
-            No {GOAL_CATEGORY_LABELS[category].toLowerCase()} goals set yet.
+        <div className="flex items-center justify-between rounded-xl border border-dashed border-border/60 bg-muted/20 px-5 py-4">
+          <p className="font-sans text-sm text-muted-foreground">
+            No {GOAL_CATEGORY_LABELS[category].toLowerCase()} goals defined yet.
           </p>
           <Button
             variant="outline"
             size="sm"
-            className="mt-3"
+            className={tokens.button.cardAction}
             onClick={() => onAddGoal(category)}
           >
             <Plus className="w-3.5 h-3.5 mr-1.5" />
-            Set Your First Goal
+            Add Goal
           </Button>
         </div>
       ) : (

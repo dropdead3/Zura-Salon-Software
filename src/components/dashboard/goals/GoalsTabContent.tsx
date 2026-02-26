@@ -1,6 +1,8 @@
 import { useState, useRef, useCallback } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Target, Plus } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
+import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
 import { useOrganizationGoals, useDeleteOrganizationGoal, type OrganizationGoal, type GoalCategory } from '@/hooks/useOrganizationGoals';
 import { GoalsOverviewHeader } from './GoalsOverviewHeader';
 import { GoalCategorySection } from './GoalCategorySection';
@@ -67,42 +69,56 @@ export function GoalsTabContent() {
     );
   }
 
+  const hasAnyGoals = goals.length > 0;
+
   return (
     <div className="space-y-8">
       {/* Overview summary tiles */}
       <GoalsOverviewHeader goals={goals} onCategoryClick={handleCategoryClick} />
 
-      {/* Category sections */}
-      {CATEGORY_ORDER.map(cat => {
-        const catGoals = goals.filter(g => g.category === cat);
-        // For team category, also show the team summary card
-        if (cat === 'team') {
+      {!hasAnyGoals ? (
+        <EmptyState
+          icon={Target}
+          title="Set Your Organization Goals"
+          description="Define targets across revenue, profitability, client health, efficiency, and team metrics to track what matters most."
+          action={
+            <Button onClick={() => handleAddGoal('revenue')}>
+              <Plus className="w-4 h-4 mr-1.5" />
+              Add Your First Goal
+            </Button>
+          }
+        />
+      ) : (
+        CATEGORY_ORDER.map(cat => {
+          const catGoals = goals.filter(g => g.category === cat);
+          if (cat === 'team') {
+            return (
+              <div key={cat} className="space-y-4">
+                <GoalCategorySection
+                  category={cat}
+                  goals={catGoals}
+                  onAddGoal={handleAddGoal}
+                  onEditGoal={handleEditGoal}
+                  onDeleteGoal={handleDeleteGoal}
+                  sectionRef={(el) => { sectionRefs.current[cat] = el; }}
+                />
+                <TeamGoalsSummary />
+              </div>
+            );
+          }
           return (
-            <div key={cat} className="space-y-4">
-              <GoalCategorySection
-                category={cat}
-                goals={catGoals}
-                onAddGoal={handleAddGoal}
-                onEditGoal={handleEditGoal}
-                onDeleteGoal={handleDeleteGoal}
-                sectionRef={(el) => { sectionRefs.current[cat] = el; }}
-              />
-              <TeamGoalsSummary />
-            </div>
+            <GoalCategorySection
+              key={cat}
+              category={cat}
+              goals={catGoals}
+              onAddGoal={handleAddGoal}
+              onEditGoal={handleEditGoal}
+              onDeleteGoal={handleDeleteGoal}
+              sectionRef={(el) => { sectionRefs.current[cat] = el; }}
+            />
           );
-        }
-        return (
-          <GoalCategorySection
-            key={cat}
-            category={cat}
-            goals={catGoals}
-            onAddGoal={handleAddGoal}
-            onEditGoal={handleEditGoal}
-            onDeleteGoal={handleDeleteGoal}
-            sectionRef={(el) => { sectionRefs.current[cat] = el; }}
-          />
-        );
-      })}
+        })
+      )}
 
       {/* Setup Dialog */}
       <GoalSetupDialog
