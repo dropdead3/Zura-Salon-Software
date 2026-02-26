@@ -1,141 +1,65 @@
 
 
-## Editor Shell Responsiveness Plan
+## Diagnosis: Editor Preview Rendering Issues
 
-### Prompt Assessment
+### What I Found
 
-Excellent specification with clear breakpoint definitions and priority ordering for panel collapse. The "collapse inspector first, then structure" hierarchy is the right call. One refinement for future prompts: the "desktop preview must be true 16:10 ratio" requirement conflicts with how iframe previews work -- the iframe already renders a real website at whatever dimensions are available. Constraining it to a fixed aspect ratio would add letterboxing that makes the preview less useful, not more. The better approach is a max-width constraint with natural height fill, which is what pro tools (Webflow, Framer) actually do. The plan below implements the spirit of the request (constrained, centered, breathing room) without the letterboxing downside.
+I navigated to the Website Editor and observed the live preview iframe. After the initial load (which took a few seconds), the site **does render** -- I can see the announcement bar, navigation header, and sections like "Book Your Consult." However, there are two distinct problems:
 
----
+### Problem 1: Full-Bleed Sections Are Constrained
 
-### Current State
-
-The editor shell at line 647 of `WebsiteSectionsHub.tsx`:
+The `PageSectionRenderer` wraps the editor preview in:
 ```
-<div className="h-screen flex gap-3 p-3 bg-muted/30">
+<div className="zura-editor-preview px-4 sm:px-6 lg:px-8 py-6 space-y-0">
 ```
 
-- **Structure panel**: Fixed `w-[280px]` via `editorTokens.panel.structure` -- no min/max, no collapse
-- **Inspector panel**: Fixed `w-[320px]` via `editorTokens.panel.inspector` -- no min/max, no collapse
-- **Canvas panel**: `flex-1 min-w-0` -- takes whatever's left
-- **Mobile handling**: `useIsMobile()` at 768px -- binary switch to drawer/FAB, no intermediate breakpoints
-- **No resize handles**, no collapse buttons, no width persistence, no viewport frame for desktop preview
+This adds horizontal padding (`px-4` to `px-8`) that **constrains sections designed to be full-width/full-bleed** (Hero, Gallery, etc.). The Hero section, for example, uses `min-h-screen` or large viewport-relative heights with absolute positioning -- when wrapped in padding + a bento card with `p-6 sm:p-7 lg:p-8` internal padding, it either:
+- Gets cropped or collapses in height
+- Loses its full-bleed visual
+- Appears broken or missing
 
-At 1024px viewport: 280 + 320 + 24 (gaps+padding) = 624px consumed by panels → canvas gets ~400px. That's below any usable editing threshold.
+The `EditorSectionCard` wrapper itself adds another layer of padding and `overflow: hidden` via `rounded-[20px]`, which clips content that relies on extending beyond its container.
 
----
+### Problem 2: The Sticky Nav IS Present
 
-### Architecture
+Looking at the screenshot, the Header (DD logo, Services, About, etc.) **is** rendering. It's part of `Layout.tsx`, which wraps `PageSectionRenderer`. The sticky behavior may appear broken because:
+1. The `Layout.tsx` forces `theme-cream` and removes dark mode -- this is fine
+2. The iframe loads the full page including `Layout > Header > PageSectionRenderer`, so the nav should work
+3. But the `zura-editor-preview` padding creates a gap that makes it look different from the actual site
 
-#### New hook: `src/hooks/useEditorLayout.ts`
+### Root Cause
 
-A single responsive layout manager that:
-- Reads `window.innerWidth` via `ResizeObserver` on the shell container
-- Computes panel visibility states deterministically from width
-- Persists user-chosen panel widths to `localStorage`
-- Exposes collapse/expand toggle functions
-- Returns computed CSS values for each panel
+The editor preview wrapper (`zura-editor-preview` class + `EditorSectionCard` padding) was designed for a card-layout aesthetic but **conflicts with full-bleed section components** that expect to fill 100% width with no parent padding. The sections weren't built to render inside constrained padded containers.
 
-```text
-Breakpoint map:
-  ≥1440px  (wide):     structure=280-320, inspector=340-380, both visible
-  1200-1439 (standard): structure=260-280, inspector=320-340, both visible
-  1024-1199 (compact):  structure=260, inspector=collapsed (icon tab), canvas priority
-  768-1023  (tablet):   structure=collapsed (overlay), inspector=collapsed (overlay)
-  <768      (mobile):   existing drawer/FAB behavior (unchanged)
-```
+### Fix
 
-Panel collapse priority: inspector first, then structure.
+The fix needs to handle the tension between "floating bento cards" (which need padding/radius) and "full-bleed sections" (which need edge-to-edge rendering). The solution:
 
-#### Modified tokens: `editor-tokens.ts`
+1. **Remove outer horizontal padding from `zura-editor-preview`** -- let the bento cards extend to the iframe edges. The iframe itself already provides the boundary.
 
-Remove fixed `w-[280px]` and `w-[320px]` from panel tokens. Panels get their width from the layout manager via inline styles. Tokens retain glass/blur/radius/shadow only.
+2. **Make `EditorSectionCard` use `overflow-visible` instead of clipping** -- allow section content to render naturally within the card, with the card chrome (header controls, selection ring) as a visual overlay rather than a constraining box.
 
-#### Modified shell: `WebsiteSectionsHub.tsx`
+3. **For full-bleed sections (hero, gallery, etc.), use `p-0` padding on the card** and only show the bento card header/controls as an overlay. The card border/shadow provides visual separation without constraining the content.
 
-- Use `useEditorLayout` to get panel states and widths
-- Render collapse toggle buttons on each panel header
-- When inspector is collapsed: render a thin glass icon rail (40px wide, rounded-xl) with a button to expand
-- When structure is collapsed: render a thin glass icon rail (40px wide) with Pages/Layers/Nav icons
-- Canvas gets `minWidth: 0` with flexbox doing the work -- the layout manager prevents panels from stealing too much space by collapsing them first
+4. **Add a `fullBleed` flag** to `EditorSectionCard` for sections that are known full-width (hero, gallery, new_client, etc.) -- these get `p-0 overflow-hidden rounded-[20px]` (clip at the rounded corners only, no internal padding).
 
-#### Modified: `CanvasPanel.tsx`
+### Files to Change
 
-- Desktop viewport mode: constrain iframe to `max-w-[1280px]` centered with `mx-auto` and subtle padding (`px-6 py-4`), so the preview floats within the canvas rather than stretching edge-to-edge
-- Add "Fit" zoom controls to `CanvasHeader`: Fit / 100% / 75% -- these apply CSS `transform: scale()` to the iframe container only
-
-#### Modified: Panel components
-
-- `StructurePanel.tsx`: Accept `isCollapsed` prop → render icon rail when collapsed
-- `InspectorPanel.tsx`: Accept `isCollapsed` prop → render icon rail when collapsed
-- Both: Add collapse/expand button in their headers
-
----
-
-### Deliverables
-
-#### 1. `src/hooks/useEditorLayout.ts` (NEW)
-
-State machine for editor panel layout:
-
-- `containerRef` → attach to shell div, uses `ResizeObserver`
-- Computed state: `{ structureWidth, inspectorWidth, structureVisible, inspectorVisible, isCompact, isTablet, isMobile }`
-- `toggleStructure()`, `toggleInspector()` -- manual collapse/expand
-- Auto-collapse logic: if available canvas width < 820px after both panels, collapse inspector. If still < 820px, collapse structure.
-- Persists widths to `localStorage('editor-panel-widths')`
-- Returns `structureWidth` clamped to [260, 320], `inspectorWidth` clamped to [320, 380]
-
-#### 2. `editor-tokens.ts` updates
-
-- Remove `w-[280px]` from `panel.structure` → becomes `flex-shrink-0 bg-card/80 backdrop-blur-xl border border-border/30 rounded-xl shadow-[0_1px_3px_0_rgba(0,0,0,0.04)]`
-- Remove `w-[320px]` from `panel.inspector` → same treatment
-- Add new token `panel.collapsedRail`: `w-10 flex-shrink-0 bg-card/80 backdrop-blur-xl border border-border/30 rounded-xl shadow-[0_1px_3px_0_rgba(0,0,0,0.04)] flex flex-col items-center py-3 gap-2`
-
-#### 3. `StructurePanel.tsx` updates
-
-- Accept `isCollapsed: boolean` and `onToggleCollapse: () => void` props
-- When collapsed: render icon rail with three icon buttons (FileText, Layers, Navigation) stacked vertically, plus an expand chevron at top
-- When expanded: render as today, plus a collapse button (ChevronLeft icon) in the header area
-
-#### 4. `InspectorPanel.tsx` updates
-
-- Accept `isCollapsed: boolean` and `onToggleCollapse: () => void` props
-- When collapsed: render icon rail with a single expand button (ChevronLeft mirrored)
-- When expanded: render as today, plus a collapse button (ChevronRight icon) in the header
-
-#### 5. `CanvasPanel.tsx` updates
-
-- Desktop viewport: wrap iframe in `max-w-[1280px] mx-auto` container with `px-6 py-4` padding so the preview floats
-- Add zoom state: `'fit' | '100' | '75'` with `transform: scale()` on the iframe wrapper
-- Add zoom controls to `CanvasHeader` (three small buttons in the center area, after viewport toggle)
-
-#### 6. `CanvasHeader.tsx` updates
-
-- Add zoom level controls: Fit / 100% / 75% as a segmented control after the viewport toggle
-- Accept `zoomLevel` and `onZoomChange` props
-
-#### 7. `WebsiteSectionsHub.tsx` updates
-
-- Import and use `useEditorLayout`
-- Pass `ref` to shell container
-- Conditionally render structure/inspector based on layout state
-- Pass `isCollapsed` + `onToggleCollapse` to panel components
-- Apply computed widths via `style={{ width: structureWidth }}` instead of token classes
-- Keep existing mobile drawer/FAB logic for <768px (unchanged)
-
----
-
-### Files Summary
-
-| Action | File |
+| File | Change |
 |---|---|
-| Create | `src/hooks/useEditorLayout.ts` |
-| Modify | `src/components/dashboard/website-editor/editor-tokens.ts` |
-| Modify | `src/components/dashboard/website-editor/panels/StructurePanel.tsx` |
-| Modify | `src/components/dashboard/website-editor/panels/InspectorPanel.tsx` |
-| Modify | `src/components/dashboard/website-editor/panels/CanvasPanel.tsx` |
-| Modify | `src/components/dashboard/website-editor/panels/CanvasHeader.tsx` |
-| Modify | `src/pages/dashboard/admin/WebsiteSectionsHub.tsx` |
+| `src/components/home/PageSectionRenderer.tsx` | Remove outer `px-*` padding from `zura-editor-preview`. Pass `fullBleed` prop to `EditorSectionCard` for full-bleed section types. Add vertical spacing between cards via `space-y-5` or `gap-5`. |
+| `src/components/home/EditorSectionCard.tsx` | Accept `fullBleed` boolean prop. When true: use `p-0 overflow-hidden` instead of `p-6 sm:p-7 lg:p-8`. Always keep `rounded-[20px]` and the hover header overlay. |
 
-No public site files modified. No database changes.
+Two files. Targeted fix that preserves the bento card aesthetic while letting full-bleed sections render correctly.
+
+### Full-Bleed Section Types
+
+These section types should get `fullBleed={true}`:
+- `hero`
+- `gallery`
+- `new_client`
+- `brand_statement`
+- `extensions`
+
+All other sections (services_preview, popular_services, testimonials, faq, stylists, locations, brands, drink_menu) render fine with card padding.
 
