@@ -16,6 +16,12 @@ export interface InsightItem {
   actByDate?: string | null;
   effortLevel?: 'quick_win' | 'strategic' | null;
   staffMentions?: string[] | null;
+  /** Numeric dollar impact for deterministic priority scoring (computed server-side) */
+  impactEstimateNumeric?: number | null;
+  /** Classification of the impact */
+  impactType?: 'at_risk' | 'opportunity' | 'inefficiency' | null;
+  /** Deterministic priority score 0-100, computed server-side after AI returns */
+  priorityScore?: number | null;
 }
 
 export interface ActionItem {
