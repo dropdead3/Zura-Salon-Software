@@ -40,6 +40,7 @@ export function RevenueDonutChart({
 
   const total = serviceRevenue + productRevenue;
   const servicePercent = total > 0 ? Math.round((serviceRevenue / total) * 100) : 0;
+  const retailPercent = total > 0 ? Math.round((productRevenue / total) * 100) : 0;
 
   const headerContent = (
     <div className="flex items-center justify-between w-full">
@@ -109,7 +110,7 @@ export function RevenueDonutChart({
                 <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: 'hsla(35, 70%, 45%, 0.55)' }} />
                 <span className="text-muted-foreground">Retail</span>
               </div>
-              <span className="font-medium tabular-nums">{100 - servicePercent}%</span>
+              <span className="font-medium tabular-nums">{retailPercent}%</span>
             </div>
             <div className="pt-2 mt-2 border-t border-border/50 space-y-1">
               <div className="flex items-center justify-between gap-2">
@@ -118,7 +119,7 @@ export function RevenueDonutChart({
                   <MetricInfoTooltip description="Product Revenue ÷ Total Revenue × 100. Shows retail sales as a percentage of all revenue." />
                 </div>
                 <span className="font-medium text-foreground tabular-nums">
-                  {100 - servicePercent}%
+                  {retailPercent}%
                 </span>
               </div>
               <div className="flex items-center justify-between gap-2">
