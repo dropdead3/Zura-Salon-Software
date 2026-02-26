@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
+import { cn } from '@/lib/utils';
 import { Megaphone, X, Pin, ExternalLink, Settings, Plus, ChevronRight, ChevronDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -40,9 +41,13 @@ const normalizeUrl = (url: string): string => {
 
 interface AnnouncementsWidgetProps {
   isLeadership: boolean;
+  /** Override collapsed trigger label. Defaults to "Announcements". */
+  label?: string;
+  /** Render icon-only collapsed trigger with tooltip. */
+  iconOnly?: boolean;
 }
 
-export function AnnouncementsDrawer({ isLeadership }: AnnouncementsWidgetProps) {
+export function AnnouncementsDrawer({ isLeadership, label, iconOnly }: AnnouncementsWidgetProps) {
   const [expanded, setExpanded] = useState(false);
   const [locationFilter, setLocationFilter] = useState('all');
   const { user } = useAuth();
@@ -173,18 +178,22 @@ export function AnnouncementsDrawer({ isLeadership }: AnnouncementsWidgetProps) 
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
             onClick={() => setExpanded(true)}
-            className="inline-flex items-center gap-2 h-9 px-4 rounded-md border border-border bg-background text-sm font-sans hover:bg-muted/50 transition-colors cursor-pointer"
+            className={cn(
+              "inline-flex items-center gap-2 h-9 rounded-md border border-border bg-background text-sm font-sans hover:bg-muted/50 transition-colors cursor-pointer whitespace-nowrap",
+              iconOnly ? "px-2.5" : "px-4",
+            )}
+            title={iconOnly ? (label ?? 'Announcements') : undefined}
           >
-            <div className="w-5 h-5 rounded-md bg-primary/10 flex items-center justify-center">
+            <div className="w-5 h-5 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
               <Megaphone className="w-3 h-3 text-primary" />
             </div>
-            <span>Announcements</span>
+            {!iconOnly && <span className="truncate">{label ?? 'Announcements'}</span>}
             {unreadCount > 0 && (
-              <span className="min-w-[18px] h-[18px] rounded-full bg-red-500 text-white text-[10px] font-medium flex items-center justify-center px-1">
+              <span className="min-w-[18px] h-[18px] rounded-full bg-red-500 text-white text-[10px] font-medium flex items-center justify-center px-1 shrink-0">
                 {unreadCount > 9 ? '9+' : unreadCount}
               </span>
             )}
-            <ChevronDown className="w-3.5 h-3.5 text-muted-foreground ml-0.5" />
+            {!iconOnly && <ChevronDown className="w-3.5 h-3.5 text-muted-foreground ml-0.5 shrink-0" />}
           </motion.button>
         ) : (
           /* ── Expanded: Full card ── */

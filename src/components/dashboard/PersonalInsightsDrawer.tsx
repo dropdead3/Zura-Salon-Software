@@ -148,7 +148,12 @@ function PersonalActionCard({ item, index, onRequestGuidance }: { item: ActionIt
   );
 }
 
-export function PersonalInsightsDrawer() {
+interface PersonalInsightsDrawerProps {
+  /** Override the collapsed trigger label. */
+  label?: string;
+}
+
+export function PersonalInsightsDrawer({ label }: PersonalInsightsDrawerProps = {}) {
   const [expanded, setExpanded] = useState(false);
   const { data, generatedAt, isLoading, isRefreshing, isStale, refresh, cooldownRemaining } = usePersonalInsights();
   const [cooldown, setCooldown] = useState(0);
@@ -202,12 +207,12 @@ export function PersonalInsightsDrawer() {
           exit={{ opacity: 0, scale: 0.95 }}
           transition={{ duration: 0.2, ease: "easeOut" }}
           onClick={() => setExpanded(true)}
-          className="inline-flex items-center gap-2 h-9 px-4 rounded-md border border-border bg-background text-sm font-sans hover:bg-muted/50 transition-colors cursor-pointer"
+          className="inline-flex items-center gap-2 h-9 px-4 rounded-md border border-border bg-background text-sm font-sans hover:bg-muted/50 transition-colors cursor-pointer whitespace-nowrap"
         >
-          <div className="w-5 h-5 rounded-md bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center">
+          <div className="w-5 h-5 rounded-md bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center shrink-0">
             <Brain className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
           </div>
-          <span>My Insights</span>
+          <span className="truncate">{label ?? 'My Insights'}</span>
           {sentiment && SentimentIcon && (
             <div className={cn('w-4 h-4 rounded-full flex items-center justify-center', sentiment.bg)}>
               <SentimentIcon className={cn('w-2.5 h-2.5', sentiment.color)} />

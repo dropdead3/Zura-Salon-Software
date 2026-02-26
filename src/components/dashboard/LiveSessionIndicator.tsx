@@ -16,9 +16,11 @@ const ENTERPRISE_THRESHOLD = 40;
 
 interface LiveSessionIndicatorProps {
   locationId?: string;
+  /** Shorten labels for compact layouts */
+  compact?: boolean;
 }
 
-export function LiveSessionIndicator({ locationId }: LiveSessionIndicatorProps) {
+export function LiveSessionIndicator({ locationId, compact }: LiveSessionIndicatorProps) {
   const live = useLiveSessionSnapshot(locationId);
   const [drilldownOpen, setDrilldownOpen] = useState(false);
 
@@ -30,10 +32,10 @@ export function LiveSessionIndicator({ locationId }: LiveSessionIndicatorProps) 
   if (inSessionCount === 0) {
     if (!dayHadAppointments) return null;
     return (
-      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-background border border-border select-none">
-        <Moon className="h-3 w-3 text-muted-foreground" />
-        <span className="text-xs font-medium text-muted-foreground whitespace-nowrap font-sans">
-          Day concluded
+      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-background border border-border select-none whitespace-nowrap">
+        <Moon className="h-3 w-3 text-muted-foreground shrink-0" />
+        <span className="text-xs font-medium text-muted-foreground whitespace-nowrap font-sans truncate">
+          {compact ? 'Concluded' : 'Day concluded'}
         </span>
       </div>
     );
@@ -64,8 +66,10 @@ export function LiveSessionIndicator({ locationId }: LiveSessionIndicatorProps) 
             </span>
 
             {/* Count text */}
-            <span className="text-xs font-medium text-foreground whitespace-nowrap font-sans">
-              {activeStylistCount} stylists, {activeAssistantCount} assistants in service now
+            <span className="text-xs font-medium text-foreground whitespace-nowrap font-sans truncate">
+              {compact
+                ? `${activeStylistCount + activeAssistantCount} in service`
+                : `${activeStylistCount} stylists, ${activeAssistantCount} assistants in service now`}
             </span>
 
             {/* Stacked avatars (hidden for enterprise) */}

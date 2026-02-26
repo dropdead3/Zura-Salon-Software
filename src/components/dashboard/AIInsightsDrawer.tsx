@@ -212,8 +212,13 @@ function ActionItemCard({ item, index, onRequestGuidance }: { item: ActionItem; 
   );
 }
 
+interface AIInsightsDrawerProps {
+  /** Override the collapsed trigger label. Defaults to `${PLATFORM_NAME} Insights`. */
+  label?: string;
+}
+
 /** Self-contained expandable card widget for AI Business Insights */
-export function AIInsightsDrawer() {
+export function AIInsightsDrawer({ label }: AIInsightsDrawerProps = {}) {
   const [expanded, setExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState<InsightTab>('insights');
   const [leverOpen, setLeverOpen] = useState(false);
@@ -308,13 +313,13 @@ export function AIInsightsDrawer() {
               exit={{ opacity: 0, scale: 0.95 }}
               transition={{ duration: 0.2, ease: "easeOut" }}
               onClick={() => setExpanded(true)}
-              className="inline-flex items-center gap-2 h-9 px-4 rounded-md border border-border bg-background text-sm font-sans hover:bg-muted/50 transition-colors cursor-pointer"
+            className="inline-flex items-center gap-2 h-9 px-4 rounded-md border border-border bg-background text-sm font-sans hover:bg-muted/50 transition-colors cursor-pointer whitespace-nowrap"
             >
-              <div className="w-5 h-5 rounded-md bg-primary/10 flex items-center justify-center">
+              <div className="w-5 h-5 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
                 <Brain className="w-3 h-3 text-primary" />
               </div>
-              <span>{PLATFORM_NAME} Insights</span>
-              <ChevronDown className="w-3.5 h-3.5 text-muted-foreground ml-0.5" />
+              <span className="truncate">{label ?? `${PLATFORM_NAME} Insights`}</span>
+              <ChevronDown className="w-3.5 h-3.5 text-muted-foreground ml-0.5 shrink-0" />
             </motion.button>
           ) : (
             <motion.div

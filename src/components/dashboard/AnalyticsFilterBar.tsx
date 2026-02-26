@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { cn } from '@/lib/utils';
 import { MapPin, Calendar } from 'lucide-react';
 import { Tabs, FilterTabsList, FilterTabsTrigger } from '@/components/ui/tabs';
 import {
@@ -39,6 +40,8 @@ interface AnalyticsFilterBarProps {
   canViewAggregate?: boolean;
   compact?: boolean;
   onCompactChange?: (compact: boolean) => void;
+  /** Density mode from parent for width clamping */
+  density?: 'full' | 'short' | 'icon-some';
   leadingContent?: ReactNode;
 }
 
@@ -51,6 +54,7 @@ export function AnalyticsFilterBar({
   canViewAggregate = true,
   compact,
   onCompactChange,
+  density = 'full',
   leadingContent,
 }: AnalyticsFilterBarProps) {
   const { data: allLocations } = useActiveLocations();
@@ -63,7 +67,7 @@ export function AnalyticsFilterBar({
   const showLocationSelector = canViewAggregate || locationCount > 1;
 
   return (
-    <div className="flex flex-wrap items-center justify-end gap-2">
+    <div className="flex flex-nowrap items-center justify-end gap-2">
       {/* Simple / Detailed toggle */}
       {onCompactChange && (
         <Tabs
@@ -89,7 +93,10 @@ export function AnalyticsFilterBar({
       {/* Single-select for 1-2 locations */}
       {showLocationSelector && !useMultiSelect && (
         <Select value={locationId} onValueChange={onLocationChange}>
-          <SelectTrigger className="h-9 w-auto min-w-[180px] text-sm border-border">
+          <SelectTrigger className={cn(
+            "h-9 w-auto min-w-[140px] text-sm border-border whitespace-nowrap overflow-hidden",
+            density === 'full' ? 'max-w-[220px]' : 'max-w-[180px]',
+          )}>
             <MapPin className="w-4 h-4 mr-2 text-muted-foreground shrink-0" />
             <SelectValue placeholder="Select Location" />
           </SelectTrigger>
@@ -114,7 +121,10 @@ export function AnalyticsFilterBar({
 
       {/* Date Range Select */}
       <Select value={dateRange} onValueChange={(v) => onDateRangeChange(v as DateRangeType)}>
-        <SelectTrigger className="h-9 w-auto min-w-[160px] text-sm border-border">
+        <SelectTrigger className={cn(
+          "h-9 w-auto min-w-[130px] text-sm border-border whitespace-nowrap overflow-hidden",
+          density === 'full' ? 'max-w-[180px]' : 'max-w-[160px]',
+        )}>
           <Calendar className="w-4 h-4 mr-2 text-muted-foreground shrink-0" />
           <SelectValue />
         </SelectTrigger>
