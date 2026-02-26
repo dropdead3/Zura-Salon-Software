@@ -118,6 +118,7 @@ import Transactions from "./pages/dashboard/Transactions";
 import AppointmentsHub from "./pages/dashboard/AppointmentsHub";
 import Inventory from "./pages/dashboard/Inventory";
 import Register from "./pages/dashboard/Register";
+import TodayPrep from "./pages/dashboard/TodayPrep";
 import LoyaltyProgram from "./pages/dashboard/settings/LoyaltyProgram";
 import BoothRenters from "./pages/dashboard/admin/BoothRenters";
 
@@ -271,6 +272,7 @@ const App = () => (
                       <Route path="/dashboard/my-clients" element={<Navigate to="/dashboard/clients" replace />} />
                       <Route path="/dashboard/my-pay" element={<ProtectedRoute requiredPermission="view_my_pay"><MyPay /></ProtectedRoute>} />
                       <Route path="/dashboard/schedule" element={<ProtectedRoute requiredPermission="view_booking_calendar"><Schedule /></ProtectedRoute>} />
+                      <Route path="/dashboard/today-prep" element={<ProtectedRoute requiredPermission="view_booking_calendar"><TodayPrep /></ProtectedRoute>} />
                       <Route path="/dashboard/team-chat" element={<ProtectedRoute><TeamChat /></ProtectedRoute>} />
                       <Route path="/dashboard/changelog" element={<ProtectedRoute><Changelog /></ProtectedRoute>} />
                       <Route path="/dashboard/campaigns" element={<ProtectedRoute requiredPermission="view_team_overview"><Campaigns /></ProtectedRoute>} />
