@@ -1,16 +1,27 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 import { Bell } from 'lucide-react';
+import { tokens } from '@/lib/design-tokens';
 import { useSoundSettings } from '@/contexts/SoundSettingsContext';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
+import { useNotificationSound } from '@/hooks/useNotificationSound';
+import { toast } from 'sonner';
+import { ChaChingToast } from '@/components/dashboard/ChaChingToast';
 
 export function CheckoutAlertsSection() {
   const { chaChingEnabled, setChaChingEnabled } = useSoundSettings();
   const { data: profile } = useEmployeeProfile();
+  const { playAchievement } = useNotificationSound();
   const isEligible = profile?.is_primary_owner || profile?.is_super_admin;
 
   if (!isEligible) return null;
+
+  const handlePreview = () => {
+    playAchievement();
+    toast.custom((id) => <ChaChingToast amount={125} toastId={id} />, { duration: 5000 });
+  };
 
   return (
     <Card>
@@ -21,7 +32,7 @@ export function CheckoutAlertsSection() {
         </div>
         <CardDescription>Get notified when a client checks out.</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-medium">Cha-ching notifications</p>
@@ -32,6 +43,9 @@ export function CheckoutAlertsSection() {
             <Switch checked={chaChingEnabled} onCheckedChange={setChaChingEnabled} />
           </div>
         </div>
+        <Button type="button" variant="outline" size={tokens.button.card} onClick={handlePreview} disabled={!chaChingEnabled}>
+          Preview cha-ching
+        </Button>
       </CardContent>
     </Card>
   );
