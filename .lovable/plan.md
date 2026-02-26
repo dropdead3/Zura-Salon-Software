@@ -1,83 +1,40 @@
 
 
-## Fix Zura Insights: Full-Width Expansion Row Beneath Controls
+## Apply Full-Width Expansion Row Pattern to Announcements
 
 ### Problem
-AIInsightsDrawer (and PersonalInsightsDrawer) currently render their expanded panel inline within the control row's left cluster, pushing controls sideways and breaking layout.
+The Announcements card currently opens inline within the control row's left cluster (visible in the screenshot), pushing controls sideways — the same issue we just fixed for Insights.
 
-### Architecture Change
-
-Separate the **trigger button** from the **expansion panel**. The trigger stays in the control row; the panel renders as a full-width row beneath it.
+### Approach
+Follow the exact same split pattern used for AIInsightsDrawer: separate the trigger button from the panel content, lift expansion state to CommandCenterControlRow, and render the panel as a full-width expansion row beneath controls.
 
 ### Files Changed
 
 | File | Action |
 |------|--------|
-| `src/components/dashboard/AIInsightsDrawer.tsx` | Split into trigger + panel; expose `expanded`/`onToggle` props; panel renders full-width |
-| `src/components/dashboard/PersonalInsightsDrawer.tsx` | Same split pattern as AIInsightsDrawer |
-| `src/components/dashboard/CommandCenterControlRow.tsx` | Manage expanded state; render trigger in row, panel below as expansion row |
+| `src/components/dashboard/AnnouncementsDrawer.tsx` | Split into trigger + panel; add `expanded`/`onToggle` controlled mode; export `AnnouncementsPanel` |
+| `src/components/dashboard/CommandCenterControlRow.tsx` | Add `announcementsExpanded` state; render `AnnouncementsPanel` in expansion row below controls |
 
-### Structural Layout (After)
+### Changes
 
-```text
-┌─────────────────────────────────────────────────┐
-│ Controls Row: [Insights▾] [Announce] [Live]  …  │  ← stable, never shifts
-├─────────────────────────────────────────────────┤
-│ Insights Expansion Row (full-width, collapsible) │  ← animates height open/close
-│ ┌─────────────────────────────────────────────┐ │
-│ │  Glass bento card, rounded-xl, p-6, shadow  │ │
-│ │  max-h-[65vh] internal scroll               │ │
-│ └─────────────────────────────────────────────┘ │
-├─────────────────────────────────────────────────┤
-│ Dashboard Grid                                   │  ← shifts down smoothly
-└─────────────────────────────────────────────────┘
-```
-
-### Detailed Changes
-
-**1. AIInsightsDrawer.tsx**
-- Add optional props: `expanded?: boolean`, `onToggle?: () => void`
-- When `onToggle` is provided, the component operates in "controlled" mode
-- Split rendering: when collapsed, render only the `SilverShineButton` trigger (with chevron state: `ChevronDown` when closed, `ChevronUp` when open)
-- Export a new `AIInsightsPanel` component that contains just the expanded content (the glass card with tabs, insights, guidance, etc.)
-- Panel uses `motion.div` with height animation: `initial={{ height: 0, opacity: 0 }}` → `animate={{ height: 'auto', opacity: 1 }}` with `duration: 0.25, ease: [0.4, 0, 0.2, 1]`
-- Panel wrapper: `overflow-hidden` during animation, `rounded-xl shadow-lg border border-border/40 bg-card`
-- Internal scroll: `max-h-[65vh] overflow-y-auto` on content area
+**1. AnnouncementsDrawer.tsx**
+- Add `expanded?: boolean` and `onToggle?: () => void` props
+- When `onToggle` is provided (controlled mode), render only the collapsed trigger button with chevron state (up/down) and active ring styling when expanded
+- Move all expanded card content (header, announcement list, footer) into a new exported `AnnouncementsPanel` component
+- `AnnouncementsPanel` receives `onClose`, `isLeadership` props and contains the existing card UI (location filter, announcement list, footer link)
+- Panel uses same glass card styling: `rounded-xl shadow-lg border border-border/40 bg-card`, `max-h-[65vh] overflow-y-auto` for internal scroll
 - Escape key closes panel
-- Active button state: subtle accent background when expanded
+- Keep all existing data hooks (query, realtime, mark-as-read, auto-expand) inside the panel
+- Unread badge remains on the trigger button
 
-**2. PersonalInsightsDrawer.tsx**
-- Same controlled-mode pattern: `expanded?`, `onToggle?`, separate `PersonalInsightsPanel`
-- Identical animation and layout rules
+**2. CommandCenterControlRow.tsx**
+- Import `AnnouncementsPanel` from AnnouncementsDrawer
+- Add `announcementsExpanded` state + `toggleAnnouncements` / `closeAnnouncements` callbacks
+- When Insights opens, close Announcements (and vice versa) — only one expansion row open at a time
+- Pass `expanded` and `onToggle` to `AnnouncementsDrawer` trigger
+- Render `AnnouncementsPanel` inside the same `AnimatePresence` block, using the identical `motion.div` height animation (0→auto, 250ms, ease `[0.4, 0, 0.2, 1]`)
+- Panel wrapped in `pt-3` container matching Insights placement
 
-**3. CommandCenterControlRow.tsx**
-- Add `insightsExpanded` state
-- Pass `expanded` and `onToggle` to AIInsightsDrawer/PersonalInsightsDrawer triggers
-- After the controls row `div`, render `AnimatePresence` with the corresponding panel component
-- Panel is wrapped in a full-width container that respects parent padding
-- Uses `motion.div` with `layout` for smooth push-down of content below
-- No z-index hacks — panel is in normal document flow
-- Props interface unchanged (no breaking changes to DashboardHome)
-
-### Animation Spec
-
-- **Open**: Height 0→auto + opacity 0→1, 250ms, `ease-in-out`
-- **Close**: Reverse, 220ms
-- **Content below**: Shifts naturally via document flow (no explicit animation needed — the expansion row height change handles it)
-- No spring, no bounce, no elastic
-- `overflow: hidden` on the animating container to prevent content flash
-
-### Interaction Details
-
-- Clicking trigger toggles `insightsExpanded`
-- Close icon (X) in panel header closes
-- Escape key closes
-- Active state on trigger: `bg-accent/50` border highlight when open
-- Chevron rotates: down when closed, up when open
-
-### Responsive Behavior
-
-- Panel stays full-width at all breakpoints
-- At narrow widths, panel content scrolls internally (max-h-[65vh])
-- Never becomes a side panel or inline card
+### Mutual Exclusion
+Only one expansion row (Insights or Announcements) can be open at a time. Opening one closes the other. This prevents the expansion area from stacking two panels.
 
