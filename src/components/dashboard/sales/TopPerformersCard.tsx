@@ -108,6 +108,7 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
 
   if (isLoading) {
     return (
+      <TabsPrimitive.Root value={sortMode} onValueChange={(v) => setSortMode(v as SortMode)}>
       <Card className="h-full flex flex-col overflow-hidden border-border/40">
         <CardHeader className="px-4 pt-4 pb-1">{headerContent}</CardHeader>
         <CardContent className="px-4 pb-2 pt-0 flex-1">
@@ -124,11 +125,13 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
           </div>
         </CardContent>
       </Card>
+      </TabsPrimitive.Root>
     );
   }
 
   if (!performers.length) {
     return (
+      <TabsPrimitive.Root value={sortMode} onValueChange={(v) => setSortMode(v as SortMode)}>
       <Card className="h-full flex flex-col overflow-hidden border-border/40">
         <CardHeader className="px-4 pt-4 pb-1">{headerContent}</CardHeader>
         <CardContent className="px-4 pb-2 pt-0 flex-1 flex items-center justify-center">
@@ -137,6 +140,7 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
           </div>
         </CardContent>
       </Card>
+      </TabsPrimitive.Root>
     );
   }
 
