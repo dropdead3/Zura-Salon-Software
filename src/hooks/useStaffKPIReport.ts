@@ -50,7 +50,7 @@ export function useStaffKPIReport(dateFrom: string, dateTo: string, locationId?:
       // Get appointments for revenue
       let appointmentsQuery = supabase
         .from('phorest_appointments')
-        .select('phorest_staff_id, total_price, phorest_client_id')
+        .select('phorest_staff_id, total_price, phorest_client_id, appointment_date')
         .gte('appointment_date', dateFrom)
         .lte('appointment_date', dateTo)
         .not('total_price', 'is', null);
@@ -63,6 +63,7 @@ export function useStaffKPIReport(dateFrom: string, dateTo: string, locationId?:
 
       // Aggregate by staff
       const staffData: Record<string, StaffKPI> = {};
+      const staffVisitSets: Record<string, Set<string>> = {};
 
       // Process appointments for revenue
       appointments?.forEach(apt => {
@@ -83,10 +84,14 @@ export function useStaffKPIReport(dateFrom: string, dateTo: string, locationId?:
             retentionRate: 0,
             newClients: 0,
           };
+          staffVisitSets[mapping.userId] = new Set();
         }
 
         staffData[mapping.userId].totalRevenue += Number(apt.total_price) || 0;
         staffData[mapping.userId].totalServices += 1;
+        // Track unique client visits
+        const visitKey = `${apt.phorest_client_id}|${(apt as any).appointment_date}`;
+        staffVisitSets[mapping.userId].add(visitKey);
       });
 
       // Process metrics for KPIs
@@ -104,10 +109,11 @@ export function useStaffKPIReport(dateFrom: string, dateTo: string, locationId?:
         }
       });
 
-      // Calculate averages
-      Object.values(staffData).forEach(staff => {
-        staff.averageTicket = staff.totalServices > 0 
-          ? staff.totalRevenue / staff.totalServices 
+      // Calculate averages using unique visits
+      Object.entries(staffData).forEach(([userId, staff]) => {
+        const visits = staffVisitSets[userId]?.size || 0;
+        staff.averageTicket = visits > 0 
+          ? staff.totalRevenue / visits 
           : 0;
       });
 

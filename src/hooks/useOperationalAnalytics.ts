@@ -350,7 +350,7 @@ export function useAppointmentSummary(dateFrom: string, dateTo: string, location
     queryFn: async () => {
       let query = supabase
         .from('phorest_appointments')
-        .select('status')
+        .select('status, phorest_client_id, appointment_date')
         .gte('appointment_date', dateFrom)
         .lte('appointment_date', dateTo);
 
@@ -361,10 +361,27 @@ export function useAppointmentSummary(dateFrom: string, dateTo: string, location
       const { data, error } = await query;
       if (error) throw error;
 
-      const total = data?.length || 0;
-      const completed = data?.filter(a => a.status === 'completed').length || 0;
-      const noShow = data?.filter(a => a.status === 'no_show').length || 0;
-      const cancelled = data?.filter(a => a.status === 'cancelled').length || 0;
+      // Deduplicate by unique client visit (phorest_client_id + appointment_date)
+      // Use first status encountered per visit; prioritize completed > no_show > cancelled > other
+      const visitMap = new Map<string, string>();
+      const statusPriority: Record<string, number> = { completed: 3, no_show: 2, cancelled: 1 };
+      (data || []).forEach(a => {
+        const key = a.phorest_client_id
+          ? `${a.phorest_client_id}|${a.appointment_date}`
+          : `row-${Math.random()}`;
+        const existing = visitMap.get(key);
+        const currentPriority = statusPriority[a.status || ''] || 0;
+        const existingPriority = statusPriority[existing || ''] || 0;
+        if (!existing || currentPriority > existingPriority) {
+          visitMap.set(key, a.status || '');
+        }
+      });
+
+      const statuses = Array.from(visitMap.values());
+      const total = statuses.length;
+      const completed = statuses.filter(s => s === 'completed').length;
+      const noShow = statuses.filter(s => s === 'no_show').length;
+      const cancelled = statuses.filter(s => s === 'cancelled').length;
 
       return {
         total,

@@ -1102,12 +1102,17 @@ async function syncSalesTransactions(
                 total_revenue: 0,
                 total_transactions: 0,
                 total_discounts: 0,
+                clientVisits: new Set<string>(),
               });
             }
             
             const summary = dailySummaries.get(summaryKey);
             const amount = parseFloat(transactionRecord.total_amount) || 0;
             const discount = parseFloat(transactionRecord.discount_amount as any) || 0;
+            
+            // Track unique client visits instead of counting every line item
+            const clientId = purchase.clientId || purchase.client?.clientId || transactionRecord.client_name || 'unknown';
+            summary.clientVisits.add(clientId);
             
             const tax = parseFloat(transactionRecord.tax_amount as any) || 0;
             if (itemType === 'product') {
@@ -1118,7 +1123,7 @@ async function syncSalesTransactions(
               summary.service_revenue += amount;
             }
             summary.total_revenue += amount + tax;
-            summary.total_transactions += 1;
+            summary.total_transactions = summary.clientVisits.size;
             summary.total_discounts += discount;
           }
         }
