@@ -258,13 +258,13 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
         return q;
       });
 
-      // Build transaction items query for product revenue and tips
+      // Build transaction items query for product revenue, tips, and POS transaction count
       const txItems = await fetchAllBatched<{
-        total_amount: number | null; item_type: string | null; tip_amount: number | null;
+        total_amount: number | null; item_type: string | null; tip_amount: number | null; phorest_client_id: string | null;
       }>((from, to) => {
         let q = supabase
           .from('phorest_transaction_items')
-          .select('total_amount, item_type, tip_amount')
+          .select('total_amount, item_type, tip_amount, phorest_client_id')
           .not('total_amount', 'is', null)
           .range(from, to);
 
@@ -278,16 +278,21 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
         return q;
       });
 
-      // Aggregate product revenue and tips from transaction items
+      // Aggregate product revenue, tips, and POS transaction count from transaction items
       let productRevenue = 0;
       let totalProducts = 0;
+      const posClientIds = new Set<string>();
       for (const item of txItems) {
         const itemType = (item.item_type || '').toLowerCase();
         if (['product', 'retail'].includes(itemType)) {
           productRevenue += Number(item.total_amount) || 0;
           totalProducts += 1;
         }
+        if (item.phorest_client_id) {
+          posClientIds.add(item.phorest_client_id);
+        }
       }
+      const posTransactionCount = posClientIds.size;
 
       // Sum tips from appointments, deduplicating multi-service appointments
       // Phorest duplicates the same tip on every service line item within one visit
@@ -344,8 +349,8 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
         productRevenue,
         totalServices,
         totalProducts,
-        totalTransactions: uniqueVisits || totalServices,
-        averageTicket: uniqueVisits > 0 ? totalRevenue / uniqueVisits : (totalServices > 0 ? totalRevenue / totalServices : 0),
+        totalTransactions: posTransactionCount || uniqueVisits || totalServices,
+        averageTicket: posTransactionCount > 0 ? totalRevenue / posTransactionCount : (uniqueVisits > 0 ? totalRevenue / uniqueVisits : (totalServices > 0 ? totalRevenue / totalServices : 0)),
         totalDiscounts: 0,
         unmappedStaffRecords: 0,
         totalServiceHours,
