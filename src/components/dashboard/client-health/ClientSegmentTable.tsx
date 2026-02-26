@@ -8,6 +8,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Search, ArrowUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useFormatDate } from '@/hooks/useFormatDate';
+import { calculateCLV, CLV_TIERS } from '@/lib/clv-calculator';
+import { cn } from '@/lib/utils';
 import type { HealthClient } from '@/hooks/useClientHealthSegments';
 
 interface ClientSegmentTableProps {
@@ -16,7 +18,7 @@ interface ClientSegmentTableProps {
   onSelectionChange: (ids: Set<string>) => void;
 }
 
-type SortField = 'name' | 'last_visit' | 'total_spend' | 'days_inactive';
+type SortField = 'name' | 'last_visit' | 'total_spend' | 'days_inactive' | 'clv';
 
 export function ClientSegmentTable({ clients, selectedIds, onSelectionChange }: ClientSegmentTableProps) {
   const { formatDate } = useFormatDate();
@@ -24,6 +26,18 @@ export function ClientSegmentTable({ clients, selectedIds, onSelectionChange }: 
   const [search, setSearch] = useState('');
   const [sortField, setSortField] = useState<SortField>('days_inactive');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+
+  const getClientCLV = (c: HealthClient) => {
+    const clv = calculateCLV(c.total_spend, c.visit_count, c.first_visit, c.last_visit);
+    return clv.isReliable ? clv.annualValue : 0;
+  };
+
+  const getClientTier = (annualValue: number) => {
+    if (annualValue >= 2000) return CLV_TIERS.platinum;
+    if (annualValue >= 1000) return CLV_TIERS.gold;
+    if (annualValue >= 500) return CLV_TIERS.silver;
+    return CLV_TIERS.bronze;
+  };
 
   const filtered = useMemo(() => {
     let result = clients;
@@ -40,6 +54,7 @@ export function ClientSegmentTable({ clients, selectedIds, onSelectionChange }: 
       if (sortField === 'name') cmp = a.name.localeCompare(b.name);
       else if (sortField === 'last_visit') cmp = (a.last_visit || '').localeCompare(b.last_visit || '');
       else if (sortField === 'total_spend') cmp = a.total_spend - b.total_spend;
+      else if (sortField === 'clv') cmp = getClientCLV(a) - getClientCLV(b);
       else cmp = a.days_inactive - b.days_inactive;
       return sortDir === 'desc' ? -cmp : cmp;
     });
@@ -109,12 +124,17 @@ export function ClientSegmentTable({ clients, selectedIds, onSelectionChange }: 
                   Total Spend <ArrowUpDown className="h-3 w-3" />
                 </Button>
               </TableHead>
+              <TableHead>
+                <Button variant="ghost" size={tokens.button.inline} className="gap-1 -ml-3" onClick={() => handleSort('clv')}>
+                  CLV <ArrowUpDown className="h-3 w-3" />
+                </Button>
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                   No clients in this segment
                 </TableCell>
               </TableRow>
@@ -139,6 +159,21 @@ export function ClientSegmentTable({ clients, selectedIds, onSelectionChange }: 
                     </Badge>
                   </TableCell>
                   <TableCell className="text-xs font-medium">{formatCurrencyWhole(client.total_spend)}</TableCell>
+                  <TableCell>
+                    {(() => {
+                      const annualValue = getClientCLV(client);
+                      if (annualValue <= 0) return <span className="text-xs text-muted-foreground">—</span>;
+                      const tier = getClientTier(annualValue);
+                      return (
+                        <div className="flex items-center gap-1.5">
+                          <Badge className={cn("text-[10px] px-1.5 py-0 border-0", tier.color, tier.bgColor)}>
+                            {tier.label}
+                          </Badge>
+                          <span className="text-[10px] text-muted-foreground">{formatCurrencyWhole(Math.round(annualValue))}/yr</span>
+                        </div>
+                      );
+                    })()}
+                  </TableCell>
                 </TableRow>
               ))
             )}

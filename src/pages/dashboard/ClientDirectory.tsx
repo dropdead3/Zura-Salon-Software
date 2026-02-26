@@ -39,7 +39,7 @@ import { DuplicatePairCard } from '@/components/dashboard/clients/DuplicatePairC
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { differenceInDays } from 'date-fns';
-import { calculateCLV, formatCLVValue } from '@/lib/clv-calculator';
+import { calculateCLV, CLV_TIERS } from '@/lib/clv-calculator';
 import { toast } from 'sonner';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
@@ -1272,10 +1272,17 @@ export default function ClientDirectory() {
                                 client.last_visit,
                               );
                               if (!clv.isReliable) return null;
+                              const tier = clv.annualValue >= 2000 ? CLV_TIERS.platinum
+                                : clv.annualValue >= 1000 ? CLV_TIERS.gold
+                                : clv.annualValue >= 500 ? CLV_TIERS.silver
+                                : CLV_TIERS.bronze;
                               return (
-                                <p className="text-[10px] text-primary mt-0.5">
-                                  CLV {formatCLVValue(clv.lifetimeValue)}
-                                </p>
+                                <div className="flex items-center gap-1.5 mt-0.5">
+                                  <Badge className={cn("text-[10px] px-1.5 py-0 border-0", tier.color, tier.bgColor)}>
+                                    {tier.label}
+                                  </Badge>
+                                  <span className="text-[10px] text-muted-foreground">{formatCurrencyWhole(Math.round(clv.lifetimeValue))}</span>
+                                </div>
                               );
                             })()}
                           </div>
