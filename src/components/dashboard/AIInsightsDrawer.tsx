@@ -41,6 +41,7 @@ import {
   Clock,
   X,
   ChevronDown,
+  ChevronUp,
   ChevronRight,
   CheckCheck,
   Lightbulb,
@@ -216,11 +217,68 @@ function ActionItemCard({ item, index, onRequestGuidance }: { item: ActionItem; 
 interface AIInsightsDrawerProps {
   /** Override the collapsed trigger label. Defaults to `${PLATFORM_NAME} Insights`. */
   label?: string;
+  /** Controlled expanded state — when provided, component operates in controlled mode */
+  expanded?: boolean;
+  /** Toggle callback for controlled mode */
+  onToggle?: () => void;
 }
 
-/** Self-contained expandable card widget for AI Business Insights */
-export function AIInsightsDrawer({ label }: AIInsightsDrawerProps = {}) {
-  const [expanded, setExpanded] = useState(false);
+/** Self-contained expandable card widget for AI Business Insights.
+ *  When `expanded`/`onToggle` are provided, renders only the trigger button.
+ *  The panel content is rendered separately via `AIInsightsPanel`.
+ */
+export function AIInsightsDrawer({ label, expanded: controlledExpanded, onToggle }: AIInsightsDrawerProps) {
+  const isControlled = onToggle !== undefined;
+  const [internalExpanded, setInternalExpanded] = useState(false);
+  const expanded = isControlled ? (controlledExpanded ?? false) : internalExpanded;
+  const setExpanded = isControlled ? () => onToggle?.() : setInternalExpanded;
+
+  // In controlled mode, only render the trigger button
+  if (isControlled) {
+    return (
+      <VisibilityGate
+        elementKey="ai_business_insights"
+        elementName="AI Business Insights"
+        elementCategory="Dashboard Home"
+      >
+        <SilverShineButton
+          onClick={onToggle}
+          className={expanded ? 'ring-1 ring-accent/50' : undefined}
+        >
+          <div className="w-5 h-5 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
+            <Brain className="w-3 h-3 text-primary" />
+          </div>
+          <span className="truncate">{label ?? `${PLATFORM_NAME} Insights`}</span>
+          {expanded ? (
+            <ChevronUp className="w-3.5 h-3.5 text-muted-foreground ml-0.5 shrink-0" />
+          ) : (
+            <ChevronDown className="w-3.5 h-3.5 text-muted-foreground ml-0.5 shrink-0" />
+          )}
+        </SilverShineButton>
+      </VisibilityGate>
+    );
+  }
+
+  // Uncontrolled mode — original inline behavior (legacy fallback)
+  return (
+    <VisibilityGate
+      elementKey="ai_business_insights"
+      elementName="AI Business Insights"
+      elementCategory="Dashboard Home"
+    >
+      <SilverShineButton onClick={() => setExpanded(!expanded)}>
+        <div className="w-5 h-5 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
+          <Brain className="w-3 h-3 text-primary" />
+        </div>
+        <span className="truncate">{label ?? `${PLATFORM_NAME} Insights`}</span>
+        <ChevronDown className="w-3.5 h-3.5 text-muted-foreground ml-0.5 shrink-0" />
+      </SilverShineButton>
+    </VisibilityGate>
+  );
+}
+
+/** Full-width panel for AI Business Insights — rendered outside the control row */
+export function AIInsightsPanel({ onClose }: { onClose: () => void }) {
   const [activeTab, setActiveTab] = useState<InsightTab>('insights');
   const [leverOpen, setLeverOpen] = useState(false);
   const { data, generatedAt, isLoading, isRefreshing, isStale, refresh, cooldownRemaining } = useAIInsights();
@@ -256,12 +314,20 @@ export function AIInsightsDrawer({ label }: AIInsightsDrawerProps = {}) {
     if (zuraNav?.savedState && !activeGuidance) {
       const restored = zuraNav.restore();
       if (restored) {
-        setExpanded(true);
         setActiveGuidance(restored.guidance);
         setGuidanceText(restored.guidanceText);
       }
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Escape key closes panel
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [onClose]);
 
   useEffect(() => {
     if (cooldownRemaining <= 0) { setCooldown(0); return; }
@@ -300,270 +366,245 @@ export function AIInsightsDrawer({ label }: AIInsightsDrawerProps = {}) {
   const SentimentIcon = sentiment?.icon || Activity;
 
   return (
-    <VisibilityGate
-      elementKey="ai_business_insights"
-      elementName="AI Business Insights"
-      elementCategory="Dashboard Home"
-    >
-      <AnimatePresence mode="wait">
-          {!expanded ? (
-            <SilverShineButton onClick={() => setExpanded(true)}>
-              <div className="w-5 h-5 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
-                <Brain className="w-3 h-3 text-primary" />
-              </div>
-              <span className="truncate">{label ?? `${PLATFORM_NAME} Insights`}</span>
-              <ChevronDown className="w-3.5 h-3.5 text-muted-foreground ml-0.5 shrink-0" />
-            </SilverShineButton>
-          ) : (
+    <div className="w-full rounded-xl shadow-lg border border-border/40 bg-card overflow-hidden">
+      <div className="h-px bg-gradient-to-r from-transparent via-border/40 to-transparent" />
+
+      {!activeGuidance && (
+        <div className="p-4 pb-3">
+          <div className="flex items-center justify-between mb-3">
+            <span className="font-display text-sm tracking-[0.15em]">{PLATFORM_NAME.toUpperCase()} BUSINESS INSIGHTS</span>
+            <div className="flex items-center gap-1">
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => refresh(true)} disabled={isRefreshing || cooldown > 0}>
+                <RefreshCw className={cn('w-3.5 h-3.5', isRefreshing && 'animate-spin')} />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose}>
+                <X className="w-3.5 h-3.5" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="relative">
+        <AnimatePresence initial={false} mode="wait">
+          {!activeGuidance ? (
             <motion.div
-              key="expanded"
-              initial={{ opacity: 0, scale: 0.98, y: -4 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.98, y: -4 }}
-              transition={{ duration: 0.25, ease: "easeOut" }}
-              className="w-full rounded-xl shadow-lg border border-border/40 bg-card overflow-hidden"
+              key="insights"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
             >
-              <div className="h-px bg-gradient-to-r from-transparent via-border/40 to-transparent" />
-              
-              {!activeGuidance && (
-                <div className="p-4 pb-3">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="font-display text-sm tracking-[0.15em]">{PLATFORM_NAME.toUpperCase()} BUSINESS INSIGHTS</span>
-                    <div className="flex items-center gap-1">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => refresh(true)} disabled={isRefreshing || cooldown > 0}>
-                        <RefreshCw className={cn('w-3.5 h-3.5', isRefreshing && 'animate-spin')} />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setExpanded(false)}>
-                        <X className="w-3.5 h-3.5" />
-                      </Button>
+              <div
+                className="max-h-[65vh] overflow-y-auto"
+                onWheel={(e) => e.stopPropagation()}
+              >
+                {data && (
+                  <div className="px-4 pb-2">
+                    <div className="flex items-start gap-2">
+                      <div className={cn('flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center', sentiment?.bg)}>
+                        <SentimentIcon className={cn('w-3 h-3', sentiment?.color)} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-muted-foreground leading-snug">{blurFinancialValues(data.summaryLine)}</p>
+                        <p className="text-[10px] text-muted-foreground/70 mt-1">Based on your recent business data</p>
+                        {generatedAt && (
+                          <p className="text-[10px] text-muted-foreground/60 mt-0.5 flex items-center gap-1 flex-wrap">
+                            <Clock className="w-2.5 h-2.5" />
+                            Updated {formatDistanceToNow(new Date(generatedAt), { addSuffix: true })}
+                            {cooldown > 0 && ` · ${cooldown}s cooldown`}
+                          </p>
+                        )}
+                        {isStale && (
+                          <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-1 flex items-center gap-1">
+                            Insights are over 2 hours old
+                            <button type="button" onClick={() => refresh(true)} disabled={isRefreshing || cooldown > 0} className="underline hover:no-underline">
+                              Refresh for latest
+                            </button>
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              <div className="relative">
-                <AnimatePresence initial={false} mode="wait">
-                  {!activeGuidance ? (
-                    <motion.div
-                      key="insights"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <div 
-                        style={{ maxHeight: '500px', overflowY: 'auto' }}
-                        onWheel={(e) => e.stopPropagation()}
-                      >
-                        {data && (
-                          <div className="px-4 pb-2">
-                            <div className="flex items-start gap-2">
-                              <div className={cn('flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center', sentiment?.bg)}>
-                                <SentimentIcon className={cn('w-3 h-3', sentiment?.color)} />
+                {/* Weekly Lever — leadership only, collapsible */}
+                {isLeadership && (
+                  <div className="px-4 pb-3">
+                    <Collapsible open={leverOpen} onOpenChange={setLeverOpen}>
+                      <CollapsibleTrigger className="flex w-full items-center gap-2 rounded-lg border border-border/50 px-3 py-2.5 text-left hover:bg-accent/50 transition-colors">
+                        {isLeverLoading ? (
+                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                        ) : leverRecommendation ? (
+                          <>
+                            <Zap className="h-4 w-4 shrink-0 text-amber-500" />
+                            <span className="text-sm font-medium truncate">{leverRecommendation.title}</span>
+                          </>
+                        ) : (
+                          <SilenceState compact />
+                        )}
+                        <ChevronDown className={cn('ml-auto h-4 w-4 shrink-0 text-muted-foreground transition-transform', leverOpen && 'rotate-180')} />
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <div className="pt-3">
+                          <EnforcementGateBanner gateKey="gate_kpi_architecture">
+                            {leverRecommendation ? (
+                              <WeeklyLeverBrief recommendation={leverRecommendation} />
+                            ) : (
+                              <div className="text-sm text-muted-foreground space-y-1 px-1">
+                                <p>No high-confidence lever detected this period.</p>
+                                <p className="text-xs">Last reviewed: {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
                               </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm text-muted-foreground leading-snug">{blurFinancialValues(data.summaryLine)}</p>
-                                <p className="text-[10px] text-muted-foreground/70 mt-1">Based on your recent business data</p>
-                                {generatedAt && (
-                                  <p className="text-[10px] text-muted-foreground/60 mt-0.5 flex items-center gap-1 flex-wrap">
-                                    <Clock className="w-2.5 h-2.5" />
-                                    Updated {formatDistanceToNow(new Date(generatedAt), { addSuffix: true })}
-                                    {cooldown > 0 && ` · ${cooldown}s cooldown`}
-                                  </p>
-                                )}
-                                {isStale && (
-                                  <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-1 flex items-center gap-1">
-                                    Insights are over 2 hours old
-                                    <button type="button" onClick={() => refresh(true)} disabled={isRefreshing || cooldown > 0} className="underline hover:no-underline">
-                                      Refresh for latest
+                            )}
+                          </EnforcementGateBanner>
+                        </div>
+                      </CollapsibleContent>
+                    </Collapsible>
+                  </div>
+                )}
+
+                <div className="px-4 pb-6">
+                  {isLoading ? (
+                    <div className="space-y-3">
+                      {[1, 2, 3].map(i => (
+                        <div key={i} className="space-y-1.5">
+                          <Skeleton className="w-20 h-3 rounded" />
+                          <Skeleton className="w-full h-4 rounded" />
+                          <Skeleton className="w-3/4 h-3 rounded" />
+                        </div>
+                      ))}
+                    </div>
+                  ) : !data ? (
+                    <div className="text-center py-14">
+                      <ZuraAvatar size="md" className="mx-auto mb-3 opacity-20" />
+                      <p className="text-sm font-display text-muted-foreground">No insights generated yet</p>
+                      <p className="text-xs text-muted-foreground/80 mt-1 max-w-[240px] mx-auto">We'll analyze your sales, capacity, and team data to surface what matters.</p>
+                      <Button variant="outline" size={tokens.button.card} onClick={() => refresh(true)} disabled={isRefreshing} className="gap-1.5 mt-3">
+                        <Brain className="w-3.5 h-3.5" />
+                        Generate Insights
+                      </Button>
+                    </div>
+                  ) : (hasInsights || hasActionItems || hasSuggestions) ? (
+                    <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as InsightTab)} className="w-full">
+                      <TabsList className="w-full grid rounded-lg p-1 h-auto" style={{ gridTemplateColumns: tabCount ? `repeat(${tabCount}, 1fr)` : undefined }}>
+                        {hasInsights && <TabsTrigger value="insights" className="text-xs py-2">Key Insights</TabsTrigger>}
+                        {hasActionItems && <TabsTrigger value="action_items" className="text-xs py-2">Action Items</TabsTrigger>}
+                        {hasSuggestions && <TabsTrigger value="suggestions" className="text-xs py-2">More suggestions</TabsTrigger>}
+                      </TabsList>
+                      {hasInsights && (
+                        <TabsContent value="insights" className="mt-3 space-y-2.5">
+                          {sortedInsights.map((insight, i) => (
+                            <InsightCard
+                              key={i}
+                              insight={insight}
+                              onRequestGuidance={handleRequestGuidance}
+                              drillDownHref={categoryToAnalyticsTab[insight.category] ? analyticsHubUrl(categoryToAnalyticsTab[insight.category]!) : undefined}
+                            />
+                          ))}
+                        </TabsContent>
+                      )}
+                      {hasActionItems && (
+                        <TabsContent value="action_items" className="mt-3">
+                          <div className="space-y-1 rounded-lg border border-border/30 bg-muted/10 px-4 py-3">
+                            {sortedActionItems.map((item, i) => (
+                              <ActionItemCard key={i} item={item} index={i} onRequestGuidance={handleRequestGuidance} />
+                            ))}
+                          </div>
+                        </TabsContent>
+                      )}
+                      {hasSuggestions && (
+                        <TabsContent value="suggestions" className="mt-3 space-y-2">
+                          <AnimatePresence>
+                            {visibleSuggestions.map((suggestion) => (
+                              <motion.div
+                                key={suggestion.suggestionKey}
+                                initial={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+                                transition={{ duration: 0.3 }}
+                                className="relative border border-dashed border-amber-500/30 rounded-lg p-3 bg-gradient-to-br from-amber-500/5 to-orange-500/5"
+                              >
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <button
+                                      onClick={() => dismiss(suggestion.suggestionKey)}
+                                      className="absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                                    >
+                                      <X className="w-3 h-3" />
                                     </button>
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Weekly Lever — leadership only, collapsible */}
-                        {isLeadership && (
-                          <div className="px-4 pb-3">
-                            <Collapsible open={leverOpen} onOpenChange={setLeverOpen}>
-                              <CollapsibleTrigger className="flex w-full items-center gap-2 rounded-lg border border-border/50 px-3 py-2.5 text-left hover:bg-accent/50 transition-colors">
-                                {isLeverLoading ? (
-                                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                                ) : leverRecommendation ? (
-                                  <>
-                                    <Zap className="h-4 w-4 shrink-0 text-amber-500" />
-                                    <span className="text-sm font-medium truncate">{leverRecommendation.title}</span>
-                                  </>
-                                ) : (
-                                  <SilenceState compact />
-                                )}
-                                <ChevronDown className={cn('ml-auto h-4 w-4 shrink-0 text-muted-foreground transition-transform', leverOpen && 'rotate-180')} />
-                              </CollapsibleTrigger>
-                              <CollapsibleContent>
-                                <div className="pt-3">
-                                  <EnforcementGateBanner gateKey="gate_kpi_architecture">
-                                    {leverRecommendation ? (
-                                      <WeeklyLeverBrief recommendation={leverRecommendation} />
-                                    ) : (
-                                      <div className="text-sm text-muted-foreground space-y-1 px-1">
-                                        <p>No high-confidence lever detected this period.</p>
-                                        <p className="text-xs">Last reviewed: {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
-                                      </div>
-                                    )}
-                                  </EnforcementGateBanner>
-                                </div>
-                              </CollapsibleContent>
-                            </Collapsible>
-                          </div>
-                        )}
-
-                        <div className="px-4 pb-6">
-                          {isLoading ? (
-                            <div className="space-y-3">
-                              {[1, 2, 3].map(i => (
-                                <div key={i} className="space-y-1.5">
-                                  <Skeleton className="w-20 h-3 rounded" />
-                                  <Skeleton className="w-full h-4 rounded" />
-                                  <Skeleton className="w-3/4 h-3 rounded" />
-                                </div>
-                              ))}
-                            </div>
-                          ) : !data ? (
-                            <div className="text-center py-14">
-                              <ZuraAvatar size="md" className="mx-auto mb-3 opacity-20" />
-                              <p className="text-sm font-display text-muted-foreground">No insights generated yet</p>
-                              <p className="text-xs text-muted-foreground/80 mt-1 max-w-[240px] mx-auto">We’ll analyze your sales, capacity, and team data to surface what matters.</p>
-                              <Button variant="outline" size={tokens.button.card} onClick={() => refresh(true)} disabled={isRefreshing} className="gap-1.5 mt-3">
-                                <Brain className="w-3.5 h-3.5" />
-                                Generate Insights
-                              </Button>
-                            </div>
-                          ) : (hasInsights || hasActionItems || hasSuggestions) ? (
-                            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as InsightTab)} className="w-full">
-                              <TabsList className="w-full grid rounded-lg p-1 h-auto" style={{ gridTemplateColumns: tabCount ? `repeat(${tabCount}, 1fr)` : undefined }}>
-                                {hasInsights && <TabsTrigger value="insights" className="text-xs py-2">Key Insights</TabsTrigger>}
-                                {hasActionItems && <TabsTrigger value="action_items" className="text-xs py-2">Action Items</TabsTrigger>}
-                                {hasSuggestions && <TabsTrigger value="suggestions" className="text-xs py-2">More suggestions</TabsTrigger>}
-                              </TabsList>
-                              {hasInsights && (
-                                <TabsContent value="insights" className="mt-3 space-y-2.5">
-                                  {sortedInsights.map((insight, i) => (
-                                    <InsightCard
-                                      key={i}
-                                      insight={insight}
-                                      onRequestGuidance={handleRequestGuidance}
-                                      drillDownHref={categoryToAnalyticsTab[insight.category] ? analyticsHubUrl(categoryToAnalyticsTab[insight.category]!) : undefined}
+                                  </TooltipTrigger>
+                                  <TooltipContent side="left">Dismiss for 30 days</TooltipContent>
+                                </Tooltip>
+                                <div className="flex items-start gap-2.5 pr-5">
+                                  <Zap className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-0.5">
+                                      <span className="text-sm font-medium">{suggestion.featureName}</span>
+                                      <span className={cn(
+                                        'text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded font-display',
+                                        priorityBadge[suggestion.priority],
+                                      )}>
+                                        {suggestion.priority}
+                                      </span>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground leading-relaxed">{suggestion.whyItHelps}</p>
+                                    <p className="text-xs text-muted-foreground/70 mt-1 italic">{suggestion.howToStart}</p>
+                                    <GuidanceTrigger
+                                      label="Learn more"
+                                      hideIcon
+                                      onClick={() => handleRequestGuidance({
+                                        type: 'action',
+                                        title: `Enable ${suggestion.featureName}`,
+                                        description: `${suggestion.whyItHelps} ${suggestion.howToStart}`,
+                                      })}
                                     />
-                                  ))}
-                                </TabsContent>
-                              )}
-                              {hasActionItems && (
-                                <TabsContent value="action_items" className="mt-3">
-                                  <div className="space-y-1 rounded-lg border border-border/30 bg-muted/10 px-4 py-3">
-                                    {sortedActionItems.map((item, i) => (
-                                      <ActionItemCard key={i} item={item} index={i} onRequestGuidance={handleRequestGuidance} />
-                                    ))}
                                   </div>
-                                </TabsContent>
-                              )}
-                              {hasSuggestions && (
-                                <TabsContent value="suggestions" className="mt-3 space-y-2">
-                                  <AnimatePresence>
-                                    {visibleSuggestions.map((suggestion) => (
-                                      <motion.div
-                                        key={suggestion.suggestionKey}
-                                        initial={{ opacity: 1, height: 'auto' }}
-                                        exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-                                        transition={{ duration: 0.3 }}
-                                        className="relative border border-dashed border-amber-500/30 rounded-lg p-3 bg-gradient-to-br from-amber-500/5 to-orange-500/5"
-                                      >
-                                        <Tooltip>
-                                          <TooltipTrigger asChild>
-                                            <button
-                                              onClick={() => dismiss(suggestion.suggestionKey)}
-                                              className="absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-                                            >
-                                              <X className="w-3 h-3" />
-                                            </button>
-                                          </TooltipTrigger>
-                                          <TooltipContent side="left">Dismiss for 30 days</TooltipContent>
-                                        </Tooltip>
-                                        <div className="flex items-start gap-2.5 pr-5">
-                                          <Zap className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
-                                          <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-2 mb-0.5">
-                                              <span className="text-sm font-medium">{suggestion.featureName}</span>
-                                              <span className={cn(
-                                                'text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded font-display',
-                                                priorityBadge[suggestion.priority],
-                                              )}>
-                                                {suggestion.priority}
-                                              </span>
-                                            </div>
-                                            <p className="text-xs text-muted-foreground leading-relaxed">{suggestion.whyItHelps}</p>
-                                            <p className="text-xs text-muted-foreground/70 mt-1 italic">{suggestion.howToStart}</p>
-                                            <GuidanceTrigger
-                                              label="Learn more"
-                                              hideIcon
-                                              onClick={() => handleRequestGuidance({
-                                                type: 'action',
-                                                title: `Enable ${suggestion.featureName}`,
-                                                description: `${suggestion.whyItHelps} ${suggestion.howToStart}`,
-                                              })}
-                                            />
-                                          </div>
-                                        </div>
-                                      </motion.div>
-                                    ))}
-                                  </AnimatePresence>
-                                </TabsContent>
-                              )}
-                            </Tabs>
-                          ) : (
-                            <div className="text-center py-10">
-                              <p className="text-sm text-muted-foreground">No insights or actions right now</p>
-                              <Button variant="outline" size={tokens.button.card} onClick={() => refresh(true)} disabled={isRefreshing} className="gap-1.5 mt-3">
-                                <RefreshCw className="w-3.5 h-3.5" />
-                                Refresh
-                              </Button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      <div className="px-4 pb-4 pt-4 mt-2 border-t border-border/50 bg-muted/20 rounded-b-2xl">
-                        <div className="flex items-center justify-center gap-1.5">
-                          <ZuraAvatar size="sm" className="w-3 h-3 opacity-40" />
-                          <span className="text-[10px] text-muted-foreground/50">Powered by {PLATFORM_NAME} AI · Based on your data</span>
-                        </div>
-                      </div>
-                    </motion.div>
+                                </div>
+                              </motion.div>
+                            ))}
+                          </AnimatePresence>
+                        </TabsContent>
+                      )}
+                    </Tabs>
                   ) : (
-                    <motion.div
-                      key="guidance"
-                      initial={slideVariants.enterFromRight}
-                      animate={slideVariants.center}
-                      exit={slideVariants.exitToRight}
-                      transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-                      className="h-[500px] flex flex-col"
-                    >
-                      <GuidancePanel
-                        title={activeGuidance.title}
-                        type={activeGuidance.type}
-                        guidance={guidanceText}
-                        isLoading={isLoadingGuidance}
-                        onBack={handleBack}
-                        suggestedTasks={data?.suggestedTasks}
-                        onAddTask={(task) => createTask.mutate(task)}
-                      />
-                    </motion.div>
+                    <div className="text-center py-10">
+                      <p className="text-sm text-muted-foreground">No insights or actions right now</p>
+                      <Button variant="outline" size={tokens.button.card} onClick={() => refresh(true)} disabled={isRefreshing} className="gap-1.5 mt-3">
+                        <RefreshCw className="w-3.5 h-3.5" />
+                        Refresh
+                      </Button>
+                    </div>
                   )}
-                </AnimatePresence>
+                </div>
               </div>
+              <div className="px-4 pb-4 pt-4 mt-2 border-t border-border/50 bg-muted/20 rounded-b-2xl">
+                <div className="flex items-center justify-center gap-1.5">
+                  <ZuraAvatar size="sm" className="w-3 h-3 opacity-40" />
+                  <span className="text-[10px] text-muted-foreground/50">Powered by {PLATFORM_NAME} AI · Based on your data</span>
+                </div>
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="guidance"
+              initial={slideVariants.enterFromRight}
+              animate={slideVariants.center}
+              exit={slideVariants.exitToRight}
+              transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+              className="h-[500px] flex flex-col"
+            >
+              <GuidancePanel
+                title={activeGuidance.title}
+                type={activeGuidance.type}
+                guidance={guidanceText}
+                isLoading={isLoadingGuidance}
+                onBack={handleBack}
+                suggestedTasks={data?.suggestedTasks}
+                onAddTask={(task) => createTask.mutate(task)}
+              />
             </motion.div>
           )}
         </AnimatePresence>
-    </VisibilityGate>
+      </div>
+    </div>
   );
 }

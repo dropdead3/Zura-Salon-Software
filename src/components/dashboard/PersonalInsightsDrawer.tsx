@@ -25,6 +25,7 @@ import {
   Clock,
   X,
   ChevronDown,
+  ChevronUp,
   ChevronRight,
   CheckCheck,
   ThumbsUp,
@@ -152,15 +153,73 @@ function PersonalActionCard({ item, index, onRequestGuidance }: { item: ActionIt
 interface PersonalInsightsDrawerProps {
   /** Override the collapsed trigger label. */
   label?: string;
+  /** Controlled expanded state */
+  expanded?: boolean;
+  /** Toggle callback for controlled mode */
+  onToggle?: () => void;
 }
 
-export function PersonalInsightsDrawer({ label }: PersonalInsightsDrawerProps = {}) {
-  const [expanded, setExpanded] = useState(false);
+export function PersonalInsightsDrawer({ label, expanded: controlledExpanded, onToggle }: PersonalInsightsDrawerProps) {
+  const isControlled = onToggle !== undefined;
+  const { data } = usePersonalInsights();
+
+  const sentiment = data?.overallSentiment ? sentimentConfig[data.overallSentiment] : null;
+  const SentimentIcon = sentiment?.icon || Activity;
+  const expanded = isControlled ? (controlledExpanded ?? false) : false;
+
+  // In controlled mode, only render the trigger button
+  if (isControlled) {
+    return (
+      <SilverShineButton
+        onClick={onToggle}
+        className={expanded ? 'ring-1 ring-accent/50' : undefined}
+      >
+        <div className="w-5 h-5 rounded-md bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center shrink-0">
+          <Brain className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+        </div>
+        <span className="truncate">{label ?? 'My Insights'}</span>
+        {sentiment && SentimentIcon && (
+          <div className={cn('w-4 h-4 rounded-full flex items-center justify-center', sentiment.bg)}>
+            <SentimentIcon className={cn('w-2.5 h-2.5', sentiment.color)} />
+          </div>
+        )}
+        {expanded ? (
+          <ChevronUp className="w-3.5 h-3.5 text-muted-foreground ml-0.5" />
+        ) : (
+          <ChevronDown className="w-3.5 h-3.5 text-muted-foreground ml-0.5" />
+        )}
+      </SilverShineButton>
+    );
+  }
+
+  // Uncontrolled fallback — just the trigger
+  return (
+    <SilverShineButton onClick={() => {}}>
+      <div className="w-5 h-5 rounded-md bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center shrink-0">
+        <Brain className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+      </div>
+      <span className="truncate">{label ?? 'My Insights'}</span>
+      <ChevronDown className="w-3.5 h-3.5 text-muted-foreground ml-0.5" />
+    </SilverShineButton>
+  );
+}
+
+/** Full-width panel for Personal Insights — rendered outside the control row */
+export function PersonalInsightsPanel({ onClose }: { onClose: () => void }) {
   const { data, generatedAt, isLoading, isRefreshing, isStale, refresh, cooldownRemaining } = usePersonalInsights();
   const [cooldown, setCooldown] = useState(0);
   const [activeGuidance, setActiveGuidance] = useState<GuidanceRequest | null>(null);
   const [guidanceText, setGuidanceText] = useState<string | null>(null);
   const [isLoadingGuidance, setIsLoadingGuidance] = useState(false);
+
+  // Escape key closes panel
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [onClose]);
 
   useEffect(() => {
     if (cooldownRemaining <= 0) { setCooldown(0); return; }
@@ -199,169 +258,145 @@ export function PersonalInsightsDrawer({ label }: PersonalInsightsDrawerProps = 
   const SentimentIcon = sentiment?.icon || Activity;
 
   return (
-    <AnimatePresence mode="wait">
-      {!expanded ? (
-        <SilverShineButton onClick={() => setExpanded(true)}>
-          <div className="w-5 h-5 rounded-md bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center shrink-0">
-            <Brain className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+    <div className="w-full rounded-xl shadow-lg border border-border/40 bg-card overflow-hidden">
+      <div className="h-px bg-gradient-to-r from-transparent via-border/40 to-transparent" />
+
+      {!activeGuidance && (
+        <div className="p-4 pb-3">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              <span className="font-display text-sm tracking-[0.15em]">{PLATFORM_NAME.toUpperCase()} PERSONAL INSIGHTS</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => refresh(true)} disabled={isRefreshing || cooldown > 0}>
+                <RefreshCw className={cn('w-3.5 h-3.5', isRefreshing && 'animate-spin')} />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose}>
+                <X className="w-3.5 h-3.5" />
+              </Button>
+            </div>
           </div>
-          <span className="truncate">{label ?? 'My Insights'}</span>
-          {sentiment && SentimentIcon && (
-            <div className={cn('w-4 h-4 rounded-full flex items-center justify-center', sentiment.bg)}>
-              <SentimentIcon className={cn('w-2.5 h-2.5', sentiment.color)} />
-            </div>
-          )}
-          <ChevronDown className="w-3.5 h-3.5 text-muted-foreground ml-0.5" />
-        </SilverShineButton>
-      ) : (
-        <motion.div
-          key="expanded"
-          initial={{ opacity: 0, scale: 0.98, y: -4 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.98, y: -4 }}
-          transition={{ duration: 0.25, ease: "easeOut" }}
-          className="w-full rounded-xl shadow-lg border border-border/40 bg-card overflow-hidden"
-        >
-          <div className="h-px bg-gradient-to-r from-transparent via-border/40 to-transparent" />
+        </div>
+      )}
 
-          {!activeGuidance && (
-            <div className="p-4 pb-3">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  <span className="font-display text-sm tracking-[0.15em]">{PLATFORM_NAME.toUpperCase()} PERSONAL INSIGHTS</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => refresh(true)} disabled={isRefreshing || cooldown > 0}>
-                    <RefreshCw className={cn('w-3.5 h-3.5', isRefreshing && 'animate-spin')} />
-                  </Button>
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setExpanded(false)}>
-                    <X className="w-3.5 h-3.5" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div className="relative">
-            <AnimatePresence initial={false} mode="wait">
-              {!activeGuidance ? (
-                <motion.div
-                  key="insights"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <div
-                    style={{ maxHeight: '500px', overflowY: 'auto' }}
-                    onWheel={(e) => e.stopPropagation()}
-                  >
-                    {data && (
-                      <div className="flex items-start gap-2 px-4 pb-3">
-                        <div className={cn('flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center', sentiment?.bg)}>
-                          <SentimentIcon className={cn('w-3 h-3', sentiment?.color)} />
+      <div className="relative">
+        <AnimatePresence initial={false} mode="wait">
+          {!activeGuidance ? (
+            <motion.div
+              key="insights"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <div
+                className="max-h-[65vh] overflow-y-auto"
+                onWheel={(e) => e.stopPropagation()}
+              >
+                {data && (
+                  <div className="flex items-start gap-2 px-4 pb-3">
+                    <div className={cn('flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center', sentiment?.bg)}>
+                      <SentimentIcon className={cn('w-3 h-3', sentiment?.color)} />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm text-muted-foreground leading-snug">{data.summaryLine}</p>
+                      {generatedAt && (
+                        <p className="text-[10px] text-muted-foreground/60 mt-1 flex items-center gap-1">
+                          <Clock className="w-2.5 h-2.5" />
+                          Updated {formatDistanceToNow(new Date(generatedAt), { addSuffix: true })}
+                          {isStale && ' · Stale'}
+                          {cooldown > 0 && ` · ${cooldown}s cooldown`}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+                <div className="px-4 pb-3">
+                  {isLoading ? (
+                    <div className="space-y-3">
+                      {[1, 2, 3].map(i => (
+                        <div key={i} className="space-y-1.5">
+                          <Skeleton className="w-20 h-3 rounded" />
+                          <Skeleton className="w-full h-4 rounded" />
+                          <Skeleton className="w-3/4 h-3 rounded" />
                         </div>
-                        <div className="flex-1">
-                          <p className="text-sm text-muted-foreground leading-snug">{data.summaryLine}</p>
-                          {generatedAt && (
-                            <p className="text-[10px] text-muted-foreground/60 mt-1 flex items-center gap-1">
-                              <Clock className="w-2.5 h-2.5" />
-                              Updated {formatDistanceToNow(new Date(generatedAt), { addSuffix: true })}
-                              {isStale && ' · Stale'}
-                              {cooldown > 0 && ` · ${cooldown}s cooldown`}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                    <div className="px-4 pb-3">
-                      {isLoading ? (
-                        <div className="space-y-3">
-                          {[1, 2, 3].map(i => (
-                            <div key={i} className="space-y-1.5">
-                              <Skeleton className="w-20 h-3 rounded" />
-                              <Skeleton className="w-full h-4 rounded" />
-                              <Skeleton className="w-3/4 h-3 rounded" />
+                      ))}
+                    </div>
+                  ) : !data ? (
+                    <div className="text-center py-14">
+                      <ZuraAvatar size="md" className="mx-auto mb-3 opacity-20" />
+                      <p className="text-sm font-display text-muted-foreground">No personal insights yet</p>
+                      <Button variant="outline" size={tokens.button.card} onClick={() => refresh(true)} disabled={isRefreshing} className="gap-1.5 mt-3">
+                        <Brain className="w-3.5 h-3.5" />
+                        Generate My Insights
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-5">
+                      {(data.insights.length > 0 || data.actionItems.length > 0) && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {data.insights.length > 0 && (
+                            <div>
+                              <div className="flex items-center gap-2 mb-3">
+                                <Brain className="w-3.5 h-3.5 text-emerald-500" />
+                                <span className="text-xs uppercase tracking-[0.15em] text-muted-foreground font-display font-medium">Personal Insights</span>
+                                <div className="flex-1 h-px bg-border/40" />
+                              </div>
+                              <div className="space-y-2">
+                                {data.insights.map((insight, i) => (
+                                  <PersonalInsightCard key={i} insight={insight} onRequestGuidance={handleRequestGuidance} />
+                                ))}
+                              </div>
                             </div>
-                          ))}
-                        </div>
-                      ) : !data ? (
-                        <div className="text-center py-14">
-                          <ZuraAvatar size="md" className="mx-auto mb-3 opacity-20" />
-                          <p className="text-sm font-display text-muted-foreground">No personal insights yet</p>
-                          <Button variant="outline" size={tokens.button.card} onClick={() => refresh(true)} disabled={isRefreshing} className="gap-1.5 mt-3">
-                            <Brain className="w-3.5 h-3.5" />
-                            Generate My Insights
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="space-y-5">
-                          {(data.insights.length > 0 || data.actionItems.length > 0) && (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              {data.insights.length > 0 && (
-                                <div>
-                                  <div className="flex items-center gap-2 mb-3">
-                                    <Brain className="w-3.5 h-3.5 text-emerald-500" />
-                                    <span className="text-xs uppercase tracking-[0.15em] text-muted-foreground font-display font-medium">Personal Insights</span>
-                                    <div className="flex-1 h-px bg-border/40" />
-                                  </div>
-                                  <div className="space-y-2">
-                                    {data.insights.map((insight, i) => (
-                                      <PersonalInsightCard key={i} insight={insight} onRequestGuidance={handleRequestGuidance} />
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                              {data.actionItems.length > 0 && (
-                                <div>
-                                  <div className="flex items-center gap-2 mb-3">
-                                    <CheckCircle2 className="w-3.5 h-3.5 text-muted-foreground" />
-                                    <span className="text-xs uppercase tracking-[0.15em] text-muted-foreground font-display font-medium">Your Next Steps</span>
-                                    <div className="flex-1 h-px bg-border/40" />
-                                  </div>
-                                  <div className="space-y-1 rounded-lg border border-border/30 bg-muted/10 px-5 py-3">
-                                    {data.actionItems.map((item, i) => (
-                                      <PersonalActionCard key={i} item={item} index={i} onRequestGuidance={handleRequestGuidance} />
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
+                          )}
+                          {data.actionItems.length > 0 && (
+                            <div>
+                              <div className="flex items-center gap-2 mb-3">
+                                <CheckCircle2 className="w-3.5 h-3.5 text-muted-foreground" />
+                                <span className="text-xs uppercase tracking-[0.15em] text-muted-foreground font-display font-medium">Your Next Steps</span>
+                                <div className="flex-1 h-px bg-border/40" />
+                              </div>
+                              <div className="space-y-1 rounded-lg border border-border/30 bg-muted/10 px-5 py-3">
+                                {data.actionItems.map((item, i) => (
+                                  <PersonalActionCard key={i} item={item} index={i} onRequestGuidance={handleRequestGuidance} />
+                                ))}
+                              </div>
                             </div>
                           )}
                         </div>
                       )}
                     </div>
-                  </div>
-                  <div className="px-4 pb-4 pt-1">
-                    <div className="flex items-center justify-center gap-1.5 pt-2 border-t border-border/50">
-                      <ZuraAvatar size="sm" className="w-3 h-3 opacity-40" />
-                      <span className="text-[10px] text-muted-foreground/50">{`Powered by ${PLATFORM_NAME} AI · Your personal data only`}</span>
-                    </div>
-                  </div>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="guidance"
-                  initial={slideVariants.enterFromRight}
-                  animate={slideVariants.center}
-                  exit={slideVariants.exitToRight}
-                  transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-                  className="h-[500px] flex flex-col"
-                >
-                  <GuidancePanel
-                    title={activeGuidance.title}
-                    type={activeGuidance.type}
-                    guidance={guidanceText}
-                    isLoading={isLoadingGuidance}
-                    onBack={handleBack}
-                  />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+                  )}
+                </div>
+              </div>
+              <div className="px-4 pb-4 pt-1">
+                <div className="flex items-center justify-center gap-1.5 pt-2 border-t border-border/50">
+                  <ZuraAvatar size="sm" className="w-3 h-3 opacity-40" />
+                  <span className="text-[10px] text-muted-foreground/50">{`Powered by ${PLATFORM_NAME} AI · Your personal data only`}</span>
+                </div>
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="guidance"
+              initial={slideVariants.enterFromRight}
+              animate={slideVariants.center}
+              exit={slideVariants.exitToRight}
+              transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+              className="h-[500px] flex flex-col"
+            >
+              <GuidancePanel
+                title={activeGuidance.title}
+                type={activeGuidance.type}
+                guidance={guidanceText}
+                isLoading={isLoadingGuidance}
+                onBack={handleBack}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
   );
 }

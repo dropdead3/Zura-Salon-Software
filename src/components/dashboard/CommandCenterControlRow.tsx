@@ -1,12 +1,13 @@
 import { useState, useRef, useEffect, useCallback, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
-import { AIInsightsDrawer } from '@/components/dashboard/AIInsightsDrawer';
-import { PersonalInsightsDrawer } from '@/components/dashboard/PersonalInsightsDrawer';
+import { AIInsightsDrawer, AIInsightsPanel } from '@/components/dashboard/AIInsightsDrawer';
+import { PersonalInsightsDrawer, PersonalInsightsPanel } from '@/components/dashboard/PersonalInsightsDrawer';
 import { AnnouncementsDrawer } from '@/components/dashboard/AnnouncementsDrawer';
 import { LiveSessionIndicator } from '@/components/dashboard/LiveSessionIndicator';
 import { PhorestSyncPopout } from '@/components/dashboard/PhorestSyncPopout';
 import { DashboardCustomizeMenu } from '@/components/dashboard/DashboardCustomizeMenu';
 import { AnalyticsFilterBar } from '@/components/dashboard/AnalyticsFilterBar';
+import { motion, AnimatePresence } from 'framer-motion';
 import type { AnalyticsFilters, DateRangeType } from '@/components/dashboard/PinnedAnalyticsCard';
 
 type Density = 'full' | 'short' | 'icon-some';
@@ -73,14 +74,24 @@ export function CommandCenterControlRow({
 }: CommandCenterControlRowProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const density = useControlRowDensity(containerRef);
+  const [insightsExpanded, setInsightsExpanded] = useState(false);
 
   const isShort = density === 'short' || density === 'icon-some';
   const announcementsIconOnly = density === 'icon-some';
 
   const gapClass = density === 'full' ? 'gap-2' : 'gap-1.5';
 
+  const toggleInsights = useCallback(() => {
+    setInsightsExpanded(prev => !prev);
+  }, []);
+
+  const closeInsights = useCallback(() => {
+    setInsightsExpanded(false);
+  }, []);
+
   return (
     <div ref={containerRef} className="pt-6 pb-2">
+      {/* Controls Row — stable, never shifts */}
       <div className={cn(
         'flex items-center justify-between flex-nowrap overflow-hidden',
         gapClass,
@@ -88,9 +99,17 @@ export function CommandCenterControlRow({
         {/* LEFT CLUSTER: Context — shrinks first */}
         <div className={cn('flex items-center min-w-0 shrink', gapClass)}>
           {isLeadership ? (
-            <AIInsightsDrawer label={isShort ? 'Insights' : undefined} />
+            <AIInsightsDrawer
+              label={isShort ? 'Insights' : undefined}
+              expanded={insightsExpanded}
+              onToggle={toggleInsights}
+            />
           ) : (
-            <PersonalInsightsDrawer label={isShort ? 'Insights' : undefined} />
+            <PersonalInsightsDrawer
+              label={isShort ? 'Insights' : undefined}
+              expanded={insightsExpanded}
+              onToggle={toggleInsights}
+            />
           )}
           <AnnouncementsDrawer
             isLeadership={isLeadership}
@@ -127,6 +146,28 @@ export function CommandCenterControlRow({
           />
         </div>
       </div>
+
+      {/* Insights Expansion Row — full-width, below controls, in document flow */}
+      <AnimatePresence>
+        {insightsExpanded && (
+          <motion.div
+            key="insights-expansion"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+            className="overflow-hidden"
+          >
+            <div className="pt-3">
+              {isLeadership ? (
+                <AIInsightsPanel onClose={closeInsights} />
+              ) : (
+                <PersonalInsightsPanel onClose={closeInsights} />
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
