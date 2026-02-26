@@ -613,8 +613,8 @@ export function AggregateSalesCard({
           <div className="bg-card-inner rounded-xl p-4 sm:p-6 border border-border/40 relative">
             {/* Top-right sync status when no POS data yet */}
             {isToday && !todayActual?.hasActualData && (
-              <div className="absolute top-3 right-3 sm:top-4 sm:right-4 flex flex-col items-end gap-0.5 z-10">
-                <p className="text-[10px] text-muted-foreground/70">{t('sales.actual_not_available')}</p>
+              <div className="absolute top-3 right-3 sm:top-4 sm:right-4 flex flex-col items-end gap-1 z-10">
+                <p className="text-[10px] text-muted-foreground/60">{t('sales.actual_not_available')}</p>
                 <LastSyncIndicator syncType="sales" showAutoRefresh />
               </div>
             )}
@@ -789,7 +789,7 @@ export function AggregateSalesCard({
               )}
 
               {showTrendIndicators && (
-                <div className="mt-2">
+                <div className="mt-2 flex justify-center">
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <div>
