@@ -337,17 +337,17 @@ export function StylistsContent() {
 
       {/* Sample Cards Settings */}
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Settings className="w-4 h-4" />
+        <CardHeader className="p-3 pb-2">
+          <CardTitle className="text-sm font-sans font-medium flex items-center gap-2">
+            <Settings className="w-3.5 h-3.5" />
             Sample Cards Settings
           </CardTitle>
-          <CardDescription>
-            Show placeholder stylist cards when no real stylists are visible on the homepage.
+          <CardDescription className="text-xs">
+            Show placeholder cards when no real stylists are visible.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex items-center gap-3">
+        <CardContent className="p-3 pt-0 space-y-2.5">
+          <div className="flex items-center gap-2.5">
             <Switch
               id="sample-cards"
               checked={showSampleCards}
@@ -361,33 +361,33 @@ export function StylistsContent() {
               <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
             )}
           </div>
-          <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-            <Badge variant="outline" className="gap-1">
+          <div className="flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
+            <Badge variant="outline" className="gap-1 text-xs">
               <Users className="w-3 h-3" />
               {northMesaCount} North Mesa
             </Badge>
-            <Badge variant="outline" className="gap-1">
+            <Badge variant="outline" className="gap-1 text-xs">
               <Users className="w-3 h-3" />
               {valVistaCount} Val Vista
             </Badge>
           </div>
           {showSampleCards && visibleStylists.length > 0 && (
-            <div className="flex items-start gap-2 mt-3 p-3 bg-destructive/10 border border-destructive/30 rounded-lg">
-              <AlertCircle className="w-4 h-4 text-destructive shrink-0 mt-0.5" />
+            <div className="flex items-start gap-2 p-2.5 bg-destructive/10 border border-destructive/30 rounded-lg">
+              <AlertCircle className="w-3.5 h-3.5 text-destructive shrink-0 mt-0.5" />
               <p className="text-xs text-destructive">
-                <span className="font-medium">Sample cards hidden:</span> You have {visibleStylists.length} real stylist(s) visible on the homepage. Sample cards only appear when no real stylists are visible.
+                <span className="font-medium">Sample cards hidden:</span> You have {visibleStylists.length} real stylist(s) visible. Sample cards only appear when no real stylists are visible.
               </p>
             </div>
           )}
-          <div className="mt-4 pt-4 border-t">
+          <div className="pt-2.5 border-t">
             <Button
               variant="outline"
               size={tokens.button.card}
               onClick={() => setPreviewOpen(true)}
-              className="gap-2"
+              className="gap-2 w-full"
             >
               <Eye className="w-4 h-4" />
-              Preview Homepage Section
+              Preview Homepage
               <ExternalLink className="w-3 h-3" />
             </Button>
           </div>
