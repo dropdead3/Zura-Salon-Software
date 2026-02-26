@@ -1,4 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
+import { useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 
@@ -24,6 +25,32 @@ interface LocationActualData {
 
 export function useTodayActualRevenue(enabled: boolean) {
   const today = format(new Date(), 'yyyy-MM-dd');
+  const queryClient = useQueryClient();
+
+  // Realtime subscription: invalidate queries when POS sales data changes
+  useEffect(() => {
+    if (!enabled) return;
+
+    const channel = supabase
+      .channel('sales-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'phorest_daily_sales_summary',
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['today-actual-revenue'] });
+          queryClient.invalidateQueries({ queryKey: ['today-actual-revenue-by-location'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [enabled, queryClient]);
 
   // Primary: POS daily sales summary
   const actualRevenueQuery = useQuery({
