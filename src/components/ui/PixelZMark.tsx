@@ -1,6 +1,12 @@
 import { motion, useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
+// Deterministic pseudo-random based on cell index
+function seededRandom(seed: number) {
+  const x = Math.sin(seed * 9301 + 49297) * 49297;
+  return x - Math.floor(x);
+}
+
 export function PixelZMark({ className }: { className?: string }) {
   const reduceMotion = useReducedMotion();
   const cells = [
@@ -22,27 +28,44 @@ export function PixelZMark({ className }: { className?: string }) {
       aria-hidden="true"
     >
       {cells.flatMap((row, r) =>
-        row.split('').map((c, i) => (
-          <motion.span
-            key={`${r}-${i}`}
-            className={cn(
-              'h-3.5 w-3.5 rounded-[4px] border',
-              c === '1'
-                ? 'bg-foreground/90 border-foreground/15 shadow-[0_1px_0_rgba(0,0,0,0.25)]'
-                : 'bg-transparent border-border/40'
-            )}
-            animate={
-              reduceMotion || c !== '1'
-                ? undefined
-                : { y: [0, -2, 0], opacity: [0.9, 1, 0.9] }
-            }
-            transition={
-              reduceMotion || c !== '1'
-                ? undefined
-                : { duration: 3.2, repeat: Infinity, delay: (r * 7 + i) * 0.03 }
-            }
-          />
-        ))
+        row.split('').map((c, i) => {
+          const idx = r * 7 + i;
+          const isLit = c === '1';
+          const duration = 1.5 + seededRandom(idx) * 2;
+          const delay = seededRandom(idx + 100) * 2;
+
+          return (
+            <motion.span
+              key={`${r}-${i}`}
+              className={cn(
+                'h-3.5 w-3.5 rounded-[4px] border',
+                isLit
+                  ? 'bg-foreground/90 border-foreground/15'
+                  : 'bg-transparent border-border/40'
+              )}
+              animate={
+                reduceMotion || !isLit
+                  ? undefined
+                  : {
+                      opacity: [0.3, 1, 0.5, 1, 0.3],
+                      scale: [1, 1.1, 1, 1.05, 1],
+                      boxShadow: [
+                        '0 0 0px rgba(255,255,255,0)',
+                        '0 0 8px rgba(255,255,255,0.4)',
+                        '0 0 2px rgba(255,255,255,0.1)',
+                        '0 0 6px rgba(255,255,255,0.3)',
+                        '0 0 0px rgba(255,255,255,0)',
+                      ],
+                    }
+              }
+              transition={
+                reduceMotion || !isLit
+                  ? undefined
+                  : { duration, repeat: Infinity, delay, ease: 'easeInOut' }
+              }
+            />
+          );
+        })
       )}
     </motion.div>
   );
