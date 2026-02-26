@@ -95,7 +95,7 @@ export function TogglePill({
               type="button"
               onClick={() => onChange(option.value)}
               className={cn(
-                "relative z-10 flex items-center justify-center gap-1.5 rounded-full font-sans font-medium transition-colors duration-200",
+                "relative z-10 flex items-center justify-center gap-1.5 rounded-full font-sans font-medium transition-colors duration-200 outline-none focus:outline-none focus-visible:outline-none",
                 sizeClasses[size],
                 isSelected
                   ? "text-background"
