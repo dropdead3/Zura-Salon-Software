@@ -48,7 +48,7 @@ export function useLiveSessionSnapshot(locationId?: string): LiveSessionSnapshot
           .lte('start_time', now)
           .gt('end_time', now)
           .is('deleted_at', null)
-          .not('status', 'in', '("cancelled","no_show","completed")') as any,
+          .not('status', 'in', '("cancelled","no_show")') as any,
         locationId,
       );
       const { data: appointments, error } = await activeQuery;
