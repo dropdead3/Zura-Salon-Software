@@ -1109,14 +1109,15 @@ async function syncSalesTransactions(
             const amount = parseFloat(transactionRecord.total_amount) || 0;
             const discount = parseFloat(transactionRecord.discount_amount as any) || 0;
             
+            const tax = parseFloat(transactionRecord.tax_amount as any) || 0;
             if (itemType === 'product') {
               summary.total_products += transactionRecord.quantity;
-              summary.product_revenue += amount;
+              summary.product_revenue += amount + tax;
             } else {
               summary.total_services += transactionRecord.quantity;
               summary.service_revenue += amount;
             }
-            summary.total_revenue += amount;
+            summary.total_revenue += amount + tax;
             summary.total_transactions += 1;
             summary.total_discounts += discount;
           }
