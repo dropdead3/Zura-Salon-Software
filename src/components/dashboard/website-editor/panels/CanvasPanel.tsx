@@ -2,15 +2,14 @@
  * CANVAS PANEL (Center, Flexible)
  * 
  * Full-bleed live preview iframe with header controls.
- * No editor forms here — all editing moves to the Inspector.
+ * Desktop preview constrained to max-w-[1280px] with zoom controls.
  */
 
 import { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { cn } from '@/lib/utils';
 import { RefreshCw } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { editorTokens } from '../editor-tokens';
-import { CanvasHeader, type ViewportMode } from './CanvasHeader';
+import { CanvasHeader, type ViewportMode, type ZoomLevel } from './CanvasHeader';
 
 interface CanvasPanelProps {
   activeSectionId?: string;
@@ -27,9 +26,15 @@ interface CanvasPanelProps {
 }
 
 const VIEWPORT_WIDTHS: Record<ViewportMode, string> = {
-  desktop: 'w-full',
+  desktop: 'w-full max-w-[1280px]',
   tablet: 'max-w-[834px]',
   mobile: 'max-w-[390px]',
+};
+
+const ZOOM_SCALES: Record<ZoomLevel, number> = {
+  fit: 1,
+  '100': 1,
+  '75': 0.75,
 };
 
 export const CanvasPanel = memo(function CanvasPanel({
@@ -48,6 +53,7 @@ export const CanvasPanel = memo(function CanvasPanel({
   const [viewportMode, setViewportMode] = useState<ViewportMode>(() => {
     return (localStorage.getItem('editor-viewport') as ViewportMode) || 'desktop';
   });
+  const [zoomLevel, setZoomLevel] = useState<ZoomLevel>('fit');
   const [refreshKey, setRefreshKey] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -103,8 +109,10 @@ export const CanvasPanel = memo(function CanvasPanel({
     return () => window.removeEventListener('website-preview-refresh', handleRefresh);
   }, []);
 
+  const scale = ZOOM_SCALES[zoomLevel];
+
   return (
-    <div className={cn(editorTokens.panel.canvas, 'h-full flex flex-col')}>
+    <div className={cn(editorTokens.panel.canvas, 'h-full flex flex-col relative')}>
       {/* Canvas Header */}
       <CanvasHeader
         siteName={siteName}
@@ -113,7 +121,9 @@ export const CanvasPanel = memo(function CanvasPanel({
         canUndo={canUndo}
         canRedo={canRedo}
         viewportMode={viewportMode}
+        zoomLevel={zoomLevel}
         onViewportChange={handleViewportChange}
+        onZoomChange={setZoomLevel}
         onUndo={onUndo}
         onRedo={onRedo}
         onSave={onSave}
@@ -122,11 +132,17 @@ export const CanvasPanel = memo(function CanvasPanel({
 
       {/* Canvas Surface */}
       <div className="flex-1 overflow-hidden bg-muted/30">
-        <div className={cn(
-          'mx-auto h-full transition-all duration-200 ease-[cubic-bezier(0.25,0.1,0.25,1)]',
-          VIEWPORT_WIDTHS[viewportMode],
-          viewportMode !== 'desktop' && 'my-4 rounded-lg overflow-hidden border border-border shadow-lg bg-background'
-        )}>
+        <div
+          className={cn(
+            'mx-auto h-full transition-all duration-200 ease-[cubic-bezier(0.25,0.1,0.25,1)]',
+            VIEWPORT_WIDTHS[viewportMode],
+            viewportMode !== 'desktop' && 'my-4 rounded-lg overflow-hidden border border-border shadow-lg bg-background'
+          )}
+          style={{
+            transform: scale !== 1 ? `scale(${scale})` : undefined,
+            transformOrigin: 'top center',
+          }}
+        >
           <iframe
             ref={iframeRef}
             key={refreshKey}

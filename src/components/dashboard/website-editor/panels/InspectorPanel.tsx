@@ -1,27 +1,27 @@
 /**
- * INSPECTOR PANEL (Right, 320px Fixed)
+ * INSPECTOR PANEL (Right, responsive width)
  * 
  * Contextual property editor. Shows "Select an element" when nothing
- * is selected, otherwise renders the editor content passed as children.
+ * is selected. Supports collapsed icon-rail state.
  */
 
 import { type ReactNode } from 'react';
-import { MousePointerClick, ChevronRight } from 'lucide-react';
+import { MousePointerClick, ChevronRight, ChevronLeft } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { editorTokens } from '../editor-tokens';
 import { PanelSlideIn } from '../EditorMotion';
 import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface InspectorPanelProps {
-  /** Whether an element is selected (shows editor vs empty state) */
   hasSelection: boolean;
-  /** Unique key for the current selection (triggers slide animation) */
   selectionKey?: string;
-  /** Breadcrumb segments for context (e.g., ["Services Page", "Content Block"]) */
   breadcrumb?: string[];
-  /** Editor content to render */
   children: ReactNode;
   className?: string;
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
+  style?: React.CSSProperties;
 }
 
 export function InspectorPanel({
@@ -30,13 +30,50 @@ export function InspectorPanel({
   breadcrumb,
   children,
   className,
+  isCollapsed = false,
+  onToggleCollapse,
+  style,
 }: InspectorPanelProps) {
+  // ─── Collapsed Icon Rail ───
+  if (isCollapsed) {
+    return (
+      <div className={editorTokens.panel.collapsedRail} style={style}>
+        {onToggleCollapse && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={onToggleCollapse}
+                className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors duration-150"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="left">Expand Inspector</TooltipContent>
+          </Tooltip>
+        )}
+        <div className="w-full border-t border-border/20 my-1" />
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={onToggleCollapse}
+              className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors duration-150"
+            >
+              <MousePointerClick className="h-4 w-4" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="left">Inspector</TooltipContent>
+        </Tooltip>
+      </div>
+    );
+  }
+
+  // ─── Expanded Panel ───
   return (
-    <div className={cn(editorTokens.panel.inspector, 'h-full flex flex-col', className)}>
+    <div className={cn(editorTokens.panel.inspector, 'h-full flex flex-col', className)} style={style}>
       {/* Inspector Header */}
       <div className={cn(editorTokens.panel.header, 'justify-between')}>
         {breadcrumb && breadcrumb.length > 0 ? (
-          <div className="flex items-center gap-1 min-w-0 overflow-hidden">
+          <div className="flex items-center gap-1 min-w-0 overflow-hidden flex-1">
             {breadcrumb.map((segment, i) => (
               <span key={i} className="flex items-center gap-1 min-w-0">
                 {i > 0 && <ChevronRight className="h-3 w-3 text-muted-foreground/50 flex-shrink-0" />}
@@ -52,9 +89,22 @@ export function InspectorPanel({
             ))}
           </div>
         ) : (
-          <span className="text-xs font-display tracking-wide text-muted-foreground">
+          <span className="text-xs font-display tracking-wide text-muted-foreground flex-1">
             INSPECTOR
           </span>
+        )}
+        {onToggleCollapse && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={onToggleCollapse}
+                className="w-7 h-7 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors duration-150 flex-shrink-0"
+              >
+                <ChevronRight className="h-3.5 w-3.5" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Collapse Panel</TooltipContent>
+          </Tooltip>
         )}
       </div>
 

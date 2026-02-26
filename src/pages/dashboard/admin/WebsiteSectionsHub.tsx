@@ -47,6 +47,7 @@ import { InspectorPanel } from '@/components/dashboard/website-editor/panels/Ins
 // Hooks
 import { useUndoRedo } from '@/hooks/useUndoRedo';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useEditorLayout } from '@/hooks/useEditorLayout';
 import {
   useWebsiteSections,
   useUpdateWebsiteSections,
@@ -132,6 +133,7 @@ export default function WebsiteSectionsHub() {
   const contextSlug = effectiveOrganization?.slug || selectedOrganization?.slug || currentOrganization?.slug;
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
+  const layout = useEditorLayout();
 
   const { data: fallbackSlug } = useQuery({
     queryKey: ['website-editor-org-slug-fallback'],
@@ -644,13 +646,16 @@ export default function WebsiteSectionsHub() {
   // ─── Render ───
   return (
     <DashboardLayout hideFooter hideTopBar hideSidebar>
-      <div className="h-screen flex gap-3 p-3 bg-muted/30">
-        {/* Structure Panel (280px) */}
-        {!isMobile && (
+      <div ref={layout.containerRef} className="h-screen flex gap-3 p-3 bg-muted/30">
+        {/* Structure Panel — responsive */}
+        {!isMobile && layout.structureVisible && (
           <StructurePanel
             mode={structureMode}
             onModeChange={handleStructureModeChange}
             onSearchSelect={handleTabChange}
+            isCollapsed={false}
+            onToggleCollapse={layout.toggleStructure}
+            style={{ width: layout.structureWidth }}
           >
             {structureMode === 'pages' && (
               <StructurePagesTab
@@ -688,6 +693,19 @@ export default function WebsiteSectionsHub() {
                 onActivate={() => setActiveTab('navigation')}
               />
             )}
+          </StructurePanel>
+        )}
+
+        {/* Structure collapsed rail */}
+        {!isMobile && !layout.structureVisible && !layout.isTablet && (
+          <StructurePanel
+            mode={structureMode}
+            onModeChange={handleStructureModeChange}
+            onSearchSelect={handleTabChange}
+            isCollapsed
+            onToggleCollapse={layout.toggleStructure}
+          >
+            <div />
           </StructurePanel>
         )}
 
@@ -737,14 +755,27 @@ export default function WebsiteSectionsHub() {
           onPreview={() => window.open(openSiteUrl, '_blank')}
         />
 
-        {/* Inspector Panel (320px) - Desktop */}
-        {!isMobile && (
+        {/* Inspector Panel — Desktop, expanded */}
+        {!isMobile && layout.inspectorVisible && (
           <InspectorPanel
             hasSelection={!!hasInspectorContent}
             selectionKey={activeTab}
             breadcrumb={inspectorBreadcrumb}
+            onToggleCollapse={layout.toggleInspector}
+            style={{ width: layout.inspectorWidth }}
           >
             {renderEditor()}
+          </InspectorPanel>
+        )}
+
+        {/* Inspector collapsed rail */}
+        {!isMobile && !layout.inspectorVisible && !layout.isTablet && (
+          <InspectorPanel
+            hasSelection={false}
+            isCollapsed
+            onToggleCollapse={layout.toggleInspector}
+          >
+            <div />
           </InspectorPanel>
         )}
 

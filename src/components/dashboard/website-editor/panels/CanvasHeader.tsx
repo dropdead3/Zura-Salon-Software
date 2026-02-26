@@ -3,7 +3,7 @@
  * 
  * Top control strip for the Canvas panel.
  * Left: site name + draft indicator + auto-save
- * Center: Desktop / Tablet / Mobile segmented toggle
+ * Center: Desktop / Tablet / Mobile + Zoom controls
  * Right: Undo, Redo, Preview, Save, Publish
  */
 
@@ -28,6 +28,7 @@ import { SavedIndicator } from '../EditorMotion';
 import { PublishChangesButton } from '../PublishChangelog';
 
 export type ViewportMode = 'desktop' | 'tablet' | 'mobile';
+export type ZoomLevel = 'fit' | '100' | '75';
 
 interface CanvasHeaderProps {
   siteName?: string;
@@ -36,7 +37,9 @@ interface CanvasHeaderProps {
   canUndo: boolean;
   canRedo: boolean;
   viewportMode: ViewportMode;
+  zoomLevel: ZoomLevel;
   onViewportChange: (mode: ViewportMode) => void;
+  onZoomChange: (zoom: ZoomLevel) => void;
   onUndo: () => void;
   onRedo: () => void;
   onSave: () => void;
@@ -50,7 +53,9 @@ export function CanvasHeader({
   canUndo,
   canRedo,
   viewportMode,
+  zoomLevel,
   onViewportChange,
+  onZoomChange,
   onUndo,
   onRedo,
   onSave,
@@ -70,7 +75,7 @@ export function CanvasHeader({
     }
   }, [wasSaving, isSaving]);
 
-  // Escape key → navigate back (guarded)
+  // Escape key → navigate back
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
@@ -93,6 +98,12 @@ export function CanvasHeader({
     { mode: 'desktop', icon: Monitor, label: 'Desktop' },
     { mode: 'tablet', icon: Tablet, label: 'Tablet' },
     { mode: 'mobile', icon: Smartphone, label: 'Mobile' },
+  ];
+
+  const zoomOptions: { level: ZoomLevel; label: string }[] = [
+    { level: 'fit', label: 'Fit' },
+    { level: '100', label: '100%' },
+    { level: '75', label: '75%' },
   ];
 
   return (
@@ -126,25 +137,44 @@ export function CanvasHeader({
         </div>
       </div>
 
-      {/* Center: Viewport toggle */}
-      <div className={editorTokens.segmented.container}>
-        {viewports.map(({ mode, icon: Icon, label }) => (
-          <Tooltip key={mode}>
-            <TooltipTrigger asChild>
-              <button
-                onClick={() => onViewportChange(mode)}
-                className={cn(
-                  editorTokens.segmented.button,
-                  'px-2 flex-initial',
-                  viewportMode === mode && editorTokens.segmented.active
-                )}
-              >
-                <Icon className="h-4 w-4" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>{label}</TooltipContent>
-          </Tooltip>
-        ))}
+      {/* Center: Viewport + Zoom */}
+      <div className="flex items-center gap-2">
+        <div className={editorTokens.segmented.container}>
+          {viewports.map(({ mode, icon: Icon, label }) => (
+            <Tooltip key={mode}>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => onViewportChange(mode)}
+                  className={cn(
+                    editorTokens.segmented.button,
+                    'px-2 flex-initial',
+                    viewportMode === mode && editorTokens.segmented.active
+                  )}
+                >
+                  <Icon className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>{label}</TooltipContent>
+            </Tooltip>
+          ))}
+        </div>
+
+        {/* Zoom controls */}
+        <div className={cn(editorTokens.segmented.container, 'hidden sm:flex')}>
+          {zoomOptions.map(({ level, label }) => (
+            <button
+              key={level}
+              onClick={() => onZoomChange(level)}
+              className={cn(
+                editorTokens.segmented.button,
+                'px-2 flex-initial text-[10px]',
+                zoomLevel === level && editorTokens.segmented.active
+              )}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Right: Actions */}
@@ -192,7 +222,6 @@ function useWasSaving(isSaving: boolean) {
   useEffect(() => {
     if (isSaving) setWasSaving(true);
     else if (!isSaving && wasSaving) {
-      // Keep wasSaving true for one render so the effect above can detect the transition
       const timer = setTimeout(() => setWasSaving(false), 50);
       return () => clearTimeout(timer);
     }
