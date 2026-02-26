@@ -25,6 +25,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Dialog,
   DialogContent,
@@ -577,13 +578,14 @@ export function ServicesContent() {
                                 <Pencil className="w-4 h-4" />
                               </Button>
                             </DialogTrigger>
-                            <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                            <DialogContent className="max-w-2xl max-h-[80vh]">
                               <DialogHeader>
                                 <DialogTitle>Edit Service</DialogTitle>
                                 <DialogDescription>
                                   Update service details, pricing, and website display
                                 </DialogDescription>
                               </DialogHeader>
+                              <ScrollArea className="max-h-[calc(80vh-8rem)]">
                               {editingService && (
                                 <div className="space-y-4 py-4">
                                   <div className="space-y-2">
@@ -729,6 +731,7 @@ export function ServicesContent() {
                                   Save Changes
                                 </Button>
                               </DialogFooter>
+                              </ScrollArea>
                             </DialogContent>
                           </Dialog>
                         </div>

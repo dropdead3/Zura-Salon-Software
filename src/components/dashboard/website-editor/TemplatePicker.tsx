@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { tokens } from '@/lib/design-tokens';
 import {
   Dialog,
@@ -40,12 +41,13 @@ export function TemplatePicker({ open, onOpenChange, onSelect, filterType }: Tem
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[70vh] overflow-auto">
+      <DialogContent className="max-w-lg max-h-[70vh]">
         <DialogHeader>
           <DialogTitle>Section Templates</DialogTitle>
           <DialogDescription>Choose a pre-built template to get started quickly.</DialogDescription>
         </DialogHeader>
 
+        <ScrollArea className="max-h-[calc(70vh-8rem)]">
         {/* Category Tabs */}
         {!filterType && (
           <div className="flex gap-1.5 flex-wrap">
@@ -101,6 +103,7 @@ export function TemplatePicker({ open, onOpenChange, onSelect, filterType }: Tem
             <p className="text-sm text-muted-foreground text-center py-6">No templates in this category</p>
           )}
         </div>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );

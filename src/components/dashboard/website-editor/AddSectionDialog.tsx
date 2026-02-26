@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { tokens } from '@/lib/design-tokens';
 import {
   Dialog,
@@ -78,12 +79,13 @@ export function AddSectionDialog({ open, onOpenChange, onAdd, onAddFromTemplate 
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-lg max-h-[75vh] overflow-auto">
+      <DialogContent className="max-w-lg max-h-[75vh]">
         <DialogHeader>
           <DialogTitle>Add New Section</DialogTitle>
           <DialogDescription>Choose a blank section type or start from a template.</DialogDescription>
         </DialogHeader>
 
+        <ScrollArea className="max-h-[calc(75vh-8rem)]">
         {!selectedType ? (
           <Tabs defaultValue="blank" className="w-full">
             <TabsList className="w-full">
@@ -196,6 +198,7 @@ export function AddSectionDialog({ open, onOpenChange, onAdd, onAddFromTemplate 
             </div>
           </div>
         )}
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );
