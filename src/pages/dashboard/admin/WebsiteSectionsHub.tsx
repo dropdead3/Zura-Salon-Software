@@ -34,6 +34,7 @@ import { PageSettingsEditor } from '@/components/dashboard/website-editor/PageSe
 import { PageTemplatePicker } from '@/components/dashboard/website-editor/PageTemplatePicker';
 import { SectionStyleEditor } from '@/components/dashboard/website-editor/SectionStyleEditor';
 import { AddSectionDialog } from '@/components/dashboard/website-editor/AddSectionDialog';
+import { StructurePanelSkeleton, CanvasPanelSkeleton, InspectorPanelSkeleton } from '@/components/dashboard/website-editor/EditorSkeletons';
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
 
 // Three-panel layout
@@ -167,10 +168,11 @@ export default function WebsiteSectionsHub() {
   const [showMobileStructure, setShowMobileStructure] = useState(false);
 
   // ─── Data ───
-  const { data: pagesConfig } = useWebsitePages();
+  const { data: pagesConfig, isLoading: pagesLoading } = useWebsitePages();
   const updatePages = useUpdateWebsitePages();
-  const { data: sectionsConfig } = useWebsiteSections();
+  const { data: sectionsConfig, isLoading: sectionsLoading } = useWebsiteSections();
   const updateSections = useUpdateWebsiteSections();
+  const isEditorLoading = pagesLoading || sectionsLoading;
 
   const selectedPage = useMemo(
     () => pagesConfig?.pages.find(p => p.id === selectedPageId),
@@ -647,6 +649,13 @@ export default function WebsiteSectionsHub() {
   return (
     <DashboardLayout hideFooter hideTopBar hideSidebar>
       <div ref={layout.containerRef} className="h-screen flex gap-3 p-3 bg-muted/30">
+        {isEditorLoading ? (
+          <>
+            <StructurePanelSkeleton width={layout.structureWidth} visible={layout.structureVisible} />
+            <CanvasPanelSkeleton />
+            <InspectorPanelSkeleton width={layout.inspectorWidth} visible={layout.inspectorVisible} />
+          </>
+        ) : (<>
         {/* Structure Panel — responsive */}
         {!isMobile && layout.structureVisible && (
           <StructurePanel
@@ -842,6 +851,7 @@ export default function WebsiteSectionsHub() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+        </>)}
       </div>
     </DashboardLayout>
   );
