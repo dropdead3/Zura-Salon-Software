@@ -8,7 +8,7 @@ import { useNotificationSound } from '@/hooks/useNotificationSound';
 import { Button } from '@/components/ui/button';
 
 export function SoundSettingsSection() {
-  const { enabled, setEnabled } = useSoundSettings();
+  const { enabled, setEnabled, chaChingEnabled, setChaChingEnabled } = useSoundSettings();
   const { playSuccess, playError } = useNotificationSound();
 
   return (
@@ -29,6 +29,16 @@ export function SoundSettingsSection() {
           <div className="flex items-center gap-3">
             <Label className="text-xs text-muted-foreground">{enabled ? 'On' : 'Off'}</Label>
             <Switch checked={enabled} onCheckedChange={setEnabled} />
+          </div>
+        </div>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium">Checkout notifications</p>
+            <p className="text-xs text-muted-foreground">Show a cha-ching alert when a client checks out.</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Label className="text-xs text-muted-foreground">{chaChingEnabled ? 'On' : 'Off'}</Label>
+            <Switch checked={chaChingEnabled} onCheckedChange={setChaChingEnabled} />
           </div>
         </div>
         <div className="flex items-center gap-2">

@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/format';
 import { useNotificationSound } from '@/hooks/useNotificationSound';
+import { useSoundSettings } from '@/contexts/SoundSettingsContext';
 
 interface TodayActualRevenueData {
   actualRevenue: number;
@@ -30,6 +31,7 @@ export function useTodayActualRevenue(enabled: boolean) {
   const today = format(new Date(), 'yyyy-MM-dd');
   const queryClient = useQueryClient();
   const { playAchievement } = useNotificationSound();
+  const { chaChingEnabled } = useSoundSettings();
   const prevRevenueRef = useRef<number | null>(null);
 
 
@@ -99,7 +101,7 @@ export function useTodayActualRevenue(enabled: boolean) {
       return;
     }
 
-    if (hasData && currentRevenue > prevRevenueRef.current) {
+    if (chaChingEnabled && hasData && currentRevenue > prevRevenueRef.current) {
       const delta = currentRevenue - prevRevenueRef.current;
       toast('💰 Cha-ching!', {
         description: `A client just checked out for ${formatCurrency(delta)}`,
@@ -109,7 +111,7 @@ export function useTodayActualRevenue(enabled: boolean) {
     }
 
     prevRevenueRef.current = currentRevenue;
-  }, [actualRevenueQuery.data, playAchievement]);
+  }, [actualRevenueQuery.data, playAchievement, chaChingEnabled]);
 
   const lastAppointmentQuery = useQuery({
     queryKey: ['today-last-appointment', today],
