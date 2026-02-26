@@ -1,70 +1,81 @@
 
 
-## Fix: Editor Sidebars Always Start Expanded + Toggle Actually Works
+## Fix: Enable Scrolling in Editor Canvas Preview
 
-### Root Cause Analysis
+### Problem
 
-**Two interconnected bugs:**
+The editor's live preview iframe cannot be scrolled to see the full site. The user sees the Header and some sections but can't scroll down to view all content.
 
-1. **Stale localStorage**: Previous sessions save `structureCollapsed: true` or `inspectorCollapsed: true`. On reload, `loadPrefs()` reads these values, so panels start collapsed despite the user expectation of "always expanded on load."
+### Root Cause
 
-2. **Toggle defeated by space-check**: When clicking "Expand" on the collapsed rail, `toggleStructure` flips `structureCollapsed` from `true` to `false`. But the space-check logic (lines 132-141) immediately re-evaluates and can set `structureVisible = false` again if `prefs.inspectorCollapsed === undefined`. The toggle "works" in state but the computed visibility overrides it.
+In `src/components/layout/Layout.tsx` (line 98), the main content wrapper has `overflow-hidden`:
+
+```tsx
+<div 
+  className="relative z-10 flex flex-col min-h-screen bg-background rounded-b-[2rem] md:rounded-b-[3rem] shadow-[...] overflow-hidden"
+  style={{ marginBottom: footerHeight }}
+>
+```
+
+This `overflow-hidden` is needed for the public site to clip content cleanly against the rounded bottom corners and the fixed-footer reveal effect. However, inside the editor preview iframe, this creates a scrolling conflict:
+
+- The iframe viewport is smaller than the full page
+- The div has `min-h-screen` (which resolves to the iframe's viewport height)
+- Content is longer than the iframe viewport
+- `overflow-hidden` clips that excess content
+- The fixed footer architecture adds `marginBottom: footerHeight`, pushing content further
+
+Additionally, the `CanvasPanel.tsx` canvas surface container (line 134) uses `overflow-hidden` with padding (`p-6 lg:p-8`), which reduces the iframe's visible area and clips its edges.
 
 ### Fix
 
-#### File: `src/hooks/useEditorLayout.ts`
+Two targeted changes:
 
-**Change 1 — Always start expanded on mount.** Do not read `structureCollapsed` or `inspectorCollapsed` from localStorage. Only persist/restore panel widths. This matches the user's explicit preference: "Always force expanded."
+#### 1. `src/components/layout/Layout.tsx`
+When in editor preview mode (`?preview=true`), remove `overflow-hidden` from the main content wrapper and disable the fixed footer reveal effect (since the user doesn't need to see the footer reveal animation in the editor). This allows the iframe document to scroll naturally.
 
-```tsx
-// loadPrefs: only restore widths, never collapse state
-function loadPrefs(): PersistedLayout {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      // Only restore width preferences, not collapse state
-      return {
-        structureWidth: parsed.structureWidth,
-        inspectorWidth: parsed.inspectorWidth,
-        structureCollapsed: false,
-        inspectorCollapsed: false,
-      };
-    }
-    return {};
-  } catch {
-    return {};
-  }
-}
-```
+- Detect `isEditorPreview` via `?preview` URL param (same pattern used in `PageSectionRenderer`)
+- When in preview mode:
+  - Remove `overflow-hidden` from the main content wrapper
+  - Remove `rounded-b-*` (no need for rounded corners in editor)
+  - Remove `marginBottom: footerHeight` (no fixed footer reveal)
+  - Hide the fixed `<Footer />` element entirely (not needed in editor)
+  - Keep the `<FooterCTA />` visible (it's part of the content flow)
+- Public site rendering remains completely unchanged
 
-**Change 2 — Fix toggle to use explicit booleans.** The current toggle `!prev.structureCollapsed` is ambiguous when the value is `undefined` (`!undefined = true` → collapses instead of expanding). Use explicit boolean flipping:
+#### 2. `src/components/dashboard/website-editor/panels/CanvasPanel.tsx`
+Change the canvas surface container from `overflow-hidden` to `overflow-auto` to allow the preview frame to fill the full available space without clipping. Also remove the padding (`p-6 lg:p-8`) when in desktop mode so the iframe gets maximum space — or reduce it to minimal padding.
 
-```tsx
-const toggleStructure = useCallback(() => {
-  setPrefs((prev) => {
-    const next = { ...prev, structureCollapsed: prev.structureCollapsed === true ? false : true };
-    savePrefs(next);
-    return next;
-  });
-}, []);
-
-const toggleInspector = useCallback(() => {
-  setPrefs((prev) => {
-    const next = { ...prev, inspectorCollapsed: prev.inspectorCollapsed === true ? false : true };
-    savePrefs(next);
-    return next;
-  });
-}, []);
-```
-
-**Change 3 — Space-check should not silently override explicit user toggles.** Currently, the space check collapses panels when `prefs.inspectorCollapsed === undefined`. After the fix, prefs will always be explicit booleans (`true`/`false`), so the `=== undefined` check will never match, which means the space check won't override user intent. This is the correct behavior — if the user explicitly expands a panel, it stays expanded even if space is tight.
+Actually, the iframe scrolls internally so the outer container padding is fine. The key change is ensuring the iframe container fills the available height properly. Currently `items-start` aligns the frame to the top which is correct. The `overflow-hidden` on this container is fine because the iframe handles its own scrolling — the real fix is inside the iframe (Layout.tsx).
 
 ### Files
 
 | File | Change |
 |---|---|
-| `src/hooks/useEditorLayout.ts` | Always init collapse state as `false`, fix toggle to use explicit booleans |
+| `src/components/layout/Layout.tsx` | In preview mode: remove `overflow-hidden`, disable fixed footer, remove `marginBottom` |
 
-One file. Three targeted changes.
+One file. The iframe scrolls internally — the fix is inside the rendered content, not the iframe container.
+
+### Technical Detail
+
+The `isEditorPreview` detection uses the same module-level pattern already established in `PageSectionRenderer.tsx`:
+
+```tsx
+const isEditorPreview = typeof window !== 'undefined'
+  && new URLSearchParams(window.location.search).has('preview');
+```
+
+In preview mode, the Layout simplifies to:
+```tsx
+// No fixed footer, no overflow-hidden, no bottom margin
+<div className="relative z-10 flex flex-col min-h-screen bg-background">
+  <Header />
+  <main className="flex-1 bg-background">
+    <PageTransition>{children}</PageTransition>
+  </main>
+  <FooterCTA />
+</div>
+```
+
+Public site layout remains completely untouched.
 
