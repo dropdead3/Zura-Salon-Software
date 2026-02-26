@@ -131,12 +131,13 @@ export const CanvasPanel = memo(function CanvasPanel({
       />
 
       {/* Canvas Surface */}
-      <div className="flex-1 overflow-hidden bg-muted/30">
+      <div className="flex-1 overflow-hidden bg-muted/30 flex items-start justify-center p-6 lg:p-8">
         <div
           className={cn(
-            'mx-auto h-full transition-all duration-200 ease-[cubic-bezier(0.25,0.1,0.25,1)]',
+            'w-full h-full transition-all duration-200 ease-[cubic-bezier(0.25,0.1,0.25,1)]',
             VIEWPORT_WIDTHS[viewportMode],
-            viewportMode !== 'desktop' && 'my-4 rounded-lg overflow-hidden border border-border shadow-lg bg-background'
+            editorTokens.canvas.previewFrame,
+            viewportMode !== 'desktop' && 'mx-auto'
           )}
           style={{
             transform: scale !== 1 ? `scale(${scale})` : undefined,

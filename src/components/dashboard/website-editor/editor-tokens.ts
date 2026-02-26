@@ -79,6 +79,8 @@ export const editorTokens = {
     controlStrip: 'h-12 px-4 border-b border-border/30 bg-card/90 backdrop-blur-md flex items-center justify-between gap-4',
     /** Auto-save indicator */
     savedIndicator: 'text-[11px] text-muted-foreground font-sans',
+    /** Luxury bento preview frame — wraps the iframe */
+    previewFrame: 'rounded-[24px] overflow-hidden border border-border/20 shadow-[0_2px_12px_0_rgba(0,0,0,0.06)] bg-background',
   },
 } as const;
 
