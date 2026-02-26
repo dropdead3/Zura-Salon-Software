@@ -1,25 +1,18 @@
 
 
-## Increase Interior Card Border Opacity by +10%
+## Replace Sort Dropdown with Tab Toggle on Top Performers Card
 
-The interior/sub-card borders use opacity modifiers on `border-border`. The primary sources are:
+**File: `src/components/dashboard/sales/TopPerformersCard.tsx`**
 
-1. **Design tokens** (`src/lib/design-tokens.ts`, lines 74-76): `border-border/40` → `border-border/50` for `card.inner` and `card.innerDeep`
-2. **Widespread component usage**: Many components use `border-border/30` for interior dividers and row separators — these should become `border-border/40`. Components using `border-border/40` should become `border-border/50`. Components using `border-border/50` should become `border-border/60`.
+1. Remove the dropdown state (`showDropdown`, `dropdownRef`, outside-click `useEffect`), the `ChevronDown` import (keep `ChevronUp`), and the dropdown JSX block (lines 154-178)
 
-### Changes
+2. Move the sort toggle into the card header as a `FilterTabsList`/`FilterTabsTrigger` on the right side (before `AnalyticsFilterBadge`), using the existing compact filter tab components from `@/components/ui/tabs`
 
-**File: `src/lib/design-tokens.ts`**
-- Line 74: `border-border/40` → `border-border/50` (card.inner)
-- Line 76: `border-border/40` → `border-border/50` (card.innerDeep)
-- Line 194: `border-border/40` → `border-border/50` (drilldown header)
-- Line 198: `border-border/40` → `border-border/50` (drilldown footer)
+3. Updated header layout:
+   - Left: Icon + Title + InfoTooltip (unchanged)
+   - Right: `FilterTabsList` with two `FilterTabsTrigger` options ("Revenue" / "Retail"), then `AnalyticsFilterBadge`
 
-**Bulk find-and-replace across ~200 component files** for interior border classes:
-- `border-border/20` → `border-border/30`
-- `border-border/30` → `border-border/40`
-- `border-border/40` → `border-border/50`
-- `border-border/50` → `border-border/60`
+4. Replace `useState`-based sort with `Tabs` component wrapping the card, using `onValueChange` to set `sortMode`
 
-This cascading +10% shift applies to all interior card borders, separators, dividers, and sub-card outlines across the entire dashboard. The outer card borders (which use full `border-border` without opacity) are unaffected.
+**Result**: Clean pill-toggle in the header right column instead of the current "Sorted by: X" dropdown below the header.
 
