@@ -1173,8 +1173,9 @@ export function AggregateSalesCard({
                         const tipDenominator = isToday && todayActual?.hasActualData
                           ? todayActual.actualRevenue
                           : displayMetrics.totalRevenue;
-                        return tipDenominator > 0
-                          ? `${((metrics?.totalTips ?? 0) / tipDenominator * 100).toFixed(1)}%`
+                        const tips = metrics?.totalTips ?? 0;
+                        return tipDenominator > 0 && tips > 0
+                          ? `${(tips / tipDenominator * 100).toFixed(1)}%`
                           : '—';
                       })()}
                     </p>
