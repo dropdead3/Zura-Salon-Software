@@ -19,6 +19,14 @@ import { isBuiltinSection, type BuiltinSectionType, type CustomSectionType, type
 
 const FULL_BLEED_SECTIONS = new Set<string>(['hero', 'gallery', 'new_client', 'brand_statement', 'extensions']);
 
+// Must be at module level — React.lazy inside render body causes infinite re-suspension
+const EditorSectionCard = React.lazy(() =>
+  import('@/components/home/EditorSectionCard').then(m => ({ default: m.EditorSectionCard }))
+);
+const InsertionLine = React.lazy(() =>
+  import('@/components/home/InsertionLine').then(m => ({ default: m.InsertionLine }))
+);
+
 const BUILTIN_COMPONENTS: Record<BuiltinSectionType, React.ReactNode> = {
   hero: <HeroSection />,
   brand_statement: <BrandStatement />,
@@ -87,10 +95,6 @@ export function PageSectionRenderer({ sections }: PageSectionRendererProps) {
 
   // Editor preview: floating bento cards
   if (isEditorPreview) {
-    // Lazy load editor-only components
-    const EditorSectionCard = React.lazy(() => import('@/components/home/EditorSectionCard').then(m => ({ default: m.EditorSectionCard })));
-    const InsertionLine = React.lazy(() => import('@/components/home/InsertionLine').then(m => ({ default: m.InsertionLine })));
-
     return (
       <div className="zura-editor-preview py-6 space-y-5">
         <React.Suspense fallback={null}>
