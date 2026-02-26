@@ -1,30 +1,41 @@
 @keyframes silver-shine-rotate {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% { transform: translate(-50%, -50%) rotate(0deg); }
+  100% { transform: translate(-50%, -50%) rotate(360deg); }
 }
 
+/* Container: 1px padding reveals the layered background as a stroke */
 .silver-shine-border {
   position: relative;
+  background:
+    /* Layer 1: static silver base stroke (always visible) */
+    linear-gradient(
+      135deg,
+      hsl(0 0% 45% / 0.5),
+      hsl(0 0% 65% / 0.6),
+      hsl(0 0% 50% / 0.5)
+    );
+  padding: 1px;
   overflow: hidden;
 }
 
+/* Layer 2: rotating reflective highlight */
 .silver-shine-border::before {
   content: '';
   position: absolute;
   top: 50%;
   left: 50%;
-  width: max(200%, 200vh);
+  width: max(300%, 300vh);
   height: 0;
-  padding-bottom: max(200%, 200vh);
-  transform: translate(-50%, -50%);
+  padding-bottom: max(300%, 300vh);
+  transform: translate(-50%, -50%) rotate(0deg);
   border-radius: 0;
   background: conic-gradient(
     transparent 0deg,
-    transparent 320deg,
-    hsl(0 0% 70% / 0.15) 332deg,
-    hsl(0 0% 80% / 0.35) 345deg,
-    hsl(0 0% 90% / 0.45) 352deg,
-    hsl(0 0% 80% / 0.35) 358deg,
+    transparent 300deg,
+    hsl(0 0% 70% / 0.25) 325deg,
+    hsl(0 0% 85% / 0.55) 345deg,
+    hsl(0 0% 95% / 0.7) 352deg,
+    hsl(0 0% 85% / 0.55) 358deg,
     transparent 360deg
   );
   animation: silver-shine-rotate 12s ease-in-out infinite;
@@ -42,7 +53,7 @@
   opacity: 0;
 }
 
-/* Inner mask to restrict shine to stroke only */
+/* Inner content sits above the stroke layers */
 .silver-shine-inner {
   position: relative;
   z-index: 1;
