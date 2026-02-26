@@ -155,7 +155,7 @@ export function GoalLocationRow({
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="px-4 pb-4 pt-1 space-y-3 border-t border-border/20">
+            <div className="px-4 pb-4 pt-1 space-y-3 border-t border-border/30">
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Earned</p>
@@ -252,7 +252,7 @@ export function GoalLocationRow({
               )}
             </div>
           </ScrollArea>
-          <div className="text-[10px] text-muted-foreground text-center pt-2 border-t border-border/30">
+          <div className="text-[10px] text-muted-foreground text-center pt-2 border-t border-border/40">
             Powered by {PLATFORM_NAME} AI
           </div>
         </DialogContent>

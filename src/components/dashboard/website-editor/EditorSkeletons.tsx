@@ -97,7 +97,7 @@ export function CanvasPanelSkeleton() {
       <div className={cn(editorTokens.canvas.surface, 'flex-1 p-6 overflow-auto scrollbar-thin')}>
         <div className="max-w-3xl mx-auto space-y-5">
           {/* Hero card */}
-          <div className="rounded-[20px] bg-card/80 border border-border/30 p-6 space-y-4" style={{ minHeight: 200 }}>
+          <div className="rounded-[20px] bg-card/80 border border-border/40 p-6 space-y-4" style={{ minHeight: 200 }}>
             <div className={cn(sk, 'h-6 w-[65%]')} />
             <div className={cn(sk, 'h-4 w-[45%]')} />
             <div className="pt-2">
@@ -106,7 +106,7 @@ export function CanvasPanelSkeleton() {
           </div>
 
           {/* Text section card */}
-          <div className="rounded-[20px] bg-card/80 border border-border/30 p-6 space-y-3" style={{ minHeight: 120 }}>
+          <div className="rounded-[20px] bg-card/80 border border-border/40 p-6 space-y-3" style={{ minHeight: 120 }}>
             <div className={cn(sk, 'h-4 w-[80%]')} />
             <div className={cn(sk, 'h-3.5 w-[90%]')} />
             <div className={cn(sk, 'h-3.5 w-[70%]')} />
@@ -114,7 +114,7 @@ export function CanvasPanelSkeleton() {
           </div>
 
           {/* Gallery card */}
-          <div className="rounded-[20px] bg-card/80 border border-border/30 p-6" style={{ minHeight: 140 }}>
+          <div className="rounded-[20px] bg-card/80 border border-border/40 p-6" style={{ minHeight: 140 }}>
             <div className={cn(sk, 'h-4 w-[40%] mb-4')} />
             <div className="flex gap-3">
               <div className={cn(sk, 'h-24 flex-1 rounded-lg')} />
@@ -124,7 +124,7 @@ export function CanvasPanelSkeleton() {
           </div>
 
           {/* CTA card */}
-          <div className="rounded-[20px] bg-card/80 border border-border/30 p-6 flex flex-col items-center gap-3" style={{ minHeight: 80 }}>
+          <div className="rounded-[20px] bg-card/80 border border-border/40 p-6 flex flex-col items-center gap-3" style={{ minHeight: 80 }}>
             <div className={cn(sk, 'h-5 w-[50%]')} />
             <div className={cn(skPill, 'h-9 w-28')} />
           </div>

@@ -238,7 +238,7 @@ export function MenuItemInspector({ item, menuId, pagesConfig }: MenuItemInspect
         </div>
 
         {/* Delete */}
-        <div className="pt-2 border-t border-border/30">
+        <div className="pt-2 border-t border-border/40">
           <Button
             variant="ghost"
             size={tokens.button.inline}

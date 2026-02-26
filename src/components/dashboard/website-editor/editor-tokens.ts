@@ -12,15 +12,15 @@ export const editorTokens = {
   // ========================================
   panel: {
     /** Structure panel (left — width from useEditorLayout) */
-    structure: 'flex-shrink-0 bg-card/80 backdrop-blur-xl border border-border/30 rounded-xl shadow-[0_1px_3px_0_rgba(0,0,0,0.04)]',
+    structure: 'flex-shrink-0 bg-card/80 backdrop-blur-xl border border-border/40 rounded-xl shadow-[0_1px_3px_0_rgba(0,0,0,0.04)]',
     /** Canvas panel (center, flexible) */
-    canvas: 'flex-1 min-w-0 bg-muted/20 backdrop-blur-sm rounded-xl overflow-hidden border border-border/30 shadow-[0_1px_3px_0_rgba(0,0,0,0.04)]',
+    canvas: 'flex-1 min-w-0 bg-muted/20 backdrop-blur-sm rounded-xl overflow-hidden border border-border/40 shadow-[0_1px_3px_0_rgba(0,0,0,0.04)]',
     /** Inspector panel (right — width from useEditorLayout) */
-    inspector: 'flex-shrink-0 bg-card/80 backdrop-blur-xl border border-border/30 rounded-xl shadow-[0_1px_3px_0_rgba(0,0,0,0.04)]',
+    inspector: 'flex-shrink-0 bg-card/80 backdrop-blur-xl border border-border/40 rounded-xl shadow-[0_1px_3px_0_rgba(0,0,0,0.04)]',
     /** Collapsed icon rail */
-    collapsedRail: 'w-10 flex-shrink-0 bg-card/80 backdrop-blur-xl border border-border/30 rounded-xl shadow-[0_1px_3px_0_rgba(0,0,0,0.04)] flex flex-col items-center py-3 gap-2',
+    collapsedRail: 'w-10 flex-shrink-0 bg-card/80 backdrop-blur-xl border border-border/40 rounded-xl shadow-[0_1px_3px_0_rgba(0,0,0,0.04)] flex flex-col items-center py-3 gap-2',
     /** Shared panel header */
-    header: 'h-12 px-4 border-b border-border/30 bg-card/90 backdrop-blur-md flex items-center',
+    header: 'h-12 px-4 border-b border-border/40 bg-card/90 backdrop-blur-md flex items-center',
   },
 
   // ========================================
@@ -62,11 +62,11 @@ export const editorTokens = {
     /** Inspector content area — symmetric insets, single envelope */
     content: 'px-5 pt-4 pb-8 space-y-4 max-w-full box-border overflow-hidden',
     /** Collapsible group header */
-    groupHeader: 'flex items-center justify-between w-full py-3 px-1 text-xs font-medium text-muted-foreground uppercase tracking-[0.15em] hover:text-foreground transition-colors duration-120 border-t border-border/20 first:border-t-0',
+    groupHeader: 'flex items-center justify-between w-full py-3 px-1 text-xs font-medium text-muted-foreground uppercase tracking-[0.15em] hover:text-foreground transition-colors duration-120 border-t border-border/30 first:border-t-0',
     /** Collapsible group content */
     groupContent: 'pb-5 space-y-4',
     /** Group divider */
-    groupDivider: 'border-b border-border/30',
+    groupDivider: 'border-b border-border/40',
   },
 
   // ========================================
@@ -76,11 +76,11 @@ export const editorTokens = {
     /** Canvas inner frame (the white editing surface) */
     surface: 'bg-background h-full',
     /** Canvas header control strip */
-    controlStrip: 'h-12 px-4 border-b border-border/30 bg-card/90 backdrop-blur-md flex items-center justify-between gap-4',
+    controlStrip: 'h-12 px-4 border-b border-border/40 bg-card/90 backdrop-blur-md flex items-center justify-between gap-4',
     /** Auto-save indicator */
     savedIndicator: 'text-[11px] text-muted-foreground font-sans',
     /** Luxury bento preview frame — wraps the iframe */
-    previewFrame: 'rounded-[24px] overflow-hidden border border-border/20 shadow-[0_2px_12px_0_rgba(0,0,0,0.06)] bg-background',
+    previewFrame: 'rounded-[24px] overflow-hidden border border-border/30 shadow-[0_2px_12px_0_rgba(0,0,0,0.06)] bg-background',
   },
 } as const;
 

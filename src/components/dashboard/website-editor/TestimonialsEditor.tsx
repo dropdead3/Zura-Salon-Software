@@ -184,7 +184,7 @@ export function TestimonialsEditor() {
           </CollapsibleContent>
         </Collapsible>
 
-        <div className="pt-4 border-t border-border/30">
+        <div className="pt-4 border-t border-border/40">
           <p className="text-sm text-muted-foreground">
             <strong>Note:</strong> Individual testimonials are managed in the Testimonials Manager.
           </p>

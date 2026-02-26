@@ -100,7 +100,7 @@ export function FAQEditor() {
           description="Display introductory text above the FAQ list"
         />
         {localConfig.show_intro_paragraphs && (
-          <div className="space-y-4 pt-4 border-t border-border/30">
+          <div className="space-y-4 pt-4 border-t border-border/40">
             <h4 className="font-medium text-sm">Introduction Paragraphs</h4>
             <p className="text-xs text-muted-foreground">Displayed above the FAQ list to set context for visitors.</p>
             {localConfig.intro_paragraphs.map((paragraph, index) => (
@@ -117,7 +117,7 @@ export function FAQEditor() {
         )}
 
         {/* CTA Buttons */}
-        <div className="space-y-4 pt-4 border-t border-border/30">
+        <div className="space-y-4 pt-4 border-t border-border/40">
           <h4 className="font-medium text-sm">Call to Action Buttons</h4>
           <ToggleInput
             label="Show Primary CTA"
@@ -204,7 +204,7 @@ export function FAQEditor() {
           </CollapsibleContent>
         </Collapsible>
 
-        <div className="pt-4 border-t border-border/30">
+        <div className="pt-4 border-t border-border/40">
           <p className="text-sm text-muted-foreground">
             <strong>Note:</strong> FAQ questions and answers are managed separately in the FAQ Manager.
           </p>

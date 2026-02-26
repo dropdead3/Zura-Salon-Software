@@ -125,7 +125,7 @@ export function CalendarColorPreview({ colorMap }: CalendarColorPreviewProps) {
             {HOURS.map((hour) => (
               <div
                 key={hour}
-                className="h-14 border-b border-border/20"
+                className="h-14 border-b border-border/30"
               />
             ))}
 

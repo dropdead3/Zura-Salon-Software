@@ -100,7 +100,7 @@ export function StylistFlipCard({ stylist, index, selectedLocation, isPreview, p
                         "inline-flex items-center gap-1.5 px-3 py-1.5 backdrop-blur-sm text-xs font-medium tracking-wide rounded-full",
                         isExtensions
                           ? "bg-oat/90 text-oat-foreground border border-oat-foreground/30 badge-shine"
-                          : "bg-background/70 text-foreground border border-border/30"
+                          : "bg-background/70 text-foreground border border-border/40"
                       )}
                     >
                       {isExtensions && <Sparkles className="w-3 h-3" />}

@@ -144,7 +144,7 @@ export function DayRateWidget() {
         )}
       </div>
 
-      <div className="flex justify-end mt-2 pt-2 border-t border-border/30 min-h-[28px]">
+      <div className="flex justify-end mt-2 pt-2 border-t border-border/40 min-h-[28px]">
         <Link 
           to="/dashboard/admin/day-rate-calendar"
           className="text-xs font-medium text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"

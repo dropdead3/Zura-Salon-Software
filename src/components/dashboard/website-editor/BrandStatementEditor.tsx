@@ -243,7 +243,7 @@ export function BrandStatementEditor() {
           description="Display description paragraphs below the headline"
         />
         {localConfig.show_paragraphs && (
-          <div className="space-y-4 pt-4 border-t border-border/30">
+          <div className="space-y-4 pt-4 border-t border-border/40">
             <div className="flex items-center justify-between">
               <div>
                 <h4 className="font-medium text-sm">Description Paragraphs</h4>

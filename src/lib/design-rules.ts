@@ -61,11 +61,11 @@ export const TYPOGRAPHY_RULES = {
   DRAWER_SHEET_RULES: {
     aesthetic: 'Luxury Glass Bento — bg-card/80, backdrop-blur-xl, border-border, shadow-2xl',
     overlay: 'backdrop-blur-sm bg-black/40 (NOT bg-black/80)',
-    header: 'p-5 pb-3 border-b border-border/40 — text-left by default',
+    header: 'p-5 pb-3 border-b border-border/50 — text-left by default',
     title: 'font-display text-sm tracking-wide uppercase (Termina)',
     closeButton: 'rounded-full bg-muted/60 hover:bg-muted',
     body: 'p-5 — no p-6, no raw padding overrides',
-    footer: 'p-5 pt-3 border-t border-border/40',
+    footer: 'p-5 pt-3 border-t border-border/50',
     prohibited: ['bg-background on SheetContent', 'bg-black/80 overlay', 'p-6 shadow-lg', 'font-bold on titles'],
     token: 'tokens.drawer.*',
   },

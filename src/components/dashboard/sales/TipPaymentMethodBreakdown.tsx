@@ -29,7 +29,7 @@ export function TipPaymentMethodBreakdown({ byPaymentMethod }: TipPaymentMethodB
 
   if (allUnknown) {
     return (
-      <div className="flex items-center gap-2 py-2 px-3 rounded-lg bg-muted/20 border border-border/30">
+      <div className="flex items-center gap-2 py-2 px-3 rounded-lg bg-muted/20 border border-border/40">
         <CreditCard className="w-3.5 h-3.5 text-muted-foreground" />
         <span className="text-xs text-muted-foreground">
           Payment method data not yet available — will populate after next sync

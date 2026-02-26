@@ -57,7 +57,7 @@ export function StructurePanel({
             <TooltipContent side="right">Expand Structure</TooltipContent>
           </Tooltip>
         )}
-        <div className="w-full border-t border-border/20 my-1" />
+        <div className="w-full border-t border-border/30 my-1" />
         {TABS.map(({ mode: tabMode, label, icon: Icon }) => (
           <Tooltip key={tabMode}>
             <TooltipTrigger asChild>
@@ -87,7 +87,7 @@ export function StructurePanel({
   return (
     <div className={cn(editorTokens.panel.structure, 'h-full flex flex-col')} style={style}>
       {/* Header with collapse */}
-      <div className="px-3 pt-3 pb-2 border-b border-border/30 space-y-2">
+      <div className="px-3 pt-3 pb-2 border-b border-border/40 space-y-2">
         <div className="flex items-center gap-1">
           <div className={cn(editorTokens.segmented.container, 'flex-1')}>
             {TABS.map(({ mode: tabMode, label, icon: Icon }) => (

@@ -270,7 +270,7 @@ function ActionItemsSection({ actionItems }: { actionItems: CardActionItem[] }) 
 
               {/* Expandable Details */}
               {isExpanded && item.details && (
-                <div className="px-4 pb-3 pt-0 ml-7 border-t border-border/30 mt-1">
+                <div className="px-4 pb-3 pt-0 ml-7 border-t border-border/40 mt-1">
                   <div className="pt-3 text-xs leading-relaxed text-muted-foreground">
                     <ReactMarkdown
                       components={{

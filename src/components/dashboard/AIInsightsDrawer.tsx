@@ -765,7 +765,7 @@ export function AIInsightsPanel({ onClose }: { onClose: () => void }) {
                       )}
                       {hasActionItems && (
                         <TabsContent value="action_items" className="mt-3">
-                          <div className="rounded-lg border border-border/30 overflow-hidden">
+                          <div className="rounded-lg border border-border/40 overflow-hidden">
                             {sortedActionItems.map((item, i) => (
                               <ActionItemCard key={i} item={item} index={i} isEven={i % 2 === 0} onRequestGuidance={handleRequestGuidance} />
                             ))}
@@ -838,7 +838,7 @@ export function AIInsightsPanel({ onClose }: { onClose: () => void }) {
                   )}
                 </div>
               </div>
-              <div className="px-5 py-2.5 border-t border-border/30 flex items-center justify-center gap-1.5">
+              <div className="px-5 py-2.5 border-t border-border/40 flex items-center justify-center gap-1.5">
                 <ZuraAvatar size="sm" className="w-3 h-3 opacity-40" />
                 <span className="text-[10px] text-muted-foreground/50">Powered by {PLATFORM_NAME} AI · Based on your data</span>
               </div>

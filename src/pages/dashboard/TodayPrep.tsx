@@ -166,7 +166,7 @@ function PrepCard({ appointment, formatCurrency }: { appointment: PrepAppointmen
 
               {/* Previous appointment notes */}
               {appointment.previousAppointmentNotes.map((n, i) => (
-                <div key={`an-${i}`} className="text-sm font-sans text-muted-foreground bg-muted/20 rounded-md px-3 py-2 border border-border/30 italic">
+                <div key={`an-${i}`} className="text-sm font-sans text-muted-foreground bg-muted/20 rounded-md px-3 py-2 border border-border/40 italic">
                   <p>{n.note}</p>
                   <p className="text-xs mt-1">
                     {n.authorName} · {format(parseISO(n.createdAt), 'MMM d')} · Appointment note

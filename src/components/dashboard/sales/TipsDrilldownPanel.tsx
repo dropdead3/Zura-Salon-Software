@@ -130,7 +130,7 @@ export function TipsDrilldownPanel({ isOpen, parentLocationId, dateFrom, dateTo 
           transition={{ duration: 0.3, ease: 'easeInOut' }}
           className="overflow-hidden"
         >
-          <div className="pt-4 pb-2 space-y-4 border-t border-border/30 mt-4">
+          <div className="pt-4 pb-2 space-y-4 border-t border-border/40 mt-4">
             {/* Filter Bar */}
             <div className="flex flex-wrap items-center gap-2">
 
@@ -482,7 +482,7 @@ function LocationGroupedList({ stylists, locations, expandedStylist, onToggleSty
 /* ── Self-view metric card ── */
 function SelfMetricCard({ label, value, alert = false }: { label: string; value: string; alert?: boolean }) {
   return (
-    <div className="text-center p-3 bg-card-inner rounded-lg border border-border/30">
+    <div className="text-center p-3 bg-card-inner rounded-lg border border-border/40">
       <span className="text-lg font-display tabular-nums">
         <BlurredAmount>{value}</BlurredAmount>
       </span>
@@ -570,7 +570,7 @@ function StylistAppointmentList({ stylistKey, rawAppointments, locations, client
           const locName = visit.locationId ? locationMap.get(visit.locationId) : null;
 
           return (
-            <div key={i} className="rounded-lg bg-muted/20 border border-border/20 px-3 py-2 font-sans">
+            <div key={i} className="rounded-lg bg-muted/20 border border-border/30 px-3 py-2 font-sans">
               {/* Row 1: Date · Time · Client · Location */}
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0 flex-wrap">
                 <Clock className="w-3 h-3 flex-shrink-0" />

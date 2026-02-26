@@ -357,7 +357,7 @@ export function WeekAheadForecast() {
             <div
               className={cn(
                 "text-center p-3 bg-card-inner rounded-lg border cursor-pointer transition-all hover:-translate-y-0.5",
-                selectedStatCard === 'revenue' ? 'border-primary/50 ring-1 ring-primary/20' : 'border-border/30'
+                selectedStatCard === 'revenue' ? 'border-primary/50 ring-1 ring-primary/20' : 'border-border/40'
               )}
               onClick={() => handleStatCardClick('revenue')}
             >
@@ -378,7 +378,7 @@ export function WeekAheadForecast() {
             <div
               className={cn(
                 "text-center p-3 bg-card-inner rounded-lg border cursor-pointer transition-all hover:-translate-y-0.5",
-                selectedStatCard === 'dailyAvg' ? 'border-primary/50 ring-1 ring-primary/20' : 'border-border/30'
+                selectedStatCard === 'dailyAvg' ? 'border-primary/50 ring-1 ring-primary/20' : 'border-border/40'
               )}
               onClick={() => handleStatCardClick('dailyAvg')}
             >
@@ -397,7 +397,7 @@ export function WeekAheadForecast() {
             <div
               className={cn(
                 "text-center p-3 bg-card-inner rounded-lg border cursor-pointer transition-all hover:-translate-y-0.5",
-                selectedStatCard === 'count' ? 'border-primary/50 ring-1 ring-primary/20' : 'border-border/30'
+                selectedStatCard === 'count' ? 'border-primary/50 ring-1 ring-primary/20' : 'border-border/40'
               )}
               onClick={() => handleStatCardClick('count')}
             >

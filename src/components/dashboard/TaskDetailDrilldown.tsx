@@ -138,7 +138,7 @@ export function TaskDetailDrilldown({
           )}
 
           {/* Checklist */}
-          <div className="bg-muted/30 border border-border/30 rounded-lg p-4">
+          <div className="bg-muted/30 border border-border/40 rounded-lg p-4">
             <p className="font-sans text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
               <ListChecks className="w-3 h-3" /> Checklist
               {checklistItems.length > 0 && (
@@ -199,7 +199,7 @@ export function TaskDetailDrilldown({
           </div>
 
           {/* Notes */}
-          <div className="bg-muted/30 border border-border/30 rounded-lg p-4">
+          <div className="bg-muted/30 border border-border/40 rounded-lg p-4">
             <p className="font-sans text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
               <StickyNote className="w-3 h-3" /> Notes
             </p>
@@ -221,7 +221,7 @@ export function TaskDetailDrilldown({
           </div>
 
           {/* Metadata Grid */}
-          <div className="bg-muted/20 border border-border/30 rounded-lg p-4">
+          <div className="bg-muted/20 border border-border/40 rounded-lg p-4">
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div className="space-y-1">
                 <p className="font-sans text-xs text-muted-foreground flex items-center gap-1"><Clock className="w-3 h-3" /> Created</p>

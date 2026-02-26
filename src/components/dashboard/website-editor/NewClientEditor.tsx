@@ -115,7 +115,7 @@ export function NewClientEditor() {
         )}
 
         {/* Benefits */}
-        <div className="pt-4 border-t border-border/30 space-y-4">
+        <div className="pt-4 border-t border-border/40 space-y-4">
           <ToggleInput
             label="Show Benefits"
             value={localConfig.show_benefits}
@@ -133,7 +133,7 @@ export function NewClientEditor() {
         </div>
 
         {/* CTA */}
-        <div className="space-y-4 pt-4 border-t border-border/30">
+        <div className="space-y-4 pt-4 border-t border-border/40">
           <ToggleInput
             label="Show CTA Button"
             value={localConfig.show_cta}

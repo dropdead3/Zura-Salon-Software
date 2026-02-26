@@ -184,7 +184,7 @@ export function LocationDrilldownPanel({
             {/* Stats Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
               {/* Team Size */}
-              <div className="p-3 rounded-lg border border-border/30 bg-card-inner">
+              <div className="p-3 rounded-lg border border-border/40 bg-card-inner">
                 <div className="flex items-center gap-1.5 mb-1">
                   <Users className="w-3.5 h-3.5 text-muted-foreground" />
                   <span className="text-xs text-muted-foreground">Team Size</span>
@@ -197,7 +197,7 @@ export function LocationDrilldownPanel({
               </div>
 
               {/* Rev / Provider */}
-              <div className="p-3 rounded-lg border border-border/30 bg-card-inner">
+              <div className="p-3 rounded-lg border border-border/40 bg-card-inner">
                 <div className="flex items-center gap-1.5 mb-1">
                   <Zap className="w-3.5 h-3.5 text-muted-foreground" />
                   <span className="text-xs text-muted-foreground">Rev / Provider</span>
@@ -212,7 +212,7 @@ export function LocationDrilldownPanel({
               </div>
 
               {/* Peak Hour */}
-              <div className="p-3 rounded-lg border border-border/30 bg-card-inner">
+              <div className="p-3 rounded-lg border border-border/40 bg-card-inner">
                 <div className="flex items-center gap-1.5 mb-1">
                   <Clock className="w-3.5 h-3.5 text-muted-foreground" />
                   <span className="text-xs text-muted-foreground">Peak Hour</span>
@@ -225,7 +225,7 @@ export function LocationDrilldownPanel({
               </div>
 
               {/* Period Comparison */}
-              <div className="p-3 rounded-lg border border-border/30 bg-card-inner">
+              <div className="p-3 rounded-lg border border-border/40 bg-card-inner">
                 <div className="flex items-center gap-1.5 mb-1">
                   <TrendingUp className="w-3.5 h-3.5 text-muted-foreground" />
                   <span className="text-xs text-muted-foreground">vs Prior Period</span>
@@ -255,7 +255,7 @@ export function LocationDrilldownPanel({
               </div>
 
               {/* Retail Attach Rate */}
-              <div className="p-3 rounded-lg border border-border/30 bg-card-inner">
+              <div className="p-3 rounded-lg border border-border/40 bg-card-inner">
                 <div className="flex items-center gap-1.5 mb-1">
                   <ShoppingBag className="w-3.5 h-3.5 text-muted-foreground" />
                   <span className="text-xs text-muted-foreground">Attach Rate</span>

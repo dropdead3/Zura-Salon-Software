@@ -209,7 +209,7 @@ export function LocationComparisonTable({
                             className="overflow-hidden"
                             onClick={(e) => e.stopPropagation()}
                           >
-                            <div className="px-6 py-4 bg-muted/10 border-b border-border/30 border-l-2 border-l-primary/20">
+                            <div className="px-6 py-4 bg-muted/10 border-b border-border/40 border-l-2 border-l-primary/20">
                               <LocationDrilldownPanel
                                 locationId={loc.location_id}
                                 dateFrom={dateFrom}

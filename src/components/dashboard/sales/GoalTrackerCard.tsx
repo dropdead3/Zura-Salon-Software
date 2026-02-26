@@ -202,7 +202,7 @@ export function GoalTrackerCard() {
                     transition={{ duration: 0.25 }}
                     className="overflow-hidden"
                   >
-                    <div className="pt-2 border-t border-border/30">
+                    <div className="pt-2 border-t border-border/40">
                       <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2 font-display">
                         Pace Trend
                       </p>

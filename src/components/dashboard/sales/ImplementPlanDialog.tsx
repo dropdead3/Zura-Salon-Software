@@ -397,8 +397,8 @@ export function ImplementPlanDialog({
                           className={cn(
                             'flex gap-3 p-2.5 rounded-lg border cursor-pointer transition-colors',
                             selected
-                              ? 'border-border/30 bg-card/50'
-                              : 'border-border/20 bg-muted/20 opacity-60'
+                              ? 'border-border/40 bg-card/50'
+                              : 'border-border/30 bg-muted/20 opacity-60'
                           )}
                         >
                           <Checkbox

@@ -308,7 +308,7 @@ export function ClientExperienceCard({ dateFrom, dateTo, locationId, filterConte
 
         {/* Unmapped staff banner */}
         {!data.hasNames && (
-          <div className="flex items-center gap-2 mb-3 px-3 py-2 rounded-lg bg-muted/30 border border-border/30">
+          <div className="flex items-center gap-2 mb-3 px-3 py-2 rounded-lg bg-muted/30 border border-border/40">
             <Info className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
             <p className="text-xs text-muted-foreground">
               Staff names unavailable —{' '}
@@ -377,7 +377,7 @@ export function ClientExperienceCard({ dateFrom, dateTo, locationId, filterConte
 
             {/* Coaching callout */}
             {needsAttentionCount > 0 && (
-              <div className="mt-4 flex items-start gap-2.5 px-3 py-2.5 rounded-lg bg-muted/40 border border-border/30">
+              <div className="mt-4 flex items-start gap-2.5 px-3 py-2.5 rounded-lg bg-muted/40 border border-border/40">
                 <Award className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
                 <p className="text-xs text-muted-foreground">
                   {needsAttentionCount} {needsAttentionCount === 1 ? 'stylist' : 'stylists'} may benefit from coaching on client experience fundamentals.

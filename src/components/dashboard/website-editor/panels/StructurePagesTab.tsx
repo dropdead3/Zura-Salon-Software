@@ -113,7 +113,7 @@ export function StructurePagesTab({
       </ScrollArea>
 
       {/* Add Page */}
-      <div className="p-3 border-t border-border/30">
+      <div className="p-3 border-t border-border/40">
         <Button
           variant="outline"
           size="sm"

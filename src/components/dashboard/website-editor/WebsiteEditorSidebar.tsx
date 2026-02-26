@@ -359,9 +359,9 @@ export function WebsiteEditorSidebar({
 
   if (collapsed) {
     return (
-      <div className="h-full flex flex-col bg-card/60 backdrop-blur-xl border-r border-border/40 py-2 w-full">
+      <div className="h-full flex flex-col bg-card/60 backdrop-blur-xl border-r border-border/50 py-2 w-full">
         {/* Expand toggle */}
-        <div className="px-2 mb-2 pb-2 border-b border-border/30">
+        <div className="px-2 mb-2 pb-2 border-b border-border/40">
           <Tooltip>
             <TooltipTrigger asChild>
               <button
@@ -441,9 +441,9 @@ export function WebsiteEditorSidebar({
   }
 
   return (
-    <div className="h-full flex flex-col bg-card/60 backdrop-blur-xl border-r border-border/40">
+    <div className="h-full flex flex-col bg-card/60 backdrop-blur-xl border-r border-border/50">
       {/* Collapse toggle */}
-      <div className="px-3 py-2 border-b border-border/30 flex-shrink-0">
+      <div className="px-3 py-2 border-b border-border/40 flex-shrink-0">
         <Tooltip>
           <TooltipTrigger asChild>
             <button
@@ -458,7 +458,7 @@ export function WebsiteEditorSidebar({
         </Tooltip>
       </div>
 
-      <div className="p-3 border-b border-border/30 space-y-2">
+      <div className="p-3 border-b border-border/40 space-y-2">
         <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider px-1">Editing Page</p>
         <div className="flex items-center gap-2">
           <Select value={selectedPageId} onValueChange={v => onPageChange?.(v)}>

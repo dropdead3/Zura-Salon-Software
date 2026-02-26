@@ -1165,7 +1165,7 @@ export function AggregateSalesCard({
                   "text-center p-4 bg-card-inner rounded-lg border transition-all cursor-pointer",
                   tipsDrilldownOpen
                     ? "border-primary/50 ring-1 ring-primary/20"
-                    : "border-border/60 dark:border-border/30 hover:border-primary/30 hover:bg-muted/50"
+                    : "border-border/70 dark:border-border/40 hover:border-primary/30 hover:bg-muted/50"
                 )}
                 onClick={handleTipsToggle}
               >
@@ -1345,7 +1345,7 @@ export function AggregateSalesCard({
                                   onClick={(e) => handleLocationMetricClick(e, 'services', location)}
                                   disabled={!location.location_id}
                                   className={cn(
-                                    'bg-muted/30 rounded-lg border border-border/30 p-3 text-left transition-colors',
+                                    'bg-muted/30 rounded-lg border border-border/40 p-3 text-left transition-colors',
                                     location.location_id && 'cursor-pointer hover:bg-muted/50 hover:border-primary/30'
                                   )}
                                   aria-label={t('sales.services')}
@@ -1369,7 +1369,7 @@ export function AggregateSalesCard({
                                   onClick={(e) => handleLocationMetricClick(e, 'products', location)}
                                   disabled={!location.location_id}
                                   className={cn(
-                                    'bg-muted/30 rounded-lg border border-border/30 p-3 text-left transition-colors',
+                                    'bg-muted/30 rounded-lg border border-border/40 p-3 text-left transition-colors',
                                     location.location_id && 'cursor-pointer hover:bg-muted/50 hover:border-primary/30'
                                   )}
                                   aria-label={t('sales.products')}
@@ -1393,7 +1393,7 @@ export function AggregateSalesCard({
                                   onClick={(e) => handleLocationMetricClick(e, 'transactions', location)}
                                   disabled={!location.location_id}
                                   className={cn(
-                                    'bg-muted/30 rounded-lg border border-border/30 p-3 text-left transition-colors',
+                                    'bg-muted/30 rounded-lg border border-border/40 p-3 text-left transition-colors',
                                     location.location_id && 'cursor-pointer hover:bg-muted/50 hover:border-primary/30'
                                   )}
                                   aria-label={t('sales.transactions')}
@@ -1417,7 +1417,7 @@ export function AggregateSalesCard({
                                   onClick={(e) => handleLocationMetricClick(e, 'avgTicket', location)}
                                   disabled={!location.location_id}
                                   className={cn(
-                                    'bg-muted/30 rounded-lg border border-border/30 p-3 text-left transition-colors',
+                                    'bg-muted/30 rounded-lg border border-border/40 p-3 text-left transition-colors',
                                     location.location_id && 'cursor-pointer hover:bg-muted/50 hover:border-primary/30'
                                   )}
                                   aria-label={t('sales.avg_ticket')}
@@ -1444,7 +1444,7 @@ export function AggregateSalesCard({
                                   onClick={(e) => handleLocationMetricClick(e, 'trend', location)}
                                   disabled={!location.location_id}
                                   className={cn(
-                                    'bg-muted/30 rounded-lg border border-border/30 p-3 text-left transition-colors',
+                                    'bg-muted/30 rounded-lg border border-border/40 p-3 text-left transition-colors',
                                     location.location_id && 'cursor-pointer hover:bg-muted/50 hover:border-primary/30'
                                   )}
                                   aria-label={t('sales.trend')}
@@ -1467,7 +1467,7 @@ export function AggregateSalesCard({
                                     onClick={(e) => handleLocationMetricClick(e, 'status', location)}
                                     disabled={!location.location_id}
                                     className={cn(
-                                      'bg-muted/30 rounded-lg border border-border/30 p-3 text-left transition-colors',
+                                      'bg-muted/30 rounded-lg border border-border/40 p-3 text-left transition-colors',
                                       location.location_id && 'cursor-pointer hover:bg-muted/50 hover:border-primary/30'
                                     )}
                                     aria-label={t('sales.status')}
