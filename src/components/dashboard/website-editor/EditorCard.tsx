@@ -39,7 +39,7 @@ export function EditorCard({ title, icon: Icon, description, headerActions, chil
         )}
       </div>
       {/* Content */}
-      <div className="p-4 space-y-4 max-w-full box-border overflow-hidden">
+      <div className="p-3.5 space-y-4 max-w-full box-border overflow-hidden">
         {children}
       </div>
     </div>
