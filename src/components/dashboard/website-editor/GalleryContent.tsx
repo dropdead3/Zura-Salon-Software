@@ -199,6 +199,7 @@ export function GalleryContent() {
       title="Gallery Manager"
       icon={Images}
       description="Manage gallery images and before/after transformations"
+      className="overflow-hidden"
     >
 
       {/* Stats */}
@@ -243,11 +244,11 @@ export function GalleryContent() {
           </TabsList>
 
           <TabsContent value="gallery" className="space-y-4 mt-4">
-            <div className="flex justify-end gap-2">
+      <div className="flex flex-col gap-2">
               {/* Bulk Upload Dialog */}
               <Dialog open={isBulkUploadOpen} onOpenChange={setIsBulkUploadOpen}>
                 <DialogTrigger asChild>
-                  <Button variant="outline" className="gap-2">
+                  <Button variant="outline" className="gap-2 w-full">
                     <Upload className="w-4 h-4" />
                     Bulk Upload
                   </Button>
@@ -272,7 +273,7 @@ export function GalleryContent() {
               {/* Single Image Dialog */}
               <Dialog open={isAddImageOpen} onOpenChange={setIsAddImageOpen}>
                 <DialogTrigger asChild>
-                  <Button className="gap-2">
+                  <Button className="gap-2 w-full">
                     <Plus className="w-4 h-4" />
                     Add Image
                   </Button>
@@ -316,9 +317,9 @@ export function GalleryContent() {
             </div>
 
             {galleryImages.length === 0 ? (
-              <Card className="p-8 text-center">
+              <Card className="p-6 text-center">
                 <ImageIcon className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">No gallery images yet. Add your first image to get started.</p>
+                <p className="text-sm text-muted-foreground">No gallery images yet. Add your first image to get started.</p>
               </Card>
             ) : (
               <DndContext
@@ -343,10 +344,10 @@ export function GalleryContent() {
           </TabsContent>
 
           <TabsContent value="transformations" className="space-y-4 mt-4">
-            <div className="flex justify-end">
+            <div className="flex flex-col gap-2">
               <Dialog open={isAddTransformOpen} onOpenChange={setIsAddTransformOpen}>
                 <DialogTrigger asChild>
-                  <Button className="gap-2">
+                  <Button className="gap-2 w-full">
                     <Plus className="w-4 h-4" />
                     Add Before/After
                   </Button>
@@ -407,9 +408,9 @@ export function GalleryContent() {
             </div>
 
             {transformations.length === 0 ? (
-              <Card className="p-8 text-center">
+              <Card className="p-6 text-center">
                 <ArrowLeftRight className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">No transformations yet. Add your first before/after to get started.</p>
+                <p className="text-sm text-muted-foreground">No transformations yet. Add your first before/after to get started.</p>
               </Card>
             ) : (
               <DndContext
