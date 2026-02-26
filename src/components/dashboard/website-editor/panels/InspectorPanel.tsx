@@ -69,7 +69,7 @@ export function InspectorPanel({
 
   // ─── Expanded Panel ───
   return (
-    <div className={cn(editorTokens.panel.inspector, 'h-full flex flex-col', className)} style={style}>
+    <div className={cn(editorTokens.panel.inspector, 'h-full flex flex-col overflow-hidden', className)} style={style}>
       {/* Inspector Header */}
       <div className={cn(editorTokens.panel.header, 'justify-between')}>
         {breadcrumb && breadcrumb.length > 0 ? (

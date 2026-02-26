@@ -185,15 +185,15 @@ export function LocationsContent() {
                   <div className="space-y-0.5 text-xs text-muted-foreground min-w-0 overflow-hidden">
                     <p className="flex items-center gap-1.5 min-w-0">
                       <MapPin className="w-3 h-3 shrink-0" />
-                      <span className="truncate">{location.address}, {location.city}</span>
+                      <span className="truncate [overflow-wrap:anywhere]">{location.address}, {location.city}</span>
                     </p>
                     <p className="flex items-center gap-1.5 min-w-0">
                       <Phone className="w-3 h-3 shrink-0" />
-                      <span className="truncate">{location.phone}</span>
+                      <span className="truncate [overflow-wrap:anywhere]">{location.phone}</span>
                     </p>
                     <p className="flex items-center gap-1.5 min-w-0">
                       <Clock className="w-3 h-3 shrink-0" />
-                      <span className="truncate">{formatHoursForDisplay(location.hours_json) || location.hours || 'No hours set'}</span>
+                      <span className="truncate [overflow-wrap:anywhere]">{formatHoursForDisplay(location.hours_json) || location.hours || 'No hours set'}</span>
                     </p>
                   </div>
                   {/* Toggle */}
