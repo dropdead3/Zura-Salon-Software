@@ -1,41 +1,28 @@
 
 
-## Root Cause
+## Fix: Remove Appointment Fallback -- POS Transaction Data Only
 
-The previous fix only partially worked. Here's what's broken and why:
+You're right to push back. The Sales Overview card should reflect what actually happened in POS, not synthesized numbers from appointment records. If POS hasn't synced, the card should show $0 -- that's honest data, and it signals that a sync is needed.
 
-**Problem 1: Services = $0, Retail = $0 (the two sub-cards)**
-In `useTodayActualRevenue.ts` lines 203-204, `actualServiceRevenue` and `actualProductRevenue` ALWAYS come from the POS summary table (`phorest_daily_sales_summary`), which has zero rows for today. The fallback to completed appointments only computes `actualRevenue` (total) but never assigns it to service vs product. So even though the hero shows $2,268, the breakdown shows $0/$0.
+### Changes
 
-**Problem 2: Top Performers = "No sales data available"**
-`useSalesByStylist` queries `phorest_transaction_items` exclusively. Today has 0 transaction items. No fallback exists to completed appointments.
+**File 1: `src/hooks/useTodayActualRevenue.ts`**
+- Remove the entire `completedAppointmentsQuery` (lines 59-96) -- no more fallback to `phorest_appointments`
+- Remove the fallback logic (lines 188-199) that selects between POS and appointment data
+- All values (`actualRevenue`, `actualServiceRevenue`, `actualProductRevenue`, `actualTransactions`) come exclusively from `phorest_daily_sales_summary`
+- `actualServiceHours` will be set to 0 when POS has no data (or derived from POS if available)
+- `hasActualData` is true only when POS summary has data
+- Keep the `lastAppointmentEndTime` query (it's used for "estimated final at" display, not revenue)
 
-**Problem 3: Revenue Breakdown donut = "No data"**
-Same as Problem 1 -- it reads `todayActual.actualServiceRevenue` (0) and `todayActual.actualProductRevenue` (0).
+**File 2: `src/hooks/useSalesData.ts` -- `useSalesByStylist`**
+- Remove the appointment fallback block (lines 465-517) that was just added
+- Top Performers leaderboard shows only when `phorest_transaction_items` has data
+- If no POS transactions exist for the date range, return empty array (shows "No sales data" which is truthful)
 
-### Database Evidence
-- `phorest_daily_sales_summary` for today: **0 rows**
-- `phorest_transaction_items` for today: **0 rows**
-- `phorest_appointments` for today: **18 completed** ($2,268), **4 booked** ($768)
+**No changes to `AggregateSalesCard.tsx`** -- it already reads from `todayActual` correctly; once the hook stops lying with appointment data, the card will show honest POS numbers.
 
-All three problems stem from missing fallback logic when POS line-item data hasn't synced yet.
-
----
-
-## Fix Plan
-
-### File 1: `src/hooks/useTodayActualRevenue.ts`
-**Lines 201-204** -- When using the completed-appointments fallback (POS has no data), set:
-- `actualServiceRevenue = completedData.totalRevenue` (all appointment revenue counts as services per user's choice)
-- `actualProductRevenue = 0` (no line-item data to distinguish retail)
-
-This is a 2-line change in the result construction block.
-
-### File 2: `src/hooks/useSalesData.ts` -- `useSalesByStylist` function (lines 366-467)
-Add a fallback path: when `phorest_transaction_items` returns 0 rows for the queried date range, re-query `phorest_appointments` where `status = 'completed'`, group by `phorest_staff_id`, and return stylist revenue from appointments. This enables the Top Performers leaderboard to work in real time even before POS transaction sync.
-
-### No other file changes needed
-- The Services/Retail sub-cards (AggregateSalesCard lines 814-862) already read `todayActual.actualServiceRevenue` and `todayActual.actualProductRevenue` -- they'll show correct values once File 1 is fixed.
-- The Revenue Breakdown donut (line 1128-1131) reads the same fields -- will auto-fix.
-- Transactions, Avg Ticket, Rev/Hour tiles already use `todayActual` correctly and show 18 / $126 / $76 as expected.
+### Result
+- If POS has synced: all metrics reflect real transaction data
+- If POS hasn't synced: metrics show $0 / 0 transactions -- an honest signal that sync is pending
+- No more mixing appointment estimates into "actual" sales figures
 
