@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { isAllLocations, parseLocationIds } from '@/lib/locationFilter';
 
 export interface StaffServiceProduct {
   phorestStaffId: string;
@@ -19,42 +20,77 @@ interface UseServiceProductDrilldownOptions {
   locationId?: string;
 }
 
+/** Fetch all rows from a query, paginating in batches of 1000 to avoid Supabase default limit. */
+async function fetchAllPages<T>(
+  buildQuery: (from: number, to: number) => ReturnType<ReturnType<typeof supabase.from>['select']>,
+): Promise<T[]> {
+  const PAGE = 1000;
+  const all: T[] = [];
+  let offset = 0;
+  let done = false;
+  while (!done) {
+    const { data, error } = await buildQuery(offset, offset + PAGE - 1);
+    if (error) throw error;
+    if (data) all.push(...(data as T[]));
+    if (!data || data.length < PAGE) done = true;
+    offset += PAGE;
+  }
+  return all;
+}
+
 export function useServiceProductDrilldown({ dateFrom, dateTo, locationId }: UseServiceProductDrilldownOptions) {
   return useQuery({
     queryKey: ['service-product-drilldown', dateFrom, dateTo, locationId || 'all'],
     queryFn: async () => {
-      // Query phorest_appointments for service data
-      let query = supabase
-        .from('phorest_appointments')
-        .select('phorest_staff_id, total_price, tip_amount, service_name')
-        .gte('appointment_date', dateFrom)
-        .lte('appointment_date', dateTo)
-        .not('status', 'in', '("cancelled","no_show","Cancelled","No Show")')
-        .not('total_price', 'is', null);
+      // Normalize date bounds for transaction_date (may be timestamp)
+      const txDateFrom = dateFrom.includes('T') ? dateFrom : `${dateFrom}T00:00:00`;
+      const txDateTo = dateTo.includes('T') ? dateTo : `${dateTo}T23:59:59.999`;
 
-      if (locationId && locationId !== 'all') {
-        query = query.eq('location_id', locationId);
-      }
+      // --- Fetch appointments (paginated) ---
+      const appointments = await fetchAllPages<{
+        phorest_staff_id: string | null;
+        total_price: number | null;
+        tip_amount: number | null;
+        service_name: string | null;
+      }>((from, to) => {
+        let q = supabase
+          .from('phorest_appointments')
+          .select('phorest_staff_id, total_price, tip_amount, service_name')
+          .gte('appointment_date', dateFrom)
+          .lte('appointment_date', dateTo)
+          .not('status', 'in', '("cancelled","no_show","Cancelled","No Show")')
+          .not('total_price', 'is', null)
+          .range(from, to);
+        if (!isAllLocations(locationId)) {
+          const ids = parseLocationIds(locationId);
+          q = ids.length === 1 ? q.eq('location_id', ids[0]) : q.in('location_id', ids);
+        }
+        return q;
+      });
 
-      const { data: appointments, error } = await query;
-      if (error) throw error;
+      // --- Fetch product transaction items (paginated) ---
+      const productItems = await fetchAllPages<{
+        phorest_staff_id: string | null;
+        total_amount: number | null;
+        tax_amount: number | null;
+        item_name: string | null;
+      }>((from, to) => {
+        let q = supabase
+          .from('phorest_transaction_items')
+          .select('phorest_staff_id, total_amount, tax_amount, item_name')
+          .gte('transaction_date', txDateFrom)
+          .lte('transaction_date', txDateTo)
+          .in('item_type', ['product', 'Product', 'retail', 'Retail', 'PRODUCT', 'RETAIL'])
+          .range(from, to);
+        if (!isAllLocations(locationId)) {
+          const ids = parseLocationIds(locationId);
+          q = ids.length === 1 ? q.eq('location_id', ids[0]) : q.in('location_id', ids);
+        }
+        return q;
+      });
 
-      // Query product data from transaction items
-      let productQuery = supabase
-        .from('phorest_transaction_items')
-        .select('phorest_staff_id, total_amount, tax_amount, item_name')
-        .gte('transaction_date', dateFrom)
-        .lte('transaction_date', dateTo)
-        .in('item_type', ['product', 'Product', 'retail', 'Retail', 'PRODUCT', 'RETAIL']);
 
-      if (locationId && locationId !== 'all') {
-        productQuery = productQuery.eq('location_id', locationId);
-      }
-
-      const { data: productItems, error: productError } = await productQuery;
-      if (productError) throw productError;
-
-      // Fetch staff name mappings
+      // --- Staff name lookup ---
       const { data: staffMappings } = await supabase
         .from('phorest_staff_mapping')
         .select(`
@@ -73,34 +109,29 @@ export function useServiceProductDrilldown({ dateFrom, dateTo, locationId }: Use
         staffLookup[m.phorest_staff_id] = profile?.display_name || profile?.full_name || 'Unknown';
       });
 
-      // Aggregate services by staff
+      // --- Aggregate services by staff ---
       const serviceMap: Record<string, { serviceRevenue: number; serviceCount: number; tipTotal: number }> = {};
-      (appointments || []).forEach(appt => {
+      appointments.forEach(appt => {
         const sid = appt.phorest_staff_id;
         if (!sid) return;
-        if (!serviceMap[sid]) {
-          serviceMap[sid] = { serviceRevenue: 0, serviceCount: 0, tipTotal: 0 };
-        }
+        if (!serviceMap[sid]) serviceMap[sid] = { serviceRevenue: 0, serviceCount: 0, tipTotal: 0 };
         serviceMap[sid].serviceRevenue += Number(appt.total_price) || 0;
         serviceMap[sid].serviceCount += 1;
         serviceMap[sid].tipTotal += Number(appt.tip_amount) || 0;
       });
 
-      // Aggregate products by staff (tax-inclusive)
+      // --- Aggregate products by staff (tax-inclusive) ---
       const productMap: Record<string, { productRevenue: number; productCount: number }> = {};
-      (productItems || []).forEach(item => {
+      productItems.forEach(item => {
         const sid = item.phorest_staff_id;
         if (!sid) return;
-        if (!productMap[sid]) {
-          productMap[sid] = { productRevenue: 0, productCount: 0 };
-        }
+        if (!productMap[sid]) productMap[sid] = { productRevenue: 0, productCount: 0 };
         productMap[sid].productRevenue += (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
         productMap[sid].productCount += 1;
       });
 
-      // Merge staff IDs from both sources
+      // --- Merge ---
       const allStaffIds = new Set([...Object.keys(serviceMap), ...Object.keys(productMap)]);
-
       let totalServiceRevenue = 0;
       let totalProductRevenue = 0;
       Object.values(serviceMap).forEach(v => { totalServiceRevenue += v.serviceRevenue; });
@@ -122,11 +153,7 @@ export function useServiceProductDrilldown({ dateFrom, dateTo, locationId }: Use
         };
       });
 
-      return {
-        staffData,
-        totalServiceRevenue,
-        totalProductRevenue,
-      };
+      return { staffData, totalServiceRevenue, totalProductRevenue };
     },
     staleTime: 2 * 60 * 1000,
   });
