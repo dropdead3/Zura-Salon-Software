@@ -1,52 +1,95 @@
 
 
-## Enhance Cha-Ching Notifications: Glass Bento + History Drawer
+## Establish Drawer/Sheet Design Tokens and Apply Globally
 
-### Current state
-Cha-ching fires a plain `sonner` toast with text "💰 Cha-ching!" and a description. No history, no custom styling, stacks poorly (as shown in screenshot).
+**Problem**: Every new Sheet/Drawer is created with raw ad-hoc classes. The ChaChingDrawer, ScheduledReports, LeadDetails, ChannelSettings, and others all have inconsistent styling — none match the luxury glass bento aesthetic of `PremiumFloatingPanel`.
 
-### Plan
+**Solution**: Add canonical drawer/sheet tokens to `design-tokens.ts`, update the base `sheet.tsx` and `drawer.tsx` primitives to apply glass bento defaults, then audit all consumers.
 
-#### 1. Create a cha-ching notification store
-**New file**: `src/hooks/useChaChingHistory.ts`
-- React context + provider with state: `notifications: Array<{ id, amount, timestamp }>` (max 50, session-only).
-- `addNotification(amount)` pushes to array.
-- `unreadCount` derived from items added since last drawer open.
-- `markAllRead()` resets unread count.
-- Export `useChaChingHistory` hook.
+---
 
-#### 2. Create custom cha-ching toast component
-**New file**: `src/components/dashboard/ChaChingToast.tsx`
-- Glass bento card: `bg-card/80 backdrop-blur-xl border border-border/40 rounded-xl shadow-2xl`.
-- Wrapped in `SilverShineWrapper` for the silver shine stroke effect.
-- Layout: money bag icon left, "Cha-ching!" title (font-display), amount below (font-display text-xl tabular-nums), timestamp in muted text.
-- Renders via `toast.custom()` from sonner instead of `toast()`.
-- Auto-dismiss after 5s with smooth exit animation.
+### 1. Add drawer/sheet tokens to `design-tokens.ts`
 
-#### 3. Create sticky cha-ching tab + drawer
-**New file**: `src/components/dashboard/ChaChingDrawer.tsx`
-- **Sticky tab**: Fixed to right edge of screen, vertically centered. Small pill/tab shape (`rounded-l-xl`) with money bag icon + unread count badge. Uses `bg-card/80 backdrop-blur-xl border-border/40`.
-- **On click**: Opens a right-side sheet/drawer (using Vaul or Radix Dialog) listing all session notifications in reverse chronological order.
-- Each history item: glass bento mini-card with amount, relative timestamp ("2m ago"), silver shine border.
-- Empty state if no notifications yet.
-- "Mark all read" clears the badge count.
+Add a new `drawer` token group:
 
-#### 4. Wire into existing cha-ching trigger
-**File**: `src/hooks/useTodayActualRevenue.ts`
-- Replace `toast('💰 Cha-ching!', ...)` with:
-  - `addNotification(delta)` to push to history store.
-  - `toast.custom((t) => <ChaChingToast amount={delta} toastId={t} />)` for the styled notification.
-- Keep `playAchievement()` call unchanged.
+```text
+drawer: {
+  overlay:  'backdrop-blur-sm bg-black/40'
+  content:  'bg-card/80 backdrop-blur-xl border-border shadow-2xl'
+  header:   'p-5 pb-3 border-b border-border/40'
+  body:     'p-5 flex-1 min-h-0 overflow-y-auto'
+  footer:   'p-5 pt-3 border-t border-border/40'
+  title:    'font-display text-sm tracking-wide uppercase'
+  iconBox:  (reuse tokens.card.iconBox)
+  icon:     (reuse tokens.card.icon)
+}
+```
 
-#### 5. Mount providers and components
-**File**: `src/App.tsx` (or layout wrapper)
-- Wrap with `ChaChingHistoryProvider`.
-- Render `ChaChingDrawer` inside the dashboard layout so the sticky tab appears on all dashboard pages.
+Also add `getTokenFor` entries for `'drawer-content'`, `'drawer-overlay'`, etc.
 
-### Files
-- **New**: `src/hooks/useChaChingHistory.tsx` — notification store + context
-- **New**: `src/components/dashboard/ChaChingToast.tsx` — custom glass bento toast
-- **New**: `src/components/dashboard/ChaChingDrawer.tsx` — sticky tab + history drawer
-- **Edit**: `src/hooks/useTodayActualRevenue.ts` — swap plain toast for custom toast + history push
-- **Edit**: Dashboard layout — mount provider + drawer
+### 2. Update `sheet.tsx` primitive with glass bento defaults
+
+- Change `SheetOverlay` default from `bg-black/80` to the new `tokens.drawer.overlay` value (`backdrop-blur-sm bg-black/40`).
+- Change `SheetContent` base variant from `bg-background p-6 shadow-lg` to `bg-card/80 backdrop-blur-xl border-border shadow-2xl p-0`.
+- Keep the `side` variant animations unchanged.
+- Update the close button to use `rounded-full bg-muted/60 hover:bg-muted` (matching `PremiumFloatingPanel`).
+
+### 3. Update `drawer.tsx` primitive with glass bento defaults
+
+- Change `DrawerOverlay` from `bg-black/80` to `tokens.drawer.overlay`.
+- Change `DrawerContent` base from `border bg-background` to `border-border bg-card/80 backdrop-blur-xl shadow-2xl`.
+
+### 4. Update `ChaChingDrawer.tsx`
+
+- Remove inline glass styling from `SheetContent` className (now inherited from primitive).
+- Apply `tokens.drawer.header`, `tokens.drawer.title` to header section.
+- Apply `tokens.drawer.body` to scroll area wrapper.
+
+### 5. Update `drilldownDialogStyles.ts`
+
+- Add `DRILLDOWN_SHEET_CONTENT_CLASS` and `DRILLDOWN_SHEET_OVERLAY_CLASS` constants that reference the new tokens, for any Sheet-based drilldowns.
+
+### 6. Audit and update remaining Sheet consumers
+
+Files using raw `SheetContent className=...` that need token alignment:
+- `ChannelSettingsSheet.tsx` — add glass backdrop classes
+- `ScheduledReportsSubTab.tsx` — add glass backdrop classes
+- `DashboardCustomizeMenu.tsx` — add glass backdrop classes
+- `TeamChatAdminSettingsSheet.tsx` — add glass backdrop classes
+- `LeadDetailsSheet.tsx` — already has flex/overflow, add glass backdrop
+- `ChannelMembersSheet.tsx` — add glass backdrop classes
+- `MobileAgendaCard.tsx` — bottom sheet, add glass backdrop
+- `GraduationTracker.tsx` — add glass backdrop classes
+- `CampaignBudgetManager.tsx` — add glass backdrop classes
+- `DashboardLayout.tsx` — mobile sidebar sheet (keep as-is, sidebar has own styling)
+
+Since the primitives themselves will carry the glass defaults, most consumers just need their overrides removed or simplified.
+
+### 7. Update `MobileSubmitDrawer.tsx`
+
+- Remove raw classes from `DrawerContent`, apply token-based header/footer styling.
+
+### 8. Update `WebsiteSectionsHub.tsx` mobile drawer
+
+- Remove raw classes, inherit from updated primitive.
+
+---
+
+### Files to modify
+- `src/lib/design-tokens.ts` — add `drawer` token group
+- `src/components/ui/sheet.tsx` — glass bento defaults
+- `src/components/ui/drawer.tsx` — glass bento defaults
+- `src/components/dashboard/drilldownDialogStyles.ts` — add sheet constants
+- `src/components/dashboard/ChaChingDrawer.tsx` — use tokens
+- `src/components/dashboard/MobileSubmitDrawer.tsx` — use tokens
+- `src/components/dashboard/DashboardCustomizeMenu.tsx` — simplify overrides
+- `src/components/dashboard/leads/LeadDetailsSheet.tsx` — simplify overrides
+- `src/components/team-chat/ChannelSettingsSheet.tsx` — simplify overrides
+- `src/components/team-chat/TeamChatAdminSettingsSheet.tsx` — simplify overrides
+- `src/components/team-chat/ChannelMembersSheet.tsx` — simplify overrides
+- `src/components/dashboard/reports/scheduled/ScheduledReportsSubTab.tsx` — simplify overrides
+- `src/components/dashboard/marketing/CampaignBudgetManager.tsx` — simplify overrides
+- `src/pages/dashboard/admin/GraduationTracker.tsx` — simplify overrides
+- `src/pages/dashboard/admin/WebsiteSectionsHub.tsx` — simplify overrides
+- `src/components/mobile/schedule/MobileAgendaCard.tsx` — simplify overrides
 
