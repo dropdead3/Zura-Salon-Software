@@ -160,6 +160,10 @@ export default {
           "60%": { transform: "rotate(6deg)" },
           "80%": { transform: "rotate(-4deg)" },
         },
+        "skeleton-pulse": {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.94" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -176,6 +180,7 @@ export default {
         "bounce-once": "bounce-once 0.3s ease-out",
         "shimmer": "shimmer 3s ease-in-out infinite",
         "swing": "swing 1s ease-in-out infinite",
+        "skeleton-pulse": "skeleton-pulse 2s ease-in-out infinite",
       },
     },
   },
