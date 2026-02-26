@@ -1,65 +1,85 @@
 
 
-## Diagnosis: Editor Preview Rendering Issues
-
-### What I Found
-
-I navigated to the Website Editor and observed the live preview iframe. After the initial load (which took a few seconds), the site **does render** -- I can see the announcement bar, navigation header, and sections like "Book Your Consult." However, there are two distinct problems:
-
-### Problem 1: Full-Bleed Sections Are Constrained
-
-The `PageSectionRenderer` wraps the editor preview in:
-```
-<div className="zura-editor-preview px-4 sm:px-6 lg:px-8 py-6 space-y-0">
-```
-
-This adds horizontal padding (`px-4` to `px-8`) that **constrains sections designed to be full-width/full-bleed** (Hero, Gallery, etc.). The Hero section, for example, uses `min-h-screen` or large viewport-relative heights with absolute positioning -- when wrapped in padding + a bento card with `p-6 sm:p-7 lg:p-8` internal padding, it either:
-- Gets cropped or collapses in height
-- Loses its full-bleed visual
-- Appears broken or missing
-
-The `EditorSectionCard` wrapper itself adds another layer of padding and `overflow: hidden` via `rounded-[20px]`, which clips content that relies on extending beyond its container.
-
-### Problem 2: The Sticky Nav IS Present
-
-Looking at the screenshot, the Header (DD logo, Services, About, etc.) **is** rendering. It's part of `Layout.tsx`, which wraps `PageSectionRenderer`. The sticky behavior may appear broken because:
-1. The `Layout.tsx` forces `theme-cream` and removes dark mode -- this is fine
-2. The iframe loads the full page including `Layout > Header > PageSectionRenderer`, so the nav should work
-3. But the `zura-editor-preview` padding creates a gap that makes it look different from the actual site
+## Debug: Panels Won't Expand
 
 ### Root Cause
 
-The editor preview wrapper (`zura-editor-preview` class + `EditorSectionCard` padding) was designed for a card-layout aesthetic but **conflicts with full-bleed section components** that expect to fill 100% width with no parent padding. The sections weren't built to render inside constrained padded containers.
+The `CANVAS_MIN` constant in `useEditorLayout.ts` is set to **820px**. This is too aggressive. Here's the math at 1440px (the "wide" breakpoint):
 
-### Fix
+```text
+Container:          1440px
+Gutters + Padding:   -48px
+Structure panel:    -300px
+Inspector panel:    -360px
+─────────────────────────
+Canvas remaining:    732px  ← LESS than CANVAS_MIN (820)
+```
 
-The fix needs to handle the tension between "floating bento cards" (which need padding/radius) and "full-bleed sections" (which need edge-to-edge rendering). The solution:
+Result: the auto-collapse logic on lines 134-139 **always** force-collapses the inspector, even at the widest breakpoint. When you click the expand chevron, `toggleInspector` sets `inspectorCollapsed: false` in prefs, but on the very next render the space check overrides it and collapses it again. The panel flickers or simply never expands.
 
-1. **Remove outer horizontal padding from `zura-editor-preview`** -- let the bento cards extend to the iframe edges. The iframe itself already provides the boundary.
+The same applies to the structure panel at narrower widths -- the space check on line 137-139 re-collapses it immediately after the user tries to expand.
 
-2. **Make `EditorSectionCard` use `overflow-visible` instead of clipping** -- allow section content to render naturally within the card, with the card chrome (header controls, selection ring) as a visual overlay rather than a constraining box.
+Additionally, the toggle logic doesn't differentiate between "auto-collapsed by the layout engine" and "user explicitly collapsed." So user intent is always overridden by the space check.
 
-3. **For full-bleed sections (hero, gallery, etc.), use `p-0` padding on the card** and only show the bento card header/controls as an overlay. The card border/shadow provides visual separation without constraining the content.
+### Fix (single file: `src/hooks/useEditorLayout.ts`)
 
-4. **Add a `fullBleed` flag** to `EditorSectionCard` for sections that are known full-width (hero, gallery, new_client, etc.) -- these get `p-0 overflow-hidden rounded-[20px]` (clip at the rounded corners only, no internal padding).
+**1. Reduce `CANVAS_MIN` from 820 to 480.**
 
-### Files to Change
+820px was meant to represent "desktop editing minimum" but it's unrealistic -- it's wider than a tablet viewport. Pro editors like Webflow and Figma allow canvases as narrow as ~400px when side panels are open. 480px is a safe minimum that still shows useful content.
+
+**2. Respect explicit user intent in the toggle functions.**
+
+When the user clicks expand, temporarily mark the preference as "explicitly expanded" so the space check doesn't immediately override it. Specifically:
+- In `toggleStructure`: set `structureCollapsed: false` (as today)
+- In `toggleInspector`: set `inspectorCollapsed: false` (as today)  
+- In the auto-collapse logic: only auto-collapse if the user hasn't **explicitly set** the pref to `false`. The current check on line 124 (`prefs.inspectorCollapsed !== false`) already attempts this pattern, but it's overridden by the space check below it. The fix: skip the space-check override when the user has explicitly set `Collapsed: false`.
+
+**3. Adjust `GUTTERS_AND_PADDING` to match actual layout.**
+
+The shell uses `gap-3 p-3` = 12px gap between panels (×2 gaps = 24px) + 12px padding (×2 sides = 24px) = 48px. This is correct but the collapsed rail (40px) also consumes space that isn't accounted for. Update the space calculation to include the rail width when a panel is collapsed.
+
+### Concrete Changes
+
+```typescript
+// Line 18: reduce canvas minimum
+const CANVAS_MIN = 480;
+
+// Lines 118-139: rewrite auto-collapse to respect user intent
+let structureVisible = !isMobile && !isTablet && !prefs.structureCollapsed;
+let inspectorVisible = !isMobile && !isTablet && !prefs.inspectorCollapsed;
+
+// For compact: auto-collapse inspector only if user hasn't explicitly expanded
+if (isCompact && prefs.inspectorCollapsed === undefined) {
+  inspectorVisible = false;
+}
+
+// Space check: only override if user hasn't explicitly set the pref
+const spaceWithBoth = containerWidth - GUTTERS_AND_PADDING - idealStructureWidth - idealInspectorWidth;
+const spaceWithStructureOnly = containerWidth - GUTTERS_AND_PADDING - idealStructureWidth;
+
+if (structureVisible && inspectorVisible && spaceWithBoth < CANVAS_MIN) {
+  // Only auto-collapse if user didn't explicitly expand
+  if (prefs.inspectorCollapsed === undefined) {
+    inspectorVisible = false;
+  }
+}
+if (structureVisible && !inspectorVisible && spaceWithStructureOnly < CANVAS_MIN) {
+  if (prefs.structureCollapsed === undefined) {
+    structureVisible = false;
+  }
+}
+```
+
+This ensures:
+- First load (prefs undefined): layout engine auto-collapses based on space
+- User clicks expand: pref set to `false`, space check is skipped, panel stays open
+- User clicks collapse: pref set to `true`, panel closes and stays closed
+
+### Files
 
 | File | Change |
 |---|---|
-| `src/components/home/PageSectionRenderer.tsx` | Remove outer `px-*` padding from `zura-editor-preview`. Pass `fullBleed` prop to `EditorSectionCard` for full-bleed section types. Add vertical spacing between cards via `space-y-5` or `gap-5`. |
-| `src/components/home/EditorSectionCard.tsx` | Accept `fullBleed` boolean prop. When true: use `p-0 overflow-hidden` instead of `p-6 sm:p-7 lg:p-8`. Always keep `rounded-[20px]` and the hover header overlay. |
+| `src/hooks/useEditorLayout.ts` | Reduce `CANVAS_MIN`, fix auto-collapse to respect user intent |
 
-Two files. Targeted fix that preserves the bento card aesthetic while letting full-bleed sections render correctly.
-
-### Full-Bleed Section Types
-
-These section types should get `fullBleed={true}`:
-- `hero`
-- `gallery`
-- `new_client`
-- `brand_statement`
-- `extensions`
-
-All other sections (services_preview, popular_services, testimonials, faq, stylists, locations, brands, drink_menu) render fine with card padding.
+Single file fix. No other files affected.
 
