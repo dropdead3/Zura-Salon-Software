@@ -33,7 +33,7 @@ const getRankStyles = (rank: number) => {
     case 1:
       return {
         badge: 'bg-chart-4/15 text-chart-4 border border-chart-4/30',
-        row: 'border-l-2 border-l-chart-4/60',
+        row: 'border-l-2 border-l-chart-4/60 ring-1 ring-chart-4/10 shadow-sm py-0.5',
       };
     case 2:
       return {
@@ -230,7 +230,7 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
                         {/* Row 1: Name + Revenue */}
                         <div className="flex items-center justify-between gap-2 mb-1">
                           <p className="text-sm font-medium truncate">{performer.name}</p>
-                          <BlurredAmount className="font-display text-sm shrink-0 whitespace-nowrap min-w-[80px] text-right">
+                          <BlurredAmount className={cn("font-display text-sm shrink-0 whitespace-nowrap min-w-[80px] text-right", rank === 1 && "text-foreground")}>
                             {formatCurrencyWhole(displayValue)}
                           </BlurredAmount>
                         </div>
@@ -238,7 +238,7 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
                         {/* Row 2: Progress bar */}
                         <div className="h-1 w-full bg-primary/15 rounded-full overflow-hidden">
                           <motion.div
-                            className="h-full bg-primary rounded-full"
+                            className={cn("h-full rounded-full", rank === 1 ? "bg-primary" : "bg-primary/70")}
                             initial={{ width: 0 }}
                             animate={{ width: `${progressPercent}%` }}
                             transition={{ duration: 0.6, delay: 0.15 + idx * 0.05, ease: 'easeOut' }}
