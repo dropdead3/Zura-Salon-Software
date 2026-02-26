@@ -11,6 +11,8 @@ interface ChaChingHistoryContextValue {
   unreadCount: number;
   addNotification: (amount: number) => void;
   markAllRead: () => void;
+  dismissNotification: (id: string) => void;
+  clearAll: () => void;
 }
 
 const ChaChingHistoryContext = createContext<ChaChingHistoryContextValue | null>(null);
@@ -36,8 +38,16 @@ export function ChaChingHistoryProvider({ children }: { children: ReactNode }) {
     setLastReadAt(new Date());
   }, []);
 
+  const dismissNotification = useCallback((id: string) => {
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+  }, []);
+
+  const clearAll = useCallback(() => {
+    setNotifications([]);
+  }, []);
+
   return (
-    <ChaChingHistoryContext.Provider value={{ notifications, unreadCount, addNotification, markAllRead }}>
+    <ChaChingHistoryContext.Provider value={{ notifications, unreadCount, addNotification, markAllRead, dismissNotification, clearAll }}>
       {children}
     </ChaChingHistoryContext.Provider>
   );
