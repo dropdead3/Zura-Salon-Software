@@ -1,129 +1,76 @@
 
 
-## Refactor Top Performers Card for Intelligent Responsiveness
+## Diagnosis: Why the Previous Fix Didn't Work
 
-### What Changes
+The previous implementation correctly restructured the layout into 3 zones — but it used **viewport breakpoints** (`xl:flex` at 1280px). The TopPerformersCard lives inside a sidebar that's only **1/3 of the viewport width** in the `grid xl:grid-cols-3` layout of AggregateSalesCard. On a 1440px screen, the card is roughly 400px wide, yet `xl:` classes fire because the **viewport** is 1440px. Avatars stay visible, everything crams into a 400px column, and no layout shift occurs.
 
-Re-architect each performer row from a single horizontal flex line into a 3-zone stacked layout that degrades gracefully at narrower widths, with avatar visibility toggled by breakpoint.
+Viewport breakpoints cannot solve this. The card needs **container queries** — responding to its own width, not the window's.
 
-### Breakpoint Strategy (Tailwind-aligned)
+---
 
-Since Tailwind's built-in breakpoints don't include 1200px or 1440px, we'll use the closest native breakpoints plus one custom approach:
+## Technical Plan
 
-| Your Spec | Tailwind Equivalent | Behavior |
-|-----------|-------------------|----------|
-| ≥ 1440px | `2xl:` (1536px) — close enough, or custom `min-[1440px]:` | Full horizontal, avatar visible, inline split |
-| 1200–1439px | `xl:` (1280px) | Avatar visible, split moves below |
-| 900–1199px | `lg:` (1024px) | Avatar hidden, stacked 3-row layout |
-| < 900px | `md:` and below | Same stacked layout, increased spacing |
+### Approach: CSS Container Queries via Tailwind
 
-For precision, we'll use `@container` queries or Tailwind arbitrary breakpoints (`min-[1200px]:`, `min-[900px]:`) to match your exact spec. However, since this card lives inside a flex column that's narrower than the viewport, **container queries** are more accurate. We'll use Tailwind's native breakpoints as the pragmatic approach since the card's container width roughly tracks viewport width.
+Tailwind v3.3+ supports `@container` via the `@container` variant. We add `@container` to the card wrapper and use `@[width]:` arbitrary container breakpoints on child elements.
 
-### Technical Changes
+### File: `src/components/dashboard/sales/TopPerformersCard.tsx`
 
-**File: `src/components/dashboard/sales/TopPerformersCard.tsx`**
+**1. Add container query context to the card**
 
-Each performer row (lines 201–257) gets restructured:
+On the outermost `<Card>`, add the class `@container` (Tailwind's container query declaration). This makes all descendants queryable against the card's own width.
 
-**Current structure:**
-```
-[Rank] [Avatar] [Name ——— Revenue]
-                [progress bar      ]
-                [service · retail   ]
-```
+**2. Replace viewport breakpoints with container breakpoints**
 
-**New structure at compact widths (< `xl`):**
-```
-Row 1: [Rank] [Name]          [Revenue]
-Row 2: [service · retail breakdown     ]
-Row 3: [progress bar                   ]
-```
+| Current (viewport) | New (container) | Purpose |
+|---|---|---|
+| `hidden xl:flex` on Avatar | `hidden @[400px]:flex` | Show avatar only when card is ≥ 400px wide |
+| (none) | Additional container breakpoints for spacing | Tighter/wider spacing based on card width |
 
-**At wide widths (`xl`+):**
-```
-Row 1: [Rank] [Avatar] [Name] [Revenue]
-Row 2:                 [progress bar   ]
-Row 3:                 [service·retail ]
-```
+The 400px threshold ensures avatars only appear when the card has enough horizontal room — whether it's in a sidebar, full-width command center, or any other layout context.
 
-**Specific changes:**
+**3. Specific element changes in the performer row**
 
-1. **Avatar visibility**: Wrap `<Avatar>` in `hidden xl:block` — completely removed from layout below 1280px
-
-2. **Row layout restructure**: Change the inner content div from a single `flex items-center` to a stacked layout:
-   - Top row: `flex items-center justify-between` with name (left, truncate) and revenue (right, `whitespace-nowrap shrink-0`)
-   - Below: progress bar at full width
-   - Below: service/retail split
-
-3. **Revenue protection**: Add `whitespace-nowrap` and `min-w-[80px] text-right` to the revenue `BlurredAmount` wrapper to prevent wrapping or compression
-
-4. **Spacing increase**: Change `space-y-2` on the performer list to `space-y-3` for better visual separation between rows
-
-5. **Progress bar**: Already full-width within content envelope — no change needed, just ensure it's in its own row below the name/revenue line
-
-### Layout Code (Performer Row)
-
+Avatar line changes from:
 ```tsx
-<motion.div
-  key={performer.user_id}
-  className={cn(
-    "p-2.5 rounded-lg bg-card-inner",
-    styles.row
-  )}
->
-  <div className="flex items-start gap-3">
-    {/* Rank badge - always visible */}
-    <span className={cn(
-      "w-7 h-7 rounded-full flex items-center justify-center font-display text-xs shrink-0 mt-0.5",
-      styles.badge
-    )}>
-      {rank}
-    </span>
-
-    {/* Avatar - hidden below xl */}
-    <Avatar className="h-9 w-9 shrink-0 hidden xl:flex mt-0.5">
-      <AvatarImage ... />
-      <AvatarFallback ...>{initials}</AvatarFallback>
-    </Avatar>
-
-    {/* Content zone */}
-    <div className="flex-1 min-w-0">
-      {/* Row 1: Name + Revenue */}
-      <div className="flex items-center justify-between gap-2 mb-1">
-        <p className="text-sm font-medium truncate">{performer.name}</p>
-        <BlurredAmount className="font-display text-sm shrink-0 whitespace-nowrap">
-          {formatCurrencyWhole(displayValue)}
-        </BlurredAmount>
-      </div>
-
-      {/* Row 2: Progress bar */}
-      <div className="h-1 w-full bg-primary/15 rounded-full overflow-hidden">
-        <motion.div ... />
-      </div>
-
-      {/* Row 3: Service · Retail split */}
-      {showSplit && (
-        <div className="flex items-center gap-1 mt-1 text-[10px] text-muted-foreground">
-          ...
-        </div>
-      )}
-    </div>
-  </div>
-</motion.div>
+<Avatar className="h-9 w-9 shrink-0 hidden xl:flex mt-0.5">
 ```
+To:
+```tsx
+<Avatar className="h-9 w-9 shrink-0 hidden @[400px]:flex mt-0.5">
+```
+
+**4. Add `@tailwindcss/container-queries` plugin**
+
+Container queries require the `@tailwindcss/container-queries` plugin for Tailwind. This needs to be added:
+- Install `@tailwindcss/container-queries`
+- Add to `tailwind.config.ts` plugins array
+
+**Alternative (no plugin needed):** Use inline CSS with raw `@container` queries via a wrapper `<div>` with `style={{ containerType: 'inline-size' }}` and a small CSS class that applies the breakpoint rules. However, the Tailwind plugin approach is cleaner and consistent with the existing Tailwind-first architecture.
+
+### Fallback if plugin is undesirable
+
+If adding a dependency is unwanted, we can use a **ResizeObserver hook** approach:
+- Create a `useContainerWidth` hook that tracks the card's width
+- Pass width as a prop or use a CSS custom property
+- Apply conditional classes based on measured width
+
+This is more JavaScript but zero new dependencies.
+
+---
 
 ### Files Changed
 
 | File | Action |
-|------|--------|
-| `src/components/dashboard/sales/TopPerformersCard.tsx` | Restructure performer rows into 3-zone layout, add avatar breakpoint visibility, protect revenue from wrapping, increase row spacing |
+|------|---|
+| `src/components/dashboard/sales/TopPerformersCard.tsx` | Add `@container` to Card, replace `xl:flex` with `@[400px]:flex` on Avatar |
+| `tailwind.config.ts` | Add `@tailwindcss/container-queries` plugin |
+| `package.json` | Install `@tailwindcss/container-queries` |
 
 ### What Does NOT Change
 
-- Card header layout
-- Sort dropdown
-- View all toggle
-- Rank badge styling
-- Animation behavior
-- ScrollArea logic
+- Card header layout, sort dropdown, view all toggle
+- The 3-zone stacked structure (already correct)
+- Rank badge styling, animation, ScrollArea logic
+- Any other component
 
