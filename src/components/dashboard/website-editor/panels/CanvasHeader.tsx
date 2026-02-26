@@ -8,9 +8,11 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
+  ArrowLeft,
   Monitor,
   Tablet,
   Smartphone,
@@ -54,6 +56,8 @@ export function CanvasHeader({
   onSave,
   onPreview,
 }: CanvasHeaderProps) {
+  const navigate = useNavigate();
+
   // Auto-save "Saved" indicator
   const [showSaved, setShowSaved] = useState(false);
   const wasSaving = useWasSaving(isSaving);
@@ -66,6 +70,25 @@ export function CanvasHeader({
     }
   }, [wasSaving, isSaving]);
 
+  // Escape key → navigate back (guarded)
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          (target as any).isContentEditable ||
+          target.closest('[role="dialog"]'))
+      ) return;
+      e.preventDefault();
+      navigate('/dashboard');
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [navigate]);
+
   const viewports: { mode: ViewportMode; icon: typeof Monitor; label: string }[] = [
     { mode: 'desktop', icon: Monitor, label: 'Desktop' },
     { mode: 'tablet', icon: Tablet, label: 'Tablet' },
@@ -74,8 +97,22 @@ export function CanvasHeader({
 
   return (
     <div className={editorTokens.canvas.controlStrip}>
-      {/* Left: Site name + status */}
+      {/* Left: Back + Site name + status */}
       <div className="flex items-center gap-2 min-w-0 flex-shrink">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 flex-shrink-0"
+              onClick={() => navigate('/dashboard')}
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Back to Command Center (Esc)</TooltipContent>
+        </Tooltip>
+        <div className="border-r border-border/40 h-5 flex-shrink-0" />
         <span className="text-sm font-sans font-medium truncate">{siteName}</span>
         <div className="flex items-center gap-1.5">
           <span className={cn(
