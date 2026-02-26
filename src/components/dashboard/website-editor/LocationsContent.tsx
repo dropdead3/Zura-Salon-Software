@@ -24,6 +24,7 @@ import {
   type Location,
 } from '@/hooks/useLocations';
 import { LocationPreviewModal } from '@/components/dashboard/LocationPreviewModal';
+import { EditorCard } from './EditorCard';
 
 export function LocationsContent() {
   const { data: locations = [], isLoading } = useLocations();
@@ -67,40 +68,33 @@ export function LocationsContent() {
   const websiteVisibleCount = activeLocations.filter(loc => loc.show_on_website).length;
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-display flex items-center gap-2">
-            <MapPin className="w-5 h-5" />
-            Website Locations
-          </h2>
-          <p className="text-muted-foreground text-sm">
-            Control which locations appear on the public website
-          </p>
-        </div>
-        
-        <div className="flex items-center gap-2 flex-wrap">
+    <EditorCard
+      title="Website Locations"
+      icon={MapPin}
+      description="Control which locations appear on the public website"
+      headerActions={
+        <div className="flex items-center gap-1">
           <Button 
-            variant="outline" 
-            size={tokens.button.card}
+            variant="ghost" 
+            size={tokens.button.inline}
             onClick={() => setPreviewOpen(true)}
-            className="gap-2"
+            className="gap-1.5 text-muted-foreground"
           >
-            <Eye className="w-4 h-4" />
+            <Eye className="w-3.5 h-3.5" />
             Preview
           </Button>
           <Button 
-            variant="outline" 
-            size={tokens.button.card}
+            variant="ghost" 
+            size={tokens.button.inline}
             onClick={() => navigate('/dashboard/admin/settings')}
-            className="gap-2"
+            className="gap-1.5 text-muted-foreground"
           >
-            <Settings className="w-4 h-4" />
-            Edit in Settings
+            <Settings className="w-3.5 h-3.5" />
+            Settings
           </Button>
         </div>
-      </div>
+      }
+    >
 
       {/* Info Banner */}
       <div className="bg-muted/50 border rounded-lg p-4 flex items-start gap-3">
@@ -230,11 +224,10 @@ export function LocationsContent() {
         </p>
       )}
 
-      {/* Preview Modal */}
       <LocationPreviewModal 
         open={previewOpen} 
         onOpenChange={setPreviewOpen} 
       />
-    </div>
+    </EditorCard>
   );
 }

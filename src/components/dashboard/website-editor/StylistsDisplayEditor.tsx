@@ -1,3 +1,4 @@
+import { Users } from 'lucide-react';
 import { useStylistsDisplayConfig } from '@/hooks/useSectionConfig';
 import { SectionDisplayEditor } from './SectionDisplayEditor';
 
@@ -24,7 +25,8 @@ export function StylistsDisplayEditor() {
   return (
     <SectionDisplayEditor
       title="Stylists Display Section"
-      description="Configure how the stylists section appears on the homepage. To manage individual team profiles, go to Stylists under Site Content."
+      description="Configure how the stylists section appears on the homepage."
+      icon={Users}
       data={data}
       isLoading={isLoading}
       isSaving={isSaving}

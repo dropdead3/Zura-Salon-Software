@@ -77,28 +77,7 @@ export function AnnouncementBarContent() {
   const isDark = isDarkColor(formData.bg_color || '');
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-display tracking-tight flex items-center gap-2">
-            <Megaphone className="h-5 w-5 text-primary" />
-            Announcement Bar
-          </h2>
-          <p className="text-muted-foreground text-sm">
-            Customize the promotional banner displayed above the header on the public website.
-          </p>
-        </div>
-        <Button variant="outline" size={tokens.button.card} asChild>
-          <a href="/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2">
-            <ExternalLink className="h-4 w-4" />
-            Preview Website
-          </a>
-        </Button>
-      </div>
-
-      {/* Settings Form */}
-      <EditorCard title="Settings" icon={Megaphone} description="Configure the announcement bar content and behavior">
+    <EditorCard title="Announcement Bar" icon={Megaphone} description="Customize the promotional banner displayed above the header on the public website">
         {/* Visibility Toggle */}
         <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
           <div>
@@ -247,7 +226,6 @@ export function AnnouncementBarContent() {
             />
           </div>
         </div>
-      </EditorCard>
-    </div>
+    </EditorCard>
   );
 }

@@ -1,3 +1,4 @@
+import { Star } from 'lucide-react';
 import { usePopularServicesConfig } from '@/hooks/useSectionConfig';
 import { SectionDisplayEditor } from './SectionDisplayEditor';
 
@@ -24,7 +25,8 @@ export function PopularServicesEditor() {
   return (
     <SectionDisplayEditor
       title="Popular Services Section"
-      description="Configure which popular services are highlighted on the homepage. Services marked as 'Popular' in the Services Manager will appear here."
+      description="Configure which popular services are highlighted on the homepage."
+      icon={Star}
       data={data}
       isLoading={isLoading}
       isSaving={isSaving}

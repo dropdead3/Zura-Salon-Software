@@ -1,3 +1,4 @@
+import { MapPin } from 'lucide-react';
 import { useLocationsDisplayConfig } from '@/hooks/useSectionConfig';
 import { SectionDisplayEditor } from './SectionDisplayEditor';
 
@@ -27,7 +28,8 @@ export function LocationsDisplayEditor() {
   return (
     <SectionDisplayEditor
       title="Locations Display Section"
-      description="Configure how locations appear on the homepage. To manage individual locations, go to Locations under Site Content."
+      description="Configure how locations appear on the homepage."
+      icon={MapPin}
       data={data}
       isLoading={isLoading}
       isSaving={isSaving}

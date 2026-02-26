@@ -61,6 +61,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useStylistLevelsSimple } from '@/hooks/useStylistLevels';
+import { EditorCard } from './EditorCard';
 import { ServiceCommunicationFlowEditor } from '@/components/dashboard/ServiceCommunicationFlowEditor';
 import { useAllServiceCommunicationFlows } from '@/hooks/useServiceCommunicationFlows';
 import {
@@ -265,29 +266,21 @@ export function ServicesContent() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-4">
-        <div>
-          <h2 className="text-xl font-display flex items-center gap-2">
-            <Scissors className="w-5 h-5" />
-            Services Manager
-          </h2>
-          <p className="text-muted-foreground text-sm">
-            Manage services, pricing, and website display settings
-          </p>
-        </div>
-
-        {/* Info notice */}
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/60 border border-border">
-          <Settings2 className="w-5 h-5 text-muted-foreground shrink-0" />
-          <p className="text-sm text-muted-foreground">
-            Services and categories are managed in{' '}
-            <Link to="/dashboard/admin/services" className="underline font-medium text-foreground hover:text-primary">
-              Services Settings
-            </Link>
-            . Use this editor to control website display, descriptions, and popular badges.
-          </p>
-        </div>
+    <EditorCard
+      title="Services Manager"
+      icon={Scissors}
+      description="Manage services, pricing, and website display settings"
+    >
+      {/* Info notice */}
+      <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/60 border border-border">
+        <Settings2 className="w-5 h-5 text-muted-foreground shrink-0" />
+        <p className="text-sm text-muted-foreground">
+          Services and categories are managed in{' '}
+          <Link to="/dashboard/admin/services" className="underline font-medium text-foreground hover:text-primary">
+            Services Settings
+          </Link>
+          . Use this editor to control website display, descriptions, and popular badges.
+        </p>
       </div>
 
       {/* Data health warning */}
@@ -782,6 +775,6 @@ export function ServicesContent() {
           serviceName={configureFlowsServiceName}
         />
       )}
-    </div>
+    </EditorCard>
   );
 }

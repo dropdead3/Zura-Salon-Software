@@ -1,3 +1,4 @@
+import { Images } from 'lucide-react';
 import { useGalleryDisplayConfig } from '@/hooks/useSectionConfig';
 import { SectionDisplayEditor } from './SectionDisplayEditor';
 
@@ -18,7 +19,8 @@ export function GalleryDisplayEditor() {
   return (
     <SectionDisplayEditor
       title="Gallery Display Section"
-      description="Configure how the gallery section appears on the homepage. To manage individual images, go to Gallery under Site Content."
+      description="Configure how the gallery section appears on the homepage."
+      icon={Images}
       data={data}
       isLoading={isLoading}
       isSaving={isSaving}

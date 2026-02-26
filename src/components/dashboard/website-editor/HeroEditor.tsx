@@ -3,7 +3,7 @@ import { tokens } from '@/lib/design-tokens';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Loader2, Settings2, RotateCcw } from 'lucide-react';
+import { Loader2, Settings2, RotateCcw, Layout } from 'lucide-react';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
 import { toast } from 'sonner';
 import { useHeroConfig, type HeroConfig, DEFAULT_HERO } from '@/hooks/useSectionConfig';
@@ -16,6 +16,7 @@ import { useDebounce } from '@/hooks/use-debounce';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
 import { SectionGroupHeader } from './SectionGroupHeader';
+import { EditorCard } from './EditorCard';
 
 export function HeroEditor() {
   const { data, isLoading, isSaving, update } = useHeroConfig();
@@ -59,14 +60,17 @@ export function HeroEditor() {
   }
 
   return (
-    <div className="space-y-5">
-      {/* Reset row */}
-      <div className="flex justify-end">
+    <EditorCard
+      title="Hero Section"
+      icon={Layout}
+      description="Configure the main hero banner on your homepage"
+      headerActions={
         <Button variant="ghost" size={tokens.button.inline} onClick={handleReset} className="text-muted-foreground gap-1.5">
           <RotateCcw className="h-3.5 w-3.5" />
           Reset
         </Button>
-      </div>
+      }
+    >
 
       {/* Eyebrow */}
       <ToggleInput
@@ -261,6 +265,6 @@ export function HeroEditor() {
           </div>
         </CollapsibleContent>
       </Collapsible>
-    </div>
+    </EditorCard>
   );
 }

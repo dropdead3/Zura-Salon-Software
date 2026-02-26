@@ -8,8 +8,10 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { toast } from 'sonner';
+import { Layers } from 'lucide-react';
 import type { CustomSectionType, StyleOverrides } from '@/hooks/useWebsiteSections';
 import { ImageUploadInput } from './inputs/ImageUploadInput';
+import { EditorCard } from './EditorCard';
 
 interface CustomSectionEditorProps {
   sectionId: string;
@@ -273,8 +275,20 @@ export function CustomSectionEditor({ sectionId, sectionType, sectionLabel, styl
     }
   };
 
+  const sectionTypeLabels: Record<CustomSectionType, string> = {
+    rich_text: 'Rich Text Block',
+    image_text: 'Image + Text Block',
+    video: 'Video Embed',
+    custom_cta: 'Call to Action',
+    spacer: 'Spacer / Divider',
+  };
+
   return (
-    <div className="space-y-5">
+    <EditorCard
+      title={sectionTypeLabels[sectionType] || 'Custom Section'}
+      icon={Layers}
+      description={`Configure this ${sectionType.replace('_', ' ')} section`}
+    >
       {onLabelChange && (
         <div className="space-y-2">
           <Label>Section Label</Label>
@@ -292,6 +306,6 @@ export function CustomSectionEditor({ sectionId, sectionType, sectionLabel, styl
         </div>
       )}
       {renderFields()}
-    </div>
+    </EditorCard>
   );
 }

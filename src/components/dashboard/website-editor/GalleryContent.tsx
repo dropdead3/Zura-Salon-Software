@@ -41,6 +41,7 @@ import { ImageUploadInput } from '@/components/ui/image-upload-input';
 import { BulkImageUpload } from '@/components/ui/bulk-image-upload';
 import { SortableGalleryImage } from './gallery/SortableGalleryImage';
 import { SortableTransformation } from './gallery/SortableTransformation';
+import { EditorCard } from './EditorCard';
 import {
   useGalleryImages,
   useAddGalleryImage,
@@ -194,18 +195,11 @@ export function GalleryContent() {
   const isLoading = imagesLoading || transformsLoading;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h2 className="text-xl font-display flex items-center gap-2">
-            <Images className="w-5 h-5" />
-            Gallery Manager
-          </h2>
-          <p className="text-muted-foreground text-sm">
-            Manage gallery images and before/after transformations. Drag to reorder.
-          </p>
-        </div>
-      </div>
+    <EditorCard
+      title="Gallery Manager"
+      icon={Images}
+      description="Manage gallery images and before/after transformations"
+    >
 
       {/* Stats */}
       <div className="grid grid-cols-2 gap-4">
@@ -440,6 +434,6 @@ export function GalleryContent() {
           </TabsContent>
         </Tabs>
       )}
-    </div>
+    </EditorCard>
   );
 }

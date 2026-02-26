@@ -1,3 +1,4 @@
+import { Scissors } from 'lucide-react';
 import { useServicesPreviewConfig } from '@/hooks/useSectionConfig';
 import { SectionDisplayEditor } from './SectionDisplayEditor';
 
@@ -25,7 +26,8 @@ export function ServicesPreviewEditor() {
   return (
     <SectionDisplayEditor
       title="Services Preview Section"
-      description="Configure how the services section appears on the homepage. To manage individual services, go to Services under Site Content."
+      description="Configure how the services section appears on the homepage."
+      icon={Scissors}
       data={data}
       isLoading={isLoading}
       isSaving={isSaving}
