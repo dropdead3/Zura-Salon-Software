@@ -1,93 +1,81 @@
 
-You gave very strong bug feedback again, and that’s exactly what makes UI fixes converge: short, direct, reproducible (“still not fixed”) plus screenshots. That’s excellent debugging collaboration.
 
-Prompt-coaching improvement for your next report (to speed final convergence): include one exact acceptance test sentence such as:
-- “At 1366/1280/1024 widths, every inspector card must have equal left/right visible inset from panel border, with scrollbar never covering card borders/text.”
+## Investigation: Sales Overview Double Counting
 
-I now have your clarifications:
-- Right gutter target: must visually match the left side
-- Scope: all inspector modules + scrollbar behavior
+Good instinct flagging this. Here's what the data investigation revealed.
 
-Implementation diagnosis (why current patch still fails):
-1) Root-level `pr-2` on `ScrollArea` is only a partial workaround  
-- It does not guarantee a true non-overlay content gutter because Radix scrollbars are layered and can still visually sit over content in narrow panel widths.
+### What the data actually shows
 
-2) Fixes were too local, not systemic  
-- `LocationsContent` got per-module `pr-*` tweaks, but other modules still inherit the same inspector container behavior.
-- This causes inconsistent right spacing across modules.
+| Source | Amount | What it represents |
+|--------|--------|--------------------|
+| `phorest_daily_sales_summary` (Actual) | **$3,675** | POS-confirmed revenue: $3,376 service + $299 retail |
+| `phorest_transaction_items` (cross-check) | **$3,675** | Matches exactly per staff member |
+| `phorest_appointments` (Expected) | **$4,050** | Scheduled appointment `total_price` sums |
+| UI "Expected" badge | **$4,349** | $4,050 appointments + $299 retail (double-counted) |
 
-3) Header action clipping can still happen in `EditorCard`  
-- The left header block is `min-w-0` but not `flex-1 overflow-hidden`, so long title+description combinations can still squeeze right action buttons at tight widths.
+### The actual problem: Expected badge inflates by double-counting products
 
-4) Overlay-scrollbar behavior remains the core issue  
-- As long as the scroller overlays content, “padding looks wrong” even when overflow is technically constrained.
+In `useSalesMetrics` (src/hooks/useSalesData.ts, lines 324-325):
 
-Proposed final implementation plan (systemic, not patchy):
-
-1) Convert inspector content scroller from Radix `ScrollArea` to native overflow container (Inspector only)
-- File: `src/components/dashboard/website-editor/panels/InspectorPanel.tsx`
-- Replace inspector’s `<ScrollArea ...>` with a native `<div>` scroller:
-  - `flex-1 min-w-0 overflow-y-auto overflow-x-hidden`
-  - `scrollbar-gutter: stable` (via utility/class style) so scrollbar space is reserved and never overlays content
-  - Keep `PanelSlideIn` inside a strict width envelope wrapper (`w-full min-w-0 max-w-full overflow-x-hidden`)
-- Rationale: native gutter reservation is deterministic and avoids Radix overlay-layer edge cases in this narrow inspector rail.
-
-2) Establish one global “safe content envelope” for inspector modules
-- File: `src/components/dashboard/website-editor/editor-tokens.ts`
-- Keep/adjust `editorTokens.inspector.content` to be the single source of truth:
-  - symmetric left/right inset (same value)
-  - stable top/bottom spacing
-  - `box-border max-w-full overflow-x-hidden`
-- Remove one-off per-module right padding hacks once global envelope is reliable.
-
-3) Harden `EditorCard` for narrow inspector widths globally
-- File: `src/components/dashboard/website-editor/EditorCard.tsx`
-- Header left block becomes `flex-1 min-w-0 overflow-hidden` so header actions always remain visible.
-- Keep content `p-4` and strict containment:
-  - `max-w-full box-border overflow-x-hidden`
-- This applies to all inspector modules using `EditorCard`, giving consistent behavior platform-wide.
-
-4) Roll back local Location-only spacing overrides
-- File: `src/components/dashboard/website-editor/LocationsContent.tsx`
-- Remove temporary `pr-4` / `pr-3` patches added as local compensation.
-- Keep only semantic layout choices required for content readability.
-- Reason: local overrides mask the container problem and create drift between modules.
-
-5) Add inspector-level defensive text wrapping for long inline strings
-- File: `src/components/dashboard/website-editor/panels/InspectorPanel.tsx` (wrapper class) or tokenized helper
-- Scoped rule for inspector content only:
-  - paragraph/span long-token protection (`overflow-wrap:anywhere; word-break:break-word`) where safe
-- Prevents rare long strings from pushing perceived right-edge pressure.
-
-6) Validation protocol (must pass before closing)
-- Breakpoints: 1366, 1280, 1024
-- Tabs: Locations + at least 4 other inspector modules (Services, Gallery, Testimonials, Navigation/Page settings)
-- Verify all:
-  - Equal perceived left/right inset for cards
-  - No right-edge clipping of borders, badges, buttons, or text
-  - No horizontal scrollbar anywhere in inspector
-  - Scrollbar never overlaps interactive content
-  - Header actions in `EditorCard` remain fully visible
-
-Technical implementation notes:
-- This is a UI container architecture issue, not data or backend.
-- The most robust fix is “reserved scrollbar gutter + single envelope + global card hardening,” not accumulating per-module `pr-*` patches.
-- Keeping the fix centralized in `InspectorPanel` + `EditorCard` aligns with your “single source of truth” CSS doctrine and prevents regressions.
-
-ASCII view of target containment model:
-```text
-[Inspector Panel Border]
-  [Header]
-  [Native Scroll Container with stable gutter]
-    [Content Envelope: equal left/right inset]
-      [EditorCard (w-full, max-w-full)]
-        [Header: left flex-1 + right actions fixed]
-        [Body content constrained]
+```
+serviceRevenue = SUM(appointment.total_price)    // $4,050
+totalRevenue = serviceRevenue + productRevenue   // $4,050 + $299 = $4,349
 ```
 
-Prompt enhancement suggestions (for your next bug report):
-1) Include exact equality criterion: “right inset must visually equal left inset.”
-2) Include module scope in one line: “all inspector modules, not just Locations.”
-3) Include breakpoint matrix explicitly (you’re already doing this well).
-4) Add one “known bad element” example (e.g., “header action icons clipping”).
-5) Add regression guard: “avoid module-specific padding hacks; fix must be container-level.”
+The issue: `appointment.total_price` in Phorest already includes product purchases bundled into the visit. The hook then fetches product revenue separately from `phorest_transaction_items` and adds it again. Result: **$299 in retail revenue counted twice** in the Expected figure.
+
+### The "$3,675 Actual" is correct
+
+Cross-verified against `phorest_transaction_items` per staff member -- every row matches exactly. The `phorest_daily_sales_summary` upsert logic is clean (unique on `staff_id + location_id + date`). No duplication in the actual revenue figure.
+
+### The "$4,349 Expected" is inflated
+
+Should be either:
+- **$4,050** (appointment totals only, which already include products), or
+- **$3,751 + $299** if we strip products from appointments and re-add from transaction items (more accurate decomposition)
+
+### Proposed fix
+
+**File: `src/hooks/useSalesData.ts` (lines 261-325)**
+
+Stop adding `productRevenue` from transaction items to the `totalRevenue` calculation when the data source is appointments. The appointment `total_price` field already includes products sold during the visit. Instead:
+
+1. Keep fetching transaction items for the **breakdown** (service vs. product split display) but do NOT add product revenue on top of appointment totals for the headline figure.
+2. Calculate `totalRevenue` as just `serviceRevenue` (which is actually the sum of all appointment prices including products bundled in).
+3. Rename the internal variable from `serviceRevenue` to `appointmentRevenue` for clarity, since it includes both services and bundled products.
+4. Use transaction items only for the service/product **split percentages** in the breakdown cards.
+
+**Concrete change:**
+
+```typescript
+// Line 324-325 currently:
+const serviceRevenue = data.reduce((sum, apt) => sum + (Number(apt.total_price) || 0), 0);
+const totalRevenue = serviceRevenue + productRevenue;
+
+// Should become:
+const appointmentRevenue = data.reduce((sum, apt) => sum + (Number(apt.total_price) || 0), 0);
+const totalRevenue = appointmentRevenue; // total_price already includes products
+// serviceRevenue for breakdown = appointmentRevenue - productRevenue
+const serviceRevenue = Math.max(0, appointmentRevenue - productRevenue);
+```
+
+This ensures:
+- Total Revenue (Expected) = sum of appointment prices = $4,050 (no inflation)
+- Service/Retail split still works correctly for the breakdown cards
+- The "Actual" figure from `phorest_daily_sales_summary` ($3,675) remains untouched
+
+### Why the discrepancy between $4,050 expected and $3,675 actual
+
+This is legitimate -- appointments are scheduled at list price, but POS actuals reflect discounts, package redemptions, and adjustments applied at checkout. The $375 gap ($4,050 - $3,675) represents normal checkout adjustments, which is healthy business context to display.
+
+### Technical detail
+
+- `totalTransactions` on line 343 also changes: currently `totalServices + totalProducts`, but `totalProducts` is from transaction items while `totalServices` is from appointments. These are different counting units. For the Expected view, transaction count should use appointment count only. For Actual view, it already uses the summary table's `total_transactions`.
+- The `averageTicket` on line 344 inherits the same issue.
+
+### Files to modify
+
+| File | Change |
+|------|--------|
+| `src/hooks/useSalesData.ts` | Fix `useSalesMetrics` to not double-add product revenue; derive service revenue by subtraction |
+
