@@ -1,42 +1,44 @@
 
 
-## Fix Gallery Manager Inspector Overflow
+## Make Testimonials Inspector Cohesive with Other Panels
 
-### Problems Visible in Screenshot
+### Problem
 
-1. **Action buttons overflow** — "Bulk Upload" and "Add Image" buttons with text labels sit side-by-side in `flex justify-end gap-2` (line 246), pushing past the ~290px panel edge. Combined they are ~280px+ which leaves no margin.
+The Testimonials panel renders as a raw `div` with its own custom header layout, while all other inspector panels (Gallery, Footer CTA, Locations, Stylists) use the `EditorCard` wrapper component. This creates visual inconsistency -- the Testimonials panel lacks the frosted-glass header, compact stat sizing, and overflow containment that the other panels share.
 
-2. **Empty state card too wide** — The empty state `Card` with `p-8` and centered icon/text appears to bleed into the right edge of the inspector panel. The parent `EditorCard` content area is only ~260px wide after padding.
+### Current vs Expected Pattern
 
-3. **Stats cards have generous padding** — The stat cards use `p-3` which is fine, but the overall `grid-cols-1 gap-3` could be tightened.
+| Aspect | Current (Testimonials) | Expected (matches Gallery, etc.) |
+|--------|----------------------|----------------------------------|
+| Wrapper | Raw `<div className="space-y-6">` | `<EditorCard title="..." icon={...} description="...">` |
+| Header | Custom h2 + description + floating Add button | EditorCard sticky frosted-glass header with icon-only or compact headerActions |
+| Stats grid | `grid-cols-2 gap-4`, `p-4`, `text-2xl` values | `grid-cols-1 gap-3`, `p-3`, `text-lg` values, `min-w-0` containment |
+| Empty state | `p-8`, `text-lg font-medium` heading | `p-6`, `text-sm` description, compact heading |
+| Info card | Separate Card with CardHeader/CardTitle | Compact `text-xs text-muted-foreground` block or removed |
+| Add button | Full `<Button>` in header area | `w-full` stacked button or icon-only in EditorCard headerActions |
+| Loading | Custom skeleton layout | Centered `Loader2` spinner (matches Gallery) |
 
 ### Changes
 
-#### 1. `GalleryContent.tsx` — Stack action buttons vertically
-Change the button container from horizontal `flex justify-end gap-2` to `flex flex-col gap-2` with full-width buttons. This prevents horizontal overflow entirely:
+#### `TestimonialsContent.tsx`
 
-```tsx
-<div className="flex flex-col gap-2">
-  <Button variant="outline" className="gap-2 w-full">
-    <Upload /> Bulk Upload
-  </Button>
-  <Button className="gap-2 w-full">
-    <Plus /> Add Image
-  </Button>
-</div>
-```
+1. **Wrap in EditorCard** -- Replace the raw `div` wrapper with `<EditorCard title="Testimonials" icon={Quote} description="Manage customer reviews" className="overflow-hidden">` with an icon-only "Add" button as `headerActions`.
 
-Same for the "Add Before/After" button container on line 346.
+2. **Compact stats** -- Change `grid-cols-2 gap-4` to `grid-cols-1 gap-3`. Reduce stat card padding from `p-4` to `p-3`, icon containers from `p-2` to `p-1.5`, icon sizes from `w-5 h-5` to `w-4 h-4`, stat values from `text-2xl` to `text-lg`, stat labels from `text-sm` to `text-xs`. Add `min-w-0` for truncation safety.
 
-#### 2. `GalleryContent.tsx` — Compact empty state padding
-Reduce the empty state `p-8` to `p-6` so it fits the narrow panel without bleeding.
+3. **Compact empty state** -- Reduce from `p-8` to `p-6`, heading from `text-lg font-medium mb-2` to `text-sm font-medium mb-1`, description to `text-sm`, and make the "Add Testimonial" button `w-full`.
 
-#### 3. `GalleryContent.tsx` — Add `overflow-hidden` to EditorCard wrapper
-The parent content area needs to clip any children that try to exceed its bounds. Add `overflow-hidden` to the root element.
+4. **Compact info card** -- Reduce the "About Testimonials" card: remove `CardHeader`/`CardTitle` overhead, use a simpler compact layout with smaller text matching other panels.
+
+5. **Loading state** -- Replace custom skeletons with centered `Loader2` spinner matching Gallery pattern.
+
+6. **Testimonial cards** -- Reduce internal card padding, tighten the title row with `min-w-0` for overflow safety, and use smaller action buttons (`h-7 w-7`).
+
+7. **Remove standalone header** -- The `h2` + description + "Add Testimonial" button block (lines 284-376) is replaced by the EditorCard header + a full-width "Add Testimonial" button inside the content area (matching Gallery's stacked button pattern).
 
 ### Files Modified
 
 | File | Change |
 |------|--------|
-| `GalleryContent.tsx` | Stack action buttons vertically with `w-full`, reduce empty state padding to `p-6`, add overflow containment |
+| `TestimonialsContent.tsx` | Wrap in EditorCard, compact stats/empty/info/loading, overflow containment |
 
