@@ -1,164 +1,103 @@
 
 
-## Refactor Inspector Panel — Promote Section Styling, Remove Card-in-Card
+## Make Website Preview Frame Rounded + Luxury Bento (Editor Only)
 
-### What I Found
+### Current State
 
-The inspector currently has a **card-within-card** problem. Here's the nesting chain:
+The canvas surface (lines 134-155 of `CanvasPanel.tsx`) renders the iframe directly inside a `div` with `bg-muted/30`. Desktop mode goes full-width edge-to-edge with no breathing room, no rounded corners, and no elevation. Tablet/mobile modes add `rounded-lg` and a border, but desktop is raw and unframed.
 
-```text
-InspectorPanel (glass bento panel — bg-card/80, border, rounded-xl)
-  └─ ScrollArea
-       └─ PanelSlideIn (animation wrapper)
-            └─ div.space-y-4
-                 ├─ EditorCard (SECOND card — bg-card/80, border, rounded-xl, sticky header)
-                 │    └─ Content fields (inputs, toggles, etc.)
-                 └─ SectionStyleEditor (THIRD card — border rounded-lg collapsible)
+### Plan
+
+Two files changed. No public site modifications.
+
+---
+
+### 1. Add preview frame token to `editor-tokens.ts`
+
+Add a new `previewFrame` token inside the `canvas` group:
+
+```typescript
+canvas: {
+  surface: '...',
+  controlStrip: '...',
+  savedIndicator: '...',
+  /** Luxury bento preview frame — wraps the iframe */
+  previewFrame: 'rounded-[24px] overflow-hidden border border-border/20 shadow-[0_2px_12px_0_rgba(0,0,0,0.06)] bg-background',
+}
 ```
 
-Three nested containers. The `EditorCard` inside the inspector is redundant — the inspector panel itself already provides the glass bento container, header, and scrolling. And `SectionStyleEditor` sits at the very bottom, after all content fields, buried beneath CTAs and advanced settings.
+- `rounded-[24px]`: luxury tier radius, slightly larger than panel `rounded-xl` (20px)
+- `overflow-hidden`: clips all iframe content to the rounded boundary
+- `border-border/20`: very subtle inner stroke
+- Soft shadow for floating elevation
+- `bg-background`: clean surface behind the iframe
 
-### Architecture of the Fix
+### 2. Refactor `CanvasPanel.tsx` canvas surface (lines 133-155)
 
-**Zone A — Section-Level Controls** (top of inspector, directly under breadcrumb header):
-- `SectionStyleEditor` (collapsible, default collapsed, borderless)
-- Subtle divider
+Replace the current canvas surface with a two-layer structure:
 
-**Zone B — Content Controls** (everything below):
-- Editor fields directly rendered (no `EditorCard` wrapper)
+**Outer layer** (canvas background): provides breathing space and centering.
+- `flex-1 overflow-hidden bg-muted/30 flex items-start justify-center p-6` (32px breathing space on all sides via `p-6`, with `p-8` / 48px at `lg:`)
 
-### Files to Change
+**Inner layer** (preview frame): the luxury bento container.
+- Uses the new `editorTokens.canvas.previewFrame` token
+- Applies viewport width constraints (`max-w-[1280px]`, `max-w-[834px]`, `max-w-[390px]`)
+- Applies zoom scaling
+- `overflow-hidden` ensures scrollbars stay inside the rounded boundary
+- `h-full` is replaced with a calculated height that accounts for padding
+
+**Iframe**: unchanged, `w-full h-full border-0` inside the frame.
+
+Concrete markup:
+
+```tsx
+{/* Canvas Surface */}
+<div className="flex-1 overflow-hidden bg-muted/30 flex items-start justify-center p-6 lg:p-8">
+  <div
+    className={cn(
+      'w-full h-full transition-all duration-200 ease-[cubic-bezier(0.25,0.1,0.25,1)]',
+      VIEWPORT_WIDTHS[viewportMode],
+      editorTokens.canvas.previewFrame,
+      viewportMode !== 'desktop' && 'mx-auto'
+    )}
+    style={{
+      transform: scale !== 1 ? `scale(${scale})` : undefined,
+      transformOrigin: 'top center',
+    }}
+  >
+    <iframe
+      ref={iframeRef}
+      key={refreshKey}
+      src={previewUrl || '/?preview=true'}
+      className="w-full h-full border-0"
+      title="Website Preview"
+      onLoad={handleIframeLoad}
+    />
+  </div>
+</div>
+```
+
+Key differences from current:
+- Desktop now gets rounded corners + shadow + stroke (previously raw)
+- Tablet/mobile remove the old `my-4 rounded-lg border shadow-lg` in favor of the unified token
+- All viewport modes share the same luxury frame
+- 32-48px breathing space ensures the frame floats, never touches edges
+- `overflow-hidden` on the frame clips scrollbars inside the rounded boundary
+
+### 3. Remove old viewport-specific styling
+
+The current conditional on line 139:
+```tsx
+viewportMode !== 'desktop' && 'my-4 rounded-lg overflow-hidden border border-border shadow-lg bg-background'
+```
+This is removed entirely. The unified `previewFrame` token handles all modes.
+
+### Files
 
 | File | Change |
 |---|---|
-| `WebsiteSectionsHub.tsx` | Restructure `renderEditor()` to render `SectionStyleEditor` first (Zone A), then a divider, then the editor component (Zone B). |
-| `HeroEditor.tsx` | Remove `EditorCard` wrapper. Return fields directly. Move reset button to a prop/callback system or keep inline without card chrome. |
-| `SectionDisplayEditor.tsx` | Remove `EditorCard` wrapper. Return fields directly in a `space-y-5` div. |
-| `CustomSectionEditor.tsx` | Remove `EditorCard` wrapper. Return fields directly. Remove its own `SectionStyleEditor` (now handled by parent). |
-| `SectionStyleEditor.tsx` | Remove `border rounded-lg` container styling. Use borderless collapsible with subtle group-header typography matching `editorTokens.inspector.groupHeader`. |
+| `src/components/dashboard/website-editor/editor-tokens.ts` | Add `previewFrame` token to `canvas` group |
+| `src/components/dashboard/website-editor/panels/CanvasPanel.tsx` | Refactor canvas surface to two-layer structure with breathing space and unified luxury frame |
 
-### Detailed Changes
-
-#### 1. `WebsiteSectionsHub.tsx` — `renderEditor()` (lines 584-609)
-
-Current:
-```tsx
-const renderEditor = () => {
-  // ...
-  return (
-    <div className="space-y-4">
-      <EditorComponent />  {/* ← contains EditorCard */}
-      {section && <SectionStyleEditor ... />}  {/* ← at bottom */}
-    </div>
-  );
-};
-```
-
-New:
-```tsx
-const renderEditor = () => {
-  // ...
-  const sectionId = TAB_TO_SECTION[activeTab];
-  const section = sectionId ? sectionsConfig?.homepage.find(s => s.id === sectionId) : null;
-
-  return (
-    <div className="space-y-0">
-      {/* Zone A: Section-level controls */}
-      {section && (
-        <SectionStyleEditor
-          value={section.style_overrides ?? {}}
-          onChange={(overrides) => handleStyleOverrideChange(section.id, overrides)}
-          sectionId={section.id}
-        />
-      )}
-
-      {/* Divider between zones */}
-      {section && (
-        <div className="mx-1 my-1 border-t border-border/20" />
-      )}
-
-      {/* Zone B: Content controls */}
-      <EditorComponent />
-    </div>
-  );
-};
-```
-
-Same pattern applied to the `custom-` branch: move `SectionStyleEditor` above `renderFields()`.
-
-#### 2. `HeroEditor.tsx`
-
-Remove `EditorCard` wrapper entirely. The component currently returns:
-```tsx
-<div className="space-y-6 h-full">
-  <EditorCard title="Hero Section" icon={Sparkles} headerActions={resetButton}>
-    {/* all fields */}
-  </EditorCard>
-</div>
-```
-
-Replace with:
-```tsx
-<div className="space-y-5">
-  {/* all fields directly — no EditorCard */}
-</div>
-```
-
-The reset button moves to a small inline row at the top (or stays as a ghost button within the field flow). The title/icon are redundant because the `InspectorPanel` breadcrumb already shows "Home → Hero Section".
-
-#### 3. `SectionDisplayEditor.tsx`
-
-Same pattern — remove `EditorCard` wrapper. Return fields in a flat `space-y-5` div. The `title` and `description` props become unused (already displayed in the inspector breadcrumb). Keep the loading spinner as-is.
-
-#### 4. `CustomSectionEditor.tsx`
-
-Remove `EditorCard` wrapper. Remove the `SectionStyleEditor` render at the bottom (lines 303-309) — this is now handled by `renderEditor()` in the parent. Keep the label-editing input as a standalone row at the top of the fields.
-
-#### 5. `SectionStyleEditor.tsx`
-
-Current styling: `border rounded-lg` on the Collapsible root, full-width ghost Button trigger.
-
-New styling:
-- Remove `border rounded-lg` from the Collapsible container
-- Style the trigger to match `editorTokens.inspector.groupHeader` (uppercase tracking, subtle border-t)
-- Keep `CollapsibleContent` padding as-is but remove boxing
-- This makes it feel like a native inspector group, not a separate card
-
-### Visual Result
-
-```text
-┌─────────────────────────────┐
-│ Home → Hero Section     [▸] │  ← breadcrumb header (existing)
-├─────────────────────────────┤
-│                             │
-│ SECTION STYLING      [▸]   │  ← Zone A: collapsible, collapsed by default
-│   (Background, Padding,    │     expands inline, no card border
-│    Max Width, Radius)       │
-│                             │
-│ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ │  ← subtle divider (border-border/20)
-│                             │
-│ Show Eyebrow        [    ] │  ← Zone B: content fields, flat
-│ Eyebrow Text    [________] │
-│ Show Rotating   [    ]     │
-│ Rotating Words  [________] │
-│ Show Subheadline [    ]    │
-│                             │
-│ ─ Call to Action ────────── │
-│ Primary Button  [________] │
-│ Primary URL     [________] │
-│                             │
-│ ⚙ Advanced Settings  Show  │
-│                             │
-└─────────────────────────────┘
-```
-
-No card-within-card. Section Styling is immediately discoverable at the top. Content fields flow naturally with typographic hierarchy and spacing as structure.
-
-### Scope
-
-- 5 files modified
-- No public site changes
-- No database changes
-- No canvas or theme changes
-- Strictly editor inspector panel UX
+No public site files. No database changes. Editor-only.
 
