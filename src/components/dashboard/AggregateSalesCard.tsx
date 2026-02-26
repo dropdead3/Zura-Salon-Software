@@ -610,7 +610,14 @@ export function AggregateSalesCard({
         {/* KPIs with Trends */}
         <div className="xl:col-span-2">
           {/* Hero: Total Revenue with Breakdown */}
-          <div className="bg-card-inner rounded-xl p-4 sm:p-6 border border-border/40">
+          <div className="bg-card-inner rounded-xl p-4 sm:p-6 border border-border/40 relative">
+            {/* Top-right sync status when no POS data yet */}
+            {isToday && !todayActual?.hasActualData && (
+              <div className="absolute top-3 right-3 sm:top-4 sm:right-4 flex flex-col items-end gap-0.5 z-10">
+                <p className="text-[10px] text-muted-foreground/70">{t('sales.actual_not_available')}</p>
+                <LastSyncIndicator syncType="sales" showAutoRefresh />
+              </div>
+            )}
             <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1.5">
               <span>{isAllLocations ? t('sales.all_locations') : selectedLocationName || tc('loading')}</span>
               {/* Closed locations summary — single-day views only */}
@@ -729,14 +736,7 @@ export function AggregateSalesCard({
                               </div>
                             ) : null}
                           </div>
-                        ) : (
-                          <div className="flex flex-col items-center gap-1.5">
-                            <p className="text-xs text-muted-foreground/70 text-center">
-                              {t('sales.actual_not_available')}
-                            </p>
-                            <LastSyncIndicator syncType="sales" showAutoRefresh />
-                          </div>
-                        )}
+                        ) : null}
 
                         {!exceededExpected && allAppointmentsComplete ? (
                           <div className="flex items-center justify-center gap-1.5 text-xs text-success-foreground">
