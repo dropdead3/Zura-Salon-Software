@@ -1,31 +1,42 @@
 
 
-## Fix Website Locations Inspector Overflow
+## Fix Gallery Manager Inspector Overflow
 
-### Problem
+### Problems Visible in Screenshot
 
-The address text (e.g., "3641 E Baseline Rd Suite Q-103, Gilbert, AZ 85234") is still running off the panel edge. The `truncate` class on the `<p>` flex containers doesn't propagate truncation to child text -- in a flex layout, `truncate` on the parent doesn't constrain children without explicit `min-w-0` + `overflow-hidden` on the flex container chain.
+1. **Action buttons overflow** — "Bulk Upload" and "Add Image" buttons with text labels sit side-by-side in `flex justify-end gap-2` (line 246), pushing past the ~290px panel edge. Combined they are ~280px+ which leaves no margin.
+
+2. **Empty state card too wide** — The empty state `Card` with `p-8` and centered icon/text appears to bleed into the right edge of the inspector panel. The parent `EditorCard` content area is only ~260px wide after padding.
+
+3. **Stats cards have generous padding** — The stat cards use `p-3` which is fine, but the overall `grid-cols-1 gap-3` could be tightened.
 
 ### Changes
 
-**`src/components/dashboard/website-editor/LocationsContent.tsx`**
+#### 1. `GalleryContent.tsx` — Stack action buttons vertically
+Change the button container from horizontal `flex justify-end gap-2` to `flex flex-col gap-2` with full-width buttons. This prevents horizontal overflow entirely:
 
-1. **Address/phone/hours rows**: Each `<p>` is a flex row with an icon + text. Add `min-w-0 overflow-hidden` to each `<p>` and ensure the text `<span>` has `truncate`. For phone (line 189-191), wrap the text in a `<span className="truncate">` as well.
+```tsx
+<div className="flex flex-col gap-2">
+  <Button variant="outline" className="gap-2 w-full">
+    <Upload /> Bulk Upload
+  </Button>
+  <Button className="gap-2 w-full">
+    <Plus /> Add Image
+  </Button>
+</div>
+```
 
-2. **Location name + badge row** (line 170): The `flex-wrap` causes the badge to drop below on narrow panels. Change to `overflow-hidden` with `truncate` on the name so it clips instead of wrapping, keeping the badge inline.
+Same for the "Add Before/After" button container on line 346.
 
-3. **Parent `space-y-0.5` div** (line 184): Add `min-w-0 overflow-hidden` to ensure the detail block respects the card boundary.
+#### 2. `GalleryContent.tsx` — Compact empty state padding
+Reduce the empty state `p-8` to `p-6` so it fits the narrow panel without bleeding.
 
-### Specific Edits
+#### 3. `GalleryContent.tsx` — Add `overflow-hidden` to EditorCard wrapper
+The parent content area needs to clip any children that try to exceed its bounds. Add `overflow-hidden` to the root element.
 
-| Line(s) | Current | Fix |
-|---------|---------|-----|
-| 170 | `flex items-center gap-1.5 mb-1 flex-wrap` | `flex items-center gap-1.5 mb-1 min-w-0` (remove flex-wrap, add min-w-0) |
-| 184 | `space-y-0.5 text-xs text-muted-foreground` | `space-y-0.5 text-xs text-muted-foreground min-w-0 overflow-hidden` |
-| 185 | `flex items-center gap-1.5 truncate` | `flex items-center gap-1.5 min-w-0` (move truncate to inner span) |
-| 189-191 | Phone text is bare | Wrap in `<span className="truncate">` |
-| 193 | `flex items-center gap-1.5 truncate` | `flex items-center gap-1.5 min-w-0` (truncate already on inner span) |
+### Files Modified
 
-### Result
-All text lines clip cleanly within the inspector panel. No horizontal overflow on addresses, phone numbers, or hours.
+| File | Change |
+|------|--------|
+| `GalleryContent.tsx` | Stack action buttons vertically with `w-full`, reduce empty state padding to `p-6`, add overflow containment |
 
