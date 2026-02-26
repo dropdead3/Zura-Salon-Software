@@ -1,13 +1,7 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
-import { toast } from 'sonner';
-import { formatCurrency } from '@/lib/format';
-import { useNotificationSound } from '@/hooks/useNotificationSound';
-import { useSoundSettings } from '@/contexts/SoundSettingsContext';
-import { useChaChingHistorySafe } from '@/hooks/useChaChingHistory';
-import { ChaChingToast } from '@/components/dashboard/ChaChingToast';
 
 interface TodayActualRevenueData {
   actualRevenue: number;
@@ -32,10 +26,6 @@ interface LocationActualData {
 export function useTodayActualRevenue(enabled: boolean) {
   const today = format(new Date(), 'yyyy-MM-dd');
   const queryClient = useQueryClient();
-  const { playAchievement } = useNotificationSound();
-  const { chaChingEnabled } = useSoundSettings();
-  const chaChingHistory = useChaChingHistorySafe();
-  const prevRevenueRef = useRef<number | null>(null);
 
 
   // Realtime subscription: invalidate queries when POS sales data changes
@@ -140,27 +130,8 @@ export function useTodayActualRevenue(enabled: boolean) {
     refetchInterval: 5 * 60 * 1000,
   });
 
-  // Cha-ching toast when revenue increases
-  useEffect(() => {
-    const currentRevenue = actualRevenueQuery.data?.totalRevenue ?? 0;
-    const hasData = actualRevenueQuery.data?.hasData ?? false;
 
-    if (prevRevenueRef.current === null) {
-      prevRevenueRef.current = currentRevenue;
-      return;
-    }
 
-    if (chaChingEnabled && hasData && currentRevenue > prevRevenueRef.current) {
-      const delta = currentRevenue - prevRevenueRef.current;
-      chaChingHistory?.addNotification(delta);
-      toast.custom((t) => <ChaChingToast amount={delta} toastId={t} />, {
-        duration: 5000,
-      });
-      playAchievement();
-    }
-
-    prevRevenueRef.current = currentRevenue;
-  }, [actualRevenueQuery.data, playAchievement, chaChingEnabled]);
 
   const lastAppointmentQuery = useQuery({
     queryKey: ['today-last-appointment', today],
