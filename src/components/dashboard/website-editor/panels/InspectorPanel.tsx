@@ -6,7 +6,7 @@
  */
 
 import { type ReactNode } from 'react';
-import { MousePointerClick } from 'lucide-react';
+import { MousePointerClick, ChevronRight } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { editorTokens } from '../editor-tokens';
 import { PanelSlideIn } from '../EditorMotion';
@@ -17,6 +17,8 @@ interface InspectorPanelProps {
   hasSelection: boolean;
   /** Unique key for the current selection (triggers slide animation) */
   selectionKey?: string;
+  /** Breadcrumb segments for context (e.g., ["Services Page", "Content Block"]) */
+  breadcrumb?: string[];
   /** Editor content to render */
   children: ReactNode;
   className?: string;
@@ -25,6 +27,7 @@ interface InspectorPanelProps {
 export function InspectorPanel({
   hasSelection,
   selectionKey,
+  breadcrumb,
   children,
   className,
 }: InspectorPanelProps) {
@@ -32,9 +35,27 @@ export function InspectorPanel({
     <div className={cn(editorTokens.panel.inspector, 'h-full flex flex-col', className)}>
       {/* Inspector Header */}
       <div className={cn(editorTokens.panel.header, 'justify-between')}>
-        <span className="text-xs font-display tracking-wide text-muted-foreground">
-          INSPECTOR
-        </span>
+        {breadcrumb && breadcrumb.length > 0 ? (
+          <div className="flex items-center gap-1 min-w-0 overflow-hidden">
+            {breadcrumb.map((segment, i) => (
+              <span key={i} className="flex items-center gap-1 min-w-0">
+                {i > 0 && <ChevronRight className="h-3 w-3 text-muted-foreground/50 flex-shrink-0" />}
+                <span className={cn(
+                  'text-xs font-sans truncate',
+                  i === breadcrumb.length - 1
+                    ? 'text-foreground font-medium'
+                    : 'text-muted-foreground'
+                )}>
+                  {segment}
+                </span>
+              </span>
+            ))}
+          </div>
+        ) : (
+          <span className="text-xs font-display tracking-wide text-muted-foreground">
+            INSPECTOR
+          </span>
+        )}
       </div>
 
       {/* Content */}
