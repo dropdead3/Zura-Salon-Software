@@ -9,6 +9,7 @@ import {
   TooltipProvider,
 } from '@/components/ui/tooltip';
 import { LiveSessionDrilldown } from './LiveSessionDrilldown';
+import { Moon } from 'lucide-react';
 
 const MAX_AVATARS = 7;
 const ENTERPRISE_THRESHOLD = 40;
@@ -21,9 +22,22 @@ export function LiveSessionIndicator({ locationId }: LiveSessionIndicatorProps) 
   const live = useLiveSessionSnapshot(locationId);
   const [drilldownOpen, setDrilldownOpen] = useState(false);
 
-  const { inSessionCount, activeStylistCount, activeAssistantCount, stylists, isLoading } = live;
+  const { inSessionCount, activeStylistCount, activeAssistantCount, stylists, dayHadAppointments, isLoading } = live;
 
-  if (isLoading || inSessionCount === 0) return null;
+  if (isLoading) return null;
+
+  // Day concluded state
+  if (inSessionCount === 0) {
+    if (!dayHadAppointments) return null;
+    return (
+      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-background border border-border select-none">
+        <Moon className="h-3 w-3 text-muted-foreground" />
+        <span className="text-xs font-medium text-muted-foreground whitespace-nowrap font-sans">
+          Day concluded
+        </span>
+      </div>
+    );
+  }
 
   const isEnterprise = activeStylistCount > ENTERPRISE_THRESHOLD;
   const visibleStylists = stylists.slice(0, MAX_AVATARS);

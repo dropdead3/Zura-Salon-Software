@@ -28,6 +28,7 @@ interface LiveSessionSnapshot {
   activeAssistantCount: number;
   stylists: ActiveStylist[];
   stylistDetails: StylistDetail[];
+  dayHadAppointments: boolean;
   isLoading: boolean;
 }
 
@@ -62,7 +63,19 @@ export function useLiveSessionSnapshot(locationId?: string): LiveSessionSnapshot
 
       if (error) throw error;
       if (!appointments || appointments.length === 0) {
-        return { inSessionCount: 0, activeStylistCount: 0, activeAssistantCount: 0, stylists: [], stylistDetails: [] };
+        // Check if the day had any completed/checked-in appointments
+        const completedQuery = applyLocationFilter(
+          supabase
+            .from('phorest_appointments')
+            .select('id', { count: 'exact', head: true })
+            .eq('appointment_date', today)
+            .in('status', ['completed', 'checked_in'])
+            .is('deleted_at', null) as any,
+          locationId,
+        );
+        const { count } = await completedQuery;
+        const dayHadAppointments = (count ?? 0) > 0;
+        return { inSessionCount: 0, activeStylistCount: 0, activeAssistantCount: 0, stylists: [], stylistDetails: [], dayHadAppointments };
       }
 
       const inSessionCount = appointments.length;
@@ -234,6 +247,7 @@ export function useLiveSessionSnapshot(locationId?: string): LiveSessionSnapshot
         activeAssistantCount: uniqueAssistantNames.size,
         stylists,
         stylistDetails,
+        dayHadAppointments: true,
       };
     },
     refetchInterval: 60_000,
@@ -246,6 +260,7 @@ export function useLiveSessionSnapshot(locationId?: string): LiveSessionSnapshot
     activeAssistantCount: data?.activeAssistantCount ?? 0,
     stylists: data?.stylists ?? [],
     stylistDetails: data?.stylistDetails ?? [],
+    dayHadAppointments: data?.dayHadAppointments ?? false,
     isLoading,
   };
 }
