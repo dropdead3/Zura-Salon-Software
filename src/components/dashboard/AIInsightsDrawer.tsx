@@ -682,6 +682,66 @@ export function AIInsightsPanel({ onClose }: { onClose: () => void }) {
                       </Button>
                     </div>
                   ) : (hasInsights || hasActionItems || hasSuggestions) ? (
+                    <>
+                      {/* "One Thing Today" — top priority insight as prominent standalone card */}
+                      {sortedInsights.length > 0 && (() => {
+                        const topInsight = sortedInsights[0];
+                        const topConfig = categoryConfig[topInsight.category];
+                        const TopIcon = topConfig?.icon || Activity;
+                        const impactTypeLabel: Record<string, string> = { at_risk: 'At Risk', opportunity: 'Opportunity', inefficiency: 'Inefficiency' };
+                        const impactTypeColor: Record<string, string> = {
+                          at_risk: 'text-red-600 dark:text-red-400',
+                          opportunity: 'text-emerald-600 dark:text-emerald-400',
+                          inefficiency: 'text-amber-600 dark:text-amber-400',
+                        };
+                        return (
+                          <div className="mb-4 rounded-xl border border-primary/20 bg-gradient-to-br from-primary/5 via-background to-primary/5 p-4 shadow-sm">
+                            <div className="flex items-center gap-1.5 mb-2">
+                              <Zap className="w-3.5 h-3.5 text-amber-500" />
+                              <span className="text-[10px] font-display tracking-[0.15em] uppercase text-amber-600 dark:text-amber-400">One Thing Today</span>
+                            </div>
+                            <div className="flex items-start gap-3">
+                              <div className={cn('mt-0.5 flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center', severityStyles[topInsight.severity])}>
+                                <TopIcon className={cn('w-4.5 h-4.5', severityIconColor[topInsight.severity])} />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                {topInsight.impactEstimateNumeric != null && topInsight.impactEstimateNumeric > 0 && (
+                                  <div className="flex items-baseline gap-2 mb-1">
+                                    <span className="text-2xl font-display tracking-wide">
+                                      <BlurredAmount>${topInsight.impactEstimateNumeric.toLocaleString()}</BlurredAmount>
+                                    </span>
+                                    {topInsight.impactType && (
+                                      <span className={cn('text-[10px] uppercase tracking-wider font-display', impactTypeColor[topInsight.impactType])}>
+                                        {impactTypeLabel[topInsight.impactType]}
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+                                <p className="text-sm font-medium leading-snug">{topInsight.title}</p>
+                                <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                                  <InsightDescriptionWithLinks description={topInsight.description} />
+                                </p>
+                                <div className="flex flex-wrap items-center gap-2 mt-2.5">
+                                  <GuidanceTrigger
+                                    label="How to improve"
+                                    icon={Lightbulb}
+                                    onClick={() => handleRequestGuidance({ type: 'insight', title: topInsight.title, description: topInsight.description, category: topInsight.category })}
+                                  />
+                                  {categoryToAnalyticsTab[topInsight.category] && (
+                                    <a
+                                      href={analyticsHubUrl(categoryToAnalyticsTab[topInsight.category]!)}
+                                      className="group inline-flex items-center justify-center gap-1.5 h-8 pl-3 pr-3 rounded-md border border-border/60 bg-muted/30 text-xs font-medium text-muted-foreground hover:bg-primary/10 hover:border-primary/30 hover:text-primary transition-[color,background-color,border-color] duration-200"
+                                    >
+                                      <BarChart3 className="w-3.5 h-3.5 shrink-0" />
+                                      <span>See in Analytics</span>
+                                    </a>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })()}
                     <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as InsightTab)} className="w-full">
                       <TabsList className="w-full grid rounded-lg p-1 h-auto" style={{ gridTemplateColumns: tabCount ? `repeat(${tabCount}, 1fr)` : undefined }}>
                         {hasInsights && <TabsTrigger value="insights" className="text-xs py-2">Key Insights</TabsTrigger>}
@@ -691,7 +751,8 @@ export function AIInsightsPanel({ onClose }: { onClose: () => void }) {
                       {hasInsights && (
                         <TabsContent value="insights" className="mt-3">
                           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                            {sortedInsights.map((insight, i) => (
+                            {/* Skip first insight since it's shown in "One Thing Today" */}
+                            {sortedInsights.slice(1).map((insight, i) => (
                               <InsightCard
                                 key={i}
                                 insight={insight}
@@ -764,6 +825,8 @@ export function AIInsightsPanel({ onClose }: { onClose: () => void }) {
                         </TabsContent>
                       )}
                     </Tabs>
+                    </>
+
                   ) : (
                     <div className="text-center py-10">
                       <p className="text-sm text-muted-foreground">No insights or actions right now</p>

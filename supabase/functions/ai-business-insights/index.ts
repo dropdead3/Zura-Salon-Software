@@ -89,6 +89,9 @@ serve(async (req) => {
     const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString().split("T")[0];
     const nextWeek = new Date(Date.now() + 7 * 86400000).toISOString().split("T")[0];
 
+    const fortyFiveDaysAgo = new Date(Date.now() - 45 * 86400000).toISOString().split("T")[0];
+    const ninetyDaysAgo = new Date(Date.now() - 90 * 86400000).toISOString().split("T")[0];
+
     const [
       salesRes,
       appointmentsRes,
@@ -102,6 +105,14 @@ serve(async (req) => {
       phorestLocationsRes,
       highTicketRes,
       transactionItemsRes,
+      // New: client retention cohorts
+      atRiskClientsRes,
+      lapsedClientsRes,
+      newClientsRes,
+      // New: staff performance breakdown (last 30 days)
+      staffAppointmentsRes,
+      // New: org info for multi-location
+      orgInfoRes,
     ] = await Promise.all([
       // Recent sales (last 14 days)
       supabase
@@ -177,7 +188,7 @@ serve(async (req) => {
       // Phorest-connected locations
       supabase
         .from("locations")
-        .select("id, phorest_branch_id")
+        .select("id, phorest_branch_id, name")
         .eq("organization_id", orgId)
         .not("phorest_branch_id", "is", null),
 
@@ -197,6 +208,46 @@ serve(async (req) => {
         .gte("transaction_date", thirtyDaysAgo)
         .lte("transaction_date", today)
         .limit(2000),
+
+      // CLIENT RETENTION: At-risk (45-90 days since last visit)
+      supabase
+        .from("phorest_clients")
+        .select("id, total_spend, last_visit_date", { count: "exact", head: false })
+        .eq("is_duplicate", false)
+        .gte("last_visit_date", ninetyDaysAgo)
+        .lt("last_visit_date", fortyFiveDaysAgo)
+        .limit(1000),
+
+      // CLIENT RETENTION: Lapsed (90+ days)
+      supabase
+        .from("phorest_clients")
+        .select("id, total_spend", { count: "exact", head: false })
+        .eq("is_duplicate", false)
+        .lt("last_visit_date", ninetyDaysAgo)
+        .limit(1000),
+
+      // CLIENT RETENTION: New clients (last 30 days)
+      supabase
+        .from("phorest_clients")
+        .select("id", { count: "exact", head: true })
+        .eq("is_duplicate", false)
+        .gte("first_visit", thirtyDaysAgo),
+
+      // STAFF PERFORMANCE: appointments by staff (last 30 days)
+      supabase
+        .from("phorest_appointments")
+        .select("phorest_staff_id, total_price, status, rebooked_at_checkout")
+        .gte("appointment_date", thirtyDaysAgo)
+        .lte("appointment_date", today)
+        .not("phorest_staff_id", "is", null)
+        .limit(3000),
+
+      // Org info for multi-location flag
+      supabase
+        .from("organizations")
+        .select("is_multi_location")
+        .eq("id", orgId)
+        .single(),
     ]);
 
     // Build data summary for the AI
@@ -303,6 +354,118 @@ ${unusedIntegrations.length > 0 ? `\nUnconnected Integrations:\n${unusedIntegrat
     const totalItemRevenue = productRevenue30d + serviceRevenue30d;
     const productPct = totalItemRevenue > 0 ? ((productRevenue30d / totalItemRevenue) * 100).toFixed(1) : "0";
 
+    // ─── CLIENT RETENTION COHORTS ───
+    const atRiskClients = atRiskClientsRes.data || [];
+    const lapsedClients = lapsedClientsRes.data || [];
+    const newClientCount = newClientsRes.count ?? 0;
+    const atRiskCount = atRiskClients.length;
+    const lapsedCount = lapsedClients.length;
+    const atRiskAvgSpend = atRiskCount > 0 ? atRiskClients.reduce((s: number, c: any) => s + (Number(c.total_spend) || 0), 0) / atRiskCount : 0;
+    const lapsedTotalSpend = lapsedClients.reduce((s: number, c: any) => s + (Number(c.total_spend) || 0), 0);
+
+    // ─── STAFF PERFORMANCE BREAKDOWN ───
+    const staffAppts = (staffAppointmentsRes.data || []) as any[];
+    const staffMetrics: Record<string, { name: string; completed: number; revenue: number; rebooked: number }> = {};
+    // Build staff name lookup from employee_profiles
+    const staffNameMap = new Map((staff as any[]).map((s: any) => [s.user_id, s.display_name || 'Unknown']));
+
+    // Get phorest staff mapping for joining
+    const { data: staffMappings } = await supabase
+      .from("phorest_staff_mapping")
+      .select("phorest_staff_id, user_id")
+      .eq("is_active", true);
+    const phorestToUser = new Map((staffMappings || []).map((m: any) => [m.phorest_staff_id, m.user_id]));
+
+    for (const apt of staffAppts) {
+      const userId = phorestToUser.get(apt.phorest_staff_id);
+      if (!userId) continue;
+      if (!staffMetrics[userId]) {
+        staffMetrics[userId] = { name: staffNameMap.get(userId) || 'Unknown', completed: 0, revenue: 0, rebooked: 0 };
+      }
+      if (apt.status === 'completed') {
+        staffMetrics[userId].completed++;
+        staffMetrics[userId].revenue += Number(apt.total_price) || 0;
+        if (apt.rebooked_at_checkout) staffMetrics[userId].rebooked++;
+      }
+    }
+    const staffList = Object.values(staffMetrics).filter(s => s.completed > 0);
+    staffList.sort((a, b) => b.revenue - a.revenue);
+    const top3Staff = staffList.slice(0, 3);
+    const bottom3Staff = staffList.length > 3 ? staffList.slice(-3).reverse() : [];
+    const teamAvgRebook = staffList.length > 0
+      ? staffList.reduce((s, st) => s + (st.completed > 0 ? st.rebooked / st.completed : 0), 0) / staffList.length * 100
+      : 0;
+
+    // ─── DAY-OF-WEEK PATTERNS ───
+    const dowCounts: Record<number, number> = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
+    const dowNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const pastCompletedAppts = pastAppointments.filter((a: any) => a.status === 'completed');
+    for (const apt of pastCompletedAppts) {
+      const dow = new Date(apt.appointment_date + 'T12:00:00').getDay();
+      dowCounts[dow]++;
+    }
+    const weeksInRange = Math.max(1, Math.ceil((new Date(today).getTime() - new Date(weekAgo).getTime()) / (7 * 86400000)));
+
+    // ─── WEEK-OVER-WEEK DELTAS ───
+    const thisWeekAppts = appointments.filter((a: any) => a.appointment_date >= weekAgo && a.appointment_date <= today);
+    const lastWeekAppts = appointments.filter((a: any) => a.appointment_date >= twoWeeksAgo && a.appointment_date < weekAgo);
+
+    const wowMetrics = (appts: any[]) => {
+      const total = appts.length;
+      const cancelled = appts.filter(a => a.status === 'cancelled').length;
+      const noShow = appts.filter(a => a.status === 'no_show').length;
+      const completed = appts.filter(a => a.status === 'completed').length;
+      const rebooked = appts.filter(a => a.rebooked_at_checkout).length;
+      return {
+        total,
+        cancelRate: total > 0 ? (cancelled / total * 100) : 0,
+        noShowRate: total > 0 ? (noShow / total * 100) : 0,
+        rebookRate: completed > 0 ? (rebooked / completed * 100) : 0,
+      };
+    };
+    const thisWeekMetrics = wowMetrics(thisWeekAppts);
+    const lastWeekMetrics = wowMetrics(lastWeekAppts);
+
+    // ─── LOCATION COMPARISON (multi-location only) ───
+    const isMultiLocation = orgInfoRes.data?.is_multi_location === true;
+    const locations = phorestLocationsRes.data || [];
+    let locationComparisonContext = '';
+
+    if (isMultiLocation && locations.length > 1 && !locationId) {
+      // Fetch per-location appointment summary for last 30 days
+      const { data: locationAppts } = await supabase
+        .from("phorest_appointments")
+        .select("location_id, total_price, status, rebooked_at_checkout")
+        .gte("appointment_date", thirtyDaysAgo)
+        .lte("appointment_date", today)
+        .limit(5000);
+
+      if (locationAppts && locationAppts.length > 0) {
+        const locMap: Record<string, { name: string; completed: number; revenue: number; rebooked: number; cancelled: number; total: number }> = {};
+        const locNameMap = new Map((locations as any[]).map((l: any) => [l.id, l.name || l.id]));
+
+        for (const apt of locationAppts as any[]) {
+          const lid = apt.location_id;
+          if (!lid) continue;
+          if (!locMap[lid]) locMap[lid] = { name: locNameMap.get(lid) || lid, completed: 0, revenue: 0, rebooked: 0, cancelled: 0, total: 0 };
+          locMap[lid].total++;
+          if (apt.status === 'completed') {
+            locMap[lid].completed++;
+            locMap[lid].revenue += Number(apt.total_price) || 0;
+            if (apt.rebooked_at_checkout) locMap[lid].rebooked++;
+          }
+          if (apt.status === 'cancelled') locMap[lid].cancelled++;
+        }
+
+        locationComparisonContext = `\nCROSS-LOCATION COMPARISON (Last 30 days):\n` +
+          Object.values(locMap).map(l =>
+            `  ${l.name}: ${l.completed} completed, $${l.revenue.toFixed(0)} revenue, ` +
+            `rebook ${l.completed > 0 ? (l.rebooked / l.completed * 100).toFixed(1) : '0'}%, ` +
+            `cancel ${l.total > 0 ? (l.cancelled / l.total * 100).toFixed(1) : '0'}%`
+          ).join('\n');
+      }
+    }
+
     const dataContext = `
 BUSINESS DATA SNAPSHOT (as of ${today}):
 
@@ -321,8 +484,28 @@ APPOINTMENTS (Last 7 + Next 7 days):
 - Rebooked at checkout: ${rebookedCount} (${completedCount > 0 ? ((rebookedCount / completedCount) * 100).toFixed(1) : 0}%)
 - Upcoming next 7 days: ${futureAppointments.length}
 
+WEEK-OVER-WEEK DELTAS:
+- Appointments: ${thisWeekMetrics.total} vs ${lastWeekMetrics.total} (${lastWeekMetrics.total > 0 ? ((thisWeekMetrics.total - lastWeekMetrics.total) / lastWeekMetrics.total * 100).toFixed(1) : 'N/A'}%)
+- Cancel rate: ${thisWeekMetrics.cancelRate.toFixed(1)}% vs ${lastWeekMetrics.cancelRate.toFixed(1)}% last week
+- No-show rate: ${thisWeekMetrics.noShowRate.toFixed(1)}% vs ${lastWeekMetrics.noShowRate.toFixed(1)}% last week
+- Rebook rate: ${thisWeekMetrics.rebookRate.toFixed(1)}% vs ${lastWeekMetrics.rebookRate.toFixed(1)}% last week
+
 STAFF:
 - Active team members: ${staff.length}
+
+STAFF PERFORMANCE BREAKDOWN (Last 30 days):
+- Team average rebook rate: ${teamAvgRebook.toFixed(1)}%
+${top3Staff.length > 0 ? `Top performers:\n${top3Staff.map(s => `  ${s.name}: ${s.completed} completed, $${s.revenue.toFixed(0)} revenue, ${s.completed > 0 ? (s.rebooked / s.completed * 100).toFixed(1) : '0'}% rebook`).join('\n')}` : 'Insufficient staff data for rankings.'}
+${bottom3Staff.length > 0 ? `\nNeeds attention:\n${bottom3Staff.map(s => `  ${s.name}: ${s.completed} completed, $${s.revenue.toFixed(0)} revenue, ${s.completed > 0 ? (s.rebooked / s.completed * 100).toFixed(1) : '0'}% rebook`).join('\n')}` : ''}
+
+CLIENT RETENTION HEALTH:
+- At-risk clients (45-90 days since last visit): ${atRiskCount} (avg lifetime spend: $${atRiskAvgSpend.toFixed(0)})
+- Lapsed clients (90+ days): ${lapsedCount} (total historical spend: $${lapsedTotalSpend.toFixed(0)})
+- New clients (last 30 days): ${newClientCount}
+${atRiskCount > 0 ? `- Estimated at-risk revenue: ~$${(atRiskCount * atRiskAvgSpend * 0.3).toFixed(0)}/mo if lost` : ''}
+
+DAY-OF-WEEK PATTERNS (Last week):
+${Object.entries(dowCounts).map(([dow, count]) => `  ${dowNames[Number(dow)]}: ${count} appointments (avg ${(count / weeksInRange).toFixed(1)}/week)`).join('\n')}
 
 REVENUE FORECASTS (Next 7 days):
 ${forecasts.length > 0 ? forecasts.map((f) => `  ${f.forecast_date}: $${f.predicted_revenue} (${f.confidence_level} confidence)${f.actual_revenue ? ` | Actual: $${f.actual_revenue}` : ""}`).join("\n") : "No forecasts available"}
@@ -342,6 +525,7 @@ HIGH-TICKET & RETAIL ANALYSIS (Last 30 days):
 - Service revenue (from transaction items): $${serviceRevenue30d.toFixed(0)}
 - Product attachment rate: ${attachmentRate.toFixed(1)}% of service transactions included retail
 - Average ticket (from appointments): $${avgTicket30d}
+${locationComparisonContext}
 `;
 
     // Call Lovable AI with tool calling for structured output
