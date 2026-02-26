@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { SilverShineButton } from '@/components/dashboard/SilverShineButton';
 import { Button } from '@/components/ui/button';
 import { PLATFORM_NAME } from '@/lib/brand';
 import { useZuraNavigationSafe } from '@/contexts/ZuraNavigationContext';
@@ -306,21 +307,13 @@ export function AIInsightsDrawer({ label }: AIInsightsDrawerProps = {}) {
     >
       <AnimatePresence mode="wait">
           {!expanded ? (
-            <motion.button
-              key="collapsed"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-              onClick={() => setExpanded(true)}
-            className="inline-flex items-center gap-2 h-9 px-4 rounded-md border border-border bg-background text-sm font-sans hover:bg-muted/50 transition-colors cursor-pointer whitespace-nowrap"
-            >
+            <SilverShineButton onClick={() => setExpanded(true)}>
               <div className="w-5 h-5 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
                 <Brain className="w-3 h-3 text-primary" />
               </div>
               <span className="truncate">{label ?? `${PLATFORM_NAME} Insights`}</span>
               <ChevronDown className="w-3.5 h-3.5 text-muted-foreground ml-0.5 shrink-0" />
-            </motion.button>
+            </SilverShineButton>
           ) : (
             <motion.div
               key="expanded"

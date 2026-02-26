@@ -1,0 +1,51 @@
+@keyframes silver-shine-rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.silver-shine-border {
+  position: relative;
+  overflow: hidden;
+}
+
+.silver-shine-border::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: conic-gradient(
+    transparent 0deg,
+    transparent 335deg,
+    hsl(0 0% 75% / 0.12) 345deg,
+    hsl(0 0% 85% / 0.18) 352deg,
+    hsl(0 0% 80% / 0.14) 356deg,
+    transparent 360deg
+  );
+  animation: silver-shine-rotate 12s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 0;
+  transition: opacity 0.3s ease;
+}
+
+.silver-shine-border:hover::before {
+  animation-play-state: paused;
+  opacity: 0;
+}
+
+.silver-shine-border:active::before {
+  opacity: 0;
+}
+
+/* Inner mask to restrict shine to stroke only */
+.silver-shine-inner {
+  position: relative;
+  z-index: 1;
+  border-radius: inherit;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .silver-shine-border::before {
+    animation: none !important;
+    opacity: 0 !important;
+  }
+}
