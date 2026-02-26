@@ -118,9 +118,9 @@ const getSections = (): SectionConfig[] => [
   },
   { 
     id: 'schedule_tasks', 
-    label: 'Schedule & Tasks', 
-    icon: <Calendar className="w-4 h-4" />, 
-    description: 'Daily schedule and to-dos',
+    label: 'Tasks', 
+    icon: <CheckSquare className="w-4 h-4" />, 
+    description: 'Your to-dos and action items',
   },
   { 
     id: 'announcements', 
