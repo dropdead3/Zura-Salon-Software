@@ -1,59 +1,83 @@
 
 
-## Improve Stroke Highlight: Reflective Shine Instead of Tracer
+## Fix Zura Insights: Full-Width Expansion Row Beneath Controls
 
 ### Problem
-The current conic-gradient uses a narrow ~60° arc (300°–360°) that reads as a small bright dot tracing the perimeter. A real reflective shine on metal is a **wide, soft wash** — like light glancing off a ring — not a pinpoint tracer.
+AIInsightsDrawer (and PersonalInsightsDrawer) currently render their expanded panel inline within the control row's left cluster, pushing controls sideways and breaking layout.
 
-### Approach
-Widen the highlight arc dramatically and soften the gradient transitions so it looks like a broad band of light sweeping across the stroke, similar to how light reflects off polished jewelry.
+### Architecture Change
 
-### Changes — `src/styles/silver-shine.css` only
-
-1. **Widen the conic-gradient arc** from ~60° to ~150°, creating a broad luminous wash instead of a tight tracer dot:
-   - Bright zone spans roughly 180°–360° with soft ramps on both edges
-   - Peak opacity stays restrained (~0.5) for subtlety
-   - The opposite side stays fully transparent, creating a natural "lit vs unlit" hemisphere
-
-2. **Slow the rotation slightly** (12s → 14s) — broader highlights look better at a more leisurely pace
-
-3. **Add a secondary `::after` layer** with a much wider, lower-opacity wash offset by ~90° to simulate ambient light scatter (the soft secondary reflection you see on polished metal alongside the primary highlight)
-
-4. Everything else stays identical: static base stroke, hover pause/fade, active fade, reduced-motion fallback, inner wrapper structure.
-
-### Resulting Gradient (primary)
-```css
-background: conic-gradient(
-  transparent 0deg,
-  transparent 150deg,
-  hsl(0 0% 65% / 0.12) 180deg,
-  hsl(0 0% 75% / 0.3) 220deg,
-  hsl(0 0% 85% / 0.45) 260deg,
-  hsl(0 0% 95% / 0.5) 290deg,
-  hsl(0 0% 85% / 0.35) 320deg,
-  hsl(0 0% 70% / 0.15) 345deg,
-  transparent 360deg
-);
-```
-
-### Secondary ambient wash (`::after`)
-```css
-background: conic-gradient(
-  transparent 0deg,
-  transparent 60deg,
-  hsl(0 0% 80% / 0.08) 90deg,
-  hsl(0 0% 85% / 0.12) 140deg,
-  hsl(0 0% 80% / 0.08) 190deg,
-  transparent 220deg,
-  transparent 360deg
-);
-```
+Separate the **trigger button** from the **expansion panel**. The trigger stays in the control row; the panel renders as a full-width row beneath it.
 
 ### Files Changed
 
 | File | Action |
 |------|--------|
-| `src/styles/silver-shine.css` | Widen primary arc, add secondary ambient `::after` layer, adjust timing |
+| `src/components/dashboard/AIInsightsDrawer.tsx` | Split into trigger + panel; expose `expanded`/`onToggle` props; panel renders full-width |
+| `src/components/dashboard/PersonalInsightsDrawer.tsx` | Same split pattern as AIInsightsDrawer |
+| `src/components/dashboard/CommandCenterControlRow.tsx` | Manage expanded state; render trigger in row, panel below as expansion row |
 
-No changes to `SilverShineButton.tsx`.
+### Structural Layout (After)
+
+```text
+┌─────────────────────────────────────────────────┐
+│ Controls Row: [Insights▾] [Announce] [Live]  …  │  ← stable, never shifts
+├─────────────────────────────────────────────────┤
+│ Insights Expansion Row (full-width, collapsible) │  ← animates height open/close
+│ ┌─────────────────────────────────────────────┐ │
+│ │  Glass bento card, rounded-xl, p-6, shadow  │ │
+│ │  max-h-[65vh] internal scroll               │ │
+│ └─────────────────────────────────────────────┘ │
+├─────────────────────────────────────────────────┤
+│ Dashboard Grid                                   │  ← shifts down smoothly
+└─────────────────────────────────────────────────┘
+```
+
+### Detailed Changes
+
+**1. AIInsightsDrawer.tsx**
+- Add optional props: `expanded?: boolean`, `onToggle?: () => void`
+- When `onToggle` is provided, the component operates in "controlled" mode
+- Split rendering: when collapsed, render only the `SilverShineButton` trigger (with chevron state: `ChevronDown` when closed, `ChevronUp` when open)
+- Export a new `AIInsightsPanel` component that contains just the expanded content (the glass card with tabs, insights, guidance, etc.)
+- Panel uses `motion.div` with height animation: `initial={{ height: 0, opacity: 0 }}` → `animate={{ height: 'auto', opacity: 1 }}` with `duration: 0.25, ease: [0.4, 0, 0.2, 1]`
+- Panel wrapper: `overflow-hidden` during animation, `rounded-xl shadow-lg border border-border/40 bg-card`
+- Internal scroll: `max-h-[65vh] overflow-y-auto` on content area
+- Escape key closes panel
+- Active button state: subtle accent background when expanded
+
+**2. PersonalInsightsDrawer.tsx**
+- Same controlled-mode pattern: `expanded?`, `onToggle?`, separate `PersonalInsightsPanel`
+- Identical animation and layout rules
+
+**3. CommandCenterControlRow.tsx**
+- Add `insightsExpanded` state
+- Pass `expanded` and `onToggle` to AIInsightsDrawer/PersonalInsightsDrawer triggers
+- After the controls row `div`, render `AnimatePresence` with the corresponding panel component
+- Panel is wrapped in a full-width container that respects parent padding
+- Uses `motion.div` with `layout` for smooth push-down of content below
+- No z-index hacks — panel is in normal document flow
+- Props interface unchanged (no breaking changes to DashboardHome)
+
+### Animation Spec
+
+- **Open**: Height 0→auto + opacity 0→1, 250ms, `ease-in-out`
+- **Close**: Reverse, 220ms
+- **Content below**: Shifts naturally via document flow (no explicit animation needed — the expansion row height change handles it)
+- No spring, no bounce, no elastic
+- `overflow: hidden` on the animating container to prevent content flash
+
+### Interaction Details
+
+- Clicking trigger toggles `insightsExpanded`
+- Close icon (X) in panel header closes
+- Escape key closes
+- Active state on trigger: `bg-accent/50` border highlight when open
+- Chevron rotates: down when closed, up when open
+
+### Responsive Behavior
+
+- Panel stays full-width at all breakpoints
+- At narrow widths, panel content scrolls internally (max-h-[65vh])
+- Never becomes a side panel or inline card
 
