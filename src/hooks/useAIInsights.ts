@@ -10,6 +10,12 @@ export interface InsightItem {
   title: string;
   description: string;
   severity: 'info' | 'warning' | 'critical';
+  estimatedImpact?: string | null;
+  trendDirection?: 'improving' | 'declining' | 'stable' | null;
+  comparisonContext?: string | null;
+  actByDate?: string | null;
+  effortLevel?: 'quick_win' | 'strategic' | null;
+  staffMentions?: string[] | null;
 }
 
 export interface ActionItem {

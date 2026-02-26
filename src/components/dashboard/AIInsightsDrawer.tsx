@@ -147,6 +147,8 @@ function InsightCard({ insight, onRequestGuidance, drillDownHref }: { insight: I
   const Icon = config?.icon || Activity;
   const isCritical = insight.severity === 'critical';
 
+  const hasMeta = insight.estimatedImpact || insight.trendDirection || insight.comparisonContext || insight.actByDate || insight.effortLevel || (insight.staffMentions && insight.staffMentions.length > 0);
+
   return (
     <div className={cn(
       'rounded-xl border-l-[3px] border border-border/50 p-3.5 transition-colors shadow-sm',
@@ -167,6 +169,78 @@ function InsightCard({ insight, onRequestGuidance, drillDownHref }: { insight: I
           <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
             <InsightDescriptionWithLinks description={insight.description} />
           </p>
+
+          {/* Enrichment metadata rows */}
+          {hasMeta && (
+            <div className="mt-2 space-y-1">
+              {/* Row 1: Trend + Impact + Comparison */}
+              {(insight.trendDirection || insight.estimatedImpact || insight.comparisonContext) && (
+                <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+                  {insight.trendDirection && (
+                    <span className={cn('inline-flex items-center gap-0.5 font-medium', {
+                      'text-emerald-600 dark:text-emerald-400': insight.trendDirection === 'improving',
+                      'text-red-600 dark:text-red-400': insight.trendDirection === 'declining',
+                      'text-muted-foreground': insight.trendDirection === 'stable',
+                    })}>
+                      {insight.trendDirection === 'improving' ? <TrendingUp className="w-3 h-3" /> : insight.trendDirection === 'declining' ? <TrendingDown className="w-3 h-3" /> : <Activity className="w-3 h-3" />}
+                      {insight.trendDirection === 'improving' ? 'Improving' : insight.trendDirection === 'declining' ? 'Declining' : 'Stable'}
+                    </span>
+                  )}
+                  {insight.trendDirection && (insight.estimatedImpact || insight.comparisonContext) && (
+                    <span className="text-muted-foreground/30">·</span>
+                  )}
+                  {insight.estimatedImpact && (
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-foreground/5 text-foreground/80">
+                      <DollarSign className="w-2.5 h-2.5" />
+                      <BlurredAmount>{insight.estimatedImpact.replace(/^\$/, '')}</BlurredAmount>
+                    </span>
+                  )}
+                  {insight.comparisonContext && (
+                    <>
+                      {insight.estimatedImpact && <span className="text-muted-foreground/30">·</span>}
+                      <span className="text-muted-foreground">{insight.comparisonContext}</span>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* Row 2: Effort + Act By + Staff */}
+              {(insight.effortLevel || insight.actByDate || (insight.staffMentions && insight.staffMentions.length > 0)) && (
+                <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+                  {insight.effortLevel && (
+                    <span className={cn('inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded font-medium', {
+                      'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400': insight.effortLevel === 'quick_win',
+                      'bg-blue-500/10 text-blue-700 dark:text-blue-400': insight.effortLevel === 'strategic',
+                    })}>
+                      {insight.effortLevel === 'quick_win' ? <Zap className="w-2.5 h-2.5" /> : <BarChart3 className="w-2.5 h-2.5" />}
+                      {insight.effortLevel === 'quick_win' ? 'Quick Win' : 'Strategic'}
+                    </span>
+                  )}
+                  {insight.actByDate && (
+                    <>
+                      {insight.effortLevel && <span className="text-muted-foreground/30">·</span>}
+                      <span className="inline-flex items-center gap-0.5 text-muted-foreground">
+                        <Clock className="w-2.5 h-2.5" />
+                        {insight.actByDate}
+                      </span>
+                    </>
+                  )}
+                  {insight.staffMentions && insight.staffMentions.length > 0 && (
+                    <>
+                      {(insight.effortLevel || insight.actByDate) && <span className="text-muted-foreground/30">·</span>}
+                      {insight.staffMentions.map((name, idx) => (
+                        <span key={idx} className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-muted/50 text-muted-foreground">
+                          <Users className="w-2.5 h-2.5" />
+                          {name}
+                        </span>
+                      ))}
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="flex flex-wrap items-center gap-2 mt-3">
             <GuidanceTrigger
               label="How to improve"
@@ -191,7 +265,6 @@ function InsightCard({ insight, onRequestGuidance, drillDownHref }: { insight: I
     </div>
   );
 }
-
 function ActionItemCard({ item, index, onRequestGuidance, isEven }: { item: ActionItem; index: number; onRequestGuidance: (req: GuidanceRequest) => void; isEven?: boolean }) {
   return (
     <div className={cn('py-2 px-3 rounded-lg', isEven && 'bg-muted/20')}>
