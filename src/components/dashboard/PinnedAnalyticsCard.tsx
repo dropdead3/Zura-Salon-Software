@@ -357,7 +357,7 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
         if (isToday && todayActualData?.hasActualData) {
           metricValue = formatCurrencyWhole(todayActualData.actualRevenue);
           metricLabel = 'Sales so far today';
-          metricSubtext = `${formatCurrencyWhole(salesData?.serviceRevenue ?? 0)} expected in services today`;
+          metricSubtext = `${formatCurrencyWhole(salesData?.totalRevenue ?? 0)} expected today`;
         } else {
           metricValue = formatCurrencyWhole(salesData?.totalRevenue ?? 0);
           metricLabel = isToday
