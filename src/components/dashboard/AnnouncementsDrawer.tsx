@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { cn } from '@/lib/utils';
-import { Megaphone, X, Pin, ExternalLink, Settings, Plus, ChevronRight, ChevronDown } from 'lucide-react';
+import { Megaphone, X, Pin, ExternalLink, Settings, Plus, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -39,21 +39,135 @@ const normalizeUrl = (url: string): string => {
   return `https://${url}`;
 };
 
-interface AnnouncementsWidgetProps {
+const formatDate = (dateStr: string) => {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  if (diffHours < 1) return 'Just now';
+  if (diffHours < 24) return `${diffHours}h ago`;
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+};
+
+/* ─────────────────────────────────────────────
+ *  TRIGGER (collapsed button in control row)
+ * ───────────────────────────────────────────── */
+
+interface AnnouncementsDrawerProps {
   isLeadership: boolean;
-  /** Override collapsed trigger label. Defaults to "Announcements". */
   label?: string;
-  /** Render icon-only collapsed trigger with tooltip. */
   iconOnly?: boolean;
+  /** Controlled mode: external expanded state */
+  expanded?: boolean;
+  /** Controlled mode: toggle callback */
+  onToggle?: () => void;
 }
 
-export function AnnouncementsDrawer({ isLeadership, label, iconOnly }: AnnouncementsWidgetProps) {
-  const [expanded, setExpanded] = useState(false);
+export function AnnouncementsDrawer({
+  isLeadership,
+  label,
+  iconOnly,
+  expanded: controlledExpanded,
+  onToggle,
+}: AnnouncementsDrawerProps) {
+  const isControlled = typeof onToggle === 'function';
+  const [internalExpanded, setInternalExpanded] = useState(false);
+  const isOpen = isControlled ? !!controlledExpanded : internalExpanded;
+
+  const { data: unreadCount = 0 } = useUnreadAnnouncementCount();
+
+  const handleClick = useCallback(() => {
+    if (isControlled) {
+      onToggle();
+    } else {
+      setInternalExpanded(prev => !prev);
+    }
+  }, [isControlled, onToggle]);
+
+  // In controlled mode, render only the trigger button
+  if (isControlled) {
+    const Chevron = isOpen ? ChevronUp : ChevronDown;
+
+    return (
+      <motion.button
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.2, ease: 'easeOut' }}
+        onClick={handleClick}
+        className={cn(
+          'inline-flex items-center gap-2 h-9 rounded-md border text-sm font-sans transition-colors cursor-pointer whitespace-nowrap',
+          isOpen
+            ? 'border-primary/30 bg-accent/50 text-foreground'
+            : 'border-border bg-background hover:bg-muted/50 text-foreground',
+          iconOnly ? 'px-2.5' : 'px-4',
+        )}
+        title={iconOnly ? (label ?? 'Announcements') : undefined}
+      >
+        <div className="w-5 h-5 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
+          <Megaphone className="w-3 h-3 text-primary" />
+        </div>
+        {!iconOnly && <span className="truncate">{label ?? 'Announcements'}</span>}
+        {unreadCount > 0 && (
+          <span className="min-w-[18px] h-[18px] rounded-full bg-red-500 text-white text-[10px] font-medium flex items-center justify-center px-1 shrink-0">
+            {unreadCount > 9 ? '9+' : unreadCount}
+          </span>
+        )}
+        {!iconOnly && <Chevron className="w-3.5 h-3.5 text-muted-foreground ml-0.5 shrink-0" />}
+      </motion.button>
+    );
+  }
+
+  // Uncontrolled fallback — original inline behavior (kept for safety, not used in command center)
+  return (
+    <AnimatePresence mode="wait">
+      {!isOpen ? (
+        <motion.button
+          key="collapsed"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          transition={{ duration: 0.2, ease: 'easeOut' }}
+          onClick={handleClick}
+          className={cn(
+            'inline-flex items-center gap-2 h-9 rounded-md border border-border bg-background text-sm font-sans hover:bg-muted/50 transition-colors cursor-pointer whitespace-nowrap',
+            iconOnly ? 'px-2.5' : 'px-4',
+          )}
+          title={iconOnly ? (label ?? 'Announcements') : undefined}
+        >
+          <div className="w-5 h-5 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
+            <Megaphone className="w-3 h-3 text-primary" />
+          </div>
+          {!iconOnly && <span className="truncate">{label ?? 'Announcements'}</span>}
+          {unreadCount > 0 && (
+            <span className="min-w-[18px] h-[18px] rounded-full bg-red-500 text-white text-[10px] font-medium flex items-center justify-center px-1 shrink-0">
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </span>
+          )}
+          {!iconOnly && <ChevronDown className="w-3.5 h-3.5 text-muted-foreground ml-0.5 shrink-0" />}
+        </motion.button>
+      ) : (
+        <AnnouncementsPanel isLeadership={isLeadership} onClose={() => setInternalExpanded(false)} />
+      )}
+    </AnimatePresence>
+  );
+}
+
+/* ─────────────────────────────────────────────
+ *  PANEL (expanded content — full-width row)
+ * ───────────────────────────────────────────── */
+
+interface AnnouncementsPanelProps {
+  isLeadership: boolean;
+  onClose: () => void;
+}
+
+export function AnnouncementsPanel({ isLeadership, onClose }: AnnouncementsPanelProps) {
   const [locationFilter, setLocationFilter] = useState('all');
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { assignedLocationIds, canViewAllLocations } = useUserLocationAccess();
-  const { data: unreadCount = 0 } = useUnreadAnnouncementCount();
   const lastAnnouncementIdRef = useRef<string | null>(null);
   const hasInitializedRef = useRef(false);
 
@@ -88,25 +202,16 @@ export function AnnouncementsDrawer({ isLeadership, label, iconOnly }: Announcem
     );
   }, [announcements, locationFilter]);
 
-  // Auto-expand when new announcement detected
+  // Escape key closes
   useEffect(() => {
-    if (!announcements || announcements.length === 0) return;
-    const latestId = announcements[0].id;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [onClose]);
 
-    if (!hasInitializedRef.current) {
-      // First load — just record the ID, don't auto-expand
-      lastAnnouncementIdRef.current = latestId;
-      hasInitializedRef.current = true;
-      return;
-    }
-
-    if (lastAnnouncementIdRef.current && lastAnnouncementIdRef.current !== latestId) {
-      setExpanded(true);
-    }
-    lastAnnouncementIdRef.current = latestId;
-  }, [announcements]);
-
-  // Realtime subscription for new announcements
+  // Realtime subscription
   useEffect(() => {
     if (!user?.id) return;
     const channel = supabase
@@ -120,9 +225,9 @@ export function AnnouncementsDrawer({ isLeadership, label, iconOnly }: Announcem
     return () => { supabase.removeChannel(channel); };
   }, [user?.id, queryClient]);
 
-  // Mark as read when card expands
+  // Mark as read when panel mounts
   useEffect(() => {
-    if (!expanded || !user?.id || !announcements || announcements.length === 0) return;
+    if (!user?.id || !announcements || announcements.length === 0) return;
 
     const markAsRead = async () => {
       const { data: existingReads } = await supabase
@@ -145,173 +250,108 @@ export function AnnouncementsDrawer({ isLeadership, label, iconOnly }: Announcem
     };
 
     markAsRead();
-  }, [expanded, announcements, user?.id, queryClient]);
-
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    if (diffHours < 1) return 'Just now';
-    if (diffHours < 24) return `${diffHours}h ago`;
-    const diffDays = Math.floor(diffHours / 24);
-    if (diffDays < 7) return `${diffDays}d ago`;
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  };
-
-  const handleCollapse = () => {
-    setExpanded(false);
-    // Update ref so same announcement doesn't re-trigger
-    if (announcements && announcements.length > 0) {
-      lastAnnouncementIdRef.current = announcements[0].id;
-    }
-  };
+  }, [announcements, user?.id, queryClient]);
 
   return (
-    <AnimatePresence mode="wait">
-        {!expanded ? (
-          /* ── Collapsed: Inline button ── */
-          <motion.button
-            key="collapsed"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-            onClick={() => setExpanded(true)}
-            className={cn(
-              "inline-flex items-center gap-2 h-9 rounded-md border border-border bg-background text-sm font-sans hover:bg-muted/50 transition-colors cursor-pointer whitespace-nowrap",
-              iconOnly ? "px-2.5" : "px-4",
-            )}
-            title={iconOnly ? (label ?? 'Announcements') : undefined}
-          >
-            <div className="w-5 h-5 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
-              <Megaphone className="w-3 h-3 text-primary" />
-            </div>
-            {!iconOnly && <span className="truncate">{label ?? 'Announcements'}</span>}
-            {unreadCount > 0 && (
-              <span className="min-w-[18px] h-[18px] rounded-full bg-red-500 text-white text-[10px] font-medium flex items-center justify-center px-1 shrink-0">
-                {unreadCount > 9 ? '9+' : unreadCount}
-              </span>
-            )}
-            {!iconOnly && <ChevronDown className="w-3.5 h-3.5 text-muted-foreground ml-0.5 shrink-0" />}
-          </motion.button>
-        ) : (
-          /* ── Expanded: Full card ── */
-          <motion.div
-            key="expanded"
-            initial={{ opacity: 0, scale: 0.98, y: -4 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.98, y: -4 }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
-            className="w-full rounded-xl shadow-lg border border-border/40 bg-card overflow-hidden"
-          >
-            {/* Top gradient accent */}
-            <div className="h-px bg-gradient-to-r from-transparent via-border/40 to-transparent" />
+    <div className="w-full rounded-xl shadow-lg border border-border/40 bg-card overflow-hidden">
+      {/* Top gradient accent */}
+      <div className="h-px bg-gradient-to-r from-transparent via-border/40 to-transparent" />
 
-            {/* Header */}
-            <div className="p-4 pb-3">
-              <div className="flex items-center justify-between mb-3">
-                <span className="font-display text-xs tracking-[0.15em]">ANNOUNCEMENTS</span>
-                <div className="flex items-center gap-1">
-                  {/* Compact location filter */}
-                  <LocationSelect
-                    value={locationFilter}
-                    onValueChange={setLocationFilter}
-                    includeAll
-                    allLabel="All Locations"
-                    triggerClassName="h-7 text-xs bg-muted/30 border-border/40 w-auto min-w-0 max-w-[240px] px-2 whitespace-nowrap"
-                  />
-                  {isLeadership && (
-                    <>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
-                        <Link to="/dashboard/announcements">
-                          <Settings className="w-3.5 h-3.5" />
-                        </Link>
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
-                        <Link to="/dashboard/announcements/create">
-                          <Plus className="w-3.5 h-3.5" />
-                        </Link>
-                      </Button>
-                    </>
-                  )}
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleCollapse}>
-                    <X className="w-3.5 h-3.5" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            {/* Content with stagger animation */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.15, duration: 0.25 }}
-            >
-              <ScrollArea className="max-h-[400px]">
-                <div className="px-4 pb-3 space-y-3">
-                  {filteredAnnouncements.length > 0 ? (
-                    filteredAnnouncements.map((announcement, i) => (
-                      <motion.div
-                        key={announcement.id}
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2 + i * 0.05, duration: 0.25 }}
-                        className={`group relative p-4 rounded-xl bg-muted/30 border border-border/30 border-l-[3px] ${priorityColors[announcement.priority || 'normal']} hover:bg-muted/50 transition-all duration-200`}
-                      >
-                        <div className="flex items-start gap-2">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-1.5 mb-1">
-                              {announcement.is_pinned && (
-                                <Pin className="w-3 h-3 text-oat shrink-0" />
-                              )}
-                              <h3 className="text-sm font-medium truncate">{announcement.title}</h3>
-                            </div>
-                            <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-                              {announcement.content}
-                            </p>
-                            <div className="flex items-center gap-2 mt-2">
-                              <span className="text-[10px] text-muted-foreground/60 tracking-wide">
-                                {formatDate(announcement.created_at)}
-                              </span>
-                              {announcement.link_url && (
-                                <a
-                                  href={normalizeUrl(announcement.link_url)}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1 text-[10px] text-primary hover:underline"
-                                >
-                                  {announcement.link_label || 'Learn more'}
-                                  <ExternalLink className="w-2.5 h-2.5" />
-                                </a>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </motion.div>
-                    ))
-                  ) : (
-                    <div className="text-center py-14 text-muted-foreground">
-                      <Megaphone className="w-7 h-7 mx-auto mb-3 opacity-20" />
-                      <p className="text-sm font-display">No announcements</p>
-                      <p className="text-xs mt-1 text-muted-foreground/60">You're all caught up</p>
-                    </div>
-                  )}
-                </div>
-              </ScrollArea>
-
-              {/* Footer */}
-              <div className="px-4 pb-4 pt-1">
-                <Button variant="ghost" className="w-full justify-center text-xs h-9 text-muted-foreground hover:text-foreground" asChild>
+      {/* Header */}
+      <div className="p-4 pb-3">
+        <div className="flex items-center justify-between mb-3">
+          <span className="font-display text-xs tracking-[0.15em]">ANNOUNCEMENTS</span>
+          <div className="flex items-center gap-1">
+            <LocationSelect
+              value={locationFilter}
+              onValueChange={setLocationFilter}
+              includeAll
+              allLabel="All Locations"
+              triggerClassName="h-7 text-xs bg-muted/30 border-border/40 w-auto min-w-0 max-w-[240px] px-2 whitespace-nowrap"
+            />
+            {isLeadership && (
+              <>
+                <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
                   <Link to="/dashboard/announcements">
-                    View All Announcements
-                    <ChevronRight className="w-3.5 h-3.5 ml-1" />
+                    <Settings className="w-3.5 h-3.5" />
                   </Link>
                 </Button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+                <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
+                  <Link to="/dashboard/announcements/create">
+                    <Plus className="w-3.5 h-3.5" />
+                  </Link>
+                </Button>
+              </>
+            )}
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose}>
+              <X className="w-3.5 h-3.5" />
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Content */}
+      <ScrollArea className="max-h-[65vh]">
+        <div className="px-4 pb-3 space-y-3">
+          {filteredAnnouncements.length > 0 ? (
+            filteredAnnouncements.map((announcement, i) => (
+              <motion.div
+                key={announcement.id}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.05 + i * 0.04, duration: 0.25 }}
+                className={`group relative p-4 rounded-xl bg-muted/30 border border-border/30 border-l-[3px] ${priorityColors[announcement.priority || 'normal']} hover:bg-muted/50 transition-all duration-200`}
+              >
+                <div className="flex items-start gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      {announcement.is_pinned && (
+                        <Pin className="w-3 h-3 text-oat shrink-0" />
+                      )}
+                      <h3 className="text-sm font-medium truncate">{announcement.title}</h3>
+                    </div>
+                    <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                      {announcement.content}
+                    </p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className="text-[10px] text-muted-foreground/60 tracking-wide">
+                        {formatDate(announcement.created_at)}
+                      </span>
+                      {announcement.link_url && (
+                        <a
+                          href={normalizeUrl(announcement.link_url)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-[10px] text-primary hover:underline"
+                        >
+                          {announcement.link_label || 'Learn more'}
+                          <ExternalLink className="w-2.5 h-2.5" />
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            ))
+          ) : (
+            <div className="text-center py-14 text-muted-foreground">
+              <Megaphone className="w-7 h-7 mx-auto mb-3 opacity-20" />
+              <p className="text-sm font-display">No announcements</p>
+              <p className="text-xs mt-1 text-muted-foreground/60">You're all caught up</p>
+            </div>
+          )}
+        </div>
+      </ScrollArea>
+
+      {/* Footer */}
+      <div className="px-4 pb-4 pt-1">
+        <Button variant="ghost" className="w-full justify-center text-xs h-9 text-muted-foreground hover:text-foreground" asChild>
+          <Link to="/dashboard/announcements">
+            View All Announcements
+            <ChevronRight className="w-3.5 h-3.5 ml-1" />
+          </Link>
+        </Button>
+      </div>
+    </div>
   );
 }
