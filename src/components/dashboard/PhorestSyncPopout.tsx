@@ -215,7 +215,7 @@ export function PhorestSyncPopout({ asMenuItem = false }: { asMenuItem?: boolean
         </TooltipContent>
       </Tooltip>
       
-      <PopoverContent align="end" className="w-80 p-0 bg-card/60 backdrop-blur-xl backdrop-saturate-150 border-border/20 rounded-xl shadow-[0_12px_40px_-8px_rgba(0,0,0,0.3)] overflow-hidden">
+      <PopoverContent align="end" className="w-80 p-0 bg-card/60 backdrop-blur-xl backdrop-saturate-150 border border-border rounded-xl shadow-[0_12px_40px_-8px_rgba(0,0,0,0.3)] overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-border/15">
           <h4 className="font-display text-xs uppercase tracking-wider text-foreground">
