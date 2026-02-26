@@ -148,6 +148,8 @@ import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { NextClientIndicator } from '@/components/dashboard/NextClientIndicator';
 import { TopBarSearch } from '@/components/dashboard/TopBarSearch';
 import { SuperAdminTopBar } from '@/components/dashboard/SuperAdminTopBar';
+import { ChaChingDrawer } from '@/components/dashboard/ChaChingDrawer';
+import { ChaChingHistoryProvider } from '@/hooks/useChaChingHistory';
 
 // Role colors/icons now come from useRoleUtils hook
 
@@ -1320,20 +1322,23 @@ export function DashboardLayout(props: DashboardLayoutProps) {
   }, [resolvedTheme, colorTheme]);
   
   return (
-    <DashboardLockProvider>
-      <ZuraNavigationProvider>
-        <NavigationHistoryProvider>
-          <div className={cn(
-            resolvedTheme === 'dark' && 'dark',
-            `theme-${colorTheme}`,
-            'bg-background text-foreground',
-            isPlatformRoute && 'platform-theme platform-gradient-radial min-h-screen'
-          )}>
-            <DashboardLayoutWithLock {...props} />
-            <ZuraStickyGuidance />
-          </div>
-        </NavigationHistoryProvider>
-      </ZuraNavigationProvider>
-    </DashboardLockProvider>
+    <ChaChingHistoryProvider>
+      <DashboardLockProvider>
+        <ZuraNavigationProvider>
+          <NavigationHistoryProvider>
+            <div className={cn(
+              resolvedTheme === 'dark' && 'dark',
+              `theme-${colorTheme}`,
+              'bg-background text-foreground',
+              isPlatformRoute && 'platform-theme platform-gradient-radial min-h-screen'
+            )}>
+              <DashboardLayoutWithLock {...props} />
+              <ChaChingDrawer />
+              <ZuraStickyGuidance />
+            </div>
+          </NavigationHistoryProvider>
+        </ZuraNavigationProvider>
+      </DashboardLockProvider>
+    </ChaChingHistoryProvider>
   );
 }

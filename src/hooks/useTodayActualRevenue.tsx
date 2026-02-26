@@ -6,6 +6,8 @@ import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/format';
 import { useNotificationSound } from '@/hooks/useNotificationSound';
 import { useSoundSettings } from '@/contexts/SoundSettingsContext';
+import { useChaChingHistorySafe } from '@/hooks/useChaChingHistory';
+import { ChaChingToast } from '@/components/dashboard/ChaChingToast';
 
 interface TodayActualRevenueData {
   actualRevenue: number;
@@ -32,6 +34,7 @@ export function useTodayActualRevenue(enabled: boolean) {
   const queryClient = useQueryClient();
   const { playAchievement } = useNotificationSound();
   const { chaChingEnabled } = useSoundSettings();
+  const chaChingHistory = useChaChingHistorySafe();
   const prevRevenueRef = useRef<number | null>(null);
 
 
@@ -149,8 +152,8 @@ export function useTodayActualRevenue(enabled: boolean) {
 
     if (chaChingEnabled && hasData && currentRevenue > prevRevenueRef.current) {
       const delta = currentRevenue - prevRevenueRef.current;
-      toast('💰 Cha-ching!', {
-        description: `A client just checked out for ${formatCurrency(delta)}`,
+      chaChingHistory?.addNotification(delta);
+      toast.custom((t) => <ChaChingToast amount={delta} toastId={t} />, {
         duration: 5000,
       });
       playAchievement();
