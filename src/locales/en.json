@@ -140,7 +140,7 @@
       "select_location": "Select Location",
       "expected_revenue": "Expected Revenue",
       "actual_revenue": "Actual Revenue",
-      "actual_not_available": "Actual revenue not available until appointments check out",
+      "actual_not_available": "POS data not yet synced for today",
       "estimated_final_at": "Estimated final transaction at",
       "weekly_goal": "Weekly Goal",
       "monthly_goal": "Monthly Goal",

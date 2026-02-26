@@ -1,5 +1,6 @@
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { LastSyncIndicator } from '@/components/dashboard/sales/LastSyncIndicator';
 import { Badge } from '@/components/ui/badge';
 import { BlurredAmount, useHideNumbers } from '@/contexts/HideNumbersContext';
 import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
@@ -729,9 +730,12 @@ export function AggregateSalesCard({
                             ) : null}
                           </div>
                         ) : (
-                          <p className="text-xs text-muted-foreground/70 text-center">
-                            {t('sales.actual_not_available')}
-                          </p>
+                          <div className="flex flex-col items-center gap-1.5">
+                            <p className="text-xs text-muted-foreground/70 text-center">
+                              {t('sales.actual_not_available')}
+                            </p>
+                            <LastSyncIndicator syncType="sales" showAutoRefresh />
+                          </div>
                         )}
 
                         {!exceededExpected && allAppointmentsComplete ? (
