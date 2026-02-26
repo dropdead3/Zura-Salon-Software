@@ -167,30 +167,30 @@ export function LocationsContent() {
 
                 {/* Location info + toggle stacked */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                  <div className="flex items-center gap-1.5 mb-1 min-w-0">
                     <h3 className="font-sans font-medium text-sm truncate">{location.name}</h3>
                     {location.show_on_website ? (
-                      <Badge variant="secondary" className="text-[10px] bg-primary/10 text-primary border-primary/20">
+                      <Badge variant="secondary" className="text-[10px] bg-primary/10 text-primary border-primary/20 shrink-0">
                         <Eye className="w-2.5 h-2.5 mr-0.5" />
                         Visible
                       </Badge>
                     ) : (
-                      <Badge variant="secondary" className="text-[10px]">
+                      <Badge variant="secondary" className="text-[10px] shrink-0">
                         <EyeOff className="w-2.5 h-2.5 mr-0.5" />
                         Hidden
                       </Badge>
                     )}
                   </div>
-                  <div className="space-y-0.5 text-xs text-muted-foreground">
-                    <p className="flex items-center gap-1.5 truncate">
+                  <div className="space-y-0.5 text-xs text-muted-foreground min-w-0 overflow-hidden">
+                    <p className="flex items-center gap-1.5 min-w-0">
                       <MapPin className="w-3 h-3 shrink-0" />
                       <span className="truncate">{location.address}, {location.city}</span>
                     </p>
-                    <p className="flex items-center gap-1.5">
+                    <p className="flex items-center gap-1.5 min-w-0">
                       <Phone className="w-3 h-3 shrink-0" />
-                      {location.phone}
+                      <span className="truncate">{location.phone}</span>
                     </p>
-                    <p className="flex items-center gap-1.5 truncate">
+                    <p className="flex items-center gap-1.5 min-w-0">
                       <Clock className="w-3 h-3 shrink-0" />
                       <span className="truncate">{formatHoursForDisplay(location.hours_json) || location.hours || 'No hours set'}</span>
                     </p>
