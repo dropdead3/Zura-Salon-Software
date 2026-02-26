@@ -27,9 +27,11 @@ export function RevenueDonutChart({
   const { hideNumbers } = useHideNumbers();
   const { formatCurrencyWhole } = useFormatCurrency();
   
+  const emptyData = [{ name: 'Empty', value: 1, color: 'hsl(var(--muted))' }];
+
   const data = useMemo(() => {
     const total = serviceRevenue + productRevenue;
-    if (total === 0) return [];
+    if (total === 0) return emptyData;
     return [
       { name: 'Services', value: serviceRevenue, color: 'hsl(var(--foreground))' },
       { name: 'Retail', value: productRevenue, color: 'hsla(35, 70%, 45%, 0.55)' },
@@ -56,16 +58,6 @@ export function RevenueDonutChart({
     </div>
   );
 
-  if (!data.length) {
-    return (
-      <Card className="overflow-hidden border-border/40">
-        <CardHeader className="px-4 pt-4 pb-1">{headerContent}</CardHeader>
-        <CardContent className="px-4 pb-3 pt-0 flex-1 flex items-center justify-center">
-          <div className="text-muted-foreground text-xs">No data</div>
-        </CardContent>
-      </Card>
-    );
-  }
 
   return (
     <Card className="overflow-hidden border-border/40">
