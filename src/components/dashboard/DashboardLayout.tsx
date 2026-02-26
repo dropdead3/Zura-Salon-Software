@@ -148,7 +148,7 @@ import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { NextClientIndicator } from '@/components/dashboard/NextClientIndicator';
 import { TopBarSearch } from '@/components/dashboard/TopBarSearch';
 import { SuperAdminTopBar } from '@/components/dashboard/SuperAdminTopBar';
-import { ChaChingNotificationCenter } from '@/components/dashboard/ChaChingNotificationCenter';
+
 import { ChaChingHistoryProvider } from '@/hooks/useChaChingHistory';
 import { useChaChingDetector } from '@/hooks/useChaChingDetector';
 
@@ -1342,7 +1342,7 @@ export function DashboardLayout(props: DashboardLayoutProps) {
             )}>
               <DashboardLayoutWithLock {...props} />
               <ChaChingDetectorMount />
-              <ChaChingNotificationCenter />
+              
               <ZuraStickyGuidance />
             </div>
           </NavigationHistoryProvider>
