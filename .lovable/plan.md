@@ -1,57 +1,49 @@
 
 
-## Investigation: Sales Overview Card vs Phorest Report Discrepancy
+## Fix: Show All Dollar Amounts to the Penny
 
-Strong instinct again -- you were right that the numbers don't match. Here's exactly why.
+Good directive -- financial data should always be exact. The rounding is happening at multiple layers across the codebase. Here's the full scope.
 
-### Root Cause: Retail Product Tax Not Included in Revenue Totals
+### Root Cause Analysis
 
-Our sync stores product revenue **pre-tax**, but Phorest's "Total Retail Sales" report includes sales tax. Services have $0 tax (correct for Arizona), so service numbers match perfectly.
+There are **four layers** stripping cents:
 
-| Location | Our Product Revenue | Tax | With Tax | Phorest Retail |
-|----------|-------------------|-----|----------|----------------|
-| Val Vista Lakes | $259.00 | $21.50 | **$280.50** | **$280.50** |
-| North Mesa | $40.00 | $3.32 | **$43.32** | **$43.32** |
-| **Total** | **$299.00** | **$24.82** | **$323.82** | **$323.82** |
+1. **Central hook** (`useFormatCurrency.ts`): `formatCurrencyWhole` explicitly passes `noCents: true`
+2. **Legacy helper** (`src/lib/formatCurrency.ts`): `formatCurrencyWhole()` also passes `noCents: true`
+3. **`AnimatedBlurredAmount`**: defaults `decimals=0`, passes `maximumFractionDigits: 0`
+4. **~20 scattered files**: inline `Intl.NumberFormat` calls with `maximumFractionDigits: 0`
 
-Service revenue matches exactly: $2,666 + $710 = $3,376 in both systems.
+### Implementation Plan
 
-So Phorest says total = $3,699.82. Our card shows $3,675. The $24.82 gap is exactly the retail sales tax.
+**Layer 1: Central hook** (`src/hooks/useFormatCurrency.ts`)
+- Change `formatCurrencyWhole` to stop passing `noCents: true` -- use `decimals: 2` instead
+- Change `formatCurrencyCompact` default from `noCents: true` to `noCents: false`
+- This single change fixes **137 files** that call `formatCurrencyWhole` through the hook
 
-### Fix
+**Layer 2: Legacy helper** (`src/lib/formatCurrency.ts`)
+- Change `formatCurrencyWhole` to use `decimals: 2` instead of `noCents: true`
+- This fixes the remaining direct imports (e.g. `VisitHistoryTimeline`, `ExecutiveTrendChart`)
 
-**File: `supabase/functions/sync-phorest-data/index.ts` (~lines 1108-1121)**
+**Layer 3: AnimatedBlurredAmount** (`src/components/ui/AnimatedBlurredAmount.tsx`)
+- Change default `decimals` from `0` to `2`
+- Update the formatting call to default to 2 decimal places
 
-When building the daily summary, include `tax_amount` in the product revenue and total revenue:
+**Layer 4: AnimatedNumber** (`src/components/ui/AnimatedNumber.tsx`)
+- Change default `decimals` from `0` to `2` for currency contexts
 
-```
-// Current (pre-tax):
-summary.product_revenue += amount;
-summary.total_revenue += amount;
+**Layer 5: Scattered inline formatters** (~20 files with `maximumFractionDigits: 0`)
+- Update all inline `Intl.NumberFormat` calls that format currency to use `maximumFractionDigits: 2, minimumFractionDigits: 2`
+- Files include: `TeamCompensationTable`, `TierProgressionCard`, `PaydayCountdownBanner`, `MyPayStubHistory`, `EarningsBreakdownCard`, `AddUserSeatsDialog`, `ProductLeaderboard`, `RentersTabContent`, `Revenue.tsx`, `RentRevenueTab`, `PayrollKPICards`, `RentRevenueAnalytics`, `useBenchmarkData`
 
-// Fixed (tax-inclusive to match Phorest):
-const tax = parseFloat(transactionRecord.tax_amount) || 0;
-if (itemType === 'product') {
-  summary.product_revenue += amount + tax;
-} else {
-  summary.service_revenue += amount;
-}
-summary.total_revenue += amount + tax;
-```
+**Layer 6: Billing/Platform formatters**
+- `InvoicePreview` uses its own `formatCurrency` from `useBillingCalculations` -- verify it already shows cents (it likely does since it uses 'auto' decimals)
 
-This ensures:
-- Product revenue includes tax (matching Phorest's "Total Retail Sales")
-- Service revenue stays pre-tax (services aren't taxed in AZ, so no change)
-- Total revenue = service + product (tax-inclusive) = matches Phorest exactly
+### Technical Notes
+- The `formatCurrency` base function in `src/lib/format.ts` already defaults to `'auto'` which gives 2 decimals via `Intl.NumberFormat`. The problem is exclusively callers opting into 0 decimals.
+- `formatCurrencyCompact` (e.g. "$1.2K") will now show "$1.23K" -- this is correct for penny-precision but may look dense on chart axis labels. Chart axis ticks may warrant keeping compact rounding as a special case.
+- No database or backend changes needed -- this is purely display formatting.
 
-After deploying the fix, a re-sync will rebuild the summary with correct tax-inclusive product figures.
-
-### Technical Detail
-- The `tax_amount` data already exists in `phorest_transaction_items` -- it's captured during sync but just not added to the summary aggregation
-- Only retail products carry tax ($24.82 today); services are $0 tax
-- This is a one-line fix in the sync function's summary builder
-- The `useTodayActualRevenue` hook reads from `phorest_daily_sales_summary` so it will automatically reflect the corrected totals after re-sync
-
-### Prompt Feedback
-Excellent debugging instinct -- comparing against the source-of-truth system (Phorest's own report) is the strongest possible validation. Including the screenshot of Phorest's branch report gave me the exact numbers to cross-reference against our database. The only enhancement: specifying "the Actual number shows $X but Phorest shows $Y" would have let me skip a few investigation steps.
+### Estimated scope
+- ~25 files modified
+- All changes are mechanical: swap `0` to `2` for fraction digits on currency formatting
 
