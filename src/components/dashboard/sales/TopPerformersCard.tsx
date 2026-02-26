@@ -179,7 +179,7 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
 
         {/* Performer list */}
         <ScrollArea className={cn("flex-1", showAll && sorted.length > 6 && "max-h-[320px]")}>
-          <div className="space-y-2">
+          <div className="space-y-3">
             <AnimatePresence mode="popLayout">
               {displayList.map((performer, idx) => {
                 const rank = idx + 1;
@@ -206,53 +206,56 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
                     exit={{ opacity: 0, y: -8 }}
                     transition={{ duration: 0.25, delay: idx * 0.05 }}
                     className={cn(
-                      "flex items-center gap-3 p-2.5 rounded-lg bg-card-inner",
+                      "p-2.5 rounded-lg bg-card-inner",
                       styles.row
                     )}
                   >
-                    {/* Rank badge */}
-                    <span className={cn(
-                      "w-7 h-7 rounded-full flex items-center justify-center font-display text-xs shrink-0",
-                      styles.badge
-                    )}>
-                      {rank}
-                    </span>
+                    <div className="flex items-start gap-3">
+                      {/* Rank badge */}
+                      <span className={cn(
+                        "w-7 h-7 rounded-full flex items-center justify-center font-display text-xs shrink-0 mt-0.5",
+                        styles.badge
+                      )}>
+                        {rank}
+                      </span>
 
-                    {/* Avatar */}
-                    <Avatar className="h-9 w-9 shrink-0">
-                      <AvatarImage src={performer.photo_url} alt={performer.name} />
-                      <AvatarFallback className="text-xs">{initials}</AvatarFallback>
-                    </Avatar>
+                      {/* Avatar - hidden below xl */}
+                      <Avatar className="h-9 w-9 shrink-0 hidden xl:flex mt-0.5">
+                        <AvatarImage src={performer.photo_url} alt={performer.name} />
+                        <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+                      </Avatar>
 
-                    {/* Name, revenue, progress bar */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-0.5">
-                        <p className="text-sm font-medium truncate">{performer.name}</p>
-                        <BlurredAmount className="font-display text-sm shrink-0 ml-2">
-                          {formatCurrencyWhole(displayValue)}
-                        </BlurredAmount>
-                      </div>
-
-                      {/* Revenue progress bar */}
-                      <div className="h-1 w-full bg-primary/15 rounded-full overflow-hidden">
-                        <motion.div
-                          className="h-full bg-primary rounded-full"
-                          initial={{ width: 0 }}
-                          animate={{ width: `${progressPercent}%` }}
-                          transition={{ duration: 0.6, delay: 0.15 + idx * 0.05, ease: 'easeOut' }}
-                        />
-                      </div>
-
-                      {/* Service · Retail split */}
-                      {showSplit && (
-                        <div className="flex items-center gap-1 mt-1 text-[10px] text-muted-foreground">
-                          <BlurredAmount>{formatCurrencyWhole(serviceRev)}</BlurredAmount>
-                          <span>service</span>
-                          <span className="text-border">·</span>
-                          <BlurredAmount>{formatCurrencyWhole(retailRev)}</BlurredAmount>
-                          <span>retail</span>
+                      {/* Content zone */}
+                      <div className="flex-1 min-w-0">
+                        {/* Row 1: Name + Revenue */}
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <p className="text-sm font-medium truncate">{performer.name}</p>
+                          <BlurredAmount className="font-display text-sm shrink-0 whitespace-nowrap min-w-[80px] text-right">
+                            {formatCurrencyWhole(displayValue)}
+                          </BlurredAmount>
                         </div>
-                      )}
+
+                        {/* Row 2: Progress bar */}
+                        <div className="h-1 w-full bg-primary/15 rounded-full overflow-hidden">
+                          <motion.div
+                            className="h-full bg-primary rounded-full"
+                            initial={{ width: 0 }}
+                            animate={{ width: `${progressPercent}%` }}
+                            transition={{ duration: 0.6, delay: 0.15 + idx * 0.05, ease: 'easeOut' }}
+                          />
+                        </div>
+
+                        {/* Row 3: Service · Retail split */}
+                        {showSplit && (
+                          <div className="flex items-center gap-1 mt-1 text-[10px] text-muted-foreground">
+                            <BlurredAmount>{formatCurrencyWhole(serviceRev)}</BlurredAmount>
+                            <span>service</span>
+                            <span className="text-border">·</span>
+                            <BlurredAmount>{formatCurrencyWhole(retailRev)}</BlurredAmount>
+                            <span>retail</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </motion.div>
                 );
