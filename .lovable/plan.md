@@ -1,153 +1,79 @@
 
 
-## Standardize All Inspector Section Editors to a Consistent Hybrid Shell
+## Fix Inspector Panel Content Responsiveness
 
 ### Problem
-The inspector panel renders wildly different UIs depending on which section is selected. Three distinct visual patterns exist:
+The inspector panel is 320-380px wide, but the content inside it was designed for wider containers. Several issues are visible in the screenshot:
 
-1. **EditorCard shell** (Footer CTA, Brand Statement, etc.) — frosted glass card with sticky icon+title header, consistent padding
-2. **Page-like headers** (Locations, Stylists, Services, Gallery) — full `text-xl font-display` heading with icon, buttons, info banners, stats grids. These look like standalone pages crammed into the inspector, not contextual property editors
-3. **Naked field lists** (Hero, SectionDisplayEditor-based editors, CustomSectionEditor) — bare form fields with no enclosing shell at all
+1. **Stats tiles overflow** — `BentoGrid` with `maxPerRow={2}` uses `sm:flex-row` (breakpoint: 640px), which never triggers inside a 320px panel. But some editors use hardcoded `grid grid-cols-2` which does trigger and creates cramped 150px cells with truncated text.
+2. **EditorCard padding too generous** — `p-5` (20px) on a 320px panel leaves only 280px for content, then nested cards add their own padding, compounding the crunch.
+3. **Text and badges overflow** — Info banners, location cards, and service items use fixed gap/padding that doesn't adapt to the narrow context.
+4. **Gallery grid `grid-cols-2`** hardcoded regardless of panel width — images get ~130px wide.
 
-The user sees three completely different visual languages when clicking between sections.
+### Root Cause
+The inspector is a narrow panel (320-380px), but all content components were built assuming standard page widths where CSS breakpoints like `sm:` (640px) would activate. Inside the inspector, the viewport breakpoints are irrelevant — the panel is always narrow.
 
-### Canonical Pattern: Hybrid Shell
+### Fix Strategy: Inspector-Aware Compact Styling
 
-Every section editor rendered inside the Inspector will follow this structure:
+Reduce padding, tighten spacing, and ensure all grids/layouts work at 300px minimum width without overflow.
 
-```text
-┌─────────────────────────────────────┐
-│ [icon] SECTION TITLE        [Reset] │  ← EditorCard sticky header
-│ Short description...                │
-├─────────────────────────────────────┤
-│                                     │
-│  Zone A: Section Styling (existing) │  ← Already handled by renderEditor()
-│                                     │
-│ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─│
-│                                     │
-│  Zone B: Content Controls           │  ← Wrapped in EditorCard
-│  • Toggle fields                    │
-│  • Text inputs                      │
-│  • Sliders                          │
-│  • Sub-cards for complex content    │
-│                                     │
-└─────────────────────────────────────┘
-```
+### Changes
 
-### Changes by Category
+#### 1. `EditorCard.tsx` — Tighter inspector-fit padding
+- Header padding: `px-5 py-3.5` → `px-4 py-3`
+- Content padding: `p-5 space-y-5` → `p-4 space-y-4`
+- Icon container: `w-8 h-8` → `w-7 h-7`, icon `w-4 h-4` → `w-3.5 h-3.5`
 
-#### Category C: `SectionDisplayEditor`-based editors (5 files)
-**Files:** `GalleryDisplayEditor`, `LocationsDisplayEditor`, `PopularServicesEditor`, `StylistsDisplayEditor`, `ServicesPreviewEditor`
+#### 2. `editorTokens.inspector.content` — Reduce outer content padding
+- `p-5 space-y-5` → `p-3 space-y-4`
 
-**Change:** Wrap `SectionDisplayEditor` output in an `EditorCard` shell. Add an `icon` prop to `SectionDisplayEditor` or wrap at the calling component level. The `SectionDisplayEditor` component itself will import `EditorCard` and use it as its outer container, using the existing `title` and `description` props.
+This applies to the `PanelSlideIn` wrapper that wraps all inspector content.
 
-**In `SectionDisplayEditor.tsx`:**
-- Import `EditorCard` and a default icon
-- Wrap the field list in `<EditorCard title={title} description={description} icon={icon}>...</EditorCard>`
-- Add `icon` prop (optional `LucideIcon`)
+#### 3. `ServicesContent.tsx` — Major responsiveness fixes
+- Stats `BentoGrid maxPerRow={2}` — switch to a CSS grid that always works: `grid grid-cols-2 gap-2`
+- Stats card padding: `p-3` → `p-2.5`, icon container: `p-2` → `p-1.5`, stat text: `text-2xl` → `text-lg`
+- Stats label text: ensure `text-xs` and `truncate`
+- Info notice: tighten padding `p-3` → `p-2.5`, icon `w-5 h-5` → `w-4 h-4`
+- Accordion trigger: reduce padding `px-4 py-3` → `px-3 py-2.5`
+- Service item rows: reduce padding, ensure `flex-wrap` on badges
+- Price row: ensure wrapping
 
-#### Category B: Content manager editors (4 files)
-**Files:** `LocationsContent`, `StylistsContent`, `ServicesContent`, `GalleryContent`
+#### 4. `GalleryContent.tsx` — Fix stats grid
+- `grid grid-cols-2 gap-4` → `grid grid-cols-1 gap-3` (stack stats vertically)
+- Stats card padding: `p-4` → `p-3`, stat text: `text-2xl` → `text-lg`
+- Gallery image grid: keep `grid-cols-2` but reduce `gap-4` → `gap-2`
 
-These are the most divergent. They have page-level headers (`text-xl font-display`), stats grids, info banners, and full CRUD UIs that look like standalone pages rather than inspector panels.
+#### 5. `StylistsContent.tsx` — Fix card density
+- Sample Cards Settings card: reduce internal padding
+- Badge rows: ensure `flex-wrap gap-1.5`
+- Tab triggers already have `text-xs sm:text-sm` which is fine
 
-**Change for each:**
-- Remove the standalone `<h2>` page header block and replace with `EditorCard` wrapper(s)
-- Remove the top-level `flex items-start justify-between` header that includes buttons like "Preview" and "Edit in Settings" — relocate those as `headerActions` inside the `EditorCard`
-- Info banners become part of the card content (no visual change, just contained)
-- Stats grids remain but inside the card shell
+#### 6. `LocationsContent.tsx` — Fix info banner and card density
+- Info banner: reduce `p-4` → `p-3`, icon container `w-8 h-8` → `w-6 h-6`
+- Location cards: reduce `p-4` → `p-3`, tighten gap from `gap-3` → `gap-2`
 
-Specific per-file:
-- **`LocationsContent`**: Wrap in `EditorCard` with `icon={MapPin}`, title "Website Locations". Move Preview/Edit in Settings buttons to `headerActions`.
-- **`StylistsContent`**: Wrap in `EditorCard` with `icon={Globe}`, title "Homepage Stylists". The "Sample Cards Settings" sub-card is already a Card — keep as internal card within EditorCard.
-- **`GalleryContent`**: Wrap in `EditorCard` with `icon={Images}`, title "Gallery Manager". Stats cards become internal.
-- **`ServicesContent`**: Wrap in `EditorCard` with `icon={Scissors}`, title "Services Manager". The info notice and stats grids become internal content.
+#### 7. `AnnouncementBarContent.tsx` — Fix toggle rows and color grid
+- Toggle rows: `p-4` → `p-3`
+- Color swatches: `w-10 h-10` → `w-8 h-8` to fit more per row in narrow panel
+- Custom color row: stack vertically instead of `flex items-center`
 
-#### Category D: Naked field editors (2 files)
-**Files:** `HeroEditor`, `CustomSectionEditor`
+#### 8. `HeroEditor.tsx` — Minor tweaks
+- Advanced settings container `p-4` → `p-3`
+- Already well-structured with toggle/input pattern, minimal changes needed
 
-**Change:**
-- **`HeroEditor`**: Already has fields directly inside `space-y-5`. Wrap in `EditorCard` with `icon` (e.g., `Layout`), title "Hero Section". Move Reset button to `headerActions`. Remove standalone reset row.
-- **`CustomSectionEditor`**: Wrap in `EditorCard` using a generic icon (e.g., `Layers`). The section label input becomes the first field inside the card content.
-
-#### Category A: Already using `EditorCard` (12 files)
-**No changes needed.** These already follow the canonical pattern.
-
-### Technical Details
-
-**`SectionDisplayEditor.tsx` modification:**
-```tsx
-// Add icon prop
-interface SectionDisplayEditorProps<T extends object> {
-  title: string;
-  description: string;
-  icon?: LucideIcon;  // NEW
-  // ... rest unchanged
-}
-
-// Wrap render in EditorCard
-return (
-  <div className="space-y-6">
-    <EditorCard title={title} icon={icon} description={description}>
-      {fields.map((field) => { /* existing field rendering */ })}
-    </EditorCard>
-  </div>
-);
-```
-
-**Content editor pattern (e.g., LocationsContent):**
-```tsx
-// BEFORE: standalone page header
-<div className="flex items-start justify-between gap-4">
-  <h2 className="text-xl font-display ...">Website Locations</h2>
-  <Button>Preview</Button>
-</div>
-
-// AFTER: EditorCard shell
-<EditorCard 
-  title="Website Locations" 
-  icon={MapPin}
-  description="Control which locations appear on the public website"
-  headerActions={<Button variant="ghost" size={tokens.button.card}>Preview</Button>}
->
-  {/* Info banner, location cards, footer note — all inside */}
-</EditorCard>
-```
-
-**`HeroEditor` pattern:**
-```tsx
-// BEFORE: standalone reset row + naked fields
-<div className="space-y-5">
-  <div className="flex justify-end"><Button>Reset</Button></div>
-  <ToggleInput ... />
-  ...
-</div>
-
-// AFTER: EditorCard shell
-<EditorCard title="Hero Section" icon={Layout} headerActions={<Button>Reset</Button>}>
-  <ToggleInput ... />
-  ...
-</EditorCard>
-```
-
-### Files Modified (18 total)
+### Files Modified
 
 | File | Change |
 |------|--------|
-| `SectionDisplayEditor.tsx` | Add `icon` prop, wrap in `EditorCard` |
-| `GalleryDisplayEditor.tsx` | Pass icon to `SectionDisplayEditor` |
-| `LocationsDisplayEditor.tsx` | Pass icon to `SectionDisplayEditor` |
-| `PopularServicesEditor.tsx` | Pass icon to `SectionDisplayEditor` |
-| `StylistsDisplayEditor.tsx` | Pass icon to `SectionDisplayEditor` |
-| `ServicesPreviewEditor.tsx` | Pass icon to `SectionDisplayEditor` |
-| `LocationsContent.tsx` | Replace page header with `EditorCard` wrapper |
-| `StylistsContent.tsx` | Replace page header with `EditorCard` wrapper |
-| `GalleryContent.tsx` | Replace page header with `EditorCard` wrapper |
-| `ServicesContent.tsx` | Replace page header with `EditorCard` wrapper |
-| `HeroEditor.tsx` | Wrap in `EditorCard`, move Reset to `headerActions` |
-| `CustomSectionEditor.tsx` | Wrap in `EditorCard` |
-| `AnnouncementBarContent.tsx` | Remove standalone header (already uses EditorCard for body, but has a page-like header above it) |
+| `EditorCard.tsx` | Tighter padding for inspector-fit |
+| `editor-tokens.ts` | Reduce inspector content padding |
+| `ServicesContent.tsx` | Compact stats grid, tighter card/row padding |
+| `GalleryContent.tsx` | Stack stats, reduce gallery grid gap |
+| `StylistsContent.tsx` | Compact card padding and badge wrapping |
+| `LocationsContent.tsx` | Tighter info banner and location cards |
+| `AnnouncementBarContent.tsx` | Smaller color swatches, compact toggle rows |
+| `HeroEditor.tsx` | Minor padding reduction in advanced section |
 
 ### Result
-Every section inspector follows one visual language: frosted glass `EditorCard` shell with sticky icon+title header, consistent padding (`p-5 space-y-5`), and optional `headerActions` for Reset/Preview buttons. No more page-level headings, no more naked field lists.
+All inspector content fits within 320px minimum width without overflow, truncation, or visual crunch. Consistent density across all section editors.
 
