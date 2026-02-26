@@ -137,7 +137,7 @@ export function SalesStatsCard({ userId }: SalesStatsCardProps) {
             <p className="text-2xl font-display tabular-nums">
               <AnimatedNumber
                 value={displayData.totalRevenue}
-                formatOptions={{ style: 'currency', currency, maximumFractionDigits: 0, minimumFractionDigits: 0 }}
+                formatOptions={{ style: 'currency', currency, maximumFractionDigits: 2, minimumFractionDigits: 2 }}
               />
             </p>
           </div>
@@ -149,7 +149,7 @@ export function SalesStatsCard({ userId }: SalesStatsCardProps) {
             <p className="text-2xl font-display tabular-nums">
               <AnimatedNumber
                 value={displayData.serviceRevenue}
-                formatOptions={{ style: 'currency', currency, maximumFractionDigits: 0, minimumFractionDigits: 0 }}
+                formatOptions={{ style: 'currency', currency, maximumFractionDigits: 2, minimumFractionDigits: 2 }}
               />
             </p>
           </div>
@@ -161,7 +161,7 @@ export function SalesStatsCard({ userId }: SalesStatsCardProps) {
             <p className="text-2xl font-display tabular-nums">
               <AnimatedNumber
                 value={displayData.productRevenue}
-                formatOptions={{ style: 'currency', currency, maximumFractionDigits: 0, minimumFractionDigits: 0 }}
+                formatOptions={{ style: 'currency', currency, maximumFractionDigits: 2, minimumFractionDigits: 2 }}
               />
             </p>
           </div>
@@ -182,7 +182,7 @@ export function SalesStatsCard({ userId }: SalesStatsCardProps) {
             <p className="text-2xl font-display tabular-nums">
               <AnimatedNumber
                 value={Math.round(displayData.averageTicket)}
-                formatOptions={{ style: 'currency', currency, maximumFractionDigits: 0, minimumFractionDigits: 0 }}
+                formatOptions={{ style: 'currency', currency, maximumFractionDigits: 2, minimumFractionDigits: 2 }}
               />
             </p>
           </div>

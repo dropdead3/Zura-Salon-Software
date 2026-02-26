@@ -100,7 +100,7 @@ export function PayrollKPICards({ kpis, isLoading }: PayrollKPICardsProps) {
         value={
           <AnimatedNumber
             value={kpis.nextPayrollForecast}
-            formatOptions={{ style: 'currency', currency, maximumFractionDigits: 0, minimumFractionDigits: 0 }}
+            formatOptions={{ style: 'currency', currency, maximumFractionDigits: 2, minimumFractionDigits: 2 }}
             className="tabular-nums"
           />
         }
@@ -114,7 +114,7 @@ export function PayrollKPICards({ kpis, isLoading }: PayrollKPICardsProps) {
         value={
           <AnimatedNumber
             value={kpis.ytdPayrollTotal}
-            formatOptions={{ style: 'currency', currency, maximumFractionDigits: 0, minimumFractionDigits: 0 }}
+            formatOptions={{ style: 'currency', currency, maximumFractionDigits: 2, minimumFractionDigits: 2 }}
             className="tabular-nums"
           />
         }
@@ -144,7 +144,7 @@ export function PayrollKPICards({ kpis, isLoading }: PayrollKPICardsProps) {
         value={
           <AnimatedNumber
             value={kpis.employerTaxBurden}
-            formatOptions={{ style: 'currency', currency, maximumFractionDigits: 0, minimumFractionDigits: 0 }}
+            formatOptions={{ style: 'currency', currency, maximumFractionDigits: 2, minimumFractionDigits: 2 }}
             className="tabular-nums"
           />
         }
@@ -174,7 +174,7 @@ export function PayrollKPICards({ kpis, isLoading }: PayrollKPICardsProps) {
         value={
           <AnimatedNumber
             value={kpis.tipsCollected}
-            formatOptions={{ style: 'currency', currency, maximumFractionDigits: 0, minimumFractionDigits: 0 }}
+            formatOptions={{ style: 'currency', currency, maximumFractionDigits: 2, minimumFractionDigits: 2 }}
             className="tabular-nums"
           />
         }

@@ -240,7 +240,7 @@ export function RentRevenueTab({ organizationId }: RentRevenueTabProps) {
                 <AreaChart data={stats?.chartData || []}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                   <XAxis dataKey="month" className="text-xs" />
-                  <YAxis className="text-xs" tickFormatter={(v) => formatCurrencyUtil(v, undefined, { maximumFractionDigits: 0, minimumFractionDigits: 0 })} />
+                  <YAxis className="text-xs" tickFormatter={(v) => formatCurrencyUtil(v, undefined, { maximumFractionDigits: 2, minimumFractionDigits: 2 })} />
                   <Tooltip 
                     formatter={(value: number) => formatCurrencyUtil(value)}
                     contentStyle={{ 

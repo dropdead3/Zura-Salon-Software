@@ -49,7 +49,7 @@ export function RentRevenueAnalytics({ organizationId }: RentRevenueAnalyticsPro
             <p className="text-2xl font-medium text-primary tabular-nums">
               <AnimatedNumber
                 value={metrics.monthlyRentRevenue}
-                formatOptions={{ style: 'currency', currency, maximumFractionDigits: 0, minimumFractionDigits: 0 }}
+                formatOptions={{ style: 'currency', currency, maximumFractionDigits: 2, minimumFractionDigits: 2 }}
               />
             </p>
           </CardContent>
@@ -64,7 +64,7 @@ export function RentRevenueAnalytics({ organizationId }: RentRevenueAnalyticsPro
             <p className="text-2xl font-medium tabular-nums">
               <AnimatedNumber
                 value={metrics.yearlyRentRevenue}
-                formatOptions={{ style: 'currency', currency, maximumFractionDigits: 0, minimumFractionDigits: 0 }}
+                formatOptions={{ style: 'currency', currency, maximumFractionDigits: 2, minimumFractionDigits: 2 }}
               />
             </p>
           </CardContent>
@@ -91,7 +91,7 @@ export function RentRevenueAnalytics({ organizationId }: RentRevenueAnalyticsPro
             <p className="text-2xl font-medium text-red-400 tabular-nums">
               <AnimatedNumber
                 value={metrics.overdueBalance}
-                formatOptions={{ style: 'currency', currency, maximumFractionDigits: 0, minimumFractionDigits: 0 }}
+                formatOptions={{ style: 'currency', currency, maximumFractionDigits: 2, minimumFractionDigits: 2 }}
               />
             </p>
             {metrics.overdueRenterCount > 0 && (
