@@ -397,7 +397,15 @@ THRESHOLDS TO FLAG:
 
 Additionally, review the UNUSED FEATURES & INTEGRATIONS section. Based on the business data patterns, identify 2-4 of the most impactful unused features or integrations that would benefit this business. For each, explain WHY it would help based on the specific data you see, and HOW to get started. Use the suggestionKey format "feature:<key>" for features and "integration:<name>" for integrations.
 
-Also generate 3-5 specific, actionable checkbox-style tasks (suggestedTasks) the owner can complete based on the data patterns. These should be concrete and completable (e.g., "Review and reach out to 5 clients who haven't visited in 60+ days") rather than vague recommendations. Assign a priority and optionally a number of days from now when it should be due.`,
+Also generate 3-5 specific, actionable checkbox-style tasks (suggestedTasks) the owner can complete based on the data patterns. These should be concrete and completable (e.g., "Review and reach out to 5 clients who haven't visited in 60+ days") rather than vague recommendations. Assign a priority and optionally a number of days from now when it should be due.
+
+ENRICHMENT RULES FOR EVERY INSIGHT:
+- estimatedImpact: For every insight, estimate the weekly or monthly dollar impact using actual numbers from the data snapshot. Frame as loss ('~$X/wk lost') or opportunity ('~$X/mo opportunity'). Set to null only if the data truly cannot support a reasonable estimate.
+- trendDirection: Set by comparing this week vs last week for the relevant metric. Use "improving", "declining", or "stable". Null only if insufficient historical data.
+- comparisonContext: Cite industry benchmarks or the salon's own historical average. Key benchmarks: rebooking rate 65%, retail attachment 30%, no-show rate <5%, cancellation <10%, average ticket varies by market. Format: "Industry avg: X% · You: Y%" or "Last week: $X · This week: $Y".
+- actByDate: Set for insights where delay worsens the problem (cancellation spikes, no-show patterns, capacity gaps, revenue drops). Use 'Today', 'Within 3 days', 'This week', or 'This month'. Null for informational insights without time pressure.
+- effortLevel: Tag "quick_win" for actions completable in one session (<30 min), "strategic" for multi-week initiatives requiring planning or training. Null if ambiguous.
+- staffMentions: When specific staff members are underperforming or excelling on the relevant metric, include their display_name (max 3). Cross-reference staff data with appointments. Null if insight is org-wide without staff-specific relevance.`,
           },
           {
             role: "user",
@@ -446,6 +454,33 @@ Also generate 3-5 specific, actionable checkbox-style tasks (suggestedTasks) the
                         severity: {
                           type: "string",
                           enum: ["info", "warning", "critical"],
+                        },
+                        estimatedImpact: {
+                          type: ["string", "null"],
+                          description: "Dollar impact estimate, e.g. '~$2,246/wk lost' or '~$800/mo opportunity'. Null if not quantifiable.",
+                        },
+                        trendDirection: {
+                          type: ["string", "null"],
+                          enum: ["improving", "declining", "stable", null],
+                          description: "Trend based on week-over-week or period comparison.",
+                        },
+                        comparisonContext: {
+                          type: ["string", "null"],
+                          description: "Benchmark comparison, e.g. 'Industry avg: 30% · You: 17%'. Null if no benchmark applies.",
+                        },
+                        actByDate: {
+                          type: ["string", "null"],
+                          description: "Urgency framing: 'Today', 'Within 3 days', 'This week', or 'This month'. Null if not time-sensitive.",
+                        },
+                        effortLevel: {
+                          type: ["string", "null"],
+                          enum: ["quick_win", "strategic", null],
+                          description: "quick_win = completable in <30 min, strategic = multi-week initiative.",
+                        },
+                        staffMentions: {
+                          type: ["array", "null"],
+                          items: { type: "string" },
+                          description: "Display names of up to 3 staff members relevant to this insight. Null if not staff-specific.",
                         },
                       },
                       required: ["category", "title", "description", "severity"],
