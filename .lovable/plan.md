@@ -1,46 +1,68 @@
 
 
-## Fix: Preview Button 404 — Missing Public RLS Policy on Organizations
+## Fix: Footer Reveal Bleeding Through First Section
 
 ### Problem
 
-When clicking **Preview** in the editor, the button opens `/org/drop-dead-salons` in a new tab. The `OrgPublicRoute` component calls `useOrganizationBySlug('drop-dead-salons')`, which queries the `organizations` table. However, all existing RLS policies on that table require `auth.uid()` (authenticated users only):
+The Layout uses a "parallax footer reveal" pattern where:
+1. The `<Footer>` is `fixed bottom-0 z-0` — always rendered at the bottom of the viewport
+2. The main content is `relative z-10 bg-background` with `marginBottom: footerHeight` — creates a gap at the bottom where the footer reveals as you scroll
 
-- "Platform users can view all organizations" — requires platform role
-- "Users can view their own organization" — requires membership
-
-An unauthenticated visitor (or a new tab without an active session) gets a Postgres RLS denial, which surfaces as an error in `OrgPublicRoute`, triggering the `<NotFound />` fallback — the exact 404 you see.
-
-### Root Cause
-
-The `/org/:orgSlug` routes are **public-facing pages** (the salon's website for their clients), but the database has no anonymous/public SELECT policy on the `organizations` table.
+**The bug**: The footer content ("Death to bad hair", "Navigate", "Locations") is confirmed visible behind the hero section because:
+- The `rounded-b-[2rem]` on the main content div clips the bottom corners, creating gaps where the fixed footer peeks through
+- The gradient overlay div (`absolute bottom-0`, `h-24 md:h-32`) uses semi-transparent backgrounds (`hsl(var(--background) / 0.5)`) that don't fully cover the footer
+- On initial page load, `footerHeight` starts at `0` and jumps to the real value after 100ms, causing a layout shift
 
 ### Fix
 
-Add a **narrowly scoped** RLS policy that allows anonymous SELECT access to **only** the columns needed for public site rendering, restricted to **active** organizations. This is the standard pattern for public storefronts.
+**Hide the fixed footer until the user is near the bottom of the page.** Instead of always rendering the footer behind the content and relying on the content to cover it, we control footer visibility with scroll position.
 
-#### 1. Database Migration
+#### File: `src/components/layout/Layout.tsx`
 
-```sql
-CREATE POLICY "Public can view active organizations by slug"
-  ON public.organizations
-  FOR SELECT
-  USING (status = 'active');
+1. **Add scroll-based footer visibility**: Track whether the user has scrolled near the bottom of the page. Only show the fixed footer when they're within range of the footer reveal area.
+
+2. **Set the footer to `visibility: hidden` / `opacity: 0` until scroll threshold is met**: This prevents the footer from bleeding through content at any scroll position.
+
+3. **Remove the gradient overlay div entirely** (lines 100-108): This decorative gradient at `absolute bottom-0` adds a semi-transparent layer that interferes with content and doesn't add meaningful value to the reveal effect. The `rounded-b-[2rem]` + `shadow` on the main content div already provides a clean visual transition to the footer.
+
+```tsx
+// Add to Layout component:
+const [showFooter, setShowFooter] = useState(false);
+
+useEffect(() => {
+  const handleScroll = () => {
+    const scrollY = window.scrollY;
+    const windowHeight = window.innerHeight;
+    const documentHeight = document.documentElement.scrollHeight;
+    // Show footer when within 2 viewport heights of the bottom
+    setShowFooter(scrollY + windowHeight > documentHeight - windowHeight * 2);
+  };
+  window.addEventListener('scroll', handleScroll, { passive: true });
+  return () => window.removeEventListener('scroll', handleScroll);
+}, []);
+
+// On the fixed footer wrapper:
+<div
+  ref={footerRef}
+  className="fixed bottom-0 left-0 right-0 z-0 transition-opacity duration-300"
+  style={{ opacity: showFooter ? 1 : 0, visibility: showFooter ? 'visible' : 'hidden' }}
+>
+  <Footer />
+</div>
 ```
 
-This allows unauthenticated requests to read organization rows, but **only** active ones. Combined with the existing authenticated policies, this is additive and does not weaken any existing access control.
-
-**Security note**: The `organizations` table contains fields like `name`, `slug`, `logo_url`, `business_type`, `settings`, and `timezone` — all of which are already displayed on the public site. Sensitive fields like `primary_contact_email`, `primary_contact_phone`, and `legal_name` are present but are not used by public components. If desired, a database view could further restrict columns, but this is a Phase 2 concern and matches the current public site architecture.
-
-#### 2. No Code Changes
-
-The `useOrganizationBySlug` hook, `OrgPublicRoute`, and all public page components are already correct. They just need the database to allow the query to succeed for anonymous users.
+4. **Remove the gradient overlay div** (the `absolute bottom-0 h-24 md:h-32` div with blur/gradient) — it serves no purpose now and was the primary source of visual bleed.
 
 ### Files
 
 | File | Change |
 |---|---|
-| Database migration | Add public SELECT policy for active organizations |
+| `src/components/layout/Layout.tsx` | Add scroll-based footer visibility, remove gradient overlay |
 
-One migration. No code file changes.
+### Technical Notes
+
+- The footer still measures correctly via `ResizeObserver` (it's in the DOM, just hidden)
+- `visibility: hidden` preserves layout measurement while preventing rendering artifacts
+- The scroll threshold (2x viewport height from bottom) ensures the footer fades in well before the user reaches the reveal area
+- The `transition-opacity duration-300` provides a smooth appearance
 
