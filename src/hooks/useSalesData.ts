@@ -321,8 +321,11 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
         };
       }
 
-      const serviceRevenue = data.reduce((sum, apt) => sum + (Number(apt.total_price) || 0), 0);
-      const totalRevenue = serviceRevenue + productRevenue;
+      // appointment total_price already includes bundled products — do NOT add productRevenue again
+      const appointmentRevenue = data.reduce((sum, apt) => sum + (Number(apt.total_price) || 0), 0);
+      const totalRevenue = appointmentRevenue;
+      // derive service-only revenue by subtracting product revenue (for breakdown display)
+      const serviceRevenue = Math.max(0, appointmentRevenue - productRevenue);
       const totalServices = data.length;
       const daysWithSales = new Set(data.map(d => d.appointment_date).filter(Boolean)).size;
       
@@ -340,8 +343,8 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
         productRevenue,
         totalServices,
         totalProducts,
-        totalTransactions: totalServices + totalProducts,
-        averageTicket: (totalServices + totalProducts) > 0 ? totalRevenue / (totalServices + totalProducts) : 0,
+        totalTransactions: totalServices,
+        averageTicket: totalServices > 0 ? totalRevenue / totalServices : 0,
         totalDiscounts: 0,
         unmappedStaffRecords: 0,
         totalServiceHours,
