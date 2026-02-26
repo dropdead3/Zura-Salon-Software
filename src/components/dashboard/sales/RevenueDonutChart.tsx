@@ -34,7 +34,7 @@ export function RevenueDonutChart({
     if (total === 0) return emptyData;
     return [
       { name: 'Services', value: serviceRevenue, color: 'hsl(var(--foreground))' },
-      { name: 'Retail', value: productRevenue, color: 'hsla(35, 70%, 45%, 0.55)' },
+      { name: 'Retail', value: productRevenue, color: 'hsl(var(--muted-foreground) / 0.4)' },
     ].filter(d => d.value > 0);
   }, [serviceRevenue, productRevenue]);
 
@@ -107,7 +107,7 @@ export function RevenueDonutChart({
             </div>
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: 'hsla(35, 70%, 45%, 0.55)' }} />
+                <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: 'hsl(var(--muted-foreground) / 0.4)' }} />
                 <span className="text-muted-foreground">Retail</span>
               </div>
               <span className="font-medium tabular-nums">{retailPercent}%</span>
