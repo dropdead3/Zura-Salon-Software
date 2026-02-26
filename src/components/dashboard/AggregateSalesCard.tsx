@@ -266,6 +266,7 @@ export function AggregateSalesCard({
 
   // Location display logic
   const isAllLocations = !filterContext?.locationId || filterContext.locationId === 'all';
+  const [locationRevenueView, setLocationRevenueView] = useState<'expected' | 'actual'>('actual');
   const selectedLocationName = !isAllLocations 
     ? locations?.find(loc => loc.id === filterContext.locationId)?.name 
     : null;
@@ -1215,6 +1216,28 @@ export function AggregateSalesCard({
             <div className="flex items-center gap-2">
               <Building2 className="w-4 h-4 text-muted-foreground" />
               <h3 className="font-display text-xs tracking-wide text-muted-foreground">{t('sales.by_location')}</h3>
+              {isToday && (
+                <div className="flex items-center bg-muted/50 rounded-full p-0.5 text-xs font-sans">
+                  <button
+                    className={cn(
+                      'px-3 py-1 rounded-full transition-colors',
+                      locationRevenueView === 'actual' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground'
+                    )}
+                    onClick={() => setLocationRevenueView('actual')}
+                  >
+                    Actual
+                  </button>
+                  <button
+                    className={cn(
+                      'px-3 py-1 rounded-full transition-colors',
+                      locationRevenueView === 'expected' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground'
+                    )}
+                    onClick={() => setLocationRevenueView('expected')}
+                  >
+                    Expected
+                  </button>
+                </div>
+              )}
             </div>
             <div className="flex items-center gap-2">
               {availableRegions.length >= 2 && (
@@ -1287,16 +1310,29 @@ export function AggregateSalesCard({
                           <span className="text-sm font-display tabular-nums">
                             <BlurredAmount>
                               {(() => {
-                                // On today view, show actual revenue as primary value when available
                                 const locActual = isToday ? locationActuals[location.location_id || ''] : null;
-                                const useActual = locActual?.hasActualData && (locationSortField === 'totalRevenue' || locationSortField === 'name');
+                                const useActualView = isToday && locationRevenueView === 'actual';
                                 
-                                if (locationSortField === 'totalTransactions') return location.totalTransactions.toLocaleString();
-                                if (locationSortField === 'avgTicket') return formatCurrency(avgTicket);
-                                if (locationSortField === 'name' || locationSortField === 'totalRevenue') {
-                                  return useActual ? formatCurrency(locActual!.actualRevenue) : formatCurrency(location.totalRevenue);
+                                if (locationSortField === 'totalTransactions') {
+                                  if (useActualView) return (locActual?.actualTransactions ?? 0).toLocaleString();
+                                  return location.totalTransactions.toLocaleString();
                                 }
-                                return formatCurrency(location[locationSortField] ?? 0);
+                                if (locationSortField === 'avgTicket') {
+                                  if (useActualView) {
+                                    const actTx = locActual?.actualTransactions ?? 0;
+                                    const actAvg = actTx > 0 ? (locActual?.actualRevenue ?? 0) / actTx : 0;
+                                    return formatCurrency(Math.round(actAvg));
+                                  }
+                                  return formatCurrency(avgTicket);
+                                }
+                                if (locationSortField === 'serviceRevenue') {
+                                  return useActualView ? formatCurrency(locActual?.actualServiceRevenue ?? 0) : formatCurrency(location.serviceRevenue);
+                                }
+                                if (locationSortField === 'productRevenue') {
+                                  return useActualView ? formatCurrency(locActual?.actualProductRevenue ?? 0) : formatCurrency(location.productRevenue);
+                                }
+                                // totalRevenue or name
+                                return useActualView ? formatCurrency(locActual?.actualRevenue ?? 0) : formatCurrency(location.totalRevenue);
                               })()}
                             </BlurredAmount>
                           </span>
@@ -1327,10 +1363,18 @@ export function AggregateSalesCard({
                                   )}
                                   aria-label={t('sales.services')}
                                 >
-                                  <p className="text-xs text-muted-foreground mb-1">{t('sales.services')}</p>
-                                  <p className="text-sm font-display tabular-nums">
-                                    <BlurredAmount>{formatCurrency(location.serviceRevenue)}</BlurredAmount>
-                                  </p>
+                                  {(() => {
+                                    const locActual = isToday ? locationActuals[location.location_id || ''] : null;
+                                    const useAct = isToday && locationRevenueView === 'actual';
+                                    return (
+                                      <>
+                                        <p className="text-xs text-muted-foreground mb-1">{t('sales.services')}</p>
+                                        <p className="text-sm font-display tabular-nums">
+                                          <BlurredAmount>{formatCurrency(useAct ? (locActual?.actualServiceRevenue ?? 0) : location.serviceRevenue)}</BlurredAmount>
+                                        </p>
+                                      </>
+                                    );
+                                  })()}
                                 </button>
                                 {/* Products */}
                                 <button
@@ -1343,10 +1387,18 @@ export function AggregateSalesCard({
                                   )}
                                   aria-label={t('sales.products')}
                                 >
-                                  <p className="text-xs text-muted-foreground mb-1">{t('sales.products')}</p>
-                                  <p className="text-sm font-display tabular-nums">
-                                    <BlurredAmount>{formatCurrency(location.productRevenue)}</BlurredAmount>
-                                  </p>
+                                  {(() => {
+                                    const locActual = isToday ? locationActuals[location.location_id || ''] : null;
+                                    const useAct = isToday && locationRevenueView === 'actual';
+                                    return (
+                                      <>
+                                        <p className="text-xs text-muted-foreground mb-1">{t('sales.products')}</p>
+                                        <p className="text-sm font-display tabular-nums">
+                                          <BlurredAmount>{formatCurrency(useAct ? (locActual?.actualProductRevenue ?? 0) : location.productRevenue)}</BlurredAmount>
+                                        </p>
+                                      </>
+                                    );
+                                  })()}
                                 </button>
                                 {/* Transactions */}
                                 <button
@@ -1359,10 +1411,18 @@ export function AggregateSalesCard({
                                   )}
                                   aria-label={t('sales.transactions')}
                                 >
-                                  <p className="text-xs text-muted-foreground mb-1">{t('sales.transactions')}</p>
-                                  <p className="text-sm font-display tabular-nums">
-                                    <BlurredAmount>{location.totalTransactions}</BlurredAmount>
-                                  </p>
+                                  {(() => {
+                                    const locActual = isToday ? locationActuals[location.location_id || ''] : null;
+                                    const useAct = isToday && locationRevenueView === 'actual';
+                                    return (
+                                      <>
+                                        <p className="text-xs text-muted-foreground mb-1">{t('sales.transactions')}</p>
+                                        <p className="text-sm font-display tabular-nums">
+                                          <BlurredAmount>{useAct ? (locActual?.actualTransactions ?? 0) : location.totalTransactions}</BlurredAmount>
+                                        </p>
+                                      </>
+                                    );
+                                  })()}
                                 </button>
                                 {/* Avg Ticket */}
                                 <button
@@ -1375,10 +1435,21 @@ export function AggregateSalesCard({
                                   )}
                                   aria-label={t('sales.avg_ticket')}
                                 >
-                                  <p className="text-xs text-muted-foreground mb-1">{t('sales.avg_ticket')}</p>
-                                  <p className="text-sm font-display tabular-nums">
-                                    <BlurredAmount>{formatCurrency(isFinite(avgTicket) ? Math.round(avgTicket) : 0)}</BlurredAmount>
-                                  </p>
+                                  {(() => {
+                                    const locActual = isToday ? locationActuals[location.location_id || ''] : null;
+                                    const useAct = isToday && locationRevenueView === 'actual';
+                                    const txVal = useAct ? (locActual?.actualTransactions ?? 0) : location.totalTransactions;
+                                    const revVal = useAct ? (locActual?.actualRevenue ?? 0) : location.totalRevenue;
+                                    const avgVal = txVal > 0 ? revVal / txVal : 0;
+                                    return (
+                                      <>
+                                        <p className="text-xs text-muted-foreground mb-1">{t('sales.avg_ticket')}</p>
+                                        <p className="text-sm font-display tabular-nums">
+                                          <BlurredAmount>{formatCurrency(isFinite(avgVal) ? Math.round(avgVal) : 0)}</BlurredAmount>
+                                        </p>
+                                      </>
+                                    );
+                                  })()}
                                 </button>
                                 {/* Trend */}
                                 <button
