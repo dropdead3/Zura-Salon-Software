@@ -19,12 +19,14 @@ export function SilverShineButton({ children, className, onClick }: SilverShineB
       transition={{ duration: 0.2, ease: 'easeOut' }}
       onClick={onClick}
       className={cn(
-        'silver-shine-border rounded-md cursor-pointer border border-border/40 bg-background',
+        'silver-shine-border rounded-md cursor-pointer p-[1px]',
         className,
       )}
     >
-      <span className="relative z-[2] inline-flex items-center gap-2 h-9 px-4 w-full text-sm font-sans whitespace-nowrap">
-        {children}
+      <span className="silver-shine-inner block bg-background rounded-[calc(theme(borderRadius.md)-1px)]">
+        <span className="inline-flex items-center gap-2 h-9 px-4 w-full text-sm font-sans whitespace-nowrap">
+          {children}
+        </span>
       </span>
     </motion.button>
   );
