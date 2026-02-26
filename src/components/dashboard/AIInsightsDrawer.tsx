@@ -55,6 +55,7 @@ import { ZuraAvatar } from '@/components/ui/ZuraAvatar';
 type InsightTab = 'insights' | 'action_items' | 'suggestions';
 
 const severityOrder: Record<InsightItem['severity'], number> = { critical: 0, warning: 1, info: 2 };
+// Priority score sort is now primary; severity is fallback
 const priorityOrder: Record<ActionItem['priority'], number> = { high: 0, medium: 1, low: 2 };
 
 const categoryToAnalyticsTab: Partial<Record<InsightItem['category'], string>> = {
@@ -149,6 +150,13 @@ function InsightCard({ insight, onRequestGuidance, drillDownHref }: { insight: I
 
   const hasMeta = insight.estimatedImpact || insight.trendDirection || insight.comparisonContext || insight.actByDate || insight.effortLevel || (insight.staffMentions && insight.staffMentions.length > 0);
 
+  const impactTypeLabel: Record<string, string> = { at_risk: 'At Risk', opportunity: 'Opportunity', inefficiency: 'Inefficiency' };
+  const impactTypeColor: Record<string, string> = {
+    at_risk: 'text-red-600 dark:text-red-400',
+    opportunity: 'text-emerald-600 dark:text-emerald-400',
+    inefficiency: 'text-amber-600 dark:text-amber-400',
+  };
+
   return (
     <div className={cn(
       'rounded-xl border-l-[3px] border border-border/50 p-3.5 transition-colors shadow-sm',
@@ -160,11 +168,28 @@ function InsightCard({ insight, onRequestGuidance, drillDownHref }: { insight: I
           <Icon className="w-4 h-4" />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-0.5">
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-display">
-              {config?.label || insight.category}
-            </span>
-          </div>
+          {/* Impact-led header: show dollar impact prominently when available */}
+          {insight.impactEstimateNumeric != null && insight.impactEstimateNumeric > 0 ? (
+            <div className="flex items-baseline gap-2 mb-1">
+              <span className="text-lg font-display tracking-wide">
+                <BlurredAmount>${insight.impactEstimateNumeric.toLocaleString()}</BlurredAmount>
+              </span>
+              {insight.impactType && (
+                <span className={cn('text-[10px] uppercase tracking-wider font-display', impactTypeColor[insight.impactType])}>
+                  {impactTypeLabel[insight.impactType]}
+                </span>
+              )}
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-display ml-auto">
+                {config?.label || insight.category}
+              </span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 mb-0.5">
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-display">
+                {config?.label || insight.category}
+              </span>
+            </div>
+          )}
           <p className={cn('text-sm font-medium leading-snug', isCritical && 'text-base')}>{insight.title}</p>
           <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
             <InsightDescriptionWithLinks description={insight.description} />
@@ -292,6 +317,60 @@ function ActionItemCard({ item, index, onRequestGuidance, isEven }: { item: Acti
   );
 }
 
+/** Business Health Summary Strip — derived dynamically from active insights */
+function BusinessHealthStrip({ insights }: { insights: InsightItem[] }) {
+  const healthCategories = [
+    { key: 'revenue_pulse' as const, label: 'Revenue', icon: DollarSign },
+    { key: 'client_health' as const, label: 'Retention', icon: HeartPulse },
+    { key: 'cash_flow' as const, label: 'Retail', icon: TrendingUp },
+    { key: 'capacity' as const, label: 'Capacity', icon: Activity },
+    { key: 'staffing' as const, label: 'Staffing', icon: Users },
+  ];
+
+  const categoryHealth = (cat: InsightItem['category']) => {
+    const catInsights = insights.filter(i => i.category === cat);
+    if (catInsights.length === 0) return { severity: 'none' as const, trend: null as string | null };
+    // Worst severity wins
+    const worst = catInsights.some(i => i.severity === 'critical') ? 'critical'
+      : catInsights.some(i => i.severity === 'warning') ? 'warning' : 'info';
+    // Dominant trend
+    const trends = catInsights.map(i => i.trendDirection).filter(Boolean);
+    const trend = trends.length > 0 ? (trends.filter(t => t === 'declining').length > trends.length / 2 ? 'declining'
+      : trends.filter(t => t === 'improving').length > trends.length / 2 ? 'improving' : 'stable') : null;
+    return { severity: worst, trend };
+  };
+
+  const severityDot: Record<string, string> = {
+    critical: 'bg-red-500',
+    warning: 'bg-amber-500',
+    info: 'bg-blue-500',
+    none: 'bg-muted-foreground/20',
+  };
+
+  const trendIcon = (trend: string | null) => {
+    if (trend === 'improving') return <TrendingUp className="w-3 h-3 text-emerald-500" />;
+    if (trend === 'declining') return <TrendingDown className="w-3 h-3 text-red-500" />;
+    if (trend === 'stable') return <Activity className="w-3 h-3 text-muted-foreground" />;
+    return null;
+  };
+
+  return (
+    <div className="flex items-center gap-1 overflow-x-auto py-1">
+      {healthCategories.map(({ key, label, icon: CatIcon }) => {
+        const health = categoryHealth(key);
+        return (
+          <div key={key} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-muted/30 min-w-0 shrink-0">
+            <CatIcon className="w-3 h-3 text-muted-foreground shrink-0" />
+            <span className="text-[10px] font-display tracking-wider uppercase text-muted-foreground">{label}</span>
+            <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', severityDot[health.severity])} />
+            {trendIcon(health.trend)}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function SeverityCounts({ insights }: { insights: InsightItem[] }) {
   const counts = { critical: 0, warning: 0, info: 0 };
   insights.forEach(i => counts[i.severity]++);
@@ -403,7 +482,13 @@ export function AIInsightsPanel({ onClose }: { onClose: () => void }) {
   const hasInsights = (data?.insights?.length ?? 0) > 0;
   const hasActionItems = (data?.actionItems?.length ?? 0) > 0;
   const hasSuggestions = visibleSuggestions.length > 0;
-  const sortedInsights = data?.insights ? [...data.insights].sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity]) : [];
+  // Sort by priorityScore (descending), fallback to severity
+  const sortedInsights = data?.insights ? [...data.insights].sort((a, b) => {
+    const scoreA = a.priorityScore ?? 0;
+    const scoreB = b.priorityScore ?? 0;
+    if (scoreB !== scoreA) return scoreB - scoreA;
+    return severityOrder[a.severity] - severityOrder[b.severity];
+  }) : [];
   const sortedActionItems = data?.actionItems ? [...data.actionItems].sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]) : [];
 
   const tabCount = [hasInsights, hasActionItems, hasSuggestions].filter(Boolean).length;
@@ -520,6 +605,10 @@ export function AIInsightsPanel({ onClose }: { onClose: () => void }) {
                           {formatDistanceToNow(new Date(generatedAt), { addSuffix: true })}
                         </span>
                       )}
+                    </div>
+                    {/* Business Health Summary Strip */}
+                    <div className="mt-2">
+                      <BusinessHealthStrip insights={data.insights || []} />
                     </div>
                     <div className="flex items-center justify-between mt-2">
                       <SeverityCounts insights={data.insights || []} />

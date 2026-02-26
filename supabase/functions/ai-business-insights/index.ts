@@ -615,6 +615,69 @@ ENRICHMENT RULES FOR EVERY INSIGHT:
       );
     }
 
+    // ─── Pre-computed dollar impacts for deterministic scoring ───
+    const avgTicketNum = Number(avgTicket30d) || 0;
+    const rebookRate = completedCount > 0 ? rebookedCount / completedCount : 0;
+    const rebookingGap = completedCount > 0 ? Math.round((0.65 - rebookRate) * completedCount * avgTicketNum * 0.25) : 0; // weekly est
+    const retailGap = attachmentRate < 30 ? Math.round((0.30 - attachmentRate / 100) * serviceTransactionIds.size * 15) : 0; // avg retail $15
+    const cancellationLoss = Math.round(cancelledCount * avgTicketNum);
+
+    const preComputedImpacts: Record<string, { numeric: number; type: string }> = {
+      revenue_pulse: { numeric: Math.max(rebookingGap, 0), type: rebookingGap > 0 ? 'at_risk' : 'opportunity' },
+      client_health: { numeric: Math.max(rebookingGap, 0), type: 'at_risk' },
+      cash_flow: { numeric: cancellationLoss, type: 'at_risk' },
+      capacity: { numeric: Math.round((staff.length * 8 - (completedCount / 7)) * avgTicketNum * 0.3), type: 'inefficiency' },
+      staffing: { numeric: Math.round((staff.length * 8 - (completedCount / 7)) * avgTicketNum * 0.2), type: 'inefficiency' },
+      anomaly: { numeric: 0, type: 'at_risk' },
+    };
+
+    // ─── Deterministic priority scoring (post-AI) ───
+    const timeSensitivityWeight: Record<string, number> = {
+      'Today': 1.0,
+      'Within 3 days': 0.85,
+      'This week': 0.7,
+      'This month': 0.4,
+    };
+
+    const severityToUrgency: Record<string, number> = { critical: 90, warning: 60, info: 30 };
+    const effortToScore: Record<string, number> = { quick_win: 2, strategic: 4 };
+
+    // Find max impact for normalization
+    const allImpacts = (insights.insights || []).map((ins: any) => {
+      const preComputed = preComputedImpacts[ins.category];
+      return preComputed?.numeric || 0;
+    });
+    const maxImpact = Math.max(...allImpacts, 1);
+
+    // Enrich each insight with deterministic scores
+    insights.insights = (insights.insights || []).map((ins: any) => {
+      const preComputed = preComputedImpacts[ins.category] || { numeric: 0, type: 'opportunity' };
+      const impactNumeric = preComputed.numeric;
+      const normalizedImpact = (impactNumeric / maxImpact) * 100;
+      const urgency = severityToUrgency[ins.severity] || 30;
+      const confidence = ins.trendDirection ? 70 : 50; // higher if we have trend data
+      const effort = effortToScore[ins.effortLevel] || 3;
+      const timeSens = timeSensitivityWeight[ins.actByDate] || 0.4;
+
+      const priorityScore = Math.round(
+        (normalizedImpact * 0.45) +
+        (urgency * 0.25) +
+        (confidence * 0.15) +
+        ((6 - effort) * 20 * 0.10) + // scale effort inverse to 0-100
+        (timeSens * 100 * 0.05)
+      );
+
+      return {
+        ...ins,
+        impactEstimateNumeric: impactNumeric,
+        impactType: preComputed.type,
+        priorityScore: Math.min(100, Math.max(0, priorityScore)),
+      };
+    });
+
+    // Sort insights by priority score descending
+    insights.insights.sort((a: any, b: any) => (b.priorityScore || 0) - (a.priorityScore || 0));
+
     // Cache the result (upsert)
     const expiresAt = new Date(Date.now() + CACHE_HOURS * 3600000).toISOString();
     const now = new Date().toISOString();
