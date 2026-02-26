@@ -1,76 +1,71 @@
 
 
-## Diagnosis: Why the Previous Fix Didn't Work
+## #1 Performer Premium Emphasis
 
-The previous implementation correctly restructured the layout into 3 zones — but it used **viewport breakpoints** (`xl:flex` at 1280px). The TopPerformersCard lives inside a sidebar that's only **1/3 of the viewport width** in the `grid xl:grid-cols-3` layout of AggregateSalesCard. On a 1440px screen, the card is roughly 400px wide, yet `xl:` classes fire because the **viewport** is 1440px. Avatars stay visible, everything crams into a 400px column, and no layout shift occurs.
+### What Changes
 
-Viewport breakpoints cannot solve this. The card needs **container queries** — responding to its own width, not the window's.
+Subtle visual elevation for the rank #1 row only — applied dynamically to whichever performer is currently ranked first (not a specific person). No new elements, no density increase.
 
----
+### Technical Changes
 
-## Technical Plan
+**File: `src/components/dashboard/sales/TopPerformersCard.tsx`**
 
-### Approach: CSS Container Queries via Tailwind
+**1. Update `getRankStyles` for rank 1** (lines 32–37)
 
-Tailwind v3.3+ supports `@container` via the `@container` variant. We add `@container` to the card wrapper and use `@[width]:` arbitrary container breakpoints on child elements.
-
-### File: `src/components/dashboard/sales/TopPerformersCard.tsx`
-
-**1. Add container query context to the card**
-
-On the outermost `<Card>`, add the class `@container` (Tailwind's container query declaration). This makes all descendants queryable against the card's own width.
-
-**2. Replace viewport breakpoints with container breakpoints**
-
-| Current (viewport) | New (container) | Purpose |
-|---|---|---|
-| `hidden xl:flex` on Avatar | `hidden @[400px]:flex` | Show avatar only when card is ≥ 400px wide |
-| (none) | Additional container breakpoints for spacing | Tighter/wider spacing based on card width |
-
-The 400px threshold ensures avatars only appear when the card has enough horizontal room — whether it's in a sidebar, full-width command center, or any other layout context.
-
-**3. Specific element changes in the performer row**
-
-Avatar line changes from:
+Current:
 ```tsx
-<Avatar className="h-9 w-9 shrink-0 hidden xl:flex mt-0.5">
-```
-To:
-```tsx
-<Avatar className="h-9 w-9 shrink-0 hidden @[400px]:flex mt-0.5">
+badge: 'bg-chart-4/15 text-chart-4 border border-chart-4/30',
+row: 'border-l-2 border-l-chart-4/60',
 ```
 
-**4. Add `@tailwindcss/container-queries` plugin**
+New:
+```tsx
+badge: 'bg-chart-4/15 text-chart-4 border border-chart-4/30',
+row: 'border-l-2 border-l-chart-4/60 ring-1 ring-chart-4/10 shadow-sm py-0.5',
+```
 
-Container queries require the `@tailwindcss/container-queries` plugin for Tailwind. This needs to be added:
-- Install `@tailwindcss/container-queries`
-- Add to `tailwind.config.ts` plugins array
+- `ring-1 ring-chart-4/10` — ultra-subtle accent stroke at 10% opacity (barely visible, not bright gold)
+- `shadow-sm` — one tier of elevation above the default flat rows
+- `py-0.5` — adds ~4px extra vertical padding to the row (stacks with existing `p-2.5`)
 
-**Alternative (no plugin needed):** Use inline CSS with raw `@container` queries via a wrapper `<div>` with `style={{ containerType: 'inline-size' }}` and a small CSS class that applies the breakpoint rules. However, the Tailwind plugin approach is cleaner and consistent with the existing Tailwind-first architecture.
+**2. Revenue text contrast for #1** (line 233)
 
-### Fallback if plugin is undesirable
+Change the `BlurredAmount` wrapper to accept a conditional class:
+```tsx
+<BlurredAmount className={cn(
+  "font-display text-sm shrink-0 whitespace-nowrap min-w-[80px] text-right",
+  rank === 1 && "text-foreground"
+)}>
+```
 
-If adding a dependency is unwanted, we can use a **ResizeObserver hook** approach:
-- Create a `useContainerWidth` hook that tracks the card's width
-- Pass width as a prop or use a CSS custom property
-- Apply conditional classes based on measured width
+For non-#1 rows, revenue inherits the default color. For #1, it gets full `text-foreground` contrast — brighter without changing size.
 
-This is more JavaScript but zero new dependencies.
+**3. Progress bar contrast for #1** (line 241)
 
----
+```tsx
+<motion.div
+  className={cn(
+    "h-full rounded-full",
+    rank === 1 ? "bg-primary" : "bg-primary/70"
+  )}
+  ...
+/>
+```
+
+The #1 bar stays at full primary opacity. All other bars drop to 70% — making #1 visually dominant without changing thickness or adding animation.
+
+### What Does NOT Change
+
+- Typography scale (no font size changes)
+- Layout structure (no new elements)
+- Container query breakpoints
+- Avatar visibility logic
+- Sort behavior
+- Data shown
 
 ### Files Changed
 
 | File | Action |
-|------|---|
-| `src/components/dashboard/sales/TopPerformersCard.tsx` | Add `@container` to Card, replace `xl:flex` with `@[400px]:flex` on Avatar |
-| `tailwind.config.ts` | Add `@tailwindcss/container-queries` plugin |
-| `package.json` | Install `@tailwindcss/container-queries` |
-
-### What Does NOT Change
-
-- Card header layout, sort dropdown, view all toggle
-- The 3-zone stacked structure (already correct)
-- Rank badge styling, animation, ScrollArea logic
-- Any other component
+|------|--------|
+| `src/components/dashboard/sales/TopPerformersCard.tsx` | Add ring/shadow to #1 row, brighten #1 revenue text, differentiate progress bar opacity |
 
