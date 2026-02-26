@@ -79,7 +79,7 @@ export function AnnouncementBarContent() {
   return (
     <EditorCard title="Announcement Bar" icon={Megaphone} description="Customize the promotional banner displayed above the header on the public website">
         {/* Visibility Toggle */}
-        <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+        <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
           <div>
             <Label htmlFor="enabled" className="text-base font-medium">Show Announcement Bar</Label>
             <p className="text-sm text-muted-foreground">
@@ -108,7 +108,7 @@ export function AnnouncementBarContent() {
                   type="button"
                   onClick={() => handleChange('bg_color', preset.value)}
                   className={cn(
-                    "relative w-10 h-10 rounded-lg border-2 transition-all duration-200 hover:scale-110",
+                    "relative w-8 h-8 rounded-lg border-2 transition-all duration-200 hover:scale-110",
                     isSelected ? "border-primary ring-2 ring-primary/20" : "border-border"
                   )}
                   style={{ backgroundColor: preset.color }}
@@ -121,22 +121,22 @@ export function AnnouncementBarContent() {
               );
             })}
           </div>
-          <div className="flex items-center gap-3">
-            <Label htmlFor="custom_color" className="text-sm whitespace-nowrap">Custom color</Label>
-            <div className="flex items-center gap-2 flex-1">
+          <div className="space-y-2">
+            <Label htmlFor="custom_color" className="text-sm">Custom color</Label>
+            <div className="flex items-center gap-2">
               <input
                 type="color"
                 id="custom_color_picker"
                 value={formData.bg_color || '#ebe6df'}
                 onChange={(e) => handleChange('bg_color', e.target.value)}
-                className="w-8 h-8 rounded border border-border cursor-pointer"
+                className="w-8 h-8 rounded border border-border cursor-pointer shrink-0"
               />
               <Input
                 id="custom_color"
                 value={formData.bg_color || ''}
                 onChange={(e) => handleChange('bg_color', e.target.value)}
-                placeholder="e.g. hsl(40, 20%, 92%) or #ebe6df"
-                className="max-w-xs"
+                placeholder="e.g. hsl(40, 20%, 92%)"
+                className="min-w-0"
               />
             </div>
           </div>
@@ -212,7 +212,7 @@ export function AnnouncementBarContent() {
               />
             </div>
           </div>
-          <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+          <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
             <div>
               <Label htmlFor="open_in_new_tab" className="text-base font-medium">Open in New Tab</Label>
               <p className="text-sm text-muted-foreground">

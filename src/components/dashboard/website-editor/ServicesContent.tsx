@@ -1,5 +1,4 @@
 import { useState, useMemo, useEffect } from 'react';
-import { BentoGrid } from '@/components/ui/bento-grid';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -272,8 +271,8 @@ export function ServicesContent() {
       description="Manage services, pricing, and website display settings"
     >
       {/* Info notice */}
-      <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/60 border border-border">
-        <Settings2 className="w-5 h-5 text-muted-foreground shrink-0" />
+      <div className="flex items-start gap-2.5 p-2.5 rounded-lg bg-muted/60 border border-border">
+        <Settings2 className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
         <p className="text-sm text-muted-foreground">
           Services and categories are managed in{' '}
           <Link to="/dashboard/admin/services" className="underline font-medium text-foreground hover:text-primary">
@@ -286,7 +285,7 @@ export function ServicesContent() {
       {/* Data health warning */}
       {!hasLevelPrices && (
         <div className="flex items-center gap-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
-          <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
+          <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
           <p className="text-sm text-amber-800 dark:text-amber-200">
             Level-based pricing has not been configured yet. Services are showing base prices only.
           </p>
@@ -294,65 +293,65 @@ export function ServicesContent() {
       )}
 
       {/* Stats */}
-      <BentoGrid maxPerRow={2} gap="gap-3">
+      <div className="grid grid-cols-2 gap-2">
         <Card>
-          <CardContent className="p-3 flex items-center gap-3">
-            <div className="p-2 rounded-full bg-blue-100 dark:bg-blue-900/30">
-              <Scissors className="w-5 h-5 text-blue-600" />
+          <CardContent className="p-2.5 flex items-center gap-2">
+            <div className="p-1.5 rounded-full bg-blue-100 dark:bg-blue-900/30">
+              <Scissors className="w-4 h-4 text-blue-600" />
             </div>
-            <div>
-              <p className="text-2xl font-medium">{totalServices}</p>
-              <p className="text-sm text-muted-foreground">Total Services</p>
+            <div className="min-w-0">
+              <p className="text-lg font-medium">{totalServices}</p>
+              <p className="text-xs text-muted-foreground truncate">Total Services</p>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-3 flex items-center gap-3">
-            <div className="p-2 rounded-full bg-purple-100 dark:bg-purple-900/30">
-              <Layers className="w-5 h-5 text-purple-600" />
+          <CardContent className="p-2.5 flex items-center gap-2">
+            <div className="p-1.5 rounded-full bg-purple-100 dark:bg-purple-900/30">
+              <Layers className="w-4 h-4 text-purple-600" />
             </div>
-            <div>
-              <p className="text-2xl font-medium">{serviceCategories.length}</p>
-              <p className="text-sm text-muted-foreground">Categories</p>
+            <div className="min-w-0">
+              <p className="text-lg font-medium">{serviceCategories.length}</p>
+              <p className="text-xs text-muted-foreground truncate">Categories</p>
             </div>
           </CardContent>
         </Card>
         <Link to="/dashboard/admin/stylist-levels">
           <Card className="cursor-pointer transition-all duration-200 hover:scale-[1.02] hover:shadow-md hover:border-primary/30 h-full">
-            <CardContent className="p-3 flex items-center gap-3">
-              <div className="p-2 rounded-full bg-emerald-100 dark:bg-emerald-900/30">
-                <Settings2 className="w-5 h-5 text-emerald-600" />
+            <CardContent className="p-2.5 flex items-center gap-2">
+              <div className="p-1.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30">
+                <Settings2 className="w-4 h-4 text-emerald-600" />
               </div>
-              <div>
-                <p className="text-2xl font-medium">{(stylistLevels || []).length}</p>
-                <p className="text-sm text-muted-foreground">Stylist Levels</p>
+              <div className="min-w-0">
+                <p className="text-lg font-medium">{(stylistLevels || []).length}</p>
+                <p className="text-xs text-muted-foreground truncate">Stylist Levels</p>
               </div>
             </CardContent>
           </Card>
         </Link>
         <Card>
-          <CardContent className="p-3 flex items-center gap-3">
-            <div className="p-2 rounded-full bg-amber-100 dark:bg-amber-900/30">
-              <Star className="w-5 h-5 text-amber-600 fill-amber-600" />
+          <CardContent className="p-2.5 flex items-center gap-2">
+            <div className="p-1.5 rounded-full bg-amber-100 dark:bg-amber-900/30">
+              <Star className="w-4 h-4 text-amber-600 fill-amber-600" />
             </div>
-            <div>
-              <p className="text-2xl font-medium">{popularServices}</p>
-              <p className="text-sm text-muted-foreground">Popular</p>
+            <div className="min-w-0">
+              <p className="text-lg font-medium">{popularServices}</p>
+              <p className="text-xs text-muted-foreground truncate">Popular</p>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-3 flex items-center gap-3">
-            <div className="p-2 rounded-full bg-sky-100 dark:bg-sky-900/30">
-              <Globe className="w-5 h-5 text-sky-600" />
+          <CardContent className="p-2.5 flex items-center gap-2">
+            <div className="p-1.5 rounded-full bg-sky-100 dark:bg-sky-900/30">
+              <Globe className="w-4 h-4 text-sky-600" />
             </div>
-            <div>
-              <p className="text-2xl font-medium">{onlineServices}</p>
-              <p className="text-sm text-muted-foreground">Online</p>
+            <div className="min-w-0">
+              <p className="text-lg font-medium">{onlineServices}</p>
+              <p className="text-xs text-muted-foreground truncate">Online</p>
             </div>
           </CardContent>
         </Card>
-      </BentoGrid>
+      </div>
 
       {/* Search */}
       <div className="relative">
@@ -390,7 +389,7 @@ export function ServicesContent() {
               onDrop={(e) => handleCategoryDrop(e, originalCategoryIndex)}
               onDragEnd={handleCategoryDragEnd}
             >
-              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50 [&>svg]:shrink-0">
+              <AccordionTrigger className="px-3 py-2.5 hover:no-underline hover:bg-muted/50 [&>svg]:shrink-0">
                 <div className="flex items-center gap-3 flex-1">
                   {!searchQuery && (
                     <div 

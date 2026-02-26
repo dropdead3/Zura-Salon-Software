@@ -60,7 +60,7 @@ export const editorTokens = {
     /** Empty state text */
     emptyText: 'text-sm text-muted-foreground/60',
     /** Inspector content area */
-    content: 'p-5 space-y-5',
+    content: 'p-3 space-y-4',
     /** Collapsible group header */
     groupHeader: 'flex items-center justify-between w-full py-3 px-1 text-xs font-medium text-muted-foreground uppercase tracking-[0.15em] hover:text-foreground transition-colors duration-120 border-t border-border/20 first:border-t-0',
     /** Collapsible group content */
