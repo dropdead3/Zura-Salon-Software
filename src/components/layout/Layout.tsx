@@ -5,6 +5,9 @@ import { FooterCTA } from "./FooterCTA";
 import { StickyFooterBar } from "./StickyFooterBar";
 import { PageTransition } from "./PageTransition";
 
+const isEditorPreview = typeof window !== 'undefined'
+  && new URLSearchParams(window.location.search).has('preview');
+
 interface LayoutProps {
   children: ReactNode;
 }
@@ -81,6 +84,21 @@ export function Layout({ children }: LayoutProps) {
       window.removeEventListener("resize", updateFooterHeight);
     };
   }, []);
+
+  // Editor preview: simplified layout without fixed footer or overflow-hidden
+  if (isEditorPreview) {
+    return (
+      <div className="min-h-screen flex flex-col relative theme-cream" style={{ colorScheme: 'light' }}>
+        <div className="relative z-10 flex flex-col min-h-screen bg-background">
+          <Header />
+          <main className="flex-1 bg-background">
+            <PageTransition>{children}</PageTransition>
+          </main>
+          <FooterCTA />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col relative theme-cream" style={{ colorScheme: 'light' }}>
