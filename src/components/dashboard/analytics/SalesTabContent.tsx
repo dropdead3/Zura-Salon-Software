@@ -63,6 +63,7 @@ import { StaffCommissionTable } from '@/components/dashboard/sales/StaffCommissi
 import { SalesReportPDF } from '@/components/dashboard/sales/SalesReportPDF';
 
 import { GoalTrackerCard } from '@/components/dashboard/sales/GoalTrackerCard';
+import { GoalsTabContent } from '@/components/dashboard/goals/GoalsTabContent';
 import { RevenueForecast } from '@/components/dashboard/sales/RevenueForecast';
 import { ForecastingCard } from '@/components/dashboard/sales/ForecastingCard';
 import { GrowthForecastCard } from '@/components/dashboard/sales/GrowthForecastCard';
@@ -392,7 +393,7 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
         </TabsContent>
 
         <TabsContent value="goals" className="mt-6 space-y-6">
-          <GoalTrackerCard />
+          <GoalsTabContent />
         </TabsContent>
 
         <TabsContent value="compare" className="mt-6">

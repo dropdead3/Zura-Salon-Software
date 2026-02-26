@@ -8848,6 +8848,68 @@ export type Database = {
           },
         ]
       }
+      organization_goals: {
+        Row: {
+          category: string
+          created_at: string
+          critical_threshold: number | null
+          description: string | null
+          display_name: string
+          goal_period: string
+          id: string
+          is_active: boolean
+          location_id: string | null
+          metric_key: string
+          organization_id: string
+          target_value: number
+          unit: string
+          updated_at: string
+          warning_threshold: number | null
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          critical_threshold?: number | null
+          description?: string | null
+          display_name: string
+          goal_period?: string
+          id?: string
+          is_active?: boolean
+          location_id?: string | null
+          metric_key: string
+          organization_id: string
+          target_value: number
+          unit?: string
+          updated_at?: string
+          warning_threshold?: number | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          critical_threshold?: number | null
+          description?: string | null
+          display_name?: string
+          goal_period?: string
+          id?: string
+          is_active?: boolean
+          location_id?: string | null
+          metric_key?: string
+          organization_id?: string
+          target_value?: number
+          unit?: string
+          updated_at?: string
+          warning_threshold?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_goals_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_health_scores: {
         Row: {
           calculated_at: string
