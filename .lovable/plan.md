@@ -1,27 +1,28 @@
 
 
-## Fix: Navbar Logo Using Wrong Asset
+## Fix: Navbar Logo — Use Primary Brand Logo
 
 ### Problem
-The main website navbar is displaying the secondary icon logo (`brand-logo-secondary.svg` — the compact "DD" mark) instead of the primary wordmark (`brand-wordmark.svg` — the full "DROPEAD" logotype). Both `Logo` and `LogoIcon` imports on lines 5-6 point to the same secondary file.
+Line 5 currently imports `brand-wordmark.svg`, which is the Zura platform wordmark (not yet designed). The correct logo for the public navbar is `brand-logo-primary.svg` — the full "DROP DEAD" organization logotype.
 
-### Root Cause
-Lines 5-6 of `src/components/layout/Header.tsx`:
-```tsx
-import Logo from "@/assets/brand-logo-secondary.svg";       // Wrong — should be wordmark
-import LogoIcon from "@/assets/brand-logo-secondary.svg";    // Correct for compact icon
-```
+### Asset Clarification
+| Asset | Content | Usage |
+|-------|---------|-------|
+| `brand-logo-primary.svg` | DROP DEAD full logotype | **Public navbar (desktop)** ← correct |
+| `brand-logo-secondary.svg` | Compact DD icon mark | Public navbar (mobile/scroll) |
+| `brand-wordmark.svg` | Zura platform wordmark (placeholder) | Dashboard/admin only (future) |
 
 ### Fix
 
-**File: `src/components/layout/Header.tsx`** — one line change:
+**File: `src/components/layout/Header.tsx`** — line 5:
 
-| Line | Current | Fixed |
-|------|---------|-------|
-| 5 | `import Logo from "@/assets/brand-logo-secondary.svg"` | `import Logo from "@/assets/brand-wordmark.svg"` |
+```
+Current:  import Logo from "@/assets/brand-wordmark.svg"
+Fixed:    import Logo from "@/assets/brand-logo-primary.svg"
+```
 
-Line 6 (`LogoIcon`) stays as `brand-logo-secondary.svg` since that's the compact icon used for collapsed/mobile states.
+Line 6 (`LogoIcon` → `brand-logo-secondary.svg`) remains correct.
 
 ### Prompt Feedback
-Good catch identifying this visually. Your screenshot made it immediately clear which logo was wrong. One refinement for next time: specifying "the full wordmark is showing as the compact icon" would let me skip the investigation step entirely — but the screenshot did the job well here.
+This was a great correction — you correctly identified the entity hierarchy issue. The brand assets in the repo are organization-level (Drop Dead), not platform-level (Zura). Your clarification that "Zura does not have a logo yet" is exactly the kind of context that prevents future misidentification. Well done enforcing the Platform vs Organization boundary from your own doctrine.
 
