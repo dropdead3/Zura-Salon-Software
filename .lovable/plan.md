@@ -1,85 +1,94 @@
 
 
-## Debug: Panels Won't Expand
+## Luxury Skeleton Loaders for Website Editor
 
-### Root Cause
+### Approach
 
-The `CANVAS_MIN` constant in `useEditorLayout.ts` is set to **820px**. This is too aggressive. Here's the math at 1440px (the "wide" breakpoint):
+Create a single `EditorSkeletons.tsx` file containing three skeleton components (Structure, Canvas, Inspector) that match the exact dimensions and glass styling of the real panels. Wire them into `WebsiteSectionsHub.tsx` using the existing `isLoading` state from `useWebsiteSections` and `useWebsitePages`.
 
-```text
-Container:          1440px
-Gutters + Padding:   -48px
-Structure panel:    -300px
-Inspector panel:    -360px
-─────────────────────────
-Canvas remaining:    732px  ← LESS than CANVAS_MIN (820)
+The animation uses a subtle opacity pulse (1.0 → 0.94 → 1.0, 2s duration) via a custom Tailwind animation -- no shimmer gradients.
+
+---
+
+### Technical Details
+
+#### New file: `src/components/dashboard/website-editor/EditorSkeletons.tsx`
+
+Three exported components:
+
+**`StructurePanelSkeleton`**
+- Glass container matching `editorTokens.panel.structure`
+- Segmented control placeholder (3 pill shapes in `bg-muted/60` container)
+- Search bar placeholder
+- 8 rows: each with a 20px circle + text bar (60-80% width, varying), correct 8px vertical gap
+- Row indentation for 2-3 rows to simulate hierarchy
+
+**`CanvasPanelSkeleton`**
+- Glass container matching `editorTokens.panel.canvas`
+- Header strip matching `editorTokens.canvas.controlStrip` with placeholder blocks for back button, site name, viewport toggle, action buttons
+- 4 floating section card skeletons inside the canvas area:
+  - Card 1 (Hero): tall (200px), full-width title bar (65%), subtitle bar (45%), pill button shape
+  - Card 2 (Text): medium (120px), 4 text bars of varying widths
+  - Card 3 (Gallery): medium (140px), 3 rectangular image placeholders in a row
+  - Card 4 (CTA): short (80px), centered title bar + button pill
+- Cards use `rounded-[20px]`, `bg-card/80`, `border-border/30` -- matching `EditorSectionCard`
+- Vertical spacing: `space-y-5` matching the real layout
+
+**`InspectorPanelSkeleton`**
+- Glass container matching `editorTokens.panel.inspector`
+- Header bar placeholder
+- 3 collapsible group sections, each with:
+  - Group header bar (uppercase-width placeholder)
+  - 2-3 input field rows (label bar + input rectangle)
+  - 1 toggle switch placeholder
+- 32px group spacing, 16px field spacing
+
+All skeleton shapes use `bg-muted/60 rounded-md` with the custom pulse animation.
+
+#### Custom animation (added to `tailwind.config.ts`):
+
 ```
+"skeleton-pulse": "skeleton-pulse 2s ease-in-out infinite"
+```
+Keyframes: `0%,100% { opacity: 1 } 50% { opacity: 0.94 }`
 
-Result: the auto-collapse logic on lines 134-139 **always** force-collapses the inspector, even at the widest breakpoint. When you click the expand chevron, `toggleInspector` sets `inspectorCollapsed: false` in prefs, but on the very next render the space check overrides it and collapses it again. The panel flickers or simply never expands.
+#### Modified: `src/pages/dashboard/admin/WebsiteSectionsHub.tsx`
 
-The same applies to the structure panel at narrower widths -- the space check on line 137-139 re-collapses it immediately after the user tries to expand.
-
-Additionally, the toggle logic doesn't differentiate between "auto-collapsed by the layout engine" and "user explicitly collapsed." So user intent is always overridden by the space check.
-
-### Fix (single file: `src/hooks/useEditorLayout.ts`)
-
-**1. Reduce `CANVAS_MIN` from 820 to 480.**
-
-820px was meant to represent "desktop editing minimum" but it's unrealistic -- it's wider than a tablet viewport. Pro editors like Webflow and Figma allow canvases as narrow as ~400px when side panels are open. 480px is a safe minimum that still shows useful content.
-
-**2. Respect explicit user intent in the toggle functions.**
-
-When the user clicks expand, temporarily mark the preference as "explicitly expanded" so the space check doesn't immediately override it. Specifically:
-- In `toggleStructure`: set `structureCollapsed: false` (as today)
-- In `toggleInspector`: set `inspectorCollapsed: false` (as today)  
-- In the auto-collapse logic: only auto-collapse if the user hasn't **explicitly set** the pref to `false`. The current check on line 124 (`prefs.inspectorCollapsed !== false`) already attempts this pattern, but it's overridden by the space check below it. The fix: skip the space-check override when the user has explicitly set `Collapsed: false`.
-
-**3. Adjust `GUTTERS_AND_PADDING` to match actual layout.**
-
-The shell uses `gap-3 p-3` = 12px gap between panels (×2 gaps = 24px) + 12px padding (×2 sides = 24px) = 48px. This is correct but the collapsed rail (40px) also consumes space that isn't accounted for. Update the space calculation to include the rail width when a panel is collapsed.
-
-### Concrete Changes
+Add loading gate near the top of the render:
 
 ```typescript
-// Line 18: reduce canvas minimum
-const CANVAS_MIN = 480;
-
-// Lines 118-139: rewrite auto-collapse to respect user intent
-let structureVisible = !isMobile && !isTablet && !prefs.structureCollapsed;
-let inspectorVisible = !isMobile && !isTablet && !prefs.inspectorCollapsed;
-
-// For compact: auto-collapse inspector only if user hasn't explicitly expanded
-if (isCompact && prefs.inspectorCollapsed === undefined) {
-  inspectorVisible = false;
-}
-
-// Space check: only override if user hasn't explicitly set the pref
-const spaceWithBoth = containerWidth - GUTTERS_AND_PADDING - idealStructureWidth - idealInspectorWidth;
-const spaceWithStructureOnly = containerWidth - GUTTERS_AND_PADDING - idealStructureWidth;
-
-if (structureVisible && inspectorVisible && spaceWithBoth < CANVAS_MIN) {
-  // Only auto-collapse if user didn't explicitly expand
-  if (prefs.inspectorCollapsed === undefined) {
-    inspectorVisible = false;
-  }
-}
-if (structureVisible && !inspectorVisible && spaceWithStructureOnly < CANVAS_MIN) {
-  if (prefs.structureCollapsed === undefined) {
-    structureVisible = false;
-  }
-}
+const { data: sectionsConfig, isLoading: sectionsLoading } = useWebsiteSections();
+const { data: pagesConfig, isLoading: pagesLoading } = useWebsitePages();
+const isEditorLoading = sectionsLoading || pagesLoading;
 ```
 
-This ensures:
-- First load (prefs undefined): layout engine auto-collapses based on space
-- User clicks expand: pref set to `false`, space check is skipped, panel stays open
-- User clicks collapse: pref set to `true`, panel closes and stays closed
+When `isEditorLoading` is true, render the skeleton shell instead of real panels:
 
-### Files
+```tsx
+{isEditorLoading ? (
+  <>
+    <StructurePanelSkeleton width={layout.structureWidth} visible={layout.structureVisible} />
+    <CanvasPanelSkeleton />
+    <InspectorPanelSkeleton width={layout.inspectorWidth} visible={layout.inspectorVisible} />
+  </>
+) : (
+  // existing panel rendering
+)}
+```
 
-| File | Change |
+Skeleton panels accept `width` and `visible` props to match the layout manager's computed sizes, ensuring zero layout shift when content resolves.
+
+Content crossfade: wrap the real panels in a `motion.div` with `initial={{ opacity: 0 }}` and `animate={{ opacity: 1 }}` over 200ms when loading completes.
+
+---
+
+### Files Summary
+
+| Action | File |
 |---|---|
-| `src/hooks/useEditorLayout.ts` | Reduce `CANVAS_MIN`, fix auto-collapse to respect user intent |
+| Create | `src/components/dashboard/website-editor/EditorSkeletons.tsx` |
+| Modify | `src/pages/dashboard/admin/WebsiteSectionsHub.tsx` |
+| Modify | `tailwind.config.ts` (add skeleton-pulse keyframe) |
 
-Single file fix. No other files affected.
+No public site files modified. No database changes.
 
