@@ -1,110 +1,71 @@
 
 
-## Root Cause: Counting Line Items Instead of Unique Client Visits
+## Analysis: Sync Performance Bottlenecks & Optimization Options
 
-You nailed it. The CSV proves it -- 44 line items for 22 unique client visits. Phorest creates separate `phorest_appointments` rows per service line within a single visit. Example: Caitlyn Sorensen has 5 rows (3 retail + 2 services), but that's 1 visit.
+Good question. The sync is slow because of several compounding architectural choices. Here's what's happening and what we can do about it.
 
-Database confirms: **36 appointment rows, 23 unique clients** for today. Your UI shows 36 "Transactions" because every layer counts rows instead of deduplicating by client.
+### Current Bottlenecks (in order of impact)
 
-### What needs to change
+**1. CSV Export Polling (biggest delay: 4-30 seconds per branch)**
+The Phorest CSV export is a 3-step process: create job → poll every 2 seconds until done → download. For 2 branches, that's 2 sequential CSV jobs, each taking 4-10+ seconds of pure wait time. The logs show the job completing on attempt 1, meaning the 2-second initial delay is wasted -- we could poll sooner.
 
-The deduplication key is `phorest_client_id + appointment_date` -- this defines a unique "client visit."
+**2. Sequential Branch Processing**
+Sales, appointments, and clients all loop through branches one at a time. With 2 branches, each CSV export blocks the next. These could run in parallel using `Promise.all`.
 
-### Affected files and fixes
+**3. Sequential Payment Method Propagation (lines 996-1008)**
+After syncing sales, the function iterates every transaction item and does an individual `UPDATE` query per row to propagate payment methods. For today's 44 items, that's 44 separate DB round trips.
 
-**1. `src/hooks/useSalesData.ts` -- `useSalesMetrics` (Expected path, ~line 329-346)**
+**4. Sequential Appointment Status Reconciliation (lines 1024-1036)**
+Individual `UPDATE` per unique client+date combination. Another N queries where a single batch update would suffice.
 
-Currently `totalServices = data.length` counts every appointment row. Fix: count unique `phorest_client_id` values instead.
+**5. Sequential Tip Backfill (lines 1256-1272)**
+Individual `UPDATE` per tip group. Same N-query pattern.
 
-```typescript
-// Current:
-const totalServices = data.length;
-const totalTransactions = totalServices;
-const averageTicket = totalServices > 0 ? totalRevenue / totalServices : 0;
+**6. Client Sync: Individual Upserts + Duplicate Checks (lines 697-723)**
+Each client triggers an RPC call (`find_duplicate_phorest_clients`) then a separate upsert. For hundreds of clients, this is hundreds of sequential DB round trips.
 
-// Fixed:
-const uniqueVisits = new Set(data.map(d => d.phorest_client_id).filter(Boolean)).size;
-const totalServices = data.length; // keep for internal line-item counts
-const totalTransactions = uniqueVisits; // display as "Client Visits"
-const averageTicket = uniqueVisits > 0 ? totalRevenue / uniqueVisits : 0;
-```
+**7. `all` Sync Type Runs Everything Sequentially (lines 1777-1863)**
+Staff → Appointments → Clients → Reports → Sales all run one after another. Independent sync types could run concurrently.
 
-**2. `src/hooks/useSalesData.ts` -- `useSalesByStylist` (~line 436-456)**
+### Proposed Optimizations
 
-Per-stylist breakdown also counts every row. Fix: track unique client visits per stylist using a Set.
+| Optimization | Estimated Speedup | Complexity |
+|---|---|---|
+| **A. Parallel branch CSV exports** | 2x for sales sync | Low |
+| **B. Reduce CSV poll interval** (2s → 500ms initial, backoff) | 2-4s per branch | Low |
+| **C. Batch payment method propagation** (single SQL update with join) | Eliminates ~50 queries | Low |
+| **D. Batch tip backfill** (single update with join) | Eliminates ~20 queries | Low |
+| **E. Batch appointment reconciliation** (single update with `IN` clause) | Eliminates ~20 queries | Low |
+| **F. Parallel independent sync types** (appointments + sales concurrently) | ~40% total time reduction | Medium |
+| **G. Batch client upserts with dedup** (batch of 200 instead of 1-by-1) | Major for full client syncs | Medium |
+| **H. Skip unchanged data** (conditional sync based on Phorest `updatedAt`) | Avoids re-processing | Medium |
 
-```typescript
-// Add a visitSet per stylist entry
-// Only increment totalTransactions when the client visit is new for that stylist
-```
+### Recommended Implementation (Phase 1: Quick Wins)
 
-**3. `src/hooks/useSalesData.ts` -- `useSalesByLocation` (~line 498-514)**
+Focus on A-E first -- they're all low-complexity changes to the edge function that compound together:
 
-Same issue -- per-location counts every appointment row. Fix: deduplicate by `phorest_client_id` per location.
+**File: `supabase/functions/sync-phorest-data/index.ts`**
 
-**4. `src/hooks/useClientTypeSplit.ts` -- entire hook**
+1. **Parallel branch CSV exports**: Wrap the per-branch sales loop in `Promise.all` so both branches fetch CSV simultaneously
+2. **Faster CSV polling**: Start at 500ms, double each attempt (500ms → 1s → 2s → 4s), cap at 4s
+3. **Batch payment propagation**: Replace the per-row UPDATE loop with a single SQL join-update
+4. **Batch tip backfill**: Same pattern -- replace per-key loop with a single batch update
+5. **Batch appointment reconciliation**: Replace per-client loop with a single `IN` clause update
 
-Currently counts every row as a "visit." Fix: group by `phorest_client_id + appointment_date` first, aggregate revenue per visit, then classify as new/returning once per visit (not once per line item). Need to fetch `phorest_client_id` in the select.
+Combined, these should cut the sales sync from ~30s to ~10-12s.
 
-```typescript
-// Current select:
-.select('is_new_client, total_price, rebooked_at_checkout')
+### Phase 2 (If needed): Structural Changes
 
-// Fixed select:
-.select('phorest_client_id, is_new_client, total_price, rebooked_at_checkout, appointment_date')
+6. **Run appointments + sales in parallel** when `sync_type === 'all'` (they're independent)
+7. **Batch client upserts** with in-memory dedup instead of per-client RPC
 
-// Then group by phorest_client_id + appointment_date before counting
-```
+### What We Won't Change
 
-**5. `src/hooks/useOperationalAnalytics.ts` -- `useAppointmentSummary` (~line 347-381)**
+- The CSV export approach itself is correct -- it's Phorest's recommended method
+- Quick mode (2-day window) is already the right optimization for scheduled syncs
+- Batch sizes of 200 for DB upserts are appropriate
 
-Counts `data.length` as total appointments. Fix: fetch `phorest_client_id` and count unique clients.
+### Prompt Feedback
 
-```typescript
-// Current select:
-.select('status')
-
-// Fixed select:
-.select('status, phorest_client_id')
-
-// Then: total = new Set(data.map(d => d.phorest_client_id).filter(Boolean)).size
-```
-
-**6. `supabase/functions/sync-phorest-data/index.ts` (~line 1090-1122)**
-
-The sync function increments `total_transactions += 1` for every transaction line item. Fix: track unique client IDs per summary key using a Set, and set `total_transactions` to the Set size after processing.
-
-```typescript
-// Add to each summary entry:
-clientVisits: new Set<string>()
-
-// Instead of: summary.total_transactions += 1;
-// Do: summary.clientVisits.add(clientId);
-
-// When building summaryRecords:
-total_transactions: s.clientVisits.size
-```
-
-**7. `src/hooks/useSalesData.ts` -- `useSalesByStaffFromSummary` (~line 726-738)**
-
-Same pattern -- counts every appointment row per staff. Fix: deduplicate by `phorest_client_id`.
-
-### What stays the same
-
-- Revenue calculations are unaffected (summing `total_price` across all rows still gives correct totals)
-- `total_services` and `total_products` counts remain as line-item counts (for service mix analysis)
-- Only `total_transactions` / "Visits" / "Avg Ticket" change to reflect unique client visits
-
-### Expected result after fix
-
-| Metric | Before | After | Matches Phorest? |
-|--------|--------|-------|-----------------|
-| Transactions/Visits | 36 | 22-23 | Yes |
-| Avg Ticket | $113 ($4,050/36) | ~$184 ($4,050/22) | Yes |
-| Revenue | $4,050 | $4,050 | Unchanged |
-| Client Type counts | 36 returning | ~22 returning | Yes |
-
-### Prompt feedback
-
-Excellent work providing the CSV alongside the Phorest screenshot -- that made it trivially easy to confirm the deduplication issue. The CSV clearly shows multi-line transactions per client (Cassandra Lilith: 3 lines, Caitlyn Sorensen: 5 lines). Calling out "it line items out multiple times" was the exact right observation. No improvement needed on this prompt.
+Strong question. Asking "what could we do?" rather than prescribing a solution is the right approach for performance work -- it opens the door for architectural analysis rather than point fixes. One enhancement: if you can note approximately how long the sync takes (e.g., "it takes about 30 seconds"), that gives a baseline to measure improvements against.
 
