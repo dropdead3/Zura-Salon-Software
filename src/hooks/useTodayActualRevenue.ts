@@ -56,45 +56,6 @@ export function useTodayActualRevenue(enabled: boolean) {
     refetchInterval: 5 * 60 * 1000,
   });
 
-  // Fallback: completed appointments when POS summary has no data
-  const completedAppointmentsQuery = useQuery({
-    queryKey: ['today-completed-appointments', today],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('phorest_appointments')
-        .select('total_price, start_time, end_time')
-        .eq('appointment_date', today)
-        .eq('status', 'completed')
-        .not('total_price', 'is', null);
-
-      if (error) throw error;
-      if (!data || data.length === 0) {
-        return { totalRevenue: 0, totalTransactions: 0, serviceHours: 0, hasData: false };
-      }
-
-      let totalRevenue = 0;
-      let serviceHours = 0;
-      for (const row of data) {
-        totalRevenue += Number(row.total_price) || 0;
-        if (row.start_time && row.end_time) {
-          const [sh, sm] = row.start_time.split(':').map(Number);
-          const [eh, em] = row.end_time.split(':').map(Number);
-          const mins = (eh * 60 + em) - (sh * 60 + sm);
-          serviceHours += (mins > 0 ? mins : 0) / 60;
-        }
-      }
-
-      return {
-        totalRevenue,
-        totalTransactions: data.length,
-        serviceHours,
-        hasData: totalRevenue > 0,
-      };
-    },
-    enabled,
-    refetchInterval: 5 * 60 * 1000,
-  });
-
   const lastAppointmentQuery = useQuery({
     queryKey: ['today-last-appointment', today],
     queryFn: async () => {
@@ -185,25 +146,17 @@ export function useTodayActualRevenue(enabled: boolean) {
     };
   }
 
-  // Determine actual data: prefer POS summary, fallback to completed appointments
-  const posHasData = actualRevenueQuery.data?.hasData ?? false;
-  const completedData = completedAppointmentsQuery.data;
-
-  const actualRevenue = posHasData
-    ? (actualRevenueQuery.data?.totalRevenue ?? 0)
-    : (completedData?.totalRevenue ?? 0);
-  const actualTransactions = posHasData
-    ? (actualRevenueQuery.data?.totalTransactions ?? 0)
-    : (completedData?.totalTransactions ?? 0);
-  const actualServiceHours = completedData?.serviceHours ?? 0;
-  const hasActualData = posHasData || (completedData?.hasData ?? false);
+  // POS data only -- no appointment fallback
+  const actualRevenue = actualRevenueQuery.data?.totalRevenue ?? 0;
+  const actualTransactions = actualRevenueQuery.data?.totalTransactions ?? 0;
+  const hasActualData = actualRevenueQuery.data?.hasData ?? false;
 
   const result: TodayActualRevenueData = {
     actualRevenue,
-    actualServiceRevenue: posHasData ? (actualRevenueQuery.data?.serviceRevenue ?? 0) : actualRevenue,
-    actualProductRevenue: posHasData ? (actualRevenueQuery.data?.productRevenue ?? 0) : 0,
+    actualServiceRevenue: actualRevenueQuery.data?.serviceRevenue ?? 0,
+    actualProductRevenue: actualRevenueQuery.data?.productRevenue ?? 0,
     actualTransactions,
-    actualServiceHours,
+    actualServiceHours: 0,
     actualAverageTicket: actualTransactions > 0 ? actualRevenue / actualTransactions : 0,
     lastAppointmentEndTime: lastAppointmentQuery.data ?? null,
     hasActualData,
@@ -212,7 +165,7 @@ export function useTodayActualRevenue(enabled: boolean) {
   return {
     data: result,
     locationActuals,
-    isLoading: actualRevenueQuery.isLoading || lastAppointmentQuery.isLoading || completedAppointmentsQuery.isLoading,
+    isLoading: actualRevenueQuery.isLoading || lastAppointmentQuery.isLoading,
     dataUpdatedAt: actualRevenueQuery.dataUpdatedAt,
   };
 }
