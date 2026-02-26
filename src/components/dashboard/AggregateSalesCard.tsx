@@ -1,4 +1,5 @@
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { TogglePill } from '@/components/ui/toggle-pill';
 import { cn } from '@/lib/utils';
 import { LastSyncIndicator } from '@/components/dashboard/sales/LastSyncIndicator';
 import { Badge } from '@/components/ui/badge';
@@ -1216,30 +1217,20 @@ export function AggregateSalesCard({
             <div className="flex items-center gap-2">
               <Building2 className="w-4 h-4 text-muted-foreground" />
               <h3 className="font-display text-xs tracking-wide text-muted-foreground">{t('sales.by_location')}</h3>
-              {isToday && (
-                <div className="flex items-center bg-muted/50 rounded-full p-0.5 text-xs font-sans">
-                  <button
-                    className={cn(
-                      'px-3 py-1 rounded-full transition-colors',
-                      locationRevenueView === 'actual' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground'
-                    )}
-                    onClick={() => setLocationRevenueView('actual')}
-                  >
-                    Actual
-                  </button>
-                  <button
-                    className={cn(
-                      'px-3 py-1 rounded-full transition-colors',
-                      locationRevenueView === 'expected' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground'
-                    )}
-                    onClick={() => setLocationRevenueView('expected')}
-                  >
-                    Expected
-                  </button>
-                </div>
-              )}
             </div>
             <div className="flex items-center gap-2">
+              {isToday && (
+                <TogglePill
+                  options={[
+                    { value: 'actual', label: 'Actual' },
+                    { value: 'expected', label: 'Expected' },
+                  ]}
+                  value={locationRevenueView}
+                  onChange={(v) => setLocationRevenueView(v as 'actual' | 'expected')}
+                  size="sm"
+                  variant="solid"
+                />
+              )}
               {availableRegions.length >= 2 && (
                 <Select value={regionFilter} onValueChange={setRegionFilter}>
                   <SelectTrigger className="w-[140px] h-7 text-xs">
