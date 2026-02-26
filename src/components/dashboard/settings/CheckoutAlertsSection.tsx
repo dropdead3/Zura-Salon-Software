@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Bell } from 'lucide-react';
+import { Bell, Shield } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { useSoundSettings } from '@/contexts/SoundSettingsContext';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
@@ -31,6 +31,10 @@ export function CheckoutAlertsSection() {
           <CardTitle className="font-display text-lg">CHECKOUT ALERTS</CardTitle>
         </div>
         <CardDescription>Get notified when a client checks out.</CardDescription>
+        <div className="flex items-center gap-1.5 mt-1 text-xs text-muted-foreground">
+          <Shield className="w-3 h-3" />
+          <span>Visible to Primary Owner and Super Admins only.</span>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center justify-between">
