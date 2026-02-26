@@ -1,14 +1,26 @@
 
 
-## Change Retail color to light gray
+## Show dash for Avg Tip Rate when zero
 
-**File: `src/components/dashboard/sales/RevenueDonutChart.tsx`**
+**File: `src/components/dashboard/AggregateSalesCard.tsx` (lines 1172-1178)**
 
-Two changes:
+Update the IIFE to also return `'—'` when tips are zero, not just when the denominator is zero:
 
-1. **Donut segment color** (line 37): Change `'hsla(35, 70%, 45%, 0.55)'` to `'hsl(var(--muted-foreground) / 0.4)'` — a subtle light gray that works in both light and dark mode.
+```tsx
+// Current logic
+return tipDenominator > 0
+  ? `${((metrics?.totalTips ?? 0) / tipDenominator * 100).toFixed(1)}%`
+  : '—';
 
-2. **Legend indicator dot** (line 109): Change the inline `backgroundColor: 'hsla(35, 70%, 45%, 0.55)'` to match the same gray value.
+// Updated logic — also dash when tips are zero
+const tips = metrics?.totalTips ?? 0;
+return tipDenominator > 0 && tips > 0
+  ? `${(tips / tipDenominator * 100).toFixed(1)}%`
+  : '—';
+```
 
-This replaces the amber-orange retail color with a muted gray, keeping the foreground (Services) as the dominant visual element.
+Single condition change: adds `&& tips > 0` so that 0% renders as `—` to match the Tip Attach column.
+
+### File changed
+- `src/components/dashboard/AggregateSalesCard.tsx` (1 line change)
 
