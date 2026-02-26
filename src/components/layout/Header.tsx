@@ -306,7 +306,7 @@ export function Header() {
         ref={headerRef}
         className={cn(
           "sticky top-0 left-0 right-0 z-50 px-4 md:px-6 lg:px-8 transition-[padding] duration-400",
-          isScrolledDesktop ? "pt-4 md:pt-6 lg:pt-8" : "pt-2"
+          isScrolledDesktop ? "pt-3 md:pt-4 lg:pt-5" : "pt-2"
         )}
       >
         <motion.div
@@ -335,12 +335,12 @@ export function Header() {
             "container mx-auto px-6 lg:px-8 transition-colors duration-300",
             isOverDark ? "text-white [&_svg]:text-white" : "text-foreground"
           )}>
-            <div className="flex items-center justify-between h-16 lg:h-20 gap-4">
+            <div className="flex items-center justify-between h-14 lg:h-16 gap-4">
             {/* Logo */}
             <div className="w-40 lg:w-40 xl:w-56 shrink-0 flex items-center">
               <Link
                 to={orgPath("/")}
-                className="flex items-center hover:opacity-70 transition-opacity relative h-12"
+                className="flex items-center hover:opacity-70 transition-opacity relative h-8"
               >
                 <img
                   src={Logo}
@@ -351,7 +351,7 @@ export function Header() {
                     transition: "opacity 0.5s ease-out, transform 0.5s ease-out"
                   }}
                   className={cn(
-                    "h-12 lg:h-10 w-auto",
+                    "h-8 lg:h-7 w-auto",
                     isOverDark && "invert"
                   )}
                 />
