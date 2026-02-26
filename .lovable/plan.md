@@ -1,24 +1,19 @@
 
 
-## Fix: Center the revenue highlight area properly
+## Clean up Sales Overview card corner elements
 
-**Root cause**: The clickable revenue `div` uses negative margins to stretch to the card edges, but only horizontally and at the bottom -- not the top. The "All locations combined" label sits above the highlight, making the ring visually lopsided. The content looks shifted down within the overall card.
+Looking at the screenshot, there are two visual issues:
 
-**Solution**: Revert the negative margin approach. Use a contained highlight with modest padding (`p-4 rounded-xl`) that sits naturally within the card. This keeps the ring symmetric around the content and visually centered.
+### Issue 1: Trend indicator (-100.0%) stuck in bottom-left
+The `SalesTrendIndicator` is a `flex` element inside a `text-center` parent. `text-center` only affects inline/text children, not flex containers -- so the trend renders left-aligned while everything else is centered.
 
-### Changes
+**Fix** (`AggregateSalesCard.tsx`, line 792): Change the wrapper `<div className="mt-2">` to `<div className="mt-2 flex justify-center">` so the trend indicator centers with the rest of the hero content.
 
-**File: `src/components/dashboard/AggregateSalesCard.tsx` (line 647)**
+### Issue 2: Top-right sync status refinement
+The absolute-positioned "No POS sales recorded yet today" and sync indicator work but could use slightly better spacing and opacity treatment for a calmer look.
 
-Revert the class back to a symmetric, self-contained highlight:
+**Fix** (`AggregateSalesCard.tsx`, lines 616-619): Adjust to `gap-1` for breathing room and use `text-muted-foreground/60` on the label for softer presence.
 
-```
-// Before (current)
-"text-center mb-4 sm:mb-6 cursor-pointer transition-all rounded-lg p-4 -mx-4 sm:p-6 sm:-mx-6 -mb-4 sm:-mb-6 group/revenue"
-
-// After
-"text-center mb-4 sm:mb-6 cursor-pointer transition-all rounded-xl p-4 sm:p-6 group/revenue"
-```
-
-This gives the highlight its own contained box with equal padding on all sides -- no negative margins, no asymmetry. The ring sits centered between the location label above and the Services/Retail sub-cards below.
+### Files changed
+- `src/components/dashboard/AggregateSalesCard.tsx` (2 small edits)
 
