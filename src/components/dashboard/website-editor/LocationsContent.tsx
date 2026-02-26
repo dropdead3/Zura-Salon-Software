@@ -98,7 +98,7 @@ export function LocationsContent() {
     >
 
       {/* Info Banner */}
-      <div className="bg-muted/50 border rounded-lg p-3 flex items-start gap-2.5 overflow-hidden">
+      <div className="bg-muted/50 border rounded-lg p-3 pr-4 flex items-start gap-2.5 overflow-hidden">
         <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
           <MapPin className="w-3.5 h-3.5 text-primary" />
         </div>
@@ -144,7 +144,7 @@ export function LocationsContent() {
                 !location.show_on_website && "opacity-70 bg-muted/30"
               )}
             >
-              <div className="flex items-start gap-1.5 p-2 min-w-0">
+              <div className="flex items-start gap-1.5 p-2 pr-3 min-w-0">
                 {/* Reorder handle */}
                 <div className="flex flex-col items-center opacity-40 group-hover:opacity-100 transition-opacity pt-0.5 shrink-0">
                   <button
