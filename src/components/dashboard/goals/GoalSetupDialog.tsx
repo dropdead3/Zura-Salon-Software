@@ -14,7 +14,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { Check, ChevronRight, ChevronDown, ArrowLeft, Sparkles } from 'lucide-react';
+import { Check, ChevronRight, ChevronDown, ArrowLeft, Sparkles, BarChart3 } from 'lucide-react';
 import {
   GOAL_TEMPLATES,
   GOAL_CATEGORY_LABELS,
@@ -24,6 +24,7 @@ import {
   type GoalCategory,
   type GoalTemplate,
 } from '@/hooks/useOrganizationGoals';
+import { useHistoricalBenchmarks, type BenchmarkResult } from '@/hooks/useHistoricalBenchmarks';
 
 interface GoalSetupDialogProps {
   open: boolean;
@@ -47,11 +48,22 @@ const CATEGORY_ORDER: GoalCategory[] = ['revenue', 'profitability', 'client', 'e
 
 const RECOMMENDED_KEYS = ['monthly_revenue', 'labor_cost_pct', 'client_retention', 'utilization_rate', 'revenue_per_stylist'];
 
-function formatTarget(template: GoalTemplate): string {
-  if (template.suggested_target === null) return '—';
-  if (template.unit === '$') return `$${template.suggested_target.toLocaleString()}`;
-  if (template.unit === '%') return `${template.suggested_target}%`;
-  return String(template.suggested_target);
+function formatTarget(template: GoalTemplate, benchmark?: BenchmarkResult | null): string {
+  const value = benchmark?.suggestedTarget ?? template.suggested_target;
+  if (value === null || value === undefined) return '—';
+  if (template.unit === '$') return `$${Math.round(value).toLocaleString()}`;
+  if (template.unit === '%') return `${Math.round(value)}%`;
+  return String(Math.round(value));
+}
+
+function formatActual(template: GoalTemplate, benchmark: BenchmarkResult): string {
+  if (template.unit === '$') return `$${Math.round(benchmark.actual).toLocaleString()}`;
+  if (template.unit === '%') return `${Math.round(benchmark.actual)}%`;
+  return String(Math.round(benchmark.actual));
+}
+
+function getEffectiveTarget(template: GoalTemplate, benchmark?: BenchmarkResult | null): number | null {
+  return benchmark?.suggestedTarget ?? template.suggested_target;
 }
 
 interface SelectedGoalState {
@@ -70,6 +82,7 @@ export function GoalSetupDialog({
 }: GoalSetupDialogProps) {
   const upsertSingle = useUpsertOrganizationGoal();
   const batchUpsert = useBatchUpsertOrganizationGoals();
+  const { data: benchmarks } = useHistoricalBenchmarks();
 
   const [step, setStep] = useState<'select' | 'customize'>('select');
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
@@ -78,6 +91,18 @@ export function GoalSetupDialog({
 
   const isEditing = !!editGoal;
   const grouped = useMemo(() => groupByCategory(GOAL_TEMPLATES), []);
+
+  /** Build initial goal state from a template, preferring benchmark targets */
+  const buildGoalState = (tmpl: GoalTemplate): SelectedGoalState => {
+    const bm = benchmarks?.[tmpl.metric_key];
+    const target = getEffectiveTarget(tmpl, bm);
+    return {
+      metric_key: tmpl.metric_key,
+      target_value: target !== null ? String(Math.round(target)) : '',
+      warning_threshold: tmpl.suggested_warning !== null ? String(tmpl.suggested_warning) : '',
+      critical_threshold: tmpl.suggested_critical !== null ? String(tmpl.suggested_critical) : '',
+    };
+  };
 
   // Reset state when dialog opens/closes
   useEffect(() => {
@@ -106,15 +131,9 @@ export function GoalSetupDialog({
       next.delete(key);
     } else {
       next.add(key);
-      // Initialize state from template defaults
       const tmpl = GOAL_TEMPLATES.find(t => t.metric_key === key);
       if (tmpl && !goalStates.has(key)) {
-        setGoalStates(prev => new Map(prev).set(key, {
-          metric_key: key,
-          target_value: tmpl.suggested_target !== null ? String(tmpl.suggested_target) : '',
-          warning_threshold: tmpl.suggested_warning !== null ? String(tmpl.suggested_warning) : '',
-          critical_threshold: tmpl.suggested_critical !== null ? String(tmpl.suggested_critical) : '',
-        }));
+        setGoalStates(prev => new Map(prev).set(key, buildGoalState(tmpl)));
       }
     }
     setSelectedKeys(next);
@@ -161,12 +180,14 @@ export function GoalSetupDialog({
 
     const goals = selectedTemplates.map(tmpl => {
       const state = goalStates.get(tmpl.metric_key);
+      const bm = benchmarks?.[tmpl.metric_key];
+      const fallbackTarget = getEffectiveTarget(tmpl, bm) ?? 0;
       return {
         metric_key: tmpl.metric_key,
         display_name: tmpl.display_name,
         description: tmpl.description,
         category: tmpl.category,
-        target_value: parseFloat(state?.target_value || String(tmpl.suggested_target || 0)),
+        target_value: parseFloat(state?.target_value || String(fallbackTarget)),
         warning_threshold: state?.warning_threshold ? parseFloat(state.warning_threshold) : undefined,
         critical_threshold: state?.critical_threshold ? parseFloat(state.critical_threshold) : undefined,
         goal_period: tmpl.goal_period,
@@ -194,7 +215,7 @@ export function GoalSetupDialog({
               ? 'Update the target for this goal.'
               : step === 'select'
                 ? 'Tap to select the goals that matter most to your salon.'
-                : 'Review and customize your targets. Industry benchmarks are pre-filled.'}
+                : 'Review and customize your targets. Targets are personalized from your data when available.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -221,12 +242,7 @@ export function GoalSetupDialog({
                           if (!newStates.has(key)) {
                             const tmpl = GOAL_TEMPLATES.find(t => t.metric_key === key);
                             if (tmpl) {
-                              newStates.set(key, {
-                                metric_key: key,
-                                target_value: tmpl.suggested_target !== null ? String(tmpl.suggested_target) : '',
-                                warning_threshold: tmpl.suggested_warning !== null ? String(tmpl.suggested_warning) : '',
-                                critical_threshold: tmpl.suggested_critical !== null ? String(tmpl.suggested_critical) : '',
-                              });
+                              newStates.set(key, buildGoalState(tmpl));
                             }
                           }
                         }
@@ -273,6 +289,7 @@ export function GoalSetupDialog({
                       {templates.map(tmpl => {
                         const isExisting = existingMetricKeys.includes(tmpl.metric_key);
                         const isSelected = selectedKeys.has(tmpl.metric_key);
+                        const bm = benchmarks?.[tmpl.metric_key] ?? null;
                         return (
                           <button
                             key={tmpl.metric_key}
@@ -305,12 +322,19 @@ export function GoalSetupDialog({
                               {tmpl.display_name}
                             </span>
                             <span className="font-display text-base font-medium tracking-wide text-primary mt-1 block">
-                              {formatTarget(tmpl)}
+                              {formatTarget(tmpl, bm)}
                               <span className="text-xs text-muted-foreground font-sans font-normal ml-1">
                                 /{tmpl.goal_period === 'weekly' ? 'wk' : 'mo'}
                               </span>
                             </span>
-                            <span className="font-sans text-xs text-muted-foreground mt-1.5 block line-clamp-2">
+                            {/* Show actual from historical data */}
+                            {bm && (
+                              <span className="font-sans text-xs text-muted-foreground mt-0.5 block flex items-center gap-1">
+                                <BarChart3 className="w-3 h-3 text-primary/60" />
+                                Current: {formatActual(tmpl, bm)}
+                              </span>
+                            )}
+                            <span className="font-sans text-xs text-muted-foreground mt-1 block line-clamp-2">
                               {tmpl.description}
                             </span>
                           </button>
@@ -330,6 +354,7 @@ export function GoalSetupDialog({
                 const state = goalStates.get(tmpl.metric_key);
                 if (!state) return null;
                 const isAdvancedOpen = expandedAdvanced.has(tmpl.metric_key);
+                const bm = benchmarks?.[tmpl.metric_key] ?? null;
                 return (
                   <div
                     key={tmpl.metric_key}
@@ -359,6 +384,20 @@ export function GoalSetupDialog({
                           <span className="font-sans text-sm text-muted-foreground">%</span>
                         )}
                       </div>
+                    </div>
+
+                    {/* Benchmark contextual hint */}
+                    <div className="mt-2">
+                      {bm ? (
+                        <span className="font-sans text-xs text-muted-foreground flex items-center gap-1.5">
+                          <BarChart3 className="w-3 h-3 text-primary/60 shrink-0" />
+                          Your 90-day avg: {formatActual(tmpl, bm)} — targeting +{Math.round(bm.improvementPct)}%
+                        </span>
+                      ) : (
+                        <span className="font-sans text-xs text-muted-foreground/70 italic">
+                          Industry benchmark (no historical data yet)
+                        </span>
+                      )}
                     </div>
 
                     {/* Advanced thresholds */}
