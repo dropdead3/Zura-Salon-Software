@@ -1,30 +1,32 @@
 
 
-## Fix Bar Labels in ForecastingCard
+## Increase Border/Separator Visibility Across Dashboard Cards
 
-The change was applied to the wrong file. The chart visible on your dashboard is `ForecastingCard.tsx`, not `WeekAheadForecast.tsx`. The `AboveBarLabel` in `ForecastingCard.tsx` (line 195) uses a manual compact formatter that always rounds to thousands.
+The borders and separator lines inside cards are nearly invisible because the dark mode `--border` CSS variable is set to `0 0% 26%` (very dark gray on a 4% black background), and most components further reduce it with opacity modifiers like `border-border/30` and `border-border/40`.
 
-### Change
+### Root Cause
+- `--border` in dark cream theme: `0 0% 26%` — only 22% contrast against the 11% card background
+- Many components apply `/20`, `/30`, `/40` opacity modifiers, making borders nearly invisible
 
-**File: `src/components/dashboard/sales/ForecastingCard.tsx`** — line 195
+### Fix: Increase `--border` lightness in dark mode
 
-Replace the manual `k` formatting with the same conditional approach:
+**File: `src/index.css`** — line 249
 
-```tsx
-// Current (line 195):
-{value >= 1000 ? formatCurrencyWholeUtil(Math.round(value / 1000)) + 'k' : formatCurrencyWholeUtil(value)}
+```css
+/* Current */
+--border: 0 0% 26%;
 
-// Replace with:
-{value >= 10000
-  ? formatCurrencyPrecise(value, { compact: true, decimals: 2 })
-  : formatCurrencyPrecise(value, { decimals: 0 })}
+/* Change to */
+--border: 0 0% 34%;
 ```
 
-This requires adding the import for `formatCurrency as formatCurrencyPrecise` from `@/lib/format` (if not already present).
+This single change increases border visibility across every card, separator, and divider in the dashboard without touching any component files. The 34% lightness gives a clear but still subtle separation against the 11% card surface — visible at a glance without being harsh.
 
-- Values under $10,000: full dollar amount, no cents (e.g., `$3,411`, `$4,333`)
-- Values >= $10,000: compact with 2 decimals (e.g., `$12.35k`)
+The same adjustment should be applied to the other dark theme variants for consistency:
 
-### Files
-- **Edit**: `src/components/dashboard/sales/ForecastingCard.tsx` (line 195 + import)
+- **Dark Rose** (line 372): `350 10% 28%` → `350 10% 36%`
+- **Dark Sage** (line 495): `145 8% 28%` → `145 8% 36%`
+- **Dark Ocean** (if present): same pattern
+
+This is a single-variable fix that propagates to all 86+ files using `border-border` classes.
 
