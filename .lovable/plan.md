@@ -1,48 +1,40 @@
 
 
-## Enhance POS Sync Popover — Luxury Glass Styling
+## Glassify POS Sync Popover — True Transparent Blur
 
-The current popover uses plain `bg-popover` defaults with basic borders. The screenshot confirms it needs refinement to match the Zura luxury glass bento system.
+The popover currently uses `bg-card/80` which in dark mode (4% lightness card color) still reads nearly opaque. The screenshot confirms it lacks the see-through glass depth seen in the premium floating panels and appointment detail sheets.
 
 ### Changes (single file: `src/components/dashboard/PhorestSyncPopout.tsx`)
 
-**1. PopoverContent — Glass Treatment**
-- Replace default `w-72 p-0` with luxury glass: `w-80 p-0 bg-card/80 backdrop-blur-xl border-border/30 rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] overflow-hidden`
-- Wider (w-80 → 320px) for better breathing room
+**1. PopoverContent — Deeper Transparency**
+- Change `bg-card/80` → `bg-card/60` for more blur-through
+- Add `backdrop-saturate-150` to match the top nav bar's glass treatment (see `DashboardLayout.tsx` line 1218)
+- Increase shadow depth: `shadow-[0_8px_32px_rgba(0,0,0,0.12)]` → `shadow-[0_12px_40px_-8px_rgba(0,0,0,0.3)]` for more float
+- Soften border further: `border-border/30` → `border-border/20`
 
-**2. Header — Refined Spacing & Typography**
-- Current: `px-4 py-3 border-b border-border` — plain divider
-- New: `px-5 py-3.5 border-b border-border/20` — softer divider, more horizontal padding
-- Settings link: add `font-display text-[10px] uppercase tracking-wider` to match system links, remove underline hover
+**2. Inner Row Cards — Remove Opaque Stacking**
+- Change `bg-card-inner/50` → `bg-card-inner/30` so inner rows don't fight the glass effect with additive opacity
+- This maintains hierarchy without blocking the blur-through
 
-**3. Status Rows — Glass Inner Cards**
-- Wrap each row in a subtle `bg-card-inner/50 rounded-lg px-3 py-2.5` container for depth hierarchy
-- Status icons: increase to `w-4 h-4` for better touch targets
-- Time-ago text: use `text-[11px]` for refinement
-- Label text: use `font-sans text-sm` (already correct, just confirm no `font-medium`)
+**3. Header Divider — Even Softer**
+- `border-border/20` → `border-border/15` for near-invisible structural separation
 
-**4. Sync Now Button — Luxury Pill CTA**
-- Apply `rounded-full` pill shape (already default from button component)
-- Use `bg-foreground text-background hover:bg-foreground/80` for the dark CTA treatment matching the luxury glass pill standard
-- Container: `px-5 pb-5 pt-2`
+**4. Sync Now Button — Glass-Aware Contrast**
+- Already using `bg-foreground text-background` which is correct for glass surfaces
+- No change needed here
 
-**5. Footer — Subtle Footnote**
-- Replace `bg-muted/50 border-t border-border` with softer `border-t border-border/10 bg-transparent`
-- Text: `text-[11px] text-muted-foreground/50` — quieter, less prominent
-
-**6. Health Dot on Trigger**
-- Add subtle `shadow-[0_0_4px]` glow using the health color for a premium indicator feel
+**5. Footer — Match Glass Depth**
+- `border-border/10` stays — already properly subtle
+- No change needed
 
 ### Visual Result
-- Glass-backed popover with consistent depth hierarchy
-- Softer dividers (border/20 instead of full opacity)
-- Dark pill CTA matching the luxury floating panel standard
-- Quieter footer that doesn't compete with the action button
-- Inner card rows for visual separation without heavy borders
+- Popover blurs through the dashboard content behind it (visible grid, cards)
+- Saturated glass matches the top navigation bar's glass treatment
+- Inner rows provide depth without blocking transparency
+- Stronger shadow creates more physical "float" above the surface
 
 ### What Stays the Same
-- All sync logic, queries, and error handling unchanged
-- Health calculation logic unchanged
-- Tooltip and trigger behavior unchanged
-- Token system compliance maintained throughout
+- All sync logic, queries, health calculation unchanged
+- Layout structure, spacing, typography unchanged
+- Button styling unchanged
 
