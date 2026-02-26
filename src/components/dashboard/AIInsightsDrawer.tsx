@@ -145,11 +145,16 @@ function GuidanceTrigger({ label, onClick, icon: IconOverride, hideIcon }: { lab
 function InsightCard({ insight, onRequestGuidance, drillDownHref }: { insight: InsightItem; onRequestGuidance: (req: GuidanceRequest) => void; drillDownHref?: string }) {
   const config = categoryConfig[insight.category];
   const Icon = config?.icon || Activity;
+  const isCritical = insight.severity === 'critical';
 
   return (
-    <div className="rounded-xl border border-border/50 p-3.5 transition-colors shadow-sm">
+    <div className={cn(
+      'rounded-xl border-l-[3px] border border-border/50 p-3.5 transition-colors shadow-sm',
+      severityStyles[insight.severity],
+      isCritical && 'lg:col-span-2',
+    )}>
       <div className="flex items-start gap-2.5">
-        <div className="mt-0.5 flex-shrink-0 text-muted-foreground">
+        <div className={cn('mt-0.5 flex-shrink-0', severityIconColor[insight.severity])}>
           <Icon className="w-4 h-4" />
         </div>
         <div className="flex-1 min-w-0">
@@ -158,7 +163,7 @@ function InsightCard({ insight, onRequestGuidance, drillDownHref }: { insight: I
               {config?.label || insight.category}
             </span>
           </div>
-          <p className="text-sm font-medium leading-snug">{insight.title}</p>
+          <p className={cn('text-sm font-medium leading-snug', isCritical && 'text-base')}>{insight.title}</p>
           <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
             <InsightDescriptionWithLinks description={insight.description} />
           </p>
@@ -187,9 +192,9 @@ function InsightCard({ insight, onRequestGuidance, drillDownHref }: { insight: I
   );
 }
 
-function ActionItemCard({ item, index, onRequestGuidance }: { item: ActionItem; index: number; onRequestGuidance: (req: GuidanceRequest) => void }) {
+function ActionItemCard({ item, index, onRequestGuidance, isEven }: { item: ActionItem; index: number; onRequestGuidance: (req: GuidanceRequest) => void; isEven?: boolean }) {
   return (
-    <div className="py-1.5">
+    <div className={cn('py-2 px-3 rounded-lg', isEven && 'bg-muted/20')}>
       <div className="flex items-start gap-2.5">
         <div className="flex-shrink-0 w-5 h-5 rounded-full bg-foreground/5 flex items-center justify-center mt-0.5">
           <span className="text-[10px] font-display">{index + 1}</span>
@@ -204,12 +209,40 @@ function ActionItemCard({ item, index, onRequestGuidance }: { item: ActionItem; 
           />
         </div>
         <span className={cn(
-          'text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded font-display flex-shrink-0',
+          'text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full font-display flex-shrink-0',
           priorityBadge[item.priority],
         )}>
           {item.priority}
         </span>
       </div>
+    </div>
+  );
+}
+
+function SeverityCounts({ insights }: { insights: InsightItem[] }) {
+  const counts = { critical: 0, warning: 0, info: 0 };
+  insights.forEach(i => counts[i.severity]++);
+  
+  return (
+    <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+      {counts.critical > 0 && (
+        <span className="flex items-center gap-1">
+          <span className="w-2 h-2 rounded-full bg-destructive" />
+          {counts.critical} critical
+        </span>
+      )}
+      {counts.warning > 0 && (
+        <span className="flex items-center gap-1">
+          <span className="w-2 h-2 rounded-full bg-amber-500" />
+          {counts.warning} warning
+        </span>
+      )}
+      {counts.info > 0 && (
+        <span className="flex items-center gap-1">
+          <span className="w-2 h-2 rounded-full bg-blue-500" />
+          {counts.info} info
+        </span>
+      )}
     </div>
   );
 }
@@ -370,7 +403,7 @@ export function AIInsightsPanel({ onClose }: { onClose: () => void }) {
       <div className="h-px bg-gradient-to-r from-transparent via-border/40 to-transparent" />
 
       {!activeGuidance && (
-        <div className="p-4 pb-3">
+        <div className="p-5 pb-3">
           <div className="flex items-center justify-between mb-3">
             <span className="font-display text-sm tracking-[0.15em]">{PLATFORM_NAME.toUpperCase()} BUSINESS INSIGHTS</span>
             <div className="flex items-center gap-1">
@@ -396,41 +429,43 @@ export function AIInsightsPanel({ onClose }: { onClose: () => void }) {
               transition={{ duration: 0.2 }}
             >
               <div
-                className="max-h-[65vh] overflow-y-auto"
+                className="max-h-[60vh] overflow-y-auto"
                 onWheel={(e) => e.stopPropagation()}
               >
                 {data && (
-                  <div className="px-4 pb-2">
-                    <div className="flex items-start gap-2">
-                      <div className={cn('flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center', sentiment?.bg)}>
-                        <SentimentIcon className={cn('w-3 h-3', sentiment?.color)} />
+                  <div className="px-5 pb-3">
+                    <div className="flex items-center gap-3 rounded-lg bg-muted/30 backdrop-blur-sm px-3.5 py-2.5">
+                      <div className={cn('flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center', sentiment?.bg)}>
+                        <SentimentIcon className={cn('w-3.5 h-3.5', sentiment?.color)} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm text-muted-foreground leading-snug">{blurFinancialValues(data.summaryLine)}</p>
-                        <p className="text-[10px] text-muted-foreground/70 mt-1">Based on your recent business data</p>
-                        {generatedAt && (
-                          <p className="text-[10px] text-muted-foreground/60 mt-0.5 flex items-center gap-1 flex-wrap">
-                            <Clock className="w-2.5 h-2.5" />
-                            Updated {formatDistanceToNow(new Date(generatedAt), { addSuffix: true })}
-                            {cooldown > 0 && ` · ${cooldown}s cooldown`}
-                          </p>
-                        )}
-                        {isStale && (
-                          <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-1 flex items-center gap-1">
-                            Insights are over 2 hours old
-                            <button type="button" onClick={() => refresh(true)} disabled={isRefreshing || cooldown > 0} className="underline hover:no-underline">
-                              Refresh for latest
-                            </button>
-                          </p>
-                        )}
+                        <p className="text-sm text-foreground leading-snug">{blurFinancialValues(data.summaryLine)}</p>
                       </div>
+                      {generatedAt && (
+                        <span className="text-[10px] text-muted-foreground/60 flex items-center gap-1 flex-shrink-0 whitespace-nowrap">
+                          <Clock className="w-2.5 h-2.5" />
+                          {formatDistanceToNow(new Date(generatedAt), { addSuffix: true })}
+                        </span>
+                      )}
                     </div>
+                    <div className="flex items-center justify-between mt-2">
+                      <SeverityCounts insights={data.insights || []} />
+                      {cooldown > 0 && <span className="text-[10px] text-muted-foreground/50">{cooldown}s cooldown</span>}
+                    </div>
+                    {isStale && (
+                      <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-1 flex items-center gap-1">
+                        Insights are over 2 hours old
+                        <button type="button" onClick={() => refresh(true)} disabled={isRefreshing || cooldown > 0} className="underline hover:no-underline">
+                          Refresh for latest
+                        </button>
+                      </p>
+                    )}
                   </div>
                 )}
 
                 {/* Weekly Lever — leadership only, collapsible */}
                 {isLeadership && (
-                  <div className="px-4 pb-3">
+                  <div className="px-5 pb-3">
                     <Collapsible open={leverOpen} onOpenChange={setLeverOpen}>
                       <CollapsibleTrigger className="flex w-full items-center gap-2 rounded-lg border border-border/50 px-3 py-2.5 text-left hover:bg-accent/50 transition-colors">
                         {isLeverLoading ? (
@@ -463,7 +498,7 @@ export function AIInsightsPanel({ onClose }: { onClose: () => void }) {
                   </div>
                 )}
 
-                <div className="px-4 pb-6">
+                <div className="px-5 pb-5">
                   {isLoading ? (
                     <div className="space-y-3">
                       {[1, 2, 3].map(i => (
@@ -492,22 +527,24 @@ export function AIInsightsPanel({ onClose }: { onClose: () => void }) {
                         {hasSuggestions && <TabsTrigger value="suggestions" className="text-xs py-2">More suggestions</TabsTrigger>}
                       </TabsList>
                       {hasInsights && (
-                        <TabsContent value="insights" className="mt-3 space-y-2.5">
-                          {sortedInsights.map((insight, i) => (
-                            <InsightCard
-                              key={i}
-                              insight={insight}
-                              onRequestGuidance={handleRequestGuidance}
-                              drillDownHref={categoryToAnalyticsTab[insight.category] ? analyticsHubUrl(categoryToAnalyticsTab[insight.category]!) : undefined}
-                            />
-                          ))}
+                        <TabsContent value="insights" className="mt-3">
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                            {sortedInsights.map((insight, i) => (
+                              <InsightCard
+                                key={i}
+                                insight={insight}
+                                onRequestGuidance={handleRequestGuidance}
+                                drillDownHref={categoryToAnalyticsTab[insight.category] ? analyticsHubUrl(categoryToAnalyticsTab[insight.category]!) : undefined}
+                              />
+                            ))}
+                          </div>
                         </TabsContent>
                       )}
                       {hasActionItems && (
                         <TabsContent value="action_items" className="mt-3">
-                          <div className="space-y-1 rounded-lg border border-border/30 bg-muted/10 px-4 py-3">
+                          <div className="rounded-lg border border-border/30 overflow-hidden">
                             {sortedActionItems.map((item, i) => (
-                              <ActionItemCard key={i} item={item} index={i} onRequestGuidance={handleRequestGuidance} />
+                              <ActionItemCard key={i} item={item} index={i} isEven={i % 2 === 0} onRequestGuidance={handleRequestGuidance} />
                             ))}
                           </div>
                         </TabsContent>
@@ -576,11 +613,9 @@ export function AIInsightsPanel({ onClose }: { onClose: () => void }) {
                   )}
                 </div>
               </div>
-              <div className="px-4 pb-4 pt-4 mt-2 border-t border-border/50 bg-muted/20 rounded-b-2xl">
-                <div className="flex items-center justify-center gap-1.5">
-                  <ZuraAvatar size="sm" className="w-3 h-3 opacity-40" />
-                  <span className="text-[10px] text-muted-foreground/50">Powered by {PLATFORM_NAME} AI · Based on your data</span>
-                </div>
+              <div className="px-5 py-2.5 border-t border-border/30 flex items-center justify-center gap-1.5">
+                <ZuraAvatar size="sm" className="w-3 h-3 opacity-40" />
+                <span className="text-[10px] text-muted-foreground/50">Powered by {PLATFORM_NAME} AI · Based on your data</span>
               </div>
             </motion.div>
           ) : (
