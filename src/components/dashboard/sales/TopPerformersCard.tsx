@@ -1,14 +1,16 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Trophy, ChevronDown, ChevronUp } from 'lucide-react';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { AnalyticsFilterBadge, type FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
+import { FilterTabsList, FilterTabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { motion, AnimatePresence } from 'framer-motion';
+import * as TabsPrimitive from '@radix-ui/react-tabs';
 
 interface Performer {
   user_id: string;
@@ -62,22 +64,8 @@ const INITIAL_COUNT = 3;
 
 export function TopPerformersCard({ performers, isLoading, showInfoTooltip = false, filterContext }: TopPerformersCardProps) {
   const [sortMode, setSortMode] = useState<SortMode>('totalRevenue');
-  const [showDropdown, setShowDropdown] = useState(false);
   const [showAll, setShowAll] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
   const { formatCurrencyWhole } = useFormatCurrency();
-
-  // Close dropdown on outside click
-  useEffect(() => {
-    if (!showDropdown) return;
-    const handler = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setShowDropdown(false);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [showDropdown]);
 
   const sorted = useMemo(() => [...performers].sort((a, b) => {
     if (sortMode === 'retail') {
@@ -103,12 +91,18 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
         <CardTitle className="font-display text-sm tracking-wide">TOP PERFORMERS</CardTitle>
         <MetricInfoTooltip description="Ranks your team by total revenue or retail sales in the selected period." />
       </div>
-      {filterContext && (
-        <AnalyticsFilterBadge 
-          locationId={filterContext.locationId} 
-          dateRange={filterContext.dateRange} 
-        />
-      )}
+      <div className="flex items-center gap-2">
+        <FilterTabsList>
+          <FilterTabsTrigger value="totalRevenue">Revenue</FilterTabsTrigger>
+          <FilterTabsTrigger value="retail">Retail</FilterTabsTrigger>
+        </FilterTabsList>
+        {filterContext && (
+          <AnalyticsFilterBadge 
+            locationId={filterContext.locationId} 
+            dateRange={filterContext.dateRange} 
+          />
+        )}
+      </div>
     </div>
   );
 
@@ -147,37 +141,10 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
   }
 
   return (
+    <TabsPrimitive.Root value={sortMode} onValueChange={(v) => setSortMode(v as SortMode)}>
     <Card className="@container h-full flex flex-col overflow-hidden border-border/40">
       <CardHeader className="px-4 pt-4 pb-1">{headerContent}</CardHeader>
-      <CardContent className="px-4 pb-3 pt-0 flex-1 flex flex-col">
-        {/* Sort toggle */}
-        <div className="relative mb-2" ref={dropdownRef}>
-          <button
-            onClick={() => setShowDropdown(!showDropdown)}
-            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <span>Sorted by: <span className="text-foreground font-medium">{currentLabel}</span></span>
-            <ChevronDown className={cn("w-3 h-3 transition-transform", showDropdown && "rotate-180")} />
-          </button>
-          {showDropdown && (
-            <div className="absolute top-full left-0 mt-1 z-10 bg-popover border border-border rounded-lg shadow-lg py-1 min-w-[140px]">
-              {SORT_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  onClick={() => { setSortMode(opt.value); setShowDropdown(false); }}
-                  className={cn(
-                    "w-full text-left px-3 py-1.5 text-xs hover:bg-muted/50 transition-colors",
-                    sortMode === opt.value && "text-primary font-medium"
-                  )}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Performer list */}
+      <CardContent className="px-4 pb-3 pt-2 flex-1 flex flex-col">
         <ScrollArea className={cn("flex-1", showAll && sorted.length > 6 && "max-h-[320px]")}>
           <div className="space-y-3">
             <AnimatePresence mode="popLayout">
@@ -279,5 +246,6 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
         )}
       </CardContent>
     </Card>
+    </TabsPrimitive.Root>
   );
 }
