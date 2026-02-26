@@ -1,102 +1,137 @@
 
 
-## CLV Feature Gap Analysis
+## Three Enhancements: Cancellation Waitlist, Service Menu Intelligence, and Today's Prep Quick-Link
 
-The CLV calculator and its integration points are functional but have several gaps worth closing before moving on.
+These are three independent features at different scales. Here is the plan for each.
 
 ---
 
-### Gap 1: CLV Tier Badges Not Displayed Anywhere
+### Enhancement 1: Pre-Visit Prep Link from Schedule Header
 
-`assignCLVTier()` is exported and imported in `ClientDetailSheet.tsx`, but no tier badge (Platinum/Gold/Silver/Bronze) is actually rendered in the UI. The tier config includes colors and labels, but they're unused visually. Owners can't quickly see which clients are their most valuable.
-
-**Fix**: Add a compact CLV tier badge to:
-- The CLV card in `ClientDetailSheet.tsx` (next to the lifetime value)
-- The client row in `ClientDirectory.tsx` (replacing or augmenting the raw CLV number)
-
-This requires computing all CLV values once to establish percentile rankings, then passing them through. A lightweight `useAllClientCLVs()` hook can cache the sorted array.
+**Scope**: Small. Add a quick-link icon button to the Schedule header's dark bar (right-side action group, next to Assistant Blocks / Drafts / Settings).
 
 | File | Change |
 |------|--------|
-| New: `src/hooks/useAllClientCLVs.ts` | Fetch all clients' spend/visit/dates, compute CLV array for tier ranking |
-| `ClientDetailSheet.tsx` | Render tier badge next to CLV value using `assignCLVTier` |
-| `ClientDirectory.tsx` | Show tier badge inline with CLV on each row |
+| `src/components/dashboard/schedule/ScheduleHeader.tsx` | Add a `ClipboardCheck` icon button between the Drafts button and the Settings button. Links to `/dashboard/today-prep`. Tooltip reads "Today's Prep". Matches existing ghost-button style with the dark header palette. Only visible when the current date is today (since prep is same-day only). |
+
+No new hooks, no backend changes. Single-file edit.
 
 ---
 
-### Gap 2: Revenue-at-Risk Calculation Passes `null` for `firstVisit`
+### Enhancement 2: Cancellation Waitlist
 
-In `ClientHealthSummaryCard.tsx` line 73, the call is:
-```ts
-calculateCLV(c.total_spend, c.visit_count, null, c.last_visit)
-```
+**Scope**: Medium-large. New table, RLS, hook, UI components, route, and nav entry.
 
-Passing `null` for `firstVisit` means any client with only 1 visit won't get a reliable CLV (correct), but clients with 2+ visits also get `isReliable: false` because the function requires `firstVisit` to be non-null. The `HealthClient` interface already has `first_visit` -- it's just not being passed.
+**Data Model**
 
-**Fix**: Change `null` to `c.first_visit` on that line.
+New table: `waitlist_entries`
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | uuid PK | Default `gen_random_uuid()` |
+| `organization_id` | uuid FK → organizations | RLS scoping |
+| `client_id` | uuid nullable | FK → phorest_clients |
+| `client_name` | text | Denormalized for display |
+| `client_phone` | text nullable | For contact |
+| `client_email` | text nullable | For contact |
+| `service_name` | text nullable | Requested service(s) |
+| `preferred_stylist_id` | uuid nullable | FK → employee_profiles.user_id |
+| `preferred_date_start` | date | Earliest acceptable date |
+| `preferred_date_end` | date nullable | Latest acceptable date |
+| `preferred_time_start` | time nullable | Earliest acceptable time |
+| `preferred_time_end` | time nullable | Latest acceptable time |
+| `status` | text | `waiting`, `offered`, `booked`, `expired`, `cancelled` |
+| `priority` | int | Default 0 (higher = more urgent) |
+| `notes` | text nullable | |
+| `offered_at` | timestamptz nullable | When a match was offered |
+| `resolved_at` | timestamptz nullable | When booked or expired |
+| `created_by` | uuid | auth.uid() |
+| `created_at` | timestamptz | Default now() |
+| `updated_at` | timestamptz | Default now() |
+
+RLS: `is_org_member(auth.uid(), organization_id)` for read; `is_org_admin(auth.uid(), organization_id)` for write.
+
+**Hook**
+
+New: `src/hooks/useWaitlist.ts`
+- `useWaitlistEntries(orgId, filters)` — fetch active entries, sorted by priority then created_at
+- `useAddWaitlistEntry()` — mutation to insert
+- `useUpdateWaitlistStatus()` — mutation to update status (offer, book, cancel, expire)
+
+**UI Components**
+
+New directory: `src/components/dashboard/waitlist/`
+
+| Component | Purpose |
+|-----------|---------|
+| `WaitlistTable.tsx` | Sortable table of active waitlist entries with status badges, contact info, preferred dates/times |
+| `AddWaitlistEntryDialog.tsx` | Form dialog to add a client to the waitlist (client search, service, date range, time preferences, stylist preference) |
+| `WaitlistMatchBanner.tsx` | Inline banner shown in the Schedule page when a cancellation creates a slot that matches a waitlisted client. Shows client name and a "Notify" action. |
+
+**Page**
+
+New: `src/pages/dashboard/Waitlist.tsx` — wraps `DashboardLayout`, renders `WaitlistTable` with filters (status, date range). Page header with "Add to Waitlist" CTA.
+
+**Route & Nav**
 
 | File | Change |
 |------|--------|
-| `ClientHealthSummaryCard.tsx` | Pass `c.first_visit` instead of `null` |
+| `src/App.tsx` | Add route `/dashboard/waitlist` |
+| `src/config/dashboardNav.ts` | Add entry in `mainNavItems` after Schedule, with `ClipboardList` icon, permission `view_booking_calendar`, roles for admin/manager/receptionist |
+
+**Matching Logic (Phase 1 — Manual)**
+
+When an appointment is cancelled or no-showed, the system does not auto-notify. Instead, the `WaitlistMatchBanner` component queries active waitlist entries whose date range and time preferences overlap the freed slot, and surfaces them as suggestions. The receptionist/manager clicks "Notify" to mark the entry as `offered` and contacts the client manually.
+
+This follows the autonomy model: Recommend → Approve → Execute. Automated notifications are Phase 2+.
 
 ---
 
-### Gap 3: `formatCLVValue` Hardcodes "$" Symbol
+### Enhancement 3: Service Menu Intelligence
 
-The function returns `$${value}` regardless of org currency. Every other monetary display uses `useFormatCurrency()` for proper locale/currency. This means non-USD organizations see mixed currency symbols.
+**Scope**: Medium. New analytics card in the Services tab of the Analytics Hub. No new tables needed — this analyzes existing `phorest_transaction_items` and `phorest_services` data.
 
-**Fix**: Either remove `formatCLVValue` and replace all usages with `formatCurrencyCompact` from the existing `useFormatCurrency` hook, or make `formatCLVValue` accept a currency parameter.
+**What It Does**
+
+Surfaces three actionable intelligence signals:
+
+1. **Underperforming Services**: Services with declining booking frequency (comparing recent 4 weeks vs prior 4 weeks). Flags services with >25% drop.
+2. **High-Margin Opportunities**: Cross-references `useAddonMarginAnalytics` data with booking frequency to identify high-margin services that are underbooked.
+3. **Bundle Suggestions**: Extends the existing `ServiceBundlingIntelligence` by adding a "Suggested Bundles" section that pairs frequently co-booked services with pricing recommendations.
+
+**Hook**
+
+New: `src/hooks/useServiceMenuIntelligence.ts`
+- Queries `phorest_transaction_items` for the last 8 weeks
+- Groups by service, calculates booking trend (recent vs prior period)
+- Merges with service cost/margin data from `phorest_services`
+- Returns: `decliningServices`, `highMarginUnderbooked`, `suggestedBundles`
+
+**UI Component**
+
+New: `src/components/dashboard/sales/ServiceMenuIntelligence.tsx`
+- A `PinnableCard` with three collapsible sections
+- **Declining Services**: Table with service name, trend arrow, booking count change, revenue impact
+- **High-Margin Underbooked**: Services where margin > 60% but bookings are below median. Action: "Consider promoting"
+- **Bundle Opportunities**: Natural pairings from co-booking data with estimated revenue lift if bundled at a discount
+
+**Integration**
 
 | File | Change |
 |------|--------|
-| `clv-calculator.ts` | Remove `formatCLVValue` or make currency-aware |
-| `ClientDetailSheet.tsx` | Use `formatCurrencyWhole` / `formatCurrencyCompact` instead |
-| `ClientDirectory.tsx` | Same replacement |
+| `src/components/dashboard/analytics/ServicesContent.tsx` | Add `ServiceMenuIntelligence` as a new section/tab in the Services analytics, after existing Service Bundling Intelligence |
+
+No new route needed — this lives within the existing Analytics Hub under the Services tab.
 
 ---
 
-### Gap 4: Client Health Hub Table Has No CLV Column
+### Implementation Order
 
-The `ClientSegmentTable.tsx` shows Name, Email, Phone, Last Visit, Days Inactive, and Total Spend -- but no CLV or tier. When an owner is deciding which at-risk clients to reach out to first, CLV ranking is the most important signal.
+| Step | Enhancement | Effort |
+|------|-------------|--------|
+| 1 | Today's Prep quick-link from Schedule header | Trivial — single file edit |
+| 2 | Cancellation Waitlist (table + RLS + hook + UI + route + nav) | Medium — new feature end-to-end |
+| 3 | Service Menu Intelligence (hook + card + Analytics Hub integration) | Medium — analytics-only, no new tables |
 
-**Fix**: Add a CLV column (sortable) and tier badge to `ClientSegmentTable`. This makes the outreach prioritization data-driven.
-
-| File | Change |
-|------|--------|
-| `ClientSegmentTable.tsx` | Add CLV column with tier badge, make sortable |
-
----
-
-### Gap 5: "Client Lifetime Value" Report Is a Stub
-
-The Reports Hub lists a "Client Lifetime Value" report (`lifetime-value`), but `ClientRetentionReport.tsx` handles it with a generic fallback -- it doesn't actually generate CLV-specific content. This is a dead link.
-
-**Fix**: Wire the `lifetime-value` report type to generate a proper CLV report: top clients ranked by CLV with tier distribution, average CLV by segment, and total portfolio value.
-
-| File | Change |
-|------|--------|
-| `ClientRetentionReport.tsx` | Add CLV-specific report generation for `lifetime-value` type |
-
----
-
-### Gap 6: No CLV on Executive Brief or AI Insights
-
-The weekly intelligence brief and AI insights don't reference CLV data. Adding a "Top 10 clients by CLV represent X% of revenue" or "Revenue at risk from lapsing high-CLV clients: $X" would make the brief significantly more actionable.
-
-This is lower priority and can be deferred to when the executive brief is next enhanced.
-
----
-
-### Recommended Implementation Order
-
-| Priority | Fix | Effort | Impact |
-|----------|-----|--------|--------|
-| 1 | Fix `firstVisit` null bug (Gap 2) | Trivial | Fixes broken revenue-at-risk calculation |
-| 2 | Replace hardcoded "$" with org currency (Gap 3) | Small | Correctness for non-USD orgs |
-| 3 | Add CLV tier badges to detail sheet + directory (Gap 1) | Small | Visual payoff -- clients feel categorized |
-| 4 | Add CLV column to Health Hub table (Gap 4) | Small | Outreach prioritization becomes data-driven |
-| 5 | Wire CLV report in Reports Hub (Gap 5) | Medium | Completes the feature loop |
-| 6 | CLV in executive brief (Gap 6) | Defer | Enhancement for later pass |
-
-Gaps 1-4 can all ship in a single pass. Gap 5 is a standalone enhancement. Gap 6 is deferred.
+All three are independent and can be built sequentially without conflicts.
 
