@@ -1,29 +1,34 @@
 
 
-## Fix: Reduce Navbar Height
+## Scrollbar Standards Enforcement
 
 ### Problem
-The navbar is too tall. The main content row uses `h-16 lg:h-20` (64px / 80px), and the scrolled state adds extra top padding (`pt-4 md:pt-6 lg:pt-8`), making the overall header feel oversized.
+Several scrollable containers in the website editor use raw `overflow-auto` or `overflow-y-auto` instead of the tokenized `ScrollArea` component or the `scrollbar-thin` utility class. This causes visible scrollbar track backgrounds and always-visible scrollbars, violating the design standard of: no track background, thumb visible only on hover.
 
-### Current Values (line 338)
-```
-h-16 lg:h-20  →  64px mobile / 80px desktop
-```
+### Affected Files
 
-Logo height (line 354): `h-12 lg:h-10` → 48px mobile / 40px desktop — also oversized for the container.
+| File | Line | Current | Fix |
+|------|------|---------|-----|
+| `AddSectionDialog.tsx` | 81 | `overflow-auto` on `DialogContent` | Replace with `ScrollArea` wrapper inside dialog, remove `overflow-auto` |
+| `TemplatePicker.tsx` | 43 | `overflow-auto` on `DialogContent` | Replace with `ScrollArea` wrapper inside dialog, remove `overflow-auto` |
+| `ServicesContent.tsx` | 580 | `overflow-y-auto` on `DialogContent` | Replace with `ScrollArea` wrapper inside dialog, remove `overflow-y-auto` |
+| `EditorSkeletons.tsx` | 97 | `overflow-auto` on canvas skeleton | Add `scrollbar-thin` class alongside `overflow-auto` |
 
-Scrolled padding (line 309): `pt-4 md:pt-6 lg:pt-8` → up to 32px extra top padding when scrolled.
+### Approach
 
-### Fix
+For dialog content containers, the cleanest fix is to:
+1. Remove `overflow-auto` / `overflow-y-auto` from the `DialogContent` className
+2. Wrap the dialog body content (below `DialogHeader`) in a `ScrollArea` with `max-h` constraint
+3. The `ScrollArea` component already uses tokenized scrollbar styles (transparent track, hover-only thumb via `group-hover/scroll:opacity-100`)
 
-**File: `src/components/layout/Header.tsx`**
+For the skeleton loader, simply add `scrollbar-thin` to ensure the native scrollbar follows the tokenized pattern.
 
-| Line | Current | Fixed | Reason |
-|------|---------|-------|--------|
-| 338 | `h-16 lg:h-20` | `h-14 lg:h-16` | Reduce row height: 56px mobile / 64px desktop |
-| 309 | `pt-4 md:pt-6 lg:pt-8` | `pt-3 md:pt-4 lg:pt-5` | Less top padding when scrolled |
-| 354 | `h-12 lg:h-10` | `h-8 lg:h-7` | Scale logo down proportionally |
-| 343 | `h-12` (logo link height) | `h-8` | Match reduced logo size |
+### Design Standard (Reference)
+From `design-tokens.ts`:
+- Track: `opacity-0`, fades in on container hover via `group-hover/scroll:opacity-100`
+- Thumb: `bg-muted-foreground/25`, lifts to `/40` on hover
+- No visible track background at any time
 
-This brings the navbar closer to a standard ~56-64px height, consistent with the reference screenshot showing a compact, elegant header.
+### Prompt Feedback
+Good catch identifying this as a design system consistency issue. Your phrasing "not adhering to our tokenized design standards" is precise and immediately actionable — it tells me exactly which standard to check against. For maximum specificity, you could add which panel or container had the offending scrollbar (e.g., "the sidebar list" or "the dialog content"), but the general call-out works well here since the fix should be applied globally.
 
