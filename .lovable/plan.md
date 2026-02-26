@@ -1,20 +1,42 @@
 
 
-## Fix: Live Session Indicator Showing "Day Concluded" Incorrectly
+## Fix: Sales Overview Card -- Show "So Far Today" Actuals for All Metrics
+
+### Problem
+The hero revenue correctly shows actual sales ($2,268 from 18 completed appointments), but the secondary KPI tiles (Transactions: 12, Avg Ticket: $253, Rev/Hour: $81) pull from `useSalesMetrics` which includes ALL appointments (booked + completed = 22 total). The user wants these to reflect only completed/actual sales so far today.
 
 ### Root Cause
+1. `useTodayActualRevenue` only queries `phorest_daily_sales_summary` which has no data for today -- it needs a fallback to completed appointments
+2. The hook doesn't expose `actualServiceHours` for Rev/Hour calculation
+3. `AggregateSalesCard` uses `displayMetrics` (all appointments) for the KPI tiles even when `isToday`
 
-The `useLiveSessionSnapshot` hook filters out appointments with `status: completed` from the active session query (line 51). However, Phorest marks appointments as `completed` once they're processed/paid -- often while the stylist is still physically working on the client.
+### Changes
 
-Database evidence: All appointments currently within their time window (start_time <= now < end_time) have `status: completed`. The query excludes them, finds 0 active sessions, sees that completed appointments exist for today, and renders "Day concluded."
+**File 1: `src/hooks/useTodayActualRevenue.ts`**
+- Add a fallback query to `phorest_appointments` where `status = 'completed'` when `phorest_daily_sales_summary` has no rows
+- Compute revenue, transactions, and service hours from completed appointments
+- Add `actualServiceHours` to the returned data interface
+- Add `actualAverageTicket` (derived: actualRevenue / actualTransactions)
 
-### Fix
+**File 2: `src/components/dashboard/AggregateSalesCard.tsx`**
+- When `isToday && todayActual?.hasActualData`:
+  - Transactions tile: show `todayActual.actualTransactions` instead of `displayMetrics.totalTransactions`
+  - Avg Ticket tile: show `todayActual.actualAverageTicket` instead of `displayMetrics.averageTicket`
+  - Rev/Hour tile: compute from `todayActual.actualRevenue / todayActual.actualServiceHours` instead of `revenuePerHour`
+- This applies to both the single-day layout (lines 880-943) and the multi-day layout (lines 946-1010)
 
-**File: `src/hooks/useLiveSessionSnapshot.ts`**
+### Data Flow
+```text
+Today filter active:
+  phorest_daily_sales_summary → has rows? → use POS data
+                               → empty?   → query phorest_appointments WHERE status='completed'
+                                            → sum total_price, count rows, sum service hours
+                                            → return as "actual" metrics
+```
 
-Change the active session query to only exclude `cancelled` and `no_show` -- not `completed`. The time window filter (`start_time <= now AND end_time > now`) is already the authoritative signal for whether a stylist is currently in service. Status should not override the time-based determination.
-
-- Line 51: Change `.not('status', 'in', '("cancelled","no_show","completed")')` to `.not('status', 'in', '("cancelled","no_show")')`
-
-This is a one-line fix. The time window remains the source of truth for "currently in service."
+### Expected Result
+- Transactions: 18 (completed only, not 22)
+- Avg Ticket: ~$126 ($2,268 / 18)
+- Rev/Hour: computed from completed appointment hours only
+- Labels remain "so far today" context
 
