@@ -2289,6 +2289,50 @@ export type Database = {
           },
         ]
       }
+      canonical_content: {
+        Row: {
+          content_key: string
+          content_type: string
+          created_at: string | null
+          id: string
+          last_synced_at: string | null
+          organization_id: string
+          source: string | null
+          updated_at: string | null
+          value: Json
+        }
+        Insert: {
+          content_key: string
+          content_type?: string
+          created_at?: string | null
+          id?: string
+          last_synced_at?: string | null
+          organization_id: string
+          source?: string | null
+          updated_at?: string | null
+          value?: Json
+        }
+        Update: {
+          content_key?: string
+          content_type?: string
+          created_at?: string | null
+          id?: string
+          last_synced_at?: string | null
+          organization_id?: string
+          source?: string | null
+          updated_at?: string | null
+          value?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "canonical_content_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       challenge_participants: {
         Row: {
           challenge_id: string
@@ -16590,6 +16634,146 @@ export type Database = {
           },
         ]
       }
+      theme_activations: {
+        Row: {
+          activated_at: string | null
+          activated_by: string | null
+          id: string
+          is_current: boolean | null
+          migration_report: Json | null
+          organization_id: string
+          pre_switch_snapshot: Json | null
+          theme_id: string
+          theme_version: string
+        }
+        Insert: {
+          activated_at?: string | null
+          activated_by?: string | null
+          id?: string
+          is_current?: boolean | null
+          migration_report?: Json | null
+          organization_id: string
+          pre_switch_snapshot?: Json | null
+          theme_id: string
+          theme_version: string
+        }
+        Update: {
+          activated_at?: string | null
+          activated_by?: string | null
+          id?: string
+          is_current?: boolean | null
+          migration_report?: Json | null
+          organization_id?: string
+          pre_switch_snapshot?: Json | null
+          theme_id?: string
+          theme_version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "theme_activations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "theme_activations_theme_id_fkey"
+            columns: ["theme_id"]
+            isOneToOne: false
+            referencedRelation: "website_themes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      theme_section_types: {
+        Row: {
+          allowed_field_types: string[] | null
+          canonical_fields_schema: Json
+          created_at: string | null
+          id: string
+          is_builtin: boolean | null
+          is_portable: boolean | null
+          max_instances_per_page: number | null
+          performance_weight: number | null
+          semantic_category: string
+          transformation_rules: Json | null
+        }
+        Insert: {
+          allowed_field_types?: string[] | null
+          canonical_fields_schema?: Json
+          created_at?: string | null
+          id: string
+          is_builtin?: boolean | null
+          is_portable?: boolean | null
+          max_instances_per_page?: number | null
+          performance_weight?: number | null
+          semantic_category: string
+          transformation_rules?: Json | null
+        }
+        Update: {
+          allowed_field_types?: string[] | null
+          canonical_fields_schema?: Json
+          created_at?: string | null
+          id?: string
+          is_builtin?: boolean | null
+          is_portable?: boolean | null
+          max_instances_per_page?: number | null
+          performance_weight?: number | null
+          semantic_category?: string
+          transformation_rules?: Json | null
+        }
+        Relationships: []
+      }
+      theme_slot_mappings: {
+        Row: {
+          created_at: string | null
+          expected_field_type: string
+          fallback_source: string | null
+          id: string
+          performance_priority: number | null
+          primary_source: string
+          required: boolean | null
+          semantic_type: string
+          slot_id: string
+          theme_id: string
+          transformation_rules: Json | null
+        }
+        Insert: {
+          created_at?: string | null
+          expected_field_type: string
+          fallback_source?: string | null
+          id?: string
+          performance_priority?: number | null
+          primary_source: string
+          required?: boolean | null
+          semantic_type: string
+          slot_id: string
+          theme_id: string
+          transformation_rules?: Json | null
+        }
+        Update: {
+          created_at?: string | null
+          expected_field_type?: string
+          fallback_source?: string | null
+          id?: string
+          performance_priority?: number | null
+          primary_source?: string
+          required?: boolean | null
+          semantic_type?: string
+          slot_id?: string
+          theme_id?: string
+          transformation_rules?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "theme_slot_mappings_theme_id_fkey"
+            columns: ["theme_id"]
+            isOneToOne: false
+            referencedRelation: "website_themes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ticket_comments: {
         Row: {
           author_id: string
@@ -17825,7 +18009,10 @@ export type Database = {
       }
       website_themes: {
         Row: {
+          blueprint: Json
+          category: string
           color_scheme: string
+          compatibility_rules: Json | null
           created_at: string
           default_sections: Json
           description: string | null
@@ -17834,11 +18021,19 @@ export type Database = {
           is_builtin: boolean
           layout_config: Json
           name: string
+          organization_id: string | null
+          status: string
+          supported_features: Json | null
           thumbnail_url: string | null
           typography_preset: Json
+          updated_at: string | null
+          version: string
         }
         Insert: {
+          blueprint?: Json
+          category?: string
           color_scheme?: string
+          compatibility_rules?: Json | null
           created_at?: string
           default_sections?: Json
           description?: string | null
@@ -17847,11 +18042,19 @@ export type Database = {
           is_builtin?: boolean
           layout_config?: Json
           name: string
+          organization_id?: string | null
+          status?: string
+          supported_features?: Json | null
           thumbnail_url?: string | null
           typography_preset?: Json
+          updated_at?: string | null
+          version?: string
         }
         Update: {
+          blueprint?: Json
+          category?: string
           color_scheme?: string
+          compatibility_rules?: Json | null
           created_at?: string
           default_sections?: Json
           description?: string | null
@@ -17860,10 +18063,23 @@ export type Database = {
           is_builtin?: boolean
           layout_config?: Json
           name?: string
+          organization_id?: string | null
+          status?: string
+          supported_features?: Json | null
           thumbnail_url?: string | null
           typography_preset?: Json
+          updated_at?: string | null
+          version?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "website_themes_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       weekly_assignment_completions: {
         Row: {
