@@ -28,6 +28,7 @@ import {
   MessageSquare,
   Clock,
   TrendingUp,
+  DollarSign,
   Cake,
   Award,
   Pencil,
@@ -47,6 +48,7 @@ import {
 } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn, formatPhoneDisplay } from '@/lib/utils';
+import { calculateCLV, assignCLVTier, formatCLVValue, type CLVTierConfig } from '@/lib/clv-calculator';
 import { LEAD_SOURCES, getLeadSourceLabel, getLeadSourceColor, isStandardSource } from '@/lib/leadSources';
 import { MergedProfileBanner } from './clients/merge/MergedProfileBanner';
 import { VisitHistoryTimeline } from './VisitHistoryTimeline';
@@ -600,34 +602,74 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
           )}
 
           {/* Stats Cards — Bento tiles */}
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="grid grid-cols-3 gap-3">
-            <Card className="p-3 text-center bg-card/80 backdrop-blur-xl border-border/60">
-              <Calendar className="w-4 h-4 mx-auto text-muted-foreground mb-1" />
-              <p className="font-display text-lg tracking-wide">{client.visit_count}</p>
-              <p className="text-xs text-muted-foreground">Visits</p>
-            </Card>
-            <Card className="p-3 text-center bg-card/80 backdrop-blur-xl border-border/60">
-              <TrendingUp className="w-4 h-4 mx-auto text-muted-foreground mb-1" />
-              <p className="font-display text-lg tracking-wide">{formatCurrencyWhole(client.total_spend || 0)}</p>
-              <p className="text-xs text-muted-foreground">Total Spend</p>
-            </Card>
-            <Card className="p-3 text-center bg-card/80 backdrop-blur-xl border-border/60">
-              <Clock className="w-4 h-4 mx-auto text-muted-foreground mb-1" />
-              <p className={cn(
-                "font-display text-lg tracking-wide",
-                client.daysSinceVisit && client.daysSinceVisit > 60 && "text-destructive",
-                client.daysSinceVisit && client.daysSinceVisit > 30 && client.daysSinceVisit <= 60 && "text-amber-600 dark:text-amber-400"
-              )}>
-                {client.daysSinceVisit !== null ? `${client.daysSinceVisit}d` : 'N/A'}
-              </p>
-              <p className="text-xs text-muted-foreground">Since Visit</p>
-              {client.last_visit && (
-                <p className="text-[10px] text-muted-foreground/70 mt-0.5">
-                  {formatDate(new Date(client.last_visit), 'MMM d, yyyy')}
-                </p>
-              )}
-            </Card>
-          </motion.div>
+          {(() => {
+            const clvResult = calculateCLV(
+              client.total_spend,
+              client.visit_count,
+              (client as any).client_since || (client as any).first_visit || null,
+              client.last_visit,
+            );
+            return (
+              <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="space-y-3">
+                <div className="grid grid-cols-3 gap-3">
+                  <Card className="p-3 text-center bg-card/80 backdrop-blur-xl border-border/60">
+                    <Calendar className="w-4 h-4 mx-auto text-muted-foreground mb-1" />
+                    <p className="font-display text-lg tracking-wide">{client.visit_count}</p>
+                    <p className="text-xs text-muted-foreground">Visits</p>
+                  </Card>
+                  <Card className="p-3 text-center bg-card/80 backdrop-blur-xl border-border/60">
+                    <TrendingUp className="w-4 h-4 mx-auto text-muted-foreground mb-1" />
+                    <p className="font-display text-lg tracking-wide">{formatCurrencyWhole(client.total_spend || 0)}</p>
+                    <p className="text-xs text-muted-foreground">Total Spend</p>
+                  </Card>
+                  <Card className="p-3 text-center bg-card/80 backdrop-blur-xl border-border/60">
+                    <Clock className="w-4 h-4 mx-auto text-muted-foreground mb-1" />
+                    <p className={cn(
+                      "font-display text-lg tracking-wide",
+                      client.daysSinceVisit && client.daysSinceVisit > 60 && "text-destructive",
+                      client.daysSinceVisit && client.daysSinceVisit > 30 && client.daysSinceVisit <= 60 && "text-amber-600 dark:text-amber-400"
+                    )}>
+                      {client.daysSinceVisit !== null ? `${client.daysSinceVisit}d` : 'N/A'}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Since Visit</p>
+                    {client.last_visit && (
+                      <p className="text-[10px] text-muted-foreground/70 mt-0.5">
+                        {formatDate(new Date(client.last_visit), 'MMM d, yyyy')}
+                      </p>
+                    )}
+                  </Card>
+                </div>
+
+                {/* CLV Card */}
+                {clvResult.isReliable && (
+                  <Card className="p-3 bg-card/80 backdrop-blur-xl border-border/60">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <DollarSign className="w-4 h-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-display">Lifetime Value</p>
+                          <p className="font-display text-xl tracking-wide">{formatCLVValue(clvResult.lifetimeValue)}</p>
+                        </div>
+                      </div>
+                      <div className="text-right space-y-0.5">
+                        <p className="text-xs text-muted-foreground">
+                          {formatCLVValue(clvResult.annualValue)}<span className="text-muted-foreground/60">/yr</span>
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {formatCurrencyWhole(Math.round(clvResult.avgTicket))}<span className="text-muted-foreground/60">/visit</span>
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {clvResult.annualFrequency.toFixed(1)}<span className="text-muted-foreground/60"> visits/yr</span>
+                        </p>
+                      </div>
+                    </div>
+                  </Card>
+                )}
+              </motion.div>
+            );
+          })()}
 
           {/* Household Card */}
           {householdData && householdData.members.length > 0 && (

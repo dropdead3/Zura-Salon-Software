@@ -39,6 +39,7 @@ import { DuplicatePairCard } from '@/components/dashboard/clients/DuplicatePairC
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { differenceInDays } from 'date-fns';
+import { calculateCLV, formatCLVValue } from '@/lib/clv-calculator';
 import { toast } from 'sonner';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
@@ -1263,6 +1264,20 @@ export default function ClientDirectory() {
                           <div>
                             <p className="font-display text-lg">{formatCurrencyWhole(Number(client.total_spend || 0))}</p>
                             <p className="text-xs text-muted-foreground">lifetime</p>
+                            {(() => {
+                              const clv = calculateCLV(
+                                client.total_spend,
+                                client.visit_count,
+                                client.client_since || client.first_visit || null,
+                                client.last_visit,
+                              );
+                              if (!clv.isReliable) return null;
+                              return (
+                                <p className="text-[10px] text-primary mt-0.5">
+                                  CLV {formatCLVValue(clv.lifetimeValue)}
+                                </p>
+                              );
+                            })()}
                           </div>
                           {/* Single merge action */}
                           {canMerge && (client as any).status !== 'merged' && !(client as any).is_duplicate && !(client as any)._linkedReason && !(client as any)._linkedDuplicateId && (

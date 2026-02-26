@@ -7,9 +7,12 @@ import { Link } from 'react-router-dom';
 import { useClientHealthSegments } from '@/hooks/useClientHealthSegments';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { calculateCLV } from '@/lib/clv-calculator';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 export function ClientHealthSummaryCard() {
   const { data: segments, isLoading } = useClientHealthSegments();
+  const { formatCurrencyWhole } = useFormatCurrency();
 
   if (isLoading) {
     return (
@@ -59,7 +62,19 @@ export function ClientHealthSummaryCard() {
 
         <div className="grid grid-cols-2 gap-3">
           {metrics.map(m => {
-            const count = segments?.[m.key]?.length || 0;
+            const segmentClients = segments?.[m.key] || [];
+            const count = segmentClients.length;
+            
+            // Compute revenue at risk for at-risk and high-value-quiet segments
+            const showDollarImpact = m.key === 'at-risk' || m.key === 'high-value-quiet';
+            let revenueAtRisk = 0;
+            if (showDollarImpact && count > 0) {
+              revenueAtRisk = segmentClients.reduce((sum, c) => {
+                const clv = calculateCLV(c.total_spend, c.visit_count, null, c.last_visit);
+                return sum + (clv.isReliable ? clv.annualValue : 0);
+              }, 0);
+            }
+            
             return (
               <Link
                 key={m.key}
@@ -70,6 +85,11 @@ export function ClientHealthSummaryCard() {
                 <div className="min-w-0">
                   <p className="text-lg font-medium leading-none">{count}</p>
                   <p className="text-[10px] text-muted-foreground truncate">{m.label}</p>
+                  {showDollarImpact && revenueAtRisk > 0 && (
+                    <p className="text-[10px] text-destructive truncate">
+                      {formatCurrencyWhole(Math.round(revenueAtRisk))}/yr at risk
+                    </p>
+                  )}
                 </div>
               </Link>
             );
