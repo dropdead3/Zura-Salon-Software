@@ -1,7 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { format, startOfMonth, endOfMonth, differenceInDays } from 'date-fns';
+import {
+  fetchRevenue,
+  fetchAvgTicket,
+  fetchRetailRevenue,
+  fetchNoShowRate,
+  fetchRebookRate,
+  fetchNewClientPct,
+} from '@/lib/goal-metric-fetchers';
 
 export interface GoalMetricResult {
   currentValue: number | null;
@@ -36,20 +43,28 @@ export function useGoalCurrentValue(
         case 'monthly_revenue':
           return fetchRevenue(dateFrom, dateTo, locationId);
 
-        case 'avg_ticket':
-          return fetchAvgTicket(dateFrom, dateTo, locationId);
+        case 'avg_ticket': {
+          const result = await fetchAvgTicket(dateFrom, dateTo, locationId);
+          return result.avg;
+        }
 
         case 'retail_revenue':
           return fetchRetailRevenue(dateFrom, dateTo, locationId);
 
-        case 'noshow_rate':
-          return fetchNoShowRate(dateFrom, dateTo, locationId);
+        case 'noshow_rate': {
+          const result = await fetchNoShowRate(dateFrom, dateTo, locationId);
+          return result.rate;
+        }
 
-        case 'rebook_rate':
-          return fetchRebookRate(dateFrom, dateTo, locationId);
+        case 'rebook_rate': {
+          const result = await fetchRebookRate(dateFrom, dateTo, locationId);
+          return result.rate;
+        }
 
-        case 'new_client_pct':
-          return fetchNewClientPct(dateFrom, dateTo, locationId);
+        case 'new_client_pct': {
+          const result = await fetchNewClientPct(dateFrom, dateTo, locationId);
+          return result.rate;
+        }
 
         // Metrics that need more complex data pipelines — return null gracefully
         case 'labor_cost_pct':
@@ -82,153 +97,4 @@ export function useGoalCurrentValue(
   }
 
   return { currentValue, projectedValue, isLoading };
-}
-
-// ── Data fetchers ──
-
-async function fetchRevenue(
-  dateFrom: string,
-  dateTo: string,
-  locationId?: string | null,
-): Promise<number> {
-  let query = supabase
-    .from('phorest_appointments')
-    .select('total_price')
-    .gte('appointment_date', dateFrom)
-    .lte('appointment_date', dateTo)
-    .not('status', 'in', '("cancelled","no_show")')
-    .not('total_price', 'is', null);
-
-  if (locationId && locationId !== 'all') {
-    query = query.eq('location_id', locationId);
-  }
-
-  const { data, error } = await query;
-  if (error) throw error;
-  return data?.reduce((sum, r) => sum + (Number(r.total_price) || 0), 0) ?? 0;
-}
-
-async function fetchAvgTicket(
-  dateFrom: string,
-  dateTo: string,
-  locationId?: string | null,
-): Promise<number | null> {
-  let query = supabase
-    .from('phorest_appointments')
-    .select('total_price')
-    .gte('appointment_date', dateFrom)
-    .lte('appointment_date', dateTo)
-    .not('status', 'in', '("cancelled","no_show")')
-    .not('total_price', 'is', null)
-    .gt('total_price', 0);
-
-  if (locationId && locationId !== 'all') {
-    query = query.eq('location_id', locationId);
-  }
-
-  const { data, error } = await query;
-  if (error) throw error;
-  if (!data?.length) return null;
-  const total = data.reduce((sum, r) => sum + (Number(r.total_price) || 0), 0);
-  return total / data.length;
-}
-
-async function fetchRetailRevenue(
-  dateFrom: string,
-  dateTo: string,
-  locationId?: string | null,
-): Promise<number> {
-  let query = supabase
-    .from('phorest_transaction_items')
-    .select('total_amount')
-    .gte('transaction_date', dateFrom)
-    .lte('transaction_date', dateTo)
-    .eq('item_type', 'product')
-    .not('total_amount', 'is', null);
-
-  if (locationId && locationId !== 'all') {
-    query = query.eq('location_id', locationId);
-  }
-
-  const { data, error } = await query;
-  if (error) throw error;
-  return data?.reduce((sum, r) => sum + (Number(r.total_amount) || 0), 0) ?? 0;
-}
-
-async function fetchNoShowRate(
-  dateFrom: string,
-  dateTo: string,
-  locationId?: string | null,
-): Promise<number | null> {
-  let totalQ = supabase
-    .from('phorest_appointments')
-    .select('id', { count: 'exact', head: true })
-    .gte('appointment_date', dateFrom)
-    .lte('appointment_date', dateTo)
-    .not('status', 'in', '("cancelled")');
-
-  let noshowQ = supabase
-    .from('phorest_appointments')
-    .select('id', { count: 'exact', head: true })
-    .gte('appointment_date', dateFrom)
-    .lte('appointment_date', dateTo)
-    .eq('status', 'no_show');
-
-  if (locationId && locationId !== 'all') {
-    totalQ = totalQ.eq('location_id', locationId);
-    noshowQ = noshowQ.eq('location_id', locationId);
-  }
-
-  const [totalRes, noshowRes] = await Promise.all([totalQ, noshowQ]);
-  if (totalRes.error) throw totalRes.error;
-  if (noshowRes.error) throw noshowRes.error;
-  const total = totalRes.count ?? 0;
-  if (total === 0) return null;
-  return ((noshowRes.count ?? 0) / total) * 100;
-}
-
-async function fetchRebookRate(
-  dateFrom: string,
-  dateTo: string,
-  locationId?: string | null,
-): Promise<number | null> {
-  let query = supabase
-    .from('phorest_appointments')
-    .select('rebooked_at_checkout')
-    .gte('appointment_date', dateFrom)
-    .lte('appointment_date', dateTo)
-    .not('status', 'in', '("cancelled","no_show")');
-
-  if (locationId && locationId !== 'all') {
-    query = query.eq('location_id', locationId);
-  }
-
-  const { data, error } = await query;
-  if (error) throw error;
-  if (!data?.length) return null;
-  const rebooked = data.filter(r => r.rebooked_at_checkout === true).length;
-  return (rebooked / data.length) * 100;
-}
-
-async function fetchNewClientPct(
-  dateFrom: string,
-  dateTo: string,
-  locationId?: string | null,
-): Promise<number | null> {
-  let query = supabase
-    .from('phorest_appointments')
-    .select('is_new_client')
-    .gte('appointment_date', dateFrom)
-    .lte('appointment_date', dateTo)
-    .not('status', 'in', '("cancelled","no_show")');
-
-  if (locationId && locationId !== 'all') {
-    query = query.eq('location_id', locationId);
-  }
-
-  const { data, error } = await query;
-  if (error) throw error;
-  if (!data?.length) return null;
-  const newClients = data.filter(r => r.is_new_client === true).length;
-  return (newClients / data.length) * 100;
 }
