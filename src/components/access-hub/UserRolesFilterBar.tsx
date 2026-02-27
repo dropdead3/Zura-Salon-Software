@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Search, Filter, ChevronDown, LayoutList, LayoutGrid, UserX } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
+import { getRoleIconComponent } from '@/components/dashboard/RoleIconPicker';
 import type { Database } from '@/integrations/supabase/types';
 
 type AppRole = Database['public']['Enums']['app_role'];
@@ -20,6 +21,7 @@ interface RoleOption {
   name: string;
   display_name: string;
   color: string;
+  icon: string;
 }
 
 interface UserRolesFilterBarProps {
@@ -130,18 +132,22 @@ export function UserRolesFilterBar({
             </label>
           </div>
           <div className="max-h-[280px] overflow-y-auto p-2 space-y-0.5">
-            {roles.map(role => (
-              <label
-                key={role.name}
-                className="flex items-center gap-2 px-2 py-1.5 cursor-pointer rounded-md hover:bg-accent text-sm"
-              >
-                <Checkbox
-                  checked={effectiveSelectedRoles.includes(role.name)}
-                  onCheckedChange={() => handleRoleToggle(role.name)}
-                />
-                {role.display_name}
-              </label>
-            ))}
+            {roles.map(role => {
+              const RoleIcon = getRoleIconComponent(role.icon);
+              return (
+                <label
+                  key={role.name}
+                  className="flex items-center gap-2 px-2 py-1.5 cursor-pointer rounded-md hover:bg-accent text-sm"
+                >
+                  <Checkbox
+                    checked={effectiveSelectedRoles.includes(role.name)}
+                    onCheckedChange={() => handleRoleToggle(role.name)}
+                  />
+                  <RoleIcon className="w-3.5 h-3.5 text-muted-foreground" />
+                  {role.display_name}
+                </label>
+              );
+            })}
           </div>
         </PopoverContent>
       </Popover>
