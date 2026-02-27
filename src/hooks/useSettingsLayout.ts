@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 // Default icon colors for each category
 export const DEFAULT_ICON_COLORS: Record<string, string> = {
+  'my-profile': '#8B5CF6',
   business: '#D946EF',
   email: '#8B5CF6',
   sms: '#22C55E',
@@ -35,7 +36,7 @@ export const SECTION_GROUPS = [
   {
     id: 'operations',
     label: 'Business Operations',
-    categories: ['business', 'website', 'locations', 'services', 'retail-products', 'schedule', 'kiosk', 'dayrate', 'forms', 'levels', 'leaderboard', 'onboarding', 'loyalty', 'team-rewards', 'feedback'],
+    categories: ['my-profile', 'business', 'website', 'locations', 'services', 'retail-products', 'schedule', 'kiosk', 'dayrate', 'forms', 'levels', 'leaderboard', 'onboarding', 'loyalty', 'team-rewards', 'feedback'],
   },
   {
     id: 'team',
