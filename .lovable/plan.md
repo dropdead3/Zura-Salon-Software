@@ -1,19 +1,18 @@
 
 
-## Flatten Card Nesting in StylistsContent
+## Flatten Remaining Card-in-Card Nesting in StylistsContent
 
-The current structure is EditorCard → Card (Sample Cards Settings) → CardContent, creating triple-nested card borders and excessive padding. The fix is to remove the inner `Card`/`CardHeader`/`CardContent` wrapper and render the Sample Cards Settings content directly inside the `EditorCard` using a simple section header and divider.
+The screenshot shows three levels of nesting: EditorCard → Tabs → Card (for each stylist item and empty states). These inner cards create redundant borders and padding inside the already-bounded EditorCard.
 
-### Change — `src/components/dashboard/website-editor/StylistsContent.tsx`
+### Changes — `src/components/dashboard/website-editor/StylistsContent.tsx`
 
-**Remove** the `<Card>`, `<CardHeader>`, `<CardTitle>`, `<CardDescription>`, and `<CardContent>` wrapper around the Sample Cards Settings block (lines 339-398). Replace with:
+**1. StylistCard (lines 240-328):** Replace `<Card><CardContent className="p-3 sm:p-4">` with a plain `<div className="p-3 border border-border/40 rounded-lg">`. This keeps visual separation between list items without the full card treatment.
 
-1. A lightweight section header using an inline icon + label (same `Settings` icon + "Sample Cards Settings" text) styled as `text-xs font-display tracking-wide text-muted-foreground` — no card border
-2. A `text-xs text-muted-foreground` description line below
-3. The existing toggle, badges, alert, and preview button rendered directly — no extra card padding layer
-4. A `border-t border-border/30` divider before the Tabs section to visually separate
+**2. Empty state "No pending requests" (line 417):** Replace `<Card className="p-8 text-center">` with `<div className="p-8 text-center text-muted-foreground border border-dashed border-border/40 rounded-lg">` and remove the inner `<p>` wrapper (merge text into the div).
 
-This eliminates one full nesting level, reclaiming ~24px of horizontal padding and removing the redundant inner card border. The `StylistCard` items inside tabs also use `<Card>` but those are leaf-level list items and appropriate.
+**3. Empty state "No stylists visible" (line 435):** Same treatment as above.
 
-**Imports cleanup**: Remove `CardHeader` and `CardTitle` and `CardDescription` from imports if no longer used (the empty-state cards in tabs still use `Card` so keep that import).
+**4. Imports (line 3):** Remove `Card` and `CardContent` from imports if no longer used elsewhere in this file. Check `SpecialtyOptionsManager` — it's a separate component so its own card usage is fine.
+
+Single file change: `src/components/dashboard/website-editor/StylistsContent.tsx`
 
