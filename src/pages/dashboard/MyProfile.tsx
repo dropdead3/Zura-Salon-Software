@@ -195,8 +195,14 @@ export default function MyProfile() {
         location_id: profile.location_id || '',
         location_ids: locationIds,
         stylist_level: profile.stylist_level || '',
-        specialties: profile.specialties || [],
-        highlighted_services: ((profile as any).highlighted_services || []).filter((s: string) => (profile.specialties || []).includes(s)),
+        specialties: (profile.specialties || []).map((s: string) => {
+          const match = specialtyOptions?.find(opt => opt.name.toLowerCase() === s.toLowerCase());
+          return match ? match.name : s;
+        }),
+        highlighted_services: ((profile as any).highlighted_services || []).map((s: string) => {
+          const match = specialtyOptions?.find(opt => opt.name.toLowerCase() === s.toLowerCase());
+          return match ? match.name : s;
+        }).filter((s: string) => (profile.specialties || []).some((sp: string) => sp.toLowerCase() === s.toLowerCase())),
         extensions_certified: profile.extensions_certified || false,
         emergency_contact: profile.emergency_contact || '',
         emergency_phone: profile.emergency_phone || '',
@@ -209,7 +215,7 @@ export default function MyProfile() {
       setInitialFormData(newFormData);
       setHasUnsavedChanges(false);
     }
-  }, [profile, existingSchedules]);
+  }, [profile, existingSchedules, specialtyOptions]);
 
   // Track changes and show toast (only when not in read-only mode)
   useEffect(() => {
