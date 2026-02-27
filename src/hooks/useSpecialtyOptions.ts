@@ -65,7 +65,7 @@ export function useAddSpecialtyOption() {
 
       const { data, error } = await supabase
         .from('specialty_options')
-        .insert({ name: name.toUpperCase(), display_order: order })
+        .insert({ name, display_order: order })
         .select()
         .single();
 
@@ -99,7 +99,7 @@ export function useUpdateSpecialtyOption() {
       is_active?: boolean;
     }) => {
       const updates: Partial<SpecialtyOption> = {};
-      if (name !== undefined) updates.name = name.toUpperCase();
+      if (name !== undefined) updates.name = name;
       if (display_order !== undefined) updates.display_order = display_order;
       if (is_active !== undefined) updates.is_active = is_active;
 
