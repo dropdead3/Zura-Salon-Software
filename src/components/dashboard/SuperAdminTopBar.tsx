@@ -208,6 +208,7 @@ export function SuperAdminTopBar({
           {/* Role badges — responsive density */}
           {(isPlatformUser || isAdmin) && roleBadges.map((badge, i) => {
             const Icon = badge.icon;
+            const isStylistAdmin = badge.label === 'Stylist' && isAdmin;
             return (
               <Tooltip key={i}>
                 <TooltipTrigger asChild>
@@ -221,8 +222,10 @@ export function SuperAdminTopBar({
                     <span className="hidden xl:inline 2xl:hidden">{badge.shortLabel}</span>
                   </div>
                 </TooltipTrigger>
-                <TooltipContent side="bottom" className="xl:hidden">
-                  {badge.label}
+                <TooltipContent side="bottom" className={cn("max-w-[260px] text-xs", !isStylistAdmin && "xl:hidden")}>
+                  {isStylistAdmin
+                    ? "This user is an admin who also performs services. Managed via the 'I also perform services' toggle in Profile Settings."
+                    : badge.label}
                 </TooltipContent>
               </Tooltip>
             );

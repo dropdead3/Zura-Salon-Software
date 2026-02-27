@@ -327,7 +327,8 @@ export function UserRolesTab({ canManage }: UserRolesTabProps) {
                     .filter(role => user.roles.includes(role.name as AppRole) && role.name !== 'super_admin')
                     .map(role => {
                       const colorClasses = getRoleColorClasses(role.color);
-                      return (
+                      const isAdminStylist = role.name === 'stylist' && user.roles.some((r: string) => ['super_admin', 'admin', 'manager'].includes(r));
+                      const badge = (
                         <Badge 
                           key={role.name} 
                           variant="outline" 
@@ -336,6 +337,17 @@ export function UserRolesTab({ canManage }: UserRolesTabProps) {
                           {role.display_name}
                         </Badge>
                       );
+                      if (isAdminStylist) {
+                        return (
+                          <Tooltip key={role.name}>
+                            <TooltipTrigger asChild>{badge}</TooltipTrigger>
+                            <TooltipContent side="top" className="max-w-[240px] text-xs">
+                              This user is an admin who also performs services. Managed via the "I also perform services" toggle in Profile Settings.
+                            </TooltipContent>
+                          </Tooltip>
+                        );
+                      }
+                      return badge;
                     })}
                   <ResponsibilityBadges userId={user.user_id} />
                 </div>
