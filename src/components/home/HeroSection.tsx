@@ -17,11 +17,8 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [isAnimationReady, setIsAnimationReady] = useState(false);
 
-  // In preview mode (inside editor iframe), skip all entrance animations and scroll transforms
-  const isPreview = typeof window !== 'undefined' && (() => {
-    const params = new URLSearchParams(window.location.search);
-    return params.has('preview') || params.get('mode') === 'edit';
-  })();
+  // Detect if we're inside an iframe (editor preview) — URL param detection fails due to React Router
+  const isPreview = typeof window !== 'undefined' && window.self !== window.top;
   const animDelay = isPreview ? 0 : 1;
 
   // Start word rotation after initial heading animation completes
@@ -80,54 +77,41 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
   // Shared spring config for organic animations
   const springTransition = { type: "spring" as const, stiffness: 50, damping: 20 };
 
-  // In preview mode, render a completely static version with no motion components
+  // In preview mode, render a completely static version with zero external component deps
   if (isPreview) {
     return (
-      <section ref={sectionRef} data-theme="light" className="relative flex flex-col overflow-hidden min-h-[600px]">
-        {videoSrc && (
-          <div className="absolute inset-0 z-0">
-            <video autoPlay loop muted playsInline className="w-full h-full object-cover">
-              <source src={videoSrc} type="video/mp4" />
-            </video>
-            <div className="absolute inset-0 bg-background/60" />
-          </div>
-        )}
-        <div className="flex-1 flex items-start justify-center relative z-0 pt-16 pb-16">
-          <div className="container mx-auto px-6 lg:px-12">
-            <div className="max-w-4xl mx-auto text-center">
-              <Eyebrow className="text-muted-foreground mb-6">Hair • Color • Artistry</Eyebrow>
-              <h1 className="font-display text-[clamp(2.25rem,8vw,5.5rem)] font-normal text-foreground leading-[0.95] flex flex-col items-center">
-                <span className="whitespace-nowrap block">Your Salon</span>
-                <span className="block overflow-hidden h-[1.15em]">
-                  <span className="block">{rotatingWords[currentWordIndex]}</span>
-                </span>
-              </h1>
-              <p className="mt-8 text-sm md:text-base text-muted-foreground font-sans font-light max-w-md mx-auto leading-relaxed">
-                Where technical talent meets artistry.
-                <br />
-                We believe in more than just the status quo.
-              </p>
-              <div className="mt-10 flex flex-col items-center gap-3">
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                  <button
-                    onClick={() => setConsultationOpen(true)}
-                    className="group w-full sm:w-auto px-8 py-4 text-base font-sans font-normal bg-foreground text-background rounded-full hover:bg-foreground/90 hover:shadow-xl transition-all duration-300 text-center active:scale-[0.98] inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-6"
-                  >
-                    <span className="relative z-10">I am a new client</span>
-                    <ArrowRight className="w-0 h-4 opacity-0 group-hover:w-4 group-hover:opacity-100 transition-all duration-300" />
-                  </button>
-                  <Link
-                    to="/booking"
-                    className="group w-full sm:w-auto px-8 py-4 text-base font-sans font-normal border border-foreground text-foreground rounded-full transition-all duration-300 text-center relative overflow-hidden inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-6"
-                  >
-                    <span className="relative z-10">I am a returning client</span>
-                    <ArrowRight className="w-0 h-4 opacity-0 group-hover:w-4 group-hover:opacity-100 transition-all duration-300" />
-                  </Link>
-                </div>
-                <div className="flex flex-col items-center gap-1 text-xs md:text-sm text-muted-foreground font-sans">
-                  <p>New clients begin with a $15 consultation</p>
-                  <p>Returning clients are free to book their known services</p>
-                </div>
+      <section ref={sectionRef} className="relative flex flex-col overflow-hidden" style={{ minHeight: '500px' }}>
+        <div className="flex-1 flex items-center justify-center py-12 px-6">
+          <div style={{ maxWidth: '56rem', width: '100%', textAlign: 'center' as const }}>
+            <p style={{ fontSize: '0.75rem', letterSpacing: '0.15em', textTransform: 'uppercase' as const, color: 'hsl(40,10%,50%)', marginBottom: '1.5rem' }}>
+              Hair • Color • Artistry
+            </p>
+            <h1 className="font-display" style={{ fontSize: 'clamp(2.25rem, 8vw, 5.5rem)', fontWeight: 400, lineHeight: 0.95, color: 'hsl(40,10%,10%)' }}>
+              <span style={{ display: 'block', whiteSpace: 'nowrap' as const }}>Your Salon</span>
+              <span style={{ display: 'block' }}>{rotatingWords[currentWordIndex]}</span>
+            </h1>
+            <p style={{ marginTop: '2rem', fontSize: '0.875rem', color: 'hsl(40,10%,45%)', maxWidth: '28rem', marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.6 }}>
+              Where technical talent meets artistry.<br />
+              We believe in more than just the status quo.
+            </p>
+            <div style={{ marginTop: '2.5rem', display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: '0.75rem' }}>
+              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' as const, justifyContent: 'center' }}>
+                <button
+                  onClick={() => setConsultationOpen(true)}
+                  style={{ padding: '1rem 2rem', fontSize: '1rem', backgroundColor: 'hsl(40,10%,10%)', color: 'hsl(40,25%,95%)', borderRadius: '9999px', border: 'none', cursor: 'pointer' }}
+                >
+                  I am a new client
+                </button>
+                <a
+                  href="/booking"
+                  style={{ padding: '1rem 2rem', fontSize: '1rem', border: '1px solid hsl(40,10%,10%)', color: 'hsl(40,10%,10%)', borderRadius: '9999px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}
+                >
+                  I am a returning client
+                </a>
+              </div>
+              <div style={{ fontSize: '0.75rem', color: 'hsl(40,10%,50%)' }}>
+                <p>New clients begin with a $15 consultation</p>
+                <p>Returning clients are free to book their known services</p>
               </div>
             </div>
           </div>
@@ -138,7 +122,7 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
   }
 
   return (
-    <section ref={sectionRef} data-theme="light" className="relative flex flex-col overflow-hidden min-h-screen">
+    <section ref={sectionRef} data-theme="light" className={`relative flex flex-col overflow-hidden ${isPreview ? 'min-h-[500px]' : 'min-h-screen'}`}>
       {/* Video Background */}
       {videoSrc && (
         <motion.div 
@@ -197,8 +181,9 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
       )}
 
       <motion.div 
-        className="flex-1 flex items-start justify-center relative z-0 pt-28 pb-32 lg:pt-36 lg:pb-48"
-        style={{ opacity }}
+        className={`flex-1 flex items-start justify-center relative z-0 ${isPreview ? 'pt-16 pb-16' : 'pt-28 pb-32 lg:pt-36 lg:pb-48'}`}
+        style={isPreview ? { opacity: 1 } : { opacity }}
+        initial={isPreview ? false : undefined}
       >
         <div className="container mx-auto px-6 lg:px-12">
           <div className="max-w-4xl mx-auto text-center">
