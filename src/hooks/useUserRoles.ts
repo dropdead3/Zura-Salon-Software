@@ -35,13 +35,15 @@ export const ROLE_DESCRIPTIONS: Record<AppRole, string> = {
   bookkeeper: 'External accounting access for payroll, sales data, and financial reports',
 };
 
-interface UserWithRoles {
+export interface UserWithRoles {
   user_id: string;
   full_name: string;
   display_name: string | null;
   email: string | null;
   photo_url: string | null;
   roles: AppRole[];
+  location_id: string | null;
+  location_ids: string[] | null;
 }
 
 export function useAllUsersWithRoles() {
@@ -51,7 +53,7 @@ export function useAllUsersWithRoles() {
       // Get all active employee profiles
       const { data: profiles, error: profilesError } = await supabase
         .from('employee_profiles')
-        .select('user_id, full_name, display_name, email, photo_url')
+        .select('user_id, full_name, display_name, email, photo_url, location_id, location_ids')
         .eq('is_active', true)
         .order('full_name');
 
