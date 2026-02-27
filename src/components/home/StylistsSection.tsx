@@ -438,6 +438,8 @@ export function StylistsSection() {
       locations: (s.location_ids && s.location_ids.length > 0 ? s.location_ids : (s.location_id ? [s.location_id] : [])) as Location[],
       isBooking: s.is_booking ?? true,
       bio: s.bio || undefined,
+      card_focal_x: s.card_focal_x ?? 50,
+      card_focal_y: s.card_focal_y ?? 50,
     }));
   }, [dbStylists]);
 
