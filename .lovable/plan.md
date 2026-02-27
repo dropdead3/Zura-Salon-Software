@@ -1,37 +1,36 @@
 
 
-## Fix: Security Toggles Not Persisting State
+## Fix: Account Owner Badge "Fritzing" Shine Effect
 
-The "Require Email Verification" and "Restrict Sign-ups" toggles in the Security card are **completely uncontrolled** — they have no `checked` prop, no `onCheckedChange` handler, and no persistence logic. They render as bare `<Switch />` elements that flip visually but lose state on navigation.
+The `animate-shine` animation shifts `backgroundPosition` across the gradient, which on the Account Owner badge (and Super Admin / GM badges) causes a visible background oscillation — the lighter `via-*` band sweeps back and forth, making the badge look glitchy.
 
-### Root Cause (lines 1366 and 1373 of Settings.tsx)
+### Root Cause
 
-```tsx
-<Switch />  // No checked, no handler — purely decorative
-<Switch />  // Same issue
-```
+In `src/lib/roleBadgeConfig.ts`, these badges combine:
+- `bg-gradient-to-r from-stone-700 via-stone-600 to-stone-700` (color gradient)
+- `bg-[length:200%_100%]` (stretched background)
+- `animate-shine` (moves backgroundPosition 200% → -200% in 1.2s)
 
-### Solution
+The gradient IS the shine — so the entire badge background visibly shifts, creating the "fritz."
 
-Follow the same pattern used by the Help & Guidance toggle (`useInfotainerSettings`) — persist these two booleans to the `organizations.settings` JSONB column.
+### Fix: Static Gradient + CSS Pseudo-Element Shine
 
-### Step 1: Create `src/hooks/useOrgSecuritySettings.ts`
+**File: `src/lib/roleBadgeConfig.ts`**
 
-- Read `require_email_verification` and `restrict_signups` from `organizations.settings` JSONB (defaults: both `false`)
-- Provide individual toggle mutation functions that merge into the existing settings object
-- Use `useOrganizationContext` for org scoping
-- Invalidate query cache on success
+1. Remove `bg-[length:200%_100%] animate-shine` from all three shimmer badges (Account Owner, Super Admin, Admin/GM)
+2. Replace with a static gradient and a dedicated `shine-badge` class
 
-### Step 2: Update Security Card in `Settings.tsx` (lines 1352-1376)
+**File: `src/components/dashboard/SuperAdminTopBar.tsx`**
 
-- Extract the inline Security card into a `SecuritySettingsCard` component (same pattern as `InfotainerToggleCard`)
-- Import and use the new hook
-- Wire `checked` and `onCheckedChange` to the hook's state and mutators
-- Add `disabled` prop during save to prevent double-toggling
+3. Add a `relative overflow-hidden` wrapper to badge `<div>` and insert a `::after` pseudo-element shine sweep via a small inline style or utility class
 
-### Technical Notes
+**Alternative (simpler, equally premium):**
 
-- No database migration needed — `organizations.settings` is already a JSONB column used for `show_infotainers`
-- The two new keys (`require_email_verification`, `restrict_signups`) merge safely alongside existing settings keys
-- Optimistic updates via `onMutate` for instant UI feedback
+Remove the `animate-shine` entirely from all three badges. The gradient itself already communicates premium status. The shimmer was causing more harm than good. Keep `bg-gradient-to-r` static — no animation, no `bg-[length:200%_100%]`.
+
+This is the recommended approach: static gradients look clean and executive. The animation was producing visual noise rather than elegance.
+
+### Changes
+
+- `src/lib/roleBadgeConfig.ts` — Remove `bg-[length:200%_100%] animate-shine` from `super_admin`, `admin`, and `ACCOUNT_OWNER_BADGE` colorClasses
 
