@@ -321,7 +321,7 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
     totalCount: onboardingTotalItems,
     percentage: onboardingPercentage,
   };
-  const { roleNames: ALL_ROLES, roleLabels: ROLE_LABELS, getRoleBadgeClasses, getRoleIcon, getRoleDescription } = useRoleUtils();
+  const { roles: dbRoles, roleNames: ALL_ROLES, roleLabels: ROLE_LABELS, getRoleBadgeClasses, getRoleIcon, getRoleDescription } = useRoleUtils();
 
   // Greeting computation for sidebar
   const firstName = user?.user_metadata?.full_name?.split(' ')[0] || 'there';
@@ -466,10 +466,18 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
   
   // Team Tools items are now in managerNavItems (Management section) - no separate transformation needed
 
+  const dbColorMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    dbRoles.forEach((r) => {
+      if (r.color) map[r.name] = r.color;
+    });
+    return map;
+  }, [dbRoles]);
+
   // Build multi-role badge array
   const roleBadges = useMemo(
-    () => buildRoleBadges(actualRoles, !!employeeProfile?.is_primary_owner),
-    [actualRoles, employeeProfile?.is_primary_owner]
+    () => buildRoleBadges(actualRoles, !!employeeProfile?.is_primary_owner, dbColorMap),
+    [actualRoles, employeeProfile?.is_primary_owner, dbColorMap]
   );
 
   // Legacy single-badge helpers kept for any remaining consumers
