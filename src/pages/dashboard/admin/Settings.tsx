@@ -112,6 +112,7 @@ import { useSettingsLayout, useUpdateSettingsLayout, DEFAULT_ICON_COLORS, DEFAUL
 import { useStaffingAlertSettings, useUpdateStaffingAlertSettings } from '@/hooks/useStaffingAlertSettings';
 import { cn } from '@/lib/utils';
 import { useInfotainerSettings } from '@/hooks/useInfotainers';
+import { useOrgSecuritySettings } from '@/hooks/useOrgSecuritySettings';
 import { Slider } from '@/components/ui/slider';
 import {
   DndContext,
@@ -285,6 +286,46 @@ function InfotainerToggleCard() {
             checked={showInfotainers}
             onCheckedChange={toggleInfotainers}
             disabled={isToggling}
+          />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Security settings card
+function SecuritySettingsCard() {
+  const { requireEmailVerification, restrictSignups, updateSecurity, isSaving } = useOrgSecuritySettings();
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <Shield className="w-5 h-5 text-primary" />
+          <CardTitle className="font-display text-lg">SECURITY</CardTitle>
+        </div>
+        <CardDescription>Security and access settings.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="font-sans font-medium text-sm">Require Email Verification</p>
+            <p className="text-xs text-muted-foreground">New users must verify email</p>
+          </div>
+          <Switch
+            checked={requireEmailVerification}
+            onCheckedChange={(val) => updateSecurity({ require_email_verification: val })}
+            disabled={isSaving}
+          />
+        </div>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="font-sans font-medium text-sm">Restrict Sign-ups</p>
+            <p className="text-xs text-muted-foreground">Only approved email domains</p>
+          </div>
+          <Switch
+            checked={restrictSignups}
+            onCheckedChange={(val) => updateSecurity({ restrict_signups: val })}
+            disabled={isSaving}
           />
         </div>
       </CardContent>
@@ -1349,31 +1390,7 @@ export default function Settings() {
                 <InfotainerToggleCard />
 
                 {/* Security */}
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-center gap-2">
-                      <Shield className="w-5 h-5 text-primary" />
-                      <CardTitle className="font-display text-lg">SECURITY</CardTitle>
-                    </div>
-                    <CardDescription>Security and access settings.</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-sans font-medium text-sm">Require Email Verification</p>
-                        <p className="text-xs text-muted-foreground">New users must verify email</p>
-                      </div>
-                      <Switch />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-sans font-medium text-sm">Restrict Sign-ups</p>
-                        <p className="text-xs text-muted-foreground">Only approved email domains</p>
-                      </div>
-                      <Switch />
-                    </div>
-                  </CardContent>
-                </Card>
+                <SecuritySettingsCard />
 
                 {/* Quick Login PIN */}
                 <UserPinSettings />
