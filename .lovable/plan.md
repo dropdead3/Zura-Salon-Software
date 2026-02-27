@@ -1,21 +1,22 @@
 
 
-## Fix Specialty Options Saving as ALL CAPS
+## Add "Manage Specialties" Link on Professional Details Card
 
-**Problem**: The `useAddSpecialtyOption` and `useUpdateSpecialtyOption` hooks both force `name.toUpperCase()` before inserting/updating the database. This overrides whatever casing the user typed.
+**Scope**: Add a small admin-only link in the Professional Details `CardHeader` that navigates to the Website Editor's Specialties manager.
 
 ### Implementation
 
-**File: `src/hooks/useSpecialtyOptions.ts`**
+**File: `src/pages/dashboard/MyProfile.tsx`**
 
-1. **`useAddSpecialtyOption`** (~line 68): Change `name: name.toUpperCase()` → `name` (preserve as-is)
-2. **`useUpdateSpecialtyOption`** (~line 95): Change `updates.name = name.toUpperCase()` → `updates.name = name` (preserve as-is)
+1. In the `CardHeader` of the Professional Details card (line ~1126-1128), add a conditional link visible only when the user has `super_admin` or `admin` role.
+2. Use the existing `roles` array (already available) to check `roles.includes('super_admin') || roles.includes('admin')`.
+3. Render a small `Button` as a `Link` to `/dashboard/admin/website-sections?tab=stylists` with text like "Manage Specialties" and an `ArrowRight` icon.
+4. Style as a compact ghost/outline button (`variant="ghost"`, `size="sm"`) to keep it subtle.
 
-**File: `src/components/dashboard/SpecialtyOptionsManager.tsx`**
+**Result**: The CardHeader becomes:
+```
+PROFESSIONAL DETAILS          [Manage Specialties →]
+```
 
-3. **`handleSaveName`** (line 73): Fix the comparison — currently `editName.trim().toUpperCase() !== option.name` skips saves when only casing changed. Change to `editName.trim() !== option.name` so any text change (including casing) is saved.
-
-### Scope
-- Two files, three one-line fixes
-- No schema or migration changes
+The link only appears for super admins and account owners. It takes them directly to the Website Editor's stylists tab where `SpecialtyOptionsManager` lives.
 
