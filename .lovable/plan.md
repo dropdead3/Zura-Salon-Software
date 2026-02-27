@@ -1,23 +1,30 @@
 
 
-## Unify Specialty Bubble Selectors and Fix Badge Display Logic
+## Fix Per-Step State Persistence in Photo Wizard
 
-Two issues to address:
+Three bugs are causing the wizard to lose zoom/recomposition state between steps.
 
-### 1. Unify bubble styling in MyProfile.tsx
+### Changes in `src/components/dashboard/ImageCropModal.tsx`
 
-The **Specialties** section uses rounded-full `<button>` elements with `border-2`, while the **Highlighted Services** section uses `<Badge>` components with different styling (solid fill vs outline, `opacity-60`, `border-dashed`). Both should use the same bubble style — rounded-full buttons with consistent border/selected states.
+**1. Split rotation into per-step state**
+- Replace single `rotation` state with `avatarRotation` and `cardRotation`
+- Derive `currentRotation` / `setCurrentRotation` from `step` (same pattern as zoom/focal)
+- Update all rotation references (`renderComposeFrame`, `renderControls`, `generateResizedBlob`, reset effect)
 
-**File: `src/pages/dashboard/MyProfile.tsx`** (lines 1209-1230)
-- Replace the `<Badge>` components in Highlighted Services with the same `<button>` style used in the Specialties section
-- Selected highlighted items: `border-primary bg-primary/10 text-primary font-medium`
-- Unselected highlighted items: `border-border hover:border-primary/50 text-foreground` (with `opacity-60 border-dashed` to differentiate as "available to highlight")
-- Disabled items (at max 3): `opacity-40 cursor-not-allowed`
+**2. Fix image load effect to not reset user-set zoom**
+- Remove `setAvatarZoom(1)`, `setCardZoom(1)`, `setRotation(0)` from the `img.onload` callback (lines 127-129)
+- These resets already happen in the modal-close effect (lines 98-100) and in `handleReplacePhoto` — no need to double-reset on image load, which can fire unexpectedly
 
-### 2. Only show highlighted_services on website card — never fall back to specialties
-
-**File: `src/components/home/StylistFlipCard.tsx`** (lines 76-103)
-- Remove the fallback logic that shows `specialties` when `highlighted_services` is empty
-- Remove the extensions-sorting logic (leftover from the old special treatment)
-- Only display badges if `highlighted_services` has items; show nothing otherwise
+**3. Make `handleFrameInteraction` use explicit step logic**
+- Instead of capturing derived `setCurrentFocalX`/`setCurrentFocalY` via closure, use explicit conditionals inside the callback:
+  ```ts
+  if (step === 'card') {
+    setCardFocalX(Math.round(x));
+    setCardFocalY(Math.round(y));
+  } else {
+    setFocalX(Math.round(x));
+    setFocalY(Math.round(y));
+  }
+  ```
+- This eliminates any stale closure risk
 
