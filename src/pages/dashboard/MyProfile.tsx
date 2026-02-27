@@ -382,8 +382,13 @@ export default function MyProfile() {
     e.target.value = '';
   };
 
-  const handleCroppedPhotoUpload = (blob: Blob, focalX: number, focalY: number, cardFocalX: number, cardFocalY: number) => {
-    uploadPhoto.mutate({ input: blob, focalX, focalY, cardFocalX, cardFocalY });
+  const handleCroppedPhotoUpload = async (blob: Blob, focalX: number, focalY: number, cardFocalX: number, cardFocalY: number) => {
+    await uploadPhoto.mutateAsync({ input: blob, focalX, focalY, cardFocalX, cardFocalY });
+    await Promise.all([
+      queryClient.refetchQueries({ queryKey: ['employee-profile'] }),
+      queryClient.refetchQueries({ queryKey: ['team-directory'] }),
+      queryClient.refetchQueries({ queryKey: ['homepage-stylists'] }),
+    ]);
   };
 
   const toggleSpecialty = (specialty: string) => {

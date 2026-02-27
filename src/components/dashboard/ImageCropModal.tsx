@@ -32,7 +32,7 @@ interface ImageCropModalProps {
   imageFile: File | null;
   imageUrl?: string;
   /** Called with the resized blob and both focal point pairs (0-100) */
-  onCropComplete: (blob: Blob, focalX: number, focalY: number, cardFocalX: number, cardFocalY: number) => void;
+  onCropComplete: (blob: Blob, focalX: number, focalY: number, cardFocalX: number, cardFocalY: number) => Promise<void> | void;
   aspectRatio?: number;
   maxOutputSize?: number;
   cardPreviewProps?: CardPreviewProps;
@@ -83,6 +83,7 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
   const [step, setStep] = useState<WizardStep>('avatar');
   const [previewBlob, setPreviewBlob] = useState<Blob | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>('');
+  const [isSaving, setIsSaving] = useState(false);
 
   const effectiveFile = localFile || imageFile;
 
@@ -235,9 +236,16 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
   // Non-wizard: direct save from avatar step
   const handleApply = useCallback(async () => {
     const blob = await generateResizedBlob();
-    if (blob) {
-      onCropComplete(blob, focalX, focalY, focalX, focalY);
+    if (!blob) return;
+
+    try {
+      setIsSaving(true);
+      await Promise.resolve(onCropComplete(blob, focalX, focalY, focalX, focalY));
       onClose();
+    } catch {
+      // Keep modal open so user can retry if upload fails
+    } finally {
+      setIsSaving(false);
     }
   }, [generateResizedBlob, onCropComplete, onClose, focalX, focalY]);
 
@@ -254,10 +262,17 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
   }, [generateResizedBlob, previewUrl]);
 
   // Wizard: final save from review step
-  const handleSaveFromReview = useCallback(() => {
-    if (previewBlob) {
-      onCropComplete(previewBlob, focalX, focalY, cardFocalX, cardFocalY);
+  const handleSaveFromReview = useCallback(async () => {
+    if (!previewBlob) return;
+
+    try {
+      setIsSaving(true);
+      await Promise.resolve(onCropComplete(previewBlob, focalX, focalY, cardFocalX, cardFocalY));
       onClose();
+    } catch {
+      // Keep modal open so user can retry if upload fails
+    } finally {
+      setIsSaving(false);
     }
   }, [previewBlob, onCropComplete, onClose, focalX, focalY, cardFocalX, cardFocalY]);
 
@@ -489,17 +504,17 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
                     <RefreshCw className="h-3.5 w-3.5" />
                     Replace
                   </Button>
-                  <Button type="button" variant="outline" size="sm" onClick={onClose}>
+                  <Button type="button" variant="outline" size="sm" onClick={onClose} disabled={isSaving}>
                     Cancel
                   </Button>
                   {isWizard ? (
-                    <Button type="button" size="sm" onClick={() => setStep('card')} className="gap-1.5">
+                    <Button type="button" size="sm" onClick={() => setStep('card')} className="gap-1.5" disabled={isSaving}>
                       Next
                       <ArrowRight className="h-3.5 w-3.5" />
                     </Button>
                   ) : (
-                    <Button type="button" size="sm" onClick={handleApply}>
-                      Save Photo
+                    <Button type="button" size="sm" onClick={handleApply} disabled={isSaving}>
+                      {isSaving ? 'Saving...' : 'Save Photo'}
                     </Button>
                   )}
                 </>
@@ -515,7 +530,7 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
                     <ArrowLeft className="h-3.5 w-3.5" />
                     Back
                   </Button>
-                  <Button type="button" size="sm" onClick={handleGoToReview} className="gap-1.5">
+                  <Button type="button" size="sm" onClick={handleGoToReview} className="gap-1.5" disabled={isSaving}>
                     Next
                     <ArrowRight className="h-3.5 w-3.5" />
                   </Button>
@@ -608,13 +623,14 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
                   setPreviewBlob(null);
                   setStep('card');
                 }}
+                disabled={isSaving}
               >
                 <ArrowLeft className="h-3.5 w-3.5" />
                 Back
               </Button>
-              <Button type="button" size="sm" onClick={handleSaveFromReview} className="gap-1.5">
+              <Button type="button" size="sm" onClick={handleSaveFromReview} className="gap-1.5" disabled={isSaving}>
                 <Save className="h-3.5 w-3.5" />
-                Save Photo
+                {isSaving ? 'Saving...' : 'Save Photo'}
               </Button>
             </div>
           </>
