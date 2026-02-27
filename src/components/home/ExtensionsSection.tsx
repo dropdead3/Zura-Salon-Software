@@ -38,7 +38,7 @@ export function ExtensionsSection() {
     <Section className="bg-background overflow-hidden" theme="light">
       <motion.div 
         ref={scrollRef} 
-        className="relative bg-foreground text-background p-8 md:p-12 lg:p-16 overflow-hidden"
+        className="relative bg-foreground text-background rounded-3xl p-8 md:p-12 lg:p-16 overflow-hidden"
         style={isPreview ? { opacity: 1, y: 0, filter: 'none' } : { opacity, y, filter: blurFilter }}
       >
         {/* Background accent */}

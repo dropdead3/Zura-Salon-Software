@@ -1,34 +1,37 @@
 
 
-## Problem
+## Problem Diagnosis
 
-Two issues create the "broken apart bento" appearance in the editor's Preview mode:
+The "broken apart" look has two root causes:
 
-1. **Layout.tsx detection gap**: `getIsEditorPreview()` only checks `params.has('preview')`, missing `?mode=view`. So Preview mode falls through to the public-site footer-reveal layout with `rounded-b-[2rem]`, `shadow`, and `marginBottom: footerHeight` — creating a large outer container break.
+1. **Footer reveal layout bleeding into the editor iframe**: In Preview (view) mode, `Layout.tsx` falls through to the public-site path which applies `rounded-b-[2rem]`, `shadow-[0_30px_60px]`, `overflow-hidden`, and `marginBottom: footerHeight`. Inside the editor iframe, this creates visible card-like breaks and clipping.
 
-2. **Section-level rounded containers**: Several sections apply `rounded-2xl` or `rounded-3xl` to their inner content blocks, creating visible bento-card separations between sections. The key offenders:
-   - `BrandStatement.tsx` → `rounded-2xl` on the dark block
-   - `NewClientSection.tsx` → `rounded-t-2xl` on the gradient card  
-   - `ExtensionsSection.tsx` → `rounded-3xl` on the dark block
-
-These rounded containers were intentionally styled to look like individual "Apple bento cards" floating within the page. The user wants sections to flow edge-to-edge without visible separations.
-
----
+2. **Scroll-based opacity animations stuck at 0**: `BrandStatement`, `FooterCTA`, and other sections use `useScroll` + `useTransform` to animate opacity from 0 → 1 on scroll. Inside the constrained iframe, scroll progress never advances, so these sections render as invisible empty gaps — creating the "broken apart" appearance with visible divisions between blank areas.
 
 ## Plan
 
-### Step 1: Fix Layout.tsx editor detection
-Update `getIsEditorPreview()` to also check `params.has('mode')` so that `?mode=view` routes into the simplified layout (no footer reveal, no rounded bottom, no shadow).
+### 1. Fix Layout.tsx — disable footer reveal for ALL editor iframe modes
+Currently `getIsEditorPreview()` only checks `params.has('preview')`. The simplified layout branch (`isEditorPreview && !isViewMode`) excludes view mode, pushing it into the footer-reveal path. Change the condition so both edit AND view modes inside the editor iframe use the simplified layout (no `rounded-b`, no `marginBottom`, no fixed footer, no `PageTransition`).
 
-### Step 2: Remove bento rounding from BrandStatement
-Change `rounded-2xl` to no rounding on the dark content block, making it full-width edge-to-edge within its section.
+### 2. Fix BrandStatement — bypass scroll-based opacity in preview
+The `useScroll`/`useTransform` on the outer `motion.div` (opacity, blur, y) starts at 0 and never progresses. Add an `isPreview` check (detect iframe via URL params) and force `style={{ opacity: 1, filter: 'none', y: 0 }}` when in the editor.
 
-### Step 3: Remove bento rounding from NewClientSection
-Change `rounded-t-2xl` to no rounding on the gradient card container.
+### 3. Fix FooterCTA — bypass scroll-based opacity in preview  
+Same issue: 6+ scroll-linked opacity transforms all start at 0. Add iframe detection and force all content to full visibility when rendered inside the editor.
 
-### Step 4: Remove bento rounding from ExtensionsSection
-Change `rounded-3xl` to no rounding on the dark content block.
+### 4. Audit remaining scroll-animated sections
+Check `NewClientSection`, `GallerySection`, `ServicesPreview`, `TestimonialSection`, and `FAQSection` for the same `useScroll`/`useTransform` opacity pattern. Apply the same forced-visibility fix to any that use it.
 
-### Step 5: Audit and verify
-Check that these sections now flow seamlessly into each other without visible breaks or gaps in Preview mode.
+### Technical Detail
+
+Detection approach — use URL params evaluated at render time:
+```ts
+function getIsEditorContext() {
+  if (typeof window === 'undefined') return false;
+  const params = new URLSearchParams(window.location.search);
+  return params.has('preview') || params.has('mode');
+}
+```
+
+This is already used in `PageSectionRenderer.tsx` as `getIsEditorPreview()`. The same check will be applied in `Layout.tsx` (replacing the narrower `params.has('preview')` check) and passed as props or evaluated locally in scroll-animated sections.
 
