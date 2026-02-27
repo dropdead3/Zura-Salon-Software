@@ -1,4 +1,5 @@
 import { motion, useScroll, useTransform } from "framer-motion";
+import { useIsEditorPreview } from "@/hooks/useIsEditorPreview";
 import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Phone, MapPin, AlertCircle } from "lucide-react";
@@ -31,6 +32,7 @@ const locationGalleries: Record<string, string[]> = {
 };
 
 function LocationCard({ location, index }: { location: Location; index: number }) {
+  const isPreview = useIsEditorPreview();
   const cardRef = useRef<HTMLDivElement>(null);
   const [isFlipped, setIsFlipped] = useState(false);
   
@@ -78,7 +80,7 @@ function LocationCard({ location, index }: { location: Location; index: number }
   return (
     <motion.div
       ref={cardRef}
-      style={{ opacity, y, scale }}
+      style={isPreview ? { opacity: 1, y: 0, scale: 1 } : { opacity, y, scale }}
       className="group relative h-[420px] md:h-[460px] cursor-pointer perspective-1000"
       onClick={handleFlip}
       onMouseLeave={() => setIsFlipped(false)}
@@ -256,6 +258,7 @@ function LocationCard({ location, index }: { location: Location; index: number }
 }
 
 export function LocationsSection() {
+  const isPreview = useIsEditorPreview();
   const sectionRef = useRef<HTMLElement>(null);
   const { data: locations = [] } = useActiveLocations();
   
@@ -284,7 +287,7 @@ export function LocationsSection() {
       />
       <div className="container mx-auto px-6">
         {/* Header */}
-        <motion.div style={{ opacity: headerOpacity, y: headerY }}>
+        <motion.div style={isPreview ? { opacity: 1, y: 0 } : { opacity: headerOpacity, y: headerY }}>
           <SectionHeader
             eyebrow="Find Us"
             title="Our Locations"

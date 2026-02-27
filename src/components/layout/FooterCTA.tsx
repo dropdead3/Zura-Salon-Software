@@ -4,8 +4,10 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
 import { useActiveLocations } from "@/hooks/useLocations";
 import { useOrgPath } from "@/hooks/useOrgPath";
+import { useIsEditorPreview } from "@/hooks/useIsEditorPreview";
 
 export function FooterCTA() {
+  const isPreview = useIsEditorPreview();
   const orgPath = useOrgPath();
   const { data: locations = [] } = useActiveLocations();
   const sectionRef = useRef<HTMLElement>(null);
@@ -49,7 +51,7 @@ export function FooterCTA() {
         {/* Eyebrow */}
         <motion.p 
           className="text-foreground/50 text-sm md:text-xs uppercase tracking-[0.2em] font-display mb-6"
-          style={{ 
+          style={isPreview ? { opacity: 1, y: 0, filter: 'none' } : { 
             opacity: eyebrowOpacity, 
             y: eyebrowY,
             filter: useTransform(eyebrowBlur, (v) => `blur(${v}px)`)
@@ -62,7 +64,7 @@ export function FooterCTA() {
         <h2 className="font-display text-5xl md:text-6xl lg:text-7xl text-foreground mb-6 flex flex-col items-center leading-[0.95]">
           <motion.span 
             className="block"
-            style={{ 
+            style={isPreview ? { opacity: 1, y: 0, x: 0, filter: 'none' } : { 
               opacity: topLineOpacity, 
               y: topLineY,
               x: topLineX,
@@ -73,7 +75,7 @@ export function FooterCTA() {
           </motion.span>
           <motion.span 
             className="block"
-            style={{ 
+            style={isPreview ? { opacity: 1, y: 0, x: 0, filter: 'none' } : { 
               opacity: bottomLineOpacity, 
               y: bottomLineY,
               x: bottomLineX,
@@ -87,7 +89,7 @@ export function FooterCTA() {
         {/* Description */}
         <motion.p 
           className="text-foreground/60 text-lg md:text-xl font-sans font-light max-w-xl mx-auto mb-10"
-          style={{ 
+          style={isPreview ? { opacity: 1, y: 0, filter: 'none' } : { 
             opacity: descOpacity, 
             y: descY,
             filter: useTransform(descBlur, (v) => `blur(${v}px)`)
@@ -99,7 +101,7 @@ export function FooterCTA() {
         {/* CTA Buttons */}
         <motion.div 
           className="flex flex-col items-center justify-center gap-4"
-          style={{ 
+          style={isPreview ? { opacity: 1, y: 0, filter: 'none' } : { 
             opacity: ctaOpacity, 
             y: ctaY,
             filter: useTransform(ctaBlur, (v) => `blur(${v}px)`)

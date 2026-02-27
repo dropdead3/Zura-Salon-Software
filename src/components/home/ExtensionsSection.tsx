@@ -5,8 +5,10 @@ import { ArrowRight, Star, Zap, MapPin, Play, Award } from "lucide-react";
 import { Link } from "react-router-dom";
 import { BeforeAfterSlider, BeforeAfterSliderHandle } from "./BeforeAfterSlider";
 import { useScrollReveal } from "@/hooks/use-scroll-reveal";
+import { useIsEditorPreview } from "@/hooks/useIsEditorPreview";
 
 export function ExtensionsSection() {
+  const isPreview = useIsEditorPreview();
   const contentRef = useRef(null);
   const featuresRef = useRef(null);
   const sliderRef = useRef<BeforeAfterSliderHandle>(null);
@@ -37,7 +39,7 @@ export function ExtensionsSection() {
       <motion.div 
         ref={scrollRef} 
         className="relative bg-foreground text-background rounded-3xl p-8 md:p-12 lg:p-16 overflow-hidden"
-        style={{ opacity, y, filter: blurFilter }}
+        style={isPreview ? { opacity: 1, y: 0, filter: 'none' } : { opacity, y, filter: blurFilter }}
       >
         {/* Background accent */}
         <motion.div
