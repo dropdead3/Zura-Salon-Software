@@ -83,7 +83,7 @@ export function BrandStatement() {
       <motion.div 
         ref={containerRef}
         data-theme="dark"
-        className="bg-foreground text-background rounded-2xl p-12 md:p-20 lg:p-24"
+        className="bg-foreground text-background p-12 md:p-20 lg:p-24"
         style={isPreview ? { opacity: 1, filter: 'none', y: 0 } : { opacity, filter: blurFilter, y }}
       >
         <div ref={contentRef} className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-8 lg:gap-12 items-center">
