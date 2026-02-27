@@ -382,8 +382,8 @@ export default function MyProfile() {
     e.target.value = '';
   };
 
-  const handleCroppedPhotoUpload = async (blob: Blob, focalX: number, focalY: number, cardFocalX: number, cardFocalY: number) => {
-    await uploadPhoto.mutateAsync({ input: blob, focalX, focalY, cardFocalX, cardFocalY });
+  const handleCroppedPhotoUpload = async (blob: Blob, focalX: number, focalY: number, cardFocalX: number, cardFocalY: number, avatarZoom: number, avatarRotation: number, cardZoom: number, cardRotation: number) => {
+    await uploadPhoto.mutateAsync({ input: blob, focalX, focalY, cardFocalX, cardFocalY, avatarZoom, avatarRotation, cardZoom, cardRotation });
     await Promise.all([
       queryClient.refetchQueries({ queryKey: ['employee-profile'] }),
       queryClient.refetchQueries({ queryKey: ['team-directory'] }),
@@ -692,6 +692,10 @@ export default function MyProfile() {
                 initialFocalY={(profile as any)?.photo_focal_y ?? 50}
                 initialCardFocalX={(profile as any)?.card_focal_x ?? 50}
                 initialCardFocalY={(profile as any)?.card_focal_y ?? 50}
+                initialAvatarZoom={(profile as any)?.avatar_zoom ?? 1}
+                initialAvatarRotation={(profile as any)?.avatar_rotation ?? 0}
+                initialCardZoom={(profile as any)?.card_zoom ?? 1}
+                initialCardRotation={(profile as any)?.card_rotation ?? 0}
                 cardPreviewProps={showProfessionalDetails ? {
                   name: formData.full_name,
                   displayName: formData.display_name,

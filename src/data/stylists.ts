@@ -18,6 +18,8 @@ export interface Stylist {
   bio?: string; // short bio for card flip
   card_focal_x?: number; // focal point X for card display (0-100)
   card_focal_y?: number; // focal point Y for card display (0-100)
+  card_zoom?: number; // zoom level for card display (default 1)
+  card_rotation?: number; // rotation for card display (default 0)
 }
 
 // Helper to get location display name

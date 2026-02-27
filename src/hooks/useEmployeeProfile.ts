@@ -147,7 +147,7 @@ export function useUploadProfilePhoto() {
   const { user } = useAuth();
 
   return useMutation({
-    mutationFn: async ({ input, focalX, focalY, cardFocalX, cardFocalY }: { input: File | Blob; focalX?: number; focalY?: number; cardFocalX?: number; cardFocalY?: number }) => {
+    mutationFn: async ({ input, focalX, focalY, cardFocalX, cardFocalY, avatarZoom, avatarRotation, cardZoom, cardRotation }: { input: File | Blob; focalX?: number; focalY?: number; cardFocalX?: number; cardFocalY?: number; avatarZoom?: number; avatarRotation?: number; cardZoom?: number; cardRotation?: number }) => {
       const isFile = input instanceof File && 'name' in input && input.name;
       const fileExt = isFile ? (input as File).name.split('.').pop() : 'webp';
       const fileName = `${user!.id}-${Date.now()}.${fileExt}`;
@@ -167,12 +167,16 @@ export function useUploadProfilePhoto() {
         .from('employee-photos')
         .getPublicUrl(filePath);
 
-      // Update profile with new photo URL and focal points
+      // Update profile with new photo URL, focal points, zoom, and rotation
       const updatePayload: Record<string, any> = { photo_url: publicUrl };
       if (focalX !== undefined) updatePayload.photo_focal_x = focalX;
       if (focalY !== undefined) updatePayload.photo_focal_y = focalY;
       if (cardFocalX !== undefined) updatePayload.card_focal_x = cardFocalX;
       if (cardFocalY !== undefined) updatePayload.card_focal_y = cardFocalY;
+      if (avatarZoom !== undefined) updatePayload.avatar_zoom = avatarZoom;
+      if (avatarRotation !== undefined) updatePayload.avatar_rotation = avatarRotation;
+      if (cardZoom !== undefined) updatePayload.card_zoom = cardZoom;
+      if (cardRotation !== undefined) updatePayload.card_rotation = cardRotation;
 
       const { error: updateError } = await supabase
         .from('employee_profiles')

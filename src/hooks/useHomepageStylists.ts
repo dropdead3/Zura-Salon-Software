@@ -19,6 +19,8 @@ export interface HomepageStylist {
   bio: string | null;
   card_focal_x: number | null;
   card_focal_y: number | null;
+  card_zoom: number | null;
+  card_rotation: number | null;
   homepage_order: number | null;
 }
 
@@ -88,7 +90,7 @@ export function useHomepageStylists() {
 
       const { data, error } = await supabase
         .from('employee_profiles')
-        .select('id, user_id, full_name, display_name, photo_url, instagram, tiktok, preferred_social_handle, stylist_level, specialties, highlighted_services, location_id, location_ids, is_booking, bio, card_focal_x, card_focal_y, homepage_order')
+        .select('id, user_id, full_name, display_name, photo_url, instagram, tiktok, preferred_social_handle, stylist_level, specialties, highlighted_services, location_id, location_ids, is_booking, bio, card_focal_x, card_focal_y, card_zoom, card_rotation, homepage_order')
         .eq('is_active', true)
         .eq('homepage_visible', true)
         .in('user_id', stylistUserIds);

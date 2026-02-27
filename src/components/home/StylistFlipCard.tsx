@@ -27,11 +27,15 @@ interface StylistFlipCardProps {
   photoFocalX?: number;
   /** Override focal point Y for the card image (0-100) */
   photoFocalY?: number;
+  /** Override zoom for the card image */
+  photoZoom?: number;
+  /** Override rotation for the card image */
+  photoRotation?: number;
   /** Stylist levels from database for tooltip display */
   levels?: Array<{ id: string; client_label: string; description: string | null; label: string }>;
 }
 
-export function StylistFlipCard({ stylist, index, selectedLocation, isPreview, photoFocalX, photoFocalY, levels }: StylistFlipCardProps) {
+export function StylistFlipCard({ stylist, index, selectedLocation, isPreview, photoFocalX, photoFocalY, photoZoom, photoRotation, levels }: StylistFlipCardProps) {
   const [isFlipped, setIsFlipped] = useState(false);
 
   const handleFlip = () => {
@@ -67,6 +71,8 @@ export function StylistFlipCard({ stylist, index, selectedLocation, isPreview, p
               wrapperClassName="absolute inset-0"
               style={{
                 objectPosition: `${photoFocalX ?? stylist.card_focal_x ?? 50}% ${photoFocalY ?? stylist.card_focal_y ?? 50}%`,
+                transform: `scale(${photoZoom ?? stylist.card_zoom ?? 1}) rotate(${photoRotation ?? stylist.card_rotation ?? 0}deg)`,
+                transformOrigin: `${photoFocalX ?? stylist.card_focal_x ?? 50}% ${photoFocalY ?? stylist.card_focal_y ?? 50}%`,
               }}
             />
             

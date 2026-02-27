@@ -31,8 +31,8 @@ interface ImageCropModalProps {
   onClose: () => void;
   imageFile: File | null;
   imageUrl?: string;
-  /** Called with the resized blob and both focal point pairs (0-100) */
-  onCropComplete: (blob: Blob, focalX: number, focalY: number, cardFocalX: number, cardFocalY: number) => Promise<void> | void;
+  /** Called with the resized blob, focal points, zoom, and rotation for both avatar and card */
+  onCropComplete: (blob: Blob, focalX: number, focalY: number, cardFocalX: number, cardFocalY: number, avatarZoom: number, avatarRotation: number, cardZoom: number, cardRotation: number) => Promise<void> | void;
   aspectRatio?: number;
   maxOutputSize?: number;
   cardPreviewProps?: CardPreviewProps;
@@ -42,6 +42,11 @@ interface ImageCropModalProps {
   /** Initial card focal point from the database */
   initialCardFocalX?: number;
   initialCardFocalY?: number;
+  /** Initial zoom/rotation values from the database */
+  initialAvatarZoom?: number;
+  initialAvatarRotation?: number;
+  initialCardZoom?: number;
+  initialCardRotation?: number;
 }
 
 const MAX_RESIZE = 1200;
@@ -59,16 +64,20 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
   initialFocalY = 50,
   initialCardFocalX = 50,
   initialCardFocalY = 50,
+  initialAvatarZoom = 1,
+  initialAvatarRotation = 0,
+  initialCardZoom = 1,
+  initialCardRotation = 0,
 }) => {
   const frameRef = useRef<HTMLDivElement>(null);
   const replaceInputRef = useRef<HTMLInputElement>(null);
   const [imageSrc, setImageSrc] = useState<string>('');
   const [imageElement, setImageElement] = useState<HTMLImageElement | null>(null);
-  const [avatarZoom, setAvatarZoom] = useState(1);
-  const [cardZoom, setCardZoom] = useState(1);
+  const [avatarZoom, setAvatarZoom] = useState(initialAvatarZoom);
+  const [cardZoom, setCardZoom] = useState(initialCardZoom);
   const [minZoom, setMinZoom] = useState(0.5);
-  const [avatarRotation, setAvatarRotation] = useState(0);
-  const [cardRotation, setCardRotation] = useState(0);
+  const [avatarRotation, setAvatarRotation] = useState(initialAvatarRotation);
+  const [cardRotation, setCardRotation] = useState(initialCardRotation);
   // Avatar focal point
   const [focalX, setFocalX] = useState(initialFocalX);
   const [focalY, setFocalY] = useState(initialFocalY);
@@ -97,10 +106,10 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
       setFocalY(initialFocalY);
       setCardFocalX(initialCardFocalX);
       setCardFocalY(initialCardFocalY);
-      setAvatarZoom(1);
-      setCardZoom(1);
-      setAvatarRotation(0);
-      setCardRotation(0);
+      setAvatarZoom(initialAvatarZoom);
+      setCardZoom(initialCardZoom);
+      setAvatarRotation(initialAvatarRotation);
+      setCardRotation(initialCardRotation);
       if (previewUrl) {
         URL.revokeObjectURL(previewUrl);
         setPreviewUrl('');
@@ -240,7 +249,7 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
 
     try {
       setIsSaving(true);
-      await Promise.resolve(onCropComplete(blob, focalX, focalY, focalX, focalY));
+      await Promise.resolve(onCropComplete(blob, focalX, focalY, focalX, focalY, avatarZoom, avatarRotation, avatarZoom, avatarRotation));
       onClose();
     } catch {
       // Keep modal open so user can retry if upload fails
@@ -267,7 +276,7 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
 
     try {
       setIsSaving(true);
-      await Promise.resolve(onCropComplete(previewBlob, focalX, focalY, cardFocalX, cardFocalY));
+      await Promise.resolve(onCropComplete(previewBlob, focalX, focalY, cardFocalX, cardFocalY, avatarZoom, avatarRotation, cardZoom, cardRotation));
       onClose();
     } catch {
       // Keep modal open so user can retry if upload fails
@@ -567,7 +576,11 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
                         src={previewUrl}
                         alt="Avatar preview"
                         className="w-full h-full object-cover"
-                        style={{ objectPosition: `${focalX}% ${focalY}%` }}
+                        style={{
+                          objectPosition: `${focalX}% ${focalY}%`,
+                          transform: `scale(${avatarZoom}) rotate(${avatarRotation}deg)`,
+                          transformOrigin: `${focalX}% ${focalY}%`,
+                        }}
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
@@ -603,6 +616,8 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
                         isPreview
                         photoFocalX={cardFocalX}
                         photoFocalY={cardFocalY}
+                        photoZoom={cardZoom}
+                        photoRotation={cardRotation}
                       />
                     </div>
                   </div>
