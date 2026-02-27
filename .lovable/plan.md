@@ -1,23 +1,19 @@
 
 
-## Move Help Text Into the Alert Notice
+## Flatten Card Nesting in StylistsContent
 
-The contextual help block (lines 397-401) should be merged into the existing destructive alert (lines 374-381), not floating as a separate element. Remove the standalone `div` and append the visibility management instruction directly inside the alert's `<p>` tag.
+The current structure is EditorCard → Card (Sample Cards Settings) → CardContent, creating triple-nested card borders and excessive padding. The fix is to remove the inner `Card`/`CardHeader`/`CardContent` wrapper and render the Sample Cards Settings content directly inside the `EditorCard` using a simple section header and divider.
 
 ### Change — `src/components/dashboard/website-editor/StylistsContent.tsx`
 
-**1. Update the alert text (lines 377-379)** to append the help instruction after the existing message:
+**Remove** the `<Card>`, `<CardHeader>`, `<CardTitle>`, `<CardDescription>`, and `<CardContent>` wrapper around the Sample Cards Settings block (lines 339-398). Replace with:
 
-```tsx
-<p className="text-xs text-destructive">
-  <span className="font-medium">Sample cards hidden:</span> You have {visibleStylists.length} real stylist(s) visible. Sample cards only appear when no real stylists are visible.
-  <span className="block mt-1.5 text-muted-foreground">
-    To hide or show individual stylists, use the <span className="font-medium text-foreground">Visible</span> tab below.
-  </span>
-</p>
-```
+1. A lightweight section header using an inline icon + label (same `Settings` icon + "Sample Cards Settings" text) styled as `text-xs font-display tracking-wide text-muted-foreground` — no card border
+2. A `text-xs text-muted-foreground` description line below
+3. The existing toggle, badges, alert, and preview button rendered directly — no extra card padding layer
+4. A `border-t border-border/30` divider before the Tabs section to visually separate
 
-**2. Remove the standalone help block (lines 397-401)** — the separate `bg-muted/50` div between the Card and Tabs.
+This eliminates one full nesting level, reclaiming ~24px of horizontal padding and removing the redundant inner card border. The `StylistCard` items inside tabs also use `<Card>` but those are leaf-level list items and appropriate.
 
-Single file: `src/components/dashboard/website-editor/StylistsContent.tsx`
+**Imports cleanup**: Remove `CardHeader` and `CardTitle` and `CardDescription` from imports if no longer used (the empty-state cards in tabs still use `Card` so keep that import).
 
