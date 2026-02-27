@@ -67,7 +67,8 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
   const [avatarZoom, setAvatarZoom] = useState(1);
   const [cardZoom, setCardZoom] = useState(1);
   const [minZoom, setMinZoom] = useState(0.5);
-  const [rotation, setRotation] = useState(0);
+  const [avatarRotation, setAvatarRotation] = useState(0);
+  const [cardRotation, setCardRotation] = useState(0);
   // Avatar focal point
   const [focalX, setFocalX] = useState(initialFocalX);
   const [focalY, setFocalY] = useState(initialFocalY);
@@ -97,7 +98,8 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
       setCardFocalY(initialCardFocalY);
       setAvatarZoom(1);
       setCardZoom(1);
-      setRotation(0);
+      setAvatarRotation(0);
+      setCardRotation(0);
       if (previewUrl) {
         URL.revokeObjectURL(previewUrl);
         setPreviewUrl('');
@@ -124,9 +126,6 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
       setImageElement(img);
       const calculatedMinZoom = Math.max(0.1, 0.5);
       setMinZoom(calculatedMinZoom);
-      setAvatarZoom(1);
-      setCardZoom(1);
-      setRotation(0);
     };
     img.src = src;
 
@@ -154,6 +153,8 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
   const setCurrentFocalY = step === 'card' ? setCardFocalY : setFocalY;
   const currentZoom = step === 'card' ? cardZoom : avatarZoom;
   const setCurrentZoom = step === 'card' ? setCardZoom : setAvatarZoom;
+  const currentRotation = step === 'card' ? cardRotation : avatarRotation;
+  const setCurrentRotation = step === 'card' ? setCardRotation : setAvatarRotation;
 
   // Handle focal point click/drag on the compose frame
   const handleFrameInteraction = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
@@ -163,8 +164,13 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
     const rect = frame.getBoundingClientRect();
     const x = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
     const y = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
-    setCurrentFocalX(Math.round(x));
-    setCurrentFocalY(Math.round(y));
+    if (step === 'card') {
+      setCardFocalX(Math.round(x));
+      setCardFocalY(Math.round(y));
+    } else {
+      setFocalX(Math.round(x));
+      setFocalY(Math.round(y));
+    }
   }, [step]);
 
   const handleFrameMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
@@ -190,7 +196,7 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
       const ctx = canvas.getContext('2d');
       if (!ctx) { resolve(null); return; }
 
-      const isRotated90 = rotation % 180 !== 0;
+      const isRotated90 = avatarRotation % 180 !== 0;
       const srcW = isRotated90 ? imageElement.height : imageElement.width;
       const srcH = isRotated90 ? imageElement.width : imageElement.height;
 
@@ -211,7 +217,7 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
 
       ctx.save();
       ctx.translate(outW / 2, outH / 2);
-      ctx.rotate((rotation * Math.PI) / 180);
+      ctx.rotate((avatarRotation * Math.PI) / 180);
 
       const drawW = isRotated90 ? outH : outW;
       const drawH = isRotated90 ? outW : outH;
@@ -224,7 +230,7 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
         0.82
       );
     });
-  }, [imageElement, rotation]);
+  }, [imageElement, avatarRotation]);
 
   // Non-wizard: direct save from avatar step
   const handleApply = useCallback(async () => {
@@ -257,7 +263,7 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
 
   const handleZoomIn = () => setCurrentZoom(prev => Math.min(prev * 1.2, 3));
   const handleZoomOut = () => setCurrentZoom(prev => Math.max(prev / 1.2, minZoom));
-  const handleRotate = () => setRotation(prev => (prev + 90) % 360);
+  const handleRotate = () => setCurrentRotation(prev => (prev + 90) % 360);
 
   const handleResetFocal = () => {
     setCurrentFocalX(50);
@@ -296,7 +302,7 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
                 className="absolute inset-0 w-full h-full object-cover pointer-events-none"
                 style={{
                   objectPosition: `${currentFocalX}% ${currentFocalY}%`,
-                  transform: `scale(${currentZoom}) rotate(${rotation}deg)`,
+                  transform: `scale(${currentZoom}) rotate(${currentRotation}deg)`,
                   transformOrigin: `${currentFocalX}% ${currentFocalY}%`,
                   transition: isDragging ? 'none' : 'transform 0.2s ease',
                 }}
@@ -385,7 +391,7 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
           className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors rounded-full border border-border/50 bg-background px-3 py-1.5"
         >
           <RotateCw className="h-3 w-3" />
-          {rotation}°
+          {currentRotation}°
         </button>
       </div>
     </div>
