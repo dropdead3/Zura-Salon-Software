@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { platformNavGroups } from '@/config/platformNav';
 import { cn } from '@/lib/utils';
+import { getAvatarStyle } from '@/lib/avatar-utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useState, useEffect } from 'react';
 import { usePlatformBranding } from '@/hooks/usePlatformBranding';
@@ -312,7 +313,7 @@ export function PlatformSidebar() {
               'h-8 w-8 border',
               isDark ? 'border-slate-600' : 'border-violet-200'
             )}>
-              <AvatarImage src={profile?.photo_url || undefined} alt="Profile" />
+              <AvatarImage src={profile?.photo_url || undefined} alt="Profile" className="object-cover" style={getAvatarStyle(profile)} />
               <AvatarFallback className={cn(
                 'text-xs font-medium',
                 isDark ? 'bg-slate-700 text-slate-300' : 'bg-violet-100 text-violet-700'
