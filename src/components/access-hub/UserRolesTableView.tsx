@@ -14,6 +14,7 @@ import {
 import { User, Crown, Lock, ChevronDown, ChevronRight, Award } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { getRoleColorClasses } from '@/components/dashboard/RoleColorPicker';
+import { getRoleIconComponent } from '@/components/dashboard/RoleIconPicker';
 import { ResponsibilityBadges } from './ResponsibilityBadges';
 import { cn } from '@/lib/utils';
 import type { UserWithRoles } from '@/hooks/useUserRoles';
@@ -25,6 +26,7 @@ interface RoleOption {
   name: string;
   display_name: string;
   color: string;
+  icon: string;
 }
 
 interface LocationInfo {
@@ -179,8 +181,9 @@ export function UserRolesTableView({
                               <Badge
                                 key={role.name}
                                 variant="outline"
-                                className={cn("text-[10px] px-1.5 py-0", colorClasses.bg, colorClasses.text)}
+                                className={cn("text-[10px] px-1.5 py-0 gap-1", colorClasses.bg, colorClasses.text)}
                               >
+                                {(() => { const RoleIcon = getRoleIconComponent(role.icon); return <RoleIcon className="w-3 h-3" />; })()}
                                 {role.display_name}
                               </Badge>
                             );
@@ -252,9 +255,10 @@ export function UserRolesTableView({
                               return (
                                 <div key={role.name} className="flex items-center gap-2">
                                   <label className={cn(
-                                    "text-sm font-medium",
+                                    "text-sm font-medium flex items-center gap-1",
                                     isLocked ? "text-muted-foreground cursor-not-allowed" : "cursor-pointer"
                                   )}>
+                                    {(() => { const RoleIcon = getRoleIconComponent(role.icon); return <RoleIcon className="w-3 h-3" />; })()}
                                     {role.display_name}
                                   </label>
                                   {isLocked && (
