@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { tokens } from '@/lib/design-tokens';
-import { Card, CardContent } from '@/components/ui/card';
+
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -237,8 +237,7 @@ export function StylistsContent() {
   };
 
   const StylistCard = ({ stylist, showActions = false }: { stylist: StylistProfile; showActions?: boolean }) => (
-    <Card>
-      <CardContent className="p-3 sm:p-4">
+    <div className="p-3 border border-border/40 rounded-lg">
         <div className="flex flex-col gap-3">
           {/* Top row: Avatar + Info */}
           <div className="flex items-start gap-3">
@@ -324,8 +323,7 @@ export function StylistsContent() {
             )}
           </div>
         </div>
-      </CardContent>
-    </Card>
+    </div>
   );
 
   return (
@@ -414,9 +412,9 @@ export function StylistsContent() {
               <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
             </div>
           ) : pendingRequests.length === 0 ? (
-            <Card className="p-8 text-center">
-              <p className="text-muted-foreground">No pending requests</p>
-            </Card>
+            <div className="p-8 text-center text-muted-foreground border border-dashed border-border/40 rounded-lg">
+              No pending requests
+            </div>
           ) : (
             <div className="space-y-3">
               {pendingRequests.map(stylist => (
@@ -432,9 +430,9 @@ export function StylistsContent() {
               <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
             </div>
           ) : displayStylists.length === 0 ? (
-            <Card className="p-8 text-center">
-              <p className="text-muted-foreground">No stylists visible on homepage</p>
-            </Card>
+            <div className="p-8 text-center text-muted-foreground border border-dashed border-border/40 rounded-lg">
+              No stylists visible on homepage
+            </div>
           ) : (
             <ReorderableStylistList
               stylists={displayStylists}
