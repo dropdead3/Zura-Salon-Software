@@ -376,6 +376,9 @@ export function StylistsContent() {
               <AlertCircle className="w-3.5 h-3.5 text-destructive shrink-0 mt-0.5" />
               <p className="text-xs text-destructive">
                 <span className="font-medium">Sample cards hidden:</span> You have {visibleStylists.length} real stylist(s) visible. Sample cards only appear when no real stylists are visible.
+                <span className="block mt-1.5 text-muted-foreground">
+                  To hide or show individual stylists, use the <span className="font-medium text-foreground">Visible</span> tab below.
+                </span>
               </p>
             </div>
           )}
@@ -394,11 +397,6 @@ export function StylistsContent() {
         </CardContent>
       </Card>
 
-      <div className="p-3 bg-muted/50 rounded-lg border border-border/30">
-        <p className="text-xs text-muted-foreground leading-relaxed">
-          To hide or show individual stylists on the homepage, use the <span className="font-medium text-foreground">Visible</span> tab below. Toggle each stylist's visibility switch to control who appears on your site.
-        </p>
-      </div>
 
       <Tabs defaultValue="pending" className="space-y-4">
         <TabsList>
