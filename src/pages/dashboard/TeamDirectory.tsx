@@ -1010,7 +1010,6 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
             <div className="flex flex-wrap justify-center gap-1 pt-2.5 border-t border-border/50">
               {member.specialties.slice(0, 4).map((specialty) => {
                 const isHighlighted = member.highlighted_services?.includes(specialty);
-                const isExtensions = specialty.toLowerCase() === 'extensions';
                 
                 return (
                   <Badge
@@ -1018,14 +1017,12 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
                     variant="outline"
                     className={cn(
                       "text-[10px] font-medium h-5 px-1.5 gap-0.5 normal-case",
-                      isExtensions
-                        ? "bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 border-amber-300 dark:from-amber-950/40 dark:to-yellow-950/40 dark:text-amber-300 dark:border-amber-700"
-                        : isHighlighted
-                          ? "bg-primary/5 text-primary border-primary/30"
-                          : "bg-muted/50 text-muted-foreground border-border"
+                      isHighlighted
+                        ? "bg-primary/5 text-primary border-primary/30"
+                        : "bg-muted/50 text-muted-foreground border-border"
                     )}
                   >
-                    {(isHighlighted || isExtensions) && (
+                    {isHighlighted && (
                       <Sparkles className="w-2.5 h-2.5" />
                     )}
                     {specialty.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ')}
