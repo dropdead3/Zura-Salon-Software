@@ -7,6 +7,7 @@ export interface SpecialtyOption {
   name: string;
   display_order: number;
   is_active: boolean;
+  category: string;
   created_at: string;
   updated_at: string;
 }
