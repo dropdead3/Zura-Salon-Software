@@ -81,7 +81,6 @@ function SortableSpecialtyItem({ option, onUpdate, onDelete, isUpdating }: Sorta
     setIsEditing(false);
   };
 
-  const isExtensions = option.name.toLowerCase().includes('extension');
   const displayName = option.name;
 
   return (
@@ -130,7 +129,6 @@ function SortableSpecialtyItem({ option, onUpdate, onDelete, isUpdating }: Sorta
         ) : (
           <>
             <div className="flex-1 flex items-center gap-1 min-w-0">
-              {isExtensions && <Sparkles className="w-3 h-3 text-primary flex-shrink-0" />}
               <span className={cn("text-xs font-sans truncate min-w-0", !option.is_active && "text-muted-foreground")}>{displayName}</span>
             </div>
 

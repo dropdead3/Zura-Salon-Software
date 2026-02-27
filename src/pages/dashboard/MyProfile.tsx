@@ -1163,7 +1163,6 @@ export default function MyProfile() {
                           {specialtyOptions.filter(o => o.category === category).map(option => {
                             const specialty = option.name;
                             const isSelected = formData.specialties.includes(specialty);
-                            const isExtensions = specialty.toLowerCase().includes('extension');
                             
                             return (
                               <button
@@ -1172,13 +1171,10 @@ export default function MyProfile() {
                                 onClick={() => toggleSpecialty(specialty)}
                                 className={cn(
                                   "px-3 py-1.5 rounded-full border-2 text-sm transition-all flex items-center gap-1.5",
-                                  isExtensions && isSelected && "border-[hsl(35,30%,70%)] bg-[hsl(38,35%,85%)] text-[hsl(30,15%,25%)] font-medium",
-                                  isExtensions && !isSelected && "border-[hsl(35,30%,75%)] bg-[hsl(38,35%,92%)] hover:bg-[hsl(38,35%,85%)] text-[hsl(30,15%,35%)]",
-                                  !isExtensions && isSelected && "border-primary bg-primary/10 text-primary font-medium",
-                                  !isExtensions && !isSelected && "border-border hover:border-primary/50 text-foreground",
+                                  isSelected && "border-primary bg-primary/10 text-primary font-medium",
+                                  !isSelected && "border-border hover:border-primary/50 text-foreground",
                                 )}
                               >
-                                {isExtensions && <Sparkles className="w-3 h-3" />}
                                 {specialty}
                                 {isSelected && <X className="w-3 h-3 ml-0.5 opacity-60" />}
                               </button>
@@ -1203,9 +1199,6 @@ export default function MyProfile() {
                   <p className="text-xs text-muted-foreground">
                     Tap a specialty below to highlight it on your website card. Choose up to 3 from your specialties above.
                   </p>
-                  <p className="text-xs text-muted-foreground/80 italic">
-                    Note: Extension Specialist is displayed with a <Sparkles className="w-3 h-3 inline text-[hsl(35,30%,50%)]" /> and gold accent color to attract our highest-ticket services.
-                  </p>
                   <div className="flex flex-wrap gap-2">
                     {formData.specialties.map(specialty => {
                       const isSelected = formData.highlighted_services.includes(specialty);
@@ -1223,7 +1216,6 @@ export default function MyProfile() {
                           )}
                           onClick={() => !isDisabled && toggleHighlightedService(specialty)}
                         >
-                          {isSelected && specialty.toLowerCase().includes('extension') && <Sparkles className="w-3 h-3 mr-1" />}
                           {specialty}
                           {isSelected && <X className="w-3 h-3 ml-1 opacity-60" />}
                         </Badge>
