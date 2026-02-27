@@ -206,12 +206,13 @@ export function SuperAdminTopBar({
             </div>
           )}
 
-          {/* Role badges — responsive density */}
-          {(isPlatformUser || isAdmin) && roleBadges.map((badge, i) => {
+          {/* Primary role badge — only highest-priority shown */}
+          {(isPlatformUser || isAdmin) && roleBadges.length > 0 && (() => {
+            const badge = roleBadges[0];
             const Icon = badge.icon;
             const isStylistAdmin = badge.label === 'Stylist' && isAdmin;
             return (
-              <Tooltip key={i}>
+              <Tooltip>
                 <TooltipTrigger asChild>
                   <div className={cn(
                     "h-9 rounded-full inline-flex items-center gap-1.5 text-xs font-medium border transition-all duration-150",
@@ -223,14 +224,16 @@ export function SuperAdminTopBar({
                     <span className="hidden xl:inline 2xl:hidden">{badge.shortLabel}</span>
                   </div>
                 </TooltipTrigger>
-                <TooltipContent side="bottom" className={cn("max-w-[260px] text-xs", !isStylistAdmin && "xl:hidden")}>
+                <TooltipContent side="bottom" className="max-w-[260px] text-xs">
                   {isStylistAdmin
                     ? "This user is an admin who also performs services. Managed via the 'I also perform services' toggle in Profile Settings."
-                    : badge.label}
+                    : roleBadges.length > 1
+                      ? `Roles: ${roleBadges.map(b => b.label).join(', ')}`
+                      : badge.label}
                 </TooltipContent>
               </Tooltip>
             );
-          })}
+          })()}
 
           {/* View As — Tier 0, always visible */}
           {isAdmin && <ViewAsToggle />}
@@ -257,8 +260,25 @@ export function SuperAdminTopBar({
                 )}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48 bg-popover border border-border">
+            <DropdownMenuContent align="end" className="w-56 bg-popover border border-border">
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              {roleBadges.length > 1 && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground font-display">Roles</DropdownMenuLabel>
+                  {roleBadges.map((badge, i) => {
+                    const BadgeIcon = badge.icon;
+                    return (
+                      <div key={i} className="flex items-center gap-2 px-2 py-1.5">
+                        <div className={cn("h-6 rounded-full inline-flex items-center gap-1.5 px-2.5 text-[10px] font-medium border", badge.colorClasses)}>
+                          <BadgeIcon className="w-3 h-3" />
+                          <span>{badge.label}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </>
+              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
                 <Link to="/dashboard/profile" className="flex items-center gap-2 cursor-pointer">
