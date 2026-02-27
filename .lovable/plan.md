@@ -1,49 +1,52 @@
 
 
-## Persist Zoom and Rotation Per-Step to Database
+## Apply Saved Avatar Composition to Profile Photo Display
 
-The root cause: **zoom and rotation are never saved**. The database only has `photo_focal_x/y` and `card_focal_x/y`. When the wizard closes, zoom resets to 100% and rotation to 0° — so the saved photo never matches what the user composed.
+The modal saves `avatar_zoom`, `avatar_rotation`, `photo_focal_x`, `photo_focal_y` correctly, but the rendered avatar on the profile page ignores them entirely — it just shows the raw image centered.
 
-### 1. Add 4 new columns to `employee_profiles`
+### Changes
 
-```sql
-ALTER TABLE employee_profiles
-  ADD COLUMN avatar_zoom real DEFAULT 1,
-  ADD COLUMN avatar_rotation smallint DEFAULT 0,
-  ADD COLUMN card_zoom real DEFAULT 1,
-  ADD COLUMN card_rotation smallint DEFAULT 0;
+**1. `src/pages/dashboard/MyProfile.tsx` — Profile photo card avatar (line ~633)**
+
+Apply saved composition values to the `<AvatarImage>`:
+```tsx
+<AvatarImage 
+  src={profile.photo_url} 
+  alt={profile?.full_name}
+  className="object-cover"
+  style={{
+    objectPosition: `${(profile as any)?.photo_focal_x ?? 50}% ${(profile as any)?.photo_focal_y ?? 50}%`,
+    transform: `scale(${(profile as any)?.avatar_zoom ?? 1}) rotate(${(profile as any)?.avatar_rotation ?? 0}deg)`,
+    transformOrigin: `${(profile as any)?.photo_focal_x ?? 50}% ${(profile as any)?.photo_focal_y ?? 50}%`,
+  }}
+/>
 ```
 
-### 2. Update the save flow to persist zoom/rotation
+Also apply this to the stylist-locked avatar variant (~line 587 area) if it exists.
 
-**`src/hooks/useEmployeeProfile.ts`** — `useUploadProfilePhoto`
-- Accept `avatarZoom`, `avatarRotation`, `cardZoom`, `cardRotation` in the mutation input
-- Include them in the `updatePayload` written to `employee_profiles`
+**2. `src/components/ui/avatar.tsx` — Ensure overflow hidden**
 
-**`src/components/dashboard/ImageCropModal.tsx`** — `onCropComplete` signature
-- Expand to pass all 8 values: `(blob, focalX, focalY, cardFocalX, cardFocalY, avatarZoom, avatarRotation, cardZoom, cardRotation)`
+Verify the `Avatar` root has `overflow-hidden` (it likely does via Radix defaults). The `scale()` transform will enlarge the image beyond the circle boundary, so clipping is essential.
 
-**`src/pages/dashboard/MyProfile.tsx`** — `handleCroppedPhotoUpload`
-- Forward all 8 values to `uploadPhoto.mutateAsync`
-- Pass `initialAvatarZoom`, `initialAvatarRotation`, `initialCardZoom`, `initialCardRotation` props to the modal from the loaded profile
+**3. `src/pages/dashboard/ViewProfile.tsx` — Admin view profile avatar**
 
-### 3. Apply saved zoom/rotation at render time
+Same treatment: apply saved `avatar_zoom`, `avatar_rotation`, `photo_focal_x/y` to `<AvatarImage>` style.
 
-**`src/components/home/StylistFlipCard.tsx`**
-- Accept `cardZoom` prop, apply `transform: scale(cardZoom)` with `transformOrigin` at the focal point on the photo `<img>`
+**4. Consider a reusable helper**
 
-**`src/hooks/useHomepageStylists.ts`**
-- Add `card_zoom` and `card_rotation` to the select query and interface
+Create a utility function to avoid repeating the style computation:
+```tsx
+// src/lib/avatar-utils.ts
+export function getAvatarStyle(profile: { photo_focal_x?: number; photo_focal_y?: number; avatar_zoom?: number; avatar_rotation?: number } | null) {
+  const fx = profile?.photo_focal_x ?? 50;
+  const fy = profile?.photo_focal_y ?? 50;
+  return {
+    objectPosition: `${fx}% ${fy}%`,
+    transform: `scale(${profile?.avatar_zoom ?? 1}) rotate(${profile?.avatar_rotation ?? 0}deg)`,
+    transformOrigin: `${fx}% ${fy}%`,
+  };
+}
+```
 
-**Avatar renders** (sidebar, team directory, chat)
-- Apply `avatar_zoom` / `avatar_rotation` from the profile wherever the circular avatar is rendered using `object-position` + `transform: scale()`
-
-### 4. Initialize modal with saved values
-
-**`src/components/dashboard/ImageCropModal.tsx`**
-- Add props: `initialAvatarZoom`, `initialAvatarRotation`, `initialCardZoom`, `initialCardRotation`
-- Initialize state from these props instead of hardcoded `1` / `0`
-- Reset effect uses the initial values instead of defaults
-
-This ensures each step's composition (focal point + zoom + rotation) is independently saved and correctly rendered everywhere.
+This can be imported wherever avatars are rendered (sidebar, team directory, chat) for consistent composition.
 
