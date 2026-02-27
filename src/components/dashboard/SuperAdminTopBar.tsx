@@ -6,6 +6,7 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { useUnreadAnnouncements } from '@/hooks/useUnreadAnnouncements';
 import { cn } from '@/lib/utils';
+import { getAvatarStyle } from '@/lib/avatar-utils';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
@@ -248,7 +249,7 @@ export function SuperAdminTopBar({
               <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full transition-all duration-150">
                 {employeeProfile?.photo_url ? (
                   <Avatar className="h-7 w-7">
-                    <AvatarImage src={employeeProfile.photo_url} alt="Profile" />
+                    <AvatarImage src={employeeProfile.photo_url} alt="Profile" className="object-cover" style={getAvatarStyle(employeeProfile)} />
                     <AvatarFallback><UserCircle className="w-4 h-4" /></AvatarFallback>
                   </Avatar>
                 ) : (

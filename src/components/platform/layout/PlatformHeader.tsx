@@ -4,6 +4,7 @@ import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { usePlatformTheme } from '@/contexts/PlatformThemeContext';
 import { usePlatformPresenceContext } from '@/contexts/PlatformPresenceContext';
 import { cn } from '@/lib/utils';
+import { getAvatarStyle } from '@/lib/avatar-utils';
 import { User, LogOut, Settings, Crown, Shield, Headphones, Code, Users } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -163,7 +164,7 @@ export function PlatformHeader() {
                     'h-8 w-8 border',
                     isDark ? 'border-slate-600' : 'border-violet-200'
                   )}>
-                    <AvatarImage src={profile?.photo_url || undefined} alt="Profile" />
+                    <AvatarImage src={profile?.photo_url || undefined} alt="Profile" className="object-cover" style={getAvatarStyle(profile)} />
                     <AvatarFallback className={cn(
                       'text-xs font-medium',
                       isDark ? 'bg-slate-700 text-slate-300' : 'bg-violet-100 text-violet-700'
