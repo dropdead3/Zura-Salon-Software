@@ -21,6 +21,7 @@ import { useSpecialtyOptions } from '@/hooks/useSpecialtyOptions';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { useLocations, getClosedDaysArray } from '@/hooks/useLocations';
 import { cn } from '@/lib/utils';
+import { getAvatarStyle } from '@/lib/avatar-utils';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AssistantRequestHistoryCard } from '@/components/dashboard/AssistantRequestHistoryCard';
@@ -388,7 +389,7 @@ export default function ViewProfile() {
           
           <div className="flex items-start gap-4">
             <Avatar className="w-16 h-16">
-              <AvatarImage src={profile.photo_url || undefined} alt={profile.full_name} />
+              <AvatarImage src={profile.photo_url || undefined} alt={profile.full_name} className="object-cover" style={getAvatarStyle(profile)} />
               <AvatarFallback className="text-xl bg-muted">
                 {profile.full_name?.charAt(0) || <User className="w-8 h-8" />}
               </AvatarFallback>
@@ -483,7 +484,7 @@ export default function ViewProfile() {
               <div className="flex items-center gap-6">
                 <div className="relative group">
                   <Avatar className="w-24 h-24">
-                    <AvatarImage src={profile?.photo_url || undefined} alt={profile?.full_name} />
+                    <AvatarImage src={profile?.photo_url || undefined} alt={profile?.full_name} className="object-cover" style={getAvatarStyle(profile)} />
                     <AvatarFallback className="text-2xl bg-muted">
                       {formData.full_name?.charAt(0) || <User className="w-8 h-8" />}
                     </AvatarFallback>
