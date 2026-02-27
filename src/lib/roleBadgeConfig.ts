@@ -17,14 +17,14 @@ const ROLE_BADGE_MAP: Partial<Record<AppRole, RoleBadgeConfig>> = {
     label: 'Super Admin',
     shortLabel: 'Admin',
     icon: Crown,
-    colorClasses: 'bg-gradient-to-r from-yellow-200 via-amber-100 to-yellow-200 text-yellow-900 border-yellow-400 dark:from-yellow-800/50 dark:via-amber-700/30 dark:to-yellow-800/50 dark:text-yellow-200 dark:border-yellow-600 bg-[length:200%_100%] animate-shine',
+    colorClasses: 'bg-gradient-to-r from-yellow-200 via-amber-100 to-yellow-200 text-yellow-900 border-yellow-400 dark:from-yellow-800/50 dark:via-amber-700/30 dark:to-yellow-800/50 dark:text-yellow-200 dark:border-yellow-600',
     order: 1,
   },
   admin: {
     label: 'General Manager',
     shortLabel: 'GM',
     icon: Crown,
-    colorClasses: 'bg-gradient-to-r from-amber-200 via-orange-100 to-amber-200 text-amber-900 border-amber-400 dark:from-amber-800/50 dark:via-orange-700/30 dark:to-amber-800/50 dark:text-amber-200 dark:border-amber-600 bg-[length:200%_100%] animate-shine',
+    colorClasses: 'bg-gradient-to-r from-amber-200 via-orange-100 to-amber-200 text-amber-900 border-amber-400 dark:from-amber-800/50 dark:via-orange-700/30 dark:to-amber-800/50 dark:text-amber-200 dark:border-amber-600',
     order: 2,
   },
   manager: {
@@ -69,7 +69,7 @@ export const ACCOUNT_OWNER_BADGE: RoleBadgeConfig = {
   label: 'Account Owner',
   shortLabel: 'Owner',
   icon: Gem,
-  colorClasses: 'bg-gradient-to-r from-stone-700 via-stone-600 to-stone-700 text-amber-100 border-amber-400/30 dark:from-stone-800 dark:via-stone-700 dark:to-stone-800 dark:text-amber-200 dark:border-amber-500/30 bg-[length:200%_100%] animate-shine',
+  colorClasses: 'bg-gradient-to-r from-stone-700 via-stone-600 to-stone-700 text-amber-100 border-amber-400/30 dark:from-stone-800 dark:via-stone-700 dark:to-stone-800 dark:text-amber-200 dark:border-amber-500/30',
   order: 0,
 };
 
