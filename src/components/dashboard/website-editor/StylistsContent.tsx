@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { tokens } from '@/lib/design-tokens';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -336,67 +336,63 @@ export function StylistsContent() {
     >
 
       {/* Sample Cards Settings */}
-      <Card>
-        <CardHeader className="p-3 pb-2">
-          <CardTitle className="text-sm font-sans font-medium flex items-center gap-2">
-            <Settings className="w-3.5 h-3.5" />
-            Sample Cards Settings
-          </CardTitle>
-          <CardDescription className="text-xs">
-            Show placeholder cards when no real stylists are visible.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="p-3 pt-0 space-y-2.5">
-          <div className="flex items-center gap-2.5">
-            <Switch
-              id="sample-cards"
-              checked={showSampleCards}
-              onCheckedChange={handleToggleSampleCards}
-              disabled={settingsLoading || updateSettings.isPending}
-            />
-            <label htmlFor="sample-cards" className="text-sm font-medium cursor-pointer">
-              Show sample stylist cards
-            </label>
-            {(settingsLoading || updateSettings.isPending) && (
-              <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-            )}
-          </div>
-          <div className="flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
-            <Badge variant="outline" className="gap-1 text-xs">
-              <Users className="w-3 h-3" />
-              {northMesaCount} North Mesa
-            </Badge>
-            <Badge variant="outline" className="gap-1 text-xs">
-              <Users className="w-3 h-3" />
-              {valVistaCount} Val Vista
-            </Badge>
-          </div>
-          {showSampleCards && visibleStylists.length > 0 && (
-            <div className="flex items-start gap-2 p-2.5 bg-destructive/10 border border-destructive/30 rounded-lg">
-              <AlertCircle className="w-3.5 h-3.5 text-destructive shrink-0 mt-0.5" />
-              <p className="text-xs text-destructive">
-                <span className="font-medium">Sample cards hidden:</span> You have {visibleStylists.length} real stylist(s) visible. Sample cards only appear when no real stylists are visible.
-                <span className="block mt-1.5 text-muted-foreground">
-                  To hide or show individual stylists, use the <span className="font-medium text-foreground">Visible</span> tab below.
-                </span>
-              </p>
-            </div>
-          )}
-          <div className="pt-2.5 border-t">
-            <Button
-              variant="outline"
-              size={tokens.button.card}
-              onClick={() => setPreviewOpen(true)}
-              className="gap-2 w-full"
-            >
-              <Eye className="w-4 h-4" />
-              Preview Homepage
-              <ExternalLink className="w-3 h-3" />
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="space-y-2.5">
+        <div className="flex items-center gap-2">
+          <Settings className="w-3.5 h-3.5 text-muted-foreground" />
+          <span className="text-xs font-display tracking-wide text-muted-foreground">Sample Cards Settings</span>
+        </div>
+        <p className="text-xs text-muted-foreground">Show placeholder cards when no real stylists are visible.</p>
 
+        <div className="flex items-center gap-2.5">
+          <Switch
+            id="sample-cards"
+            checked={showSampleCards}
+            onCheckedChange={handleToggleSampleCards}
+            disabled={settingsLoading || updateSettings.isPending}
+          />
+          <label htmlFor="sample-cards" className="text-sm font-medium cursor-pointer">
+            Show sample stylist cards
+          </label>
+          {(settingsLoading || updateSettings.isPending) && (
+            <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+          )}
+        </div>
+        <div className="flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
+          <Badge variant="outline" className="gap-1 text-xs">
+            <Users className="w-3 h-3" />
+            {northMesaCount} North Mesa
+          </Badge>
+          <Badge variant="outline" className="gap-1 text-xs">
+            <Users className="w-3 h-3" />
+            {valVistaCount} Val Vista
+          </Badge>
+        </div>
+        {showSampleCards && visibleStylists.length > 0 && (
+          <div className="flex items-start gap-2 p-2.5 bg-destructive/10 border border-destructive/30 rounded-lg">
+            <AlertCircle className="w-3.5 h-3.5 text-destructive shrink-0 mt-0.5" />
+            <p className="text-xs text-destructive">
+              <span className="font-medium">Sample cards hidden:</span> You have {visibleStylists.length} real stylist(s) visible. Sample cards only appear when no real stylists are visible.
+              <span className="block mt-1.5 text-muted-foreground">
+                To hide or show individual stylists, use the <span className="font-medium text-foreground">Visible</span> tab below.
+              </span>
+            </p>
+          </div>
+        )}
+        <div className="pt-2.5 border-t border-border/30">
+          <Button
+            variant="outline"
+            size={tokens.button.card}
+            onClick={() => setPreviewOpen(true)}
+            className="gap-2 w-full"
+          >
+            <Eye className="w-4 h-4" />
+            Preview Homepage
+            <ExternalLink className="w-3 h-3" />
+          </Button>
+        </div>
+      </div>
+
+      <div className="border-t border-border/30" />
 
       <Tabs defaultValue="pending" className="space-y-4">
         <TabsList>
