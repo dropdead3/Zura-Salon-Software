@@ -70,7 +70,7 @@ function SortableSpecialtyItem({ option, onUpdate, onDelete, isUpdating }: Sorta
   };
 
   const handleSaveName = () => {
-    if (editName.trim() && editName.trim().toUpperCase() !== option.name) {
+    if (editName.trim() && editName.trim() !== option.name) {
       onUpdate(option.id, { name: editName.trim() });
     }
     setIsEditing(false);
