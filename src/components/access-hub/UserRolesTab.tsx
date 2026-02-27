@@ -20,6 +20,7 @@ import {
   Collapsible, CollapsibleContent, CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { Loader2, User, Crown, AlertTriangle, Lock, Users, Award, ChevronDown, ChevronRight, MapPin, Shield } from 'lucide-react';
+import { getRoleIconComponent } from '@/components/dashboard/RoleIconPicker';
 import { tokens } from '@/lib/design-tokens';
 import { ResponsibilityBadges } from './ResponsibilityBadges';
 import { AssignResponsibilityDialog } from './AssignResponsibilityDialog';
@@ -499,6 +500,7 @@ export function UserRolesTab({ canManage }: UserRolesTabProps) {
         
         {roles.map(role => {
           const isSuperAdminRole = role.name === 'super_admin';
+          const RoleIcon = getRoleIconComponent(role.icon);
           return (
             <Card 
               key={role.name} 
@@ -520,7 +522,7 @@ export function UserRolesTab({ canManage }: UserRolesTabProps) {
                   "text-xs flex items-center justify-center gap-1",
                   isSuperAdminRole ? "text-amber-600 dark:text-amber-500" : "text-muted-foreground"
                 )}>
-                  {isSuperAdminRole && <Crown className="w-3 h-3" />}
+                  <RoleIcon className="w-3 h-3" />
                   {role.display_name}{!isSuperAdminRole && 's'}
                 </p>
               </CardContent>
@@ -561,18 +563,19 @@ export function UserRolesTab({ canManage }: UserRolesTabProps) {
                 {roles.map(role => {
                   const colorClasses = getRoleColorClasses(role.color);
                   const isSuperAdminRole = role.name === 'super_admin';
+                  const RoleIcon = getRoleIconComponent(role.icon);
                   return (
                     <div key={role.name} className="flex flex-col gap-1.5">
                       <Badge 
                         variant="outline" 
                         className={cn(
-                          "text-xs w-fit whitespace-nowrap px-3 py-1",
+                          "text-xs w-fit whitespace-nowrap px-3 py-1 gap-1.5",
                           isSuperAdminRole 
-                            ? "bg-gradient-to-r from-amber-100 via-orange-50 to-amber-100 text-amber-800 border-amber-300/60 gap-1.5" 
+                            ? "bg-gradient-to-r from-amber-100 via-orange-50 to-amber-100 text-amber-800 border-amber-300/60" 
                             : cn(colorClasses.bg, colorClasses.text, "border-current/20")
                         )}
                       >
-                        {isSuperAdminRole && <Crown className="w-3 h-3" />}
+                        <RoleIcon className="w-3 h-3" />
                         {role.display_name}
                       </Badge>
                       <span className="text-sm text-muted-foreground leading-snug">
