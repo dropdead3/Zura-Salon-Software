@@ -162,7 +162,7 @@ export function UserRolesTableView({
                               : "bg-gradient-to-r from-amber-200 via-orange-100 to-amber-200 text-amber-900 border-amber-300"
                           )}>
                             <Crown className="w-2.5 h-2.5" />
-                            {isPrimaryOwner ? 'Owner' : 'SA'}
+                            {isPrimaryOwner ? 'Account Owner' : 'SA'}
                           </Badge>
                         )}
                       </div>
