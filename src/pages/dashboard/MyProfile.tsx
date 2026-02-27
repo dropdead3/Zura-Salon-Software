@@ -391,11 +391,6 @@ export default function MyProfile() {
           highlighted_services: prev.highlighted_services.filter(s => s !== specialty)
         };
       }
-      // Limit to 3 specialties
-      if (prev.specialties.length >= 3) {
-        toast.error('You can select up to 3 specialties');
-        return prev;
-      }
       return { ...prev, specialties: [...prev.specialties, specialty] };
     });
   };
@@ -1151,13 +1146,13 @@ export default function MyProfile() {
                 <div className="space-y-2">
                   <Label>
                     Specialties <span className="text-destructive">*</span>
-                    <span className="text-muted-foreground text-xs font-normal ml-1">(select 2-3 required)</span>
+                    <span className="text-muted-foreground text-xs font-normal ml-1">(select all that apply)</span>
                   </Label>
                   <div className="flex flex-wrap gap-2">
                     {specialtyOptions.map(option => {
                       const specialty = option.name;
                       const isSelected = formData.specialties.includes(specialty);
-                      const isDisabled = !isSelected && formData.specialties.length >= 3;
+                      const isDisabled = false;
                       const isExtensions = specialty.toLowerCase() === 'extensions';
                       const displayName = specialty.charAt(0).toUpperCase() + specialty.slice(1).toLowerCase();
                       
@@ -1186,12 +1181,8 @@ export default function MyProfile() {
                       );
                     })}
                   </div>
-                  <p className={cn(
-                    "text-xs",
-                    formData.specialties.length < 2 ? "text-destructive" : "text-muted-foreground"
-                  )}>
-                    {formData.specialties.length}/3 selected
-                    {formData.specialties.length < 2 && " — Please select at least 2 specialties"}
+                  <p className="text-xs text-muted-foreground">
+                    {formData.specialties.length} selected
                   </p>
                 </div>
 
