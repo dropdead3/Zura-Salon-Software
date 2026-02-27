@@ -1211,21 +1211,21 @@ export default function MyProfile() {
                       const isSelected = formData.highlighted_services.includes(specialty);
                       const isDisabled = !isSelected && formData.highlighted_services.length >= 3;
                       return (
-                        <Badge
+                        <button
                           key={specialty}
-                          variant={isSelected ? 'default' : 'outline'}
+                          type="button"
+                          onClick={() => !isDisabled && toggleHighlightedService(specialty)}
                           className={cn(
-                            "cursor-pointer transition-all",
+                            "px-3 py-1.5 rounded-full border-2 text-sm transition-all",
                             isSelected
-                              ? "bg-primary/80 text-primary-foreground"
-                              : "opacity-60 border-dashed",
+                              ? "border-primary bg-primary/10 text-primary font-medium"
+                              : "border-border border-dashed opacity-60 hover:border-primary/50 text-foreground",
                             isDisabled && "opacity-40 cursor-not-allowed"
                           )}
-                          onClick={() => !isDisabled && toggleHighlightedService(specialty)}
                         >
                           {specialty}
-                          {isSelected && <X className="w-3 h-3 ml-1 opacity-60" />}
-                        </Badge>
+                          {isSelected && <X className="w-3 h-3 ml-1 inline opacity-60" />}
+                        </button>
                       );
                     })}
                   </div>
