@@ -1,5 +1,6 @@
 import { Crown, Shield, Scissors, Headset, HandHelping, User, Gem, type LucideIcon } from 'lucide-react';
 import type { Database } from '@/integrations/supabase/types';
+import { getRoleColorClasses } from '@/components/dashboard/RoleColorPicker';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
@@ -73,15 +74,24 @@ export const ACCOUNT_OWNER_BADGE: RoleBadgeConfig = {
   order: 0,
 };
 
-export function getRoleBadgeConfig(role: AppRole): RoleBadgeConfig {
-  return ROLE_BADGE_MAP[role] ?? FALLBACK_BADGE;
+export function getRoleBadgeConfig(role: AppRole, dbColor?: string): RoleBadgeConfig {
+  const base = ROLE_BADGE_MAP[role] ?? FALLBACK_BADGE;
+  if (dbColor) {
+    const colors = getRoleColorClasses(dbColor);
+    return { ...base, colorClasses: `${colors.bg} ${colors.text}` };
+  }
+  return base;
 }
 
 /**
  * Build the full ordered array of role badges for a user.
  * Prepends "Account Owner" if `isPrimaryOwner` is true.
  */
-export function buildRoleBadges(roles: AppRole[], isPrimaryOwner: boolean): RoleBadgeConfig[] {
+export function buildRoleBadges(
+  roles: AppRole[],
+  isPrimaryOwner: boolean,
+  dbColorMap?: Record<string, string>,
+): RoleBadgeConfig[] {
   const badges: RoleBadgeConfig[] = [];
 
   if (isPrimaryOwner) {
@@ -89,7 +99,7 @@ export function buildRoleBadges(roles: AppRole[], isPrimaryOwner: boolean): Role
   }
 
   const roleBadges = roles
-    .map(r => ROLE_BADGE_MAP[r])
+    .map(r => getRoleBadgeConfig(r, dbColorMap?.[r]))
     .filter((b): b is RoleBadgeConfig => !!b)
     .sort((a, b) => a.order - b.order);
 
