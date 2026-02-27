@@ -173,7 +173,7 @@ export const tokens = {
   // ========================================
   scrollbar: {
     /** Base track: hidden by default, fades in on container hover */
-    track: 'flex touch-none select-none opacity-0 transition-opacity duration-700 ease-in-out group-hover/scroll:opacity-100',
+    track: 'flex touch-none select-none bg-transparent opacity-0 transition-opacity duration-700 ease-in-out group-hover/scroll:opacity-100',
     /** Vertical track sizing */
     trackV: 'h-full w-2 p-[1px]',
     /** Horizontal track sizing */
