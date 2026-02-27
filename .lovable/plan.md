@@ -1,30 +1,25 @@
 
 
-## Fix Stylist Badge Color Inconsistency
+## Use Custom SVG for Booth Renter Icon
 
-The root cause: two independent color systems define Stylist's appearance.
-
-1. **`src/lib/roleBadgeConfig.ts`** — hardcoded `bg-blue-100 text-blue-800` for Stylist (used in nav bar badges)
-2. **`getRoleColorClasses(role.color)`** from `RoleColorPicker.tsx` — reads the DB `color` field (used in Access Hub)
-
-If someone set the Stylist role color to "pink" in the DB, the Access Hub shows pink while the nav bar shows blue.
-
-### Fix Approach
-
-Unify both systems so `roleBadgeConfig.ts` is no longer the source of truth for colors. Instead, make the nav bar badges also resolve colors from the DB-driven role configuration.
+The uploaded `BoothRentIcon.svg` will be copied into the project and wrapped as a Lucide-compatible React component so it can be used anywhere the icon system resolves role icons.
 
 ### Changes
 
-#### 1. `src/hooks/useRoleUtils.ts` (or wherever role data feeds into `DashboardLayout`)
-- Ensure the roles query data (with `color` and `icon` fields) is available where `buildRoleBadges` is called
+#### 1. Copy SVG asset
+- Copy `user-uploads://BoothRentIcon.svg` → `src/assets/icons/BoothRentIcon.svg`
 
-#### 2. `src/lib/roleBadgeConfig.ts`
-- Add an optional `colorOverride` parameter to `getRoleBadgeConfig` and `buildRoleBadges` that accepts the DB color field
-- When a DB color is provided, use `getRoleColorClasses(dbColor)` to generate the badge colors instead of the hardcoded `colorClasses`
+#### 2. Create `src/components/icons/BoothRentIcon.tsx`
+- Wrap the SVG path in a React component matching the Lucide icon interface (`size`, `className`, `color`, `strokeWidth` props)
+- Use `currentColor` for fill so it adapts to badge themes
 
-#### 3. `src/components/dashboard/DashboardLayout.tsx`
-- Pass the roles data (with DB colors) into `buildRoleBadges` so nav bar badges use the same colors as the Access Hub
+#### 3. Update `src/components/dashboard/RoleIconPicker.tsx`
+- Import `BoothRentIcon` custom component
+- Add `"BoothRent"` key to `ICON_MAP` so it can be selected when configuring the booth_renter role
+
+#### 4. Update `src/lib/iconResolver.ts`
+- Add `"BoothRent"` → `BoothRentIcon` to the global `ICON_MAP` so all icon resolution (nav bar, badges, etc.) can find it
 
 ### Result
-Stylist (and all roles) will show the same color everywhere — whatever color is configured in the DB role settings.
+When the booth_renter role's icon is set to `"BoothRent"` in the DB, all badges, stats, filters, and nav bar will render the custom booth chair SVG.
 
