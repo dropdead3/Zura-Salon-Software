@@ -8,6 +8,7 @@ import { ImageWithSkeleton } from "@/components/ui/image-skeleton";
 import { Images, ArrowRight } from "lucide-react";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { useScrollReveal } from "@/hooks/use-scroll-reveal";
+import { useIsEditorPreview } from "@/hooks/useIsEditorPreview";
 
 // Gallery images - replace with real salon work
 const galleryImages = [
@@ -40,6 +41,7 @@ const transformations = [
 ];
 
 export function GallerySection() {
+  const isPreview = useIsEditorPreview();
   const contentRef = useRef(null);
   const isInView = useInView(contentRef, { once: true, margin: "-100px" });
   const { ref: scrollRef, opacity, y, blurFilter } = useScrollReveal();
@@ -48,7 +50,7 @@ export function GallerySection() {
     <Section theme="light">
       <motion.div
         ref={scrollRef}
-        style={{ opacity, y, filter: blurFilter }}
+        style={isPreview ? { opacity: 1, y: 0, filter: 'none' } : { opacity, y, filter: blurFilter }}
       >
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
           <SectionHeader

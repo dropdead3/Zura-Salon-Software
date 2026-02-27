@@ -3,6 +3,7 @@ import { useRef, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Check, ArrowRight } from "lucide-react";
 import { useScrollReveal } from "@/hooks/use-scroll-reveal";
+import { useIsEditorPreview } from "@/hooks/useIsEditorPreview";
 
 const benefits = [
   "Complimentary Drinks & Snacks",
@@ -13,6 +14,7 @@ const benefits = [
 const rotatingWords = ["Start Here", "Wanted", "Are The Best"];
 
 export const NewClientSection = () => {
+  const isPreview = useIsEditorPreview();
   const contentRef = useRef(null);
   const isInView = useInView(contentRef, { once: true, margin: "-100px" });
   const { ref: scrollRef, opacity, y, blurFilter } = useScrollReveal();
@@ -68,7 +70,12 @@ export const NewClientSection = () => {
           ref={scrollRef}
           data-theme="light"
           className="relative rounded-t-2xl p-12 md:p-16 lg:p-20 pb-20 md:pb-28 lg:pb-36 overflow-visible"
-          style={{ 
+          style={isPreview ? { 
+            opacity: 1, 
+            y: 0, 
+            filter: 'none',
+            background: 'linear-gradient(180deg, hsl(var(--secondary)) 0%, hsl(var(--secondary)) 70%, transparent 100%)'
+          } : {
             opacity, 
             y, 
             filter: blurFilter,

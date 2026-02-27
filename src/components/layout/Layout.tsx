@@ -94,8 +94,8 @@ export function Layout({ children }: LayoutProps) {
     };
   }, []);
 
-  // Editor preview in edit mode: simplified layout without fixed footer
-  if (isEditorPreview && !isViewMode) {
+  // Editor iframe (both edit and view modes): simplified layout, no footer reveal
+  if (isEditorPreview) {
     return (
       <div className="min-h-screen flex flex-col relative theme-cream" style={{ colorScheme: 'light' }}>
         <div className="relative z-10 flex flex-col min-h-screen bg-background">

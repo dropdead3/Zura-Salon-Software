@@ -2,6 +2,7 @@ import { motion, useScroll, useTransform, useInView, AnimatePresence } from "fra
 import { useRef, useState, useEffect } from "react";
 import { Section } from "@/components/ui/section";
 import { Eyebrow } from "@/components/ui/Eyebrow";
+import { useIsEditorPreview } from "@/hooks/useIsEditorPreview";
 
 const rotatingWords = [
   "Average",
@@ -14,6 +15,7 @@ const rotatingWords = [
 ];
 
 export function BrandStatement() {
+  const isPreview = useIsEditorPreview();
   const containerRef = useRef(null);
   const contentRef = useRef(null);
   const isInView = useInView(contentRef, { once: true, margin: "-100px" });
@@ -82,7 +84,7 @@ export function BrandStatement() {
         ref={containerRef}
         data-theme="dark"
         className="bg-foreground text-background rounded-2xl p-12 md:p-20 lg:p-24"
-        style={{ opacity, filter: blurFilter, y }}
+        style={isPreview ? { opacity: 1, filter: 'none', y: 0 } : { opacity, filter: blurFilter, y }}
       >
         <div ref={contentRef} className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-8 lg:gap-12 items-center">
           {/* Left side - Title */}
