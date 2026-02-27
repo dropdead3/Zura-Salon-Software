@@ -394,6 +394,12 @@ export function StylistsContent() {
         </CardContent>
       </Card>
 
+      <div className="p-3 bg-muted/50 rounded-lg border border-border/30">
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          To hide or show individual stylists on the homepage, use the <span className="font-medium text-foreground">Visible</span> tab below. Toggle each stylist's visibility switch to control who appears on your site.
+        </p>
+      </div>
+
       <Tabs defaultValue="pending" className="space-y-4">
         <TabsList>
           <TabsTrigger value="pending" className="gap-1.5 text-xs sm:text-sm">
