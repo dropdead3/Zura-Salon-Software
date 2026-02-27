@@ -39,6 +39,7 @@ import {
   FileText,
   type LucideIcon 
 } from 'lucide-react';
+import BoothRentIcon from '@/components/icons/BoothRentIcon';
 
 /**
  * Map of icon name strings to Lucide React components.
@@ -96,6 +97,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Tag,
   Folder,
   FileText,
+  BoothRent: BoothRentIcon as unknown as LucideIcon,
 };
 
 /**

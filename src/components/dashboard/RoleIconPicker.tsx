@@ -11,6 +11,7 @@ import {
   Camera, Image, Palette, Brush, Wand2,
   LucideIcon,
 } from 'lucide-react';
+import BoothRentIcon from '@/components/icons/BoothRentIcon';
 
 interface RoleIconPickerProps {
   value: string;
@@ -28,6 +29,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Briefcase, Building, Store, Home, MapPin,
   DollarSign, CreditCard, Receipt, PiggyBank, Wallet,
   Camera, Image, Palette, Brush, Wand2,
+  BoothRent: BoothRentIcon as unknown as LucideIcon,
 };
 
 const ROLE_ICONS = Object.keys(ICON_MAP);
