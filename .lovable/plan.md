@@ -1,30 +1,49 @@
 
 
-## Fix Per-Step State Persistence in Photo Wizard
+## Persist Zoom and Rotation Per-Step to Database
 
-Three bugs are causing the wizard to lose zoom/recomposition state between steps.
+The root cause: **zoom and rotation are never saved**. The database only has `photo_focal_x/y` and `card_focal_x/y`. When the wizard closes, zoom resets to 100% and rotation to 0° — so the saved photo never matches what the user composed.
 
-### Changes in `src/components/dashboard/ImageCropModal.tsx`
+### 1. Add 4 new columns to `employee_profiles`
 
-**1. Split rotation into per-step state**
-- Replace single `rotation` state with `avatarRotation` and `cardRotation`
-- Derive `currentRotation` / `setCurrentRotation` from `step` (same pattern as zoom/focal)
-- Update all rotation references (`renderComposeFrame`, `renderControls`, `generateResizedBlob`, reset effect)
+```sql
+ALTER TABLE employee_profiles
+  ADD COLUMN avatar_zoom real DEFAULT 1,
+  ADD COLUMN avatar_rotation smallint DEFAULT 0,
+  ADD COLUMN card_zoom real DEFAULT 1,
+  ADD COLUMN card_rotation smallint DEFAULT 0;
+```
 
-**2. Fix image load effect to not reset user-set zoom**
-- Remove `setAvatarZoom(1)`, `setCardZoom(1)`, `setRotation(0)` from the `img.onload` callback (lines 127-129)
-- These resets already happen in the modal-close effect (lines 98-100) and in `handleReplacePhoto` — no need to double-reset on image load, which can fire unexpectedly
+### 2. Update the save flow to persist zoom/rotation
 
-**3. Make `handleFrameInteraction` use explicit step logic**
-- Instead of capturing derived `setCurrentFocalX`/`setCurrentFocalY` via closure, use explicit conditionals inside the callback:
-  ```ts
-  if (step === 'card') {
-    setCardFocalX(Math.round(x));
-    setCardFocalY(Math.round(y));
-  } else {
-    setFocalX(Math.round(x));
-    setFocalY(Math.round(y));
-  }
-  ```
-- This eliminates any stale closure risk
+**`src/hooks/useEmployeeProfile.ts`** — `useUploadProfilePhoto`
+- Accept `avatarZoom`, `avatarRotation`, `cardZoom`, `cardRotation` in the mutation input
+- Include them in the `updatePayload` written to `employee_profiles`
+
+**`src/components/dashboard/ImageCropModal.tsx`** — `onCropComplete` signature
+- Expand to pass all 8 values: `(blob, focalX, focalY, cardFocalX, cardFocalY, avatarZoom, avatarRotation, cardZoom, cardRotation)`
+
+**`src/pages/dashboard/MyProfile.tsx`** — `handleCroppedPhotoUpload`
+- Forward all 8 values to `uploadPhoto.mutateAsync`
+- Pass `initialAvatarZoom`, `initialAvatarRotation`, `initialCardZoom`, `initialCardRotation` props to the modal from the loaded profile
+
+### 3. Apply saved zoom/rotation at render time
+
+**`src/components/home/StylistFlipCard.tsx`**
+- Accept `cardZoom` prop, apply `transform: scale(cardZoom)` with `transformOrigin` at the focal point on the photo `<img>`
+
+**`src/hooks/useHomepageStylists.ts`**
+- Add `card_zoom` and `card_rotation` to the select query and interface
+
+**Avatar renders** (sidebar, team directory, chat)
+- Apply `avatar_zoom` / `avatar_rotation` from the profile wherever the circular avatar is rendered using `object-position` + `transform: scale()`
+
+### 4. Initialize modal with saved values
+
+**`src/components/dashboard/ImageCropModal.tsx`**
+- Add props: `initialAvatarZoom`, `initialAvatarRotation`, `initialCardZoom`, `initialCardRotation`
+- Initialize state from these props instead of hardcoded `1` / `0`
+- Reset effect uses the initial values instead of defaults
+
+This ensures each step's composition (focal point + zoom + rotation) is independently saved and correctly rendered everywhere.
 
