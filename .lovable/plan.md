@@ -1,24 +1,31 @@
 
 
-## Add Management Hub to Sidebar Navigation
+## Fix Specialty Options Layout for Narrow Inspector Panel
 
-**Problem**: The Management Hub (`/dashboard/admin/management`) exists as a route and appears in the Command Center quick-access grid, but it is not listed in any of the sidebar navigation item arrays in `src/config/dashboardNav.ts`. This means it never renders in the left sidebar.
+**Problem**: The `SortableSpecialtyItem` component uses a single-row horizontal flex layout (`flex items-center gap-3`) that crams 5 elements into the narrow Inspector panel (~280px wide). The Badge text has no minimum width and wraps character-by-character.
+
+**Root cause**: The component was designed for the full-width admin page (`HomepageStylists.tsx`) and reused without adaptation in the Website Editor Inspector.
 
 ### Implementation
 
-**File: `src/config/dashboardNav.ts`**
+**File: `src/components/dashboard/SpecialtyOptionsManager.tsx`**
 
-Add a Management Hub entry to `managerNavItems` under the `operations` manager group (alongside other hub-style links like Analytics Hub):
+Restructure `SortableSpecialtyItem` from a single-row layout to a two-row stacked layout:
 
-```ts
-{ href: '/dashboard/admin/management', label: 'Management Hub', labelKey: 'management_hub', icon: LayoutGrid, permission: 'view_team_overview', managerGroup: 'operations' },
-```
+- **Row 1**: Grip handle + specialty name (truncated, not in a Badge) filling available width
+- **Row 2**: Edit button + Switch + Delete button, right-aligned
 
-This will place it inside the Management section's "Operations" sub-group, consistent with how Analytics Hub appears under `analytics`.
+Key changes:
+1. Replace the `Badge` wrapper with a plain `span` using `truncate` and `min-w-0` so the name ellipses instead of wrapping vertically
+2. Move the action controls (edit, switch, delete) to a second row beneath the name
+3. Use `flex-col` on the outer container with the controls row using `flex justify-end gap-2`
+4. Keep the drag handle on the top-left via the first row
+5. Maintain the edit-inline mode but constrain the Input with `min-w-0`
 
-**Import**: `LayoutGrid` is already imported in `dashboardNav.ts`.
+The `SpecialtyOptionsManager` card wrapper (`<Card>`) also needs adjustment -- when rendered inside the Inspector it shouldn't add its own card chrome since `EditorCard` already provides it. Check `StylistsContent.tsx` to see if it's already wrapped; if so, consider rendering without the outer `<Card>` in the editor context, or just fix the item layout which is the primary issue.
 
-### What this changes
-- Management Hub will appear in the sidebar under Management > Operations for users with `view_team_overview` permission
-- No route, component, or permission changes needed -- the route already exists in `App.tsx`
+### Scope
+- Single file change: `src/components/dashboard/SpecialtyOptionsManager.tsx`
+- No data or schema changes
+- No new components needed
 
