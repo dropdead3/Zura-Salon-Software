@@ -1,21 +1,19 @@
 
 
-## Remove Kristi's Extra Roles
+## Add Hover Tooltip to Stylist Badge for Admin Service Providers
 
-Kristi Day (kristi@dropdeadsalon.com) currently has three roles in `user_roles`:
-- `super_admin` — keep
-- `admin` (Director of Operations) — remove
-- `stylist` — remove
+**File:** `src/components/access-hub/UserRolesTableView.tsx`, lines ~180-189
 
-### Change
+**What changes:**
+Wrap the role badge in a `Tooltip` when the role is `stylist` and the user also holds an admin-level role (`super_admin`, `admin`, or `manager`). The tooltip text:
 
-**Database operation** — delete the two extra role assignments:
+> *"This user is an admin who also performs services. This role is managed via the 'I also perform services' toggle in Profile Settings."*
 
-```sql
-DELETE FROM user_roles 
-WHERE user_id = '4f9562e9-925c-4037-bfaa-728f18afdefa' 
-  AND role IN ('admin', 'stylist');
-```
+**Implementation:**
+1. Import `Tooltip`, `TooltipTrigger`, `TooltipContent` from `@/components/ui/tooltip`
+2. In the role badge mapping (lines 176-190), detect if the current badge is `stylist` and the user also has an admin-level role
+3. Conditionally wrap that badge in a Tooltip with the explanatory hint
+4. Non-stylist badges render unchanged
 
-No code changes required. After deletion, Kristi will show only the Super Admin badge.
+**Single file change, no database changes.**
 
