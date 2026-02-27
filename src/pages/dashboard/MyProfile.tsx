@@ -1123,8 +1123,15 @@ export default function MyProfile() {
           {/* Professional Info - For stylists and stylist assistants */}
           {showProfessionalDetails && (
             <Card>
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-lg">Professional Details</CardTitle>
+                {(roles.includes('super_admin') || roles.includes('admin')) && (
+                  <Button variant="ghost" size="sm" asChild className="text-muted-foreground">
+                    <Link to="/dashboard/admin/website-sections?tab=stylists">
+                      Manage Specialties <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                )}
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
