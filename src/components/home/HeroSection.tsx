@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { cn } from "@/lib/utils";
 import { motion, useScroll, useTransform, AnimatePresence, type TargetAndTransition } from "framer-motion";
 import { ChevronDown, ArrowRight } from "lucide-react";
 import { useRef, useState, useEffect } from "react";
@@ -81,7 +82,7 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
   const scrollStyle = (styles: Record<string, unknown>) => isPreview ? undefined : styles;
 
   return (
-    <section ref={sectionRef} data-theme="light" className="relative min-h-screen flex flex-col overflow-hidden">
+    <section ref={sectionRef} data-theme="light" className={cn("relative flex flex-col overflow-hidden", isPreview ? "min-h-[600px]" : "min-h-screen")}>
       {/* Video Background */}
       {videoSrc && (
         <motion.div 
@@ -140,7 +141,7 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
       )}
 
       <motion.div 
-        className="flex-1 flex items-start justify-center pt-28 pb-32 lg:pt-36 lg:pb-48 relative z-0"
+        className={cn("flex-1 flex items-start justify-center relative z-0", isPreview ? "pt-16 pb-16" : "pt-28 pb-32 lg:pt-36 lg:pb-48")}
         style={scrollStyle({ opacity })}
       >
         <div className="container mx-auto px-6 lg:px-12">
