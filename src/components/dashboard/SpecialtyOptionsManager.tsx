@@ -81,10 +81,8 @@ function SortableSpecialtyItem({ option, onUpdate, onDelete, isUpdating }: Sorta
     setIsEditing(false);
   };
 
-  const isExtensions = option.name.toLowerCase() === 'extensions';
-  const displayName = option.name.split(' ').map(word => 
-    word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-  ).join(' ');
+  const isExtensions = option.name.toLowerCase().includes('extension');
+  const displayName = option.name;
 
   return (
     <>
@@ -333,17 +331,25 @@ export function SpecialtyOptionsManager() {
               items={displayOptions.map(o => o.id)}
               strategy={verticalListSortingStrategy}
             >
-              <div className="space-y-2">
-                {displayOptions.map((option) => (
-                  <SortableSpecialtyItem
-                    key={option.id}
-                    option={option}
-                    onUpdate={(id, updates) => updateOption.mutate({ id, ...updates })}
-                    onDelete={(id) => deleteOption.mutate(id)}
-                    isUpdating={updateOption.isPending || deleteOption.isPending}
-                  />
-                ))}
-              </div>
+              {(() => {
+                const categories = [...new Set(displayOptions.map(o => o.category))];
+                return categories.map(category => (
+                  <div key={category} className="space-y-2 mb-4">
+                    <p className="text-xs font-display tracking-wide text-muted-foreground uppercase">{category}</p>
+                    <div className="space-y-2">
+                      {displayOptions.filter(o => o.category === category).map((option) => (
+                        <SortableSpecialtyItem
+                          key={option.id}
+                          option={option}
+                          onUpdate={(id, updates) => updateOption.mutate({ id, ...updates })}
+                          onDelete={(id) => deleteOption.mutate(id)}
+                          isUpdating={updateOption.isPending || deleteOption.isPending}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ));
+              })()}
             </SortableContext>
           </DndContext>
         )}

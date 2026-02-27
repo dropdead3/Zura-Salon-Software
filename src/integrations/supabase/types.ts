@@ -15445,6 +15445,7 @@ export type Database = {
       }
       specialty_options: {
         Row: {
+          category: string
           created_at: string
           display_order: number
           id: string
@@ -15453,6 +15454,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          category?: string
           created_at?: string
           display_order?: number
           id?: string
@@ -15461,6 +15463,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          category?: string
           created_at?: string
           display_order?: number
           id?: string

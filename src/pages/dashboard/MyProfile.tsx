@@ -1149,45 +1149,45 @@ export default function MyProfile() {
                   </Select>
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-4">
                   <Label>
                     Specialties <span className="text-destructive">*</span>
                     <span className="text-muted-foreground text-xs font-normal ml-1">(select all that apply)</span>
                   </Label>
-                  <div className="flex flex-wrap gap-2">
-                    {specialtyOptions.map(option => {
-                      const specialty = option.name;
-                      const isSelected = formData.specialties.includes(specialty);
-                      const isDisabled = false;
-                      const isExtensions = specialty.toLowerCase() === 'extensions';
-                      const displayName = specialty.charAt(0).toUpperCase() + specialty.slice(1).toLowerCase();
-                      
-                      return (
-                        <button
-                          key={specialty}
-                          type="button"
-                          disabled={isDisabled}
-                          onClick={() => {
-                            if (!isDisabled) {
-                              toggleSpecialty(specialty);
-                            }
-                          }}
-                          className={cn(
-                            "px-3 py-1.5 rounded-full border-2 text-sm transition-all flex items-center gap-1.5",
-                            isExtensions && isSelected && "border-[hsl(35,30%,70%)] bg-[hsl(38,35%,85%)] text-[hsl(30,15%,25%)] font-medium",
-                            isExtensions && !isSelected && !isDisabled && "border-[hsl(35,30%,75%)] bg-[hsl(38,35%,92%)] hover:bg-[hsl(38,35%,85%)] text-[hsl(30,15%,35%)]",
-                            !isExtensions && isSelected && "border-primary bg-primary/10 text-primary font-medium",
-                            !isExtensions && !isSelected && !isDisabled && "border-border hover:border-primary/50 text-foreground",
-                            isDisabled && "border-muted bg-muted/30 text-muted-foreground/50 cursor-not-allowed opacity-50"
-                          )}
-                        >
-                          {isExtensions && <Sparkles className="w-3 h-3" />}
-                          {displayName}
-                          {isSelected && <X className="w-3 h-3 ml-0.5 opacity-60" />}
-                        </button>
-                      );
-                    })}
-                  </div>
+                  {(() => {
+                    const categories = [...new Set(specialtyOptions.map(o => o.category))];
+                    return categories.map(category => (
+                      <div key={category} className="space-y-2">
+                        <p className="text-xs font-display tracking-wide text-muted-foreground uppercase">{category}</p>
+                        <div className="flex flex-wrap gap-2">
+                          {specialtyOptions.filter(o => o.category === category).map(option => {
+                            const specialty = option.name;
+                            const isSelected = formData.specialties.includes(specialty);
+                            const isExtensions = specialty.toLowerCase().includes('extension');
+                            
+                            return (
+                              <button
+                                key={specialty}
+                                type="button"
+                                onClick={() => toggleSpecialty(specialty)}
+                                className={cn(
+                                  "px-3 py-1.5 rounded-full border-2 text-sm transition-all flex items-center gap-1.5",
+                                  isExtensions && isSelected && "border-[hsl(35,30%,70%)] bg-[hsl(38,35%,85%)] text-[hsl(30,15%,25%)] font-medium",
+                                  isExtensions && !isSelected && "border-[hsl(35,30%,75%)] bg-[hsl(38,35%,92%)] hover:bg-[hsl(38,35%,85%)] text-[hsl(30,15%,35%)]",
+                                  !isExtensions && isSelected && "border-primary bg-primary/10 text-primary font-medium",
+                                  !isExtensions && !isSelected && "border-border hover:border-primary/50 text-foreground",
+                                )}
+                              >
+                                {isExtensions && <Sparkles className="w-3 h-3" />}
+                                {specialty}
+                                {isSelected && <X className="w-3 h-3 ml-0.5 opacity-60" />}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ));
+                  })()}
                   <p className="text-xs text-muted-foreground">
                     {formData.specialties.length} selected
                   </p>
@@ -1204,7 +1204,7 @@ export default function MyProfile() {
                     Tap a specialty below to highlight it on your website card. Choose up to 3 from your specialties above.
                   </p>
                   <p className="text-xs text-muted-foreground/80 italic">
-                    Note: Extensions is the only badge displayed with a <Sparkles className="w-3 h-3 inline text-[hsl(35,30%,50%)]" /> and gold accent color to attract our highest-ticket services.
+                    Note: Extension Specialist is displayed with a <Sparkles className="w-3 h-3 inline text-[hsl(35,30%,50%)]" /> and gold accent color to attract our highest-ticket services.
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {formData.specialties.map(specialty => {
@@ -1223,8 +1223,8 @@ export default function MyProfile() {
                           )}
                           onClick={() => !isDisabled && toggleHighlightedService(specialty)}
                         >
-                          {isSelected && specialty.toLowerCase() === 'extensions' && <Sparkles className="w-3 h-3 mr-1" />}
-                          {specialty.charAt(0).toUpperCase() + specialty.slice(1).toLowerCase()}
+                          {isSelected && specialty.toLowerCase().includes('extension') && <Sparkles className="w-3 h-3 mr-1" />}
+                          {specialty}
                           {isSelected && <X className="w-3 h-3 ml-1 opacity-60" />}
                         </Badge>
                       );

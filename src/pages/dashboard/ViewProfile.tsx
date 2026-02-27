@@ -17,6 +17,7 @@ import {
   ArrowLeft, Shield, ShieldCheck
 } from 'lucide-react';
 import { useUserProfile, useUserRoles, useUserLocationSchedules, useUpdateUserProfile, useUpsertUserLocationSchedule, useUploadUserProfilePhoto } from '@/hooks/useAdminProfile';
+import { useSpecialtyOptions } from '@/hooks/useSpecialtyOptions';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { useLocations, getClosedDaysArray } from '@/hooks/useLocations';
 import { cn } from '@/lib/utils';
@@ -38,11 +39,7 @@ const DAYS_OF_WEEK = [
 
 const stylistLevels = ['LEVEL 1', 'LEVEL 2', 'LEVEL 3', 'LEVEL 4'];
 
-const specialtyOptions = [
-  'EXTENSIONS', 'BLONDING', 'CREATIVE COLOR', 'AIRTOUCH', 
-  'COLOR BLOCKING', 'LAYERED CUTS', 'CUSTOM CUTS', 'BALAYAGE',
-  'VIVIDS', 'CORRECTIVE COLOR', 'KERATIN', 'BRIDAL'
-];
+// specialtyOptions now fetched from DB inside the component
 
 // allServiceNames is now fetched from DB inside the component
 
@@ -84,6 +81,8 @@ export default function ViewProfile() {
   const { data: userRoles = [], isLoading: rolesLoading } = useUserRoles(userId);
   const { data: existingSchedules = [] } = useUserLocationSchedules(userId);
   const { data: locations = [] } = useLocations();
+  const { data: specialtyOptionsData = [] } = useSpecialtyOptions();
+  const specialtyOptions = specialtyOptionsData.map(o => o.name);
   
   // Fetch all service names from DB for highlighted services picker
   const { data: allServiceNames = [] } = useQuery({
