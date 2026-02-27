@@ -1,19 +1,22 @@
 
 
-## Add Role Icons to Badges in Roles & Controls Hub
+## Fix Badge UI Consistency — Add Role Icons Everywhere
 
-Two locations need role icons added — both currently only show the Crown for super_admin while ignoring the `role.icon` field for all other roles.
+The role badges are inconsistent: the top bar and Role Overview legend show icons, but the **table view badges** and **filter bar** do not. The `RoleOption` interface in both `UserRolesTableView.tsx` and `UserRolesFilterBar.tsx` is also missing the `icon` field.
 
-### Changes in `src/components/access-hub/UserRolesTab.tsx`
+### Changes
 
-#### 1. Stats Bar (lines 500-529)
+#### 1. `src/components/access-hub/UserRolesTableView.tsx`
+- Add `icon` to local `RoleOption` interface
 - Import `getRoleIconComponent` from `RoleIconPicker`
-- For each role card, resolve `const Icon = getRoleIconComponent(role.icon)` 
-- Render `<Icon className="w-3 h-3" />` next to the role label (replacing the super_admin-only Crown conditional)
+- In the Roles column badges (line 179-185), resolve and render the role icon before the display name
+- In the expanded role toggle labels (line 258), also render the role icon
 
-#### 2. Role Overview Legend (lines 561-586)
-- Same pattern: resolve icon from `role.icon` for every role
-- Render the icon inside each `<Badge>` before the display name (replacing the super_admin-only Crown conditional)
+#### 2. `src/components/access-hub/UserRolesFilterBar.tsx`
+- Add `icon` to local `RoleOption` interface
+- Import `getRoleIconComponent`
+- Render role icons in the role filter dropdown chips for visual consistency
 
-### No new files needed — single file edit to `UserRolesTab.tsx`.
+### Scope
+Three files touched, no new files. Pure UI consistency fix — no data or hook changes needed since the `icon` field is already present on the role objects passed from the parent.
 
