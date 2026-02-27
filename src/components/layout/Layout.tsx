@@ -5,18 +5,23 @@ import { FooterCTA } from "./FooterCTA";
 import { StickyFooterBar } from "./StickyFooterBar";
 import { PageTransition } from "./PageTransition";
 
-const isEditorPreview = typeof window !== 'undefined'
-  && new URLSearchParams(window.location.search).has('preview');
+function getIsEditorPreview() {
+  if (typeof window === 'undefined') return false;
+  return new URLSearchParams(window.location.search).has('preview');
+}
 
-// mode=view means "render exactly like public site" even inside editor iframe
-const isViewMode = typeof window !== 'undefined'
-  && new URLSearchParams(window.location.search).get('mode') === 'view';
+function getIsViewMode() {
+  if (typeof window === 'undefined') return false;
+  return new URLSearchParams(window.location.search).get('mode') === 'view';
+}
 
 interface LayoutProps {
   children: ReactNode;
 }
 
 export function Layout({ children }: LayoutProps) {
+  const isEditorPreview = getIsEditorPreview();
+  const isViewMode = getIsViewMode();
   const [footerHeight, setFooterHeight] = useState(0);
   const [showFooter, setShowFooter] = useState(false);
   const footerRef = useRef<HTMLDivElement>(null);

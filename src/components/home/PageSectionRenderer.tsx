@@ -19,13 +19,8 @@ import { isBuiltinSection, type BuiltinSectionType, type CustomSectionType, type
 
 const FULL_BLEED_SECTIONS = new Set<string>(['hero', 'gallery', 'new_client', 'brand_statement', 'extensions']);
 
-// Must be at module level — React.lazy inside render body causes infinite re-suspension
-const EditorSectionCard = React.lazy(() =>
-  import('@/components/home/EditorSectionCard').then(m => ({ default: m.EditorSectionCard }))
-);
-const InsertionLine = React.lazy(() =>
-  import('@/components/home/InsertionLine').then(m => ({ default: m.InsertionLine }))
-);
+import { EditorSectionCard } from '@/components/home/EditorSectionCard';
+import { InsertionLine } from '@/components/home/InsertionLine';
 
 function getBuiltinComponent(type: BuiltinSectionType, isPreview: boolean): React.ReactNode {
   switch (type) {
@@ -46,13 +41,18 @@ function getBuiltinComponent(type: BuiltinSectionType, isPreview: boolean): Reac
   }
 }
 
-// Detect editor preview mode (inside iframe)
-const isEditorPreview = typeof window !== 'undefined'
-  && (new URLSearchParams(window.location.search).has('preview') || new URLSearchParams(window.location.search).has('mode'));
+// Detect editor preview mode — must be evaluated at render time, not module level,
+// because this module may be loaded before the iframe URL is set.
+function getIsEditorPreview() {
+  if (typeof window === 'undefined') return false;
+  const params = new URLSearchParams(window.location.search);
+  return params.has('preview') || params.has('mode');
+}
 
-// When mode=view, render the public site exactly (no bento cards)
-const isViewMode = typeof window !== 'undefined'
-  && new URLSearchParams(window.location.search).get('mode') === 'view';
+function getIsViewMode() {
+  if (typeof window === 'undefined') return false;
+  return new URLSearchParams(window.location.search).get('mode') === 'view';
+}
 
 interface PageSectionRendererProps {
   sections: SectionConfig[];
@@ -60,16 +60,17 @@ interface PageSectionRendererProps {
 
 export function PageSectionRenderer({ sections }: PageSectionRendererProps) {
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
+  const isEditorPreview = getIsEditorPreview();
+  const isViewMode = getIsViewMode();
 
   const enabledSections = useMemo(() => {
     if (isEditorPreview && !isViewMode) {
-      // In editor edit mode, show all sections (enabled and disabled) so user can toggle
       return [...sections].sort((a, b) => a.order - b.order);
     }
     return [...sections]
       .filter(s => s.enabled)
       .sort((a, b) => a.order - b.order);
-  }, [sections]);
+  }, [sections, isEditorPreview, isViewMode]);
 
   // Listen for postMessage from parent (Website Editor) for scroll & highlight
   useEffect(() => {
@@ -140,33 +141,30 @@ export function PageSectionRenderer({ sections }: PageSectionRendererProps) {
   if (isEditorPreview) {
     return (
       <div className="zura-editor-preview py-6 space-y-5">
-        <React.Suspense fallback={null}>
-          {enabledSections.map((section, index) => (
-            <React.Fragment key={section.id}>
-              {index > 0 && <InsertionLine afterSectionId={enabledSections[index - 1].id} />}
-              <EditorSectionCard
-                sectionId={section.id}
-                sectionLabel={section.label}
-                enabled={section.enabled}
-                isSelected={selectedSectionId === section.id}
-                fullBleed={FULL_BLEED_SECTIONS.has(section.type)}
-              >
-                <div id={`section-${section.id}`}>
-                  <SectionStyleWrapper styleOverrides={section.style_overrides}>
-                    {isBuiltinSection(section.type)
-                      ? getBuiltinComponent(section.type, true)
-                      : <CustomSectionRenderer sectionId={section.id} sectionType={section.type as CustomSectionType} />
-                    }
-                  </SectionStyleWrapper>
-                </div>
-              </EditorSectionCard>
-            </React.Fragment>
-          ))}
-          {/* Insertion line after last section */}
-          {enabledSections.length > 0 && (
-            <InsertionLine afterSectionId={enabledSections[enabledSections.length - 1].id} />
-          )}
-        </React.Suspense>
+        {enabledSections.map((section, index) => (
+          <React.Fragment key={section.id}>
+            {index > 0 && <InsertionLine afterSectionId={enabledSections[index - 1].id} />}
+            <EditorSectionCard
+              sectionId={section.id}
+              sectionLabel={section.label}
+              enabled={section.enabled}
+              isSelected={selectedSectionId === section.id}
+              fullBleed={FULL_BLEED_SECTIONS.has(section.type)}
+            >
+              <div id={`section-${section.id}`}>
+                <SectionStyleWrapper styleOverrides={section.style_overrides}>
+                  {isBuiltinSection(section.type)
+                    ? getBuiltinComponent(section.type, true)
+                    : <CustomSectionRenderer sectionId={section.id} sectionType={section.type as CustomSectionType} />
+                  }
+                </SectionStyleWrapper>
+              </div>
+            </EditorSectionCard>
+          </React.Fragment>
+        ))}
+        {enabledSections.length > 0 && (
+          <InsertionLine afterSectionId={enabledSections[enabledSections.length - 1].id} />
+        )}
       </div>
     );
   }
