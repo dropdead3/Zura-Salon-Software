@@ -1,4 +1,5 @@
-import { Users } from 'lucide-react';
+import { Users, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useStylistsDisplayConfig } from '@/hooks/useSectionConfig';
 import { SectionDisplayEditor } from './SectionDisplayEditor';
 
@@ -23,15 +24,29 @@ export function StylistsDisplayEditor() {
   const { data, isLoading, isSaving, update } = useStylistsDisplayConfig();
 
   return (
-    <SectionDisplayEditor
-      title="Stylists Display Section"
-      description="Configure how the stylists section appears on the homepage."
-      icon={Users}
-      data={data}
-      isLoading={isLoading}
-      isSaving={isSaving}
-      update={update}
-      fields={FIELDS}
-    />
+    <>
+      <SectionDisplayEditor
+        title="Stylists Display Section"
+        description="Configure how the stylists section appears on the homepage."
+        icon={Users}
+        data={data}
+        isLoading={isLoading}
+        isSaving={isSaving}
+        update={update}
+        fields={FIELDS}
+      />
+      <div className="mt-3 mx-1 p-3 bg-muted/50 rounded-lg border border-border/30">
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          To manage which stylists appear on the homepage — approve requests, hide or show individuals — visit the Homepage Stylists manager.
+        </p>
+        <Link
+          to="/dashboard/admin/website-sections?tab=stylists"
+          className="inline-flex items-center gap-1 mt-2 text-xs text-primary hover:underline font-sans"
+        >
+          Manage Homepage Stylists
+          <ArrowRight className="w-3 h-3" />
+        </Link>
+      </div>
+    </>
   );
 }
