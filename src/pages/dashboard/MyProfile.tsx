@@ -152,7 +152,7 @@ export default function MyProfile() {
     stylist_level: '',
     specialties: [] as string[],
     highlighted_services: [] as string[],
-    extensions_certified: false,
+    
     emergency_contact: '',
     emergency_phone: '',
     bio: '',
@@ -203,7 +203,7 @@ export default function MyProfile() {
           const match = specialtyOptions?.find(opt => opt.name.toLowerCase() === s.toLowerCase());
           return match ? match.name : s;
         }).filter((s: string) => (profile.specialties || []).some((sp: string) => sp.toLowerCase() === s.toLowerCase())),
-        extensions_certified: profile.extensions_certified || false,
+        
         emergency_contact: profile.emergency_contact || '',
         emergency_phone: profile.emergency_phone || '',
         bio: (profile as any).bio || '',
@@ -342,7 +342,7 @@ export default function MyProfile() {
       stylist_level: formData.stylist_level,
       specialties: formData.specialties,
       highlighted_services: formData.highlighted_services,
-      extensions_certified: formData.extensions_certified,
+      
       emergency_contact: formData.emergency_contact,
       emergency_phone: formData.emergency_phone,
       bio: formData.bio,
@@ -1257,29 +1257,7 @@ export default function MyProfile() {
                   </p>
                 </div>
 
-                {/* Extensions Certified */}
-                <div className="pt-4 border-t">
-                  <div className="flex items-start gap-4">
-                    <div className="flex-1">
-                    <Label className="flex items-center gap-2">
-                        <img 
-                          src="/assets/brand-icon.svg" 
-                          alt="Certified" 
-                          className="w-5 h-5"
-                        />
-                        Extensions Certified
-                      </Label>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Completed the extensions training program.
-                      </p>
-                    </div>
-                    <Switch
-                      
-                      checked={formData.extensions_certified}
-                      onCheckedChange={(checked) => setFormData(prev => ({ ...prev, extensions_certified: checked }))}
-                    />
-                  </div>
-                </div>
+
               </CardContent>
             </Card>
           )}
