@@ -1,33 +1,37 @@
 
 
-## Problem
+## Problem Diagnosis
 
-In **Edit mode** (`mode=edit`), the canvas renders sections inside `EditorSectionCard` bento cards stacked vertically with `space-y-5`. The `HeroSection` uses `min-h-screen` (100vh of the iframe), creating a massive card that pushes all other sections far below the fold. The hero content starts at `pt-28` from the top of that enormous card — the user sees mostly blank space, then has to scroll past the full-viewport-height hero card to reach other sections. This makes the editor appear "stuck."
+The "broken apart" look has two root causes:
 
-In **Preview/View mode** (`mode=view`), sections render without bento card wrappers, full-height is expected, and everything works.
+1. **Footer reveal layout bleeding into the editor iframe**: In Preview (view) mode, `Layout.tsx` falls through to the public-site path which applies `rounded-b-[2rem]`, `shadow-[0_30px_60px]`, `overflow-hidden`, and `marginBottom: footerHeight`. Inside the editor iframe, this creates visible card-like breaks and clipping.
 
-## Fix
+2. **Scroll-based opacity animations stuck at 0**: `BrandStatement`, `FooterCTA`, and other sections use `useScroll` + `useTransform` to animate opacity from 0 → 1 on scroll. Inside the constrained iframe, scroll progress never advances, so these sections render as invisible empty gaps — creating the "broken apart" appearance with visible divisions between blank areas.
 
-**File: `src/components/home/HeroSection.tsx`** (line 84)
+## Plan
 
-When `isPreview` is true (editor iframe), replace `min-h-screen` with a constrained height (`min-h-[600px]`) and reduce vertical padding. This gives a reasonable card-sized preview without the full-viewport blank space.
+### 1. Fix Layout.tsx — disable footer reveal for ALL editor iframe modes
+Currently `getIsEditorPreview()` only checks `params.has('preview')`. The simplified layout branch (`isEditorPreview && !isViewMode`) excludes view mode, pushing it into the footer-reveal path. Change the condition so both edit AND view modes inside the editor iframe use the simplified layout (no `rounded-b`, no `marginBottom`, no fixed footer, no `PageTransition`).
 
-```tsx
-// Line 84 — conditional class
-className={cn(
-  "relative flex flex-col overflow-hidden",
-  isPreview ? "min-h-[600px]" : "min-h-screen"
-)}
+### 2. Fix BrandStatement — bypass scroll-based opacity in preview
+The `useScroll`/`useTransform` on the outer `motion.div` (opacity, blur, y) starts at 0 and never progresses. Add an `isPreview` check (detect iframe via URL params) and force `style={{ opacity: 1, filter: 'none', y: 0 }}` when in the editor.
+
+### 3. Fix FooterCTA — bypass scroll-based opacity in preview  
+Same issue: 6+ scroll-linked opacity transforms all start at 0. Add iframe detection and force all content to full visibility when rendered inside the editor.
+
+### 4. Audit remaining scroll-animated sections
+Check `NewClientSection`, `GallerySection`, `ServicesPreview`, `TestimonialSection`, and `FAQSection` for the same `useScroll`/`useTransform` opacity pattern. Apply the same forced-visibility fix to any that use it.
+
+### Technical Detail
+
+Detection approach — use URL params evaluated at render time:
+```ts
+function getIsEditorContext() {
+  if (typeof window === 'undefined') return false;
+  const params = new URLSearchParams(window.location.search);
+  return params.has('preview') || params.has('mode');
+}
 ```
 
-Also reduce the excessive padding that creates blank space in preview:
-```tsx
-// Line 143 — conditional padding
-className={cn(
-  "flex-1 flex items-start justify-center relative z-0",
-  isPreview ? "pt-16 pb-16" : "pt-28 pb-32 lg:pt-36 lg:pb-48"
-)}
-```
-
-Two lines changed, one file. Edit mode shows a compact, visible hero preview. Public site is unaffected.
+This is already used in `PageSectionRenderer.tsx` as `getIsEditorPreview()`. The same check will be applied in `Layout.tsx` (replacing the narrower `params.has('preview')` check) and passed as props or evaluated locally in scroll-animated sections.
 
