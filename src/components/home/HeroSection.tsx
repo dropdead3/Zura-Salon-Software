@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
+import { motion, useScroll, useTransform, AnimatePresence, type TargetAndTransition } from "framer-motion";
 import { ChevronDown, ArrowRight } from "lucide-react";
 import { useRef, useState, useEffect } from "react";
 import { ConsultationFormDialog } from "@/components/ConsultationFormDialog";
@@ -16,9 +16,9 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [isAnimationReady, setIsAnimationReady] = useState(false);
 
-  // In preview mode (inside editor iframe), skip long entrance animation delays
+  // In preview mode (inside editor iframe), skip all entrance animations and scroll transforms
   const isPreview = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('preview');
-  const animDelay = isPreview ? 0 : 1; // multiplier for animation delays
+  const animDelay = isPreview ? 0 : 1;
 
   // Start word rotation after initial heading animation completes
   useEffect(() => {
@@ -35,7 +35,7 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
     
     const interval = setInterval(() => {
       setCurrentWordIndex((prev) => (prev + 1) % rotatingWords.length);
-    }, 5500); // Change word every 5.5 seconds
+    }, 5500);
 
     return () => clearInterval(interval);
   }, [isAnimationReady]);
@@ -62,8 +62,8 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
   const ctaY = useTransform(scrollYProgress, [0, 1], [0, -200]);
 
   // Directional scroll transforms for headline split animation
-  const topLineX = useTransform(scrollYProgress, [0, 0.4], [0, -150]); // Exit left
-  const bottomLineX = useTransform(scrollYProgress, [0, 0.4], [0, 150]); // Exit right
+  const topLineX = useTransform(scrollYProgress, [0, 0.4], [0, -150]);
+  const bottomLineX = useTransform(scrollYProgress, [0, 0.4], [0, 150]);
   const headlineScrollOpacity = useTransform(scrollYProgress, [0, 0.35], [1, 0]);
 
   const scrollToContent = () => {
@@ -76,13 +76,17 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
   // Shared spring config for organic animations
   const springTransition = { type: "spring" as const, stiffness: 50, damping: 20 };
 
+  // In preview mode: no entrance animations, no scroll-based transforms
+  const noAnim = (fallback: TargetAndTransition): false | TargetAndTransition => isPreview ? false : fallback;
+  const scrollStyle = (styles: Record<string, unknown>) => isPreview ? undefined : styles;
+
   return (
     <section ref={sectionRef} data-theme="light" className="relative min-h-screen flex flex-col overflow-hidden">
       {/* Video Background */}
       {videoSrc && (
         <motion.div 
           className="absolute inset-0 z-0"
-          initial={{ opacity: 0, scale: 1.1 }}
+          initial={noAnim({ opacity: 0, scale: 1.1 })}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1.5 }}
         >
@@ -95,7 +99,6 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
           >
             <source src={videoSrc} type="video/mp4" />
           </video>
-          {/* Overlay for text readability */}
           <div className="absolute inset-0 bg-background/60" />
         </motion.div>
       )}
@@ -138,42 +141,42 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
 
       <motion.div 
         className="flex-1 flex items-start justify-center pt-28 pb-32 lg:pt-36 lg:pb-48 relative z-0"
-        style={{ opacity }}
+        style={scrollStyle({ opacity })}
       >
         <div className="container mx-auto px-6 lg:px-12">
           <div className="max-w-4xl mx-auto text-center">
             {/* Tagline */}
             <motion.div
-              initial={{ opacity: 0, y: 30, filter: "blur(10px)" }}
+              initial={noAnim({ opacity: 0, y: 30, filter: "blur(10px)" })}
               animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
               transition={{ ...springTransition, delay: 2.0 * animDelay }}
-              style={{ y: taglineY }}
+              style={scrollStyle({ y: taglineY })}
             >
               <Eyebrow className="text-muted-foreground mb-6">
                 Hair • Color • Artistry
               </Eyebrow>
             </motion.div>
 
-            {/* Main headline - Always two lines: brand on first, rotating word on second */}
+            {/* Main headline */}
             <motion.h1
               className="font-display text-[clamp(2.25rem,8vw,5.5rem)] font-normal text-foreground leading-[0.95] flex flex-col items-center"
-              style={{ y: headlineY, filter: headingBlurFilter }}
+              style={scrollStyle({ y: headlineY, filter: headingBlurFilter })}
             >
               <motion.span 
                 className="whitespace-nowrap block"
-                initial={{ opacity: 0, y: 40, filter: "blur(12px)" }}
+                initial={noAnim({ opacity: 0, y: 40, filter: "blur(12px)" })}
                 animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                 transition={{ ...springTransition, delay: 2.5 * animDelay }}
-                style={{ x: topLineX, opacity: headlineScrollOpacity }}
+                style={scrollStyle({ x: topLineX, opacity: headlineScrollOpacity })}
               >
                 Your Salon
               </motion.span>
               <motion.span 
                 className="block overflow-hidden h-[1.15em]"
-                initial={{ opacity: 0, y: 40, filter: "blur(12px)" }}
+                initial={noAnim({ opacity: 0, y: 40, filter: "blur(12px)" })}
                 animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                 transition={{ ...springTransition, delay: 2.5 * animDelay }}
-                style={{ x: bottomLineX, opacity: headlineScrollOpacity }}
+                style={scrollStyle({ x: bottomLineX, opacity: headlineScrollOpacity })}
               >
                 <AnimatePresence mode="wait">
                   <motion.span
@@ -195,11 +198,11 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
 
             {/* Subheadline */}
             <motion.p
-              initial={{ opacity: 0, y: 30, filter: "blur(8px)" }}
+              initial={noAnim({ opacity: 0, y: 30, filter: "blur(8px)" })}
               animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
               transition={{ ...springTransition, delay: 3.6 * animDelay }}
               className="mt-8 text-sm md:text-base text-muted-foreground font-sans font-light max-w-md mx-auto leading-relaxed"
-              style={{ y: subheadlineY }}
+              style={scrollStyle({ y: subheadlineY })}
             >
               Where technical talent meets artistry.
               <br />
@@ -209,11 +212,11 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
             {/* CTAs */}
             <motion.div
               className="mt-10 flex flex-col items-center gap-3"
-              style={{ y: ctaY }}
+              style={scrollStyle({ y: ctaY })}
             >
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                 <motion.div
-                  initial={{ opacity: 0, y: 25, filter: "blur(8px)" }}
+                  initial={noAnim({ opacity: 0, y: 25, filter: "blur(8px)" })}
                   animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                   transition={{ ...springTransition, delay: 4.2 * animDelay }}
                 >
@@ -226,7 +229,7 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
                   </button>
                 </motion.div>
                 <motion.div
-                  initial={{ opacity: 0, y: 25, filter: "blur(8px)" }}
+                  initial={noAnim({ opacity: 0, y: 25, filter: "blur(8px)" })}
                   animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                   transition={{ ...springTransition, delay: 4.6 * animDelay }}
                 >
@@ -240,7 +243,7 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
                 </motion.div>
               </div>
               <motion.div 
-                initial={{ opacity: 0, y: 20, filter: "blur(6px)" }}
+                initial={noAnim({ opacity: 0, y: 20, filter: "blur(6px)" })}
                 animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                 transition={{ ...springTransition, delay: 5.1 * animDelay }}
                 className="flex flex-col items-center gap-1 text-xs md:text-sm text-muted-foreground font-sans"
@@ -255,9 +258,9 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
 
       {/* Scroll Indicator */}
       <motion.button
-        initial={{ opacity: 0, y: 15 }}
+        initial={noAnim({ opacity: 0, y: 15 })}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ ...springTransition, delay: 5.8 }}
+        transition={{ ...springTransition, delay: 5.8 * animDelay }}
         onClick={scrollToContent}
         className="absolute bottom-8 inset-x-0 mx-auto w-fit flex flex-col items-center gap-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer z-20"
         aria-label="Scroll down"
