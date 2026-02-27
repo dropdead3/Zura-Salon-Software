@@ -1,32 +1,24 @@
 
 
-## Add "X" Clear Buttons to Selected Specialties and Highlighted Services
+## Add Management Hub to Sidebar Navigation
 
-### Specialties Section (lines 1165-1187)
+**Problem**: The Management Hub (`/dashboard/admin/management`) exists as a route and appears in the Command Center quick-access grid, but it is not listed in any of the sidebar navigation item arrays in `src/config/dashboardNav.ts`. This means it never renders in the left sidebar.
 
-When a specialty is **selected**, show an `X` icon inside the button to make deselection obvious:
+### Implementation
 
-```tsx
-{isSelected && <X className="w-3 h-3 ml-0.5" />}
+**File: `src/config/dashboardNav.ts`**
+
+Add a Management Hub entry to `managerNavItems` under the `operations` manager group (alongside other hub-style links like Analytics Hub):
+
+```ts
+{ href: '/dashboard/admin/management', label: 'Management Hub', labelKey: 'management_hub', icon: LayoutGrid, permission: 'view_team_overview', managerGroup: 'operations' },
 ```
 
-Add it after `{displayName}` inside the button. The button already calls `toggleSpecialty` on click, so no logic changes needed — just visual clarity.
+This will place it inside the Management section's "Operations" sub-group, consistent with how Analytics Hub appears under `analytics`.
 
-### Highlighted Services Section (lines 1212-1229)
+**Import**: `LayoutGrid` is already imported in `dashboardNav.ts`.
 
-When a highlighted service is **selected**, replace the `Check` icon with an `X` icon (or show both — check on left, X on right):
-
-```tsx
-// Change from:
-{isSelected ? <Check className="w-3 h-3 mr-1" /> : null}
-
-// To:
-{isSelected && <X className="w-3 h-3 ml-1" />}  // after the label text
-```
-
-This makes it clear that clicking removes the item.
-
-### Files Changed
-
-- `src/pages/dashboard/MyProfile.tsx` — two small UI additions within the existing specialty and highlighted service button/badge renders
+### What this changes
+- Management Hub will appear in the sidebar under Management > Operations for users with `view_team_overview` permission
+- No route, component, or permission changes needed -- the route already exists in `App.tsx`
 
