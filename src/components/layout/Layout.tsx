@@ -96,7 +96,7 @@ export function Layout({ children }: LayoutProps) {
         <div className="relative z-10 flex flex-col min-h-screen bg-background">
           <Header />
           <main className="flex-1 bg-background">
-            <PageTransition>{children}</PageTransition>
+            {children}
           </main>
           <FooterCTA />
         </div>
