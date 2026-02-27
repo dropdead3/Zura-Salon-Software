@@ -77,9 +77,11 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
   // Shared spring config for organic animations
   const springTransition = { type: "spring" as const, stiffness: 50, damping: 20 };
 
-  // In preview mode: no entrance animations, no scroll-based transforms
+  // In preview mode: skip animations, force immediate visibility
   const noAnim = (fallback: TargetAndTransition): false | TargetAndTransition => isPreview ? false : fallback;
-  const scrollStyle = (styles: Record<string, unknown>) => isPreview ? undefined : styles;
+  const noTransition = isPreview ? { duration: 0 } : undefined;
+  // Force opacity:1 inline in preview so framer-motion can never hide content
+  const scrollStyle = (styles: Record<string, unknown>) => isPreview ? { opacity: 1 } : styles;
 
   return (
     <section ref={sectionRef} data-theme="light" className={cn("relative flex flex-col overflow-hidden", isPreview ? "min-h-[600px]" : "min-h-screen")}>
@@ -89,7 +91,7 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
           className="absolute inset-0 z-0"
           initial={noAnim({ opacity: 0, scale: 1.1 })}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1.5 }}
+          transition={noTransition || { duration: 1.5 }}
         >
           <video
             autoPlay
@@ -150,7 +152,7 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
             <motion.div
               initial={noAnim({ opacity: 0, y: 30, filter: "blur(10px)" })}
               animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              transition={{ ...springTransition, delay: 2.0 * animDelay }}
+              transition={noTransition || { ...springTransition, delay: 2.0 * animDelay }}
               style={scrollStyle({ y: taglineY })}
             >
               <Eyebrow className="text-muted-foreground mb-6">
@@ -167,7 +169,7 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
                 className="whitespace-nowrap block"
                 initial={noAnim({ opacity: 0, y: 40, filter: "blur(12px)" })}
                 animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                transition={{ ...springTransition, delay: 2.5 * animDelay }}
+                transition={noTransition || { ...springTransition, delay: 2.5 * animDelay }}
                 style={scrollStyle({ x: topLineX, opacity: headlineScrollOpacity })}
               >
                 Your Salon
@@ -176,7 +178,7 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
                 className="block overflow-hidden h-[1.15em]"
                 initial={noAnim({ opacity: 0, y: 40, filter: "blur(12px)" })}
                 animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                transition={{ ...springTransition, delay: 2.5 * animDelay }}
+                transition={noTransition || { ...springTransition, delay: 2.5 * animDelay }}
                 style={scrollStyle({ x: bottomLineX, opacity: headlineScrollOpacity })}
               >
                 <AnimatePresence mode="wait">
@@ -201,7 +203,7 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
             <motion.p
               initial={noAnim({ opacity: 0, y: 30, filter: "blur(8px)" })}
               animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              transition={{ ...springTransition, delay: 3.6 * animDelay }}
+              transition={noTransition || { ...springTransition, delay: 3.6 * animDelay }}
               className="mt-8 text-sm md:text-base text-muted-foreground font-sans font-light max-w-md mx-auto leading-relaxed"
               style={scrollStyle({ y: subheadlineY })}
             >
@@ -219,7 +221,7 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
                 <motion.div
                   initial={noAnim({ opacity: 0, y: 25, filter: "blur(8px)" })}
                   animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                  transition={{ ...springTransition, delay: 4.2 * animDelay }}
+                  transition={noTransition || { ...springTransition, delay: 4.2 * animDelay }}
                 >
                   <button
                     onClick={() => setConsultationOpen(true)}
@@ -232,7 +234,7 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
                 <motion.div
                   initial={noAnim({ opacity: 0, y: 25, filter: "blur(8px)" })}
                   animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                  transition={{ ...springTransition, delay: 4.6 * animDelay }}
+                  transition={noTransition || { ...springTransition, delay: 4.6 * animDelay }}
                 >
                   <Link
                     to="/booking"
@@ -246,7 +248,7 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
               <motion.div 
                 initial={noAnim({ opacity: 0, y: 20, filter: "blur(6px)" })}
                 animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                transition={{ ...springTransition, delay: 5.1 * animDelay }}
+                transition={noTransition || { ...springTransition, delay: 5.1 * animDelay }}
                 className="flex flex-col items-center gap-1 text-xs md:text-sm text-muted-foreground font-sans"
               >
                 <p>New clients begin with a $15 consultation</p>
@@ -261,7 +263,7 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
       <motion.button
         initial={noAnim({ opacity: 0, y: 15 })}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ ...springTransition, delay: 5.8 * animDelay }}
+        transition={noTransition || { ...springTransition, delay: 5.8 * animDelay }}
         onClick={scrollToContent}
         className="absolute bottom-8 inset-x-0 mx-auto w-fit flex flex-col items-center gap-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer z-20"
         aria-label="Scroll down"
