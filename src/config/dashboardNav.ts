@@ -114,6 +114,7 @@ export const managerNavItems: DashboardNavItem[] = [
   { href: '/dashboard/admin/inventory', label: 'Inventory', labelKey: 'inventory', icon: Package, permission: 'manage_inventory', managerGroup: 'operations' },
   { href: '/dashboard/admin/website-sections', label: 'Website Editor', labelKey: 'website_editor', icon: Globe, permission: 'manage_homepage_stylists', managerGroup: 'operations' },
   { href: '/dashboard/admin/seo-workshop', label: 'SEO Workshop', labelKey: 'seo_workshop', icon: Search, permission: 'view_team_overview', managerGroup: 'operations' },
+  { href: '/dashboard/admin/management', label: 'Management Hub', labelKey: 'management_hub', icon: LayoutGrid, permission: 'view_team_overview', managerGroup: 'operations' },
 ];
 
 export const adminOnlyNavItems: DashboardNavItem[] = [
