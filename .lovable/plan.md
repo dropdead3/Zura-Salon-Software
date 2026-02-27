@@ -1,55 +1,33 @@
 
 
-## Fix Canvas Preview Scroll-to-Section
+## Fix Canvas Preview: Hero Invisible + Scroll Issues
 
-Two root causes identified and confirmed via browser testing:
+### Root Cause Analysis
 
-### Problem 1: Incomplete `TAB_TO_SECTION` mapping
+**Problem 1 — Hero content is invisible in preview.** The `HeroSection` has multiple framer-motion elements with `initial={{ opacity: 0, ... }}` entrance animations. While `animDelay` was set to 0 in preview mode, the spring transitions still take noticeable time. More critically, the main content wrapper at line 139-141 has `style={{ opacity }}` bound to `useScroll({ target: sectionRef })` — inside the small iframe viewport, this scroll-based opacity may resolve incorrectly, making the entire hero invisible.
 
-The SITE CONTENT items use tab keys like `'testimonials'`, `'gallery'`, `'stylists'`, `'locations'` — but `TAB_TO_SECTION` in `WebsiteSectionsHub.tsx` only maps the `-section` suffixed variants (`'testimonials-section'`, `'gallery-section'`, etc.). When clicking a SITE CONTENT item, `activeSectionId` resolves to `undefined`, so no scroll message is sent.
+**Problem 2 — Parallax transforms break inside iframe.** The `useScroll`/`useTransform` hooks create parallax effects (taglineY, headlineY, blur, etc.) that depend on the section being inside a full-height scrollable viewport. Inside the editor iframe, these transforms produce unexpected offsets and opacity values.
 
-**Fix — `src/pages/dashboard/admin/WebsiteSectionsHub.tsx`** (lines 114-128):
+### Changes
 
-Add the missing SITE CONTENT tab keys to `TAB_TO_SECTION`:
+**File 1 — `src/components/home/HeroSection.tsx`**
 
-```ts
-const TAB_TO_SECTION: Record<string, string> = {
-  'hero': 'hero',
-  'brand': 'brand_statement',
-  'testimonials-section': 'testimonials',
-  'testimonials': 'testimonials',          // SITE CONTENT tab
-  'services-preview': 'services_preview',
-  'popular-services': 'popular_services',
-  'gallery-section': 'gallery',
-  'gallery': 'gallery',                    // SITE CONTENT tab
-  'new-client': 'new_client',
-  'stylists-section': 'stylists',
-  'stylists': 'stylists',                  // SITE CONTENT tab
-  'locations-section': 'locations',
-  'locations': 'locations',                // SITE CONTENT tab
-  'faq': 'faq',
-  'extensions': 'extensions',
-  'brands': 'brands',
-  'drinks': 'drink_menu',
-  'footer-cta': 'new_client',              // Footer CTA maps to new_client section
-};
-```
+When `isPreview` is true:
+- Set all `initial` props to `false` on every `motion.*` element (skips entrance animations entirely — content appears immediately)
+- Disable the scroll-based `style` bindings (`opacity`, `y` parallax transforms, blur filters) by conditionally passing `undefined` instead of the `useTransform` values
+- This means: no entrance fade-in, no parallax, no scroll-blur — just static visible content in preview
 
-### Problem 2: Re-selecting same section doesn't re-scroll
+Specifically:
+- Line 141: `style={{ opacity }}` → `style={isPreview ? undefined : { opacity }}`
+- Lines 146-149: `initial={isPreview ? false : { opacity: 0, y: 30, filter: "blur(10px)" }}` (and remove the `style={{ y: taglineY }}` in preview)
+- Same pattern for all other motion elements (headline spans at ~162-176, subheadline at ~197, CTA divs at ~215-245, scroll indicator at ~257)
+- Lines 160, 167, 176: conditional `style` for parallax `y`, `x`, `opacity`, `filter` transforms
 
-When `activeSectionId` stays the same (e.g., clicking the same section again), the `useEffect` in `CanvasPanel` doesn't re-fire. The fix is to include a counter or use a callback pattern.
+**File 2 — `src/components/dashboard/website-editor/panels/CanvasPanel.tsx`**
 
-**Fix — `src/pages/dashboard/admin/WebsiteSectionsHub.tsx`**:
+No changes needed for scrolling — the iframe scrolls natively. The "stuck" appearance was caused by the hero being invisible (opacity 0), making it look like the page started at the FooterCTA.
 
-Add a `scrollCounter` state that increments on every tab change, and pass it alongside `activeSectionId` so the effect always re-fires.
+### Result
 
-**Fix — `src/components/dashboard/website-editor/panels/CanvasPanel.tsx`**:
-
-Accept an optional `scrollTrigger` prop (a counter). Include it in the `useEffect` dependency array so it re-fires even when the sectionId is the same.
-
-### Single-file summary
-
-Two files modified:
-1. `src/pages/dashboard/admin/WebsiteSectionsHub.tsx` — expand `TAB_TO_SECTION`, add scroll counter
-2. `src/components/dashboard/website-editor/panels/CanvasPanel.tsx` — accept `scrollTrigger` prop, include in effect deps
+Hero content will appear immediately and fully visible in the editor canvas. The page will scroll normally because the hero section will have visible content at the top. All parallax/blur effects remain intact on the public site.
 
