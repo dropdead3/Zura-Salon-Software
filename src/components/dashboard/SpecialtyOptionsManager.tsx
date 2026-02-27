@@ -90,67 +90,66 @@ function SortableSpecialtyItem({ option, onUpdate, onDelete, isUpdating }: Sorta
         ref={setNodeRef}
         style={style}
         className={cn(
-          "flex items-center gap-3 p-3 bg-background border rounded-lg transition-all",
+          "flex flex-col gap-2 p-3 bg-background border rounded-lg transition-all",
           isDragging && "opacity-50 shadow-lg ring-2 ring-primary",
           !option.is_active && "opacity-60"
         )}
       >
-        <button
-          {...attributes}
-          {...listeners}
-          className="touch-none p-1 rounded hover:bg-muted cursor-grab active:cursor-grabbing"
-        >
-          <GripVertical className="w-4 h-4 text-muted-foreground" />
-        </button>
+        {/* Row 1: Grip + Name */}
+        <div className="flex items-center gap-2 min-w-0">
+          <button
+            {...attributes}
+            {...listeners}
+            className="touch-none p-1 rounded hover:bg-muted cursor-grab active:cursor-grabbing flex-shrink-0"
+          >
+            <GripVertical className="w-4 h-4 text-muted-foreground" />
+          </button>
 
-        {isEditing ? (
-          <div className="flex-1 flex items-center gap-2">
-            <Input
-              value={editName}
-              onChange={(e) => {
-                const value = e.target.value.split(' ').map(word => 
-                  word.charAt(0).toUpperCase() + word.slice(1)
-                ).join(' ');
-                setEditName(value);
-              }}
-              className="h-8 text-sm"
-              autoFocus
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleSaveName();
-                if (e.key === 'Escape') handleCancelEdit();
-              }}
-            />
-            <Button size={tokens.button.inline} variant="ghost" onClick={handleSaveName}>
-              <Check className="w-4 h-4" />
-            </Button>
-            <Button size={tokens.button.inline} variant="ghost" onClick={handleCancelEdit}>
-              <X className="w-4 h-4" />
-            </Button>
-          </div>
-        ) : (
-          <>
-            <div className="flex-1 flex items-center gap-2">
-              <Badge
-                variant={isExtensions ? "default" : "outline"}
-                className={cn(
-                  isExtensions && "bg-oat text-oat-foreground"
-                )}
-              >
-                {isExtensions && <Sparkles className="w-3 h-3 mr-1" />}
-                {displayName}
-              </Badge>
+          {isEditing ? (
+            <div className="flex-1 flex items-center gap-1 min-w-0">
+              <Input
+                value={editName}
+                onChange={(e) => {
+                  const value = e.target.value.split(' ').map(word => 
+                    word.charAt(0).toUpperCase() + word.slice(1)
+                  ).join(' ');
+                  setEditName(value);
+                }}
+                className="h-8 text-sm min-w-0 flex-1"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSaveName();
+                  if (e.key === 'Escape') handleCancelEdit();
+                }}
+              />
+              <Button size={tokens.button.inline} variant="ghost" onClick={handleSaveName} className="flex-shrink-0">
+                <Check className="w-4 h-4" />
+              </Button>
+              <Button size={tokens.button.inline} variant="ghost" onClick={handleCancelEdit} className="flex-shrink-0">
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          ) : (
+            <div className="flex-1 flex items-center gap-1.5 min-w-0">
+              {isExtensions && <Sparkles className="w-3 h-3 text-primary flex-shrink-0" />}
+              <span className="text-sm font-sans truncate min-w-0">{displayName}</span>
               {!option.is_active && (
-                <span className="text-xs text-muted-foreground">(hidden)</span>
+                <span className="text-xs text-muted-foreground flex-shrink-0">(hidden)</span>
               )}
             </div>
+          )}
+        </div>
 
+        {/* Row 2: Actions */}
+        {!isEditing && (
+          <div className="flex items-center justify-end gap-1 pl-7">
             <Button
               size={tokens.button.inline}
               variant="ghost"
               onClick={() => setIsEditing(true)}
               disabled={isUpdating}
             >
-              <Edit2 className="w-4 h-4" />
+              <Edit2 className="w-3.5 h-3.5" />
             </Button>
 
             <Switch
@@ -166,9 +165,9 @@ function SortableSpecialtyItem({ option, onUpdate, onDelete, isUpdating }: Sorta
               disabled={isUpdating}
               className="text-destructive hover:text-destructive"
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="w-3.5 h-3.5" />
             </Button>
-          </>
+          </div>
         )}
       </div>
 
