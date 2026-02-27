@@ -10,15 +10,14 @@ const rotatingWords = ["Salon", "Extensions", "Salon", "Blonding", "Salon", "Col
 
 interface HeroSectionProps {
   videoSrc?: string;
+  isPreview?: boolean;
 }
 
-export function HeroSection({ videoSrc }: HeroSectionProps) {
+export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
   const [consultationOpen, setConsultationOpen] = useState(false);
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [isAnimationReady, setIsAnimationReady] = useState(false);
 
-  // Detect if we're inside an iframe (editor preview) — URL param detection fails due to React Router
-  const isPreview = typeof window !== 'undefined' && window.self !== window.top;
   const animDelay = isPreview ? 0 : 1;
 
   // Start word rotation after initial heading animation completes
@@ -77,49 +76,7 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
   // Shared spring config for organic animations
   const springTransition = { type: "spring" as const, stiffness: 50, damping: 20 };
 
-  // In preview mode, render a completely static version with zero external component deps
-  if (isPreview) {
-    return (
-      <section ref={sectionRef} className="relative flex flex-col overflow-hidden" style={{ minHeight: '500px' }}>
-        <div className="flex-1 flex items-center justify-center py-12 px-6">
-          <div style={{ maxWidth: '56rem', width: '100%', textAlign: 'center' as const }}>
-            <p style={{ fontSize: '0.75rem', letterSpacing: '0.15em', textTransform: 'uppercase' as const, color: 'hsl(40,10%,50%)', marginBottom: '1.5rem' }}>
-              Hair • Color • Artistry
-            </p>
-            <h1 className="font-display" style={{ fontSize: 'clamp(2.25rem, 8vw, 5.5rem)', fontWeight: 400, lineHeight: 0.95, color: 'hsl(40,10%,10%)' }}>
-              <span style={{ display: 'block', whiteSpace: 'nowrap' as const }}>Your Salon</span>
-              <span style={{ display: 'block' }}>{rotatingWords[currentWordIndex]}</span>
-            </h1>
-            <p style={{ marginTop: '2rem', fontSize: '0.875rem', color: 'hsl(40,10%,45%)', maxWidth: '28rem', marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.6 }}>
-              Where technical talent meets artistry.<br />
-              We believe in more than just the status quo.
-            </p>
-            <div style={{ marginTop: '2.5rem', display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: '0.75rem' }}>
-              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' as const, justifyContent: 'center' }}>
-                <button
-                  onClick={() => setConsultationOpen(true)}
-                  style={{ padding: '1rem 2rem', fontSize: '1rem', backgroundColor: 'hsl(40,10%,10%)', color: 'hsl(40,25%,95%)', borderRadius: '9999px', border: 'none', cursor: 'pointer' }}
-                >
-                  I am a new client
-                </button>
-                <a
-                  href="/booking"
-                  style={{ padding: '1rem 2rem', fontSize: '1rem', border: '1px solid hsl(40,10%,10%)', color: 'hsl(40,10%,10%)', borderRadius: '9999px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}
-                >
-                  I am a returning client
-                </a>
-              </div>
-              <div style={{ fontSize: '0.75rem', color: 'hsl(40,10%,50%)' }}>
-                <p>New clients begin with a $15 consultation</p>
-                <p>Returning clients are free to book their known services</p>
-              </div>
-            </div>
-          </div>
-        </div>
-        <ConsultationFormDialog open={consultationOpen} onOpenChange={setConsultationOpen} />
-      </section>
-    );
-  }
+  // Remove broken preview branch — just make the main render always visible
 
   return (
     <section ref={sectionRef} data-theme="light" className={`relative flex flex-col overflow-hidden ${isPreview ? 'min-h-[500px]' : 'min-h-screen'}`}>

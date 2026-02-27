@@ -27,21 +27,24 @@ const InsertionLine = React.lazy(() =>
   import('@/components/home/InsertionLine').then(m => ({ default: m.InsertionLine }))
 );
 
-const BUILTIN_COMPONENTS: Record<BuiltinSectionType, React.ReactNode> = {
-  hero: <HeroSection />,
-  brand_statement: <BrandStatement />,
-  testimonials: <TestimonialSection />,
-  services_preview: <ServicesPreview />,
-  popular_services: <PopularServices />,
-  gallery: <GallerySection />,
-  new_client: <NewClientSection />,
-  stylists: <StylistsSection />,
-  locations: <LocationsSection />,
-  faq: <FAQSection />,
-  extensions: <ExtensionsSection />,
-  brands: <BrandsSection />,
-  drink_menu: <DrinkMenuSection />,
-};
+function getBuiltinComponent(type: BuiltinSectionType, isPreview: boolean): React.ReactNode {
+  switch (type) {
+    case 'hero': return <HeroSection isPreview={isPreview} />;
+    case 'brand_statement': return <BrandStatement />;
+    case 'testimonials': return <TestimonialSection />;
+    case 'services_preview': return <ServicesPreview />;
+    case 'popular_services': return <PopularServices />;
+    case 'gallery': return <GallerySection />;
+    case 'new_client': return <NewClientSection />;
+    case 'stylists': return <StylistsSection />;
+    case 'locations': return <LocationsSection />;
+    case 'faq': return <FAQSection />;
+    case 'extensions': return <ExtensionsSection />;
+    case 'brands': return <BrandsSection />;
+    case 'drink_menu': return <DrinkMenuSection />;
+    default: return null;
+  }
+}
 
 // Detect editor preview mode (inside iframe)
 const isEditorPreview = typeof window !== 'undefined'
@@ -123,7 +126,7 @@ export function PageSectionRenderer({ sections }: PageSectionRendererProps) {
           <SectionStyleWrapper key={section.id} styleOverrides={section.style_overrides}>
             <div id={`section-${section.id}`}>
               {isBuiltinSection(section.type)
-                ? BUILTIN_COMPONENTS[section.type]
+                ? getBuiltinComponent(section.type, false)
                 : <CustomSectionRenderer sectionId={section.id} sectionType={section.type as CustomSectionType} />
               }
             </div>
@@ -151,7 +154,7 @@ export function PageSectionRenderer({ sections }: PageSectionRendererProps) {
                 <div id={`section-${section.id}`}>
                   <SectionStyleWrapper styleOverrides={section.style_overrides}>
                     {isBuiltinSection(section.type)
-                      ? BUILTIN_COMPONENTS[section.type]
+                      ? getBuiltinComponent(section.type, true)
                       : <CustomSectionRenderer sectionId={section.id} sectionType={section.type as CustomSectionType} />
                     }
                   </SectionStyleWrapper>
