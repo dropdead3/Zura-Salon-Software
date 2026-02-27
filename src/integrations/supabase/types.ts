@@ -5409,10 +5409,14 @@ export type Database = {
           admin_approved_by: string | null
           approved_at: string | null
           approved_by: string | null
+          avatar_rotation: number | null
+          avatar_zoom: number | null
           bio: string | null
           birthday: string | null
           card_focal_x: number | null
           card_focal_y: number | null
+          card_rotation: number | null
+          card_zoom: number | null
           chat_enabled: boolean | null
           created_at: string
           departure_notes: string | null
@@ -5461,10 +5465,14 @@ export type Database = {
           admin_approved_by?: string | null
           approved_at?: string | null
           approved_by?: string | null
+          avatar_rotation?: number | null
+          avatar_zoom?: number | null
           bio?: string | null
           birthday?: string | null
           card_focal_x?: number | null
           card_focal_y?: number | null
+          card_rotation?: number | null
+          card_zoom?: number | null
           chat_enabled?: boolean | null
           created_at?: string
           departure_notes?: string | null
@@ -5513,10 +5521,14 @@ export type Database = {
           admin_approved_by?: string | null
           approved_at?: string | null
           approved_by?: string | null
+          avatar_rotation?: number | null
+          avatar_zoom?: number | null
           bio?: string | null
           birthday?: string | null
           card_focal_x?: number | null
           card_focal_y?: number | null
+          card_rotation?: number | null
+          card_zoom?: number | null
           chat_enabled?: boolean | null
           created_at?: string
           departure_notes?: string | null

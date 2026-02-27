@@ -440,6 +440,8 @@ export function StylistsSection() {
       bio: s.bio || undefined,
       card_focal_x: s.card_focal_x ?? 50,
       card_focal_y: s.card_focal_y ?? 50,
+      card_zoom: s.card_zoom ?? 1,
+      card_rotation: s.card_rotation ?? 0,
     }));
   }, [dbStylists]);
 
