@@ -183,9 +183,10 @@ export function useUploadProfilePhoto() {
 
       return publicUrl;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['employee-profile'] });
-      queryClient.invalidateQueries({ queryKey: ['team-directory'] });
+    onSuccess: async () => {
+      await queryClient.refetchQueries({ queryKey: ['employee-profile'] });
+      await queryClient.refetchQueries({ queryKey: ['team-directory'] });
+      await queryClient.refetchQueries({ queryKey: ['homepage-stylists'] });
       toast.success('Photo uploaded successfully');
     },
     onError: (error) => {
