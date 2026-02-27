@@ -45,7 +45,7 @@ const BUILTIN_COMPONENTS: Record<BuiltinSectionType, React.ReactNode> = {
 
 // Detect editor preview mode (inside iframe)
 const isEditorPreview = typeof window !== 'undefined'
-  && new URLSearchParams(window.location.search).has('preview');
+  && (new URLSearchParams(window.location.search).has('preview') || new URLSearchParams(window.location.search).has('mode'));
 
 // When mode=view, render the public site exactly (no bento cards)
 const isViewMode = typeof window !== 'undefined'
