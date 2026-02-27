@@ -25,6 +25,7 @@ import { useSpecialtyOptions } from '@/hooks/useSpecialtyOptions';
 import { useStylistLevels } from '@/hooks/useStylistLevels';
 import { locations as staticLocations } from '@/data/stylists';
 import { cn } from '@/lib/utils';
+import { getAvatarStyle } from '@/lib/avatar-utils';
 import { toast } from 'sonner';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -587,7 +588,7 @@ export default function MyProfile() {
                 <div className="space-y-4">
                   <div className="flex items-center gap-6">
                     <Avatar className="w-24 h-24 ring-2 ring-muted">
-                      <AvatarImage src={profile?.photo_url || undefined} alt={profile?.full_name} />
+                      <AvatarImage src={profile?.photo_url || undefined} alt={profile?.full_name} className="object-cover" style={getAvatarStyle(profile)} />
                       <AvatarFallback className="text-2xl bg-muted">
                         {formData.full_name?.charAt(0) || <User className="w-8 h-8" />}
                       </AvatarFallback>
@@ -631,7 +632,7 @@ export default function MyProfile() {
                   {profile?.photo_url ? (
                     <div className="relative group">
                       <Avatar className="w-28 h-28 ring-2 ring-border/40">
-                        <AvatarImage src={profile.photo_url} alt={profile?.full_name} />
+                        <AvatarImage src={profile.photo_url} alt={profile?.full_name} className="object-cover" style={getAvatarStyle(profile)} />
                         <AvatarFallback className="text-3xl bg-muted">
                           {formData.full_name?.charAt(0) || <User className="w-10 h-10" />}
                         </AvatarFallback>
