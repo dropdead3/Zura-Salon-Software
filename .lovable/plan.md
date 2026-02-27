@@ -1,36 +1,32 @@
 
 
-## Fix: Case Mismatch Between Stored Specialties and Specialty Options
+## Add "X" Clear Buttons to Selected Specialties and Highlighted Services
 
-**Root Cause:** The database stores specialties in UPPERCASE (`EXTENSIONS`, `BLONDING`) but `specialty_options` uses title case (`Extensions`, `Blonding`). The `includes()` check is case-sensitive, so:
-- Specialty buttons above show as **unselected** (no match)
-- Highlighted services section renders `formData.specialties` values directly (the uppercase ones still appear)
+### Specialties Section (lines 1165-1187)
 
-### Changes — `src/pages/dashboard/MyProfile.tsx`
+When a specialty is **selected**, show an `X` icon inside the button to make deselection obvious:
 
-**1. Normalize specialties on load (around line 198)**
-When initializing `formData`, map stored specialties to match the canonical names from `specialtyOptions`:
-
-```typescript
-// Before:
-specialties: profile.specialties || [],
-
-// After: normalize to match specialtyOptions casing
-const normalizedSpecialties = (profile.specialties || []).map((s: string) => {
-  const match = specialtyOptions.find(opt => opt.name.toLowerCase() === s.toLowerCase());
-  return match ? match.name : s;
-});
+```tsx
+{isSelected && <X className="w-3 h-3 ml-0.5" />}
 ```
 
-This requires `specialtyOptions` to be available when setting formData. If the timing doesn't work, an alternative is to do case-insensitive comparison in `isSelected` checks.
+Add it after `{displayName}` inside the button. The button already calls `toggleSpecialty` on click, so no logic changes needed — just visual clarity.
 
-**2. Alternative (simpler): Case-insensitive comparison in `isSelected` (line 1154)**
-Change `formData.specialties.includes(specialty)` to a case-insensitive check:
-```typescript
-const isSelected = formData.specialties.some(s => s.toLowerCase() === specialty.toLowerCase());
+### Highlighted Services Section (lines 1212-1229)
+
+When a highlighted service is **selected**, replace the `Check` icon with an `X` icon (or show both — check on left, X on right):
+
+```tsx
+// Change from:
+{isSelected ? <Check className="w-3 h-3 mr-1" /> : null}
+
+// To:
+{isSelected && <X className="w-3 h-3 ml-1" />}  // after the label text
 ```
 
-Apply the same fix in `toggleSpecialty`, `toggleHighlightedService`, and the highlighted services rendering.
+This makes it clear that clicking removes the item.
 
-**Recommended approach:** Normalize on load (option 1) since it fixes all downstream comparisons at once and ensures saved data matches canonical casing going forward.
+### Files Changed
+
+- `src/pages/dashboard/MyProfile.tsx` — two small UI additions within the existing specialty and highlighted service button/badge renders
 
