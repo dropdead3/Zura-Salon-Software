@@ -115,16 +115,21 @@ const TAB_TO_SECTION: Record<string, string> = {
   'hero': 'hero',
   'brand': 'brand_statement',
   'testimonials-section': 'testimonials',
+  'testimonials': 'testimonials',
   'services-preview': 'services_preview',
   'popular-services': 'popular_services',
   'gallery-section': 'gallery',
+  'gallery': 'gallery',
   'new-client': 'new_client',
   'stylists-section': 'stylists',
+  'stylists': 'stylists',
   'locations-section': 'locations',
+  'locations': 'locations',
   'faq': 'faq',
   'extensions': 'extensions',
   'brands': 'brands',
   'drinks': 'drink_menu',
+  'footer-cta': 'new_client',
 };
 
 export default function WebsiteSectionsHub() {
@@ -156,6 +161,7 @@ export default function WebsiteSectionsHub() {
   const [isDirty, setIsDirty] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const dirtyToastShownRef = useRef(false);
+  const [scrollCounter, setScrollCounter] = useState(0);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showPageTemplatePicker, setShowPageTemplatePicker] = useState(false);
   const [pendingTemplate, setPendingTemplate] = useState<PageTemplate | null>(null);
@@ -274,6 +280,7 @@ export default function WebsiteSectionsHub() {
       setShowUnsavedDialog(true);
     } else {
       setActiveTab(tab);
+      setScrollCounter(c => c + 1);
       replaceTabInUrl(tab);
     }
   }, [replaceTabInUrl]);
@@ -284,6 +291,7 @@ export default function WebsiteSectionsHub() {
     setShowUnsavedDialog(false);
     if (pendingTab) {
       setActiveTab(pendingTab);
+      setScrollCounter(c => c + 1);
       replaceTabInUrl(pendingTab);
       setPendingTab(null);
     }
@@ -788,6 +796,7 @@ export default function WebsiteSectionsHub() {
         {/* Canvas Panel (flex-1) */}
         <CanvasPanel
           activeSectionId={activeSectionId}
+          scrollTrigger={scrollCounter}
           previewUrl={previewUrl}
           siteName={orgName}
           isDirty={isDirty}
