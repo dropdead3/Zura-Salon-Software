@@ -97,6 +97,23 @@ export function PageSectionRenderer({ sections }: PageSectionRendererProps) {
     return () => window.removeEventListener('message', handler);
   }, []);
 
+  // Notify parent iframe that sections have rendered and are ready for scroll commands
+  useEffect(() => {
+    if (!isEditorPreview || enabledSections.length === 0) return;
+    // Small delay to ensure DOM elements are painted
+    const timer = setTimeout(() => {
+      try {
+        window.parent.postMessage(
+          { type: 'PREVIEW_READY' },
+          window.location.origin
+        );
+      } catch {
+        // Ignore cross-origin errors
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [enabledSections.length]);
+
   // View mode inside editor: render exact public layout (no bento cards)
   // Also used for the public site (non-preview)
   if (!isEditorPreview || isViewMode) {

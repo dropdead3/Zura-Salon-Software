@@ -16,14 +16,18 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [isAnimationReady, setIsAnimationReady] = useState(false);
 
+  // In preview mode (inside editor iframe), skip long entrance animation delays
+  const isPreview = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('preview');
+  const animDelay = isPreview ? 0 : 1; // multiplier for animation delays
+
   // Start word rotation after initial heading animation completes
   useEffect(() => {
     const startDelay = setTimeout(() => {
       setIsAnimationReady(true);
-    }, 4000); // Start after heading fade-in (3.0s delay + animation time)
+    }, isPreview ? 500 : 4000);
 
     return () => clearTimeout(startDelay);
-  }, []);
+  }, [isPreview]);
 
   // Cycle through words
   useEffect(() => {
@@ -142,7 +146,7 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
             <motion.div
               initial={{ opacity: 0, y: 30, filter: "blur(10px)" }}
               animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              transition={{ ...springTransition, delay: 2.0 }}
+              transition={{ ...springTransition, delay: 2.0 * animDelay }}
               style={{ y: taglineY }}
             >
               <Eyebrow className="text-muted-foreground mb-6">
@@ -159,7 +163,7 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
                 className="whitespace-nowrap block"
                 initial={{ opacity: 0, y: 40, filter: "blur(12px)" }}
                 animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                transition={{ ...springTransition, delay: 2.5 }}
+                transition={{ ...springTransition, delay: 2.5 * animDelay }}
                 style={{ x: topLineX, opacity: headlineScrollOpacity }}
               >
                 Your Salon
@@ -168,7 +172,7 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
                 className="block overflow-hidden h-[1.15em]"
                 initial={{ opacity: 0, y: 40, filter: "blur(12px)" }}
                 animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                transition={{ ...springTransition, delay: 2.5 }}
+                transition={{ ...springTransition, delay: 2.5 * animDelay }}
                 style={{ x: bottomLineX, opacity: headlineScrollOpacity }}
               >
                 <AnimatePresence mode="wait">
@@ -193,7 +197,7 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
             <motion.p
               initial={{ opacity: 0, y: 30, filter: "blur(8px)" }}
               animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              transition={{ ...springTransition, delay: 3.6 }}
+              transition={{ ...springTransition, delay: 3.6 * animDelay }}
               className="mt-8 text-sm md:text-base text-muted-foreground font-sans font-light max-w-md mx-auto leading-relaxed"
               style={{ y: subheadlineY }}
             >
@@ -211,7 +215,7 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
                 <motion.div
                   initial={{ opacity: 0, y: 25, filter: "blur(8px)" }}
                   animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                  transition={{ ...springTransition, delay: 4.2 }}
+                  transition={{ ...springTransition, delay: 4.2 * animDelay }}
                 >
                   <button
                     onClick={() => setConsultationOpen(true)}
@@ -224,7 +228,7 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
                 <motion.div
                   initial={{ opacity: 0, y: 25, filter: "blur(8px)" }}
                   animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                  transition={{ ...springTransition, delay: 4.6 }}
+                  transition={{ ...springTransition, delay: 4.6 * animDelay }}
                 >
                   <Link
                     to="/booking"
@@ -238,7 +242,7 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
               <motion.div 
                 initial={{ opacity: 0, y: 20, filter: "blur(6px)" }}
                 animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                transition={{ ...springTransition, delay: 5.1 }}
+                transition={{ ...springTransition, delay: 5.1 * animDelay }}
                 className="flex flex-col items-center gap-1 text-xs md:text-sm text-muted-foreground font-sans"
               >
                 <p>New clients begin with a $15 consultation</p>

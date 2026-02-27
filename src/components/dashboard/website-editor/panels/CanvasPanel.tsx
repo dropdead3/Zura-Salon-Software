@@ -104,11 +104,25 @@ export const CanvasPanel = memo(function CanvasPanel({
 
   const handleIframeLoad = useCallback(() => {
     setIsLoading(false);
-    iframeReadyRef.current = true;
-    if (pendingSectionRef.current) {
-      sendScrollMessage(pendingSectionRef.current);
-      pendingSectionRef.current = undefined;
-    }
+    // Don't set iframeReadyRef here — wait for PREVIEW_READY from the rendered content
+    // But still queue the pending section
+  }, []);
+
+  // Listen for PREVIEW_READY from iframe content (PageSectionRenderer)
+  useEffect(() => {
+    const handler = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      const msg = event.data;
+      if (msg?.type === 'PREVIEW_READY') {
+        iframeReadyRef.current = true;
+        if (pendingSectionRef.current) {
+          sendScrollMessage(pendingSectionRef.current);
+          pendingSectionRef.current = undefined;
+        }
+      }
+    };
+    window.addEventListener('message', handler);
+    return () => window.removeEventListener('message', handler);
   }, [sendScrollMessage]);
 
   useEffect(() => {
