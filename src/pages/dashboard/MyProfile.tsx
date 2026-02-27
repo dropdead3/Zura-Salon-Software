@@ -196,7 +196,7 @@ export default function MyProfile() {
         location_ids: locationIds,
         stylist_level: profile.stylist_level || '',
         specialties: profile.specialties || [],
-        highlighted_services: (profile as any).highlighted_services || [],
+        highlighted_services: ((profile as any).highlighted_services || []).filter((s: string) => (profile.specialties || []).includes(s)),
         extensions_certified: profile.extensions_certified || false,
         emergency_contact: profile.emergency_contact || '',
         emergency_phone: profile.emergency_phone || '',
