@@ -7,7 +7,8 @@ import { PageTransition } from "./PageTransition";
 
 function getIsEditorPreview() {
   if (typeof window === 'undefined') return false;
-  return new URLSearchParams(window.location.search).has('preview');
+  const params = new URLSearchParams(window.location.search);
+  return params.has('preview') || params.has('mode');
 }
 
 function getIsViewMode() {

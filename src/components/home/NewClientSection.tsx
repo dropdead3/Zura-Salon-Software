@@ -69,7 +69,7 @@ export const NewClientSection = () => {
         <motion.div 
           ref={scrollRef}
           data-theme="light"
-          className="relative rounded-t-2xl p-12 md:p-16 lg:p-20 pb-20 md:pb-28 lg:pb-36 overflow-visible"
+          className="relative p-12 md:p-16 lg:p-20 pb-20 md:pb-28 lg:pb-36 overflow-visible"
           style={isPreview ? { 
             opacity: 1, 
             y: 0, 
