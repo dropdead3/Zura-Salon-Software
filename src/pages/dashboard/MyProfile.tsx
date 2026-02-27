@@ -1183,6 +1183,7 @@ export default function MyProfile() {
                         >
                           {isExtensions && <Sparkles className="w-3 h-3" />}
                           {displayName}
+                          {isSelected && <X className="w-3 h-3 ml-0.5 opacity-60" />}
                         </button>
                       );
                     })}
@@ -1222,9 +1223,9 @@ export default function MyProfile() {
                           )}
                           onClick={() => !isDisabled && toggleHighlightedService(specialty)}
                         >
-                          {isSelected ? <Check className="w-3 h-3 mr-1" /> : null}
                           {isSelected && specialty.toLowerCase() === 'extensions' && <Sparkles className="w-3 h-3 mr-1" />}
                           {specialty.charAt(0).toUpperCase() + specialty.slice(1).toLowerCase()}
+                          {isSelected && <X className="w-3 h-3 ml-1 opacity-60" />}
                         </Badge>
                       );
                     })}
