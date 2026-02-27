@@ -1,26 +1,36 @@
 
 
-## Fix Specialties and Highlighted Services Flow
+## Fix: Case Mismatch Between Stored Specialties and Specialty Options
 
-The current implementation caps **Specialties** at 3, which is wrong. The intended flow is:
-
-1. **Specialties** — select freely from the full list of 10 (no cap, or a higher cap like 10)
-2. **Highlighted Services** — from your selected specialties, pick 2-3 to feature on the website card
+**Root Cause:** The database stores specialties in UPPERCASE (`EXTENSIONS`, `BLONDING`) but `specialty_options` uses title case (`Extensions`, `Blonding`). The `includes()` check is case-sensitive, so:
+- Specialty buttons above show as **unselected** (no match)
+- Highlighted services section renders `formData.specialties` values directly (the uppercase ones still appear)
 
 ### Changes — `src/pages/dashboard/MyProfile.tsx`
 
-**1. Remove the 3-specialty cap in `toggleSpecialty` (lines 394-398)**
-- Remove the `if (prev.specialties.length >= 3)` guard so stylists can select as many specialties as apply to them
+**1. Normalize specialties on load (around line 198)**
+When initializing `formData`, map stored specialties to match the canonical names from `specialtyOptions`:
 
-**2. Update the Specialties label (line 1154)**
-- Change `"(select 2-3 required)"` to something like `"(select all that apply)"` since specialties are no longer capped at 3
+```typescript
+// Before:
+specialties: profile.specialties || [],
 
-**3. Update the counter text (lines 1189-1195)**
-- Change the `{formData.specialties.length}/3 selected` counter to just `{formData.specialties.length} selected`
-- Remove the "Please select at least 2 specialties" validation text (or keep a minimum of 1)
+// After: normalize to match specialtyOptions casing
+const normalizedSpecialties = (profile.specialties || []).map((s: string) => {
+  const match = specialtyOptions.find(opt => opt.name.toLowerCase() === s.toLowerCase());
+  return match ? match.name : s;
+});
+```
 
-**4. Update the disabled logic for specialty buttons (line 1160)**
-- Remove `const isDisabled = !isSelected && formData.specialties.length >= 3;` — no cap means never disabled
+This requires `specialtyOptions` to be available when setting formData. If the timing doesn't work, an alternative is to do case-insensitive comparison in `isSelected` checks.
 
-**5. Highlighted Services stays as-is** — already correctly limited to 3 and sourced from `formData.specialties`
+**2. Alternative (simpler): Case-insensitive comparison in `isSelected` (line 1154)**
+Change `formData.specialties.includes(specialty)` to a case-insensitive check:
+```typescript
+const isSelected = formData.specialties.some(s => s.toLowerCase() === specialty.toLowerCase());
+```
+
+Apply the same fix in `toggleSpecialty`, `toggleHighlightedService`, and the highlighted services rendering.
+
+**Recommended approach:** Normalize on load (option 1) since it fixes all downstream comparisons at once and ensures saved data matches canonical casing going forward.
 
