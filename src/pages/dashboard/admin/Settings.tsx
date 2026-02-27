@@ -141,7 +141,7 @@ interface UserWithRole {
 }
 
 
-type SettingsCategory = 'business' | 'email' | 'sms' | 'service-flows' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'access-hub' | 'locations' | 'dayrate' | 'forms' | 'loyalty' | 'feedback' | 'leaderboard' | 'team-rewards' | 'kiosk' | 'services' | 'retail-products' | 'website' | null;
+type SettingsCategory = 'my-profile' | 'business' | 'email' | 'sms' | 'service-flows' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'access-hub' | 'locations' | 'dayrate' | 'forms' | 'loyalty' | 'feedback' | 'leaderboard' | 'team-rewards' | 'kiosk' | 'services' | 'retail-products' | 'website' | null;
 
 // Preset colors for icon customization
 const PRESET_COLORS = [
@@ -783,6 +783,12 @@ export default function Settings() {
   };
 
   const categoriesMap: Record<string, { id: string; label: string; description: string; icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }> }> = {
+    'my-profile': {
+      id: 'my-profile',
+      label: 'My Profile',
+      description: 'Photo, bio & professional details',
+      icon: Users,
+    },
     business: {
       id: 'business',
       label: 'Business',
@@ -1565,7 +1571,9 @@ export default function Settings() {
                             iconColor={localColors[category.id] || DEFAULT_ICON_COLORS[category.id]}
                             onColorChange={(color) => handleColorChange(category.id, color)}
                             onClick={() => {
-                              if (category.id === 'business') {
+                              if (category.id === 'my-profile') {
+                                navigate('/dashboard/profile');
+                              } else if (category.id === 'business') {
                                 setBusinessDialogOpen(true);
                               } else if (category.id === 'access-hub') {
                                 navigate('/dashboard/admin/access-hub');
