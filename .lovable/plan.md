@@ -1,52 +1,22 @@
 
 
-## Apply Saved Avatar Composition to Profile Photo Display
+## Wire `getAvatarStyle` to All Navigation Avatars
 
-The modal saves `avatar_zoom`, `avatar_rotation`, `photo_focal_x`, `photo_focal_y` correctly, but the rendered avatar on the profile page ignores them entirely — it just shows the raw image centered.
+The top bar and platform layout avatars render `<AvatarImage>` without applying the saved `avatar_zoom`, `avatar_rotation`, or `photo_focal_x/y` values. The `getAvatarStyle` utility already exists — it just needs to be imported and applied.
 
-### Changes
+### Files to change
 
-**1. `src/pages/dashboard/MyProfile.tsx` — Profile photo card avatar (line ~633)**
+**1. `src/components/dashboard/SuperAdminTopBar.tsx` (line ~251)**
+- Import `getAvatarStyle` from `@/lib/avatar-utils`
+- Add `className="object-cover"` and `style={getAvatarStyle(employeeProfile)}` to the `<AvatarImage>`
 
-Apply saved composition values to the `<AvatarImage>`:
-```tsx
-<AvatarImage 
-  src={profile.photo_url} 
-  alt={profile?.full_name}
-  className="object-cover"
-  style={{
-    objectPosition: `${(profile as any)?.photo_focal_x ?? 50}% ${(profile as any)?.photo_focal_y ?? 50}%`,
-    transform: `scale(${(profile as any)?.avatar_zoom ?? 1}) rotate(${(profile as any)?.avatar_rotation ?? 0}deg)`,
-    transformOrigin: `${(profile as any)?.photo_focal_x ?? 50}% ${(profile as any)?.photo_focal_y ?? 50}%`,
-  }}
-/>
-```
+**2. `src/components/platform/layout/PlatformHeader.tsx` (line ~166)**
+- Import `getAvatarStyle`
+- Apply `className="object-cover"` and `style={getAvatarStyle(profile)}` to the profile `<AvatarImage>`
 
-Also apply this to the stylist-locked avatar variant (~line 587 area) if it exists.
+**3. `src/components/platform/layout/PlatformSidebar.tsx` (line ~315)**
+- Import `getAvatarStyle`
+- Apply `className="object-cover"` and `style={getAvatarStyle(profile)}` to the sidebar `<AvatarImage>`
 
-**2. `src/components/ui/avatar.tsx` — Ensure overflow hidden**
-
-Verify the `Avatar` root has `overflow-hidden` (it likely does via Radix defaults). The `scale()` transform will enlarge the image beyond the circle boundary, so clipping is essential.
-
-**3. `src/pages/dashboard/ViewProfile.tsx` — Admin view profile avatar**
-
-Same treatment: apply saved `avatar_zoom`, `avatar_rotation`, `photo_focal_x/y` to `<AvatarImage>` style.
-
-**4. Consider a reusable helper**
-
-Create a utility function to avoid repeating the style computation:
-```tsx
-// src/lib/avatar-utils.ts
-export function getAvatarStyle(profile: { photo_focal_x?: number; photo_focal_y?: number; avatar_zoom?: number; avatar_rotation?: number } | null) {
-  const fx = profile?.photo_focal_x ?? 50;
-  const fy = profile?.photo_focal_y ?? 50;
-  return {
-    objectPosition: `${fx}% ${fy}%`,
-    transform: `scale(${profile?.avatar_zoom ?? 1}) rotate(${profile?.avatar_rotation ?? 0}deg)`,
-    transformOrigin: `${fx}% ${fy}%`,
-  };
-}
-```
-
-This can be imported wherever avatars are rendered (sidebar, team directory, chat) for consistent composition.
+All three changes are identical in pattern: add the import and apply the style helper to each `<AvatarImage>` element.
 
