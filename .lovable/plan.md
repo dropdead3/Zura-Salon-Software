@@ -1,23 +1,29 @@
 
 
-## Add Visibility Management Instruction to Stylists Display Editor
+## Add Visibility Help to StylistsContent (Sample Cards Settings View)
 
-The `StylistsDisplayEditor` in the Website Editor inspector needs a contextual help note explaining how to manage which stylists are visible on the homepage, with a direct link to the Homepage Stylists management tab.
+The help block was added to `StylistsDisplayEditor` (the `stylists-section` tab), but the user is viewing `StylistsContent` (the `stylists` tab) which shows Sample Cards Settings. That's the component that needs the contextual instruction.
 
 ### Change
 
-**`src/components/dashboard/website-editor/StylistsDisplayEditor.tsx`**
+**`src/components/dashboard/website-editor/StylistsContent.tsx`**
 
-Add a helper info block below the `SectionDisplayEditor` (or as a footer within `EditorCard`) that includes:
-- A brief instruction: "To manage which stylists appear on the homepage (approve requests, hide/show individuals), visit the Homepage Stylists manager."
-- A clickable link styled as a subtle button/link that navigates to `/dashboard/admin/website-sections?tab=stylists`
-- Use `Link` from `react-router-dom` with an `ExternalLink` or `ArrowRight` icon
+Add a help block inside the `EditorCard`, between the Sample Cards Settings card and the Tabs section (~line 396, before `<Tabs>`):
 
-Since `SectionDisplayEditor` renders an `EditorCard` with only the fields, the cleanest approach is to wrap the `SectionDisplayEditor` in a fragment and add the info block after it, or add a `footer` slot. Given `SectionDisplayEditor` doesn't support a footer prop, the simplest path is:
+- Muted info box (`bg-muted/50 rounded-lg border border-border/30 p-3`)
+- Text: "To hide or show individual stylists on the homepage, switch to the Visible tab above and toggle their visibility. You can also manage display settings from the Stylists Display section."
+- Link to the `stylists-section` tab: uses `onClick` to change the active tab (or a descriptive pointer since the "Visible" tab is already in this same component)
 
-1. Replace the single `<SectionDisplayEditor>` return with a fragment
-2. Add a styled info/help block below it with the link
-3. Import `Link` from `react-router-dom` and `Users`/`ArrowRight` from `lucide-react`
+Since the "Visible" tab is already within this component, the help text should simply direct users to the "Visible" tab. No external link needed — just clear instructional copy placed below the Sample Cards Settings card.
 
-The info block will use a muted card style (`bg-muted/50 rounded-lg p-3`) with `text-xs text-muted-foreground` body text and a small link.
+```tsx
+// After the Sample Cards Settings </Card> (~line 395), before <Tabs>:
+<div className="p-3 bg-muted/50 rounded-lg border border-border/30">
+  <p className="text-xs text-muted-foreground leading-relaxed">
+    To hide or show individual stylists on the homepage, use the <span className="font-medium text-foreground">Visible</span> tab below. Toggle each stylist's visibility switch to control who appears on your site.
+  </p>
+</div>
+```
+
+Single file change: `src/components/dashboard/website-editor/StylistsContent.tsx`
 
