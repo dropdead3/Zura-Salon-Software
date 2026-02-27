@@ -13,6 +13,7 @@ import { CanvasHeader, type ViewportMode, type ZoomLevel, type CanvasMode } from
 
 interface CanvasPanelProps {
   activeSectionId?: string;
+  scrollTrigger?: number;
   previewUrl?: string;
   siteName?: string;
   isDirty: boolean;
@@ -39,6 +40,7 @@ const ZOOM_SCALES: Record<ZoomLevel, number> = {
 
 export const CanvasPanel = memo(function CanvasPanel({
   activeSectionId,
+  scrollTrigger,
   previewUrl,
   siteName,
   isDirty,
@@ -98,7 +100,7 @@ export const CanvasPanel = memo(function CanvasPanel({
     } else {
       pendingSectionRef.current = activeSectionId;
     }
-  }, [activeSectionId, sendScrollMessage]);
+  }, [activeSectionId, scrollTrigger, sendScrollMessage]);
 
   const handleIframeLoad = useCallback(() => {
     setIsLoading(false);
