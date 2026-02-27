@@ -90,84 +90,74 @@ function SortableSpecialtyItem({ option, onUpdate, onDelete, isUpdating }: Sorta
         ref={setNodeRef}
         style={style}
         className={cn(
-          "flex flex-col gap-2 p-3 bg-background border rounded-lg transition-all",
+          "group flex items-center gap-1.5 px-2.5 py-1.5 bg-background border rounded-md transition-all",
           isDragging && "opacity-50 shadow-lg ring-2 ring-primary",
-          !option.is_active && "opacity-60"
+          !option.is_active && "opacity-50"
         )}
       >
-        {/* Row 1: Grip + Name */}
-        <div className="flex items-center gap-2 min-w-0">
-          <button
-            {...attributes}
-            {...listeners}
-            className="touch-none p-1 rounded hover:bg-muted cursor-grab active:cursor-grabbing flex-shrink-0"
-          >
-            <GripVertical className="w-4 h-4 text-muted-foreground" />
-          </button>
+        <button
+          {...attributes}
+          {...listeners}
+          className="touch-none p-0.5 rounded hover:bg-muted cursor-grab active:cursor-grabbing flex-shrink-0"
+        >
+          <GripVertical className="w-3.5 h-3.5 text-muted-foreground" />
+        </button>
 
-          {isEditing ? (
+        {isEditing ? (
+          <div className="flex-1 flex items-center gap-1 min-w-0">
+            <Input
+              value={editName}
+              onChange={(e) => {
+                const value = e.target.value.split(' ').map(word => 
+                  word.charAt(0).toUpperCase() + word.slice(1)
+                ).join(' ');
+                setEditName(value);
+              }}
+              className="h-7 text-xs min-w-0 flex-1 rounded-md px-2"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleSaveName();
+                if (e.key === 'Escape') handleCancelEdit();
+              }}
+            />
+            <button onClick={handleSaveName} className="h-6 w-6 flex items-center justify-center rounded hover:bg-muted flex-shrink-0">
+              <Check className="w-3.5 h-3.5 text-foreground" />
+            </button>
+            <button onClick={handleCancelEdit} className="h-6 w-6 flex items-center justify-center rounded hover:bg-muted flex-shrink-0">
+              <X className="w-3.5 h-3.5 text-muted-foreground" />
+            </button>
+          </div>
+        ) : (
+          <>
             <div className="flex-1 flex items-center gap-1 min-w-0">
-              <Input
-                value={editName}
-                onChange={(e) => {
-                  const value = e.target.value.split(' ').map(word => 
-                    word.charAt(0).toUpperCase() + word.slice(1)
-                  ).join(' ');
-                  setEditName(value);
-                }}
-                className="h-8 text-sm min-w-0 flex-1"
-                autoFocus
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleSaveName();
-                  if (e.key === 'Escape') handleCancelEdit();
-                }}
-              />
-              <Button size={tokens.button.inline} variant="ghost" onClick={handleSaveName} className="flex-shrink-0">
-                <Check className="w-4 h-4" />
-              </Button>
-              <Button size={tokens.button.inline} variant="ghost" onClick={handleCancelEdit} className="flex-shrink-0">
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-          ) : (
-            <div className="flex-1 flex items-center gap-1.5 min-w-0">
               {isExtensions && <Sparkles className="w-3 h-3 text-primary flex-shrink-0" />}
-              <span className="text-sm font-sans truncate min-w-0">{displayName}</span>
-              {!option.is_active && (
-                <span className="text-xs text-muted-foreground flex-shrink-0">(hidden)</span>
-              )}
+              <span className={cn("text-xs font-sans truncate min-w-0", !option.is_active && "text-muted-foreground")}>{displayName}</span>
             </div>
-          )}
-        </div>
 
-        {/* Row 2: Actions */}
-        {!isEditing && (
-          <div className="flex items-center justify-end gap-1 pl-7">
-            <Button
-              size={tokens.button.inline}
-              variant="ghost"
+            <button
               onClick={() => setIsEditing(true)}
               disabled={isUpdating}
+              className="h-6 w-6 flex items-center justify-center rounded hover:bg-muted flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
             >
-              <Edit2 className="w-3.5 h-3.5" />
-            </Button>
+              <Edit2 className="w-3 h-3 text-muted-foreground" />
+            </button>
 
-            <Switch
-              checked={option.is_active}
-              onCheckedChange={(checked) => onUpdate(option.id, { is_active: checked })}
-              disabled={isUpdating}
-            />
+            <div className="flex-shrink-0 scale-[0.8] origin-center">
+              <Switch
+                checked={option.is_active}
+                onCheckedChange={(checked) => onUpdate(option.id, { is_active: checked })}
+                disabled={isUpdating}
+              />
+            </div>
 
-            <Button
-              size={tokens.button.inline}
-              variant="ghost"
+            <button
               onClick={() => setShowDeleteConfirm(true)}
               disabled={isUpdating}
-              className="text-destructive hover:text-destructive"
+              className="h-6 w-6 flex items-center justify-center rounded hover:bg-muted flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
             >
-              <Trash2 className="w-3.5 h-3.5" />
-            </Button>
-          </div>
+              <Trash2 className="w-3 h-3 text-destructive" />
+            </button>
+          </>
         )}
       </div>
 
@@ -335,7 +325,7 @@ export function SpecialtyOptionsManager() {
                 return categories.map(category => (
                   <div key={category} className="space-y-2 mb-4">
                     <p className="text-xs font-display tracking-wide text-muted-foreground uppercase">{category}</p>
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                       {displayOptions.filter(o => o.category === category).map((option) => (
                         <SortableSpecialtyItem
                           key={option.id}
