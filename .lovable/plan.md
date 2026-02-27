@@ -1,24 +1,26 @@
 
 
-## Add Stylist Badge Tooltip in Three Locations
+## Fix Specialties and Highlighted Services Flow
 
-Three surfaces render the stylist badge for admin-who-also-performs-services. All three need the explanatory tooltip.
+The current implementation caps **Specialties** at 3, which is wrong. The intended flow is:
 
-### 1. Top Bar — `src/components/dashboard/SuperAdminTopBar.tsx` (lines 208-228)
+1. **Specialties** — select freely from the full list of 10 (no cap, or a higher cap like 10)
+2. **Highlighted Services** — from your selected specialties, pick 2-3 to feature on the website card
 
-The top bar already wraps every role badge in a `Tooltip`, but the content just shows the label (and is hidden at `xl+`). For the stylist badge when `isAdmin` is true, change the tooltip content to the explanatory text and remove the `xl:hidden` restriction so it always shows.
+### Changes — `src/pages/dashboard/MyProfile.tsx`
 
-**Detection:** `badge.label === 'Stylist' && isAdmin` (both props already available)
+**1. Remove the 3-specialty cap in `toggleSpecialty` (lines 394-398)**
+- Remove the `if (prev.specialties.length >= 3)` guard so stylists can select as many specialties as apply to them
 
-### 2. Card View — `src/components/access-hub/UserRolesTab.tsx` (lines 326-339)
+**2. Update the Specialties label (line 1154)**
+- Change `"(select 2-3 required)"` to something like `"(select all that apply)"` since specialties are no longer capped at 3
 
-The card view renders stylist badges without any tooltip. Wrap the stylist badge in a `Tooltip` when the user also has an admin-level role (`super_admin`, `admin`, or `manager` in `user.roles`).
+**3. Update the counter text (lines 1189-1195)**
+- Change the `{formData.specialties.length}/3 selected` counter to just `{formData.specialties.length} selected`
+- Remove the "Please select at least 2 specialties" validation text (or keep a minimum of 1)
 
-### 3. Table View — `src/components/access-hub/UserRolesTableView.tsx` (lines 180-200)
+**4. Update the disabled logic for specialty buttons (line 1160)**
+- Remove `const isDisabled = !isSelected && formData.specialties.length >= 3;` — no cap means never disabled
 
-Already implemented. Will verify it functions correctly after deploying changes to the other two locations.
-
-### Tooltip Text (all three locations)
-
-> "This user is an admin who also performs services. Managed via the 'I also perform services' toggle in Profile Settings."
+**5. Highlighted Services stays as-is** — already correctly limited to 3 and sourced from `formData.specialties`
 
