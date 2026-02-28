@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2 } from 'lucide-react';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
+import { useEditorDirtyState } from '@/hooks/useEditorDirtyState';
 import { toast } from 'sonner';
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -47,6 +48,8 @@ export function SectionDisplayEditor<T extends object>({
   fields,
 }: SectionDisplayEditorProps<T>) {
   const [localConfig, setLocalConfig] = useState<T>(data);
+  const isDirty = JSON.stringify(localConfig) !== JSON.stringify(data);
+  useEditorDirtyState(isDirty);
 
   useEffect(() => {
     if (data && !isLoading) {
