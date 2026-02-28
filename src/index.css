@@ -1550,7 +1550,7 @@ body {
   margin-right: calc(100% - 100vw);
 }
 
-/* Nested scrollable elements: thin + transparent */
+/* Firefox: thin scrollbar on all elements (does not create gutters) */
 * {
   scrollbar-width: thin;
   scrollbar-color: transparent transparent;
@@ -1559,30 +1559,26 @@ body {
   scrollbar-color: rgba(128, 128, 128, 0.35) transparent;
 }
 
-/* WebKit: transparent 6px track, adaptive glass thumb on hover */
-::-webkit-scrollbar {
+/* WebKit: scope to html ONLY — nested elements keep native overlay scrollbars */
+html::-webkit-scrollbar {
   width: 6px !important;
   height: 6px !important;
   background: transparent !important;
 }
-::-webkit-scrollbar-track {
+html::-webkit-scrollbar-track {
   background: transparent !important;
 }
-::-webkit-scrollbar-thumb {
+html::-webkit-scrollbar-thumb {
   background: transparent !important;
   border-radius: 3px !important;
 }
-html:hover ::-webkit-scrollbar-thumb,
-*:hover::-webkit-scrollbar-thumb {
+html:hover::-webkit-scrollbar-thumb {
   background: rgba(128, 128, 128, 0.35) !important;
   box-shadow:
     inset 0 0 0 0.5px rgba(255, 255, 255, 0.3),
     inset 0 0 4px rgba(0, 0, 0, 0.15) !important;
   backdrop-filter: blur(4px) !important;
 }
-*:hover::-webkit-scrollbar-thumb:hover {
-  background: rgba(128, 128, 128, 0.5) !important;
-}
-::-webkit-scrollbar-corner {
+html::-webkit-scrollbar-corner {
   background: transparent !important;
 }
