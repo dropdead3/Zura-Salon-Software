@@ -1535,18 +1535,22 @@ html, body, #root {
   transition: box-shadow 0.3s ease;
 }
 
-/* ===== EDITOR PREVIEW — Hidden scrollbars (scrolling still works) ===== */
+/* ===== EDITOR PREVIEW — Glass scroll thumbs on hover ===== */
 .editor-preview,
 .editor-preview body,
 .editor-preview * {
-  scrollbar-width: none !important;
+  scrollbar-width: thin !important;
   scrollbar-color: transparent transparent !important;
 }
+.editor-preview *:hover {
+  scrollbar-color: rgba(255, 255, 255, 0.25) transparent !important;
+}
+
 .editor-preview ::-webkit-scrollbar,
 .editor-preview::-webkit-scrollbar {
-  width: 0 !important;
-  height: 0 !important;
-  display: none !important;
+  width: 6px !important;
+  height: 6px !important;
+  background: transparent !important;
 }
 .editor-preview ::-webkit-scrollbar-track,
 .editor-preview::-webkit-scrollbar-track,
@@ -1556,6 +1560,15 @@ html, body, #root {
 .editor-preview ::-webkit-scrollbar-thumb,
 .editor-preview::-webkit-scrollbar-thumb {
   background: transparent !important;
+  border-radius: 3px !important;
+  transition: background 0.2s ease !important;
+}
+.editor-preview *:hover::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.25) !important;
+  box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.15) !important;
+}
+.editor-preview *:hover::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.4) !important;
 }
 .editor-preview ::-webkit-scrollbar-corner,
 .editor-preview::-webkit-scrollbar-corner {
