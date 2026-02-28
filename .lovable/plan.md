@@ -1,39 +1,29 @@
 
 
-## Fix Navigation Manager: Seed Failure + Empty State
+## Fix: Navigation Manager Not Loading (Org Context Issue)
 
 ### Root Cause
-The database tables (`website_menus`, `website_menu_items`) exist and have correct RLS policies, but contain zero rows. The auto-seed mutation fires once (guarded by `seedAttempted` ref), and if it fails (silently — no error toast), it never retries. The user is stuck on "Choose menu..." permanently.
+The logged-in user is a **platform user** (platform_owner). For platform users, `effectiveOrganization` returns `selectedOrganization`, which is `null` unless explicitly set via the org-switcher. Since `useWebsiteMenus` depends on `effectiveOrganization?.id` for its query, the query is **permanently disabled** — no network request fires, no menus load, no seed triggers.
+
+The WebsiteSectionsHub page already works around this with a slug fallback query, but the Navigation Manager hooks don't have this fallback.
 
 ### Changes
 
-**1. Fix seed resilience (`NavigationManager.tsx`)**
-- Reset `seedAttempted` ref on mutation error so it can retry
-- Add `onError` handler to `seedMenus.mutate()` with toast feedback
-- Show an explicit "Create Default Menus" button when `menus` is empty and seed isn't pending — gives the user a manual fallback
+**1. Fix `useResolvedOrgId()` in `useWebsiteMenus.ts` (line 100-103)**
+- Fall back to `currentOrganization?.id` when `effectiveOrganization` is null
+- This mirrors the pattern the hub page uses (`effectiveOrganization || selectedOrganization || currentOrganization`)
 
-**2. Add "Sync from Pages" action (`NavigationManager.tsx`)**
-- When menus exist but have no items, show a "Sync from Pages" button that reads `pagesConfig.pages` where `show_in_nav: true` and `enabled: true`, and creates corresponding `page_link` menu items automatically
-- This bridges the gap between the Pages tab and the Nav tab
-
-**3. Add error display on seed/load failure**
-- If `useWebsiteMenus` returns an error, show it with a retry button instead of the spinner
-- If the seed mutation errors, show a toast with the error message
-
-### Technical Detail
-
-Current broken flow:
-```
-menus loads → empty array → seedAttempted=false → mutate() → fails silently → seedAttempted=true → never retries
+```tsx
+function useResolvedOrgId() {
+  const { effectiveOrganization, currentOrganization } = useOrganizationContext();
+  return effectiveOrganization?.id ?? currentOrganization?.id;
+}
 ```
 
-Fixed flow:
-```
-menus loads → empty array → seedAttempted=false → mutate() → onError: reset ref + toast → user can click "Create Default Menus" button → retries
-```
+This single change unblocks all menu hooks (`useWebsiteMenus`, `useSeedMenus`, `useCreateMenuItem`, etc.) because they all call `useResolvedOrgId()`.
 
-The manual button bypasses the ref guard entirely and calls `seedMenus.mutate()` directly with proper error/success feedback.
+**2. No other files need changes** — the NavigationManager UI, seed logic, tree editor, and inspector are all correctly wired. The only issue is that the org ID was resolving to `undefined`.
 
-**Files to modify:**
-- `src/components/dashboard/website-editor/navigation/NavigationManager.tsx` — seed error handling, empty state UI, sync-from-pages button
+### Files to modify
+- `src/hooks/useWebsiteMenus.ts` — 1-line fix to `useResolvedOrgId()`
 
