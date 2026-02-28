@@ -212,3 +212,6 @@ verify_jwt = false
 
 [functions.migrate-phorest-data]
 verify_jwt = false
+
+[functions.ai-website-analysis]
+verify_jwt = false
