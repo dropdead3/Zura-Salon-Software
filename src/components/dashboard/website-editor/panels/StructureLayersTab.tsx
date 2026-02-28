@@ -223,7 +223,7 @@ export function StructureLayersTab({
             <>
               <SectionGroupHeader title="Global Elements" collapsible isOpen={isGroupOpen('global')} onToggle={() => toggleGroup('global')} />
               {isGroupOpen('global') && (
-                <div className="space-y-0.5 mb-1">
+                <div className="space-y-0.5 mb-0.5">
                   {GLOBAL_ELEMENTS.map(item => (
                     <ContentNavItem
                       key={item.tab}
@@ -238,7 +238,7 @@ export function StructureLayersTab({
               )}
               <SectionGroupHeader title="Content Managers" collapsible isOpen={isGroupOpen('managers')} onToggle={() => toggleGroup('managers')} />
               {isGroupOpen('managers') && (
-                <div className="space-y-0.5 mb-2">
+                <div className="space-y-0.5 mb-0.5">
                   {CONTENT_MANAGERS.map(item => (
                     <ContentNavItem
                       key={item.tab}
@@ -251,7 +251,7 @@ export function StructureLayersTab({
                   ))}
                 </div>
               )}
-              <div className="my-3 mx-3 border-t-2 border-border/50" />
+              <div className="my-2 mx-3 border-t border-border/40" />
             </>
           )}
 
@@ -259,7 +259,7 @@ export function StructureLayersTab({
           {isHomePage && (
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleHomeDragEnd}>
               <SortableContext items={homeSections.map(s => s.id)} strategy={verticalListSortingStrategy}>
-                <div className="mb-1 px-4 py-1">
+                <div className="mb-0.5 px-3 py-0.5">
                   <span className="text-[10px] font-display tracking-wider text-muted-foreground/70">
                     HOMEPAGE LAYOUT
                   </span>
@@ -272,7 +272,7 @@ export function StructureLayersTab({
                   const groupId = `layout-${group.title}`;
                   return (
                     <div key={group.title}>
-                      {gi > 0 && <Separator className="my-2 mx-3" />}
+                      {gi > 0 && !(collapsedGroups.has(`layout-${SECTION_GROUPS[gi-1].title}`) && collapsedGroups.has(`layout-${group.title}`)) && <Separator className="my-1 mx-3 opacity-50" />}
                       <SectionGroupHeader title={group.title} collapsible isOpen={isGroupOpen(groupId)} onToggle={() => toggleGroup(groupId)} />
                       {isGroupOpen(groupId) && groupSections.map(section => (
                         <SectionNavItem
@@ -293,7 +293,7 @@ export function StructureLayersTab({
                 })}
                 {customSections.length > 0 && (
                   <>
-                    <Separator className="my-2 mx-3" />
+                    {!collapsedGroups.has(`layout-${SECTION_GROUPS[SECTION_GROUPS.length-1].title}`) && <Separator className="my-1 mx-3 opacity-50" />}
                     <SectionGroupHeader title="Custom Sections" collapsible isOpen={isGroupOpen('custom')} onToggle={() => toggleGroup('custom')} />
                     {isGroupOpen('custom') && customSections.map(section => (
                       <SectionNavItem
