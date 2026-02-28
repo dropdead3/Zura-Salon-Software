@@ -98,8 +98,8 @@ export function flattenMenuTree(tree: MenuItem[]): MenuItem[] {
 // ─── Hooks ───────────────────────────────────────────────────────────────────
 
 function useResolvedOrgId() {
-  const { effectiveOrganization } = useOrganizationContext();
-  return effectiveOrganization?.id;
+  const { effectiveOrganization, currentOrganization } = useOrganizationContext();
+  return effectiveOrganization?.id ?? currentOrganization?.id;
 }
 
 /** Fetch all menus for the current org */
