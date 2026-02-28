@@ -1,72 +1,49 @@
 
 
-## AI Content Writer for Website Editor
+## Auto-Fix Buttons for Website Intelligence Findings
 
 ### Approach
-Add a reusable "AI Write" button (sparkle icon) beside text fields in section editors. When clicked, it opens a compact popover where the user can describe their salon's vibe/audience, pick a tone, and generate copy via an edge function. The generated text fills the field directly.
+Add an `autoFix` property to each finding that describes the fix action. The edge function returns fix metadata alongside findings. The Insights tab renders a "Fix" button next to fixable findings. Clicking it calls an `onAutoFix(finding)` handler in the Hub, which applies the change directly (toggling a section, enabling a page, generating SEO text via AI) and re-runs analysis.
 
 ### Changes
 
-**1. New edge function: `supabase/functions/ai-content-writer/index.ts`**
-- Accepts: `{ fieldType, context, tone, salonName, currentValue }`
-  - `fieldType`: one of `hero_headline`, `hero_subheadline`, `brand_statement`, `service_description`, `cta_button`, `eyebrow`, `faq_answer`, `rotating_words`, `meta_description`
-  - `context`: free-text describing the salon (e.g. "luxury color studio in Austin, TX targeting 25-45 professionals")
-  - `tone`: `luxe` | `warm` | `edgy` | `minimal` | `playful`
-  - `currentValue`: existing text (for "improve" mode)
-- System prompt: salon copywriting specialist, outputs short-form copy matching the field type constraints (character limits, sentence counts)
-- Uses tool calling to return structured output: `{ suggestion: string, alternatives: string[] }` (primary + 2 alternatives)
-- Returns 3 options so the user can pick or regenerate
-
-**2. New component: `src/components/dashboard/website-editor/inputs/AiWriteButton.tsx`**
-- Small sparkle icon button that sits inline next to any text field label
-- On click, opens a Popover with:
-  - Salon context textarea (persisted in localStorage so user only enters once)
-  - Tone selector (5 pill buttons)
-  - "Generate" button → calls edge function → shows 3 suggestions as selectable cards
-  - "Use" button applies the selected suggestion to the parent field via `onAccept(text)` callback
-- Loading state with shimmer skeleton while generating
-- Props: `fieldType`, `onAccept: (value: string) => void`, `currentValue?: string`, `maxLength?: number`
-
-**3. Update `CharCountInput` to accept optional `aiFieldType` prop**
-- When `aiFieldType` is provided, render `AiWriteButton` inline next to the label
-- On accept, calls `onChange` with the AI-generated value
-
-**4. Wire AI Write into section editors**
-- `HeroEditor.tsx`: Add `aiFieldType` to headline, eyebrow, subheadline fields
-- `BrandStatementEditor.tsx`: Add to eyebrow, headline prefix/suffix, paragraphs
-- `NewClientEditor.tsx`: Add to headline, description, CTA text
-- `ServicesPreviewEditor.tsx`: Add where applicable
-- `FAQEditor.tsx`: Add to FAQ answers
-
-**5. Register edge function in `supabase/config.toml`**
-
-### Component Integration Example
-```tsx
-<CharCountInput
-  label="Headline Text"
-  value={localConfig.headline_text}
-  onChange={(value) => updateField('headline_text', value)}
-  maxLength={30}
-  aiFieldType="hero_headline"  // ← enables the sparkle button
-/>
+**1. Extend `Finding` type (`useWebsiteAnalysis.ts`)**
+Add optional `autoFix` field:
+```ts
+interface AutoFix {
+  type: 'enable_section' | 'enable_page' | 'generate_seo' | 'navigate_only';
+  sectionType?: string;   // e.g. 'faq', 'testimonials'
+  pageId?: string;        // e.g. 'about'
+  field?: string;         // e.g. 'seo_title', 'seo_description'
+}
 ```
 
-### AI Prompt Strategy
-The system prompt is field-type-aware:
-- `hero_headline`: "Generate a 3-5 word salon headline. Confident, not clever."
-- `brand_statement`: "Write a 1-2 sentence salon brand statement (50-150 chars)."
-- `rotating_words`: Returns a JSON array of 4-6 words
-- `meta_description`: "Write a 150-160 char meta description for local SEO."
-- `cta_button`: "Generate a 2-4 word CTA button label."
+**2. Update edge function (`ai-website-analysis/index.ts`)**
+Add `autoFix` data to each fixable finding in `runRuleChecks`:
+- Missing SEO title/description → `{ type: 'generate_seo', pageId, field }`
+- Disabled FAQ/testimonials/new-client/gallery → `{ type: 'enable_section', sectionType }`
+- Disabled About page → `{ type: 'enable_page', pageId: 'about' }`
+- Findings that are already passing or purely informational → no autoFix
 
-Each prompt includes the salon context and tone preference for personalization.
+**3. Update `StructureInsightsTab.tsx`**
+- Accept new `onAutoFix` prop
+- Render a small "Fix" button (pill style, `tokens.button.inline`) next to each non-pass finding that has `autoFix`
+- Show a loading spinner on the individual finding while fix is in progress
+- After fix completes, auto-re-run analysis
+
+**4. Update `WebsiteSectionsHub.tsx`**
+- Add `handleAutoFix(finding)` handler that switches on `autoFix.type`:
+  - `enable_section`: calls `handleHomeSectionToggle(sectionId, true)` for the matching section
+  - `enable_page`: updates `pagesConfig` to set the page's `enabled: true` via `updatePages.mutateAsync`
+  - `generate_seo`: calls the `ai-content-writer` edge function with `fieldType: 'meta_description'` or `'hero_headline'`, then patches the page config
+- Pass `onAutoFix` to `StructureInsightsTab`
+- After any auto-fix, call `handleRunAnalysis()` to refresh scores
+
+**5. Deploy updated edge function**
 
 ### Files
-- `supabase/functions/ai-content-writer/index.ts` (new)
-- `src/components/dashboard/website-editor/inputs/AiWriteButton.tsx` (new)
-- `src/components/dashboard/website-editor/inputs/CharCountInput.tsx` (modify — add optional AI button)
-- `src/components/dashboard/website-editor/HeroEditor.tsx` (modify — add aiFieldType props)
-- `src/components/dashboard/website-editor/BrandStatementEditor.tsx` (modify — add aiFieldType props)
-- `src/components/dashboard/website-editor/NewClientEditor.tsx` (modify — add aiFieldType props)
-- `supabase/config.toml` (register function)
+- `src/hooks/useWebsiteAnalysis.ts` — add `AutoFix` type to `Finding`
+- `supabase/functions/ai-website-analysis/index.ts` — add `autoFix` to findings
+- `src/components/dashboard/website-editor/panels/StructureInsightsTab.tsx` — render Fix buttons
+- `src/pages/dashboard/admin/WebsiteSectionsHub.tsx` — implement `handleAutoFix`
 
