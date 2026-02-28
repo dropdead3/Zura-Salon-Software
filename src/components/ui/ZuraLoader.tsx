@@ -55,20 +55,25 @@ export function ZuraLoader({ size = 'md', className }: ZuraLoaderProps) {
                 cell,
                 'border',
                 isLit
-                  ? 'bg-foreground/90 border-foreground/15'
-                  : 'bg-transparent border-border/40'
+                  ? 'bg-foreground/80 border-foreground/20'
+                  : 'bg-transparent border-border/30'
               )}
+              initial={
+                reduceMotion || !isLit
+                  ? undefined
+                  : { opacity: 0.15, scale: 0.95 }
+              }
               animate={
                 reduceMotion || !isLit
                   ? undefined
                   : {
-                      opacity: [0.3, 1, 0.5, 1, 0.3],
-                      scale: [1, 1.1, 1, 1.05, 1],
+                      opacity: [0.15, 1, 0.35, 0.9, 0.15],
+                      scale: [0.95, 1.15, 0.98, 1.1, 0.95],
                       boxShadow: [
                         '0 0 0px rgba(255,255,255,0)',
-                        '0 0 8px rgba(255,255,255,0.4)',
-                        '0 0 2px rgba(255,255,255,0.1)',
-                        '0 0 6px rgba(255,255,255,0.3)',
+                        '0 0 12px rgba(255,255,255,0.6)',
+                        '0 0 2px rgba(255,255,255,0.05)',
+                        '0 0 10px rgba(255,255,255,0.45)',
                         '0 0 0px rgba(255,255,255,0)',
                       ],
                     }
