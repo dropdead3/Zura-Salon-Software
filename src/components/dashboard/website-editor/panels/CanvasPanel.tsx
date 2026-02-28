@@ -61,6 +61,7 @@ export const CanvasPanel = memo(function CanvasPanel({
   const [canvasMode, setCanvasMode] = useState<CanvasMode>(() => (localStorage.getItem('editor-canvas-mode') as CanvasMode) || 'edit');
   const [refreshKey, setRefreshKey] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const loadStartRef = useRef(Date.now());
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerSize, setContainerSize] = useState({ w: 0, h: 0 });
@@ -73,6 +74,7 @@ export const CanvasPanel = memo(function CanvasPanel({
     // Refresh iframe when switching modes so it re-renders with the new param
     setRefreshKey(prev => prev + 1);
     setIsLoading(true);
+    loadStartRef.current = Date.now();
     iframeReadyRef.current = false;
   }, []);
 
@@ -107,9 +109,10 @@ export const CanvasPanel = memo(function CanvasPanel({
   }, [activeSectionId, scrollTrigger, sendScrollMessage]);
 
   const handleIframeLoad = useCallback(() => {
-    setIsLoading(false);
-    // Don't set iframeReadyRef here — wait for PREVIEW_READY from the rendered content
-    // But still queue the pending section
+    const MIN_DISPLAY_MS = 400;
+    const elapsed = Date.now() - loadStartRef.current;
+    const remaining = Math.max(0, MIN_DISPLAY_MS - elapsed);
+    setTimeout(() => setIsLoading(false), remaining);
   }, []);
 
   // Listen for PREVIEW_READY from iframe content (PageSectionRenderer)
@@ -133,6 +136,7 @@ export const CanvasPanel = memo(function CanvasPanel({
     const handleRefresh = () => {
       setRefreshKey(prev => prev + 1);
       setIsLoading(true);
+      loadStartRef.current = Date.now();
       iframeReadyRef.current = false;
     };
     window.addEventListener('website-preview-refresh', handleRefresh);
