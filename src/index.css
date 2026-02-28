@@ -1528,16 +1528,27 @@ html, body, #root {
   transition: box-shadow 0.3s ease;
 }
 
-/* ===== EDITOR PREVIEW — Hide scrollbars inside iframe ===== */
+/* ===== EDITOR PREVIEW — Transparent scrollbar track, visible thumb ===== */
 .editor-preview,
 .editor-preview body {
-  scrollbar-width: none !important;
-  -ms-overflow-style: none !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: hsl(var(--border) / 0.5) transparent !important;
 }
 .editor-preview::-webkit-scrollbar,
 .editor-preview body::-webkit-scrollbar,
 .editor-preview *::-webkit-scrollbar {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
+  width: 6px !important;
+  height: 6px !important;
+  background: transparent !important;
+}
+.editor-preview::-webkit-scrollbar-track,
+.editor-preview body::-webkit-scrollbar-track,
+.editor-preview *::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+.editor-preview::-webkit-scrollbar-thumb,
+.editor-preview body::-webkit-scrollbar-thumb,
+.editor-preview *::-webkit-scrollbar-thumb {
+  background: hsl(var(--border) / 0.5) !important;
+  border-radius: 3px !important;
 }
