@@ -32,8 +32,8 @@ export function SectionGroupHeader({ title, collapsible, isOpen = true, onToggle
   }
 
   return (
-    <div className="px-3 py-1.5 mt-1 mb-0.5">
-      <span className="text-[10px] font-display tracking-wider text-muted-foreground/70">
+    <div className="px-3 py-1.5 mt-3 mb-0.5">
+      <span className="text-[10px] font-display tracking-wider text-muted-foreground">
         {title}
       </span>
     </div>
