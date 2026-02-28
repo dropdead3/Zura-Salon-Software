@@ -44,6 +44,11 @@ export function Layout({ children }: LayoutProps) {
     // Ensure cream theme is applied
     root.classList.remove('theme-rose', 'theme-sage', 'theme-ocean');
     root.classList.add('theme-cream');
+
+    // Add editor-preview class for scrollbar hiding
+    if (isEditorPreview) {
+      root.classList.add('editor-preview');
+    }
     
     // Clear any custom CSS variable overrides from dashboard theme
     const style = root.style;
@@ -56,7 +61,13 @@ export function Layout({ children }: LayoutProps) {
       }
     }
     propsToRemove.forEach(prop => style.removeProperty(prop));
-  }, []);
+
+    return () => {
+      if (isEditorPreview) {
+        root.classList.remove('editor-preview');
+      }
+    };
+  }, [isEditorPreview]);
 
   useEffect(() => {
     const handleScroll = () => {
