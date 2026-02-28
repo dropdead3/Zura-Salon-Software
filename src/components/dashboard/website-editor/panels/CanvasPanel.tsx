@@ -185,7 +185,7 @@ export const CanvasPanel = memo(function CanvasPanel({
       />
 
       {/* Canvas Surface */}
-      <div ref={containerRef} className="flex-1 overflow-auto scrollbar-hide bg-background relative">
+      <div ref={containerRef} className="flex-1 overflow-hidden bg-background relative">
         <div
           className={cn(
             'h-full',
