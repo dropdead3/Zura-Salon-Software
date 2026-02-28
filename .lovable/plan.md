@@ -1,54 +1,29 @@
 
 
-## Fix Edit/Preview Toggle Sizing
+## Audit: Missing Editable Fields in Hero Section
 
-The Edit/Preview segmented control buttons are visually inconsistent with the adjacent viewport toggles (Desktop/Tablet/Mobile). The viewport buttons are compact icon-only pills, while Edit/Preview uses stacked icon+text at different proportions, making them look oversized.
+### Problem
+The "Your Salon" headline text is hardcoded in three places:
+1. `src/components/home/HeroSection.tsx` (line 90, 215) — public site
+2. `src/components/dashboard/website-editor/previews/HeroSectionPreview.tsx` (line 45) — editor preview
 
-### Change: `src/components/dashboard/website-editor/panels/CanvasHeader.tsx` (lines 150–183)
+The `HeroConfig` interface has no field for this static headline. Users cannot change it.
 
-Update the Edit/Preview toggle buttons to use the same compact `px-2` sizing as viewport buttons, with the label placed inline to the right of the icon using a horizontal flex layout and matched `text-[10px]` sizing. Remove the `flex-initial` override that was causing inconsistent widths.
+### Solution
 
-```tsx
-{/* Edit / Preview mode toggle */}
-<div className={editorTokens.segmented.container}>
-  <Tooltip>
-    <TooltipTrigger asChild>
-      <button
-        onClick={() => onCanvasModeChange('edit')}
-        className={cn(
-          editorTokens.segmented.button,
-          'inline-flex items-center gap-1.5 px-2.5',
-          canvasMode === 'edit' && editorTokens.segmented.active
-        )}
-      >
-        <Pencil className="h-3.5 w-3.5" />
-        <span>Edit</span>
-      </button>
-    </TooltipTrigger>
-    <TooltipContent>Edit mode — section cards &amp; controls</TooltipContent>
-  </Tooltip>
-  <Tooltip>
-    <TooltipTrigger asChild>
-      <button
-        onClick={() => onCanvasModeChange('view')}
-        className={cn(
-          editorTokens.segmented.button,
-          'inline-flex items-center gap-1.5 px-2.5',
-          canvasMode === 'view' && editorTokens.segmented.active
-        )}
-      >
-        <Eye className="h-3.5 w-3.5" />
-        <span>Preview</span>
-      </button>
-    </TooltipTrigger>
-    <TooltipContent>Preview mode — exact public site</TooltipContent>
-  </Tooltip>
-</div>
-```
+**1. Add `headline_text` field to `HeroConfig`** (`src/hooks/useSectionConfig.ts`)
+- Add `headline_text: string` to the interface (line ~77)
+- Add default `headline_text: "Your Salon"` to `DEFAULT_HERO` (line ~326)
 
-Key changes:
-- Icon size bumped from `h-3 w-3` to `h-3.5 w-3.5` to match viewport icons
-- `inline-flex items-center gap-1.5` ensures horizontal icon+label alignment
-- `px-2.5` provides balanced padding matching viewport buttons
-- Removed `flex-initial` and the redundant `text-[10px]` (inherits from `editorTokens.segmented.button` which already sets `text-xs`)
+**2. Add editor input** (`src/components/dashboard/website-editor/HeroEditor.tsx`)
+- Insert a `CharCountInput` for "Headline Text" between the Eyebrow section and the Rotating Words section (~line 91), with `maxLength={30}` and description "The static headline above the rotating words"
+
+**3. Update preview** (`src/components/dashboard/website-editor/previews/HeroSectionPreview.tsx`)
+- Replace hardcoded `Your Salon` on line 45 with `{config.headline_text}`
+
+**4. Update public site** (`src/components/home/HeroSection.tsx`)
+- Replace both hardcoded `Your Salon` instances (lines 90, 215) with `{heroConfig.headline_text}` (or equivalent from whatever config variable is used there)
+
+### Scope
+Four files, one new field. No database migration needed — `headline_text` falls back to the default when absent from stored config.
 
