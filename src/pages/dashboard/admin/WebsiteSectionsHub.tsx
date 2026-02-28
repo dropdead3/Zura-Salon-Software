@@ -129,7 +129,7 @@ const TAB_TO_SECTION: Record<string, string> = {
   'extensions': 'extensions',
   'brands': 'brands',
   'drinks': 'drink_menu',
-  'footer-cta': 'new_client',
+  'footer-cta': 'footer_cta',
 };
 
 export default function WebsiteSectionsHub() {

@@ -43,6 +43,7 @@ export function FooterCTA() {
 
   return (
     <section 
+      id="section-footer_cta"
       ref={sectionRef}
       className="relative z-10 bg-secondary text-foreground py-28 lg:py-32 text-center overflow-hidden"
       data-theme="light"
