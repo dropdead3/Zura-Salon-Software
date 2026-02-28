@@ -1535,12 +1535,13 @@ html, body, #root {
   transition: box-shadow 0.3s ease;
 }
 
-/* ===== EDITOR PREVIEW — Glass scroll thumbs on hover ===== */
+/* ===== EDITOR PREVIEW — Glass overlay scroll thumbs on hover ===== */
 .editor-preview,
 .editor-preview body,
 .editor-preview * {
   scrollbar-width: thin !important;
   scrollbar-color: transparent transparent !important;
+  overflow: overlay !important;
 }
 .editor-preview *:hover {
   scrollbar-color: rgba(255, 255, 255, 0.25) transparent !important;
