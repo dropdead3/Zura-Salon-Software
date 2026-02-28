@@ -1,29 +1,19 @@
 
 
-## Audit: Missing Editable Fields in Hero Section
+## Fix: HeroEditor Missing Dirty State / Save Button
 
-### Problem
-The "Your Salon" headline text is hardcoded in three places:
-1. `src/components/home/HeroSection.tsx` (line 90, 215) — public site
-2. `src/components/dashboard/website-editor/previews/HeroSectionPreview.tsx` (line 45) — editor preview
+The HeroEditor already has `useEditorSaveAction` wired up (it responds to save requests), but it never tells the Hub that changes exist. Without dispatching `editor-dirty-state`, the Save button in the canvas header stays hidden.
 
-The `HeroConfig` interface has no field for this static headline. Users cannot change it.
+### Change: `src/components/dashboard/website-editor/HeroEditor.tsx`
 
-### Solution
+1. Import `useEditorDirtyState`
+2. Track dirty state by comparing `localConfig` against `data` (the server state)
+3. Call `useEditorDirtyState(isDirty)` so the Hub shows the Save button
+4. Clear dirty state after successful save
 
-**1. Add `headline_text` field to `HeroConfig`** (`src/hooks/useSectionConfig.ts`)
-- Add `headline_text: string` to the interface (line ~77)
-- Add default `headline_text: "Your Salon"` to `DEFAULT_HERO` (line ~326)
-
-**2. Add editor input** (`src/components/dashboard/website-editor/HeroEditor.tsx`)
-- Insert a `CharCountInput` for "Headline Text" between the Eyebrow section and the Rotating Words section (~line 91), with `maxLength={30}` and description "The static headline above the rotating words"
-
-**3. Update preview** (`src/components/dashboard/website-editor/previews/HeroSectionPreview.tsx`)
-- Replace hardcoded `Your Salon` on line 45 with `{config.headline_text}`
-
-**4. Update public site** (`src/components/home/HeroSection.tsx`)
-- Replace both hardcoded `Your Salon` instances (lines 90, 215) with `{heroConfig.headline_text}` (or equivalent from whatever config variable is used there)
-
-### Scope
-Four files, one new field. No database migration needed — `headline_text` falls back to the default when absent from stored config.
+Specifically:
+- Add `import { useEditorDirtyState } from '@/hooks/useEditorDirtyState'` (line 7 area)
+- Add a computed `isDirty` that checks `JSON.stringify(localConfig) !== JSON.stringify(data)` (after line 25)
+- Call `useEditorDirtyState(isDirty)` right after the dirty computation
+- This is zero-risk: the save handler already works via `useEditorSaveAction` — we're just surfacing the Save button that triggers it
 
