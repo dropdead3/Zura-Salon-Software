@@ -108,7 +108,7 @@ export function Layout({ children }: LayoutProps) {
 
         {/* Scrolling content that slides over the footer */}
         <div
-          className="relative z-10 flex flex-col min-h-screen bg-background rounded-b-[2rem] md:rounded-b-[3rem] shadow-[0_30px_60px_rgba(0,0,0,0.12)] overflow-hidden"
+          className="relative z-10 flex flex-col min-h-screen bg-background rounded-b-[2rem] md:rounded-b-[3rem] shadow-[0_30px_60px_rgba(0,0,0,0.12)]"
           style={{ marginBottom: footerHeight }}
         >
           <Header />
@@ -136,7 +136,7 @@ export function Layout({ children }: LayoutProps) {
 
       {/* Main content that scrolls over the footer */}
       <div 
-        className="relative z-10 flex flex-col min-h-screen bg-background rounded-b-[2rem] md:rounded-b-[3rem] shadow-[0_30px_60px_rgba(0,0,0,0.12)] overflow-hidden"
+        className="relative z-10 flex flex-col min-h-screen bg-background rounded-b-[2rem] md:rounded-b-[3rem] shadow-[0_30px_60px_rgba(0,0,0,0.12)]"
         style={{ marginBottom: footerHeight }}
       >
         <Header />
