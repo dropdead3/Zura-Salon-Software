@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Plus, Trash2, ShieldAlert } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
+import { ZuraLoader } from '@/components/ui/ZuraLoader';
 import {
   useCancellationFeePolicies,
   useUpsertCancellationFeePolicy,
@@ -85,7 +86,7 @@ export function CancellationFeePoliciesSettings() {
       <CardContent className="space-y-4">
         {isLoading ? (
           <div className="flex items-center justify-center h-20">
-            <Loader2 className={tokens.loading.spinner} />
+            <ZuraLoader size="sm" />
           </div>
         ) : (
           <>
