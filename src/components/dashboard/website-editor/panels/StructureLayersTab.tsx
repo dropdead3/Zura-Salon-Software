@@ -24,7 +24,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
+
 import { Button } from '@/components/ui/button';
 import {
   Scissors,
@@ -251,7 +251,7 @@ export function StructureLayersTab({
                   ))}
                 </div>
               )}
-              <div className="my-2 mx-3 border-t border-border/40" />
+              <SectionGroupHeader title="Homepage Layout" />
             </>
           )}
 
@@ -259,11 +259,6 @@ export function StructureLayersTab({
           {isHomePage && (
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleHomeDragEnd}>
               <SortableContext items={homeSections.map(s => s.id)} strategy={verticalListSortingStrategy}>
-                <div className="mb-0.5 px-3 py-0.5">
-                  <span className="text-[10px] font-display tracking-wider text-muted-foreground/70">
-                    HOMEPAGE LAYOUT
-                  </span>
-                </div>
                 {SECTION_GROUPS.map((group, gi) => {
                   const groupSections = group.sectionTypes
                     .map(type => getBuiltinSection(type))
@@ -271,8 +266,7 @@ export function StructureLayersTab({
                   if (groupSections.length === 0) return null;
                   const groupId = `layout-${group.title}`;
                   return (
-                    <div key={group.title}>
-                      {gi > 0 && !(collapsedGroups.has(`layout-${SECTION_GROUPS[gi-1].title}`) && collapsedGroups.has(`layout-${group.title}`)) && <Separator className="my-1 mx-3 opacity-50" />}
+                    <div key={group.title} className="mt-0.5">
                       <SectionGroupHeader title={group.title} collapsible isOpen={isGroupOpen(groupId)} onToggle={() => toggleGroup(groupId)} />
                       {isGroupOpen(groupId) && groupSections.map(section => (
                         <SectionNavItem
@@ -293,7 +287,7 @@ export function StructureLayersTab({
                 })}
                 {customSections.length > 0 && (
                   <>
-                    {!collapsedGroups.has(`layout-${SECTION_GROUPS[SECTION_GROUPS.length-1].title}`) && <Separator className="my-1 mx-3 opacity-50" />}
+                    <div className="mt-0.5" />
                     <SectionGroupHeader title="Custom Sections" collapsible isOpen={isGroupOpen('custom')} onToggle={() => toggleGroup('custom')} />
                     {isGroupOpen('custom') && customSections.map(section => (
                       <SectionNavItem

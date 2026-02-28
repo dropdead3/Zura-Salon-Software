@@ -44,7 +44,7 @@ export function ContentNavItem({
     <button
       onClick={onSelect}
       className={cn(
-        'w-full flex items-center gap-3 px-3 py-2.5 mx-2 rounded-lg cursor-pointer transition-all text-left',
+        'w-full flex items-center gap-2 px-3 py-1.5 mx-2 rounded-lg cursor-pointer transition-all text-left',
         isActive
           ? 'bg-primary/10 border border-primary/20 shadow-sm'
           : 'hover:bg-muted/60 border border-transparent'
@@ -52,7 +52,7 @@ export function ContentNavItem({
     >
       {/* Icon */}
       <div className={cn(
-        'flex-shrink-0 p-1.5 rounded-md',
+        'flex-shrink-0 p-1 rounded-md',
         isActive ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground'
       )}>
         <Icon className="h-3.5 w-3.5" />
