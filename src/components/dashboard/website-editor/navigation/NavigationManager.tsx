@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Loader2, Navigation } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MenuTreeEditor } from './MenuTreeEditor';
@@ -23,12 +23,14 @@ export function NavigationManager() {
   const [selectedMenuId, setSelectedMenuId] = useState<string | null>(null);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
 
-  // Auto-seed on first load if no menus
+  // Auto-seed on first load if no menus (ref prevents infinite loop)
+  const seedAttempted = useRef(false);
   useEffect(() => {
-    if (menus && menus.length === 0 && !seedMenus.isPending) {
+    if (menus && menus.length === 0 && !seedAttempted.current) {
+      seedAttempted.current = true;
       seedMenus.mutate();
     }
-  }, [menus, seedMenus]);
+  }, [menus]);
 
   // Auto-select first menu
   useEffect(() => {
@@ -106,6 +108,7 @@ export function NavigationManager() {
                 item={selectedItem}
                 menuId={selectedMenuId}
                 pagesConfig={pagesConfig}
+                allItems={menuItems ?? []}
               />
             </>
           )}

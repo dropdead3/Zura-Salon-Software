@@ -54,14 +54,23 @@ export function MenuTreeEditor({
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
-    // Only handle top-level reordering for now
-    const topLevel = items.filter(i => !i.parent_id).sort((a, b) => a.sort_order - b.sort_order);
-    const oldIndex = topLevel.findIndex(i => i.id === active.id);
-    const newIndex = topLevel.findIndex(i => i.id === over.id);
+    const activeItem = items.find(i => i.id === active.id);
+    const overItem = items.find(i => i.id === over.id);
+    if (!activeItem || !overItem) return;
+
+    // Only reorder within same parent group
+    if (activeItem.parent_id !== overItem.parent_id) return;
+
+    const siblings = items
+      .filter(i => i.parent_id === activeItem.parent_id)
+      .sort((a, b) => a.sort_order - b.sort_order);
+
+    const oldIndex = siblings.findIndex(i => i.id === active.id);
+    const newIndex = siblings.findIndex(i => i.id === over.id);
 
     if (oldIndex === -1 || newIndex === -1) return;
 
-    const reordered = arrayMove(topLevel, oldIndex, newIndex);
+    const reordered = arrayMove(siblings, oldIndex, newIndex);
     const updates = reordered.map((item, idx) => ({
       id: item.id,
       sort_order: idx,
@@ -112,7 +121,7 @@ export function MenuTreeEditor({
       ) : (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext
-            items={tree.map(i => i.id)}
+            items={items.map(i => i.id)}
             strategy={verticalListSortingStrategy}
           >
             <div className="space-y-0.5">
@@ -138,6 +147,7 @@ export function MenuTreeEditor({
         menuId={menuId}
         pagesConfig={pagesConfig}
         existingItemCount={items.length}
+        menuItems={items}
       />
     </EditorCard>
   );

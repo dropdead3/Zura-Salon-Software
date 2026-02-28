@@ -30,7 +30,7 @@ export function MenuItemNode({ item, depth, isSelected, selectedItemId, onSelect
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: item.id, disabled: depth > 0 });
+  } = useSortable({ id: item.id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
