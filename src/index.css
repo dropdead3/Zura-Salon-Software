@@ -1535,37 +1535,27 @@ html, body, #root {
   transition: box-shadow 0.3s ease;
 }
 
-/* ===== EDITOR PREVIEW — Hover-only scrollbar thumbs ===== */
+/* ===== EDITOR PREVIEW — Hidden scrollbars (scrolling still works) ===== */
 .editor-preview,
 .editor-preview body,
 .editor-preview * {
-  scrollbar-width: thin !important;
+  scrollbar-width: none !important;
   scrollbar-color: transparent transparent !important;
-}
-.editor-preview *:hover {
-  scrollbar-color: rgba(0, 0, 0, 0.15) transparent !important;
 }
 .editor-preview ::-webkit-scrollbar,
 .editor-preview::-webkit-scrollbar {
-  width: 6px !important;
-  height: 6px !important;
-  background-color: transparent !important;
-  background: transparent !important;
+  width: 0 !important;
+  height: 0 !important;
+  display: none !important;
 }
 .editor-preview ::-webkit-scrollbar-track,
 .editor-preview::-webkit-scrollbar-track,
-.editor-preview *::-webkit-scrollbar-track,
-.editor-preview *:hover::-webkit-scrollbar-track {
-  background-color: transparent !important;
+.editor-preview *::-webkit-scrollbar-track {
   background: transparent !important;
 }
 .editor-preview ::-webkit-scrollbar-thumb,
 .editor-preview::-webkit-scrollbar-thumb {
   background: transparent !important;
-  border-radius: 3px !important;
-}
-.editor-preview *:hover::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.15) !important;
 }
 .editor-preview ::-webkit-scrollbar-corner,
 .editor-preview::-webkit-scrollbar-corner {
