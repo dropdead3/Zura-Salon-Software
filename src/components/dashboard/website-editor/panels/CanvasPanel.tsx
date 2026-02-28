@@ -157,14 +157,14 @@ export const CanvasPanel = memo(function CanvasPanel({
   const isDesktop = viewportMode === 'desktop';
   const effectiveWidth = isDesktop ? Math.max(DESKTOP_WIDTH, containerSize.w) : DESKTOP_WIDTH;
   const fitScale = isDesktop && containerSize.w > 0
-    ? Math.min((containerSize.w + 1) / effectiveWidth, 1)
+    ? Math.min((containerSize.w + 2) / effectiveWidth, 1)
     : 1;
   const effectiveScale = isDesktop
     ? fitScale * (zoomLevel === '75' ? 0.75 : 1)
     : ZOOM_SCALES[zoomLevel];
 
   return (
-    <div className={cn(editorTokens.panel.canvas, 'h-full flex flex-col relative')}>
+    <div className={cn(editorTokens.panel.canvas, 'h-full flex flex-col relative rounded-none')}>
       {/* Canvas Header */}
       <CanvasHeader
         siteName={siteName}
@@ -185,7 +185,7 @@ export const CanvasPanel = memo(function CanvasPanel({
       />
 
       {/* Canvas Surface */}
-      <div ref={containerRef} className="flex-1 overflow-hidden bg-background relative">
+      <div ref={containerRef} className="flex-1 overflow-hidden relative" style={{ backgroundColor: 'hsl(36, 39%, 93%)' }}>
         <div
           className={cn(
             'h-full',
