@@ -1,39 +1,53 @@
 
 
-## Problem
+## Plan: Replace Loading Spinners with Branded PixelZMark Disco Loader
 
-When the inspector panel collapses, the canvas container grows wider (flex-1). The ResizeObserver fires and recalculates `fitScale`, but there's a visual gap on the right edge. Two contributing factors:
+Great instinct to brand the loading experience — this is exactly the kind of detail that makes a platform feel premium and intentional. The PixelZMark disco Z is a perfect fit for a loading indicator.
 
-1. The outer canvas panel has `bg-muted/20` (from `editorTokens.panel.canvas`) which shows through as a lighter strip beside the inner `bg-background` div — especially visible during or after resize.
-2. Sub-pixel rounding: `fitScale = containerSize.w / 1440` can produce a fractional scale that, when multiplied back (`1440 * scale`), lands a fraction of a pixel short of the container width.
+### Approach
 
-## Plan
+Rather than touching all 363 files that use `Loader2`, we'll create a drop-in `ZuraLoader` component and then progressively adopt it. The component will be a smaller version of `PixelZMark` sized appropriately for inline and full-page loading contexts.
 
-### 1. Eliminate the background mismatch (editor-tokens.ts)
+### 1. Create `src/components/ui/ZuraLoader.tsx`
 
-Change the canvas panel token background from `bg-muted/20` to `bg-background` so no lighter strip ever shows between the panel edge and the iframe.
+A new component that renders a scaled-down `PixelZMark` with size variants:
 
-**File**: `src/components/dashboard/website-editor/editor-tokens.ts` line 17
+- **`sm`** — for inline/button contexts (replaces `w-4 h-4` spinners). ~20px grid using `h-2 w-2` cells with `gap-0.5`.
+- **`md`** (default) — for card/section loading (replaces `w-6 h-6` spinners). ~28px grid using `h-2.5 w-2.5` cells with `gap-0.5`.
+- **`lg`** — for full-page loading (replaces `h-8 w-8` spinners). ~40px grid using `h-3.5 w-3.5` cells with `gap-1`.
 
-`bg-muted/20` → `bg-background`
+The disco shimmer animation from `PixelZMark` carries over directly. Accepts `className` for additional styling.
 
-### 2. Over-scale by a tiny amount to prevent sub-pixel gaps (CanvasPanel.tsx)
+### 2. Update `tokens.loading.spinner` in `design-tokens.ts`
 
-Add a 1px buffer to the scale calculation so the iframe's visual width always slightly exceeds the container rather than falling a fraction of a pixel short:
+Update the comment to reference `ZuraLoader` as the canonical loading component. The token class string stays as a fallback but the component becomes the standard.
+
+### 3. Replace key high-visibility loading states
+
+Swap `Loader2` for `ZuraLoader` in the most visible locations first:
+
+- **Full-page loaders** — pages like `GoalsTabContent`, `AssistantSchedule`, `ProgramEditor`, etc. that show a centered spinner while data loads.
+- **`tokens.loading.spinner` usages** — the ~12 files using the design token spinner pattern.
+- **Dashboard loading states** — any loading state a user sees on initial page load.
+
+Inline button spinners (e.g., "Save" button loading) will keep `Loader2` since the Z mark would be too complex at that tiny size.
+
+### Technical detail
 
 ```tsx
-const fitScale = isDesktop && containerSize.w > 0
-  ? Math.min((containerSize.w + 1) / DESKTOP_WIDTH, 1)
-  : 1;
+// src/components/ui/ZuraLoader.tsx
+const SIZES = {
+  sm: { cell: 'h-2 w-2 rounded-[2px]', gap: 'gap-0.5' },
+  md: { cell: 'h-2.5 w-2.5 rounded-[3px]', gap: 'gap-0.5' },
+  lg: { cell: 'h-3.5 w-3.5 rounded-[4px]', gap: 'gap-1' },
+};
+
+export function ZuraLoader({ size = 'md', className }) {
+  // Same cells grid and disco animation as PixelZMark
+  // but with configurable cell sizes
+}
 ```
 
-### 3. Remove duplicate `overflow-hidden` causing clipping artifacts (CanvasPanel.tsx)
-
-The inner container div at line 183 has `overflow-hidden` AND the outer panel token also has `overflow-hidden`. The inner one is unnecessary and can cause the scaled iframe to clip at the right edge. Remove `overflow-hidden` from the inner container (line 183), keeping only the outer panel's `overflow-hidden` from the editor token.
-
-`"flex-1 overflow-hidden bg-background relative"` → `"flex-1 overflow-auto bg-background relative"`
-
-This allows the scaled content to render fully within the outer panel's bounds.
-
-Three small edits across two files.
+**Files to create**: `src/components/ui/ZuraLoader.tsx`
+**Files to modify**: ~12-15 high-visibility loading state files (full-page and section loaders)
 
