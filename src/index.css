@@ -1010,11 +1010,11 @@ html, body, #root {
   }
 
   .scrollbar-minimal:hover::-webkit-scrollbar-thumb {
-    background: hsl(var(--muted-foreground) / 0.25);
+    background: rgba(0, 0, 0, 0.15);
   }
 
   .scrollbar-minimal:hover::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--muted-foreground) / 0.4);
+    background: rgba(0, 0, 0, 0.25);
   }
 
   .scrollbar-hide {
@@ -1033,7 +1033,7 @@ html, body, #root {
   }
 
   .scrollbar-thin:hover {
-    scrollbar-color: hsl(var(--muted-foreground) / 0.25) transparent;
+    scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
   }
 
   .scrollbar-thin::-webkit-scrollbar {
@@ -1051,11 +1051,11 @@ html, body, #root {
   }
 
   .scrollbar-thin:hover::-webkit-scrollbar-thumb {
-    background: hsl(var(--muted-foreground) / 0.25);
+    background: rgba(0, 0, 0, 0.15);
   }
 
   .scrollbar-thin:hover::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--muted-foreground) / 0.4);
+    background: rgba(0, 0, 0, 0.25);
   }
 
   /* 3D Flip Card Utilities */
@@ -1459,10 +1459,16 @@ html, body, #root {
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
+  background-color: transparent;
   background: transparent;
 }
 
 ::-webkit-scrollbar-track {
+  background-color: transparent !important;
+  background: transparent !important;
+}
+
+::-webkit-scrollbar-corner {
   background: transparent !important;
 }
 
@@ -1473,15 +1479,15 @@ html, body, #root {
 }
 
 *:hover::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted-foreground) / 0.25);
+  background: rgba(0, 0, 0, 0.15);
 }
 
 *:hover::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground) / 0.4);
+  background: rgba(0, 0, 0, 0.25);
 }
 
 *:hover::-webkit-scrollbar-thumb:active {
-  background: hsl(var(--muted-foreground) / 0.5);
+  background: rgba(0, 0, 0, 0.35);
 }
 
 /* Firefox — hover-reveal: transparent by default, visible on hover */
@@ -1491,7 +1497,7 @@ html, body, #root {
 }
 
 *:hover {
-  scrollbar-color: hsl(var(--muted-foreground) / 0.25) transparent;
+  scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
 }
 
 /* ===== SYNTHETIC BOLD PREVENTION =====
