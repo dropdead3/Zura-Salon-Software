@@ -1,34 +1,34 @@
 
 
-## Problem
+## Plan: Glass Scroll Thumbs for Editor Preview
 
-The CSS rule `scrollbar-width: thin !important` in the `.editor-preview` block (line 1542) reserves 6px of gutter space on the right and bottom edges for scrollbar tracks, even though the track and thumb are transparent. This creates visible gaps where the cream background shows through instead of the website content filling edge-to-edge.
+### Changes to `src/index.css` (lines 1538-1563)
 
-## Plan
+Replace the current hidden-scrollbar rules with a glass-thumb-on-hover pattern:
 
-### 1. Change `scrollbar-width` from `thin` to `none` in editor-preview rules
+- **Default state**: `scrollbar-width: thin`, thumbs fully transparent (no gutter gap since thumb is invisible)
+- **Hover state**: Thumb reveals as a frosted glass pill — `rgba(255, 255, 255, 0.25)` with a subtle `rgba(255, 255, 255, 0.1)` border effect via `box-shadow`
+- **Active/drag state**: Slightly more opaque `rgba(255, 255, 255, 0.4)`
+- **Track**: Always transparent — no background reserved
+- **Webkit scrollbar width**: 6px thin overlay style
 
-In `src/index.css` lines 1538-1573, update the editor-preview scrollbar rules:
-
-- Line 1542: Change `scrollbar-width: thin` to `scrollbar-width: none` — removes the gutter entirely
-- Lines 1549-1550: Change webkit scrollbar `width: 6px` and `height: 6px` to `width: 0` and `height: 0` — removes webkit gutter
-- Remove all hover-reveal rules (lines 1545-1547, 1567-1569) since there's no scrollbar to show
-
-Scrolling still works with `scrollbar-width: none` — it just hides the scrollbar UI completely, which is the desired behavior for a scaled preview viewport.
-
-**Resulting CSS:**
 ```css
+/* ===== EDITOR PREVIEW — Glass scroll thumbs on hover ===== */
 .editor-preview,
 .editor-preview body,
 .editor-preview * {
-  scrollbar-width: none !important;
+  scrollbar-width: thin !important;
   scrollbar-color: transparent transparent !important;
 }
+.editor-preview *:hover {
+  scrollbar-color: rgba(255, 255, 255, 0.25) transparent !important;
+}
+
 .editor-preview ::-webkit-scrollbar,
 .editor-preview::-webkit-scrollbar {
-  width: 0 !important;
-  height: 0 !important;
-  display: none !important;
+  width: 6px !important;
+  height: 6px !important;
+  background: transparent !important;
 }
 .editor-preview ::-webkit-scrollbar-track,
 .editor-preview::-webkit-scrollbar-track,
@@ -38,6 +38,15 @@ Scrolling still works with `scrollbar-width: none` — it just hides the scrollb
 .editor-preview ::-webkit-scrollbar-thumb,
 .editor-preview::-webkit-scrollbar-thumb {
   background: transparent !important;
+  border-radius: 3px !important;
+  transition: background 0.2s ease !important;
+}
+.editor-preview *:hover::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.25) !important;
+  box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.15) !important;
+}
+.editor-preview *:hover::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.4) !important;
 }
 .editor-preview ::-webkit-scrollbar-corner,
 .editor-preview::-webkit-scrollbar-corner {
@@ -45,5 +54,5 @@ Scrolling still works with `scrollbar-width: none` — it just hides the scrollb
 }
 ```
 
-This eliminates the reserved scrollbar gutter space, allowing the iframe content to fill the entire bento box edge-to-edge.
+This gives a luxury frosted-glass scrollbar thumb that only materializes on hover, with no visible track or gutter when idle.
 
