@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Loader2, Navigation } from 'lucide-react';
-import { EditorCard } from '../EditorCard';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MenuTreeEditor } from './MenuTreeEditor';
 import { MenuItemInspector } from './MenuItemInspector';
@@ -54,35 +53,41 @@ export function NavigationManager() {
   }
 
   return (
-    <div className="space-y-4">
-      <EditorCard
-        title="Navigation Manager"
-        icon={Navigation}
-        description="Configure header and footer navigation menus"
-      >
-        {/* Menu Selector */}
-        <div className="space-y-1.5">
-          <label className="text-xs text-muted-foreground font-medium">Select Menu</label>
-          <Select
-            value={selectedMenuId ?? ''}
-            onValueChange={(v) => { setSelectedMenuId(v); setSelectedItemId(null); }}
-          >
-            <SelectTrigger className="h-9 text-sm">
-              <SelectValue placeholder="Choose menu..." />
-            </SelectTrigger>
-            <SelectContent>
-              {menus?.map((menu: WebsiteMenu) => (
-                <SelectItem key={menu.id} value={menu.id}>
-                  {menu.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+    <div className="space-y-0">
+      {/* Menu Selector — lightweight, no EditorCard */}
+      <div className="px-3 py-3 space-y-1.5">
+        <div className="flex items-center gap-2 mb-2">
+          <div className="w-7 h-7 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
+            <Navigation className="w-3.5 h-3.5 text-primary" />
+          </div>
+          <div className="min-w-0">
+            <h3 className="font-display text-sm tracking-wide text-foreground truncate">Navigation</h3>
+            <p className="text-[10px] text-muted-foreground">Configure header & footer menus</p>
+          </div>
         </div>
-      </EditorCard>
+        <label className="text-xs text-muted-foreground font-medium">Select Menu</label>
+        <Select
+          value={selectedMenuId ?? ''}
+          onValueChange={(v) => { setSelectedMenuId(v); setSelectedItemId(null); }}
+        >
+          <SelectTrigger className="h-9 text-sm">
+            <SelectValue placeholder="Choose menu..." />
+          </SelectTrigger>
+          <SelectContent>
+            {menus?.map((menu: WebsiteMenu) => (
+              <SelectItem key={menu.id} value={menu.id}>
+                {menu.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
       {selectedMenuId && (
         <>
+          {/* Border divider */}
+          <div className="border-t border-border/40" />
+
           {/* Menu Tree */}
           <MenuTreeEditor
             menuId={selectedMenuId}
@@ -95,19 +100,26 @@ export function NavigationManager() {
 
           {/* Item Inspector */}
           {selectedItem && (
-            <MenuItemInspector
-              item={selectedItem}
-              menuId={selectedMenuId}
-              pagesConfig={pagesConfig}
-            />
+            <>
+              <div className="border-t border-border/40" />
+              <MenuItemInspector
+                item={selectedItem}
+                menuId={selectedMenuId}
+                pagesConfig={pagesConfig}
+              />
+            </>
           )}
 
           {/* Mobile Settings (primary menu only) */}
           {selectedMenu?.slug === 'primary' && selectedMenu && (
-            <MobileNavConfig menu={selectedMenu} />
+            <>
+              <div className="border-t border-border/40" />
+              <MobileNavConfig menu={selectedMenu} />
+            </>
           )}
 
           {/* Publish Bar */}
+          <div className="border-t border-border/40" />
           <MenuPublishBar
             menuId={selectedMenuId}
             menuName={selectedMenu?.name ?? ''}
