@@ -1,20 +1,65 @@
 
 
-## Fix Services Manager Inspector Layout
+## Enhance Left-Side Editor Menu Organization
 
 ### Problem
-Category names in the accordion use `font-display` (Termina, uppercase, wide tracking), which is too heavy for an inspector sidebar context. User wants Aeonik Pro in normal capitalization.
+The "Site Content" section is a flat list of 8 items mixing global elements (Announcement Bar, Footer) with content managers (Services, Gallery, Stylists). This makes it harder to scan and understand what each item controls.
 
-### Change: `src/components/dashboard/website-editor/ServicesContent.tsx`
+### Solution
+Split the flat "Site Content" list into two clearly labeled sub-groups, and refine the visual hierarchy between site-wide elements and content managers vs. the homepage layout sections below.
 
-**Line 447** — Change the category heading class:
+### Changes: `src/components/dashboard/website-editor/panels/StructureLayersTab.tsx`
 
-```diff
-- <h3 className="font-display font-medium uppercase tracking-wide">{category.categoryName}</h3>
-+ <h3 className="font-sans font-medium text-sm">{category.categoryName}</h3>
+**1. Reorganize SITE_CONTENT_ITEMS into two groups:**
+
+```text
+GLOBAL ELEMENTS          (site-wide, always present)
+  Announcement Bar
+  Footer CTA
+  Footer
+
+CONTENT MANAGERS         (data sources used by sections)
+  Services
+  Testimonials
+  Gallery
+  Stylists
+  Locations
 ```
 
-This switches from Termina (uppercase, wide tracking) to Aeonik Pro (normal caps, standard spacing), which fits the inspector panel density better and matches how other inspector labels use `font-sans`.
+**2. Render two `SectionGroupHeader` blocks** instead of the single "Site Content" header — one for "Global Elements" and one for "Content Managers", each with its own item list.
 
-Single line change, no structural risk.
+**3. Adjust the divider** between content managers and "Homepage Layout" to use a slightly stronger visual separator (e.g., thicker spacing or a subtle background band on the "Homepage Layout" label).
+
+### Changes: `src/components/dashboard/website-editor/SectionGroupHeader.tsx`
+
+No structural change needed — the existing component works for the new group titles.
+
+### Visual Structure
+```text
+┌──────────────────────────┐
+│ GLOBAL ELEMENTS          │
+│   Announcement Bar       │
+│   Footer CTA             │
+│   Footer                 │
+├──────────────────────────┤
+│ CONTENT MANAGERS         │
+│   Services               │
+│   Testimonials           │
+│   Gallery                │
+│   Stylists               │
+│   Locations              │
+├══════════════════════════┤
+│ HOMEPAGE LAYOUT          │
+│ ─ Above the Fold ─       │
+│   Hero Section           │
+│   Brand Statement        │
+│ ─ Social Proof ─         │
+│   Testimonials           │
+│   Partner Brands         │
+│   ...                    │
+└──────────────────────────┘
+```
+
+### Scope
+Single file change (`StructureLayersTab.tsx`): split the `SITE_CONTENT_ITEMS` array into two arrays and render them under separate group headers.
 
