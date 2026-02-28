@@ -2,6 +2,13 @@ import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { PageConfig } from './useWebsitePages';
 
+export interface AutoFix {
+  type: 'enable_section' | 'enable_page' | 'generate_seo' | 'navigate_only';
+  sectionType?: string;
+  pageId?: string;
+  field?: string;
+}
+
 export interface Finding {
   id: string;
   category: 'seo' | 'conversion' | 'content' | 'structure';
@@ -10,6 +17,7 @@ export interface Finding {
   points: number;
   maxPoints: number;
   actionTarget?: string;
+  autoFix?: AutoFix;
 }
 
 export interface CategoryScore {

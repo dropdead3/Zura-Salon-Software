@@ -51,7 +51,7 @@ import { InspectorPanel } from '@/components/dashboard/website-editor/panels/Ins
 import { useUndoRedo } from '@/hooks/useUndoRedo';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useEditorLayout } from '@/hooks/useEditorLayout';
-import { useWebsiteAnalysis } from '@/hooks/useWebsiteAnalysis';
+import { useWebsiteAnalysis, type Finding } from '@/hooks/useWebsiteAnalysis';
 import {
   useWebsiteSections,
   useUpdateWebsiteSections,
@@ -316,6 +316,8 @@ export default function WebsiteSectionsHub() {
     }
   }, [handleTabChange]);
 
+
+
   const handleDiscardAndSwitch = () => {
     isDirtyRef.current = false;
     window.dispatchEvent(new CustomEvent('editor-dirty-state', { detail: { dirty: false } }));
@@ -360,6 +362,57 @@ export default function WebsiteSectionsHub() {
       toast.success(`Section ${enabled ? 'enabled' : 'disabled'}`);
     } catch { toast.error('Failed to update section'); }
   }, [orderedHomeSections, updateSections, pushUndoState]);
+
+  // ─── Auto-Fix handler for insights findings ───
+  const handleAutoFix = useCallback(async (finding: Finding) => {
+    if (!finding.autoFix) return;
+    const { type, sectionType, pageId, field } = finding.autoFix;
+
+    try {
+      switch (type) {
+        case 'enable_section': {
+          if (!sectionType) break;
+          const sectionId = orderedHomeSections.find(s => s.type === sectionType)?.id ?? sectionType;
+          await handleHomeSectionToggle(sectionId, true);
+          break;
+        }
+        case 'enable_page': {
+          if (!pageId || !pagesConfig) break;
+          const updated: WebsitePagesConfig = {
+            pages: pagesConfig.pages.map(p =>
+              p.id === pageId ? { ...p, enabled: true } : p
+            ),
+          };
+          await updatePages.mutateAsync(updated);
+          toast.success(`"${pageId}" page enabled`);
+          break;
+        }
+        case 'generate_seo': {
+          if (!pageId || !field || !pagesConfig) break;
+          const page = pagesConfig.pages.find(p => p.id === pageId);
+          if (!page) break;
+          const fieldType = field === 'seo_title' ? 'hero_headline' : 'meta_description';
+          const { data: aiResult, error: aiErr } = await supabase.functions.invoke('ai-content-writer', {
+            body: { fieldType, context: `Salon website page: ${page.title}`, tone: 'luxe' },
+          });
+          if (aiErr) throw new Error(aiErr.message);
+          const generatedText = aiResult?.suggestion || aiResult?.alternatives?.[0] || '';
+          if (!generatedText) throw new Error('No content generated');
+          const updated2: WebsitePagesConfig = {
+            pages: pagesConfig.pages.map(p =>
+              p.id === pageId ? { ...p, [field]: generatedText } : p
+            ),
+          };
+          await updatePages.mutateAsync(updated2);
+          toast.success(`Generated ${field === 'seo_title' ? 'SEO title' : 'meta description'} for "${page.title}"`);
+          break;
+        }
+      }
+      handleRunAnalysis();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Auto-fix failed');
+    }
+  }, [orderedHomeSections, handleHomeSectionToggle, pagesConfig, updatePages, handleRunAnalysis]);
 
   const handleHomeSectionDuplicate = useCallback(async (section: SectionConfig) => {
     const newId = generateSectionId();
@@ -797,6 +850,7 @@ export default function WebsiteSectionsHub() {
                 error={websiteAnalysis.error}
                 onAnalyze={handleRunAnalysis}
                 onFindingClick={handleInsightsFindingClick}
+                onAutoFix={handleAutoFix}
               />
             )}
           </StructurePanel>
@@ -848,6 +902,7 @@ export default function WebsiteSectionsHub() {
                     error={websiteAnalysis.error}
                     onAnalyze={handleRunAnalysis}
                     onFindingClick={(target) => { handleInsightsFindingClick(target); setShowMobileStructure(false); }}
+                    onAutoFix={handleAutoFix}
                   />
                 )}
               </StructurePanel>

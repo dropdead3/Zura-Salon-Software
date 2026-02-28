@@ -29,6 +29,13 @@ interface NavItem {
   url: string;
 }
 
+interface AutoFix {
+  type: 'enable_section' | 'enable_page' | 'generate_seo' | 'navigate_only';
+  sectionType?: string;
+  pageId?: string;
+  field?: string;
+}
+
 interface Finding {
   id: string;
   category: "seo" | "conversion" | "content" | "structure";
@@ -36,7 +43,8 @@ interface Finding {
   message: string;
   points: number;
   maxPoints: number;
-  actionTarget?: string; // tab key to navigate to
+  actionTarget?: string;
+  autoFix?: AutoFix;
 }
 
 interface CategoryScore {
@@ -70,6 +78,7 @@ function runRuleChecks(
         points: 0,
         maxPoints: 3,
         actionTarget: `page-settings-${page.id}`,
+        autoFix: { type: 'generate_seo', pageId: page.id, field: 'seo_title' },
       });
     } else {
       findings.push({
@@ -91,6 +100,7 @@ function runRuleChecks(
         points: 0,
         maxPoints: 3,
         actionTarget: `page-settings-${page.id}`,
+        autoFix: { type: 'generate_seo', pageId: page.id, field: 'seo_description' },
       });
     } else {
       findings.push({
@@ -123,6 +133,7 @@ function runRuleChecks(
       points: 0,
       maxPoints: 2,
       actionTarget: "hero",
+      autoFix: { type: 'enable_section', sectionType: 'hero' },
     });
   }
 
@@ -145,6 +156,7 @@ function runRuleChecks(
       points: 0,
       maxPoints: 2,
       actionTarget: "faq",
+      autoFix: { type: 'enable_section', sectionType: 'faq' },
     });
   }
 
@@ -168,6 +180,7 @@ function runRuleChecks(
       points: 0,
       maxPoints: 5,
       actionTarget: "hero",
+      autoFix: { type: 'enable_section', sectionType: 'hero' },
     });
   }
 
@@ -192,6 +205,7 @@ function runRuleChecks(
       points: 0,
       maxPoints: 4,
       actionTarget: "services-preview",
+      autoFix: { type: 'enable_section', sectionType: 'services_preview' },
     });
   }
 
@@ -216,6 +230,7 @@ function runRuleChecks(
       points: 0,
       maxPoints: 3,
       actionTarget: "testimonials-section",
+      autoFix: { type: 'enable_section', sectionType: 'testimonials' },
     });
   }
 
@@ -240,6 +255,7 @@ function runRuleChecks(
       points: 0,
       maxPoints: 3,
       actionTarget: "new-client",
+      autoFix: { type: 'enable_section', sectionType: 'new_client' },
     });
   }
 
@@ -342,6 +358,7 @@ function runRuleChecks(
       message: 'No "About" page — visitors want to know your story',
       points: 0,
       maxPoints: 3,
+      autoFix: { type: 'enable_page', pageId: 'about' },
     });
   }
 
@@ -366,6 +383,7 @@ function runRuleChecks(
       points: 0,
       maxPoints: 2,
       actionTarget: "gallery-section",
+      autoFix: { type: 'enable_section', sectionType: 'gallery' },
     });
   }
 
