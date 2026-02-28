@@ -1,48 +1,23 @@
 
 
-## Collapsible Group Sections for Left Editor Menu
+## Clean Up Collapsed State UI
 
 ### Problem
-The left menu is a long scrollable list with all groups always expanded. As sections grow, it becomes hard to navigate. Groups like "Global Elements" and "Content Managers" take up space even when the user is focused on homepage layout sections.
-
-### Solution
-Make each group header collapsible with a chevron toggle. Groups remember their open/closed state. The group containing the active item auto-expands.
+When groups are collapsed, the left menu has too much vertical whitespace — each collapsed header has generous padding, separators between homepage layout sub-groups remain visible even when both adjacent groups are collapsed, and the overall density is poor.
 
 ### Changes
 
 **1. `src/components/dashboard/website-editor/SectionGroupHeader.tsx`**
-- Add `collapsible` (boolean), `isOpen` (boolean), `onToggle` callback props
-- When collapsible, render a ChevronRight/ChevronDown icon that rotates on toggle
-- Wrap children display logic in parent (the header itself just signals toggle)
-- Keep existing non-collapsible behavior as default for backward compatibility
+- Reduce vertical padding on the collapsible button from `py-2 mt-4` to `py-1.5 mt-2` for tighter collapsed stacking
+- Remove `first:mt-0` — use consistent small top margin instead
+- Reduce `mb-1` to `mb-0.5` so expanded content sits closer to the header
 
 **2. `src/components/dashboard/website-editor/panels/StructureLayersTab.tsx`**
-- Add local state for collapsed groups: `collapsedGroups: Set<string>` (default all open)
-- Wrap each group's item list in a conditional render based on collapsed state
-- Auto-expand the group containing the currently active tab
-- Apply to all three top-level groups: Global Elements, Content Managers, and each Homepage Layout sub-group
-- Add a subtle animated height transition (CSS `grid-rows` trick or simple conditional render)
+- Conditionally hide the `<Separator>` between homepage layout sub-groups when **both** adjacent groups are collapsed (no children visible = no need for a divider)
+- Reduce the heavy `border-t-2` divider between Content Managers and Homepage Layout from `my-3` to `my-2`
+- Tighten the "Homepage Layout" label padding from `px-4 py-1` to `px-3 py-0.5`
+- Reduce `mb-1` / `mb-2` on item containers to `mb-0.5` so collapsed-to-expanded transitions feel snug
 
-### Visual Structure
-```text
-┌──────────────────────────┐
-│ ▾ GLOBAL ELEMENTS        │  ← click to collapse
-│   Announcement Bar       │
-│   Footer CTA             │
-│   Footer                 │
-├──────────────────────────┤
-│ ▸ CONTENT MANAGERS       │  ← collapsed, saves space
-├══════════════════════════┤
-│   HOMEPAGE LAYOUT        │
-│ ▾ Above the Fold         │
-│   Hero Section           │
-│   Brand Statement        │
-│ ▸ Social Proof           │  ← collapsed
-│ ▾ Services & Portfolio   │
-│   ...                    │
-└──────────────────────────┘
-```
-
-### Scope
-Two files: `SectionGroupHeader.tsx` (add toggle UI), `StructureLayersTab.tsx` (add collapse state + conditional rendering).
+### Result
+Collapsed groups stack tightly with minimal gaps. Separators only appear when they separate visible content. The menu feels dense and scannable when collapsed.
 
