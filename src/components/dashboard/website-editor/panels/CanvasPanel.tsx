@@ -191,7 +191,7 @@ export const CanvasPanel = memo(function CanvasPanel({
             'h-full',
             !isDesktop && 'transition-all duration-200 ease-[cubic-bezier(0.25,0.1,0.25,1)]',
             !isDesktop && VIEWPORT_WIDTHS[viewportMode],
-            editorTokens.canvas.previewFrame,
+            isDesktop ? 'overflow-hidden bg-background' : editorTokens.canvas.previewFrame,
             !isDesktop && 'mx-auto'
           )}
           style={{
