@@ -180,10 +180,11 @@ export const CanvasPanel = memo(function CanvasPanel({
       />
 
       {/* Canvas Surface */}
-      <div ref={containerRef} className="flex-1 overflow-hidden bg-muted/30 relative">
+      <div ref={containerRef} className="flex-1 overflow-hidden bg-background relative">
         <div
           className={cn(
-            'h-full transition-all duration-200 ease-[cubic-bezier(0.25,0.1,0.25,1)]',
+            'h-full',
+            !isDesktop && 'transition-all duration-200 ease-[cubic-bezier(0.25,0.1,0.25,1)]',
             !isDesktop && VIEWPORT_WIDTHS[viewportMode],
             editorTokens.canvas.previewFrame,
             !isDesktop && 'mx-auto'
