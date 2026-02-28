@@ -2,20 +2,29 @@
 
 ## Problem
 
-The `editorTokens.canvas.previewFrame` token applies `rounded-[24px]` to the iframe wrapper in all viewport modes, including desktop. This forces a bento-rounded shape on the website content itself. The outer canvas panel should keep its bento styling, but the preview iframe container should have no rounding in desktop mode so the website renders edge-to-edge.
+Two issues visible in the screenshot:
+
+1. **Black scrollbar backgrounds** — The canvas surface container at line 188 uses `overflow-auto`, which renders native scrollbars with dark/black track backgrounds that interfere with the preview.
+2. **Unnecessary horizontal scrollbar** — In desktop mode the iframe width matches the container exactly (via `effectiveWidth = Math.max(DESKTOP_WIDTH, containerSize.w)`), so a horizontal scrollbar should never appear. The `overflow-auto` allows it anyway.
 
 ## Fix — `src/components/dashboard/website-editor/panels/CanvasPanel.tsx`
 
-1. Apply `editorTokens.canvas.previewFrame` only when **not** in desktop mode (mobile/tablet viewports where the bento frame makes visual sense).
-2. In desktop mode, the iframe wrapper gets no rounding — just `overflow-hidden bg-background` so the website fills the full canvas area.
-
-Single line change at line 194: conditionally apply the previewFrame token.
+**Line 188** — Change the canvas surface container's overflow:
 
 ```tsx
 // Before
-editorTokens.canvas.previewFrame,
+<div ref={containerRef} className="flex-1 overflow-auto bg-background relative">
 
-// After
-isDesktop ? 'overflow-hidden bg-background' : editorTokens.canvas.previewFrame,
+// After  
+<div ref={containerRef} className="flex-1 overflow-y-auto overflow-x-hidden bg-background relative">
 ```
+
+This:
+- Removes the horizontal scrollbar entirely (content is responsive and should never overflow horizontally)
+- Keeps vertical scrolling for non-desktop viewports where content may exceed the container height
+- Eliminates the black scrollbar track on the right by limiting overflow to vertical only when needed
+
+For desktop mode specifically, the scaled iframe already fits perfectly within the container dimensions, so vertical overflow is also unlikely — but keeping `overflow-y-auto` is safe as a fallback.
+
+Single line change.
 
