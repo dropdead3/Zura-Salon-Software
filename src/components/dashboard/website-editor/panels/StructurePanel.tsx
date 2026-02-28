@@ -29,7 +29,6 @@ const TABS: { mode: StructureMode; label: string; icon: typeof FileText }[] = [
   { mode: 'pages', label: 'Pages', icon: FileText },
   { mode: 'layers', label: 'Sections', icon: Layers },
   { mode: 'navigation', label: 'Nav', icon: Navigation },
-  { mode: 'insights', label: 'AI', icon: Sparkles },
 ];
 
 export function StructurePanel({
@@ -58,6 +57,26 @@ export function StructurePanel({
             <TooltipContent side="right">Expand Structure</TooltipContent>
           </Tooltip>
         )}
+        {/* AI Insights — top of rail, visually separated */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={() => {
+                onModeChange('insights');
+                onToggleCollapse?.();
+              }}
+              className={cn(
+                'w-8 h-8 flex items-center justify-center rounded-lg transition-colors duration-150',
+                mode === 'insights'
+                  ? 'text-primary bg-primary/10'
+                  : 'text-muted-foreground hover:text-primary hover:bg-primary/5'
+              )}
+            >
+              <Sparkles className="h-4 w-4" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="right">AI Insights</TooltipContent>
+        </Tooltip>
         <div className="w-full border-t border-border/30 my-1" />
         {TABS.map(({ mode: tabMode, label, icon: Icon }) => (
           <Tooltip key={tabMode}>
@@ -87,8 +106,22 @@ export function StructurePanel({
   // ─── Expanded Panel ───
   return (
     <div className={cn(editorTokens.panel.structure, 'h-full flex flex-col')} style={style}>
-      {/* Header with collapse */}
+      {/* Header with AI banner + tabs */}
       <div className="px-3 pt-3 pb-2 border-b border-border/40 space-y-2">
+        {/* AI Insights standalone banner */}
+        <button
+          onClick={() => onModeChange('insights')}
+          className={cn(
+            'w-full flex items-center gap-2 px-3 py-2 rounded-lg font-display text-xs uppercase tracking-[0.08em] transition-all duration-150',
+            mode === 'insights'
+              ? 'bg-primary/15 text-primary ring-1 ring-primary/30 shadow-sm'
+              : 'bg-gradient-to-r from-primary/10 to-primary/5 text-primary/80 hover:from-primary/15 hover:to-primary/10 hover:text-primary'
+          )}
+        >
+          <Sparkles className="h-3.5 w-3.5 flex-shrink-0" />
+          <span>AI Insights</span>
+        </button>
+
         <div className="flex items-center gap-1">
           <div className={cn(editorTokens.segmented.container, 'flex-1')}>
             {TABS.map(({ mode: tabMode, label, icon: Icon }) => (
