@@ -152,7 +152,7 @@ export const CanvasPanel = memo(function CanvasPanel({
 
   const isDesktop = viewportMode === 'desktop';
   const fitScale = isDesktop && containerSize.w > 0
-    ? Math.min(containerSize.w / DESKTOP_WIDTH, 1)
+    ? Math.min((containerSize.w + 1) / DESKTOP_WIDTH, 1)
     : 1;
   const effectiveScale = isDesktop
     ? fitScale * (zoomLevel === '75' ? 0.75 : 1)
@@ -180,7 +180,7 @@ export const CanvasPanel = memo(function CanvasPanel({
       />
 
       {/* Canvas Surface */}
-      <div ref={containerRef} className="flex-1 overflow-hidden bg-background relative">
+      <div ref={containerRef} className="flex-1 overflow-auto bg-background relative">
         <div
           className={cn(
             'h-full',
