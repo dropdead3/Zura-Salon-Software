@@ -14,7 +14,7 @@ export const editorTokens = {
     /** Structure panel (left — width from useEditorLayout) */
     structure: 'flex-shrink-0 bg-card/80 backdrop-blur-xl border border-border/40 rounded-xl shadow-[0_1px_3px_0_rgba(0,0,0,0.04)]',
     /** Canvas panel (center, flexible) */
-    canvas: 'flex-1 min-w-0 bg-muted/20 backdrop-blur-sm rounded-xl overflow-hidden border border-border/40 shadow-[0_1px_3px_0_rgba(0,0,0,0.04)]',
+    canvas: 'flex-1 min-w-0 bg-background backdrop-blur-sm rounded-xl overflow-hidden border border-border/40 shadow-[0_1px_3px_0_rgba(0,0,0,0.04)]',
     /** Inspector panel (right — width from useEditorLayout) */
     inspector: 'flex-shrink-0 bg-card/80 backdrop-blur-xl border border-border/40 rounded-xl shadow-[0_1px_3px_0_rgba(0,0,0,0.04)]',
     /** Collapsed icon rail */
