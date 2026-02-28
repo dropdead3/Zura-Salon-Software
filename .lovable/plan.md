@@ -1,24 +1,26 @@
 
 
-## Plan: Glass Scroll Thumbs for Editor Preview
+## Problem
 
-### Changes to `src/index.css` (lines 1538-1563)
+`scrollbar-width: thin` reserves a 6px gutter that pushes content inward. The glass thumbs need to float **over** the content with no reserved space — an overlay scrollbar.
 
-Replace the current hidden-scrollbar rules with a glass-thumb-on-hover pattern:
+## Plan
 
-- **Default state**: `scrollbar-width: thin`, thumbs fully transparent (no gutter gap since thumb is invisible)
-- **Hover state**: Thumb reveals as a frosted glass pill — `rgba(255, 255, 255, 0.25)` with a subtle `rgba(255, 255, 255, 0.1)` border effect via `box-shadow`
-- **Active/drag state**: Slightly more opaque `rgba(255, 255, 255, 0.4)`
-- **Track**: Always transparent — no background reserved
-- **Webkit scrollbar width**: 6px thin overlay style
+### Update `src/index.css` lines 1538-1576
+
+Two changes:
+
+1. **Add `overflow: overlay`** to scrollable containers — this is the WebKit/Blink property that renders scrollbars on top of content with zero gutter. Falls back gracefully to `auto`.
+2. **Keep `scrollbar-width: thin`** for Firefox (Firefox doesn't support overlay, but `thin` is the thinnest option and the least intrusive gutter).
 
 ```css
-/* ===== EDITOR PREVIEW — Glass scroll thumbs on hover ===== */
+/* ===== EDITOR PREVIEW — Glass overlay scroll thumbs on hover ===== */
 .editor-preview,
 .editor-preview body,
 .editor-preview * {
   scrollbar-width: thin !important;
   scrollbar-color: transparent transparent !important;
+  overflow: overlay !important;
 }
 .editor-preview *:hover {
   scrollbar-color: rgba(255, 255, 255, 0.25) transparent !important;
@@ -54,5 +56,7 @@ Replace the current hidden-scrollbar rules with a glass-thumb-on-hover pattern:
 }
 ```
 
-This gives a luxury frosted-glass scrollbar thumb that only materializes on hover, with no visible track or gutter when idle.
+The key addition is `overflow: overlay !important` on all editor-preview elements. This tells WebKit/Blink to render the scrollbar as a floating overlay on top of content rather than reserving gutter space. The glass thumbs will appear directly over the page content on hover.
+
+Note: `overflow: overlay` is deprecated in spec but remains fully functional in Chrome/Safari (the browsers used for this preview). Elements that don't scroll will simply ignore the property.
 
