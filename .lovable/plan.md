@@ -2,61 +2,30 @@
 
 ## Problem
 
-`scrollbar-width: thin` reserves a 6px gutter that pushes content inward. The glass thumbs need to float **over** the content with no reserved space — an overlay scrollbar.
+The current glass scrollbar thumbs use only white (`rgba(255, 255, 255, 0.25)`), which is visible over dark sections but invisible over light/cream sections. The thumbs need to adapt — appearing darker over light content and lighter over dark content.
 
 ## Plan
 
-### Update `src/index.css` lines 1538-1576
+### Update `src/index.css` lines 1567-1572
 
-Two changes:
+Use a dual-layer thumb with both a dark and light component, combined with a `mix-blend-mode` approach. The simplest effective technique: use a medium gray thumb color with high contrast via `background: rgba(128, 128, 128, 0.4)` and add a `backdrop-filter: contrast(0.85)` or use a `box-shadow` that provides both light and dark edges.
 
-1. **Add `overflow: overlay`** to scrollable containers — this is the WebKit/Blink property that renders scrollbars on top of content with zero gutter. Falls back gracefully to `auto`.
-2. **Keep `scrollbar-width: thin`** for Firefox (Firefox doesn't support overlay, but `thin` is the thinnest option and the least intrusive gutter).
+The most reliable cross-browser approach is a **neutral gray thumb with both an inner light and dark shadow**, creating a "pill" that reads on any background:
 
 ```css
-/* ===== EDITOR PREVIEW — Glass overlay scroll thumbs on hover ===== */
-.editor-preview,
-.editor-preview body,
-.editor-preview * {
-  scrollbar-width: thin !important;
-  scrollbar-color: transparent transparent !important;
-  overflow: overlay !important;
-}
-.editor-preview *:hover {
-  scrollbar-color: rgba(255, 255, 255, 0.25) transparent !important;
-}
-
-.editor-preview ::-webkit-scrollbar,
-.editor-preview::-webkit-scrollbar {
-  width: 6px !important;
-  height: 6px !important;
-  background: transparent !important;
-}
-.editor-preview ::-webkit-scrollbar-track,
-.editor-preview::-webkit-scrollbar-track,
-.editor-preview *::-webkit-scrollbar-track {
-  background: transparent !important;
-}
-.editor-preview ::-webkit-scrollbar-thumb,
-.editor-preview::-webkit-scrollbar-thumb {
-  background: transparent !important;
-  border-radius: 3px !important;
-  transition: background 0.2s ease !important;
-}
 .editor-preview *:hover::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.25) !important;
-  box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.15) !important;
+  background: rgba(128, 128, 128, 0.35) !important;
+  box-shadow:
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.3),
+    inset 0 0 4px rgba(0, 0, 0, 0.15) !important;
+  backdrop-filter: blur(4px) !important;
 }
 .editor-preview *:hover::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.4) !important;
-}
-.editor-preview ::-webkit-scrollbar-corner,
-.editor-preview::-webkit-scrollbar-corner {
-  background: transparent !important;
+  background: rgba(128, 128, 128, 0.5) !important;
 }
 ```
 
-The key addition is `overflow: overlay !important` on all editor-preview elements. This tells WebKit/Blink to render the scrollbar as a floating overlay on top of content rather than reserving gutter space. The glass thumbs will appear directly over the page content on hover.
+Also update the Firefox `scrollbar-color` fallback on line 1547 from `rgba(255, 255, 255, 0.25)` to `rgba(128, 128, 128, 0.35)`.
 
-Note: `overflow: overlay` is deprecated in spec but remains fully functional in Chrome/Safari (the browsers used for this preview). Elements that don't scroll will simply ignore the property.
+The neutral gray base with the dual inset shadow (white inner border + dark inner glow) creates a frosted glass pill that contrasts against both light cream sections and dark sections. The `backdrop-filter: blur` adds the frosted glass depth.
 
