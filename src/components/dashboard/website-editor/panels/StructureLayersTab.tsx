@@ -47,16 +47,20 @@ import {
   type BuiltinSectionType,
 } from '@/hooks/useWebsiteSections';
 
-// Site Content items (data managers)
-const SITE_CONTENT_ITEMS = [
+// Global Elements (site-wide, always present)
+const GLOBAL_ELEMENTS = [
   { tab: 'banner', label: 'Announcement Bar', description: 'Site-wide top banner', icon: Megaphone },
+  { tab: 'footer-cta', label: 'Footer CTA', description: 'Pre-footer call to action', icon: MousePointerClick },
+  { tab: 'footer', label: 'Footer', description: 'Footer links & copyright', icon: PanelBottom },
+];
+
+// Content Managers (data sources used by sections)
+const CONTENT_MANAGERS = [
   { tab: 'services', label: 'Services', description: 'Manage service catalog', icon: Scissors },
   { tab: 'testimonials', label: 'Testimonials', description: 'Manage client reviews', icon: MessageSquareQuote },
   { tab: 'gallery', label: 'Gallery', description: 'Manage portfolio images', icon: Images },
   { tab: 'stylists', label: 'Stylists', description: 'Manage team profiles', icon: Users },
   { tab: 'locations', label: 'Locations', description: 'Manage salon locations', icon: MapPin },
-  { tab: 'footer-cta', label: 'Footer CTA', description: 'Pre-footer call to action', icon: MousePointerClick },
-  { tab: 'footer', label: 'Footer', description: 'Footer links & copyright', icon: PanelBottom },
 ];
 
 // Built-in section → tab mapping
@@ -173,9 +177,9 @@ export function StructureLayersTab({
           {/* Site Content (home page only) */}
           {isHomePage && (
             <>
-              <SectionGroupHeader title="Site Content" />
-              <div className="space-y-0.5 mb-2">
-                {SITE_CONTENT_ITEMS.map(item => (
+              <SectionGroupHeader title="Global Elements" />
+              <div className="space-y-0.5 mb-1">
+                {GLOBAL_ELEMENTS.map(item => (
                   <ContentNavItem
                     key={item.tab}
                     label={item.label}
@@ -186,7 +190,20 @@ export function StructureLayersTab({
                   />
                 ))}
               </div>
-              <Separator className="my-3 mx-3" />
+              <SectionGroupHeader title="Content Managers" />
+              <div className="space-y-0.5 mb-2">
+                {CONTENT_MANAGERS.map(item => (
+                  <ContentNavItem
+                    key={item.tab}
+                    label={item.label}
+                    description={item.description}
+                    icon={item.icon}
+                    isActive={activeTab === item.tab}
+                    onSelect={() => onTabChange(item.tab)}
+                  />
+                ))}
+              </div>
+              <div className="my-3 mx-3 border-t-2 border-border/50" />
             </>
           )}
 
