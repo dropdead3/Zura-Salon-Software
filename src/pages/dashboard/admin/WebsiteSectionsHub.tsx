@@ -43,6 +43,7 @@ import { StructurePanel, type StructureMode } from '@/components/dashboard/websi
 import { StructurePagesTab } from '@/components/dashboard/website-editor/panels/StructurePagesTab';
 import { StructureLayersTab } from '@/components/dashboard/website-editor/panels/StructureLayersTab';
 import { StructureNavTab } from '@/components/dashboard/website-editor/panels/StructureNavTab';
+import { StructureInsightsTab } from '@/components/dashboard/website-editor/panels/StructureInsightsTab';
 import { CanvasPanel } from '@/components/dashboard/website-editor/panels/CanvasPanel';
 import { InspectorPanel } from '@/components/dashboard/website-editor/panels/InspectorPanel';
 
@@ -50,6 +51,7 @@ import { InspectorPanel } from '@/components/dashboard/website-editor/panels/Ins
 import { useUndoRedo } from '@/hooks/useUndoRedo';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useEditorLayout } from '@/hooks/useEditorLayout';
+import { useWebsiteAnalysis } from '@/hooks/useWebsiteAnalysis';
 import {
   useWebsiteSections,
   useUpdateWebsiteSections,
@@ -186,6 +188,17 @@ export default function WebsiteSectionsHub() {
   const updateSections = useUpdateWebsiteSections();
   const isEditorLoading = pagesLoading || sectionsLoading;
 
+  // ─── Website Analysis ───
+  const websiteAnalysis = useWebsiteAnalysis();
+  const handleRunAnalysis = useCallback(() => {
+    if (!pagesConfig) return;
+    // Collect nav items from pages with show_in_nav
+    const navItems = pagesConfig.pages
+      .filter(p => p.show_in_nav && p.enabled)
+      .map(p => ({ label: p.title, url: p.slug || '/' }));
+    websiteAnalysis.analyze(pagesConfig.pages, navItems, {});
+  }, [pagesConfig, websiteAnalysis]);
+
   const selectedPage = useMemo(
     () => pagesConfig?.pages.find(p => p.id === selectedPageId),
     [pagesConfig, selectedPageId]
@@ -293,6 +306,15 @@ export default function WebsiteSectionsHub() {
       replaceTabInUrl(tab);
     }
   }, [replaceTabInUrl]);
+
+  const handleInsightsFindingClick = useCallback((actionTarget: string) => {
+    if (actionTarget === 'navigation') {
+      setStructureMode('navigation');
+    } else {
+      handleTabChange(actionTarget);
+      setStructureMode('layers');
+    }
+  }, [handleTabChange]);
 
   const handleDiscardAndSwitch = () => {
     isDirtyRef.current = false;
@@ -768,6 +790,15 @@ export default function WebsiteSectionsHub() {
             {structureMode === 'navigation' && (
               <StructureNavTab />
             )}
+            {structureMode === 'insights' && (
+              <StructureInsightsTab
+                data={websiteAnalysis.data}
+                isLoading={websiteAnalysis.isLoading}
+                error={websiteAnalysis.error}
+                onAnalyze={handleRunAnalysis}
+                onFindingClick={handleInsightsFindingClick}
+              />
+            )}
           </StructurePanel>
         )}
 
@@ -809,6 +840,15 @@ export default function WebsiteSectionsHub() {
                 )}
                 {structureMode === 'navigation' && (
                   <StructureNavTab />
+                )}
+                {structureMode === 'insights' && (
+                  <StructureInsightsTab
+                    data={websiteAnalysis.data}
+                    isLoading={websiteAnalysis.isLoading}
+                    error={websiteAnalysis.error}
+                    onAnalyze={handleRunAnalysis}
+                    onFindingClick={(target) => { handleInsightsFindingClick(target); setShowMobileStructure(false); }}
+                  />
                 )}
               </StructurePanel>
             </div>

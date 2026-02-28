@@ -6,14 +6,14 @@
  */
 
 import { type ReactNode } from 'react';
-import { FileText, Layers, Navigation, ChevronLeft, ChevronRight } from 'lucide-react';
+import { FileText, Layers, Navigation, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { editorTokens } from '../editor-tokens';
 import { ContentFade } from '../EditorMotion';
 import { WebsiteEditorSearch } from '../WebsiteEditorSearch';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
-export type StructureMode = 'pages' | 'layers' | 'navigation';
+export type StructureMode = 'pages' | 'layers' | 'navigation' | 'insights';
 
 interface StructurePanelProps {
   mode: StructureMode;
@@ -29,6 +29,7 @@ const TABS: { mode: StructureMode; label: string; icon: typeof FileText }[] = [
   { mode: 'pages', label: 'Pages', icon: FileText },
   { mode: 'layers', label: 'Sections', icon: Layers },
   { mode: 'navigation', label: 'Nav', icon: Navigation },
+  { mode: 'insights', label: 'AI', icon: Sparkles },
 ];
 
 export function StructurePanel({
