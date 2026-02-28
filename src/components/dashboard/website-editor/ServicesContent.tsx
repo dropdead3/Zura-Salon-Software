@@ -444,7 +444,7 @@ export function ServicesContent() {
                   ) : (
                     <>
                       <div className="text-left">
-                        <h3 className="font-display font-medium uppercase tracking-wide">{category.categoryName}</h3>
+                        <h3 className="font-sans font-medium text-sm">{category.categoryName}</h3>
                         <p className="text-xs text-muted-foreground font-sans font-normal">
                           {category.items.length} services
                         </p>
