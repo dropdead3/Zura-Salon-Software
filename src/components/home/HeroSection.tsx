@@ -5,6 +5,7 @@ import { ChevronDown, ArrowRight } from "lucide-react";
 import { useRef, useState, useEffect } from "react";
 import { ConsultationFormDialog } from "@/components/ConsultationFormDialog";
 import { Eyebrow } from "@/components/ui/Eyebrow";
+import { useHeroConfig, DEFAULT_HERO } from "@/hooks/useSectionConfig";
 
 const rotatingWords = ["Salon", "Extensions", "Salon", "Blonding", "Salon", "Color", "Salon", "Results"];
 
@@ -14,6 +15,8 @@ interface HeroSectionProps {
 }
 
 export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
+  const { data: heroConfig } = useHeroConfig();
+  const headlineText = heroConfig?.headline_text ?? DEFAULT_HERO.headline_text;
   const [consultationOpen, setConsultationOpen] = useState(false);
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [isAnimationReady, setIsAnimationReady] = useState(false);
@@ -87,7 +90,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                 Hair • Color • Artistry
               </p>
               <h1 className="font-display text-[clamp(2.25rem,8vw,5.5rem)] font-normal text-foreground leading-[0.95] flex flex-col items-center">
-                <span className="whitespace-nowrap block">Your Salon</span>
+                <span className="whitespace-nowrap block">{headlineText}</span>
                 <span className="block">{rotatingWords[currentWordIndex]}</span>
               </h1>
               <p className="mt-8 text-sm md:text-base text-muted-foreground font-sans font-light max-w-md mx-auto leading-relaxed">
@@ -212,7 +215,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                 transition={{ ...springTransition, delay: 2.5 }}
                 style={{ x: topLineX, opacity: headlineScrollOpacity }}
               >
-                Your Salon
+                {headlineText}
               </motion.span>
               <motion.span 
                 className="block overflow-hidden h-[1.15em]"

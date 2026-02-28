@@ -89,6 +89,16 @@ export function HeroEditor() {
         />
       )}
 
+      {/* Headline Text */}
+      <CharCountInput
+        label="Headline Text"
+        value={localConfig.headline_text}
+        onChange={(value) => updateField('headline_text', value)}
+        maxLength={30}
+        placeholder="Your Salon"
+        description="The static headline above the rotating words"
+      />
+
       {/* Rotating Words */}
       <ToggleInput
         label="Show Rotating Words"

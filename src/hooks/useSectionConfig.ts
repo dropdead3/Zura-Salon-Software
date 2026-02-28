@@ -74,6 +74,7 @@ function useSectionConfig<T>(sectionId: string, defaultValue: T) {
 // ============================================
 
 export interface HeroConfig {
+  headline_text: string;
   eyebrow: string;
   rotating_words: string[];
   subheadline_line1: string;
@@ -323,6 +324,7 @@ export interface LocationsDisplayConfig {
 // ============================================
 
 export const DEFAULT_HERO: HeroConfig = {
+  headline_text: "Your Salon",
   eyebrow: "Your Tagline Here",
   rotating_words: ["Salon", "Studio", "Experience"],
   subheadline_line1: "Where expertise meets artistry.",
