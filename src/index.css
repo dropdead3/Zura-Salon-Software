@@ -1548,3 +1548,22 @@ html {
 *:hover {
   scrollbar-color: rgba(128, 128, 128, 0.35) transparent;
 }
+
+/* ZuraLoader disco shimmer */
+@keyframes zura-disco {
+  0%, 100% { opacity: 0.15; transform: scale(0.95); box-shadow: 0 0 0px rgba(255,255,255,0); }
+  25% { opacity: 1; transform: scale(1.12); box-shadow: 0 0 12px rgba(255,255,255,0.6); }
+  50% { opacity: 0.35; transform: scale(0.98); box-shadow: 0 0 2px rgba(255,255,255,0.05); }
+  75% { opacity: 0.9; transform: scale(1.08); box-shadow: 0 0 10px rgba(255,255,255,0.45); }
+}
+
+.zura-shimmer {
+  animation: zura-disco ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .zura-shimmer {
+    animation: none;
+    opacity: 0.6;
+  }
+}
