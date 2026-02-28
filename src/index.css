@@ -1535,23 +1535,31 @@ html, body, #root {
   transition: box-shadow 0.3s ease;
 }
 
-/* ===== GLOBAL — Glass overlay scroll thumbs (no gutter, floating thumb on hover) ===== */
+/* ===== GLOBAL — Floating glass scrollbar (no gutter, content extends edge-to-edge) ===== */
+/* Negative margin hack: body extends under the scrollbar gutter so content fills full viewport */
 html {
-  overflow: overlay !important;
-  scrollbar-width: thin !important;
-  scrollbar-color: transparent transparent !important;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
 }
 html:hover {
-  scrollbar-color: rgba(128, 128, 128, 0.35) transparent !important;
+  scrollbar-color: rgba(128, 128, 128, 0.35) transparent;
 }
-* {
-  scrollbar-width: thin !important;
-  scrollbar-color: transparent transparent !important;
-}
-*:hover {
-  scrollbar-color: rgba(128, 128, 128, 0.35) transparent !important;
+body {
+  margin-right: calc(100% - 100vw);
 }
 
+/* Nested scrollable elements: thin + transparent */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+*:hover {
+  scrollbar-color: rgba(128, 128, 128, 0.35) transparent;
+}
+
+/* WebKit: transparent 6px track, adaptive glass thumb on hover */
 ::-webkit-scrollbar {
   width: 6px !important;
   height: 6px !important;
@@ -1563,7 +1571,6 @@ html:hover {
 ::-webkit-scrollbar-thumb {
   background: transparent !important;
   border-radius: 3px !important;
-  transition: background 0.2s ease !important;
 }
 html:hover ::-webkit-scrollbar-thumb,
 *:hover::-webkit-scrollbar-thumb {
