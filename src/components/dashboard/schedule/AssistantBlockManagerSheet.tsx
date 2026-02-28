@@ -22,6 +22,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Users, Clock, Trash2, Loader2 } from 'lucide-react';
+import { ZuraLoader } from '@/components/ui/ZuraLoader';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
@@ -346,7 +347,7 @@ export function AssistantBlockManagerSheet({
           <ScrollArea className="flex-1 px-6 py-4">
             {isLoading ? (
               <div className="flex items-center justify-center h-32">
-                <Loader2 className={tokens.loading.spinner} />
+                <ZuraLoader />
               </div>
             ) : (
               <>

@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react';
 import { parseISO, isToday, isTomorrow, isPast, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
-import { Plus, Clock, User, CheckCircle2, XCircle, Calendar, List, LayoutGrid, MapPin, Repeat, Users, CalendarDays, TrendingUp, AlertCircle, UserCheck, UserPlus, Inbox, Loader2 } from 'lucide-react';
+import { Plus, Clock, User, CheckCircle2, XCircle, Calendar, List, LayoutGrid, MapPin, Repeat, Users, CalendarDays, TrendingUp, AlertCircle, UserCheck, UserPlus, Inbox } from 'lucide-react';
+import { ZuraLoader } from '@/components/ui/ZuraLoader';
 import { tokens, APPOINTMENT_STATUS_BADGE } from '@/lib/design-tokens';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
@@ -590,7 +591,7 @@ export default function AssistantSchedule() {
               <TabsContent value="overview" className="space-y-6">
                 {loadingAll ? (
                   <div className="flex items-center justify-center h-64">
-                    <Loader2 className={tokens.loading.spinner} />
+                    <ZuraLoader size="lg" />
                   </div>
                 ) : (
                   <>
@@ -791,7 +792,7 @@ export default function AssistantSchedule() {
                   <CardContent>
                     {loadingAll ? (
                       <div className="flex items-center justify-center h-64">
-                        <Loader2 className={tokens.loading.spinner} />
+                        <ZuraLoader size="lg" />
                       </div>
                     ) : allRequests.length === 0 ? (
                       <EmptyState icon={Inbox} title="No requests yet" description="Assistant requests will appear here as they're created." />
@@ -836,7 +837,7 @@ export default function AssistantSchedule() {
                   <CardContent>
                     {loadingMyRequests ? (
                       <div className="flex items-center justify-center h-64">
-                        <Loader2 className={tokens.loading.spinner} />
+                        <ZuraLoader size="lg" />
                       </div>
                     ) : (
                       <RequestsList requests={filterActive(myRequests)} isStylistView={true} />
@@ -882,7 +883,7 @@ export default function AssistantSchedule() {
                   <CardContent>
                     {loadingMyAssignments ? (
                       <div className="flex items-center justify-center h-64">
-                        <Loader2 className={tokens.loading.spinner} />
+                        <ZuraLoader size="lg" />
                       </div>
                     ) : (
                       <RequestsList requests={filterActive(myAssignments)} isStylistView={false} />
