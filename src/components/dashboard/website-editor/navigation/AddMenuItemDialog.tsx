@@ -11,7 +11,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { useCreateMenuItem, type MenuItemType } from '@/hooks/useWebsiteMenus';
+import { useCreateMenuItem, type MenuItemType, type MenuItem } from '@/hooks/useWebsiteMenus';
 import type { WebsitePagesConfig } from '@/hooks/useWebsitePages';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -30,14 +30,19 @@ interface AddMenuItemDialogProps {
   menuId: string;
   pagesConfig: WebsitePagesConfig | null | undefined;
   existingItemCount: number;
+  menuItems?: MenuItem[];
 }
 
-export function AddMenuItemDialog({ open, onOpenChange, menuId, pagesConfig, existingItemCount }: AddMenuItemDialogProps) {
+export function AddMenuItemDialog({ open, onOpenChange, menuId, pagesConfig, existingItemCount, menuItems }: AddMenuItemDialogProps) {
   const [type, setType] = useState<MenuItemType>('page_link');
   const [label, setLabel] = useState('');
   const [targetPageId, setTargetPageId] = useState('');
   const [targetUrl, setTargetUrl] = useState('');
+  const [parentId, setParentId] = useState('');
   const createItem = useCreateMenuItem();
+
+  // Get dropdown parents for nesting
+  const dropdownParents = (menuItems ?? []).filter(i => i.item_type === 'dropdown_parent');
 
   const handleCreate = () => {
     if (!label.trim()) {
@@ -50,6 +55,7 @@ export function AddMenuItemDialog({ open, onOpenChange, menuId, pagesConfig, exi
       label: label.trim(),
       item_type: type,
       sort_order: existingItemCount,
+      ...(parentId ? { parent_id: parentId } : {}),
     };
 
     if (type === 'page_link' && targetPageId) {
@@ -83,6 +89,7 @@ export function AddMenuItemDialog({ open, onOpenChange, menuId, pagesConfig, exi
     setLabel('');
     setTargetPageId('');
     setTargetUrl('');
+    setParentId('');
   };
 
   return (
@@ -166,6 +173,27 @@ export function AddMenuItemDialog({ open, onOpenChange, menuId, pagesConfig, exi
                 placeholder={type === 'external_url' ? 'https://example.com' : '/booking'}
                 className="h-9 text-sm"
               />
+            </div>
+          )}
+
+          {/* Parent Item (nesting) */}
+          {dropdownParents.length > 0 && type !== 'dropdown_parent' && (
+            <div className="space-y-1.5">
+              <Label className="text-xs">Parent Item</Label>
+              <Select value={parentId} onValueChange={setParentId}>
+                <SelectTrigger className="h-9 text-sm">
+                  <SelectValue placeholder="Top level (no parent)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Top Level</SelectItem>
+                  {dropdownParents.map(p => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[10px] text-muted-foreground">Nest this item under a dropdown parent</p>
             </div>
           )}
 

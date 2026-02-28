@@ -254,7 +254,8 @@ export function useSeedMenus() {
         { label: 'Hair Extensions', item_type: 'page_link', target_url: '/extensions', sort_order: 2 },
         { label: 'Join The Team', item_type: 'page_link', target_url: '/careers', sort_order: 3 },
         { label: 'Gallery', item_type: 'page_link', target_url: '/gallery', sort_order: 4 },
-        { label: 'Book Consult', item_type: 'cta', target_url: '/booking', cta_style: 'primary', sort_order: 5 },
+        { label: 'Contact Us', item_type: 'page_link', target_url: '/contact', sort_order: 5 },
+        { label: 'Book Consult', item_type: 'cta', target_url: '/booking', cta_style: 'primary', sort_order: 6 },
       ];
 
       const { data: insertedPrimary, error: e3 } = await supabase

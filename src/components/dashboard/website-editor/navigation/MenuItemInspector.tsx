@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Trash2, Settings } from 'lucide-react';
+import { Trash2, Settings, Copy } from 'lucide-react';
 import { EditorCard } from '../EditorCard';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,6 +10,7 @@ import { UrlInput } from '../inputs/UrlInput';
 import {
   useUpdateMenuItem,
   useDeleteMenuItem,
+  useCreateMenuItem,
   type MenuItem,
   type MenuItemType,
   type CtaStyle,
@@ -33,11 +34,13 @@ interface MenuItemInspectorProps {
   item: MenuItem;
   menuId: string;
   pagesConfig: WebsitePagesConfig | null | undefined;
+  allItems?: MenuItem[];
 }
 
-export function MenuItemInspector({ item, menuId, pagesConfig }: MenuItemInspectorProps) {
+export function MenuItemInspector({ item, menuId, pagesConfig, allItems }: MenuItemInspectorProps) {
   const updateItem = useUpdateMenuItem();
   const deleteItem = useDeleteMenuItem();
+  const createItem = useCreateMenuItem();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Local state for debounced fields
@@ -237,8 +240,34 @@ export function MenuItemInspector({ item, menuId, pagesConfig }: MenuItemInspect
           <p className="text-[10px] text-muted-foreground">Optional analytics identifier</p>
         </div>
 
-        {/* Delete */}
-        <div className="pt-2 border-t border-border/40">
+        {/* Actions */}
+        <div className="pt-2 border-t border-border/40 flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size={tokens.button.inline}
+            className="text-xs"
+            onClick={() => {
+              createItem.mutate({
+                menu_id: menuId,
+                label: `${item.label} (copy)`,
+                item_type: item.item_type,
+                target_url: item.target_url,
+                target_page_id: item.target_page_id,
+                target_anchor: item.target_anchor,
+                cta_style: item.cta_style,
+                visibility: item.visibility,
+                open_in_new_tab: item.open_in_new_tab,
+                parent_id: item.parent_id,
+                sort_order: item.sort_order + 1,
+              } as any, {
+                onSuccess: () => toast.success('Item duplicated'),
+              });
+            }}
+            disabled={createItem.isPending}
+          >
+            <Copy className="h-3 w-3 mr-1" />
+            Duplicate
+          </Button>
           <Button
             variant="ghost"
             size={tokens.button.inline}
@@ -246,7 +275,7 @@ export function MenuItemInspector({ item, menuId, pagesConfig }: MenuItemInspect
             onClick={() => setShowDeleteConfirm(true)}
           >
             <Trash2 className="h-3 w-3 mr-1" />
-            Delete Item
+            Delete
           </Button>
         </div>
       </div>
