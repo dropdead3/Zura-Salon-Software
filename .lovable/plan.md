@@ -2,23 +2,59 @@
 
 ## Problem
 
-The editor canvas iframe renders at a narrower viewport than the live front-end site. The logo uses responsive classes `h-8 lg:h-7` — at `<1024px` (editor iframe width) the logo is 32px, at `>=1024px` (live site) it's 28px. While the CSS sizes differ, the overall impression in the editor is that the logo appears smaller because the entire iframe is rendered in a narrower container. The header also shifts from `h-14` to `h-16` at the `lg` breakpoint, changing proportions.
+The editor iframe renders at whatever pixel width the canvas panel actually occupies (roughly 600-800px depending on sidebar widths). The site inside the iframe responds to that narrow width, triggering tablet/mobile breakpoints — fewer nav links, stacked layouts, etc. You're seeing a "responsive" view instead of a true full-desktop preview.
 
-The core fix is to unify the logo and header sizing so they're consistent regardless of viewport width.
+## Solution
 
-## Plan
+For desktop viewport mode, render the iframe at a fixed intrinsic width of **1440px** and CSS-scale it down to fit the available container. This is the standard approach used by website builders (Webflow, Squarespace, etc.) to show a full-width desktop preview inside a narrower panel.
 
-### 1. Normalize logo height in Header.tsx
+### Changes in `CanvasPanel.tsx`
 
-Change the logo `<img>` class from `h-8 lg:h-7` to a single consistent `h-7` (28px). This ensures the same logo size whether viewed in the editor iframe or on the live site.
+1. **Measure the container width** using a `ResizeObserver` on the canvas surface `div`.
 
-**Line 354**: `"h-8 lg:h-7 w-auto"` → `"h-7 w-auto"`
+2. **For desktop mode**: Set the iframe wrapper to a fixed `width: 1440px` and apply `transform: scale(containerWidth / 1440)` with `transform-origin: top left`. Set the wrapper height to `containerHeight / scale` so the iframe fills the visible area. Remove `max-w-[1280px]` constraint for desktop.
 
-### 2. Normalize header row height
+3. **For tablet/mobile modes**: Keep the current behavior (constrained max-width, no scaling override) since those modes intentionally show responsive layouts.
 
-Change the header row from `h-14 lg:h-16` to a consistent `h-16` so the logo-to-header proportion stays the same at all widths.
+4. **Combine with zoom**: The existing zoom control (`fit`, `100%`, `75%`) multiplies with the desktop scale. `fit` = auto-scale to container. `100%` = no scaling (shows scrollbars if needed). `75%` = 0.75x.
 
-**Line 338**: `"flex items-center justify-between h-14 lg:h-16 gap-4"` → `"flex items-center justify-between h-16 gap-4"`
+### Implementation detail
 
-Two single-class edits in `Header.tsx`.
+```tsx
+// New: measure container
+const containerRef = useRef<HTMLDivElement>(null);
+const [containerSize, setContainerSize] = useState({ w: 0, h: 0 });
+
+useEffect(() => {
+  const el = containerRef.current;
+  if (!el) return;
+  const ro = new ResizeObserver(([entry]) => {
+    setContainerSize({ w: entry.contentRect.width, h: entry.contentRect.height });
+  });
+  ro.observe(el);
+  return () => ro.disconnect();
+}, []);
+
+// Desktop: fixed 1440px width, scaled to fit
+const DESKTOP_WIDTH = 1440;
+const isDesktop = viewportMode === 'desktop';
+const fitScale = isDesktop && containerSize.w > 0
+  ? Math.min(containerSize.w / DESKTOP_WIDTH, 1)
+  : 1;
+const effectiveScale = isDesktop ? fitScale * (zoomLevel === '75' ? 0.75 : zoomLevel === '100' ? 1 : 1) : ZOOM_SCALES[zoomLevel];
+
+// For desktop, override zoom "fit" to mean auto-scale, "100%" to mean true 1440px
+```
+
+The iframe wrapper for desktop gets:
+```tsx
+style={{
+  width: isDesktop ? `${DESKTOP_WIDTH}px` : undefined,
+  height: isDesktop ? `${containerSize.h / effectiveScale}px` : undefined,
+  transform: `scale(${effectiveScale})`,
+  transformOrigin: 'top left',
+}}
+```
+
+This ensures the site always renders as if viewed at 1440px wide, with all nav links visible and full desktop layout, regardless of how narrow the editor panel actually is.
 
