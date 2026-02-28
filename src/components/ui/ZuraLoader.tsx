@@ -1,4 +1,4 @@
-import { motion, useReducedMotion } from 'framer-motion';
+import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 
 // Deterministic pseudo-random based on cell index
@@ -29,15 +29,21 @@ interface ZuraLoaderProps {
 }
 
 export function ZuraLoader({ size = 'md', className }: ZuraLoaderProps) {
-  const reduceMotion = useReducedMotion();
+  const [mounted, setMounted] = useState(false);
   const { cell, gap } = SIZES[size];
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   return (
-    <motion.div
-      initial={reduceMotion ? false : { opacity: 0 }}
-      animate={reduceMotion ? undefined : { opacity: 1 }}
-      transition={{ duration: 0.2 }}
-      className={cn('grid grid-cols-7', gap, className)}
+    <div
+      className={cn(
+        'grid grid-cols-7 transition-opacity duration-200',
+        gap,
+        mounted ? 'opacity-100' : 'opacity-0',
+        className,
+      )}
       role="status"
       aria-label="Loading"
     >
@@ -49,44 +55,27 @@ export function ZuraLoader({ size = 'md', className }: ZuraLoaderProps) {
           const delay = seededRandom(idx + 100) * 2;
 
           return (
-            <motion.span
+            <span
               key={`${r}-${i}`}
               className={cn(
                 cell,
                 'border',
                 isLit
-                  ? 'bg-foreground/80 border-foreground/20'
-                  : 'bg-transparent border-border/30'
+                  ? 'bg-foreground/80 border-foreground/20 zura-shimmer'
+                  : 'bg-transparent border-border/30',
               )}
-              initial={
-                reduceMotion || !isLit
-                  ? undefined
-                  : { opacity: 0.15, scale: 0.95 }
-              }
-              animate={
-                reduceMotion || !isLit
-                  ? undefined
-                  : {
-                      opacity: [0.15, 1, 0.35, 0.9, 0.15],
-                      scale: [0.95, 1.15, 0.98, 1.1, 0.95],
-                      boxShadow: [
-                        '0 0 0px rgba(255,255,255,0)',
-                        '0 0 12px rgba(255,255,255,0.6)',
-                        '0 0 2px rgba(255,255,255,0.05)',
-                        '0 0 10px rgba(255,255,255,0.45)',
-                        '0 0 0px rgba(255,255,255,0)',
-                      ],
+              style={
+                isLit
+                  ? {
+                      animationDuration: `${duration}s`,
+                      animationDelay: `${delay}s`,
                     }
-              }
-              transition={
-                reduceMotion || !isLit
-                  ? undefined
-                  : { duration, repeat: Infinity, delay, ease: 'easeInOut' }
+                  : undefined
               }
             />
           );
-        })
+        }),
       )}
-    </motion.div>
+    </div>
   );
 }
