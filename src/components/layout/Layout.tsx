@@ -97,7 +97,7 @@ export function Layout({ children }: LayoutProps) {
   // Editor iframe: parallax footer reveal (same pattern as public site, minus PageTransition/StickyFooterBar)
   if (isEditorPreview) {
     return (
-      <div className="min-h-screen flex flex-col relative theme-cream" style={{ colorScheme: 'light' }}>
+      <div className="min-h-screen flex flex-col relative theme-cream bg-secondary" style={{ colorScheme: 'light' }}>
         {/* Fixed footer revealed as content scrolls past */}
         <div
           ref={footerRef}
@@ -124,7 +124,7 @@ export function Layout({ children }: LayoutProps) {
   // Editor preview in view mode OR public site: full layout with footer reveal
 
   return (
-    <div className="min-h-screen flex flex-col relative theme-cream" style={{ colorScheme: 'light' }}>
+    <div className="min-h-screen flex flex-col relative theme-cream bg-secondary" style={{ colorScheme: 'light' }}>
       {/* Fixed footer that reveals as content scrolls */}
       <div 
         ref={footerRef}
