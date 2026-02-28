@@ -1,65 +1,48 @@
 
 
-## Enhance Left-Side Editor Menu Organization
+## Collapsible Group Sections for Left Editor Menu
 
 ### Problem
-The "Site Content" section is a flat list of 8 items mixing global elements (Announcement Bar, Footer) with content managers (Services, Gallery, Stylists). This makes it harder to scan and understand what each item controls.
+The left menu is a long scrollable list with all groups always expanded. As sections grow, it becomes hard to navigate. Groups like "Global Elements" and "Content Managers" take up space even when the user is focused on homepage layout sections.
 
 ### Solution
-Split the flat "Site Content" list into two clearly labeled sub-groups, and refine the visual hierarchy between site-wide elements and content managers vs. the homepage layout sections below.
+Make each group header collapsible with a chevron toggle. Groups remember their open/closed state. The group containing the active item auto-expands.
 
-### Changes: `src/components/dashboard/website-editor/panels/StructureLayersTab.tsx`
+### Changes
 
-**1. Reorganize SITE_CONTENT_ITEMS into two groups:**
+**1. `src/components/dashboard/website-editor/SectionGroupHeader.tsx`**
+- Add `collapsible` (boolean), `isOpen` (boolean), `onToggle` callback props
+- When collapsible, render a ChevronRight/ChevronDown icon that rotates on toggle
+- Wrap children display logic in parent (the header itself just signals toggle)
+- Keep existing non-collapsible behavior as default for backward compatibility
 
-```text
-GLOBAL ELEMENTS          (site-wide, always present)
-  Announcement Bar
-  Footer CTA
-  Footer
-
-CONTENT MANAGERS         (data sources used by sections)
-  Services
-  Testimonials
-  Gallery
-  Stylists
-  Locations
-```
-
-**2. Render two `SectionGroupHeader` blocks** instead of the single "Site Content" header — one for "Global Elements" and one for "Content Managers", each with its own item list.
-
-**3. Adjust the divider** between content managers and "Homepage Layout" to use a slightly stronger visual separator (e.g., thicker spacing or a subtle background band on the "Homepage Layout" label).
-
-### Changes: `src/components/dashboard/website-editor/SectionGroupHeader.tsx`
-
-No structural change needed — the existing component works for the new group titles.
+**2. `src/components/dashboard/website-editor/panels/StructureLayersTab.tsx`**
+- Add local state for collapsed groups: `collapsedGroups: Set<string>` (default all open)
+- Wrap each group's item list in a conditional render based on collapsed state
+- Auto-expand the group containing the currently active tab
+- Apply to all three top-level groups: Global Elements, Content Managers, and each Homepage Layout sub-group
+- Add a subtle animated height transition (CSS `grid-rows` trick or simple conditional render)
 
 ### Visual Structure
 ```text
 ┌──────────────────────────┐
-│ GLOBAL ELEMENTS          │
+│ ▾ GLOBAL ELEMENTS        │  ← click to collapse
 │   Announcement Bar       │
 │   Footer CTA             │
 │   Footer                 │
 ├──────────────────────────┤
-│ CONTENT MANAGERS         │
-│   Services               │
-│   Testimonials           │
-│   Gallery                │
-│   Stylists               │
-│   Locations              │
+│ ▸ CONTENT MANAGERS       │  ← collapsed, saves space
 ├══════════════════════════┤
-│ HOMEPAGE LAYOUT          │
-│ ─ Above the Fold ─       │
+│   HOMEPAGE LAYOUT        │
+│ ▾ Above the Fold         │
 │   Hero Section           │
 │   Brand Statement        │
-│ ─ Social Proof ─         │
-│   Testimonials           │
-│   Partner Brands         │
+│ ▸ Social Proof           │  ← collapsed
+│ ▾ Services & Portfolio   │
 │   ...                    │
 └──────────────────────────┘
 ```
 
 ### Scope
-Single file change (`StructureLayersTab.tsx`): split the `SITE_CONTENT_ITEMS` array into two arrays and render them under separate group headers.
+Two files: `SectionGroupHeader.tsx` (add toggle UI), `StructureLayersTab.tsx` (add collapse state + conditional rendering).
 
