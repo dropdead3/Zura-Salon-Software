@@ -1535,19 +1535,9 @@ html, body, #root {
   transition: box-shadow 0.3s ease;
 }
 
-/* ===== GLOBAL — Floating glass scrollbar (no gutter, content extends edge-to-edge) ===== */
-/* Negative margin hack: body extends under the scrollbar gutter so content fills full viewport */
+/* ===== GLOBAL — Native overlay scrollbars (no gutter anywhere) ===== */
 html {
-  overflow-y: scroll;
   overflow-x: hidden;
-  scrollbar-width: thin;
-  scrollbar-color: transparent transparent;
-}
-html:hover {
-  scrollbar-color: rgba(128, 128, 128, 0.35) transparent;
-}
-body {
-  margin-right: calc(100% - 100vw);
 }
 
 /* Firefox: thin scrollbar on all elements (does not create gutters) */
@@ -1557,28 +1547,4 @@ body {
 }
 *:hover {
   scrollbar-color: rgba(128, 128, 128, 0.35) transparent;
-}
-
-/* WebKit: scope to html ONLY — nested elements keep native overlay scrollbars */
-html::-webkit-scrollbar {
-  width: 6px !important;
-  height: 6px !important;
-  background: transparent !important;
-}
-html::-webkit-scrollbar-track {
-  background: transparent !important;
-}
-html::-webkit-scrollbar-thumb {
-  background: transparent !important;
-  border-radius: 3px !important;
-}
-html:hover::-webkit-scrollbar-thumb {
-  background: rgba(128, 128, 128, 0.35) !important;
-  box-shadow:
-    inset 0 0 0 0.5px rgba(255, 255, 255, 0.3),
-    inset 0 0 4px rgba(0, 0, 0, 0.15) !important;
-  backdrop-filter: blur(4px) !important;
-}
-html::-webkit-scrollbar-corner {
-  background: transparent !important;
 }
