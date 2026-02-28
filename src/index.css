@@ -1527,3 +1527,17 @@ html, body, #root {
   box-shadow: 0 0 0 2px hsl(var(--primary) / 0.2);
   transition: box-shadow 0.3s ease;
 }
+
+/* ===== EDITOR PREVIEW — Hide scrollbars inside iframe ===== */
+.editor-preview,
+.editor-preview body {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+.editor-preview::-webkit-scrollbar,
+.editor-preview body::-webkit-scrollbar,
+.editor-preview *::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
