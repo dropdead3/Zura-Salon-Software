@@ -2,59 +2,42 @@
 
 ## Problem
 
-The editor iframe renders at whatever pixel width the canvas panel actually occupies (roughly 600-800px depending on sidebar widths). The site inside the iframe responds to that narrow width, triggering tablet/mobile breakpoints — fewer nav links, stacked layouts, etc. You're seeing a "responsive" view instead of a true full-desktop preview.
+When the inspector panel collapses, the canvas container grows wider. The ResizeObserver detects the new width and recalculates the scale, but two issues cause the visible gap:
 
-## Solution
+1. **Transition lag**: The inner iframe wrapper has `transition-all duration-200` which animates the `transform` change, creating a visible delay where the old scale doesn't fill the new container width.
+2. **Visual rendering**: The scaled element sits at `transform-origin: top left` with a layout box of 1440px. While the visual width matches (`1440 * scale = containerWidth`), the transition between old and new scale creates a momentary gap showing the `bg-muted/30` background.
 
-For desktop viewport mode, render the iframe at a fixed intrinsic width of **1440px** and CSS-scale it down to fit the available container. This is the standard approach used by website builders (Webflow, Squarespace, etc.) to show a full-width desktop preview inside a narrower panel.
+## Plan
+
+### 1. Remove transition from desktop scaled iframe wrapper (CanvasPanel.tsx)
+
+The `transition-all duration-200` class on the iframe wrapper (line 186) causes the scale change to animate slowly when the container resizes. For desktop mode, the scale should update instantly to match the container width. Keep transitions only for viewport mode switches (desktop→mobile).
+
+- Split the transition: apply it only when `!isDesktop` (for tablet/mobile centering animations), not during desktop scale recalculations.
+
+### 2. Match container background to iframe background
+
+Change the canvas surface container background from `bg-muted/30` to `bg-background` so any sub-pixel gaps between the scaled iframe and container edge are invisible.
 
 ### Changes in `CanvasPanel.tsx`
 
-1. **Measure the container width** using a `ResizeObserver` on the canvas surface `div`.
+**Line 183**: Change `bg-muted/30` to `bg-background` on the container div.
 
-2. **For desktop mode**: Set the iframe wrapper to a fixed `width: 1440px` and apply `transform: scale(containerWidth / 1440)` with `transform-origin: top left`. Set the wrapper height to `containerHeight / scale` so the iframe fills the visible area. Remove `max-w-[1280px]` constraint for desktop.
-
-3. **For tablet/mobile modes**: Keep the current behavior (constrained max-width, no scaling override) since those modes intentionally show responsive layouts.
-
-4. **Combine with zoom**: The existing zoom control (`fit`, `100%`, `75%`) multiplies with the desktop scale. `fit` = auto-scale to container. `100%` = no scaling (shows scrollbars if needed). `75%` = 0.75x.
-
-### Implementation detail
+**Line 186**: Make the transition conditional — only apply `transition-all duration-200` when not in desktop mode, so the desktop scale snaps instantly to the new container width without a visible gap.
 
 ```tsx
-// New: measure container
-const containerRef = useRef<HTMLDivElement>(null);
-const [containerSize, setContainerSize] = useState({ w: 0, h: 0 });
+// Line 183 — container background matches iframe
+<div ref={containerRef} className="flex-1 overflow-hidden bg-background relative">
 
-useEffect(() => {
-  const el = containerRef.current;
-  if (!el) return;
-  const ro = new ResizeObserver(([entry]) => {
-    setContainerSize({ w: entry.contentRect.width, h: entry.contentRect.height });
-  });
-  ro.observe(el);
-  return () => ro.disconnect();
-}, []);
-
-// Desktop: fixed 1440px width, scaled to fit
-const DESKTOP_WIDTH = 1440;
-const isDesktop = viewportMode === 'desktop';
-const fitScale = isDesktop && containerSize.w > 0
-  ? Math.min(containerSize.w / DESKTOP_WIDTH, 1)
-  : 1;
-const effectiveScale = isDesktop ? fitScale * (zoomLevel === '75' ? 0.75 : zoomLevel === '100' ? 1 : 1) : ZOOM_SCALES[zoomLevel];
-
-// For desktop, override zoom "fit" to mean auto-scale, "100%" to mean true 1440px
+// Line 185-186 — conditional transition
+className={cn(
+  'h-full',
+  !isDesktop && 'transition-all duration-200 ease-[cubic-bezier(0.25,0.1,0.25,1)]',
+  !isDesktop && VIEWPORT_WIDTHS[viewportMode],
+  editorTokens.canvas.previewFrame,
+  !isDesktop && 'mx-auto'
+)}
 ```
 
-The iframe wrapper for desktop gets:
-```tsx
-style={{
-  width: isDesktop ? `${DESKTOP_WIDTH}px` : undefined,
-  height: isDesktop ? `${containerSize.h / effectiveScale}px` : undefined,
-  transform: `scale(${effectiveScale})`,
-  transformOrigin: 'top left',
-}}
-```
-
-This ensures the site always renders as if viewed at 1440px wide, with all nav links visible and full desktop layout, regardless of how narrow the editor panel actually is.
+Two targeted edits in `CanvasPanel.tsx` — background color swap and conditional transition.
 
