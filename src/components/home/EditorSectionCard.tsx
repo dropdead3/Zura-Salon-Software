@@ -59,11 +59,7 @@ export function EditorSectionCard({
     <div
       onClick={handleClick}
       className={cn(
-        'group relative rounded-[20px] transition-all duration-200',
-        'shadow-[0_2px_12px_-4px_rgba(0,0,0,0.08)]',
-        'border border-border/40',
-        'bg-[hsl(0_0%_99%)] dark:bg-card/90',
-        fullBleed ? 'p-0 overflow-hidden' : 'p-6 sm:p-7 lg:p-8',
+        'group relative transition-all duration-200',
         'cursor-pointer',
         isSelected && 'ring-2 ring-primary/20 ring-offset-2 ring-offset-background',
         !enabled && 'opacity-50'

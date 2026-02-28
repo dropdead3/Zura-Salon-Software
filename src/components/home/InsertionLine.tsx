@@ -22,7 +22,7 @@ export function InsertionLine({ afterSectionId }: InsertionLineProps) {
   }, [afterSectionId]);
 
   return (
-    <div className="group/insert relative h-6 flex items-center justify-center cursor-pointer" onClick={handleClick}>
+    <div className="group/insert relative h-0 hover:h-8 flex items-center justify-center cursor-pointer transition-all duration-200 overflow-hidden" onClick={handleClick}>
       {/* Line */}
       <div className="absolute inset-x-4 h-px bg-primary/0 group-hover/insert:bg-primary/30 transition-colors duration-150" />
       

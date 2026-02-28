@@ -140,7 +140,7 @@ export function PageSectionRenderer({ sections }: PageSectionRendererProps) {
   // Edit mode inside editor: floating bento cards
   if (isEditorPreview) {
     return (
-      <div className="zura-editor-preview py-6 space-y-5">
+      <div className="zura-editor-preview py-0 space-y-0">
         {enabledSections.map((section, index) => (
           <React.Fragment key={section.id}>
             {index > 0 && <InsertionLine afterSectionId={enabledSections[index - 1].id} />}
