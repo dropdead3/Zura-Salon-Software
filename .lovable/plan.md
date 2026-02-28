@@ -1,45 +1,45 @@
 
 
-## Problem
+## Prompt Coaching
 
-`overflow: overlay` is **deprecated and removed** in Chrome 114+ (June 2023). It now behaves identically to `overflow: auto`, which **reserves space** for the scrollbar — creating the visible gutter strip the user sees on the right edge of the public website and modals.
+Good description of the desired behavior. An even more precise prompt would be:
+> "The `* ::-webkit-scrollbar` CSS selector is forcing Chrome to switch all elements from native overlay scrollbars to classic (gutter-reserving) mode. Remove the `*` webkit scrollbar styling so only `html` gets custom scrollbar treatment. Nested scrollable elements should keep their native overlay scrollbar behavior."
 
-No amount of transparent background styling fixes this because the gutter is structural (layout space), not visual (paint).
+This identifies the **specific CSS selector** causing the gutter, not just the symptom.
+
+## Root Cause
+
+Styling `::-webkit-scrollbar` via the `*` selector forces **every scrollable element** in Chrome to switch from native overlay scrollbars (which float over content) to "classic" scrollbars (which reserve layout space as a gutter). The negative margin hack on `body` only compensates for the root scrollbar — it cannot fix every nested `overflow: auto` container (modals, panels, iframes).
+
+```text
+Native overlay (default macOS Chrome):
+┌─────────────────────────────────┐
+│ content fills full width   [▐]  │  ← thumb floats OVER content
+└─────────────────────────────────┘
+
+Classic mode (triggered by * ::-webkit-scrollbar):
+┌───────────────────────────┬─────┐
+│ content stops here        │ gut │  ← 6px gutter reserved
+└───────────────────────────┴─────┘
+```
 
 ## Solution
 
-Use the well-known **negative margin hack** to pull content under the scrollbar gutter, combined with transparent track/thumb styling.
+1. **Remove `*` webkit scrollbar styling** — Stop the `*::-webkit-scrollbar`, `*::-webkit-scrollbar-track`, `*::-webkit-scrollbar-thumb` rules that force classic mode on every element
 
-### How it works
+2. **Keep `html`-level scrollbar styling only** — The root scrollbar gets the glass treatment with the negative margin compensation
 
-```text
-┌──────────────────────────┬──┐
-│ viewport (100vw)         │SB│  ← SB = scrollbar (6px)
-│                          │  │
-│ body width = 100%        │  │  ← 100% = viewport minus scrollbar
-│ margin-right = -6px      │→→│  ← negative margin extends body UNDER scrollbar
-│ content now fills 100vw  │  │
-└──────────────────────────┴──┘
-   html: overflow-x: hidden clips any overflow
-```
+3. **Nested elements get native overlay** — Without `*::-webkit-scrollbar` rules, Chrome keeps its default overlay scrollbar on nested containers (modals, panels, sidebars), which already floats over content with no gutter
 
-`calc(100% - 100vw)` automatically equals the negative scrollbar width (because `100vw` includes scrollbar, `100%` doesn't).
+4. **Firefox: keep `scrollbar-width: thin` on `*`** — Firefox's `thin` value does not create gutters the same way; it's safe to keep for cross-browser consistency
 
-### Changes to `src/index.css` (lines 1538-1581)
+### Changes to `src/index.css` (lines 1538-1588)
 
-Replace the current global scrollbar block with:
+- **html**: Keep `overflow-y: scroll`, `overflow-x: hidden`, `scrollbar-width: thin`, `scrollbar-color` — unchanged
+- **body**: Keep `margin-right: calc(100% - 100vw)` — unchanged
+- **`*` selector**: Keep Firefox `scrollbar-width: thin` and `scrollbar-color`, but **remove** the `*`-scoped `::-webkit-scrollbar`, `::-webkit-scrollbar-track`, `::-webkit-scrollbar-thumb` rules
+- **html-only webkit**: Scope all `::-webkit-scrollbar` pseudo-elements to `html::` only (not bare `::`)
+- **Remove**: `*:hover::-webkit-scrollbar-thumb` and `*:hover::-webkit-scrollbar-thumb:hover` rules
 
-1. **html**: `overflow-y: scroll; overflow-x: hidden` — always show scrollbar zone but clip horizontal overflow
-2. **body**: `margin-right: calc(100% - 100vw)` — extend body under the scrollbar gutter so content fills full viewport
-3. **`::-webkit-scrollbar`**: Keep at 6px width, transparent background
-4. **`::-webkit-scrollbar-track`**: Transparent
-5. **`::-webkit-scrollbar-thumb`**: Transparent by default, adaptive glass gray on hover with the dual box-shadow treatment
-6. **Firefox fallback**: `scrollbar-width: thin; scrollbar-color: transparent transparent` (Firefox's `thin` scrollbar is already overlay-like on most OS configurations)
-7. Remove the deprecated `overflow: overlay` declarations entirely
-
-For **nested scrollable elements** (modals, dialogs, scroll containers): The `*` selector rules for `::-webkit-scrollbar` and `scrollbar-width: thin` continue to handle these — they make inner scrollbars thin and transparent, which is sufficient because inner scroll containers don't have the same full-viewport gutter problem.
-
-### No changes needed to Layout.tsx or any other files
-
-The `editor-preview` class can remain for any future editor-specific behavior but is no longer the gate for scrollbar styling.
+This means the root page scrollbar gets the glass thumb treatment, and all nested scrollable containers revert to native macOS overlay scrollbars (which already float, have no gutter, and auto-hide).
 
