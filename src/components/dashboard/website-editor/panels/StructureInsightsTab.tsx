@@ -6,7 +6,7 @@
  */
 
 import { useState } from 'react';
-import { Sparkles, RefreshCw, ChevronDown, ChevronRight, CheckCircle2, AlertTriangle, XCircle, Info, Loader2 } from 'lucide-react';
+import { Sparkles, RefreshCw, ChevronDown, ChevronRight, CheckCircle2, AlertTriangle, XCircle, Info, Loader2, Wand2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,7 @@ interface StructureInsightsTabProps {
   error: string | null;
   onAnalyze: () => void;
   onFindingClick?: (actionTarget: string) => void;
+  onAutoFix?: (finding: Finding) => Promise<void>;
 }
 
 // ─── Score Ring ───
@@ -83,9 +84,13 @@ function SeverityIcon({ severity }: { severity: Finding['severity'] }) {
 function CategorySection({
   category,
   onFindingClick,
+  onAutoFix,
+  fixingIds,
 }: {
   category: CategoryScore;
   onFindingClick?: (target: string) => void;
+  onAutoFix?: (finding: Finding) => Promise<void>;
+  fixingIds: Set<string>;
 }) {
   const [open, setOpen] = useState(true);
   const issueCount = category.findings.filter(f => f.severity !== 'pass').length;
@@ -110,27 +115,60 @@ function CategorySection({
       </CollapsibleTrigger>
       <CollapsibleContent>
         <div className="pl-4 pr-2 pb-2 space-y-1">
-          {category.findings.map((finding) => (
-            <button
-              key={finding.id}
-              onClick={() => finding.actionTarget && onFindingClick?.(finding.actionTarget)}
-              disabled={!finding.actionTarget || finding.severity === 'pass'}
-              className={cn(
-                'w-full flex items-start gap-2 py-1.5 px-2 rounded-md text-left transition-colors duration-150',
-                finding.actionTarget && finding.severity !== 'pass'
-                  ? 'hover:bg-muted/60 cursor-pointer'
-                  : 'cursor-default'
-              )}
-            >
-              <SeverityIcon severity={finding.severity} />
-              <span className={cn(
-                'font-sans text-xs leading-relaxed',
-                finding.severity === 'pass' ? 'text-muted-foreground' : 'text-foreground'
-              )}>
-                {finding.message}
-              </span>
-            </button>
-          ))}
+          {category.findings.map((finding) => {
+            const isFixing = fixingIds.has(finding.id);
+            const hasAutoFix = finding.autoFix && finding.severity !== 'pass';
+
+            return (
+              <div
+                key={finding.id}
+                className={cn(
+                  'w-full flex items-center gap-2 py-1.5 px-2 rounded-md transition-colors duration-150',
+                  finding.actionTarget && finding.severity !== 'pass'
+                    ? 'hover:bg-muted/60'
+                    : ''
+                )}
+              >
+                <button
+                  onClick={() => finding.actionTarget && onFindingClick?.(finding.actionTarget)}
+                  disabled={!finding.actionTarget || finding.severity === 'pass'}
+                  className={cn(
+                    'flex-1 flex items-start gap-2 text-left min-w-0',
+                    finding.actionTarget && finding.severity !== 'pass'
+                      ? 'cursor-pointer'
+                      : 'cursor-default'
+                  )}
+                >
+                  <SeverityIcon severity={finding.severity} />
+                  <span className={cn(
+                    'font-sans text-xs leading-relaxed',
+                    finding.severity === 'pass' ? 'text-muted-foreground' : 'text-foreground'
+                  )}>
+                    {finding.message}
+                  </span>
+                </button>
+                {hasAutoFix && onAutoFix && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={isFixing}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onAutoFix(finding);
+                    }}
+                    className="h-6 px-2 text-[10px] font-sans rounded-full flex-shrink-0 gap-1"
+                  >
+                    {isFixing ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <Wand2 className="h-3 w-3" />
+                    )}
+                    Fix
+                  </Button>
+                )}
+              </div>
+            );
+          })}
         </div>
       </CollapsibleContent>
     </Collapsible>
@@ -145,7 +183,24 @@ export function StructureInsightsTab({
   error,
   onAnalyze,
   onFindingClick,
+  onAutoFix,
 }: StructureInsightsTabProps) {
+  const [fixingIds, setFixingIds] = useState<Set<string>>(new Set());
+
+  const handleAutoFix = async (finding: Finding) => {
+    if (!onAutoFix) return;
+    setFixingIds(prev => new Set(prev).add(finding.id));
+    try {
+      await onAutoFix(finding);
+    } finally {
+      setFixingIds(prev => {
+        const next = new Set(prev);
+        next.delete(finding.id);
+        return next;
+      });
+    }
+  };
+
   // ─── Empty State ───
   if (!data && !isLoading && !error) {
     return (
@@ -232,6 +287,8 @@ export function StructureInsightsTab({
               key={cat.category}
               category={cat}
               onFindingClick={onFindingClick}
+              onAutoFix={handleAutoFix}
+              fixingIds={fixingIds}
             />
           ))}
         </div>
