@@ -27,7 +27,7 @@ import { StylistsContent } from '@/components/dashboard/website-editor/StylistsC
 import { LocationsContent } from '@/components/dashboard/website-editor/LocationsContent';
 import { ServicesContent } from '@/components/dashboard/website-editor/ServicesContent';
 import { AnnouncementBarContent } from '@/components/dashboard/website-editor/AnnouncementBarContent';
-import { NavigationManager } from '@/components/dashboard/website-editor/navigation/NavigationManager';
+
 import { PagesManager } from '@/components/dashboard/website-editor/PagesManager';
 import { PageSettingsEditor } from '@/components/dashboard/website-editor/PageSettingsEditor';
 import { PageTemplatePicker } from '@/components/dashboard/website-editor/PageTemplatePicker';
@@ -109,7 +109,7 @@ const EDITOR_COMPONENTS: Record<string, React.ComponentType> = {
   'drinks': DrinksManager,
   'footer-cta': FooterCTAEditor,
   'footer': FooterEditor,
-  'navigation': NavigationManager,
+  // navigation now renders inline in StructureNavTab
   'pages': PagesManager,
 };
 
@@ -766,10 +766,7 @@ export default function WebsiteSectionsHub() {
               />
             )}
             {structureMode === 'navigation' && (
-              <StructureNavTab
-                isActive={activeTab === 'navigation'}
-                onActivate={() => setActiveTab('navigation')}
-              />
+              <StructureNavTab />
             )}
           </StructurePanel>
         )}
@@ -811,7 +808,7 @@ export default function WebsiteSectionsHub() {
                   <StructureLayersTab isHomePage={isHomePage} activeTab={activeTab} onTabChange={(tab) => { handleTabChange(tab); setShowMobileStructure(false); }} homeSections={orderedHomeSections} onHomeSectionsReorder={saveSections} onHomeSectionToggle={handleHomeSectionToggle} onHomeSectionDuplicate={handleHomeSectionDuplicate} onHomeSectionDelete={(section) => setDeleteTarget(section)} pageSections={orderedPageSections} onPageSectionsReorder={handlePageSectionReorder} onPageSectionToggle={handlePageSectionToggle} onPageSectionDuplicate={handlePageSectionDuplicate} onPageSectionDelete={(section) => handlePageSectionDelete(section.id)} pageTitle={selectedPage?.title} onAddSection={() => setShowAddDialog(true)} />
                 )}
                 {structureMode === 'navigation' && (
-                  <StructureNavTab isActive={activeTab === 'navigation'} onActivate={() => setActiveTab('navigation')} />
+                  <StructureNavTab />
                 )}
               </StructurePanel>
             </div>
