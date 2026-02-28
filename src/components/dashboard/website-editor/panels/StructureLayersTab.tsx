@@ -7,7 +7,7 @@
  * Also includes Site Content items for quick access.
  */
 
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -150,6 +150,50 @@ export function StructureLayersTab({
   const getBuiltinSection = (type: BuiltinSectionType) =>
     homeSections.find(s => s.type === type);
 
+  // ─── Collapse State ───
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+
+  const toggleGroup = useCallback((groupId: string) => {
+    setCollapsedGroups(prev => {
+      const next = new Set(prev);
+      next.has(groupId) ? next.delete(groupId) : next.add(groupId);
+      return next;
+    });
+  }, []);
+
+  const isGroupOpen = useCallback((groupId: string) => !collapsedGroups.has(groupId), [collapsedGroups]);
+
+  // Auto-expand group containing active tab
+  useEffect(() => {
+    if (!activeTab) return;
+    // Check Global Elements
+    if (GLOBAL_ELEMENTS.some(i => i.tab === activeTab) && collapsedGroups.has('global')) {
+      setCollapsedGroups(prev => { const n = new Set(prev); n.delete('global'); return n; });
+      return;
+    }
+    // Check Content Managers
+    if (CONTENT_MANAGERS.some(i => i.tab === activeTab) && collapsedGroups.has('managers')) {
+      setCollapsedGroups(prev => { const n = new Set(prev); n.delete('managers'); return n; });
+      return;
+    }
+    // Check homepage layout sub-groups
+    for (const group of SECTION_GROUPS) {
+      const groupId = `layout-${group.title}`;
+      const matchesBuiltin = group.sectionTypes.some(type => {
+        const tab = BUILTIN_SECTION_TO_TAB[type];
+        return tab === activeTab;
+      });
+      if (matchesBuiltin && collapsedGroups.has(groupId)) {
+        setCollapsedGroups(prev => { const n = new Set(prev); n.delete(groupId); return n; });
+        return;
+      }
+    }
+    // Check custom sections
+    if (activeTab.startsWith('custom-') && collapsedGroups.has('custom')) {
+      setCollapsedGroups(prev => { const n = new Set(prev); n.delete('custom'); return n; });
+    }
+  }, [activeTab]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Home page DnD
   const handleHomeDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -177,32 +221,36 @@ export function StructureLayersTab({
           {/* Site Content (home page only) */}
           {isHomePage && (
             <>
-              <SectionGroupHeader title="Global Elements" />
-              <div className="space-y-0.5 mb-1">
-                {GLOBAL_ELEMENTS.map(item => (
-                  <ContentNavItem
-                    key={item.tab}
-                    label={item.label}
-                    description={item.description}
-                    icon={item.icon}
-                    isActive={activeTab === item.tab}
-                    onSelect={() => onTabChange(item.tab)}
-                  />
-                ))}
-              </div>
-              <SectionGroupHeader title="Content Managers" />
-              <div className="space-y-0.5 mb-2">
-                {CONTENT_MANAGERS.map(item => (
-                  <ContentNavItem
-                    key={item.tab}
-                    label={item.label}
-                    description={item.description}
-                    icon={item.icon}
-                    isActive={activeTab === item.tab}
-                    onSelect={() => onTabChange(item.tab)}
-                  />
-                ))}
-              </div>
+              <SectionGroupHeader title="Global Elements" collapsible isOpen={isGroupOpen('global')} onToggle={() => toggleGroup('global')} />
+              {isGroupOpen('global') && (
+                <div className="space-y-0.5 mb-1">
+                  {GLOBAL_ELEMENTS.map(item => (
+                    <ContentNavItem
+                      key={item.tab}
+                      label={item.label}
+                      description={item.description}
+                      icon={item.icon}
+                      isActive={activeTab === item.tab}
+                      onSelect={() => onTabChange(item.tab)}
+                    />
+                  ))}
+                </div>
+              )}
+              <SectionGroupHeader title="Content Managers" collapsible isOpen={isGroupOpen('managers')} onToggle={() => toggleGroup('managers')} />
+              {isGroupOpen('managers') && (
+                <div className="space-y-0.5 mb-2">
+                  {CONTENT_MANAGERS.map(item => (
+                    <ContentNavItem
+                      key={item.tab}
+                      label={item.label}
+                      description={item.description}
+                      icon={item.icon}
+                      isActive={activeTab === item.tab}
+                      onSelect={() => onTabChange(item.tab)}
+                    />
+                  ))}
+                </div>
+              )}
               <div className="my-3 mx-3 border-t-2 border-border/50" />
             </>
           )}
@@ -221,11 +269,12 @@ export function StructureLayersTab({
                     .map(type => getBuiltinSection(type))
                     .filter(Boolean) as SectionConfig[];
                   if (groupSections.length === 0) return null;
+                  const groupId = `layout-${group.title}`;
                   return (
                     <div key={group.title}>
                       {gi > 0 && <Separator className="my-2 mx-3" />}
-                      <SectionGroupHeader title={group.title} />
-                      {groupSections.map(section => (
+                      <SectionGroupHeader title={group.title} collapsible isOpen={isGroupOpen(groupId)} onToggle={() => toggleGroup(groupId)} />
+                      {isGroupOpen(groupId) && groupSections.map(section => (
                         <SectionNavItem
                           key={section.id}
                           id={section.id}
@@ -245,8 +294,8 @@ export function StructureLayersTab({
                 {customSections.length > 0 && (
                   <>
                     <Separator className="my-2 mx-3" />
-                    <SectionGroupHeader title="Custom Sections" />
-                    {customSections.map(section => (
+                    <SectionGroupHeader title="Custom Sections" collapsible isOpen={isGroupOpen('custom')} onToggle={() => toggleGroup('custom')} />
+                    {isGroupOpen('custom') && customSections.map(section => (
                       <SectionNavItem
                         key={section.id}
                         id={section.id}
