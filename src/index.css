@@ -1532,7 +1532,7 @@ html, body, #root {
 .editor-preview,
 .editor-preview body {
   scrollbar-width: thin !important;
-  scrollbar-color: hsl(var(--border) / 0.5) transparent !important;
+  scrollbar-color: rgba(0, 0, 0, 0.18) transparent !important;
 }
 .editor-preview::-webkit-scrollbar,
 .editor-preview body::-webkit-scrollbar,
@@ -1549,6 +1549,6 @@ html, body, #root {
 .editor-preview::-webkit-scrollbar-thumb,
 .editor-preview body::-webkit-scrollbar-thumb,
 .editor-preview *::-webkit-scrollbar-thumb {
-  background: hsl(var(--border) / 0.5) !important;
+  background: rgba(0, 0, 0, 0.18) !important;
   border-radius: 3px !important;
 }
