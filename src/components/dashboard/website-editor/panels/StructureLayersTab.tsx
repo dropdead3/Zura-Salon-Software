@@ -37,6 +37,8 @@ import {
   PanelBottom,
   Plus,
   Layers,
+  ChevronsDownUp,
+  ChevronsUpDown,
 } from 'lucide-react';
 import { SectionNavItem } from '../SectionNavItem';
 import { SectionGroupHeader } from '../SectionGroupHeader';
@@ -163,6 +165,30 @@ export function StructureLayersTab({
 
   const isGroupOpen = useCallback((groupId: string) => !collapsedGroups.has(groupId), [collapsedGroups]);
 
+  const allGroupIds = useMemo(() => {
+    const ids = SECTION_GROUPS.map(g => `layout-${g.title}`);
+    if (customSections.length > 0) ids.push('custom');
+    return ids;
+  }, [customSections.length]);
+
+  const allCollapsed = allGroupIds.length > 0 && allGroupIds.every(id => collapsedGroups.has(id));
+
+  const expandAll = useCallback(() => {
+    setCollapsedGroups(prev => {
+      const next = new Set(prev);
+      allGroupIds.forEach(id => next.delete(id));
+      return next;
+    });
+  }, [allGroupIds]);
+
+  const collapseAll = useCallback(() => {
+    setCollapsedGroups(prev => {
+      const next = new Set(prev);
+      allGroupIds.forEach(id => next.add(id));
+      return next;
+    });
+  }, [allGroupIds]);
+
   // Auto-expand group containing active tab
   useEffect(() => {
     if (!activeTab) return;
@@ -251,7 +277,21 @@ export function StructureLayersTab({
                   ))}
                 </div>
               )}
-              <SectionGroupHeader title="Homepage Layout" />
+              <div className="flex items-center justify-between px-3 py-1.5 mt-3 mb-0.5">
+                <span className="text-[10px] font-display tracking-wider text-muted-foreground">
+                  Homepage Layout
+                </span>
+                <button
+                  onClick={allCollapsed ? expandAll : collapseAll}
+                  className="flex items-center gap-0.5 text-[9px] font-sans text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+                >
+                  {allCollapsed ? (
+                    <><ChevronsUpDown className="h-3 w-3" /> Expand</>
+                  ) : (
+                    <><ChevronsDownUp className="h-3 w-3" /> Collapse</>
+                  )}
+                </button>
+              </div>
             </>
           )}
 
