@@ -1,46 +1,50 @@
 
 
-## Investigation Summary
+## Problem
 
-The black gaps at the right and bottom edges of the website preview viewport are caused by two compounding issues:
+The editor-preview scrollbar CSS (lines 1538-1568 in `index.css`) forces scrollbar thumbs to be **always visible** at `rgba(0, 0, 0, 0.18)` — both in the default state and on hover. This creates persistent dark scrollbar handles visible against the light website content in the preview viewport.
 
-1. **CSS transform scaling sub-pixel gaps**: The iframe is rendered at 1440px width and scaled down via `transform: scale()`. The current `+1px` buffer in the scale calculation is insufficient — sub-pixel rounding leaves thin gaps at the right and bottom edges where the scaled content doesn't fully cover the container.
-
-2. **Dark dashboard background bleeding through**: The editor page container uses `bg-muted/30` which resolves to a dark color in the dashboard's dark theme. The canvas panel's `rounded-xl overflow-hidden` border and any scaling gaps expose this dark background.
+The correct behavior per design tokens: **no scrollbar backgrounds anywhere, thumbs only appear on hover/mouse motion**.
 
 ## Plan
 
-### 1. Increase scale buffer to eliminate right-edge gap
-In `CanvasPanel.tsx`, change the fit scale calculation from `+1` to `+2` pixel buffer, ensuring the scaled iframe slightly overflows rather than falling short:
+### 1. Fix editor-preview scrollbar rules in `src/index.css`
 
-```ts
-// Line 160: Change from (containerSize.w + 1) to (containerSize.w + 2)
-const fitScale = isDesktop && containerSize.w > 0
-  ? Math.min((containerSize.w + 2) / effectiveWidth, 1)
-  : 1;
+**Lines 1538-1568** — Change the editor-preview scrollbar rules to match the hover-only pattern:
+
+- **Default state** (lines 1539-1545): Change `scrollbar-color` from `rgba(0, 0, 0, 0.18) transparent` to `transparent transparent` — thumbs invisible by default
+- **Hover state**: Add a separate hover rule that reveals the thumb on hover only
+- **Webkit thumb** (lines 1560-1564): Change default thumb from `rgba(0, 0, 0, 0.18)` to `transparent` — invisible by default
+- **Webkit thumb hover**: Add hover-reveal rule for webkit thumbs within editor-preview
+
+Resulting CSS:
+
+```css
+/* Default: all transparent */
+.editor-preview,
+.editor-preview body,
+.editor-preview * {
+  scrollbar-width: thin !important;
+  scrollbar-color: transparent transparent !important;
+}
+
+/* Hover: reveal thumb only */
+.editor-preview *:hover {
+  scrollbar-color: rgba(0, 0, 0, 0.15) transparent !important;
+}
+
+/* Webkit: thumb transparent by default */
+.editor-preview ::-webkit-scrollbar-thumb,
+.editor-preview::-webkit-scrollbar-thumb {
+  background: transparent !important;
+  border-radius: 3px !important;
+}
+
+/* Webkit: thumb visible on hover */
+.editor-preview *:hover::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15) !important;
+}
 ```
 
-### 2. Match canvas container background to iframe content
-On the canvas surface container (line 188), ensure the `bg-background` matches the cream website background. Add an explicit inline background color that matches the website's cream theme so any sub-pixel gaps show cream, not dark:
-
-```tsx
-// Line 188: Add cream fallback background
-<div ref={containerRef} className="flex-1 overflow-hidden relative"
-  style={{ backgroundColor: 'hsl(36, 39%, 93%)' }}>
-```
-
-This uses the website's cream `--background` color directly, so any gap shows the same cream instead of the dashboard's dark background.
-
-### 3. Remove rounded corners from canvas panel in editor context  
-The `rounded-xl` on the canvas panel token creates corners where the dark dashboard background peeks through. For the canvas panel specifically, override the rounding to prevent corner bleed:
-
-In `CanvasPanel.tsx` line 167, add `rounded-none` override:
-```tsx
-<div className={cn(editorTokens.panel.canvas, 'h-full flex flex-col relative rounded-none')}>
-```
-
-Alternatively, if the bento aesthetic requires rounding, keep rounding but ensure the canvas background color matches the iframe content.
-
-### Verification
-After each change, take a screenshot to confirm the gaps are resolved at both the right edge and bottom edge.
+The track, corner, and scrollbar base rules remain unchanged (already transparent).
 
