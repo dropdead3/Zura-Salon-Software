@@ -1536,34 +1536,42 @@ html, body, #root {
 }
 
 /* ===== EDITOR PREVIEW — Glass overlay scroll thumbs on hover ===== */
-.editor-preview,
-.editor-preview body,
-.editor-preview * {
+html.editor-preview {
+  overflow: overlay !important;
   scrollbar-width: thin !important;
   scrollbar-color: transparent transparent !important;
-  overflow: overlay !important;
+}
+html.editor-preview:hover {
+  scrollbar-color: rgba(128, 128, 128, 0.35) transparent !important;
+}
+.editor-preview *  {
+  scrollbar-width: thin !important;
+  scrollbar-color: transparent transparent !important;
 }
 .editor-preview *:hover {
   scrollbar-color: rgba(128, 128, 128, 0.35) transparent !important;
 }
 
+html.editor-preview::-webkit-scrollbar,
 .editor-preview ::-webkit-scrollbar,
-.editor-preview::-webkit-scrollbar {
+.editor-preview *::-webkit-scrollbar {
   width: 6px !important;
   height: 6px !important;
   background: transparent !important;
 }
+html.editor-preview::-webkit-scrollbar-track,
 .editor-preview ::-webkit-scrollbar-track,
-.editor-preview::-webkit-scrollbar-track,
 .editor-preview *::-webkit-scrollbar-track {
   background: transparent !important;
 }
+html.editor-preview::-webkit-scrollbar-thumb,
 .editor-preview ::-webkit-scrollbar-thumb,
-.editor-preview::-webkit-scrollbar-thumb {
+.editor-preview *::-webkit-scrollbar-thumb {
   background: transparent !important;
   border-radius: 3px !important;
   transition: background 0.2s ease !important;
 }
+html.editor-preview:hover::-webkit-scrollbar-thumb,
 .editor-preview *:hover::-webkit-scrollbar-thumb {
   background: rgba(128, 128, 128, 0.35) !important;
   box-shadow:
@@ -1571,10 +1579,12 @@ html, body, #root {
     inset 0 0 4px rgba(0, 0, 0, 0.15) !important;
   backdrop-filter: blur(4px) !important;
 }
+html.editor-preview:hover::-webkit-scrollbar-thumb:hover,
 .editor-preview *:hover::-webkit-scrollbar-thumb:hover {
   background: rgba(128, 128, 128, 0.5) !important;
 }
+html.editor-preview::-webkit-scrollbar-corner,
 .editor-preview ::-webkit-scrollbar-corner,
-.editor-preview::-webkit-scrollbar-corner {
+.editor-preview *::-webkit-scrollbar-corner {
   background: transparent !important;
 }
