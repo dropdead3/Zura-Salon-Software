@@ -103,8 +103,9 @@ export function Layout({ children }: LayoutProps) {
           <main className="flex-1 bg-background">
             {children}
           </main>
-          <FooterCTA />
-        </div>
+        <FooterCTA />
+        <Footer />
+      </div>
       </div>
     );
   }

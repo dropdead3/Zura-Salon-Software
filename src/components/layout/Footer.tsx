@@ -34,6 +34,7 @@ export function Footer() {
 
   return (
     <footer
+      id="section-footer"
       className="bg-secondary text-foreground"
       data-theme="light"
     >
