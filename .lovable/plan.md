@@ -1,37 +1,45 @@
 
 
-## Prompt Coaching
-
-Your prompt was well-intentioned but missed one critical detail: **where** the issue occurs. The screenshot shows the public-facing organization website (`/org/drop-dead-salons`), but all the glass scrollbar CSS we built is scoped exclusively to the `.editor-preview` class — which only applies inside the website editor's iframe (when the URL has `?preview=true`).
-
-A better prompt would have been:
-> "Apply the glass floating scrollbar styling globally — to both the editor preview AND the public-facing organization website. The public site at `/org/drop-dead-salons` still shows the default browser scrollbar gutter because the styles are scoped only to `.editor-preview`."
-
-That single sentence would have solved it in one pass because it identifies the **scope mismatch**.
-
 ## Problem
 
-The glass scrollbar CSS targets only `html.editor-preview` and `.editor-preview *`. The public organization website never gets the `editor-preview` class added, so it renders the browser's default scrollbar with a visible gutter track.
+`overflow: overlay` is **deprecated and removed** in Chrome 114+ (June 2023). It now behaves identically to `overflow: auto`, which **reserves space** for the scrollbar — creating the visible gutter strip the user sees on the right edge of the public website and modals.
 
-## Plan
+No amount of transparent background styling fixes this because the gutter is structural (layout space), not visual (paint).
 
-### 1. Add global glass scrollbar styles to `src/index.css`
+## Solution
 
-Add a new CSS block **before** the editor-preview section that applies the same glass overlay scrollbar behavior globally (to all pages using the cream theme / public site layout):
+Use the well-known **negative margin hack** to pull content under the scrollbar gutter, combined with transparent track/thumb styling.
 
-- `html` gets `overflow: overlay` (or `overflow: auto` with `scrollbar-gutter: auto`) and `scrollbar-width: thin`
-- `::-webkit-scrollbar` gets transparent background, 6px width
-- `::-webkit-scrollbar-track` gets transparent background
-- `::-webkit-scrollbar-thumb` gets transparent by default, adaptive gray on hover with the dual box-shadow treatment
-- Firefox fallback via `scrollbar-color: transparent transparent` default, switching on hover
+### How it works
 
-This replaces the need for the `.editor-preview`-scoped rules entirely — they become redundant since the global rules cover all contexts.
+```text
+┌──────────────────────────┬──┐
+│ viewport (100vw)         │SB│  ← SB = scrollbar (6px)
+│                          │  │
+│ body width = 100%        │  │  ← 100% = viewport minus scrollbar
+│ margin-right = -6px      │→→│  ← negative margin extends body UNDER scrollbar
+│ content now fills 100vw  │  │
+└──────────────────────────┴──┘
+   html: overflow-x: hidden clips any overflow
+```
 
-### 2. Remove redundant `.editor-preview` scoping
+`calc(100% - 100vw)` automatically equals the negative scrollbar width (because `100vw` includes scrollbar, `100%` doesn't).
 
-Simplify the existing editor-preview block to just inherit the global styles, or remove it entirely since the global rules will now cover both the public site and the editor preview iframe.
+### Changes to `src/index.css` (lines 1538-1581)
 
-### 3. Keep the `editor-preview` class logic in Layout.tsx
+Replace the current global scrollbar block with:
 
-The class can remain for any other editor-specific behavior, but it will no longer be the gate for scrollbar styling.
+1. **html**: `overflow-y: scroll; overflow-x: hidden` — always show scrollbar zone but clip horizontal overflow
+2. **body**: `margin-right: calc(100% - 100vw)` — extend body under the scrollbar gutter so content fills full viewport
+3. **`::-webkit-scrollbar`**: Keep at 6px width, transparent background
+4. **`::-webkit-scrollbar-track`**: Transparent
+5. **`::-webkit-scrollbar-thumb`**: Transparent by default, adaptive glass gray on hover with the dual box-shadow treatment
+6. **Firefox fallback**: `scrollbar-width: thin; scrollbar-color: transparent transparent` (Firefox's `thin` scrollbar is already overlay-like on most OS configurations)
+7. Remove the deprecated `overflow: overlay` declarations entirely
+
+For **nested scrollable elements** (modals, dialogs, scroll containers): The `*` selector rules for `::-webkit-scrollbar` and `scrollbar-width: thin` continue to handle these — they make inner scrollbars thin and transparent, which is sufficient because inner scroll containers don't have the same full-viewport gutter problem.
+
+### No changes needed to Layout.tsx or any other files
+
+The `editor-preview` class can remain for any future editor-specific behavior but is no longer the gate for scrollbar styling.
 
