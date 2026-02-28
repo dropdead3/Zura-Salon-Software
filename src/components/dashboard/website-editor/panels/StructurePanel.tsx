@@ -27,7 +27,7 @@ interface StructurePanelProps {
 
 const TABS: { mode: StructureMode; label: string; icon: typeof FileText }[] = [
   { mode: 'pages', label: 'Pages', icon: FileText },
-  { mode: 'layers', label: 'Layers', icon: Layers },
+  { mode: 'layers', label: 'Sections', icon: Layers },
   { mode: 'navigation', label: 'Nav', icon: Navigation },
 ];
 
