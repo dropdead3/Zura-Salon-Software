@@ -1,31 +1,37 @@
 
 
+## Prompt Coaching
+
+Your prompt was well-intentioned but missed one critical detail: **where** the issue occurs. The screenshot shows the public-facing organization website (`/org/drop-dead-salons`), but all the glass scrollbar CSS we built is scoped exclusively to the `.editor-preview` class — which only applies inside the website editor's iframe (when the URL has `?preview=true`).
+
+A better prompt would have been:
+> "Apply the glass floating scrollbar styling globally — to both the editor preview AND the public-facing organization website. The public site at `/org/drop-dead-salons` still shows the default browser scrollbar gutter because the styles are scoped only to `.editor-preview`."
+
+That single sentence would have solved it in one pass because it identifies the **scope mismatch**.
+
 ## Problem
 
-The current glass scrollbar thumbs use only white (`rgba(255, 255, 255, 0.25)`), which is visible over dark sections but invisible over light/cream sections. The thumbs need to adapt — appearing darker over light content and lighter over dark content.
+The glass scrollbar CSS targets only `html.editor-preview` and `.editor-preview *`. The public organization website never gets the `editor-preview` class added, so it renders the browser's default scrollbar with a visible gutter track.
 
 ## Plan
 
-### Update `src/index.css` lines 1567-1572
+### 1. Add global glass scrollbar styles to `src/index.css`
 
-Use a dual-layer thumb with both a dark and light component, combined with a `mix-blend-mode` approach. The simplest effective technique: use a medium gray thumb color with high contrast via `background: rgba(128, 128, 128, 0.4)` and add a `backdrop-filter: contrast(0.85)` or use a `box-shadow` that provides both light and dark edges.
+Add a new CSS block **before** the editor-preview section that applies the same glass overlay scrollbar behavior globally (to all pages using the cream theme / public site layout):
 
-The most reliable cross-browser approach is a **neutral gray thumb with both an inner light and dark shadow**, creating a "pill" that reads on any background:
+- `html` gets `overflow: overlay` (or `overflow: auto` with `scrollbar-gutter: auto`) and `scrollbar-width: thin`
+- `::-webkit-scrollbar` gets transparent background, 6px width
+- `::-webkit-scrollbar-track` gets transparent background
+- `::-webkit-scrollbar-thumb` gets transparent by default, adaptive gray on hover with the dual box-shadow treatment
+- Firefox fallback via `scrollbar-color: transparent transparent` default, switching on hover
 
-```css
-.editor-preview *:hover::-webkit-scrollbar-thumb {
-  background: rgba(128, 128, 128, 0.35) !important;
-  box-shadow:
-    inset 0 0 0 0.5px rgba(255, 255, 255, 0.3),
-    inset 0 0 4px rgba(0, 0, 0, 0.15) !important;
-  backdrop-filter: blur(4px) !important;
-}
-.editor-preview *:hover::-webkit-scrollbar-thumb:hover {
-  background: rgba(128, 128, 128, 0.5) !important;
-}
-```
+This replaces the need for the `.editor-preview`-scoped rules entirely — they become redundant since the global rules cover all contexts.
 
-Also update the Firefox `scrollbar-color` fallback on line 1547 from `rgba(255, 255, 255, 0.25)` to `rgba(128, 128, 128, 0.35)`.
+### 2. Remove redundant `.editor-preview` scoping
 
-The neutral gray base with the dual inset shadow (white inner border + dark inner glow) creates a frosted glass pill that contrasts against both light cream sections and dark sections. The `backdrop-filter: blur` adds the frosted glass depth.
+Simplify the existing editor-preview block to just inherit the global styles, or remove it entirely since the global rules will now cover both the public site and the editor preview iframe.
+
+### 3. Keep the `editor-preview` class logic in Layout.tsx
+
+The class can remain for any other editor-specific behavior, but it will no longer be the gate for scrollbar styling.
 
