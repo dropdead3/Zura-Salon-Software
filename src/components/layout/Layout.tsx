@@ -105,29 +105,17 @@ export function Layout({ children }: LayoutProps) {
     };
   }, []);
 
-  // Editor iframe: parallax footer reveal (same pattern as public site, minus PageTransition/StickyFooterBar)
+  // Editor iframe: simple linear layout — no parallax footer reveal.
+  // Parallax creates gaps/dark edges inside the viewport bento box.
   if (isEditorPreview) {
     return (
-      <div className="min-h-screen flex flex-col relative theme-cream bg-secondary" style={{ colorScheme: 'light' }}>
-        {/* Fixed footer revealed as content scrolls past */}
-        <div
-          ref={footerRef}
-          className="fixed bottom-0 left-0 right-0 z-0"
-        >
-          <Footer />
-        </div>
-
-        {/* Scrolling content that slides over the footer */}
-        <div
-          className="relative z-10 flex flex-col min-h-screen bg-background rounded-b-[2rem] md:rounded-b-[3rem] shadow-[0_30px_60px_rgba(0,0,0,0.12)]"
-          style={{ marginBottom: footerHeight }}
-        >
-          <Header />
-          <main className="flex-1 bg-background">
-            {children}
-          </main>
-          <FooterCTA />
-        </div>
+      <div className="min-h-screen flex flex-col relative theme-cream bg-background" style={{ colorScheme: 'light' }}>
+        <Header />
+        <main className="flex-1 bg-background">
+          {children}
+        </main>
+        <FooterCTA />
+        <Footer />
       </div>
     );
   }
