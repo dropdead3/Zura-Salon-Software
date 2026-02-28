@@ -2,24 +2,23 @@
 
 ## Problem
 
-The outer wrapper `div` (line 100 for editor, line 127 for public site) has no background color. The scrolling content container has `rounded-b-[2rem]` with `bg-background` (white). As it slides over the fixed `bg-secondary` (gray) footer, the rounded corners expose the wrapper's transparent/white background — creating visible white corner artifacts above the footer.
+The editor canvas iframe renders at a narrower viewport than the live front-end site. The logo uses responsive classes `h-8 lg:h-7` — at `<1024px` (editor iframe width) the logo is 32px, at `>=1024px` (live site) it's 28px. While the CSS sizes differ, the overall impression in the editor is that the logo appears smaller because the entire iframe is rendered in a narrower container. The header also shifts from `h-14` to `h-16` at the `lg` breakpoint, changing proportions.
 
-## Fix
+The core fix is to unify the logo and header sizing so they're consistent regardless of viewport width.
 
-Set the outer wrapper's background to match the footer's background (`bg-secondary`) in both layout branches. This way, the rounded corners of the white content container blend seamlessly into the gray footer area.
+## Plan
 
-### 1. Editor preview branch (line 100)
-Change:
-```
-className="min-h-screen flex flex-col relative theme-cream"
-```
-To:
-```
-className="min-h-screen flex flex-col relative theme-cream bg-secondary"
-```
+### 1. Normalize logo height in Header.tsx
 
-### 2. Public site branch (line 127)
-Same change — add `bg-secondary` to the outer wrapper.
+Change the logo `<img>` class from `h-8 lg:h-7` to a single consistent `h-7` (28px). This ensures the same logo size whether viewed in the editor iframe or on the live site.
 
-No other files need to change. Two single-line edits in `Layout.tsx`.
+**Line 354**: `"h-8 lg:h-7 w-auto"` → `"h-7 w-auto"`
+
+### 2. Normalize header row height
+
+Change the header row from `h-14 lg:h-16` to a consistent `h-16` so the logo-to-header proportion stays the same at all widths.
+
+**Line 338**: `"flex items-center justify-between h-14 lg:h-16 gap-4"` → `"flex items-center justify-between h-16 gap-4"`
+
+Two single-class edits in `Header.tsx`.
 
