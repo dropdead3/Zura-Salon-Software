@@ -1,45 +1,53 @@
 
 
-## Prompt Coaching
+## Analysis
 
-Good description of the desired behavior. An even more precise prompt would be:
-> "The `* ::-webkit-scrollbar` CSS selector is forcing Chrome to switch all elements from native overlay scrollbars to classic (gutter-reserving) mode. Remove the `*` webkit scrollbar styling so only `html` gets custom scrollbar treatment. Nested scrollable elements should keep their native overlay scrollbar behavior."
+The scrollbar you see is **inside the iframe** — it's the website's own root scrollbar. Here's why it's still showing as a classic gutter:
 
-This identifies the **specific CSS selector** causing the gutter, not just the symptom.
+In WebKit/Chrome, the moment you style `::-webkit-scrollbar` on any element (even `html`), that element permanently switches from native overlay scrollbars to "classic" mode, which reserves layout space (the gutter). Our current CSS does this:
 
-## Root Cause
-
-Styling `::-webkit-scrollbar` via the `*` selector forces **every scrollable element** in Chrome to switch from native overlay scrollbars (which float over content) to "classic" scrollbars (which reserve layout space as a gutter). The negative margin hack on `body` only compensates for the root scrollbar — it cannot fix every nested `overflow: auto` container (modals, panels, iframes).
-
-```text
-Native overlay (default macOS Chrome):
-┌─────────────────────────────────┐
-│ content fills full width   [▐]  │  ← thumb floats OVER content
-└─────────────────────────────────┘
-
-Classic mode (triggered by * ::-webkit-scrollbar):
-┌───────────────────────────┬─────┐
-│ content stops here        │ gut │  ← 6px gutter reserved
-└───────────────────────────┴─────┘
+```css
+html::-webkit-scrollbar { width: 6px; background: transparent; }
 ```
+
+This makes the track *visually* transparent, but the 6px gutter is still **structurally reserved**. The `body { margin-right: calc(100% - 100vw) }` hack compensates by extending the body under it — but inside the iframe, this creates a visible strip because the iframe container clips at its boundary.
+
+The dark appearance comes from the page content rendering behind the transparent track in a region where the iframe's clipping boundary meets the canvas background.
 
 ## Solution
 
-1. **Remove `*` webkit scrollbar styling** — Stop the `*::-webkit-scrollbar`, `*::-webkit-scrollbar-track`, `*::-webkit-scrollbar-thumb` rules that force classic mode on every element
+**Remove all WebKit scrollbar pseudo-element styling entirely.** On macOS Chrome, native overlay scrollbars already float over content with no gutter — they only appear when scrolling and auto-hide. By removing our `::-webkit-scrollbar` rules, we stop forcing Chrome into classic mode.
 
-2. **Keep `html`-level scrollbar styling only** — The root scrollbar gets the glass treatment with the negative margin compensation
+### Changes to `src/index.css` (lines 1538–1584)
 
-3. **Nested elements get native overlay** — Without `*::-webkit-scrollbar` rules, Chrome keeps its default overlay scrollbar on nested containers (modals, panels, sidebars), which already floats over content with no gutter
+Replace the entire scrollbar block with:
 
-4. **Firefox: keep `scrollbar-width: thin` on `*`** — Firefox's `thin` value does not create gutters the same way; it's safe to keep for cross-browser consistency
+1. **Remove** `html { overflow-y: scroll }` — this forces a permanent scrollbar; let the browser decide
+2. **Keep** `html { overflow-x: hidden }` — prevents horizontal scroll from the negative margin
+3. **Remove** `body { margin-right: calc(100% - 100vw) }` — no longer needed since native overlay scrollbars don't create gutters
+4. **Remove** all `html::-webkit-scrollbar*` rules — these are what force classic gutter mode
+5. **Keep** Firefox `scrollbar-width: thin` + `scrollbar-color` on `*` — Firefox handles this correctly without creating gutters
 
-### Changes to `src/index.css` (lines 1538-1588)
+Final CSS:
 
-- **html**: Keep `overflow-y: scroll`, `overflow-x: hidden`, `scrollbar-width: thin`, `scrollbar-color` — unchanged
-- **body**: Keep `margin-right: calc(100% - 100vw)` — unchanged
-- **`*` selector**: Keep Firefox `scrollbar-width: thin` and `scrollbar-color`, but **remove** the `*`-scoped `::-webkit-scrollbar`, `::-webkit-scrollbar-track`, `::-webkit-scrollbar-thumb` rules
-- **html-only webkit**: Scope all `::-webkit-scrollbar` pseudo-elements to `html::` only (not bare `::`)
-- **Remove**: `*:hover::-webkit-scrollbar-thumb` and `*:hover::-webkit-scrollbar-thumb:hover` rules
+```css
+html {
+  overflow-x: hidden;
+}
 
-This means the root page scrollbar gets the glass thumb treatment, and all nested scrollable containers revert to native macOS overlay scrollbars (which already float, have no gutter, and auto-hide).
+/* Firefox: thin scrollbar on all elements (does not create gutters) */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+*:hover {
+  scrollbar-color: rgba(128, 128, 128, 0.35) transparent;
+}
+```
+
+This is the minimal approach: let the OS handle scrollbar rendering natively (floating overlay on macOS, thin overlay on Windows 11), and only customize Firefox's colors. No gutters anywhere — root page, iframes, modals, all clean.
+
+### Risk
+
+On Windows with "always show scrollbars" enabled, users will see the OS default scrollbar (not our glass treatment). This is acceptable because Windows scrollbars in that mode are expected behavior and don't create the jarring dark gutter strip. If custom styling for Windows is desired later, it can be added as a separate enhancement.
 
