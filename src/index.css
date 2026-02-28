@@ -1459,10 +1459,11 @@ html, body, #root {
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: transparent !important;
 }
 
 ::-webkit-scrollbar-thumb {
@@ -1540,10 +1541,14 @@ html, body, #root {
 .editor-preview::-webkit-scrollbar {
   width: 6px !important;
   height: 6px !important;
+  background-color: transparent !important;
   background: transparent !important;
 }
 .editor-preview ::-webkit-scrollbar-track,
-.editor-preview::-webkit-scrollbar-track {
+.editor-preview::-webkit-scrollbar-track,
+.editor-preview *::-webkit-scrollbar-track,
+.editor-preview *:hover::-webkit-scrollbar-track {
+  background-color: transparent !important;
   background: transparent !important;
 }
 .editor-preview ::-webkit-scrollbar-thumb,
@@ -1551,6 +1556,7 @@ html, body, #root {
   background: rgba(0, 0, 0, 0.18) !important;
   border-radius: 3px !important;
 }
-.editor-preview *:hover::-webkit-scrollbar-track {
+.editor-preview ::-webkit-scrollbar-corner,
+.editor-preview::-webkit-scrollbar-corner {
   background: transparent !important;
 }
