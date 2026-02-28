@@ -16,7 +16,7 @@ export function SectionGroupHeader({ title, collapsible, isOpen = true, onToggle
     return (
       <button
         onClick={onToggle}
-        className="w-full flex items-center gap-1.5 px-3 py-1.5 mt-1 border-b border-border/30 mb-0.5 group hover:bg-muted/30 transition-colors duration-150"
+        className="w-full flex items-center gap-1.5 px-3 py-1.5 mt-1 mb-0.5 rounded-md group hover:bg-muted/40 transition-colors duration-150"
       >
         <ChevronRight
           className={cn(
@@ -32,7 +32,7 @@ export function SectionGroupHeader({ title, collapsible, isOpen = true, onToggle
   }
 
   return (
-    <div className="px-3 py-1.5 mt-1 border-b border-border/30 mb-0.5">
+    <div className="px-3 py-1.5 mt-1 mb-0.5">
       <span className="text-[10px] font-display tracking-wider text-muted-foreground/70">
         {title}
       </span>
