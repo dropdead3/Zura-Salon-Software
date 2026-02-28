@@ -27,7 +27,7 @@ interface CanvasPanelProps {
 }
 
 const VIEWPORT_WIDTHS: Record<ViewportMode, string> = {
-  desktop: 'w-full max-w-[1280px]',
+  desktop: 'w-full', // no max-w constraint — scaled instead
   tablet: 'max-w-[834px]',
   mobile: 'max-w-[390px]',
 };
@@ -37,6 +37,8 @@ const ZOOM_SCALES: Record<ZoomLevel, number> = {
   '100': 1,
   '75': 0.75,
 };
+
+const DESKTOP_WIDTH = 1440;
 
 export const CanvasPanel = memo(function CanvasPanel({
   activeSectionId,
@@ -60,6 +62,8 @@ export const CanvasPanel = memo(function CanvasPanel({
   const [refreshKey, setRefreshKey] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerSize, setContainerSize] = useState({ w: 0, h: 0 });
   const iframeReadyRef = useRef(false);
   const pendingSectionRef = useRef<string | undefined>(undefined);
 
@@ -135,7 +139,24 @@ export const CanvasPanel = memo(function CanvasPanel({
     return () => window.removeEventListener('website-preview-refresh', handleRefresh);
   }, []);
 
-  const scale = ZOOM_SCALES[zoomLevel];
+  // Measure container for desktop scaling
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => {
+      setContainerSize({ w: entry.contentRect.width, h: entry.contentRect.height });
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const isDesktop = viewportMode === 'desktop';
+  const fitScale = isDesktop && containerSize.w > 0
+    ? Math.min(containerSize.w / DESKTOP_WIDTH, 1)
+    : 1;
+  const effectiveScale = isDesktop
+    ? fitScale * (zoomLevel === '75' ? 0.75 : 1)
+    : ZOOM_SCALES[zoomLevel];
 
   return (
     <div className={cn(editorTokens.panel.canvas, 'h-full flex flex-col relative')}>
@@ -159,17 +180,26 @@ export const CanvasPanel = memo(function CanvasPanel({
       />
 
       {/* Canvas Surface */}
-      <div className="flex-1 overflow-hidden bg-muted/30 flex items-start justify-center p-6 lg:p-8">
+      <div ref={containerRef} className="flex-1 overflow-hidden bg-muted/30 relative">
         <div
           className={cn(
-            'w-full h-full transition-all duration-200 ease-[cubic-bezier(0.25,0.1,0.25,1)]',
-            VIEWPORT_WIDTHS[viewportMode],
+            'h-full transition-all duration-200 ease-[cubic-bezier(0.25,0.1,0.25,1)]',
+            !isDesktop && VIEWPORT_WIDTHS[viewportMode],
             editorTokens.canvas.previewFrame,
-            viewportMode !== 'desktop' && 'mx-auto'
+            !isDesktop && 'mx-auto'
           )}
           style={{
-            transform: scale !== 1 ? `scale(${scale})` : undefined,
-            transformOrigin: 'top center',
+            ...(isDesktop
+              ? {
+                  width: `${DESKTOP_WIDTH}px`,
+                  height: containerSize.h > 0 ? `${containerSize.h / effectiveScale}px` : '100%',
+                  transform: `scale(${effectiveScale})`,
+                  transformOrigin: 'top left',
+                }
+              : {
+                  transform: effectiveScale !== 1 ? `scale(${effectiveScale})` : undefined,
+                  transformOrigin: 'top center',
+                }),
           }}
         >
           <iframe
