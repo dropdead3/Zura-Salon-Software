@@ -155,8 +155,9 @@ export const CanvasPanel = memo(function CanvasPanel({
   }, []);
 
   const isDesktop = viewportMode === 'desktop';
+  const effectiveWidth = isDesktop ? Math.max(DESKTOP_WIDTH, containerSize.w) : DESKTOP_WIDTH;
   const fitScale = isDesktop && containerSize.w > 0
-    ? Math.min((containerSize.w + 1) / DESKTOP_WIDTH, 1)
+    ? Math.min((containerSize.w + 1) / effectiveWidth, 1)
     : 1;
   const effectiveScale = isDesktop
     ? fitScale * (zoomLevel === '75' ? 0.75 : 1)
@@ -196,7 +197,7 @@ export const CanvasPanel = memo(function CanvasPanel({
           style={{
             ...(isDesktop
               ? {
-                  width: `${DESKTOP_WIDTH}px`,
+                  width: `${effectiveWidth}px`,
                   height: containerSize.h > 0 ? `${containerSize.h / effectiveScale}px` : '100%',
                   transform: `scale(${effectiveScale})`,
                   transformOrigin: 'top left',
