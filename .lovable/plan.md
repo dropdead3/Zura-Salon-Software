@@ -1,62 +1,39 @@
 
 
-## Fix Navigation Manager: Auto-Seed + Functional Gaps
+## Fix Navigation Manager: Seed Failure + Empty State
 
-### Root Cause: Empty Menu State
-The `useSeedMenus` auto-seed `useEffect` in `NavigationManager.tsx` includes `seedMenus` in its dependency array. Since `useMutation` returns a new object every render, this creates a loop where the effect fires repeatedly but the mutation either gets cancelled or never completes. The menu selector shows "Choose menu..." because the database tables are empty.
+### Root Cause
+The database tables (`website_menus`, `website_menu_items`) exist and have correct RLS policies, but contain zero rows. The auto-seed mutation fires once (guarded by `seedAttempted` ref), and if it fails (silently — no error toast), it never retries. The user is stuck on "Choose menu..." permanently.
 
 ### Changes
 
-**1. Fix auto-seed infinite loop (`NavigationManager.tsx`, lines 27-31)**
-- Replace `seedMenus` dependency with a stable ref-based approach using `useRef` to track whether seeding was attempted
-- Only call `seedMenus.mutate()` once, guarded by a `hasSeeded` ref
+**1. Fix seed resilience (`NavigationManager.tsx`)**
+- Reset `seedAttempted` ref on mutation error so it can retry
+- Add `onError` handler to `seedMenus.mutate()` with toast feedback
+- Show an explicit "Create Default Menus" button when `menus` is empty and seed isn't pending — gives the user a manual fallback
 
-**2. Add a "parent item" selector to `AddMenuItemDialog.tsx`**
-- Currently new items can only be added at top level — no way to add children under a dropdown parent
-- Add a "Parent Item" dropdown that lists all `dropdown_parent` items from the current menu
-- When a parent is selected, set `parent_id` on the new item
+**2. Add "Sync from Pages" action (`NavigationManager.tsx`)**
+- When menus exist but have no items, show a "Sync from Pages" button that reads `pagesConfig.pages` where `show_in_nav: true` and `enabled: true`, and creates corresponding `page_link` menu items automatically
+- This bridges the gap between the Pages tab and the Nav tab
 
-**3. Add "Duplicate Item" action to `MenuItemInspector.tsx`**
-- Add a "Duplicate" button next to Delete for quickly cloning a menu item
-- Copies label (appending " (copy)"), type, URL, visibility, and places it after the original in sort order
-
-**4. Add nesting via drag-drop support (`MenuTreeEditor.tsx` + `MenuItemNode.tsx`)**
-- Currently drag-and-drop only reorders top-level items (`depth > 0` is disabled)
-- Enable dragging child items within their parent group
-- This is a targeted improvement — full cross-level nesting is complex and deferred
-
-**5. Deselect item when switching menus (`NavigationManager.tsx`)**
-- Already handled (line 71) but confirm `selectedItemId` resets are consistent
-
-**6. Add "Contact Us" link type to seed data (`useWebsiteMenus.ts`)**
-- Add `Contact Us` as a default seeded item in primary nav to match common salon nav patterns
+**3. Add error display on seed/load failure**
+- If `useWebsiteMenus` returns an error, show it with a retry button instead of the spinner
+- If the seed mutation errors, show a toast with the error message
 
 ### Technical Detail
 
-The critical fix is item 1. The current code:
-```tsx
-useEffect(() => {
-  if (menus && menus.length === 0 && !seedMenus.isPending) {
-    seedMenus.mutate();
-  }
-}, [menus, seedMenus]); // seedMenus changes every render
+Current broken flow:
+```
+menus loads → empty array → seedAttempted=false → mutate() → fails silently → seedAttempted=true → never retries
 ```
 
-Fix:
-```tsx
-const seedAttempted = useRef(false);
-useEffect(() => {
-  if (menus && menus.length === 0 && !seedAttempted.current) {
-    seedAttempted.current = true;
-    seedMenus.mutate();
-  }
-}, [menus]); // stable dependency
+Fixed flow:
+```
+menus loads → empty array → seedAttempted=false → mutate() → onError: reset ref + toast → user can click "Create Default Menus" button → retries
 ```
 
-### Identified Gaps (Recommendations for Future)
-- **No page-to-nav sync**: When a page is enabled with `show_in_nav: true`, it doesn't auto-create a menu item. Users must manually add it. A "Sync from Pages" button would bridge this.
-- **No menu preview highlighting**: Editing a nav item doesn't highlight it in the canvas preview.
-- **No "Contact Us" page link in nav**: The seeded nav items reference pages by URL string, not by `target_page_id`. This means broken-link validation can't catch mismatches. Seed should use page IDs where possible.
-- **No undo/revert**: The version snapshot system exists but there's no UI to rollback to a previous version.
-- **Footer menu has no dedicated editor**: The footer menu exists in the dropdown but has no specialized layout options (column grouping, social links section).
+The manual button bypasses the ref guard entirely and calls `seedMenus.mutate()` directly with proper error/success feedback.
+
+**Files to modify:**
+- `src/components/dashboard/website-editor/navigation/NavigationManager.tsx` — seed error handling, empty state UI, sync-from-pages button
 
