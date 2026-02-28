@@ -31,7 +31,9 @@ import { NavigationManager } from '@/components/dashboard/website-editor/navigat
 import { PagesManager } from '@/components/dashboard/website-editor/PagesManager';
 import { PageSettingsEditor } from '@/components/dashboard/website-editor/PageSettingsEditor';
 import { PageTemplatePicker } from '@/components/dashboard/website-editor/PageTemplatePicker';
-import { SectionStyleEditor } from '@/components/dashboard/website-editor/SectionStyleEditor';
+import { SectionStyleEditor, hasActiveStyleOverrides } from '@/components/dashboard/website-editor/SectionStyleEditor';
+import { Tabs, FilterTabsList, FilterTabsTrigger } from '@/components/ui/tabs';
+import { Paintbrush } from 'lucide-react';
 import { AddSectionDialog } from '@/components/dashboard/website-editor/AddSectionDialog';
 import { StructurePanelSkeleton, CanvasPanelSkeleton, InspectorPanelSkeleton } from '@/components/dashboard/website-editor/EditorSkeletons';
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
@@ -167,6 +169,12 @@ export default function WebsiteSectionsHub() {
   const [showPageTemplatePicker, setShowPageTemplatePicker] = useState(false);
   const [pendingTemplate, setPendingTemplate] = useState<PageTemplate | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<SectionConfig | null>(null);
+  const [inspectorTab, setInspectorTab] = useState<'content' | 'styling'>('content');
+
+  // Reset inspector tab when section changes
+  useEffect(() => {
+    setInspectorTab('content');
+  }, [activeTab]);
 
   // Mobile panel visibility
   const [showMobileStructure, setShowMobileStructure] = useState(false);
@@ -620,37 +628,53 @@ export default function WebsiteSectionsHub() {
       }
     }
 
-    // Render Zone A + divider + Zone B
+    // Content editor element
+    const contentEditor = EditorComponent ? (
+      <EditorComponent />
+    ) : activeTab.startsWith('custom-') && resolvedSection ? (
+      <CustomSectionEditor
+        sectionId={resolvedSection.id}
+        sectionType={resolvedSection.type as CustomSectionType}
+        sectionLabel={resolvedSection.label}
+        onLabelChange={(newLabel) => handleSectionLabelChange(resolvedSection!.id, newLabel)}
+      />
+    ) : null;
+
+    // If no styling available, render content directly
+    if (!resolvedSection) {
+      return contentEditor;
+    }
+
+    const styleActive = hasActiveStyleOverrides(resolvedSection.style_overrides);
+
     return (
-      <div className="space-y-0">
-        {/* Zone A: Section-level controls */}
-        {resolvedSection && (
+      <div className="space-y-4">
+        {/* Content / Styling toggle */}
+        <Tabs value={inspectorTab} onValueChange={(v) => setInspectorTab(v as 'content' | 'styling')}>
+          <FilterTabsList className="w-full">
+            <FilterTabsTrigger value="content" className="flex-1">Content</FilterTabsTrigger>
+            <FilterTabsTrigger value="styling" className="flex-1 gap-1.5">
+              <Paintbrush className="h-3 w-3" />
+              Styling
+              {styleActive && (
+                <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+              )}
+            </FilterTabsTrigger>
+          </FilterTabsList>
+        </Tabs>
+
+        {/* Tab content */}
+        {inspectorTab === 'content' ? (
+          contentEditor
+        ) : (
           <SectionStyleEditor
             value={resolvedSection.style_overrides ?? {}}
             onChange={(overrides) => handleStyleOverrideChange(resolvedSection!.id, overrides)}
             sectionId={resolvedSection.id}
           />
         )}
-
-        {/* Divider between zones */}
-        {resolvedSection && (
-          <div className="mx-1 my-1 border-t border-border/30" />
-        )}
-
-        {/* Zone B: Content controls */}
-        {EditorComponent ? (
-          <EditorComponent />
-        ) : activeTab.startsWith('custom-') && resolvedSection ? (
-          <CustomSectionEditor
-            sectionId={resolvedSection.id}
-            sectionType={resolvedSection.type as CustomSectionType}
-            sectionLabel={resolvedSection.label}
-            onLabelChange={(newLabel) => handleSectionLabelChange(resolvedSection!.id, newLabel)}
-          />
-        ) : null}
       </div>
     );
-    return null;
   };
 
   const hasInspectorContent = activeTab !== '' && (
