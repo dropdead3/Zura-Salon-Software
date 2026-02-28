@@ -90,6 +90,7 @@ export function HeroEditor() {
           onChange={(value) => updateField('eyebrow', value)}
           maxLength={40}
           placeholder="Hair • Color • Artistry"
+          aiFieldType="eyebrow"
         />
       )}
 
@@ -101,6 +102,7 @@ export function HeroEditor() {
         maxLength={30}
         placeholder="Your Salon"
         description="The static headline above the rotating words"
+        aiFieldType="hero_headline"
       />
 
       {/* Rotating Words */}
@@ -134,6 +136,7 @@ export function HeroEditor() {
             onChange={(value) => updateField('subheadline_line1', value)}
             maxLength={60}
             description="First line of supporting text below the headline"
+            aiFieldType="hero_subheadline"
           />
           <CharCountInput
             label="Subheadline Line 2"
@@ -154,6 +157,7 @@ export function HeroEditor() {
           onChange={(value) => updateField('cta_new_client', value)}
           maxLength={30}
           description="Main call-to-action button"
+          aiFieldType="cta_button"
         />
         <UrlInput
           label="Primary Button URL"

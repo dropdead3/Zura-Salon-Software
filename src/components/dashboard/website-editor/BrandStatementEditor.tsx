@@ -196,6 +196,7 @@ export function BrandStatementEditor() {
             onChange={(value) => updateField('eyebrow', value)}
             maxLength={40}
             description="Small introductory text above the headline (e.g. 'Our Brand is')"
+            aiFieldType="eyebrow"
           />
         )}
 
@@ -216,6 +217,7 @@ export function BrandStatementEditor() {
                 maxLength={30}
                 placeholder="Not Your"
                 description="Static text before the rotating words"
+                aiFieldType="hero_headline"
               />
               <CharCountInput
                 label="Headline Suffix"

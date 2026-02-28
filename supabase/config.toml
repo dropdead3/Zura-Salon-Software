@@ -215,3 +215,6 @@ verify_jwt = false
 
 [functions.ai-website-analysis]
 verify_jwt = false
+
+[functions.ai-content-writer]
+verify_jwt = false

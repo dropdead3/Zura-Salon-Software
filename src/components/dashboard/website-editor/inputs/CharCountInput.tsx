@@ -1,6 +1,7 @@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
+import { AiWriteButton, type AiFieldType } from './AiWriteButton';
 
 interface CharCountInputProps {
   label: string;
@@ -11,6 +12,7 @@ interface CharCountInputProps {
   description?: string;
   className?: string;
   id?: string;
+  aiFieldType?: AiFieldType;
 }
 
 export function CharCountInput({
@@ -22,6 +24,7 @@ export function CharCountInput({
   description,
   className,
   id,
+  aiFieldType,
 }: CharCountInputProps) {
   const length = value.length;
   const isOver = length > maxLength;
@@ -30,7 +33,17 @@ export function CharCountInput({
   return (
     <div className={cn("space-y-2", className)}>
       <div className="flex items-center justify-between">
-        <Label htmlFor={id} className="text-sm font-medium">{label}</Label>
+        <div className="flex items-center gap-1.5">
+          <Label htmlFor={id} className="text-sm font-medium">{label}</Label>
+          {aiFieldType && (
+            <AiWriteButton
+              fieldType={aiFieldType}
+              onAccept={onChange}
+              currentValue={value}
+              maxLength={maxLength}
+            />
+          )}
+        </div>
         <span className={cn(
           "text-[10px] font-mono tabular-nums",
           isOver ? "text-destructive" : isNear ? "text-[hsl(var(--platform-warning))]" : "text-muted-foreground"
