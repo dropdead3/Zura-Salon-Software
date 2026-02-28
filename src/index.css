@@ -1530,25 +1530,27 @@ html, body, #root {
 
 /* ===== EDITOR PREVIEW — Transparent scrollbar track, visible thumb ===== */
 .editor-preview,
-.editor-preview body {
+.editor-preview body,
+.editor-preview *,
+.editor-preview *:hover {
   scrollbar-width: thin !important;
   scrollbar-color: rgba(0, 0, 0, 0.18) transparent !important;
 }
-.editor-preview::-webkit-scrollbar,
-.editor-preview body::-webkit-scrollbar,
-.editor-preview *::-webkit-scrollbar {
+.editor-preview ::-webkit-scrollbar,
+.editor-preview::-webkit-scrollbar {
   width: 6px !important;
   height: 6px !important;
   background: transparent !important;
 }
-.editor-preview::-webkit-scrollbar-track,
-.editor-preview body::-webkit-scrollbar-track,
-.editor-preview *::-webkit-scrollbar-track {
+.editor-preview ::-webkit-scrollbar-track,
+.editor-preview::-webkit-scrollbar-track {
   background: transparent !important;
 }
-.editor-preview::-webkit-scrollbar-thumb,
-.editor-preview body::-webkit-scrollbar-thumb,
-.editor-preview *::-webkit-scrollbar-thumb {
+.editor-preview ::-webkit-scrollbar-thumb,
+.editor-preview::-webkit-scrollbar-thumb {
   background: rgba(0, 0, 0, 0.18) !important;
   border-radius: 3px !important;
+}
+.editor-preview *:hover::-webkit-scrollbar-track {
+  background: transparent !important;
 }
