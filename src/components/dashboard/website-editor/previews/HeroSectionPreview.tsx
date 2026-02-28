@@ -42,7 +42,7 @@ export function HeroSectionPreview({ config }: HeroSectionPreviewProps) {
 
             {/* Main headline */}
             <h1 className="font-display text-[clamp(2.25rem,8vw,5.5rem)] font-normal text-foreground leading-[0.95] flex flex-col items-center">
-              <span className="whitespace-nowrap block">Your Salon</span>
+              <span className="whitespace-nowrap block">{config.headline_text}</span>
               <span className="block overflow-hidden h-[1.15em]">
                 <AnimatePresence mode="wait">
                   <motion.span
