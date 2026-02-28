@@ -84,6 +84,7 @@ export function NewClientEditor() {
               maxLength={30}
               placeholder="New Clients"
               description="Static text before the rotating words"
+              aiFieldType="hero_headline"
             />
             <RotatingWordsInput
               words={localConfig.rotating_words}
@@ -148,6 +149,7 @@ export function NewClientEditor() {
                 onChange={(value) => updateField('cta_text', value)}
                 maxLength={30}
                 description="Text displayed on the main call-to-action button"
+                aiFieldType="cta_button"
               />
               <UrlInput
                 label="CTA Button URL"
