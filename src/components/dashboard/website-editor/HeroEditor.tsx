@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Loader2, Settings2, RotateCcw, Layout } from 'lucide-react';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
+import { useEditorDirtyState } from '@/hooks/useEditorDirtyState';
 import { toast } from 'sonner';
 import { useHeroConfig, type HeroConfig, DEFAULT_HERO } from '@/hooks/useSectionConfig';
 import { RotatingWordsInput } from './RotatingWordsInput';
@@ -23,6 +24,9 @@ export function HeroEditor() {
   const [localConfig, setLocalConfig] = useState<HeroConfig>(DEFAULT_HERO);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const debouncedConfig = useDebounce(localConfig, 300);
+
+  const isDirty = JSON.stringify(localConfig) !== JSON.stringify(data);
+  useEditorDirtyState(isDirty);
 
   useEffect(() => {
     if (data && !isLoading) {
