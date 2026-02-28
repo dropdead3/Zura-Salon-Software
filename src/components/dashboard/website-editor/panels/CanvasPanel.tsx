@@ -7,7 +7,7 @@
 
 import { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { cn } from '@/lib/utils';
-import { RefreshCw } from 'lucide-react';
+import { ZuraLoader } from '@/components/ui/ZuraLoader';
 import { editorTokens } from '../editor-tokens';
 import { CanvasHeader, type ViewportMode, type ZoomLevel, type CanvasMode } from './CanvasHeader';
 
@@ -221,7 +221,7 @@ export const CanvasPanel = memo(function CanvasPanel({
       {/* Loading overlay */}
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <RefreshCw className="h-5 w-5 animate-spin text-muted-foreground/40" />
+          <ZuraLoader size="lg" />
         </div>
       )}
     </div>
