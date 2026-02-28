@@ -1535,13 +1535,15 @@ html, body, #root {
   transition: box-shadow 0.3s ease;
 }
 
-/* ===== EDITOR PREVIEW — Transparent scrollbar track, visible thumb ===== */
+/* ===== EDITOR PREVIEW — Hover-only scrollbar thumbs ===== */
 .editor-preview,
 .editor-preview body,
-.editor-preview *,
-.editor-preview *:hover {
+.editor-preview * {
   scrollbar-width: thin !important;
-  scrollbar-color: rgba(0, 0, 0, 0.18) transparent !important;
+  scrollbar-color: transparent transparent !important;
+}
+.editor-preview *:hover {
+  scrollbar-color: rgba(0, 0, 0, 0.15) transparent !important;
 }
 .editor-preview ::-webkit-scrollbar,
 .editor-preview::-webkit-scrollbar {
@@ -1559,8 +1561,11 @@ html, body, #root {
 }
 .editor-preview ::-webkit-scrollbar-thumb,
 .editor-preview::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.18) !important;
+  background: transparent !important;
   border-radius: 3px !important;
+}
+.editor-preview *:hover::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15) !important;
 }
 .editor-preview ::-webkit-scrollbar-corner,
 .editor-preview::-webkit-scrollbar-corner {
