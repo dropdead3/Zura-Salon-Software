@@ -112,7 +112,7 @@ export const managerNavItems: DashboardNavItem[] = [
   { href: '/dashboard/clients', label: 'Client Directory', labelKey: 'client_directory', icon: Users, permission: 'view_clients', managerGroup: 'people' },
   { href: '/dashboard/admin/booth-rental', label: 'Booth Rental', labelKey: 'booth_rental', icon: Armchair, permission: 'manage_booth_rental', managerGroup: 'people' },
   { href: '/dashboard/admin/inventory', label: 'Inventory', labelKey: 'inventory', icon: Package, permission: 'manage_inventory', managerGroup: 'operations' },
-  { href: '/dashboard/admin/website-sections', label: 'Website Editor', labelKey: 'website_editor', icon: Globe, permission: 'manage_homepage_stylists', managerGroup: 'operations' },
+  { href: '/dashboard/admin/settings?category=website', label: 'Website Editor', labelKey: 'website_editor', icon: Globe, permission: 'manage_homepage_stylists', managerGroup: 'operations' },
   { href: '/dashboard/admin/seo-workshop', label: 'SEO Workshop', labelKey: 'seo_workshop', icon: Search, permission: 'view_team_overview', managerGroup: 'operations' },
   { href: '/dashboard/admin/management', label: 'Management Hub', labelKey: 'management_hub', icon: LayoutGrid, permission: 'view_team_overview', managerGroup: 'operations' },
 ];
@@ -139,7 +139,7 @@ export const hubLinksConfig: HubLinkConfig[] = [
   { href: '/dashboard/admin/management', icon: LayoutGrid, label: 'Management Hub', colorClass: 'bg-primary/5 text-primary hover:bg-primary/10', permission: 'view_team_overview' },
   { href: '/dashboard/admin/payroll', icon: DollarSign, label: 'Hiring & Payroll Hub', colorClass: 'bg-primary/5 text-primary hover:bg-primary/10', permission: 'manage_payroll' },
   { href: '/dashboard/admin/booth-renters', icon: Store, label: 'Renter Hub', colorClass: 'bg-primary/5 text-primary hover:bg-primary/10', permission: 'manage_booth_renters' },
-  { href: '/dashboard/admin/website-sections', icon: Globe, label: 'Website Editor', colorClass: 'bg-primary/5 text-primary hover:bg-primary/10', permission: 'manage_homepage_stylists' },
+  { href: '/dashboard/admin/settings?category=website', icon: Globe, label: 'Website Editor', colorClass: 'bg-primary/5 text-primary hover:bg-primary/10', permission: 'manage_homepage_stylists' },
   { href: '/dashboard/admin/seo-workshop', icon: Search, label: 'SEO Workshop', colorClass: 'bg-primary/5 text-primary hover:bg-primary/10', permission: 'view_team_overview' },
   { href: '/dashboard/campaigns', icon: Rocket, label: 'Campaigns', colorClass: 'bg-primary/5 text-primary hover:bg-primary/10', permission: 'view_team_overview' },
   { href: '/dashboard/admin/feedback', icon: MessageSquarePlus, label: 'Feedback Hub', colorClass: 'bg-primary/5 text-primary hover:bg-primary/10', permission: 'manage_settings' },
