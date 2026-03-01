@@ -5,13 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet';
+import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import {
   Clock,
   User,
@@ -103,54 +97,59 @@ export function MobileAgendaCard({
   };
 
   return (
-    <Sheet open={isOpen} onOpenChange={setIsOpen}>
-      <SheetTrigger asChild>
-        <Card className={cn(
+    <>
+      <Card 
+        className={cn(
           'p-3 cursor-pointer transition-all active:scale-[0.98]',
           isCompleted && 'opacity-70'
-        )}>
-          <div className="flex items-center gap-3">
-            {/* Avatar */}
-            <Avatar className="h-10 w-10">
-              <AvatarFallback className="bg-primary/10 text-primary text-sm">
-                {getInitials(appointment.client_name)}
-              </AvatarFallback>
-            </Avatar>
+        )}
+        onClick={() => setIsOpen(true)}
+      >
+        <div className="flex items-center gap-3">
+          <Avatar className="h-10 w-10">
+            <AvatarFallback className="bg-primary/10 text-primary text-sm">
+              {getInitials(appointment.client_name)}
+            </AvatarFallback>
+          </Avatar>
 
-            {/* Details */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between gap-2">
-                <p className="font-medium truncate">
-                  {appointment.client_name || 'Unknown Client'}
-                </p>
-                <Badge className={cn('text-[10px] shrink-0', statusConfig.color)}>
-                  <StatusIcon className="h-2.5 w-2.5 mr-1" />
-                  {statusConfig.label}
-                </Badge>
-              </div>
-              
-              <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  {formatTime(appointment.start_time)}
-                </span>
-                {appointment.service_name && (
-                  <span className="truncate max-w-[120px]">
-                    {appointment.service_name}
-                  </span>
-                )}
-              </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between gap-2">
+              <p className="font-medium truncate">
+                {appointment.client_name || 'Unknown Client'}
+              </p>
+              <Badge className={cn('text-[10px] shrink-0', statusConfig.color)}>
+                <StatusIcon className="h-2.5 w-2.5 mr-1" />
+                {statusConfig.label}
+              </Badge>
             </div>
-
-            {/* Chevron */}
-            <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+            
+            <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                {formatTime(appointment.start_time)}
+              </span>
+              {appointment.service_name && (
+                <span className="truncate max-w-[120px]">
+                  {appointment.service_name}
+                </span>
+              )}
+            </div>
           </div>
-        </Card>
-      </SheetTrigger>
 
-      <SheetContent side="bottom" className="h-[70vh] rounded-t-2xl">
-        <SheetHeader className="text-left pb-4 border-b">
-          <SheetTitle className="flex items-center gap-3">
+          <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+        </div>
+      </Card>
+
+      <PremiumFloatingPanel 
+        open={isOpen} 
+        onOpenChange={setIsOpen} 
+        side="bottom"
+        maxHeight="70vh"
+        maxWidth="100%"
+        showCloseButton
+      >
+        <div className="p-5 pb-4 border-b border-border/40">
+          <div className="flex items-center gap-3">
             <Avatar className="h-12 w-12">
               <AvatarFallback className="bg-primary/10 text-primary">
                 {getInitials(appointment.client_name)}
@@ -163,10 +162,10 @@ export function MobileAgendaCard({
                 {statusConfig.label}
               </Badge>
             </div>
-          </SheetTitle>
-        </SheetHeader>
+          </div>
+        </div>
 
-        <div className="py-4 space-y-4">
+        <div className="p-5 space-y-4 overflow-y-auto">
           {/* Time & Service */}
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-muted/30 rounded-lg p-3">
@@ -268,7 +267,7 @@ export function MobileAgendaCard({
             </div>
           )}
         </div>
-      </SheetContent>
-    </Sheet>
+      </PremiumFloatingPanel>
+    </>
   );
 }

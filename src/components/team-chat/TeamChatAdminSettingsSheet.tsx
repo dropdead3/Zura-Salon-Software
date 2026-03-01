@@ -1,13 +1,6 @@
 import { useState } from 'react';
 import { Settings } from 'lucide-react';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet';
+import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsTrigger, ResponsiveTabsList } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -33,59 +26,57 @@ export function TeamChatAdminSettingsSheet({ open, onOpenChange }: TeamChatAdmin
   const [activeTab, setActiveTab] = useState('channels');
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-2xl">
-        <SheetHeader>
-          <SheetTitle className="flex items-center gap-2">
-            <Settings className="h-5 w-5" />
-            Team Chat Settings
-          </SheetTitle>
-          <SheetDescription>
-            Configure permissions, sections, display options, and auto-join rules
-          </SheetDescription>
-        </SheetHeader>
+    <PremiumFloatingPanel open={open} onOpenChange={onOpenChange} maxWidth="720px">
+      <div className="p-5 pb-3 border-b border-border/40">
+        <h2 className="font-display text-sm tracking-wide uppercase flex items-center gap-2">
+          <Settings className="h-5 w-5" />
+          Team Chat Settings
+        </h2>
+        <p className="text-sm text-muted-foreground mt-1">
+          Configure permissions, sections, display options, and auto-join rules
+        </p>
+      </div>
 
-        {isLoading ? (
-          <div className="mt-6 space-y-4">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-32 w-full" />
-            <Skeleton className="h-32 w-full" />
-          </div>
-        ) : (
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
-            <ResponsiveTabsList onTabChange={setActiveTab}>
-              <TabsTrigger value="channels">Channels</TabsTrigger>
-              <TabsTrigger value="sections">Sections</TabsTrigger>
-              <TabsTrigger value="roles">Roles</TabsTrigger>
-              <TabsTrigger value="auto-join">Auto</TabsTrigger>
-              <TabsTrigger value="ai">AI</TabsTrigger>
-            </ResponsiveTabsList>
+      {isLoading ? (
+        <div className="p-5 space-y-4">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-32 w-full" />
+          <Skeleton className="h-32 w-full" />
+        </div>
+      ) : (
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden p-5 pt-3">
+          <ResponsiveTabsList onTabChange={setActiveTab}>
+            <TabsTrigger value="channels">Channels</TabsTrigger>
+            <TabsTrigger value="sections">Sections</TabsTrigger>
+            <TabsTrigger value="roles">Roles</TabsTrigger>
+            <TabsTrigger value="auto-join">Auto</TabsTrigger>
+            <TabsTrigger value="ai">AI</TabsTrigger>
+          </ResponsiveTabsList>
 
-            <ScrollArea className="h-[calc(100vh-220px)] mt-4 pr-4">
-              <TabsContent value="channels" className="mt-0">
-                <ChannelPermissionsTab settings={settings} onUpdate={updateSettings} />
-              </TabsContent>
+          <ScrollArea className="flex-1 mt-4 pr-4">
+            <TabsContent value="channels" className="mt-0">
+              <ChannelPermissionsTab settings={settings} onUpdate={updateSettings} />
+            </TabsContent>
 
-              <TabsContent value="sections" className="mt-0">
-                <SectionManagementTab />
-              </TabsContent>
+            <TabsContent value="sections" className="mt-0">
+              <SectionManagementTab />
+            </TabsContent>
 
-              <TabsContent value="roles" className="mt-0">
-                <ChatPermissionsTab embedded />
-              </TabsContent>
+            <TabsContent value="roles" className="mt-0">
+              <ChatPermissionsTab embedded />
+            </TabsContent>
 
-              <TabsContent value="auto-join" className="mt-0">
-                <AutoJoinRulesTab />
-              </TabsContent>
+            <TabsContent value="auto-join" className="mt-0">
+              <AutoJoinRulesTab />
+            </TabsContent>
 
-              <TabsContent value="ai" className="mt-0">
-                <SmartActionsSettingsTab settings={settings} onUpdate={updateSettings} />
-              </TabsContent>
-            </ScrollArea>
-          </Tabs>
-        )}
-      </SheetContent>
-    </Sheet>
+            <TabsContent value="ai" className="mt-0">
+              <SmartActionsSettingsTab settings={settings} onUpdate={updateSettings} />
+            </TabsContent>
+          </ScrollArea>
+        </Tabs>
+      )}
+    </PremiumFloatingPanel>
   );
 }
 

@@ -1,13 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-  SheetDescription,
-} from '@/components/ui/sheet';
+import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { ArrowUpDown, RotateCcw, GripVertical } from 'lucide-react';
 import {
   DndContext,
@@ -117,25 +110,29 @@ export function AnalyticsCardReorderDrawer({
     .filter(Boolean) as CardDefinition[];
 
   return (
-    <Sheet open={isOpen} onOpenChange={setIsOpen}>
-      <SheetTrigger asChild>
-        <Button variant="ghost" size={tokens.button.card} className="gap-1.5 text-muted-foreground hover:text-foreground h-8">
-          <ArrowUpDown className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline text-xs">Reorganize</span>
-        </Button>
-      </SheetTrigger>
-      <SheetContent className="w-full sm:max-w-md overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle className="font-display tracking-wide flex items-center gap-2">
-            <ArrowUpDown className="w-5 h-5" />
-            REORGANIZE CARDS
-          </SheetTitle>
-          <SheetDescription>
-            Drag cards to reorder them on this page
-          </SheetDescription>
-        </SheetHeader>
+    <>
+      <Button
+        variant="ghost"
+        size={tokens.button.card}
+        className="gap-1.5 text-muted-foreground hover:text-foreground h-8"
+        onClick={() => setIsOpen(true)}
+      >
+        <ArrowUpDown className="w-3.5 h-3.5" />
+        <span className="hidden sm:inline text-xs">Reorganize</span>
+      </Button>
 
-        <div className="mt-6 space-y-4">
+      <PremiumFloatingPanel open={isOpen} onOpenChange={setIsOpen} maxWidth="440px">
+        <div className="p-5 pb-3 border-b border-border/40">
+          <h2 className="font-display text-sm tracking-wide uppercase flex items-center gap-2">
+            <ArrowUpDown className="w-5 h-5" />
+            Reorganize Cards
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Drag cards to reorder them on this page
+          </p>
+        </div>
+
+        <div className="p-5 space-y-4 overflow-y-auto flex-1">
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
@@ -170,7 +167,7 @@ export function AnalyticsCardReorderDrawer({
             Reset to Default
           </Button>
         </div>
-      </SheetContent>
-    </Sheet>
+      </PremiumFloatingPanel>
+    </>
   );
 }

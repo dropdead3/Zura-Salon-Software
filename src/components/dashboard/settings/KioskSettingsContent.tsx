@@ -10,7 +10,7 @@ import { useLocations } from '@/hooks/useLocations';
 import { usePushDefaultsToAllLocations, useLocationKioskOverrides } from '@/hooks/useKioskSettings';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 
@@ -88,22 +88,24 @@ export function KioskSettingsContent() {
       )}
 
       {/* Preview Sheet for org defaults */}
-      <Sheet open={previewOpen} onOpenChange={setPreviewOpen}>
-        <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle>Kiosk Preview — Organization Defaults</SheetTitle>
-            <SheetDescription>Live preview of default kiosk appearance</SheetDescription>
-          </SheetHeader>
-          {previewSettings && (
-            <div className="mt-4">
-              <KioskPreviewPanel 
-                settings={previewSettings} 
-                businessSettings={businessSettings}
-              />
-            </div>
-          )}
-        </SheetContent>
-      </Sheet>
+      <PremiumFloatingPanel open={previewOpen} onOpenChange={setPreviewOpen} maxWidth="720px">
+        <div className="p-5 pb-3 border-b border-border/40">
+          <h2 className="font-display text-sm tracking-wide uppercase">
+            Kiosk Preview — Organization Defaults
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Live preview of default kiosk appearance
+          </p>
+        </div>
+        {previewSettings && (
+          <div className="flex-1 overflow-y-auto p-5">
+            <KioskPreviewPanel 
+              settings={previewSettings} 
+              businessSettings={businessSettings}
+            />
+          </div>
+        )}
+      </PremiumFloatingPanel>
     </div>
   );
 }

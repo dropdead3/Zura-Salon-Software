@@ -1,10 +1,5 @@
 import { useState } from 'react';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
+import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
@@ -117,29 +112,29 @@ export function LeadDetailsSheet({
     : null;
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-lg overflow-hidden flex flex-col">
-        <SheetHeader className="pb-4">
-          <div className="flex items-start justify-between">
-            <div>
-              <SheetTitle className="text-xl">{lead.name}</SheetTitle>
-              <div className="flex items-center gap-2 mt-2">
-                <Badge variant="outline" className={cn("text-xs", getStatusColor(lead.status))}>
-                  {STATUS_OPTIONS.find(s => s.value === lead.status)?.label || lead.status}
-                </Badge>
-                <Badge variant="secondary" className="text-xs">
-                  {formatSourceName(lead.source)}
-                </Badge>
-              </div>
+    <PremiumFloatingPanel open={open} onOpenChange={onOpenChange} maxWidth="560px">
+      <div className="p-5 pb-4 border-b border-border/40">
+        <div className="flex items-start justify-between">
+          <div>
+            <h2 className="font-display text-sm tracking-wide uppercase">{lead.name}</h2>
+            <div className="flex items-center gap-2 mt-2">
+              <Badge variant="outline" className={cn("text-xs", getStatusColor(lead.status))}>
+                {STATUS_OPTIONS.find(s => s.value === lead.status)?.label || lead.status}
+              </Badge>
+              <Badge variant="secondary" className="text-xs">
+                {formatSourceName(lead.source)}
+              </Badge>
             </div>
           </div>
-        </SheetHeader>
+        </div>
+      </div>
 
-        <ScrollArea className="flex-1 -mx-6 px-6">
+      <ScrollArea className="flex-1">
+        <div className="p-5">
           {/* Contact Info */}
           <div className="space-y-3 mb-6">
             {lead.email && (
-              <a 
+              <a
                 href={`mailto:${lead.email}`}
                 className="flex items-center gap-3 text-sm hover:text-primary transition-colors"
               >
@@ -149,7 +144,7 @@ export function LeadDetailsSheet({
               </a>
             )}
             {lead.phone && (
-              <a 
+              <a
                 href={`tel:${lead.phone}`}
                 className="flex items-center gap-3 text-sm hover:text-primary transition-colors"
               >
@@ -247,8 +242,8 @@ export function LeadDetailsSheet({
           {/* Status Update */}
           <div className="mb-6">
             <h4 className="text-sm font-medium mb-2">Update Status</h4>
-            <Select 
-              value={lead.status} 
+            <Select
+              value={lead.status}
               onValueChange={handleStatusChange}
               disabled={isUpdating}
             >
@@ -273,7 +268,7 @@ export function LeadDetailsSheet({
           {/* Activity Log */}
           <div className="mb-6">
             <h4 className="text-sm font-medium mb-3">Activity</h4>
-            
+
             {/* Add Note */}
             <div className="flex gap-2 mb-4">
               <Textarea
@@ -282,8 +277,8 @@ export function LeadDetailsSheet({
                 onChange={(e) => setNewNote(e.target.value)}
                 className="min-h-[60px] resize-none"
               />
-              <Button 
-                size="icon" 
+              <Button
+                size="icon"
                 onClick={handleAddNote}
                 disabled={!newNote.trim() || isSendingNote}
                 className="flex-shrink-0"
@@ -304,7 +299,7 @@ export function LeadDetailsSheet({
             ) : (
               <div className="space-y-3">
                 {activity.map((item) => (
-                  <div 
+                  <div
                     key={item.id}
                     className="relative pl-4 border-l-2 border-muted pb-3 last:pb-0"
                   >
@@ -329,8 +324,8 @@ export function LeadDetailsSheet({
               </div>
             )}
           </div>
-        </ScrollArea>
-      </SheetContent>
-    </Sheet>
+        </div>
+      </ScrollArea>
+    </PremiumFloatingPanel>
   );
 }

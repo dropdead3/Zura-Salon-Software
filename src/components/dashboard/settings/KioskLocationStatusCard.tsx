@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { UserCheck, ClipboardCheck, CalendarPlus, FileSignature, Upload, Loader2, Tablet, ChevronDown, Eye } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
@@ -14,7 +13,7 @@ import { KioskPreviewPanel } from './KioskPreviewPanel';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { formatDistanceToNow } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -331,23 +330,25 @@ export function KioskLocationStatusCard({ orgId }: KioskLocationStatusCardProps)
       </Card>
 
       {/* Preview Sheet */}
-      <Sheet open={previewOpen} onOpenChange={setPreviewOpen}>
-        <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle>Kiosk Preview — {previewLocationName}</SheetTitle>
-            <SheetDescription>Live preview of how the kiosk will appear</SheetDescription>
-          </SheetHeader>
-          {previewSettings && (
-            <div className="mt-4">
-              <KioskPreviewPanel 
-                settings={previewSettings} 
-                businessSettings={businessSettings}
-                locationName={previewLocationName}
-              />
-            </div>
-          )}
-        </SheetContent>
-      </Sheet>
+      <PremiumFloatingPanel open={previewOpen} onOpenChange={setPreviewOpen} maxWidth="720px">
+        <div className="p-5 pb-3 border-b border-border/40">
+          <h2 className="font-display text-sm tracking-wide uppercase">
+            Kiosk Preview — {previewLocationName}
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Live preview of how the kiosk will appear
+          </p>
+        </div>
+        {previewSettings && (
+          <div className="flex-1 overflow-y-auto p-5">
+            <KioskPreviewPanel 
+              settings={previewSettings} 
+              businessSettings={businessSettings}
+              locationName={previewLocationName}
+            />
+          </div>
+        )}
+      </PremiumFloatingPanel>
     </>
   );
 }

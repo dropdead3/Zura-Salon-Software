@@ -30,12 +30,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { 
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
+import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { 
   Pagination, 
   PaginationContent, 
@@ -61,7 +56,6 @@ const DATE_PRESETS = [
   { label: 'Last 7 days', value: '7d', getRange: () => ({ from: subDays(new Date(), 7), to: new Date() }) },
   { label: 'Last 30 days', value: '30d', getRange: () => ({ from: subDays(new Date(), 30), to: new Date() }) },
   { label: 'Last 90 days', value: '90d', getRange: () => ({ from: subDays(new Date(), 90), to: new Date() }) },
-  { label: 'All time', value: 'all', getRange: () => ({ from: undefined, to: undefined }) },
 ];
 
 export default function AuditLogPage() {
@@ -88,36 +82,33 @@ export default function AuditLogPage() {
     }
   };
 
-  const handlePageChange = (page: number) => {
-    setFilters(prev => ({ ...prev, page }));
+  const handleFilterChange = (key: keyof AuditLogFilters, value: any) => {
+    setFilters(prev => ({ ...prev, [key]: value, page: 1 }));
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setFilters(prev => ({ ...prev, page: newPage }));
   };
 
   return (
-    <PlatformPageContainer className="space-y-6">
+    <PlatformPageContainer>
       <PlatformPageHeader
-        title="Activity Log"
-        description="View and search platform activity history"
-        backTo="/dashboard/platform/overview"
-        backLabel="Back to Overview"
+        title="Audit Logs"
+        description="Comprehensive audit trail of all platform activities and changes"
         actions={
-          <div className="flex items-center gap-2">
-            <PlatformButton 
-              variant="outline" 
-              size="sm" 
-              onClick={() => refetch()}
-              disabled={isFetching}
-            >
-              <RefreshCw className={cn("h-4 w-4 mr-1", isFetching && "animate-spin")} />
+          <div className="flex gap-2">
+            <PlatformButton variant="outline" onClick={() => refetch()} disabled={isFetching}>
+              <RefreshCw className={cn("w-4 h-4 mr-2", isFetching && "animate-spin")} />
               Refresh
             </PlatformButton>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <PlatformButton variant="outline" size="sm">
-                  <Download className="h-4 w-4 mr-1" />
+                <PlatformButton variant="outline">
+                  <Download className="w-4 h-4 mr-2" />
                   Export
                 </PlatformButton>
               </DropdownMenuTrigger>
-              <DropdownMenuContent>
+              <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => handleExport('csv')}>
                   Export as CSV
                 </DropdownMenuItem>
@@ -130,122 +121,95 @@ export default function AuditLogPage() {
         }
       />
 
-      {/* Filters Bar */}
-      <div className="rounded-xl border border-border/60 bg-card/80 backdrop-blur-sm p-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-            <Select value={datePreset} onValueChange={setDatePreset}>
-              <SelectTrigger className={cn("w-auto", tokens.input.filter)}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {DATE_PRESETS.map(preset => (
-                  <SelectItem key={preset.value} value={preset.value}>
-                    {preset.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+      <div className="space-y-4">
+        {/* Filters */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-card rounded-lg border border-border/60">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search details..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 bg-background"
+            />
           </div>
+          
+          <Select value={filters.action} onValueChange={(v) => handleFilterChange('action', v === 'all' ? undefined : v)}>
+            <SelectTrigger className="bg-background">
+              <SelectValue placeholder="All Actions" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Actions</SelectItem>
+              {actions?.map(action => (
+                <SelectItem key={action} value={action}>
+                  {getAuditActionConfig(action).label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-          <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-muted-foreground" />
-            <Select 
-              value={filters.actions?.[0] || 'all'} 
-              onValueChange={(v) => setFilters(prev => ({ 
-                ...prev, 
-                actions: v === 'all' ? undefined : [v],
-                page: 1
-              }))}
-            >
-              <SelectTrigger className={cn("w-auto", tokens.input.filter)}>
-                <SelectValue placeholder="All actions" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All actions</SelectItem>
-                {actions?.map(action => (
-                  <SelectItem key={action} value={action}>
-                    {getAuditActionConfig(action).label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <Select value={filters.organizationId} onValueChange={(v) => handleFilterChange('organizationId', v === 'all' ? undefined : v)}>
+            <SelectTrigger className="bg-background">
+              <SelectValue placeholder="All Organizations" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Organizations</SelectItem>
+              {organizations?.map(org => (
+                <SelectItem key={org.id} value={org.id}>
+                  {org.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-          <div className="flex items-center gap-2">
-            <Building2 className="h-4 w-4 text-muted-foreground" />
-            <Select 
-              value={filters.organizationId || 'all'} 
-              onValueChange={(v) => setFilters(prev => ({ 
-                ...prev, 
-                organizationId: v === 'all' ? undefined : v,
-                page: 1
-              }))}
-            >
-              <SelectTrigger className={cn("w-auto", tokens.input.filter)}>
-                <SelectValue placeholder="All organizations" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All organizations</SelectItem>
-                {organizations?.map(org => (
-                  <SelectItem key={org.id} value={org.id}>
-                    {org.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex-1 min-w-[200px]">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search logs..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className={cn("pl-9", tokens.input.search)}
-              />
-            </div>
-          </div>
+          <Select value={datePreset} onValueChange={setDatePreset}>
+            <SelectTrigger className="bg-background">
+              <SelectValue placeholder="Date Range" />
+            </SelectTrigger>
+            <SelectContent>
+              {DATE_PRESETS.map(preset => (
+                <SelectItem key={preset.value} value={preset.value}>
+                  {preset.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-      </div>
 
-      {/* Results Table */}
-      <div className="rounded-xl border border-border/60 bg-card/80 backdrop-blur-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-border/60">
-                <th className={cn("text-left px-4 py-3", tokens.table.columnHeader)}>Action</th>
-                <th className={cn("text-left px-4 py-3", tokens.table.columnHeader)}>User</th>
-                <th className={cn("text-left px-4 py-3", tokens.table.columnHeader)}>Organization</th>
-                <th className={cn("text-left px-4 py-3", tokens.table.columnHeader)}>Time</th>
-                <th className="w-10"></th>
+        {/* Table */}
+        <div className="rounded-lg border border-border/60 overflow-hidden bg-card">
+          <table className="w-full text-left border-collapse">
+            <thead className="bg-muted/30 text-xs uppercase text-muted-foreground font-medium">
+              <tr>
+                <th className="px-4 py-3 w-32">Action</th>
+                <th className="px-4 py-3 w-48">User</th>
+                <th className="px-4 py-3">Organization</th>
+                <th className="px-4 py-3 w-48">Timestamp</th>
+                <th className="px-4 py-3 w-10"></th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-border/40">
               {isLoading ? (
-                [...Array(10)].map((_, i) => (
-                  <tr key={i} className="border-b border-border/40">
-                    <td className="px-4 py-3"><Skeleton className="h-6 w-32" /></td>
-                    <td className="px-4 py-3"><Skeleton className="h-6 w-28" /></td>
-                    <td className="px-4 py-3"><Skeleton className="h-6 w-28" /></td>
-                    <td className="px-4 py-3"><Skeleton className="h-6 w-20" /></td>
-                    <td></td>
-                  </tr>
-                ))
+                <tr>
+                  <td colSpan={5} className="p-4">
+                    <div className="space-y-3">
+                      {[1, 2, 3, 4, 5].map(i => (
+                        <Skeleton key={i} className="h-12 w-full" />
+                      ))}
+                    </div>
+                  </td>
+                </tr>
               ) : data?.logs.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-12 text-center text-muted-foreground">
-                    No audit logs found matching your filters.
+                  <td colSpan={5} className="p-12 text-center text-muted-foreground">
+                    <FileText className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                    <p>No audit logs found matching your filters</p>
                   </td>
                 </tr>
               ) : (
                 data?.logs.map(log => {
                   const config = getAuditActionConfig(log.action);
                   const colorClasses = {
-                    violet: 'bg-violet-500/15 text-violet-700 dark:text-violet-300',
                     emerald: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300',
                     amber: 'bg-amber-500/15 text-amber-700 dark:text-amber-300',
                     rose: 'bg-rose-500/15 text-rose-700 dark:text-rose-300',
@@ -339,45 +303,43 @@ export default function AuditLogPage() {
       </div>
 
       {/* Detail Sheet */}
-      <Sheet open={!!selectedLog} onOpenChange={(open) => !open && setSelectedLog(null)}>
-        <SheetContent className="bg-card border-border w-[500px] sm:max-w-[500px]">
-          <SheetHeader>
-            <SheetTitle className="text-foreground">Activity Log Details</SheetTitle>
-          </SheetHeader>
-          {selectedLog && (
-            <div className="mt-6 space-y-6">
-              <div>
-                <label className={tokens.heading.subsection}>Action</label>
-                <p className="mt-1 text-foreground">{getAuditActionConfig(selectedLog.action).label}</p>
-              </div>
-              <div>
-                <label className={tokens.heading.subsection}>User</label>
-                <p className="mt-1 text-foreground">{selectedLog.user_name || 'System'}</p>
-              </div>
-              <div>
-                <label className={tokens.heading.subsection}>Organization</label>
-                <p className="mt-1 text-foreground">{selectedLog.organization_name || '-'}</p>
-              </div>
-              <div>
-                <label className={tokens.heading.subsection}>Timestamp</label>
-                <p className="mt-1 text-foreground">{format(new Date(selectedLog.created_at), 'PPpp')}</p>
-              </div>
-              {selectedLog.entity_type && (
-                <div>
-                  <label className={tokens.heading.subsection}>Entity</label>
-                  <p className="mt-1 text-foreground">{selectedLog.entity_type} ({selectedLog.entity_id})</p>
-                </div>
-              )}
-              <div>
-                <label className={tokens.heading.subsection}>Details</label>
-                <pre className="mt-1 p-3 bg-muted/50 rounded-lg text-sm text-foreground overflow-auto max-h-[300px]">
-                  {JSON.stringify(selectedLog.details, null, 2)}
-                </pre>
-              </div>
+      <PremiumFloatingPanel open={!!selectedLog} onOpenChange={(open) => !open && setSelectedLog(null)} maxWidth="500px">
+        <div className="p-5 pb-3 border-b border-border/40">
+          <h2 className="font-display text-sm tracking-wide uppercase">Activity Log Details</h2>
+        </div>
+        {selectedLog && (
+          <div className="flex-1 overflow-y-auto p-5 space-y-6">
+            <div>
+              <label className={tokens.heading.subsection}>Action</label>
+              <p className="mt-1 text-foreground">{getAuditActionConfig(selectedLog.action).label}</p>
             </div>
-          )}
-        </SheetContent>
-      </Sheet>
+            <div>
+              <label className={tokens.heading.subsection}>User</label>
+              <p className="mt-1 text-foreground">{selectedLog.user_name || 'System'}</p>
+            </div>
+            <div>
+              <label className={tokens.heading.subsection}>Organization</label>
+              <p className="mt-1 text-foreground">{selectedLog.organization_name || '-'}</p>
+            </div>
+            <div>
+              <label className={tokens.heading.subsection}>Timestamp</label>
+              <p className="mt-1 text-foreground">{format(new Date(selectedLog.created_at), 'PPpp')}</p>
+            </div>
+            {selectedLog.entity_type && (
+              <div>
+                <label className={tokens.heading.subsection}>Entity</label>
+                <p className="mt-1 text-foreground">{selectedLog.entity_type} ({selectedLog.entity_id})</p>
+              </div>
+            )}
+            <div>
+              <label className={tokens.heading.subsection}>Details</label>
+              <pre className="mt-1 p-3 bg-muted/50 rounded-lg text-sm text-foreground overflow-auto max-h-[300px]">
+                {JSON.stringify(selectedLog.details, null, 2)}
+              </pre>
+            </div>
+          </div>
+        )}
+      </PremiumFloatingPanel>
     </PlatformPageContainer>
   );
 }

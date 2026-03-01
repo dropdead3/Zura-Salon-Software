@@ -13,12 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
 // Switch removed - rebook toggle replaced by rebooking gate
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
+import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { toast } from 'sonner';
 import { jsPDF } from 'jspdf';
 import type { PhorestAppointment } from '@/hooks/usePhorestCalendar';
@@ -27,7 +22,16 @@ import { PromoCodeInput } from '@/components/dashboard/checkout/PromoCodeInput';
 import type { PromoValidationResult } from '@/hooks/usePromoCodeValidation';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
-/** Default reasons a client may decline rebooking */
+// Constants
+const RECEIPT_WIDTH = 80; // mm
+const RECEIPT_MARGIN = 5; // mm
+
+// Helpers
+const formatAddress = (address: any) => {
+  if (!address) return '';
+  return `${address.street}, ${address.city}, ${address.state} ${address.zip}`;
+};
+
 const DECLINE_REASONS = [
   'Wants to check their schedule first',
   'Prefers to book online later',
@@ -48,9 +52,7 @@ interface CheckoutSummarySheetProps {
   locationAddress?: string;
   locationPhone?: string;
   organizationId?: string;
-  /** Called when user wants to schedule next appointment (opens booking popover) */
   onScheduleNext?: (apt: PhorestAppointment) => void;
-  /** Externally set when rebook completes via QuickBookingPopover callback */
   rebookCompleted?: boolean;
 }
 
@@ -83,13 +85,11 @@ export function CheckoutSummarySheet({
   const { formatCurrency, currency } = useFormatCurrency();
   const { formatDate: formatDateLocale } = useFormatDate();
 
-  // Rebooking gate state
   type GatePhase = 'gate' | 'declining' | 'checkout';
   const [gatePhase, setGatePhase] = useState<GatePhase>('gate');
   const [declineReason, setDeclineReason] = useState<string>('');
   const [declineOtherText, setDeclineOtherText] = useState<string>('');
 
-  // Reset gate when sheet opens/closes
   useEffect(() => {
     if (open) {
       setGatePhase('gate');
@@ -99,7 +99,6 @@ export function CheckoutSummarySheet({
     }
   }, [open]);
 
-  // When rebook completes externally, advance past the gate
   useEffect(() => {
     if (rebookCompleted && open) {
       setRebooked(true);
@@ -107,7 +106,6 @@ export function CheckoutSummarySheet({
     }
   }, [rebookCompleted, open]);
 
-  // Fetch add-on events for this appointment
   const { data: addonEvents = [] } = useQuery({
     queryKey: ['checkout-addon-events', appointment?.id],
     queryFn: async () => {
@@ -132,7 +130,6 @@ export function CheckoutSummarySheet({
   const checkoutTotal = discountedSubtotal + tax;
   const grandTotal = checkoutTotal + tipAmount;
 
-  // Calculate duration
   const getDuration = () => {
     try {
       const start = parseISO(`${appointment.appointment_date}T${appointment.start_time}`);
@@ -370,16 +367,16 @@ export function CheckoutSummarySheet({
   const isDeclineValid = declineReason !== '' && (declineReason !== 'Other' || declineOtherText.trim().length >= 3);
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-md overflow-y-auto">
-        <SheetHeader className="pb-4">
-          <SheetTitle className="flex items-center gap-2">
-            <CreditCard className="h-5 w-5" />
-            Checkout Summary
-          </SheetTitle>
-        </SheetHeader>
+    <PremiumFloatingPanel open={open} onOpenChange={onOpenChange} maxWidth="560px">
+      <div className="p-5 pb-3 border-b border-border/40">
+        <h2 className="font-display text-sm tracking-wide uppercase flex items-center gap-2">
+          <CreditCard className="h-5 w-5" />
+          Checkout Summary
+        </h2>
+      </div>
 
-        <div className="space-y-6">
+      <div className="flex-1 overflow-y-auto">
+        <div className="space-y-6 p-5">
           {/* Client Info */}
           <div className="space-y-2">
             <h3 className="text-sm font-medium text-muted-foreground">Client</h3>
@@ -499,16 +496,20 @@ export function CheckoutSummarySheet({
                     subtotal={subtotal}
                     clientId={appointment.phorest_client_id}
                     onPromoApplied={setAppliedPromo}
-                    appliedPromo={appliedPromo}
                   />
                 </div>
               )}
 
-              {/* Show discount if applied */}
-              {discount > 0 && (
-                <div className="flex justify-between text-primary">
-                  <span>Discount</span>
-                  <span className="font-medium">-{formatCurrency(discount)}</span>
+              {/* Discount Display */}
+              {appliedPromo && (
+                <div className="flex justify-between text-emerald-600">
+                  <span className="flex items-center gap-1">
+                    Discount 
+                    <span className="text-xs bg-emerald-100 dark:bg-emerald-900/30 px-1.5 py-0.5 rounded">
+                      {appliedPromo.code}
+                    </span>
+                  </span>
+                  <span>-{formatCurrency(discount)}</span>
                 </div>
               )}
 
@@ -516,255 +517,176 @@ export function CheckoutSummarySheet({
                 <span className="text-muted-foreground">Tax ({(taxRate * 100).toFixed(1)}%)</span>
                 <span className="font-medium">{formatCurrency(tax)}</span>
               </div>
-              <Separator />
-              <div className="flex justify-between">
-                <span className="font-medium">Checkout Total</span>
-                <span className="font-medium">{formatCurrency(checkoutTotal)}</span>
+              
+              <div className="flex justify-between text-lg font-bold border-t border-border/50 pt-2">
+                <span>Checkout Total</span>
+                <span>{formatCurrency(checkoutTotal)}</span>
               </div>
             </div>
           </div>
 
-          <Separator />
-
-          {/* Tip Section */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <DollarSign className="h-4 w-4" />
-              Record Tip
-            </h3>
-            <p className="text-xs text-muted-foreground">
-              Enter the tip amount from the PhorestPay terminal receipt
-            </p>
-            
-            {/* Quick select buttons */}
-            <div className="flex gap-2">
-              {TIP_PRESETS.map((preset) => (
-                <Button
-                  key={preset.label}
-                  type="button"
-                  variant={tipAmount === Math.round(subtotal * preset.multiplier * 100) / 100 ? 'default' : 'outline'}
-                  size={tokens.button.inline}
-                  className="flex-1"
-                  onClick={() => handleTipPreset(preset.multiplier)}
-                >
-                  {preset.label}
-                </Button>
-              ))}
-            </div>
-
-            {/* Custom tip input */}
-            <div className="flex items-center gap-2">
-              <Label htmlFor="custom-tip" className="text-sm whitespace-nowrap">
-                Custom:
-              </Label>
-              <div className="relative flex-1">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">{currency}</span>
-                <Input
-                  id="custom-tip"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  placeholder="0.00"
-                  value={customTip}
-                  onChange={(e) => handleCustomTipChange(e.target.value)}
-                  className="pl-7"
-                />
-              </div>
-            </div>
-
-            {tipAmount > 0 && (
-              <div className="flex justify-between text-sm bg-muted/50 p-3 rounded-lg">
-                <span>Tip Amount</span>
-                <span className="font-medium">{formatCurrency(tipAmount)}</span>
-              </div>
-            )}
-          </div>
-
-          {/* Grand Total with Tip */}
-          {tipAmount > 0 && (
-            <>
-              <Separator />
-              <div className="flex justify-between text-lg bg-primary/5 p-4 rounded-lg border border-primary/20">
-                <span className="font-medium">Grand Total</span>
-                <span className="font-medium text-primary">{formatCurrency(grandTotal)}</span>
-              </div>
-            </>
-          )}
-
-          <Separator />
-
-          {/* Rebooking Gate or Rebook Status */}
-          {gatePhase === 'gate' && (
-            <div className="space-y-4 p-5 bg-primary/5 rounded-xl border border-primary/20">
-              <div className="text-center space-y-1">
-                <CalendarPlus className="h-8 w-8 text-primary mx-auto" />
-                <h3 className="font-medium text-base">Schedule Next Appointment</h3>
-                <p className="text-xs text-muted-foreground">
-                  Before completing checkout, let's get {appointment.client_name || 'the client'} booked for next time.
-                </p>
-              </div>
-
-              <Button
-                className="w-full gap-2"
-                variant="default"
-                size="lg"
-                onClick={handleScheduleNextClick}
-                disabled={!onScheduleNext}
-              >
-                <CalendarPlus className="h-4 w-4" />
-                Schedule Next Appointment
-              </Button>
-
-              <button
-                type="button"
-                className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center gap-1.5 pt-1"
-                onClick={() => setGatePhase('declining')}
-              >
-                <XCircle className="h-3.5 w-3.5" />
-                Client doesn't want to rebook
-              </button>
-            </div>
-          )}
-
-          {gatePhase === 'declining' && (
-            <div className="space-y-4 p-5 bg-muted/50 rounded-xl border">
-              <div className="space-y-1">
-                <h3 className="text-sm font-medium flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                  Why isn't the client rebooking?
+          {/* Rebooking Gate UI */}
+          {gatePhase !== 'checkout' ? (
+            <div className="border rounded-xl overflow-hidden bg-card shadow-sm">
+              <div className="bg-primary/5 p-4 border-b border-border/50">
+                <h3 className="font-medium flex items-center gap-2 text-primary">
+                  <CalendarPlus className="h-4 w-4" />
+                  Rebooking Check
                 </h3>
-                <p className="text-xs text-muted-foreground">
-                  Select a reason to continue to payment.
+                <p className="text-sm text-muted-foreground mt-1">
+                  Did the client rebook their next appointment?
                 </p>
               </div>
-
-              <RadioGroup
-                value={declineReason}
-                onValueChange={(val) => {
-                  setDeclineReason(val);
-                  if (val !== 'Other') setDeclineOtherText('');
-                }}
-                className="space-y-2"
-              >
-                {DECLINE_REASONS.map((reason) => (
-                  <div key={reason} className="flex items-center space-x-3 p-3 rounded-lg border bg-background hover:bg-accent/50 transition-colors cursor-pointer">
-                    <RadioGroupItem value={reason} id={`decline-${reason}`} />
-                    <Label htmlFor={`decline-${reason}`} className="cursor-pointer flex-1 text-sm">
-                      {reason}
-                    </Label>
+              
+              <div className="p-4 space-y-4">
+                {gatePhase === 'gate' && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button 
+                      variant="outline" 
+                      className="h-24 flex flex-col gap-2 hover:bg-red-50 hover:text-red-600 hover:border-red-200 dark:hover:bg-red-900/10"
+                      onClick={() => setGatePhase('declining')}
+                    >
+                      <XCircle className="h-6 w-6" />
+                      No, Declined
+                    </Button>
+                    <Button 
+                      className="h-24 flex flex-col gap-2 bg-primary/10 text-primary hover:bg-primary/20 border-primary/20"
+                      variant="outline"
+                      onClick={handleScheduleNextClick}
+                    >
+                      <CalendarCheck className="h-6 w-6" />
+                      Yes, Schedule Now
+                    </Button>
                   </div>
-                ))}
-              </RadioGroup>
+                )}
 
-              {declineReason === 'Other' && (
-                <Textarea
-                  placeholder="Please specify the reason..."
-                  value={declineOtherText}
-                  onChange={(e) => setDeclineOtherText(e.target.value)}
-                  className="min-h-[60px]"
-                />
-              )}
-
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1"
-                  onClick={() => {
-                    setGatePhase('gate');
-                    setDeclineReason('');
-                    setDeclineOtherText('');
-                  }}
-                >
-                  Back
-                </Button>
-                <Button
-                  variant="default"
-                  size="sm"
-                  className="flex-1"
-                  disabled={!isDeclineValid}
-                  onClick={handleDeclineConfirm}
-                >
-                  Continue to Payment
-                </Button>
+                {gatePhase === 'declining' && (
+                  <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
+                    <div className="space-y-3">
+                      <Label>Why did they decline?</Label>
+                      <RadioGroup value={declineReason} onValueChange={setDeclineReason}>
+                        {DECLINE_REASONS.map((reason) => (
+                          <div key={reason} className="flex items-center space-x-2">
+                            <RadioGroupItem value={reason} id={reason} />
+                            <Label htmlFor={reason} className="font-normal cursor-pointer">{reason}</Label>
+                          </div>
+                        ))}
+                      </RadioGroup>
+                      
+                      {declineReason === 'Other' && (
+                        <Textarea 
+                          placeholder="Please specify reason..."
+                          value={declineOtherText}
+                          onChange={(e) => setDeclineOtherText(e.target.value)}
+                          className="mt-2"
+                        />
+                      )}
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <Button variant="ghost" onClick={() => setGatePhase('gate')} className="flex-1">
+                        Back
+                      </Button>
+                      <Button 
+                        onClick={handleDeclineConfirm} 
+                        disabled={!isDeclineValid}
+                        className="flex-1"
+                      >
+                        Continue to Tip
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
-          )}
-
-          {gatePhase === 'checkout' && (
-            <>
-              {/* Rebook Status Indicator (read-only) */}
-              <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border">
-                <div className="flex items-center gap-3">
-                  <CalendarCheck className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">
-                      {rebooked ? 'Next appointment scheduled' : 'Client declined rebooking'}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {rebooked
-                        ? 'Great work! Next visit is on the books.'
-                        : declineReason === 'Other'
-                          ? declineOtherText
-                          : declineReason}
-                    </p>
-                  </div>
-                </div>
-                <div className={cn(
-                  'h-3 w-3 rounded-full',
-                  rebooked ? 'bg-emerald-500' : 'bg-amber-500'
-                )} />
-              </div>
-
+          ) : (
+            /* Tip Selection - Only shown in checkout phase */
+            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <Separator />
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-medium flex items-center gap-1.5">
+                    <DollarSign className="h-4 w-4 text-emerald-600" />
+                    Add Tip
+                  </h3>
+                  {rebooked && (
+                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 gap-1">
+                      <CalendarCheck className="h-3 w-3" />
+                      Rebooked
+                    </Badge>
+                  )}
+                </div>
+                
+                <div className="grid grid-cols-4 gap-2">
+                  {TIP_PRESETS.map((preset) => (
+                    <Button
+                      key={preset.label}
+                      variant={Math.abs(tipAmount - Number((subtotal * preset.multiplier).toFixed(2))) < 0.01 ? "default" : "outline"}
+                      className="text-xs h-9"
+                      onClick={() => handleTipPreset(preset.multiplier)}
+                    >
+                      {preset.label}
+                    </Button>
+                  ))}
+                </div>
 
-              {/* Info Banner */}
-              <div className="flex items-start gap-3 p-4 bg-muted rounded-lg border">
-                <Info className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-muted-foreground">
-                  Process payment on PhorestPay terminal, then confirm below.
-                </p>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                  <Input
+                    type="number"
+                    value={customTip}
+                    onChange={(e) => handleCustomTipChange(e.target.value)}
+                    placeholder="Custom tip amount"
+                    className="pl-6"
+                  />
+                </div>
+
+                {tipAmount > 0 && (
+                  <div className="flex justify-between text-sm bg-muted/30 p-2 rounded">
+                    <span>Tip Amount:</span>
+                    <span className="font-medium">{formatCurrency(tipAmount)}</span>
+                  </div>
+                )}
               </div>
-
-              {/* Receipt Buttons */}
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size={tokens.button.inline}
-                  className="flex-1 gap-2"
-                  onClick={() => generateReceiptPDF(true)}
-                >
-                  <Eye className="h-4 w-4" />
-                  Preview
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size={tokens.button.inline}
-                  className="flex-1 gap-2"
-                  onClick={() => generateReceiptPDF(false)}
-                >
-                  <Download className="h-4 w-4" />
-                  Download
-                </Button>
-              </div>
-
-              {/* Confirm Button */}
-              <Button
-                className="w-full gap-2"
-                variant="default"
-                size="lg"
-                onClick={handleConfirm}
-                disabled={isUpdating}
-              >
-                <Receipt className="h-4 w-4" />
-                {isUpdating ? 'Processing...' : 'Mark as Paid'}
-              </Button>
-            </>
+            </div>
           )}
         </div>
-      </SheetContent>
-    </Sheet>
+      </div>
+
+      {gatePhase === 'checkout' && (
+        <div className="p-5 pt-0 space-y-3 border-t border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <div className="flex justify-between items-center py-2">
+            <span className="font-medium text-muted-foreground">Total Charge</span>
+            <span className="text-xl font-bold text-primary">{formatCurrency(grandTotal)}</span>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-3">
+            <Button
+              variant="outline"
+              onClick={() => generateReceiptPDF(false)}
+              className="w-full"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Receipt
+            </Button>
+            <Button 
+              onClick={handleConfirm} 
+              disabled={isUpdating}
+              className="w-full font-bold shadow-lg shadow-primary/20"
+              size="lg"
+            >
+              {isUpdating ? (
+                'Processing...' 
+              ) : (
+                <>
+                  <CheckCircle2 className="w-4 h-4 mr-2" />
+                  Complete
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      )}
+    </PremiumFloatingPanel>
   );
 }

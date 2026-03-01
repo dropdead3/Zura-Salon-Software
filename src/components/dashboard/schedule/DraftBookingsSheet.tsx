@@ -1,13 +1,7 @@
 import { useState, useMemo } from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { Search, FileText, Trash2, Play, Clock, User, Scissors, ChevronDown, ChevronRight, GitCompareArrows, CheckCircle2, AlertTriangle, Loader2 } from 'lucide-react';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from '@/components/ui/sheet';
+import { Search, FileText, Clock, User, Scissors, ChevronDown, ChevronRight, GitCompareArrows, CheckCircle2, AlertTriangle, Loader2 } from 'lucide-react';
+import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -124,57 +118,55 @@ export function DraftBookingsSheet({ open, onOpenChange, orgId, onResume }: Draf
 
   return (
     <>
-      <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="right" className="w-full sm:max-w-md p-0 flex flex-col">
-          <SheetHeader className="px-6 pt-6 pb-4 border-b border-border/50">
-            <SheetTitle className="font-display tracking-wide text-base flex items-center gap-2">
-              <FileText className="h-5 w-5 text-primary" />
-              DRAFT BOOKINGS
-            </SheetTitle>
-            <SheetDescription className="font-sans text-sm">
-              Resume incomplete bookings or discard them. Drafts auto-delete after 7 days.
-            </SheetDescription>
-            <div className="relative mt-3">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search drafts..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-          </SheetHeader>
+      <PremiumFloatingPanel open={open} onOpenChange={onOpenChange} maxWidth="440px">
+        <div className="p-5 pb-3 border-b border-border/40">
+          <h2 className="font-display text-sm tracking-wide uppercase flex items-center gap-2">
+            <FileText className="h-5 w-5 text-primary" />
+            Draft Bookings
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Resume incomplete bookings or discard them. Drafts auto-delete after 7 days.
+          </p>
+          <div className="relative mt-3">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search drafts..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+        </div>
 
-          <ScrollArea className="flex-1">
-            <div className="p-4 space-y-2">
-              {isLoading ? (
-                <div className="text-center py-8 text-muted-foreground text-sm">Loading drafts...</div>
-              ) : grouped.size === 0 ? (
-                <div className={tokens.empty.container}>
-                  <FileText className={tokens.empty.icon} />
-                  <h3 className={tokens.empty.heading}>No drafts</h3>
-                  <p className={tokens.empty.description}>
-                    {search ? 'No drafts match your search.' : 'Incomplete bookings will appear here.'}
-                  </p>
-                </div>
-              ) : (
-                Array.from(grouped.entries()).map(([clientKey, clientDrafts]) => (
-                  <ClientGroup
-                    key={clientKey}
-                    clientKey={clientKey}
-                    drafts={clientDrafts}
-                    orgId={orgId}
-                    onResume={handleResume}
-                    onDiscard={setDiscardingDraft}
-                    onDiscardAll={(ids) => setDiscardingGroup({ clientKey, ids })}
-                    onCloseSheet={() => onOpenChange(false)}
-                  />
-                ))
-              )}
-            </div>
-          </ScrollArea>
-        </SheetContent>
-      </Sheet>
+        <ScrollArea className="flex-1">
+          <div className="p-5 space-y-2">
+            {isLoading ? (
+              <div className="text-center py-8 text-muted-foreground text-sm">Loading drafts...</div>
+            ) : grouped.size === 0 ? (
+              <div className={tokens.empty.container}>
+                <FileText className={tokens.empty.icon} />
+                <h3 className={tokens.empty.heading}>No drafts</h3>
+                <p className={tokens.empty.description}>
+                  {search ? 'No drafts match your search.' : 'Incomplete bookings will appear here.'}
+                </p>
+              </div>
+            ) : (
+              Array.from(grouped.entries()).map(([clientKey, clientDrafts]) => (
+                <ClientGroup
+                  key={clientKey}
+                  clientKey={clientKey}
+                  drafts={clientDrafts}
+                  orgId={orgId}
+                  onResume={handleResume}
+                  onDiscard={setDiscardingDraft}
+                  onDiscardAll={(ids) => setDiscardingGroup({ clientKey, ids })}
+                  onCloseSheet={() => onOpenChange(false)}
+                />
+              ))
+            )}
+          </div>
+        </ScrollArea>
+      </PremiumFloatingPanel>
 
       {/* Single draft discard dialog */}
       <AlertDialog open={!!discardingDraft} onOpenChange={(open) => !open && setDiscardingDraft(null)}>
@@ -458,7 +450,7 @@ function DraftCard({ draft, orgId, isMostRecent, onResume, onDiscard, showCompar
                         e.stopPropagation();
                         handleQuickRebook(slot);
                       }}
-                      className="px-2 py-0.5 rounded-full text-[10px] bg-primary/10 text-primary hover:bg-primary/20 transition-colors border border-primary/20"
+                      className="px-1.5 py-0.5 rounded bg-secondary hover:bg-secondary/80 text-secondary-foreground text-[10px] transition-colors"
                     >
                       {formatTimeDisplay(slot)}
                     </button>
@@ -471,23 +463,29 @@ function DraftCard({ draft, orgId, isMostRecent, onResume, onDiscard, showCompar
       )}
 
       {/* Actions */}
-      <div className="flex items-center gap-2 pt-0.5">
+      <div className="flex items-center justify-end gap-2 pt-1 border-t border-border/30 mt-2">
         <Button
-          size={tokens.button.inline}
-          onClick={() => onResume(draft)}
-          className="gap-1.5 flex-1"
+          variant="ghost"
+          size="sm"
+          className="h-6 text-[10px] text-destructive hover:text-destructive hover:bg-destructive/10"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDiscard(draft);
+          }}
         >
-          <Play className="h-3.5 w-3.5" />
-          {status === 'conflict' ? 'Resume & Adjust' : 'Resume'}
+          <Trash2 className="h-3 w-3 mr-1" />
+          Discard
         </Button>
         <Button
-          variant="outline"
-          size={tokens.button.inline}
-          onClick={() => onDiscard(draft)}
-          className="gap-1.5 text-destructive hover:text-destructive"
+          size="sm"
+          className="h-6 text-[10px]"
+          onClick={(e) => {
+            e.stopPropagation();
+            onResume(draft);
+          }}
         >
-          <Trash2 className="h-3.5 w-3.5" />
-          Discard
+          <Play className="h-3 w-3 mr-1" />
+          Resume
         </Button>
       </div>
     </div>
