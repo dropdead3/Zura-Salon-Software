@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { Search, FileText, Clock, User, Scissors, ChevronDown, ChevronRight, GitCompareArrows, CheckCircle2, AlertTriangle, Loader2 } from 'lucide-react';
+import { Search, FileText, Clock, User, Scissors, ChevronDown, ChevronRight, GitCompareArrows, CheckCircle2, AlertTriangle, Loader2, Trash2, Play } from 'lucide-react';
 import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

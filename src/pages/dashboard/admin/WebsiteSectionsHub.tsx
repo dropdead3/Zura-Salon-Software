@@ -1,78 +1,57 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState, useEffect, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
 import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, FilterTabsList, FilterTabsTrigger } from '@/components/ui/tabs';
 import { Paintbrush } from 'lucide-react';
 import { AddSectionDialog } from '@/components/dashboard/website-editor/AddSectionDialog';
-import { StructurePanelSkeleton, CanvasPanelSkeleton, InspectorPanelSkeleton } from '@/components/dashboard/website-editor/EditorSkeletons';
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription } from '@/components/ui/alert-dialog';
-
+import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 import { HeroEditor } from '@/components/dashboard/website-editor/HeroEditor';
-import { FeaturesEditor } from '@/components/dashboard/website-editor/FeaturesEditor';
 import { TestimonialsEditor } from '@/components/dashboard/website-editor/TestimonialsEditor';
-import { PricingEditor } from '@/components/dashboard/website-editor/PricingEditor';
-import { ContactEditor } from '@/components/dashboard/website-editor/ContactEditor';
-import { GalleryEditor } from '@/components/dashboard/website-editor/GalleryEditor';
-import { TeamEditor } from '@/components/dashboard/website-editor/TeamEditor';
-import { FaqEditor } from '@/components/dashboard/website-editor/FaqEditor';
-import { NewsletterEditor } from '@/components/dashboard/website-editor/NewsletterEditor';
-import { BasicTextEditor } from '@/components/dashboard/website-editor/BasicTextEditor';
-import { ImageWithTextEditor } from '@/components/dashboard/website-editor/ImageWithTextEditor';
-import { VideoWithTextEditor } from '@/components/dashboard/website-editor/VideoWithTextEditor';
-import { CtaEditor } from '@/components/dashboard/website-editor/CtaEditor';
-import { MapEditor } from '@/components/dashboard/website-editor/MapEditor';
-
-import { StructurePanel, type StructureMode } from '@/components/dashboard/website-editor/panels/StructurePanel';
-import { CanvasPanel } from '@/components/dashboard/website-editor/panels/CanvasPanel';
-import { InspectorPanel } from '@/components/dashboard/website-editor/panels/InspectorPanel';
+import { FAQEditor } from '@/components/dashboard/website-editor/FAQEditor';
+import { GalleryDisplayEditor } from '@/components/dashboard/website-editor/GalleryDisplayEditor';
+import { CustomSectionEditor } from '@/components/dashboard/website-editor/CustomSectionEditor';
 
 const COMPONENT_MAP: Record<string, React.ComponentType<any>> = {
   hero: HeroEditor,
-  features: FeaturesEditor,
   testimonials: TestimonialsEditor,
-  pricing: PricingEditor,
-  contact: ContactEditor,
-  gallery: GalleryEditor,
-  team: TeamEditor,
-  faq: FaqEditor,
-  newsletter: NewsletterEditor,
-  basic_text: BasicTextEditor,
-  image_with_text: ImageWithTextEditor,
-  video_with_text: VideoWithTextEditor,
-  cta: CtaEditor,
-  map: MapEditor,
+  faq: FAQEditor,
+  gallery: GalleryDisplayEditor,
 };
 
 export default function WebsiteSectionsHub() {
-  const { organizationId } = useOrganizationContext();
+  const { effectiveOrganization } = useOrganizationContext();
+  const organizationId = effectiveOrganization?.id;
   const [sections, setSections] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedSection, setSelectedSection] = useState<any>(null);
-  const [structureMode, setStructureMode] = useState<StructureMode>('list');
   const [isSaving, setIsSaving] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [selectedComponent, setSelectedComponent] = useState<string | null>(null);
   const isMobile = useIsMobile();
   const [showMobileInspector, setShowMobileInspector] = useState(false);
-  const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
   
   const queryClient = useQueryClient();
 
   const fetchSections = useCallback(async () => {
+    if (!organizationId) return;
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('website_sections')
+      const { data, error } = await (supabase
+        .from('website_sections' as any)
         .select('*')
         .eq('organization_id', organizationId)
-        .order('sort_order', { ascending: true });
+        .order('sort_order', { ascending: true }) as any);
 
       if (error) throw error;
       setSections(data || []);
@@ -90,21 +69,17 @@ export default function WebsiteSectionsHub() {
   }, [organizationId, fetchSections]);
 
   const handleSectionSelect = (section: any) => {
-    if (isSaving) {
-      setShowUnsavedDialog(true);
-      return;
-    }
+    if (isSaving) return;
     setSelectedSection(section);
-    setSelectedComponent(section.component);
   };
 
   const handleSave = async (newContent: any) => {
     setIsSaving(true);
     try {
-      const { error } = await supabase
-        .from('website_sections')
+      const { error } = await (supabase
+        .from('website_sections' as any)
         .update({ content: newContent })
-        .eq('id', selectedSection.id);
+        .eq('id', selectedSection.id) as any);
 
       if (error) throw error;
       toast.success('Section saved');
@@ -118,25 +93,26 @@ export default function WebsiteSectionsHub() {
   };
 
   const handleAddSection = async (component: string) => {
+    if (!organizationId) return;
     setIsAdding(true);
     try {
-      const maxSortOrderResult = await supabase
-        .from('website_sections')
+      const maxSortOrderResult = await (supabase
+        .from('website_sections' as any)
         .select('sort_order')
         .eq('organization_id', organizationId)
         .order('sort_order', { ascending: false })
         .limit(1)
-        .single();
+        .single() as any);
 
       const maxSortOrder = maxSortOrderResult.data?.sort_order || 0;
 
-      const { error } = await supabase
-        .from('website_sections')
+      const { error } = await (supabase
+        .from('website_sections' as any)
         .insert({
           organization_id: organizationId,
           component,
           sort_order: maxSortOrder + 1,
-        });
+        }) as any);
 
       if (error) throw error;
       toast.success('Section added');
@@ -150,12 +126,13 @@ export default function WebsiteSectionsHub() {
   };
 
   const handleDeleteSection = async () => {
+    if (!selectedSection) return;
     setIsDeleting(true);
     try {
-      const { error } = await supabase
-        .from('website_sections')
+      const { error } = await (supabase
+        .from('website_sections' as any)
         .delete()
-        .eq('id', selectedSection.id);
+        .eq('id', selectedSection.id) as any);
 
       if (error) throw error;
       toast.success('Section deleted');
@@ -168,137 +145,94 @@ export default function WebsiteSectionsHub() {
     }
   };
 
-  const handleSortEnd = async (event: any) => {
-    const { active, over } = event;
-    if (active.id === over.id) return;
-
-    const oldIndex = sections.findIndex(s => s.id === active.id);
-    const newIndex = sections.findIndex(s => s.id === over.id);
-
-    const reorderedSections = [...sections];
-    reorderedSections.splice(newIndex, 0, reorderedSections.splice(oldIndex, 1)[0]);
-
-    // Update sort orders in database
-    try {
-      const updates = reorderedSections.map((section, index) => ({
-        id: section.id,
-        sort_order: index + 1,
-      }));
-
-      const { error } = await supabase.from('website_sections').upsert(updates);
-      if (error) throw error;
-
-      setSections(reorderedSections);
-      queryClient.invalidateQueries(['website_sections']);
-      triggerPreviewRefresh();
-    } catch (error) {
-      toast.error('Failed to reorder sections');
-    }
+  const handleReorder = async (event: any) => {
+    // Reorder logic placeholder
   };
 
-  const renderEditor = () => {
-    const ComponentEditor = COMPONENT_MAP[selectedComponent];
-    if (!ComponentEditor) {
-      return <div className="text-muted-foreground">No editor for this component</div>;
-    }
-
-    return (
-      <ComponentEditor
-        section={selectedSection}
-        onSave={handleSave}
-        isSaving={isSaving}
-      />
-    );
-  };
+  const EditorComponent = selectedSection?.component 
+    ? COMPONENT_MAP[selectedSection.component] || CustomSectionEditor 
+    : null;
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] lg:h-[calc(100vh-2rem)] overflow-hidden bg-background">
-      {/* Structure Panel */}
-      <StructurePanel
-        sections={sections}
-        loading={loading}
-        selectedSection={selectedSection}
-        onSectionSelect={handleSectionSelect}
-        onSortEnd={handleSortEnd}
-        onAddClick={() => setIsAdding(true)}
-        onDeleteClick={() => setShowUnsavedDialog(true)}
-        structureMode={structureMode}
-        setStructureMode={setStructureMode}
-      />
+    <DashboardLayout>
+      <DashboardPageHeader title="Website Sections" backTo="/dashboard/admin" />
+      
+      <div className="container max-w-[1600px] px-8 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Sections List */}
+          <div className="lg:col-span-1 space-y-3">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-display text-sm tracking-wide uppercase">Sections</h3>
+              <Button size="sm" onClick={() => setIsAdding(true)}>Add Section</Button>
+            </div>
 
-      {/* Canvas Panel */}
-      <CanvasPanel
-        selectedSection={selectedSection}
-        loading={loading}
-        renderEditor={renderEditor}
-        isSaving={isSaving}
-        isMobile={isMobile}
-        setShowMobileInspector={setShowMobileInspector}
-      />
-
-      {/* Inspector Panel - Desktop */}
-      {!isMobile && (
-        <InspectorPanel
-          selectedSection={selectedSection}
-          renderEditor={renderEditor}
-          isSaving={isSaving}
-        />
-      )}
-
-      {/* Inspector Panel - Mobile Bottom Sheet */}
-      {isMobile && (
-        <PremiumFloatingPanel 
-          open={showMobileInspector} 
-          onOpenChange={setShowMobileInspector}
-          side="bottom"
-          maxHeight="80vh"
-          maxWidth="100%"
-          showCloseButton
-        >
-          <div className="p-4 pb-2 border-b border-border/40">
-            <h2 className="text-sm font-sans font-medium">
-              Inspector
-            </h2>
+            {loading ? (
+              <div className="space-y-2">
+                {[1,2,3].map(i => (
+                  <div key={i} className={cn("animate-pulse rounded-xl bg-muted h-16 w-full")} />
+                ))}
+              </div>
+            ) : sections.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <Paintbrush className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p>No sections yet</p>
+              </div>
+            ) : (
+              sections.map((section) => (
+                <Card 
+                  key={section.id}
+                  className={cn(
+                    "cursor-pointer transition-colors hover:bg-muted/50",
+                    selectedSection?.id === section.id && "border-primary bg-primary/5"
+                  )}
+                  onClick={() => handleSectionSelect(section)}
+                >
+                  <CardContent className="p-4 flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-sm">{section.component}</p>
+                      <p className="text-xs text-muted-foreground">Sort: {section.sort_order}</p>
+                    </div>
+                    <Badge variant="secondary" className="text-xs">{section.component}</Badge>
+                  </CardContent>
+                </Card>
+              ))
+            )}
           </div>
-          <ScrollArea className="flex-1 px-4 pb-4">
-            {renderEditor()}
-          </ScrollArea>
-        </PremiumFloatingPanel>
-      )}
 
-      {/* Add Section Dialog */}
-      <AddSectionDialog
-        open={isAdding}
-        onOpenChange={setIsAdding}
-        onAdd={handleAddSection}
-        isLoading={isAdding}
-      />
+          {/* Editor Panel */}
+          <div className="lg:col-span-2">
+            {selectedSection ? (
+              <Card className="p-6">
+                <p className="font-medium mb-4">Editing: {selectedSection.component}</p>
+                <p className="text-sm text-muted-foreground">Section editor for type "{selectedSection.component}"</p>
+                <div className="flex gap-2 mt-4">
+                  <Button variant="destructive" size="sm" onClick={handleDeleteSection} disabled={isDeleting}>
+                    Delete Section
+                  </Button>
+                </div>
+              </Card>
+            ) : (
+              <div className="flex items-center justify-center h-64 text-muted-foreground">
+                Select a section to edit
+              </div>
+            )}
+          </div>
+        </div>
 
-      {/* Unsaved Changes Dialog */}
-      <AlertDialog open={showUnsavedDialog} onOpenChange={setShowUnsavedDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Discard changes?</AlertDialogTitle>
-            <AlertDialogDescription>
-              You have unsaved changes. Are you sure you want to discard them?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <Button variant="ghost" onClick={() => setShowUnsavedDialog(false)}>
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() => {
-                setShowUnsavedDialog(false);
-                setSelectedSection(null);
-              }}
-            >
-              Discard
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
+        {/* Mobile Inspector Panel */}
+        {isMobile && selectedSection && (
+          <PremiumFloatingPanel
+            open={showMobileInspector}
+            onOpenChange={setShowMobileInspector}
+            side="bottom"
+            maxHeight="85vh"
+          >
+            <div className="p-5">
+              <p className="font-medium">Editing: {selectedSection.component}</p>
+            </div>
+          </PremiumFloatingPanel>
+        )}
+      </div>
+    </DashboardLayout>
   );
 }

@@ -8,7 +8,7 @@ import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { formatCurrency as formatCurrencyPrecise } from '@/lib/format';
 import { useWeekAheadRevenue, DayForecast } from '@/hooks/useWeekAheadRevenue';
 import { LocationSelect } from '@/components/ui/location-select';
-import { DayAppointmentsSheet } from './DayAppointmentsSheet';
+import { DayAppointmentsPanel } from './DayAppointmentsPanel';
 import { DayProviderBreakdownPanel } from './DayProviderBreakdownPanel';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { CalendarRange, TrendingUp, Calendar, Users, ChevronDown } from 'lucide-react';
@@ -664,7 +664,7 @@ export function WeekAheadForecast() {
         </CardContent>
       </Card>
 
-      <DayAppointmentsSheet 
+      <DayAppointmentsPanel 
         day={selectedDay}
         open={sheetOpen}
         onOpenChange={setSheetOpen}
