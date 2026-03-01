@@ -7,6 +7,12 @@ const corsHeaders = {
 
 const PHOREST_BASE_URL = "https://api-gateway-eu.phorest.com/third-party-api-server/api";
 
+// ── GLOBAL SAFETY KILL SWITCH ──
+// When true, ALL Phorest write-back calls are blocked at the code level,
+// regardless of the organization's phorest_write_enabled setting.
+// Change to false and redeploy when ready to enable Phorest writes.
+const PHOREST_WRITES_GLOBALLY_DISABLED = true;
+
 interface CreateClientRequest {
   branch_id: string;
   first_name: string;
@@ -138,10 +144,16 @@ Deno.serve(async (req) => {
           .eq("id", locData.organization_id)
           .single();
         const settings = (orgData?.settings || {}) as Record<string, any>;
-        phorestWriteEnabled = settings.phorest_write_enabled === true;
+      phorestWriteEnabled = settings.phorest_write_enabled === true;
       }
     } catch (e) {
       console.log("Could not resolve org for write-gate check, defaulting to disabled");
+    }
+
+    // GLOBAL SAFETY OVERRIDE
+    if (PHOREST_WRITES_GLOBALLY_DISABLED) {
+      phorestWriteEnabled = false;
+      console.warn("GLOBAL SAFETY: Phorest writes are disabled at code level");
     }
 
     // Build the Phorest client object
