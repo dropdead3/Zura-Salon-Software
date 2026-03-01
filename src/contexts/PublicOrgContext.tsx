@@ -8,7 +8,7 @@ interface PublicOrgContextValue {
   orgPath: (path?: string) => string;
 }
 
-const PublicOrgContext = createContext<PublicOrgContextValue | null>(null);
+export const PublicOrgContext = createContext<PublicOrgContextValue | null>(null);
 
 export function PublicOrgProvider({
   organization,

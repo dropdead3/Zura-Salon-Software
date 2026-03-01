@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useSettingsOrgId } from './useSettingsOrgId';
 
 export interface ReviewThresholdSettings {
   minimumOverallRating: number;
@@ -29,14 +30,17 @@ const DEFAULT_SETTINGS: ReviewThresholdSettings = {
   privateFollowUpThreshold: 3,
 };
 
-export function useReviewThresholdSettings() {
+export function useReviewThresholdSettings(explicitOrgId?: string) {
+  const orgId = useSettingsOrgId(explicitOrgId);
+
   return useQuery({
-    queryKey: ['site-settings', 'review_threshold_settings'],
+    queryKey: ['site-settings', orgId, 'review_threshold_settings'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('site_settings')
         .select('value')
         .eq('id', 'review_threshold_settings')
+        .eq('organization_id', orgId!)
         .single();
 
       if (error) {
@@ -44,7 +48,6 @@ export function useReviewThresholdSettings() {
         throw error;
       }
       
-      // Safely merge with defaults to ensure all properties exist
       const value = data?.value as Record<string, unknown> | null;
       if (!value) return DEFAULT_SETTINGS;
       
@@ -52,22 +55,25 @@ export function useReviewThresholdSettings() {
         ...DEFAULT_SETTINGS,
         ...value,
       } as ReviewThresholdSettings;
-      
     },
+    enabled: !!orgId,
   });
 }
 
-export function useUpdateReviewThresholdSettings() {
+export function useUpdateReviewThresholdSettings(explicitOrgId?: string) {
   const queryClient = useQueryClient();
+  const orgId = useSettingsOrgId(explicitOrgId);
 
   return useMutation({
     mutationFn: async (value: ReviewThresholdSettings) => {
+      if (!orgId) throw new Error('No organization context');
       const { data: { user } } = await supabase.auth.getUser();
       
       const { error } = await supabase
         .from('site_settings')
         .upsert({ 
           id: 'review_threshold_settings',
+          organization_id: orgId,
           value: value as never,
           updated_by: user?.id 
         });
@@ -75,7 +81,7 @@ export function useUpdateReviewThresholdSettings() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['site-settings', 'review_threshold_settings'] });
+      queryClient.invalidateQueries({ queryKey: ['site-settings', orgId, 'review_threshold_settings'] });
     },
   });
 }

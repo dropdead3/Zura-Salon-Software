@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { useSettingsOrgId } from './useSettingsOrgId';
 
 export interface StaffingAlertSettings {
   percentage: number;
@@ -14,14 +15,17 @@ const DEFAULT_SETTINGS: StaffingAlertSettings = {
   in_app_enabled: true,
 };
 
-export function useStaffingAlertSettings() {
+export function useStaffingAlertSettings(explicitOrgId?: string) {
+  const orgId = useSettingsOrgId(explicitOrgId);
+
   return useQuery({
-    queryKey: ['staffing-alert-settings'],
+    queryKey: ['site-settings', orgId, 'staffing_alert_threshold'],
     queryFn: async (): Promise<StaffingAlertSettings> => {
       const { data, error } = await supabase
         .from('site_settings')
         .select('value')
         .eq('id', 'staffing_alert_threshold')
+        .eq('organization_id', orgId!)
         .maybeSingle();
 
       if (error) {
@@ -38,20 +42,24 @@ export function useStaffingAlertSettings() {
         in_app_enabled: typeof value.in_app_enabled === 'boolean' ? value.in_app_enabled : DEFAULT_SETTINGS.in_app_enabled,
       };
     },
+    enabled: !!orgId,
   });
 }
 
-export function useUpdateStaffingAlertSettings() {
+export function useUpdateStaffingAlertSettings(explicitOrgId?: string) {
   const queryClient = useQueryClient();
+  const orgId = useSettingsOrgId(explicitOrgId);
 
   return useMutation({
     mutationFn: async (settings: StaffingAlertSettings) => {
+      if (!orgId) throw new Error('No organization context');
       const { data: { user } } = await supabase.auth.getUser();
       
       const { error } = await supabase
         .from('site_settings')
         .upsert({ 
           id: 'staffing_alert_threshold',
+          organization_id: orgId,
           value: settings as never,
           updated_by: user?.id,
           updated_at: new Date().toISOString(),
@@ -60,7 +68,7 @@ export function useUpdateStaffingAlertSettings() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['staffing-alert-settings'] });
+      queryClient.invalidateQueries({ queryKey: ['site-settings', orgId, 'staffing_alert_threshold'] });
       toast({
         title: 'Settings saved',
         description: 'Staffing alert settings have been updated.',

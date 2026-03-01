@@ -101,6 +101,7 @@ export function useReapplyPandaDocFields() {
         .from('site_settings')
         .select('value')
         .eq('id', 'pandadoc_field_mapping')
+        .not('organization_id', 'is', null)
         .maybeSingle();
       
       const fieldMapping = (mappingSettings?.value as Record<string, string>) || {

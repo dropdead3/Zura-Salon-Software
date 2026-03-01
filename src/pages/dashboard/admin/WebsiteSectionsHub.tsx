@@ -421,10 +421,10 @@ export default function WebsiteSectionsHub() {
     await saveSections(newSections);
     const sourceKey = `section_custom_${section.id}`;
     const destKey = `section_custom_${newId}`;
-    const { data: sourceConfig } = await supabase.from('site_settings').select('value').eq('id', sourceKey).maybeSingle();
+    const { data: sourceConfig } = await supabase.from('site_settings').select('value').eq('id', sourceKey).eq('organization_id', effectiveOrganization?.id).maybeSingle();
     if (sourceConfig?.value) {
       const { data: { user } } = await supabase.auth.getUser();
-      await supabase.from('site_settings').upsert({ id: destKey, value: sourceConfig.value as never, updated_by: user?.id });
+      await supabase.from('site_settings').upsert({ id: destKey, organization_id: effectiveOrganization?.id, value: sourceConfig.value as never, updated_by: user?.id });
     }
     toast.success(`"${section.label}" duplicated`);
     handleTabChange(`custom-${newId}`);
@@ -434,7 +434,7 @@ export default function WebsiteSectionsHub() {
     if (!deleteTarget) return;
     const newSections = orderedHomeSections.filter(s => s.id !== deleteTarget.id);
     await saveSections(newSections);
-    supabase.from('site_settings').delete().eq('id', `section_custom_${deleteTarget.id}`).then(() => {});
+    supabase.from('site_settings').delete().eq('id', `section_custom_${deleteTarget.id}`).eq('organization_id', effectiveOrganization?.id).then(() => {});
     toast.success(`"${deleteTarget.label}" deleted`);
     setDeleteTarget(null);
     if (activeTab === `custom-${deleteTarget.id}` && newSections.length > 0) {
@@ -467,7 +467,7 @@ export default function WebsiteSectionsHub() {
     }
     const settingsKey = `section_custom_${newSection.id}`;
     const { data: { user } } = await supabase.auth.getUser();
-    await supabase.from('site_settings').upsert({ id: settingsKey, value: template.default_config as never, updated_by: user?.id });
+    await supabase.from('site_settings').upsert({ id: settingsKey, organization_id: effectiveOrganization?.id, value: template.default_config as never, updated_by: user?.id });
     toast.success(`"${template.name}" added from template`);
     handleTabChange(`custom-${newSection.id}`);
   }, [isHomePage, orderedHomeSections, orderedPageSections, pagesConfig, selectedPageId, saveSections, updatePages, handleTabChange]);

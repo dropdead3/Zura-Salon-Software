@@ -15401,23 +15401,34 @@ export type Database = {
       site_settings: {
         Row: {
           id: string
+          organization_id: string | null
           updated_at: string
           updated_by: string | null
           value: Json
         }
         Insert: {
           id: string
+          organization_id?: string | null
           updated_at?: string
           updated_by?: string | null
           value?: Json
         }
         Update: {
           id?: string
+          organization_id?: string | null
           updated_at?: string
           updated_by?: string | null
           value?: Json
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "site_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sms_templates: {
         Row: {

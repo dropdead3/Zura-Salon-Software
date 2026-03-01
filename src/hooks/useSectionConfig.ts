@@ -1,17 +1,20 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useSettingsOrgId } from './useSettingsOrgId';
 
 // Generic hook for section configurations
 function useSectionConfig<T>(sectionId: string, defaultValue: T) {
   const queryClient = useQueryClient();
+  const orgId = useSettingsOrgId();
 
   const query = useQuery({
-    queryKey: ['site-settings', sectionId],
+    queryKey: ['site-settings', orgId, sectionId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('site_settings')
         .select('value')
         .eq('id', sectionId)
+        .eq('organization_id', orgId!)
         .maybeSingle();
 
       if (error) throw error;
@@ -20,10 +23,12 @@ function useSectionConfig<T>(sectionId: string, defaultValue: T) {
       // Merge with defaults to handle new fields
       return { ...defaultValue, ...(data.value as object) } as T;
     },
+    enabled: !!orgId,
   });
 
   const mutation = useMutation({
     mutationFn: async (value: T) => {
+      if (!orgId) throw new Error('No organization context');
       const { data: { user } } = await supabase.auth.getUser();
       
       // Try to update first
@@ -31,6 +36,7 @@ function useSectionConfig<T>(sectionId: string, defaultValue: T) {
         .from('site_settings')
         .select('id')
         .eq('id', sectionId)
+        .eq('organization_id', orgId)
         .maybeSingle();
 
       if (existingData) {
@@ -40,7 +46,8 @@ function useSectionConfig<T>(sectionId: string, defaultValue: T) {
             value: value as never,
             updated_by: user?.id 
           })
-          .eq('id', sectionId);
+          .eq('id', sectionId)
+          .eq('organization_id', orgId);
 
         if (error) throw error;
       } else {
@@ -48,6 +55,7 @@ function useSectionConfig<T>(sectionId: string, defaultValue: T) {
           .from('site_settings')
           .insert({ 
             id: sectionId,
+            organization_id: orgId,
             value: value as never,
             updated_by: user?.id 
           });
@@ -56,7 +64,7 @@ function useSectionConfig<T>(sectionId: string, defaultValue: T) {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['site-settings', sectionId] });
+      queryClient.invalidateQueries({ queryKey: ['site-settings', orgId, sectionId] });
     },
   });
 
