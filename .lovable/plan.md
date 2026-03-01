@@ -1,28 +1,44 @@
 
 
-## Fix Collapsed Sidebar Icon Contrast
+## Harden Phorest Write Protection
 
-### Problem
-The collapsed sidebar nav icons use `text-muted-foreground` which resolves to `hsl(0 0% 45%)` — a medium gray. Against the sidebar's `bg-card/80` background at `hsl(40 25% 98%)`, this creates low visual contrast, making icons appear nearly invisible, especially on high-brightness displays.
+### Current State (Already Safe)
+The codebase has a write-gate pattern across all 4 edge functions that could write to Phorest:
+- `update-phorest-appointment` -- status changes (PUT)
+- `update-phorest-appointment-time` -- reschedules (PATCH)
+- `create-phorest-booking` -- new bookings (POST)
+- `create-phorest-client` -- new clients (POST)
 
-### Root Cause
-The `text-muted-foreground` token is designed for secondary body text on white/cream cards — it's intentionally subdued. In a collapsed sidebar where icons are the **only** visual affordance (no labels), they need stronger contrast to remain usable.
+All check `organizations.settings.phorest_write_enabled === true` and default to `false` when unset. Your organization currently has it unset (null), so all writes are blocked. No DELETE operations to Phorest exist anywhere in the codebase.
 
-### Fix — 1 file: `src/components/dashboard/SidebarNavContent.tsx`
+### What This Plan Adds
+Add a **secondary hardcoded safety check** in each edge function so that even if someone accidentally enables the toggle, Phorest API calls are still blocked. This acts as a code-level kill switch independent of the database setting.
 
-**1. Non-active collapsed nav icons (line 294)**
-Change from `text-muted-foreground` to `text-foreground/60` — this uses the main foreground color (`0 0% 8%`) at 60% opacity, giving substantially more contrast than `muted-foreground` (45% lightness) while still being visually softer than active items.
+### Changes (4 files)
 
-**2. Logo initials fallback (line 344)**
-Change `text-foreground` to `text-foreground/80` — keep strong but not full contrast for the initials circle since it has a `bg-muted` background.
+**1. `supabase/functions/update-phorest-appointment/index.ts`**
+Add a hardcoded constant at the top: `const PHOREST_WRITES_GLOBALLY_DISABLED = true;`
+Then wrap the existing write-gate check: if `PHOREST_WRITES_GLOBALLY_DISABLED` is true, force `phorestWriteEnabled = false` and log a warning.
 
-**3. Collapse toggle chevron button (line 369)**
-Change `text-muted-foreground` to `text-foreground/60` — same treatment as nav icons for consistency.
+**2. `supabase/functions/update-phorest-appointment-time/index.ts`**
+Same pattern -- add global disable constant, override the write gate.
 
-**4. Footer nav items** — Search for any other collapsed icon references using the same pattern and apply `text-foreground/60`.
+**3. `supabase/functions/create-phorest-booking/index.ts`**
+Same pattern -- add global disable constant, override the write gate.
 
-### What This Changes
-- Non-active collapsed icons go from ~45% lightness gray to ~8% lightness at 60% opacity (effectively ~40% but with warm tint matching the foreground color, appearing darker)
-- Active items unchanged (already `bg-foreground text-background`)
-- Dark mode overrides in `sidebar-dark` CSS class unchanged (they use `!important` and apply only when `resolvedTheme === 'dark'`)
+**4. `supabase/functions/create-phorest-client/index.ts`**
+Same pattern -- add global disable constant, override the write gate.
+
+### How It Works
+```text
+Request arrives
+  → Check org settings (phorest_write_enabled)
+  → OVERRIDE: if PHOREST_WRITES_GLOBALLY_DISABLED === true
+       → force phorestWriteEnabled = false
+       → log: "GLOBAL SAFETY: Phorest writes are disabled at code level"
+  → All operations proceed local-only
+```
+
+### Reversibility
+When you're ready to enable Phorest writes in the future, change `PHOREST_WRITES_GLOBALLY_DISABLED` to `false` in each function and redeploy. The existing database toggle then takes over.
 
