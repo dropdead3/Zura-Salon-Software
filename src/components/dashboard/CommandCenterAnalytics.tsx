@@ -44,16 +44,11 @@ import {
 
 type DateRangeType = 'today' | 'yesterday' | '7d' | '30d' | 'thisWeek' | 'thisMonth' | 'todayToPayday' | 'lastMonth';
 
-const DATE_RANGE_LABELS: Record<DateRangeType, string> = {
-  today: 'Today',
-  yesterday: 'Yesterday',
-  '7d': 'Last 7 days',
-  '30d': 'Last 30 days',
-  thisWeek: 'This Week',
-  thisMonth: 'This Month',
-  todayToPayday: 'Today to Next Pay Day',
-  lastMonth: 'Last Month',
-};
+import { DATE_RANGE_LABELS, getDateRangeSubtitle } from '@/lib/dateRangeLabels';
+
+const CC_DATE_RANGE_KEYS: DateRangeType[] = [
+  'today', 'yesterday', '7d', '30d', 'thisWeek', 'thisMonth', 'todayToPayday', 'lastMonth',
+];
 
 // Helper function to get date range
 function getDateRange(dateRange: DateRangeType): { dateFrom: string; dateTo: string } {
@@ -496,11 +491,19 @@ export function CommandCenterAnalytics() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {(Object.keys(DATE_RANGE_LABELS) as DateRangeType[]).map((key) => (
-              <SelectItem key={key} value={key}>
-                {DATE_RANGE_LABELS[key]}
-              </SelectItem>
-            ))}
+            {CC_DATE_RANGE_KEYS.map((key) => {
+              const subtitle = getDateRangeSubtitle(key);
+              return (
+                <SelectItem key={key} value={key}>
+                  <div className="flex flex-col">
+                    <span>{DATE_RANGE_LABELS[key] ?? key}</span>
+                    {subtitle && (
+                      <span className="text-[11px] text-muted-foreground leading-tight">{subtitle}</span>
+                    )}
+                  </div>
+                </SelectItem>
+              );
+            })}
           </SelectContent>
         </Select>
       </div>

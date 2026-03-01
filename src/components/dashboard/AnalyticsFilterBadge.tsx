@@ -1,23 +1,9 @@
 import { MapPin, Calendar } from 'lucide-react';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { cn } from '@/lib/utils';
+import { DATE_RANGE_LABELS } from '@/lib/dateRangeLabels';
 
 export type DateRangeType = 'today' | 'yesterday' | '7d' | '30d' | '90d' | 'thisWeek' | 'thisMonth' | 'todayToEom' | 'todayToPayday' | 'lastMonth' | 'ytd' | 'custom';
-
-const DATE_RANGE_LABELS: Record<DateRangeType, string> = {
-  today: 'Today',
-  yesterday: 'Yesterday',
-  '7d': 'Last 7 days',
-  '30d': 'Last 30 days',
-  '90d': 'Last 90 days',
-  thisWeek: 'This Week',
-  thisMonth: 'This Month',
-  todayToEom: 'Today to EOM',
-  todayToPayday: 'Today to Next Pay Day',
-  lastMonth: 'Last Month',
-  ytd: 'Year To Date',
-  custom: 'Custom',
-};
 
 export interface FilterContext {
   locationId: string;
