@@ -295,13 +295,13 @@ const App = () => (
                       <Route path="/dashboard/admin/schedule-requests" element={<ProtectedRoute requiredPermission="manage_schedule_requests"><ScheduleRequests /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/handbooks" element={<ProtectedRoute requiredPermission="manage_handbooks"><Handbooks /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/announcements" element={<ProtectedRoute requiredPermission="manage_announcements"><AdminAnnouncements /></ProtectedRoute>} />
-                      <Route path="/dashboard/admin/homepage-stylists" element={<Navigate to="/dashboard/admin/website-sections?tab=stylists" replace />} />
-                      <Route path="/dashboard/admin/testimonials" element={<Navigate to="/dashboard/admin/website-sections?tab=testimonials" replace />} />
-                      <Route path="/dashboard/admin/gallery" element={<Navigate to="/dashboard/admin/website-sections?tab=gallery" replace />} />
-                      <Route path="/dashboard/admin/services" element={<Navigate to="/dashboard/admin/website-sections?tab=services" replace />} />
-                      <Route path="/dashboard/admin/announcement-bar" element={<Navigate to="/dashboard/admin/website-sections?tab=banner" replace />} />
-                      <Route path="/dashboard/admin/locations" element={<Navigate to="/dashboard/admin/website-sections?tab=locations" replace />} />
-                      <Route path="/dashboard/admin/website-sections" element={<ProtectedRoute requiredPermission="manage_homepage_stylists"><WebsiteSectionsHub /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/homepage-stylists" element={<Navigate to="/dashboard/admin/settings?category=website" replace />} />
+                      <Route path="/dashboard/admin/testimonials" element={<Navigate to="/dashboard/admin/settings?category=website" replace />} />
+                      <Route path="/dashboard/admin/gallery" element={<Navigate to="/dashboard/admin/settings?category=website" replace />} />
+                      <Route path="/dashboard/admin/services" element={<Navigate to="/dashboard/admin/settings?category=website" replace />} />
+                      <Route path="/dashboard/admin/announcement-bar" element={<Navigate to="/dashboard/admin/settings?category=website" replace />} />
+                      <Route path="/dashboard/admin/locations" element={<Navigate to="/dashboard/admin/settings?category=website" replace />} />
+                      <Route path="/dashboard/admin/website-sections" element={<Navigate to="/dashboard/admin/settings?category=website" replace />} />
                       <Route path="/dashboard/admin/roles" element={<Navigate to="/dashboard/admin/access-hub?tab=user-roles" replace />} />
                       <Route path="/dashboard/admin/accounts" element={<Navigate to="/dashboard/admin/access-hub?tab=invitations" replace />} />
                       <Route path="/dashboard/admin/stylist-levels" element={<ProtectedRoute requiredPermission="manage_settings"><StylistLevels /></ProtectedRoute>} />
