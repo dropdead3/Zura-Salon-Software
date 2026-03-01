@@ -1,6 +1,40 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
+/**
+ * Sums total_price from ALL phorest_appointments in a date range
+ * regardless of status (cancelled + no-show + completed).
+ * This is the "what was on the books" number for gap analysis.
+ */
+export function useScheduledRevenue(
+  dateFrom: string,
+  dateTo: string,
+  locationId?: string | null,
+  enabled = true
+) {
+  return useQuery<number>({
+    queryKey: ['scheduled-revenue', dateFrom, dateTo, locationId],
+    queryFn: async () => {
+      let query = supabase
+        .from('phorest_appointments')
+        .select('total_price')
+        .gte('appointment_date', dateFrom)
+        .lte('appointment_date', dateTo)
+        .not('total_price', 'is', null);
+
+      if (locationId && locationId !== 'all') {
+        query = query.eq('location_id', locationId);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data?.reduce((sum, r) => sum + (Number(r.total_price) || 0), 0) ?? 0;
+    },
+    enabled,
+    staleTime: 2 * 60 * 1000,
+  });
+}
+
 export type GapReason = 'cancelled' | 'no_show' | 'no_pos_record' | 'service_changed' | 'discount' | 'pricing_diff';
 
 export interface GapItem {
