@@ -1,27 +1,29 @@
 
 
-## Link Forecast Appointments to Schedule
+## Add "View on Schedule" to Command Center Appointment Surfaces
 
 ### What's Changing
-Each appointment row in the `DayAppointmentsSheet` (the drill-down from the week-ahead forecast card) will become clickable. Tapping a row closes the sheet and navigates to `/dashboard/schedule`, passing the appointment date and appointment ID via router state. The Schedule page will pick up that state, set the date, switch to day view, and auto-select the appointment to open its detail panel.
+Two Command Center surfaces show appointments -- **Today's Prep** and **Today's Queue**. Both will gain a "View on Schedule" action that navigates to `/dashboard/schedule` with the same deep-link pattern already implemented for the forecast drill-down (`focusDate` + `focusAppointmentId` via router state).
 
 ### Files
 
-1. **`src/components/dashboard/sales/DayAppointmentsSheet.tsx`**
-   - Accept an optional `onNavigateToSchedule` callback prop (or use `useNavigate` directly)
-   - Wrap each `AppointmentCard` with a clickable action (subtle icon button or the whole card) that calls `navigate('/dashboard/schedule', { state: { focusDate: day.date, focusAppointmentId: apt.id } })` and closes the sheet
-   - Add a small `ExternalLink` or `CalendarDays` icon to each row as a visual affordance
+1. **`src/components/dashboard/TodaysPrepSection.tsx`**
+   - Import `useNavigate` from react-router-dom and `CalendarDays` icon
+   - Make each appointment row clickable (add `cursor-pointer` + `onClick` handler)
+   - On click: `navigate('/dashboard/schedule', { state: { focusDate: format(new Date(), 'yyyy-MM-dd'), focusAppointmentId: appt.id } })`
+   - Add a subtle `CalendarDays` icon on hover (same pattern as the forecast sheet -- invisible by default, appears on group-hover)
 
-2. **`src/pages/dashboard/Schedule.tsx`**
-   - In the existing `useEffect` that reads `location.state`, add handling for `focusDate` and `focusAppointmentId`
-   - When present: parse the date, call `setCurrentDate(parseISO(focusDate))`, `setView('day')`, and after appointments load, call `setSelectedAppointment` with the matching appointment
-   - Clear the state with `window.history.replaceState` to prevent re-triggering on refresh
+2. **`src/components/dashboard/operations/QueueCard.tsx`**
+   - Import `CalendarDays` from lucide-react and `useNavigate` from react-router-dom
+   - Add a "View on Schedule" item to the existing `DropdownMenu` (above Edit, with a separator)
+   - On click: navigate with `focusDate: appointment.appointment_date` and `focusAppointmentId: appointment.id`
 
 ### Interaction
 ```text
-Forecast Card → Click day bar → DayAppointmentsSheet opens
-  → Click appointment row → Sheet closes
-  → Navigate to /dashboard/schedule (day view, correct date)
-  → Appointment auto-selected + detail panel opens
+Command Center
+  ├─ Today's Prep row → Click → Schedule (day view, appointment selected)
+  └─ Queue Card → ⋮ menu → "View on Schedule" → Schedule (day view, appointment selected)
 ```
+
+No changes needed on the Schedule page -- the deep-link handler from the previous implementation already covers this.
 
