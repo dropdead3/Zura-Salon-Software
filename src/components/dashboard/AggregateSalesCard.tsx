@@ -38,6 +38,9 @@ import { ClosedBadge } from '@/components/dashboard/ClosedBadge';
 import { useTomorrowRevenue } from '@/hooks/useTomorrowRevenue';
 import { useSalesComparison } from '@/hooks/useSalesComparison';
 import { useTodayActualRevenue } from '@/hooks/useTodayActualRevenue';
+import { useActualRevenue } from '@/hooks/useActualRevenue';
+import { useRevenueGapAnalysis } from '@/hooks/useRevenueGapAnalysis';
+import { RevenueGapDrilldown } from './sales/RevenueGapDrilldown';
 import { useRetailAttachmentRate } from '@/hooks/useRetailAttachmentRate';
 import { useSalesGoals } from '@/hooks/useSalesGoals';
 import { useGoalPeriodRevenue } from '@/hooks/useGoalPeriodRevenue';
@@ -141,12 +144,12 @@ export function AggregateSalesCard({
   const [locationDrilldownTarget, setLocationDrilldownTarget] = useState<string | null>(null);
   const [locationDrilldown, setLocationDrilldown] = useState<{ type: LocationDrilldownType; locationId: string; locationName: string } | null>(null);
   const [tipsDrilldownOpen, setTipsDrilldownOpen] = useState(false);
-  const [activeDrilldown, setActiveDrilldown] = useState<'revenue' | 'transactions' | 'avgTicket' | 'revPerHour' | 'goals' | null>(null);
+  const [activeDrilldown, setActiveDrilldown] = useState<'revenue' | 'transactions' | 'avgTicket' | 'revPerHour' | 'goals' | 'expectedGap' | null>(null);
   const { hideNumbers } = useHideNumbers();
   const { formatCurrency, formatCurrencyWhole, currency } = useFormatCurrency();
 
   // Toggle a secondary KPI drilldown with mutual exclusivity
-  const toggleDrilldown = (panel: 'revenue' | 'transactions' | 'avgTicket' | 'revPerHour' | 'goals') => {
+  const toggleDrilldown = (panel: 'revenue' | 'transactions' | 'avgTicket' | 'revPerHour' | 'goals' | 'expectedGap') => {
     setActiveDrilldown(prev => prev === panel ? null : panel);
     setTipsDrilldownOpen(false); // Close tips when opening another
   };
@@ -264,6 +267,23 @@ export function AggregateSalesCard({
     return totalAppts > 0 ? (tippedAppts / totalAppts) * 100 : null;
   }, [tipsByTotal]);
   const isToday = dateRange === 'today';
+  const isPastRange = !isToday && dateRange !== 'todayToEom';
+
+  // Actual POS revenue for past date ranges
+  const { data: pastActual, isLoading: pastActualLoading } = useActualRevenue(
+    dateFilters.dateFrom,
+    dateFilters.dateTo,
+    isPastRange
+  );
+
+  // Gap analysis — lazy, only fetched when drill-down is open
+  const { data: gapAnalysis, isLoading: gapLoading } = useRevenueGapAnalysis(
+    dateFilters.dateFrom,
+    dateFilters.dateTo,
+    metrics?.totalRevenue ?? 0,
+    pastActual?.actualRevenue ?? 0,
+    isPastRange && activeDrilldown === 'expectedGap'
+  );
 
   // Location display logic
   const isAllLocations = !filterContext?.locationId || filterContext.locationId === 'all';
@@ -655,7 +675,7 @@ export function AggregateSalesCard({
               onClick={() => toggleDrilldown('revenue')}
             >
               <AnimatedBlurredAmount
-                value={isToday ? (todayActual?.actualRevenue ?? 0) : displayMetrics.totalRevenue}
+                value={isToday ? (todayActual?.actualRevenue ?? 0) : (isPastRange && pastActual?.hasActualData ? pastActual.actualRevenue : displayMetrics.totalRevenue)}
                 currency={currency}
                 className="text-3xl sm:text-4xl md:text-5xl font-display tabular-nums"
               />
@@ -676,7 +696,7 @@ export function AggregateSalesCard({
                 <p className="text-xs text-muted-foreground/50">Excludes Tips</p>
               </div>
 
-              {/* Expected Revenue - secondary badge (today only) */}
+              {/* Expected Revenue - secondary badge (today + past ranges with actual POS data) */}
               {isToday && (
                 <div className="mt-4 mx-auto max-w-sm space-y-3">
                   {(() => {
@@ -767,6 +787,70 @@ export function AggregateSalesCard({
                             })()}
                           </p>
                         )}
+                      </>
+                    );
+                  })()}
+                </div>
+              )}
+
+              {/* Expected Revenue badge for past date ranges */}
+              {isPastRange && pastActual?.hasActualData && displayMetrics.totalRevenue > 0 && (
+                <div className="mt-4 mx-auto max-w-sm space-y-3">
+                  {(() => {
+                    const exceededExpected = pastActual.actualRevenue >= displayMetrics.totalRevenue;
+                    return (
+                      <>
+                        <div
+                          className="flex items-center justify-center gap-1.5 cursor-pointer"
+                          onClick={(e) => { e.stopPropagation(); toggleDrilldown('expectedGap'); }}
+                        >
+                          <Badge variant="outline" className={cn(
+                            "text-xs font-normal gap-1 transition-colors",
+                            exceededExpected
+                              ? "bg-success/10 text-success-foreground border-success/30"
+                              : "bg-warning/10 text-warning border-warning/30",
+                            activeDrilldown === 'expectedGap' && "ring-1 ring-primary/30"
+                          )}>
+                            <Clock className="w-3 h-3" />
+                            <BlurredAmount>
+                              <span>{formatCurrency(displayMetrics.totalRevenue)}</span>
+                            </BlurredAmount>
+                            <span>{exceededExpected ? 'Expected · Exceeded' : 'Expected'}</span>
+                          </Badge>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Info className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom" className="max-w-[200px] text-xs">
+                              Revenue expected from scheduled appointments. Click to see gap analysis.
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+
+                        {/* Progress bar: actual vs expected */}
+                        <div className="space-y-1.5">
+                          <Progress
+                            value={displayMetrics.totalRevenue > 0
+                              ? Math.min((pastActual.actualRevenue / displayMetrics.totalRevenue) * 100, 100)
+                              : 0
+                            }
+                            className="h-1.5"
+                            indicatorClassName={exceededExpected ? "bg-success-foreground" : undefined}
+                          />
+                          {exceededExpected && (
+                            <div className="flex items-center justify-center gap-1 text-xs text-success-foreground">
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              <span>Exceeded</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Gap analysis drill-down */}
+                        <RevenueGapDrilldown
+                          isOpen={activeDrilldown === 'expectedGap'}
+                          data={gapAnalysis}
+                          isLoading={gapLoading}
+                        />
                       </>
                     );
                   })()}
