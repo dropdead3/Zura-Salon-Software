@@ -39,7 +39,7 @@ import { useTomorrowRevenue } from '@/hooks/useTomorrowRevenue';
 import { useSalesComparison } from '@/hooks/useSalesComparison';
 import { useTodayActualRevenue } from '@/hooks/useTodayActualRevenue';
 import { useActualRevenue } from '@/hooks/useActualRevenue';
-import { useRevenueGapAnalysis } from '@/hooks/useRevenueGapAnalysis';
+import { useRevenueGapAnalysis, useScheduledRevenue } from '@/hooks/useRevenueGapAnalysis';
 import { RevenueGapDrilldown } from './sales/RevenueGapDrilldown';
 import { useRetailAttachmentRate } from '@/hooks/useRetailAttachmentRate';
 import { useSalesGoals } from '@/hooks/useSalesGoals';
@@ -276,13 +276,21 @@ export function AggregateSalesCard({
     isPastRange
   );
 
+  // Scheduled revenue — all appointments on the books (cancelled + no-show + completed)
+  const { data: scheduledRevenue, isLoading: scheduledLoading } = useScheduledRevenue(
+    dateFilters.dateFrom,
+    dateFilters.dateTo,
+    filterContext?.locationId,
+    isPastRange
+  );
+
   // Gap analysis — lazy, only fetched when drill-down is open
   const { data: gapAnalysis, isLoading: gapLoading } = useRevenueGapAnalysis(
     dateFilters.dateFrom,
     dateFilters.dateTo,
-    metrics?.totalRevenue ?? 0,
+    scheduledRevenue ?? 0,
     pastActual?.actualRevenue ?? 0,
-    isPastRange && activeDrilldown === 'expectedGap'
+    isPastRange && activeDrilldown === 'expectedGap' && scheduledRevenue != null
   );
 
   // Location display logic
@@ -794,10 +802,10 @@ export function AggregateSalesCard({
               )}
 
               {/* Expected Revenue badge for past date ranges */}
-              {isPastRange && pastActual?.hasActualData && displayMetrics.totalRevenue > 0 && (
+              {isPastRange && pastActual?.hasActualData && scheduledRevenue != null && scheduledRevenue > 0 && (
                 <div className="mt-4 mx-auto max-w-sm space-y-3">
                   {(() => {
-                    const exceededExpected = pastActual.actualRevenue >= displayMetrics.totalRevenue;
+                    const exceededScheduled = pastActual.actualRevenue >= scheduledRevenue;
                     return (
                       <>
                         <div
@@ -806,38 +814,38 @@ export function AggregateSalesCard({
                         >
                           <Badge variant="outline" className={cn(
                             "text-xs font-normal gap-1 transition-colors",
-                            exceededExpected
+                            exceededScheduled
                               ? "bg-success/10 text-success-foreground border-success/30"
                               : "bg-warning/10 text-warning border-warning/30",
                             activeDrilldown === 'expectedGap' && "ring-1 ring-primary/30"
                           )}>
                             <Clock className="w-3 h-3" />
                             <BlurredAmount>
-                              <span>{formatCurrency(displayMetrics.totalRevenue)}</span>
+                              <span>{formatCurrency(scheduledRevenue)}</span>
                             </BlurredAmount>
-                            <span>{exceededExpected ? 'Expected · Exceeded' : 'Expected'}</span>
+                            <span>{exceededScheduled ? 'Scheduled · Exceeded' : 'Scheduled'}</span>
                           </Badge>
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Info className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
                             </TooltipTrigger>
-                            <TooltipContent side="bottom" className="max-w-[200px] text-xs">
-                              Revenue expected from scheduled appointments. Click to see gap analysis.
+                            <TooltipContent side="bottom" className="max-w-[220px] text-xs">
+                              Total revenue from all originally-booked appointments — before cancellations, no-shows, and POS discrepancies. Click to see gap analysis.
                             </TooltipContent>
                           </Tooltip>
                         </div>
 
-                        {/* Progress bar: actual vs expected */}
+                        {/* Progress bar: actual vs scheduled */}
                         <div className="space-y-1.5">
                           <Progress
-                            value={displayMetrics.totalRevenue > 0
-                              ? Math.min((pastActual.actualRevenue / displayMetrics.totalRevenue) * 100, 100)
+                            value={scheduledRevenue > 0
+                              ? Math.min((pastActual.actualRevenue / scheduledRevenue) * 100, 100)
                               : 0
                             }
                             className="h-1.5"
-                            indicatorClassName={exceededExpected ? "bg-success-foreground" : undefined}
+                            indicatorClassName={exceededScheduled ? "bg-success-foreground" : undefined}
                           />
-                          {exceededExpected && (
+                          {exceededScheduled && (
                             <div className="flex items-center justify-center gap-1 text-xs text-success-foreground">
                               <CheckCircle2 className="w-3.5 h-3.5" />
                               <span>Exceeded</span>
