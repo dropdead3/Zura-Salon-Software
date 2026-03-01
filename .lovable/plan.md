@@ -1,41 +1,51 @@
 
 
-## Redefine Expected Revenue to Include All Scheduled Appointments
+## Revenue Gap Analysis — Gaps and Enhancements
 
-### The Problem
+### Issues Found
 
-Right now, "expected revenue" is calculated by `useSalesMetrics` which filters out cancelled and no-show appointments. So cancellations and no-shows are never part of the expected number. But the gap drilldown lists them as reasons for the gap — which is logically inconsistent. If they were never counted as expected, they can't explain the shortfall.
+**1. Missing location filter on gap query (Bug)**
 
-### The Fix
+`useScheduledRevenue` correctly filters by `locationId`, but `useRevenueGapAnalysis` does NOT filter appointments or POS items by location. When viewing a single location, the gap drilldown shows appointments from ALL locations. This is inconsistent.
 
-Change the expected revenue passed to the gap analysis to include **all originally-scheduled appointments** (cancelled + no-show + completed). This makes the gap breakdown honest: the full picture of what was on the books vs what was actually collected.
+**Fix:** Add `.eq('location_id', locationId)` to the appointment query in `useRevenueGapAnalysis` when a location is selected.
 
-### What Changes
+**2. Null `phorest_client_id` appointments are invisible in the gap (Data gap)**
 
-**1. New hook: `useScheduledRevenue`** (in `useRevenueGapAnalysis.ts`)
+36 completed appointments in February ($3,933) have no `phorest_client_id`. The current code skips them entirely at line 209 (`if (!a.phorest_client_id) return`). These can never match POS records, so they always show as "No POS record" but are silently dropped instead.
 
-A small query that sums `total_price` from `phorest_appointments` for the date range with **no status filter** — all appointments regardless of status. This becomes the "Scheduled Revenue" number used for gap analysis.
+**Fix:** Include null-client appointments as individual gap items with reason `no_pos_record` and client name from `client_name` field or "Walk-in".
 
-**2. Update `AggregateSalesCard.tsx`**
+**3. `useScheduledRevenue` doesn't filter by `is_parent` / deduplicate sub-appointments**
 
-- Use the new `useScheduledRevenue` as the expected value passed to `useRevenueGapAnalysis` instead of `metrics?.totalRevenue`
-- The "Expected" badge label changes to "Scheduled" to make the meaning clearer — this is what was on the books before cancellations, no-shows, and POS discrepancies
-- The existing `metrics?.totalRevenue` (completed-only) continues to be the primary revenue display — no change there
+The hook sums `total_price` from ALL appointment rows. If Phorest ever sends parent + child rows for the same booking, revenue would be double-counted. The data currently shows no duplicates (`phorest_id` is unique), but this is a latent risk.
 
-**3. No changes to `useRevenueGapAnalysis` logic**
+**Fix:** Not urgent — no duplicates exist. Add a comment noting the assumption.
 
-The gap items (cancellations, no-shows, pricing variances) remain as-is. They now correctly explain the difference between "all scheduled" and "actually collected."
+### Enhancements Worth Considering
+
+**4. Gap trend over time**
+
+Right now the drilldown is a flat list. Operators can't see if cancellations are increasing week-over-week. A small sparkline or trend badge showing "Cancellations up 30% vs prior period" would surface operational drift.
+
+**5. Reason filter chips**
+
+When there are 50+ gap items, scanning is hard. Adding filter chips at the top (Cancelled · No-show · No POS · Discount) lets operators focus on one category — especially useful when investigating a specific problem like "why are so many appointments missing POS records."
+
+### Recommended Next Step
+
+Fix issues 1 and 2 — they're data correctness bugs. Issue 1 (location filter) makes single-location views misleading. Issue 2 ($3,933/month in invisible gap items) means the drilldown under-reports the gap.
 
 ### Files Modified
 
 | File | Change |
 |---|---|
-| `src/hooks/useRevenueGapAnalysis.ts` | Add `useScheduledRevenue(dateFrom, dateTo, locationId, enabled)` hook that queries all appointments without status filter |
-| `src/components/dashboard/AggregateSalesCard.tsx` | Call `useScheduledRevenue` and pass its value as expected revenue to `useRevenueGapAnalysis`. Update the badge label from "Expected" to "Scheduled" |
+| `src/hooks/useRevenueGapAnalysis.ts` | Add `locationId` parameter to `useRevenueGapAnalysis`, filter appointment + POS queries by location. Handle null-client appointments as `no_pos_record` gap items instead of skipping them. |
+| `src/components/dashboard/AggregateSalesCard.tsx` | Pass `filterContext?.locationId` to `useRevenueGapAnalysis` |
 
 ### Technical Details
 
-- `useScheduledRevenue` query: `SELECT SUM(total_price) FROM phorest_appointments WHERE appointment_date BETWEEN dateFrom AND dateTo` — no status exclusion, respects location filter
-- The primary card revenue number remains unchanged (completed appointments only from `useSalesMetrics`)
-- Gap math: `scheduledRevenue - actualPOSRevenue = total gap`, broken down by cancellations + no-shows + pricing variances + unexplained
+- Location filter: add optional `locationId` param, apply `.eq('location_id', locationId)` when not 'all'
+- Null-client handling: after the client-day grouping loop, iterate remaining completed appointments with `phorest_client_id === null`, create gap items with `reason: 'no_pos_record'` using `client_name ?? 'Walk-in'`
+- No schema changes needed
 
