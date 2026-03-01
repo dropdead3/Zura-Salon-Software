@@ -9,6 +9,7 @@ import { triggerPreviewRefresh } from '@/lib/preview-utils';
 import { toast } from 'sonner';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useSettingsOrgId } from '@/hooks/useSettingsOrgId';
 import { useEditorDirtyState } from '@/hooks/useEditorDirtyState';
 import { ToggleInput } from './inputs/ToggleInput';
 import { EditorCard } from './EditorCard';
@@ -78,44 +79,50 @@ const SOCIAL_PLATFORMS = [
 
 export function FooterEditor() {
   const queryClient = useQueryClient();
+  const orgId = useSettingsOrgId();
   const { data: savedConfig, isLoading } = useQuery({
-    queryKey: ['site-settings', 'website_footer'],
+    queryKey: ['site-settings', orgId, 'website_footer'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('site_settings')
         .select('value')
         .eq('id', 'website_footer')
+        .eq('organization_id', orgId!)
         .maybeSingle();
       if (error) throw error;
       if (!data?.value) return null;
       return data.value as unknown as FooterConfig;
     },
+    enabled: !!orgId,
   });
 
   const saveMutation = useMutation({
     mutationFn: async (value: FooterConfig) => {
+      if (!orgId) throw new Error('No organization context');
       const { data: { user } } = await supabase.auth.getUser();
       const { data: existing } = await supabase
         .from('site_settings')
         .select('id')
         .eq('id', 'website_footer')
+        .eq('organization_id', orgId)
         .maybeSingle();
 
       if (existing) {
         const { error } = await supabase
           .from('site_settings')
           .update({ value: value as never, updated_by: user?.id })
-          .eq('id', 'website_footer');
+          .eq('id', 'website_footer')
+          .eq('organization_id', orgId);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from('site_settings')
-          .insert({ id: 'website_footer', value: value as never, updated_by: user?.id });
+          .insert({ id: 'website_footer', organization_id: orgId, value: value as never, updated_by: user?.id });
         if (error) throw error;
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['site-settings', 'website_footer'] });
+      queryClient.invalidateQueries({ queryKey: ['site-settings', orgId, 'website_footer'] });
     },
   });
 

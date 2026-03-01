@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { SectionConfig, WebsiteSectionsConfig } from './useWebsiteSections';
 import { BUILTIN_SECTION_TYPES, SECTION_LABELS, SECTION_DESCRIPTIONS } from './useWebsiteSections';
 import type { StyleOverrides } from '@/components/home/SectionStyleWrapper';
+import { useSettingsOrgId } from './useSettingsOrgId';
 
 export interface PageConfig {
   id: string;
@@ -90,16 +91,18 @@ function migrateFromSections(sectionsConfig: WebsiteSectionsConfig): WebsitePage
   };
 }
 
-export function useWebsitePages() {
+export function useWebsitePages(explicitOrgId?: string) {
   const queryClient = useQueryClient();
+  const orgId = useSettingsOrgId(explicitOrgId);
 
   return useQuery({
-    queryKey: ['site-settings', 'website_pages'],
+    queryKey: ['site-settings', orgId, 'website_pages'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('site_settings')
         .select('value')
         .eq('id', 'website_pages')
+        .eq('organization_id', orgId!)
         .maybeSingle();
 
       if (error) throw error;
@@ -113,6 +116,7 @@ export function useWebsitePages() {
         .from('site_settings')
         .select('value')
         .eq('id', 'website_sections')
+        .eq('organization_id', orgId!)
         .maybeSingle();
 
       let pagesConfig: WebsitePagesConfig;
@@ -127,33 +131,36 @@ export function useWebsitePages() {
       const { data: { user } } = await supabase.auth.getUser();
       const { error: upsertError } = await supabase
         .from('site_settings')
-        .upsert({ id: 'website_pages', value: pagesConfig as never, updated_by: user?.id });
+        .upsert({ id: 'website_pages', organization_id: orgId, value: pagesConfig as never, updated_by: user?.id });
 
       if (upsertError) {
         console.error('Failed to seed website_pages:', upsertError);
       } else {
-        queryClient.invalidateQueries({ queryKey: ['site-settings', 'website_pages'] });
+        queryClient.invalidateQueries({ queryKey: ['site-settings', orgId, 'website_pages'] });
       }
 
       return pagesConfig;
     },
+    enabled: !!orgId,
   });
 }
 
-export function useUpdateWebsitePages() {
+export function useUpdateWebsitePages(explicitOrgId?: string) {
   const queryClient = useQueryClient();
+  const orgId = useSettingsOrgId(explicitOrgId);
 
   return useMutation({
     mutationFn: async (value: WebsitePagesConfig) => {
+      if (!orgId) throw new Error('No organization context');
       const { data: { user } } = await supabase.auth.getUser();
 
       const { error } = await supabase
         .from('site_settings')
-        .upsert({ id: 'website_pages', value: value as never, updated_by: user?.id });
+        .upsert({ id: 'website_pages', organization_id: orgId, value: value as never, updated_by: user?.id });
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['site-settings', 'website_pages'] });
+      queryClient.invalidateQueries({ queryKey: ['site-settings', orgId, 'website_pages'] });
     },
   });
 }

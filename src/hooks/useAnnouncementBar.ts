@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useSettingsOrgId } from './useSettingsOrgId';
 
 export interface AnnouncementBarSettings {
   enabled: boolean;
@@ -22,31 +23,35 @@ const DEFAULT_SETTINGS: AnnouncementBarSettings = {
   open_in_new_tab: true,
 };
 
-export function useAnnouncementBarSettings() {
+export function useAnnouncementBarSettings(explicitOrgId?: string) {
+  const orgId = useSettingsOrgId(explicitOrgId);
+
   return useQuery({
-    queryKey: ['site-settings', 'announcement_bar'],
+    queryKey: ['site-settings', orgId, 'announcement_bar'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('site_settings')
         .select('value')
         .eq('id', 'announcement_bar')
+        .eq('organization_id', orgId!)
         .maybeSingle();
 
       if (error) throw error;
-      
-      // Return default settings if no entry exists
       if (!data?.value) return DEFAULT_SETTINGS;
       
       return data.value as unknown as AnnouncementBarSettings;
     },
+    enabled: !!orgId,
   });
 }
 
-export function useUpdateAnnouncementBarSettings() {
+export function useUpdateAnnouncementBarSettings(explicitOrgId?: string) {
   const queryClient = useQueryClient();
+  const orgId = useSettingsOrgId(explicitOrgId);
 
   return useMutation({
     mutationFn: async (value: AnnouncementBarSettings) => {
+      if (!orgId) throw new Error('No organization context');
       const { data: { user } } = await supabase.auth.getUser();
       
       // Try to update first
@@ -54,25 +59,26 @@ export function useUpdateAnnouncementBarSettings() {
         .from('site_settings')
         .select('id')
         .eq('id', 'announcement_bar')
+        .eq('organization_id', orgId)
         .maybeSingle();
 
       if (existingData) {
-        // Update existing
         const { error } = await supabase
           .from('site_settings')
           .update({ 
             value: value as never,
             updated_by: user?.id 
           })
-          .eq('id', 'announcement_bar');
+          .eq('id', 'announcement_bar')
+          .eq('organization_id', orgId);
 
         if (error) throw error;
       } else {
-        // Insert new
         const { error } = await supabase
           .from('site_settings')
           .insert({ 
             id: 'announcement_bar',
+            organization_id: orgId,
             value: value as never,
             updated_by: user?.id 
           });
@@ -81,7 +87,7 @@ export function useUpdateAnnouncementBarSettings() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['site-settings', 'announcement_bar'] });
+      queryClient.invalidateQueries({ queryKey: ['site-settings', orgId, 'announcement_bar'] });
     },
   });
 }

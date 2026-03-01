@@ -44,6 +44,7 @@ export function usePlatformBranding() {
         .from('site_settings')
         .select('value')
         .eq('id', 'platform_branding')
+        .is('organization_id', null)
         .single();
 
       if (error) {
@@ -85,7 +86,8 @@ export function usePlatformBranding() {
       const { error } = await supabase
         .from('site_settings')
         .update({ value: brandingValue })
-        .eq('id', 'platform_branding');
+        .eq('id', 'platform_branding')
+        .is('organization_id', null);
 
       if (error) throw error;
       return branding;

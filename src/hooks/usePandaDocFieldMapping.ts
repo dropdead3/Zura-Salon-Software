@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useSettingsOrgId } from './useSettingsOrgId';
 
 export interface PandaDocFieldMapping {
   [pandaDocField: string]: string;
@@ -37,14 +38,17 @@ export const BILLING_COLUMNS = [
   { value: 'included_users', label: 'Included Users', type: 'integer' },
 ] as const;
 
-export function usePandaDocFieldMapping() {
+export function usePandaDocFieldMapping(explicitOrgId?: string) {
+  const orgId = useSettingsOrgId(explicitOrgId);
+
   return useQuery({
-    queryKey: ['site-settings', 'pandadoc_field_mapping'],
+    queryKey: ['site-settings', orgId, 'pandadoc_field_mapping'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('site_settings')
         .select('value')
         .eq('id', 'pandadoc_field_mapping')
+        .eq('organization_id', orgId!)
         .maybeSingle();
 
       if (error) {
@@ -52,35 +56,37 @@ export function usePandaDocFieldMapping() {
         throw error;
       }
 
-      // Return saved mapping or default
       return (data?.value as PandaDocFieldMapping) || DEFAULT_PANDADOC_MAPPING;
     },
+    enabled: !!orgId,
   });
 }
 
-export function useUpdatePandaDocFieldMapping() {
+export function useUpdatePandaDocFieldMapping(explicitOrgId?: string) {
   const queryClient = useQueryClient();
+  const orgId = useSettingsOrgId(explicitOrgId);
 
   return useMutation({
     mutationFn: async (mapping: PandaDocFieldMapping) => {
+      if (!orgId) throw new Error('No organization context');
       const { data: { user } } = await supabase.auth.getUser();
       
-      // Upsert the mapping
       const { error } = await supabase
         .from('site_settings')
         .upsert({
           id: 'pandadoc_field_mapping',
+          organization_id: orgId,
           value: mapping as never,
           updated_by: user?.id,
           updated_at: new Date().toISOString(),
         }, {
-          onConflict: 'id',
+          onConflict: 'organization_id,id',
         });
 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['site-settings', 'pandadoc_field_mapping'] });
+      queryClient.invalidateQueries({ queryKey: ['site-settings', orgId, 'pandadoc_field_mapping'] });
       toast.success('Field mapping saved successfully');
     },
     onError: (error) => {

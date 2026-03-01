@@ -10,6 +10,7 @@ import {
   DragEndEvent,
 } from '@dnd-kit/core';
 import { supabase } from '@/integrations/supabase/client';
+import { useSettingsOrgId } from '@/hooks/useSettingsOrgId';
 import {
   arrayMove,
   SortableContext,
@@ -157,6 +158,7 @@ export function WebsiteEditorSidebar({
   const { data: sectionsConfig, isLoading } = useWebsiteSections();
   const { data: pagesConfig } = useWebsitePages();
   const updateSections = useUpdateWebsiteSections();
+  const orgId = useSettingsOrgId();
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<SectionConfig | null>(null);
 
@@ -268,6 +270,7 @@ export function WebsiteEditorSidebar({
     const { data: { user } } = await supabase.auth.getUser();
     await supabase.from('site_settings').upsert({
       id: settingsKey,
+      organization_id: orgId,
       value: template.default_config as never,
       updated_by: user?.id,
     });
@@ -281,9 +284,8 @@ export function WebsiteEditorSidebar({
     const newSections = localSections.filter(s => s.id !== deleteTarget.id);
     await saveSections(newSections);
     
-    // Clean up orphaned site_settings row for this custom section
     const settingsKey = `section_custom_${deleteTarget.id}`;
-    supabase.from('site_settings').delete().eq('id', settingsKey).then(() => {});
+    supabase.from('site_settings').delete().eq('id', settingsKey).eq('organization_id', orgId).then(() => {});
     
     toast.success(`"${deleteTarget.label}" deleted`);
     setDeleteTarget(null);
@@ -311,11 +313,13 @@ export function WebsiteEditorSidebar({
       .from('site_settings')
       .select('value')
       .eq('id', sourceKey)
+      .eq('organization_id', orgId)
       .maybeSingle();
     if (sourceConfig?.value) {
       const { data: { user } } = await supabase.auth.getUser();
       await supabase.from('site_settings').upsert({
         id: destKey,
+        organization_id: orgId,
         value: sourceConfig.value as never,
         updated_by: user?.id,
       });
