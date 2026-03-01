@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -24,6 +25,7 @@ import {
   MoreVertical,
   Pencil,
   Trash2,
+  CalendarDays,
 } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
@@ -52,6 +54,7 @@ export function QueueCard({
 }: QueueCardProps) {
   const { formatDate } = useFormatDate();
   const { formatCurrencyWhole } = useFormatCurrency();
+  const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
 
   const formatTime = (time: string) => {
@@ -145,14 +148,18 @@ export function QueueCard({
           </span>
           <div className="flex items-center gap-2">
             {getStatusBadge()}
-            {(onEdit || onDelete) && (
-              <DropdownMenu>
+            <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="h-7 w-7 -mr-2">
                     <MoreVertical className="w-4 h-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="bg-popover">
+                  <DropdownMenuItem onClick={() => navigate('/dashboard/schedule', { state: { focusDate: appointment.appointment_date, focusAppointmentId: appointment.id } })}>
+                    <CalendarDays className="w-4 h-4 mr-2" />
+                    View on Schedule
+                  </DropdownMenuItem>
+                  {(onEdit || onDelete) && <DropdownMenuSeparator />}
                   {onEdit && (
                     <DropdownMenuItem onClick={onEdit}>
                       <Pencil className="w-4 h-4 mr-2" />
@@ -167,8 +174,7 @@ export function QueueCard({
                     </DropdownMenuItem>
                   )}
                 </DropdownMenuContent>
-              </DropdownMenu>
-            )}
+            </DropdownMenu>
           </div>
         </div>
 
