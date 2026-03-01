@@ -291,7 +291,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
           isActive 
             ? "bg-foreground text-background shadow-sm dark:bg-muted dark:text-foreground dark:shadow-none" 
             : isCollapsed
-              ? "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+              ? "text-foreground/60 hover:text-foreground hover:bg-muted/60"
               : "text-muted-foreground hover:text-foreground hover:bg-muted/60 hover:translate-x-0.5"
         )}
       >
@@ -341,7 +341,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                       className="h-4 w-auto max-w-[32px] object-contain"
                     />
                   ) : (
-                    <div className="w-7 h-7 rounded-full bg-muted dark:bg-white/10 text-foreground dark:text-white flex items-center justify-center font-display text-xs">
+                    <div className="w-7 h-7 rounded-full bg-muted dark:bg-white/10 text-foreground/80 dark:text-white flex items-center justify-center font-display text-xs">
                       {(businessSettings?.business_name || 'DD').substring(0, 2).toUpperCase()}
                     </div>
                   )}
@@ -366,7 +366,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 rounded-full bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground dark:bg-white/10 dark:hover:bg-white/15 dark:text-white/60 dark:hover:text-white"
+                  className="h-7 w-7 rounded-full bg-muted hover:bg-muted/80 text-foreground/60 hover:text-foreground dark:bg-white/10 dark:hover:bg-white/15 dark:text-white/60 dark:hover:text-white"
                   onClick={onToggleCollapse}
                 >
                   <ChevronRight className="w-3.5 h-3.5" />
