@@ -3,10 +3,10 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Ban, UserX, HelpCircle, ChevronDown } from 'lucide-react';
+import { Ban, UserX, HelpCircle, ChevronDown, ArrowRight, AlertTriangle, Tag } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
-import type { RevenueGapAnalysis, GapAppointment } from '@/hooks/useRevenueGapAnalysis';
+import type { RevenueGapAnalysis, GapAppointment, PricingVarianceItem } from '@/hooks/useRevenueGapAnalysis';
 
 interface RevenueGapDrilldownProps {
   isOpen: boolean;
@@ -77,6 +77,108 @@ function AppointmentList({
   );
 }
 
+function VarianceList({
+  items,
+  showDates,
+  formatCurrency,
+}: {
+  items: PricingVarianceItem[];
+  showDates: boolean;
+  formatCurrency: (v: number) => string;
+}) {
+  const [showAll, setShowAll] = useState(false);
+  const visible = showAll ? items : items.slice(0, INITIAL_VISIBLE);
+  const hasMore = items.length > INITIAL_VISIBLE;
+
+  return (
+    <motion.div
+      initial={{ height: 0, opacity: 0 }}
+      animate={{ height: 'auto', opacity: 1 }}
+      exit={{ height: 0, opacity: 0 }}
+      transition={{ duration: 0.15, ease: 'easeOut' }}
+      className="overflow-hidden"
+    >
+      <div className="mt-1.5 space-y-1 pl-5">
+        {visible.map((item, idx) => {
+          const servicesChanged = item.actualServices.length > 0 &&
+            JSON.stringify(item.scheduledServices.sort()) !== JSON.stringify(item.actualServices.sort());
+
+          return (
+            <div
+              key={`${item.clientName}-${item.appointmentDate}-${idx}`}
+              className="flex flex-col gap-1 text-[11px] py-2 px-2 rounded-md bg-muted/40 border border-border/20"
+            >
+              <div className="flex items-center justify-between">
+                <span className="font-sans text-foreground truncate">
+                  {item.clientName || 'Walk-in'}
+                </span>
+                <BlurredAmount>
+                  <span className="font-sans text-destructive/80 whitespace-nowrap">
+                    -{formatCurrency(item.variance)}
+                  </span>
+                </BlurredAmount>
+              </div>
+
+              {/* Scheduled → Actual amounts */}
+              <div className="flex items-center gap-1 text-muted-foreground">
+                <BlurredAmount>
+                  <span>{formatCurrency(item.scheduledAmount)}</span>
+                </BlurredAmount>
+                <ArrowRight className="w-2.5 h-2.5 shrink-0" />
+                <BlurredAmount>
+                  <span>{formatCurrency(item.actualAmount)}</span>
+                </BlurredAmount>
+                {item.stylistName && (
+                  <span className="ml-1 truncate">· w/ {item.stylistName}</span>
+                )}
+                {showDates && (
+                  <span className="ml-1">{item.appointmentDate}</span>
+                )}
+              </div>
+
+              {/* Service details when changed */}
+              {servicesChanged && (
+                <div className="text-muted-foreground/70 truncate">
+                  {item.scheduledServices.join(', ')} → {item.actualServices.join(', ')}
+                </div>
+              )}
+
+              {/* Badges */}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {item.noTransaction && (
+                  <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full bg-destructive/10 text-destructive/80 border border-destructive/20">
+                    <AlertTriangle className="w-2.5 h-2.5" />
+                    No POS record
+                  </span>
+                )}
+                {item.hasDiscount && (
+                  <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full bg-warning/10 text-warning border border-warning/20">
+                    <Tag className="w-2.5 h-2.5" />
+                    Discount applied
+                  </span>
+                )}
+                {servicesChanged && (
+                  <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary/80 border border-primary/20">
+                    Service changed
+                  </span>
+                )}
+              </div>
+            </div>
+          );
+        })}
+        {hasMore && !showAll && (
+          <button
+            onClick={() => setShowAll(true)}
+            className="w-full text-[11px] text-primary/80 hover:text-primary py-1 transition-colors"
+          >
+            Show all {items.length} variances
+          </button>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
 function ExpandableRow({
   icon,
   iconClass,
@@ -129,6 +231,63 @@ function ExpandableRow({
         {expanded && (
           <AppointmentList
             appointments={appointments}
+            showDates={showDates}
+            formatCurrency={formatCurrency}
+          />
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function ExpandableVarianceRow({
+  amount,
+  items,
+  showDates,
+  formatCurrency,
+}: {
+  amount: number;
+  items: PricingVarianceItem[];
+  showDates: boolean;
+  formatCurrency: (v: number) => string;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const hasDetails = items.length > 0;
+
+  return (
+    <div>
+      <button
+        onClick={() => hasDetails && setExpanded(!expanded)}
+        disabled={!hasDetails}
+        className={cn(
+          "flex items-center justify-between text-xs w-full bg-card-inner rounded-lg px-3 py-2 border border-border/30 transition-colors",
+          hasDetails && "cursor-pointer hover:bg-muted/60"
+        )}
+      >
+        <div className="flex items-center gap-2">
+          <HelpCircle className="w-3.5 h-3.5 text-muted-foreground" />
+          <span className="text-muted-foreground">
+            {hasDetails
+              ? `${items.length} pricing variance${items.length !== 1 ? 's' : ''}`
+              : 'Pricing / discounts / other'}
+          </span>
+          {hasDetails && (
+            <ChevronDown className={cn(
+              "w-3 h-3 text-muted-foreground/60 transition-transform duration-200",
+              expanded && "rotate-180"
+            )} />
+          )}
+        </div>
+        <BlurredAmount>
+          <span className="font-medium text-muted-foreground">
+            -{formatCurrency(amount)}
+          </span>
+        </BlurredAmount>
+      </button>
+      <AnimatePresence>
+        {expanded && (
+          <VarianceList
+            items={items}
             showDates={showDates}
             formatCurrency={formatCurrency}
           />
@@ -212,18 +371,14 @@ export function RevenueGapDrilldown({ isOpen, data, isLoading, showDates = false
                       />
                     )}
 
-                    {data.unexplainedGap > 0 && (
-                      <div className="flex items-center justify-between text-xs bg-card-inner rounded-lg px-3 py-2 border border-border/30">
-                        <div className="flex items-center gap-2">
-                          <HelpCircle className="w-3.5 h-3.5 text-muted-foreground" />
-                          <span className="text-muted-foreground">Pricing / discounts / other</span>
-                        </div>
-                        <BlurredAmount>
-                          <span className="font-medium text-muted-foreground">
-                            -{formatCurrency(data.unexplainedGap)}
-                          </span>
-                        </BlurredAmount>
-                      </div>
+                    {/* Pricing variances — expandable when detail items exist */}
+                    {(data.pricingVariances.totalVariance > 0 || data.unexplainedGap > 0) && (
+                      <ExpandableVarianceRow
+                        amount={data.pricingVariances.totalVariance + data.unexplainedGap}
+                        items={data.pricingVariances.items}
+                        showDates={showDates}
+                        formatCurrency={formatCurrency}
+                      />
                     )}
                   </div>
                 )}
