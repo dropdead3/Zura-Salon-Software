@@ -1,49 +1,26 @@
 
 
-## Fix Daily Operating Average Badge for Light/Dark Mode
+## What Happened
 
-### Problem
-The badge in both `WeekAheadForecast.tsx` and `ForecastingCard.tsx` uses hardcoded dark-mode-optimized colors:
-- Text: `rgb(254 240 138)` (pale yellow -- invisible on light backgrounds)
-- Background: `linear-gradient(... rgb(133 77 14 / 0.5) ...)` (dark amber -- muddy on cream)
-- Border: `rgb(202 138 4 / 0.6)` (dark gold)
+The route `/dashboard/admin/website-sections` is pointing to `WebsiteSectionsHub.tsx` -- a simplified stub page that queries a raw `website_sections` database table and renders a basic two-column card layout. This is NOT your full website editor.
 
-These render poorly against light chart backgrounds.
+Your full three-panel website editor (with the sidebar, live preview, resizable panels, and all the section editors) lives inside `WebsiteSettingsContent.tsx`, which is rendered at `/dashboard/admin/settings?category=website`.
 
-### Proposed Approach
-Replace hardcoded colors with **theme-aware CSS variable expressions** that resolve differently in light vs dark mode. The badge will use the existing `oat` / `gold` semantic tokens from the design system for light mode, and retain the current warm amber aesthetic for dark mode.
+The Management Hub card labeled "Website Editor" links to the wrong route.
 
-**Light mode style:**
-- Background: Warm oat/cream gradient with slight gold tint (`hsl(var(--oat))` at low opacity) -- subtle, elegant, executive
-- Text: Rich amber-brown (`hsl(35 80% 35%)`) -- high contrast on cream, warm tone
-- Border: Gold at moderate opacity -- refined accent line
+## Plan
 
-**Dark mode style:**
-- Retain current amber/gold palette (it works well on dark)
+### 1. Redirect the route to the real editor
+Change the route definition in `src/App.tsx` so `/dashboard/admin/website-sections` redirects to `/dashboard/admin/settings?category=website` (where the full editor lives), instead of rendering the stub `WebsiteSectionsHub`.
 
-### Files to Change (2)
+This also handles all the existing deep-links (e.g., `?tab=stylists`, `?tab=testimonials`) by redirecting them to the settings page with the website category.
 
-**1. `src/components/dashboard/sales/WeekAheadForecast.tsx` (~line 581-594)**
-Replace the hardcoded inline style object with a helper that returns light or dark palette based on the resolved theme from `useDashboardTheme()`.
+### 2. Update the Management Hub link
+Change the `href` in `src/pages/dashboard/admin/ManagementHub.tsx` from `/dashboard/admin/website-sections` to `/dashboard/admin/settings?category=website`.
 
-**2. `src/components/dashboard/sales/ForecastingCard.tsx` (~line 957-971)**
-Same change -- use the theme-aware style helper for the badge.
+### 3. Update any other internal links
+The `MyProfile.tsx` link to `website-sections?tab=stylists` and any other references will be updated to point to the settings route.
 
-### Implementation Detail
-Create a small shared helper (or inline in each file) that reads the current theme:
-
-```text
-Light mode badge:
-  background: hsl(40 40% 94% / 0.85)  (warm cream, semi-transparent)
-  border: 1px solid hsl(35 60% 60% / 0.5)  (warm gold outline)
-  color: hsl(35 70% 30%)  (deep amber-brown text)
-  backdrop-filter: blur(6px)
-
-Dark mode badge:
-  (keep existing amber/gold styling)
-```
-
-The dashed reference line color will also be adjusted: warm gold in light mode (`hsl(35 60% 55% / 0.4)`) vs current amber in dark.
-
-Both components already have access to the theme context or can import it with minimal overhead.
+### 4. Clean up the stub (optional)
+`WebsiteSectionsHub.tsx` can be reduced to a simple redirect component or removed entirely since the route will redirect.
 
