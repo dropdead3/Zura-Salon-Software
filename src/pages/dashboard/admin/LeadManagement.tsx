@@ -24,8 +24,6 @@ export default function LeadManagement() {
           <DashboardPageHeader
             title="Lead Management"
             description="Track, assign, and convert salon inquiries from all sources."
-            backTo="/dashboard/admin/management"
-            backLabel="Back to Management"
           />
           <div className="flex flex-wrap gap-3">
             {/* Location filter */}

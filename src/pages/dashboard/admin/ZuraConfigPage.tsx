@@ -19,8 +19,6 @@ export default function ZuraConfigPage() {
         <DashboardPageHeader
           title={`${PLATFORM_NAME} Configuration`}
           description={`Customize how ${PLATFORM_NAME} communicates, what she knows, and her boundaries`}
-          backTo="/dashboard/admin/management"
-          backLabel="Back to Management"
         />
 
         {orgId ? (

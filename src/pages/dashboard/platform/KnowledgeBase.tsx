@@ -36,8 +36,6 @@ export default function KnowledgeBase() {
       <PlatformPageHeader
         title="Knowledge Base"
         description={`Manage help articles for all accounts • ${publishedCount} published, ${draftCount} drafts`}
-        backTo="/dashboard/platform/overview"
-        backLabel="Back to Overview"
         actions={
           <PlatformButton onClick={handleNewArticle} className="gap-2">
             <Plus className="h-4 w-4" />

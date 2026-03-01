@@ -255,8 +255,6 @@ export default function TodayPrep() {
       <div className="px-4 md:px-8 py-6 md:py-8 max-w-[900px] mx-auto">
         <DashboardPageHeader
           title="Today's Prep"
-          backTo="/dashboard/schedule"
-          backLabel="Back to Schedule"
         />
 
         {appts.length === 0 ? (

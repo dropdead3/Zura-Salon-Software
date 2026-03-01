@@ -70,8 +70,6 @@ export default function ShiftSwapMarketplace() {
         <DashboardPageHeader
           title="Shift Swap Marketplace"
           description="Trade, cover, or give away shifts with your team"
-          backTo="/dashboard"
-          backLabel="Back to Dashboard"
           className="mb-6"
           actions={
             <Button onClick={() => setPostDialogOpen(true)}>

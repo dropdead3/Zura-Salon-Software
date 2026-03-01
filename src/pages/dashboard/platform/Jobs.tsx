@@ -106,8 +106,6 @@ export default function JobsPage() {
       <PlatformPageHeader
         title="Scheduled Jobs"
         description="Monitor and manage background tasks"
-        backTo="/dashboard/platform/overview"
-        backLabel="Back to Overview"
         actions={
           <PlatformButton 
             variant="outline" 

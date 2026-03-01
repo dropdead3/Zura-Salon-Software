@@ -383,8 +383,6 @@ export default function ViewProfile() {
           <DashboardPageHeader
             title={profile.display_name || profile.full_name}
             description="Editing profile as Super Admin"
-            backTo="/dashboard/directory"
-            backLabel="Back to Directory"
           />
           
           <div className="flex items-start gap-4">

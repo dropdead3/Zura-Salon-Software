@@ -56,8 +56,6 @@ export default function PTOManager() {
         <DashboardPageHeader
           title="PTO Manager"
           description="Manage PTO policies and employee balances"
-          backTo="/dashboard/admin/management"
-          backLabel="Back to Management"
         />
 
         <Tabs defaultValue="policies">

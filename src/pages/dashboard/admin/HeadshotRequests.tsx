@@ -211,7 +211,6 @@ export default function HeadshotRequests() {
         <DashboardPageHeader
           title="Headshot Requests"
           description="Schedule and manage headshot sessions for team members."
-          backTo="/dashboard/admin/management"
           className="mb-8"
         />
 

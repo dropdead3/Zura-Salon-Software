@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Link } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Card } from '@/components/ui/card';
@@ -43,7 +42,6 @@ import {
   Users,
   Filter,
   ArrowUpDown,
-  ArrowLeft,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -425,11 +423,6 @@ export default function OnboardingTracker() {
       <div className="p-6 lg:p-8 space-y-6">
         {/* Header */}
         <div className="flex items-start gap-4">
-          <Button variant="ghost" size="icon" asChild className="shrink-0 mt-1">
-            <Link to="/dashboard/admin/management">
-              <ArrowLeft className="w-5 h-5" />
-            </Link>
-          </Button>
           <div>
             <h1 className="font-display text-2xl lg:text-3xl mb-1">ONBOARDING HUB</h1>
             <p className="text-muted-foreground font-sans text-sm">

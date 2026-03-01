@@ -1,25 +1,13 @@
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Shield } from 'lucide-react';
+import { Shield } from 'lucide-react';
 import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageContainer';
-import { PlatformButton } from '@/components/platform/ui/PlatformButton';
 import { PlatformPermissionsMatrix } from '@/components/platform/PlatformPermissionsMatrix';
 
 export default function PlatformPermissions() {
-  const navigate = useNavigate();
 
   return (
     <PlatformPageContainer className="space-y-8">
       {/* Header */}
       <div>
-        <PlatformButton
-          variant="ghost"
-          size="sm"
-          onClick={() => navigate('/dashboard/platform/settings')}
-          className="text-slate-400 hover:text-white mb-4 -ml-2"
-        >
-          <ArrowLeft className="h-4 w-4 mr-1" />
-          Back to Settings
-        </PlatformButton>
         
         <div className="flex items-center gap-4">
           <div className="p-3 rounded-xl bg-violet-500/20">

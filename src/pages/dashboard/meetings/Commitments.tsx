@@ -11,8 +11,6 @@ export default function Commitments() {
           <DashboardPageHeader
             title="My Commitments"
             description="Track promises and accountability items made to team members."
-            backTo="/dashboard/schedule-meeting"
-            backLabel="Back to Meetings Hub"
           />
 
           <AccountabilityOverview />

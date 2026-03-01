@@ -8,8 +8,6 @@ export function PandaDocIntegrationPage() {
       <PlatformPageHeader
         title="PandaDoc Integration"
         description="Automate contract signing and billing configuration"
-        backTo="/dashboard/platform/settings"
-        backLabel="Back to Integrations"
       />
       
       <PandaDocStatusCard />

@@ -93,7 +93,6 @@ export default function TeamBirthdays() {
         <DashboardPageHeader
           title="Team Birthdays & Anniversaries"
           description="Celebrate your team members' special days and milestones"
-          backTo="/dashboard/admin/management"
           actions={
             <BirthdayExportButton birthdays={upcomingBirthdays || []} />
           }

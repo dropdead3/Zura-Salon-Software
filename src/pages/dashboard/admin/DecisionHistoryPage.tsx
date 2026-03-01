@@ -34,7 +34,6 @@ export default function DecisionHistoryPage() {
       <PlatformPageHeader
         title="Decision History"
         description="Every recommendation tracked: what was surfaced, what was decided."
-        backTo="/dashboard"
       />
 
       <div className="mt-8 space-y-4">

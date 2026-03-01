@@ -98,7 +98,6 @@ export default function IncidentReports() {
         <DashboardPageHeader
           title="Incident & Safety Log"
           description="Document workplace incidents for compliance"
-          backTo="/dashboard/admin/management"
           actions={
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild>

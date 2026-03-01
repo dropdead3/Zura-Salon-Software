@@ -217,8 +217,6 @@ export default function ScheduleRequests() {
         <DashboardPageHeader
           title="Schedule Change Requests"
           description="Review and manage employee schedule change requests"
-          backTo="/dashboard/admin/management"
-          backLabel="Back to Management"
         />
 
         {/* Stats */}

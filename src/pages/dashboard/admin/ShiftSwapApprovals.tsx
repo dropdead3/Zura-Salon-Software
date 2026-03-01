@@ -194,8 +194,6 @@ export default function ShiftSwapApprovals() {
         <DashboardPageHeader
           title="Shift Swap Approvals"
           description="Review and approve shift swap requests from your team"
-          backTo="/dashboard/admin/management"
-          backLabel="Back to Management"
           className="mb-6"
         />
 

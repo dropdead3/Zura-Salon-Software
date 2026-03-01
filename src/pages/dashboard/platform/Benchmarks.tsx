@@ -65,7 +65,6 @@ export default function Benchmarks() {
       <PlatformPageHeader
         title="Organization Benchmarks"
         description="Compare performance across all accounts"
-        backTo="/dashboard/platform/overview"
         actions={
           <PlatformButton
             variant="secondary"

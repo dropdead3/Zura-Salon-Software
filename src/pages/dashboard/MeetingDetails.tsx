@@ -85,8 +85,6 @@ export default function MeetingDetails() {
         <div className="p-6 lg:p-8 max-w-4xl mx-auto space-y-6">
           <DashboardPageHeader
             title="Meeting Details"
-            backTo="/dashboard/schedule-meeting"
-            backLabel="Back to Meetings"
           />
           <Card>
             <CardContent className="p-8 text-center text-muted-foreground">
@@ -108,8 +106,6 @@ export default function MeetingDetails() {
         <DashboardPageHeader
           title={`1:1 with ${canManage ? teamMemberName : (meeting.coach?.display_name || meeting.coach?.full_name || 'Coach')}`}
           description={meetingTypes[meeting.meeting_type || 'other'] || meeting.meeting_type}
-          backTo="/dashboard/schedule-meeting"
-          backLabel="Back to Meetings"
         />
 
         {/* Meeting Header */}

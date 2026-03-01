@@ -71,8 +71,6 @@ export default function NotificationsPage() {
       <PlatformPageHeader
         title="Notifications"
         description="Platform alerts and activity"
-        backTo="/dashboard/platform/overview"
-        backLabel="Back to Overview"
         actions={
           unreadCount > 0 && (
             <PlatformButton 

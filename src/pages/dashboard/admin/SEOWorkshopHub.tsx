@@ -20,8 +20,6 @@ export default function SEOWorkshopHub() {
         <DashboardPageHeader
           title="SEO Workshop"
           description="Tasks and guides to improve local visibility"
-          backTo="/dashboard/admin/management"
-          backLabel="Back to Management"
         />
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>

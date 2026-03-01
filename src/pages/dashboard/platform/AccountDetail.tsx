@@ -124,8 +124,6 @@ export default function AccountDetail() {
       <PlatformPageHeader
         title={organization.name}
         description={organization.slug}
-        backTo="/dashboard/platform/accounts"
-        backLabel="Back to Accounts"
         actions={
           <div className="flex items-center gap-3">
             <div className="h-12 w-12 rounded-xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center mr-2">

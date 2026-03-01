@@ -351,8 +351,6 @@ export default function Announcements() {
           <DashboardPageHeader
             title="Make An Announcement"
             description="Post updates and news for the team"
-            backTo="/dashboard/admin/management"
-            backLabel="Back to Management"
             actions={
               <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
                 <DialogTrigger asChild>

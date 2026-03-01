@@ -647,8 +647,6 @@ export default function AccountManagement() {
         <DashboardPageHeader
           title="Account Invitations & Approvals"
           description="Invite new team members and manage account access"
-          backTo="/dashboard/admin/management"
-          backLabel="Back to Management"
           actions={
             <div className="flex items-center gap-2 flex-wrap">
               <CreateAdminAccountDialog onSuccess={() => refetchApprovals()} />

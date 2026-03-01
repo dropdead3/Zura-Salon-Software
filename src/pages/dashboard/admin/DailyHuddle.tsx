@@ -38,8 +38,6 @@ export default function DailyHuddle() {
         <DashboardPageHeader
           title="Daily Huddle"
           description="Create and manage daily team huddle notes"
-          backTo="/dashboard/admin/management"
-          backLabel="Back to Management"
         />
 
         {/* Tabs */}

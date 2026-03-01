@@ -108,7 +108,6 @@ export default function PerformanceReviews() {
         <DashboardPageHeader
           title="Performance Reviews"
           description="Structured reviews with goals and ratings"
-          backTo="/dashboard/admin/management"
           actions={
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild>
