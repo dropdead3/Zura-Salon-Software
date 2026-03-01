@@ -4,8 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ClipboardCheck, ChevronRight, UserPlus, Phone, Star, StickyNote } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { ClipboardCheck, ChevronRight, UserPlus, Phone, Star, StickyNote, CalendarDays } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { VisibilityGate } from '@/components/visibility';
 import { useTodayPrep } from '@/hooks/useTodayPrep';
 import { CLV_TIERS, type CLVTier } from '@/lib/clv-calculator';
@@ -73,6 +73,8 @@ function hasNotes(appt: { clientDirectoryNotes: any[]; previousAppointmentNotes:
 
 export function TodaysPrepSection() {
   const { data: appointments, isLoading } = useTodayPrep();
+  const navigate = useNavigate();
+  const today = format(new Date(), 'yyyy-MM-dd');
 
   const temporalTags = useMemo(() => {
     if (!appointments) return new Map<number, TemporalTag>();
@@ -130,8 +132,9 @@ export function TodaysPrepSection() {
                 return (
                   <div
                     key={appt.id}
+                    onClick={() => navigate('/dashboard/schedule', { state: { focusDate: today, focusAppointmentId: appt.id } })}
                     className={cn(
-                      'flex items-center gap-2 py-2 px-2 rounded-lg hover:bg-muted/50 transition-colors',
+                      'flex items-center gap-2 py-2 px-2 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer group',
                       tag === 'now' && 'border-l-2 border-primary bg-primary/5',
                       tag === 'next' && 'border-l-2 border-accent',
                       isCompleted && 'opacity-50'
@@ -201,7 +204,7 @@ export function TodaysPrepSection() {
                       </Badge>
                     )}
 
-                    {/* Action prompt or visit count */}
+                    {/* Action prompt, visit count, or schedule icon */}
                     {NEEDS_CONFIRM.has(appt.status || '') ? (
                       <span className="flex items-center gap-1 text-xs text-amber-700 dark:text-amber-400 font-sans whitespace-nowrap shrink-0">
                         <Phone className="w-3 h-3" />
@@ -212,6 +215,7 @@ export function TodaysPrepSection() {
                         {appt.visitCount} visits
                       </span>
                     ) : null}
+                    <CalendarDays className="w-3.5 h-3.5 text-muted-foreground/0 group-hover:text-primary transition-colors shrink-0" />
                   </div>
                 );
               })}
