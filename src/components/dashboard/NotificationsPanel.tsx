@@ -334,7 +334,7 @@ export function NotificationsPanel({ unreadCount }: NotificationsPanelProps) {
         <Button variant="ghost" size="icon" className="relative h-8 w-8">
           <Bell className="w-4 h-4" />
           {(unreadCount > 0 || unreadChangelogCount > 0) && (
-            <span className="absolute -top-0.5 -right-0.5 h-4 min-w-4 flex items-center justify-center text-[10px] font-medium bg-destructive text-destructive-foreground px-1 rounded-full">
+            <span className="absolute -top-0.5 -right-0.5 h-4 min-w-4 flex items-center justify-center text-[10px] font-medium bg-destructive/20 text-destructive border border-destructive shadow-[0_0_8px_hsl(var(--destructive)/0.3)] px-1 rounded-full">
               {(unreadCount + unreadChangelogCount) > 9 ? '9+' : (unreadCount + unreadChangelogCount)}
             </span>
           )}
@@ -347,7 +347,7 @@ export function NotificationsPanel({ unreadCount }: NotificationsPanelProps) {
               <TabsTrigger value="notifications" className="h-8 px-3 text-xs data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">
                 Notifications
                 {unreadCount > 0 && (
-                  <span className="ml-1.5 h-4 min-w-4 flex items-center justify-center text-[10px] font-medium bg-destructive text-destructive-foreground px-1 rounded-full">
+                  <span className="ml-1.5 h-4 min-w-4 flex items-center justify-center text-[10px] font-medium bg-destructive/20 text-destructive border border-destructive shadow-[0_0_8px_hsl(var(--destructive)/0.3)] px-1 rounded-full">
                     {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
                 )}

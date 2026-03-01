@@ -110,7 +110,7 @@ export function AnnouncementsDrawer({
         </div>
         {!iconOnly && <span className="truncate">{label ?? 'Announcements'}</span>}
         {unreadCount > 0 && (
-          <span className="min-w-[18px] h-[18px] rounded-full bg-red-500 text-white text-[10px] font-medium flex items-center justify-center px-1 shrink-0">
+          <span className="min-w-[18px] h-[18px] rounded-full bg-destructive/20 text-destructive border border-destructive shadow-[0_0_8px_hsl(var(--destructive)/0.3)] text-[10px] font-medium flex items-center justify-center px-1 shrink-0">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
@@ -141,7 +141,7 @@ export function AnnouncementsDrawer({
           </div>
           {!iconOnly && <span className="truncate">{label ?? 'Announcements'}</span>}
           {unreadCount > 0 && (
-            <span className="min-w-[18px] h-[18px] rounded-full bg-red-500 text-white text-[10px] font-medium flex items-center justify-center px-1 shrink-0">
+            <span className="min-w-[18px] h-[18px] rounded-full bg-destructive/20 text-destructive border border-destructive shadow-[0_0_8px_hsl(var(--destructive)/0.3)] text-[10px] font-medium flex items-center justify-center px-1 shrink-0">
               {unreadCount > 9 ? '9+' : unreadCount}
             </span>
           )}
