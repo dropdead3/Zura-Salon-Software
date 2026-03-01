@@ -431,7 +431,7 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
     );
   };
 
-  const { unlock } = useDashboardLock();
+  const { isLocked, unlock } = useDashboardLock();
 
   return (
     <div className={cn("bg-background", hideFooter ? "h-screen overflow-hidden" : "min-h-screen")}>
@@ -555,7 +555,7 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
 
       {/* Floating & overlay components */}
       <HelpFAB />
-      <DashboardLockScreen onUnlock={unlock} />
+      {isLocked && <DashboardLockScreen onUnlock={unlock} />}
       <ClockInPromptDialog />
       <KeyboardShortcutsDialog />
       {hasZuraGuidance && <ZuraStickyGuidance />}
