@@ -1,11 +1,13 @@
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   LayoutDashboard,
   CalendarDays,
   MessageSquare,
   BarChart3,
   User,
+  LayoutGrid,
 } from 'lucide-react';
 
 interface NavItem {
@@ -14,13 +16,15 @@ interface NavItem {
   icon: React.ComponentType<{ className?: string }>;
 }
 
-const navItems: NavItem[] = [
+const baseNavItems: NavItem[] = [
   { href: '/dashboard', label: 'Home', icon: LayoutDashboard },
   { href: '/dashboard/schedule', label: 'Schedule', icon: CalendarDays },
   { href: '/dashboard/team-chat', label: 'Chat', icon: MessageSquare },
-  { href: '/dashboard/stats', label: 'Stats', icon: BarChart3 },
-  { href: '/dashboard/profile', label: 'Profile', icon: User },
 ];
+
+const statsItem: NavItem = { href: '/dashboard/stats', label: 'Stats', icon: BarChart3 };
+const manageItem: NavItem = { href: '/dashboard/admin/team-hub', label: 'Manage', icon: LayoutGrid };
+const profileItem: NavItem = { href: '/dashboard/profile', label: 'Profile', icon: User };
 
 interface MobileBottomNavProps {
   className?: string;
@@ -28,6 +32,15 @@ interface MobileBottomNavProps {
 
 export function MobileBottomNav({ className }: MobileBottomNavProps) {
   const location = useLocation();
+  const { hasPermission } = useAuth();
+
+  const isAdmin = hasPermission('view_team_overview');
+
+  const navItems: NavItem[] = [
+    ...baseNavItems,
+    isAdmin ? manageItem : statsItem,
+    profileItem,
+  ];
 
   const isActive = (href: string) => {
     if (href === '/dashboard') {

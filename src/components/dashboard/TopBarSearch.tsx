@@ -10,11 +10,44 @@ import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import ReactMarkdown from 'react-markdown';
 import {
   mainNavItems,
-  growthNavItems,
-  statsNavItems,
-  managerNavItems,
-  adminOnlyNavItems,
+  myToolsNavItems,
+  manageNavItems,
+  systemNavItems,
 } from '@/config/dashboardNav';
+
+// Hub children: deep pages inside hubs that should be searchable
+const hubChildrenItems: Array<{ href: string; label: string; icon: React.ComponentType<{ className?: string }> }> = [
+  // Team Hub children
+  { href: '/dashboard/directory', label: 'Team Directory', icon: Users },
+  { href: '/dashboard/admin/performance-reviews', label: 'Performance Reviews', icon: Users },
+  { href: '/dashboard/admin/pto', label: 'PTO Balances', icon: Users },
+  { href: '/dashboard/admin/announcements', label: 'Announcements', icon: Users },
+  { href: '/dashboard/admin/recruiting', label: 'Recruiting Pipeline', icon: Users },
+  { href: '/dashboard/admin/graduation-tracker', label: 'Graduation Tracker', icon: Users },
+  { href: '/dashboard/admin/stylist-levels', label: 'Stylist Levels', icon: Users },
+  { href: '/dashboard/admin/headshots', label: 'Headshot Requests', icon: Users },
+  { href: '/dashboard/admin/business-cards', label: 'Business Card Requests', icon: Users },
+  { href: '/dashboard/schedule-meeting', label: 'Schedule 1:1', icon: Users },
+  { href: '/dashboard/admin/training-hub', label: 'Training Hub', icon: Users },
+  // Client Hub children
+  { href: '/dashboard/clients', label: 'Client Directory', icon: Users },
+  { href: '/dashboard/admin/client-health', label: 'Client Health', icon: Users },
+  { href: '/dashboard/admin/reengagement', label: 'Re-engagement', icon: Users },
+  { href: '/dashboard/admin/feedback', label: 'Client Feedback', icon: Users },
+  // Growth Hub children
+  { href: '/dashboard/campaigns', label: 'Campaigns', icon: Users },
+  { href: '/dashboard/admin/seo-workshop', label: 'SEO Workshop', icon: Users },
+  { href: '/dashboard/admin/leads', label: 'Lead Management', icon: Users },
+  // Analytics Hub children
+  { href: '/dashboard/appointments-hub', label: 'Appointments & Transactions', icon: Users },
+  { href: '/dashboard/admin/sales', label: 'Sales Analytics', icon: Users },
+  { href: '/dashboard/admin/operational-analytics', label: 'Operational Analytics', icon: Users },
+  { href: '/dashboard/admin/staff-utilization', label: 'Staff Utilization', icon: Users },
+  { href: '/dashboard/admin/reports', label: 'Reports', icon: Users },
+  // Payroll Hub children
+  { href: '/dashboard/admin/day-rate-settings', label: 'Day Rate Settings', icon: Users },
+  { href: '/dashboard/admin/day-rate-calendar', label: 'Day Rate Calendar', icon: Users },
+];
 
 interface NavItem {
   href: string;
@@ -60,10 +93,10 @@ export function TopBarSearch({ filterNavItems }: TopBarSearchProps) {
   const navigationResults = React.useMemo((): SearchResult[] => {
     const derived = dedupeByPath([
       ...mainNavItems,
-      ...growthNavItems,
-      ...statsNavItems,
-      ...managerNavItems,
-      ...adminOnlyNavItems,
+      ...myToolsNavItems,
+      ...manageNavItems,
+      ...systemNavItems,
+      ...hubChildrenItems as any[],
     ]);
 
     const visible = filterNavItems ? filterNavItems(derived) : derived;

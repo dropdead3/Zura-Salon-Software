@@ -161,8 +161,6 @@ export const hubLinksConfig: HubLinkConfig[] = [
   { href: '/dashboard/admin/payroll', icon: DollarSign, label: 'Hiring & Payroll Hub', colorClass: 'bg-primary/5 text-primary hover:bg-primary/10', permission: 'manage_payroll' },
   { href: '/dashboard/admin/booth-renters', icon: Store, label: 'Renter Hub', colorClass: 'bg-primary/5 text-primary hover:bg-primary/10', permission: 'manage_booth_renters' },
   { href: '/dashboard/admin/access-hub', icon: Shield, label: 'Roles Hub', colorClass: 'bg-primary/5 text-primary hover:bg-primary/10', permission: 'manage_settings' },
-  { href: '/dashboard/schedule-meeting', icon: CalendarClock, label: 'Schedule 1:1', colorClass: 'bg-primary/5 text-primary hover:bg-primary/10', permission: 'schedule_meetings' },
-  { href: '/dashboard/appointments-hub', icon: Receipt, label: 'Appointments & Transactions', colorClass: 'bg-primary/5 text-primary hover:bg-primary/10', permission: 'view_transactions' },
 ];
 
 /** Canonical Analytics Hub base path. Use with ?tab= and &subtab= for drill-downs. */
