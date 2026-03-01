@@ -87,56 +87,7 @@ Deno.serve(async (req) => {
     // Check if there's a new leader
     const currentLeader = rankings[0];
     const previousLeader = lastRankings[0];
-    
-    let announcementContent = '';
-    let shouldAnnounce = false;
-
-    if (!previousLeader || previousLeader.user_id !== currentLeader.user_id) {
-      // New leader!
-      shouldAnnounce = true;
-      announcementContent = `🏆 **${currentLeader.name}** has taken the lead on this week's sales leaderboard with $${currentLeader.totalRevenue.toLocaleString()} in revenue!`;
-      
-      if (previousLeader && previousLeader.user_id !== currentLeader.user_id) {
-        announcementContent += ` Taking over from ${previousLeader.name}.`;
-      }
-    }
-
-    // Check for significant position changes
-    const positionChanges: string[] = [];
-    rankings.forEach((stylist, newRank) => {
-      const oldRank = lastRankings.findIndex(s => s.user_id === stylist.user_id);
-      if (oldRank !== -1 && oldRank - newRank >= 2) {
-        // Moved up 2+ positions
-        positionChanges.push(`📈 ${stylist.name} climbed from #${oldRank + 1} to #${newRank + 1}`);
-      }
-    });
-
-    if (positionChanges.length > 0 && !shouldAnnounce) {
-      shouldAnnounce = true;
-      announcementContent = `**Leaderboard Shake-up!** 🔥\n\n${positionChanges.join('\n')}`;
-    }
-
-    // Create announcement if needed
-    if (shouldAnnounce && announcementContent) {
-      // Get a super admin user to be the author
-      const { data: adminUser } = await supabase
-        .from('employee_profiles')
-        .select('user_id')
-        .eq('is_super_admin', true)
-        .limit(1)
-        .maybeSingle();
-
-      if (adminUser) {
-        await supabase.from('announcements').insert({
-          title: 'Sales Leaderboard Update',
-          content: announcementContent,
-          author_id: adminUser.user_id,
-          priority: 'normal',
-          is_active: true,
-          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Expires in 24 hours
-        });
-      }
-    }
+    const leaderChanged = !previousLeader || previousLeader.user_id !== currentLeader.user_id;
 
     // Store current rankings
     await supabase.from('site_settings').upsert({
@@ -148,8 +99,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ 
         success: true, 
         rankings: rankings.slice(0, 5),
-        announced: shouldAnnounce,
-        message: shouldAnnounce ? 'Leaderboard update announced' : 'No significant changes to announce'
+        leaderChanged,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
