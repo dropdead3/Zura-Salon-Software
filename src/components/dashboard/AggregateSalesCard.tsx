@@ -290,7 +290,8 @@ export function AggregateSalesCard({
     dateFilters.dateTo,
     scheduledRevenue ?? 0,
     pastActual?.actualRevenue ?? 0,
-    isPastRange && activeDrilldown === 'expectedGap' && scheduledRevenue != null
+    isPastRange && activeDrilldown === 'expectedGap' && scheduledRevenue != null,
+    filterContext?.locationId
   );
 
   // Location display logic
