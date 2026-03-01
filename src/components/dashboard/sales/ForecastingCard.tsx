@@ -952,15 +952,17 @@ export function ForecastingCard() {
                       return (
                         <g style={{ pointerEvents: 'auto', cursor: hideNumbers ? 'pointer' : 'default' }} onClick={hideNumbers ? requestUnhide : undefined}>
                           {hideNumbers && <title>Click to reveal</title>}
-                          <line x1={chartLeft} y1={yPos} x2={chartRight} y2={yPos} stroke="rgb(202 138 4)" strokeOpacity={0.5} strokeDasharray="4 4" strokeWidth={1} />
+                          <line x1={chartLeft} y1={yPos} x2={chartRight} y2={yPos} stroke={isDark ? 'rgb(202 138 4)' : 'hsl(35 60% 55% / 0.4)'} strokeOpacity={0.5} strokeDasharray="4 4" strokeWidth={1} />
                           <foreignObject x={chartLeft} y={yPos - 12} width={200} height={24} style={{ overflow: 'visible' }}>
                             <div style={{
                               fontSize: 12, fontWeight: 500,
-                              color: 'rgb(254 240 138)',
+                              color: isDark ? 'rgb(254 240 138)' : 'hsl(35 70% 30%)',
                               backdropFilter: 'blur(6px)',
                               WebkitBackdropFilter: 'blur(6px)',
-                              background: 'linear-gradient(to right, rgb(133 77 14 / 0.5), rgb(180 83 9 / 0.3), rgb(133 77 14 / 0.5))',
-                              border: '1px solid rgb(202 138 4 / 0.6)',
+                              background: isDark
+                                ? 'linear-gradient(to right, rgb(133 77 14 / 0.5), rgb(180 83 9 / 0.3), rgb(133 77 14 / 0.5))'
+                                : 'hsl(40 40% 94% / 0.85)',
+                              border: isDark ? '1px solid rgb(202 138 4 / 0.6)' : '1px solid hsl(35 60% 60% / 0.5)',
                               borderRadius: 9999,
                               padding: '2px 8px',
                               whiteSpace: 'nowrap' as const,
