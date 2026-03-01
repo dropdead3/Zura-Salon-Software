@@ -195,7 +195,7 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <HelmetProvider>
-    <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
+    <ThemeProvider attribute="data-public-theme" defaultTheme="light" enableSystem={false} disableTransitionOnChange storageKey="public-theme">
       <ErrorBoundary>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
