@@ -2,13 +2,7 @@ import { useState, useMemo } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { format, addDays } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
+import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -272,407 +266,361 @@ export function NewBookingSheet({
   };
 
   return (
-    <Sheet open={open} onOpenChange={handleClose}>
-      <SheetContent className="w-full sm:max-w-lg p-0 flex flex-col">
-        <SheetHeader className="p-6 pb-4 border-b">
-          <SheetTitle>New Booking</SheetTitle>
-          <SheetDescription>
-            {step === 'client' && 'Select or search for a client'}
-            {step === 'service' && 'Choose services for this appointment'}
-            {step === 'datetime' && 'Pick a stylist, date, and time'}
-            {step === 'confirm' && 'Review and confirm the booking'}
-          </SheetDescription>
-          
-          {/* Step Indicators */}
-          <div className="flex items-center gap-2 mt-4">
-            {(['client', 'service', 'datetime', 'confirm'] as Step[]).map((s, i) => (
-              <div key={s} className="flex items-center">
-                <div className={cn(
-                  'w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors',
-                  step === s ? 'bg-primary text-primary-foreground' :
-                  (['client', 'service', 'datetime', 'confirm'].indexOf(step) > i) ? 'bg-primary/20 text-primary' :
-                  'bg-muted text-muted-foreground'
-                )}>
-                  {i + 1}
-                </div>
-                {i < 3 && <div className="w-8 h-0.5 bg-muted mx-1" />}
+    <PremiumFloatingPanel open={open} onOpenChange={handleClose} maxWidth="520px">
+      <div className="p-5 pb-4 border-b border-border/40">
+        <h2 className="font-display text-sm tracking-wide uppercase">New Booking</h2>
+        <p className="text-sm text-muted-foreground mt-1">
+          {step === 'client' && 'Select or search for a client'}
+          {step === 'service' && 'Choose services for this appointment'}
+          {step === 'datetime' && 'Pick a stylist, date, and time'}
+          {step === 'confirm' && 'Review and confirm the booking'}
+        </p>
+        
+        {/* Step Indicators */}
+        <div className="flex items-center gap-2 mt-4">
+          {(['client', 'service', 'datetime', 'confirm'] as Step[]).map((s, i) => (
+            <div key={s} className="flex items-center">
+              <div className={cn(
+                'w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors',
+                step === s ? 'bg-primary text-primary-foreground' :
+                (['client', 'service', 'datetime', 'confirm'].indexOf(step) > i) ? 'bg-primary/20 text-primary' :
+                'bg-muted text-muted-foreground'
+              )}>
+                {i + 1}
               </div>
-            ))}
-          </div>
-        </SheetHeader>
-
-        <ScrollArea className="flex-1 p-6">
-          {/* Step 1: Client Selection */}
-          {step === 'client' && (
-            <div className="space-y-4">
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search by name, phone, or email..."
-                    value={clientSearch}
-                    onChange={(e) => setClientSearch(e.target.value)}
-                    className="pl-9"
-                  />
-                </div>
-                <Button 
-                  variant="outline" 
-                  size="icon"
-                  onClick={() => setShowNewClientDialog(true)}
-                  title="Add new client"
-                >
-                  <UserPlus className="h-4 w-4" />
-                </Button>
-              </div>
-
-              {/* Add New Client Button */}
-              <Button
-                variant="ghost"
-                className="w-full justify-start gap-2 text-primary hover:text-primary hover:bg-primary/5"
-                onClick={() => setShowNewClientDialog(true)}
-              >
-                <Plus className="h-4 w-4" />
-                Add New Client
-              </Button>
-
-              <div className="space-y-2">
-                {clients.map((client) => (
-                  <div
-                    key={client.id}
-                    className={cn(
-                      'p-3 rounded-lg border cursor-pointer transition-colors',
-                      selectedClient?.id === client.id 
-                        ? 'border-primary bg-primary/5' 
-                        : 'hover:bg-muted/50'
-                    )}
-                    onClick={() => setSelectedClient(client)}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <Avatar>
-                          <AvatarFallback>{client.name.slice(0, 2).toUpperCase()}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <div className="font-medium">{client.name}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {client.phone || client.email || 'No contact info'}
-                          </div>
-                        </div>
-                      </div>
-                      {selectedClient?.id === client.id && (
-                        <Check className="h-5 w-5 text-primary" />
-                      )}
-                    </div>
-                  </div>
-                ))}
-
-                {clients.length === 0 && clientSearch && (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <User className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                    <p>No clients found</p>
-                    <Button
-                      variant="link"
-                      className="mt-2"
-                      onClick={() => setShowNewClientDialog(true)}
-                    >
-                      <UserPlus className="h-4 w-4 mr-1" />
-                      Create this client
-                    </Button>
-                  </div>
-                )}
-              </div>
-
-              {/* New Client Dialog */}
-              <NewClientDialog
-                open={showNewClientDialog}
-                onOpenChange={setShowNewClientDialog}
-                defaultLocationId={selectedLocation}
-                onClientCreated={(client) => {
-                  setSelectedClient({
-                    id: client.id,
-                    phorest_client_id: client.phorest_client_id,
-                    name: client.name,
-                    email: client.email,
-                    phone: client.phone,
-                  });
-                }}
-              />
+              {i < 3 && <div className="w-8 h-0.5 bg-muted mx-1" />}
             </div>
-          )}
+          ))}
+        </div>
+      </div>
 
-          {/* Step 2: Service Selection */}
-          {step === 'service' && (
-            <div className="space-y-4">
-              {/* Location Selection */}
-              <div>
-                <Label>Location</Label>
-                <Select value={selectedLocation} onValueChange={setSelectedLocation}>
-                  <SelectTrigger className="mt-1.5">
-                    <SelectValue placeholder="Select a location" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {locations.map((loc) => (
-                      <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+      <ScrollArea className="flex-1 p-6">
+        {/* Step 1: Client Selection */}
+        {step === 'client' && (
+          <div className="space-y-4">
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by name, phone, or email..."
+                  value={clientSearch}
+                  onChange={(e) => setClientSearch(e.target.value)}
+                  className="pl-9"
+                />
               </div>
+              <Button 
+                variant="outline" 
+                size="icon"
+                onClick={() => setShowNewClientDialog(true)}
+                title="Add new client"
+              >
+                <UserPlus className="h-4 w-4" />
+              </Button>
+            </div>
 
-              {selectedLocation && servicesByCategory && Object.entries(servicesByCategory).map(([category, categoryServices]) => (
-                <div key={category}>
-                  <h4 className="font-medium text-sm text-muted-foreground mb-2">{category}</h4>
-                  <div className="space-y-2">
-                    {categoryServices.map((service) => (
-                      <div
-                        key={service.id}
-                        className={cn(
-                          'p-3 rounded-lg border cursor-pointer transition-colors',
-                          selectedServices.includes(service.phorest_service_id)
-                            ? 'border-primary bg-primary/5'
-                            : 'hover:bg-muted/50'
-                        )}
-                        onClick={() => {
-                          setSelectedServices(prev =>
-                            prev.includes(service.phorest_service_id)
-                              ? prev.filter(id => id !== service.phorest_service_id)
-                              : [...prev, service.phorest_service_id]
-                          );
-                        }}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <div className="font-medium">{service.name}</div>
-                            <div className="flex items-center gap-3 text-sm text-muted-foreground mt-0.5">
-                              <span className="flex items-center gap-1">
-                                <Clock className="h-3 w-3" />
-                                {service.duration_minutes} min
-                              </span>
-                              {service.price && (
-                                <span className="flex items-center gap-1">
-                                  {formatCurrency(service.price)}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          {selectedServices.includes(service.phorest_service_id) && (
-                            <Check className="h-5 w-5 text-primary" />
-                          )}
+            <Button
+              variant="ghost"
+              className="w-full justify-start gap-2 text-primary hover:text-primary hover:bg-primary/5"
+              onClick={() => setShowNewClientDialog(true)}
+            >
+              <Plus className="h-4 w-4" />
+              Add New Client
+            </Button>
+
+            <div className="space-y-2">
+              {clients.map((client) => (
+                <div
+                  key={client.id}
+                  className={cn(
+                    'p-3 rounded-lg border cursor-pointer transition-colors',
+                    selectedClient?.id === client.id 
+                      ? 'border-primary bg-primary/5' 
+                      : 'hover:bg-muted/50'
+                  )}
+                  onClick={() => setSelectedClient(client)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Avatar>
+                        <AvatarFallback>{client.name.slice(0, 2).toUpperCase()}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <div className="font-medium">{client.name}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {client.phone || client.email || 'No contact info'}
                         </div>
                       </div>
-                    ))}
+                    </div>
+                    {selectedClient?.id === client.id && (
+                      <Check className="h-5 w-5 text-primary" />
+                    )}
                   </div>
                 </div>
               ))}
 
-              {/* Summary */}
-              {selectedServices.length > 0 && (
-                <div className="p-3 bg-muted/50 rounded-lg mt-4">
-                  <div className="flex justify-between text-sm">
-                    <span>Total Duration:</span>
-                    <span className="font-medium">{totalDuration} min</span>
-                  </div>
-                  <div className="flex justify-between text-sm mt-1">
-                    <span>Estimated Price:</span>
-                    <span className="font-medium">{formatCurrency(totalPrice)}</span>
-                  </div>
+              {clients.length === 0 && clientSearch && (
+                <div className="text-center py-8 text-muted-foreground">
+                  <User className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                  <p>No clients found</p>
+                  <Button
+                    variant="link"
+                    className="mt-2"
+                    onClick={() => setShowNewClientDialog(true)}
+                  >
+                    <UserPlus className="h-4 w-4 mr-1" />
+                    Create this client
+                  </Button>
                 </div>
               )}
             </div>
-          )}
 
-          {/* Step 3: Date/Time Selection */}
-          {step === 'datetime' && (
-            <div className="space-y-6">
-              {/* Stylist Selection */}
-              <div>
-                <Label>Stylist</Label>
-                <Select value={selectedStylist} onValueChange={setSelectedStylist}>
-                  <SelectTrigger className="mt-1.5">
-                    <SelectValue placeholder="Select a stylist" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {stylists.map((s) => (
-                      <SelectItem key={s.user_id} value={s.user_id}>
-                        <div className="flex items-center gap-2">
-                          <Avatar className="h-6 w-6">
-                            <AvatarImage src={s.employee_profiles?.photo_url || undefined} />
-                            <AvatarFallback className="text-xs">
-                              {(s.employee_profiles?.display_name || s.employee_profiles?.full_name || '?').slice(0, 2).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          {s.employee_profiles?.display_name || s.employee_profiles?.full_name}
+            <NewClientDialog
+              open={showNewClientDialog}
+              onOpenChange={setShowNewClientDialog}
+              defaultLocationId={selectedLocation}
+              onClientCreated={(client) => {
+                setSelectedClient({
+                  id: client.id,
+                  phorest_client_id: client.phorest_client_id,
+                  name: client.name,
+                  email: client.email,
+                  phone: client.phone,
+                });
+              }}
+            />
+          </div>
+        )}
+
+        {/* Step 2: Service Selection */}
+        {step === 'service' && (
+          <div className="space-y-4">
+            <div>
+              <Label>Location</Label>
+              <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+                <SelectTrigger className="mt-1.5">
+                  <SelectValue placeholder="Select a location" />
+                </SelectTrigger>
+                <SelectContent>
+                  {locations.map((loc) => (
+                    <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {selectedLocation && servicesByCategory && Object.entries(servicesByCategory).map(([category, categoryServices]) => (
+              <div key={category}>
+                <h4 className="font-medium text-sm text-muted-foreground mb-2">{category}</h4>
+                <div className="space-y-2">
+                  {categoryServices.map((service) => (
+                    <div
+                      key={service.id}
+                      className={cn(
+                        'p-3 rounded-lg border cursor-pointer transition-colors',
+                        selectedServices.includes(service.phorest_service_id)
+                          ? 'border-primary bg-primary/5'
+                          : 'hover:bg-muted/50'
+                      )}
+                      onClick={() => {
+                        setSelectedServices(prev =>
+                          prev.includes(service.phorest_service_id)
+                            ? prev.filter(id => id !== service.phorest_service_id)
+                            : [...prev, service.phorest_service_id]
+                        );
+                      }}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="font-medium">{service.name}</div>
+                          <div className="flex items-center gap-3 text-sm text-muted-foreground mt-0.5">
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              {service.duration_minutes} min
+                            </span>
+                            {service.price && (
+                              <span className="flex items-center gap-1">
+                                {formatCurrency(service.price)}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                        {selectedServices.includes(service.phorest_service_id) && (
+                          <Check className="h-5 w-5 text-primary" />
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
+            ))}
 
-              {/* Date Selection */}
-              <div>
-                <Label>Date</Label>
+            {selectedServices.length > 0 && (
+              <div className="p-3 bg-muted/50 rounded-lg mt-4">
+                <div className="flex justify-between text-sm">
+                  <span>Total Duration:</span>
+                  <span className="font-medium">{totalDuration} min</span>
+                </div>
+                <div className="flex justify-between text-sm mt-1">
+                  <span>Estimated Total:</span>
+                  <span className="font-medium">{formatCurrencyWhole(totalPrice)}</span>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Step 3: Date/Time Selection */}
+        {step === 'datetime' && (
+          <div className="space-y-4">
+            <div>
+              <Label>Stylist</Label>
+              <Select value={selectedStylist} onValueChange={(val) => { setSelectedStylist(val); setAvailableSlots([]); setSelectedTime(''); }}>
+                <SelectTrigger className="mt-1.5">
+                  <SelectValue placeholder="Select a stylist" />
+                </SelectTrigger>
+                <SelectContent>
+                  {stylists.map((s: any) => (
+                    <SelectItem key={s.user_id} value={s.user_id}>
+                      {s.employee_profiles?.display_name || s.employee_profiles?.full_name || 'Unknown'}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label>Date</Label>
+              <div className="mt-1.5 border rounded-lg p-2">
                 <Calendar
                   mode="single"
                   selected={selectedDate}
-                  onSelect={(date) => date && setSelectedDate(date)}
-                  disabled={(date) => date < new Date()}
-                  className="rounded-md border mt-1.5"
+                  onSelect={(date) => { if (date) { setSelectedDate(date); setAvailableSlots([]); setSelectedTime(''); } }}
+                  disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))}
                 />
               </div>
+            </div>
 
-              {/* Time Selection */}
-              {selectedStylist && selectedDate && (
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <Label>Available Times</Label>
-                    <Button 
-                      variant="outline" 
-                      size={tokens.button.card} 
-                      onClick={handleCheckAvailability}
-                      disabled={isCheckingAvailability}
-                    >
-                      {isCheckingAvailability ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        'Check Availability'
-                      )}
-                    </Button>
-                  </div>
-                  
-                  {availableSlots.length > 0 ? (
-                    <div className="grid grid-cols-3 gap-2">
-                      {availableSlots.map((slot) => (
-                        <Button
-                          key={slot.start_time}
-                          variant={selectedTime === slot.start_time ? 'default' : 'outline'}
-                          size={tokens.button.inline}
-                          onClick={() => setSelectedTime(slot.start_time)}
-                        >
-                          {formatTime12h(slot.start_time)}
-                        </Button>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">
-                      Click "Check Availability" to see open time slots
-                    </p>
-                  )}
-                </div>
+            <Button 
+              onClick={handleCheckAvailability}
+              disabled={!selectedStylist || isCheckingAvailability}
+              variant="outline"
+              className="w-full"
+            >
+              {isCheckingAvailability ? (
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Checking...</>
+              ) : (
+                'Check Availability'
               )}
+            </Button>
 
-              {/* Notes */}
+            {availableSlots.length > 0 && (
+              <div className="space-y-2">
+                <Label>Available Times</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  {availableSlots.map((slot) => (
+                    <Button
+                      key={slot.start_time}
+                      variant={selectedTime === slot.start_time ? 'default' : 'outline'}
+                      className="text-sm"
+                      onClick={() => setSelectedTime(slot.start_time)}
+                    >
+                      {formatTime12h(slot.start_time)}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {availableSlots.length === 0 && !isCheckingAvailability && selectedStylist && (
               <div>
-                <Label>Notes (optional)</Label>
-                <Textarea
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Add any notes for this appointment..."
+                <Label>Manual Time</Label>
+                <Input
+                  type="time"
+                  value={selectedTime}
+                  onChange={(e) => setSelectedTime(e.target.value)}
                   className="mt-1.5"
-                  rows={2}
                 />
               </div>
-            </div>
-          )}
+            )}
+          </div>
+        )}
 
-          {/* Step 4: Confirmation */}
-          {step === 'confirm' && (
-            <div className="space-y-6">
-              <div className="p-4 border rounded-lg space-y-4">
-                <h4 className="font-medium">Booking Summary</h4>
-                
-                <Separator />
-
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Client</span>
-                    <span className="font-medium">{selectedClient?.name}</span>
-                  </div>
-                  
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Services</span>
-                    <div className="text-right">
-                      {selectedServiceDetails.map(s => (
-                        <div key={s.id} className="text-sm">{s.name}</div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Stylist</span>
-                    <span className="font-medium">
-                      {stylists.find(s => s.user_id === selectedStylist)?.employee_profiles?.display_name ||
-                       stylists.find(s => s.user_id === selectedStylist)?.employee_profiles?.full_name}
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Date & Time</span>
-                    <span className="font-medium">
-                      {formatDate(selectedDate, 'MMM d, yyyy')} at {formatTime12h(selectedTime)}
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Duration</span>
-                    <span className="font-medium">{totalDuration} minutes</span>
-                  </div>
-
-                  <Separator />
-
-                  <div className="flex justify-between text-lg">
-                    <span className="font-medium">Total</span>
-                    <span className="font-medium">{formatCurrency(totalPrice)}</span>
-                  </div>
+        {/* Step 4: Confirmation */}
+        {step === 'confirm' && (
+          <div className="space-y-4">
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <User className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <p className="font-medium">{selectedClient?.name}</p>
+                  <p className="text-sm text-muted-foreground">{selectedClient?.email || selectedClient?.phone}</p>
                 </div>
+              </div>
 
-                {notes && (
-                  <>
-                    <Separator />
-                    <div>
-                      <span className="text-sm text-muted-foreground">Notes:</span>
-                      <p className="text-sm mt-1">{notes}</p>
-                    </div>
-                  </>
-                )}
+              <Separator />
+
+              <div>
+                <h4 className="text-sm font-medium text-muted-foreground mb-2">Services</h4>
+                {selectedServiceDetails.map((service) => (
+                  <div key={service.id} className="flex justify-between text-sm py-1">
+                    <span>{service.name}</span>
+                    <span>{formatCurrency(service.price || 0)}</span>
+                  </div>
+                ))}
+              </div>
+
+              <Separator />
+
+              <div className="flex items-center gap-3">
+                <CalendarIcon className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <p className="font-medium">{formatDate(selectedDate, 'EEEE, MMMM d, yyyy')}</p>
+                  <p className="text-sm text-muted-foreground">at {selectedTime ? formatTime12h(selectedTime) : 'TBD'}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <DollarSign className="h-5 w-5 text-muted-foreground" />
+                <p className="font-medium">{formatCurrencyWhole(totalPrice)} estimated</p>
               </div>
             </div>
-          )}
-        </ScrollArea>
 
-        {/* Footer Navigation */}
-        <div className="p-4 border-t bg-muted/30 flex justify-between">
-          {step !== 'client' ? (
-            <Button variant="ghost" onClick={handleBack}>
-              <ChevronLeft className="h-4 w-4 mr-1" />
-              Back
-            </Button>
-          ) : (
-            <div />
-          )}
-          
-          <Button 
-            onClick={handleNext} 
-            disabled={!canProceed() || createBooking.isPending}
-          >
-            {createBooking.isPending ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
-                Creating...
-              </>
-            ) : step === 'confirm' ? (
-              <>
-                <Check className="h-4 w-4 mr-1.5" />
-                Confirm Booking
-              </>
-            ) : (
-              <>
-                Next
-                <ChevronRight className="h-4 w-4 ml-1" />
-              </>
-            )}
+            <div>
+              <Label>Notes (optional)</Label>
+              <Textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Add any notes for this appointment..."
+                className="mt-1.5"
+              />
+            </div>
+          </div>
+        )}
+      </ScrollArea>
+
+      {/* Footer */}
+      <div className="p-5 pt-0 border-t border-border/40 flex justify-between gap-3 mt-auto">
+        {step !== 'client' ? (
+          <Button variant="outline" onClick={handleBack}>
+            <ChevronLeft className="h-4 w-4 mr-1" />
+            Back
           </Button>
-        </div>
-      </SheetContent>
-    </Sheet>
+        ) : (
+          <div />
+        )}
+        <Button
+          onClick={handleNext}
+          disabled={!canProceed() || createBooking.isPending}
+        >
+          {createBooking.isPending ? (
+            <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Creating...</>
+          ) : step === 'confirm' ? (
+            'Confirm Booking'
+          ) : (
+            <>Next <ChevronRight className="h-4 w-4 ml-1" /></>
+          )}
+        </Button>
+      </div>
+    </PremiumFloatingPanel>
   );
 }

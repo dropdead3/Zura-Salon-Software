@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { format, differenceInMinutes, parseISO } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
-import { Copy, CreditCard, Info, Receipt, Download, Eye, DollarSign, CalendarCheck, Sparkles, CalendarPlus, XCircle, ChevronDown, MessageSquare } from 'lucide-react';
+import { Copy, CreditCard, Info, Receipt, Download, Eye, DollarSign, CalendarCheck, Sparkles, CalendarPlus, XCircle, ChevronDown, MessageSquare, CheckCircle2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
@@ -496,6 +496,7 @@ export function CheckoutSummarySheet({
                     subtotal={subtotal}
                     clientId={appointment.phorest_client_id}
                     onPromoApplied={setAppliedPromo}
+                    appliedPromo={appliedPromo}
                   />
                 </div>
               )}
@@ -506,7 +507,7 @@ export function CheckoutSummarySheet({
                   <span className="flex items-center gap-1">
                     Discount 
                     <span className="text-xs bg-emerald-100 dark:bg-emerald-900/30 px-1.5 py-0.5 rounded">
-                      {appliedPromo.code}
+                      {appliedPromo.promotion?.name}
                     </span>
                   </span>
                   <span>-{formatCurrency(discount)}</span>
@@ -610,10 +611,10 @@ export function CheckoutSummarySheet({
                     Add Tip
                   </h3>
                   {rebooked && (
-                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 gap-1">
+                    <span className="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium bg-green-50 text-green-700 border border-green-200 gap-1">
                       <CalendarCheck className="h-3 w-3" />
                       Rebooked
-                    </Badge>
+                    </span>
                   )}
                 </div>
                 

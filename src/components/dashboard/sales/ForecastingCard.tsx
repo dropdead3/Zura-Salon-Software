@@ -17,7 +17,7 @@ import { CategoryBreakdownPanel, BreakdownMode, BreakdownType } from './Category
 import { ServiceMixLegend } from '@/components/dashboard/analytics/ServiceMixLegend';
 import { useYearlyGoalProgress } from '@/hooks/useYearlyGoalProgress';
 import { LocationSelect } from '@/components/ui/location-select';
-import { DayAppointmentsSheet } from './DayAppointmentsSheet';
+import { DayAppointmentsPanel } from './DayAppointmentsPanel';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { Tabs, FilterTabsList, FilterTabsTrigger } from '@/components/ui/tabs';
 import { CalendarRange, TrendingUp, TrendingDown, Calendar, Users, Info, Target, ChevronDown } from 'lucide-react';
@@ -1100,7 +1100,7 @@ export function ForecastingCard() {
         </CardContent>
       </Card>
 
-      <DayAppointmentsSheet 
+      <DayAppointmentsPanel 
         day={selectedDay}
         open={sheetOpen}
         onOpenChange={setSheetOpen}

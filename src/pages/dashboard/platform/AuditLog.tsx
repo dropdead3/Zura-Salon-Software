@@ -134,7 +134,7 @@ export default function AuditLogPage() {
             />
           </div>
           
-          <Select value={filters.action} onValueChange={(v) => handleFilterChange('action', v === 'all' ? undefined : v)}>
+          <Select value={filters.actions?.[0] || 'all'} onValueChange={(v) => handleFilterChange('actions', v === 'all' ? undefined : [v])}>
             <SelectTrigger className="bg-background">
               <SelectValue placeholder="All Actions" />
             </SelectTrigger>
