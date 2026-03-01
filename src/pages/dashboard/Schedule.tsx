@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useLocation } from 'react-router-dom';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { ScheduleHeader } from '@/components/dashboard/schedule/ScheduleHeader';
@@ -374,6 +374,29 @@ export default function Schedule() {
       setView('agenda');
     }
   }, [isMobile]);
+
+  // Handle deep-link from forecast drill-down
+  useEffect(() => {
+    const state = location.state as { focusDate?: string; focusAppointmentId?: string } | null;
+    if (state?.focusDate) {
+      setCurrentDate(parseISO(state.focusDate));
+      if (!isMobile) setView('day');
+      // Clear state to prevent re-trigger on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
+
+  // Auto-select appointment from deep-link after data loads
+  useEffect(() => {
+    const state = location.state as { focusAppointmentId?: string } | null;
+    if (state?.focusAppointmentId && allAppointments.length > 0) {
+      const target = allAppointments.find(a => a.id === state.focusAppointmentId);
+      if (target) {
+        setSelectedAppointment(target);
+        setDetailOpen(true);
+      }
+    }
+  }, [allAppointments, location.state]);
 
   const handleAppointmentClick = (apt: PhorestAppointment) => {
     setSelectedAppointment(apt);

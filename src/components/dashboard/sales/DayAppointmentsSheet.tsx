@@ -7,8 +7,9 @@ import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { DayForecast, AppointmentSummary } from '@/hooks/useWeekAheadRevenue';
 import { parseISO } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
-import { Clock, User, Scissors } from 'lucide-react';
+import { Clock, User, Scissors, CalendarDays } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useNavigate } from 'react-router-dom';
 
 interface DayAppointmentsSheetProps {
   day: DayForecast | null;
@@ -32,12 +33,15 @@ function formatTime12h(time: string): string {
   return `${hour12}:${minutes.toString().padStart(2, '0')} ${period}`;
 }
 
-function AppointmentCard({ appointment }: { appointment: AppointmentSummary }) {
+function AppointmentCard({ appointment, onClick }: { appointment: AppointmentSummary; onClick?: () => void }) {
   const { formatCurrencyWhole } = useFormatCurrency();
   const statusConfig = STATUS_CONFIG[appointment.status] || STATUS_CONFIG.booked;
   
   return (
-    <Card className="p-3 space-y-2">
+    <Card 
+      className={cn("p-3 space-y-2 transition-colors", onClick && "cursor-pointer hover:bg-muted/50 group")}
+      onClick={onClick}
+    >
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Clock className="w-3.5 h-3.5" />
@@ -46,12 +50,17 @@ function AppointmentCard({ appointment }: { appointment: AppointmentSummary }) {
             {appointment.end_time && ` - ${formatTime12h(appointment.end_time)}`}
           </span>
         </div>
-        <Badge 
-          variant="secondary" 
-          className={cn('text-xs', statusConfig.bg, statusConfig.text)}
-        >
-          {statusConfig.label}
-        </Badge>
+        <div className="flex items-center gap-1.5">
+          {onClick && (
+            <CalendarDays className="w-3.5 h-3.5 text-muted-foreground/0 group-hover:text-primary transition-colors" />
+          )}
+          <Badge 
+            variant="secondary" 
+            className={cn('text-xs', statusConfig.bg, statusConfig.text)}
+          >
+            {statusConfig.label}
+          </Badge>
+        </div>
       </div>
       
       <div className="space-y-1">
@@ -90,7 +99,15 @@ function AppointmentCard({ appointment }: { appointment: AppointmentSummary }) {
 export function DayAppointmentsSheet({ day, open, onOpenChange }: DayAppointmentsSheetProps) {
   const { formatDate } = useFormatDate();
   const { formatCurrencyWhole: fmtWhole } = useFormatCurrency();
+  const navigate = useNavigate();
   if (!day) return null;
+
+  const handleAppointmentClick = (apt: AppointmentSummary) => {
+    onOpenChange(false);
+    navigate('/dashboard/schedule', { 
+      state: { focusDate: day.date, focusAppointmentId: apt.id } 
+    });
+  };
 
   const confirmedCount = day.appointments.filter(a => a.status === 'confirmed' || a.status === 'checked_in' || a.status === 'completed' || a.status === 'paid').length;
   const unconfirmedCount = day.appointments.filter(a => a.status === 'booked').length;
@@ -128,7 +145,7 @@ export function DayAppointmentsSheet({ day, open, onOpenChange }: DayAppointment
               </p>
             ) : (
               day.appointments.map(apt => (
-                <AppointmentCard key={apt.id} appointment={apt} />
+                <AppointmentCard key={apt.id} appointment={apt} onClick={() => handleAppointmentClick(apt)} />
               ))
             )}
           </div>
