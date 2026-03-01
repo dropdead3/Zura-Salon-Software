@@ -1,17 +1,27 @@
 
 
-## Remove Announcement Creation from Leaderboard Updates
+## Link Forecast Appointments to Schedule
 
-### Problem
-The `update-sales-leaderboard` edge function inserts into the `announcements` table every time a leader changes or positions shift significantly. This creates noisy, auto-generated announcements that clutter the announcements feed (as visible in the screenshot -- two identical "Sales Leaderboard Update" entries). Leaderboard updates are not organizational announcements; they belong on the leaderboard surface itself.
-
-### Solution
-Remove the announcement-creation block (lines 91-140) from `supabase/functions/update-sales-leaderboard/index.ts`. Keep the ranking comparison and `site_settings` storage logic so the function still tracks leader changes internally -- just stop writing to `announcements`.
-
-Additionally, clean up the two duplicate announcement rows already in the database.
+### What's Changing
+Each appointment row in the `DayAppointmentsSheet` (the drill-down from the week-ahead forecast card) will become clickable. Tapping a row closes the sheet and navigates to `/dashboard/schedule`, passing the appointment date and appointment ID via router state. The Schedule page will pick up that state, set the date, switch to day view, and auto-select the appointment to open its detail panel.
 
 ### Files
-1. **`supabase/functions/update-sales-leaderboard/index.ts`** -- Remove: the `announcementContent`/`shouldAnnounce` variables, the leader-change announcement logic, the position-change announcement logic, the admin-user lookup, and the `announcements` insert. Keep the `site_settings` upsert for ranking tracking. Simplify the response to just return rankings + whether a leader changed (for future notification use if needed).
 
-2. **Database cleanup** -- Delete the two existing "Sales Leaderboard Update" announcement rows via migration or direct cleanup.
+1. **`src/components/dashboard/sales/DayAppointmentsSheet.tsx`**
+   - Accept an optional `onNavigateToSchedule` callback prop (or use `useNavigate` directly)
+   - Wrap each `AppointmentCard` with a clickable action (subtle icon button or the whole card) that calls `navigate('/dashboard/schedule', { state: { focusDate: day.date, focusAppointmentId: apt.id } })` and closes the sheet
+   - Add a small `ExternalLink` or `CalendarDays` icon to each row as a visual affordance
+
+2. **`src/pages/dashboard/Schedule.tsx`**
+   - In the existing `useEffect` that reads `location.state`, add handling for `focusDate` and `focusAppointmentId`
+   - When present: parse the date, call `setCurrentDate(parseISO(focusDate))`, `setView('day')`, and after appointments load, call `setSelectedAppointment` with the matching appointment
+   - Clear the state with `window.history.replaceState` to prevent re-triggering on refresh
+
+### Interaction
+```text
+Forecast Card → Click day bar → DayAppointmentsSheet opens
+  → Click appointment row → Sheet closes
+  → Navigate to /dashboard/schedule (day view, correct date)
+  → Appointment auto-selected + detail panel opens
+```
 
