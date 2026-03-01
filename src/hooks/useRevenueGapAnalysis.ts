@@ -1,27 +1,27 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-export interface GapAppointment {
-  id: string;
-  clientName: string | null;
-  serviceName: string | null;
-  stylistName: string | null;
-  totalPrice: number;
-  appointmentDate: string;
-  startTime: string | null;
-}
+export type GapReason = 'cancelled' | 'no_show' | 'no_pos_record' | 'service_changed' | 'discount' | 'pricing_diff';
 
-export interface PricingVarianceItem {
-  clientName: string | null;
-  scheduledServices: string[];
-  actualServices: string[];
+export interface GapItem {
+  id: string;
+  clientName: string;
+  serviceName: string;
+  stylistName: string | null;
+  reason: GapReason;
   scheduledAmount: number;
   actualAmount: number;
   variance: number;
   appointmentDate: string;
-  stylistName: string | null;
-  hasDiscount: boolean;
-  noTransaction: boolean;
+  /** Only for pricing items: services found in POS */
+  actualServices?: string[];
+}
+
+export interface GapSummary {
+  reason: GapReason;
+  label: string;
+  count: number;
+  totalVariance: number;
 }
 
 export interface RevenueGapAnalysis {
@@ -29,16 +29,14 @@ export interface RevenueGapAnalysis {
   actualRevenue: number;
   gapAmount: number;
   gapPercent: number;
-  cancellations: { count: number; lostRevenue: number; appointments: GapAppointment[] };
-  noShows: { count: number; lostRevenue: number; appointments: GapAppointment[] };
-  pricingVariances: { count: number; totalVariance: number; items: PricingVarianceItem[] };
+  gapItems: GapItem[];
+  summaries: GapSummary[];
   unexplainedGap: number;
 }
 
 /**
- * Gap analysis hook: fetches cancellation/no-show data with full appointment
- * details (client, service, stylist) for a date range and computes the
- * revenue gap breakdown including pricing variances.
+ * Unified gap analysis: returns a single sorted list of every appointment
+ * that contributed to the revenue gap, each tagged with a reason.
  */
 export function useRevenueGapAnalysis(
   dateFrom: string,
@@ -50,56 +48,94 @@ export function useRevenueGapAnalysis(
   return useQuery<RevenueGapAnalysis>({
     queryKey: ['revenue-gap-analysis', dateFrom, dateTo],
     queryFn: async () => {
-      // Fetch staff mapping for name resolution
+      // ── Staff mapping ──
       const { data: staffMap } = await supabase
         .from('phorest_staff_mapping')
         .select('phorest_staff_id, phorest_staff_name');
 
       const staffLookup = new Map<string, string>();
       (staffMap ?? []).forEach((s) => {
-        if (s.phorest_staff_id && s.phorest_staff_name) {
+        if (s.phorest_staff_id && s.phorest_staff_name)
           staffLookup.set(s.phorest_staff_id, s.phorest_staff_name);
-        }
       });
 
-      // Fetch cancelled appointments with details
-      const { data: cancelledData, error: cancelledError } = await supabase
+      // ── Fetch all gap-relevant appointments in one go ──
+      const { data: allAppts, error: apptError } = await supabase
         .from('phorest_appointments')
-        .select('id, service_name, client_name, total_price, appointment_date, start_time, phorest_staff_id')
+        .select('id, service_name, client_name, total_price, appointment_date, start_time, phorest_staff_id, phorest_client_id, status')
         .gte('appointment_date', dateFrom)
         .lte('appointment_date', dateTo)
-        .eq('status', 'cancelled');
+        .in('status', ['cancelled', 'no_show', 'completed']);
 
-      if (cancelledError) throw cancelledError;
+      if (apptError) throw apptError;
 
-      // Fetch no-show appointments with details
-      const { data: noShowData, error: noShowError } = await supabase
-        .from('phorest_appointments')
-        .select('id, service_name, client_name, total_price, appointment_date, start_time, phorest_staff_id')
-        .gte('appointment_date', dateFrom)
-        .lte('appointment_date', dateTo)
-        .eq('status', 'no_show');
-
-      if (noShowError) throw noShowError;
-
-      // Fetch completed appointments for pricing variance analysis
-      const { data: completedData, error: completedError } = await supabase
-        .from('phorest_appointments')
-        .select('id, service_name, client_name, total_price, appointment_date, phorest_client_id, phorest_staff_id')
-        .gte('appointment_date', dateFrom)
-        .lte('appointment_date', dateTo)
-        .eq('status', 'completed');
-
-      if (completedError) throw completedError;
-
-      // Get unique client IDs from completed appointments for POS lookup
-      const completedClientIds = [...new Set(
-        (completedData ?? [])
-          .map(a => a.phorest_client_id)
-          .filter((id): id is string => !!id)
+      // ── Client name resolution from phorest_clients ──
+      const clientIds = [...new Set(
+        (allAppts ?? []).map(a => a.phorest_client_id).filter((id): id is string => !!id)
       )];
 
-      // Fetch POS transaction items for those clients in the date range
+      const clientNameMap = new Map<string, string>();
+      if (clientIds.length > 0) {
+        for (let i = 0; i < clientIds.length; i += 100) {
+          const chunk = clientIds.slice(i, i + 100);
+          const { data: clientData } = await supabase
+            .from('phorest_clients')
+            .select('phorest_client_id, name')
+            .in('phorest_client_id', chunk);
+          (clientData ?? []).forEach(c => {
+            if (c.phorest_client_id && c.name) clientNameMap.set(c.phorest_client_id, c.name);
+          });
+        }
+      }
+
+      const resolveClient = (a: { phorest_client_id: string | null; client_name: string | null }) =>
+        (a.phorest_client_id ? clientNameMap.get(a.phorest_client_id) : null) ?? a.client_name ?? 'Walk-in';
+
+      // ── Split by status ──
+      const cancelled = (allAppts ?? []).filter(a => a.status === 'cancelled');
+      const noShows = (allAppts ?? []).filter(a => a.status === 'no_show');
+      const completed = (allAppts ?? []).filter(a => a.status === 'completed');
+
+      // ── Build gap items for cancellations & no-shows ──
+      const gapItems: GapItem[] = [];
+
+      cancelled.forEach(a => {
+        const price = Number(a.total_price) || 0;
+        if (price <= 0) return;
+        gapItems.push({
+          id: a.id,
+          clientName: resolveClient(a),
+          serviceName: a.service_name || 'Unknown service',
+          stylistName: a.phorest_staff_id ? staffLookup.get(a.phorest_staff_id) ?? null : null,
+          reason: 'cancelled',
+          scheduledAmount: price,
+          actualAmount: 0,
+          variance: price,
+          appointmentDate: a.appointment_date,
+        });
+      });
+
+      noShows.forEach(a => {
+        const price = Number(a.total_price) || 0;
+        if (price <= 0) return;
+        gapItems.push({
+          id: a.id,
+          clientName: resolveClient(a),
+          serviceName: a.service_name || 'Unknown service',
+          stylistName: a.phorest_staff_id ? staffLookup.get(a.phorest_staff_id) ?? null : null,
+          reason: 'no_show',
+          scheduledAmount: price,
+          actualAmount: 0,
+          variance: price,
+          appointmentDate: a.appointment_date,
+        });
+      });
+
+      // ── POS matching for completed appointments (client-day level) ──
+      const completedClientIds = [...new Set(
+        completed.map(a => a.phorest_client_id).filter((id): id is string => !!id)
+      )];
+
       let posItems: Array<{
         phorest_client_id: string | null;
         transaction_date: string;
@@ -111,7 +147,6 @@ export function useRevenueGapAnalysis(
       }> = [];
 
       if (completedClientIds.length > 0) {
-        // Batch fetch in chunks of 100 to avoid query limits
         for (let i = 0; i < completedClientIds.length; i += 100) {
           const chunk = completedClientIds.slice(i, i + 100);
           const { data: posData, error: posError } = await supabase
@@ -121,37 +156,39 @@ export function useRevenueGapAnalysis(
             .gte('transaction_date', dateFrom)
             .lte('transaction_date', dateTo)
             .in('item_type', ['service', 'sale_fee']);
-
           if (posError) throw posError;
           posItems = posItems.concat(posData ?? []);
         }
       }
 
-      // Group completed appointments by client-day
+      // Group completed appts by client-day
       const clientDayScheduled = new Map<string, {
-        clientName: string | null;
+        clientName: string;
         services: string[];
         totalScheduled: number;
         appointmentDate: string;
         stylistName: string | null;
+        ids: string[];
       }>();
 
-      (completedData ?? []).forEach(a => {
+      completed.forEach(a => {
         if (!a.phorest_client_id) return;
         const key = `${a.phorest_client_id}|${a.appointment_date}`;
+        const stylist = a.phorest_staff_id ? staffLookup.get(a.phorest_staff_id) ?? null : null;
         const existing = clientDayScheduled.get(key);
-        const stylist = a.phorest_staff_id ? (staffLookup.get(a.phorest_staff_id) ?? null) : null;
         if (existing) {
           existing.services.push(a.service_name || 'Unknown service');
           existing.totalScheduled += Number(a.total_price) || 0;
+          existing.ids.push(a.id);
           if (!existing.stylistName && stylist) existing.stylistName = stylist;
         } else {
           clientDayScheduled.set(key, {
-            clientName: a.client_name ?? null,
+            clientName: resolveClient(a),
             services: [a.service_name || 'Unknown service'],
             totalScheduled: Number(a.total_price) || 0,
             appointmentDate: a.appointment_date,
             stylistName: stylist,
+            ids: [a.id],
           });
         }
       });
@@ -165,12 +202,11 @@ export function useRevenueGapAnalysis(
 
       posItems.forEach(t => {
         if (!t.phorest_client_id) return;
-        // Match transaction_date (may include time) to appointment_date
         const txDate = t.transaction_date.substring(0, 10);
         const key = `${t.phorest_client_id}|${txDate}`;
-        const existing = clientDayActual.get(key);
         const amount = (Number(t.total_amount) || 0) + (Number(t.tax_amount) || 0);
         const hasDisc = (Number(t.discount) || 0) > 0;
+        const existing = clientDayActual.get(key);
         if (existing) {
           existing.services.push(t.item_name || 'Unknown');
           existing.totalActual += amount;
@@ -184,70 +220,75 @@ export function useRevenueGapAnalysis(
         }
       });
 
-      // Compute per-client-day variances
-      const varianceItems: PricingVarianceItem[] = [];
+      // Compute pricing variances → GapItems
       clientDayScheduled.forEach((scheduled, key) => {
         const actual = clientDayActual.get(key);
         const actualAmount = actual?.totalActual ?? 0;
         const variance = scheduled.totalScheduled - actualAmount;
 
-        // Only surface variances > $1
-        if (variance > 1) {
-          varianceItems.push({
-            clientName: scheduled.clientName,
-            scheduledServices: scheduled.services,
-            actualServices: actual?.services ?? [],
-            scheduledAmount: scheduled.totalScheduled,
-            actualAmount,
-            variance,
-            appointmentDate: scheduled.appointmentDate,
-            stylistName: scheduled.stylistName,
-            hasDiscount: actual?.hasDiscount ?? false,
-            noTransaction: !actual,
-          });
+        if (variance <= 1) return; // skip negligible
+
+        let reason: GapReason;
+        if (!actual) {
+          reason = 'no_pos_record';
+        } else {
+          const servicesChanged = JSON.stringify(scheduled.services.sort()) !== JSON.stringify(actual.services.sort());
+          if (actual.hasDiscount) reason = 'discount';
+          else if (servicesChanged) reason = 'service_changed';
+          else reason = 'pricing_diff';
         }
+
+        gapItems.push({
+          id: scheduled.ids[0],
+          clientName: scheduled.clientName,
+          serviceName: scheduled.services.join(', '),
+          stylistName: scheduled.stylistName,
+          reason,
+          scheduledAmount: scheduled.totalScheduled,
+          actualAmount,
+          variance,
+          appointmentDate: scheduled.appointmentDate,
+          actualServices: actual?.services,
+        });
       });
 
       // Sort by variance descending
-      varianceItems.sort((a, b) => b.variance - a.variance);
+      gapItems.sort((a, b) => b.variance - a.variance);
 
-      const toGapAppointments = (rows: typeof cancelledData): GapAppointment[] =>
-        (rows ?? [])
-          .map((a) => ({
-            id: a.id,
-            clientName: a.client_name ?? null,
-            serviceName: a.service_name ?? null,
-            stylistName: a.phorest_staff_id ? (staffLookup.get(a.phorest_staff_id) ?? null) : null,
-            totalPrice: Number(a.total_price) || 0,
-            appointmentDate: a.appointment_date,
-            startTime: a.start_time ?? null,
-          }))
-          .sort((a, b) => b.totalPrice - a.totalPrice);
+      // Build summaries
+      const summaryMap = new Map<GapReason, { count: number; totalVariance: number }>();
+      gapItems.forEach(item => {
+        const existing = summaryMap.get(item.reason);
+        if (existing) {
+          existing.count++;
+          existing.totalVariance += item.variance;
+        } else {
+          summaryMap.set(item.reason, { count: 1, totalVariance: item.variance });
+        }
+      });
 
-      const cancelledAppts = toGapAppointments(cancelledData);
-      const noShowAppts = toGapAppointments(noShowData);
-
-      const cancellations = {
-        count: cancelledAppts.length,
-        lostRevenue: cancelledAppts.reduce((sum, a) => sum + a.totalPrice, 0),
-        appointments: cancelledAppts,
+      const reasonLabels: Record<GapReason, string> = {
+        cancelled: 'Cancellations',
+        no_show: 'No-shows',
+        no_pos_record: 'No POS record',
+        discount: 'Discounts',
+        service_changed: 'Service changed',
+        pricing_diff: 'Pricing differences',
       };
 
-      const noShows = {
-        count: noShowAppts.length,
-        lostRevenue: noShowAppts.reduce((sum, a) => sum + a.totalPrice, 0),
-        appointments: noShowAppts,
-      };
-
-      const pricingVariances = {
-        count: varianceItems.length,
-        totalVariance: varianceItems.reduce((sum, v) => sum + v.variance, 0),
-        items: varianceItems,
-      };
+      const reasonOrder: GapReason[] = ['cancelled', 'no_show', 'no_pos_record', 'discount', 'service_changed', 'pricing_diff'];
+      const summaries: GapSummary[] = reasonOrder
+        .filter(r => summaryMap.has(r))
+        .map(r => ({
+          reason: r,
+          label: reasonLabels[r],
+          count: summaryMap.get(r)!.count,
+          totalVariance: summaryMap.get(r)!.totalVariance,
+        }));
 
       const gapAmount = expectedRevenue - actualRevenue;
       const gapPercent = expectedRevenue > 0 ? (gapAmount / expectedRevenue) * 100 : 0;
-      const explainedGap = cancellations.lostRevenue + noShows.lostRevenue + pricingVariances.totalVariance;
+      const explainedGap = gapItems.reduce((sum, i) => sum + i.variance, 0);
       const unexplainedGap = Math.max(0, gapAmount - explainedGap);
 
       return {
@@ -255,9 +296,8 @@ export function useRevenueGapAnalysis(
         actualRevenue,
         gapAmount,
         gapPercent,
-        cancellations,
-        noShows,
-        pricingVariances,
+        gapItems,
+        summaries,
         unexplainedGap,
       };
     },
