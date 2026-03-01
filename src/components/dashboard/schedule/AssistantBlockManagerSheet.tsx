@@ -1,12 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useState, useMemo } from 'react';
 import { format } from 'date-fns';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from '@/components/ui/sheet';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,6 +14,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { Users, Clock, Trash2, Loader2 } from 'lucide-react';
 import { ZuraLoader } from '@/components/ui/ZuraLoader';
 import { cn } from '@/lib/utils';
@@ -300,105 +294,103 @@ export function AssistantBlockManagerSheet({
   };
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-md p-0 flex flex-col">
-        <SheetHeader className="px-6 pt-6 pb-4 border-b border-border">
-          <SheetTitle className="flex items-center gap-2 font-display text-base tracking-wide">
-            <Users className="h-5 w-5 text-primary" />
-            ASSISTANT BLOCKS
-          </SheetTitle>
-          <SheetDescription className="text-xs">
-            Manage your assistant coverage requests and assignments.
-          </SheetDescription>
-        </SheetHeader>
+    <PremiumFloatingPanel open={open} onOpenChange={onOpenChange} maxWidth="440px">
+      <div className="p-5 pb-3 border-b border-border/40">
+        <h2 className="font-display text-sm tracking-wide uppercase flex items-center gap-2">
+          <Users className="h-5 w-5 text-primary" />
+          Assistant Blocks
+        </h2>
+        <p className="text-sm text-muted-foreground mt-1">
+          Manage your assistant coverage requests and assignments.
+        </p>
+      </div>
 
-        <Tabs defaultValue="requests" className="flex-1 flex flex-col overflow-hidden">
-          <div className="px-6 pt-3">
-            <TabsList className="w-full">
-              <TabsTrigger value="requests" className="flex-1">
-                My Requests
-                {myRequests.length > 0 && (
-                  <Badge variant="secondary" className="ml-1.5 h-5 min-w-[20px] px-1 text-xs">
-                    {myRequests.length}
-                  </Badge>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="assists" className="flex-1">
-                My Assists
-                {myAssists.length > 0 && (
-                  <Badge variant="secondary" className="ml-1.5 h-5 min-w-[20px] px-1 text-xs">
-                    {myAssists.length}
-                  </Badge>
-                )}
-              </TabsTrigger>
-              {isAdmin && (
-                <TabsTrigger value="all" className="flex-1">
-                  All
-                  {timeBlocks.length > 0 && (
-                    <Badge variant="secondary" className="ml-1.5 h-5 min-w-[20px] px-1 text-xs">
-                      {timeBlocks.length}
-                    </Badge>
-                  )}
-                </TabsTrigger>
+      <Tabs defaultValue="requests" className="flex-1 flex flex-col overflow-hidden">
+        <div className="px-5 pt-3">
+          <TabsList className="w-full">
+            <TabsTrigger value="requests" className="flex-1">
+              My Requests
+              {myRequests.length > 0 && (
+                <Badge variant="secondary" className="ml-1.5 h-5 min-w-[20px] px-1 text-xs">
+                  {myRequests.length}
+                </Badge>
               )}
-            </TabsList>
-          </div>
+            </TabsTrigger>
+            <TabsTrigger value="assists" className="flex-1">
+              My Assists
+              {myAssists.length > 0 && (
+                <Badge variant="secondary" className="ml-1.5 h-5 min-w-[20px] px-1 text-xs">
+                  {myAssists.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+            {isAdmin && (
+              <TabsTrigger value="all" className="flex-1">
+                All
+                {timeBlocks.length > 0 && (
+                  <Badge variant="secondary" className="ml-1.5 h-5 min-w-[20px] px-1 text-xs">
+                    {timeBlocks.length}
+                  </Badge>
+                )}
+              </TabsTrigger>
+            )}
+          </TabsList>
+        </div>
 
-          <ScrollArea className="flex-1 px-6 py-4">
-            {isLoading ? (
-              <div className="flex items-center justify-center h-32">
-                <ZuraLoader />
-              </div>
-            ) : (
-              <>
-                <TabsContent value="requests" className="mt-0 space-y-3">
-                  {expiredRequestCount > 0 && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full text-xs text-muted-foreground"
-                      onClick={handleClearExpired}
-                      disabled={isClearingExpired}
-                    >
-                      {isClearingExpired ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Trash2 className="h-3 w-3 mr-1" />}
-                      Clear {expiredRequestCount} expired request{expiredRequestCount > 1 ? 's' : ''}
-                    </Button>
-                  )}
+        <ScrollArea className="flex-1 px-5 py-4">
+          {isLoading ? (
+            <div className="flex items-center justify-center h-32">
+              <ZuraLoader />
+            </div>
+          ) : (
+            <>
+              <TabsContent value="requests" className="mt-0 space-y-3">
+                {expiredRequestCount > 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full text-xs text-muted-foreground"
+                    onClick={handleClearExpired}
+                    disabled={isClearingExpired}
+                  >
+                    {isClearingExpired ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Trash2 className="h-3 w-3 mr-1" />}
+                    Clear {expiredRequestCount} expired request{expiredRequestCount > 1 ? 's' : ''}
+                  </Button>
+                )}
+                <BlocksByDate
+                  blocks={myRequests}
+                  showActions={false}
+                  showDelete
+                  currentUserId={currentUserId}
+                  emptyMessage="No coverage requests yet"
+                />
+              </TabsContent>
+
+              <TabsContent value="assists" className="mt-0">
+                <BlocksByDate
+                  blocks={myAssists}
+                  showActions
+                  showDelete={false}
+                  currentUserId={currentUserId}
+                  emptyMessage="No assist assignments"
+                />
+              </TabsContent>
+
+              {isAdmin && (
+                <TabsContent value="all" className="mt-0">
                   <BlocksByDate
-                    blocks={myRequests}
-                    showActions={false}
+                    blocks={timeBlocks}
+                    showActions
                     showDelete
                     currentUserId={currentUserId}
-                    emptyMessage="No coverage requests yet"
+                    emptyMessage="No assistant blocks found"
                   />
                 </TabsContent>
-
-                <TabsContent value="assists" className="mt-0">
-                  <BlocksByDate
-                    blocks={myAssists}
-                    showActions
-                    showDelete={false}
-                    currentUserId={currentUserId}
-                    emptyMessage="No assist assignments"
-                  />
-                </TabsContent>
-
-                {isAdmin && (
-                  <TabsContent value="all" className="mt-0">
-                    <BlocksByDate
-                      blocks={timeBlocks}
-                      showActions
-                      showDelete
-                      currentUserId={currentUserId}
-                      emptyMessage="No assistant blocks found"
-                    />
-                  </TabsContent>
-                )}
-              </>
-            )}
-          </ScrollArea>
-        </Tabs>
-      </SheetContent>
-    </Sheet>
+              )}
+            </>
+          )}
+        </ScrollArea>
+      </Tabs>
+    </PremiumFloatingPanel>
   );
 }

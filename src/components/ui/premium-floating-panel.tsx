@@ -5,16 +5,55 @@ import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { createPortal } from 'react-dom';
 
+type PanelSide = 'right' | 'left' | 'bottom';
+
 interface PremiumFloatingPanelProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   children: ReactNode;
   maxWidth?: string;
+  maxHeight?: string;
   className?: string;
   backdropClassName?: string;
   zIndex?: number;
   /** Set false to hide the built-in close button (e.g. when the child provides its own) */
   showCloseButton?: boolean;
+  /** Which edge the panel slides in from. Defaults to 'right'. */
+  side?: PanelSide;
+}
+
+const SPRING = { type: 'spring' as const, damping: 26, stiffness: 300, mass: 0.8 };
+
+function getAnimationProps(side: PanelSide) {
+  switch (side) {
+    case 'left':
+      return { initial: { opacity: 0, x: -80 }, animate: { opacity: 1, x: 0 }, exit: { opacity: 0, x: -80 } };
+    case 'bottom':
+      return { initial: { opacity: 0, y: 300 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: 300 } };
+    case 'right':
+    default:
+      return { initial: { opacity: 0, x: 80 }, animate: { opacity: 1, x: 0 }, exit: { opacity: 0, x: 80 } };
+  }
+}
+
+function getPositionClasses(side: PanelSide, isMobile: boolean): string {
+  if (isMobile) {
+    if (side === 'bottom') {
+      return 'bottom-0 left-0 right-0 w-full rounded-t-xl';
+    }
+    // left & right go full-screen on mobile
+    return 'right-0 top-0 bottom-0 w-full max-w-none rounded-none';
+  }
+
+  switch (side) {
+    case 'left':
+      return 'left-4 top-4 bottom-4 w-[calc(100vw-2rem)] rounded-xl';
+    case 'bottom':
+      return 'bottom-0 left-0 right-0 w-full rounded-t-xl';
+    case 'right':
+    default:
+      return 'right-4 top-4 bottom-4 w-[calc(100vw-2rem)] rounded-xl';
+  }
 }
 
 /**
@@ -22,20 +61,30 @@ interface PremiumFloatingPanelProps {
  *
  * Glass morphism · spring physics · mobile-adaptive.
  * Use this as the single source of truth for all slide-in detail panels.
+ *
+ * Supports `side` prop: 'right' (default), 'left', 'bottom'.
  */
 export function PremiumFloatingPanel({
   open,
   onOpenChange,
   children,
   maxWidth = '440px',
+  maxHeight,
   className,
   backdropClassName,
   zIndex = 50,
   showCloseButton = true,
+  side = 'right',
 }: PremiumFloatingPanelProps) {
   const isMobile = useIsMobile();
 
   const handleClose = () => onOpenChange(false);
+
+  const animProps = getAnimationProps(side);
+  const posClasses = getPositionClasses(side, isMobile);
+
+  // For bottom panels, maxWidth is irrelevant; use maxHeight instead
+  const isBottom = side === 'bottom';
 
   return createPortal(
     <AnimatePresence>
@@ -59,20 +108,18 @@ export function PremiumFloatingPanel({
           {/* Floating Panel */}
           <motion.div
             key="pfp-panel"
-            initial={{ opacity: 0, x: 80 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 80 }}
-            transition={{ type: 'spring', damping: 26, stiffness: 300, mass: 0.8 }}
+            {...animProps}
+            transition={SPRING}
             className={cn(
               'fixed border border-border bg-card/80 backdrop-blur-xl shadow-2xl overflow-hidden flex flex-col',
-              isMobile
-                ? 'right-0 top-0 bottom-0 w-full max-w-none rounded-none'
-                : 'right-4 top-4 bottom-4 w-[calc(100vw-2rem)] rounded-xl',
+              posClasses,
               className,
             )}
             style={{
               zIndex,
-              maxWidth: isMobile ? 'none' : maxWidth,
+              ...(isBottom
+                ? { maxHeight: isMobile ? undefined : (maxHeight || '85vh') }
+                : { maxWidth: isMobile ? 'none' : maxWidth }),
             }}
           >
             {/* Close button */}
@@ -83,6 +130,11 @@ export function PremiumFloatingPanel({
               >
                 <X className="w-4 h-4 text-muted-foreground" />
               </button>
+            )}
+
+            {/* Bottom panel drag handle */}
+            {isBottom && (
+              <div className="mx-auto mt-4 h-2 w-[100px] rounded-full bg-muted shrink-0" />
             )}
 
             {children}

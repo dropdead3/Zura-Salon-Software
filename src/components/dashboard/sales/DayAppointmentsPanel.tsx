@@ -1,4 +1,4 @@
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
@@ -11,7 +11,7 @@ import { Clock, User, Scissors, CalendarDays } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
 
-interface DayAppointmentsSheetProps {
+interface DayAppointmentsPanelProps {
   day: DayForecast | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -96,7 +96,7 @@ function AppointmentCard({ appointment, onClick }: { appointment: AppointmentSum
   );
 }
 
-export function DayAppointmentsSheet({ day, open, onOpenChange }: DayAppointmentsSheetProps) {
+export function DayAppointmentsPanel({ day, open, onOpenChange }: DayAppointmentsPanelProps) {
   const { formatDate } = useFormatDate();
   const { formatCurrencyWhole: fmtWhole } = useFormatCurrency();
   const navigate = useNavigate();
@@ -113,44 +113,42 @@ export function DayAppointmentsSheet({ day, open, onOpenChange }: DayAppointment
   const unconfirmedCount = day.appointments.filter(a => a.status === 'booked').length;
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-md">
-        <SheetHeader className="pb-4">
-          <SheetTitle className="font-display">
-            {formatDate(parseISO(day.date), 'EEEE, MMMM d')}
-          </SheetTitle>
-          <SheetDescription className="flex items-center gap-2">
-            <span>{day.appointmentCount} appointment{day.appointmentCount !== 1 ? 's' : ''}</span>
-            <span>·</span>
-            <span className="font-display">
-              <BlurredAmount>{fmtWhole(day.revenue)}</BlurredAmount> projected
-            </span>
-          </SheetDescription>
-          
-          <div className="flex gap-2 pt-2">
-            <Badge variant="secondary" className="bg-chart-2/20 text-chart-2">
-              {confirmedCount} Confirmed
-            </Badge>
-            <Badge variant="secondary" className="bg-muted text-muted-foreground">
-              {unconfirmedCount} Unconfirmed
-            </Badge>
-          </div>
-        </SheetHeader>
+    <PremiumFloatingPanel open={open} onOpenChange={onOpenChange} maxWidth="440px">
+      <div className="p-5 pb-3 border-b border-border/40">
+        <h2 className="font-display text-sm tracking-wide uppercase">
+          {formatDate(parseISO(day.date), 'EEEE, MMMM d')}
+        </h2>
+        <p className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
+          <span>{day.appointmentCount} appointment{day.appointmentCount !== 1 ? 's' : ''}</span>
+          <span>·</span>
+          <span className="font-display">
+            <BlurredAmount>{fmtWhole(day.revenue)}</BlurredAmount> projected
+          </span>
+        </p>
         
-        <ScrollArea className="h-[calc(100vh-220px)]">
-          <div className="space-y-3 pr-4">
-            {day.appointments.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">
-                No appointments scheduled
-              </p>
-            ) : (
-              day.appointments.map(apt => (
-                <AppointmentCard key={apt.id} appointment={apt} onClick={() => handleAppointmentClick(apt)} />
-              ))
-            )}
-          </div>
-        </ScrollArea>
-      </SheetContent>
-    </Sheet>
+        <div className="flex gap-2 pt-2">
+          <Badge variant="secondary" className="bg-chart-2/20 text-chart-2">
+            {confirmedCount} Confirmed
+          </Badge>
+          <Badge variant="secondary" className="bg-muted text-muted-foreground">
+            {unconfirmedCount} Unconfirmed
+          </Badge>
+        </div>
+      </div>
+      
+      <ScrollArea className="flex-1">
+        <div className="space-y-3 p-5">
+          {day.appointments.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8">
+              No appointments scheduled
+            </p>
+          ) : (
+            day.appointments.map(apt => (
+              <AppointmentCard key={apt.id} appointment={apt} onClick={() => handleAppointmentClick(apt)} />
+            ))
+          )}
+        </div>
+      </ScrollArea>
+    </PremiumFloatingPanel>
   );
 }

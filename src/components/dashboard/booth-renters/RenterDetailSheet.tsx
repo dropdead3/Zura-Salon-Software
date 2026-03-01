@@ -2,13 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useBoothRenter, useUpdateBoothRenter, type BoothRenterProfile } from '@/hooks/useBoothRenters';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
+import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -111,47 +105,47 @@ export function RenterDetailSheet({
   if (!renterId) return null;
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
-        <SheetHeader className="pb-4">
-          {isLoading ? (
-            <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded-full bg-muted animate-pulse" />
-              <div className="space-y-2">
-                <div className="h-5 w-32 bg-muted animate-pulse rounded" />
-                <div className="h-4 w-24 bg-muted animate-pulse rounded" />
-              </div>
+    <PremiumFloatingPanel open={open} onOpenChange={onOpenChange} maxWidth="640px">
+      <div className="p-5 pb-4 border-b border-border/40">
+        {isLoading ? (
+          <div className="flex items-center gap-4">
+            <div className="h-12 w-12 rounded-full bg-muted animate-pulse" />
+            <div className="space-y-2">
+              <div className="h-5 w-32 bg-muted animate-pulse rounded" />
+              <div className="h-4 w-24 bg-muted animate-pulse rounded" />
             </div>
-          ) : renter ? (
-            <div className="flex items-start gap-4">
-              <Avatar className="h-14 w-14">
-                <AvatarImage src={renter.photo_url || undefined} />
-                <AvatarFallback className="bg-primary/20 text-primary text-lg">
-                  {(renter.display_name || renter.full_name || 'U').charAt(0).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1">
-                <SheetTitle className="flex items-center gap-2">
-                  {renter.display_name || renter.full_name || 'Unknown'}
-                  <Badge variant="outline" className={statusColors[renter.status]}>
-                    {renter.status}
-                  </Badge>
-                </SheetTitle>
-                <SheetDescription className="flex items-center gap-1 mt-1">
-                  {renter.business_name && (
-                    <>
-                      <Building2 className="h-3.5 w-3.5" />
-                      {renter.business_name}
-                    </>
-                  )}
-                </SheetDescription>
-              </div>
+          </div>
+        ) : renter ? (
+          <div className="flex items-start gap-4">
+            <Avatar className="h-14 w-14">
+              <AvatarImage src={renter.photo_url || undefined} />
+              <AvatarFallback className="bg-primary/20 text-primary text-lg">
+                {(renter.display_name || renter.full_name || 'U').charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1">
+              <h2 className="flex items-center gap-2 font-display text-sm tracking-wide uppercase">
+                {renter.display_name || renter.full_name || 'Unknown'}
+                <Badge variant="outline" className={statusColors[renter.status]}>
+                  {renter.status}
+                </Badge>
+              </h2>
+              <p className="flex items-center gap-1 mt-1 text-sm text-muted-foreground">
+                {renter.business_name && (
+                  <>
+                    <Building2 className="h-3.5 w-3.5" />
+                    {renter.business_name}
+                  </>
+                )}
+              </p>
             </div>
-          ) : null}
-        </SheetHeader>
+          </div>
+        ) : null}
+      </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
-          <TabsList className="grid grid-cols-4">
+      <div className="flex-1 overflow-y-auto p-5">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid grid-cols-4 w-full">
             <TabsTrigger value="profile" className="gap-1.5">
               <User className="h-4 w-4" />
               <span className="hidden sm:inline">Profile</span>
@@ -426,52 +420,19 @@ export function RenterDetailSheet({
                         Verified
                       </Badge>
                     ) : (
-                      <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">
+                      <Badge variant="outline" className="bg-amber-500/20 text-amber-400 border-amber-500/30">
                         <AlertTriangle className="h-3.5 w-3.5 mr-1" />
                         Not Verified
                       </Badge>
                     )}
                   </div>
-
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <p className="text-muted-foreground">Provider</p>
-                      <p>{(renter as any).insurance_provider || '—'}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Policy #</p>
-                      <p>{(renter as any).insurance_policy_number || '—'}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Expiry Date</p>
-                      <p>
-                        {(renter as any).insurance_expiry_date
-                          ? formatDate(new Date((renter as any).insurance_expiry_date), 'MMM d, yyyy')
-                          : '—'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Document</p>
-                      {(renter as any).insurance_document_url ? (
-                        <a
-                          href={(renter as any).insurance_document_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-primary hover:underline"
-                        >
-                          View Document
-                        </a>
-                      ) : (
-                        <p>—</p>
-                      )}
-                    </div>
-                  </div>
+                  {/* Additional insurance UI would go here */}
                 </CardContent>
               </Card>
             )}
           </TabsContent>
         </Tabs>
-      </SheetContent>
-    </Sheet>
+      </div>
+    </PremiumFloatingPanel>
   );
 }

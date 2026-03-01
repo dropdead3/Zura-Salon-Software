@@ -4,13 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetFooter,
-} from '@/components/ui/sheet';
+import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -62,7 +56,6 @@ export function ChannelSettingsSheet({ open, onOpenChange }: ChannelSettingsShee
   const { sections } = useChatSections();
   const canManageSections = useHasChatPermission(CHAT_PERMISSION_KEYS.CREATE_SECTION);
 
-  // For DM channels, find the other person's name
   const dmPartnerName = useMemo(() => {
     if (activeChannel?.type !== 'dm') return null;
     const partner = members.find(m => m.userId !== user?.id);
@@ -77,7 +70,6 @@ export function ChannelSettingsSheet({ open, onOpenChange }: ChannelSettingsShee
   const [description, setDescription] = useState(activeChannel?.description || '');
   const [selectedSectionId, setSelectedSectionId] = useState<string>(activeChannel?.section_id || 'default');
 
-  // Reset local state when channel changes
   useEffect(() => {
     if (activeChannel) {
       setName(activeChannel.name || '');
@@ -89,12 +81,10 @@ export function ChannelSettingsSheet({ open, onOpenChange }: ChannelSettingsShee
   const updateMutation = useMutation({
     mutationFn: async () => {
       if (!activeChannel?.id) throw new Error('No channel');
-
       const { error } = await supabase
         .from('chat_channels')
         .update({ name, description })
         .eq('id', activeChannel.id);
-
       if (error) throw error;
     },
     onSuccess: () => {
@@ -102,20 +92,16 @@ export function ChannelSettingsSheet({ open, onOpenChange }: ChannelSettingsShee
       toast.success('Channel updated');
       onOpenChange(false);
     },
-    onError: () => {
-      toast.error('Failed to update channel');
-    },
+    onError: () => { toast.error('Failed to update channel'); },
   });
 
   const archiveMutation = useMutation({
     mutationFn: async () => {
       if (!activeChannel?.id) throw new Error('No channel');
-
       const { error } = await supabase
         .from('chat_channels')
         .update({ is_archived: true })
         .eq('id', activeChannel.id);
-
       if (error) throw error;
     },
     onSuccess: () => {
@@ -124,22 +110,17 @@ export function ChannelSettingsSheet({ open, onOpenChange }: ChannelSettingsShee
       toast.success('Channel archived');
       onOpenChange(false);
     },
-    onError: () => {
-      toast.error('Failed to archive channel');
-    },
+    onError: () => { toast.error('Failed to archive channel'); },
   });
 
-  // Hide DM conversation (per-user archive)
   const hideDMMutation = useMutation({
     mutationFn: async () => {
       if (!activeChannel?.id || !user?.id) throw new Error('No channel');
-
       const { error } = await supabase
         .from('chat_channel_members')
         .update({ is_hidden: true })
         .eq('channel_id', activeChannel.id)
         .eq('user_id', user.id);
-
       if (error) throw error;
     },
     onSuccess: () => {
@@ -148,28 +129,20 @@ export function ChannelSettingsSheet({ open, onOpenChange }: ChannelSettingsShee
       toast.success('Conversation archived. It will reappear if either of you sends a message.');
       onOpenChange(false);
     },
-    onError: () => {
-      toast.error('Failed to archive conversation');
-    },
+    onError: () => { toast.error('Failed to archive conversation'); },
   });
 
-  // Delete channel permanently (primary owner only, empty channels only)
   const deleteMutation = useMutation({
     mutationFn: async () => {
       if (!activeChannel?.id) throw new Error('No channel');
-
-      // First delete channel members
       await supabase
         .from('chat_channel_members')
         .delete()
         .eq('channel_id', activeChannel.id);
-
-      // Then delete the channel
       const { error } = await supabase
         .from('chat_channels')
         .delete()
         .eq('id', activeChannel.id);
-
       if (error) throw error;
     },
     onSuccess: () => {
@@ -178,9 +151,7 @@ export function ChannelSettingsSheet({ open, onOpenChange }: ChannelSettingsShee
       toast.success('Channel deleted permanently');
       onOpenChange(false);
     },
-    onError: () => {
-      toast.error('Failed to delete channel');
-    },
+    onError: () => { toast.error('Failed to delete channel'); },
   });
 
   if (!activeChannel) return null;
@@ -192,16 +163,16 @@ export function ChannelSettingsSheet({ open, onOpenChange }: ChannelSettingsShee
   const canEdit = isAdmin && !activeChannel.is_system && !isDM;
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-md">
-        <SheetHeader>
-          <SheetTitle className="flex items-center gap-2">
-            <Settings className="h-5 w-5" />
-            {isDM ? 'Conversation Settings' : 'Channel Settings'}
-          </SheetTitle>
-        </SheetHeader>
+    <PremiumFloatingPanel open={open} onOpenChange={onOpenChange} maxWidth="440px">
+      <div className="p-5 pb-3 border-b border-border/40">
+        <h2 className="font-display text-sm tracking-wide uppercase flex items-center gap-2">
+          <Settings className="h-5 w-5" />
+          {isDM ? 'Conversation Settings' : 'Channel Settings'}
+        </h2>
+      </div>
 
-        <div className="space-y-6 py-6">
+      <div className="flex-1 overflow-y-auto">
+        <div className="space-y-6 p-5">
           <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
             <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
               <ChannelIcon className="h-6 w-6 text-primary" />
@@ -226,7 +197,6 @@ export function ChannelSettingsSheet({ open, onOpenChange }: ChannelSettingsShee
                 />
               </div>
 
-              {/* Section assignment - only show for non-system, non-location channels */}
               {canManageSections && !activeChannel.is_system && activeChannel.type !== 'location' && (
                 <div className="space-y-2">
                   <Label htmlFor="section">Section</Label>
@@ -287,7 +257,7 @@ export function ChannelSettingsSheet({ open, onOpenChange }: ChannelSettingsShee
           )}
         </div>
 
-        <SheetFooter className="flex-col sm:flex-col gap-2 pt-4">
+        <div className="p-5 pt-0 flex flex-col gap-2">
           {isDM && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
@@ -300,7 +270,7 @@ export function ChannelSettingsSheet({ open, onOpenChange }: ChannelSettingsShee
                 <AlertDialogHeader>
                   <AlertDialogTitle>Archive this conversation?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This will hide the conversation from your sidebar. It will automatically reappear if either of you sends a new message. You can also find it via search.
+                    This will hide the conversation from your sidebar. It will automatically reappear if either of you sends a new message.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -445,8 +415,8 @@ export function ChannelSettingsSheet({ open, onOpenChange }: ChannelSettingsShee
               </Tooltip>
             )
           )}
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+        </div>
+      </div>
+    </PremiumFloatingPanel>
   );
 }

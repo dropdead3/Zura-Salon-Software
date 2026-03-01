@@ -1,14 +1,7 @@
 import { useState, useMemo } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { Button } from '@/components/ui/button';
-import { 
-  Sheet, 
-  SheetContent, 
-  SheetHeader, 
-  SheetTitle, 
-  SheetTrigger,
-  SheetDescription,
-} from '@/components/ui/sheet';
+import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { Separator } from '@/components/ui/separator';
 import { 
   Settings2, 
@@ -151,33 +144,21 @@ const WIDGETS = [
   { id: 'dayrate', label: 'Day Rate Bookings', icon: <Armchair className="w-4 h-4" /> },
 ];
 
-// All analytics cards that can be pinned to Command Center
-// size: 'half' = compact card that can pair side-by-side, 'full' = needs full width
 const PINNABLE_CARDS = [
-  // Sales & Revenue
   { id: 'sales_overview', label: 'Sales Overview', category: 'Sales', icon: <DollarSign className="w-4 h-4" />, size: 'full' as const },
   { id: 'revenue_breakdown', label: 'Revenue Breakdown', category: 'Sales', icon: <PieChart className="w-4 h-4" />, size: 'half' as const },
   { id: 'top_performers', label: 'Top Performers', category: 'Sales', icon: <Trophy className="w-4 h-4" />, size: 'half' as const },
-  
-  // Forecasting & Goals
   { id: 'week_ahead_forecast', label: 'Revenue Forecast', category: 'Forecasting', icon: <TrendingUp className="w-4 h-4" />, size: 'full' as const },
   { id: 'goal_tracker', label: 'Goal Tracker', category: 'Forecasting', icon: <Target className="w-4 h-4" />, size: 'half' as const },
   { id: 'new_bookings', label: 'New Bookings', category: 'Forecasting', icon: <CalendarPlus className="w-4 h-4" />, size: 'half' as const },
-  
-  // Clients
   { id: 'client_funnel', label: 'Client Funnel', category: 'Clients', icon: <Users className="w-4 h-4" />, size: 'half' as const },
-  
-  // Operations & Capacity
   { id: 'operations_stats', label: 'Operations Stats', category: 'Operations', icon: <LayoutDashboard className="w-4 h-4" />, size: 'full' as const },
   { id: 'capacity_utilization', label: 'Capacity Utilization', category: 'Operations', icon: <Gauge className="w-4 h-4" />, size: 'full' as const },
   { id: 'stylist_workload', label: 'Stylist Workload', category: 'Operations', icon: <Briefcase className="w-4 h-4" />, size: 'half' as const },
-  
-  // Staffing
   { id: 'staffing_trends', label: 'Staffing Trends', category: 'Staffing', icon: <LineChart className="w-4 h-4" />, size: 'full' as const },
   { id: 'hiring_capacity', label: 'Hiring Capacity', category: 'Staffing', icon: <UserPlus className="w-4 h-4" />, size: 'half' as const },
 ];
 
-// Size map for cards registered through the visibility system but not in PINNABLE_CARDS
 const CARD_SIZE_OVERRIDES: Record<string, 'half' | 'full'> = {
   executive_summary: 'full',
   daily_brief: 'full',
@@ -190,7 +171,6 @@ const CARD_SIZE_OVERRIDES: Record<string, 'half' | 'full'> = {
   client_experience_staff: 'full',
 };
 
-/** Returns the bento size hint for a pinned card. Defaults to 'full' for unknown cards. */
 export function getCardSize(cardId: string): 'half' | 'full' {
   const card = PINNABLE_CARDS.find(c => c.id === cardId);
   if (card) return card.size;
@@ -205,7 +185,6 @@ interface DashboardCustomizeMenuProps {
 export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: DashboardCustomizeMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   
-  // Get sections filtered by role
   const SECTIONS = useMemo(() => {
     const allSections = getSections();
     if (!roleContext) return allSections;
@@ -220,19 +199,16 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
   const { can } = usePermission();
   const canManageVisibility = can('manage_visibility_console');
   
-  // Visibility data for pinned analytics
   const { data: visibilityData, isLoading: isLoadingVisibility } = useDashboardVisibility();
   const registerElement = useRegisterVisibilityElement();
   const [isTogglingPin, setIsTogglingPin] = useState(false);
   const queryClient = useQueryClient();
 
-  // Sensors for drag and drop
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  // Check if a card is pinned (visible for at least one leadership role)
   const leadershipRoles: AppRole[] = ['super_admin', 'admin', 'manager'];
   
   const isCardPinned = (cardId: string): boolean => {
@@ -242,18 +218,14 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
     );
   };
 
-  // Compute unified ordered items (sections + pinned cards inline)
-  // This creates a single sortable list with both sections and pinned analytics
   const orderedUnifiedItems = useMemo(() => {
     const savedOrder = layout.sectionOrder || [];
     const sectionIds = SECTIONS.map(s => s.id);
     const pinnedCardIds = PINNABLE_CARDS.map(c => c.id).filter(id => isCardPinned(id));
     const pinnedEntries = pinnedCardIds.map(id => toPinnedEntry(id));
     
-    // Build unified list from saved order
     const result: string[] = [];
     
-    // Add items from saved order that are valid (either a section or a pinned card entry)
     for (const id of savedOrder) {
       if (result.includes(id)) continue;
       if (sectionIds.includes(id)) {
@@ -266,14 +238,12 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
       }
     }
     
-    // Add sections not in saved order
     for (const sectionId of sectionIds) {
       if (!result.includes(sectionId)) {
         result.push(sectionId);
       }
     }
     
-    // Add pinned cards not in saved order (as pinned: entries)
     for (const entry of pinnedEntries) {
       if (!result.includes(entry)) {
         result.push(entry);
@@ -283,41 +253,30 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
     return result;
   }, [layout.sectionOrder, SECTIONS, visibilityData]);
 
-  // Compute ordered widgets
   const orderedWidgets = useMemo(() => {
     const savedOrder = layout.widgets || [];
     const allIds = WIDGETS.map(w => w.id);
-    
-    // Enabled widgets in saved order
     const enabled = savedOrder.filter(id => allIds.includes(id));
-    
-    // Disabled widgets
     const disabled = allIds.filter(id => !enabled.includes(id));
-    
     return [...enabled, ...disabled];
   }, [layout.widgets]);
   
-  // Get unpinned cards for the "pin more" section
   const unpinnedCards = useMemo(() => {
     return PINNABLE_CARDS.filter(card => !isCardPinned(card.id));
   }, [visibilityData]);
   
-  // Get hubs filtered by user permission for customization
   const { hasPermission } = useAuth();
   const permittedHubs = useMemo(() => {
     return hubLinks.filter(hub => !hub.permission || hasPermission(hub.permission));
   }, [hasPermission]);
   
-  // Compute ordered hubs from layout preferences
   const orderedHubs = useMemo(() => {
     const savedOrder = layout.hubOrder || [];
     const enabledHubs = layout.enabledHubs;
     const hubHrefs = permittedHubs.map(h => h.href);
     
-    // Start with hubs in saved order that are still permitted
     const result = savedOrder.filter(href => hubHrefs.includes(href));
     
-    // Add any permitted hubs not in saved order
     for (const href of hubHrefs) {
       if (!result.includes(href)) {
         result.push(href);
@@ -332,7 +291,6 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
       ? layout.sections.filter(s => s !== sectionId)
       : [...layout.sections, sectionId];
     
-    // Preserve current order (don't remove from sectionOrder)
     saveLayout.mutate({ ...layout, sections, sectionOrder: orderedUnifiedItems });
   };
 
@@ -351,7 +309,6 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
     
     setIsTogglingPin(true);
     try {
-      // Batch upsert all leadership roles at once
       const rows = leadershipRoles.map(role => ({
         element_key: cardId,
         element_name: card?.label || cardId,
@@ -366,17 +323,14 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
 
       if (error) throw error;
 
-      // Invalidate visibility queries so UI updates everywhere
       queryClient.invalidateQueries({ queryKey: ['dashboard-visibility'] });
     } catch {
-      // Error handled silently; layout update below still proceeds
+      // Error handled silently
     } finally {
       setIsTogglingPin(false);
     }
     
-    // Update sectionOrder when pinning/unpinning
     if (newIsVisible) {
-      // Add pinned entry to sectionOrder if not already there
       const pinnedEntry = toPinnedEntry(cardId);
       if (!orderedUnifiedItems.includes(pinnedEntry)) {
         const newSectionOrder = [...orderedUnifiedItems, pinnedEntry];
@@ -384,7 +338,6 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
         saveLayout.mutate({ ...layout, pinnedCards: newPinnedCards, sectionOrder: newSectionOrder });
       }
     } else {
-      // Remove pinned entry from sectionOrder
       const pinnedEntry = toPinnedEntry(cardId);
       const newSectionOrder = orderedUnifiedItems.filter(id => id !== pinnedEntry);
       const newPinnedCards = (layout.pinnedCards || []).filter(id => id !== cardId);
@@ -400,10 +353,7 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
     const newIndex = orderedUnifiedItems.indexOf(over.id as string);
     const newOrder = arrayMove(orderedUnifiedItems, oldIndex, newIndex);
     
-    // Update enabled sections (only regular sections, not pinned: entries)
     const enabledSections = newOrder.filter(id => !isPinnedCardEntry(id) && layout.sections.includes(id));
-    
-    // Update pinnedCards order (extract from pinned: entries)
     const pinnedCardsOrder = newOrder
       .filter(id => isPinnedCardEntry(id))
       .map(id => getPinnedCardId(id));
@@ -424,7 +374,6 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
     const newIndex = orderedWidgets.indexOf(over.id as string);
     const newOrder = arrayMove(orderedWidgets, oldIndex, newIndex);
     
-    // Keep only enabled widgets in the layout, but respect new order
     const enabledWidgets = newOrder.filter(id => layout.widgets.includes(id));
     saveLayout.mutate({ ...layout, widgets: enabledWidgets });
   };
@@ -433,7 +382,6 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
     resetToDefault.mutate();
   };
   
-  // Hub customization handlers
   const handleToggleHub = (hubHref: string) => {
     const currentEnabled = layout.enabledHubs || permittedHubs.map(h => h.href);
     const newEnabled = currentEnabled.includes(hubHref)
@@ -451,7 +399,6 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
     const newIndex = orderedHubs.indexOf(over.id as string);
     const newOrder = arrayMove(orderedHubs, oldIndex, newIndex);
     
-    // Preserve enabled state or default to all enabled
     const currentEnabled = layout.enabledHubs || permittedHubs.map(h => h.href);
     saveLayout.mutate({ ...layout, hubOrder: newOrder, enabledHubs: currentEnabled });
   };
@@ -459,31 +406,29 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
   if (isLoading) return null;
 
   return (
-    <Sheet open={isOpen} onOpenChange={setIsOpen}>
-      <SheetTrigger asChild>
-        {variant === 'icon' ? (
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
-            <Settings2 className="w-4 h-4" />
-          </Button>
-        ) : (
-          <Button variant="outline" size="icon" className="h-8 w-8">
-            <Settings2 className="w-4 h-4" />
-          </Button>
-        )}
-      </SheetTrigger>
-      <SheetContent className="w-full sm:max-w-md overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle className="font-display tracking-wide flex items-center gap-2">
-            <LayoutDashboard className="w-5 h-5" />
-            CUSTOMIZE DASHBOARD
-          </SheetTitle>
-          <SheetDescription>
-            Drag to reorder, toggle to show/hide sections
-          </SheetDescription>
-        </SheetHeader>
+    <>
+      {variant === 'icon' ? (
+        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => setIsOpen(true)}>
+          <Settings2 className="w-4 h-4" />
+        </Button>
+      ) : (
+        <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setIsOpen(true)}>
+          <Settings2 className="w-4 h-4" />
+        </Button>
+      )}
 
-        <div className="mt-6 space-y-6">
-          {/* Unified Sections & Analytics List */}
+      <PremiumFloatingPanel open={isOpen} onOpenChange={setIsOpen} maxWidth="440px">
+        <div className="p-5 pb-3 border-b border-border/40">
+          <h2 className="font-display text-sm tracking-wide uppercase flex items-center gap-2">
+            <LayoutDashboard className="w-5 h-5" />
+            Customize Dashboard
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Drag to reorder, toggle to show/hide sections
+          </p>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-5 space-y-6">
           <div>
             <h3 className="text-sm font-medium text-muted-foreground mb-3">SECTIONS & ANALYTICS</h3>
             <p className="text-xs text-muted-foreground mb-4">
@@ -500,7 +445,6 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
               >
                 <div className="space-y-1">
                   {orderedUnifiedItems.map(itemId => {
-                    // Check if this is a pinned analytics card
                     if (isPinnedCardEntry(itemId)) {
                       const cardId = getPinnedCardId(itemId);
                       const card = PINNABLE_CARDS.find(c => c.id === cardId);
@@ -518,7 +462,6 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
                       );
                     }
                     
-                    // Regular section
                     const section = SECTIONS.find(s => s.id === itemId);
                     if (!section) return null;
                     return (
@@ -540,7 +483,6 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
 
           <Separator />
 
-          {/* Quick Access Hubs - Leadership only */}
           {roleContext?.isLeadership && permittedHubs.length > 0 && (
             <>
               <div>
@@ -564,7 +506,7 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
                         const Icon = hub.icon;
                         const isEnabled = layout.enabledHubs 
                           ? layout.enabledHubs.includes(hub.href)
-                          : true; // Default to enabled if no preference set
+                          : true;
                         return (
                           <SortableHubItem
                             key={hub.href}
@@ -586,8 +528,6 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
             </>
           )}
 
-
-          {/* Widgets */}
           <div>
             <h3 className="text-sm font-medium text-muted-foreground mb-3">WIDGETS</h3>
             <DndContext 
@@ -621,7 +561,6 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
 
           <Separator />
 
-          {/* Unpinned Analytics Section - Leadership only */}
           {roleContext?.isLeadership && unpinnedCards.length > 0 && (
             <>
               <div>
@@ -654,7 +593,6 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
             </>
           )}
 
-          {/* Actions */}
           <div className="space-y-3">
             <Button 
               variant="outline" 
@@ -680,14 +618,13 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
             )}
           </div>
 
-          {/* Template Info */}
           {roleTemplate && (
             <div className="text-xs text-muted-foreground text-center pt-2">
               Default template: {roleTemplate.display_name}
             </div>
           )}
         </div>
-      </SheetContent>
-    </Sheet>
+      </PremiumFloatingPanel>
+    </>
   );
 }

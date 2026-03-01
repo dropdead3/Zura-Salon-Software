@@ -36,12 +36,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
+import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 
 function ScheduleTypeLabel({ type }: { type: string }) {
   const labels: Record<string, string> = {
@@ -242,49 +237,47 @@ export function ScheduledReportsSubTab() {
       </AlertDialog>
 
       {/* Run History Sheet */}
-      <Sheet open={!!historyReportId} onOpenChange={() => setHistoryReportId(null)}>
-        <SheetContent className="sm:max-w-lg">
-          <SheetHeader>
-            <SheetTitle>Run History</SheetTitle>
-          </SheetHeader>
-          <div className="mt-6 space-y-3">
-            {runHistory?.length === 0 ? (
-              <p className="text-muted-foreground text-center py-8">
-                No runs yet
-              </p>
-            ) : (
-              runHistory?.map((run) => (
-                <div 
-                  key={run.id}
-                  className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30"
-                >
-                  {run.status === 'completed' ? (
-                    <CheckCircle2 className="w-5 h-5 text-green-500" />
-                  ) : run.status === 'failed' ? (
-                    <AlertCircle className="w-5 h-5 text-destructive" />
-                  ) : (
-                    <Clock className="w-5 h-5 text-muted-foreground" />
-                  )}
-                  <div className="flex-1">
-                    <p className="text-sm font-medium capitalize">{run.status}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {run.started_at && formatDate(new Date(run.started_at), 'MMM d, yyyy h:mm a')}
-                    </p>
-                    {run.error_message && (
-                      <p className="text-xs text-destructive mt-1">{run.error_message}</p>
-                    )}
-                  </div>
-                  {run.recipient_count && (
-                    <Badge variant="outline" className="text-xs">
-                      {run.recipient_count} sent
-                    </Badge>
+      <PremiumFloatingPanel open={!!historyReportId} onOpenChange={(open) => !open && setHistoryReportId(null)} maxWidth="560px">
+        <div className="p-5 pb-3 border-b border-border/40">
+          <h2 className="font-display text-sm tracking-wide uppercase">Run History</h2>
+        </div>
+        <div className="flex-1 overflow-y-auto p-5 space-y-3">
+          {runHistory?.length === 0 ? (
+            <p className="text-muted-foreground text-center py-8">
+              No runs yet
+            </p>
+          ) : (
+            runHistory?.map((run) => (
+              <div 
+                key={run.id}
+                className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30"
+              >
+                {run.status === 'completed' ? (
+                  <CheckCircle2 className="w-5 h-5 text-green-500" />
+                ) : run.status === 'failed' ? (
+                  <AlertCircle className="w-5 h-5 text-destructive" />
+                ) : (
+                  <Clock className="w-5 h-5 text-muted-foreground" />
+                )}
+                <div className="flex-1">
+                  <p className="text-sm font-medium capitalize">{run.status}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {run.started_at && formatDate(new Date(run.started_at), 'MMM d, yyyy h:mm a')}
+                  </p>
+                  {run.error_message && (
+                    <p className="text-xs text-destructive mt-1">{run.error_message}</p>
                   )}
                 </div>
-              ))
-            )}
-          </div>
-        </SheetContent>
-      </Sheet>
+                {run.recipient_count && (
+                  <Badge variant="outline" className="text-xs">
+                    {run.recipient_count} sent
+                  </Badge>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      </PremiumFloatingPanel>
     </div>
   );
 }
