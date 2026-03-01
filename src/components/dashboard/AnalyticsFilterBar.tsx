@@ -13,18 +13,13 @@ import { useActiveLocations } from '@/hooks/useLocations';
 import { LocationMultiSelect } from '@/components/ui/location-multi-select';
 import { parseLocationIds, encodeLocationIds } from '@/lib/locationFilter';
 import type { DateRangeType } from '@/components/dashboard/PinnedAnalyticsCard';
+import { DATE_RANGE_LABELS, getDateRangeSubtitle } from '@/lib/dateRangeLabels';
 
-const DATE_RANGE_LABELS: Record<DateRangeType, string> = {
-  lastMonth: 'Last Month',
-  '30d': 'Last 30 days',
-  '7d': 'Last 7 days',
-  yesterday: 'Yesterday',
-  today: 'Today',
-  todayToEom: 'Today to EOM',
-  todayToPayday: 'Today to Next Pay Day',
-  thisWeek: 'This Week',
-  thisMonth: 'This Month',
-};
+/** Ordered keys for the filter bar dropdown */
+const DATE_RANGE_KEYS: DateRangeType[] = [
+  'lastMonth', '30d', '7d', 'yesterday', 'today',
+  'todayToEom', 'todayToPayday', 'thisWeek', 'thisMonth',
+];
 
 interface Location {
   id: string;
@@ -129,11 +124,19 @@ export function AnalyticsFilterBar({
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          {(Object.keys(DATE_RANGE_LABELS) as DateRangeType[]).map((key) => (
-            <SelectItem key={key} value={key}>
-              {DATE_RANGE_LABELS[key]}
-            </SelectItem>
-          ))}
+          {DATE_RANGE_KEYS.map((key) => {
+            const subtitle = getDateRangeSubtitle(key);
+            return (
+              <SelectItem key={key} value={key}>
+                <div className="flex flex-col">
+                  <span>{DATE_RANGE_LABELS[key] ?? key}</span>
+                  {subtitle && (
+                    <span className="text-[11px] text-muted-foreground leading-tight">{subtitle}</span>
+                  )}
+                </div>
+              </SelectItem>
+            );
+          })}
         </SelectContent>
       </Select>
 
