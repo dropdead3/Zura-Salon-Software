@@ -1,74 +1,73 @@
 
 
-## Explain the "Unexplained Gap" — Appointment-Level Pricing Variance
+## Redesign the Revenue Gap Drilldown for Clarity
 
-### What you're asking for
+### Problems with the current UI
 
-You want the "Pricing / discounts / other" row in the gap breakdown to be expandable — just like cancellations and no-shows — showing exactly which completed appointments had a difference between what was scheduled and what was actually collected. This reveals markdowns, service swaps, discounts, and uncollected appointments.
+1. **Client names show as "Walk-in"** — the hook reads `client_name` from `phorest_appointments` which is always null in your data. Names exist in `phorest_clients.name` but aren't being joined.
 
-### Data reality
+2. **Most "pricing variances" are actually missing POS records** — 94 variances totaling $12.8K in February, but most show `actual: 0` with no transaction at all. These aren't pricing discrepancies — they're appointments that completed but never got rung up (or the POS match failed). The UI doesn't clearly distinguish these.
 
-- `phorest_transaction_items.appointment_id` is always null in your data, so we can't do a direct 1:1 join
-- We **can** match via `phorest_client_id` + `appointment_date` (client + day)
-- Clients with multiple same-day appointments create ambiguity, so we aggregate at the **client-day** level: total scheduled vs total POS collected per client per day
-- This shows which client visits had a revenue shortfall and by how much
+3. **The three-category breakdown (Cancellations / No-shows / Pricing) buries the answer** — the user has to click three different rows and mentally piece together what happened. The real question is simpler: "Which appointments didn't turn into the revenue I expected, and why?"
 
-### Plan
+### Proposed redesign: A single, clear variance list
 
-#### 1. Expand `useRevenueGapAnalysis` hook
+Instead of three separate expandable categories, show **one unified list of every appointment that contributed to the gap**, each tagged with a reason badge. This makes the drilldown scannable at a glance.
 
-Add a new query that fetches **completed appointments** with their scheduled prices, then fetches matching **POS transaction items** for those same client-days. Compares per-client-day totals:
+#### 1. Fix client name resolution in `useRevenueGapAnalysis`
 
-- `scheduledTotal` = sum of `phorest_appointments.total_price` for that client-day
-- `actualTotal` = sum of `phorest_transaction_items.total_amount` for that client-day
-- `variance` = scheduled - actual (only surface where variance > $1)
+Join `phorest_appointments.phorest_client_id` → `phorest_clients.name` to get actual client names instead of relying on the always-null `client_name` field. Apply to cancellations, no-shows, AND completed appointments.
 
-New return field:
-```typescript
-pricingVariances: {
-  count: number;
-  totalVariance: number;
-  items: PricingVarianceItem[];
-}
+#### 2. Restructure the drilldown UI
 
-interface PricingVarianceItem {
-  clientName: string | null;
-  scheduledServices: string[];   // service names from appointments
-  actualServices: string[];      // item names from transactions
-  scheduledAmount: number;
-  actualAmount: number;
-  variance: number;
-  appointmentDate: string;
-  stylistName: string | null;
-  hasDiscount: boolean;
-  noTransaction: boolean;        // true if zero POS records found
-}
+Replace the three-category accordion with a single list:
+
+```text
+┌─────────────────────────────────────────────┐
+│  WHERE THE GAP CAME FROM                    │
+│                                             │
+│  [Cancelled] Jane Smith                     │
+│  Full Balayage · w/ Sarah    -$240          │
+│                                             │
+│  [No POS Record] Kaylee Baird               │
+│  2 Row Initial Install · w/ Maria  -$300    │
+│                                             │
+│  [Discount] Nicole Dickerson                │
+│  Partial Balayage  $185 → $150    -$35      │
+│                                             │
+│  [No-show] Walk-in                          │
+│  Natural Root Retouch · w/ Amy   -$152      │
+│                                             │
+│  ... Show all 28 items                      │
+│                                             │
+│  ── Summary ──────────────────────          │
+│  Cancellations (3)         -$620            │
+│  No-shows (1)              -$152            │
+│  No POS record (18)       -$2,400           │
+│  Pricing differences (6)   -$210            │
+└─────────────────────────────────────────────┘
 ```
 
-Items sorted by variance descending (largest shortfalls first).
+Each row gets a color-coded reason badge:
+- **Cancelled** (red) — appointment was cancelled
+- **No-show** (amber) — client didn't show up
+- **No POS record** (red/muted) — completed appointment with zero matching POS transactions
+- **Service changed** (blue) — POS service differs from scheduled
+- **Discount** (amber) — POS amount lower, discount flag present
 
-#### 2. Update `RevenueGapDrilldown` component
-
-Replace the static "Pricing / discounts / other" div with an `ExpandableRow` that shows the variance items when clicked:
-
-- Each row shows: **Client name**, **Scheduled services** vs **Actual services** (if different), **Scheduled amount** → **Actual amount**, **Variance**
-- Flag rows where no POS transaction was found at all ("No transaction recorded")
-- Flag rows where services differ from scheduled ("Service changed")
-- Flag rows with discounts applied
-- Same 5-item cap with "Show all" toggle
+The list is sorted by variance amount (largest first), capped at 10 items with "Show all" toggle. A compact summary row at the bottom breaks out totals by category.
 
 #### 3. Files modified
 
 | File | Change |
 |---|---|
-| `src/hooks/useRevenueGapAnalysis.ts` | Add pricing variance query (completed appts vs POS transactions by client-day), new `pricingVariances` return field |
-| `src/components/dashboard/sales/RevenueGapDrilldown.tsx` | Make "Pricing / discounts / other" row expandable with variance detail list, new `VarianceList` sub-component |
+| `src/hooks/useRevenueGapAnalysis.ts` | Join `phorest_clients` for name resolution. Return a single unified `gapItems: GapItem[]` array combining all categories, each with a `reason` field (`'cancelled' | 'no_show' | 'no_pos_record' | 'service_changed' | 'discount' | 'pricing_diff'`). Keep the summary totals for the bottom row. |
+| `src/components/dashboard/sales/RevenueGapDrilldown.tsx` | Replace three-category accordion with single sorted list. Each item shows client name, service, stylist, amount, and a reason badge. Add compact summary bar at bottom. |
 
 ### Technical details
 
-- Client-day matching: group by `phorest_client_id` + `appointment_date` to avoid cross-join inflation
-- Only surface variances > $1 to filter rounding noise
-- Staff name resolution reuses the existing `phorest_staff_mapping` lookup already in the hook
-- Transaction query filters to `item_type IN ('service', 'sale_fee')` to match service revenue (excludes retail products which aren't part of appointment estimates)
-- The `unexplainedGap` number becomes `max(0, gapAmount - cancellations - noShows - pricingVariances.totalVariance)` — any remaining gap after all three categories
+- Client name query: `SELECT pc.name FROM phorest_clients pc WHERE pc.phorest_client_id = a.phorest_client_id` — done as a bulk lookup map, same pattern as staff mapping
+- Unified `GapItem` type replaces `GapAppointment` + `PricingVarianceItem` — simpler data model
+- Reason assignment logic: cancelled → `'cancelled'`, no-show → `'no_show'`, completed + no POS match → `'no_pos_record'`, completed + POS with discount → `'discount'`, completed + different service name → `'service_changed'`, completed + lower amount → `'pricing_diff'`
+- Initial visible cap: 10 items (up from 5, since this is now the single list)
 
