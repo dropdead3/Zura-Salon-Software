@@ -17,8 +17,6 @@ export default function TrainingHub() {
         <DashboardPageHeader
           title="Training Hub"
           description="Manage training library, assignments, quizzes, and track team progress"
-          backTo="/dashboard/admin/management"
-          backLabel="Back to Management"
         />
 
         {/* Tabs */}

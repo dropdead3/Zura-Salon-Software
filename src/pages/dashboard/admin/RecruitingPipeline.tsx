@@ -137,7 +137,6 @@ export default function RecruitingPipeline() {
         <DashboardPageHeader
           title="Recruiting Pipeline"
           description="Track and manage job applicants"
-          backTo="/dashboard/admin/management"
           className="mb-6"
         />
 

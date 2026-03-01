@@ -78,7 +78,6 @@ export default function HealthScores() {
       <PlatformPageHeader
         title="Organization Health"
         description="Monitor account health and identify at-risk tenants"
-        backTo="/dashboard/platform/overview"
         actions={
           <PlatformButton
             variant="secondary"

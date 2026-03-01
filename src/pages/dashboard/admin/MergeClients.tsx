@@ -27,8 +27,6 @@ export default function MergeClients() {
         <DashboardPageHeader
           title="Merge Clients"
           description="Consolidate duplicate client profiles safely"
-          backTo="/dashboard/admin/management"
-          backLabel="Back to Management Hub"
         />
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>

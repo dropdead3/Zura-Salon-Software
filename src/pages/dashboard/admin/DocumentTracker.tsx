@@ -94,8 +94,6 @@ export default function DocumentTracker() {
         <DashboardPageHeader
           title="Document & License Tracker"
           description="Track licenses, certifications, and compliance documents"
-          backTo="/dashboard/admin/management"
-          backLabel="Back to Management"
           actions={
             <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>

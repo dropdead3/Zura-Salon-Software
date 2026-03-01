@@ -268,8 +268,6 @@ export default function PlatformOnboarding() {
         <PlatformPageHeader 
           title="Onboarding" 
           description="Track accounts through their go-live journey"
-          backTo="/dashboard/platform/overview"
-          backLabel="Back to Overview"
         />
         <div className="mt-8 text-center text-red-400">
           Failed to load onboarding data
@@ -305,8 +303,6 @@ export default function PlatformOnboarding() {
       <PlatformPageHeader 
         title="Onboarding" 
         description="Track accounts through their go-live journey"
-        backTo="/dashboard/platform/overview"
-        backLabel="Back to Overview"
         actions={
           <PlatformButton onClick={() => navigate('/dashboard/platform/accounts')}>
             <Building2 className="h-4 w-4 mr-2" />

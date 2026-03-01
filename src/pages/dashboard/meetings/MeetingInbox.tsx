@@ -18,8 +18,6 @@ export default function MeetingInbox() {
           <DashboardPageHeader
             title="Meeting Inbox"
             description="Manager-initiated meeting requests and your pending requests."
-            backTo="/dashboard/schedule-meeting"
-            backLabel="Back to Meetings Hub"
           />
 
           <div className="space-y-4">

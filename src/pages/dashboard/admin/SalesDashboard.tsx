@@ -42,7 +42,6 @@ import {
   BarChart3,
   Users,
   Link2,
-  ArrowLeft,
 } from 'lucide-react';
 import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
@@ -280,11 +279,6 @@ export default function SalesDashboard() {
         {/* Header - Mobile optimized */}
         <div className="flex flex-col gap-4">
           <div className="flex items-start gap-4">
-            <Button variant="ghost" size="icon" asChild className="shrink-0 mt-1">
-              <Link to="/dashboard/admin/management">
-                <ArrowLeft className="w-5 h-5" />
-              </Link>
-            </Button>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-foreground text-background flex items-center justify-center rounded-lg shrink-0">
                 <DollarSign className="w-5 h-5" />

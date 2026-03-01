@@ -80,7 +80,6 @@ export default function ChallengesDashboard() {
         <DashboardPageHeader
           title="Team Challenges"
           description="Create and manage team competitions"
-          backTo="/dashboard/admin/management"
           className="mb-6"
           actions={
             <Button onClick={() => setCreateDialogOpen(true)}>

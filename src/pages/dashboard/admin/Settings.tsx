@@ -985,8 +985,6 @@ export default function Settings() {
           <div className="mb-6">
             <DashboardPageHeader
               title={categoriesMap[activeCategory]?.label.toUpperCase() ?? ''}
-              backTo="/dashboard/admin/settings"
-              backLabel="Back to Settings"
             />
           </div>
 

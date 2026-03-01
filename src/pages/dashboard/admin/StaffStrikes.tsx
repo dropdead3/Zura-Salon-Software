@@ -175,7 +175,6 @@ export default function StaffStrikes() {
         <DashboardPageHeader
           title="Staff Strikes"
           description="Track write-ups, complaints, warnings, and issues for team members."
-          backTo="/dashboard/admin/management"
           className="mb-8"
           actions={
             <div className="flex items-center gap-2">

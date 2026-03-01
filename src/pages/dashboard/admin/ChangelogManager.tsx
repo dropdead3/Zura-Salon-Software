@@ -376,8 +376,6 @@ export default function ChangelogManager() {
         <DashboardPageHeader
           title="Changelog & Roadmap"
           description="Manage updates, features, and user feedback"
-          backTo="/dashboard/admin/management"
-          backLabel="Back to Management"
           actions={
             <Button onClick={() => { resetForm(); setShowEntryDialog(true); }}>
               <Plus className="h-4 w-4 mr-2" />

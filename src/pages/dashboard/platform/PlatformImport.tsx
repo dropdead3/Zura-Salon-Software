@@ -85,8 +85,6 @@ export default function PlatformImport() {
       <PlatformPageHeader
         title="Data Migration"
         description="Import data from external software into accounts"
-        backTo="/dashboard/platform/overview"
-        backLabel="Back to Overview"
       />
 
       <Tabs defaultValue="import" className="space-y-6">

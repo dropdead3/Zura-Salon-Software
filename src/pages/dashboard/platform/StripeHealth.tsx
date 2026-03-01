@@ -31,8 +31,6 @@ export default function StripeHealthPage() {
       <PlatformPageHeader
         title="Payments Health"
         description="Monitor Stripe payment processing across all organizations"
-        backTo="/dashboard/platform/overview"
-        backLabel="Back to Overview"
         actions={
           <div className="flex items-center gap-3">
             {/* Real-time indicator */}

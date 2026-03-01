@@ -167,8 +167,6 @@ export default function ManagementHub() {
         <DashboardPageHeader
           title="Management Hub"
           description="Central command for team operations"
-          backTo="/dashboard"
-          backLabel="Back to Command Center"
         />
 
         {/* Team Development */}

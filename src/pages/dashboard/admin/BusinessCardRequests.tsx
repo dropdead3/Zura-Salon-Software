@@ -221,7 +221,6 @@ export default function BusinessCardRequests() {
         <DashboardPageHeader
           title="Business Card Requests"
           description="Manage and process business card requests from team members."
-          backTo="/dashboard/admin/management"
           className="mb-8"
         />
 

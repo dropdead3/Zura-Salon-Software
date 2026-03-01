@@ -37,8 +37,6 @@ export default function BoothRenters() {
           <PlatformPageHeader
             title="Renter Hub"
             description="Manage booth renters and rent payments"
-            backTo="/dashboard"
-            backLabel="Back to Dashboard"
             actions={<Store className="h-6 w-6 text-primary" />}
           />
           <Card className="bg-muted/30 border-dashed">
@@ -63,8 +61,6 @@ export default function BoothRenters() {
         <PlatformPageHeader
           title="Renter Hub"
           description="Manage booth renters and rent payments"
-          backTo="/dashboard"
-          backLabel="Back to Dashboard"
           actions={<Store className="h-6 w-6 text-primary" />}
         />
 

@@ -83,7 +83,6 @@ export default function PointsConfig() {
         <DashboardPageHeader
           title="Points & Rewards"
           description="Configure point rules, manage rewards, and approve redemptions"
-          backTo="/dashboard/admin/management"
         />
 
         {/* Tabs */}

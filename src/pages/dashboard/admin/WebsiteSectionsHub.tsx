@@ -155,7 +155,7 @@ export default function WebsiteSectionsHub() {
 
   return (
     <DashboardLayout>
-      <DashboardPageHeader title="Website Sections" backTo="/dashboard/admin" />
+      <DashboardPageHeader title="Website Sections" />
       
       <div className="container max-w-[1600px] px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

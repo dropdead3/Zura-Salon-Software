@@ -73,8 +73,6 @@ export default function Revenue() {
       <PlatformPageHeader
         title="Revenue Dashboard"
         description="Track subscription revenue, payment status, and account health"
-        backTo="/dashboard/platform/overview"
-        backLabel="Back to Overview"
       />
 
       {/* KPI Cards */}

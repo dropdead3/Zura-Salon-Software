@@ -66,8 +66,6 @@ export default function SystemHealthPage() {
       <PlatformPageHeader
         title="System Health"
         description="Monitor platform services and integrations"
-        backTo="/dashboard/platform/overview"
-        backLabel="Back to Overview"
         actions={
           <PlatformButton 
             variant="outline" 

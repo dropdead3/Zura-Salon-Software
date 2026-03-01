@@ -59,8 +59,6 @@ export default function PlatformAnalytics() {
       <PlatformPageHeader
         title="Organization Analytics"
         description="Deep intelligence across all accounts"
-        backTo="/dashboard/platform/overview"
-        backLabel="Back to Overview"
         actions={
           <PlatformBadge variant="warning" size="sm" className="gap-1">
             <Crown className="w-3 h-3" />

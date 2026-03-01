@@ -35,8 +35,6 @@ export default function PlatformSettings() {
       <PlatformPageHeader
         title="Platform Settings"
         description="Configure platform-wide settings and defaults"
-        backTo="/dashboard/platform/overview"
-        backLabel="Back to Overview"
       />
 
       <Tabs defaultValue="account" className="space-y-6">

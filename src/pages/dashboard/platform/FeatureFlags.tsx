@@ -252,8 +252,6 @@ export default function PlatformFeatureFlags() {
       <PlatformPageHeader
         title="Feature Flags"
         description="Control feature rollouts and experiments across all organizations"
-        backTo="/dashboard/platform/settings"
-        backLabel="Back to Settings"
         actions={
           <PlatformButton onClick={handleCreate} className="gap-2">
             <Plus className="w-4 h-4" />

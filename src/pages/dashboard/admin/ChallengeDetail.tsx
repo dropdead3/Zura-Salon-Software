@@ -132,8 +132,6 @@ export default function ChallengeDetail() {
         <DashboardPageHeader
           title={challenge.title}
           description={`${metricLabels[challenge.metric_type]} · ${challenge.challenge_type}`}
-          backTo="/dashboard/admin/challenges"
-          backLabel="Back to Challenges"
           actions={
             <div className="flex items-center gap-3">
               <Badge className={statusColors[challenge.status]}>

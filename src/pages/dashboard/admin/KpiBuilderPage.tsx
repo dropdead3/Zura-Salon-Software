@@ -90,7 +90,6 @@ export default function KpiBuilderPage() {
       <PlatformPageHeader
         title="KPI Architecture"
         description="Define the metrics that matter, the thresholds that trigger alerts, and the cadence of review."
-        backTo="/dashboard"
       />
 
       {/* Active KPIs */}
