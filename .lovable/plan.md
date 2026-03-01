@@ -1,30 +1,59 @@
 
 
-## Fix Broken Nav Links and Missing Label Rendering
+## Implement All 5 Post-Consolidation Enhancements
 
-### Issues Found
+### 1. Fix TopBarSearch hub children discovery
 
-**1. Missing i18n keys for new hub labels**
-The nav consolidation added `labelKey` values (`team_hub`, `client_hub`, `growth_hub`) to `dashboardNav.ts`, but never added the corresponding entries to `src/locales/en.json`. The `getNavLabel` function in `SidebarNavContent.tsx` calls `t('nav.team_hub')` etc., which returns the raw key string instead of a proper label.
+**File:** `src/components/dashboard/TopBarSearch.tsx`
 
-**Fix:** Add `team_hub`, `client_hub`, and `growth_hub` to `en.json` under `dashboard.nav`.
+- Replace imports of `growthNavItems`, `statsNavItems`, `managerNavItems`, `adminOnlyNavItems` with `myToolsNavItems`, `manageNavItems`, `systemNavItems`
+- Add a `hubChildrenItems` array (~35 items) containing all deep pages inside Team Hub, Client Hub, Growth Hub, and Hiring/Payroll Hub (e.g., Team Directory, Performance Reviews, PTO Balances, Campaigns, Client Health, Recruiting Pipeline, etc.)
+- Update the `navigationResults` useMemo to include `hubChildrenItems` in the deduped list
 
-**2. Missing routes in `VALID_ROUTE_PREFIXES` (guidanceRoutes.ts)**
-The new hub routes (`/dashboard/admin/team-hub`, `/dashboard/admin/client-hub`, `/dashboard/admin/growth-hub`) and several other existing routes are missing from the valid route set. This causes AI-generated guidance links to these pages to be rejected as invalid.
+### 2. Redirect legacy ManagementHub route
 
-**Fix:** Add the new hub routes plus other missing routes (`/dashboard/admin/access-hub`, `/dashboard/today-prep`, `/dashboard/waitlist`, `/dashboard/appointments-hub`, `/dashboard/campaigns`, `/dashboard/admin/feedback`, `/dashboard/admin/client-health`, `/dashboard/admin/reengagement`, `/dashboard/admin/seo-workshop`) to `VALID_ROUTE_PREFIXES`.
+**File:** `src/App.tsx`
 
-**3. `sectionItemsMap` uses legacy prop names**
-In `SidebarNavContent.tsx`, the `myTools` section is built from `[...growthNavItems, ...statsNavItems]` (the legacy prop names). Since `dashboardNav.ts` now exports `myToolsNavItems` as the canonical list, the `DashboardLayout` should pass this directly. However, since the props still use the old names for backward compatibility, the current merge-and-deduplicate approach works but is fragile. No change needed now — it functions correctly.
+- Replace the ManagementHub route at line 322:
+  ```
+  // Before:
+  <Route path="/dashboard/admin/management" element={<ProtectedRoute ...><ManagementHub /></ProtectedRoute>} />
+  // After:
+  <Route path="/dashboard/admin/management" element={<Navigate to="/dashboard/admin/team-hub" replace />} />
+  ```
+- The ManagementHub import can remain (dead code) or be removed for cleanliness
 
-### Files to Edit
+### 3. Clean up HubQuickLinks config
+
+**File:** `src/config/dashboardNav.ts`
+
+- Remove standalone non-hub items from `hubLinksConfig`: "Schedule 1:1" and "Appointments & Transactions"
+- These are individual pages, not hub entry points — they're already accessible via Team Hub and Analytics Hub respectively
+
+### 4. Update SidebarPreview link config
+
+**File:** `src/components/dashboard/settings/SidebarPreview.tsx`
+
+- Remove legacy standalone links from `LINK_CONFIG` that are no longer in the sidebar (Team Directory, Client Directory, Appointments & Transactions, etc.)
+- Add the new hub routes: `/dashboard/admin/team-hub`, `/dashboard/admin/client-hub`, `/dashboard/admin/growth-hub`
+- Keep existing hub entries (Analytics Hub, Payroll Hub, Renter Hub)
+
+### 5. Add mobile admin nav shortcut
+
+**File:** `src/components/mobile/layout/MobileBottomNav.tsx`
+
+- Import `useAuth` from `@/contexts/AuthContext`
+- Add `LayoutGrid` icon from lucide-react
+- Conditionally include a "Manage" nav item (linking to `/dashboard/admin/team-hub`) when the user has the `view_team_overview` permission
+- This replaces the "Stats" item for admin users, or is added as a 6th item (5 items is the max comfortable for mobile, so replacing Stats — which is still accessible from sidebar — is better)
+
+### Files Modified
 
 | File | Change |
 |---|---|
-| `src/locales/en.json` | Add 3 missing nav keys: `team_hub`, `client_hub`, `growth_hub` |
-| `src/utils/guidanceRoutes.ts` | Add ~12 missing route prefixes to `VALID_ROUTE_PREFIXES` |
-
-### Impact
-- Nav labels for Team Hub, Client Hub, and Growth Hub will render properly instead of showing raw i18n keys
-- AI guidance links to hub pages will be recognized as valid routes
+| `src/components/dashboard/TopBarSearch.tsx` | Fix imports, add hub children searchable items |
+| `src/App.tsx` | Replace ManagementHub route with redirect |
+| `src/config/dashboardNav.ts` | Remove non-hub items from hubLinksConfig |
+| `src/components/dashboard/settings/SidebarPreview.tsx` | Update LINK_CONFIG for new hub structure |
+| `src/components/mobile/layout/MobileBottomNav.tsx` | Add role-conditional Manage shortcut |
 
