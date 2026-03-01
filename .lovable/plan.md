@@ -1,54 +1,20 @@
 
 
-## Clarify Date Range Labels
+## Remove Focus Rings from All Inputs
 
-### Problem
-"This Week" and "This Month" are ambiguous. They actually mean **week-to-date** (Monday → today) and **month-to-date** (1st → today), but a user could reasonably interpret them as the full calendar week or a rolling window.
-
-### Solution
-Relabel with explicit, unambiguous names and add dynamic date subtitles in the dropdown so the user sees the exact range.
-
-**Label changes across all `DATE_RANGE_LABELS` maps:**
-
-| Current Label | New Label | Dropdown Subtitle Example |
-|---|---|---|
-| This Week | Week to Date | Mon, Feb 24 – Today |
-| This Month | Month to Date | Mar 1 – Today |
-| Today to EOM | Today → End of Month | Today – Mar 31 |
-| Today to Next Pay Day | Today → Next Pay Day | Today – Mar 15 |
-| Last Month | Last Month | Feb 1 – Feb 28 |
-| Last 7 days | Last 7 Days | _(no subtitle needed)_ |
-| Last 30 days | Last 30 Days | _(no subtitle needed)_ |
-
-### Approach
-1. Create a shared utility `getDateRangeSubtitle(key)` that returns a short human-readable date span string (e.g., "Mon, Feb 24 – Today") for the current moment
-2. Update `DATE_RANGE_LABELS` in all 4 locations (AnalyticsFilterBar, AnalyticsFilterBadge, CommandCenterAnalytics, AggregateSalesCard) to use the new labels
-3. In the `SelectItem` dropdowns, render the subtitle as a secondary line (`text-[11px] text-muted-foreground`) beneath the label so the user sees the exact date window before selecting
-
-### Visual (Dropdown)
-```text
-┌──────────────────────────┐
-│  Last Month              │
-│  Last 30 Days            │
-│  Last 7 Days             │
-│  Yesterday               │
-│  Today                   │
-│  ─────────────────────── │
-│  Week to Date            │
-│  Mon, Feb 24 – Today     │  ← subtle subtitle
-│  ─────────────────────── │
-│  Month to Date           │
-│  Mar 1 – Today           │  ← subtle subtitle
-│  ─────────────────────── │
-│  Today → End of Month    │
-│  Today – Mar 31          │
-└──────────────────────────┘
-```
+### What's Changing
+Strip the `focus-visible:ring-*` classes from `Input`, `Textarea`, and `PlatformInput`, replacing them with a subtle border-color shift on focus — no ring, no offset, just a clean border transition that feels intentional and luxury.
 
 ### Files
-1. **New: `src/lib/dateRangeLabels.ts`** — Single source of truth for labels + `getDateRangeSubtitle()` utility
-2. **`src/components/dashboard/AnalyticsFilterBar.tsx`** — Import shared labels, render subtitles in SelectItems
-3. **`src/components/dashboard/AnalyticsFilterBadge.tsx`** — Import shared labels
-4. **`src/components/dashboard/CommandCenterAnalytics.tsx`** — Import shared labels, render subtitles
-5. **`src/components/dashboard/AggregateSalesCard.tsx`** — Import shared labels
+
+1. **`src/components/ui/input.tsx`** (line 31)  
+   Remove `ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2`  
+   Replace with `focus-visible:border-foreground/30 transition-colors`
+
+2. **`src/components/ui/textarea.tsx`** (line 28)  
+   Same removal: strip `ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2`  
+   Replace with `focus-visible:border-foreground/30 transition-colors`
+
+3. **`src/components/platform/ui/PlatformInput.tsx`** (line 25)  
+   Already uses a border-shift style (`focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500/50`). Remove the `focus:ring-2 focus:ring-violet-500/30` portion, keep only the border shift.
 
