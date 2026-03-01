@@ -161,21 +161,18 @@ export function SuperAdminTopBar({
       <div className="relative w-full max-w-none flex items-center h-14 px-6 bg-card/80 backdrop-blur-xl backdrop-saturate-150 border border-border rounded-full overflow-x-hidden">
 
         {/* ── LEFT ZONE: Nav + Search ── */}
-        <div className="flex items-center gap-3 min-w-0 shrink">
+        <div className="flex items-center gap-3 min-w-0 flex-1">
           <NavHistoryArrows />
           {isPlatformUser && location.pathname.startsWith('/dashboard/platform') && (
             <OrganizationSwitcher compact />
           )}
-        </div>
-
-        {/* ── CENTER ZONE: Search + Status ── */}
-        <div className="flex-1 flex items-center justify-center gap-3 min-w-0 px-4" style={{ flexShrink: 2 }}>
-          {/* Search — responsive max-width */}
-          <div className="min-w-0 w-full max-w-2xl 2xl:max-w-2xl xl:max-w-xl lg:max-w-[320px]">
+          <div className="min-w-0 w-full max-w-xl">
             <TopBarSearch filterNavItems={filterNavItems} />
           </div>
+        </div>
 
-          {/* Next Client — visible ≥1280 only */}
+        {/* ── CENTER ZONE: Status ── */}
+        <div className="flex-1 flex items-center justify-center min-w-0 px-4">
           {showNextClient && (
             <div className="hidden 2xl:flex items-center min-w-0">
               <NextClientIndicator userId={currentUserId} />
