@@ -1,103 +1,43 @@
 
 
-## Eliminate Sheet/Drawer Primitives — Full Migration to PremiumFloatingPanel
+## Fix Dashboard UI Regressions from Sheet/Drawer Migration
 
 ### Problem
-Every time a new panel surface is built, contributors reach for the `Sheet` or `Drawer` primitives, producing flat Radix/Vaul drawers that don't match the luxury glass bento aesthetic. You then have to retroactively fix each one. The root cause is that these primitives exist and are the path of least resistance.
+The Sheet-to-PremiumFloatingPanel migration inadvertently stripped critical UI elements from `DashboardLayout.tsx`. The header JSX was reduced to just a mobile hamburger button, removing:
+- **SuperAdminTopBar** (the entire top menu bar with search, notifications, avatar, nav arrows)
+- **HelpFAB** (the floating action button)
+- **DashboardLockScreen** and **ClockInPromptDialog**
+- **IncidentBanner**, **CustomLandingPageBanner**, **PlatformContextBanner**
+- **ZuraStickyGuidance**
+- **KeyboardShortcutsDialog**
 
-### Strategy
-1. **Extend `PremiumFloatingPanel`** to handle all variants Sheet/Drawer currently cover (right-side, left-side, bottom sheet)
-2. **Migrate all 24 consumer files** from Sheet/Drawer to PremiumFloatingPanel
-3. **Delete `sheet.tsx` and `drawer.tsx`** so they can never be used again
+All of these components are imported but never rendered in the current JSX.
 
-### PremiumFloatingPanel Enhancements
+### Root Cause
+When the mobile sidebar was migrated from Sheet to PremiumFloatingPanel, the surrounding layout JSX was likely truncated — the `main` element lost everything except the mobile menu button and child content.
 
-Add a `side` prop (`'right' | 'left' | 'bottom'`) defaulting to `'right'`:
+### Fix (1 file)
 
-- **`right`** (current behavior): slides in from right with `x: 80` spring animation
-- **`left`**: slides in from left with `x: -80` spring, positioned `left-4 top-4 bottom-4` on desktop, full-width on mobile. Used only by DashboardLayout mobile nav
-- **`bottom`**: slides up from bottom with `y: 300` spring, positioned `bottom-0 inset-x-0` with `rounded-t-xl`, `max-h-[85vh]`. Used by MobileAgendaCard and MobileSubmitDrawer
+**`src/components/dashboard/DashboardLayout.tsx`** — Restore the missing JSX elements inside `DashboardLayoutInner`:
 
-All variants keep the canonical glass aesthetic (`bg-card/80`, `backdrop-blur-xl`, `shadow-2xl`, spring physics).
+1. **Replace the stripped header** (lines 480-492) with the full `SuperAdminTopBar` component that was there before. The `SuperAdminTopBar` handles all top-bar rendering (search, nav arrows, notifications, avatar dropdown, role badges, view-as indicators).
 
-### Migration Map (24 files)
+2. **Add back the following components** after the `</main>` closing tag (before the closing `</div>` of the layout):
+   - `<HelpFAB />`
+   - `<DashboardLockScreen />`
+   - `<ClockInPromptDialog />`
+   - `<KeyboardShortcutsDialog />`
+   - `<ZuraStickyGuidance />` (conditional on `hasZuraGuidance`)
 
-**Right-side panels (default — straightforward swap):**
+3. **Add back banners** before `{children}` inside main:
+   - `<PlatformContextBanner />`
+   - `<IncidentBanner />`
+   - `<CustomLandingPageBanner />`
 
-| File | maxWidth |
-|---|---|
-| `sales/DayAppointmentsSheet.tsx` | 440px |
-| `analytics/AnalyticsCardReorderDrawer.tsx` | 440px |
-| `schedule/AssistantBlockManagerSheet.tsx` | 440px |
-| `schedule/DraftBookingsSheet.tsx` | 440px |
-| `schedule/CheckoutSummarySheet.tsx` | 560px |
-| `payroll/providers/ProviderDetailSheet.tsx` | 560px |
-| `leads/LeadDetailsSheet.tsx` | 560px |
-| `booth-renters/RenterDetailSheet.tsx` | 640px |
-| `reports/scheduled/ScheduledReportsSubTab.tsx` | 560px |
-| `day-rate/BookingDetailSheet.tsx` | 560px |
-| `marketing/CampaignBudgetManager.tsx` | 720px |
-| `settings/KioskLocationStatusCard.tsx` | 720px |
-| `settings/KioskSettingsContent.tsx` | 720px |
-| `DashboardCustomizeMenu.tsx` | 440px |
-| `team-chat/ChannelSettingsSheet.tsx` | 440px |
-| `team-chat/ChannelMembersSheet.tsx` | 440px |
-| `team-chat/AIChatPanel.tsx` | 440px |
-| `team-chat/PinnedMessagesSheet.tsx` | 440px |
-| `team-chat/TeamChatAdminSettingsSheet.tsx` | 720px |
-| `pages/admin/GraduationTracker.tsx` | 560px |
-| `pages/platform/AuditLog.tsx` | 500px |
+4. **Pass required props to SuperAdminTopBar** — it needs `roleBadges`, `viewAsRole`, `isViewingAs`, `isViewingAsUser`, `viewAsUser`, `clearViewAs`, `setViewAsRole`, `setViewAsUser`, `teamMembers`, `locations`, `userSearch`, `setUserSearch`, `hideNumbers`, `toggleHideNumbers`, `user`, `signOut`, `employeeProfile`, `profileCompletion`, `headerScrolled`, `sidebarCollapsed`, and sidebar toggle handler. All of these variables already exist in `DashboardLayoutInner` scope from the existing imports and hooks.
 
-**Left-side panel:**
-
-| File | maxWidth |
-|---|---|
-| `DashboardLayout.tsx` (mobile nav) | 288px (w-72) |
-
-**Bottom panels (mobile):**
-
-| File | maxHeight |
-|---|---|
-| `mobile/schedule/MobileAgendaCard.tsx` | 70vh |
-| `MobileSubmitDrawer.tsx` | auto |
-| `pages/admin/WebsiteSectionsHub.tsx` | auto |
-
-### Migration Pattern
-
-Each file follows the same mechanical swap:
-
-```text
-BEFORE:
-  <Sheet open={x} onOpenChange={fn}>
-    <SheetContent className="sm:max-w-md">
-      <SheetHeader><SheetTitle>...</SheetTitle></SheetHeader>
-      {content}
-    </SheetContent>
-  </Sheet>
-
-AFTER:
-  <PremiumFloatingPanel open={x} onOpenChange={fn} maxWidth="440px">
-    <div className="p-5 pb-3 border-b border-border/40">
-      <h2 className="font-display text-sm tracking-wide uppercase">...</h2>
-    </div>
-    {content}
-  </PremiumFloatingPanel>
-```
-
-For files using `SheetTrigger` (inline trigger pattern), the trigger element stays in-place and the panel is controlled via local `useState` — same as PremiumFloatingPanel already requires.
-
-### Deletion
-
-After all migrations, delete:
-- `src/components/ui/sheet.tsx`
-- `src/components/ui/drawer.tsx`
-- Remove `drilldownDialogStyles.ts` Sheet-related exports (`DRILLDOWN_SHEET_CONTENT_CLASS`, `DRILLDOWN_SHEET_OVERLAY_CLASS`)
-
-### Execution Order
-1. Extend `PremiumFloatingPanel` with `side` prop (left/bottom variants)
-2. Migrate all 24 consumer files (batched by area: sales → schedule → settings → team-chat → pages → layout)
-3. Delete `sheet.tsx`, `drawer.tsx`, clean up `drilldownDialogStyles.ts`
-
-### What This Protects
-Once Sheet/Drawer are deleted, any future attempt to import them produces a build error — forcing contributors to use `PremiumFloatingPanel` and guaranteeing visual consistency without manual correction.
+### What This Does Not Change
+- PremiumFloatingPanel migration (stays as-is)
+- Sidebar rendering (stays as-is)
+- No new components or files
 
