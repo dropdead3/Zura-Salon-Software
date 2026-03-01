@@ -1,39 +1,113 @@
 
 
-## Remove Back Buttons from Organization Dashboard Pages
+## Consolidate Admin Navigation into Domain Hubs
 
-Great observation -- with the browser-style back/forward arrows in the top menu bar (`NavigationHistoryContext`), the per-page back buttons are redundant and add visual clutter.
+### Problem
+The sidebar currently lists 22+ individual links under the Management section (across 4 sub-groups), plus items scattered across Growth, Stats, and Admin sections. This creates a long, scrollable nav that feels like a feature warehouse.
 
-### Scope
+### Solution
+Reduce the sidebar to **hub entry points only** for admin/management functions. Each hub is an existing or new landing page that organizes its children into categorized card grids (like Management Hub already does). The sidebar stays clean; the hubs provide full access.
 
-Remove the `backTo` / `backLabel` props from all `DashboardPageHeader` usages across dashboard pages, and remove any custom inline "Back to X" buttons. This affects **~50+ files** across three areas:
+### Proposed Sidebar Structure
 
-**1. `DashboardPageHeader` `backTo` prop usage (~45 files)**
-Pages under `/dashboard/admin/`, `/dashboard/meetings/`, and top-level `/dashboard/` pages that pass `backTo` to `DashboardPageHeader`. Simply remove the `backTo` and `backLabel` props from each call.
+```text
+LOCKED (unchanged):
+  Command Center
+  Schedule
+  Team Chat
 
-Key files include:
-- `admin/`: ManagementHub, AccountManagement, DocumentTracker, IncidentReports, StaffStrikes, BusinessCardRequests, HeadshotRequests, TeamBirthdays, ChangelogManager, PointsConfig, PTOManager, ShiftSwapApprovals, ScheduleRequests, DailyHuddle, OnboardingTracker, GraduationTracker, RecruitingPipeline, PerformanceReviews, SalesDashboard, MergeClients, SEOWorkshopHub, ZuraConfigPage, DecisionHistoryPage, ChallengeDetail, plus any others
-- `meetings/`: MeetingInbox, Commitments, MeetingDetails, ScheduleNewMeeting, MyMeetings
-- Top-level: TodayPrep, ViewProfile, ShiftSwapMarketplace
+SECTION: "My Tools" (replaces growth + stats, staff-facing)
+  Today's Prep          (stylist only)
+  Waitlist              (admin/receptionist only)
+  My Stats
+  My Pay
+  Training
+  New-Client Engine     (stylist only)
+  Shift Swaps
+  Rewards
 
-**2. Custom inline back buttons (~5 files)**
-Pages that render their own `<ArrowLeft>` + "Back to X" button outside of `DashboardPageHeader`:
-- `SalesDashboard.tsx` (custom back link)
-- `OnboardingTracker.tsx` (custom back link)
-- `ViewProfile.tsx` (multiple "Back to Directory" buttons)
-- `meetings/ScheduleNewMeeting.tsx` (inline back button)
-- `meetings/MyMeetings.tsx` (inline back button)
+SECTION: "Manage" (admin/manager, hub-only links)
+  Analytics Hub         → existing hub page
+  Team Hub              → NEW hub (consolidates: Directory, Meetings, Program Team, 
+                           Onboarding Tracker, Graduation Tracker, Client Engine Tracker,
+                           Training Hub, Challenges, Performance Reviews, Strikes, 
+                           Documents, Incidents, PTO, Schedule Requests, Assistant Requests,
+                           Birthdays, Business Cards, Headshots, Daily Huddle, Announcements,
+                           Shift Swap Approvals)
+  Client Hub            → NEW hub (consolidates: Client Directory, Client Health, 
+                           Feedback, Re-engagement, Merge Clients)
+  Growth Hub            → NEW hub (consolidates: Campaigns, Website Editor, SEO Workshop)
+  Hiring & Payroll Hub  → existing hub page (Recruiting, Leads, Payroll, New Hire Wizard)
+  Renter Hub            → existing hub page (Booth Renters, Booth Rental, Renter Onboard)
 
-**3. `PlatformPageHeader` `backTo` prop usage (~10 files)**
-Platform admin pages under `/dashboard/platform/`:
-- Overview, Accounts, AccountDetail, Revenue, Jobs, KnowledgeBase, Notifications, SystemHealth, StripeHealth, FeatureFlags, Settings/Permissions, PandaDocIntegrationPage
+SECTION: "System" (admin only)
+  Roles & Controls Hub
+  Settings
+```
 
-### What stays
-- The `backTo` prop definition remains in `DashboardPageHeader` and `PlatformPageHeader` components (no breaking API change -- just unused for now)
-- Public-facing pages (e.g., `Policies.tsx` "Back to Home") are **not** touched since they don't have the top-bar navigation arrows
+This reduces ~22 sidebar links in Management to **6 hub links**, plus keeps ~8 staff-facing links in "My Tools".
 
-### Approach
-- Batch-remove `backTo` and `backLabel` props from all `DashboardPageHeader` and `PlatformPageHeader` calls in dashboard pages
-- Remove custom inline back buttons and their `ArrowLeft` imports (clean up unused imports)
-- No layout shifts expected since the back button area simply won't render
+### Implementation
+
+**1. Create Team Hub page** (`src/pages/dashboard/admin/TeamHub.tsx`)
+- Reuses `ManagementCard` + `CategorySection` pattern from ManagementHub
+- Groups: Team Development, Scheduling & Requests, Performance & Compliance, PTO & Leave, Team Operations, Communications, AI & Automation, Points & Rewards
+- Essentially the existing ManagementHub minus Marketing, Client Experience, and Recruiting sections
+
+**2. Create Client Hub page** (`src/pages/dashboard/admin/ClientHub.tsx`)
+- Groups: Client Directory, Client Health, Feedback & Reviews, Re-engagement, Merge Clients
+
+**3. Create Growth Hub page** (`src/pages/dashboard/admin/GrowthHub.tsx`)
+- Groups: Campaigns, Website Editor, SEO Workshop
+- Could expand to include marketing analytics subtab links
+
+**4. Update `dashboardNav.ts`**
+- Replace `growthNavItems` with staff-only items (Training, New-Client Engine, Ring the Bell, My Graduation)
+- Replace `statsNavItems` content to merge into a new "My Tools" section
+- Replace `managerNavItems` (22 items) with 6 hub links only
+- Add routes for new hub pages
+
+**5. Update `useSidebarLayout.ts`**
+- New section IDs: `myTools`, `manage`, `system` (replacing `growth`, `stats`, `manager`, `adminOnly`)
+- Update `SECTION_LABELS`, `DEFAULT_SECTION_ORDER`, `DEFAULT_LINK_ORDER`
+- Remove `MANAGEMENT_SUB_GROUPS` (no longer needed — no sub-groups in sidebar)
+
+**6. Update `SidebarNavContent.tsx`**
+- Remove `CollapsibleNavGroup` rendering for manager section (now just flat hub links)
+- Update `sectionItemsMap` for new section IDs
+
+**7. Update `App.tsx`**
+- Add routes: `/dashboard/admin/team-hub`, `/dashboard/admin/client-hub`, `/dashboard/admin/growth-hub`
+
+**8. Update `SidebarPreview.tsx`**
+- Update `LINK_CONFIG` for new hub routes
+
+**9. DB migration consideration**
+- Organizations with stored `sidebar_layout` referencing old section IDs need graceful fallback (already handled by the merge logic in `useSidebarLayout`)
+
+### What moves where
+
+| Old Sidebar Location | New Location | Access Path |
+|---|---|---|
+| Team Directory | Team Hub card | Manage → Team Hub → Team Directory |
+| Client Directory | Client Hub card | Manage → Client Hub → Client Directory |
+| Meetings & Accountability | Team Hub card | Manage → Team Hub → Meetings |
+| Program Team Overview | Team Hub card | Manage → Team Hub → Program Team |
+| Campaigns | Growth Hub card | Manage → Growth Hub → Campaigns |
+| Website Editor | Growth Hub card | Manage → Growth Hub → Website Editor |
+| SEO Workshop | Growth Hub card | Manage → Growth Hub → SEO Workshop |
+| Appointments & Txns | Analytics Hub (already a tab) | Manage → Analytics Hub |
+| KPI Architecture | Analytics Hub card | Manage → Analytics Hub |
+| Decision History | Analytics Hub card | Manage → Analytics Hub |
+| Team Stats / Leaderboard | Analytics Hub | Manage → Analytics Hub |
+| Inventory | Team Hub card (Operations) | Manage → Team Hub → Inventory |
+| Management Hub | Replaced by Team Hub | Manage → Team Hub |
+| Booth Rental | Renter Hub | Manage → Renter Hub |
+| Assistant Scheduling | Team Hub card | Manage → Team Hub |
+
+### Cognitive load reduction
+- Sidebar scan from ~30 items to ~16 items (including section headers)
+- Admin section: 22 → 6 links (each a clear domain hub)
+- Zero features removed — every page stays accessible, just organized behind domain hubs
+- Hubs are searchable via TopBarSearch (existing)
 
