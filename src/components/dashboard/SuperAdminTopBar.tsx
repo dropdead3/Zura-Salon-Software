@@ -166,7 +166,7 @@ export function SuperAdminTopBar({
           {isPlatformUser && location.pathname.startsWith('/dashboard/platform') && (
             <OrganizationSwitcher compact />
           )}
-          <div className="min-w-0 w-full max-w-xl">
+          <div className="min-w-0 w-full max-w-[280px] lg:max-w-md xl:max-w-lg 2xl:max-w-xl">
             <TopBarSearch filterNavItems={filterNavItems} />
           </div>
         </div>
