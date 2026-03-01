@@ -92,6 +92,9 @@ import PhorestSettings from "./pages/dashboard/admin/PhorestSettings";
 import AnalyticsHub from "./pages/dashboard/admin/AnalyticsHub";
 import ManagementHub from "./pages/dashboard/admin/ManagementHub";
 import TrainingHub from "./pages/dashboard/admin/TrainingHub";
+import TeamHub from "./pages/dashboard/admin/TeamHub";
+import ClientHub from "./pages/dashboard/admin/ClientHub";
+import GrowthHub from "./pages/dashboard/admin/GrowthHub";
 import LeadManagement from "./pages/dashboard/admin/LeadManagement";
 import AdminFeatureFlags from "./pages/dashboard/admin/FeatureFlags";
 import FeaturesCenter from "./pages/dashboard/admin/FeaturesCenter";
@@ -318,6 +321,9 @@ const App = () => (
                       <Route path="/dashboard/admin/analytics" element={<ProtectedRoute requiredPermission="view_team_overview"><AnalyticsHub /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/management" element={<ProtectedRoute requiredPermission="view_team_overview"><ManagementHub /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/training-hub" element={<ProtectedRoute requiredPermission="manage_handbooks"><TrainingHub /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/team-hub" element={<ProtectedRoute requiredPermission="view_team_overview"><TeamHub /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/client-hub" element={<ProtectedRoute requiredPermission="view_clients"><ClientHub /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/growth-hub" element={<ProtectedRoute requiredPermission="view_team_overview"><GrowthHub /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/sales" element={<Navigate to="/dashboard/admin/analytics?tab=sales" replace />} />
                       <Route path="/dashboard/admin/operational-analytics" element={<Navigate to="/dashboard/admin/analytics?tab=operations" replace />} />
                       <Route path="/dashboard/admin/staff-utilization" element={<Navigate to="/dashboard/admin/analytics?tab=operations&subtab=staff-utilization" replace />} />
