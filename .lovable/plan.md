@@ -1,59 +1,38 @@
 
 
-## Implement All 5 Post-Consolidation Enhancements
+## Anchor Search Bar to Left Zone
 
-### 1. Fix TopBarSearch hub children discovery
+The search bar is currently centered in the top bar (CENTER ZONE, line 172). Moving it to the LEFT ZONE (line 164), immediately after the navigation arrows.
 
-**File:** `src/components/dashboard/TopBarSearch.tsx`
+### Change in `src/components/dashboard/SuperAdminTopBar.tsx`
 
-- Replace imports of `growthNavItems`, `statsNavItems`, `managerNavItems`, `adminOnlyNavItems` with `myToolsNavItems`, `manageNavItems`, `systemNavItems`
-- Add a `hubChildrenItems` array (~35 items) containing all deep pages inside Team Hub, Client Hub, Growth Hub, and Hiring/Payroll Hub (e.g., Team Directory, Performance Reviews, PTO Balances, Campaigns, Client Health, Recruiting Pipeline, etc.)
-- Update the `navigationResults` useMemo to include `hubChildrenItems` in the deduped list
+**LEFT ZONE (line 164-169):** Add `TopBarSearch` right after `NavHistoryArrows` and the conditional `OrganizationSwitcher`:
 
-### 2. Redirect legacy ManagementHub route
+```tsx
+{/* ── LEFT ZONE: Nav + Search ── */}
+<div className="flex items-center gap-3 min-w-0 flex-1">
+  <NavHistoryArrows />
+  {isPlatformUser && location.pathname.startsWith('/dashboard/platform') && (
+    <OrganizationSwitcher compact />
+  )}
+  <div className="min-w-0 w-full max-w-xl">
+    <TopBarSearch filterNavItems={filterNavItems} />
+  </div>
+</div>
+```
 
-**File:** `src/App.tsx`
+**CENTER ZONE (lines 172-184):** Remove search, keep only the NextClientIndicator (or remove the zone if empty):
 
-- Replace the ManagementHub route at line 322:
-  ```
-  // Before:
-  <Route path="/dashboard/admin/management" element={<ProtectedRoute ...><ManagementHub /></ProtectedRoute>} />
-  // After:
-  <Route path="/dashboard/admin/management" element={<Navigate to="/dashboard/admin/team-hub" replace />} />
-  ```
-- The ManagementHub import can remain (dead code) or be removed for cleanliness
+```tsx
+{/* ── CENTER ZONE: Status ── */}
+<div className="flex-1 flex items-center justify-center min-w-0 px-4">
+  {showNextClient && (
+    <div className="hidden 2xl:flex items-center min-w-0">
+      <NextClientIndicator userId={currentUserId} />
+    </div>
+  )}
+</div>
+```
 
-### 3. Clean up HubQuickLinks config
-
-**File:** `src/config/dashboardNav.ts`
-
-- Remove standalone non-hub items from `hubLinksConfig`: "Schedule 1:1" and "Appointments & Transactions"
-- These are individual pages, not hub entry points — they're already accessible via Team Hub and Analytics Hub respectively
-
-### 4. Update SidebarPreview link config
-
-**File:** `src/components/dashboard/settings/SidebarPreview.tsx`
-
-- Remove legacy standalone links from `LINK_CONFIG` that are no longer in the sidebar (Team Directory, Client Directory, Appointments & Transactions, etc.)
-- Add the new hub routes: `/dashboard/admin/team-hub`, `/dashboard/admin/client-hub`, `/dashboard/admin/growth-hub`
-- Keep existing hub entries (Analytics Hub, Payroll Hub, Renter Hub)
-
-### 5. Add mobile admin nav shortcut
-
-**File:** `src/components/mobile/layout/MobileBottomNav.tsx`
-
-- Import `useAuth` from `@/contexts/AuthContext`
-- Add `LayoutGrid` icon from lucide-react
-- Conditionally include a "Manage" nav item (linking to `/dashboard/admin/team-hub`) when the user has the `view_team_overview` permission
-- This replaces the "Stats" item for admin users, or is added as a 6th item (5 items is the max comfortable for mobile, so replacing Stats — which is still accessible from sidebar — is better)
-
-### Files Modified
-
-| File | Change |
-|---|---|
-| `src/components/dashboard/TopBarSearch.tsx` | Fix imports, add hub children searchable items |
-| `src/App.tsx` | Replace ManagementHub route with redirect |
-| `src/config/dashboardNav.ts` | Remove non-hub items from hubLinksConfig |
-| `src/components/dashboard/settings/SidebarPreview.tsx` | Update LINK_CONFIG for new hub structure |
-| `src/components/mobile/layout/MobileBottomNav.tsx` | Add role-conditional Manage shortcut |
+This anchors the search bar to the left, immediately right of the nav arrows, matching the reference screenshot layout.
 
