@@ -399,6 +399,40 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
     );
   };
 
+  const isPrimaryOwner = (employeeProfile as any)?.is_primary_owner ?? false;
+  const roleBadges = buildRoleBadges(roles as AppRole[], isPrimaryOwner);
+
+  const ViewAsToggle = ({ asMenuItem }: { asMenuItem?: boolean }) => {
+    if (!isAdmin && !isPlatformUser) return null;
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            className="h-9 rounded-full px-4 gap-1.5 text-muted-foreground hover:text-foreground hover:bg-secondary"
+            onClick={() => {
+              if (isViewingAs || isViewingAsUser) {
+                clearViewAs();
+              }
+            }}
+          >
+            {isViewingAs || isViewingAsUser ? (
+              <Eye className="w-4 h-4" />
+            ) : (
+              <EyeOff className="w-4 h-4" />
+            )}
+            <span className="text-xs">{isViewingAs || isViewingAsUser ? 'Exit View As' : 'View As'}</span>
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">
+          {isViewingAs || isViewingAsUser ? 'Exit "View As" mode' : 'View as another role'}
+        </TooltipContent>
+      </Tooltip>
+    );
+  };
+
+  const { unlock } = useDashboardLock();
+
   return (
     <div className={cn("bg-background", hideFooter ? "h-screen overflow-hidden" : "min-h-screen")}>
       {!hideSidebar && (
@@ -477,25 +511,54 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
         "flex-1 flex flex-col min-h-screen transition-[margin] duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]",
         !hideSidebar && (sidebarCollapsed ? "lg:ml-24" : "lg:ml-[340px]")
       )}>
+        {/* Mobile hamburger header */}
+        <div className="lg:hidden sticky top-0 z-40">
+          <header className={cn(
+            "flex items-center justify-between px-4 h-14 transition-all duration-300",
+            headerScrolled ? "bg-background/80 backdrop-blur-md border-b border-border/40" : "bg-transparent"
+          )}>
+            <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(true)}>
+              <Menu className="h-5 w-5" />
+            </Button>
+          </header>
+        </div>
+
+        {/* Desktop top bar */}
         {!hideTopBar && (
-          <div className="sticky top-0 z-40">
-            <header className={cn(
-              "flex items-center justify-between px-4 h-14 lg:h-auto lg:py-4 transition-all duration-300",
-              headerScrolled ? "bg-background/80 backdrop-blur-md border-b border-border/40" : "bg-transparent"
-            )}>
-              <div className="lg:hidden">
-                <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(true)}>
-                  <Menu className="h-5 w-5" />
-                </Button>
-              </div>
-            </header>
-          </div>
+          <SuperAdminTopBar
+            sidebarCollapsed={sidebarCollapsed}
+            hideFooter={hideFooter}
+            headerHovered={headerHovered}
+            onHeaderHoverEnd={() => setHeaderHovered(false)}
+            filterNavItems={filterNavItems}
+            ViewAsToggle={ViewAsToggle}
+            HideNumbersToggle={HideNumbersToggle}
+            roleBadges={roleBadges}
+            isAdmin={isAdmin}
+            isPlatformUser={isPlatformUser}
+            isStylistRole={roles.includes('stylist')}
+            isStylistAssistantRole={roles.includes('stylist_assistant')}
+            isViewingAsUser={isViewingAsUser}
+            viewAsUser={viewAsUser}
+          />
         )}
+
+        {/* Banners */}
+        <PlatformContextBanner />
+        <IncidentBanner />
+        <CustomLandingPageBanner sidebarCollapsed={sidebarCollapsed} />
         
         <div className="flex-1 p-4 lg:p-8">
           {children}
         </div>
       </main>
+
+      {/* Floating & overlay components */}
+      <HelpFAB />
+      <DashboardLockScreen onUnlock={unlock} />
+      <ClockInPromptDialog />
+      <KeyboardShortcutsDialog />
+      {hasZuraGuidance && <ZuraStickyGuidance />}
     </div>
   );
 }
