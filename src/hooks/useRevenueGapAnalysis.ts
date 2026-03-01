@@ -5,6 +5,10 @@ import { supabase } from '@/integrations/supabase/client';
  * Sums total_price from ALL phorest_appointments in a date range
  * regardless of status (cancelled + no-show + completed).
  * This is the "what was on the books" number for gap analysis.
+ *
+ * NOTE: No is_parent filter applied. Current data has unique phorest_id
+ * per row (no parent+child duplication). If Phorest ever sends sub-appointments,
+ * add `.is('is_parent', true)` to avoid double-counting.
  */
 export function useScheduledRevenue(
   dateFrom: string,
@@ -77,10 +81,11 @@ export function useRevenueGapAnalysis(
   dateTo: string,
   expectedRevenue: number,
   actualRevenue: number,
-  enabled: boolean
+  enabled: boolean,
+  locationId?: string | null
 ) {
   return useQuery<RevenueGapAnalysis>({
-    queryKey: ['revenue-gap-analysis', dateFrom, dateTo],
+    queryKey: ['revenue-gap-analysis', dateFrom, dateTo, locationId],
     queryFn: async () => {
       // ── Staff mapping ──
       const { data: staffMap } = await supabase
@@ -94,12 +99,18 @@ export function useRevenueGapAnalysis(
       });
 
       // ── Fetch all gap-relevant appointments in one go ──
-      const { data: allAppts, error: apptError } = await supabase
+      let apptQuery = supabase
         .from('phorest_appointments')
         .select('id, service_name, client_name, total_price, appointment_date, start_time, phorest_staff_id, phorest_client_id, status')
         .gte('appointment_date', dateFrom)
         .lte('appointment_date', dateTo)
         .in('status', ['cancelled', 'no_show', 'completed']);
+
+      if (locationId && locationId !== 'all') {
+        apptQuery = apptQuery.eq('location_id', locationId);
+      }
+
+      const { data: allAppts, error: apptError } = await apptQuery;
 
       if (apptError) throw apptError;
 
@@ -183,13 +194,19 @@ export function useRevenueGapAnalysis(
       if (completedClientIds.length > 0) {
         for (let i = 0; i < completedClientIds.length; i += 100) {
           const chunk = completedClientIds.slice(i, i + 100);
-          const { data: posData, error: posError } = await supabase
+          let posQuery = supabase
             .from('phorest_transaction_items')
             .select('phorest_client_id, transaction_date, item_name, total_amount, tax_amount, discount, item_type')
             .in('phorest_client_id', chunk)
             .gte('transaction_date', dateFrom)
             .lte('transaction_date', dateTo)
             .in('item_type', ['service', 'sale_fee']);
+
+          if (locationId && locationId !== 'all') {
+            posQuery = posQuery.eq('location_id', locationId);
+          }
+
+          const { data: posData, error: posError } = await posQuery;
           if (posError) throw posError;
           posItems = posItems.concat(posData ?? []);
         }
@@ -206,7 +223,24 @@ export function useRevenueGapAnalysis(
       }>();
 
       completed.forEach(a => {
-        if (!a.phorest_client_id) return;
+        // Null-client appointments can never match POS — emit as individual gap items
+        if (!a.phorest_client_id) {
+          const price = Number(a.total_price) || 0;
+          if (price > 0) {
+            gapItems.push({
+              id: a.id,
+              clientName: a.client_name ?? 'Walk-in',
+              serviceName: a.service_name || 'Unknown service',
+              stylistName: a.phorest_staff_id ? staffLookup.get(a.phorest_staff_id) ?? null : null,
+              reason: 'no_pos_record',
+              scheduledAmount: price,
+              actualAmount: 0,
+              variance: price,
+              appointmentDate: a.appointment_date,
+            });
+          }
+          return;
+        }
         const key = `${a.phorest_client_id}|${a.appointment_date}`;
         const stylist = a.phorest_staff_id ? staffLookup.get(a.phorest_staff_id) ?? null : null;
         const existing = clientDayScheduled.get(key);
