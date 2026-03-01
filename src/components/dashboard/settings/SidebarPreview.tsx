@@ -1,45 +1,36 @@
 import { cn } from '@/lib/utils';
 import { SECTION_LABELS, isBuiltInSection, type CustomSectionConfig } from '@/hooks/useSidebarLayout';
 
-// Map hrefs to their labels and icons for the preview
+// Map hrefs to their labels for the preview
 const LINK_CONFIG: Record<string, { label: string }> = {
+  // Main
   '/dashboard': { label: 'Command Center' },
   '/dashboard/schedule': { label: 'Schedule' },
-  '/dashboard/directory': { label: 'Team Directory' },
+  '/dashboard/team-chat': { label: 'Team Chat' },
+  // My Tools
+  '/dashboard/today-prep': { label: "Today's Prep" },
+  '/dashboard/waitlist': { label: 'Waitlist' },
+  '/dashboard/stats': { label: 'My Stats' },
+  '/dashboard/my-pay': { label: 'My Pay' },
   '/dashboard/training': { label: 'Training' },
   '/dashboard/program': { label: 'New-Client Engine Program' },
-  '/dashboard/admin/team': { label: 'Program Team Overview' },
-  '/dashboard/ring-the-bell': { label: 'Ring the Bell' },
-  '/dashboard/my-graduation': { label: 'My Graduation' },
-  '/dashboard/stats': { label: 'Stats' },
   '/dashboard/leaderboard': { label: 'Team Leaderboard' },
-  '/dashboard/my-clients': { label: 'My Clients' },
-  '/dashboard/admin/sales': { label: 'Sales Dashboard' },
-  '/dashboard/admin/operational-analytics': { label: 'Operational Analytics' },
-  
-  '/dashboard/assistant-schedule': { label: 'Assistant Schedule' },
-  '/dashboard/schedule-meeting': { label: 'Meetings & Accountability' },
-  '/dashboard/onboarding': { label: 'Onboarding' },
-  '/dashboard/handbooks': { label: 'Handbooks' },
-  '/dashboard/admin/birthdays': { label: 'Birthdays & Anniversaries' },
-  '/dashboard/admin/onboarding-tracker': { label: 'Onboarding Hub' },
-  '/dashboard/admin/client-engine-tracker': { label: 'Client Engine Tracker' },
-  '/dashboard/admin/recruiting': { label: 'Recruiting Pipeline' },
-  '/dashboard/admin/graduation-tracker': { label: 'Graduation Tracker' },
-  '/dashboard/admin/assistant-requests': { label: 'Assistant Requests' },
-  '/dashboard/admin/strikes': { label: 'Staff Strikes' },
-  '/dashboard/admin/business-cards': { label: 'Business Cards' },
-  '/dashboard/admin/headshots': { label: 'Headshots' },
-  '/dashboard/admin/announcements': { label: 'Create Announcement' },
-  '/dashboard/admin/homepage-stylists': { label: 'Homepage Stylists' },
-  '/dashboard/admin/testimonials': { label: 'Testimonials' },
-  '/dashboard/admin/gallery': { label: 'Gallery' },
-  '/dashboard/admin/services': { label: 'Services' },
-  '/dashboard/admin/locations': { label: 'Locations' },
-  '/dashboard/admin/access-hub': { label: 'Roles & Controls Hub' },
-  '/dashboard/admin/settings': { label: 'Settings' },
   '/dashboard/shift-swaps': { label: 'Shift Swaps' },
   '/dashboard/rewards': { label: 'Rewards' },
+  '/dashboard/ring-the-bell': { label: 'Ring the Bell' },
+  '/dashboard/my-graduation': { label: 'My Graduation' },
+  // Manage (hub links)
+  '/dashboard/admin/analytics': { label: 'Analytics Hub' },
+  '/dashboard/admin/team-hub': { label: 'Team Hub' },
+  '/dashboard/admin/client-hub': { label: 'Client Hub' },
+  '/dashboard/admin/growth-hub': { label: 'Growth Hub' },
+  '/dashboard/admin/payroll': { label: 'Hiring & Payroll Hub' },
+  '/dashboard/admin/booth-renters': { label: 'Renter Hub' },
+  // System
+  '/dashboard/admin/access-hub': { label: 'Roles & Controls Hub' },
+  '/dashboard/admin/settings': { label: 'Settings' },
+  // Legacy / other
+  '/dashboard/onboarding': { label: 'Onboarding' },
 };
 
 interface SidebarPreviewProps {

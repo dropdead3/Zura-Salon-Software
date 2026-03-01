@@ -22,8 +22,7 @@ import { SidebarLockButton } from './SidebarLockButton';
 import { SidebarClockButton } from './SidebarClockButton';
 import { SidebarFeedbackButtons } from './SidebarFeedbackButtons';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
-import { useSidebarLayout, SECTION_LABELS, SECTION_ICONS, DEFAULT_SECTION_ORDER, DEFAULT_LINK_ORDER, MANAGEMENT_SUB_GROUPS, isBuiltInSection, getEffectiveHiddenSections, getEffectiveHiddenLinks, anyRoleHasOverrides } from '@/hooks/useSidebarLayout';
-import { CollapsibleNavGroup, type NavSubGroup } from './CollapsibleNavGroup';
+import { useSidebarLayout, SECTION_LABELS, SECTION_ICONS, DEFAULT_SECTION_ORDER, DEFAULT_LINK_ORDER, isBuiltInSection, getEffectiveHiddenSections, getEffectiveHiddenLinks, anyRoleHasOverrides } from '@/hooks/useSidebarLayout';
 import { useAnalyticsSubtabFavorites } from '@/hooks/useAnalyticsSubtabFavorites';
 import { AccountOwnerOrgSwitcher } from './AccountOwnerOrgSwitcher';
 type PlatformRole = 'platform_owner' | 'platform_admin' | 'platform_support' | 'platform_developer';
@@ -108,15 +107,21 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
   const { groupedFavorites, toggleFavorite: toggleSubtabFavorite } = useAnalyticsSubtabFavorites();
   
   // Map section IDs to nav items (for built-in sections)
+  // New consolidated sections: myTools (replaces growth+stats), manage (replaces manager), system (replaces adminOnly)
+  // Legacy IDs still mapped for backward compat with stored layouts
   const sectionItemsMap = useMemo(() => ({
     main: mainNavItems,
+    myTools: [...growthNavItems, ...statsNavItems].filter((item, index, arr) => arr.findIndex(i => i.href === item.href) === index),
+    manage: managerNavItems,
+    system: adminOnlyNavItems,
+    housekeeping: housekeepingNavItems,
+    website: websiteNavItems,
+    platform: platformNavItems,
+    // Legacy mappings
     growth: growthNavItems,
     stats: statsNavItems,
-    housekeeping: housekeepingNavItems,
     manager: managerNavItems,
-    website: websiteNavItems,
     adminOnly: adminOnlyNavItems,
-    platform: platformNavItems,
   }), [mainNavItems, growthNavItems, statsNavItems, housekeepingNavItems, managerNavItems, websiteNavItems, adminOnlyNavItems, platformNavItems]);
 
   // Create a map of all nav items by href (for custom sections that can contain any link)
@@ -538,20 +543,19 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
             shouldShow = filteredItems.length > 0;
           }
           
-          // For manager and adminOnly sections, only apply hardcoded checks 
+          // For manage and system sections, only apply hardcoded checks 
           // when configurator doesn't have role-specific overrides
           if (!hasConfiguratorOverrides) {
-            if (sectionId === 'manager') {
+            if (sectionId === 'manage' || sectionId === 'manager') {
               shouldShow = effectiveIsCoach && filteredItems.length > 0;
             }
             
-            if (sectionId === 'adminOnly') {
+            if (sectionId === 'system' || sectionId === 'adminOnly') {
               shouldShow = (roles.includes('admin') || roles.includes('super_admin')) && filteredItems.length > 0;
             }
           }
           
-          // Platform section should NEVER show in org dashboard - 
-          // it has its own dedicated layout at /dashboard/platform/*
+          // Platform section should NEVER show in org dashboard
           if (sectionId === 'platform') {
             shouldShow = false;
           }
@@ -561,67 +565,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
           // Get badge count for specific items
           const getBadgeCount = (href: string) => {
             if (href === '/dashboard' && sectionId === 'main') return unreadCount;
-            if (href === '/dashboard/admin/announcements' && sectionId === 'manager') return unreadCount;
             return undefined;
-          };
-          
-          // Build management sub-groups for collapsible rendering
-          const buildManagementSubGroups = (): NavSubGroup[] => {
-            const groups: NavSubGroup[] = [];
-            
-            // Team Tools group (shown first for better visibility to staff)
-            const teamToolsItems = filteredItems.filter(item => 
-              MANAGEMENT_SUB_GROUPS.teamTools.links.includes(item.href)
-            );
-            if (teamToolsItems.length > 0) {
-              groups.push({
-                id: 'teamTools',
-                label: MANAGEMENT_SUB_GROUPS.teamTools.label,
-                icon: Briefcase,
-                items: teamToolsItems,
-              });
-            }
-            
-            // Analytics & Insights group
-            const analyticsItems = filteredItems.filter(item => 
-              MANAGEMENT_SUB_GROUPS.analytics.links.includes(item.href)
-            );
-            if (analyticsItems.length > 0) {
-              groups.push({
-                id: 'analytics',
-                label: MANAGEMENT_SUB_GROUPS.analytics.label,
-                icon: TrendingUp,
-                items: analyticsItems,
-              });
-            }
-            
-            // People group
-            const peopleItems = filteredItems.filter(item => 
-              MANAGEMENT_SUB_GROUPS.people.links.includes(item.href)
-            );
-            if (peopleItems.length > 0) {
-              groups.push({
-                id: 'people',
-                label: MANAGEMENT_SUB_GROUPS.people.label,
-                icon: Users,
-                items: peopleItems,
-              });
-            }
-            
-            // Operations group
-            const operationsItems = filteredItems.filter(item => 
-              MANAGEMENT_SUB_GROUPS.operations.links.includes(item.href)
-            );
-            if (operationsItems.length > 0) {
-              groups.push({
-                id: 'operations',
-                label: MANAGEMENT_SUB_GROUPS.operations.label,
-                icon: LayoutGrid,
-                items: operationsItems,
-              });
-            }
-            
-            return groups;
           };
           
           return (
@@ -642,19 +586,8 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                 </div>
               )}
               
-              {/* Links - use CollapsibleNavGroup for manager section */}
-              {sectionId === 'manager' ? (
-                <CollapsibleNavGroup
-                  groups={buildManagementSubGroups()}
-                  sectionLabel={sectionLabel}
-                  isCollapsed={isCollapsed}
-                  onNavClick={onNavClick}
-                  getNavLabel={getNavLabel}
-                  hiddenLinks={sectionHiddenLinks}
-                  groupedFavorites={groupedFavorites}
-                  onRemoveSubLink={(tab, subtab) => toggleSubtabFavorite(tab, subtab, '')}
-                />
-              ) : isCollapsed && sectionId !== 'main' ? (
+              {/* Links - all sections now render as flat links */}
+              {isCollapsed && sectionId !== 'main' ? (
                 // Collapsed: single section icon with popover menu (skip for main section)
                 (() => {
                   const SectionIcon = SECTION_ICONS[sectionId] || SECTION_ICONS.main;

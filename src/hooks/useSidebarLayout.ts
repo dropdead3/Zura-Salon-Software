@@ -1,114 +1,95 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { managerNavItems } from '@/config/dashboardNav';
-import type { ManagerGroupId } from '@/config/dashboardNav';
 import { platformNavGroups } from '@/config/platformNav';
-import { LayoutDashboard, Rocket, BarChart3, Settings, Terminal } from 'lucide-react';
+import { LayoutDashboard, Wrench, BarChart3, Settings, Terminal, Users, Rocket, HeartPulse } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 // Section icon mapping for collapsed sidebar popovers
 export const SECTION_ICONS: Record<string, LucideIcon> = {
   main: LayoutDashboard,
+  myTools: Wrench,
+  manage: BarChart3,
+  system: Settings,
+  platform: Terminal,
+  // Legacy mappings for stored layouts that reference old section IDs
   growth: Rocket,
   stats: BarChart3,
   adminOnly: Settings,
-  platform: Terminal,
 };
 
 const DEFAULT_PLATFORM_LINK_ORDER = platformNavGroups.flatMap((g) => g.items.map((i) => i.href));
 
-// Default section order matching the sidebar structure
-// Consolidated from 9 sections to 6 sections (housekeeping items relocated to top bar)
+// Default section order — consolidated from 5 org sections to 4
 export const DEFAULT_SECTION_ORDER = [
   'main',
-  'growth',      // Renamed to "Growth & Development"
-  'stats',       // Renamed to "My Performance"
-  'manager',     // Now includes website + sub-groups (Analytics, People, Operations, Team Tools)
-  'adminOnly',   // Renamed to "Admin"
+  'myTools',    // Staff-facing daily tools (replaces growth + stats)
+  'manage',     // Admin hub-only links (replaces manager with 22+ items)
+  'system',     // Admin config (replaces adminOnly)
   'platform',
 ];
 
-// Section labels for display (housekeeping is optional/legacy; shown only when in section order)
+// Legacy section IDs that should map to new ones for stored layouts
+const LEGACY_SECTION_MAP: Record<string, string> = {
+  growth: 'myTools',
+  stats: 'myTools',
+  manager: 'manage',
+  adminOnly: 'system',
+};
+
+// Section labels for display
 export const SECTION_LABELS: Record<string, string> = {
   main: 'Main',
+  myTools: 'My Tools',
+  manage: 'Manage',
+  system: 'System',
+  platform: 'Platform Admin',
+  housekeeping: 'Resources',
+  website: 'Website',
+  // Legacy labels for backward compat
   growth: 'Growth & Development',
   stats: 'My Performance',
   manager: 'Management',
   adminOnly: 'Control Center',
-  platform: 'Platform Admin',
-  housekeeping: 'Resources',
-  website: 'Website',
 };
 
-// Management section sub-group labels and display order (links derived from registry)
-const MANAGER_GROUP_LABELS: Record<ManagerGroupId, string> = {
-  teamTools: 'Team Tools',
-  analytics: 'Analytics & Reports',
-  people: 'People',
-  operations: 'Operations',
+/** @deprecated Manager sub-groups removed — sidebar is now flat hub links. Kept for type compat. */
+export const MANAGEMENT_SUB_GROUPS = {
+  teamTools: { id: 'teamTools', label: 'Team Tools', links: [] as string[] },
+  analytics: { id: 'analytics', label: 'Analytics & Reports', links: [] as string[] },
+  people: { id: 'people', label: 'People', links: [] as string[] },
+  operations: { id: 'operations', label: 'Operations', links: [] as string[] },
 };
-
-/** Sub-groups for Management section; links are derived from managerNavItems by managerGroup. */
-export const MANAGEMENT_SUB_GROUPS = (() => {
-  const order: ManagerGroupId[] = ['teamTools', 'analytics', 'people', 'operations'];
-  const linksByGroup: Record<string, string[]> = {};
-  order.forEach(id => { linksByGroup[id] = []; });
-  managerNavItems.forEach(item => {
-    if (item.managerGroup && linksByGroup[item.managerGroup]) {
-      linksByGroup[item.managerGroup].push(item.href);
-    }
-  });
-  return order.reduce((acc, id) => {
-    acc[id] = {
-      id,
-      label: MANAGER_GROUP_LABELS[id],
-      links: linksByGroup[id] || [],
-    };
-    return acc;
-  }, {} as Record<ManagerGroupId, { id: string; label: string; links: string[] }>);
-})();
 
 // Default link order for each section
 export const DEFAULT_LINK_ORDER: Record<string, string[]> = {
   main: [
     '/dashboard',
     '/dashboard/schedule',
+    '/dashboard/team-chat',
   ],
-  growth: [
+  myTools: [
+    '/dashboard/today-prep',
+    '/dashboard/waitlist',
+    '/dashboard/stats',
+    '/dashboard/my-pay',
     '/dashboard/training',
     '/dashboard/program',
+    '/dashboard/leaderboard',
+    '/dashboard/shift-swaps',
+    '/dashboard/rewards',
     '/dashboard/ring-the-bell',
     '/dashboard/my-graduation',
   ],
-  stats: [
-    '/dashboard/stats',
-    '/dashboard/leaderboard',
-    '/dashboard/my-pay',
-  ],
-  // Manager section now includes all management items + website + team tools (grouped in UI)
-  manager: [
-    '/dashboard/schedule',
-    '/dashboard/shift-swaps',
-    '/dashboard/rewards',
-    '/dashboard/assistant-schedule',
-    '/dashboard/schedule-meeting',
+  manage: [
     '/dashboard/admin/analytics',
-    '/dashboard/appointments-hub',
-    
-    '/dashboard/admin/kpi-builder',
-    '/dashboard/admin/decision-history',
-    '/dashboard/stats',
-    '/dashboard/leaderboard',
-    '/dashboard/directory',
-    '/dashboard/clients',
-    '/dashboard/admin/team',
-    '/dashboard/admin/management',
+    '/dashboard/admin/team-hub',
+    '/dashboard/admin/client-hub',
+    '/dashboard/admin/growth-hub',
     '/dashboard/admin/payroll',
     '/dashboard/admin/booth-renters',
-    '/dashboard/admin/settings?category=website',
   ],
-  adminOnly: [
+  system: [
     '/dashboard/admin/access-hub',
     '/dashboard/admin/settings',
   ],
@@ -136,7 +117,7 @@ export interface SidebarLayoutConfig {
 
 // Check if a section is a built-in section
 export function isBuiltInSection(sectionId: string): boolean {
-  return DEFAULT_SECTION_ORDER.includes(sectionId);
+  return DEFAULT_SECTION_ORDER.includes(sectionId) || Object.keys(LEGACY_SECTION_MAP).includes(sectionId);
 }
 
 // Check if a role has any visibility overrides configured
@@ -147,7 +128,6 @@ export function hasRoleOverrides(
   if (!layout?.roleVisibility) return false;
   const roleConfig = layout.roleVisibility[role];
   if (!roleConfig) return false;
-  // Has override if there are any hidden sections or hidden links defined
   const hasHiddenSections = roleConfig.hiddenSections && roleConfig.hiddenSections.length > 0;
   const hasHiddenLinks = roleConfig.hiddenLinks && Object.keys(roleConfig.hiddenLinks).length > 0;
   return hasHiddenSections || hasHiddenLinks;
@@ -162,28 +142,20 @@ export function anyRoleHasOverrides(
 }
 
 // Get effective hidden sections for a user based on their roles
-// Now serves as the PRIMARY visibility control - configurator is source of truth
 export function getEffectiveHiddenSections(
   layout: SidebarLayoutConfig | null | undefined,
   userRoles: string[]
 ): string[] {
   if (!layout) return [];
   
-  // Start with global hidden sections
   const hidden = new Set(layout.hiddenSections || []);
-  
   const roleVisibility = layout.roleVisibility || {};
-  
-  // Check if any of the user's roles have overrides configured
   const rolesWithOverrides = userRoles.filter(role => hasRoleOverrides(layout, role));
   
-  // If no roles have overrides, only use global hidden sections
   if (rolesWithOverrides.length === 0) {
     return Array.from(hidden);
   }
   
-  // For each section, check if it's visible for at least one of the user's roles with overrides
-  // A section is shown if ANY role has it visible (not hidden)
   const sectionOrder = layout.sectionOrder || DEFAULT_SECTION_ORDER;
   
   sectionOrder.forEach((sectionId) => {
@@ -191,14 +163,12 @@ export function getEffectiveHiddenSections(
     
     for (const role of rolesWithOverrides) {
       const roleConfig = roleVisibility[role];
-      // If the role config doesn't have this section in hiddenSections, it's visible for that role
       if (!roleConfig?.hiddenSections?.includes(sectionId)) {
         visibleInAnyRole = true;
         break;
       }
     }
     
-    // If hidden for all roles with overrides, add to hidden set
     if (!visibleInAnyRole) {
       hidden.add(sectionId);
     }
@@ -208,14 +178,12 @@ export function getEffectiveHiddenSections(
 }
 
 // Get effective hidden links for a user based on their roles
-// Now serves as the PRIMARY visibility control - configurator is source of truth
 export function getEffectiveHiddenLinks(
   layout: SidebarLayoutConfig | null | undefined,
   userRoles: string[]
 ): Record<string, string[]> {
   if (!layout) return {};
   
-  // Start with global hidden links
   const hidden: Record<string, Set<string>> = {};
   
   Object.entries(layout.hiddenLinks || {}).forEach(([sectionId, links]) => {
@@ -223,11 +191,8 @@ export function getEffectiveHiddenLinks(
   });
   
   const roleVisibility = layout.roleVisibility || {};
-  
-  // Check if any of the user's roles have overrides configured
   const rolesWithOverrides = userRoles.filter(role => hasRoleOverrides(layout, role));
   
-  // If no roles have overrides, only use global hidden links
   if (rolesWithOverrides.length === 0) {
     const result: Record<string, string[]> = {};
     Object.entries(hidden).forEach(([sectionId, linkSet]) => {
@@ -236,7 +201,6 @@ export function getEffectiveHiddenLinks(
     return result;
   }
   
-  // For each link in each section, check if it's visible for at least one role with overrides
   const linkOrder = layout.linkOrder || DEFAULT_LINK_ORDER;
   
   Object.entries(linkOrder).forEach(([sectionId, links]) => {
@@ -245,14 +209,12 @@ export function getEffectiveHiddenLinks(
       
       for (const role of rolesWithOverrides) {
         const roleConfig = roleVisibility[role];
-        // If the role config doesn't have this link in hiddenLinks for this section, it's visible
         if (!roleConfig?.hiddenLinks?.[sectionId]?.includes(href)) {
           visibleInAnyRole = true;
           break;
         }
       }
       
-      // If hidden for all roles with overrides, add to hidden set
       if (!visibleInAnyRole) {
         if (!hidden[sectionId]) hidden[sectionId] = new Set();
         hidden[sectionId].add(href);
@@ -260,13 +222,79 @@ export function getEffectiveHiddenLinks(
     });
   });
   
-  // Convert Sets back to arrays
   const result: Record<string, string[]> = {};
   Object.entries(hidden).forEach(([sectionId, linkSet]) => {
     result[sectionId] = Array.from(linkSet);
   });
   
   return result;
+}
+
+/**
+ * Migrate legacy section IDs in stored layouts to new ones.
+ * e.g. 'growth' → 'myTools', 'manager' → 'manage', 'adminOnly' → 'system'
+ */
+function migrateLegacySections(stored: SidebarLayoutConfig): SidebarLayoutConfig {
+  const migratedSectionOrder = stored.sectionOrder
+    .map(id => LEGACY_SECTION_MAP[id] || id)
+    // Deduplicate (e.g. both 'growth' and 'stats' map to 'myTools')
+    .filter((id, index, arr) => arr.indexOf(id) === index);
+
+  const migratedLinkOrder: Record<string, string[]> = {};
+  Object.entries(stored.linkOrder || {}).forEach(([sectionId, links]) => {
+    const newId = LEGACY_SECTION_MAP[sectionId] || sectionId;
+    if (migratedLinkOrder[newId]) {
+      // Merge links from multiple legacy sections into one
+      migratedLinkOrder[newId] = [...new Set([...migratedLinkOrder[newId], ...links])];
+    } else {
+      migratedLinkOrder[newId] = links;
+    }
+  });
+
+  const migratedHiddenSections = (stored.hiddenSections || [])
+    .map(id => LEGACY_SECTION_MAP[id] || id)
+    .filter((id, index, arr) => arr.indexOf(id) === index);
+
+  const migratedHiddenLinks: Record<string, string[]> = {};
+  Object.entries(stored.hiddenLinks || {}).forEach(([sectionId, links]) => {
+    const newId = LEGACY_SECTION_MAP[sectionId] || sectionId;
+    if (migratedHiddenLinks[newId]) {
+      migratedHiddenLinks[newId] = [...new Set([...migratedHiddenLinks[newId], ...links])];
+    } else {
+      migratedHiddenLinks[newId] = links;
+    }
+  });
+
+  // Migrate role visibility
+  const migratedRoleVisibility: Record<string, RoleVisibilityConfig> = {};
+  Object.entries(stored.roleVisibility || {}).forEach(([role, config]) => {
+    migratedRoleVisibility[role] = {
+      hiddenSections: (config.hiddenSections || [])
+        .map(id => LEGACY_SECTION_MAP[id] || id)
+        .filter((id, index, arr) => arr.indexOf(id) === index),
+      hiddenLinks: (() => {
+        const hl: Record<string, string[]> = {};
+        Object.entries(config.hiddenLinks || {}).forEach(([sectionId, links]) => {
+          const newId = LEGACY_SECTION_MAP[sectionId] || sectionId;
+          if (hl[newId]) {
+            hl[newId] = [...new Set([...hl[newId], ...links])];
+          } else {
+            hl[newId] = links;
+          }
+        });
+        return hl;
+      })(),
+    };
+  });
+
+  return {
+    ...stored,
+    sectionOrder: migratedSectionOrder,
+    linkOrder: migratedLinkOrder,
+    hiddenSections: migratedHiddenSections,
+    hiddenLinks: migratedHiddenLinks,
+    roleVisibility: migratedRoleVisibility,
+  };
 }
 
 export function useSidebarLayout() {
@@ -280,8 +308,13 @@ export function useSidebarLayout() {
 
       if (error) throw error;
 
-      const stored = data?.sidebar_layout as unknown as SidebarLayoutConfig | null;
+      let stored = data?.sidebar_layout as unknown as SidebarLayoutConfig | null;
       
+      // Migrate legacy section IDs if present
+      if (stored?.sectionOrder?.some(id => Object.keys(LEGACY_SECTION_MAP).includes(id))) {
+        stored = migrateLegacySections(stored);
+      }
+
       // Merge stored with defaults
       const sectionOrder = stored?.sectionOrder?.length 
         ? [...new Set([...stored.sectionOrder, ...DEFAULT_SECTION_ORDER])]
@@ -291,26 +324,22 @@ export function useSidebarLayout() {
       
       if (stored?.linkOrder) {
         Object.keys(stored.linkOrder).forEach((sectionId) => {
-          const storedLinks = stored.linkOrder[sectionId];
+          // Skip legacy section IDs that weren't migrated
+          if (LEGACY_SECTION_MAP[sectionId]) return;
+          const storedLinks = stored!.linkOrder[sectionId];
           const defaultLinks = DEFAULT_LINK_ORDER[sectionId] || [];
-          // Merge stored with any new defaults
           linkOrder[sectionId] = [...new Set([...storedLinks, ...defaultLinks])];
         });
       }
 
-      // Hidden sections and links default to empty arrays
       const hiddenSections = stored?.hiddenSections || [];
       const hiddenLinks = stored?.hiddenLinks || {};
-      
-      // Custom sections default to empty object
       const customSections = stored?.customSections || {};
-      
-      // Role visibility default to empty object
       const roleVisibility = stored?.roleVisibility || {};
 
       return { sectionOrder, linkOrder, hiddenSections, hiddenLinks, customSections, roleVisibility } as SidebarLayoutConfig;
     },
-    staleTime: 1000 * 60 * 10, // Cache for 10 minutes
+    staleTime: 1000 * 60 * 10,
   });
 }
 
@@ -319,7 +348,6 @@ export function useUpdateSidebarLayout() {
 
   return useMutation({
     mutationFn: async (layout: SidebarLayoutConfig) => {
-      // Get existing settings first
       const { data: existing } = await supabase
         .from('business_settings')
         .select('id')
@@ -329,7 +357,6 @@ export function useUpdateSidebarLayout() {
         throw new Error('Business settings not found');
       }
 
-      // Convert to JSON-compatible type for Supabase using JSON serialization
       const layoutJson = JSON.parse(JSON.stringify({
         sectionOrder: layout.sectionOrder,
         linkOrder: layout.linkOrder,
