@@ -850,6 +850,7 @@ export function AggregateSalesCard({
                           isOpen={activeDrilldown === 'expectedGap'}
                           data={gapAnalysis}
                           isLoading={gapLoading}
+                          showDates={dateRange !== 'yesterday'}
                         />
                       </>
                     );
