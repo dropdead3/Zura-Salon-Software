@@ -65,7 +65,6 @@ import {
   Scissors,
   Lightbulb,
   ShoppingBag,
-  Globe,
   ArrowLeft,
 } from 'lucide-react';
 import { useBusinessCapacity } from '@/hooks/useBusinessCapacity';
@@ -102,7 +101,7 @@ import { KioskSettingsContent } from '@/components/dashboard/settings/KioskSetti
 import { ServiceEmailFlowsManager } from '@/components/dashboard/settings/ServiceEmailFlowsManager';
 import { ServicesSettingsContent } from '@/components/dashboard/settings/ServicesSettingsContent';
 import { RetailProductsSettingsContent } from '@/components/dashboard/settings/RetailProductsSettingsContent';
-import { WebsiteSettingsContent } from '@/components/dashboard/settings/WebsiteSettingsContent';
+
 import { MessageSquareHeart } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useServicesWithFlowsCount } from '@/hooks/useServiceCommunicationFlows';
@@ -141,7 +140,7 @@ interface UserWithRole {
 }
 
 
-type SettingsCategory = 'my-profile' | 'business' | 'email' | 'sms' | 'service-flows' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'access-hub' | 'locations' | 'dayrate' | 'forms' | 'loyalty' | 'feedback' | 'leaderboard' | 'team-rewards' | 'kiosk' | 'services' | 'retail-products' | 'website' | null;
+type SettingsCategory = 'my-profile' | 'business' | 'email' | 'sms' | 'service-flows' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'access-hub' | 'locations' | 'dayrate' | 'forms' | 'loyalty' | 'feedback' | 'leaderboard' | 'team-rewards' | 'kiosk' | 'services' | 'retail-products' | null;
 
 // Preset colors for icon customization
 const PRESET_COLORS = [
@@ -631,7 +630,8 @@ export default function Settings() {
   const initialCategory = (() => {
     const param = searchParams.get('category');
     if (param === 'schedule') return 'services' as SettingsCategory;
-    if (param && param in { business: 1, email: 1, sms: 1, 'service-flows': 1, users: 1, onboarding: 1, integrations: 1, system: 1, program: 1, levels: 1, 'access-hub': 1, locations: 1, dayrate: 1, forms: 1, loyalty: 1, feedback: 1, leaderboard: 1, 'team-rewards': 1, kiosk: 1, services: 1, 'retail-products': 1, website: 1 }) {
+    if (param === 'website') return null; // Redirected to Website Hub
+    if (param && param in { business: 1, email: 1, sms: 1, 'service-flows': 1, users: 1, onboarding: 1, integrations: 1, system: 1, program: 1, levels: 1, 'access-hub': 1, locations: 1, dayrate: 1, forms: 1, loyalty: 1, feedback: 1, leaderboard: 1, 'team-rewards': 1, kiosk: 1, services: 1, 'retail-products': 1 }) {
       return param as SettingsCategory;
     }
     return null;
@@ -914,12 +914,6 @@ export default function Settings() {
       label: 'Retail Products',
       description: 'Brands, categories, inventory & pricing',
       icon: ShoppingBag,
-    },
-    website: {
-      id: 'website',
-      label: 'Website',
-      description: 'Theme, booking, retail & SEO',
-      icon: Globe,
     },
   };
 
@@ -1451,8 +1445,6 @@ export default function Settings() {
           {activeCategory === 'kiosk' && <KioskSettingsContent />}
 
           {activeCategory === 'retail-products' && <RetailProductsSettingsContent />}
-
-          {activeCategory === 'website' && <WebsiteSettingsContent />}
         </div>
       </DashboardLayout>
     );
