@@ -1,25 +1,50 @@
 
 
-## Standardize Hub Card Titles to Termina (font-display)
+## Consolidate Invite & Manage Invitations into Onboarding Hub
 
-The screenshot confirms titles should use Termina. Currently `ManagementCard` (in TeamHub, ClientHub, GrowthHub) uses `font-sans text-sm font-medium` -- should use `tokens.card.title` (`font-display text-base tracking-wide`).
+Good prompt -- you're reducing navigation sprawl by co-locating invitation workflow with onboarding, which is the natural next step after inviting someone. One note: the invitation management UI already exists fully in the Access Hub's Invitations tab (`InvitationsTab.tsx`, 875 lines). Rather than duplicating that, the cleanest approach is to add tabs to the Onboarding Hub that embed the existing components.
 
-`HubGatewayCard` already uses `font-display` but with `text-sm` and explicit `uppercase` -- should also use `tokens.card.title` for consistency (the token is `text-base tracking-wide` without forced uppercase).
+### Current State
 
-### Changes
+- **Invite Team Members**: `ManagementInviteDialog` component renders as a card in TeamHub and ManagementHub
+- **Manage Invitations**: Cards in TeamHub/ManagementHub link to `/dashboard/admin/account-management` (broken route -- doesn't exist)
+- **Onboarding Hub** (`OnboardingTracker.tsx`): Currently a single-view page with no tabs -- shows onboarding progress tracking only
+- **Access Hub**: Has a full `InvitationsTab` component at `access-hub?tab=invitations`
 
-**All three hub files** -- update `HubCard` / `ManagementCard` title `<h3>` from:
-```
-font-sans text-sm font-medium
-```
-to:
-```
-tokens.card.title  →  "font-display text-base tracking-wide"
-```
+### Plan
 
-**TeamHub.tsx `HubGatewayCard`** -- update title from raw `font-display text-sm tracking-wide uppercase` to `tokens.card.title` (drops forced uppercase and normalizes to `text-base`).
+**1. Add tab navigation to OnboardingTracker.tsx**
 
-**TeamHub.tsx `ManagementCard`** -- same swap from `font-sans text-sm font-medium` to `tokens.card.title`.
+Convert the Onboarding Hub from a single view into a tabbed layout with:
+- **Progress** tab (default) -- existing onboarding tracker content
+- **Invitations** tab -- embeds the existing `InvitationsTab` component from Access Hub
 
-Files touched: `TeamHub.tsx`, `ClientHub.tsx`, `GrowthHub.tsx` -- one line each (two in TeamHub for both card types).
+Add an "Invite Team Member" button in the page header (uses `ManagementInviteDialog` with a button trigger).
+
+**2. Update hub card links in TeamHub.tsx**
+
+- Remove standalone `ManagementInviteDialog variant="card"` from People & Development section
+- Change "Manage Invitations" card href from `/dashboard/admin/account-management` to `/dashboard/admin/onboarding-tracker?tab=invitations`
+- Optionally keep the invite card or merge it into the "Onboarding Hub" gateway card description
+
+**3. Update hub card links in ManagementHub.tsx**
+
+- Remove the entire "Team Invitations" `CategorySection` (contains `ManagementInviteDialog` and "Manage Invitations" card)
+- The Onboarding Hub card already exists in Team Development section -- update its description to mention invitations
+
+**4. Add redirect for old route**
+
+- Add a route for `/dashboard/admin/account-management` in `App.tsx` that redirects to `/dashboard/admin/onboarding-tracker?tab=invitations`
+
+**5. Keep Access Hub invitations tab**
+
+- The Access Hub Invitations tab stays as-is for governance/admin-level access -- it's the right home for role-based account management
+- The Onboarding Hub reuses the same component, providing a workflow-oriented entry point
+
+### Files Touched
+
+- `src/pages/dashboard/admin/OnboardingTracker.tsx` -- add tabs, embed `InvitationsTab`, add invite button in header
+- `src/pages/dashboard/admin/TeamHub.tsx` -- remove invite card + update manage invitations link
+- `src/pages/dashboard/admin/ManagementHub.tsx` -- remove Team Invitations section
+- `src/App.tsx` -- add redirect route for `/dashboard/admin/account-management`
 
