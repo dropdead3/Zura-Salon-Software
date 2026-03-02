@@ -99,6 +99,7 @@ export const manageNavItems: DashboardNavItem[] = [
   { href: '/dashboard/admin/growth-hub', label: 'Growth Hub', labelKey: 'growth_hub', icon: Rocket, permission: 'view_team_overview' },
   { href: '/dashboard/admin/payroll', label: 'Hiring & Payroll Hub', labelKey: 'hiring_payroll_hub', icon: DollarSign, permission: 'manage_payroll' },
   { href: '/dashboard/admin/booth-renters', label: 'Renter Hub', labelKey: 'renter_hub', icon: Store, permission: 'manage_booth_renters' },
+  { href: '/dashboard/admin/chair-assignments', label: 'Chair Assignments', labelKey: 'chair_assignments', icon: Armchair, permission: 'view_team_overview' },
 ];
 
 // ─── SECTION: system (admin config) ──────────────────────────────────────────

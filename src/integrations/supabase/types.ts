@@ -13896,6 +13896,63 @@ export type Database = {
         }
         Relationships: []
       }
+      salon_chair_assignments: {
+        Row: {
+          chair_id: string
+          created_at: string
+          id: string
+          location_id: string
+          notes: string | null
+          organization_id: string
+          status: string
+          stylist_user_id: string
+          updated_at: string
+          week_end_date: string
+          week_start_date: string
+        }
+        Insert: {
+          chair_id: string
+          created_at?: string
+          id?: string
+          location_id: string
+          notes?: string | null
+          organization_id: string
+          status?: string
+          stylist_user_id: string
+          updated_at?: string
+          week_end_date: string
+          week_start_date: string
+        }
+        Update: {
+          chair_id?: string
+          created_at?: string
+          id?: string
+          location_id?: string
+          notes?: string | null
+          organization_id?: string
+          status?: string
+          stylist_user_id?: string
+          updated_at?: string
+          week_end_date?: string
+          week_start_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "salon_chair_assignments_chair_id_fkey"
+            columns: ["chair_id"]
+            isOneToOne: false
+            referencedRelation: "rental_stations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "salon_chair_assignments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       salon_inquiries: {
         Row: {
           assigned_at: string | null
