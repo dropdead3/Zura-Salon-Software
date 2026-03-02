@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { PLATFORM_NAME } from '@/lib/brand';
 import { Button } from '@/components/ui/button';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -50,6 +51,8 @@ import { KeyboardShortcutsDialog } from '@/components/KeyboardShortcutsDialog';
 import { OrganizationSwitcher } from '@/components/platform/OrganizationSwitcher';
 import { PlatformContextBanner } from '@/components/platform/PlatformContextBanner';
 import { useRoleUtils, getIconComponent } from '@/hooks/useRoleUtils';
+import { useRoles, ROLE_CATEGORIES } from '@/hooks/useRoles';
+import { getRoleIconComponent } from '@/components/dashboard/RoleIconPicker';
 import { buildRoleBadges, type RoleBadgeConfig } from '@/lib/roleBadgeConfig';
 import { useTeamDirectory, useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { useLocations } from '@/hooks/useLocations';
@@ -402,32 +405,95 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
   const isPrimaryOwner = (employeeProfile as any)?.is_primary_owner ?? false;
   const roleBadges = buildRoleBadges(roles as AppRole[], isPrimaryOwner);
 
+  const { data: allRoles = [] } = useRoles();
+  const [viewAsOpen, setViewAsOpen] = useState(false);
+
   const ViewAsToggle = ({ asMenuItem }: { asMenuItem?: boolean }) => {
     if (!isAdmin && !isPlatformUser) return null;
-    return (
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            className="h-9 rounded-full px-4 gap-1.5 text-muted-foreground hover:text-foreground hover:bg-secondary"
-            onClick={() => {
-              if (isViewingAs || isViewingAsUser) {
-                clearViewAs();
-              }
-            }}
-          >
-            {isViewingAs || isViewingAsUser ? (
+
+    const activeRoles = allRoles.filter(r => r.is_active);
+    const grouped = ROLE_CATEGORIES.map(cat => ({
+      ...cat,
+      roles: activeRoles.filter(r => r.category === cat.value).sort((a, b) => a.sort_order - b.sort_order),
+    })).filter(g => g.roles.length > 0);
+
+    // When viewing as: just a button to exit
+    if (isViewingAs || isViewingAsUser) {
+      return (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              className="h-9 rounded-full px-4 gap-1.5 text-muted-foreground hover:text-foreground hover:bg-secondary"
+              onClick={() => clearViewAs()}
+            >
               <Eye className="w-4 h-4" />
-            ) : (
-              <EyeOff className="w-4 h-4" />
-            )}
-            <span className="text-xs">{isViewingAs || isViewingAsUser ? 'Exit View As' : 'View As'}</span>
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent side="bottom">
-          {isViewingAs || isViewingAsUser ? 'Exit "View As" mode' : 'View as another role'}
-        </TooltipContent>
-      </Tooltip>
+              <span className="text-xs">Exit View As</span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">Exit "View As" mode</TooltipContent>
+        </Tooltip>
+      );
+    }
+
+    // When not viewing as: popover with role list
+    return (
+      <Popover open={viewAsOpen} onOpenChange={setViewAsOpen}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <PopoverTrigger asChild>
+              <Button
+                variant="ghost"
+                className="h-9 rounded-full px-4 gap-1.5 text-muted-foreground hover:text-foreground hover:bg-secondary"
+              >
+                <EyeOff className="w-4 h-4" />
+                <span className="text-xs">View As</span>
+              </Button>
+            </PopoverTrigger>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">View as another role</TooltipContent>
+        </Tooltip>
+        <PopoverContent
+          align="end"
+          sideOffset={8}
+          className={cn(
+            "w-72 p-0 bg-card/80 backdrop-blur-xl backdrop-saturate-150 border border-border/30 rounded-xl shadow-2xl"
+          )}
+        >
+          <div className="p-3">
+            <p className="font-display text-[10px] tracking-[0.12em] uppercase text-muted-foreground mb-2">
+              View As Role
+            </p>
+            <div className="space-y-3">
+              {grouped.map(group => (
+                <div key={group.value}>
+                  <p className="text-[10px] tracking-wider uppercase text-muted-foreground/60 mb-1 px-1">
+                    {group.label}
+                  </p>
+                  <div className="space-y-0.5">
+                    {group.roles.map(role => {
+                      const IconComp = getRoleIconComponent(role.icon);
+                      return (
+                        <button
+                          key={role.id}
+                          onClick={() => {
+                            setViewAsRole(role.name as AppRole);
+                            setViewAsOpen(false);
+                          }}
+                          className="w-full flex items-center gap-3 px-2.5 py-2 rounded-lg hover:bg-muted/50 transition-colors duration-150 text-sm"
+                        >
+                          <IconComp className="w-4 h-4 text-muted-foreground" />
+                          <span className="flex-1 text-left">{role.display_name}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </PopoverContent>
+      </Popover>
     );
   };
 
