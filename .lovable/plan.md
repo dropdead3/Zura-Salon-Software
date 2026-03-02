@@ -1,33 +1,48 @@
 
 
-## Fix "View As" Toggle — Add Role Selection Popover
+## Redesign "View As" Popover — Tabbed UI with Roles, Team, and Test Accounts
 
-The "View As" button in the top bar currently does nothing when clicked in the non-active state. The `onClick` handler only handles the "exit" case (`clearViewAs`), but there's no UI to actually select a role to impersonate. The `setViewAsRole` function is destructured in `DashboardLayout` but never passed into the toggle's click path.
+The current "View As" popover only shows a role list. You want three tabs: **Roles** (existing role impersonation), **Team** (impersonate a specific team member via `setViewAsUser`), and **Test Accounts** (placeholder for future test account infrastructure).
 
-### Root Cause
+### Approach
 
-In `DashboardLayout.tsx` lines 405–432, the `ViewAsToggle` component wraps a `Button` whose `onClick` only fires `clearViewAs()` when already viewing as someone. When not in View As mode, the click is a no-op.
+Extract the `ViewAsToggle` inline component from `DashboardLayout.tsx` into a dedicated `ViewAsPopover.tsx` component with a cleaner, tabbed design.
 
-### Solution
+### Structure
 
-Convert the `ViewAsToggle` from a plain `Button` into a `Popover`-based component:
+**Tab 1 — Roles** (existing behavior, refined)
+- Grouped by category (Leadership, Operations, Stylists, Other)
+- Each role row: icon + display name → calls `setViewAsRole(role.name)`
 
-1. **When not in View As mode**: Clicking opens a popover listing all active roles (from `useRoles`), grouped by category. Selecting a role calls `setViewAsRole(role.name)`.
+**Tab 2 — Team**
+- Search input to filter team members
+- Fetch active `employee_profiles` with their roles via `useAllUsersWithRoles`
+- Each row: avatar + name + role badges → calls `setViewAsUser({ id, full_name, roles })`
+- Exclude the current logged-in user from the list
 
-2. **When in View As mode**: Clicking the button directly calls `clearViewAs()` (exits impersonation) — no popover needed.
+**Tab 3 — Test Accounts**
+- Empty state with explanation: "Test accounts allow safe simulation without affecting real data"
+- "Coming Soon" indicator — no database table exists yet for test accounts
+- This plants the UI slot for future implementation
 
-### Single File Change
+### UI Design
 
-**`src/components/dashboard/DashboardLayout.tsx`** — Rewrite the `ViewAsToggle` inner component (~lines 405–432):
+- Tabs rendered with a compact `TabsList` (Roles | Team | Test Accounts) inside the popover header
+- Glass card aesthetic matching the overflow menu (`bg-card/80 backdrop-blur-xl`)
+- Team tab: scrollable list with `max-h-[320px]` and search at top
+- Active/exit state: when in View As mode, show the impersonated context (role name or user name) with an "Exit" button instead of opening the popover
 
-- Import `Popover`, `PopoverTrigger`, `PopoverContent` from `@/components/ui/popover`
-- Add local state `viewAsOpen` to control popover
-- When not viewing as: render Popover with role list (fetched via existing `useRoles` or from ViewAsContext's roles)
-- Each role row: icon (from `getRoleIconComponent`), display name, click → `setViewAsRole(role.name as AppRole)` + close popover
-- When viewing as: keep current behavior (direct `clearViewAs()` on click, no popover)
-- Style the popover to match the existing overflow menu aesthetic (glass card, `bg-card/80 backdrop-blur-xl`, grouped by category)
+### Files
 
-### Roles Data
+| File | Action |
+|------|--------|
+| `src/components/dashboard/ViewAsPopover.tsx` | **Create** — new tabbed popover component |
+| `src/components/dashboard/DashboardLayout.tsx` | **Edit** — replace inline `ViewAsToggle` with the new component |
 
-The `useRoles` hook is already available in `ViewAsContext` and returns `Role[]` with `name`, `display_name`, `icon`, `color`, `category`, `sort_order`, `is_active`. We can import `useRoles` directly in `DashboardLayout` (it's already imported indirectly) or pass the roles through. Since `DashboardLayout` already has access to `setViewAsRole` from `useViewAs()`, we just need to add the role list query and popover UI.
+### Technical Notes
+
+- `useAllUsersWithRoles` hook already exists and returns `{ user_id, full_name, display_name, photo_url, roles }` — perfect for the Team tab
+- `setViewAsUser` from `ViewAsContext` accepts `{ id, full_name, roles }` — already wired for user impersonation
+- Avatar fallback: initials from `full_name` when no `photo_url`
+- Font rules: tab labels use `font-sans` (Aeonik Pro), category headers use `font-display` (Termina) `text-[10px] tracking-[0.12em] uppercase`
 
