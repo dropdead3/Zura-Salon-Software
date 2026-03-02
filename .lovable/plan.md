@@ -1,32 +1,54 @@
 
 
-## Move Hub Links from Sidebar into Operations Hub
+## Reorganize Operations Hub for Intuitive Navigation
 
-Currently the sidebar "Manage" section has 7 items: Analytics Hub, Operations Hub, Client Hub, Growth Hub, Hiring & Payroll Hub, Renter Hub, and Chair Assignments. The user wants to keep only Analytics Hub and Operations Hub in the sidebar, and surface the other 5 as cards inside the Operations Hub page.
+The current page has the "Hubs" section buried among 9 other category sections. The reorganization promotes Hubs to a prominent top-level gateway and consolidates the remaining cards into fewer, more logical groupings.
 
-### Changes
+### New Page Structure
 
-**1. `src/config/dashboardNav.ts`** — Remove 5 items from `manageNavItems`
-- Remove: Client Hub, Growth Hub, Hiring & Payroll Hub, Renter Hub, Chair Assignments
-- Keep: Analytics Hub, Operations Hub
+```text
+┌─────────────────────────────────────────────┐
+│  Operations Hub (header)                    │
+├─────────────────────────────────────────────┤
+│  ★ HUB GATEWAY (full-width, prominent)     │
+│  ┌─────────┐ ┌─────────┐ ┌─────────┐       │
+│  │ Client  │ │ Growth  │ │ Hiring &│       │
+│  │ Hub     │ │ Hub     │ │ Payroll │       │
+│  ├─────────┤ ├─────────┤ ├─────────┤       │
+│  │ Renter  │ │ Chair   │ │         │       │
+│  │ Hub     │ │ Assign. │ │         │       │
+│  └─────────┘ └─────────┘ └─────────┘       │
+├─────────────────────────────────────────────┤
+│  PEOPLE & DEVELOPMENT (merged from         │
+│    "Team Development" + "Team Invitations"  │
+│    + "Team Directory")                      │
+├─────────────────────────────────────────────┤
+│  SCHEDULING & REQUESTS (unchanged)          │
+├─────────────────────────────────────────────┤
+│  PERFORMANCE & COMPLIANCE (merge in         │
+│    "PTO & Leave" cards here)                │
+├─────────────────────────────────────────────┤
+│  TEAM OPERATIONS & COMMS (merge             │
+│    "Team Operations" + "Communications"     │
+│    + "Points & Rewards")                    │
+├─────────────────────────────────────────────┤
+│  AI & AUTOMATION (unchanged)                │
+└─────────────────────────────────────────────┘
+```
 
-**2. `src/pages/dashboard/admin/TeamHub.tsx`** — Add new sections with cards for the moved hubs
-- New section **"Hubs"** (or similar) at the top, containing:
-  - Client Hub → `/dashboard/admin/client-hub` (HeartPulse icon)
-  - Growth Hub → `/dashboard/admin/growth-hub` (Rocket icon)
-  - Hiring & Payroll Hub → `/dashboard/admin/payroll` (DollarSign icon)
-  - Renter Hub → `/dashboard/admin/booth-renters` (Store icon)
-  - Chair Assignments → `/dashboard/admin/chair-assignments` (Armchair icon)
+### Changes — single file: `src/pages/dashboard/admin/TeamHub.tsx`
 
-**3. `src/components/dashboard/settings/SidebarPreview.tsx`** — Remove the 5 entries from `LINK_CONFIG` that no longer appear in sidebar (or keep for backward compat — they just won't render since they're not in the nav items)
+**1. Promote Hub Gateway to 3-column grid at top**
+- Change from `columns={2}` to `columns={3}` so Hub cards fill the width consistently with other sections, avoiding a visually orphaned 5th card.
 
-**4. `src/components/dashboard/HubQuickLinks.tsx`** — Remove Client Hub, Growth Hub, Hiring & Payroll Hub, Renter Hub from `hubLinksConfig` in `dashboardNav.ts` (they're no longer top-level hub entry points on Command Center)
+**2. Merge small sections into logical groups**
+- **"People & Development"**: Combine current "Team Development" + "Team Invitations" sections. Team Directory, Onboarding, Graduation Tracker, Training Hub, Challenges, Program Overview, Invite Dialog, and Manage Invitations all live here.
+- **"Performance & Compliance"**: Absorb "PTO & Leave" (PTO Balances card moves here). Performance Reviews, Strikes, Documents, Incidents, PTO Balances.
+- **"Team Operations & Communications"**: Merge "Team Operations" + "Communications" + "Points & Rewards". Birthdays, Business Cards, Headshots, Announcements, Changelog, Points Config.
+- **"AI & Automation"**: Stays as-is (single card is fine here as a distinct domain).
 
-**5. `src/locales/en.json`** — No changes needed (labels already exist)
+**3. Remove the now-empty standalone sections**
+- Delete the separate "PTO & Leave", "Team Invitations", "Communications", and "Points & Rewards" `CategorySection` blocks.
 
-### What stays the same
-- All routes and pages remain unchanged
-- The hub pages themselves (ClientHub, GrowthHub, etc.) still exist and work
-- Analytics Hub stays in sidebar
-- Operations Hub stays in sidebar (it becomes the central gateway to the other hubs)
+No new files. No route changes. No database changes.
 
