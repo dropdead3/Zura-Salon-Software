@@ -1,25 +1,15 @@
 
 
-## Remove Overflow Menu, Inline Controls into Top Bar
+## Fix Tab Toggle Padding in View As Popover
 
-The overflow dropdown (Info icon) currently hides "Hide Numbers", "Next Client", and "Keyboard Shortcuts" behind a popover. You want these controls directly in the top bar instead, and Keyboard Shortcuts removed entirely.
+The `TabsList` in `ViewAsPopover.tsx` uses `h-9` which creates uneven padding around the tab buttons. The fix is to increase the height and adjust the inner padding for visual balance.
 
-### Changes
+### Change
 
-**`src/components/dashboard/SuperAdminTopBar.tsx`**
-- Remove the `TopBarOverflowMenu` import and its entire `<div className="2xl:hidden">` block (lines 186-197)
-- Change `HideNumbersToggle` wrapper from `hidden 2xl:flex` to just `flex` so it's always visible in the top bar regardless of viewport
-- The `NextClientIndicator` stays in the center zone (already responsive at 2xl)
+**`src/components/dashboard/ViewAsPopover.tsx`** — line 124:
+- Change `TabsList` from `h-9` to `h-10` to give more vertical breathing room
+- Change `TabsTrigger` items from `text-xs` to `text-xs py-1.5` for even internal padding
+- Increase the container padding from `px-3 pt-3 pb-1` to `px-3 pt-3 pb-2`
 
-**`src/components/dashboard/DashboardLayout.tsx`**
-- Remove the `KeyboardShortcutsDialog` import and its `<KeyboardShortcutsDialog />` render
-
-**Files to leave in place but no longer actively used:**
-- `TopBarOverflowMenu.tsx` — no longer imported (dead code, can be cleaned up later)
-- `KeyboardShortcutsDialog.tsx` and `useKeyboardShortcuts.ts` — no longer rendered
-
-### Result
-- Hide Numbers toggle is always visible in the top bar at all breakpoints
-- No more dropdown/overflow menu (Info icon gone)
-- Keyboard Shortcuts dialog removed from the dashboard
+This ensures the pill-shaped tab buttons have symmetrical padding on all sides within the toggle bar.
 
