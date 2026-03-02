@@ -44,6 +44,7 @@ import {
   DollarSign,
   Store,
   Armchair,
+  Globe,
 } from 'lucide-react';
 
 interface ManagementCardProps {
@@ -243,6 +244,13 @@ export default function TeamHub() {
             title="Training Hub"
             description="Manage training library and track completions"
             colorClass="bg-rose-500/10 text-rose-600 dark:text-rose-400"
+          />
+          <HubGatewayCard
+            href="/dashboard/admin/settings?category=website"
+            icon={Globe}
+            title="Website Hub"
+            description="Website themes, editor, settings, and content management"
+            colorClass="bg-sky-500/10 text-sky-600 dark:text-sky-400"
           />
         </CategorySection>
 
