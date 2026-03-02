@@ -1,18 +1,25 @@
 
 
-## Standardize Hub Card Icons to Token Colors
+## Standardize Hub Card Titles to Termina (font-display)
 
-Clean choice -- uniform `bg-muted` / `text-primary` aligns with the design token system and ensures theme compliance across all five color themes.
+The screenshot confirms titles should use Termina. Currently `ManagementCard` (in TeamHub, ClientHub, GrowthHub) uses `font-sans text-sm font-medium` -- should use `tokens.card.title` (`font-display text-base tracking-wide`).
 
-### Changes (single file: `TeamHub.tsx`)
+`HubGatewayCard` already uses `font-display` but with `text-sm` and explicit `uppercase` -- should also use `tokens.card.title` for consistency (the token is `text-base tracking-wide` without forced uppercase).
 
-1. **Remove `colorClass` prop** from both `ManagementCard` and `HubGatewayCard` interfaces and components
-2. **Replace icon containers** with `tokens.card.iconBox` (`w-10 h-10 bg-muted flex items-center justify-center rounded-lg`) and `tokens.card.icon` (`w-5 h-5 text-primary`)
-3. **Remove all hardcoded color classes** from every card instance (e.g., `bg-rose-500/10 text-rose-600 dark:text-rose-400`)
-4. **Clean up**: Remove the `colorClass` default parameter and `cn()` wrapping on icon containers since they no longer need dynamic classes
+### Changes
 
-### What stays the same
-- Card structure, layout, hover effects, stat badges
-- `HubGatewayCard` vs `ManagementCard` distinction (gateway uses `font-display` title, glass background)
-- Category sections and grid layout
+**All three hub files** -- update `HubCard` / `ManagementCard` title `<h3>` from:
+```
+font-sans text-sm font-medium
+```
+to:
+```
+tokens.card.title  →  "font-display text-base tracking-wide"
+```
+
+**TeamHub.tsx `HubGatewayCard`** -- update title from raw `font-display text-sm tracking-wide uppercase` to `tokens.card.title` (drops forced uppercase and normalizes to `text-base`).
+
+**TeamHub.tsx `ManagementCard`** -- same swap from `font-sans text-sm font-medium` to `tokens.card.title`.
+
+Files touched: `TeamHub.tsx`, `ClientHub.tsx`, `GrowthHub.tsx` -- one line each (two in TeamHub for both card types).
 
