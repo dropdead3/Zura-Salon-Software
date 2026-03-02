@@ -24,11 +24,11 @@ export function ChairGrid({ chairs, assignments, stylists, onRemoveAssignment }:
         <User className={tokens.empty.icon} />
         <h3 className={tokens.empty.heading}>No chairs configured</h3>
         <p className={tokens.empty.description}>
-          Add stations in your location settings first
+          Add stations in your location settings to enable chair assignments
         </p>
         <Button variant="outline" size="sm" asChild className="mt-4">
           <Link to="/dashboard/admin/settings?category=locations">
-            Go to Location Settings
+            Manage Location Stations
           </Link>
         </Button>
       </div>

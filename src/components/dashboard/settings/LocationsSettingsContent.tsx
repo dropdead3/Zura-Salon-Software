@@ -60,6 +60,7 @@ import { toast } from 'sonner';
 import { useBusinessCapacity } from '@/hooks/useBusinessCapacity';
 import { LocationCapacityBar } from './LocationCapacityBar';
 import { AddLocationSeatsDialog } from './AddLocationSeatsDialog';
+import { LocationStationsTab } from './LocationStationsTab';
 
 const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
 const DAY_LABELS: Record<string, string> = {
@@ -461,10 +462,11 @@ export function LocationsSettingsContent() {
           </DialogHeader>
           
           <Tabs defaultValue="details" className="w-full">
-            <TabsList className="grid grid-cols-3">
+            <TabsList className={cn("grid", editingLocation ? "grid-cols-4" : "grid-cols-3")}>
               <TabsTrigger value="details">Details</TabsTrigger>
               <TabsTrigger value="hours">Hours</TabsTrigger>
               <TabsTrigger value="holidays">Holidays</TabsTrigger>
+              {editingLocation && <TabsTrigger value="stations">Stations</TabsTrigger>}
             </TabsList>
             
             <TabsContent value="details" className="space-y-4 py-4">
@@ -908,6 +910,12 @@ export function LocationsSettingsContent() {
                 </p>
               )}
             </TabsContent>
+
+            {editingLocation && (
+              <TabsContent value="stations">
+                <LocationStationsTab locationId={editingLocation.id} />
+              </TabsContent>
+            )}
           </Tabs>
           
           <DialogFooter>
