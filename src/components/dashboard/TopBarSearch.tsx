@@ -17,7 +17,7 @@ import {
 
 // Hub children: deep pages inside hubs that should be searchable
 const hubChildrenItems: Array<{ href: string; label: string; icon: React.ComponentType<{ className?: string }> }> = [
-  // Team Hub children
+  // Operations Hub children
   { href: '/dashboard/directory', label: 'Team Directory', icon: Users },
   { href: '/dashboard/admin/performance-reviews', label: 'Performance Reviews', icon: Users },
   { href: '/dashboard/admin/pto', label: 'PTO Balances', icon: Users },
