@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
@@ -9,6 +10,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs, TabsContent, TabsTrigger, ResponsiveTabsList } from '@/components/ui/tabs';
 import {
   Select,
   SelectContent,
@@ -42,12 +44,17 @@ import {
   Users,
   Filter,
   ArrowUpDown,
+  UserPlus,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import type { Database } from '@/integrations/supabase/types';
 import { OnboardingTrackerOverview } from '@/components/dashboard/OnboardingTrackerOverview';
+import { InvitationsTab } from '@/components/access-hub/InvitationsTab';
+import { InviteStaffDialog } from '@/components/dashboard/InviteStaffDialog';
+import { useAuth } from '@/contexts/AuthContext';
+import { useIsPrimaryOwner } from '@/hooks/useIsPrimaryOwner';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
@@ -138,6 +145,24 @@ const ROLE_LABELS: Record<AppRole, string> = {
 
 export default function OnboardingTracker() {
   const { toast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { roles, isPlatformUser } = useAuth();
+  const { data: isPrimaryOwner } = useIsPrimaryOwner();
+  const isSuperAdmin = roles.includes('super_admin');
+  const canManage = isSuperAdmin || isPlatformUser || isPrimaryOwner;
+
+  const tabParam = searchParams.get('tab');
+  const activeTab = tabParam === 'invitations' ? 'invitations' : 'progress';
+
+  const handleTabChange = (value: string) => {
+    if (value === 'progress') {
+      searchParams.delete('tab');
+      setSearchParams(searchParams, { replace: true });
+    } else {
+      setSearchParams({ tab: value }, { replace: true });
+    }
+  };
+
   const [loading, setLoading] = useState(true);
   const [staffData, setStaffData] = useState<StaffOnboardingData[]>([]);
   const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
@@ -420,16 +445,26 @@ export default function OnboardingTracker() {
 
   return (
     <DashboardLayout>
-      <div className="p-6 lg:p-8 space-y-6">
-        {/* Header */}
-        <div className="flex items-start gap-4">
-          <div>
-            <h1 className="font-display text-2xl lg:text-3xl mb-1">ONBOARDING HUB</h1>
-            <p className="text-muted-foreground font-sans text-sm">
-              Monitor team onboarding progress across handbooks, tasks, and requests.
-            </p>
-          </div>
-        </div>
+      <div className="p-6 lg:p-8 space-y-6 max-w-[1600px] mx-auto">
+        <DashboardPageHeader
+          title="Onboarding Hub"
+          description="Monitor team onboarding progress, invitations, and checklist completion"
+          actions={<InviteStaffDialog />}
+        />
+
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
+          <ResponsiveTabsList onTabChange={handleTabChange}>
+            <TabsTrigger value="progress" className="gap-2">
+              <ClipboardCheck className="h-4 w-4" />
+              <span className="hidden sm:inline">Progress</span>
+            </TabsTrigger>
+            <TabsTrigger value="invitations" className="gap-2">
+              <UserPlus className="h-4 w-4" />
+              <span className="hidden sm:inline">Invitations</span>
+            </TabsTrigger>
+          </ResponsiveTabsList>
+
+          <TabsContent value="progress" className="mt-0 space-y-6">
 
         {/* Overview Summary */}
         <OnboardingTrackerOverview />
@@ -748,6 +783,13 @@ export default function OnboardingTracker() {
             ))
           )}
         </div>
+
+          </TabsContent>
+
+          <TabsContent value="invitations" className="mt-0">
+            <InvitationsTab canManage={canManage} />
+          </TabsContent>
+        </Tabs>
       </div>
     </DashboardLayout>
   );
