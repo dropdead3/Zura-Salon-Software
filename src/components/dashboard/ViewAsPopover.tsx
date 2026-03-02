@@ -120,17 +120,17 @@ export function ViewAsPopover() {
       >
         <Tabs defaultValue="roles" className="w-full">
           {/* Header */}
-          <div className="px-3 pt-3 pb-1">
-            <TabsList className="grid w-full grid-cols-3 h-9">
-              <TabsTrigger value="roles" className="text-xs gap-1">
+          <div className="px-3 pt-3 pb-2">
+            <TabsList className="grid w-full grid-cols-3 h-10">
+              <TabsTrigger value="roles" className="text-xs py-1.5 gap-1">
                 <Shield className="w-3.5 h-3.5" />
                 Roles
               </TabsTrigger>
-              <TabsTrigger value="team" className="text-xs gap-1">
+              <TabsTrigger value="team" className="text-xs py-1.5 gap-1">
                 <Users className="w-3.5 h-3.5" />
                 Team
               </TabsTrigger>
-              <TabsTrigger value="test" className="text-xs gap-1">
+              <TabsTrigger value="test" className="text-xs py-1.5 gap-1">
                 <FlaskConical className="w-3.5 h-3.5" />
                 Test
               </TabsTrigger>
