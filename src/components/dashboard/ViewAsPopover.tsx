@@ -139,7 +139,7 @@ export function ViewAsPopover() {
 
           {/* === Roles Tab === */}
           <TabsContent value="roles" className="mt-0">
-            <ScrollArea className="max-h-[360px]">
+            <ScrollArea className="max-h-[420px]">
               <div className="p-3 space-y-3">
                 {grouped.map(group => (
                   <div key={group.value}>
@@ -187,7 +187,7 @@ export function ViewAsPopover() {
                 />
               </div>
             </div>
-            <ScrollArea className="max-h-[320px]">
+            <ScrollArea className="max-h-[380px]">
               <div className="px-3 pb-3 space-y-0.5">
                 {usersLoading ? (
                   <p className="text-xs text-muted-foreground text-center py-6">Loading team…</p>
