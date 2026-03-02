@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { User, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
@@ -25,6 +26,11 @@ export function ChairGrid({ chairs, assignments, stylists, onRemoveAssignment }:
         <p className={tokens.empty.description}>
           Add stations in your location settings first
         </p>
+        <Button variant="outline" size="sm" asChild className="mt-4">
+          <Link to="/dashboard/admin/settings?category=services">
+            Go to Location Settings
+          </Link>
+        </Button>
       </div>
     );
   }
