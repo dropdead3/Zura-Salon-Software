@@ -30,8 +30,8 @@ function HubCard({ href, icon: Icon, title, description, colorClass = 'bg-primar
               <div className={cn("p-2.5 rounded-xl shrink-0", colorClass)}>
                 <Icon className="w-5 h-5" />
               </div>
-              <div className="min-w-0 flex-1">
-                <h3 className="font-medium text-sm truncate">{title}</h3>
+              <div className="flex-1">
+                <h3 className="font-medium text-sm">{title}</h3>
                 <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{description}</p>
               </div>
             </div>
