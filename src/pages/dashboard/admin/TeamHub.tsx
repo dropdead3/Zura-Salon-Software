@@ -230,13 +230,6 @@ export default function TeamHub() {
             colorClass="bg-amber-500/10 text-amber-600 dark:text-amber-400"
           />
           <HubGatewayCard
-            href="/dashboard/admin/chair-assignments"
-            icon={Armchair}
-            title="Chair Assignments"
-            description="Station assignments and floor layout management"
-            colorClass="bg-sky-500/10 text-sky-600 dark:text-sky-400"
-          />
-          <HubGatewayCard
             href="/dashboard/admin/onboarding-tracker"
             icon={ClipboardList}
             title="Onboarding Hub"
@@ -394,6 +387,13 @@ export default function TeamHub() {
 
         {/* Team Operations & Communications */}
         <CategorySection title="Team Operations & Communications">
+          <ManagementCard
+            href="/dashboard/admin/chair-assignments"
+            icon={Armchair}
+            title="Chair Assignments"
+            description="Station assignments and floor layout management"
+            colorClass="bg-sky-500/10 text-sky-600 dark:text-sky-400"
+          />
           <ManagementCard
             href="/dashboard/admin/birthdays"
             icon={Cake}
