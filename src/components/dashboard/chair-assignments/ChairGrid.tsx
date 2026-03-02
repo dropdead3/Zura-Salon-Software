@@ -27,7 +27,7 @@ export function ChairGrid({ chairs, assignments, stylists, onRemoveAssignment }:
           Add stations in your location settings first
         </p>
         <Button variant="outline" size="sm" asChild className="mt-4">
-          <Link to="/dashboard/admin/settings?category=services">
+          <Link to="/dashboard/admin/settings?category=locations">
             Go to Location Settings
           </Link>
         </Button>
