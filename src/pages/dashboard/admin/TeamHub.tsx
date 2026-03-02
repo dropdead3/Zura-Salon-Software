@@ -68,7 +68,7 @@ function ManagementCard({ href, icon: Icon, title, description, stat, statLabel 
                 <Icon className={tokens.card.icon} />
               </div>
               <div className="flex-1">
-                <h3 className="font-sans text-sm font-medium">{title}</h3>
+                <h3 className={tokens.card.title}>{title}</h3>
                 <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{description}</p>
               </div>
             </div>
@@ -104,7 +104,7 @@ function HubGatewayCard({ href, icon: Icon, title, description }: HubGatewayCard
               <Icon className={tokens.card.icon} />
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="font-display text-sm tracking-wide uppercase">{title}</h3>
+              <h3 className={tokens.card.title}>{title}</h3>
               <p className="text-xs text-muted-foreground mt-1">{description}</p>
             </div>
             <ChevronRight className="w-5 h-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
