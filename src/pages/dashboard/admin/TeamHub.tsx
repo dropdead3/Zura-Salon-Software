@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+
 import { PLATFORM_NAME } from '@/lib/brand';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent } from '@/components/ui/card';
