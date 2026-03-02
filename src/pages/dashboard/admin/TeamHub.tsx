@@ -38,6 +38,11 @@ import {
   CalendarDays,
   Brain,
   Users,
+  HeartPulse,
+  Rocket,
+  DollarSign,
+  Store,
+  Armchair,
 } from 'lucide-react';
 
 interface ManagementCardProps {
@@ -160,6 +165,45 @@ export default function TeamHub() {
           title="Operations Hub"
           description="People management, development, and team operations"
         />
+
+        {/* Hub Gateway */}
+        <CategorySection title="Hubs">
+          <ManagementCard
+            href="/dashboard/admin/client-hub"
+            icon={HeartPulse}
+            title="Client Hub"
+            description="Client management, retention, and engagement"
+            colorClass="bg-rose-500/10 text-rose-600 dark:text-rose-400"
+          />
+          <ManagementCard
+            href="/dashboard/admin/growth-hub"
+            icon={Rocket}
+            title="Growth Hub"
+            description="Marketing, campaigns, and growth initiatives"
+            colorClass="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+          />
+          <ManagementCard
+            href="/dashboard/admin/payroll"
+            icon={DollarSign}
+            title="Hiring & Payroll Hub"
+            description="Compensation, commissions, and hiring pipeline"
+            colorClass="bg-green-500/10 text-green-600 dark:text-green-400"
+          />
+          <ManagementCard
+            href="/dashboard/admin/booth-renters"
+            icon={Store}
+            title="Renter Hub"
+            description="Booth renter contracts, billing, and compliance"
+            colorClass="bg-amber-500/10 text-amber-600 dark:text-amber-400"
+          />
+          <ManagementCard
+            href="/dashboard/admin/chair-assignments"
+            icon={Armchair}
+            title="Chair Assignments"
+            description="Station assignments and floor layout management"
+            colorClass="bg-sky-500/10 text-sky-600 dark:text-sky-400"
+          />
+        </CategorySection>
 
         {/* Team Development */}
         <CategorySection title="Team Development">
