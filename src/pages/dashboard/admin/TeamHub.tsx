@@ -236,6 +236,13 @@ export default function TeamHub() {
             description="Track new hire progress and checklist completion"
             colorClass="bg-cyan-500/10 text-cyan-600 dark:text-cyan-400"
           />
+          <HubGatewayCard
+            href="/dashboard/admin/training-hub"
+            icon={Video}
+            title="Training Hub"
+            description="Manage training library and track completions"
+            colorClass="bg-rose-500/10 text-rose-600 dark:text-rose-400"
+          />
         </CategorySection>
 
         {/* People & Development */}
@@ -255,13 +262,6 @@ export default function TeamHub() {
             stat={stats?.inProgressGraduations || null}
             statLabel="in progress"
             colorClass="bg-purple-500/10 text-purple-600 dark:text-purple-400"
-          />
-          <ManagementCard
-            href="/dashboard/admin/training-hub"
-            icon={Video}
-            title="Training Hub"
-            description="Manage training library and track completions"
-            colorClass="bg-rose-500/10 text-rose-600 dark:text-rose-400"
           />
           <ManagementCard
             href="/dashboard/admin/client-engine-tracker"
