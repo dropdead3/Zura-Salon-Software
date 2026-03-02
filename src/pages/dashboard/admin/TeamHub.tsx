@@ -98,7 +98,7 @@ function HubGatewayCard({ href, icon: Icon, title, description }: HubGatewayCard
   return (
     <Link to={href}>
       <Card className={cn(tokens.card.wrapper, "group hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer h-full border-border/50 bg-card/60 backdrop-blur-sm")}>
-        <CardContent className="p-5 min-h-[88px]">
+        <CardContent className="p-5 min-h-[108px]">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-start gap-3 flex-1 min-w-0">
               <div className={cn(tokens.card.iconBox, "shrink-0")}>
