@@ -200,7 +200,7 @@ export default function TeamHub() {
         />
 
         {/* Hub Gateway */}
-        <CategorySection title="Hubs" columns={2}>
+        <CategorySection title="Hubs">
           <HubGatewayCard
             href="/dashboard/admin/client-hub"
             icon={HeartPulse}
@@ -238,8 +238,8 @@ export default function TeamHub() {
           />
         </CategorySection>
 
-        {/* Team Development */}
-        <CategorySection title="Team Development">
+        {/* People & Development */}
+        <CategorySection title="People & Development">
           <ManagementCard
             href="/dashboard/directory"
             icon={Users}
@@ -264,18 +264,18 @@ export default function TeamHub() {
             colorClass="bg-purple-500/10 text-purple-600 dark:text-purple-400"
           />
           <ManagementCard
-            href="/dashboard/admin/client-engine-tracker"
-            icon={Target}
-            title="Client Engine Tracker"
-            description="Program enrollment and participation rates"
-            colorClass="bg-orange-500/10 text-orange-600 dark:text-orange-400"
-          />
-          <ManagementCard
             href="/dashboard/admin/training-hub"
             icon={Video}
             title="Training Hub"
             description="Manage training library and track completions"
             colorClass="bg-rose-500/10 text-rose-600 dark:text-rose-400"
+          />
+          <ManagementCard
+            href="/dashboard/admin/client-engine-tracker"
+            icon={Target}
+            title="Client Engine Tracker"
+            description="Program enrollment and participation rates"
+            colorClass="bg-orange-500/10 text-orange-600 dark:text-orange-400"
           />
           <ManagementCard
             href="/dashboard/admin/challenges"
@@ -291,6 +291,18 @@ export default function TeamHub() {
             description="Track stylist program progress across the team"
             colorClass="bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
           />
+          {canInvite && <ManagementInviteDialog variant="card" />}
+          {canInvite && (
+            <ManagementCard
+              href="/dashboard/admin/account-management"
+              icon={ClipboardCheck}
+              title="Manage Invitations"
+              description="View and manage all pending invitations"
+              stat={pendingInvitationCount > 0 ? pendingInvitationCount : null}
+              statLabel="pending"
+              colorClass="bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
+            />
+          )}
         </CategorySection>
 
         {/* Scheduling & Requests */}
@@ -371,10 +383,6 @@ export default function TeamHub() {
             description="Workplace safety and incident documentation"
             colorClass="bg-orange-500/10 text-orange-600 dark:text-orange-400"
           />
-        </CategorySection>
-
-        {/* PTO & Leave */}
-        <CategorySection title="PTO & Leave">
           <ManagementCard
             href="/dashboard/admin/pto"
             icon={CalendarDays}
@@ -384,24 +392,8 @@ export default function TeamHub() {
           />
         </CategorySection>
 
-        {/* Team Invitations */}
-        {canInvite && (
-          <CategorySection title="Team Invitations">
-            <ManagementInviteDialog variant="card" />
-            <ManagementCard
-              href="/dashboard/admin/account-management"
-              icon={ClipboardCheck}
-              title="Manage Invitations"
-              description="View and manage all pending invitations"
-              stat={pendingInvitationCount > 0 ? pendingInvitationCount : null}
-              statLabel="pending"
-              colorClass="bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
-            />
-          </CategorySection>
-        )}
-
-        {/* Team Operations */}
-        <CategorySection title="Team Operations">
+        {/* Team Operations & Communications */}
+        <CategorySection title="Team Operations & Communications">
           <ManagementCard
             href="/dashboard/admin/birthdays"
             icon={Cake}
@@ -429,14 +421,10 @@ export default function TeamHub() {
             statLabel="pending"
             colorClass="bg-violet-500/10 text-violet-600 dark:text-violet-400"
           />
-        </CategorySection>
-
-        {/* Communications */}
-        <CategorySection title="Communications">
           <ManagementCard
             href="/dashboard/admin/announcements"
             icon={Bell}
-            title="Create Announcement"
+            title="Announcements"
             description="Send team-wide communications"
             colorClass="bg-amber-500/10 text-amber-600 dark:text-amber-400"
           />
@@ -446,6 +434,13 @@ export default function TeamHub() {
             title="Changelog Manager"
             description="Document platform updates and releases"
             colorClass="bg-fuchsia-500/10 text-fuchsia-600 dark:text-fuchsia-400"
+          />
+          <ManagementCard
+            href="/dashboard/admin/points-config"
+            icon={Coins}
+            title="Points & Rewards Config"
+            description="Configure point rules and manage reward catalog"
+            colorClass="bg-amber-500/10 text-amber-600 dark:text-amber-400"
           />
         </CategorySection>
 
@@ -457,17 +452,6 @@ export default function TeamHub() {
             title={`${PLATFORM_NAME} Configuration`}
             description="Customize AI personality, knowledge base, and guardrails"
             colorClass="bg-violet-500/10 text-violet-600 dark:text-violet-400"
-          />
-        </CategorySection>
-
-        {/* Points & Rewards */}
-        <CategorySection title="Points & Rewards">
-          <ManagementCard
-            href="/dashboard/admin/points-config"
-            icon={Coins}
-            title="Points & Rewards Config"
-            description="Configure point rules and manage reward catalog"
-            colorClass="bg-amber-500/10 text-amber-600 dark:text-amber-400"
           />
         </CategorySection>
       </div>
