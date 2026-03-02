@@ -94,7 +94,7 @@ export const myToolsNavItems: DashboardNavItem[] = [
 
 export const manageNavItems: DashboardNavItem[] = [
   { href: '/dashboard/admin/analytics', label: 'Analytics Hub', labelKey: 'analytics_hub', icon: TrendingUp, permission: 'view_team_overview' },
-  { href: '/dashboard/admin/team-hub', label: 'Team Hub', labelKey: 'team_hub', icon: Users, permission: 'view_team_overview' },
+  { href: '/dashboard/admin/team-hub', label: 'Operations Hub', labelKey: 'team_hub', icon: Users, permission: 'view_team_overview' },
   { href: '/dashboard/admin/client-hub', label: 'Client Hub', labelKey: 'client_hub', icon: HeartPulse, permission: 'view_clients' },
   { href: '/dashboard/admin/growth-hub', label: 'Growth Hub', labelKey: 'growth_hub', icon: Rocket, permission: 'view_team_overview' },
   { href: '/dashboard/admin/payroll', label: 'Hiring & Payroll Hub', labelKey: 'hiring_payroll_hub', icon: DollarSign, permission: 'manage_payroll' },
@@ -156,7 +156,7 @@ export interface HubLinkConfig {
 
 export const hubLinksConfig: HubLinkConfig[] = [
   { href: '/dashboard/admin/analytics', icon: TrendingUp, label: 'Analytics Hub', colorClass: 'bg-primary/5 text-primary hover:bg-primary/10', permission: 'view_team_overview' },
-  { href: '/dashboard/admin/team-hub', icon: Users, label: 'Team Hub', colorClass: 'bg-primary/5 text-primary hover:bg-primary/10', permission: 'view_team_overview' },
+  { href: '/dashboard/admin/team-hub', icon: Users, label: 'Operations Hub', colorClass: 'bg-primary/5 text-primary hover:bg-primary/10', permission: 'view_team_overview' },
   { href: '/dashboard/admin/client-hub', icon: HeartPulse, label: 'Client Hub', colorClass: 'bg-primary/5 text-primary hover:bg-primary/10', permission: 'view_clients' },
   { href: '/dashboard/admin/growth-hub', icon: Rocket, label: 'Growth Hub', colorClass: 'bg-primary/5 text-primary hover:bg-primary/10', permission: 'view_team_overview' },
   { href: '/dashboard/admin/payroll', icon: DollarSign, label: 'Hiring & Payroll Hub', colorClass: 'bg-primary/5 text-primary hover:bg-primary/10', permission: 'manage_payroll' },
