@@ -9,7 +9,7 @@ import { tokens } from '@/lib/design-tokens';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
-import { ManagementInviteDialog } from '@/components/management/ManagementInviteDialog';
+
 import { usePendingInvitations } from '@/hooks/useStaffInvitations';
 import { useInvitableRoles } from '@/hooks/useInvitableRoles';
 import {
@@ -230,7 +230,7 @@ export default function TeamHub() {
             href="/dashboard/admin/onboarding-tracker"
             icon={ClipboardList}
             title="Onboarding Hub"
-            description="Track new hire progress and checklist completion"
+            description="New hire progress, invitations, and checklist completion"
           />
           <HubGatewayCard
             href="/dashboard/admin/training-hub"
@@ -280,10 +280,9 @@ export default function TeamHub() {
             title="Program Team Overview"
             description="Track stylist program progress across the team"
           />
-          {canInvite && <ManagementInviteDialog variant="card" />}
           {canInvite && (
             <ManagementCard
-              href="/dashboard/admin/account-management"
+              href="/dashboard/admin/onboarding-tracker?tab=invitations"
               icon={ClipboardCheck}
               title="Manage Invitations"
               description="View and manage all pending invitations"

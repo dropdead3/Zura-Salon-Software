@@ -7,9 +7,7 @@ import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
-import { ManagementInviteDialog } from '@/components/management/ManagementInviteDialog';
-import { usePendingInvitations } from '@/hooks/useStaffInvitations';
-import { useInvitableRoles } from '@/hooks/useInvitableRoles';
+
 import {
   LayoutGrid,
   ClipboardList,
@@ -102,9 +100,6 @@ function CategorySection({ title, children }: CategorySectionProps) {
 }
 
 export default function ManagementHub() {
-  const { canInvite } = useInvitableRoles();
-  const { data: pendingInvitations } = usePendingInvitations();
-  const pendingInvitationCount = pendingInvitations?.length || 0;
 
   // Fetch stats for badges
   const { data: stats } = useQuery({
@@ -175,7 +170,7 @@ export default function ManagementHub() {
             href="/dashboard/admin/onboarding-tracker"
             icon={ClipboardList}
             title="Onboarding Hub"
-            description="Track new hire progress and checklist completion"
+            description="New hire progress, invitations, and checklist completion"
             stat={null}
             statLabel="active"
             colorClass="bg-cyan-500/10 text-cyan-600 dark:text-cyan-400"
@@ -293,21 +288,6 @@ export default function ManagementHub() {
           />
         </CategorySection>
 
-        {/* Team Invitations - Only shown if user can invite */}
-        {canInvite && (
-          <CategorySection title="Team Invitations">
-            <ManagementInviteDialog variant="card" />
-            <ManagementCard
-              href="/dashboard/admin/account-management"
-              icon={ClipboardCheck}
-              title="Manage Invitations"
-              description="View and manage all pending invitations"
-              stat={pendingInvitationCount > 0 ? pendingInvitationCount : null}
-              statLabel="pending"
-              colorClass="bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
-            />
-          </CategorySection>
-        )}
 
         {/* Recruiting & Hiring */}
         <CategorySection title="Recruiting & Hiring">
