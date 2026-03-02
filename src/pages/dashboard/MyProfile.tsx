@@ -1137,7 +1137,7 @@ export default function MyProfile() {
                 <CardTitle className="text-lg">Professional Details</CardTitle>
                 {(roles.includes('super_admin') || roles.includes('admin')) && (
                   <Button variant="ghost" size="sm" asChild className="text-muted-foreground">
-                    <Link to="/dashboard/admin/settings?category=website">
+                    <Link to="/dashboard/admin/website-hub">
                       Manage Specialties <ArrowRight className="h-4 w-4" />
                     </Link>
                   </Button>

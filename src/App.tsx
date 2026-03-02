@@ -95,6 +95,7 @@ import TrainingHub from "./pages/dashboard/admin/TrainingHub";
 import TeamHub from "./pages/dashboard/admin/TeamHub";
 import ClientHub from "./pages/dashboard/admin/ClientHub";
 import GrowthHub from "./pages/dashboard/admin/GrowthHub";
+import WebsiteHub from "./pages/dashboard/admin/WebsiteHub";
 import LeadManagement from "./pages/dashboard/admin/LeadManagement";
 import AdminFeatureFlags from "./pages/dashboard/admin/FeatureFlags";
 import FeaturesCenter from "./pages/dashboard/admin/FeaturesCenter";
@@ -299,13 +300,14 @@ const App = () => (
                       <Route path="/dashboard/admin/schedule-requests" element={<ProtectedRoute requiredPermission="manage_schedule_requests"><ScheduleRequests /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/handbooks" element={<ProtectedRoute requiredPermission="manage_handbooks"><Handbooks /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/announcements" element={<ProtectedRoute requiredPermission="manage_announcements"><AdminAnnouncements /></ProtectedRoute>} />
-                      <Route path="/dashboard/admin/homepage-stylists" element={<Navigate to="/dashboard/admin/settings?category=website" replace />} />
-                      <Route path="/dashboard/admin/testimonials" element={<Navigate to="/dashboard/admin/settings?category=website" replace />} />
-                      <Route path="/dashboard/admin/gallery" element={<Navigate to="/dashboard/admin/settings?category=website" replace />} />
-                      <Route path="/dashboard/admin/services" element={<Navigate to="/dashboard/admin/settings?category=website" replace />} />
-                      <Route path="/dashboard/admin/announcement-bar" element={<Navigate to="/dashboard/admin/settings?category=website" replace />} />
-                      <Route path="/dashboard/admin/locations" element={<Navigate to="/dashboard/admin/settings?category=website" replace />} />
-                      <Route path="/dashboard/admin/website-sections" element={<Navigate to="/dashboard/admin/settings?category=website" replace />} />
+                      <Route path="/dashboard/admin/website-hub" element={<ProtectedRoute requiredPermission="manage_settings"><WebsiteHub /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/homepage-stylists" element={<Navigate to="/dashboard/admin/website-hub" replace />} />
+                      <Route path="/dashboard/admin/testimonials" element={<Navigate to="/dashboard/admin/website-hub" replace />} />
+                      <Route path="/dashboard/admin/gallery" element={<Navigate to="/dashboard/admin/website-hub" replace />} />
+                      <Route path="/dashboard/admin/services" element={<Navigate to="/dashboard/admin/website-hub" replace />} />
+                      <Route path="/dashboard/admin/announcement-bar" element={<Navigate to="/dashboard/admin/website-hub" replace />} />
+                      <Route path="/dashboard/admin/locations" element={<Navigate to="/dashboard/admin/website-hub" replace />} />
+                      <Route path="/dashboard/admin/website-sections" element={<Navigate to="/dashboard/admin/website-hub" replace />} />
                       <Route path="/dashboard/admin/roles" element={<Navigate to="/dashboard/admin/access-hub?tab=user-roles" replace />} />
                       <Route path="/dashboard/admin/accounts" element={<Navigate to="/dashboard/admin/access-hub?tab=invitations" replace />} />
                       <Route path="/dashboard/admin/stylist-levels" element={<ProtectedRoute requiredPermission="manage_settings"><StylistLevels /></ProtectedRoute>} />

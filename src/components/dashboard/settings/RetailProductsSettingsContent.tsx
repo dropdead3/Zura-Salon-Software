@@ -568,7 +568,7 @@ export function RetailProductsSettingsContent() {
                 — {onlineCount} of {totalCount} products visible online
               </span>
             </div>
-            <Button variant="ghost" size={tokens.button.inline} className="gap-1.5 text-emerald-700 dark:text-emerald-300 hover:text-emerald-800 shrink-0" onClick={() => navigate('/dashboard/admin/settings?category=website')}>
+            <Button variant="ghost" size={tokens.button.inline} className="gap-1.5 text-emerald-700 dark:text-emerald-300 hover:text-emerald-800 shrink-0" onClick={() => navigate('/dashboard/admin/website-hub')}>
               Manage Store Settings <ExternalLink className="w-3.5 h-3.5" />
             </Button>
           </div>
@@ -580,7 +580,7 @@ export function RetailProductsSettingsContent() {
                 Online Store is not active. Clients cannot browse or purchase products online.
               </span>
             </div>
-            <Button variant="ghost" size={tokens.button.inline} className="gap-1.5 text-amber-700 dark:text-amber-300 hover:text-amber-800 shrink-0" onClick={() => navigate('/dashboard/admin/settings?category=website')}>
+            <Button variant="ghost" size={tokens.button.inline} className="gap-1.5 text-amber-700 dark:text-amber-300 hover:text-amber-800 shrink-0" onClick={() => navigate('/dashboard/admin/website-hub')}>
               Activate Online Store <ExternalLink className="w-3.5 h-3.5" />
             </Button>
           </div>

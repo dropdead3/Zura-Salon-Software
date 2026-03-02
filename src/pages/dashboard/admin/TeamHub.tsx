@@ -246,7 +246,7 @@ export default function TeamHub() {
             colorClass="bg-rose-500/10 text-rose-600 dark:text-rose-400"
           />
           <HubGatewayCard
-            href="/dashboard/admin/settings?category=website"
+            href="/dashboard/admin/website-hub"
             icon={Globe}
             title="Website Hub"
             description="Website themes, editor, settings, and content management"
