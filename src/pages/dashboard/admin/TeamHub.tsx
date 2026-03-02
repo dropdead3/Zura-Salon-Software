@@ -5,6 +5,7 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
@@ -60,15 +61,15 @@ interface ManagementCardProps {
 function ManagementCard({ href, icon: Icon, title, description, stat, statLabel, colorClass = 'bg-primary/10 text-primary' }: ManagementCardProps) {
   return (
     <Link to={href}>
-      <Card className="group hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer h-full border-border/50">
+      <Card className={cn(tokens.card.wrapper, "group hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer h-full border-border/50")}>
         <CardContent className="p-5">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-start gap-3 flex-1 min-w-0">
-              <div className={cn("p-2.5 rounded-xl shrink-0", colorClass)}>
+              <div className={cn("w-10 h-10 flex items-center justify-center rounded-lg shrink-0", colorClass)}>
                 <Icon className="w-5 h-5" />
               </div>
               <div className="flex-1">
-                <h3 className="font-medium text-sm">{title}</h3>
+                <h3 className="font-sans text-sm font-medium">{title}</h3>
                 <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{description}</p>
               </div>
             </div>
@@ -98,11 +99,11 @@ interface HubGatewayCardProps {
 function HubGatewayCard({ href, icon: Icon, title, description, colorClass = 'bg-primary/10 text-primary' }: HubGatewayCardProps) {
   return (
     <Link to={href}>
-      <Card className="group hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer h-full border-border/50 bg-card/60 backdrop-blur-sm">
+      <Card className={cn(tokens.card.wrapper, "group hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer h-full border-border/50 bg-card/60 backdrop-blur-sm")}>
         <CardContent className="p-6">
           <div className="flex items-center gap-4">
-            <div className={cn("p-3 rounded-xl shrink-0", colorClass)}>
-              <Icon className="w-6 h-6" />
+            <div className={cn("w-10 h-10 flex items-center justify-center rounded-lg shrink-0", colorClass)}>
+              <Icon className="w-5 h-5" />
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="font-display text-sm tracking-wide uppercase">{title}</h3>
@@ -195,7 +196,7 @@ export default function TeamHub() {
 
   return (
     <DashboardLayout>
-      <div className="p-6 lg:p-8 max-w-[1600px] mx-auto space-y-8">
+      <div className={cn(tokens.layout.pageContainer, "max-w-[1600px] mx-auto")}>
         <DashboardPageHeader
           title="Operations Hub"
           description="People management, development, and team operations"
