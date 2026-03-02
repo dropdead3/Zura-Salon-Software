@@ -22,7 +22,7 @@ import { NotificationsPanel } from '@/components/dashboard/NotificationsPanel';
 import { ThemeToggle } from '@/components/dashboard/ThemeToggle';
 import { NextClientIndicator } from '@/components/dashboard/NextClientIndicator';
 import { TopBarSearch } from '@/components/dashboard/TopBarSearch';
-import { TopBarOverflowMenu } from '@/components/dashboard/TopBarOverflowMenu';
+
 import { OrganizationSwitcher } from '@/components/platform/OrganizationSwitcher';
 import {
   ArrowLeft,
@@ -183,22 +183,9 @@ export function SuperAdminTopBar({
         {/* ── RIGHT ZONE: Admin Controls (never wraps) ── */}
         <div className="flex items-center gap-2 shrink-0 flex-nowrap">
 
-          {/* Overflow menu — visible below 2xl, carries collapsed items */}
+          {/* Show/Hide $ — always visible */}
           {(isPlatformUser || isAdmin) && (
-            <div className="2xl:hidden">
-              <TopBarOverflowMenu
-                userId={currentUserId}
-                showNextClient={showNextClient}
-                hideNumbers={hideNumbers}
-                toggleHideNumbers={toggleHideNumbers}
-                showThemeToggle={false}
-              />
-            </div>
-          )}
-
-          {/* Show/Hide $ — visible ≥2xl */}
-          {(isPlatformUser || isAdmin) && (
-            <div className="hidden 2xl:flex">
+            <div className="flex">
               <HideNumbersToggle />
             </div>
           )}
