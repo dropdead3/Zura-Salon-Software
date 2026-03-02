@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import {
   Rocket,
@@ -14,21 +15,20 @@ interface HubCardProps {
   icon: React.ComponentType<{ className?: string }>;
   title: string;
   description: string;
-  colorClass?: string;
 }
 
-function HubCard({ href, icon: Icon, title, description, colorClass = 'bg-primary/10 text-primary' }: HubCardProps) {
+function HubCard({ href, icon: Icon, title, description }: HubCardProps) {
   return (
     <Link to={href}>
-      <Card className="group hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer h-full border-border/50">
+      <Card className={cn(tokens.card.wrapper, "group hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer h-full border-border/50")}>
         <CardContent className="p-5">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-start gap-3 flex-1 min-w-0">
-              <div className={cn("p-2.5 rounded-xl shrink-0", colorClass)}>
-                <Icon className="w-5 h-5" />
+              <div className={cn(tokens.card.iconBox, "shrink-0")}>
+                <Icon className={tokens.card.icon} />
               </div>
               <div className="flex-1">
-                <h3 className="font-medium text-sm">{title}</h3>
+                <h3 className="font-sans text-sm font-medium">{title}</h3>
                 <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{description}</p>
               </div>
             </div>
@@ -43,7 +43,7 @@ function HubCard({ href, icon: Icon, title, description, colorClass = 'bg-primar
 export default function GrowthHub() {
   return (
     <DashboardLayout>
-      <div className="p-6 lg:p-8 max-w-[1600px] mx-auto space-y-8">
+      <div className={cn(tokens.layout.pageContainer, "max-w-[1600px] mx-auto")}>
         <DashboardPageHeader
           title="Growth Hub"
           description="Marketing, campaigns, and online visibility"
@@ -57,14 +57,12 @@ export default function GrowthHub() {
               icon={Rocket}
               title="Campaigns"
               description="Create and manage marketing campaigns"
-              colorClass="bg-primary/10 text-primary"
             />
             <HubCard
               href="/dashboard/admin/seo-workshop"
               icon={Search}
               title="SEO Workshop"
               description="Tasks and guides to improve local search visibility"
-              colorClass="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
             />
           </div>
         </div>
