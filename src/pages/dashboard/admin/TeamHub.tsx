@@ -85,16 +85,49 @@ function ManagementCard({ href, icon: Icon, title, description, stat, statLabel,
   );
 }
 
+interface HubGatewayCardProps {
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  description: string;
+  colorClass?: string;
+}
+
+function HubGatewayCard({ href, icon: Icon, title, description, colorClass = 'bg-primary/10 text-primary' }: HubGatewayCardProps) {
+  return (
+    <Link to={href}>
+      <Card className="group hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer h-full border-border/50 bg-card/60 backdrop-blur-sm">
+        <CardContent className="p-6">
+          <div className="flex items-center gap-4">
+            <div className={cn("p-3 rounded-xl shrink-0", colorClass)}>
+              <Icon className="w-6 h-6" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-display text-sm tracking-wide uppercase">{title}</h3>
+              <p className="text-xs text-muted-foreground mt-1">{description}</p>
+            </div>
+            <ChevronRight className="w-5 h-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+          </div>
+        </CardContent>
+      </Card>
+    </Link>
+  );
+}
+
 interface CategorySectionProps {
   title: string;
   children: React.ReactNode;
+  columns?: 2 | 3;
 }
 
-function CategorySection({ title, children }: CategorySectionProps) {
+function CategorySection({ title, children, columns = 3 }: CategorySectionProps) {
   return (
     <div className="space-y-3">
       <h2 className="font-display text-sm tracking-wide text-muted-foreground uppercase">{title}</h2>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className={cn(
+        "grid gap-3",
+        columns === 2 ? "sm:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-3"
+      )}>
         {children}
       </div>
     </div>
@@ -167,36 +200,36 @@ export default function TeamHub() {
         />
 
         {/* Hub Gateway */}
-        <CategorySection title="Hubs">
-          <ManagementCard
+        <CategorySection title="Hubs" columns={2}>
+          <HubGatewayCard
             href="/dashboard/admin/client-hub"
             icon={HeartPulse}
             title="Client Hub"
             description="Client management, retention, and engagement"
             colorClass="bg-rose-500/10 text-rose-600 dark:text-rose-400"
           />
-          <ManagementCard
+          <HubGatewayCard
             href="/dashboard/admin/growth-hub"
             icon={Rocket}
             title="Growth Hub"
             description="Marketing, campaigns, and growth initiatives"
             colorClass="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
           />
-          <ManagementCard
+          <HubGatewayCard
             href="/dashboard/admin/payroll"
             icon={DollarSign}
             title="Hiring & Payroll Hub"
             description="Compensation, commissions, and hiring pipeline"
             colorClass="bg-green-500/10 text-green-600 dark:text-green-400"
           />
-          <ManagementCard
+          <HubGatewayCard
             href="/dashboard/admin/booth-renters"
             icon={Store}
             title="Renter Hub"
             description="Booth renter contracts, billing, and compliance"
             colorClass="bg-amber-500/10 text-amber-600 dark:text-amber-400"
           />
-          <ManagementCard
+          <HubGatewayCard
             href="/dashboard/admin/chair-assignments"
             icon={Armchair}
             title="Chair Assignments"
