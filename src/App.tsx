@@ -113,6 +113,7 @@ import Kiosk from "./pages/Kiosk";
 import DayRateSettings from "./pages/dashboard/admin/DayRateSettings";
 import DayRateCalendar from "./pages/dashboard/admin/DayRateCalendar";
 import DataImport from "./pages/dashboard/admin/DataImport";
+import ChairAssignments from "./pages/dashboard/admin/ChairAssignments";
 import Payroll from "./pages/dashboard/admin/Payroll";
 import PayrollCallback from "./pages/dashboard/admin/PayrollCallback";
 import HelpCenter from "./pages/dashboard/HelpCenter";
@@ -374,6 +375,7 @@ const App = () => (
                       <Route path="/dashboard/rewards" element={<ProtectedRoute><RewardShop /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/points-config" element={<ProtectedRoute requiredPermission="manage_settings"><PointsConfig /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/daily-huddle" element={<ProtectedRoute requiredPermission="manage_announcements"><DailyHuddle /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/chair-assignments" element={<ProtectedRoute requiredPermission="view_team_overview"><ChairAssignments /></ProtectedRoute>} />
 
                       {/* Renter Portal routes - booth_renter role users can access */}
                       <Route path="/dashboard/renter/portal" element={<ProtectedRoute><RenterPortal /></ProtectedRoute>} />
