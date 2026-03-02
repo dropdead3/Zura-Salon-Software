@@ -236,6 +236,13 @@ export default function TeamHub() {
             description="Station assignments and floor layout management"
             colorClass="bg-sky-500/10 text-sky-600 dark:text-sky-400"
           />
+          <HubGatewayCard
+            href="/dashboard/admin/onboarding-tracker"
+            icon={ClipboardList}
+            title="Onboarding Hub"
+            description="Track new hire progress and checklist completion"
+            colorClass="bg-cyan-500/10 text-cyan-600 dark:text-cyan-400"
+          />
         </CategorySection>
 
         {/* People & Development */}
@@ -246,13 +253,6 @@ export default function TeamHub() {
             title="Team Directory"
             description="View and manage your team roster"
             colorClass="bg-blue-500/10 text-blue-600 dark:text-blue-400"
-          />
-          <ManagementCard
-            href="/dashboard/admin/onboarding-tracker"
-            icon={ClipboardList}
-            title="Onboarding Hub"
-            description="Track new hire progress and checklist completion"
-            colorClass="bg-cyan-500/10 text-cyan-600 dark:text-cyan-400"
           />
           <ManagementCard
             href="/dashboard/admin/graduation-tracker"
