@@ -31,7 +31,7 @@ function HubCard({ href, icon: Icon, title, description }: HubCardProps) {
                 <Icon className={tokens.card.icon} />
               </div>
               <div className="flex-1">
-                <h3 className="font-sans text-sm font-medium">{title}</h3>
+                <h3 className={tokens.card.title}>{title}</h3>
                 <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{description}</p>
               </div>
             </div>
