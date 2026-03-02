@@ -5,7 +5,6 @@ import { cn } from '@/lib/utils';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import {
   Rocket,
-  Globe,
   Search,
   ChevronRight,
 } from 'lucide-react';
@@ -59,13 +58,6 @@ export default function GrowthHub() {
               title="Campaigns"
               description="Create and manage marketing campaigns"
               colorClass="bg-primary/10 text-primary"
-            />
-            <HubCard
-              href="/dashboard/admin/settings?category=website"
-              icon={Globe}
-              title="Website Editor"
-              description="Edit homepage sections, stylists, testimonials, and locations"
-              colorClass="bg-sky-500/10 text-sky-600 dark:text-sky-400"
             />
             <HubCard
               href="/dashboard/admin/seo-workshop"
