@@ -47,7 +47,7 @@ import { HelpFAB } from '@/components/dashboard/HelpFAB';
 import { DashboardLockScreen } from '@/components/dashboard/DashboardLockScreen';
 import { ClockInPromptDialog } from '@/components/dashboard/ClockInPromptDialog';
 import SidebarNavContent from '@/components/dashboard/SidebarNavContent';
-import { KeyboardShortcutsDialog } from '@/components/KeyboardShortcutsDialog';
+
 import { OrganizationSwitcher } from '@/components/platform/OrganizationSwitcher';
 import { PlatformContextBanner } from '@/components/platform/PlatformContextBanner';
 import { useRoleUtils, getIconComponent } from '@/hooks/useRoleUtils';
@@ -537,7 +537,7 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
       <HelpFAB />
       {isLocked && <DashboardLockScreen onUnlock={unlock} />}
       <ClockInPromptDialog />
-      <KeyboardShortcutsDialog />
+      
       {hasZuraGuidance && <ZuraStickyGuidance />}
     </div>
   );
