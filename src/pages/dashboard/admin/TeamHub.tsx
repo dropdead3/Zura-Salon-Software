@@ -61,7 +61,7 @@ function ManagementCard({ href, icon: Icon, title, description, stat, statLabel 
   return (
     <Link to={href}>
       <Card className={cn(tokens.card.wrapper, "group hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer h-full border-border/50")}>
-        <CardContent className="p-5">
+        <CardContent className="p-5 min-h-[88px]">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-start gap-3 flex-1 min-w-0">
               <div className={cn(tokens.card.iconBox, "shrink-0")}>
@@ -98,16 +98,18 @@ function HubGatewayCard({ href, icon: Icon, title, description }: HubGatewayCard
   return (
     <Link to={href}>
       <Card className={cn(tokens.card.wrapper, "group hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer h-full border-border/50 bg-card/60 backdrop-blur-sm")}>
-        <CardContent className="p-6">
-          <div className="flex items-center gap-4">
-            <div className={cn(tokens.card.iconBox, "shrink-0")}>
-              <Icon className={tokens.card.icon} />
+        <CardContent className="p-5 min-h-[88px]">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start gap-3 flex-1 min-w-0">
+              <div className={cn(tokens.card.iconBox, "shrink-0")}>
+                <Icon className={tokens.card.icon} />
+              </div>
+              <div className="flex-1">
+                <h3 className={tokens.card.title}>{title}</h3>
+                <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{description}</p>
+              </div>
             </div>
-            <div className="flex-1 min-w-0">
-              <h3 className={tokens.card.title}>{title}</h3>
-              <p className="text-xs text-muted-foreground mt-1">{description}</p>
-            </div>
-            <ChevronRight className="w-5 h-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+            <ChevronRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
           </div>
         </CardContent>
       </Card>
