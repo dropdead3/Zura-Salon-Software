@@ -32,6 +32,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 import { useSalesMetrics, useSalesByStylist, useSalesByLocation, useSalesTrend } from '@/hooks/useSalesData';
+import { useLiveSessionSnapshot } from '@/hooks/useLiveSessionSnapshot';
 import { useTipsDrilldown } from '@/hooks/useTipsDrilldown';
 import { useActiveLocations, isClosedOnDate, getLocationHoursForDate } from '@/hooks/useLocations';
 import { ClosedBadge } from '@/components/dashboard/ClosedBadge';
@@ -476,9 +477,16 @@ export function AggregateSalesCard({
     navigate(`/dashboard/admin/sales?${params.toString()}`);
   };
 
+  // Live session awareness — prevents "all complete" while stylists are still in service
+  const liveSession = useLiveSessionSnapshot(filterContext?.locationId);
+
   // Determine if all revenue is finalized (operating hours passed OR last appointment ended)
   const allAppointmentsComplete = useMemo(() => {
     if (!isToday) return false;
+
+    // If anyone is still in session by time-window, revenue is not finalized
+    if (liveSession.inSessionCount > 0) return false;
+
     const now = new Date();
 
     // Path 1: All locations are past their closing time
@@ -500,7 +508,7 @@ export function AggregateSalesCard({
     }
 
     return false;
-  }, [isToday, locations, todayActual]);
+  }, [isToday, locations, todayActual, liveSession.inSessionCount]);
 
   if (isLoading) {
     return (
