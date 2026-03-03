@@ -1,19 +1,37 @@
 
 
-## Fix Roles List Cutoff and Add Visible Scrollbar
+## Fix: Align "All Appointments Complete" with Live Session State
 
-The `ScrollArea` on the Roles tab has `max-h-[360px]` which is too short to show all role categories. The fix:
+The root cause is that `allAppointmentsComplete` in `AggregateSalesCard` never checks whether there are still active in-session appointments. It only looks at location closing hours and last appointment end times. Meanwhile, `LiveSessionIndicator` uses a time-window check against appointment schedule times.
 
-### Changes
+### The Fix
 
-**`src/components/dashboard/ViewAsPopover.tsx`**
+**`src/components/dashboard/AggregateSalesCard.tsx`** (around line 480):
 
-1. **Increase scroll area height** — Change `max-h-[360px]` (line 142) to `max-h-[420px]` so more roles are visible before scrolling kicks in
-2. **Ensure overflow works** — Add `overflow-y-auto` alongside the max-height so the native scrollbar appears when content exceeds the container. The `ScrollArea` component already renders a `ScrollBar` via Radix, but the `max-h` class needs to be on a wrapper that actually constrains height for the viewport to scroll. Wrap the content area properly so the Radix viewport respects the constraint.
+Add the `useLiveSessionSnapshot` hook and incorporate its `inSessionCount` into the `allAppointmentsComplete` calculation. If `inSessionCount > 0`, appointments are NOT all complete regardless of what the closing-hours logic says.
 
-Specifically:
-- Line 142: change `max-h-[360px]` to `max-h-[420px]` on the Roles tab `ScrollArea`
-- Line 190: change `max-h-[320px]` to `max-h-[380px]` on the Team tab `ScrollArea` for consistency
+```tsx
+// Add import
+import { useLiveSessionSnapshot } from '@/hooks/useLiveSessionSnapshot';
 
-This gives both tabs more vertical real estate while still constraining within screen bounds, and the existing `ScrollBar` component (with `forceMount`) will display when content overflows.
+// Inside the component, add:
+const liveSession = useLiveSessionSnapshot(locationId);
+
+// Modify allAppointmentsComplete memo to include liveSession.inSessionCount as a dependency:
+const allAppointmentsComplete = useMemo(() => {
+  if (!isToday) return false;
+  
+  // If anyone is still in session by time-window, revenue is not finalized
+  if (liveSession.inSessionCount > 0) return false;
+  
+  // ... existing Path 1 (closing hours) and Path 2 (last appointment end time) logic unchanged ...
+}, [isToday, locations, todayActual, liveSession.inSessionCount]);
+```
+
+This ensures the Sales Overview card cannot claim "All appointments complete" or "Final Revenue Today" while the Live Session indicator still shows stylists working. Both systems will now agree.
+
+### Impact
+- Single line gate added to existing memo
+- No new queries (reuses the already-cached `useLiveSessionSnapshot` data)
+- Both indicators will be consistent across the dashboard
 
