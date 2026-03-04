@@ -63,6 +63,67 @@ serve(async (req) => {
       throw new Error("Failed to fetch historical sales");
     }
 
+    // ── 30-Day Gap Ratio Calculation ──
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+    // Fetch scheduled appointment totals per day (last 30 days, all statuses)
+    let scheduledQuery = supabase
+      .from("phorest_appointments")
+      .select("appointment_date, total_price")
+      .gte("appointment_date", thirtyDaysAgoStr)
+      .lte("appointment_date", yesterdayStr);
+
+    if (locationId && locationId !== "all") {
+      scheduledQuery = scheduledQuery.eq("location_id", locationId);
+    }
+
+    const { data: scheduledAppointments, error: schedError } = await scheduledQuery;
+    if (schedError) {
+      console.error("Error fetching scheduled appointments for gap calc:", schedError);
+    }
+
+    // Build scheduled totals by date
+    const scheduledByDate: Record<string, number> = {};
+    (scheduledAppointments || []).forEach(apt => {
+      const d = apt.appointment_date;
+      if (!scheduledByDate[d]) scheduledByDate[d] = 0;
+      scheduledByDate[d] += Number(apt.total_price) || 0;
+    });
+
+    // Build actual totals by date from historical sales (already fetched, filter to 30-day window)
+    const actualByDate: Record<string, number> = {};
+    (historicalSales || []).forEach(day => {
+      if (day.summary_date >= thirtyDaysAgoStr && day.summary_date <= yesterdayStr) {
+        if (!actualByDate[day.summary_date]) actualByDate[day.summary_date] = 0;
+        actualByDate[day.summary_date] += Number(day.total_revenue) || 0;
+      }
+    });
+
+    // Compute daily realization ratios
+    const ratios: number[] = [];
+    for (const date of Object.keys(scheduledByDate)) {
+      const scheduled = scheduledByDate[date];
+      const actual = actualByDate[date];
+      if (scheduled > 0 && actual !== undefined) {
+        ratios.push(actual / scheduled);
+      }
+    }
+
+    // Calculate gap adjustment factor, clamped [0.70, 1.00]
+    let gapAdjustmentFactor = 1.0;
+    if (ratios.length >= 3) {
+      const avgRatio = ratios.reduce((s, r) => s + r, 0) / ratios.length;
+      gapAdjustmentFactor = Math.min(1.0, Math.max(0.70, avgRatio));
+    }
+
+    const realizationDataPoints = ratios.length;
+    console.log(`Gap adjustment: factor=${gapAdjustmentFactor.toFixed(3)}, dataPoints=${realizationDataPoints}`);
+
     // Get upcoming booked appointments
     const today = new Date();
     const endDate = new Date();
@@ -113,7 +174,7 @@ serve(async (req) => {
     let summary: { totalPredicted: number; avgDaily: number; trend: 'up' | 'down' | 'stable'; peakDay?: string; keyInsight: string } | null = null;
 
     if (useAi) {
-      // Build context for AI
+      // Build context for AI (now includes gap adjustment data)
       const forecastContext = {
         historicalDays: historicalSales?.length || 0,
         dayOfWeekAverages: Object.entries(dayOfWeekAverages).map(([dow, data]) => ({
@@ -125,11 +186,18 @@ serve(async (req) => {
         })),
         bookedRevenue: Object.entries(bookedByDate).map(([date, amount]) => ({
           date,
-          bookedAmount: Math.round(amount)
+          bookedAmount: Math.round(amount),
+          adjustedAmount: Math.round(amount * gapAdjustmentFactor)
         })),
         recentTrend: trend,
         forecastDays,
-        startDate: today.toISOString().split('T')[0]
+        startDate: today.toISOString().split('T')[0],
+        gapAdjustment: {
+          realizationRate: Math.round(gapAdjustmentFactor * 100),
+          factor: Number(gapAdjustmentFactor.toFixed(3)),
+          dataPoints: realizationDataPoints,
+          explanation: `Over the last 30 days, ${Math.round(gapAdjustmentFactor * 100)}% of scheduled revenue was actually collected (based on ${realizationDataPoints} days of data). Apply this realization rate to booked revenue for more accurate predictions.`
+        }
       };
 
       const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -147,10 +215,11 @@ serve(async (req) => {
 
 Consider these factors:
 1. Day-of-week patterns (weekends typically busier)
-2. Already booked appointments (guaranteed revenue)
+2. Already booked appointments (guaranteed revenue) — BUT apply the realization rate to booked amounts, as historically only a percentage of scheduled revenue converts to actual collected revenue (due to cancellations, no-shows, discounts, pricing differences)
 3. Historical averages for each day
 4. Recent trends (growth or decline)
 5. Seasonal factors
+6. The gap adjustment / realization rate provided in the data — this is critical for calibrating booked revenue predictions
 
 Return a JSON object with this exact structure:
 {
@@ -221,17 +290,17 @@ Return ONLY valid JSON, no markdown or explanation.`
         summary = parsed.summary;
       } catch (parseError) {
         console.error("Failed to parse AI response:", parseError, content);
-        forecasts = generateFallbackForecasts(forecastDays, dayOfWeekAverages, bookedByDate, today, trend);
+        forecasts = generateFallbackForecasts(forecastDays, dayOfWeekAverages, bookedByDate, today, trend, gapAdjustmentFactor);
       }
     } else {
-      forecasts = generateFallbackForecasts(forecastDays, dayOfWeekAverages, bookedByDate, today, trend);
+      forecasts = generateFallbackForecasts(forecastDays, dayOfWeekAverages, bookedByDate, today, trend, gapAdjustmentFactor);
       const totalPredicted = forecasts.reduce((sum, f) => sum + f.predictedRevenue, 0);
       summary = {
         totalPredicted,
         avgDaily: forecasts.length > 0 ? Math.round(totalPredicted / forecasts.length) : 0,
         trend,
         keyInsight: historicalSales?.length
-          ? `Based on ${historicalSales.length} days of history and day-of-week patterns`
+          ? `Based on ${historicalSales.length} days of history and day-of-week patterns${gapAdjustmentFactor < 1 ? `, adjusted for ${Math.round(gapAdjustmentFactor * 100)}% realization rate` : ''}`
           : "Based on current bookings (add more history for trend-based predictions)"
       };
     }
@@ -267,7 +336,10 @@ Return ONLY valid JSON, no markdown or explanation.`
           trend,
           keyInsight: `Based on ${historicalSales?.length || 0} days of historical data`
         },
-        historicalDataPoints: historicalSales?.length || 0
+        historicalDataPoints: historicalSales?.length || 0,
+        gapAdjustmentFactor: Number(gapAdjustmentFactor.toFixed(3)),
+        realizationRate: Math.round(gapAdjustmentFactor * 100),
+        realizationDataPoints,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
@@ -304,7 +376,8 @@ function generateFallbackForecasts(
   dayOfWeekAvg: Record<number, { total: number; count: number; services: number; products: number }>,
   bookedByDate: Record<string, number>,
   startDate: Date,
-  trend: 'up' | 'down' | 'stable' = 'stable'
+  trend: 'up' | 'down' | 'stable' = 'stable',
+  gapFactor: number = 1.0
 ): DailyForecast[] {
   const forecasts: DailyForecast[] = [];
   const mult = TREND_MULTIPLIER[trend];
@@ -320,9 +393,20 @@ function generateFallbackForecasts(
       ? avgData.total / avgData.count
       : 0;
     const baseRevenue = Math.round(rawBase * mult);
-    const bookedRevenue = bookedByDate[dateStr] || 0;
+    const rawBooked = bookedByDate[dateStr] || 0;
+    const adjustedBooked = Math.round(rawBooked * gapFactor);
 
-    const predicted = Math.max(bookedRevenue, baseRevenue);
+    const predicted = Math.max(adjustedBooked, baseRevenue);
+
+    const factors: string[] = [];
+    if (rawBooked > 0) {
+      factors.push(`$${Math.round(rawBooked)} booked`);
+      if (gapFactor < 1) {
+        factors.push(`Adjusted to $${adjustedBooked} (${Math.round(gapFactor * 100)}% realization)`);
+      }
+    } else {
+      factors.push('Based on historical average');
+    }
 
     forecasts.push({
       date: dateStr,
@@ -333,10 +417,8 @@ function generateFallbackForecasts(
       predictedProducts: avgData && avgData.count > 0
         ? Math.round(avgData.products / avgData.count)
         : 0,
-      confidence: bookedRevenue > 0 ? 'high' : (avgData && avgData.count >= 10 ? 'medium' : 'low'),
-      factors: bookedRevenue > 0
-        ? [`$${Math.round(bookedRevenue)} already booked`]
-        : ['Based on historical average']
+      confidence: rawBooked > 0 ? 'high' : (avgData && avgData.count >= 10 ? 'medium' : 'low'),
+      factors
     });
   }
 

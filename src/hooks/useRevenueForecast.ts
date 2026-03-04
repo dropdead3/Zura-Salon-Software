@@ -24,6 +24,9 @@ export interface RevenueForecastResponse {
   forecasts: DailyForecast[];
   summary: ForecastSummary;
   historicalDataPoints: number;
+  gapAdjustmentFactor?: number;
+  realizationRate?: number;
+  realizationDataPoints?: number;
 }
 
 interface UseForecastParams {
