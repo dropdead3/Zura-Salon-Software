@@ -7,6 +7,7 @@ import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { formatCurrency as formatCurrencyPrecise } from '@/lib/format';
 import { useWeekAheadRevenue, DayForecast } from '@/hooks/useWeekAheadRevenue';
+import { useRevenueForecast } from '@/hooks/useRevenueForecast';
 import { LocationSelect } from '@/components/ui/location-select';
 import { DayAppointmentsPanel } from './DayAppointmentsPanel';
 import { DayProviderBreakdownPanel } from './DayProviderBreakdownPanel';
@@ -211,6 +212,10 @@ export function WeekAheadForecast() {
   const [selectedStatCard, setSelectedStatCard] = useState<BreakdownMode | null>(null);
   const [selectedBarDay, setSelectedBarDay] = useState<DayForecast | null>(null);
   const { data, isLoading, error } = useWeekAheadRevenue(selectedLocation);
+  const { data: forecastData } = useRevenueForecast({
+    forecastDays: 7,
+    locationId: selectedLocation === 'all' ? undefined : selectedLocation,
+  });
   const { data: locations = [] } = useLocations();
   const { colorMap } = useServiceCategoryColorsMap();
   const { resolvedTheme } = useDashboardTheme();
@@ -373,6 +378,20 @@ export function WeekAheadForecast() {
                 <p className="text-xs text-muted-foreground">7-Day Total</p>
                 <MetricInfoTooltip description="Sum of projected revenue from all scheduled appointments over the next 7 days." />
               </div>
+              {forecastData?.realizationRate != null && forecastData.realizationRate < 1.0 && (
+                <div className="flex items-center gap-1 justify-center mt-0.5">
+                  <p className={cn(
+                    "text-[10px] italic",
+                    forecastData.realizationRate < 0.85 ? "text-amber-500/80" : "text-muted-foreground/60"
+                  )}>
+                    Adjusted for {Math.round(forecastData.realizationRate * 100)}% realization
+                  </p>
+                  <MetricInfoTooltip
+                    description={`Over the last 30 days, ${Math.round(forecastData.realizationRate * 100)}% of scheduled revenue was collected as actual POS revenue. Predictions account for cancellations, no-shows, and pricing differences.`}
+                    className="w-2.5 h-2.5"
+                  />
+                </div>
+              )}
               <ChevronDown className={cn('w-3 h-3 mx-auto mt-1 text-muted-foreground transition-transform', selectedStatCard === 'revenue' && 'rotate-180 text-primary')} />
             </div>
             <div
