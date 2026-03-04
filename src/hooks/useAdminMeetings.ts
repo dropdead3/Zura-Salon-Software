@@ -188,6 +188,15 @@ export function useCreateMeeting() {
         }
       }
 
+      // Send email invites via edge function (fire-and-forget)
+      try {
+        await supabase.functions.invoke('send-meeting-invite', {
+          body: { meetingId: meeting.id },
+        });
+      } catch (emailErr) {
+        console.warn('Meeting email invite failed:', emailErr);
+      }
+
       return meeting;
     },
     onSuccess: () => {

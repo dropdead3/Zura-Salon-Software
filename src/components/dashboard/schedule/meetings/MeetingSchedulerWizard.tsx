@@ -24,6 +24,9 @@ import {
   AlertTriangle,
   Loader2,
   X,
+  Bookmark,
+  BookmarkPlus,
+  Sparkles,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -34,6 +37,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLocations } from '@/hooks/useLocations';
 import { useCreateMeeting, type MeetingType, type MeetingMode } from '@/hooks/useAdminMeetings';
 import { useMeetingConflicts } from '@/hooks/useMeetingConflicts';
+import { useMeetingTemplates, useCreateMeetingTemplate, type MeetingTemplate } from '@/hooks/useMeetingTemplates';
+import { useOptimalMeetingTimes } from '@/hooks/useOptimalMeetingTimes';
+import { AttendeeAvailabilityOverlay } from './AttendeeAvailabilityOverlay';
 
 const MEETING_TYPES: { value: MeetingType; label: string; icon: string; description: string }[] = [
   { value: 'one_on_one', label: '1-on-1', icon: '👤', description: 'Performance review, coaching, check-in' },
@@ -67,6 +73,8 @@ export function MeetingSchedulerWizard({ open, onOpenChange, defaultDate }: Meet
   const orgId = effectiveOrganization?.id;
   const { data: locations = [] } = useLocations();
   const createMeeting = useCreateMeeting();
+  const { data: templates = [] } = useMeetingTemplates();
+  const createTemplate = useCreateMeetingTemplate();
 
   // Wizard state
   const [step, setStep] = useState<WizardStep>('type');
@@ -81,6 +89,9 @@ export function MeetingSchedulerWizard({ open, onOpenChange, defaultDate }: Meet
   const [videoLink, setVideoLink] = useState('');
   const [notes, setNotes] = useState('');
   const [attendeeSearch, setAttendeeSearch] = useState('');
+  const [showTemplates, setShowTemplates] = useState(false);
+  const [templateName, setTemplateName] = useState('');
+  const [showSaveTemplate, setShowSaveTemplate] = useState(false);
 
   // Calculate end time
   const endTime = useMemo(() => {
@@ -128,6 +139,14 @@ export function MeetingSchedulerWizard({ open, onOpenChange, defaultDate }: Meet
     endTime,
     selectedAttendees,
     step === 'datetime' || step === 'confirm',
+  );
+
+  // Optimal time suggestions
+  const { suggestions } = useOptimalMeetingTimes(
+    dateStr,
+    selectedAttendees,
+    duration,
+    step === 'datetime' && selectedAttendees.length > 0,
   );
 
   const stepIndex = STEPS.indexOf(step);
@@ -189,6 +208,9 @@ export function MeetingSchedulerWizard({ open, onOpenChange, defaultDate }: Meet
     setVideoLink('');
     setNotes('');
     setAttendeeSearch('');
+    setShowTemplates(false);
+    setShowSaveTemplate(false);
+    setTemplateName('');
   };
 
   const toggleAttendee = (userId: string) => {
@@ -210,6 +232,47 @@ export function MeetingSchedulerWizard({ open, onOpenChange, defaultDate }: Meet
     } catch { return t; }
   };
 
+  const applyTemplate = (template: MeetingTemplate) => {
+    setMeetingType(template.meeting_type);
+    setTitle(template.title_template);
+    setDuration(template.duration_minutes);
+    setMeetingMode(template.meeting_mode);
+    if (template.location_id) setLocationId(template.location_id);
+    if (template.video_link) setVideoLink(template.video_link);
+    if (template.notes) setNotes(template.notes);
+    if (template.attendee_user_ids?.length > 0) {
+      setSelectedAttendees(template.attendee_user_ids);
+    }
+    setShowTemplates(false);
+    toast.success(`Template "${template.name}" applied`);
+    // Skip to datetime step since type + attendees are pre-filled
+    if (template.attendee_user_ids?.length > 0) {
+      setStep('datetime');
+    } else {
+      setStep('attendees');
+    }
+  };
+
+  const handleSaveTemplate = () => {
+    if (!templateName || !meetingType) return;
+    createTemplate.mutate({
+      name: templateName,
+      meeting_type: meetingType,
+      title_template: title,
+      duration_minutes: duration,
+      meeting_mode: meetingMode,
+      location_id: locationId || null,
+      video_link: videoLink || null,
+      attendee_user_ids: selectedAttendees,
+      notes: notes || null,
+    }, {
+      onSuccess: () => {
+        setShowSaveTemplate(false);
+        setTemplateName('');
+      },
+    });
+  };
+
   return (
     <PremiumFloatingPanel open={open} onOpenChange={(o) => { if (!o) resetWizard(); onOpenChange(o); }} maxWidth="28rem" showCloseButton={false}>
       <div className="flex flex-col h-full max-h-[85vh]">
@@ -219,16 +282,29 @@ export function MeetingSchedulerWizard({ open, onOpenChange, defaultDate }: Meet
             <h2 className="font-display text-base tracking-wide">
               Schedule Meeting
             </h2>
-            <div className="flex items-center gap-1.5">
-              {STEPS.map((s, i) => (
-                <div
-                  key={s}
-                  className={cn(
-                    'w-2 h-2 rounded-full transition-colors',
-                    i <= stepIndex ? 'bg-primary' : 'bg-muted'
-                  )}
-                />
-              ))}
+            <div className="flex items-center gap-2">
+              {templates.length > 0 && step === 'type' && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="font-sans text-xs gap-1 h-7"
+                  onClick={() => setShowTemplates(!showTemplates)}
+                >
+                  <Bookmark className="w-3.5 h-3.5" />
+                  Templates
+                </Button>
+              )}
+              <div className="flex items-center gap-1.5">
+                {STEPS.map((s, i) => (
+                  <div
+                    key={s}
+                    className={cn(
+                      'w-2 h-2 rounded-full transition-colors',
+                      i <= stepIndex ? 'bg-primary' : 'bg-muted'
+                    )}
+                  />
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -237,14 +313,45 @@ export function MeetingSchedulerWizard({ open, onOpenChange, defaultDate }: Meet
         <ScrollArea className="flex-1 px-6 py-4">
           <AnimatePresence mode="wait">
             <motion.div
-              key={step}
+              key={step + (showTemplates ? '-templates' : '')}
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.15 }}
             >
+              {/* Templates popover */}
+              {showTemplates && step === 'type' && (
+                <div className="space-y-3 mb-6">
+                  <p className="text-sm text-muted-foreground font-sans">Load from template</p>
+                  <div className="space-y-2">
+                    {templates.map(t => (
+                      <button
+                        key={t.id}
+                        onClick={() => applyTemplate(t)}
+                        className="flex items-center gap-3 w-full p-3 rounded-lg border border-border hover:border-primary/30 hover:bg-muted/50 transition-colors text-left"
+                      >
+                        <Bookmark className="w-4 h-4 text-primary shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-sans text-foreground truncate">{t.name}</p>
+                          <p className="text-xs font-sans text-muted-foreground">
+                            {MEETING_TYPES.find(m => m.value === t.meeting_type)?.label} · {t.duration_minutes} min
+                            {t.attendee_user_ids?.length > 0 && ` · ${t.attendee_user_ids.length} attendees`}
+                          </p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => setShowTemplates(false)}
+                    className="text-xs font-sans text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    ← Back to meeting types
+                  </button>
+                </div>
+              )}
+
               {/* Step 1: Meeting Type */}
-              {step === 'type' && (
+              {step === 'type' && !showTemplates && (
                 <div className="space-y-4">
                   <p className="text-sm text-muted-foreground font-sans">What type of meeting?</p>
                   <div className="grid gap-3">
@@ -253,7 +360,6 @@ export function MeetingSchedulerWizard({ open, onOpenChange, defaultDate }: Meet
                         key={mt.value}
                         onClick={() => {
                           setMeetingType(mt.value);
-                          // Auto-generate title suggestion
                           if (!title) {
                             setTitle(mt.label === 'Other' ? '' : mt.label);
                           }
@@ -284,7 +390,6 @@ export function MeetingSchedulerWizard({ open, onOpenChange, defaultDate }: Meet
                 <div className="space-y-4">
                   <p className="text-sm text-muted-foreground font-sans">Who should attend?</p>
 
-                  {/* Selected attendees */}
                   {selectedAttendees.length > 0 && (
                     <div className="flex flex-wrap gap-2">
                       {selectedAttendees.map(id => {
@@ -301,7 +406,6 @@ export function MeetingSchedulerWizard({ open, onOpenChange, defaultDate }: Meet
                     </div>
                   )}
 
-                  {/* Search */}
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
@@ -312,7 +416,6 @@ export function MeetingSchedulerWizard({ open, onOpenChange, defaultDate }: Meet
                     />
                   </div>
 
-                  {/* Member list */}
                   <div className="space-y-1 max-h-[360px] overflow-y-auto">
                     {filteredMembers.map(m => {
                       const isSelected = selectedAttendees.includes(m.user_id);
@@ -362,6 +465,43 @@ export function MeetingSchedulerWizard({ open, onOpenChange, defaultDate }: Meet
                       disabled={(d) => d < new Date(new Date().setHours(0, 0, 0, 0))}
                     />
                   </div>
+
+                  {/* Availability Overlay */}
+                  {selectedAttendees.length > 0 && (
+                    <AttendeeAvailabilityOverlay
+                      date={dateStr}
+                      attendeeUserIds={selectedAttendees}
+                      teamMembers={teamMembers}
+                      startTime={startTime}
+                      endTime={endTime}
+                    />
+                  )}
+
+                  {/* Suggested times */}
+                  {suggestions.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-primary" />
+                        <span className="text-xs font-sans text-muted-foreground">Suggested times (all attendees free)</span>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {suggestions.map(s => (
+                          <button
+                            key={s.startTime}
+                            onClick={() => setStartTime(s.startTime)}
+                            className={cn(
+                              'px-3 py-1.5 rounded-full border text-xs font-sans transition-colors',
+                              startTime === s.startTime
+                                ? 'border-primary bg-primary/10 text-primary'
+                                : 'border-border hover:border-primary/40 text-foreground'
+                            )}
+                          >
+                            {formatTime12(s.startTime)}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Time and Duration */}
                   <div className="grid grid-cols-2 gap-3">
@@ -437,7 +577,6 @@ export function MeetingSchedulerWizard({ open, onOpenChange, defaultDate }: Meet
                 <div className="space-y-5">
                   <p className="text-sm text-muted-foreground font-sans">How will this meeting take place?</p>
 
-                  {/* Mode selector */}
                   <div className="grid grid-cols-3 gap-3">
                     {([
                       { value: 'in_person' as const, label: 'In Person', icon: MapPin },
@@ -460,7 +599,6 @@ export function MeetingSchedulerWizard({ open, onOpenChange, defaultDate }: Meet
                     ))}
                   </div>
 
-                  {/* Location picker (in_person or hybrid) */}
                   {meetingMode !== 'video' && (
                     <div>
                       <label className="text-xs font-sans text-muted-foreground mb-1.5 block">Location</label>
@@ -479,7 +617,6 @@ export function MeetingSchedulerWizard({ open, onOpenChange, defaultDate }: Meet
                     </div>
                   )}
 
-                  {/* Video link (video or hybrid) */}
                   {meetingMode !== 'in_person' && (
                     <div>
                       <label className="text-xs font-sans text-muted-foreground mb-1.5 block">Video Link</label>
@@ -499,7 +636,6 @@ export function MeetingSchedulerWizard({ open, onOpenChange, defaultDate }: Meet
                 <div className="space-y-5">
                   <p className="text-sm text-muted-foreground font-sans">Review and confirm your meeting.</p>
 
-                  {/* Title */}
                   <div>
                     <label className="text-xs font-sans text-muted-foreground mb-1.5 block">Meeting Title</label>
                     <Input
@@ -510,7 +646,6 @@ export function MeetingSchedulerWizard({ open, onOpenChange, defaultDate }: Meet
                     />
                   </div>
 
-                  {/* Summary Card */}
                   <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-3">
                     <div className="flex items-center gap-2 text-sm font-sans">
                       <CalendarIcon className="w-4 h-4 text-muted-foreground" />
@@ -540,7 +675,6 @@ export function MeetingSchedulerWizard({ open, onOpenChange, defaultDate }: Meet
                     </div>
                   </div>
 
-                  {/* Notes */}
                   <div>
                     <label className="text-xs font-sans text-muted-foreground mb-1.5 block">Notes (optional)</label>
                     <Textarea
@@ -551,6 +685,43 @@ export function MeetingSchedulerWizard({ open, onOpenChange, defaultDate }: Meet
                       className="font-sans"
                     />
                   </div>
+
+                  {/* Save as template */}
+                  {!showSaveTemplate ? (
+                    <button
+                      onClick={() => setShowSaveTemplate(true)}
+                      className="flex items-center gap-1.5 text-xs font-sans text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <BookmarkPlus className="w-3.5 h-3.5" />
+                      Save as template
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <Input
+                        value={templateName}
+                        onChange={e => setTemplateName(e.target.value)}
+                        placeholder="Template name..."
+                        className="font-sans text-sm h-8 flex-1"
+                      />
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="font-sans h-8 text-xs"
+                        disabled={!templateName || createTemplate.isPending}
+                        onClick={handleSaveTemplate}
+                      >
+                        {createTemplate.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Save'}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="font-sans h-8 text-xs"
+                        onClick={() => { setShowSaveTemplate(false); setTemplateName(''); }}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  )}
 
                   {hasConflicts && (
                     <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3">

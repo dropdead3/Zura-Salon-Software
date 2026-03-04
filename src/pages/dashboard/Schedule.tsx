@@ -36,6 +36,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { MeetingSchedulerWizard, ScheduleTypeSelector, MeetingDetailPanel } from '@/components/dashboard/schedule/meetings';
 import { useAdminMeetingsForDate, type AdminMeeting, type MeetingAttendee } from '@/hooks/useAdminMeetings';
+import { ShiftScheduleView } from '@/components/dashboard/schedule/shifts/ShiftScheduleView';
 import { cn } from '@/lib/utils';
 import type { CalendarFilterState } from '@/components/dashboard/schedule/CalendarFiltersPopover';
 import { AddTimeBlockForm } from '@/components/dashboard/schedule/AddTimeBlockForm';
@@ -162,6 +163,7 @@ export default function Schedule() {
   const [typeSelectorOpen, setTypeSelectorOpen] = useState(false);
   const [selectedMeeting, setSelectedMeeting] = useState<(AdminMeeting & { admin_meeting_attendees?: { user_id: string; rsvp_status: string }[] }) | null>(null);
   const [meetingDetailOpen, setMeetingDetailOpen] = useState(false);
+  const [showShiftsView, setShowShiftsView] = useState(false);
 
   // Fetch admin meetings for current date
   const currentDateStr = format(currentDate, 'yyyy-MM-dd');
@@ -723,7 +725,14 @@ export default function Schedule() {
               adminMeetings={adminMeetings}
               onMeetingClick={handleMeetingClick}
             />
-          )}
+           )}
+
+           {/* Shifts View */}
+           {showShiftsView && (
+             <div className="p-4">
+               <ShiftScheduleView locationId={selectedLocation} />
+             </div>
+           )}
         </>
       )}
     </>

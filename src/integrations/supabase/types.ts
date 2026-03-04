@@ -8284,6 +8284,68 @@ export type Database = {
           },
         ]
       }
+      meeting_templates: {
+        Row: {
+          attendee_user_ids: string[]
+          created_at: string
+          created_by: string | null
+          duration_minutes: number
+          id: string
+          is_active: boolean
+          location_id: string | null
+          meeting_mode: Database["public"]["Enums"]["meeting_mode"]
+          meeting_type: Database["public"]["Enums"]["meeting_type"]
+          name: string
+          notes: string | null
+          organization_id: string
+          title_template: string
+          updated_at: string
+          video_link: string | null
+        }
+        Insert: {
+          attendee_user_ids?: string[]
+          created_at?: string
+          created_by?: string | null
+          duration_minutes?: number
+          id?: string
+          is_active?: boolean
+          location_id?: string | null
+          meeting_mode?: Database["public"]["Enums"]["meeting_mode"]
+          meeting_type?: Database["public"]["Enums"]["meeting_type"]
+          name: string
+          notes?: string | null
+          organization_id: string
+          title_template?: string
+          updated_at?: string
+          video_link?: string | null
+        }
+        Update: {
+          attendee_user_ids?: string[]
+          created_at?: string
+          created_by?: string | null
+          duration_minutes?: number
+          id?: string
+          is_active?: boolean
+          location_id?: string | null
+          meeting_mode?: Database["public"]["Enums"]["meeting_mode"]
+          meeting_type?: Database["public"]["Enums"]["meeting_type"]
+          name?: string
+          notes?: string | null
+          organization_id?: string
+          title_template?: string
+          updated_at?: string
+          video_link?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_templates_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       metric_benchmarks: {
         Row: {
           benchmark_type: string
@@ -15818,6 +15880,68 @@ export type Database = {
           },
         ]
       }
+      staff_shifts: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          end_time: string
+          id: string
+          is_recurring: boolean
+          location_id: string | null
+          notes: string | null
+          organization_id: string
+          recurrence_pattern: string | null
+          role_context: Database["public"]["Enums"]["shift_role_context"]
+          shift_date: string
+          start_time: string
+          status: Database["public"]["Enums"]["shift_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          end_time: string
+          id?: string
+          is_recurring?: boolean
+          location_id?: string | null
+          notes?: string | null
+          organization_id: string
+          recurrence_pattern?: string | null
+          role_context?: Database["public"]["Enums"]["shift_role_context"]
+          shift_date: string
+          start_time: string
+          status?: Database["public"]["Enums"]["shift_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          end_time?: string
+          id?: string
+          is_recurring?: boolean
+          location_id?: string | null
+          notes?: string | null
+          organization_id?: string
+          recurrence_pattern?: string | null
+          role_context?: Database["public"]["Enums"]["shift_role_context"]
+          shift_date?: string
+          start_time?: string
+          status?: Database["public"]["Enums"]["shift_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_shifts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       staff_strikes: {
         Row: {
           created_at: string
@@ -19201,6 +19325,12 @@ export type Database = {
         | "wave"
       program_status: "active" | "paused" | "completed" | "restarted"
       rsvp_status: "pending" | "accepted" | "declined"
+      shift_role_context:
+        | "front_desk"
+        | "receptionist"
+        | "coordinator"
+        | "other"
+      shift_status: "scheduled" | "swapped" | "cancelled"
       stylist_type: "independent" | "commission" | "salon_owner"
       ticket_priority: "low" | "medium" | "high" | "urgent"
       ticket_status:
@@ -19442,6 +19572,13 @@ export const Constants = {
       ],
       program_status: ["active", "paused", "completed", "restarted"],
       rsvp_status: ["pending", "accepted", "declined"],
+      shift_role_context: [
+        "front_desk",
+        "receptionist",
+        "coordinator",
+        "other",
+      ],
+      shift_status: ["scheduled", "swapped", "cancelled"],
       stylist_type: ["independent", "commission", "salon_owner"],
       ticket_priority: ["low", "medium", "high", "urgent"],
       ticket_status: [
