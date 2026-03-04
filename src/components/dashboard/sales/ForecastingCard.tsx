@@ -446,6 +446,7 @@ export function ForecastingCard() {
   const [selectedStatCard, setSelectedStatCard] = useState<BreakdownMode | null>(null);
   const [breakdownType, setBreakdownType] = useState<BreakdownType>('category');
   const [selectedBarDay, setSelectedBarDay] = useState<DayForecast | null>(null);
+  const [viewMode, setViewMode] = useState<'scheduled' | 'predicted'>('scheduled');
   const { data, isLoading, error } = useForecastRevenue(period, selectedLocation);
   const forecastDays = getForecastDays(period);
   const { data: predictedData } = useRevenueForecast({
@@ -521,6 +522,13 @@ export function ForecastingCard() {
   // Compute operating-day average (exclude closed days)
   const operatingDayCount = Math.max(days.length - closedDates.size, 1);
   const operatingDailyAvg = totalRevenue / operatingDayCount;
+
+  // Realization-adjusted values
+  const realizationRate = predictedData?.realizationRate;
+  const hasRealization = realizationRate != null && realizationRate < 100 && realizationRate > 0;
+  const realizationFactor = hasRealization ? realizationRate / 100 : 1;
+  const isPredictedMode = viewMode === 'predicted' && hasRealization;
+  const displayRevenue = isPredictedMode ? totalRevenue * realizationFactor : totalRevenue;
 
   // Compute all unique categories across days/weeks (before early returns)
   const allCategories = useMemo(() => {
@@ -599,12 +607,15 @@ export function ForecastingCard() {
   }
 
   // Determine average value to show
-  const avgValue = (period === '30days' || period === '60days') 
+  const rawAvgValue = (period === '30days' || period === '60days') 
     ? Math.round(averageWeekly) 
     : Math.round(operatingDailyAvg);
+  const displayAvgValue = isPredictedMode ? Math.round(rawAvgValue * realizationFactor) : rawAvgValue;
 
   // Tooltip descriptions based on period
-  const totalTooltip = `Sum of projected revenue from all scheduled appointments over the ${PERIOD_LABELS[period].toLowerCase()}.`;
+  const totalTooltip = viewMode === 'predicted' && hasRealization
+    ? `Scheduled revenue adjusted by ${Math.round(realizationRate!)}% realization rate. Accounts for cancellations, no-shows, and pricing differences.`
+    : `Sum of projected revenue from all scheduled appointments over the ${PERIOD_LABELS[period].toLowerCase()}.`;
   const avgTooltip = period === 'tomorrow' 
     ? 'Total projected revenue for tomorrow.'
     : (period === '7days' || period === 'todayToEom'
@@ -667,6 +678,42 @@ export function ForecastingCard() {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Scheduled / Predicted toggle */}
+          <div className="flex items-center gap-3">
+            <Tabs value={viewMode} onValueChange={(v) => v && setViewMode(v as 'scheduled' | 'predicted')}>
+              <FilterTabsList>
+                <FilterTabsTrigger value="scheduled">Scheduled</FilterTabsTrigger>
+                <UITooltip>
+                  <TooltipTrigger asChild>
+                    <span>
+                      <FilterTabsTrigger value="predicted" disabled={!hasRealization}>
+                        Predicted
+                      </FilterTabsTrigger>
+                    </span>
+                  </TooltipTrigger>
+                  {!hasRealization && (
+                    <TooltipContent side="top" className="text-xs max-w-[220px]">
+                      Insufficient historical data to calculate realization rate
+                    </TooltipContent>
+                  )}
+                </UITooltip>
+              </FilterTabsList>
+            </Tabs>
+            {isPredictedMode && (
+              <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <span className={cn(
+                  "tabular-nums",
+                  realizationRate! < 85 ? "text-amber-500" : "text-chart-2"
+                )}>
+                  {Math.round(realizationRate!)}% realization rate applied
+                </span>
+                <MetricInfoTooltip
+                  description={`Over the last 30 days, ${Math.round(realizationRate!)}% of scheduled revenue was collected as actual POS revenue. Predicted values account for cancellations, no-shows, and pricing differences.`}
+                />
+              </span>
+            )}
+          </div>
+
           {/* Summary Stats */}
           <div className={cn("grid gap-3", period === 'tomorrow' ? 'grid-cols-2' : 'grid-cols-3')}>
             <div
@@ -680,7 +727,7 @@ export function ForecastingCard() {
                 <TrendingUp className="w-4 h-4 text-primary" />
               </div>
               <AnimatedBlurredAmount 
-                value={totalRevenue}
+                value={displayRevenue}
                 currency={currency}
                 className="text-lg font-display tabular-nums"
               />
@@ -702,7 +749,7 @@ export function ForecastingCard() {
                   <Calendar className="w-4 h-4 text-primary" />
                 </div>
                 <AnimatedBlurredAmount 
-                  value={avgValue}
+                  value={displayAvgValue}
                   currency={currency}
                   className="text-lg font-display tabular-nums"
                 />

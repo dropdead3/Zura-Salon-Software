@@ -13,6 +13,7 @@ import { DayAppointmentsPanel } from './DayAppointmentsPanel';
 import { DayProviderBreakdownPanel } from './DayProviderBreakdownPanel';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { CalendarRange, TrendingUp, Calendar, Users, ChevronDown } from 'lucide-react';
+import { Tooltip as UITooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { CategoryBreakdownPanel, BreakdownMode } from './CategoryBreakdownPanel';
 import { ServiceMixLegend } from '@/components/dashboard/analytics/ServiceMixLegend';
 import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
@@ -211,6 +212,7 @@ export function WeekAheadForecast() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [selectedStatCard, setSelectedStatCard] = useState<BreakdownMode | null>(null);
   const [selectedBarDay, setSelectedBarDay] = useState<DayForecast | null>(null);
+  const [viewMode, setViewMode] = useState<'scheduled' | 'predicted'>('scheduled');
   const { data, isLoading, error } = useWeekAheadRevenue(selectedLocation);
   const { data: forecastData } = useRevenueForecast({
     forecastDays: 7,
@@ -272,6 +274,14 @@ export function WeekAheadForecast() {
   // Compute operating-day average (exclude closed days)
   const operatingDayCount = Math.max(days.length - closedDates.size, 1);
   const operatingDailyAvg = totalRevenue / operatingDayCount;
+
+  // Realization-adjusted values
+  const realizationRate = forecastData?.realizationRate;
+  const hasRealization = realizationRate != null && realizationRate < 100 && realizationRate > 0;
+  const realizationFactor = hasRealization ? realizationRate / 100 : 1;
+  const isPredictedMode = viewMode === 'predicted' && hasRealization;
+  const displayRevenue = isPredictedMode ? totalRevenue * realizationFactor : totalRevenue;
+  const displayDailyAvg = isPredictedMode ? operatingDailyAvg * realizationFactor : operatingDailyAvg;
 
   // Compute all unique categories across days (must be before early returns)
   const allCategories = useMemo(() => {
@@ -357,6 +367,42 @@ export function WeekAheadForecast() {
           <CardDescription>Projected revenue from scheduled appointments</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Scheduled / Predicted toggle */}
+          <div className="flex items-center gap-3">
+            <Tabs value={viewMode} onValueChange={(v) => v && setViewMode(v as 'scheduled' | 'predicted')}>
+              <FilterTabsList>
+                <FilterTabsTrigger value="scheduled">Scheduled</FilterTabsTrigger>
+                <UITooltip>
+                  <TooltipTrigger asChild>
+                    <span>
+                      <FilterTabsTrigger value="predicted" disabled={!hasRealization}>
+                        Predicted
+                      </FilterTabsTrigger>
+                    </span>
+                  </TooltipTrigger>
+                  {!hasRealization && (
+                    <TooltipContent side="top" className="text-xs max-w-[220px]">
+                      Insufficient historical data to calculate realization rate
+                    </TooltipContent>
+                  )}
+                </UITooltip>
+              </FilterTabsList>
+            </Tabs>
+            {isPredictedMode && (
+              <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <span className={cn(
+                  "tabular-nums",
+                  realizationRate! < 85 ? "text-amber-500" : "text-chart-2"
+                )}>
+                  {Math.round(realizationRate!)}% realization rate applied
+                </span>
+                <MetricInfoTooltip
+                  description={`Over the last 30 days, ${Math.round(realizationRate!)}% of scheduled revenue was collected as actual POS revenue. Predicted values account for cancellations, no-shows, and pricing differences.`}
+                />
+              </span>
+            )}
+          </div>
+
           {/* Summary Stats */}
           <div className="grid grid-cols-3 gap-3">
             <div
@@ -370,28 +416,19 @@ export function WeekAheadForecast() {
                 <TrendingUp className="w-4 h-4 text-primary" />
               </div>
               <AnimatedBlurredAmount 
-                value={totalRevenue}
+                value={displayRevenue}
                 currency={currency}
                 className="text-lg font-display tabular-nums"
               />
               <div className="flex items-center gap-1 justify-center">
-                <p className="text-xs text-muted-foreground">7-Day Total</p>
-                <MetricInfoTooltip description="Sum of projected revenue from all scheduled appointments over the next 7 days." />
+                <p className="text-xs text-muted-foreground">
+                  {isPredictedMode ? '7-Day Predicted' : '7-Day Total'}
+                </p>
+                <MetricInfoTooltip description={isPredictedMode
+                  ? `Scheduled revenue adjusted by ${Math.round(realizationRate!)}% realization rate. Accounts for cancellations, no-shows, and pricing differences.`
+                  : "Sum of projected revenue from all scheduled appointments over the next 7 days."
+                } />
               </div>
-              {forecastData?.realizationRate != null && forecastData.realizationRate < 100 && (
-                <div className="flex items-center gap-1 justify-center mt-0.5">
-                  <p className={cn(
-                    "text-[10px] italic",
-                    forecastData.realizationRate < 85 ? "text-amber-500/80" : "text-muted-foreground/60"
-                  )}>
-                    Adjusted for {Math.round(forecastData.realizationRate)}% realization
-                  </p>
-                  <MetricInfoTooltip
-                    description={`Over the last 30 days, ${Math.round(forecastData.realizationRate)}% of scheduled revenue was collected as actual POS revenue. Predictions account for cancellations, no-shows, and pricing differences.`}
-                    className="w-2.5 h-2.5"
-                  />
-                </div>
-              )}
               <ChevronDown className={cn('w-3 h-3 mx-auto mt-1 text-muted-foreground transition-transform', selectedStatCard === 'revenue' && 'rotate-180 text-primary')} />
             </div>
             <div
@@ -405,7 +442,7 @@ export function WeekAheadForecast() {
                 <Calendar className="w-4 h-4 text-chart-2" />
               </div>
               <AnimatedBlurredAmount 
-                value={Math.round(operatingDailyAvg)}
+                value={Math.round(displayDailyAvg)}
                 currency={currency}
                 className="text-lg font-display tabular-nums"
               />
