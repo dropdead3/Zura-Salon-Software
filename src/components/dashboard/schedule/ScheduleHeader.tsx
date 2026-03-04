@@ -17,6 +17,7 @@ import {
   FileText,
   Users,
   ClipboardCheck,
+  Clock,
 } from 'lucide-react';
 import { NavBadge } from '@/components/dashboard/NavBadge';
 import { Button } from '@/components/ui/button';
@@ -65,6 +66,8 @@ interface ScheduleHeaderProps {
   onOpenDrafts?: () => void;
   pendingBlockCount?: number;
   onOpenBlockManager?: () => void;
+  showShiftsView?: boolean;
+  onToggleShiftsView?: () => void;
 }
 
 export function ScheduleHeader({
@@ -88,6 +91,8 @@ export function ScheduleHeader({
   onOpenDrafts,
   pendingBlockCount = 0,
   onOpenBlockManager,
+  showShiftsView = false,
+  onToggleShiftsView,
 }: ScheduleHeaderProps) {
   const { formatDate } = useFormatDate();
   const navigate = useNavigate();
@@ -145,6 +150,29 @@ export function ScheduleHeader({
               </button>
             </div>
           </div>
+
+          {/* Shifts View Toggle */}
+          {onToggleShiftsView && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={onToggleShiftsView}
+                  className={cn(
+                    'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all duration-200',
+                    showShiftsView
+                      ? 'bg-[hsl(40,20%,92%)] text-[hsl(0,0%,8%)] font-medium'
+                      : 'text-[hsl(40,20%,92%)]/50 hover:text-[hsl(40,20%,92%)]/80 hover:bg-[hsl(40,20%,92%)]/10'
+                  )}
+                >
+                  <Clock className="h-3.5 w-3.5" />
+                  Shifts
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                <p>{showShiftsView ? 'Hide shift schedule' : 'View support staff shifts'}</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
 
           <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
             <PopoverTrigger asChild>
