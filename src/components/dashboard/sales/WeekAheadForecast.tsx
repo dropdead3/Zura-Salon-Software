@@ -623,7 +623,7 @@ export function WeekAheadForecast() {
                       const chartLeft = xAxisMap[0].x;
                       const chartRight = chartLeft + xAxisMap[0].width;
                       if (typeof yPos !== 'number' || isNaN(yPos)) return null;
-                      const badgeY = yAxisMap[0].y + 4;
+                      const badgeY = yAxisMap[0].y - 20;
                       const lineLength = chartRight - chartLeft;
                       return (
                       <g style={{ pointerEvents: 'none' }}>

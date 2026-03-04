@@ -1021,7 +1021,7 @@ export function ForecastingCard() {
                       const padY = 4;
                       const fontSize = 12;
                       const gap = 4;
-                      const badgeY = yAxisMap[0].y + 4;
+                      const badgeY = yAxisMap[0].y - 20;
                       return (
                         <g style={{ pointerEvents: 'auto', cursor: hideNumbers ? 'pointer' : 'default' }} onClick={hideNumbers ? requestUnhide : undefined}>
                           {hideNumbers && <title>Click to reveal</title>}
@@ -1063,7 +1063,7 @@ export function ForecastingCard() {
                       const padY = 3;
                       const fontSize = 11;
                       const gap = 4;
-                      const badgeY = yAxisMap[0].y + 4;
+                      const badgeY = yAxisMap[0].y - 20;
                       return (
                         <g style={{ pointerEvents: hideNumbers ? 'auto' : 'none', cursor: hideNumbers ? 'pointer' : 'default' }} onClick={hideNumbers ? requestUnhide : undefined}>
                           {hideNumbers && <title>Click to reveal</title>}
