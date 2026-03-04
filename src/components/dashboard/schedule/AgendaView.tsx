@@ -5,6 +5,8 @@ import { cn, formatDisplayName } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Users } from 'lucide-react';
+import type { AdminMeeting } from '@/hooks/useAdminMeetings';
+import { MeetingAgendaCard } from './meetings/MeetingCard';
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
 import { APPOINTMENT_STATUS_BADGE } from '@/lib/design-tokens';
 import { AppointmentCardContent, getCardSize } from './AppointmentCardContent';
@@ -21,6 +23,8 @@ interface AgendaViewProps {
   appointmentsWithAssistants?: Set<string>;
   serviceLookup?: Map<string, ServiceLookupEntry>;
   assistantTimeBlocks?: AssistantTimeBlock[];
+  adminMeetings?: (AdminMeeting & { admin_meeting_attendees?: { user_id: string; rsvp_status: string }[] })[];
+  onMeetingClick?: (meeting: AdminMeeting & { admin_meeting_attendees?: { user_id: string; rsvp_status: string }[] }) => void;
 }
 
 function formatTime12h(time: string): string {
@@ -47,6 +51,8 @@ export function AgendaView({
   appointmentsWithAssistants,
   serviceLookup,
   assistantTimeBlocks = [],
+  adminMeetings = [],
+  onMeetingClick,
 }: AgendaViewProps) {
   const { formatDate } = useFormatDate();
   const { colorMap: categoryColors } = useServiceCategoryColorsMap();
@@ -125,6 +131,17 @@ export function AgendaView({
                   categoryColors={categoryColors}
                 />
               ))}
+
+              {/* Admin Meetings */}
+              {adminMeetings
+                .filter(m => m.start_date === dateStr)
+                .map(meeting => (
+                  <MeetingAgendaCard
+                    key={meeting.id}
+                    meeting={meeting}
+                    onClick={() => onMeetingClick?.(meeting)}
+                  />
+                ))}
 
               {/* Assistant Time Blocks */}
               {assistantTimeBlocks

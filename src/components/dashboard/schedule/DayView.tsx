@@ -4,6 +4,8 @@ import type { AssistantProfile } from '@/hooks/useAppointmentAssistantNames';
 import { format, isToday, getWeek } from 'date-fns';
 import { ClosedBadge } from '@/components/dashboard/ClosedBadge';
 import { cn, formatPhoneDisplay, formatDisplayName } from '@/lib/utils';
+import type { AdminMeeting } from '@/hooks/useAdminMeetings';
+import { MeetingGridCard } from './meetings/MeetingCard';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
 import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
@@ -55,6 +57,8 @@ interface DayViewProps {
   onBlockClick?: (block: AssistantTimeBlock) => void;
   onBlockResize?: (blockId: string, newEndTime: string) => void;
   currentUserId?: string;
+  adminMeetings?: (AdminMeeting & { admin_meeting_attendees?: { user_id: string; rsvp_status: string }[] })[];
+  onMeetingClick?: (meeting: AdminMeeting & { admin_meeting_attendees?: { user_id: string; rsvp_status: string }[] }) => void;
 }
 
 // Use consolidated status colors from design tokens
@@ -290,6 +294,8 @@ export function DayView({
   onBlockClick,
   onBlockResize,
   currentUserId,
+  adminMeetings = [],
+  onMeetingClick,
 }: DayViewProps) {
   const ROW_HEIGHT = 20; // 20px per 15-min slot (matches Week view)
   const { colorMap: categoryColors } = useServiceCategoryColorsMap();
@@ -607,6 +613,19 @@ export function DayView({
                         />
                       );
                     })}
+
+                    {/* Admin Meeting Cards */}
+                    {adminMeetings
+                      .filter(m => m.admin_meeting_attendees?.some(a => a.user_id === stylist.user_id) || m.organizer_user_id === stylist.user_id)
+                      .map(meeting => (
+                        <MeetingGridCard
+                          key={meeting.id}
+                          meeting={meeting}
+                          hoursStart={hoursStart}
+                          rowHeight={ROW_HEIGHT}
+                          onClick={() => onMeetingClick?.(meeting)}
+                        />
+                      ))}
                   </div>
                 );
               })}

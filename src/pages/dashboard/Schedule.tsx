@@ -34,7 +34,8 @@ import { useAppointmentAssistantNames } from '@/hooks/useAppointmentAssistantNam
 import { Loader2, Sparkles, Coffee, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { MeetingSchedulerWizard, ScheduleTypeSelector } from '@/components/dashboard/schedule/meetings';
+import { MeetingSchedulerWizard, ScheduleTypeSelector, MeetingDetailPanel } from '@/components/dashboard/schedule/meetings';
+import { useAdminMeetingsForDate, type AdminMeeting, type MeetingAttendee } from '@/hooks/useAdminMeetings';
 import { cn } from '@/lib/utils';
 import type { CalendarFilterState } from '@/components/dashboard/schedule/CalendarFiltersPopover';
 import { AddTimeBlockForm } from '@/components/dashboard/schedule/AddTimeBlockForm';
@@ -159,6 +160,12 @@ export default function Schedule() {
   // Meeting scheduler state
   const [meetingWizardOpen, setMeetingWizardOpen] = useState(false);
   const [typeSelectorOpen, setTypeSelectorOpen] = useState(false);
+  const [selectedMeeting, setSelectedMeeting] = useState<(AdminMeeting & { admin_meeting_attendees?: { user_id: string; rsvp_status: string }[] }) | null>(null);
+  const [meetingDetailOpen, setMeetingDetailOpen] = useState(false);
+
+  // Fetch admin meetings for current date
+  const currentDateStr = format(currentDate, 'yyyy-MM-dd');
+  const { data: adminMeetings = [] } = useAdminMeetingsForDate(currentDateStr);
 
   // Listen for FAB toggle event
   useEffect(() => {
@@ -410,6 +417,11 @@ export default function Schedule() {
     setDetailOpen(true);
   };
 
+  const handleMeetingClick = (meeting: AdminMeeting & { admin_meeting_attendees?: { user_id: string; rsvp_status: string }[] }) => {
+    setSelectedMeeting(meeting);
+    setMeetingDetailOpen(true);
+  };
+
   const handleSlotClick = (dateOrStylistId: Date | string, time: string) => {
     const slotDate = typeof dateOrStylistId === 'string' ? currentDate : dateOrStylistId;
     const stylistId = typeof dateOrStylistId === 'string' ? dateOrStylistId : undefined;
@@ -637,6 +649,8 @@ export default function Schedule() {
                 assistantProfilesMap={assistantProfilesMap}
                 assistantTimeBlocks={assistantTimeBlocks}
                 onBlockClick={() => setBlockManagerOpen(true)}
+                adminMeetings={adminMeetings}
+                onMeetingClick={handleMeetingClick}
               />
             );
           })()}
@@ -657,9 +671,11 @@ export default function Schedule() {
               serviceLookup={serviceLookup}
                assistantNamesMap={assistantNamesMap}
                  assistantProfilesMap={assistantProfilesMap}
-                 assistantTimeBlocks={assistantTimeBlocks}
-                 onBlockClick={() => setBlockManagerOpen(true)}
-              />
+                  assistantTimeBlocks={assistantTimeBlocks}
+                  onBlockClick={() => setBlockManagerOpen(true)}
+                  adminMeetings={adminMeetings}
+                  onMeetingClick={handleMeetingClick}
+               />
           )}
           
           {view === 'week' && (
@@ -704,6 +720,8 @@ export default function Schedule() {
               appointmentsWithAssistants={appointmentsWithAssistants}
               serviceLookup={serviceLookup}
               assistantTimeBlocks={rangeTimeBlocks}
+              adminMeetings={adminMeetings}
+              onMeetingClick={handleMeetingClick}
             />
           )}
         </>
@@ -1015,6 +1033,13 @@ export default function Schedule() {
         open={meetingWizardOpen}
         onOpenChange={setMeetingWizardOpen}
         defaultDate={currentDate}
+      />
+
+      {/* Meeting Detail Panel */}
+      <MeetingDetailPanel
+        meeting={selectedMeeting}
+        open={meetingDetailOpen}
+        onOpenChange={setMeetingDetailOpen}
       />
 
       {/* Type Selector Dialog (dual-role users) */}
