@@ -1,37 +1,31 @@
 
 
-## Fix: Align "All Appointments Complete" with Live Session State
+## Remove Changelog Manager Feature
 
-The root cause is that `allAppointmentsComplete` in `AggregateSalesCard` never checks whether there are still active in-session appointments. It only looks at location closing hours and last appointment end times. Meanwhile, `LiveSessionIndicator` uses a time-window check against appointment schedule times.
+Good call deferring this to platform-level — it keeps the organization admin surface cleaner and avoids premature complexity. The user-facing changelog page and widget will remain intact since those serve team communication.
 
-### The Fix
+### What Gets Removed
 
-**`src/components/dashboard/AggregateSalesCard.tsx`** (around line 480):
+1. **`src/pages/dashboard/admin/ChangelogManager.tsx`** — Delete the entire admin page file
 
-Add the `useLiveSessionSnapshot` hook and incorporate its `inSessionCount` into the `allAppointmentsComplete` calculation. If `inSessionCount > 0`, appointments are NOT all complete regardless of what the closing-hours logic says.
+2. **`src/App.tsx`** — Remove the import and route for `ChangelogManager`:
+   - Remove `import ChangelogManager from "./pages/dashboard/admin/ChangelogManager"`
+   - Remove the `<Route path="/dashboard/admin/changelog" ...>` line
 
-```tsx
-// Add import
-import { useLiveSessionSnapshot } from '@/hooks/useLiveSessionSnapshot';
+3. **`src/pages/dashboard/admin/TeamHub.tsx`** — Remove the Changelog Manager `ManagementCard` from the Team Operations & Communications section (lines ~411-416)
 
-// Inside the component, add:
-const liveSession = useLiveSessionSnapshot(locationId);
+4. **`src/pages/dashboard/admin/ManagementHub.tsx`** — Remove the Changelog Manager `ManagementCard` (lines ~382-387)
 
-// Modify allAppointmentsComplete memo to include liveSession.inSessionCount as a dependency:
-const allAppointmentsComplete = useMemo(() => {
-  if (!isToday) return false;
-  
-  // If anyone is still in session by time-window, revenue is not finalized
-  if (liveSession.inSessionCount > 0) return false;
-  
-  // ... existing Path 1 (closing hours) and Path 2 (last appointment end time) logic unchanged ...
-}, [isToday, locations, todayActual, liveSession.inSessionCount]);
-```
+### What Stays (Unchanged)
 
-This ensures the Sales Overview card cannot claim "All appointments complete" or "Final Revenue Today" while the Live Session indicator still shows stylists working. Both systems will now agree.
+- **`src/pages/dashboard/Changelog.tsx`** — User-facing changelog & roadmap viewer
+- **`src/components/dashboard/ChangelogWidget.tsx`** — Dashboard "What's New" widget
+- **`src/hooks/useChangelog.ts`** — All hooks (used by the user-facing page and widget)
+- **`src/hooks/useFeatureRequests.ts`** — Used by user-facing changelog for feature request submissions
+- **`src/hooks/usePublishChangelog.ts`** — Used by website editor publish flow
+- **Edge functions** (`publish-scheduled-changelog`, `send-changelog-digest`) — Backend infrastructure, stays for future platform use
 
-### Impact
-- Single line gate added to existing memo
-- No new queries (reuses the already-cached `useLiveSessionSnapshot` data)
-- Both indicators will be consistent across the dashboard
+### Why This Scope
+
+The admin hooks (`useAdminChangelog`, `useCreateChangelog`, etc.) remain in `useChangelog.ts` since they're self-contained exports that cause no harm and will be needed when the platform-level feature is built. Dead code elimination in the bundler will tree-shake them out.
 
