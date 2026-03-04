@@ -162,6 +162,30 @@ export function useCreateMeeting() {
           .insert(attendeeRows);
 
         if (attendeeError) throw attendeeError;
+
+        // Create in-app notifications for attendees
+        const { data: organizerProfile } = await supabase
+          .from('employee_profiles')
+          .select('display_name, full_name')
+          .eq('user_id', user.user.id)
+          .maybeSingle();
+
+        const organizerName = organizerProfile?.display_name || organizerProfile?.full_name || 'Someone';
+        const dateLabel = input.start_date;
+
+        for (const uid of input.attendee_user_ids) {
+          await supabase.from('notifications').insert({
+            user_id: uid,
+            type: 'meeting_invite',
+            title: `Meeting Invite: ${input.title}`,
+            message: `${organizerName} invited you to "${input.title}" on ${dateLabel} at ${input.start_time}.`,
+            metadata: {
+              meeting_id: meeting.id,
+              organizer_user_id: user.user.id,
+              meeting_type: input.meeting_type,
+            },
+          }).then(() => {});
+        }
       }
 
       return meeting;
