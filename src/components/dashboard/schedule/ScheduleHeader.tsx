@@ -58,6 +58,8 @@ interface ScheduleHeaderProps {
   locations: Array<{ id: string; name: string; city?: string | null; hours_json?: HoursJson | null; holiday_closures?: HolidayClosure[] | null }>;
   onNewBooking: () => void;
   canCreate?: boolean;
+  isAdminRole?: boolean;
+  isServiceProvider?: boolean;
   calendarFilters: CalendarFilterState;
   onCalendarFiltersChange: (filters: CalendarFilterState) => void;
   copilotOpen?: boolean;
@@ -83,6 +85,8 @@ export function ScheduleHeader({
   locations,
   onNewBooking,
   canCreate = false,
+  isAdminRole = false,
+  isServiceProvider = false,
   calendarFilters,
   onCalendarFiltersChange,
   copilotOpen,
@@ -293,6 +297,32 @@ export function ScheduleHeader({
               </PopoverContent>
             </Popover>
           </div>
+
+          {/* New Booking / Meeting Button */}
+          {canCreate && (
+            <Button
+              onClick={onNewBooking}
+              size="sm"
+              className="h-8 px-3 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 gap-1.5 text-xs"
+            >
+              {isAdminRole && !isServiceProvider ? (
+                <>
+                  <Users className="h-3.5 w-3.5" />
+                  New Meeting
+                </>
+              ) : isAdminRole && isServiceProvider ? (
+                <>
+                  <Plus className="h-3.5 w-3.5" />
+                  New
+                </>
+              ) : (
+                <>
+                  <Plus className="h-3.5 w-3.5" />
+                  New Booking
+                </>
+              )}
+            </Button>
+          )}
 
           {/* Assistant Blocks Button */}
           {onOpenBlockManager && (
