@@ -1,163 +1,128 @@
 
 
-## Admin Meeting Scheduler & Support Staff Shift Scheduling
+## Enhancement Plan: Meeting Email Invites, Recurring Templates, Shift Scheduling, Availability Overlay, Auto-Suggest Times
 
-### Your Prompt -- What Works Well
-
-Your instinct on the role-based branching is exactly right: admin-only users default to "Schedule A Meeting," while dual-role users (admin + service provider) get a type selector first. The conflict-aware scheduling for meetings with service providers is a high-value feature that leverages existing infrastructure.
-
-**One refinement:** Rather than building this as a modification to the existing `QuickBookingPopover` (which is deeply specialized for salon service bookings -- 2,400+ lines, service categories, add-ons, redo policies), this should be a **parallel wizard** that shares conflict-checking and availability infrastructure but has its own UI flow. Merging admin meetings into the salon booking flow would create complexity that violates the platform's persona-scaling principle.
-
-### Suggested Scope Split (Two Distinct Features)
-
-**Feature A: Admin Meeting Scheduler** -- Scheduling internal meetings (1-on-1s, interviews, manager meetings)
-
-**Feature B: Support Staff Shift Scheduler** -- Shift planning for non-service roles (front desk, receptionist, support)
-
-These are architecturally different: meetings are event-based (like appointments), while shifts are time-range-based (like schedules). Building them together risks a muddled UX. I'd recommend Feature A first since it extends the existing schedule infrastructure directly.
+This is a large scope covering 5 enhancements. I recommend building them in order of dependency and value.
 
 ---
 
-### Feature A: Admin Meeting Scheduler -- Detailed Plan
+### Enhancement 1: Email Invites for Meeting Attendees
 
-#### Data Model
+**What:** When a meeting is created, send a branded transactional email to each attendee via the existing `sendOrgEmail` infrastructure.
 
-New `admin_meetings` table (not reusing `appointments` -- different entity semantics):
+**How:**
+- Create edge function `send-meeting-invite/index.ts` that accepts a meeting ID, fetches meeting details + attendees + organizer profile, and sends a branded email via `sendOrgEmail`
+- Call this edge function from `useCreateMeeting` after successful meeting creation
+- Email includes: meeting title, type, date/time, location/video link, organizer name, and a deep link to the schedule page
+- Uses `emailType: 'transactional'` to bypass marketing rate limits
 
-```text
-admin_meetings
-├── id (uuid, PK)
-├── organization_id (uuid, FK)
-├── location_id (text, nullable) -- physical location
-├── organizer_user_id (uuid, FK) -- the admin scheduling
-├── title (text) -- "1-on-1 with Sarah", "Interview: John Doe"
-├── meeting_type (enum: one_on_one, interview, manager_meeting, training, other)
-├── start_date (date)
-├── start_time (time)
-├── end_time (time)
-├── duration_minutes (int)
-├── meeting_mode (enum: in_person, video, hybrid)
-├── video_link (text, nullable) -- Zoom/Teams URL
-├── notes (text, nullable)
-├── status (enum: scheduled, cancelled, completed)
-├── created_at, updated_at
-└── RLS: org-scoped via is_org_member
-
-admin_meeting_attendees
-├── id (uuid, PK)
-├── meeting_id (uuid, FK → admin_meetings)
-├── user_id (uuid) -- staff member invited
-├── rsvp_status (enum: pending, accepted, declined)
-├── notified_at (timestamp, nullable)
-└── RLS: org-scoped via meeting join
-```
-
-#### Wizard Flow: "Schedule A Meeting"
-
-```text
-Step 1: Meeting Type
-  ┌─────────────────────────────┐
-  │ 1-on-1  │ Interview │ Team  │
-  │ Meeting │           │ Mtg   │
-  └─────────────────────────────┘
-
-Step 2: Attendees (multi-select staff)
-  - Search/filter by role, location
-  - Shows availability indicators
-
-Step 3: Date & Time
-  - Calendar picker
-  - Conflict-aware slot recommendations
-  - Cross-checks attendee appointments + existing meetings
-  - "Best available times" ranked list
-
-Step 4: Location / Mode
-  - In-Person (select location/room)
-  - Video Call (paste Zoom/Teams link or generate)
-  - Hybrid (both)
-
-Step 5: Confirm & Send Invites
-  - Summary card
-  - Send in-app notification + optional email invite
-```
-
-#### Role-Based Entry Point
-
-In `QuickBookingPopover` or the schedule toolbar:
-
-- **Admin-only user** → Opens "Schedule A Meeting" wizard directly
-- **Admin + Service Provider** → Shows type selector first:
-
-```text
-┌──────────────────────────────────┐
-│ What would you like to schedule? │
-│                                  │
-│  [📅 Client Appointment]        │
-│  [🤝 Internal Meeting]          │
-└──────────────────────────────────┘
-```
-
-#### Conflict Detection
-
-Reuses existing infrastructure:
-- Query `phorest_appointments` + `appointments` for service provider conflicts
-- Query `admin_meetings` + `admin_meeting_attendees` for meeting conflicts
-- Surface conflicts inline: "Sarah has a client at 2:00 PM -- next available: 2:45 PM"
-
-#### Meeting Invites
-
-- In-app notification via existing notification system
-- Email invite via transactional email (service communication flow pattern)
-- RSVP tracking in `admin_meeting_attendees`
-
-#### Schedule Visualization
-
-Admin meetings render on the existing schedule grid as a distinct card type:
-- Different accent color (e.g., indigo/blue vs. service category colors)
-- Meeting icon instead of scissors
-- Shows attendee count badge
+| File | Change |
+|------|--------|
+| `supabase/functions/send-meeting-invite/index.ts` | New edge function using `sendOrgEmail` |
+| `src/hooks/useAdminMeetings.ts` | Invoke edge function after meeting creation |
 
 ---
 
-### Feature B: Support Staff Shift Scheduler (Phase 2)
+### Enhancement 2: Recurring Meeting Templates
 
-This is a separate planning surface -- not calendar events but **recurring time blocks**:
+**What:** Save meeting configurations as reusable templates. Users can create a meeting from a template with one click.
 
-```text
-staff_shifts
-├── id, organization_id, location_id
-├── user_id (the support staff member)
-├── shift_date (date)
-├── start_time, end_time
-├── role_context (enum: front_desk, receptionist, coordinator, other)
-├── status (enum: scheduled, swapped, cancelled)
-├── is_recurring, recurrence_pattern
-└── RLS: org-scoped
-```
+**How:**
+- New `meeting_templates` table: `id, organization_id, created_by, name, meeting_type, title_template, duration_minutes, meeting_mode, location_id, video_link, attendee_user_ids (text[]), notes, is_active, created_at, updated_at` with org-scoped RLS
+- New hook `useMeetingTemplates.ts` for CRUD
+- Add "Save as Template" button on the confirm step of `MeetingSchedulerWizard`
+- Add "From Template" option at the start of the wizard that pre-fills all fields
+- Templates section in a popover/dropdown on the wizard's type step
 
-This would integrate with the existing `shift_swaps` system already in your codebase and surface as a dedicated "Staff Shifts" view accessible from the schedule page or admin settings.
-
----
-
-### Recommended Phasing
-
-| Phase | Scope | Effort |
-|-------|-------|--------|
-| **Phase 1** | Admin Meeting Scheduler -- data model, wizard, conflict detection, schedule rendering | Large |
-| **Phase 2** | Meeting invites (in-app + email), RSVP tracking | Medium |
-| **Phase 3** | Support staff shift scheduling, recurring shifts, shift swap integration | Large |
+| File | Change |
+|------|--------|
+| Migration | `meeting_templates` table with RLS |
+| `src/hooks/useMeetingTemplates.ts` | New CRUD hook |
+| `src/components/dashboard/schedule/meetings/MeetingSchedulerWizard.tsx` | Add template save + template picker UI |
 
 ---
 
-### Enhancement Suggestions Beyond Your Prompt
+### Enhancement 3: Support Staff Shift Scheduling (Phase 3)
 
-1. **Meeting templates** -- Save recurring meeting configs (e.g., "Weekly 1-on-1 with Sarah, Tuesdays 10 AM")
-2. **Availability overlay** -- When selecting attendees, show a mini day-view with their booked slots grayed out
-3. **Auto-suggest optimal times** -- "All 3 attendees are free Tuesday 2-3 PM and Thursday 10-11 AM"
-4. **Meeting notes / action items** -- Post-meeting, attach notes that link to the task system
-5. **Interview pipeline** -- For new-hire interviews, track candidate flow (scheduled → completed → hired/passed)
+**What:** Shift planning for non-service roles (front desk, receptionist, coordinator).
 
-### Implementation Recommendation
+**How:**
+- New `staff_shifts` table: `id, organization_id, location_id, user_id, shift_date, start_time, end_time, role_context (enum: front_desk, receptionist, coordinator, other), status (enum: scheduled, swapped, cancelled), is_recurring, recurrence_pattern (text), notes, created_by, created_at, updated_at` with org-scoped RLS
+- New hook `useStaffShifts.ts` for CRUD + date-range queries
+- New component `src/components/dashboard/schedule/shifts/ShiftScheduleView.tsx` -- a weekly grid showing shift blocks per staff member
+- New component `ShiftEditorDialog.tsx` for creating/editing individual shifts
+- Integrate into the Schedule page as a tab or toggle alongside Day/Agenda views
+- Shift swap integration: link `staff_shifts` to existing `shift_swaps` table
 
-I'd suggest starting with **Phase 1** -- the core meeting scheduler with conflict detection. Want me to build that?
+| File | Change |
+|------|--------|
+| Migration | `staff_shifts` table with enum + RLS |
+| `src/hooks/useStaffShifts.ts` | New hook |
+| `src/components/dashboard/schedule/shifts/ShiftScheduleView.tsx` | Weekly grid UI |
+| `src/components/dashboard/schedule/shifts/ShiftEditorDialog.tsx` | Create/edit dialog |
+| `src/pages/dashboard/Schedule.tsx` | Add shifts tab/view toggle |
+
+---
+
+### Enhancement 4: Availability Overlay
+
+**What:** When selecting attendees in the meeting wizard, show a mini day-view with each attendee's booked slots grayed out so the organizer can visually find open windows.
+
+**How:**
+- New component `AttendeeAvailabilityOverlay.tsx` rendering a horizontal timeline (7 AM–9 PM) per selected attendee
+- Fetches appointments + meetings for each attendee on the selected date (reuses `useMeetingConflicts` data pattern)
+- Renders occupied blocks as colored bars, free time as open space
+- Placed between the calendar and time picker on the datetime step of the wizard
+- Shows only when attendees are selected and a date is chosen
+
+| File | Change |
+|------|--------|
+| `src/components/dashboard/schedule/meetings/AttendeeAvailabilityOverlay.tsx` | New component |
+| `src/components/dashboard/schedule/meetings/MeetingSchedulerWizard.tsx` | Integrate overlay on datetime step |
+
+---
+
+### Enhancement 5: Auto-Suggest Optimal Times
+
+**What:** Automatically find time slots where all selected attendees are free, ranked by preference (morning, early afternoon, etc.).
+
+**How:**
+- New hook `useOptimalMeetingTimes.ts` that takes attendee IDs, date, and duration, then:
+  1. Fetches all appointments + meetings for those attendees on that date
+  2. Builds a merged "busy" timeline per attendee
+  3. Scans 15-min increments (7 AM–9 PM) to find slots where all attendees are free for the full duration
+  4. Ranks by time-of-day preference and returns top 5
+- Surface as "Suggested Times" chips above the time picker on the datetime step
+- Clicking a chip auto-fills `startTime`
+
+| File | Change |
+|------|--------|
+| `src/hooks/useOptimalMeetingTimes.ts` | New hook with availability algorithm |
+| `src/components/dashboard/schedule/meetings/MeetingSchedulerWizard.tsx` | Render suggested time chips |
+
+---
+
+### Build Order
+
+1. **Email invites** (standalone edge function, minimal UI change)
+2. **Availability overlay** (improves wizard UX, no schema change)
+3. **Auto-suggest optimal times** (builds on overlay's data pattern)
+4. **Recurring templates** (new table + wizard UI additions)
+5. **Staff shift scheduling** (largest scope, new table + full UI)
+
+### Files Modified/Created Summary
+
+| New Files | Count |
+|-----------|-------|
+| Edge function (`send-meeting-invite`) | 1 |
+| Hooks (templates, shifts, optimal times) | 3 |
+| Components (overlay, shift grid, shift editor) | 3 |
+| Migrations (templates table, shifts table) | 2 |
+
+| Modified Files | Count |
+|----------------|-------|
+| `MeetingSchedulerWizard.tsx` | 1 (templates + overlay + suggestions) |
+| `useAdminMeetings.ts` | 1 (email invoke) |
+| `Schedule.tsx` | 1 (shifts tab) |
+| `meetings/index.ts` | 1 (exports) |
 
