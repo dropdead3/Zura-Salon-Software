@@ -750,6 +750,8 @@ export default function Schedule() {
                 locations={locations}
                 onNewBooking={handleNewBooking}
                 canCreate={canCreate}
+                isAdminRole={isAdminRole}
+                isServiceProvider={isServiceProvider}
                 calendarFilters={calendarFilters}
                 onCalendarFiltersChange={setCalendarFilters}
                 draftCount={drafts.length}
