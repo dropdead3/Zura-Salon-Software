@@ -378,16 +378,16 @@ export function WeekAheadForecast() {
                 <p className="text-xs text-muted-foreground">7-Day Total</p>
                 <MetricInfoTooltip description="Sum of projected revenue from all scheduled appointments over the next 7 days." />
               </div>
-              {forecastData?.realizationRate != null && forecastData.realizationRate < 1.0 && (
+              {forecastData?.realizationRate != null && forecastData.realizationRate < 100 && (
                 <div className="flex items-center gap-1 justify-center mt-0.5">
                   <p className={cn(
                     "text-[10px] italic",
-                    forecastData.realizationRate < 0.85 ? "text-amber-500/80" : "text-muted-foreground/60"
+                    forecastData.realizationRate < 85 ? "text-amber-500/80" : "text-muted-foreground/60"
                   )}>
-                    Adjusted for {Math.round(forecastData.realizationRate * 100)}% realization
+                    Adjusted for {Math.round(forecastData.realizationRate)}% realization
                   </p>
                   <MetricInfoTooltip
-                    description={`Over the last 30 days, ${Math.round(forecastData.realizationRate * 100)}% of scheduled revenue was collected as actual POS revenue. Predictions account for cancellations, no-shows, and pricing differences.`}
+                    description={`Over the last 30 days, ${Math.round(forecastData.realizationRate)}% of scheduled revenue was collected as actual POS revenue. Predictions account for cancellations, no-shows, and pricing differences.`}
                     className="w-2.5 h-2.5"
                   />
                 </div>

@@ -733,11 +733,11 @@ export function ForecastingCard() {
           </div>
 
           {/* Realization rate first-time explainer */}
-          {predictedData?.realizationRate != null && predictedData.realizationRate < 1.0 && (
+          {predictedData?.realizationRate != null && predictedData.realizationRate < 100 && (
             <FirstTimeCallout
               id="realization-rate"
               title="NEW: REALIZATION-ADJUSTED FORECASTING"
-              description={`Predictions are now calibrated using a 30-day rolling realization rate (currently ${Math.round(predictedData.realizationRate * 100)}%). This accounts for cancellations, no-shows, and pricing differences between scheduled and actual POS revenue — so forecasts are closer to what you'll actually collect.`}
+              description={`Predictions are now calibrated using a 30-day rolling realization rate (currently ${Math.round(predictedData.realizationRate)}%). This accounts for cancellations, no-shows, and pricing differences between scheduled and actual POS revenue — so forecasts are closer to what you'll actually collect.`}
             />
           )}
 
@@ -758,28 +758,28 @@ export function ForecastingCard() {
                   </TooltipTrigger>
                   <TooltipContent side="top" className="text-xs max-w-[240px]">
                     {predictedData.realizationRate != null
-                      ? `Based on last 90 days, day-of-week patterns, current bookings, and adjusted for ${Math.round(predictedData.realizationRate * 100)}% historical realization rate.`
+                      ? `Based on last 90 days, day-of-week patterns, current bookings, and adjusted for ${Math.round(predictedData.realizationRate)}% historical realization rate.`
                       : 'Based on last 90 days, day-of-week patterns, and current bookings.'}
                   </TooltipContent>
                 </UITooltip>
               </span>
             )}
-            {predictedData?.realizationRate != null && predictedData.realizationRate < 1.0 && (
+            {predictedData?.realizationRate != null && predictedData.realizationRate < 100 && (
               <span className="flex items-center gap-1.5">
                 <span className={cn(
                   "font-display text-sm tabular-nums tracking-wide",
-                  predictedData.realizationRate < 0.85 ? "text-amber-500" : "text-muted-foreground"
+                  predictedData.realizationRate < 85 ? "text-amber-500" : "text-muted-foreground"
                 )}>
-                  {Math.round(predictedData.realizationRate * 100)}%
+                  {Math.round(predictedData.realizationRate)}%
                 </span>
                 <span className={cn(
                   "text-xs",
-                  predictedData.realizationRate < 0.85 ? "text-amber-500/80" : "text-muted-foreground"
+                  predictedData.realizationRate < 85 ? "text-amber-500/80" : "text-muted-foreground"
                 )}>
                   realized
                 </span>
                 <MetricInfoTooltip
-                  description={`Over the last 30 days, ${Math.round(predictedData.realizationRate * 100)}% of scheduled revenue was collected as actual POS revenue. Predictions account for cancellations, no-shows, and pricing differences.`}
+                  description={`Over the last 30 days, ${Math.round(predictedData.realizationRate)}% of scheduled revenue was collected as actual POS revenue. Predictions account for cancellations, no-shows, and pricing differences.`}
                 />
               </span>
             )}
