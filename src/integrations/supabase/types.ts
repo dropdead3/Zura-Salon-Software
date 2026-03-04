@@ -282,6 +282,106 @@ export type Database = {
           },
         ]
       }
+      admin_meeting_attendees: {
+        Row: {
+          created_at: string
+          id: string
+          meeting_id: string
+          notified_at: string | null
+          rsvp_status: Database["public"]["Enums"]["rsvp_status"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          meeting_id: string
+          notified_at?: string | null
+          rsvp_status?: Database["public"]["Enums"]["rsvp_status"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          meeting_id?: string
+          notified_at?: string | null
+          rsvp_status?: Database["public"]["Enums"]["rsvp_status"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_meeting_attendees_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: false
+            referencedRelation: "admin_meetings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      admin_meetings: {
+        Row: {
+          created_at: string
+          duration_minutes: number
+          end_time: string
+          id: string
+          location_id: string | null
+          meeting_mode: Database["public"]["Enums"]["meeting_mode"]
+          meeting_type: Database["public"]["Enums"]["meeting_type"]
+          notes: string | null
+          organization_id: string
+          organizer_user_id: string
+          start_date: string
+          start_time: string
+          status: Database["public"]["Enums"]["meeting_status"]
+          title: string
+          updated_at: string
+          video_link: string | null
+        }
+        Insert: {
+          created_at?: string
+          duration_minutes?: number
+          end_time: string
+          id?: string
+          location_id?: string | null
+          meeting_mode?: Database["public"]["Enums"]["meeting_mode"]
+          meeting_type?: Database["public"]["Enums"]["meeting_type"]
+          notes?: string | null
+          organization_id: string
+          organizer_user_id: string
+          start_date: string
+          start_time: string
+          status?: Database["public"]["Enums"]["meeting_status"]
+          title: string
+          updated_at?: string
+          video_link?: string | null
+        }
+        Update: {
+          created_at?: string
+          duration_minutes?: number
+          end_time?: string
+          id?: string
+          location_id?: string | null
+          meeting_mode?: Database["public"]["Enums"]["meeting_mode"]
+          meeting_type?: Database["public"]["Enums"]["meeting_type"]
+          notes?: string | null
+          organization_id?: string
+          organizer_user_id?: string
+          start_date?: string
+          start_time?: string
+          status?: Database["public"]["Enums"]["meeting_status"]
+          title?: string
+          updated_at?: string
+          video_link?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_meetings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_agent_actions: {
         Row: {
           action_params: Json
@@ -19081,6 +19181,14 @@ export type Database = {
         | "walkin"
         | "other"
         | "salon_lead"
+      meeting_mode: "in_person" | "video" | "hybrid"
+      meeting_status: "scheduled" | "cancelled" | "completed"
+      meeting_type:
+        | "one_on_one"
+        | "interview"
+        | "manager_meeting"
+        | "training"
+        | "other"
       payroll_provider:
         | "gusto"
         | "quickbooks"
@@ -19092,6 +19200,7 @@ export type Database = {
         | "rippling"
         | "wave"
       program_status: "active" | "paused" | "completed" | "restarted"
+      rsvp_status: "pending" | "accepted" | "declined"
       stylist_type: "independent" | "commission" | "salon_owner"
       ticket_priority: "low" | "medium" | "high" | "urgent"
       ticket_status:
@@ -19311,6 +19420,15 @@ export const Constants = {
         "other",
         "salon_lead",
       ],
+      meeting_mode: ["in_person", "video", "hybrid"],
+      meeting_status: ["scheduled", "cancelled", "completed"],
+      meeting_type: [
+        "one_on_one",
+        "interview",
+        "manager_meeting",
+        "training",
+        "other",
+      ],
       payroll_provider: [
         "gusto",
         "quickbooks",
@@ -19323,6 +19441,7 @@ export const Constants = {
         "wave",
       ],
       program_status: ["active", "paused", "completed", "restarted"],
+      rsvp_status: ["pending", "accepted", "declined"],
       stylist_type: ["independent", "commission", "salon_owner"],
       ticket_priority: ["low", "medium", "high", "urgent"],
       ticket_status: [

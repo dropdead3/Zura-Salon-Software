@@ -34,6 +34,7 @@ import { useAppointmentAssistantNames } from '@/hooks/useAppointmentAssistantNam
 import { Loader2, Sparkles, Coffee, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { MeetingSchedulerWizard, ScheduleTypeSelector } from '@/components/dashboard/schedule/meetings';
 import { cn } from '@/lib/utils';
 import type { CalendarFilterState } from '@/components/dashboard/schedule/CalendarFiltersPopover';
 import { AddTimeBlockForm } from '@/components/dashboard/schedule/AddTimeBlockForm';
@@ -76,6 +77,8 @@ export default function Schedule() {
   
   // Check if user is stylist or stylist_assistant (they get full calendar view access)
   const isStylistRole = roles.includes('stylist') || roles.includes('stylist_assistant');
+  const isServiceProvider = roles.includes('stylist') || roles.includes('stylist_assistant') || roles.includes('booth_renter');
+  const isAdminRole = roles.includes('admin') || roles.includes('manager') || roles.includes('super_admin');
   
   const {
     currentDate,
@@ -152,6 +155,10 @@ export default function Schedule() {
   // Action bar cancel reason dialog (FIX #3)
   const [actionBarCancelOpen, setActionBarCancelOpen] = useState(false);
   const [actionBarCancelReason, setActionBarCancelReason] = useState('');
+
+  // Meeting scheduler state
+  const [meetingWizardOpen, setMeetingWizardOpen] = useState(false);
+  const [typeSelectorOpen, setTypeSelectorOpen] = useState(false);
 
   // Listen for FAB toggle event
   useEffect(() => {
@@ -470,6 +477,15 @@ export default function Schedule() {
   };
 
   const handleNewBooking = () => {
+    // Role-based branching: admin-only → meeting wizard, dual-role → type selector
+    if (isAdminRole && !isServiceProvider) {
+      setMeetingWizardOpen(true);
+      return;
+    }
+    if (isAdminRole && isServiceProvider) {
+      setTypeSelectorOpen(true);
+      return;
+    }
     setActiveDraft(null);
     setBookingDefaults({});
     setBookingOpen(true);
@@ -993,6 +1009,32 @@ export default function Schedule() {
         locationId={selectedLocation}
         currentDate={currentDate}
       />
+
+      {/* Meeting Scheduler Wizard */}
+      <MeetingSchedulerWizard
+        open={meetingWizardOpen}
+        onOpenChange={setMeetingWizardOpen}
+        defaultDate={currentDate}
+      />
+
+      {/* Type Selector Dialog (dual-role users) */}
+      <Dialog open={typeSelectorOpen} onOpenChange={setTypeSelectorOpen}>
+        <DialogContent className="sm:max-w-sm p-6">
+          <DialogTitle className="sr-only">Schedule Type</DialogTitle>
+          <ScheduleTypeSelector
+            onSelectClientBooking={() => {
+              setTypeSelectorOpen(false);
+              setActiveDraft(null);
+              setBookingDefaults({});
+              setBookingOpen(true);
+            }}
+            onSelectMeeting={() => {
+              setTypeSelectorOpen(false);
+              setMeetingWizardOpen(true);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }
