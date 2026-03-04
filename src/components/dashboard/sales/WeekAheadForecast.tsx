@@ -623,14 +623,15 @@ export function WeekAheadForecast() {
                       const chartLeft = xAxisMap[0].x;
                       const chartRight = chartLeft + xAxisMap[0].width;
                       if (typeof yPos !== 'number' || isNaN(yPos)) return null;
-                      const badgeWidth = 180;
+                      const badgeY = yAxisMap[0].y + 4;
+                      const lineLength = chartRight - chartLeft;
                       return (
                       <g style={{ pointerEvents: 'none' }}>
                           <style>{`
                             @keyframes drawLine { to { stroke-dashoffset: 0; } }
                             @keyframes fadeInBadge { from { opacity: 0; } to { opacity: 1; } }
                           `}</style>
-                          <foreignObject x={chartLeft} y={yPos - 14} width={badgeWidth} height={24} style={{ animation: 'fadeInBadge 0.5s ease-out 0.6s forwards', opacity: 0 }}>
+                          <foreignObject x={chartLeft} y={badgeY} width={200} height={24} style={{ animation: 'fadeInBadge 0.5s ease-out 0.6s forwards', opacity: 0 }}>
                             <div style={{ 
                               fontSize: 11, fontWeight: 500, 
                               color: isDark ? 'rgb(254 240 138)' : 'hsl(35 70% 30%)',
@@ -648,36 +649,27 @@ export function WeekAheadForecast() {
                               Daily Operating Avg: {formatCurrencyWhole(Math.round(operatingDailyAvg))}
                             </div>
                           </foreignObject>
-                          {(() => {
-                            const lineStart = chartLeft + badgeWidth + 4;
-                            const lineLength = chartRight - lineStart;
-                            return (
-                              <>
-                                {/* Background halo for visibility over bars */}
-                                <line
-                                  x1={lineStart}
-                                  y1={yPos}
-                                  x2={chartRight}
-                                  y2={yPos}
-                                  stroke="hsl(var(--background))"
-                                  strokeWidth={5}
-                                  strokeOpacity={0.85}
-                                />
-                                {/* Dashed reference line */}
-                                <line
-                                  x1={lineStart}
-                                  y1={yPos}
-                                  x2={chartRight}
-                                  y2={yPos}
-                                  stroke={isDark ? 'rgb(202 138 4)' : 'hsl(35 60% 55% / 0.4)'}
-                                  strokeDasharray={lineLength}
-                                  strokeDashoffset={lineLength}
-                                  strokeWidth={1}
-                                  style={{ animation: 'drawLine 1s ease-out 0.8s forwards' }}
-                                />
-                              </>
-                            );
-                          })()}
+                          {/* Full-width dashed reference line */}
+                          <line
+                            x1={chartLeft}
+                            y1={yPos}
+                            x2={chartRight}
+                            y2={yPos}
+                            stroke="hsl(var(--background))"
+                            strokeWidth={5}
+                            strokeOpacity={0.85}
+                          />
+                          <line
+                            x1={chartLeft}
+                            y1={yPos}
+                            x2={chartRight}
+                            y2={yPos}
+                            stroke={isDark ? 'rgb(202 138 4)' : 'hsl(35 60% 55% / 0.4)'}
+                            strokeDasharray={lineLength}
+                            strokeDashoffset={lineLength}
+                            strokeWidth={1}
+                            style={{ animation: 'drawLine 1s ease-out 0.8s forwards' }}
+                          />
                         </g>
                       );
                     }} />

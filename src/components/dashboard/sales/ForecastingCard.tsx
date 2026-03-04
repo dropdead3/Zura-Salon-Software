@@ -1021,11 +1021,12 @@ export function ForecastingCard() {
                       const padY = 4;
                       const fontSize = 12;
                       const gap = 4;
+                      const badgeY = yAxisMap[0].y + 4;
                       return (
                         <g style={{ pointerEvents: 'auto', cursor: hideNumbers ? 'pointer' : 'default' }} onClick={hideNumbers ? requestUnhide : undefined}>
                           {hideNumbers && <title>Click to reveal</title>}
                           <line x1={chartLeft} y1={yPos} x2={chartRight} y2={yPos} stroke={isDark ? 'rgb(202 138 4)' : 'hsl(35 60% 55% / 0.4)'} strokeOpacity={0.5} strokeDasharray="4 4" strokeWidth={1} />
-                          <foreignObject x={chartLeft} y={yPos - 12} width={200} height={24} style={{ overflow: 'visible' }}>
+                          <foreignObject x={chartLeft} y={badgeY} width={200} height={24} style={{ overflow: 'visible' }}>
                             <div style={{
                               fontSize: 12, fontWeight: 500,
                               color: isDark ? 'rgb(254 240 138)' : 'hsl(35 70% 30%)',
@@ -1062,11 +1063,12 @@ export function ForecastingCard() {
                       const padY = 3;
                       const fontSize = 11;
                       const gap = 4;
+                      const badgeY = yAxisMap[0].y + 4;
                       return (
                         <g style={{ pointerEvents: hideNumbers ? 'auto' : 'none', cursor: hideNumbers ? 'pointer' : 'default' }} onClick={hideNumbers ? requestUnhide : undefined}>
                           {hideNumbers && <title>Click to reveal</title>}
                           <line x1={chartLeft} y1={yPos} x2={chartRight} y2={yPos} stroke="rgb(202 138 4)" strokeOpacity={0.5} strokeDasharray="4 4" strokeWidth={1} />
-                          <foreignObject x={chartLeft} y={yPos - 11} width={200} height={22} style={{ overflow: 'visible' }}>
+                          <foreignObject x={chartLeft} y={badgeY} width={200} height={22} style={{ overflow: 'visible' }}>
                             <div style={{
                               fontSize: 11, fontWeight: 500,
                               color: 'rgb(254 240 138)',
