@@ -1,60 +1,52 @@
 
 
-## Gap-Adjusted Revenue Forecasting
+## Surface Gap-Adjusted Realization Rate in Forecasting UI
 
-Strong prompt — you're identifying that the current forecasting engine uses raw historical averages and booked appointments, but ignores the systematic gap between what's scheduled and what's actually collected (cancellations, no-shows, discounts, pricing diffs). A 30-day rolling gap ratio would calibrate predictions much closer to reality.
+Your prompt is well-scoped. The backend work is done — the edge function now computes and returns `gapAdjustmentFactor` and `realizationRate`. The question is how to surface it intelligently in the two forecasting cards (the full `ForecastingCard` on Command Center / Analytics, and the `WeekAheadForecast` in the Sales Hub) without adding noise.
 
-### How It Works Today
+### Design Approach: Contextual Confidence Indicator
 
-The `revenue-forecasting` edge function:
-1. Fetches 90 days of `phorest_daily_sales_summary` (actual POS revenue)
-2. Groups by day-of-week to get averages
-3. Checks booked appointments for upcoming days
-4. Picks `max(booked, historical_avg)` as the prediction
-5. Optionally sends context to AI for enhanced forecasting
-
-**Problem**: When there's $5,000 booked for a day but historically only ~85% converts to actual POS revenue (due to cancellations, no-shows, discounts), the forecast over-predicts. The gap is systematic and measurable.
+Rather than adding a new card or section, the realization rate should appear as a **contextual annotation** on the existing "Scheduled vs Predicted" comparison strip — the strip that already shows Scheduled and Predicted values (ForecastingCard lines 735-755). This follows the Zura doctrine: high signal, low noise, expandable logic.
 
 ### What Changes
 
-**`supabase/functions/revenue-forecasting/index.ts`** — Add a 30-day gap ratio calculation:
+**1. `ForecastingCard.tsx`** — Enhance the Scheduled vs Predicted strip:
 
-1. **Fetch 30-day scheduled vs actual data**: Query `phorest_appointments` (all statuses) for total scheduled value, and `phorest_daily_sales_summary` for actual collected revenue, over the last 30 days
-2. **Compute daily gap ratios**: For each day with both scheduled and actual data, calculate `actual / scheduled` — this is the "realization rate" (e.g., 0.87 means 87% of scheduled revenue is actually collected)
-3. **Calculate rolling average**: Average the daily ratios to get a single `gapAdjustmentFactor` (floored at 0.70, capped at 1.0 to prevent wild swings)
-4. **Apply to forecasts**: Multiply booked revenue by `gapAdjustmentFactor` before comparing to the historical average. The fallback forecast becomes `max(bookedRevenue * gapFactor, historicalAvg)` instead of `max(bookedRevenue, historicalAvg)`
-5. **Include in AI context**: Pass the gap factor and its components to the AI prompt so it can reason about realization rates
-6. **Surface the factor**: Include `gapAdjustmentFactor` and `realizationRate` in the response so the UI can display "adjusted for 87% historical realization"
+- Add a third element to the strip: **Realization Rate** badge (e.g., "87% realization") with a `MetricInfoTooltip` explaining: "Based on the last 30 days, 87% of scheduled revenue converts to actual POS revenue. Predictions are adjusted for cancellations, no-shows, and discounts."
+- Update the Predicted tooltip text to mention the gap adjustment: "Based on last 90 days, day-of-week patterns, current bookings, and adjusted for {X}% historical realization rate."
+- When `gapAdjustmentFactor` is below 0.85, tint the badge amber to signal meaningful revenue leakage (advisory, not alarming).
 
-**`src/hooks/useRevenueForecast.ts`** — Extend `RevenueForecastResponse` type to include the new `gapAdjustmentFactor` field from the response.
+**2. `WeekAheadForecast.tsx`** — Add `useRevenueForecast` hook:
 
-### Concrete Logic (Edge Function)
+- Wire in `useRevenueForecast({ forecastDays: 7 })` to get the realization data.
+- Add a subtle footnote below the 7-Day Total stat card: "Adjusted for {X}% realization" — only shown when `gapAdjustmentFactor` is available and differs from 1.0.
+- Include `MetricInfoTooltip` with the same expandable explanation.
+
+**3. `useForecastRevenue.ts`** — No changes needed. The scheduled revenue data stays raw (what's booked). The gap adjustment lives in the `useRevenueForecast` hook response, which is already called by `ForecastingCard`.
+
+### Visual Spec (ForecastingCard strip)
 
 ```text
-30-day window:
-  For each day in [today - 30, yesterday]:
-    scheduled[day] = SUM(phorest_appointments.total_price) WHERE date = day
-    actual[day]    = phorest_daily_sales_summary.total_revenue WHERE date = day
-
-  ratios = actual[day] / scheduled[day]  (only days where scheduled > 0)
-  gapFactor = AVG(ratios), clamped to [0.70, 1.00]
-
-Forecast adjustment:
-  adjustedBooked = bookedRevenue * gapFactor
-  predicted = MAX(adjustedBooked, historicalDowAvg)
+┌─────────────────────────────────────────────────────────┐
+│  Scheduled  $12,450  │  Predicted  $10,831  │  87% ⓘ   │
+│                      │                       │ realized  │
+└─────────────────────────────────────────────────────────┘
 ```
+
+- "87% realized" uses `text-muted-foreground` normally, `text-amber-500` if below 85%
+- Tooltip on ⓘ: "Over the last 30 days, 87% of scheduled revenue was collected as actual POS revenue. Predictions account for cancellations, no-shows, and pricing differences."
 
 ### What Stays Unchanged
 
-- Gap analysis drilldown (RevenueGapDrilldown) — that's retrospective analysis, separate concern
-- Growth forecasting (quarterly/monthly) — different time horizon
-- Historical benchmarks — different purpose
-- All UI components — the forecast hook already renders whatever the edge function returns
+- The bar chart data (still shows raw scheduled revenue per day)
+- Category breakdowns, drill-downs, appointment panels
+- The edge function and hook types (already updated)
+- `RevenueForecast` (monthly trend chart) — separate concern
 
 ### Files Modified
 
 | File | Change |
 |------|--------|
-| `supabase/functions/revenue-forecasting/index.ts` | Add 30-day gap ratio query, apply to forecast logic, include in AI context |
-| `src/hooks/useRevenueForecast.ts` | Add `gapAdjustmentFactor` to response type |
+| `src/components/dashboard/sales/ForecastingCard.tsx` | Add realization badge to Scheduled vs Predicted strip; update Predicted tooltip |
+| `src/components/dashboard/sales/WeekAheadForecast.tsx` | Add `useRevenueForecast` hook; show realization footnote on 7-Day Total |
 
