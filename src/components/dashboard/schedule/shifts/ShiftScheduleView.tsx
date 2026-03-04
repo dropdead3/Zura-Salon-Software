@@ -1,16 +1,26 @@
 import { useState, useMemo } from 'react';
-import { format, addDays, startOfWeek, isSameDay } from 'date-fns';
+import { format, addDays, startOfWeek, isSameDay, differenceInMinutes, parse } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Plus, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight, RefreshCw, Copy, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useStaffShifts, useDeleteShift, type StaffShift } from '@/hooks/useStaffShifts';
+import { useStaffShifts, useDeleteShift, useDeleteRecurringShifts, useCopyPreviousWeek, type StaffShift } from '@/hooks/useStaffShifts';
 import { ShiftEditorDialog } from './ShiftEditorDialog';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const ROLE_LABELS: Record<string, string> = {
   front_desk: 'Front Desk',
@@ -37,7 +47,11 @@ export function ShiftScheduleView({ locationId }: ShiftScheduleViewProps) {
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingShift, setEditingShift] = useState<StaffShift | null>(null);
   const [editorDefaultDate, setEditorDefaultDate] = useState<Date | undefined>();
+  const [deleteTarget, setDeleteTarget] = useState<StaffShift | null>(null);
+
   const deleteShift = useDeleteShift();
+  const deleteRecurring = useDeleteRecurringShifts();
+  const copyWeek = useCopyPreviousWeek();
 
   const weekEnd = addDays(weekStart, 6);
   const startStr = format(weekStart, 'yyyy-MM-dd');
@@ -45,7 +59,6 @@ export function ShiftScheduleView({ locationId }: ShiftScheduleViewProps) {
 
   const { data: shifts = [] } = useStaffShifts(startStr, endStr);
 
-  // Fetch staff profiles for names
   const { data: staffProfiles = [] } = useQuery({
     queryKey: ['shift-staff-profiles', orgId],
     queryFn: async () => {
@@ -64,7 +77,6 @@ export function ShiftScheduleView({ locationId }: ShiftScheduleViewProps) {
     [weekStart]
   );
 
-  // Group shifts by user
   const userIds = useMemo(() => {
     const ids = new Set<string>();
     shifts.forEach(s => ids.add(s.user_id));
@@ -75,6 +87,18 @@ export function ShiftScheduleView({ locationId }: ShiftScheduleViewProps) {
     const p = staffProfiles.find(s => s.user_id === userId);
     return p?.display_name || p?.full_name || 'Unknown';
   };
+
+  // Calculate weekly hours per user
+  const weeklyHours = useMemo(() => {
+    const map: Record<string, number> = {};
+    shifts.forEach(s => {
+      const start = parse(s.start_time.slice(0, 5), 'HH:mm', new Date());
+      const end = parse(s.end_time.slice(0, 5), 'HH:mm', new Date());
+      const mins = differenceInMinutes(end, start);
+      map[s.user_id] = (map[s.user_id] || 0) + mins;
+    });
+    return map;
+  }, [shifts]);
 
   const formatTime12 = (t: string) => {
     const [h, m] = t.split(':').map(Number);
@@ -92,6 +116,15 @@ export function ShiftScheduleView({ locationId }: ShiftScheduleViewProps) {
   const handleEditShift = (shift: StaffShift) => {
     setEditingShift(shift);
     setEditorOpen(true);
+  };
+
+  const handleDeleteConfirm = (mode: 'single' | 'series') => {
+    if (!deleteTarget) return;
+    if (mode === 'series') {
+      deleteRecurring.mutate({ shift: deleteTarget }, { onSuccess: () => setDeleteTarget(null) });
+    } else {
+      deleteShift.mutate(deleteTarget.id, { onSuccess: () => setDeleteTarget(null) });
+    }
   };
 
   return (
@@ -114,6 +147,16 @@ export function ShiftScheduleView({ locationId }: ShiftScheduleViewProps) {
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setWeekStart(addDays(weekStart, 7))}>
               <ChevronRight className="w-4 h-4" />
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="font-sans h-8 gap-1.5"
+              onClick={() => copyWeek.mutate({ currentWeekStart: startStr })}
+              disabled={copyWeek.isPending}
+            >
+              {copyWeek.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Copy className="w-3.5 h-3.5" />}
+              Copy Last Week
+            </Button>
             <Button size="sm" onClick={() => handleNewShift()} className="font-sans gap-1.5">
               <Plus className="w-4 h-4" />
               Add Shift
@@ -125,7 +168,7 @@ export function ShiftScheduleView({ locationId }: ShiftScheduleViewProps) {
           <ScrollArea className="w-full">
             <div className="min-w-[700px]">
               {/* Day headers */}
-              <div className="grid grid-cols-[140px_repeat(7,1fr)] border-b border-border">
+              <div className="grid grid-cols-[160px_repeat(7,1fr)] border-b border-border">
                 <div className="p-3" />
                 {days.map(day => (
                   <div
@@ -157,42 +200,56 @@ export function ShiftScheduleView({ locationId }: ShiftScheduleViewProps) {
                   </Button>
                 </div>
               ) : (
-                userIds.map(uid => (
-                  <div key={uid} className="grid grid-cols-[140px_repeat(7,1fr)] border-b border-border last:border-b-0">
-                    <div className="p-3 flex items-center">
-                      <span className="font-sans text-sm text-foreground truncate">{getName(uid)}</span>
-                    </div>
-                    {days.map(day => {
-                      const dayStr = format(day, 'yyyy-MM-dd');
-                      const dayShifts = shifts.filter(s => s.user_id === uid && s.shift_date === dayStr);
+                userIds.map(uid => {
+                  const hours = weeklyHours[uid] || 0;
+                  const hoursDisplay = `${Math.floor(hours / 60)}h${hours % 60 > 0 ? ` ${hours % 60}m` : ''}`;
 
-                      return (
-                        <div
-                          key={dayStr}
-                          className={cn(
-                            'p-1.5 border-l border-border min-h-[56px] cursor-pointer hover:bg-muted/30 transition-colors',
-                            isSameDay(day, new Date()) && 'bg-primary/5'
-                          )}
-                          onClick={() => dayShifts.length === 0 && handleNewShift(day)}
-                        >
-                          {dayShifts.map(shift => (
-                            <button
-                              key={shift.id}
-                              onClick={(e) => { e.stopPropagation(); handleEditShift(shift); }}
-                              className={cn(
-                                'w-full text-left rounded-md px-2 py-1 border text-[11px] font-sans mb-1 transition-colors hover:opacity-80',
-                                ROLE_COLORS[shift.role_context] || ROLE_COLORS.other
-                              )}
-                            >
-                              <div className="truncate">{formatTime12(shift.start_time.slice(0, 5))}–{formatTime12(shift.end_time.slice(0, 5))}</div>
-                              <div className="truncate opacity-70">{ROLE_LABELS[shift.role_context]}</div>
-                            </button>
-                          ))}
-                        </div>
-                      );
-                    })}
-                  </div>
-                ))
+                  return (
+                    <div key={uid} className="grid grid-cols-[160px_repeat(7,1fr)] border-b border-border last:border-b-0">
+                      <div className="p-3 flex flex-col justify-center">
+                        <span className="font-sans text-sm text-foreground truncate">{getName(uid)}</span>
+                        <span className="font-sans text-[11px] text-muted-foreground">{hoursDisplay}</span>
+                      </div>
+                      {days.map(day => {
+                        const dayStr = format(day, 'yyyy-MM-dd');
+                        const dayShifts = shifts.filter(s => s.user_id === uid && s.shift_date === dayStr);
+
+                        return (
+                          <div
+                            key={dayStr}
+                            className={cn(
+                              'p-1.5 border-l border-border min-h-[56px] cursor-pointer hover:bg-muted/30 transition-colors',
+                              isSameDay(day, new Date()) && 'bg-primary/5'
+                            )}
+                            onClick={() => dayShifts.length === 0 && handleNewShift(day)}
+                          >
+                            {dayShifts.map(shift => (
+                              <button
+                                key={shift.id}
+                                onClick={(e) => { e.stopPropagation(); handleEditShift(shift); }}
+                                onContextMenu={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  setDeleteTarget(shift);
+                                }}
+                                className={cn(
+                                  'w-full text-left rounded-md px-2 py-1 border text-[11px] font-sans mb-1 transition-colors hover:opacity-80 relative group',
+                                  ROLE_COLORS[shift.role_context] || ROLE_COLORS.other
+                                )}
+                              >
+                                <div className="flex items-center gap-1 truncate">
+                                  {shift.is_recurring && <RefreshCw className="h-2.5 w-2.5 shrink-0 opacity-60" />}
+                                  <span className="truncate">{formatTime12(shift.start_time.slice(0, 5))}–{formatTime12(shift.end_time.slice(0, 5))}</span>
+                                </div>
+                                <div className="truncate opacity-70">{ROLE_LABELS[shift.role_context]}</div>
+                              </button>
+                            ))}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })
               )}
             </div>
           </ScrollArea>
@@ -206,7 +263,39 @@ export function ShiftScheduleView({ locationId }: ShiftScheduleViewProps) {
         locationId={locationId}
         existingShift={editingShift}
         defaultDate={editorDefaultDate}
+        existingShifts={shifts}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-display text-base tracking-wide">Cancel Shift</AlertDialogTitle>
+            <AlertDialogDescription className="font-sans">
+              {deleteTarget?.is_recurring
+                ? 'This shift is part of a recurring series. How would you like to proceed?'
+                : 'Are you sure you want to cancel this shift?'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel className="font-sans">Keep Shift</AlertDialogCancel>
+            {deleteTarget?.is_recurring && (
+              <AlertDialogAction
+                onClick={() => handleDeleteConfirm('series')}
+                className="font-sans bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Cancel All Future
+              </AlertDialogAction>
+            )}
+            <AlertDialogAction
+              onClick={() => handleDeleteConfirm('single')}
+              className="font-sans"
+            >
+              {deleteTarget?.is_recurring ? 'This Shift Only' : 'Cancel Shift'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
