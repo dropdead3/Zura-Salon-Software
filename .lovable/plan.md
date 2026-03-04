@@ -1,60 +1,45 @@
 
 
-## Surface Realization-Adjusted Revenue Toggle in Forecasting Card
+## Problem
 
-### Problem
+The "Predicted" toggle is always disabled because `hasRealization` is false. This happens because:
 
-The realization rate UI elements (badge, callout, predicted strip) are conditionally rendered only when `predictedData` from `useRevenueForecast` is available. That hook calls the `revenue-forecasting` edge function, which appears to not be returning data in this environment — so nothing renders. More importantly, even when it works, the realization data is buried in a small annotation strip. You want to **see and toggle** between scheduled (raw bookings) and predicted (realization-adjusted) revenue directly in the stat cards and chart.
+1. `useRevenueForecast` calls the `revenue-forecasting` edge function
+2. That edge function call is failing silently (no network request visible in logs)
+3. When `predictedData` is `undefined`, `realizationRate` is `undefined`, so `hasRealization` evaluates to `false`
+4. The toggle is disabled with "Insufficient historical data" tooltip
 
-### Approach
+The edge function is a heavyweight call (fetches 90 days of sales, all appointments, optionally calls AI). It's fragile and overkill when all we need is the realization rate number.
 
-Rather than depending on a separate edge function call that may fail silently, **derive the predicted values client-side** from the scheduled data that's already loaded (`useForecastRevenue`) plus the realization rate from `useRevenueForecast`. Add a **Scheduled / Predicted toggle** to the stat card area so the user can switch views.
+## Fix
 
-### Changes
+Create a lightweight `useRealizationRate` hook that computes the 30-day realization rate directly via two simple database queries (same logic the edge function uses), and use it instead of depending on the full edge function response.
 
-**1. `ForecastingCard.tsx` — Add Scheduled/Predicted toggle**
+### New hook: `src/hooks/useRealizationRate.ts`
 
-- Add a `viewMode` state: `'scheduled' | 'predicted'`
-- Below the period tabs (or inline with stat cards), render a small toggle: `Scheduled | Predicted`
-- When `predicted` is active and `realizationRate` is available:
-  - Stat cards show `totalRevenue * (realizationRate / 100)` instead of raw `totalRevenue`
-  - Daily average adjusts proportionally
-  - The "Scheduled" strip updates label to show both raw and adjusted
-  - Bar chart values multiply by the realization factor
-- When `realizationRate` is unavailable, the `Predicted` toggle option shows as disabled with a tooltip: "Insufficient historical data to calculate realization rate"
-- Show the realization rate as a small annotation below the toggle (e.g., "87% realization rate applied")
-- Keep the `FirstTimeCallout` and `MetricInfoTooltip` as-is for education
+- Query `phorest_appointments` for the last 30 days (scheduled totals by date)
+- Query `phorest_daily_sales_summary` for the last 30 days (actual totals by date)
+- Compute daily ratios (actual / scheduled) for days where both exist
+- Average the ratios, clamp to [0.70, 1.00], multiply by 100 to get integer percentage
+- Return `{ realizationRate, dataPoints, isLoading }`
+- Respect location filter and organization scope
 
-**2. `ForecastingCard.tsx` — Fallback when edge function is unavailable**
+### Update `ForecastingCard.tsx`
 
-- Make the strip always show "Scheduled" with the raw value (already works)
-- When `predictedData` loads, enable the Predicted toggle and show the strip annotation
-- If `predictedData` is null/loading, gracefully fall back to scheduled-only mode (current behavior, but now explicit)
+- Import and use `useRealizationRate` instead of deriving from `predictedData`
+- Pass `selectedLocation` to the hook
+- Remove the `useRevenueForecast` dependency for this purpose (keep it if used elsewhere)
+- The toggle logic (`hasRealization`, `realizationFactor`, `isPredictedMode`) stays the same
 
-**3. `WeekAheadForecast.tsx` — Same toggle pattern**
+### Update `WeekAheadForecast.tsx`
 
-- Add a smaller `Scheduled | Predicted` toggle to the 7-Day Total stat card
-- When toggled to Predicted, multiply the total and daily values by `realizationRate / 100`
-- Show footnote with realization percentage
-
-### Visual Spec
-
-```text
-┌──────────────────────────────────────────────┐
-│  [Scheduled]  [Predicted]                    │
-│  87% realization rate applied ⓘ              │
-├──────────────────────────────────────────────┤
-│  $15,880.11    $3,176.02      150            │
-│  7-Day Total   Daily Avg      Appointments   │
-└──────────────────────────────────────────────┘
-```
-
-When in Scheduled mode (default), values show raw booked amounts as today. When in Predicted mode, values are multiplied by the realization factor and labeled accordingly.
+- Same pattern: use `useRealizationRate` instead of `predictedData?.realizationRate`
 
 ### Files Modified
 
 | File | Change |
 |------|--------|
-| `src/components/dashboard/sales/ForecastingCard.tsx` | Add `viewMode` toggle, adjust stat card values, update strip, fallback handling |
-| `src/components/dashboard/sales/WeekAheadForecast.tsx` | Add smaller toggle, adjust 7-Day Total display |
+| `src/hooks/useRealizationRate.ts` | New hook -- lightweight 30-day realization rate query |
+| `src/components/dashboard/sales/ForecastingCard.tsx` | Use `useRealizationRate` instead of edge function data |
+| `src/components/dashboard/sales/WeekAheadForecast.tsx` | Use `useRealizationRate` instead of edge function data |
 
