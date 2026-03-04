@@ -38,7 +38,7 @@ function resolveHexColor(colorHex: string): string {
 }
 import { tokens } from '@/lib/design-tokens';
 import { parseISO, differenceInDays, endOfMonth } from 'date-fns';
-import { useRevenueForecast } from '@/hooks/useRevenueForecast';
+import { useRealizationRate } from '@/hooks/useRealizationRate';
 import { useLocations, isClosedOnDate } from '@/hooks/useLocations';
 import { FirstTimeCallout } from '@/components/ui/FirstTimeCallout';
 import { motion, useInView } from 'framer-motion';
@@ -448,11 +448,7 @@ export function ForecastingCard() {
   const [selectedBarDay, setSelectedBarDay] = useState<DayForecast | null>(null);
   const [viewMode, setViewMode] = useState<'scheduled' | 'predicted'>('scheduled');
   const { data, isLoading, error } = useForecastRevenue(period, selectedLocation);
-  const forecastDays = getForecastDays(period);
-  const { data: predictedData } = useRevenueForecast({
-    forecastDays,
-    locationId: selectedLocation === 'all' ? undefined : selectedLocation,
-  });
+  const { realizationRate } = useRealizationRate(selectedLocation === 'all' ? undefined : selectedLocation);
   const { hideNumbers, requestUnhide } = useHideNumbers();
   const { resolvedTheme } = useDashboardTheme();
   const isDark = resolvedTheme === 'dark';
@@ -524,7 +520,7 @@ export function ForecastingCard() {
   const operatingDailyAvg = totalRevenue / operatingDayCount;
 
   // Realization-adjusted values
-  const realizationRate = predictedData?.realizationRate;
+  // realizationRate comes from useRealizationRate above
   const hasRealization = realizationRate != null && realizationRate < 100 && realizationRate > 0;
   const realizationFactor = hasRealization ? realizationRate / 100 : 1;
   const isPredictedMode = viewMode === 'predicted' && hasRealization;
@@ -780,11 +776,11 @@ export function ForecastingCard() {
           </div>
 
           {/* Realization rate first-time explainer */}
-          {predictedData?.realizationRate != null && predictedData.realizationRate < 100 && (
+          {hasRealization && (
             <FirstTimeCallout
               id="realization-rate"
               title="NEW: REALIZATION-ADJUSTED FORECASTING"
-              description={`Predictions are now calibrated using a 30-day rolling realization rate (currently ${Math.round(predictedData.realizationRate)}%). This accounts for cancellations, no-shows, and pricing differences between scheduled and actual POS revenue — so forecasts are closer to what you'll actually collect.`}
+              description={`Predictions are now calibrated using a 30-day rolling realization rate (currently ${Math.round(realizationRate!)}%). This accounts for cancellations, no-shows, and pricing differences between scheduled and actual POS revenue — so forecasts are closer to what you'll actually collect.`}
             />
           )}
 
@@ -794,39 +790,37 @@ export function ForecastingCard() {
               <span className="text-muted-foreground">Scheduled</span>
               <BlurredAmount className="font-medium tabular-nums">{formatCurrency(totalRevenue)}</BlurredAmount>
             </span>
-            {predictedData?.summary != null && (
+            {hasRealization && (
               <span className="flex items-center gap-2">
                 <span className="text-muted-foreground">Predicted</span>
                 <UITooltip>
                   <TooltipTrigger asChild>
                     <span className="font-medium tabular-nums cursor-help">
-                      <BlurredAmount>{formatCurrency(predictedData.summary.totalPredicted)}</BlurredAmount>
+                      <BlurredAmount>{formatCurrency(totalRevenue * realizationFactor)}</BlurredAmount>
                     </span>
                   </TooltipTrigger>
                   <TooltipContent side="top" className="text-xs max-w-[240px]">
-                    {predictedData.realizationRate != null
-                      ? `Based on last 90 days, day-of-week patterns, current bookings, and adjusted for ${Math.round(predictedData.realizationRate)}% historical realization rate.`
-                      : 'Based on last 90 days, day-of-week patterns, and current bookings.'}
+                    {`Based on current bookings, adjusted for ${Math.round(realizationRate!)}% historical realization rate.`}
                   </TooltipContent>
                 </UITooltip>
               </span>
             )}
-            {predictedData?.realizationRate != null && predictedData.realizationRate < 100 && (
+            {hasRealization && (
               <span className="flex items-center gap-1.5">
                 <span className={cn(
                   "font-display text-sm tabular-nums tracking-wide",
-                  predictedData.realizationRate < 85 ? "text-amber-500" : "text-muted-foreground"
+                  realizationRate! < 85 ? "text-amber-500" : "text-muted-foreground"
                 )}>
-                  {Math.round(predictedData.realizationRate)}%
+                  {Math.round(realizationRate!)}%
                 </span>
                 <span className={cn(
                   "text-xs",
-                  predictedData.realizationRate < 85 ? "text-amber-500/80" : "text-muted-foreground"
+                  realizationRate! < 85 ? "text-amber-500/80" : "text-muted-foreground"
                 )}>
                   realized
                 </span>
                 <MetricInfoTooltip
-                  description={`Over the last 30 days, ${Math.round(predictedData.realizationRate)}% of scheduled revenue was collected as actual POS revenue. Predictions account for cancellations, no-shows, and pricing differences.`}
+                  description={`Over the last 30 days, ${Math.round(realizationRate!)}% of scheduled revenue was collected as actual POS revenue. Predictions account for cancellations, no-shows, and pricing differences.`}
                 />
               </span>
             )}

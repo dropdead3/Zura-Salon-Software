@@ -7,7 +7,7 @@ import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { formatCurrency as formatCurrencyPrecise } from '@/lib/format';
 import { useWeekAheadRevenue, DayForecast } from '@/hooks/useWeekAheadRevenue';
-import { useRevenueForecast } from '@/hooks/useRevenueForecast';
+import { useRealizationRate } from '@/hooks/useRealizationRate';
 import { LocationSelect } from '@/components/ui/location-select';
 import { DayAppointmentsPanel } from './DayAppointmentsPanel';
 import { DayProviderBreakdownPanel } from './DayProviderBreakdownPanel';
@@ -214,10 +214,7 @@ export function WeekAheadForecast() {
   const [selectedBarDay, setSelectedBarDay] = useState<DayForecast | null>(null);
   const [viewMode, setViewMode] = useState<'scheduled' | 'predicted'>('scheduled');
   const { data, isLoading, error } = useWeekAheadRevenue(selectedLocation);
-  const { data: forecastData } = useRevenueForecast({
-    forecastDays: 7,
-    locationId: selectedLocation === 'all' ? undefined : selectedLocation,
-  });
+  const { realizationRate } = useRealizationRate(selectedLocation === 'all' ? undefined : selectedLocation);
   const { data: locations = [] } = useLocations();
   const { colorMap } = useServiceCategoryColorsMap();
   const { resolvedTheme } = useDashboardTheme();
@@ -276,7 +273,7 @@ export function WeekAheadForecast() {
   const operatingDailyAvg = totalRevenue / operatingDayCount;
 
   // Realization-adjusted values
-  const realizationRate = forecastData?.realizationRate;
+  // realizationRate comes from useRealizationRate above
   const hasRealization = realizationRate != null && realizationRate < 100 && realizationRate > 0;
   const realizationFactor = hasRealization ? realizationRate / 100 : 1;
   const isPredictedMode = viewMode === 'predicted' && hasRealization;
