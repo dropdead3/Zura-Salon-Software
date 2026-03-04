@@ -409,12 +409,6 @@ export default function TeamHub() {
             description="Send team-wide communications"
           />
           <ManagementCard
-            href="/dashboard/admin/changelog"
-            icon={Sparkles}
-            title="Changelog Manager"
-            description="Document platform updates and releases"
-          />
-          <ManagementCard
             href="/dashboard/admin/points-config"
             icon={Coins}
             title="Points & Rewards Config"

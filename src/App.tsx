@@ -105,7 +105,7 @@ import ClientDirectory from "./pages/dashboard/ClientDirectory";
 import Schedule from "./pages/dashboard/Schedule";
 import AllNotifications from "./pages/dashboard/AllNotifications";
 import Changelog from "./pages/dashboard/Changelog";
-import ChangelogManager from "./pages/dashboard/admin/ChangelogManager";
+
 import MetricsGlossary from "./pages/dashboard/MetricsGlossary";
 import PublicBooking from "./pages/PublicBooking";
 import DayRateBooking from "./pages/DayRateBooking";
@@ -336,7 +336,7 @@ const App = () => (
                       <Route path="/dashboard/admin/reports" element={<Navigate to="/dashboard/admin/analytics?tab=reports" replace />} />
                       <Route path="/dashboard/admin/leads" element={<ProtectedRoute requiredPermission="view_team_overview"><LeadManagement /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/feature-flags" element={<Navigate to="/dashboard/platform/feature-flags" replace />} />
-                      <Route path="/dashboard/admin/changelog" element={<ProtectedRoute requiredPermission="manage_announcements"><ChangelogManager /></ProtectedRoute>} />
+                      
                       <Route path="/dashboard/admin/zura-config" element={<ProtectedRoute requiredPermission="manage_settings"><ZuraConfigPage /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/kpi-builder" element={<ProtectedRoute requiredPermission="manage_settings"><KpiBuilderPage /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/executive-brief" element={<ProtectedRoute requiredPermission="manage_settings"><ExecutiveBriefPage /></ProtectedRoute>} />

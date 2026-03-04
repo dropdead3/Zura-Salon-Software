@@ -380,13 +380,6 @@ export default function ManagementHub() {
             colorClass="bg-amber-500/10 text-amber-600 dark:text-amber-400"
           />
           <ManagementCard
-            href="/dashboard/admin/changelog"
-            icon={Sparkles}
-            title="Changelog Manager"
-            description="Document platform updates and releases"
-            colorClass="bg-fuchsia-500/10 text-fuchsia-600 dark:text-fuchsia-400"
-          />
-          <ManagementCard
             href="/dashboard/admin/daily-huddle"
             icon={MessageSquare}
             title="Daily Huddle"
