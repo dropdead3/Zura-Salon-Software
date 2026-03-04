@@ -1,0 +1,102 @@
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
+
+interface RealizationRateResult {
+  realizationRate: number | undefined;
+  dataPoints: number;
+  isLoading: boolean;
+}
+
+/**
+ * Lightweight hook that computes the 30-day realization rate
+ * by comparing scheduled appointment revenue to actual POS revenue.
+ *
+ * Returns an integer percentage (e.g. 87) clamped to [70, 100],
+ * or undefined if insufficient data.
+ */
+export function useRealizationRate(locationId?: string): RealizationRateResult {
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id;
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['realization-rate', orgId, locationId],
+    queryFn: async () => {
+      if (!orgId) return { rate: undefined, points: 0 };
+
+      const now = new Date();
+      const thirtyDaysAgo = new Date(now);
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      const fromDate = thirtyDaysAgo.toISOString().slice(0, 10);
+      const toDate = now.toISOString().slice(0, 10);
+
+      // 1. Scheduled revenue by date from phorest_appointments
+      const apptBase = supabase
+        .from('phorest_appointments')
+        .select('appointment_date, total_price')
+        .gte('appointment_date', fromDate)
+        .lte('appointment_date', toDate)
+        .neq('status', 'cancelled');
+
+      const apptResult = locationId && locationId !== 'all'
+        ? await apptBase.eq('location_id', locationId)
+        : await apptBase;
+
+      if (apptResult.error) throw apptResult.error;
+
+      const scheduledByDate: Record<string, number> = {};
+      for (const row of apptResult.data || []) {
+        const d = row.appointment_date;
+        if (!d) continue;
+        scheduledByDate[d] = (scheduledByDate[d] || 0) + (Number(row.total_price) || 0);
+      }
+
+      // 2. Actual revenue by date from phorest_daily_sales_summary
+      const salesBase = supabase
+        .from('phorest_daily_sales_summary')
+        .select('summary_date, total_revenue')
+        .gte('summary_date', fromDate)
+        .lte('summary_date', toDate);
+
+      const salesResult = locationId && locationId !== 'all'
+        ? await salesBase.eq('location_id', locationId)
+        : await salesBase;
+
+      if (salesResult.error) throw salesResult.error;
+
+      const actualByDate: Record<string, number> = {};
+      for (const row of salesResult.data || []) {
+        const d = row.summary_date;
+        if (!d) continue;
+        actualByDate[d] = (actualByDate[d] || 0) + (Number(row.total_revenue) || 0);
+      }
+
+      // 3. Compute daily ratios for dates where both exist and scheduled > 0
+      const ratios: number[] = [];
+      for (const date of Object.keys(scheduledByDate)) {
+        const scheduled = scheduledByDate[date];
+        const actual = actualByDate[date];
+        if (scheduled > 0 && actual != null && actual > 0) {
+          ratios.push(actual / scheduled);
+        }
+      }
+
+      if (ratios.length < 3) {
+        return { rate: undefined, points: ratios.length };
+      }
+
+      const avg = ratios.reduce((s, r) => s + r, 0) / ratios.length;
+      const clamped = Math.min(1.0, Math.max(0.70, avg));
+      return { rate: Math.round(clamped * 100), points: ratios.length };
+    },
+    enabled: !!orgId,
+    staleTime: 30 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+  return {
+    realizationRate: data?.rate,
+    dataPoints: data?.points ?? 0,
+    isLoading,
+  };
+}
