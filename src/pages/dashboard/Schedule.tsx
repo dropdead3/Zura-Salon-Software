@@ -762,6 +762,8 @@ export default function Schedule() {
                 onOpenDrafts={() => setDraftsSheetOpen(true)}
                 pendingBlockCount={pendingCount}
                 onOpenBlockManager={() => setBlockManagerOpen(true)}
+                showShiftsView={showShiftsView}
+                onToggleShiftsView={() => setShowShiftsView(prev => !prev)}
               />
         </div>
 
