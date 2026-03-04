@@ -174,6 +174,17 @@ export const metricsGlossary: MetricDefinition[] = [
     example: '156',
     relatedMetrics: ['7-day-total'],
   },
+  {
+    id: 'realization-rate',
+    name: 'Realization Rate',
+    category: 'forecasting',
+    description: 'The percentage of scheduled appointment revenue that is actually collected as POS revenue. Accounts for cancellations, no-shows, discounts, and pricing differences over a rolling 30-day window.',
+    formula: 'AVG(actual_daily_revenue ÷ scheduled_daily_revenue) over last 30 days, clamped to [70%, 100%]',
+    dataSource: 'phorest_daily_sales_summary + phorest_appointments',
+    updateFrequency: 'Recalculated with each forecast request',
+    example: '87%',
+    relatedMetrics: ['7-day-total', 'rev-tomorrow'],
+  },
 
   // Leaderboard
   {

@@ -40,6 +40,7 @@ import { tokens } from '@/lib/design-tokens';
 import { parseISO, differenceInDays, endOfMonth } from 'date-fns';
 import { useRevenueForecast } from '@/hooks/useRevenueForecast';
 import { useLocations, isClosedOnDate } from '@/hooks/useLocations';
+import { FirstTimeCallout } from '@/components/ui/FirstTimeCallout';
 import { motion, useInView } from 'framer-motion';
 import { 
   BarChart, 
@@ -730,6 +731,15 @@ export function ForecastingCard() {
               <ChevronDown className={cn('w-3 h-3 mx-auto mt-1 text-muted-foreground transition-transform', selectedStatCard === 'count' && 'rotate-180 text-primary')} />
             </div>
           </div>
+
+          {/* Realization rate first-time explainer */}
+          {predictedData?.realizationRate != null && predictedData.realizationRate < 1.0 && (
+            <FirstTimeCallout
+              id="realization-rate"
+              title="NEW: REALIZATION-ADJUSTED FORECASTING"
+              description={`Predictions are now calibrated using a 30-day rolling realization rate (currently ${Math.round(predictedData.realizationRate * 100)}%). This accounts for cancellations, no-shows, and pricing differences between scheduled and actual POS revenue — so forecasts are closer to what you'll actually collect.`}
+            />
+          )}
 
           {/* Scheduled vs Predicted (trend + history) */}
           <div className="flex flex-wrap items-center gap-x-6 gap-y-1.5 py-2.5 px-3 rounded-lg bg-muted/20 border border-border/50 text-sm">
