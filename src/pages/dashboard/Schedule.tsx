@@ -727,12 +727,6 @@ export default function Schedule() {
             />
            )}
 
-           {/* Shifts View */}
-           {showShiftsView && (
-             <div className="p-4">
-               <ShiftScheduleView locationId={selectedLocation} />
-             </div>
-           )}
         </>
       )}
     </>
@@ -768,32 +762,38 @@ export default function Schedule() {
         </div>
 
 
-        {/* Calendar View (with optional copilot panel) */}
-        <div className={cn("flex-1 p-4 overflow-hidden", (view === 'day' || view === 'week') && "pb-[91px]")}>
-          {copilotOpen && !isMobile ? (
-            <ResizablePanelGroup direction="horizontal" className="h-full">
-              <ResizablePanel defaultSize={75} minSize={50}>
-                {calendarContent}
-              </ResizablePanel>
-              <ResizableHandle withHandle />
-              <ResizablePanel defaultSize={25} minSize={20} maxSize={40}>
-                <div className="h-full overflow-auto pl-2">
-                  <SchedulingCopilotPanel
-                    date={currentDate}
-                    locationId={selectedLocation}
-                    onSelectSlot={handleCopilotSlotSelect}
-                    onClose={() => setCopilotOpen(false)}
-                  />
-                </div>
-              </ResizablePanel>
-            </ResizablePanelGroup>
-          ) : (
-            calendarContent
-          )}
-        </div>
+        {/* Main Content Area */}
+        {showShiftsView ? (
+          <div className="flex-1 p-4 overflow-y-auto">
+            <ShiftScheduleView locationId={selectedLocation} />
+          </div>
+        ) : (
+          <>
+            <div className={cn("flex-1 p-4 overflow-hidden", (view === 'day' || view === 'week') && "pb-[91px]")}>
+              {copilotOpen && !isMobile ? (
+                <ResizablePanelGroup direction="horizontal" className="h-full">
+                  <ResizablePanel defaultSize={75} minSize={50}>
+                    {calendarContent}
+                  </ResizablePanel>
+                  <ResizableHandle withHandle />
+                  <ResizablePanel defaultSize={25} minSize={20} maxSize={40}>
+                    <div className="h-full overflow-auto pl-2">
+                      <SchedulingCopilotPanel
+                        date={currentDate}
+                        locationId={selectedLocation}
+                        onSelectSlot={handleCopilotSlotSelect}
+                        onClose={() => setCopilotOpen(false)}
+                      />
+                    </div>
+                  </ResizablePanel>
+                </ResizablePanelGroup>
+              ) : (
+                calendarContent
+              )}
+            </div>
 
-        {/* Floating Action Bar */}
-        {(view === 'day' || view === 'week') && (
+            {/* Floating Action Bar */}
+            {(view === 'day' || view === 'week') && (
           <div className="absolute bottom-0 left-0 right-0 pl-4 pr-20 pb-4 pointer-events-none z-20">
             <div className="pointer-events-auto flex items-center gap-2">
               <ScheduleActionBar
@@ -809,6 +809,8 @@ export default function Schedule() {
               />
             </div>
           </div>
+        )}
+          </>
         )}
       </div>
 
