@@ -1,46 +1,33 @@
 
 
-## Fix: Shifts View and Floating Action Bar Off-Screen
+## Problem: No Visible Entry Point for Admin Meetings on Schedule
 
-### Problem
+The `handleNewBooking` function correctly routes admin-only users to the meeting wizard, but **it's never exposed as a clickable button**. It's passed to `ScheduleHeader` as `onNewBooking` but no button in the header actually calls it. The only booking trigger is clicking on the time grid (via `onSlotClick`), which requires staff columns — something admin-only users without a service provider role may not interact with naturally.
 
-1. **Shifts View** is rendered inside `calendarContent` (which is placed in an `overflow-hidden` flex container at line 772). Since the shifts card renders below the calendar grid content, it gets clipped and is invisible.
+### Fix
 
-2. **Floating Action Bar** renders at `absolute bottom-0` but competes with the shifts view content. When shifts is toggled on, both elements fight for the same bottom space.
+Add a prominent "Schedule Meeting" button to the `ScheduleHeader` for admin users, and a general "+ New" button for all users with create permission.
 
-### Solution
+#### Changes to `src/components/dashboard/schedule/ScheduleHeader.tsx`
 
-**Move the shifts view outside the calendar container** so it replaces the calendar when active, rather than appending below it inside a clipped container.
+1. Add a CTA button in the top-right action area (near Settings icon) that calls `onNewBooking`
+2. Button label adapts by role:
+   - Admin-only users: "New Meeting" with `Users` icon
+   - Dual-role (admin + service provider): "New" with `Plus` icon (opens the type selector)
+   - Service providers only: "New Booking" with `CalendarPlus` icon
+3. Only shown when `canCreate` is true
+4. Uses `tokens.button.cardAction` (pill style) to match the header aesthetic
 
-#### Changes to `src/pages/dashboard/Schedule.tsx`:
+#### Changes to `src/pages/dashboard/Schedule.tsx`
 
-1. **Remove** the shifts view from inside `calendarContent` (lines 730-735)
-2. **Conditionally render** either the shifts view OR the calendar view in the main content area (line 772):
-   - When `showShiftsView` is true: render `ShiftScheduleView` in a scrollable container (no overflow-hidden clipping)
-   - When `showShiftsView` is false: render the existing calendar content as-is
-3. **Hide the floating action bar** when shifts view is active (it's irrelevant for shift scheduling)
+Pass `isAdminRole` and `isServiceProvider` flags to `ScheduleHeader` so it can render the correct button label.
 
 ```text
-Layout when shifts OFF (current):
-┌─────────────────────────┐
-│ ScheduleHeader          │
-├─────────────────────────┤
-│ Calendar (overflow-hidden)│
-│ ┌─────────────────────┐ │
-│ │ DayView / AgendaView│ │
-│ └─────────────────────┘ │
-├─────────────────────────┤
-│ Floating Action Bar     │
-└─────────────────────────┘
-
-Layout when shifts ON (fix):
-┌─────────────────────────┐
-│ ScheduleHeader          │
-├─────────────────────────┤
-│ ShiftScheduleView       │
-│ (scrollable, full area) │
-└─────────────────────────┘
+ScheduleHeader (top-right actions area):
+┌──────────────────────────────────────────────────┐
+│ [Day|Week] [Shifts]  Date  Staff  ...  [+ New Meeting]  ⚙ │
+└──────────────────────────────────────────────────┘
 ```
 
-This is a small, targeted fix — only `Schedule.tsx` needs editing.
+Two files modified: `ScheduleHeader.tsx` and `Schedule.tsx`.
 
