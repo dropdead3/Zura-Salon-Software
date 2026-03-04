@@ -858,7 +858,26 @@ export function ForecastingCard() {
 
           {/* Chart mode toggle + Bar Chart - only show if not tomorrow */}
           {showChart && chartData.length > 0 && (
-            <div className="flex justify-end">
+            <div className="flex items-center justify-between">
+              {(() => {
+                const avgLabel = showWeeklyChart ? 'Weekly Avg' : 'Daily Operating Avg';
+                const avgValue = showWeeklyChart ? Math.round(averageWeekly) : Math.round(operatingDailyAvg);
+                const showBadge = showWeeklyChart ? averageWeekly > 0 : operatingDailyAvg > 0;
+                if (!showBadge) return <div />;
+                return (
+                  <div className="text-[11px] font-medium px-2.5 py-0.5 rounded-full border whitespace-nowrap"
+                    style={{
+                      color: isDark ? 'rgb(254 240 138)' : 'hsl(35 70% 30%)',
+                      background: isDark
+                        ? 'linear-gradient(to right, rgb(133 77 14 / 0.5), rgb(180 83 9 / 0.3), rgb(133 77 14 / 0.5))'
+                        : 'hsl(40 40% 94% / 0.85)',
+                      borderColor: isDark ? 'rgb(202 138 4 / 0.6)' : 'hsl(35 60% 60% / 0.5)',
+                      filter: hideNumbers ? 'blur(8px)' : 'none',
+                    }}>
+                    {avgLabel}: {formatCurrency(avgValue)}
+                  </div>
+                );
+              })()}
               <Tabs value={chartMode} onValueChange={(v) => v && setChartMode(v as 'category' | 'solid')}>
                 <FilterTabsList>
                   <FilterTabsTrigger value="category">By Category</FilterTabsTrigger>
@@ -1016,35 +1035,9 @@ export function ForecastingCard() {
                       const chartLeft = xAxisMap[0].x;
                       const chartRight = chartLeft + xAxisMap[0].width;
                       if (typeof yPos !== 'number' || isNaN(yPos)) return null;
-                      const avgText = `Daily Operating Avg: ${formatCurrency(Math.round(operatingDailyAvg))}`;
-                      const padX = 8;
-                      const padY = 4;
-                      const fontSize = 12;
-                      const gap = 4;
-                      const badgeY = yAxisMap[0].y - 20;
                       return (
-                        <g style={{ pointerEvents: 'auto', cursor: hideNumbers ? 'pointer' : 'default' }} onClick={hideNumbers ? requestUnhide : undefined}>
-                          {hideNumbers && <title>Click to reveal</title>}
+                        <g style={{ pointerEvents: 'none' }}>
                           <line x1={chartLeft} y1={yPos} x2={chartRight} y2={yPos} stroke={isDark ? 'rgb(202 138 4)' : 'hsl(35 60% 55% / 0.4)'} strokeOpacity={0.5} strokeDasharray="4 4" strokeWidth={1} />
-                          <foreignObject x={chartLeft} y={badgeY} width={200} height={24} style={{ overflow: 'visible' }}>
-                            <div style={{
-                              fontSize: 12, fontWeight: 500,
-                              color: isDark ? 'rgb(254 240 138)' : 'hsl(35 70% 30%)',
-                              backdropFilter: 'blur(6px)',
-                              WebkitBackdropFilter: 'blur(6px)',
-                              background: isDark
-                                ? 'linear-gradient(to right, rgb(133 77 14 / 0.5), rgb(180 83 9 / 0.3), rgb(133 77 14 / 0.5))'
-                                : 'hsl(40 40% 94% / 0.85)',
-                              border: isDark ? '1px solid rgb(202 138 4 / 0.6)' : '1px solid hsl(35 60% 60% / 0.5)',
-                              borderRadius: 9999,
-                              padding: '2px 8px',
-                              whiteSpace: 'nowrap' as const,
-                              width: 'fit-content',
-                              filter: hideNumbers ? 'blur(8px)' : 'none',
-                            }}>
-                              {avgText}
-                            </div>
-                          </foreignObject>
                         </g>
                       );
                     }} />
@@ -1058,33 +1051,9 @@ export function ForecastingCard() {
                       const chartLeft = xAxisMap[0].x;
                       const chartRight = chartLeft + xAxisMap[0].width;
                       if (typeof yPos !== 'number' || isNaN(yPos)) return null;
-                      const avgText = `Weekly Avg: ${formatCurrency(Math.round(averageWeekly))}`;
-                      const padX = 6;
-                      const padY = 3;
-                      const fontSize = 11;
-                      const gap = 4;
-                      const badgeY = yAxisMap[0].y - 20;
                       return (
-                        <g style={{ pointerEvents: hideNumbers ? 'auto' : 'none', cursor: hideNumbers ? 'pointer' : 'default' }} onClick={hideNumbers ? requestUnhide : undefined}>
-                          {hideNumbers && <title>Click to reveal</title>}
+                        <g style={{ pointerEvents: 'none' }}>
                           <line x1={chartLeft} y1={yPos} x2={chartRight} y2={yPos} stroke="rgb(202 138 4)" strokeOpacity={0.5} strokeDasharray="4 4" strokeWidth={1} />
-                          <foreignObject x={chartLeft} y={badgeY} width={200} height={22} style={{ overflow: 'visible' }}>
-                            <div style={{
-                              fontSize: 11, fontWeight: 500,
-                              color: 'rgb(254 240 138)',
-                              backdropFilter: 'blur(6px)',
-                              WebkitBackdropFilter: 'blur(6px)',
-                              background: 'linear-gradient(to right, rgb(133 77 14 / 0.5), rgb(180 83 9 / 0.3), rgb(133 77 14 / 0.5))',
-                              border: '1px solid rgb(202 138 4 / 0.6)',
-                              borderRadius: 9999,
-                              padding: '2px 8px',
-                              whiteSpace: 'nowrap' as const,
-                              width: 'fit-content',
-                              filter: hideNumbers ? 'blur(8px)' : 'none',
-                            }}>
-                              {avgText}
-                            </div>
-                          </foreignObject>
                         </g>
                       );
                     }} />

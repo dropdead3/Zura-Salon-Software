@@ -477,8 +477,21 @@ export function WeekAheadForecast() {
           )}
 
 
-          {/* Chart mode toggle + Bar Chart */}
-          <div className="flex justify-end">
+          {/* Chart mode toggle + Daily Avg badge */}
+          <div className="flex items-center justify-between">
+            {operatingDailyAvg > 0 && (
+              <div className="text-[11px] font-medium px-2.5 py-0.5 rounded-full border whitespace-nowrap"
+                style={{
+                  color: isDark ? 'rgb(254 240 138)' : 'hsl(35 70% 30%)',
+                  background: isDark
+                    ? 'linear-gradient(to right, rgb(133 77 14 / 0.5), rgb(180 83 9 / 0.3), rgb(133 77 14 / 0.5))'
+                    : 'hsl(40 40% 94% / 0.85)',
+                  borderColor: isDark ? 'rgb(202 138 4 / 0.6)' : 'hsl(35 60% 60% / 0.5)',
+                }}>
+                Daily Operating Avg: {formatCurrencyWhole(Math.round(operatingDailyAvg))}
+              </div>
+            )}
+            {!operatingDailyAvg && <div />}
             <Tabs value={chartMode} onValueChange={(v) => v && setChartMode(v as 'category' | 'solid')}>
               <FilterTabsList>
                 <FilterTabsTrigger value="category">By Category</FilterTabsTrigger>
@@ -623,33 +636,12 @@ export function WeekAheadForecast() {
                       const chartLeft = xAxisMap[0].x;
                       const chartRight = chartLeft + xAxisMap[0].width;
                       if (typeof yPos !== 'number' || isNaN(yPos)) return null;
-                      const badgeY = yAxisMap[0].y - 20;
                       const lineLength = chartRight - chartLeft;
                       return (
                       <g style={{ pointerEvents: 'none' }}>
                           <style>{`
                             @keyframes drawLine { to { stroke-dashoffset: 0; } }
-                            @keyframes fadeInBadge { from { opacity: 0; } to { opacity: 1; } }
                           `}</style>
-                          <foreignObject x={chartLeft} y={badgeY} width={200} height={24} style={{ animation: 'fadeInBadge 0.5s ease-out 0.6s forwards', opacity: 0 }}>
-                            <div style={{ 
-                              fontSize: 11, fontWeight: 500, 
-                              color: isDark ? 'rgb(254 240 138)' : 'hsl(35 70% 30%)',
-                              backdropFilter: 'blur(6px)',
-                              WebkitBackdropFilter: 'blur(6px)',
-                              background: isDark
-                                ? 'linear-gradient(to right, rgb(133 77 14 / 0.5), rgb(180 83 9 / 0.3), rgb(133 77 14 / 0.5))'
-                                : 'hsl(40 40% 94% / 0.85)',
-                              border: isDark ? '1px solid rgb(202 138 4 / 0.6)' : '1px solid hsl(35 60% 60% / 0.5)',
-                              borderRadius: 9999,
-                              padding: '1px 8px',
-                              whiteSpace: 'nowrap',
-                              width: 'fit-content',
-                            }}>
-                              Daily Operating Avg: {formatCurrencyWhole(Math.round(operatingDailyAvg))}
-                            </div>
-                          </foreignObject>
-                          {/* Full-width dashed reference line */}
                           <line
                             x1={chartLeft}
                             y1={yPos}
