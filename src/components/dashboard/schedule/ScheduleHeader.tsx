@@ -168,8 +168,17 @@ export function ScheduleHeader({
                       : 'text-[hsl(40,20%,92%)]/50 hover:text-[hsl(40,20%,92%)]/80 hover:bg-[hsl(40,20%,92%)]/10'
                   )}
                 >
-                  <Clock className="h-3.5 w-3.5" />
-                  Shifts
+                  {showShiftsView ? (
+                    <>
+                      <CalendarIcon className="h-3.5 w-3.5" />
+                      Appointments
+                    </>
+                  ) : (
+                    <>
+                      <Clock className="h-3.5 w-3.5" />
+                      Shifts
+                    </>
+                  )}
                 </button>
               </TooltipTrigger>
               <TooltipContent side="bottom">
