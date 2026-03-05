@@ -472,7 +472,15 @@ export default function Schedule() {
     } else {
       setBookingDefaults({ date: dateOrStylistId, time });
     }
-    setBookingOpen(true);
+
+    // Role-based branching (mirrors handleNewBooking logic)
+    if (isAdminRole && !isServiceProvider) {
+      setMeetingWizardOpen(true);
+    } else if (isAdminRole && isServiceProvider) {
+      setTypeSelectorOpen(true);
+    } else {
+      setBookingOpen(true);
+    }
   };
 
   const handleCopilotSlotSelect = (time: string, staffUserId: string) => {
