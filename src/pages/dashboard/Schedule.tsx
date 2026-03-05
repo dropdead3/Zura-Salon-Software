@@ -1081,6 +1081,11 @@ export default function Schedule() {
               setTypeSelectorOpen(false);
               setMeetingWizardOpen(true);
             }}
+            onSelectTimeblock={() => {
+              setTypeSelectorOpen(false);
+              setBreakDefaults({ time: bookingDefaults.time || '09:00', stylistId: bookingDefaults.stylistId || '' });
+              setBreakDialogOpen(true);
+            }}
           />
         </DialogContent>
       </Dialog>
