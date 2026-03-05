@@ -15,6 +15,10 @@ import {
   ChevronLeft,
   ChevronRight,
   Users,
+  User,
+  Handshake,
+  GraduationCap,
+  ClipboardList,
   CalendarIcon,
   MapPin,
   Video,
@@ -26,8 +30,9 @@ import {
   X,
   Bookmark,
   BookmarkPlus,
-  Sparkles,
+  type LucideIcon,
 } from 'lucide-react';
+import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
@@ -41,12 +46,12 @@ import { useMeetingTemplates, useCreateMeetingTemplate, type MeetingTemplate } f
 import { useOptimalMeetingTimes } from '@/hooks/useOptimalMeetingTimes';
 import { AttendeeAvailabilityOverlay } from './AttendeeAvailabilityOverlay';
 
-const MEETING_TYPES: { value: MeetingType; label: string; icon: string; description: string }[] = [
-  { value: 'one_on_one', label: '1-on-1', icon: '👤', description: 'Performance review, coaching, check-in' },
-  { value: 'interview', label: 'Interview', icon: '🤝', description: 'New hire, candidate screening' },
-  { value: 'manager_meeting', label: 'Team Meeting', icon: '👥', description: 'Manager sync, team huddle' },
-  { value: 'training', label: 'Training', icon: '📚', description: 'Skills development, onboarding' },
-  { value: 'other', label: 'Other', icon: '📋', description: 'General scheduling' },
+const MEETING_TYPES: { value: MeetingType; label: string; icon: LucideIcon; description: string }[] = [
+  { value: 'one_on_one', label: '1-on-1', icon: User, description: 'Performance review, coaching, check-in' },
+  { value: 'interview', label: 'Interview', icon: Handshake, description: 'New hire, candidate screening' },
+  { value: 'manager_meeting', label: 'Team Meeting', icon: Users, description: 'Manager sync, team huddle' },
+  { value: 'training', label: 'Training', icon: GraduationCap, description: 'Skills development, onboarding' },
+  { value: 'other', label: 'Other', icon: ClipboardList, description: 'General scheduling' },
 ];
 
 const DURATION_OPTIONS = [15, 30, 45, 60, 90, 120];
@@ -275,7 +280,7 @@ export function MeetingSchedulerWizard({ open, onOpenChange, defaultDate }: Meet
 
   return (
     <PremiumFloatingPanel open={open} onOpenChange={(o) => { if (!o) resetWizard(); onOpenChange(o); }} maxWidth="28rem" showCloseButton={false}>
-      <div className="flex flex-col h-full max-h-[85vh]">
+      <div className="flex flex-col max-h-[85vh]">
         {/* Header */}
         <div className="px-6 pt-6 pb-4 border-b border-border">
           <div className="flex items-center justify-between">
@@ -310,7 +315,7 @@ export function MeetingSchedulerWizard({ open, onOpenChange, defaultDate }: Meet
         </div>
 
         {/* Content */}
-        <ScrollArea className="flex-1 px-6 py-4">
+        <div className="flex-1 min-h-0 overflow-y-auto px-6 py-4">
           <AnimatePresence mode="wait">
             <motion.div
               key={step + (showTemplates ? '-templates' : '')}
@@ -345,7 +350,7 @@ export function MeetingSchedulerWizard({ open, onOpenChange, defaultDate }: Meet
                     onClick={() => setShowTemplates(false)}
                     className="text-xs font-sans text-muted-foreground hover:text-foreground transition-colors"
                   >
-                    ← Back to meeting types
+                    <ChevronLeft className="w-3.5 h-3.5 inline mr-1" />Back to meeting types
                   </button>
                 </div>
               )}
@@ -371,7 +376,9 @@ export function MeetingSchedulerWizard({ open, onOpenChange, defaultDate }: Meet
                             : 'border-border hover:border-primary/30 hover:bg-muted/50'
                         )}
                       >
-                        <span className="text-2xl">{mt.icon}</span>
+                        <div className={tokens.card.iconBox}>
+                          <mt.icon className={tokens.card.icon} />
+                        </div>
                         <div>
                           <p className="font-sans text-sm text-foreground">{mt.label}</p>
                           <p className="font-sans text-xs text-muted-foreground">{mt.description}</p>
@@ -481,7 +488,7 @@ export function MeetingSchedulerWizard({ open, onOpenChange, defaultDate }: Meet
                   {suggestions.length > 0 && (
                     <div className="space-y-2">
                       <div className="flex items-center gap-1.5">
-                        <Sparkles className="w-3.5 h-3.5 text-primary" />
+                        <CalendarIcon className="w-3.5 h-3.5 text-primary" />
                         <span className="text-xs font-sans text-muted-foreground">Suggested times (all attendees free)</span>
                       </div>
                       <div className="flex flex-wrap gap-2">
@@ -737,7 +744,7 @@ export function MeetingSchedulerWizard({ open, onOpenChange, defaultDate }: Meet
               )}
             </motion.div>
           </AnimatePresence>
-        </ScrollArea>
+        </div>
 
         {/* Footer */}
         <div className="px-6 py-4 border-t border-border flex items-center justify-between">
