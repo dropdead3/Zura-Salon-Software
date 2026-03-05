@@ -1,36 +1,22 @@
 
 
-## UI Enhancement: Meeting Scheduler Wizard
+## Show Clicked Time in Schedule Type Selector
 
-### Issues Identified
+### Problem
+When a dual-role user clicks a time slot, the type selector dialog shows a generic "What would you like to schedule?" without indicating the time they clicked on.
 
-1. **Emojis used instead of Lucide icons** — Lines 44-49 use emoji strings (`👤`, `🤝`, `👥`, `📚`, `📋`) for meeting type icons. This violates the "no emojis, icons only" rule.
-2. **Footer gap** — The screenshot shows a large gap between the content and the bottom Cancel/Next buttons. The `ScrollArea` with `flex-1` is expanding to fill remaining space, pushing the footer far below the last content item. The footer should sit snugly below content when content is short.
+### Fix (2 files)
 
-### Changes (single file: `MeetingSchedulerWizard.tsx`)
+**1. `ScheduleTypeSelector.tsx`** — Add an optional `selectedTime` prop. When provided, format it to 12-hour display and include it in the prompt: "What would you like to schedule at 1:30 PM?"
 
-#### 1. Replace emojis with Lucide icons in `MEETING_TYPES`
+**2. `Schedule.tsx`** — Pass `bookingDefaults.time` to the `ScheduleTypeSelector` component so it has access to the clicked slot's time.
 
-| Meeting Type | Emoji → Icon |
-|---|---|
-| 1-on-1 | `👤` → `User` icon in a `w-10 h-10 rounded-lg bg-muted` container |
-| Interview | `🤝` → `Handshake` icon |
-| Team Meeting | `👥` → `Users` icon |
-| Training | `📚` → `GraduationCap` icon |
-| Other | `📋` → `ClipboardList` icon |
+```text
+ScheduleTypeSelector
+  props: + selectedTime?: string   (e.g. "13:30")
+  display: "What would you like to schedule at 1:30 PM?"
+           falls back to "What would you like to schedule?" if no time
+```
 
-Change the type from `icon: string` to `icon: LucideIcon`, render each in a themed icon box (`tokens.card.iconBox` pattern: `w-10 h-10 bg-muted rounded-lg` with `w-5 h-5 text-primary` icon).
-
-#### 2. Fix footer gap
-
-Change the outer container from `flex flex-col h-full max-h-[85vh]` to include `min-h-0` and make the `ScrollArea` not force-expand when content is short. Replace `flex-1` on ScrollArea with `flex-1 min-h-0` and add `overflow-y-auto` behavior so the panel shrinks to content height rather than always stretching to `85vh`.
-
-Wrap the content area so it uses `flex-1 min-h-0 overflow-y-auto` instead of a full-height ScrollArea, allowing the footer to sit right below content when there's no overflow.
-
-#### 3. Minor polish
-
-- Remove the `← ` unicode arrow on the "Back to meeting types" button (line 349), use `ChevronLeft` icon instead.
-- Ensure the `Sparkles` import (line 29) is removed if unused after emoji replacement, keep icons clean.
-
-**One file modified:** `src/components/dashboard/schedule/meetings/MeetingSchedulerWizard.tsx`
+Two files, ~5 lines each.
 
