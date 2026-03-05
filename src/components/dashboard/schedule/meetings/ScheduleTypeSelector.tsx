@@ -1,20 +1,35 @@
 import { CalendarPlus, Users } from 'lucide-react';
+import { parse, format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 interface ScheduleTypeSelectorProps {
   onSelectClientBooking: () => void;
   onSelectMeeting: () => void;
+  /** Optional 24h time string e.g. "13:30" to show in the prompt */
+  selectedTime?: string;
+}
+
+function formatTime12h(time: string): string {
+  try {
+    return format(parse(time, 'HH:mm', new Date()), 'h:mm a');
+  } catch {
+    return time;
+  }
 }
 
 /**
  * For dual-role users (admin + service provider): 
  * Asks which type of scheduling they want to do before opening the appropriate wizard.
  */
-export function ScheduleTypeSelector({ onSelectClientBooking, onSelectMeeting }: ScheduleTypeSelectorProps) {
+export function ScheduleTypeSelector({ onSelectClientBooking, onSelectMeeting, selectedTime }: ScheduleTypeSelectorProps) {
+  const timeLabel = selectedTime ? formatTime12h(selectedTime) : null;
+
   return (
     <div className="space-y-3">
       <p className="text-sm text-muted-foreground font-sans text-center">
-        What would you like to schedule?
+        {timeLabel
+          ? `What would you like to schedule at ${timeLabel}?`
+          : 'What would you like to schedule?'}
       </p>
       <div className="grid gap-3">
         <button

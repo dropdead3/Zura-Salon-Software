@@ -1070,6 +1070,7 @@ export default function Schedule() {
         <DialogContent className="sm:max-w-sm p-6">
           <DialogTitle className="sr-only">Schedule Type</DialogTitle>
           <ScheduleTypeSelector
+            selectedTime={bookingDefaults.time}
             onSelectClientBooking={() => {
               setTypeSelectorOpen(false);
               setActiveDraft(null);
