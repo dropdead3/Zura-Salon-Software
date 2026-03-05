@@ -1,22 +1,28 @@
 
 
-## Show Clicked Time in Schedule Type Selector
+## Add "Timeblock / Break" Option to Schedule Type Selector
 
-### Problem
-When a dual-role user clicks a time slot, the type selector dialog shows a generic "What would you like to schedule?" without indicating the time they clicked on.
+### Change Summary
 
-### Fix (2 files)
+Add a third button to the `ScheduleTypeSelector` for creating timeblocks/breaks. This mirrors the existing break dialog flow already wired up in `Schedule.tsx`.
 
-**1. `ScheduleTypeSelector.tsx`** — Add an optional `selectedTime` prop. When provided, format it to 12-hour display and include it in the prompt: "What would you like to schedule at 1:30 PM?"
+### Changes (2 files)
 
-**2. `Schedule.tsx`** — Pass `bookingDefaults.time` to the `ScheduleTypeSelector` component so it has access to the clicked slot's time.
+**1. `ScheduleTypeSelector.tsx`**
+- Add `onSelectTimeblock` callback prop
+- Add a third button with `Clock` icon (from lucide-react), label "Timeblock / Break", description "Lunch, personal time, focus block"
+- Same button styling as existing two options
+
+**2. `Schedule.tsx`**
+- Pass `onSelectTimeblock` to `ScheduleTypeSelector`
+- Handler: close type selector, set `breakDefaults` with the clicked time/stylist, open `breakDialogOpen`
 
 ```text
-ScheduleTypeSelector
-  props: + selectedTime?: string   (e.g. "13:30")
-  display: "What would you like to schedule at 1:30 PM?"
-           falls back to "What would you like to schedule?" if no time
+Type Selector options:
+  ┌─ Client Appointment   (CalendarPlus)  → booking wizard
+  ├─ Internal Meeting      (Users)         → meeting wizard
+  └─ Timeblock / Break     (Clock)         → break/block form
 ```
 
-Two files, ~5 lines each.
+Two files, ~15 lines total.
 
