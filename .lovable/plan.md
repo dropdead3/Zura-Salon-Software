@@ -1,58 +1,26 @@
 
 
-## Recurring Shifts + Shift Scheduler Enhancements
+## Fix: Time Slot Clicks Should Route Admin-Only Users to Meeting Wizard
 
-### Current State
-The shift scheduler has `is_recurring` and `recurrence_pattern` columns in the database but they're never used in the UI. The editor creates single-date shifts only. The view is a basic weekly grid with no copy, template, or bulk operations.
+### Problem
+`handleSlotClick` (line 427) always opens the **client booking wizard** (`setBookingOpen(true)`) regardless of the user's role. So when Eric (admin-only) clicks a time slot on the grid, it opens a client booking flow he shouldn't be using. The role-branching logic exists in `handleNewBooking` but was never applied to `handleSlotClick`.
 
-### Plan
+### Fix (single file: `Schedule.tsx`)
 
-#### 1. Recurring Shifts in ShiftEditorDialog
-Add a "Repeat" selector below the date picker with options: None, Daily, Weekly, Bi-Weekly, Custom (select days of week). When recurring is selected:
-- Show an "Until" date picker (end date for the recurrence)
-- On submit, generate all individual shift rows for the date range (server-side is ideal but we'll do client-side batch insert for now since the table already supports `is_recurring` and `recurrence_pattern`)
-- Mark each generated shift with `is_recurring: true` and `recurrence_pattern` (e.g., `weekly`, `biweekly`, `daily`, or `custom:mon,wed,fri`)
-- Show a recurring icon on shift cards in the grid
+Apply the same role-based branching from `handleNewBooking` to `handleSlotClick`:
 
-**Hook change (`useStaffShifts.ts`)**: Add a `useCreateRecurringShifts` mutation that accepts a base shift + recurrence config and batch-inserts all dates.
+1. **Admin-only user clicks a slot** → Open meeting wizard (`setMeetingWizardOpen(true)`) with the clicked time pre-filled as a default
+2. **Dual-role user clicks a slot** → Open the type selector (`setTypeSelectorOpen(true)`) so they choose between client booking and meeting, with the clicked time stored for whichever path they pick
+3. **Service provider (no admin)** → Current behavior (open booking wizard directly)
 
-**Dialog change (`ShiftEditorDialog.tsx`)**: Add recurrence UI section with pattern selector + end date.
+Additionally, store the clicked slot's date/time so the meeting wizard can pre-populate its fields when opened from a slot click (rather than the header button which has no time context).
 
-#### 2. Suggested Enhancements (build all)
-
-**a. Copy Previous Week**
-Button in `ShiftScheduleView` header: "Copy Last Week". Duplicates all shifts from the previous week into the current week (skipping duplicates). Quick way to replicate repeating schedules without setting up recurrence.
-
-**b. Shift Duration Display**
-Show total scheduled hours per staff member per week in the left name column (e.g., "Sarah — 32h"). Helps admins monitor labor allocation at a glance.
-
-**c. Shift Conflict Detection**
-When creating/editing a shift, warn if the staff member already has an overlapping shift on that date. Client-side check against existing shifts data.
-
-**d. Recurring Shift Indicator**
-Show a small `RefreshCw` icon on shift cards that are part of a recurring pattern. Consistent with how tasks display recurrence.
-
-**e. Delete Confirmation + "Delete All Future" for Recurring**
-When deleting a recurring shift, offer: "This shift only" vs "This and all future shifts in this series". Uses `recurrence_pattern` match + `shift_date >= selected` to bulk cancel.
-
-### Files Modified
-
-| File | Change |
-|------|--------|
-| `src/hooks/useStaffShifts.ts` | Add `useCreateRecurringShifts` mutation, add `useCopyPreviousWeek` mutation |
-| `src/components/dashboard/schedule/shifts/ShiftEditorDialog.tsx` | Add recurrence pattern selector, end date picker, conflict warning |
-| `src/components/dashboard/schedule/shifts/ShiftScheduleView.tsx` | Add "Copy Last Week" button, weekly hours per staff, recurring icon on cards, delete confirmation dialog with series option |
-
-### Technical Detail
-
-**Batch insert for recurring shifts** — generate dates client-side using `date-fns` iteration:
 ```text
-For "weekly" from March 4 to April 30:
-  → Generate: Mar 4, Mar 11, Mar 18, ... Apr 30
-  → Insert all as individual rows with is_recurring=true, recurrence_pattern='weekly'
+handleSlotClick flow (after fix):
+  ┌─ Admin only     → setMeetingWizardOpen(true) with time defaults
+  ├─ Admin + Provider → setTypeSelectorOpen(true) with time defaults
+  └─ Provider only   → setBookingOpen(true) (existing behavior)
 ```
 
-**Copy Previous Week** — query shifts for `weekStart - 7` to `weekStart - 1`, then insert copies with dates shifted +7 days.
-
-**Conflict detection** — filter existing shifts by `user_id` + `shift_date`, check time overlap `(newStart < existingEnd && newEnd > existingStart)`.
+**One file modified:** `src/pages/dashboard/Schedule.tsx` — ~10 lines changed in `handleSlotClick` at lines 470-476.
 
