@@ -809,7 +809,7 @@ export function QuickBookingPopover({
           client_id: selectedClient?.id || null,
           client_name: selectedClient?.name || null,
           staff_user_id: selectedStylist || null,
-          staff_name: selectedStylistData?.employee_profiles?.display_name || selectedStylistData?.employee_profiles?.full_name || null,
+          staff_name: selectedStylistData?.employee_profiles ? formatDisplayName(selectedStylistData.employee_profiles.full_name || '', selectedStylistData.employee_profiles.display_name) : null,
           selected_services: [...serviceDetails, ...addonDetails],
           notes: bookingNotes || undefined,
           step_reached: step,
