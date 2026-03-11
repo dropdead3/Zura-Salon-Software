@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { format, addMinutes, parse } from 'date-fns';
+import { useOrgNow } from '@/hooks/useOrgNow';
 import { AnimatePresence, motion } from 'framer-motion';
 import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { Button } from '@/components/ui/button';
