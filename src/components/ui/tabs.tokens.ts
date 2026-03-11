@@ -33,9 +33,9 @@ export const RESPONSIVE_TABS_CLASSES = {
   wrapper: "w-full min-w-0 max-w-full",
   list: "w-auto max-w-full min-w-0 justify-start overflow-hidden",
   overflowTrigger: [
-    "inline-flex h-9 w-9 items-center justify-center rounded-[6px] ring-offset-background transition-colors",
+    "inline-flex h-9 w-9 items-center justify-center rounded-[6px] transition-colors",
     "text-muted-foreground hover:bg-black/[0.05] dark:hover:bg-white/[0.08] hover:text-foreground",
-    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+    "focus-visible:outline-none",
   ].join(" "),
   overflowMenuItem:
     "w-full px-3 py-2 text-sm text-left rounded-[6px] hover:bg-black/[0.05] dark:hover:bg-white/[0.08] transition-colors",
