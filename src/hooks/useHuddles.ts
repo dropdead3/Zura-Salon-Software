@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import type { Json } from '@/integrations/supabase/types';
+import { useOrgNow } from '@/hooks/useOrgNow';
 
 export interface DailyHuddle {
   id: string;
