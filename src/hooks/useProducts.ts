@@ -165,6 +165,7 @@ export function useCreateProduct() {
         organization_id: product.organization_id,
         location_id: product.location_id,
         image_url: product.image_url,
+        product_type: product.product_type || 'Products',
       };
       
       const { data, error } = await supabase
