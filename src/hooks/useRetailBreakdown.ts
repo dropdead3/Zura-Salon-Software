@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { isAllLocations, parseLocationIds } from '@/lib/locationFilter';
-import { isExtensionProduct, isMerchProduct } from '@/utils/serviceCategorization';
+import { isExtensionProduct, isGiftCardProduct, isMerchProduct } from '@/utils/serviceCategorization';
 
 /** Apply location filter. */
 function addLocationFilter(query: any, locationId?: string) {
@@ -37,9 +37,11 @@ export interface RetailBreakdownData {
   productRevenue: number;
   merchRevenue: number;
   extensionRevenue: number;
+  giftCardRevenue: number;
   productCount: number;
   merchCount: number;
   extensionCount: number;
+  giftCardCount: number;
   totalRetailRevenue: number;
 }
 
@@ -75,14 +77,17 @@ export function useRetailBreakdown(
         return q;
       });
 
-      let productRevenue = 0, merchRevenue = 0, extensionRevenue = 0;
-      let productCount = 0, merchCount = 0, extensionCount = 0;
+      let productRevenue = 0, merchRevenue = 0, extensionRevenue = 0, giftCardRevenue = 0;
+      let productCount = 0, merchCount = 0, extensionCount = 0, giftCardCount = 0;
 
       for (const item of items) {
         const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
         if (isExtensionProduct(item.item_name)) {
           extensionRevenue += amount;
           extensionCount += 1;
+        } else if (isGiftCardProduct(item.item_name)) {
+          giftCardRevenue += amount;
+          giftCardCount += 1;
         } else if (isMerchProduct(item.item_name)) {
           merchRevenue += amount;
           merchCount += 1;
@@ -96,10 +101,12 @@ export function useRetailBreakdown(
         productRevenue,
         merchRevenue,
         extensionRevenue,
+        giftCardRevenue,
         productCount,
         merchCount,
         extensionCount,
-        totalRetailRevenue: productRevenue + merchRevenue + extensionRevenue,
+        giftCardCount,
+        totalRetailRevenue: productRevenue + merchRevenue + extensionRevenue + giftCardRevenue,
       };
     },
     enabled,
