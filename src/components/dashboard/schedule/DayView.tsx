@@ -117,7 +117,7 @@ function DroppableSlot({
   isOutsideHours: boolean;
   showCurrentTime: boolean;
   onClick: () => void;
-  onContextMenu?: (e: React.MouseEvent) => void;
+  
   isOver: boolean;
 }) {
   const { setNodeRef, isOver: dndIsOver } = useDroppable({ id });
