@@ -921,12 +921,15 @@ export function AggregateSalesCard({
             
             {/* Services & Products Sub-cards */}
             {(() => {
-              // When today + actual data, show actual breakdown; otherwise show expected
+              // When today + actual data, show actual breakdown; for past ranges with POS data, use POS; otherwise show expected
+              const usePastActual = isPastRange && pastActual?.hasActualData;
               const svcRevenue = isToday
                 ? (todayActual?.hasActualData ? todayActual.actualServiceRevenue : 0)
+                : usePastActual ? pastActual.actualServiceRevenue
                 : displayMetrics.serviceRevenue;
               const prodRevenue = isToday
                 ? (todayActual?.hasActualData ? todayActual.actualProductRevenue : 0)
+                : usePastActual ? pastActual.actualProductRevenue
                 : displayMetrics.productRevenue;
               const totalBrkdn = svcRevenue + prodRevenue;
               const svcPct = totalBrkdn > 0 ? Math.round((svcRevenue / totalBrkdn) * 100) : 0;
@@ -986,7 +989,9 @@ export function AggregateSalesCard({
           {(() => {
             const showDailyAvg = dateRange !== 'today' && dateRange !== 'yesterday';
             const workingDays = metrics?.daysWithSales ?? 0;
-            const dailyAverage = workingDays > 0 ? displayMetrics.totalRevenue / workingDays : 0;
+            const pastActualActive = isPastRange && pastActual?.hasActualData;
+            const dailyAvgRevenue = pastActualActive ? pastActual.actualRevenue : displayMetrics.totalRevenue;
+            const dailyAverage = workingDays > 0 ? dailyAvgRevenue / workingDays : 0;
 
             if (!showDailyAvg) {
               // 4 cards: single row
@@ -1005,7 +1010,7 @@ export function AggregateSalesCard({
                       <div className="flex justify-center mb-2">
                         <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                       </div>
-                      <AnimatedBlurredAmount value={isToday ? (todayActual?.hasActualData ? todayActual.actualTransactions : 0) : displayMetrics.totalTransactions} className="text-lg sm:text-xl md:text-2xl font-display tabular-nums" />
+                      <AnimatedBlurredAmount value={isToday ? (todayActual?.hasActualData ? todayActual.actualTransactions : 0) : pastActualActive ? pastActual.actualTransactions : displayMetrics.totalTransactions} className="text-lg sm:text-xl md:text-2xl font-display tabular-nums" />
                       <div className="flex items-center gap-1 justify-center mt-1">
                         <p className="text-xs text-muted-foreground">{t('sales.transactions')}</p>
                         <ChevronDown className={cn("w-3 h-3 text-muted-foreground transition-transform duration-200", activeDrilldown === 'transactions' && "rotate-180")} />
@@ -1024,7 +1029,7 @@ export function AggregateSalesCard({
                       <div className="flex justify-center mb-2">
                         <Receipt className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                       </div>
-                      <AnimatedBlurredAmount value={Math.round(isToday ? (todayActual?.hasActualData ? todayActual.actualAverageTicket : 0) : displayMetrics.averageTicket)} currency={currency} className="text-lg sm:text-xl md:text-2xl font-display tabular-nums" />
+                      <AnimatedBlurredAmount value={Math.round(isToday ? (todayActual?.hasActualData ? todayActual.actualAverageTicket : 0) : pastActualActive ? (pastActual.actualTransactions > 0 ? pastActual.actualRevenue / pastActual.actualTransactions : 0) : displayMetrics.averageTicket)} currency={currency} className="text-lg sm:text-xl md:text-2xl font-display tabular-nums" />
                       <div className="flex items-center gap-1 justify-center mt-1">
                         <p className="text-xs text-muted-foreground">{t('sales.avg_ticket')}</p>
                         <ChevronDown className={cn("w-3 h-3 text-muted-foreground transition-transform duration-200", activeDrilldown === 'avgTicket' && "rotate-180")} />
@@ -1043,7 +1048,7 @@ export function AggregateSalesCard({
                       <div className="flex justify-center mb-2">
                         <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                       </div>
-                      <AnimatedBlurredAmount value={Math.round(isToday ? (todayActual?.hasActualData && todayActual.actualServiceHours > 0 ? todayActual.actualRevenue / todayActual.actualServiceHours : 0) : revenuePerHour)} currency={currency} className="text-lg sm:text-xl md:text-2xl font-display tabular-nums" />
+                      <AnimatedBlurredAmount value={Math.round(isToday ? (todayActual?.hasActualData && todayActual.actualServiceHours > 0 ? todayActual.actualRevenue / todayActual.actualServiceHours : 0) : pastActualActive ? (metrics?.totalServiceHours && metrics.totalServiceHours > 0 ? pastActual.actualRevenue / metrics.totalServiceHours : 0) : revenuePerHour)} currency={currency} className="text-lg sm:text-xl md:text-2xl font-display tabular-nums" />
                       <div className="flex items-center gap-1 justify-center mt-1">
                         <p className="text-xs text-muted-foreground">{t('sales.rev_per_hour')}</p>
                         <ChevronDown className={cn("w-3 h-3 text-muted-foreground transition-transform duration-200", activeDrilldown === 'revPerHour' && "rotate-180")} />
@@ -1070,7 +1075,7 @@ export function AggregateSalesCard({
                     <div className="flex justify-center mb-2">
                       <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                     </div>
-                    <AnimatedBlurredAmount value={isToday ? (todayActual?.hasActualData ? todayActual.actualTransactions : 0) : displayMetrics.totalTransactions} className="text-lg sm:text-xl md:text-2xl font-display tabular-nums" />
+                    <AnimatedBlurredAmount value={isToday ? (todayActual?.hasActualData ? todayActual.actualTransactions : 0) : pastActualActive ? pastActual.actualTransactions : displayMetrics.totalTransactions} className="text-lg sm:text-xl md:text-2xl font-display tabular-nums" />
                     <div className="flex items-center gap-1 justify-center mt-1">
                       <p className="text-xs text-muted-foreground">{t('sales.transactions')}</p>
                       <ChevronDown className={cn("w-3 h-3 text-muted-foreground transition-transform duration-200", activeDrilldown === 'transactions' && "rotate-180")} />
@@ -1089,7 +1094,7 @@ export function AggregateSalesCard({
                     <div className="flex justify-center mb-2">
                       <Receipt className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                     </div>
-                    <AnimatedBlurredAmount value={Math.round(isToday ? (todayActual?.hasActualData ? todayActual.actualAverageTicket : 0) : displayMetrics.averageTicket)} currency={currency} className="text-lg sm:text-xl md:text-2xl font-display tabular-nums" />
+                    <AnimatedBlurredAmount value={Math.round(isToday ? (todayActual?.hasActualData ? todayActual.actualAverageTicket : 0) : pastActualActive ? (pastActual.actualTransactions > 0 ? pastActual.actualRevenue / pastActual.actualTransactions : 0) : displayMetrics.averageTicket)} currency={currency} className="text-lg sm:text-xl md:text-2xl font-display tabular-nums" />
                     <div className="flex items-center gap-1 justify-center mt-1">
                       <p className="text-xs text-muted-foreground">{t('sales.avg_ticket')}</p>
                       <ChevronDown className={cn("w-3 h-3 text-muted-foreground transition-transform duration-200", activeDrilldown === 'avgTicket' && "rotate-180")} />
@@ -1108,7 +1113,7 @@ export function AggregateSalesCard({
                     <div className="flex justify-center mb-2">
                       <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                     </div>
-                    <AnimatedBlurredAmount value={Math.round(isToday ? (todayActual?.hasActualData && todayActual.actualServiceHours > 0 ? todayActual.actualRevenue / todayActual.actualServiceHours : 0) : revenuePerHour)} currency={currency} className="text-lg sm:text-xl md:text-2xl font-display tabular-nums" />
+                    <AnimatedBlurredAmount value={Math.round(isToday ? (todayActual?.hasActualData && todayActual.actualServiceHours > 0 ? todayActual.actualRevenue / todayActual.actualServiceHours : 0) : pastActualActive ? (metrics?.totalServiceHours && metrics.totalServiceHours > 0 ? pastActual.actualRevenue / metrics.totalServiceHours : 0) : revenuePerHour)} currency={currency} className="text-lg sm:text-xl md:text-2xl font-display tabular-nums" />
                     <div className="flex items-center gap-1 justify-center mt-1">
                       <p className="text-xs text-muted-foreground">{t('sales.rev_per_hour')}</p>
                       <ChevronDown className={cn("w-3 h-3 text-muted-foreground transition-transform duration-200", activeDrilldown === 'revPerHour' && "rotate-180")} />
