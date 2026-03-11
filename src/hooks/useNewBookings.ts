@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { formatDisplayName } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { startOfWeek, startOfMonth, endOfMonth, subMonths, subDays } from 'date-fns';
 import type { DateRangeType } from '@/components/dashboard/PinnedAnalyticsCard';
