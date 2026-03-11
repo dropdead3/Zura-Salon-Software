@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon, Loader2, AlertTriangle } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatDisplayName } from '@/lib/utils';
 import {
   useCreateShift,
   useUpdateShift,
