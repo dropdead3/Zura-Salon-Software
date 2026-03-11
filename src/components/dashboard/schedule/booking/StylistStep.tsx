@@ -152,7 +152,7 @@ export function StylistStep({
               <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
                 {quickDates.map((date) => {
                   const isSelected = isSameDay(date, selectedDate);
-                  const isToday = isSameDay(date, new Date());
+                  const isToday = isOrgToday(date);
                   return (
                     <button
                       key={date.toISOString()}
