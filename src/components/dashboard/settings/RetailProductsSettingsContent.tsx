@@ -139,7 +139,7 @@ function ProductsTab() {
           <Switch checked={lowStockOnly} onCheckedChange={setLowStockOnly} id="low-stock" />
           <Label htmlFor="low-stock" className="text-sm cursor-pointer">Low Stock</Label>
         </div>
-        <Button size={tokens.button.card} onClick={() => setShowAddDialog(true)} className="gap-1.5">
+        <Button size={tokens.button.card} onClick={() => setShowWizard(true)} className="gap-1.5">
           <Plus className="w-4 h-4" /> Add Product
         </Button>
       </div>
