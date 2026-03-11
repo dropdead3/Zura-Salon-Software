@@ -214,6 +214,8 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
   const { data: locations } = useActiveLocations();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [cropPreviewFile, setCropPreviewFile] = useState<File | null>(null);
+  const [cropPreviewUrl, setCropPreviewUrl] = useState<string | null>(null);
   const [form, setForm] = useState({
     name: product?.name || '',
     brand: product?.brand || '',
@@ -229,12 +231,37 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
     image_url: product?.image_url || '',
   });
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const clearCropPreview = () => {
+    if (cropPreviewUrl) URL.revokeObjectURL(cropPreviewUrl);
+    setCropPreviewFile(null);
+    setCropPreviewUrl(null);
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    e.target.value = '';
     if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      sonnerToast.error('Please select an image file');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      sonnerToast.error('Image must be under 10 MB');
+      return;
+    }
+
+    clearCropPreview();
+    const url = URL.createObjectURL(file);
+    setCropPreviewFile(file);
+    setCropPreviewUrl(url);
+  };
+
+  const handleConfirmUpload = async () => {
+    if (!cropPreviewFile) return;
     setUploading(true);
     try {
-      const { blob } = await optimizeImage(file, {
+      const { blob } = await optimizeImage(cropPreviewFile, {
         maxWidth: 800,
         maxHeight: 800,
         quality: 0.82,
@@ -254,6 +281,7 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
       sonnerToast.error('Failed to process image');
     } finally {
       setUploading(false);
+      clearCropPreview();
     }
   };
 
@@ -310,7 +338,44 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
                   )}
                 </button>
               )}
-              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+
+              {/* Crop preview overlay */}
+              {cropPreviewUrl && (
+                <div className="w-full space-y-2">
+                  <div className="relative w-full aspect-square rounded-lg overflow-hidden border border-border bg-muted/30">
+                    <img src={cropPreviewUrl} alt="Preview" className="w-full h-full object-cover" />
+                    {/* Square crop boundary mask */}
+                    <div className="absolute inset-0 pointer-events-none" style={{ boxShadow: 'inset 0 0 0 2px hsl(var(--primary) / 0.6)' }} />
+                    <div className="absolute bottom-1.5 left-1.5 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded font-sans">
+                      Center-crop preview
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      size={tokens.button.inline}
+                      onClick={handleConfirmUpload}
+                      disabled={uploading}
+                      className="flex-1"
+                    >
+                      {uploading ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Check className="w-3 h-3 mr-1" />}
+                      Upload
+                    </Button>
+                    <Button
+                      type="button"
+                      size={tokens.button.inline}
+                      variant="outline"
+                      onClick={clearCropPreview}
+                      disabled={uploading}
+                    >
+                      <X className="w-3 h-3 mr-1" />
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileSelect} />
             </div>
           </div>
           <div><Label className="text-xs">Name *</Label><Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} /></div>
