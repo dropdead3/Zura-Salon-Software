@@ -106,7 +106,7 @@ function DroppableSlot({
   isOutsideHours,
   showCurrentTime,
   onClick,
-  onContextMenu,
+  
   isOver,
 }: {
   id: string;
