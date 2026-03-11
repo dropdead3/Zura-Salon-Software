@@ -291,6 +291,7 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
     name: product?.name || '',
     brand: product?.brand || '',
     category: product?.category || '',
+    product_type: product?.product_type || 'Products',
     sku: product?.sku || '',
     barcode: product?.barcode || '',
     retail_price: product?.retail_price?.toString() || '',
