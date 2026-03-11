@@ -73,8 +73,12 @@ function ProductsTab() {
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
+  const [wizardDraftId, setWizardDraftId] = useState<string | undefined>();
+  const [wizardInitialDraft, setWizardInitialDraft] = useState<{ form_data: Record<string, any>; current_step: number } | undefined>();
   const [editingStockId, setEditingStockId] = useState<string | null>(null);
   const [stockValue, setStockValue] = useState('');
+  const { data: drafts } = useProductDrafts();
+  const deleteDraft = useDeleteProductDraft();
 
   // Products are now filtered server-side via productType filter
   const filteredProducts = products || [];
