@@ -15,14 +15,14 @@ import {
 import { tokens } from '@/lib/design-tokens';
 import {
   Search, Plus, BarChart3, Package, Edit2, AlertTriangle, Minus,
-  Loader2, Check, X, MapPin, CheckCircle2, Info, ExternalLink, ImagePlus,
+  Loader2, Check, X, MapPin, CheckCircle2, Info, ExternalLink, ImagePlus, Gift,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useProducts, useCreateProduct, useUpdateProduct, useProductBrandsList, type Product } from '@/hooks/useProducts';
 import { useProductBrands, useProductCategorySummaries } from '@/hooks/useProductBrands';
 import { useProductCategories } from '@/hooks/useProducts';
-import { isExtensionProduct, isGiftCardProduct, isMerchProduct } from '@/utils/serviceCategorization';
+import { isExtensionProduct, isMerchProduct } from '@/utils/serviceCategorization';
 import { useBulkUpdateProducts, useBulkToggleProducts } from '@/hooks/useBulkUpdateProducts';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
@@ -30,18 +30,18 @@ import { useWebsiteRetailSettings } from '@/hooks/useWebsiteSettings';
 import { supabase } from '@/integrations/supabase/client';
 import { toast as sonnerToast } from 'sonner';
 import { optimizeImage } from '@/lib/image-utils';
+import { GiftCardsHub } from '@/components/dashboard/settings/GiftCardsHub';
 // Helper to classify product type — prefer DB column, fall back to regex
 function getProductType(product: Product): string {
   if (product.product_type && product.product_type !== 'Products') return product.product_type;
   if (product.product_type === 'Products') return 'Products';
   // Fallback for legacy rows without product_type
   if (isExtensionProduct(product.name)) return 'Extensions';
-  if (isGiftCardProduct(product.name)) return 'Gift Cards';
   if (isMerchProduct(product.name)) return 'Merch';
   return 'Products';
 }
 
-const PRODUCT_TYPES = ['Products', 'Extensions', 'Gift Cards', 'Merch'] as const;
+const PRODUCT_TYPES = ['Products', 'Extensions', 'Merch'] as const;
 
 // ─── Products Tab ───
 function ProductsTab() {
@@ -854,6 +854,7 @@ export function RetailProductsSettingsContent() {
           <TabsTrigger value="brands">Brands</TabsTrigger>
           <TabsTrigger value="categories">Categories</TabsTrigger>
           <TabsTrigger value="inventory" className="gap-1.5"><MapPin className="w-3.5 h-3.5" /> Inventory</TabsTrigger>
+          <TabsTrigger value="gift-cards" className="gap-1.5"><Gift className="w-3.5 h-3.5" /> Gift Cards</TabsTrigger>
         </TabsList>
 
         <TabsContent value="products" className="mt-4">
@@ -870,6 +871,10 @@ export function RetailProductsSettingsContent() {
 
         <TabsContent value="inventory" className="mt-4">
           <InventoryByLocationTab />
+        </TabsContent>
+
+        <TabsContent value="gift-cards" className="mt-4">
+          <GiftCardsHub />
         </TabsContent>
       </Tabs>
     </div>
