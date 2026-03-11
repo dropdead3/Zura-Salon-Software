@@ -31,6 +31,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast as sonnerToast } from 'sonner';
 import { optimizeImage } from '@/lib/image-utils';
 import { GiftCardsHub } from '@/components/dashboard/settings/GiftCardsHub';
+import { ProductWizard } from '@/components/dashboard/settings/ProductWizard';
 // Helper to classify product type — prefer DB column, fall back to regex
 function getProductType(product: Product): string {
   if (product.product_type && product.product_type !== 'Products') return product.product_type;
