@@ -1004,11 +1004,13 @@ export function AggregateSalesCard({
               return (
                 <div className="grid grid-cols-2 gap-6">
                   {/* Services (with expandable category breakdown) */}
-                  <div className="text-center p-3 sm:p-4 bg-card-inner-deep rounded-lg border border-border/40 transition-all hover:border-border/80 dark:hover:border-border/60">
-                    <div 
-                      className="cursor-pointer"
-                      onClick={() => setDrilldownMode('services')}
-                    >
+                  <div className={cn(
+                    "text-center p-3 sm:p-4 bg-card-inner-deep rounded-lg border transition-all cursor-pointer",
+                    activeDrilldown === 'revenue'
+                      ? "ring-1 ring-primary/20 bg-primary/5 border-primary/30"
+                      : "border-border/40 hover:border-border/80 dark:hover:border-border/60"
+                  )} onClick={() => toggleDrilldown('revenue')}>
+                    <div>
                       <div className="flex items-center justify-center gap-1.5 mb-2">
                         <Scissors className="w-3.5 h-3.5 text-primary" />
                         <span className="text-xs text-muted-foreground">{t('sales.services')}</span>
