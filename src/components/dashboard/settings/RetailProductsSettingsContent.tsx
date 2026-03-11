@@ -41,7 +41,7 @@ function getProductType(product: Product): string {
   return 'Products';
 }
 
-const PRODUCT_TYPES = ['Products', 'Extensions', 'Gift Cards', 'Merch'] as const;
+const PRODUCT_TYPES = ['Products', 'Extensions', 'Merch'] as const;
 
 // ─── Products Tab ───
 function ProductsTab() {
