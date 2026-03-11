@@ -345,7 +345,7 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
         if (isProduct) {
           productRevenue += Number(item.total_amount) || 0;
           productUnits += item.quantity || 1;
-          if (visitKey) productVisitKeys.add(visitKey);
+          if (visitKey && !isExtensionProduct(item.item_name)) productVisitKeys.add(visitKey);
         }
         if (isService) {
           serviceRevenue += Number(item.total_amount) || 0;

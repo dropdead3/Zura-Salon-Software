@@ -354,7 +354,7 @@ export function useRetailAnalytics(dateFrom?: string, dateTo?: string, locationI
           if (isProduct) {
             s.revenue += Number(item.total_amount) || 0;
             s.units += item.quantity || 1;
-            if (txId) s.productTxs.add(txId);
+            if (txId && !isExtensionProduct(item.item_name)) s.productTxs.add(txId);
           }
         }
 

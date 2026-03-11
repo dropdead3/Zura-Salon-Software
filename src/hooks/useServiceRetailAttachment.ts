@@ -75,6 +75,7 @@ export function useServiceRetailAttachment({ dateFrom, dateTo, locationId }: Use
       const productVisitMap = new Map<string, number>();
       for (const p of productItems) {
         if (!p.phorest_client_id || !p.transaction_date) continue;
+        if (isExtensionProduct(p.item_name)) continue;
         const key = `${p.phorest_client_id}|${p.transaction_date}`;
         productVisitMap.set(
           key,
