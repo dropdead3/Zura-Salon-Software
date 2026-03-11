@@ -11,7 +11,7 @@ export const TABS_CLASSES = {
 
   subList: "inline-flex h-10 items-center gap-4 bg-transparent p-0 text-muted-foreground",
   subTrigger:
-    "inline-flex items-center gap-2 px-2 py-2 text-sm font-medium border-b-2 border-transparent rounded-t-md transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:text-foreground hover:bg-muted/50 data-[state=active]:text-foreground data-[state=active]:border-primary data-[state=active]:bg-transparent",
+    "inline-flex items-center gap-2 px-2 py-2 text-sm font-medium border-b-2 border-transparent rounded-t-md transition-all duration-200 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 hover:text-foreground hover:bg-muted/50 data-[state=active]:text-foreground data-[state=active]:border-primary data-[state=active]:bg-transparent",
 
   filterList: "inline-flex h-8 items-center justify-center p-1 text-muted-foreground gap-1 bg-muted/70 rounded-[7px]",
   filterTrigger: [
