@@ -80,8 +80,13 @@ export function useRetailAttachmentRate({ dateFrom, dateTo, locationId }: UseRet
         }
       }
 
+      // Filter out extension products — they are service inputs, not cross-sells
+      const nonExtensionProducts = productItems.filter(
+        (row: any) => !isExtensionProduct(row.item_name)
+      );
+
       const productVisitSet = new Set<string>();
-      for (const row of productItems) {
+      for (const row of nonExtensionProducts) {
         if (row.phorest_client_id && row.transaction_date) {
           productVisitSet.add(`${row.phorest_client_id}|${row.transaction_date}`);
         }
