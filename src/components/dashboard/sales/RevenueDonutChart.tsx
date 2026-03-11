@@ -176,7 +176,7 @@ export function RevenueDonutChart({
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-1.5">
                   <span className="text-muted-foreground">Attach Rate</span>
-                  <MetricInfoTooltip description="Percentage of service clients who also purchased a retail product in this period. A key indicator of cross-selling effectiveness." />
+                  <MetricInfoTooltip description="Percentage of service clients who also purchased a retail product (excluding extensions) in this period. Extensions are service inputs and not counted as cross-sells." />
                 </div>
                 <div className="flex items-center gap-1.5">
                   {!retailAttachmentLoading && retailAttachmentRate !== undefined && (
