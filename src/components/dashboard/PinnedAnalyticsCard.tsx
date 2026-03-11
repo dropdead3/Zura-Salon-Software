@@ -297,7 +297,13 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
     dateTo: filters.dateTo,
     locationId: locationFilter,
   });
-  
+  const { data: retailBreakdown } = useRetailBreakdown(
+    filters.dateFrom,
+    filters.dateTo,
+    true,
+    locationFilter,
+  );
+
   const { accessibleLocations } = useUserLocationAccess();
   const { data: locations } = useLocations();
   const { data: rebookData } = useRebookingRate(filters.dateFrom, filters.dateTo, filters.locationId);

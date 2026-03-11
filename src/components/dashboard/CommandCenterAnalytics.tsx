@@ -184,6 +184,12 @@ export function CommandCenterAnalytics() {
     dateTo: dateFilters.dateTo,
     locationId: locationFilter,
   });
+  const { data: retailBreakdown } = useRetailBreakdown(
+    dateFilters.dateFrom,
+    dateFilters.dateTo,
+    true,
+    locationFilter,
+  );
   // Commission resolution handled internally by commission components
   
   // Show nothing if loading
