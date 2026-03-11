@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
-import { format, addDays, startOfWeek, isSameDay, differenceInMinutes, parse } from 'date-fns';
+import { format, addDays, startOfWeek, differenceInMinutes, parse } from 'date-fns';
+import { useOrgNow } from '@/hooks/useOrgNow';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';

@@ -5,9 +5,8 @@ import { isClosedOnDate, getLocationHoursForDate, type HoursJson, type HolidayCl
 import { 
   format, 
   addDays, 
-  isToday,
-  isTomorrow,
 } from 'date-fns';
+import { useOrgNow } from '@/hooks/useOrgNow';
 import { cn, formatDisplayName } from '@/lib/utils';
 import { 
   Tooltip,

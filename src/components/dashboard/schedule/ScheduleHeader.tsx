@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { format, addDays, isToday, startOfWeek } from 'date-fns';
+import { format, addDays } from 'date-fns';
+import { useOrgNow } from '@/hooks/useOrgNow';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { isClosedOnDate, type HoursJson, type HolidayClosure } from '@/hooks/useLocations';
 import { 

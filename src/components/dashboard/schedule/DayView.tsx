@@ -1,7 +1,8 @@
 import { useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
 import type { AssistantProfile } from '@/hooks/useAppointmentAssistantNames';
-import { format, isToday, getWeek } from 'date-fns';
+import { format, getWeek } from 'date-fns';
+import { useOrgNow } from '@/hooks/useOrgNow';
 import { ClosedBadge } from '@/components/dashboard/ClosedBadge';
 import { cn, formatPhoneDisplay, formatDisplayName } from '@/lib/utils';
 import type { AdminMeeting } from '@/hooks/useAdminMeetings';

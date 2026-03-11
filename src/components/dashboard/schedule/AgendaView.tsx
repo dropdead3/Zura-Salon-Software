@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import { addDays, isToday, isTomorrow, parseISO } from 'date-fns';
+import { addDays, parseISO } from 'date-fns';
+import { isOrgToday, isOrgTomorrow } from '@/lib/orgTime';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { cn, formatDisplayName } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';

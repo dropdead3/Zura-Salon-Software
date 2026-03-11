@@ -7,9 +7,9 @@ import {
   endOfWeek,
   addDays,
   isSameMonth,
-  isToday,
   isSameDay
 } from 'date-fns';
+import { useOrgNow } from '@/hooks/useOrgNow';
 import { cn } from '@/lib/utils';
 import { ClosedBadge } from '@/components/dashboard/ClosedBadge';
 import { isClosedOnDate, type HoursJson, type HolidayClosure } from '@/hooks/useLocations';

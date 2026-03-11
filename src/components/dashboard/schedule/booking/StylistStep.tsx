@@ -5,7 +5,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Calendar } from '@/components/ui/calendar';
 import { Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn, formatDisplayName } from '@/lib/utils';
-import { addDays, subDays, isSameDay } from 'date-fns';
+import { addDays, subDays, isSameDay, format as formatDateFns } from 'date-fns';
+import { useOrgNow } from '@/hooks/useOrgNow';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useState } from 'react';
 
