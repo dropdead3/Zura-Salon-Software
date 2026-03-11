@@ -134,7 +134,7 @@ export function StylistOverridesContent({ serviceId, basePrice }: StylistOverrid
               return (
                 <div key={emp.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/40 transition-colors">
                   <div className="flex-1 min-w-0">
-                    <p className={cn(tokens.body.emphasis, 'truncate')}>{emp.display_name || emp.full_name}</p>
+                    <p className={cn(tokens.body.emphasis, 'truncate')}>{formatDisplayName(emp.full_name, emp.display_name)}</p>
                     <p className={tokens.body.muted}>
                       {emp.stylist_level || 'No level'}
                       {levelPrice != null && ` · Level: $${levelPrice.toFixed(2)}`}
