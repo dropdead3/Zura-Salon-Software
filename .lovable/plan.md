@@ -1,28 +1,22 @@
 
 
-## Add "Timeblock / Break" Option to Schedule Type Selector
+## Sort Retail Categories by Revenue with Rank Numbers
 
-### Change Summary
+### Change
+**`src/components/dashboard/AggregateSalesCard.tsx`** (~line 1007-1068)
 
-Add a third button to the `ScheduleTypeSelector` for creating timeblocks/breaks. This mirrors the existing break dialog flow already wired up in `Schedule.tsx`.
+1. After defining `subCategories` array, sort it descending by `amount`:
+   ```js
+   .sort((a, b) => b.amount - a.amount)
+   ```
 
-### Changes (2 files)
+2. In the `.map()` rendering (line 1068), use the index to display a rank number before the icon:
+   ```jsx
+   {subCategories.map(({ label, icon: Icon, amount }, index) => {
+     ...
+     <span className="text-[10px] text-muted-foreground/50 w-3 tabular-nums">{index + 1}</span>
+     <Icon ... />
+   ```
 
-**1. `ScheduleTypeSelector.tsx`**
-- Add `onSelectTimeblock` callback prop
-- Add a third button with `Clock` icon (from lucide-react), label "Timeblock / Break", description "Lunch, personal time, focus block"
-- Same button styling as existing two options
-
-**2. `Schedule.tsx`**
-- Pass `onSelectTimeblock` to `ScheduleTypeSelector`
-- Handler: close type selector, set `breakDefaults` with the clicked time/stylist, open `breakDialogOpen`
-
-```text
-Type Selector options:
-  ┌─ Client Appointment   (CalendarPlus)  → booking wizard
-  ├─ Internal Meeting      (Users)         → meeting wizard
-  └─ Timeblock / Break     (Clock)         → break/block form
-```
-
-Two files, ~15 lines total.
+Two small additions — a `.sort()` call and a rank `<span>`.
 
