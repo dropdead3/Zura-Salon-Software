@@ -455,7 +455,7 @@ export function ScheduleHeader({
                   )}
                   <span className="font-medium text-xs tracking-wide">Today</span>
                 </div>
-                <span className="text-[10px] opacity-70">{format(new Date(), 'MMM d')}</span>
+                <span className="text-[10px] opacity-70">{format(orgToday, 'MMM d')}</span>
               </button>
             );
 
