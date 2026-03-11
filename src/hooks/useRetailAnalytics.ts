@@ -3,6 +3,7 @@ import { formatDisplayName } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { differenceInDays, parseISO, subDays, format } from 'date-fns';
 import { isAllLocations, parseLocationIds } from '@/lib/locationFilter';
+import { isExtensionProduct } from '@/utils/serviceCategorization';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -341,7 +342,7 @@ export function useRetailAnalytics(dateFrom?: string, dateTo?: string, locationI
 
         // Track all service/product transactions for attachment rate
         if (isService && txId) allServiceTxs.add(txId);
-        if (isProduct && txId) allProductTxs.add(txId);
+        if (isProduct && txId && !isExtensionProduct(item.item_name)) allProductTxs.add(txId);
 
         // Staff tracking
         if (staffId) {
@@ -353,7 +354,7 @@ export function useRetailAnalytics(dateFrom?: string, dateTo?: string, locationI
           if (isProduct) {
             s.revenue += Number(item.total_amount) || 0;
             s.units += item.quantity || 1;
-            if (txId) s.productTxs.add(txId);
+            if (txId && !isExtensionProduct(item.item_name)) s.productTxs.add(txId);
           }
         }
 

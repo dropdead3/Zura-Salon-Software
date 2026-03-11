@@ -650,7 +650,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
   const kpis = [
     { label: 'Product Revenue', value: formatCurrencyWhole(summary.totalRevenue), change: summary.revenueChange as number | null, icon: DollarSign, tooltip: 'Total revenue from retail product sales in the selected period. Change is compared against the equivalent prior period.' },
     { label: 'Units Sold', value: summary.totalUnits.toLocaleString(), change: summary.unitsChange as number | null, icon: Package, tooltip: 'Total quantity of retail products sold. Change is compared against the equivalent prior period.' },
-    { label: 'Attachment Rate', value: `${summary.attachmentRate}%`, change: null as number | null, icon: ShoppingBag, tooltip: 'Percentage of service transactions that also included a retail product sale. Higher rates indicate effective retail recommendations.' },
+    { label: 'Attachment Rate', value: `${summary.attachmentRate}%`, change: null as number | null, icon: ShoppingBag, tooltip: 'Percentage of service transactions that also included a retail product sale (excludes extension products). Higher rates indicate effective retail recommendations.' },
     { label: 'Avg Product Ticket', value: formatCurrencyWhole(summary.avgProductTicket), change: null as number | null, icon: Tag, tooltip: 'Average revenue per retail unit sold. Calculated as total product revenue divided by total units sold.' },
   ];
 

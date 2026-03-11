@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { getServiceCategory } from '@/utils/serviceCategorization';
+import { getServiceCategory, isExtensionProduct } from '@/utils/serviceCategorization';
 
 export interface ServiceRetailRow {
   serviceName: string;
@@ -62,7 +62,7 @@ export function useServiceRetailAttachment({ dateFrom, dateTo, locationId }: Use
       const productItems = await fetchAllPages((offset) => {
         let q = supabase
           .from('phorest_transaction_items')
-          .select('phorest_client_id, transaction_date, total_amount')
+          .select('phorest_client_id, transaction_date, total_amount, item_name')
           .gte('transaction_date', dateFrom)
           .lte('transaction_date', dateTo)
           .not('phorest_client_id', 'is', null)
@@ -75,6 +75,7 @@ export function useServiceRetailAttachment({ dateFrom, dateTo, locationId }: Use
       const productVisitMap = new Map<string, number>();
       for (const p of productItems) {
         if (!p.phorest_client_id || !p.transaction_date) continue;
+        if (isExtensionProduct(p.item_name)) continue;
         const key = `${p.phorest_client_id}|${p.transaction_date}`;
         productVisitMap.set(
           key,

@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { formatDisplayName } from '@/lib/utils';
 import { differenceInDays, parseISO, subDays, format, differenceInBusinessDays } from 'date-fns';
+import { isExtensionProduct } from '@/utils/serviceCategorization';
 import { useResolveCommission } from '@/hooks/useResolveCommission';
 
 // ---------------------------------------------------------------------------
@@ -344,7 +345,7 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
         if (isProduct) {
           productRevenue += Number(item.total_amount) || 0;
           productUnits += item.quantity || 1;
-          if (visitKey) productVisitKeys.add(visitKey);
+          if (visitKey && !isExtensionProduct(item.item_name)) productVisitKeys.add(visitKey);
         }
         if (isService) {
           serviceRevenue += Number(item.total_amount) || 0;
