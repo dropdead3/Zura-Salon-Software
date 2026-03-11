@@ -57,6 +57,7 @@ export function AgendaView({
 }: AgendaViewProps) {
   const { formatDate } = useFormatDate();
   const { colorMap: categoryColors } = useServiceCategoryColorsMap();
+  const { timezone } = useOrgNow();
 
   // Group appointments by date
   const appointmentsByDate = useMemo(() => {
