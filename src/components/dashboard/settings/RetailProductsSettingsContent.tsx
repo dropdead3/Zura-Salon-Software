@@ -390,9 +390,10 @@ function CategoriesTab() {
   return (
     <div className="overflow-x-auto border rounded-lg">
       <Table>
-        <TableHeader>
+         <TableHeader>
           <TableRow>
             <TableHead>Category</TableHead>
+            <TableHead>Type</TableHead>
             <TableHead className="text-right">Products</TableHead>
             <TableHead className="text-right">Total Stock</TableHead>
             <TableHead className="text-right">Inventory Value</TableHead>
@@ -401,8 +402,11 @@ function CategoriesTab() {
         </TableHeader>
         <TableBody>
           {!categories?.length ? (
-            <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">No categories found</TableCell></TableRow>
-          ) : categories.map(c => (
+            <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No categories found</TableCell></TableRow>
+          ) : categories.map(c => {
+            const typeEntries = Object.entries(c.typeCounts || {}).sort((a, b) => b[1] - a[1]);
+            const isSingleType = typeEntries.length === 1;
+            return (
             <TableRow key={c.category}>
               <TableCell>
                 {renamingCat === c.category ? (
@@ -415,6 +419,15 @@ function CategoriesTab() {
                   <span className="font-medium text-sm">{c.category}</span>
                 )}
               </TableCell>
+              <TableCell>
+                <div className="flex flex-wrap gap-1">
+                  {typeEntries.map(([type, count]) => (
+                    <Badge key={type} variant="secondary" className="text-[10px] px-2 py-0.5">
+                      {isSingleType ? type : `${type} (${count})`}
+                    </Badge>
+                  ))}
+                </div>
+              </TableCell>
               <TableCell className="text-right tabular-nums">{c.productCount}</TableCell>
               <TableCell className="text-right tabular-nums">{c.totalStock}</TableCell>
               <TableCell className="text-right tabular-nums"><BlurredAmount>{formatCurrency(c.totalInventoryValue)}</BlurredAmount></TableCell>
@@ -426,7 +439,7 @@ function CategoriesTab() {
                 )}
               </TableCell>
             </TableRow>
-          ))}
+          );})}
         </TableBody>
       </Table>
     </div>

@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { isExtensionProduct, isGiftCardProduct, isMerchProduct } from '@/utils/serviceCategorization';
 
 export interface BrandSummary {
   brand: string;
@@ -13,6 +14,7 @@ export interface CategorySummary {
   productCount: number;
   totalInventoryValue: number;
   totalStock: number;
+  typeCounts: Record<string, number>;
 }
 
 export function useProductBrands() {
@@ -49,21 +51,30 @@ export function useProductCategorySummaries() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('category, retail_price, quantity_on_hand')
+        .select('category, name, retail_price, quantity_on_hand')
         .eq('is_active', true);
 
       if (error) throw error;
+
+      function getRetailType(name: string | null): string {
+        if (isExtensionProduct(name)) return 'Extensions';
+        if (isGiftCardProduct(name)) return 'Gift Cards';
+        if (isMerchProduct(name)) return 'Merch';
+        return 'Products';
+      }
 
       const catMap = new Map<string, CategorySummary>();
       (data || []).forEach((p: any) => {
         const category = p.category || 'Uncategorized';
         if (!catMap.has(category)) {
-          catMap.set(category, { category, productCount: 0, totalInventoryValue: 0, totalStock: 0 });
+          catMap.set(category, { category, productCount: 0, totalInventoryValue: 0, totalStock: 0, typeCounts: {} });
         }
         const c = catMap.get(category)!;
         c.productCount++;
         c.totalStock += p.quantity_on_hand || 0;
         c.totalInventoryValue += (p.retail_price || 0) * (p.quantity_on_hand || 0);
+        const type = getRetailType(p.name);
+        c.typeCounts[type] = (c.typeCounts[type] || 0) + 1;
       });
 
       return Array.from(catMap.values()).sort((a, b) => b.productCount - a.productCount);
