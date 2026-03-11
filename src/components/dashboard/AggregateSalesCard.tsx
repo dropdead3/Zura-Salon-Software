@@ -1054,11 +1054,11 @@ export function AggregateSalesCard({
                           transition={{ duration: 0.2 }}
                           className="overflow-hidden"
                         >
-                          <div className="mt-3 pt-3 border-t border-border/40 space-y-2 text-left">
+                          <div className="mt-3 pt-3 border-t border-border/40 space-y-1 text-left -mx-1">
                             {serviceCategoryData.slice(0, 4).map((cat, index) => (
                               <div
                                 key={cat.category}
-                                className="flex items-center gap-2 w-full text-left rounded-lg px-3 py-2 -mx-3"
+                                className="flex items-center gap-2 w-full text-left rounded-xl px-3 py-2.5 hover:bg-muted/50 transition-colors"
                               >
                                 <span className="text-[10px] text-muted-foreground/50 w-3 tabular-nums">{index + 1}</span>
                                 <Scissors className="w-3 h-3 text-muted-foreground shrink-0" />
@@ -1116,14 +1116,14 @@ export function AggregateSalesCard({
                           transition={{ duration: 0.2 }}
                           className="overflow-hidden"
                         >
-                          <div className="mt-3 pt-3 border-t border-border/40 space-y-2 text-left">
+                          <div className="mt-3 pt-3 border-t border-border/40 space-y-1 text-left -mx-1">
                             {subCategories.map(({ label, icon: Icon, amount }, index) => {
                               const pct = retailTotal > 0 ? Math.round((amount / retailTotal) * 100) : 0;
                               return (
                                 <button
                                   key={label}
                                   type="button"
-                                  className="flex items-center gap-2 w-full text-left rounded-lg px-3 py-2 -mx-3 transition-colors hover:bg-muted/60"
+                                  className="flex items-center gap-2 w-full text-left rounded-xl px-3 py-2.5 transition-colors hover:bg-muted/50"
                                   onClick={(e) => { e.stopPropagation(); setRetailCategoryDrilldown(label as any); }}
                                 >
                                   <span className="text-[10px] text-muted-foreground/50 w-3 tabular-nums">{index + 1}</span>

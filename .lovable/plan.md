@@ -1,24 +1,28 @@
 
 
-## Fix Breakdown Row Hover Highlights
+## Add "Timeblock / Break" Option to Schedule Type Selector
 
-**Problem:** The rows use `px-3 -mx-3` — the negative margin extends the hit area but the rounded corners get clipped by the parent's `overflow-hidden`. The content also sits flush against the highlight edges because the padding is consumed by the negative-margin offset.
+### Change Summary
 
-**Solution:** Remove the negative-margin hack. Instead, add padding to the rows naturally and compensate by removing padding from the parent container so the rows still align with the card edges.
+Add a third button to the `ScheduleTypeSelector` for creating timeblocks/breaks. This mirrors the existing break dialog flow already wired up in `Schedule.tsx`.
 
-### Changes — `src/components/dashboard/AggregateSalesCard.tsx`
+### Changes (2 files)
 
-**Services breakdown rows (line 1057):**
-- Change parent `div` from `space-y-2 text-left` → `space-y-1 text-left -mx-1` (slight negative margin on the container only, so rows can breathe)
+**1. `ScheduleTypeSelector.tsx`**
+- Add `onSelectTimeblock` callback prop
+- Add a third button with `Clock` icon (from lucide-react), label "Timeblock / Break", description "Lunch, personal time, focus block"
+- Same button styling as existing two options
 
-**Services row (line 1061):**
-- Change from `rounded-lg px-3 py-2 -mx-3` → `rounded-xl px-3 py-2.5 hover:bg-muted/50 transition-colors`
+**2. `Schedule.tsx`**
+- Pass `onSelectTimeblock` to `ScheduleTypeSelector`
+- Handler: close type selector, set `breakDefaults` with the clicked time/stylist, open `breakDialogOpen`
 
-**Retail breakdown rows (line 1119):**
-- Same parent change: `space-y-2 text-left` → `space-y-1 text-left -mx-1`
+```text
+Type Selector options:
+  ┌─ Client Appointment   (CalendarPlus)  → booking wizard
+  ├─ Internal Meeting      (Users)         → meeting wizard
+  └─ Timeblock / Break     (Clock)         → break/block form
+```
 
-**Retail row (line 1126):**
-- Change from `rounded-lg px-3 py-2 -mx-3 transition-colors hover:bg-muted/60` → `rounded-xl px-3 py-2.5 transition-colors hover:bg-muted/50`
-
-This gives each row proper inner padding within the highlight, visible rounded corners, and consistent hover styling across both breakdowns.
+Two files, ~15 lines total.
 
