@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { formatDisplayName } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 
 interface PreferredStylistInfo {
