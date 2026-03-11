@@ -217,11 +217,11 @@ export function WeekView({
   }, [appointments, weekDays]);
 
   // Current time indicator
-  const now = new Date();
-  const todayInWeek = weekDays.find(d => isToday(d));
+  const { isToday: isOrgToday, isTomorrow: isOrgTomorrow, nowMinutes: wkNowMins } = useOrgNow();
+  const todayInWeek = weekDays.find(d => isOrgToday(d));
   const showCurrentTime = !!todayInWeek;
   const currentTimeOffset = showCurrentTime
-    ? ((now.getHours() * 60 + now.getMinutes()) - (hoursStart * 60)) / 15 * ROW_HEIGHT
+    ? (wkNowMins - (hoursStart * 60)) / 15 * ROW_HEIGHT
     : 0;
 
   return (
