@@ -1,28 +1,38 @@
 
 
-## Add "Timeblock / Break" Option to Schedule Type Selector
+## Enhance Retail Breakdown: Category Drilldowns + Fix Total
 
-### Change Summary
+### Problems
+1. **Total mismatch**: The Retail card headline shows `rawProdRevenue` (from POS daily summary), while the breakdown rows come from `useRetailBreakdown` (transaction items). These sources can diverge. Fix: use `retailBreakdown.totalRetailRevenue` as the headline when available.
+2. **No category drilldowns**: Sub-category rows (Products, Merch, Gift Cards, Extensions) are static text — clicking them should open a filtered drilldown.
+3. **Gift Cards**: Already in the code/data model, just needs drilldown support like the others.
 
-Add a third button to the `ScheduleTypeSelector` for creating timeblocks/breaks. This mirrors the existing break dialog flow already wired up in `Schedule.tsx`.
+### Changes
 
-### Changes (2 files)
+**`src/components/dashboard/AggregateSalesCard.tsx`**
+- Replace `rawProdRevenue` with `retailBreakdown?.totalRetailRevenue ?? rawProdRevenue` as the displayed Retail total and for percentage calculation
+- Add a `retailCategoryDrilldown` state (`'Products' | 'Merch' | 'Gift Cards' | 'Extensions' | null`)
+- Make each sub-category row clickable — on click, set `retailCategoryDrilldown` to that label
+- Render a new `RetailCategoryDrilldown` dialog (or reuse `ServiceProductDrilldown` with a category filter) when `retailCategoryDrilldown` is set
 
-**1. `ScheduleTypeSelector.tsx`**
-- Add `onSelectTimeblock` callback prop
-- Add a third button with `Clock` icon (from lucide-react), label "Timeblock / Break", description "Lunch, personal time, focus block"
-- Same button styling as existing two options
+**`src/components/dashboard/RetailCategoryDrilldown.tsx`** (new)
+- A dialog showing product items filtered to the selected retail category
+- Reuses the same `phorest_transaction_items` query but filters items through `isExtensionProduct`, `isMerchProduct`, `isGiftCardProduct` to show only matching items
+- Groups by item name, shows quantity and revenue per item, sorted by revenue descending
+- Header shows category icon + name, footer shows category total
 
-**2. `Schedule.tsx`**
-- Pass `onSelectTimeblock` to `ScheduleTypeSelector`
-- Handler: close type selector, set `breakDefaults` with the clicked time/stylist, open `breakDialogOpen`
+**`src/hooks/useRetailCategoryItems.ts`** (new)
+- Fetches transaction items for the date range + location, filters by the category's pattern matcher
+- Returns `{ itemName, quantity, revenue }[]` sorted by revenue
+- Uses the same `fetchAllBatched` pattern from `useRetailBreakdown`
 
-```text
-Type Selector options:
-  ┌─ Client Appointment   (CalendarPlus)  → booking wizard
-  ├─ Internal Meeting      (Users)         → meeting wizard
-  └─ Timeblock / Break     (Clock)         → break/block form
-```
+### UI Behavior
+- Clicking the main Retail card area still opens the full Products drilldown (by stylist)
+- Clicking a specific sub-category row (Products/Merch/Gift Cards/Extensions) opens the category-specific drilldown showing individual items
+- The Retail headline number matches the sum of all sub-category rows
 
-Two files, ~15 lines total.
+### Files
+1. `src/components/dashboard/AggregateSalesCard.tsx` — fix total, add category drilldown state + click handlers
+2. `src/hooks/useRetailCategoryItems.ts` — new hook for fetching items by category
+3. `src/components/dashboard/RetailCategoryDrilldown.tsx` — new dialog component for category item list
 
