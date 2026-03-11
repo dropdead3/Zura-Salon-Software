@@ -80,7 +80,7 @@ export function useRenterInsurance(boothRenterId: string | undefined) {
         ...insurance,
         days_until_expiry,
         expiry_status,
-        renter_name: employee?.display_name || employee?.full_name,
+        renter_name: employee ? formatDisplayName(employee.full_name || '', employee.display_name) : undefined,
       } as RenterInsurance;
     },
     enabled: !!boothRenterId,
