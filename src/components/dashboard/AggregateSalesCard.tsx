@@ -270,12 +270,61 @@ export function AggregateSalesCard({
   const isToday = dateRange === 'today';
   const isPastRange = !isToday && dateRange !== 'todayToEom';
 
-  // Actual POS revenue for past date ranges
-  const { data: pastActual, isLoading: pastActualLoading } = useActualRevenue(
+  // For ranges that include today (7d, thisWeek, mtd, ytd, last365), exclude today
+  // from the POS query so we don't get stale/missing data for the current day.
+  // Today's live POS data is already handled by useTodayActualRevenue.
+  const todayStr = format(new Date(), 'yyyy-MM-dd');
+  const pastRangeIncludesToday = isPastRange && dateFilters.dateTo === todayStr;
+  const pastActualDateTo = pastRangeIncludesToday
+    ? format(subDays(new Date(), 1), 'yyyy-MM-dd')
+    : dateFilters.dateTo;
+
+  // Actual POS revenue for past date ranges (with location filter + pagination)
+  const { data: pastActualRaw, isLoading: pastActualLoading } = useActualRevenue(
     dateFilters.dateFrom,
-    dateFilters.dateTo,
-    isPastRange
+    pastActualDateTo,
+    isPastRange,
+    filterContext?.locationId
   );
+
+  // When the range includes today, combine historical POS data with today's live POS data
+  const pastActual = useMemo(() => {
+    if (!isPastRange) return pastActualRaw;
+    if (!pastRangeIncludesToday) return pastActualRaw;
+
+    // Get today's data — use location-specific if a location is selected
+    const todayData = (() => {
+      if (filterContext?.locationId && filterContext.locationId !== 'all' && locationActuals) {
+        const locData = locationActuals[filterContext.locationId];
+        return locData ? {
+          revenue: locData.actualRevenue,
+          service: locData.actualServiceRevenue,
+          product: locData.actualProductRevenue,
+          transactions: locData.actualTransactions,
+          hasData: locData.hasActualData,
+        } : null;
+      }
+      return todayActual ? {
+        revenue: todayActual.actualRevenue,
+        service: todayActual.actualServiceRevenue,
+        product: todayActual.actualProductRevenue,
+        transactions: todayActual.actualTransactions,
+        hasData: todayActual.hasActualData,
+      } : null;
+    })();
+
+    const hist = pastActualRaw ?? { actualRevenue: 0, actualServiceRevenue: 0, actualProductRevenue: 0, actualTransactions: 0, hasActualData: false };
+    const today = todayData ?? { revenue: 0, service: 0, product: 0, transactions: 0, hasData: false };
+
+    const combined = {
+      actualRevenue: hist.actualRevenue + today.revenue,
+      actualServiceRevenue: hist.actualServiceRevenue + today.service,
+      actualProductRevenue: hist.actualProductRevenue + today.product,
+      actualTransactions: hist.actualTransactions + today.transactions,
+      hasActualData: hist.hasActualData || today.hasData,
+    };
+    return combined;
+  }, [pastActualRaw, pastRangeIncludesToday, isPastRange, todayActual, locationActuals, filterContext?.locationId]);
 
   // Scheduled revenue — all appointments on the books (cancelled + no-show + completed)
   const { data: scheduledRevenue, isLoading: scheduledLoading } = useScheduledRevenue(
