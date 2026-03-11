@@ -60,9 +60,10 @@ export function StylistStep({
 }: StylistStepProps) {
   const { formatDate } = useFormatDate();
   const [showCalendar, setShowCalendar] = useState(false);
+  const { todayStr, todayDate, isToday: isOrgToday } = useOrgNow();
 
-  // Generate next 7 days for quick selection
-  const quickDates = Array.from({ length: 7 }, (_, i) => addDays(new Date(), i));
+  // Generate next 7 days for quick selection (org-timezone-aware)
+  const quickDates = Array.from({ length: 7 }, (_, i) => addDays(todayDate, i));
 
   const formatTime12h = (time: string) => {
     const [hours, minutes] = time.split(':');
