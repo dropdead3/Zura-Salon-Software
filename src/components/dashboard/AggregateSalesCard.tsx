@@ -1039,7 +1039,7 @@ export function AggregateSalesCard({
                         <MetricInfoTooltip description="Total retail revenue including products, merch, and extension hardware. Expand to see breakdown." />
                       </div>
                       <AnimatedBlurredAmount 
-                        value={rawProdRevenue}
+                        value={retailDisplayRevenue}
                         currency={currency}
                         className="text-xl sm:text-2xl font-display tabular-nums"
                       />
