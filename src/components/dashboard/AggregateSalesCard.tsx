@@ -40,7 +40,7 @@ import { useTomorrowRevenue } from '@/hooks/useTomorrowRevenue';
 import { useSalesComparison } from '@/hooks/useSalesComparison';
 import { useTodayActualRevenue } from '@/hooks/useTodayActualRevenue';
 import { useActualRevenue } from '@/hooks/useActualRevenue';
-import { useExtensionProductRevenue } from '@/hooks/useExtensionProductRevenue';
+import { useRetailBreakdown } from '@/hooks/useRetailBreakdown';
 import { useRevenueGapAnalysis, useScheduledRevenue } from '@/hooks/useRevenueGapAnalysis';
 import { RevenueGapDrilldown } from './sales/RevenueGapDrilldown';
 import { useRetailAttachmentRate } from '@/hooks/useRetailAttachmentRate';
