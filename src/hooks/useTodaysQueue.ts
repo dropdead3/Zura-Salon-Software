@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { formatDisplayName } from '@/lib/utils';
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { format, differenceInMinutes, parseISO, addMinutes, isAfter } from 'date-fns';
