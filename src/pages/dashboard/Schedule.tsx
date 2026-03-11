@@ -941,38 +941,6 @@ export default function Schedule() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Right-click context menu */}
-      {breakContextMenu?.open && (
-        <div
-          className="fixed z-50 min-w-[160px] rounded-lg border bg-popover p-1 shadow-md animate-in fade-in-0 zoom-in-95"
-          style={{ top: breakContextMenu.y, left: breakContextMenu.x }}
-          onMouseDown={(e) => e.stopPropagation()}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <button
-            className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors"
-            onClick={() => {
-              setBreakDefaults({ time: breakContextMenu.time, stylistId: breakContextMenu.stylistId });
-              setBreakContextMenu(null);
-              setBreakDialogOpen(true);
-            }}
-          >
-             <Coffee className="h-4 w-4" />
-             Add Break / Block
-          </button>
-          <button
-            className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors"
-            onClick={() => {
-              setBreakDefaults({ time: breakContextMenu.time, stylistId: breakContextMenu.stylistId });
-              setBreakContextMenu(null);
-              setAssistantDialogOpen(true);
-            }}
-          >
-             <Users className="h-4 w-4" />
-             Request Assistant
-          </button>
-        </div>
-      )}
 
       {/* Break dialog from context menu */}
       <Dialog open={breakDialogOpen} onOpenChange={setBreakDialogOpen}>

@@ -555,9 +555,6 @@ export function DayView({
                           onClick={() => {
                             onSlotClick?.(stylist.user_id, slotTime);
                           }}
-                          onContextMenu={(e) => {
-                            onSlotContextMenu?.(stylist.user_id, slotTime, e);
-                          }}
                         />
                       );
                     })}
