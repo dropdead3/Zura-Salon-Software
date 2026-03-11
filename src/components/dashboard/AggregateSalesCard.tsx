@@ -1123,7 +1123,7 @@ export function AggregateSalesCard({
                                 <button
                                   key={label}
                                   type="button"
-                                  className="flex items-center gap-2 w-full text-left rounded-md px-1.5 py-1 -mx-1.5 transition-colors hover:bg-muted/60"
+                                  className="flex items-center gap-2 w-full text-left rounded-lg px-3 py-2 -mx-3 transition-colors hover:bg-muted/60"
                                   onClick={(e) => { e.stopPropagation(); setRetailCategoryDrilldown(label as any); }}
                                 >
                                   <span className="text-[10px] text-muted-foreground/50 w-3 tabular-nums">{index + 1}</span>
