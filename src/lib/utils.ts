@@ -53,6 +53,17 @@ export function formatFullDisplayName(fullName: string, displayName?: string | n
  * Formats a phone number as (XXX) XXX-XXXX
  * Strips non-digits and applies formatting progressively as user types
  */
+/**
+ * Convenience wrapper: accepts a profile-like object and returns "First L." format.
+ */
+export function formatName(profile: { full_name?: string | null; display_name?: string | null } | null | undefined): string {
+  return formatDisplayName(profile?.full_name || '', profile?.display_name);
+}
+
+/**
+ * Formats a phone number as (XXX) XXX-XXXX
+ * Strips non-digits and applies formatting progressively as user types
+ */
 export function formatPhoneNumber(value: string): string {
   const digits = value.replace(/\D/g, '').slice(0, 10);
   if (digits.length === 0) return '';
