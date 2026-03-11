@@ -1404,9 +1404,14 @@ export function AggregateSalesCard({
             serviceRevenue={isToday ? (todayActual?.hasActualData ? todayActual.actualServiceRevenue : 0) : displayMetrics.serviceRevenue} 
             productRevenue={isToday ? (todayActual?.hasActualData ? todayActual.actualProductRevenue : 0) : displayMetrics.productRevenue}
             size={64}
-            
             retailAttachmentRate={attachmentData?.attachmentRate}
             retailAttachmentLoading={attachmentLoading}
+            retailBreakdown={retailBreakdown ? {
+              productOnlyRevenue: retailBreakdown.productRevenue,
+              extensionRevenue: retailBreakdown.extensionRevenue,
+              merchRevenue: retailBreakdown.merchRevenue,
+              giftCardRevenue: retailBreakdown.giftCardRevenue,
+            } : undefined}
           />
 
           {/* Tips Summary Card */}

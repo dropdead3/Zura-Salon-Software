@@ -30,6 +30,7 @@ import { useSalesMetrics, useSalesByStylist } from '@/hooks/useSalesData';
 import { useStaffUtilization } from '@/hooks/useStaffUtilization';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { useRetailAttachmentRate } from '@/hooks/useRetailAttachmentRate';
+import { useRetailBreakdown } from '@/hooks/useRetailBreakdown';
 // Commission resolution is now handled internally by CommissionSummaryCard and StaffCommissionTable
 import { Link } from 'react-router-dom';
 import { Settings2, MapPin, Calendar } from 'lucide-react';
@@ -183,6 +184,12 @@ export function CommandCenterAnalytics() {
     dateTo: dateFilters.dateTo,
     locationId: locationFilter,
   });
+  const { data: retailBreakdown } = useRetailBreakdown(
+    dateFilters.dateFrom,
+    dateFilters.dateTo,
+    true,
+    locationFilter,
+  );
   // Commission resolution handled internally by commission components
   
   // Show nothing if loading
@@ -276,6 +283,12 @@ export function CommandCenterAnalytics() {
                 productRevenue={salesData?.productRevenue || 0}
                 retailAttachmentRate={attachmentData?.attachmentRate}
                 retailAttachmentLoading={isLoadingAttachment}
+                retailBreakdown={retailBreakdown ? {
+                  productOnlyRevenue: retailBreakdown.productRevenue,
+                  extensionRevenue: retailBreakdown.extensionRevenue,
+                  merchRevenue: retailBreakdown.merchRevenue,
+                  giftCardRevenue: retailBreakdown.giftCardRevenue,
+                } : undefined}
               />
             </PinnableCard>
           </VisibilityGate>

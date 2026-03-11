@@ -43,6 +43,7 @@ import { RebookingCard } from '@/components/dashboard/analytics/RebookingCard';
 import { useSalesMetrics, useSalesByStylist, useServiceMix } from '@/hooks/useSalesData';
 import { useTodayActualRevenue } from '@/hooks/useTodayActualRevenue';
 import { useRetailAttachmentRate } from '@/hooks/useRetailAttachmentRate';
+import { useRetailBreakdown } from '@/hooks/useRetailBreakdown';
 import { useStaffUtilization } from '@/hooks/useStaffUtilization';
 import { useLocations } from '@/hooks/useLocations';
 import { useUserLocationAccess } from '@/hooks/useUserLocationAccess';
@@ -296,7 +297,13 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
     dateTo: filters.dateTo,
     locationId: locationFilter,
   });
-  
+  const { data: retailBreakdown } = useRetailBreakdown(
+    filters.dateFrom,
+    filters.dateTo,
+    true,
+    locationFilter,
+  );
+
   const { accessibleLocations } = useUserLocationAccess();
   const { data: locations } = useLocations();
   const { data: rebookData } = useRebookingRate(filters.dateFrom, filters.dateTo, filters.locationId);
@@ -697,6 +704,12 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
               filterContext={filterContext}
               retailAttachmentRate={attachmentData?.attachmentRate}
               retailAttachmentLoading={isLoadingAttachment}
+              retailBreakdown={retailBreakdown ? {
+                productOnlyRevenue: retailBreakdown.productRevenue,
+                extensionRevenue: retailBreakdown.extensionRevenue,
+                merchRevenue: retailBreakdown.merchRevenue,
+                giftCardRevenue: retailBreakdown.giftCardRevenue,
+              } : undefined}
             />
           </PinnableCard>
         </VisibilityGate>
