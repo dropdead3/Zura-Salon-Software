@@ -43,6 +43,7 @@ import { RebookingCard } from '@/components/dashboard/analytics/RebookingCard';
 import { useSalesMetrics, useSalesByStylist, useServiceMix } from '@/hooks/useSalesData';
 import { useTodayActualRevenue } from '@/hooks/useTodayActualRevenue';
 import { useRetailAttachmentRate } from '@/hooks/useRetailAttachmentRate';
+import { useRetailBreakdown } from '@/hooks/useRetailBreakdown';
 import { useStaffUtilization } from '@/hooks/useStaffUtilization';
 import { useLocations } from '@/hooks/useLocations';
 import { useUserLocationAccess } from '@/hooks/useUserLocationAccess';
