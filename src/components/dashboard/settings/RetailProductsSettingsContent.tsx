@@ -30,11 +30,14 @@ import { useWebsiteRetailSettings } from '@/hooks/useWebsiteSettings';
 import { supabase } from '@/integrations/supabase/client';
 import { toast as sonnerToast } from 'sonner';
 import { optimizeImage } from '@/lib/image-utils';
-// Helper to classify product type
-function getProductType(name: string | null): string {
-  if (isExtensionProduct(name)) return 'Extensions';
-  if (isGiftCardProduct(name)) return 'Gift Cards';
-  if (isMerchProduct(name)) return 'Merch';
+// Helper to classify product type — prefer DB column, fall back to regex
+function getProductType(product: Product): string {
+  if (product.product_type && product.product_type !== 'Products') return product.product_type;
+  if (product.product_type === 'Products') return 'Products';
+  // Fallback for legacy rows without product_type
+  if (isExtensionProduct(product.name)) return 'Extensions';
+  if (isGiftCardProduct(product.name)) return 'Gift Cards';
+  if (isMerchProduct(product.name)) return 'Merch';
   return 'Products';
 }
 
