@@ -233,17 +233,28 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
-    const ext = file.name.split('.').pop();
-    const path = `${crypto.randomUUID()}.${ext}`;
-    const { error } = await supabase.storage.from('product-images').upload(path, file, { upsert: true });
-    if (error) {
-      sonnerToast.error('Failed to upload image');
+    try {
+      const { blob } = await optimizeImage(file, {
+        maxWidth: 800,
+        maxHeight: 800,
+        quality: 0.82,
+        format: 'webp',
+        cropToSquare: true,
+      });
+      const path = `${crypto.randomUUID()}.webp`;
+      const { error } = await supabase.storage.from('product-images').upload(path, blob, { contentType: 'image/webp', upsert: true });
+      if (error) {
+        sonnerToast.error('Failed to upload image');
+        return;
+      }
+      const { data: { publicUrl } } = supabase.storage.from('product-images').getPublicUrl(path);
+      setForm(f => ({ ...f, image_url: publicUrl }));
+    } catch (err) {
+      console.error('Image optimization error:', err);
+      sonnerToast.error('Failed to process image');
+    } finally {
       setUploading(false);
-      return;
     }
-    const { data: { publicUrl } } = supabase.storage.from('product-images').getPublicUrl(path);
-    setForm(f => ({ ...f, image_url: publicUrl }));
-    setUploading(false);
   };
 
   const handleSubmit = () => {
