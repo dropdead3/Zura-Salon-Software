@@ -358,7 +358,7 @@ export function UserRolesTab({ canManage }: UserRolesTabProps) {
                   variant="ghost"
                   size={tokens.button.inline}
                   className="h-7 text-xs gap-1 mt-1"
-                  onClick={() => setResponsibilityDialog({ userId: user.user_id, userName: user.display_name || user.full_name })}
+                  onClick={() => setResponsibilityDialog({ userId: user.user_id, userName: formatDisplayName(user.full_name || '', user.display_name) })}
                 >
                   <Award className="h-3 w-3" />
                   Responsibilities
