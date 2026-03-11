@@ -31,6 +31,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast as sonnerToast } from 'sonner';
 import { optimizeImage } from '@/lib/image-utils';
 import { GiftCardsHub } from '@/components/dashboard/settings/GiftCardsHub';
+import { ProductWizard } from '@/components/dashboard/settings/ProductWizard';
 // Helper to classify product type — prefer DB column, fall back to regex
 function getProductType(product: Product): string {
   if (product.product_type && product.product_type !== 'Products') return product.product_type;
@@ -69,6 +70,7 @@ function ProductsTab() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showWizard, setShowWizard] = useState(false);
   const [editingStockId, setEditingStockId] = useState<string | null>(null);
   const [stockValue, setStockValue] = useState('');
 
@@ -137,7 +139,7 @@ function ProductsTab() {
           <Switch checked={lowStockOnly} onCheckedChange={setLowStockOnly} id="low-stock" />
           <Label htmlFor="low-stock" className="text-sm cursor-pointer">Low Stock</Label>
         </div>
-        <Button size={tokens.button.card} onClick={() => setShowAddDialog(true)} className="gap-1.5">
+        <Button size={tokens.button.card} onClick={() => setShowWizard(true)} className="gap-1.5">
           <Plus className="w-4 h-4" /> Add Product
         </Button>
       </div>
@@ -258,21 +260,18 @@ function ProductsTab() {
         </div>
       )}
 
-      {(showAddDialog || editProduct) && (
+      {editProduct && (
         <ProductFormDialog
           product={editProduct}
-          onClose={() => { setShowAddDialog(false); setEditProduct(null); }}
+          onClose={() => setEditProduct(null)}
           onSave={(data) => {
-            if (editProduct) {
-              updateProduct.mutate({ id: editProduct.id, updates: data });
-            } else {
-              createProduct.mutate(data);
-            }
-            setShowAddDialog(false);
+            updateProduct.mutate({ id: editProduct.id, updates: data });
             setEditProduct(null);
           }}
         />
       )}
+
+      <ProductWizard open={showWizard} onOpenChange={setShowWizard} />
     </div>
   );
 }
