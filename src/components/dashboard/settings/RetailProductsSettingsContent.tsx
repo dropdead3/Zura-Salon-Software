@@ -16,6 +16,7 @@ import { tokens } from '@/lib/design-tokens';
 import {
   Search, Plus, BarChart3, Package, Edit2, AlertTriangle, Minus,
   Loader2, Check, X, MapPin, CheckCircle2, Info, ExternalLink, ImagePlus, Gift,
+  FileText,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
@@ -32,6 +33,7 @@ import { toast as sonnerToast } from 'sonner';
 import { optimizeImage } from '@/lib/image-utils';
 import { GiftCardsHub } from '@/components/dashboard/settings/GiftCardsHub';
 import { ProductWizard } from '@/components/dashboard/settings/ProductWizard';
+import { useProductDrafts, useDeleteProductDraft, type ProductDraft } from '@/hooks/useProductDrafts';
 // Helper to classify product type — prefer DB column, fall back to regex
 function getProductType(product: Product): string {
   if (product.product_type && product.product_type !== 'Products') return product.product_type;
@@ -71,8 +73,12 @@ function ProductsTab() {
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
+  const [wizardDraftId, setWizardDraftId] = useState<string | undefined>();
+  const [wizardInitialDraft, setWizardInitialDraft] = useState<{ form_data: Record<string, any>; current_step: number } | undefined>();
   const [editingStockId, setEditingStockId] = useState<string | null>(null);
   const [stockValue, setStockValue] = useState('');
+  const { data: drafts } = useProductDrafts();
+  const deleteDraft = useDeleteProductDraft();
 
   // Products are now filtered server-side via productType filter
   const filteredProducts = products || [];
@@ -139,7 +145,27 @@ function ProductsTab() {
           <Switch checked={lowStockOnly} onCheckedChange={setLowStockOnly} id="low-stock" />
           <Label htmlFor="low-stock" className="text-sm cursor-pointer">Low Stock</Label>
         </div>
-        <Button size={tokens.button.card} onClick={() => setShowWizard(true)} className="gap-1.5">
+        {drafts && drafts.length > 0 && (
+          <div className="flex items-center gap-1">
+            {drafts.map((d) => (
+              <Button
+                key={d.id}
+                variant="outline"
+                size={tokens.button.card}
+                className="gap-1.5 text-muted-foreground"
+                onClick={() => {
+                  setWizardDraftId(d.id);
+                  setWizardInitialDraft({ form_data: d.form_data, current_step: d.current_step });
+                  setShowWizard(true);
+                }}
+              >
+                <FileText className="w-3.5 h-3.5" />
+                Draft{drafts.length > 1 ? '' : ''}: {(d.form_data as any)?.name || 'Untitled'}
+              </Button>
+            ))}
+          </div>
+        )}
+        <Button size={tokens.button.card} onClick={() => { setWizardDraftId(undefined); setWizardInitialDraft(undefined); setShowWizard(true); }} className="gap-1.5">
           <Plus className="w-4 h-4" /> Add Product
         </Button>
       </div>
@@ -271,7 +297,7 @@ function ProductsTab() {
         />
       )}
 
-      <ProductWizard open={showWizard} onOpenChange={setShowWizard} />
+      <ProductWizard open={showWizard} onOpenChange={setShowWizard} draftId={wizardDraftId} initialDraft={wizardInitialDraft} />
     </div>
   );
 }
