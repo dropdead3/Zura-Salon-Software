@@ -30,14 +30,35 @@ import { useWebsiteRetailSettings } from '@/hooks/useWebsiteSettings';
 import { supabase } from '@/integrations/supabase/client';
 import { toast as sonnerToast } from 'sonner';
 import { optimizeImage } from '@/lib/image-utils';
+// Helper to classify product type
+function getProductType(name: string | null): string {
+  if (isExtensionProduct(name)) return 'Extensions';
+  if (isGiftCardProduct(name)) return 'Gift Cards';
+  if (isMerchProduct(name)) return 'Merch';
+  return 'Products';
+}
+
+const PRODUCT_TYPES = ['Products', 'Extensions', 'Gift Cards', 'Merch'] as const;
+
 // ─── Products Tab ───
 function ProductsTab() {
   const { formatCurrency } = useFormatCurrency();
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
+  const [brandFilter, setBrandFilter] = useState('all');
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [locationFilter, setLocationFilter] = useState('all');
   const [lowStockOnly, setLowStockOnly] = useState(false);
-  const { data: products, isLoading } = useProducts({ search, category: categoryFilter, lowStockOnly });
+  const { data: products, isLoading } = useProducts({
+    search,
+    category: categoryFilter,
+    brand: brandFilter,
+    locationId: locationFilter !== 'all' ? locationFilter : undefined,
+    lowStockOnly,
+  });
   const { data: categories } = useProductCategories();
+  const { data: brands } = useProductBrandsList();
+  const { data: locations } = useActiveLocations();
   const createProduct = useCreateProduct();
   const updateProduct = useUpdateProduct();
   const bulkToggle = useBulkToggleProducts();
@@ -46,6 +67,13 @@ function ProductsTab() {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editingStockId, setEditingStockId] = useState<string | null>(null);
   const [stockValue, setStockValue] = useState('');
+
+  // Client-side type filtering
+  const filteredProducts = useMemo(() => {
+    if (!products) return [];
+    if (typeFilter === 'all') return products;
+    return products.filter(p => getProductType(p.name) === typeFilter);
+  }, [products, typeFilter]);
 
   const toggleSelect = (id: string) => {
     setSelectedIds(prev => {
@@ -56,12 +84,14 @@ function ProductsTab() {
   };
 
   const toggleAll = () => {
-    if (selectedIds.size === (products?.length || 0)) {
+    if (selectedIds.size === (filteredProducts?.length || 0)) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(products?.map(p => p.id)));
+      setSelectedIds(new Set(filteredProducts?.map(p => p.id)));
     }
   };
+
+  const showLocationFilter = locations && locations.length > 1;
 
   return (
     <div className="space-y-4">
@@ -77,6 +107,32 @@ function ProductsTab() {
             {categories?.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
           </SelectContent>
         </Select>
+        <Select value={brandFilter} onValueChange={setBrandFilter}>
+          <SelectTrigger className="w-[150px] h-9"><SelectValue placeholder="Brand" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Brands</SelectItem>
+            {brands?.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={typeFilter} onValueChange={setTypeFilter}>
+          <SelectTrigger className="w-[140px] h-9"><SelectValue placeholder="Type" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Types</SelectItem>
+            {PRODUCT_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        {showLocationFilter && (
+          <Select value={locationFilter} onValueChange={setLocationFilter}>
+            <SelectTrigger className="w-[160px] h-9">
+              <MapPin className="w-3.5 h-3.5 mr-1.5 text-muted-foreground shrink-0" />
+              <SelectValue placeholder="Location" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Locations</SelectItem>
+              {locations.map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        )}
         <div className="flex items-center gap-2">
           <Switch checked={lowStockOnly} onCheckedChange={setLowStockOnly} id="low-stock" />
           <Label htmlFor="low-stock" className="text-sm cursor-pointer">Low Stock</Label>
@@ -84,6 +140,11 @@ function ProductsTab() {
         <Button size={tokens.button.card} onClick={() => setShowAddDialog(true)} className="gap-1.5">
           <Plus className="w-4 h-4" /> Add Product
         </Button>
+      </div>
+
+      {/* Product count */}
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-muted-foreground">{filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''}</span>
       </div>
 
       {selectedIds.size > 0 && (
@@ -104,11 +165,12 @@ function ProductsTab() {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-10">
-                  <input type="checkbox" checked={selectedIds.size === (products?.length || 0) && (products?.length || 0) > 0} onChange={toggleAll} className="rounded border-border" />
+                  <input type="checkbox" checked={selectedIds.size === (filteredProducts?.length || 0) && (filteredProducts?.length || 0) > 0} onChange={toggleAll} className="rounded border-border" />
                 </TableHead>
                 <TableHead>Product</TableHead>
                 <TableHead>Brand</TableHead>
                 <TableHead>Category</TableHead>
+                <TableHead>Type</TableHead>
                 <TableHead>SKU</TableHead>
                 <TableHead className="text-right">Retail</TableHead>
                 <TableHead className="text-right">Cost</TableHead>
@@ -118,16 +180,20 @@ function ProductsTab() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {!products?.length ? (
-                <TableRow><TableCell colSpan={10} className="text-center py-8 text-muted-foreground">No products found</TableCell></TableRow>
-              ) : products.map(p => {
+              {!filteredProducts?.length ? (
+                <TableRow><TableCell colSpan={11} className="text-center py-8 text-muted-foreground">No products found</TableCell></TableRow>
+              ) : filteredProducts.map(p => {
                 const isLow = p.reorder_level != null && p.quantity_on_hand != null && p.quantity_on_hand <= p.reorder_level;
+                const productType = getProductType(p.name);
                 return (
                   <TableRow key={p.id} className={cn(isLow && 'bg-amber-50/50 dark:bg-amber-950/10')}>
                     <TableCell><input type="checkbox" checked={selectedIds.has(p.id)} onChange={() => toggleSelect(p.id)} className="rounded border-border" /></TableCell>
                     <TableCell className="font-medium text-sm">{p.name}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">{p.brand || '—'}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">{p.category || '—'}</TableCell>
+                    <TableCell>
+                      <Badge variant="secondary" className="text-[10px] px-2 py-0.5">{productType}</Badge>
+                    </TableCell>
                     <TableCell className="text-sm text-muted-foreground font-mono">{p.sku || '—'}</TableCell>
                     <TableCell className="text-right tabular-nums text-sm"><BlurredAmount>{p.retail_price != null ? formatCurrency(p.retail_price) : '—'}</BlurredAmount></TableCell>
                     <TableCell className="text-right tabular-nums text-sm text-muted-foreground"><BlurredAmount>{p.cost_price != null ? formatCurrency(p.cost_price) : '—'}</BlurredAmount></TableCell>
