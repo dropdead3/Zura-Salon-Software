@@ -1,7 +1,8 @@
 import { useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
 import type { AssistantProfile } from '@/hooks/useAppointmentAssistantNames';
-import { format, isToday, getWeek } from 'date-fns';
+import { format, getWeek } from 'date-fns';
+import { useOrgNow } from '@/hooks/useOrgNow';
 import { ClosedBadge } from '@/components/dashboard/ClosedBadge';
 import { cn, formatPhoneDisplay, formatDisplayName } from '@/lib/utils';
 import type { AdminMeeting } from '@/hooks/useAdminMeetings';
@@ -215,15 +216,14 @@ function AppointmentCard({
   const size = getCardSize(appointment.start_time, appointment.end_time);
 
   // Late check-in detection
+  const { isToday: isOrgToday, nowMinutes: orgNowMins } = useOrgNow();
   const isOverdueForCheckin = useMemo(() => {
-    if (!date || !isToday(date)) return false;
+    if (!date || !isOrgToday(date)) return false;
     const status = appointment.status;
     if (status !== 'booked' && status !== 'confirmed') return false;
-    const now = new Date();
-    const nowMinutes = now.getHours() * 60 + now.getMinutes();
     const startMinutes = parseTimeToMinutes(appointment.start_time);
-    return nowMinutes > startMinutes;
-  }, [date, appointment.status, appointment.start_time]);
+    return orgNowMins > startMinutes;
+  }, [date, appointment.status, appointment.start_time, isOrgToday, orgNowMins]);
 
   return (
     <div
@@ -363,10 +363,10 @@ export function DayView({
   }, [activeId, appointments]);
 
   // Current time indicator
-  const now = new Date();
-  const showCurrentTime = isToday(date);
+  const { isToday: isDayToday, nowMinutes: dayNowMins } = useOrgNow();
+  const showCurrentTime = isDayToday(date);
   const currentTimeOffset = showCurrentTime
-    ? ((now.getHours() * 60 + now.getMinutes()) - (hoursStart * 60)) / 15 * ROW_HEIGHT
+    ? (dayNowMins - (hoursStart * 60)) / 15 * ROW_HEIGHT
     : 0;
 
   // Calculate overlapping appointments for a stylist
@@ -524,11 +524,10 @@ export function DayView({
                   >
                     {/* Time slot backgrounds (droppable) */}
                     {timeSlots.map(({ hour, minute }) => {
-                      const isPastSlot = showCurrentTime && (() => {
-                        const slotDate = new Date(date);
-                        slotDate.setHours(hour, minute, 0, 0);
-                        return slotDate < now;
-                      })();
+                    const isPastSlot = showCurrentTime && (() => {
+                      const slotMins = hour * 60 + minute;
+                      return slotMins < dayNowMins;
+                    })();
                       
                       const slotTime = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
                       

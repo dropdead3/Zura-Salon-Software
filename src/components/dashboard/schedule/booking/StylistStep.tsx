@@ -5,7 +5,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Calendar } from '@/components/ui/calendar';
 import { Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn, formatDisplayName } from '@/lib/utils';
-import { addDays, subDays, isSameDay } from 'date-fns';
+import { addDays, subDays, isSameDay, format as formatDateFns } from 'date-fns';
+import { useOrgNow } from '@/hooks/useOrgNow';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useState } from 'react';
 
@@ -59,9 +60,10 @@ export function StylistStep({
 }: StylistStepProps) {
   const { formatDate } = useFormatDate();
   const [showCalendar, setShowCalendar] = useState(false);
+  const { todayStr, todayDate, isToday: isOrgToday } = useOrgNow();
 
-  // Generate next 7 days for quick selection
-  const quickDates = Array.from({ length: 7 }, (_, i) => addDays(new Date(), i));
+  // Generate next 7 days for quick selection (org-timezone-aware)
+  const quickDates = Array.from({ length: 7 }, (_, i) => addDays(todayDate, i));
 
   const formatTime12h = (time: string) => {
     const [hours, minutes] = time.split(':');
@@ -143,14 +145,14 @@ export function StylistStep({
                 mode="single"
                 selected={selectedDate}
                 onSelect={(date) => date && onDateChange(date)}
-                disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                disabled={(date) => formatDateFns(date, 'yyyy-MM-dd') < todayStr}
                 className="rounded-lg border"
               />
             ) : (
               <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
                 {quickDates.map((date) => {
                   const isSelected = isSameDay(date, selectedDate);
-                  const isToday = isSameDay(date, new Date());
+                  const isToday = isOrgToday(date);
                   return (
                     <button
                       key={date.toISOString()}

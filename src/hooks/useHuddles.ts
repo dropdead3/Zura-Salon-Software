@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import type { Json } from '@/integrations/supabase/types';
+import { useOrgNow } from '@/hooks/useOrgNow';
 
 export interface DailyHuddle {
   id: string;
@@ -38,7 +39,7 @@ export interface HuddleAcknowledgment {
 }
 
 export function useTodaysHuddle(locationId?: string) {
-  const today = new Date().toISOString().split('T')[0];
+  const { todayStr: today } = useOrgNow();
 
   return useQuery({
     queryKey: ['todays-huddle', today, locationId],

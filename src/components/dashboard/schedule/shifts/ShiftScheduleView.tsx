@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
-import { format, addDays, startOfWeek, isSameDay, differenceInMinutes, parse } from 'date-fns';
+import { format, addDays, startOfWeek, differenceInMinutes, parse } from 'date-fns';
+import { useOrgNow } from '@/hooks/useOrgNow';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -43,7 +44,8 @@ interface ShiftScheduleViewProps {
 export function ShiftScheduleView({ locationId }: ShiftScheduleViewProps) {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
-  const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
+  const { isToday: shiftIsToday, todayDate: shiftToday } = useOrgNow();
+  const [weekStart, setWeekStart] = useState(() => startOfWeek(shiftToday, { weekStartsOn: 1 }));
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingShift, setEditingShift] = useState<StaffShift | null>(null);
   const [editorDefaultDate, setEditorDefaultDate] = useState<Date | undefined>();
@@ -141,7 +143,7 @@ export function ShiftScheduleView({ locationId }: ShiftScheduleViewProps) {
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setWeekStart(addDays(weekStart, -7))}>
               <ChevronLeft className="w-4 h-4" />
             </Button>
-            <Button variant="ghost" size="sm" className="font-sans h-8" onClick={() => setWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }))}>
+            <Button variant="ghost" size="sm" className="font-sans h-8" onClick={() => setWeekStart(startOfWeek(shiftToday, { weekStartsOn: 1 }))}>
               This Week
             </Button>
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setWeekStart(addDays(weekStart, 7))}>
@@ -175,7 +177,7 @@ export function ShiftScheduleView({ locationId }: ShiftScheduleViewProps) {
                     key={day.toISOString()}
                     className={cn(
                       'p-3 text-center border-l border-border',
-                      isSameDay(day, new Date()) && 'bg-primary/5'
+                      shiftIsToday(day) && 'bg-primary/5'
                     )}
                   >
                     <p className="font-display text-[10px] tracking-wider text-muted-foreground">
@@ -183,7 +185,7 @@ export function ShiftScheduleView({ locationId }: ShiftScheduleViewProps) {
                     </p>
                     <p className={cn(
                       'font-sans text-sm mt-0.5',
-                      isSameDay(day, new Date()) && 'text-primary'
+                      shiftIsToday(day) && 'text-primary'
                     )}>
                       {format(day, 'd')}
                     </p>
@@ -219,7 +221,7 @@ export function ShiftScheduleView({ locationId }: ShiftScheduleViewProps) {
                             key={dayStr}
                             className={cn(
                               'p-1.5 border-l border-border min-h-[56px] cursor-pointer hover:bg-muted/30 transition-colors',
-                              isSameDay(day, new Date()) && 'bg-primary/5'
+                              shiftIsToday(day) && 'bg-primary/5'
                             )}
                             onClick={() => dayShifts.length === 0 && handleNewShift(day)}
                           >

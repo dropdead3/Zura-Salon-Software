@@ -5,9 +5,8 @@ import { isClosedOnDate, getLocationHoursForDate, type HoursJson, type HolidayCl
 import { 
   format, 
   addDays, 
-  isToday,
-  isTomorrow,
 } from 'date-fns';
+import { useOrgNow } from '@/hooks/useOrgNow';
 import { cn, formatDisplayName } from '@/lib/utils';
 import { 
   Tooltip,
@@ -218,11 +217,11 @@ export function WeekView({
   }, [appointments, weekDays]);
 
   // Current time indicator
-  const now = new Date();
-  const todayInWeek = weekDays.find(d => isToday(d));
+  const { isToday: isOrgToday, isTomorrow: isOrgTomorrow, nowMinutes: wkNowMins } = useOrgNow();
+  const todayInWeek = weekDays.find(d => isOrgToday(d));
   const showCurrentTime = !!todayInWeek;
   const currentTimeOffset = showCurrentTime
-    ? ((now.getHours() * 60 + now.getMinutes()) - (hoursStart * 60)) / 15 * ROW_HEIGHT
+    ? (wkNowMins - (hoursStart * 60)) / 15 * ROW_HEIGHT
     : 0;
 
   return (
@@ -242,8 +241,8 @@ export function WeekView({
             >
               <div className="p-2" /> {/* Time column spacer */}
               {weekDays.map((day) => {
-                const dayIsToday = isToday(day);
-                const dayIsTomorrow = isTomorrow(day);
+                const dayIsToday = isOrgToday(day);
+                const dayIsTomorrow = isOrgTomorrow(day);
                 
                 const dateKey = format(day, 'yyyy-MM-dd');
                 const apptCount = appointmentsByDate.get(dateKey)?.length || 0;
@@ -327,7 +326,7 @@ export function WeekView({
             {weekDays.map((day) => {
               const dateKey = format(day, 'yyyy-MM-dd');
               const dayAppointments = appointmentsByDate.get(dateKey) || [];
-              const isCurrentDay = isToday(day);
+              const isCurrentDay = isOrgToday(day);
               const dayHoursInfo = getLocationHoursForDate(locationHoursJson ?? null, locationHolidayClosures ?? null, day);
               
               return (
@@ -346,9 +345,8 @@ export function WeekView({
                     
                     // Check if this slot is in the past (only for today)
                     const isPastSlot = isCurrentDay && (() => {
-                      const slotDate = new Date(day);
-                      slotDate.setHours(slot.hour, slot.minute, 0, 0);
-                      return slotDate < now;
+                      const slotMins = slot.hour * 60 + slot.minute;
+                      return slotMins < wkNowMins;
                     })();
 
                     // Check if slot is outside operating hours
@@ -500,7 +498,13 @@ export function WeekView({
                         <div className="absolute left-0 right-0 border-t-2 border-blue-500" />
                         <div className="absolute -left-1 -top-1.5 w-3 h-3 bg-blue-500 rounded-full shadow" />
                         <div className="absolute left-3 -top-2.5 bg-blue-500 text-white text-[10px] px-1.5 py-0.5 rounded font-medium shadow">
-                          {format(now, 'h:mm a')}
+                          {(() => {
+                            const h = Math.floor(wkNowMins / 60);
+                            const m = wkNowMins % 60;
+                            const ampm = h >= 12 ? 'PM' : 'AM';
+                            const h12 = h % 12 || 12;
+                            return `${h12}:${String(m).padStart(2, '0')} ${ampm}`;
+                          })()}
                         </div>
                       </div>
                     </div>

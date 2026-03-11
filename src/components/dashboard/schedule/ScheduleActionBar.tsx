@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useOrgNow } from '@/hooks/useOrgNow';
 import { Link } from 'react-router-dom';
 import { Calendar, CheckCircle2, Info, Receipt } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -28,19 +29,17 @@ function getFirstName(fullName: string): string {
   return fullName.split(' ')[0] || fullName;
 }
 
-function buildPaymentQueue(appointments: PhorestAppointment[], now: Date): QueueItem[] {
+function buildPaymentQueue(appointments: PhorestAppointment[], nowMinutes: number): QueueItem[] {
   const queue: QueueItem[] = [];
 
   for (const apt of appointments) {
     if (apt.status !== 'checked_in') continue;
 
-    // Parse end_time (HH:MM) into a Date for today
+    // Parse end_time (HH:MM) into minutes
     const [h, m] = apt.end_time.split(':').map(Number);
-    const endDate = new Date(now);
-    endDate.setHours(h, m, 0, 0);
+    const endMinutes = h * 60 + m;
 
-    const diffMs = now.getTime() - endDate.getTime();
-    const diffMin = diffMs / 60_000;
+    const diffMin = nowMinutes - endMinutes;
 
     if (diffMin >= 0) {
       // Past end time — overdue
@@ -62,15 +61,9 @@ export function ScheduleActionBar({
   onSelectAppointment,
   todayAppointmentCount = 0,
 }: ScheduleActionBarProps) {
-  const [now, setNow] = useState(() => new Date());
+  const { nowMinutes } = useOrgNow();
 
-  // Refresh clock every 60s
-  useEffect(() => {
-    const interval = setInterval(() => setNow(new Date()), 60_000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const queue = useMemo(() => buildPaymentQueue(appointments, now), [appointments, now]);
+  const queue = useMemo(() => buildPaymentQueue(appointments, nowMinutes), [appointments, nowMinutes]);
 
   return (
     <div

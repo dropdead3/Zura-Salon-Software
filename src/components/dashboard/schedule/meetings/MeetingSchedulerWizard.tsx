@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { format, addMinutes, parse } from 'date-fns';
+import { useOrgNow } from '@/hooks/useOrgNow';
 import { AnimatePresence, motion } from 'framer-motion';
 import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { Button } from '@/components/ui/button';
@@ -82,11 +83,12 @@ export function MeetingSchedulerWizard({ open, onOpenChange, defaultDate }: Meet
   const createTemplate = useCreateMeetingTemplate();
 
   // Wizard state
+  const { todayStr, todayDate } = useOrgNow();
   const [step, setStep] = useState<WizardStep>('type');
   const [meetingType, setMeetingType] = useState<MeetingType | null>(null);
   const [title, setTitle] = useState('');
   const [selectedAttendees, setSelectedAttendees] = useState<string[]>([]);
-  const [selectedDate, setSelectedDate] = useState<Date>(defaultDate || new Date());
+  const [selectedDate, setSelectedDate] = useState<Date>(defaultDate || todayDate);
   const [startTime, setStartTime] = useState('10:00');
   const [duration, setDuration] = useState(30);
   const [meetingMode, setMeetingMode] = useState<MeetingMode>('in_person');
@@ -205,7 +207,7 @@ export function MeetingSchedulerWizard({ open, onOpenChange, defaultDate }: Meet
     setMeetingType(null);
     setTitle('');
     setSelectedAttendees([]);
-    setSelectedDate(defaultDate || new Date());
+    setSelectedDate(defaultDate || todayDate);
     setStartTime('10:00');
     setDuration(30);
     setMeetingMode('in_person');
@@ -469,7 +471,7 @@ export function MeetingSchedulerWizard({ open, onOpenChange, defaultDate }: Meet
                       selected={selectedDate}
                       onSelect={(d) => d && setSelectedDate(d)}
                       className="p-3 pointer-events-auto"
-                      disabled={(d) => d < new Date(new Date().setHours(0, 0, 0, 0))}
+                      disabled={(d) => format(d, 'yyyy-MM-dd') < todayStr}
                     />
                   </div>
 

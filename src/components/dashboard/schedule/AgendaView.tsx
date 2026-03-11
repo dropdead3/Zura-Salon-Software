@@ -1,5 +1,7 @@
 import { useMemo } from 'react';
-import { addDays, isToday, isTomorrow, parseISO } from 'date-fns';
+import { addDays, parseISO } from 'date-fns';
+import { isOrgToday, isOrgTomorrow } from '@/lib/orgTime';
+import { useOrgNow } from '@/hooks/useOrgNow';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { cn, formatDisplayName } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
@@ -35,10 +37,10 @@ function formatTime12h(time: string): string {
   return `${hour12}:${minutes} ${ampm}`;
 }
 
-function getDateLabel(dateStr: string, formatDate: (date: Date, pattern: string) => string): string {
+function getDateLabel(dateStr: string, formatDate: (date: Date, pattern: string) => string, timezone: string): string {
   const date = parseISO(dateStr);
-  if (isToday(date)) return 'Today';
-  if (isTomorrow(date)) return 'Tomorrow';
+  if (isOrgToday(date, timezone)) return 'Today';
+  if (isOrgTomorrow(date, timezone)) return 'Tomorrow';
   return formatDate(date, 'EEEE, MMMM d');
 }
 
@@ -56,6 +58,7 @@ export function AgendaView({
 }: AgendaViewProps) {
   const { formatDate } = useFormatDate();
   const { colorMap: categoryColors } = useServiceCategoryColorsMap();
+  const { timezone } = useOrgNow();
 
   // Group appointments by date
   const appointmentsByDate = useMemo(() => {
@@ -100,14 +103,14 @@ export function AgendaView({
       {dates.map((dateStr) => {
         const dayAppointments = appointmentsByDate.get(dateStr) || [];
         const date = parseISO(dateStr);
-        const dateLabel = getDateLabel(dateStr, formatDate);
+        const dateLabel = getDateLabel(dateStr, formatDate, timezone);
 
         return (
           <div key={dateStr}>
             {/* Date Header */}
             <div className={cn(
               'sticky top-0 z-10 py-2 px-1 mb-3 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60',
-              isToday(date) && 'border-l-4 border-l-primary pl-3'
+              isOrgToday(date, timezone) && 'border-l-4 border-l-primary pl-3'
             )}>
               <h3 className="font-medium text-lg">{dateLabel}</h3>
               <p className="text-sm text-muted-foreground">

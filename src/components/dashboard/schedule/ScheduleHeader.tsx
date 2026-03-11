@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { format, addDays, isToday, startOfWeek } from 'date-fns';
+import { format, addDays } from 'date-fns';
+import { useOrgNow } from '@/hooks/useOrgNow';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { isClosedOnDate, type HoursJson, type HolidayClosure } from '@/hooks/useLocations';
 import { 
@@ -103,11 +104,13 @@ export function ScheduleHeader({
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [staffPopoverOpen, setStaffPopoverOpen] = useState(false);
 
-  // Get quick day buttons - show the next 7 days after today (tomorrow through +7)
-  const today = new Date();
-  const quickDays = Array.from({ length: 7 }, (_, i) => addDays(today, i + 1));
+  // Org-timezone-aware "today"
+  const { isToday: isOrgToday, todayDate: orgToday } = useOrgNow();
 
-  const goToToday = () => setCurrentDate(new Date());
+  // Get quick day buttons - show the next 7 days after today (tomorrow through +7)
+  const quickDays = Array.from({ length: 7 }, (_, i) => addDays(orgToday, i + 1));
+
+  const goToToday = () => setCurrentDate(orgToday);
   
   const goToPrevDay = () => setCurrentDate(addDays(currentDate, -1));
   const goToNextDay = () => setCurrentDate(addDays(currentDate, 1));
@@ -219,7 +222,7 @@ export function ScheduleHeader({
         <div className="text-lg font-display tracking-wide">
           {formatDate(currentDate, 'EEEE, MMMM d, yyyy')}
         </div>
-          {isToday(currentDate) && (
+          {isOrgToday(currentDate) && (
             <div className="text-xs text-[hsl(40,20%,92%)]/70">Today</div>
           )}
         </div>
@@ -378,7 +381,7 @@ export function ScheduleHeader({
           )}
 
           {/* Today's Prep Button — only when viewing today */}
-          {isToday(currentDate) && (
+          {isOrgToday(currentDate) && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -432,7 +435,7 @@ export function ScheduleHeader({
           {(() => {
             const selectedLoc = locations.find(l => l.id === selectedLocation);
             const todayClosed = selectedLoc
-              ? isClosedOnDate(selectedLoc.hours_json ?? null, selectedLoc.holiday_closures ?? null, new Date())
+              ? isClosedOnDate(selectedLoc.hours_json ?? null, selectedLoc.holiday_closures ?? null, orgToday)
               : { isClosed: false };
 
             const todayButton = (
@@ -440,10 +443,10 @@ export function ScheduleHeader({
                 onClick={goToToday}
                 className={cn(
                   'flex flex-col items-center justify-center min-w-[56px] px-3 py-2 rounded-lg text-sm font-sans transition-all duration-200',
-                  isToday(currentDate)
+                  isOrgToday(currentDate)
                     ? 'bg-primary text-primary-foreground shadow-sm'
                     : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
-                  todayClosed.isClosed && !isToday(currentDate) && 'opacity-60'
+                  todayClosed.isClosed && !isOrgToday(currentDate) && 'opacity-60'
                 )}
               >
                 <div className="flex items-center gap-1">
@@ -452,7 +455,7 @@ export function ScheduleHeader({
                   )}
                   <span className="font-medium text-xs tracking-wide">Today</span>
                 </div>
-                <span className="text-[10px] opacity-70">{format(new Date(), 'MMM d')}</span>
+                <span className="text-[10px] opacity-70">{format(orgToday, 'MMM d')}</span>
               </button>
             );
 
@@ -467,7 +470,7 @@ export function ScheduleHeader({
           })()}
           {quickDays.map((day) => {
             const isSelected = format(day, 'yyyy-MM-dd') === format(currentDate, 'yyyy-MM-dd');
-            const isTodayDate = isToday(day);
+            const isTodayDate = isOrgToday(day);
             const selectedLoc = locations.find(l => l.id === selectedLocation);
             const closed = selectedLoc
               ? isClosedOnDate(selectedLoc.hours_json ?? null, selectedLoc.holiday_closures ?? null, day)

@@ -7,9 +7,9 @@ import {
   endOfWeek,
   addDays,
   isSameMonth,
-  isToday,
   isSameDay
 } from 'date-fns';
+import { useOrgNow } from '@/hooks/useOrgNow';
 import { cn } from '@/lib/utils';
 import { ClosedBadge } from '@/components/dashboard/ClosedBadge';
 import { isClosedOnDate, type HoursJson, type HolidayClosure } from '@/hooks/useLocations';
@@ -42,6 +42,7 @@ export function MonthView({
   locationHoursJson,
   locationHolidayClosures,
 }: MonthViewProps) {
+  const { isToday: orgIsToday } = useOrgNow();
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
   const calendarStart = startOfWeek(monthStart, { weekStartsOn: 0 });
@@ -99,7 +100,7 @@ export function MonthView({
               const dateKey = format(day, 'yyyy-MM-dd');
               const dayAppointments = appointmentsByDate.get(dateKey) || [];
               const isCurrentMonth = isSameMonth(day, currentDate);
-              const isCurrentDay = isToday(day);
+              const isCurrentDay = orgIsToday(day);
               const closureInfo = isClosedOnDate(locationHoursJson ?? null, locationHolidayClosures ?? null, day);
               
               // Count by status for the dots
