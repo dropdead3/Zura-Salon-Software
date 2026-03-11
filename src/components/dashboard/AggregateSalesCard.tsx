@@ -752,13 +752,7 @@ export function AggregateSalesCard({
             </div>
             {/* Total Revenue - Hero */}
             <div
-              className={cn(
-                "text-center mb-4 sm:mb-6 cursor-pointer transition-all rounded-xl p-4 sm:p-6 group/revenue",
-                activeDrilldown === 'revenue'
-                  ? "ring-1 ring-primary/20 bg-primary/5"
-                  : ""
-              )}
-              onClick={() => toggleDrilldown('revenue')}
+              className="text-center mb-4 sm:mb-6 rounded-xl p-4 sm:p-6"
             >
               <AnimatedBlurredAmount
                 value={isToday ? (todayActual?.actualRevenue ?? 0) : (isPastRange && pastActual?.hasActualData ? pastActual.actualRevenue : displayMetrics.totalRevenue)}
