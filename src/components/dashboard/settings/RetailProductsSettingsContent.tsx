@@ -16,6 +16,7 @@ import { tokens } from '@/lib/design-tokens';
 import {
   Search, Plus, BarChart3, Package, Edit2, AlertTriangle, Minus,
   Loader2, Check, X, MapPin, CheckCircle2, Info, ExternalLink, ImagePlus, Gift,
+  FileText,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
@@ -32,6 +33,7 @@ import { toast as sonnerToast } from 'sonner';
 import { optimizeImage } from '@/lib/image-utils';
 import { GiftCardsHub } from '@/components/dashboard/settings/GiftCardsHub';
 import { ProductWizard } from '@/components/dashboard/settings/ProductWizard';
+import { useProductDrafts, useDeleteProductDraft, type ProductDraft } from '@/hooks/useProductDrafts';
 // Helper to classify product type — prefer DB column, fall back to regex
 function getProductType(product: Product): string {
   if (product.product_type && product.product_type !== 'Products') return product.product_type;
