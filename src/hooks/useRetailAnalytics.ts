@@ -3,6 +3,7 @@ import { formatDisplayName } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { differenceInDays, parseISO, subDays, format } from 'date-fns';
 import { isAllLocations, parseLocationIds } from '@/lib/locationFilter';
+import { isExtensionProduct } from '@/utils/serviceCategorization';
 
 // ---------------------------------------------------------------------------
 // Types
