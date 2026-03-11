@@ -39,7 +39,7 @@ export interface HuddleAcknowledgment {
 }
 
 export function useTodaysHuddle(locationId?: string) {
-  const today = new Date().toISOString().split('T')[0];
+  const { todayStr: today } = useOrgNow();
 
   return useQuery({
     queryKey: ['todays-huddle', today, locationId],
