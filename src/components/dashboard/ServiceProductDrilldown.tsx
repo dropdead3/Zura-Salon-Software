@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Scissors, ShoppingBag, MapPin, Globe, ChevronDown } from 'lucide-react';
-import { isExtensionProduct } from '@/utils/serviceCategorization';
+import { Scissors, ShoppingBag, MapPin, Globe, ChevronDown } from 'lucide-react';
 import {
   Select,
   SelectContent,
