@@ -35,8 +35,21 @@ export async function optimizeImage(
     img.onload = () => {
       URL.revokeObjectURL(url);
       
-      // Calculate new dimensions while maintaining aspect ratio
-      let { width, height } = img;
+      // Source crop parameters (full image by default)
+      let sx = 0, sy = 0, sw = img.width, sh = img.height;
+      
+      // If cropToSquare, calculate centered square crop from source
+      if (opts.cropToSquare) {
+        const side = Math.min(img.width, img.height);
+        sx = Math.round((img.width - side) / 2);
+        sy = Math.round((img.height - side) / 2);
+        sw = side;
+        sh = side;
+      }
+      
+      // Calculate output dimensions maintaining aspect ratio of cropped region
+      let width = sw;
+      let height = sh;
       
       if (width > opts.maxWidth) {
         height = (height * opts.maxWidth) / width;
@@ -67,8 +80,8 @@ export async function optimizeImage(
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
       
-      // Draw the image
-      ctx.drawImage(img, 0, 0, width, height);
+      // Draw the image (with source crop if applicable)
+      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, width, height);
       
       // Convert to blob
       const mimeType = `image/${opts.format}`;
