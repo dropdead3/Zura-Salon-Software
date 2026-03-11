@@ -98,7 +98,7 @@ export function useActualRevenue(dateFrom: string, dateTo: string, enabled: bool
           .gte('transaction_date', `${dateFrom}T00:00:00`)
           .lte('transaction_date', `${dateTo}T23:59:59`)
           .range(from, to);
-        q = applyLocationFilter(q, locationId);
+        q = addLocationFilter(q, locationId);
         return q;
       });
 
