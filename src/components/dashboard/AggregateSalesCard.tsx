@@ -921,12 +921,15 @@ export function AggregateSalesCard({
             
             {/* Services & Products Sub-cards */}
             {(() => {
-              // When today + actual data, show actual breakdown; otherwise show expected
+              // When today + actual data, show actual breakdown; for past ranges with POS data, use POS; otherwise show expected
+              const usePastActual = isPastRange && pastActual?.hasActualData;
               const svcRevenue = isToday
                 ? (todayActual?.hasActualData ? todayActual.actualServiceRevenue : 0)
+                : usePastActual ? pastActual.actualServiceRevenue
                 : displayMetrics.serviceRevenue;
               const prodRevenue = isToday
                 ? (todayActual?.hasActualData ? todayActual.actualProductRevenue : 0)
+                : usePastActual ? pastActual.actualProductRevenue
                 : displayMetrics.productRevenue;
               const totalBrkdn = svcRevenue + prodRevenue;
               const svcPct = totalBrkdn > 0 ? Math.round((svcRevenue / totalBrkdn) * 100) : 0;
