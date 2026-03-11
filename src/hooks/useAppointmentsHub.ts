@@ -113,7 +113,7 @@ export function useAppointmentsHub(filters: HubFilters) {
           .select('user_id, display_name, full_name')
           .in('user_id', stylistIds);
         for (const p of profiles || []) {
-          stylistMap[p.user_id] = p.display_name || p.full_name || 'Unknown';
+          stylistMap[p.user_id] = formatDisplayName(p.full_name || '', p.display_name);
         }
       }
 
