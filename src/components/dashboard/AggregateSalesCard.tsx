@@ -1004,7 +1004,7 @@ export function AggregateSalesCard({
                 { label: 'Merch', icon: Shirt, amount: rb?.merchRevenue ?? 0, count: rb?.merchCount ?? 0 },
                 { label: 'Gift Cards', icon: Gift, amount: rb?.giftCardRevenue ?? 0, count: rb?.giftCardCount ?? 0 },
                 { label: 'Extensions', icon: GemIcon, amount: rb?.extensionRevenue ?? 0, count: rb?.extensionCount ?? 0 },
-              ];
+               ].sort((a, b) => b.amount - a.amount);
 
               return (
                 <div className="grid grid-cols-2 gap-6">
@@ -1065,7 +1065,7 @@ export function AggregateSalesCard({
                           className="overflow-hidden"
                         >
                           <div className="mt-3 pt-3 border-t border-border/40 space-y-2 text-left">
-                            {subCategories.map(({ label, icon: Icon, amount }) => {
+                            {subCategories.map(({ label, icon: Icon, amount }, index) => {
                               const pct = retailTotal > 0 ? Math.round((amount / retailTotal) * 100) : 0;
                               return (
                                 <button
@@ -1074,6 +1074,7 @@ export function AggregateSalesCard({
                                   className="flex items-center gap-2 w-full text-left rounded-md px-1.5 py-1 -mx-1.5 transition-colors hover:bg-muted/60"
                                   onClick={(e) => { e.stopPropagation(); setRetailCategoryDrilldown(label as any); }}
                                 >
+                                  <span className="text-[10px] text-muted-foreground/50 w-3 tabular-nums">{index + 1}</span>
                                   <Icon className="w-3 h-3 text-muted-foreground shrink-0" />
                                   <span className="text-[11px] text-muted-foreground flex-1">{label}</span>
                                   <BlurredAmount>
