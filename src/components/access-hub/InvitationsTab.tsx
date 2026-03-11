@@ -66,7 +66,7 @@ import {
   Sparkles,
   Maximize2
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatDisplayName } from '@/lib/utils';
 import { QRCodeCanvas } from 'qrcode.react';
 import BrandLogo from '@/assets/brand-logo-secondary.svg';
 import { QRCodeFullScreen } from '@/components/dashboard/QRCodeFullScreen';
