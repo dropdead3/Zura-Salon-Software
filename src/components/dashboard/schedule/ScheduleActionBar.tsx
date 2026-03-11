@@ -61,15 +61,9 @@ export function ScheduleActionBar({
   onSelectAppointment,
   todayAppointmentCount = 0,
 }: ScheduleActionBarProps) {
-  const [now, setNow] = useState(() => new Date());
+  const { nowMinutes } = useOrgNow();
 
-  // Refresh clock every 60s
-  useEffect(() => {
-    const interval = setInterval(() => setNow(new Date()), 60_000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const queue = useMemo(() => buildPaymentQueue(appointments, now), [appointments, now]);
+  const queue = useMemo(() => buildPaymentQueue(appointments, nowMinutes), [appointments, nowMinutes]);
 
   return (
     <div
