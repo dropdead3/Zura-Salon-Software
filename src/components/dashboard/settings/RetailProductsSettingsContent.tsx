@@ -362,6 +362,7 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
       name: form.name,
       brand: form.brand || null,
       category: form.category || null,
+      product_type: form.product_type || 'Products',
       sku: form.sku || null,
       barcode: form.barcode || null,
       retail_price: form.retail_price ? parseFloat(form.retail_price) : null,
