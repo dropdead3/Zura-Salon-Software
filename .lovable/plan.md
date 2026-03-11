@@ -1,23 +1,20 @@
 
 
-## Timezone-Safe Scheduling (Implemented)
+## Fix: Edit Button Crash on Product Form
 
-### Problem
-`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
+### Root Cause
+The `ProductFormDialog` component (line 288 in `RetailProductsSettingsContent.tsx`) renders a `<SelectItem value="">All Locations</SelectItem>`. Radix UI's Select component throws an error when any `SelectItem` has an empty string value — this is the runtime error shown in console: *"A Select.Item must have a value prop that is not an empty string."*
 
-### Solution
-- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
-- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
-- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
+When the edit button opens the dialog and the Location select renders, it crashes and triggers the ErrorBoundary.
 
-### Files Updated
-- `ScheduleHeader.tsx` — today button, quick days, isToday checks
-- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
-- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
-- `MonthView.tsx` — today highlight
-- `AgendaView.tsx` — today/tomorrow labels, today border
-- `ScheduleActionBar.tsx` — payment queue timing
-- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
-- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
-- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
-- `useHuddles.ts` — today's huddle query
+### Fix
+**`src/components/dashboard/settings/RetailProductsSettingsContent.tsx`** — Line 288
+
+Change `<SelectItem value="">All Locations</SelectItem>` to `<SelectItem value="all">All Locations</SelectItem>`, and handle the `"all"` sentinel value by converting it back to an empty string/null when saving.
+
+- Line 285: Update `value` prop to convert empty/null `location_id` to `"all"` for the select
+- Line 288: Change value from `""` to `"all"`
+- In `onValueChange`, convert `"all"` back to empty string
+
+Single-line fix, no structural changes.
+
