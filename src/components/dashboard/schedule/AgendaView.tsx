@@ -110,7 +110,7 @@ export function AgendaView({
             {/* Date Header */}
             <div className={cn(
               'sticky top-0 z-10 py-2 px-1 mb-3 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60',
-              isToday(date) && 'border-l-4 border-l-primary pl-3'
+              isOrgToday(date, timezone) && 'border-l-4 border-l-primary pl-3'
             )}>
               <h3 className="font-medium text-lg">{dateLabel}</h3>
               <p className="text-sm text-muted-foreground">

@@ -524,11 +524,10 @@ export function DayView({
                   >
                     {/* Time slot backgrounds (droppable) */}
                     {timeSlots.map(({ hour, minute }) => {
-                      const isPastSlot = showCurrentTime && (() => {
-                        const slotDate = new Date(date);
-                        slotDate.setHours(hour, minute, 0, 0);
-                        return slotDate < now;
-                      })();
+                    const isPastSlot = showCurrentTime && (() => {
+                      const slotMins = hour * 60 + minute;
+                      return slotMins < dayNowMins;
+                    })();
                       
                       const slotTime = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
                       

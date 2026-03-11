@@ -221,7 +221,7 @@ export function ShiftScheduleView({ locationId }: ShiftScheduleViewProps) {
                             key={dayStr}
                             className={cn(
                               'p-1.5 border-l border-border min-h-[56px] cursor-pointer hover:bg-muted/30 transition-colors',
-                              isSameDay(day, new Date()) && 'bg-primary/5'
+                              shiftIsToday(day) && 'bg-primary/5'
                             )}
                             onClick={() => dayShifts.length === 0 && handleNewShift(day)}
                           >

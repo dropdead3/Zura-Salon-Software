@@ -345,9 +345,8 @@ export function WeekView({
                     
                     // Check if this slot is in the past (only for today)
                     const isPastSlot = isCurrentDay && (() => {
-                      const slotDate = new Date(day);
-                      slotDate.setHours(slot.hour, slot.minute, 0, 0);
-                      return slotDate < now;
+                      const slotMins = slot.hour * 60 + slot.minute;
+                      return slotMins < wkNowMins;
                     })();
 
                     // Check if slot is outside operating hours
