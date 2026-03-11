@@ -451,8 +451,54 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
           </div>
           <div><Label className="text-xs">Name *</Label><Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} /></div>
           <div className="grid grid-cols-2 gap-3">
-            <div><Label className="text-xs">Brand</Label><Input value={form.brand} onChange={e => setForm(f => ({ ...f, brand: e.target.value }))} /></div>
-            <div><Label className="text-xs">Category</Label><Input value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} /></div>
+            <div>
+              <Label className="text-xs">Brand</Label>
+              {customBrand ? (
+                <div className="flex gap-1.5 mt-1">
+                  <Input value={form.brand} onChange={e => setForm(f => ({ ...f, brand: e.target.value }))} placeholder="New brand" className="h-9" autoFocus />
+                  <Button type="button" variant="ghost" size="icon" className="w-9 h-9 shrink-0" onClick={() => { setCustomBrand(false); setForm(f => ({ ...f, brand: '' })); }}>
+                    <X className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+              ) : (
+                <Select value={form.brand || '__none__'} onValueChange={v => {
+                  if (v === '__other__') { setCustomBrand(true); setForm(f => ({ ...f, brand: '' })); }
+                  else if (v === '__none__') setForm(f => ({ ...f, brand: '' }));
+                  else setForm(f => ({ ...f, brand: v }));
+                }}>
+                  <SelectTrigger className="h-9"><SelectValue placeholder="Select brand" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">None</SelectItem>
+                    {existingBrands?.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}
+                    <SelectItem value="__other__">Other…</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+            <div>
+              <Label className="text-xs">Category</Label>
+              {customCategory ? (
+                <div className="flex gap-1.5 mt-1">
+                  <Input value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} placeholder="New category" className="h-9" autoFocus />
+                  <Button type="button" variant="ghost" size="icon" className="w-9 h-9 shrink-0" onClick={() => { setCustomCategory(false); setForm(f => ({ ...f, category: '' })); }}>
+                    <X className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+              ) : (
+                <Select value={form.category || '__none__'} onValueChange={v => {
+                  if (v === '__other__') { setCustomCategory(true); setForm(f => ({ ...f, category: '' })); }
+                  else if (v === '__none__') setForm(f => ({ ...f, category: '' }));
+                  else setForm(f => ({ ...f, category: v }));
+                }}>
+                  <SelectTrigger className="h-9"><SelectValue placeholder="Select category" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">None</SelectItem>
+                    {existingCategories?.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    <SelectItem value="__other__">Other…</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div><Label className="text-xs">SKU</Label><Input value={form.sku} onChange={e => setForm(f => ({ ...f, sku: e.target.value }))} /></div>
