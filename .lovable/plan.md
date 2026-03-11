@@ -1,47 +1,28 @@
 
 
-## Add Service Category Breakdown to Services Card
+## Add "Timeblock / Break" Option to Schedule Type Selector
 
-### Problem
-When Retail and Services cards are side-by-side (`grid-cols-2`), expanding the Retail breakdown stretches the Retail card taller, leaving empty space in the Services card. We should show the top 4 service categories in the Services card when the Retail breakdown is expanded.
+### Change Summary
 
-### Approach
-The `useRevenueByCategoryDrilldown` hook already exists and returns service categories with revenue/count/sharePercent. React Query will deduplicate the fetch since `RevenueByCategoryPanel` uses the same query key.
+Add a third button to the `ScheduleTypeSelector` for creating timeblocks/breaks. This mirrors the existing break dialog flow already wired up in `Schedule.tsx`.
 
-### Changes — `src/components/dashboard/AggregateSalesCard.tsx`
+### Changes (2 files)
 
-1. **Import** `useRevenueByCategoryDrilldown` at the top (already used by `RevenueByCategoryPanel`, but now needed directly).
+**1. `ScheduleTypeSelector.tsx`**
+- Add `onSelectTimeblock` callback prop
+- Add a third button with `Clock` icon (from lucide-react), label "Timeblock / Break", description "Lunch, personal time, focus block"
+- Same button styling as existing two options
 
-2. **Call the hook** alongside existing data hooks (~line 266):
-   ```js
-   const { data: serviceCategoryData } = useRevenueByCategoryDrilldown({
-     dateFrom: dateFilters.dateFrom,
-     dateTo: dateFilters.dateTo,
-     locationId: filterContext?.locationId,
-   });
-   ```
+**2. `Schedule.tsx`**
+- Pass `onSelectTimeblock` to `ScheduleTypeSelector`
+- Handler: close type selector, set `breakDefaults` with the clicked time/stylist, open `breakDialogOpen`
 
-3. **Add state** for services breakdown toggle:
-   ```js
-   const [servicesExpanded, setServicesExpanded] = useState(false);
-   ```
-
-4. **Auto-expand services when retail expands**: Sync `servicesExpanded` to match `retailExpanded` so both breakdowns appear together, filling the space.
-
-5. **Update Services card** (lines 1011-1027) to include a "Breakdown" toggle and an expandable section showing the top 4 service categories (sorted by revenue descending), with rank numbers, category names, amounts, and percentages — mirroring the Retail breakdown style.
-
-### UI Output (Services card when expanded)
 ```text
-  ✂ Services ⓘ
-    $39,031.10
-       83%
-   Breakdown ˄
-   ─────────────
-   1  Hair         $22,000   56%
-   2  Color        $10,000   26%
-   3  Treatments    $5,000   13%
-   4  Nails         $2,031    5%
+Type Selector options:
+  ┌─ Client Appointment   (CalendarPlus)  → booking wizard
+  ├─ Internal Meeting      (Users)         → meeting wizard
+  └─ Timeblock / Break     (Clock)         → break/block form
 ```
 
-Single file change, no new hooks or components needed.
+Two files, ~15 lines total.
 

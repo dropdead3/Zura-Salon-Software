@@ -59,6 +59,7 @@ import { Package, Shirt, Gem as GemIcon, Gift } from 'lucide-react';
 
 import { ServiceProductDrilldown } from './ServiceProductDrilldown';
 import { RetailCategoryDrilldown } from './RetailCategoryDrilldown';
+import { useRevenueByCategoryDrilldown } from '@/hooks/useRevenueByCategoryDrilldown';
 import { LocationMetricDrilldownSheet, type LocationDrilldownType } from './LocationMetricDrilldownSheet';
 import { TipsDrilldownPanel } from './sales/TipsDrilldownPanel';
 import { TransactionsByHourPanel } from './sales/TransactionsByHourPanel';
@@ -264,7 +265,13 @@ export function AggregateSalesCard({
     true,
     filterContext?.locationId
   );
-  // Tip attach rate from drilldown data (react-query deduplicates the fetch)
+  // Service category breakdown (deduped by react-query)
+  const { data: serviceCategoryData } = useRevenueByCategoryDrilldown({
+    dateFrom: dateFilters.dateFrom,
+    dateTo: dateFilters.dateTo,
+    locationId: filterContext?.locationId,
+  });
+
   const { byTotalTips: tipsByTotal } = useTipsDrilldown({
     dateFrom: dateFilters.dateFrom,
     dateTo: dateFilters.dateTo,
@@ -1008,22 +1015,53 @@ export function AggregateSalesCard({
 
               return (
                 <div className="grid grid-cols-2 gap-6">
-                  {/* Services */}
-                  <div 
-                    className="text-center p-3 sm:p-4 bg-card-inner-deep rounded-lg border border-border/40 cursor-pointer transition-all hover:-translate-y-0.5 hover:border-border/80 dark:hover:border-border/60"
-                    onClick={() => setDrilldownMode('services')}
-                  >
-                    <div className="flex items-center justify-center gap-1.5 mb-2">
-                      <Scissors className="w-3.5 h-3.5 text-primary" />
-                      <span className="text-xs text-muted-foreground">{t('sales.services')}</span>
-                      <MetricInfoTooltip description="Revenue from booked services. Tips are tracked separately." />
+                  {/* Services (with expandable category breakdown) */}
+                  <div className="text-center p-3 sm:p-4 bg-card-inner-deep rounded-lg border border-border/40 transition-all hover:border-border/80 dark:hover:border-border/60">
+                    <div 
+                      className="cursor-pointer"
+                      onClick={() => setDrilldownMode('services')}
+                    >
+                      <div className="flex items-center justify-center gap-1.5 mb-2">
+                        <Scissors className="w-3.5 h-3.5 text-primary" />
+                        <span className="text-xs text-muted-foreground">{t('sales.services')}</span>
+                        <MetricInfoTooltip description="Revenue from booked services. Tips are tracked separately." />
+                      </div>
+                      <AnimatedBlurredAmount 
+                        value={svcRevenue}
+                        currency={currency}
+                        className="text-xl sm:text-2xl font-display tabular-nums"
+                      />
+                      <p className="text-xs text-muted-foreground/70 mt-1">{svcPct}%</p>
                     </div>
-                    <AnimatedBlurredAmount 
-                      value={svcRevenue}
-                      currency={currency}
-                      className="text-xl sm:text-2xl font-display tabular-nums"
-                    />
-                    <p className="text-xs text-muted-foreground/70 mt-1">{svcPct}%</p>
+                    {/* Service category breakdown synced with retail */}
+                    <AnimatePresence>
+                      {retailExpanded && serviceCategoryData && serviceCategoryData.length > 0 && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="overflow-hidden"
+                        >
+                          <div className="mt-3 pt-3 border-t border-border/40 space-y-2 text-left">
+                            {serviceCategoryData.slice(0, 4).map((cat, index) => (
+                              <div
+                                key={cat.category}
+                                className="flex items-center gap-2 w-full text-left rounded-md px-1.5 py-1 -mx-1.5"
+                              >
+                                <span className="text-[10px] text-muted-foreground/50 w-3 tabular-nums">{index + 1}</span>
+                                <Scissors className="w-3 h-3 text-muted-foreground shrink-0" />
+                                <span className="text-[11px] text-muted-foreground flex-1">{cat.category}</span>
+                                <BlurredAmount>
+                                  <span className="text-[11px] tabular-nums font-medium">{formatCurrencyWhole(cat.revenue)}</span>
+                                </BlurredAmount>
+                                <span className="text-[10px] text-muted-foreground/60 w-8 text-right">{cat.sharePercent}%</span>
+                              </div>
+                            ))}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
                   
                   {/* Retail (with expandable breakdown) */}
