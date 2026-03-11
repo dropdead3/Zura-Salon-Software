@@ -241,8 +241,8 @@ export function WeekView({
             >
               <div className="p-2" /> {/* Time column spacer */}
               {weekDays.map((day) => {
-                const dayIsToday = isToday(day);
-                const dayIsTomorrow = isTomorrow(day);
+                const dayIsToday = isOrgToday(day);
+                const dayIsTomorrow = isOrgTomorrow(day);
                 
                 const dateKey = format(day, 'yyyy-MM-dd');
                 const apptCount = appointmentsByDate.get(dateKey)?.length || 0;
