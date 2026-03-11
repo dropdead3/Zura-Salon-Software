@@ -260,21 +260,18 @@ function ProductsTab() {
         </div>
       )}
 
-      {(showAddDialog || editProduct) && (
+      {editProduct && (
         <ProductFormDialog
           product={editProduct}
-          onClose={() => { setShowAddDialog(false); setEditProduct(null); }}
+          onClose={() => setEditProduct(null)}
           onSave={(data) => {
-            if (editProduct) {
-              updateProduct.mutate({ id: editProduct.id, updates: data });
-            } else {
-              createProduct.mutate(data);
-            }
-            setShowAddDialog(false);
+            updateProduct.mutate({ id: editProduct.id, updates: data });
             setEditProduct(null);
           }}
         />
       )}
+
+      <ProductWizard open={showWizard} onOpenChange={setShowWizard} />
     </div>
   );
 }
