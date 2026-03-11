@@ -1792,6 +1792,13 @@ export function AggregateSalesCard({
         parentLocationId={locationDrilldownTarget ?? filterContext?.locationId}
         
       />
+      {/* Retail Category Drilldown Dialog */}
+      <RetailCategoryDrilldown
+        category={retailCategoryDrilldown}
+        onClose={() => setRetailCategoryDrilldown(null)}
+        dateFrom={dateFilters.dateFrom}
+        dateTo={dateFilters.dateTo}
+        locationId={filterContext?.locationId}
       <LocationMetricDrilldownSheet
         open={!!locationDrilldown}
         onOpenChange={(open) => !open && setLocationDrilldown(null)}
