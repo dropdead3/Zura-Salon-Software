@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { isAllLocations, parseLocationIds } from '@/lib/locationFilter';
-import { isExtensionProduct, isMerchProduct } from '@/utils/serviceCategorization';
+import { isExtensionProduct, isGiftCardProduct, isMerchProduct } from '@/utils/serviceCategorization';
 
 /** Apply location filter. */
 function addLocationFilter(query: any, locationId?: string) {
