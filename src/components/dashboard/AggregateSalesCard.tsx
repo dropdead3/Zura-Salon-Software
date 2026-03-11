@@ -1116,7 +1116,7 @@ export function AggregateSalesCard({
                                   onClick={(e) => { e.stopPropagation(); setRetailCategoryDrilldown(label as any); }}
                                 >
                                   <span className="text-[10px] text-muted-foreground/50 w-3 tabular-nums">{index + 1}</span>
-                                  <Icon className="w-3 h-3 text-muted-foreground shrink-0" />
+                                  
                                   <span className="text-[11px] text-muted-foreground flex-1">{label}</span>
                                   <BlurredAmount>
                                     <span className="text-[11px] tabular-nums font-medium">{formatCurrencyWhole(amount)}</span>
