@@ -207,7 +207,7 @@ export function MeetingSchedulerWizard({ open, onOpenChange, defaultDate }: Meet
     setMeetingType(null);
     setTitle('');
     setSelectedAttendees([]);
-    setSelectedDate(defaultDate || new Date());
+    setSelectedDate(defaultDate || todayDate);
     setStartTime('10:00');
     setDuration(30);
     setMeetingMode('in_person');
