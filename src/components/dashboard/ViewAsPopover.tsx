@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { cn } from '@/lib/utils';
+import { cn, formatDisplayName } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useViewAs } from '@/contexts/ViewAsContext';
 import { useRoles, ROLE_CATEGORIES } from '@/hooks/useRoles';
