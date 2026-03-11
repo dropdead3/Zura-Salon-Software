@@ -1,24 +1,24 @@
 export const TABS_CLASSES = {
   list: "inline-flex h-11 items-center justify-center p-1.5 text-muted-foreground gap-1 bg-muted/70 rounded-[9px]",
   trigger: [
-    "inline-flex items-center justify-center whitespace-nowrap rounded-[6px] px-3.5 py-1.5 text-sm font-medium ring-offset-background transition-all",
+    "inline-flex items-center justify-center whitespace-nowrap rounded-[6px] px-3.5 py-1.5 text-sm font-medium transition-all",
     "data-[state=active]:bg-black/[0.07] dark:data-[state=active]:bg-white/[0.08] data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=active]:ring-1 data-[state=active]:ring-black/[0.10] dark:data-[state=active]:ring-white/[0.12] data-[state=active]:backdrop-blur-sm",
     "data-[state=inactive]:hover:ring-1 data-[state=inactive]:hover:ring-black/[0.06] dark:data-[state=inactive]:hover:ring-white/[0.08] data-[state=inactive]:hover:text-foreground/80",
-    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+    "focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50",
   ].join(" "),
   content:
-    "mt-6 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+    "mt-6 focus-visible:outline-none",
 
   subList: "inline-flex h-10 items-center gap-4 bg-transparent p-0 text-muted-foreground",
   subTrigger:
-    "inline-flex items-center gap-2 px-2 py-2 text-sm font-medium border-b-2 border-transparent rounded-t-md transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:text-foreground hover:bg-muted/50 data-[state=active]:text-foreground data-[state=active]:border-primary data-[state=active]:bg-transparent",
+    "inline-flex items-center gap-2 px-2 py-2 text-sm font-medium border-b-2 border-transparent rounded-t-md transition-all duration-200 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 hover:text-foreground hover:bg-muted/50 data-[state=active]:text-foreground data-[state=active]:border-primary data-[state=active]:bg-transparent",
 
   filterList: "inline-flex h-8 items-center justify-center p-1 text-muted-foreground gap-1 bg-muted/70 rounded-[7px]",
   filterTrigger: [
-    "inline-flex items-center justify-center whitespace-nowrap rounded-[5px] px-2.5 py-1 text-xs font-medium ring-offset-background transition-all",
+    "inline-flex items-center justify-center whitespace-nowrap rounded-[5px] px-2.5 py-1 text-xs font-medium transition-all",
     "data-[state=active]:bg-black/[0.07] dark:data-[state=active]:bg-white/[0.08] data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=active]:ring-1 data-[state=active]:ring-black/[0.10] dark:data-[state=active]:ring-white/[0.12] data-[state=active]:backdrop-blur-sm",
     "data-[state=inactive]:hover:ring-1 data-[state=inactive]:hover:ring-black/[0.06] dark:data-[state=inactive]:hover:ring-white/[0.08] data-[state=inactive]:hover:text-foreground/80",
-    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+    "focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50",
   ].join(" "),
 } as const;
 
@@ -33,9 +33,9 @@ export const RESPONSIVE_TABS_CLASSES = {
   wrapper: "w-full min-w-0 max-w-full",
   list: "w-auto max-w-full min-w-0 justify-start overflow-hidden",
   overflowTrigger: [
-    "inline-flex h-9 w-9 items-center justify-center rounded-[6px] ring-offset-background transition-colors",
+    "inline-flex h-9 w-9 items-center justify-center rounded-[6px] transition-colors",
     "text-muted-foreground hover:bg-black/[0.05] dark:hover:bg-white/[0.08] hover:text-foreground",
-    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+    "focus-visible:outline-none",
   ].join(" "),
   overflowMenuItem:
     "w-full px-3 py-2 text-sm text-left rounded-[6px] hover:bg-black/[0.05] dark:hover:bg-white/[0.08] transition-colors",
