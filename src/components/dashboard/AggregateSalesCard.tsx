@@ -1087,7 +1087,7 @@ export function AggregateSalesCard({
                       <div className="flex items-center justify-center gap-1.5 mb-2">
                         <ShoppingBag className="w-3.5 h-3.5 text-primary" />
                         <span className="text-xs text-muted-foreground">{t('sales.products')}</span>
-                        <MetricInfoTooltip description="Total retail revenue including products, merch, and extension hardware. Expand to see breakdown." />
+                        <MetricInfoTooltip description="Total retail revenue including products, merch, and extensions. Expand to see breakdown." />
                       </div>
                       <AnimatedBlurredAmount 
                         value={retailDisplayRevenue}
