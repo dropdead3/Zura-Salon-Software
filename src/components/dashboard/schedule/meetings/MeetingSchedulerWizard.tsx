@@ -471,7 +471,7 @@ export function MeetingSchedulerWizard({ open, onOpenChange, defaultDate }: Meet
                       selected={selectedDate}
                       onSelect={(d) => d && setSelectedDate(d)}
                       className="p-3 pointer-events-auto"
-                      disabled={(d) => d < new Date(new Date().setHours(0, 0, 0, 0))}
+                      disabled={(d) => format(d, 'yyyy-MM-dd') < todayStr}
                     />
                   </div>
 
