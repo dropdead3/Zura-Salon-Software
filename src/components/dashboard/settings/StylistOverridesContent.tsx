@@ -197,7 +197,7 @@ export function StylistOverridesContent({ serviceId, basePrice }: StylistOverrid
                   onClick={() => { setAddingEmployeeId(emp.id); setNewPrice(''); }}
                 >
                   <div className="flex-1 min-w-0">
-                    <p className={cn(tokens.body.emphasis, 'truncate')}>{emp.display_name || emp.full_name}</p>
+                    <p className={cn(tokens.body.emphasis, 'truncate')}>{formatDisplayName(emp.full_name, emp.display_name)}</p>
                     <p className={tokens.body.muted}>{emp.stylist_level || 'No level'}</p>
                   </div>
                   {addingEmployeeId === emp.id && (

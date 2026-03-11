@@ -197,7 +197,7 @@ export function ViewAsPopover() {
                   </p>
                 ) : (
                   filteredUsers.map(member => {
-                    const displayName = member.display_name || member.full_name || 'Unknown';
+                    const displayName = formatDisplayName(member.full_name || '', member.display_name);
                     const initials = getInitials(displayName);
                     const primaryBadge = member.roles.length > 0
                       ? getRoleBadgeConfig(member.roles[0])

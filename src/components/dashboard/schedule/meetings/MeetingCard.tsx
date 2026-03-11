@@ -150,7 +150,7 @@ export function MeetingAgendaCard({ meeting, onClick, attendeeProfiles }: Meetin
                 <Avatar key={att.user_id} className="w-5 h-5">
                   <AvatarImage src={profile?.photo_url || undefined} />
                   <AvatarFallback className="text-[8px]">
-                    {(profile?.display_name || profile?.full_name || '?').slice(0, 2).toUpperCase()}
+                    {formatDisplayName(profile?.full_name || '', profile?.display_name).slice(0, 2).toUpperCase() || '?'}
                   </AvatarFallback>
                 </Avatar>
               );

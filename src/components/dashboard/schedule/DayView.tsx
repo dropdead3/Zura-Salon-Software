@@ -480,11 +480,11 @@ export function DayView({
                   <Avatar className="h-8 w-8 border border-background/20">
                     <AvatarImage src={stylist.photo_url || undefined} />
                     <AvatarFallback className="text-xs bg-background/20 text-background">
-                      {(stylist.display_name || stylist.full_name).slice(0, 2).toUpperCase()}
+                      {formatDisplayName(stylist.full_name, stylist.display_name).slice(0, 2).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <span className="text-sm font-medium truncate">
-                    {stylist.display_name || stylist.full_name.split(' ')[0]}
+                    {formatDisplayName(stylist.full_name, stylist.display_name)}
                   </span>
                 </div>
               ))}

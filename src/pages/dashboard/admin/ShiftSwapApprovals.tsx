@@ -79,8 +79,8 @@ export default function ShiftSwapApprovals() {
   const renderSwapCard = (swap: ShiftSwap, showActions = false) => {
     const typeConfig = swapTypeConfig[swap.swap_type];
     const TypeIcon = typeConfig.icon;
-    const requesterName = swap.requester?.display_name || swap.requester?.full_name || 'Unknown';
-    const claimerName = swap.claimer?.display_name || swap.claimer?.full_name || 'Unknown';
+    const requesterName = swap.requester ? formatDisplayName(swap.requester.full_name || '', swap.requester.display_name) : 'Unknown';
+    const claimerName = swap.claimer ? formatDisplayName(swap.claimer.full_name || '', swap.claimer.display_name) : 'Unknown';
 
     return (
       <motion.div

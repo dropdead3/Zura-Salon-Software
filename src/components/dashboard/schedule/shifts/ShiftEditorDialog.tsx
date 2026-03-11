@@ -161,7 +161,7 @@ export function ShiftEditorDialog({
               <SelectContent>
                 {staffMembers.map(m => (
                   <SelectItem key={m.user_id} value={m.user_id} className="font-sans">
-                    {m.display_name || m.full_name}
+                    {formatDisplayName(m.full_name, m.display_name)}
                   </SelectItem>
                 ))}
               </SelectContent>

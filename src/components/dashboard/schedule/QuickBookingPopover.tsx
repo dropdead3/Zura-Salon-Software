@@ -946,7 +946,7 @@ export function QuickBookingPopover({
 
   // Handle stylist selection in stylist-first mode
   const handleStylistFirstSelect = (stylist: typeof allStylists[0]) => {
-    const fullName = stylist.employee_profiles?.display_name || stylist.employee_profiles?.full_name || 'Unknown';
+    const fullName = stylist.employee_profiles ? formatDisplayName(stylist.employee_profiles.full_name || '', stylist.employee_profiles.display_name) : 'Unknown';
     setPreSelectedStylistId(stylist.user_id);
     setPreSelectedStylistPhorestId(stylist.phorest_staff_id);
     setPreSelectedStylistName(fullName);
