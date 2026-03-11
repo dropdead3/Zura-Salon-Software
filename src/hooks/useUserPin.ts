@@ -226,7 +226,7 @@ export function usePinChangelog(profileId?: string) {
         .in('user_id', changerIds);
 
       const changerMap = new Map(
-        changers?.map(c => [c.user_id, c.display_name || c.full_name]) || []
+        changers?.map(c => [c.user_id, formatDisplayName(c.full_name || '', c.display_name)]) || []
       );
 
       return (data || []).map(entry => ({
