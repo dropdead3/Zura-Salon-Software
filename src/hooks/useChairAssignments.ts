@@ -305,7 +305,7 @@ export function useRandomAssignment(
         const matchingTimeOff = (timeOff ?? []).find(t => t.user_id === s.user_id);
         exclusions.push({
           stylistId: s.user_id,
-          stylistName: s.display_name || s.full_name || 'Unknown',
+          stylistName: formatDisplayName(s.full_name || '', s.display_name),
           reason: matchingTimeOff?.reason ?? 'Time off',
           details: `${matchingTimeOff?.start_date} – ${matchingTimeOff?.end_date}`,
         });

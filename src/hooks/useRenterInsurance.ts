@@ -127,7 +127,7 @@ export function useExpiringInsurance(organizationId: string | undefined, daysThr
 
         return {
           ...renter,
-          renter_name: emp?.display_name || emp?.full_name,
+          renter_name: emp ? formatDisplayName(emp.full_name || '', emp.display_name) : undefined,
           days_until_expiry,
           expiry_status: days_until_expiry < 0 ? 'expired' : 'expiring_soon',
         };

@@ -41,7 +41,7 @@ export function useStaffInvitations() {
         .in('user_id', inviterIds);
       
       const profileMap = new Map(
-        profiles?.map(p => [p.user_id, p.display_name || p.full_name]) || []
+        profiles?.map(p => [p.user_id, formatDisplayName(p.full_name || '', p.display_name)]) || []
       );
       
       return data?.map(invitation => ({

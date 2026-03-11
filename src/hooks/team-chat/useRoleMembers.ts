@@ -96,7 +96,7 @@ export function useRoleMembersBatch(roles: AppRole[]) {
           p.user_id,
           {
             user_id: p.user_id,
-            display_name: p.display_name || p.full_name || 'Unknown',
+            display_name: formatDisplayName(p.full_name || '', p.display_name),
             full_name: p.full_name,
             photo_url: p.photo_url,
           },

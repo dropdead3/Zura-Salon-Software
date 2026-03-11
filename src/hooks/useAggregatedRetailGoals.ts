@@ -62,7 +62,7 @@ export function useAggregatedRetailGoals(currentRetailRevenue: number = 0) {
         const retailWeeklyTarget = goal?.retail_weekly_target ?? 0;
         return {
           userId: e.user_id,
-          name: e.display_name || e.full_name || 'Unknown',
+          name: formatDisplayName(e.full_name || '', e.display_name),
           photoUrl: e.photo_url,
           retailMonthlyTarget,
           retailWeeklyTarget,
