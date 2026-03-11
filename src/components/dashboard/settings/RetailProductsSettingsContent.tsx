@@ -297,7 +297,7 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-full aspect-video rounded-lg border-2 border-dashed border-border/60 bg-muted/20 flex flex-col items-center justify-center gap-1.5 hover:border-primary/40 transition-colors"
+                  className="w-full aspect-square rounded-lg border-2 border-dashed border-border/60 bg-muted/20 flex flex-col items-center justify-center gap-1.5 hover:border-primary/40 transition-colors"
                   disabled={uploading}
                 >
                   {uploading ? (
