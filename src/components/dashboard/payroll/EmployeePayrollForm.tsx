@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { formatDisplayName } from '@/lib/utils';
 import { 
   useEmployeePayrollSettings, 
   EmployeePayrollSettings,
