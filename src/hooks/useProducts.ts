@@ -26,6 +26,7 @@ export interface Product {
 export interface ProductFilters {
   search?: string;
   category?: string;
+  brand?: string;
   locationId?: string;
   lowStockOnly?: boolean;
   limit?: number;
