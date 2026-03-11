@@ -19,9 +19,10 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
-import { useProducts, useCreateProduct, useUpdateProduct, type Product } from '@/hooks/useProducts';
+import { useProducts, useCreateProduct, useUpdateProduct, useProductBrandsList, type Product } from '@/hooks/useProducts';
 import { useProductBrands, useProductCategorySummaries } from '@/hooks/useProductBrands';
 import { useProductCategories } from '@/hooks/useProducts';
+import { isExtensionProduct, isGiftCardProduct, isMerchProduct } from '@/utils/serviceCategorization';
 import { useBulkUpdateProducts, useBulkToggleProducts } from '@/hooks/useBulkUpdateProducts';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
