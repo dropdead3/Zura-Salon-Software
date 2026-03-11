@@ -90,25 +90,10 @@ export function ServiceProductDrilldown({
   const totalServiceRevenue = drilldownData?.totalServiceRevenue || 0;
   const totalProductRevenue = drilldownData?.totalProductRevenue || 0;
 
-  // When excluding extensions in products mode, filter out extension items and recalculate
-  const adjustedStaffData = useMemo(() => {
-    if (isServices || !excludeExtensions) return staffData;
-    return staffData.map(s => {
-      const filteredItems = s.productItems.filter(item => !isExtensionProduct(item.itemName));
-      const filteredRevenue = filteredItems.reduce((sum, item) => sum + item.amount, 0);
-      return {
-        ...s,
-        productRevenue: filteredRevenue,
-        productCount: filteredItems.length,
-        productItems: filteredItems,
-      };
-    });
-  }, [staffData, isServices, excludeExtensions]);
+  // No longer filtering extensions — drilldown shows all product items
+  const adjustedStaffData = staffData;
 
-  const adjustedTotalProduct = useMemo(() => {
-    if (isServices || !excludeExtensions) return totalProductRevenue;
-    return adjustedStaffData.reduce((sum, s) => sum + s.productRevenue, 0);
-  }, [adjustedStaffData, isServices, excludeExtensions, totalProductRevenue]);
+  const adjustedTotalProduct = totalProductRevenue;
 
   const [expandedStaffId, setExpandedStaffId] = useState<string | null>(null);
 
