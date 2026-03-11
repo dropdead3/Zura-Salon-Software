@@ -38,7 +38,6 @@ export function ServiceProductDrilldown({
   dateFrom,
   dateTo,
   parentLocationId,
-  excludeExtensions = false,
 }: ServiceProductDrilldownProps) {
   const isServices = mode === 'services';
   const { data: locations = [] } = useActiveLocations();
