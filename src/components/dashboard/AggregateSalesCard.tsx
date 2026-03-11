@@ -1034,9 +1034,19 @@ export function AggregateSalesCard({
                       />
                       <p className="text-xs text-muted-foreground/70 mt-1">{svcPct}%</p>
                     </div>
-                    {/* Service category breakdown synced with retail */}
+                    {/* Breakdown toggle */}
+                    {serviceCategoryData && serviceCategoryData.length > 0 && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setServicesExpanded(prev => !prev); }}
+                        className="mt-2 mx-auto flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        <span>Breakdown</span>
+                        <ChevronDown className={cn("w-3 h-3 transition-transform duration-200", servicesExpanded && "rotate-180")} />
+                      </button>
+                    )}
+                    {/* Expanded service category breakdown */}
                     <AnimatePresence>
-                      {retailExpanded && serviceCategoryData && serviceCategoryData.length > 0 && (
+                      {servicesExpanded && serviceCategoryData && serviceCategoryData.length > 0 && (
                         <motion.div
                           initial={{ height: 0, opacity: 0 }}
                           animate={{ height: 'auto', opacity: 1 }}
@@ -1059,6 +1069,9 @@ export function AggregateSalesCard({
                                 <span className="text-[10px] text-muted-foreground/60 w-8 text-right">{cat.sharePercent}%</span>
                               </div>
                             ))}
+                            {serviceCategoryData.length > 4 && (
+                              <p className="text-[10px] text-muted-foreground/40 text-center pt-1 italic">Top 4 categories shown</p>
+                            )}
                           </div>
                         </motion.div>
                       )}
