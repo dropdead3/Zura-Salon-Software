@@ -1,28 +1,17 @@
 
 
-## Add "Timeblock / Break" Option to Schedule Type Selector
+## Show All Retail Categories (Including Zero Amounts)
 
-### Change Summary
-
-Add a third button to the `ScheduleTypeSelector` for creating timeblocks/breaks. This mirrors the existing break dialog flow already wired up in `Schedule.tsx`.
-
-### Changes (2 files)
-
-**1. `ScheduleTypeSelector.tsx`**
-- Add `onSelectTimeblock` callback prop
-- Add a third button with `Clock` icon (from lucide-react), label "Timeblock / Break", description "Lunch, personal time, focus block"
-- Same button styling as existing two options
-
-**2. `Schedule.tsx`**
-- Pass `onSelectTimeblock` to `ScheduleTypeSelector`
-- Handler: close type selector, set `breakDefaults` with the clicked time/stylist, open `breakDialogOpen`
-
-```text
-Type Selector options:
-  ┌─ Client Appointment   (CalendarPlus)  → booking wizard
-  ├─ Internal Meeting      (Users)         → meeting wizard
-  └─ Timeblock / Break     (Clock)         → break/block form
+### Problem
+Line 1007 in `AggregateSalesCard.tsx` filters out categories where both amount and count are zero:
+```js
+.filter(c => c.amount > 0 || c.count > 0);
 ```
+This hides Gift Cards (and any other category with no sales) from the breakdown.
 
-Two files, ~15 lines total.
+### Fix
+**`src/components/dashboard/AggregateSalesCard.tsx`** (line 1007)
+- Remove the `.filter(c => c.amount > 0 || c.count > 0)` call so all 4 categories (Products, Merch, Gift Cards, Extensions) always display in the breakdown regardless of revenue.
+
+One-line change.
 
