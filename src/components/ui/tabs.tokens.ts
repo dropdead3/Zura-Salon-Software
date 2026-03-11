@@ -4,10 +4,10 @@ export const TABS_CLASSES = {
     "inline-flex items-center justify-center whitespace-nowrap rounded-[6px] px-3.5 py-1.5 text-sm font-medium transition-all",
     "data-[state=active]:bg-black/[0.07] dark:data-[state=active]:bg-white/[0.08] data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=active]:ring-1 data-[state=active]:ring-black/[0.10] dark:data-[state=active]:ring-white/[0.12] data-[state=active]:backdrop-blur-sm",
     "data-[state=inactive]:hover:ring-1 data-[state=inactive]:hover:ring-black/[0.06] dark:data-[state=inactive]:hover:ring-white/[0.08] data-[state=inactive]:hover:text-foreground/80",
-    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+    "focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50",
   ].join(" "),
   content:
-    "mt-6 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+    "mt-6 focus-visible:outline-none",
 
   subList: "inline-flex h-10 items-center gap-4 bg-transparent p-0 text-muted-foreground",
   subTrigger:
