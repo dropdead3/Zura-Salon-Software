@@ -326,7 +326,7 @@ export function WeekView({
             {weekDays.map((day) => {
               const dateKey = format(day, 'yyyy-MM-dd');
               const dayAppointments = appointmentsByDate.get(dateKey) || [];
-              const isCurrentDay = isToday(day);
+              const isCurrentDay = isOrgToday(day);
               const dayHoursInfo = getLocationHoursForDate(locationHoursJson ?? null, locationHolidayClosures ?? null, day);
               
               return (

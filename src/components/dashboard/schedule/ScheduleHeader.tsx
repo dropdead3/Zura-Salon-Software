@@ -470,7 +470,7 @@ export function ScheduleHeader({
           })()}
           {quickDays.map((day) => {
             const isSelected = format(day, 'yyyy-MM-dd') === format(currentDate, 'yyyy-MM-dd');
-            const isTodayDate = isToday(day);
+            const isTodayDate = isOrgToday(day);
             const selectedLoc = locations.find(l => l.id === selectedLocation);
             const closed = selectedLoc
               ? isClosedOnDate(selectedLoc.hours_json ?? null, selectedLoc.holiday_closures ?? null, day)

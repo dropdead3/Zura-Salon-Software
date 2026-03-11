@@ -99,7 +99,7 @@ export function MonthView({
               const dateKey = format(day, 'yyyy-MM-dd');
               const dayAppointments = appointmentsByDate.get(dateKey) || [];
               const isCurrentMonth = isSameMonth(day, currentDate);
-              const isCurrentDay = isToday(day);
+              const isCurrentDay = orgIsToday(day);
               const closureInfo = isClosedOnDate(locationHoursJson ?? null, locationHolidayClosures ?? null, day);
               
               // Count by status for the dots

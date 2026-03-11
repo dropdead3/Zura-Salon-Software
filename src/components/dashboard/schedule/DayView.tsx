@@ -363,10 +363,10 @@ export function DayView({
   }, [activeId, appointments]);
 
   // Current time indicator
-  const now = new Date();
-  const showCurrentTime = isToday(date);
+  const { isToday: isDayToday, nowMinutes: dayNowMins } = useOrgNow();
+  const showCurrentTime = isDayToday(date);
   const currentTimeOffset = showCurrentTime
-    ? ((now.getHours() * 60 + now.getMinutes()) - (hoursStart * 60)) / 15 * ROW_HEIGHT
+    ? (dayNowMins - (hoursStart * 60)) / 15 * ROW_HEIGHT
     : 0;
 
   // Calculate overlapping appointments for a stylist
