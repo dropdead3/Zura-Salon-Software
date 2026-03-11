@@ -265,7 +265,13 @@ export function AggregateSalesCard({
     true,
     filterContext?.locationId
   );
-  // Tip attach rate from drilldown data (react-query deduplicates the fetch)
+  // Service category breakdown (deduped by react-query)
+  const { data: serviceCategoryData } = useRevenueByCategoryDrilldown({
+    dateFrom: dateFilters.dateFrom,
+    dateTo: dateFilters.dateTo,
+    locationId: filterContext?.locationId,
+  });
+
   const { byTotalTips: tipsByTotal } = useTipsDrilldown({
     dateFrom: dateFilters.dateFrom,
     dateTo: dateFilters.dateTo,
