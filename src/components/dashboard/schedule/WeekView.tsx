@@ -498,7 +498,13 @@ export function WeekView({
                         <div className="absolute left-0 right-0 border-t-2 border-blue-500" />
                         <div className="absolute -left-1 -top-1.5 w-3 h-3 bg-blue-500 rounded-full shadow" />
                         <div className="absolute left-3 -top-2.5 bg-blue-500 text-white text-[10px] px-1.5 py-0.5 rounded font-medium shadow">
-                          {format(now, 'h:mm a')}
+                          {(() => {
+                            const h = Math.floor(wkNowMins / 60);
+                            const m = wkNowMins % 60;
+                            const ampm = h >= 12 ? 'PM' : 'AM';
+                            const h12 = h % 12 || 12;
+                            return `${h12}:${String(m).padStart(2, '0')} ${ampm}`;
+                          })()}
                         </div>
                       </div>
                     </div>
