@@ -1054,7 +1054,7 @@ export function AggregateSalesCard({
                           transition={{ duration: 0.2 }}
                           className="overflow-hidden"
                         >
-                          <div className="mt-3 pt-3 border-t border-border/40 space-y-2 text-left">
+                          <div className="mt-3 pt-3 border-t border-border/40 space-y-1 text-left -mx-1">
                             {serviceCategoryData.slice(0, 4).map((cat, index) => (
                               <div
                                 key={cat.category}
