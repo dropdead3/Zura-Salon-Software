@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { usePendingApprovals, useShiftSwaps, useApproveSwap, type ShiftSwap } from '@/hooks/useShiftSwaps';
+import { formatDisplayName } from '@/lib/utils';
 
 const swapTypeConfig = {
   swap: { icon: ArrowLeftRight, label: 'Swap', color: 'text-blue-600' },
