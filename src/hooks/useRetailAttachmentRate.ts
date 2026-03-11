@@ -63,7 +63,7 @@ export function useRetailAttachmentRate({ dateFrom, dateTo, locationId }: UseRet
       const productItems = await fetchAllPages((offset) => {
         let q = supabase
           .from('phorest_transaction_items')
-          .select('phorest_client_id, transaction_date')
+          .select('phorest_client_id, transaction_date, item_name')
           .gte('transaction_date', dateFrom)
           .lte('transaction_date', dateTo)
           .not('phorest_client_id', 'is', null)
