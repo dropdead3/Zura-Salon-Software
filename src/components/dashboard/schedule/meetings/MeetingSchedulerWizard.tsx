@@ -83,11 +83,12 @@ export function MeetingSchedulerWizard({ open, onOpenChange, defaultDate }: Meet
   const createTemplate = useCreateMeetingTemplate();
 
   // Wizard state
+  const { todayStr, todayDate } = useOrgNow();
   const [step, setStep] = useState<WizardStep>('type');
   const [meetingType, setMeetingType] = useState<MeetingType | null>(null);
   const [title, setTitle] = useState('');
   const [selectedAttendees, setSelectedAttendees] = useState<string[]>([]);
-  const [selectedDate, setSelectedDate] = useState<Date>(defaultDate || new Date());
+  const [selectedDate, setSelectedDate] = useState<Date>(defaultDate || todayDate);
   const [startTime, setStartTime] = useState('10:00');
   const [duration, setDuration] = useState(30);
   const [meetingMode, setMeetingMode] = useState<MeetingMode>('in_person');
