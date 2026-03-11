@@ -31,7 +31,7 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useDraftBookings, type DraftBooking } from '@/hooks/useDraftBookings';
 import { useServiceLookup } from '@/hooks/useServiceLookup';
 import { useAppointmentAssistantNames } from '@/hooks/useAppointmentAssistantNames';
-import { Loader2, Sparkles, Coffee, Users } from 'lucide-react';
+import { Loader2, Sparkles, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { MeetingSchedulerWizard, ScheduleTypeSelector, MeetingDetailPanel } from '@/components/dashboard/schedule/meetings';
