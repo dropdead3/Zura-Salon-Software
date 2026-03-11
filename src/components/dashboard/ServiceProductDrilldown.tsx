@@ -22,6 +22,7 @@ interface ServiceProductDrilldownProps {
   dateFrom: string;
   dateTo: string;
   parentLocationId?: string;
+  excludeExtensions?: boolean;
 }
 
 function getInitials(name: string) {
