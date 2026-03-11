@@ -1,5 +1,5 @@
 import { format, parse } from 'date-fns';
-import { cn } from '@/lib/utils';
+import { cn, formatDisplayName } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Users, Video, MapPin, Monitor } from 'lucide-react';
