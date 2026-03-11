@@ -40,7 +40,7 @@ import { useRescheduleAppointment } from '@/hooks/useRescheduleAppointment';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
+import { cn, formatDisplayName } from '@/lib/utils';
 import type { QueueAppointment } from '@/hooks/useTodaysQueue';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 

@@ -8,7 +8,7 @@ import {
   Users, Video, MapPin, Monitor, Clock, CalendarIcon, X,
   CheckCircle, XCircle, HelpCircle, Copy, ExternalLink,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatDisplayName } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUpdateMeetingStatus, useUpdateRsvp, type AdminMeeting, type MeetingAttendee, type MeetingMode } from '@/hooks/useAdminMeetings';

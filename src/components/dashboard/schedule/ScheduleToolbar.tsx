@@ -33,7 +33,7 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { cn } from '@/lib/utils';
+import { cn, formatDisplayName } from '@/lib/utils';
 import type { CalendarView, CalendarFilters, AppointmentStatus, STATUS_CONFIG } from '@/hooks/usePhorestCalendar';
 import { useLocations } from '@/hooks/useLocations';
 import { useQuery } from '@tanstack/react-query';

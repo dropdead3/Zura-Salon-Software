@@ -8,7 +8,7 @@ import {
   isToday,
   isTomorrow,
 } from 'date-fns';
-import { cn } from '@/lib/utils';
+import { cn, formatDisplayName } from '@/lib/utils';
 import { 
   Tooltip,
   TooltipContent,
