@@ -1,23 +1,30 @@
 
 
-## Timezone-Safe Scheduling (Implemented)
+## Crop-to-Square & Optimize Product Image Uploads
 
 ### Problem
-`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
+Product images are uploaded raw — no resizing, no compression, no aspect ratio enforcement. This leads to inconsistent display and slow loading.
 
-### Solution
-- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
-- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
-- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
+### Changes
 
-### Files Updated
-- `ScheduleHeader.tsx` — today button, quick days, isToday checks
-- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
-- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
-- `MonthView.tsx` — today highlight
-- `AgendaView.tsx` — today/tomorrow labels, today border
-- `ScheduleActionBar.tsx` — payment queue timing
-- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
-- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
-- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
-- `useHuddles.ts` — today's huddle query
+**`src/components/dashboard/settings/RetailProductsSettingsContent.tsx`** — `handleImageUpload` function (lines 231-246)
+
+1. Import `optimizeImage` from `@/lib/image-utils` (already exists in the project)
+2. Before uploading, run the file through `optimizeImage` with square crop settings:
+   - `maxWidth: 800`, `maxHeight: 800`, `quality: 0.82`, `format: 'webp'`
+3. Add square cropping logic to `optimizeImage` or do it inline: after loading the image, crop to a centered square (use the shorter dimension) before resizing
+4. Upload the optimized `.webp` blob instead of the raw file
+5. Change the upload path extension to `.webp`
+
+**`src/lib/image-utils.ts`** — Add `cropToSquare` option
+
+- Add optional `cropToSquare?: boolean` to `OptimizeOptions`
+- When enabled, before scaling: calculate centered square crop from the shorter dimension, then `ctx.drawImage` with source crop parameters
+- This keeps the utility reusable for other components
+
+**UI adjustments in the dialog:**
+- Change `aspect-video` to `aspect-square` on both the image preview container (line 277) and the upload placeholder (line 288) so the UI reflects the square output
+
+### Summary
+Two files changed. Images will be auto-cropped to center-square at max 800×800 WebP (~80KB typical), ensuring fast loading and consistent display.
+
