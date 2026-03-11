@@ -177,7 +177,7 @@ export function ShiftScheduleView({ locationId }: ShiftScheduleViewProps) {
                     key={day.toISOString()}
                     className={cn(
                       'p-3 text-center border-l border-border',
-                      isSameDay(day, new Date()) && 'bg-primary/5'
+                      shiftIsToday(day) && 'bg-primary/5'
                     )}
                   >
                     <p className="font-display text-[10px] tracking-wider text-muted-foreground">
