@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { formatDisplayName } from '@/lib/utils';
 import { useMemo } from 'react';
 import { getDay } from 'date-fns';
 import { useAssistantsAtLocation } from '@/hooks/useAssistantAvailability';
