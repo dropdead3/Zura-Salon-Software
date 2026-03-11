@@ -390,7 +390,7 @@ export function useSalesByStylist(dateFrom?: string, dateTo?: string, locationId
         if (m.user_id) {
           mappingLookup[m.phorest_staff_id] = {
             userId: m.user_id,
-            name: profile?.display_name || profile?.full_name || m.phorest_staff_name || 'Unknown',
+            name: profile ? formatDisplayName(profile.full_name || '', profile.display_name) : (m.phorest_staff_name || 'Unknown'),
             photo: profile?.photo_url,
           };
         }
