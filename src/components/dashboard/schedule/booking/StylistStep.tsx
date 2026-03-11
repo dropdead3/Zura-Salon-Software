@@ -145,7 +145,7 @@ export function StylistStep({
                 mode="single"
                 selected={selectedDate}
                 onSelect={(date) => date && onDateChange(date)}
-                disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                disabled={(date) => formatDateFns(date, 'yyyy-MM-dd') < todayStr}
                 className="rounded-lg border"
               />
             ) : (
