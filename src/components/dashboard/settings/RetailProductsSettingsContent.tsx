@@ -286,7 +286,7 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
             <Label className="text-xs">Product Image</Label>
             <div className="mt-1.5">
               {form.image_url ? (
-                <div className="relative group w-full aspect-video rounded-lg overflow-hidden border border-border bg-muted/30">
+                <div className="relative group w-full aspect-square rounded-lg overflow-hidden border border-border bg-muted/30">
                   <img src={form.image_url} alt="Product" className="w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                     <Button variant="secondary" size={tokens.button.inline} onClick={() => fileInputRef.current?.click()}>Replace</Button>
