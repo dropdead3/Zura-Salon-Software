@@ -152,6 +152,7 @@ export function AggregateSalesCard({
   const { hideNumbers } = useHideNumbers();
   const { formatCurrency, formatCurrencyWhole, currency } = useFormatCurrency();
   const [retailExpanded, setRetailExpanded] = useState(false);
+  const [retailCategoryDrilldown, setRetailCategoryDrilldown] = useState<'Products' | 'Merch' | 'Gift Cards' | 'Extensions' | null>(null);
 
   // Toggle a secondary KPI drilldown with mutual exclusivity
   const toggleDrilldown = (panel: 'revenue' | 'transactions' | 'avgTicket' | 'revPerHour' | 'goals' | 'expectedGap') => {
