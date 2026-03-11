@@ -140,7 +140,7 @@ export function AddStrikeToStaffDialog({
                           {member.full_name?.charAt(0)}
                         </AvatarFallback>
                       </Avatar>
-                      {member.display_name || member.full_name}
+                      {formatDisplayName(member.full_name || '', member.display_name)}
                     </div>
                   </SelectItem>
                 ))}

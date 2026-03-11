@@ -397,7 +397,7 @@ export function UserRolesTab({ canManage }: UserRolesTabProps) {
                       )}
                       <Switch
                         checked={isSuperAdmin || false}
-                        onCheckedChange={() => handleToggleSuperAdmin(user.user_id, user.display_name || user.full_name, isSuperAdmin || false)}
+                        onCheckedChange={() => handleToggleSuperAdmin(user.user_id, formatDisplayName(user.full_name || '', user.display_name), isSuperAdmin || false)}
                         disabled={toggleSuperAdmin.isPending || !canApproveAdmin || isPrimaryOwner}
                         className="data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-amber-400 data-[state=checked]:to-orange-400"
                       />

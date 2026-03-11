@@ -89,7 +89,7 @@ export function StylistCommissionDrilldown({
   const effectiveRetail = override?.retail_commission_rate ?? currentLevel?.retail_commission_rate ?? null;
   const effectiveSource = override ? 'Override' : currentLevel ? 'Level Default' : 'None';
 
-  const displayName = member.display_name || member.full_name || 'Unknown';
+  const displayName = formatDisplayName(member.full_name || '', member.display_name);
 
   const handleLevelChange = (slug: string) => {
     const targetSlug = slug === '__unassign' ? null : slug;

@@ -57,7 +57,7 @@ export default function PlatformOverview() {
   const greeting = useMemo(() => getGreeting(), []);
   const contextualMessage = useMemo(() => getContextualMessage(), []);
   
-  const firstName = profile?.display_name || profile?.full_name?.split(' ')[0] || '';
+  const firstName = profile ? formatDisplayName(profile.full_name || '', profile.display_name).split(' ')[0] : '';
 
   if (isLoading) {
     return (
