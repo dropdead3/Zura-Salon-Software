@@ -30,6 +30,7 @@ import { useSalesMetrics, useSalesByStylist } from '@/hooks/useSalesData';
 import { useStaffUtilization } from '@/hooks/useStaffUtilization';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { useRetailAttachmentRate } from '@/hooks/useRetailAttachmentRate';
+import { useRetailBreakdown } from '@/hooks/useRetailBreakdown';
 // Commission resolution is now handled internally by CommissionSummaryCard and StaffCommissionTable
 import { Link } from 'react-router-dom';
 import { Settings2, MapPin, Calendar } from 'lucide-react';
