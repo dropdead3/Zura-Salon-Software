@@ -342,7 +342,7 @@ export function useRetailAnalytics(dateFrom?: string, dateTo?: string, locationI
 
         // Track all service/product transactions for attachment rate
         if (isService && txId) allServiceTxs.add(txId);
-        if (isProduct && txId) allProductTxs.add(txId);
+        if (isProduct && txId && !isExtensionProduct(item.item_name)) allProductTxs.add(txId);
 
         // Staff tracking
         if (staffId) {
