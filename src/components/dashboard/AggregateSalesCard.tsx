@@ -989,7 +989,9 @@ export function AggregateSalesCard({
           {(() => {
             const showDailyAvg = dateRange !== 'today' && dateRange !== 'yesterday';
             const workingDays = metrics?.daysWithSales ?? 0;
-            const dailyAverage = workingDays > 0 ? displayMetrics.totalRevenue / workingDays : 0;
+            const pastActualActive = isPastRange && pastActual?.hasActualData;
+            const dailyAvgRevenue = pastActualActive ? pastActual.actualRevenue : displayMetrics.totalRevenue;
+            const dailyAverage = workingDays > 0 ? dailyAvgRevenue / workingDays : 0;
 
             if (!showDailyAvg) {
               // 4 cards: single row
