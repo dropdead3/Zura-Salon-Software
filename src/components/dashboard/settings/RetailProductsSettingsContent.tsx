@@ -214,6 +214,8 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
   const { data: locations } = useActiveLocations();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [cropPreviewFile, setCropPreviewFile] = useState<File | null>(null);
+  const [cropPreviewUrl, setCropPreviewUrl] = useState<string | null>(null);
   const [form, setForm] = useState({
     name: product?.name || '',
     brand: product?.brand || '',
@@ -229,12 +231,37 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
     image_url: product?.image_url || '',
   });
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const clearCropPreview = () => {
+    if (cropPreviewUrl) URL.revokeObjectURL(cropPreviewUrl);
+    setCropPreviewFile(null);
+    setCropPreviewUrl(null);
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    e.target.value = '';
     if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      sonnerToast.error('Please select an image file');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      sonnerToast.error('Image must be under 10 MB');
+      return;
+    }
+
+    clearCropPreview();
+    const url = URL.createObjectURL(file);
+    setCropPreviewFile(file);
+    setCropPreviewUrl(url);
+  };
+
+  const handleConfirmUpload = async () => {
+    if (!cropPreviewFile) return;
     setUploading(true);
     try {
-      const { blob } = await optimizeImage(file, {
+      const { blob } = await optimizeImage(cropPreviewFile, {
         maxWidth: 800,
         maxHeight: 800,
         quality: 0.82,
@@ -254,6 +281,7 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
       sonnerToast.error('Failed to process image');
     } finally {
       setUploading(false);
+      clearCropPreview();
     }
   };
 
