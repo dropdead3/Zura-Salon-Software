@@ -1,16 +1,28 @@
 
 
-## Match Hover Highlight Corners to Card Radius
+## Add "Timeblock / Break" Option to Schedule Type Selector
 
-The breakdown rows use `rounded-xl` (12px) which creates pill-like highlights that visually clip against the card's inner edges. Change to `rounded-lg` (8px) to match the bento card's interior radius, giving a more cohesive inset look.
+### Change Summary
 
-### Changes — `src/components/dashboard/AggregateSalesCard.tsx`
+Add a third button to the `ScheduleTypeSelector` for creating timeblocks/breaks. This mirrors the existing break dialog flow already wired up in `Schedule.tsx`.
 
-**Line 1061 (Services rows):**
-- `rounded-xl` → `rounded-lg`
+### Changes (2 files)
 
-**Line 1126 (Retail rows):**
-- `rounded-xl` → `rounded-lg`
+**1. `ScheduleTypeSelector.tsx`**
+- Add `onSelectTimeblock` callback prop
+- Add a third button with `Clock` icon (from lucide-react), label "Timeblock / Break", description "Lunch, personal time, focus block"
+- Same button styling as existing two options
 
-Two class swaps, same file.
+**2. `Schedule.tsx`**
+- Pass `onSelectTimeblock` to `ScheduleTypeSelector`
+- Handler: close type selector, set `breakDefaults` with the clicked time/stylist, open `breakDialogOpen`
+
+```text
+Type Selector options:
+  ┌─ Client Appointment   (CalendarPlus)  → booking wizard
+  ├─ Internal Meeting      (Users)         → meeting wizard
+  └─ Timeblock / Break     (Clock)         → break/block form
+```
+
+Two files, ~15 lines total.
 
