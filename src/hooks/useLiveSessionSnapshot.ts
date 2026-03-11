@@ -131,7 +131,7 @@ export function useLiveSessionSnapshot(locationId?: string): LiveSessionSnapshot
         const profile = userId ? profileMap.get(userId) : null;
         const phorestName = staffToName.get(staffId);
         fallbackIndex++;
-        const name = profile?.display_name || profile?.full_name || phorestName || `Stylist ${fallbackIndex}`;
+        const name = profile ? formatDisplayName(profile.full_name || '', profile.display_name) : (phorestName ? formatDisplayName(phorestName) : `Stylist ${fallbackIndex}`);
         return { name, photoUrl: profile?.photo_url || null };
       });
 
