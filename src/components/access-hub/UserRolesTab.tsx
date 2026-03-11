@@ -280,7 +280,7 @@ export function UserRolesTab({ canManage }: UserRolesTabProps) {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="font-medium">
-                  {user.display_name || user.full_name}
+                  {formatDisplayName(user.full_name || '', user.display_name)}
                 </h3>
                 {isSuperAdmin && (
                   <Tooltip>
