@@ -452,6 +452,15 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
             </div>
           </div>
           <div><Label className="text-xs">Name *</Label><Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} /></div>
+          <div>
+            <Label className="text-xs">Type</Label>
+            <Select value={form.product_type} onValueChange={v => setForm(f => ({ ...f, product_type: v }))}>
+              <SelectTrigger className="h-9"><SelectValue placeholder="Select type" /></SelectTrigger>
+              <SelectContent>
+                {PRODUCT_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label className="text-xs">Brand</Label>
