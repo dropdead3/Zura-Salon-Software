@@ -184,7 +184,7 @@ function ProductsTab() {
                 <TableRow><TableCell colSpan={11} className="text-center py-8 text-muted-foreground">No products found</TableCell></TableRow>
               ) : filteredProducts.map(p => {
                 const isLow = p.reorder_level != null && p.quantity_on_hand != null && p.quantity_on_hand <= p.reorder_level;
-                const productType = getProductType(p.name);
+                const productType = getProductType(p);
                 return (
                   <TableRow key={p.id} className={cn(isLow && 'bg-amber-50/50 dark:bg-amber-950/10')}>
                     <TableCell><input type="checkbox" checked={selectedIds.has(p.id)} onChange={() => toggleSelect(p.id)} className="rounded border-border" /></TableCell>
