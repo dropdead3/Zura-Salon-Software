@@ -191,14 +191,6 @@ export default function Schedule() {
     leadSources: [],
   });
 
-  // Right-click "Add Break" context menu state
-  const [breakContextMenu, setBreakContextMenu] = useState<{
-    open: boolean;
-    x: number;
-    y: number;
-    time: string;
-    stylistId: string;
-  } | null>(null);
   const [breakDialogOpen, setBreakDialogOpen] = useState(false);
   const [assistantDialogOpen, setAssistantDialogOpen] = useState(false);
   const [blockManagerOpen, setBlockManagerOpen] = useState(false);
