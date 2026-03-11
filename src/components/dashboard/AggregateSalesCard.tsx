@@ -1037,7 +1037,7 @@ export function AggregateSalesCard({
                     {/* Breakdown toggle */}
                     {serviceCategoryData && serviceCategoryData.length > 0 && (
                       <button
-                        onClick={(e) => { e.stopPropagation(); setServicesExpanded(prev => !prev); }}
+                        onClick={(e) => { e.stopPropagation(); const next = !servicesExpanded; setServicesExpanded(next); setRetailExpanded(next); }}
                         className="mt-2 mx-auto flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
                       >
                         <span>Breakdown</span>
@@ -1099,7 +1099,7 @@ export function AggregateSalesCard({
                     {/* Chevron toggle for breakdown */}
                     {subCategories.length > 1 && (
                       <button
-                        onClick={(e) => { e.stopPropagation(); setRetailExpanded(prev => !prev); }}
+                        onClick={(e) => { e.stopPropagation(); const next = !retailExpanded; setRetailExpanded(next); setServicesExpanded(next); }}
                         className="mt-2 mx-auto flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
                       >
                         <span>Breakdown</span>
