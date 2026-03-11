@@ -800,7 +800,15 @@ function InventoryByLocationTab() {
               const isLow = p.reorder_level != null && p.quantity_on_hand != null && p.quantity_on_hand <= p.reorder_level;
               return (
                 <TableRow key={p.id} className={cn(isLow && 'bg-amber-50/50 dark:bg-amber-950/10')}>
-                  <TableCell className="font-medium text-sm">{p.name}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2.5">
+                      <Avatar className="h-8 w-8 shrink-0">
+                        {p.image_url && <AvatarImage src={p.image_url} alt={p.name} className="object-cover" />}
+                        <AvatarFallback className="text-[10px] font-medium bg-muted">{getInitials(p.name)}</AvatarFallback>
+                      </Avatar>
+                      <span className="font-medium text-sm">{p.name}</span>
+                    </div>
+                  </TableCell>
                   <TableCell className="text-sm text-muted-foreground">{p.brand || '—'}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">{p.category || '—'}</TableCell>
                   <TableCell className="text-right tabular-nums text-sm text-muted-foreground">
