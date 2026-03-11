@@ -297,7 +297,7 @@ function ProductsTab() {
         />
       )}
 
-      <ProductWizard open={showWizard} onOpenChange={setShowWizard} />
+      <ProductWizard open={showWizard} onOpenChange={setShowWizard} draftId={wizardDraftId} initialDraft={wizardInitialDraft} />
     </div>
   );
 }
