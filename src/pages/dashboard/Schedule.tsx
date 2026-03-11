@@ -612,7 +612,6 @@ export default function Schedule() {
                 hoursEnd={preferences.hours_end}
                 onAppointmentClick={handleAppointmentClick}
                 onSlotClick={handleSlotClick}
-                onSlotContextMenu={handleSlotContextMenu}
                 selectedAppointmentId={selectedAppointment?.id}
                 locationHours={hoursInfo.openTime && hoursInfo.closeTime ? { open: hoursInfo.openTime, close: hoursInfo.closeTime } : null}
                 isLocationClosed={hoursInfo.isClosed}
