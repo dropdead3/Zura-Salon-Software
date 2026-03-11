@@ -185,7 +185,7 @@ export function ShiftScheduleView({ locationId }: ShiftScheduleViewProps) {
                     </p>
                     <p className={cn(
                       'font-sans text-sm mt-0.5',
-                      isSameDay(day, new Date()) && 'text-primary'
+                      shiftIsToday(day) && 'text-primary'
                     )}>
                       {format(day, 'd')}
                     </p>
