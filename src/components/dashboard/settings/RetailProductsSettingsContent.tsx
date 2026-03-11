@@ -42,6 +42,8 @@ function ProductsTab() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [editingStockId, setEditingStockId] = useState<string | null>(null);
+  const [stockValue, setStockValue] = useState('');
 
   const toggleSelect = (id: string) => {
     setSelectedIds(prev => {
