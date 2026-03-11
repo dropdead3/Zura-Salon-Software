@@ -638,7 +638,7 @@ export default function Schedule() {
               hoursEnd={preferences.hours_end}
               onAppointmentClick={handleAppointmentClick}
               onSlotClick={handleSlotClick}
-              onSlotContextMenu={handleSlotContextMenu}
+              
               selectedAppointmentId={selectedAppointment?.id}
               assistedAppointmentIds={assistedAppointmentIds}
               appointmentsWithAssistants={appointmentsWithAssistants}

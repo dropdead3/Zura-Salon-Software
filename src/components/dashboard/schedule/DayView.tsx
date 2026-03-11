@@ -272,7 +272,7 @@ export function DayView({
   hoursEnd = 21,
   onAppointmentClick,
   onSlotClick,
-  onSlotContextMenu,
+  
   selectedAppointmentId,
   locationHours,
   isLocationClosed,
