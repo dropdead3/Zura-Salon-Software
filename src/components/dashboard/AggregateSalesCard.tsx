@@ -1068,14 +1068,19 @@ export function AggregateSalesCard({
                             {subCategories.map(({ label, icon: Icon, amount }) => {
                               const pct = retailTotal > 0 ? Math.round((amount / retailTotal) * 100) : 0;
                               return (
-                                <div key={label} className="flex items-center gap-2">
+                                <button
+                                  key={label}
+                                  type="button"
+                                  className="flex items-center gap-2 w-full text-left rounded-md px-1.5 py-1 -mx-1.5 transition-colors hover:bg-muted/60"
+                                  onClick={(e) => { e.stopPropagation(); setRetailCategoryDrilldown(label as any); }}
+                                >
                                   <Icon className="w-3 h-3 text-muted-foreground shrink-0" />
                                   <span className="text-[11px] text-muted-foreground flex-1">{label}</span>
                                   <BlurredAmount>
                                     <span className="text-[11px] tabular-nums font-medium">{formatCurrencyWhole(amount)}</span>
                                   </BlurredAmount>
                                   <span className="text-[10px] text-muted-foreground/60 w-8 text-right">{pct}%</span>
-                                </div>
+                                </button>
                               );
                             })}
                           </div>
