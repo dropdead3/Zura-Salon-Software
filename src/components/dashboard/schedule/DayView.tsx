@@ -216,15 +216,14 @@ function AppointmentCard({
   const size = getCardSize(appointment.start_time, appointment.end_time);
 
   // Late check-in detection
+  const { isToday: isOrgToday, nowMinutes: orgNowMins } = useOrgNow();
   const isOverdueForCheckin = useMemo(() => {
-    if (!date || !isToday(date)) return false;
+    if (!date || !isOrgToday(date)) return false;
     const status = appointment.status;
     if (status !== 'booked' && status !== 'confirmed') return false;
-    const now = new Date();
-    const nowMinutes = now.getHours() * 60 + now.getMinutes();
     const startMinutes = parseTimeToMinutes(appointment.start_time);
-    return nowMinutes > startMinutes;
-  }, [date, appointment.status, appointment.start_time]);
+    return orgNowMins > startMinutes;
+  }, [date, appointment.status, appointment.start_time, isOrgToday, orgNowMins]);
 
   return (
     <div
