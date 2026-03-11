@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { formatDisplayName } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { differenceInDays, parseISO, subDays, format } from 'date-fns';
 import { isAllLocations, parseLocationIds } from '@/lib/locationFilter';
