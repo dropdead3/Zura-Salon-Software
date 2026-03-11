@@ -853,6 +853,7 @@ export function RetailProductsSettingsContent() {
           <TabsTrigger value="brands">Brands</TabsTrigger>
           <TabsTrigger value="categories">Categories</TabsTrigger>
           <TabsTrigger value="inventory" className="gap-1.5"><MapPin className="w-3.5 h-3.5" /> Inventory</TabsTrigger>
+          <TabsTrigger value="gift-cards" className="gap-1.5"><Gift className="w-3.5 h-3.5" /> Gift Cards</TabsTrigger>
         </TabsList>
 
         <TabsContent value="products" className="mt-4">
@@ -869,6 +870,10 @@ export function RetailProductsSettingsContent() {
 
         <TabsContent value="inventory" className="mt-4">
           <InventoryByLocationTab />
+        </TabsContent>
+
+        <TabsContent value="gift-cards" className="mt-4">
+          <GiftCardsHub />
         </TabsContent>
       </Tabs>
     </div>

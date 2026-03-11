@@ -221,3 +221,57 @@ export function useDeactivateGiftCard() {
     },
   });
 }
+
+export function useUpdateGiftCard() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ giftCardId, updates }: { giftCardId: string; updates: Partial<GiftCard> }) => {
+      const { data, error } = await supabase
+        .from('gift_cards')
+        .update(updates)
+        .eq('id', giftCardId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data as GiftCard;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['gift-cards'] });
+      toast.success('Gift card updated');
+    },
+    onError: (error) => {
+      toast.error('Failed to update gift card', {
+        description: error.message,
+      });
+    },
+  });
+}
+
+export interface BalanceTransaction {
+  id: string;
+  amount: number;
+  transaction_type: string;
+  notes: string | null;
+  created_at: string;
+}
+
+export function useGiftCardTransactions(giftCardId: string | null) {
+  return useQuery({
+    queryKey: ['gift-card-transactions', giftCardId],
+    queryFn: async () => {
+      if (!giftCardId) return [];
+
+      const { data, error } = await supabase
+        .from('balance_transactions')
+        .select('id, amount, transaction_type, notes, created_at')
+        .eq('reference_transaction_id', giftCardId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data as BalanceTransaction[];
+    },
+    enabled: !!giftCardId,
+  });
+}
