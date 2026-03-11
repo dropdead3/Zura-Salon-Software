@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Scissors, ShoppingBag, MapPin, Globe, ChevronDown } from 'lucide-react';
+import { isExtensionProduct } from '@/utils/serviceCategorization';
 import {
   Select,
   SelectContent,
@@ -21,6 +22,7 @@ interface ServiceProductDrilldownProps {
   dateFrom: string;
   dateTo: string;
   parentLocationId?: string;
+  excludeExtensions?: boolean;
 }
 
 function getInitials(name: string) {
@@ -37,6 +39,7 @@ export function ServiceProductDrilldown({
   dateFrom,
   dateTo,
   parentLocationId,
+  excludeExtensions = false,
 }: ServiceProductDrilldownProps) {
   const isServices = mode === 'services';
   const { data: locations = [] } = useActiveLocations();
@@ -89,12 +92,32 @@ export function ServiceProductDrilldown({
   const totalServiceRevenue = drilldownData?.totalServiceRevenue || 0;
   const totalProductRevenue = drilldownData?.totalProductRevenue || 0;
 
+  // When excluding extensions in products mode, filter out extension items and recalculate
+  const adjustedStaffData = useMemo(() => {
+    if (isServices || !excludeExtensions) return staffData;
+    return staffData.map(s => {
+      const filteredItems = s.productItems.filter(item => !isExtensionProduct(item.itemName));
+      const filteredRevenue = filteredItems.reduce((sum, item) => sum + item.amount, 0);
+      return {
+        ...s,
+        productRevenue: filteredRevenue,
+        productCount: filteredItems.length,
+        productItems: filteredItems,
+      };
+    });
+  }, [staffData, isServices, excludeExtensions]);
+
+  const adjustedTotalProduct = useMemo(() => {
+    if (isServices || !excludeExtensions) return totalProductRevenue;
+    return adjustedStaffData.reduce((sum, s) => sum + s.productRevenue, 0);
+  }, [adjustedStaffData, isServices, excludeExtensions, totalProductRevenue]);
+
   const [expandedStaffId, setExpandedStaffId] = useState<string | null>(null);
 
   const sorted = useMemo(() => {
-    if (!staffData?.length) return [];
-    const total = isServices ? totalServiceRevenue : totalProductRevenue;
-    return staffData
+    if (!adjustedStaffData?.length) return [];
+    const total = isServices ? totalServiceRevenue : adjustedTotalProduct;
+    return adjustedStaffData
       .map(s => ({
         ...s,
         primaryRevenue: isServices ? s.serviceRevenue : s.productRevenue,
@@ -105,7 +128,7 @@ export function ServiceProductDrilldown({
       }))
       .filter(s => s.primaryRevenue > 0 || s.primaryCount > 0)
       .sort((a, b) => b.primaryRevenue - a.primaryRevenue);
-  }, [staffData, isServices, totalServiceRevenue, totalProductRevenue]);
+  }, [adjustedStaffData, isServices, totalServiceRevenue, adjustedTotalProduct]);
 
   // Reset filters when dialog closes
   const handleClose = () => {
@@ -234,10 +257,10 @@ export function ServiceProductDrilldown({
         <div className="px-6 py-3 border-t border-border/50 bg-muted/30 sticky bottom-0">
           <div className="flex items-center justify-between">
             <p className="text-xs text-muted-foreground tracking-wide">
-              {isServices ? 'Total Service Revenue' : 'Total Product Revenue'}
+              {isServices ? 'Total Service Revenue' : (excludeExtensions ? 'Total Product Revenue (excl. extensions)' : 'Total Product Revenue')}
             </p>
             <span className="font-display text-lg tabular-nums font-medium">
-              {fmt(isServices ? totalServiceRevenue : totalProductRevenue)}
+              {fmt(isServices ? totalServiceRevenue : adjustedTotalProduct)}
             </span>
           </div>
         </div>

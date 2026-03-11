@@ -40,6 +40,7 @@ import { useTomorrowRevenue } from '@/hooks/useTomorrowRevenue';
 import { useSalesComparison } from '@/hooks/useSalesComparison';
 import { useTodayActualRevenue } from '@/hooks/useTodayActualRevenue';
 import { useActualRevenue } from '@/hooks/useActualRevenue';
+import { useExtensionProductRevenue } from '@/hooks/useExtensionProductRevenue';
 import { useRevenueGapAnalysis, useScheduledRevenue } from '@/hooks/useRevenueGapAnalysis';
 import { RevenueGapDrilldown } from './sales/RevenueGapDrilldown';
 import { useRetailAttachmentRate } from '@/hooks/useRetailAttachmentRate';
@@ -54,6 +55,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useState, useMemo } from 'react';
+import { Switch } from '@/components/ui/switch';
 
 import { ServiceProductDrilldown } from './ServiceProductDrilldown';
 import { LocationMetricDrilldownSheet, type LocationDrilldownType } from './LocationMetricDrilldownSheet';
@@ -148,6 +150,7 @@ export function AggregateSalesCard({
   const [activeDrilldown, setActiveDrilldown] = useState<'revenue' | 'transactions' | 'avgTicket' | 'revPerHour' | 'goals' | 'expectedGap' | null>(null);
   const { hideNumbers } = useHideNumbers();
   const { formatCurrency, formatCurrencyWhole, currency } = useFormatCurrency();
+  const [excludeExtensions, setExcludeExtensions] = useState(true);
 
   // Toggle a secondary KPI drilldown with mutual exclusivity
   const toggleDrilldown = (panel: 'revenue' | 'transactions' | 'avgTicket' | 'revPerHour' | 'goals' | 'expectedGap') => {
@@ -252,6 +255,13 @@ export function AggregateSalesCard({
     dateTo: dateFilters.dateTo,
     locationId: filterContext?.locationId,
   });
+  // Extension product revenue — for excluding from retail
+  const { data: extensionRevData } = useExtensionProductRevenue(
+    dateFilters.dateFrom,
+    dateFilters.dateTo,
+    true,
+    filterContext?.locationId
+  );
   // Tip attach rate from drilldown data (react-query deduplicates the fetch)
   const { byTotalTips: tipsByTotal } = useTipsDrilldown({
     dateFrom: dateFilters.dateFrom,
@@ -976,10 +986,12 @@ export function AggregateSalesCard({
                 ? (todayActual?.hasActualData ? todayActual.actualServiceRevenue : 0)
                 : usePastActual ? pastActual.actualServiceRevenue
                 : displayMetrics.serviceRevenue;
-              const prodRevenue = isToday
+              const rawProdRevenue = isToday
                 ? (todayActual?.hasActualData ? todayActual.actualProductRevenue : 0)
                 : usePastActual ? pastActual.actualProductRevenue
                 : displayMetrics.productRevenue;
+              const extRevenue = extensionRevData?.extensionProductRevenue ?? 0;
+              const prodRevenue = excludeExtensions ? Math.max(0, rawProdRevenue - extRevenue) : rawProdRevenue;
               const totalBrkdn = svcRevenue + prodRevenue;
               const svcPct = totalBrkdn > 0 ? Math.round((svcRevenue / totalBrkdn) * 100) : 0;
               const prodPct = totalBrkdn > 0 ? Math.round((prodRevenue / totalBrkdn) * 100) : 0;
@@ -1012,7 +1024,10 @@ export function AggregateSalesCard({
                     <div className="flex items-center justify-center gap-1.5 mb-2">
                       <ShoppingBag className="w-3.5 h-3.5 text-primary" />
                        <span className="text-xs text-muted-foreground">{t('sales.products')}</span>
-                      <MetricInfoTooltip description="Net revenue from retail product sales (e.g. shampoo, styling products). Excludes services, tips, and discounted amounts. Sourced from Phorest transaction items where item type is Product or Retail." />
+                      <MetricInfoTooltip description={excludeExtensions
+                        ? "Retail product sales excluding extension hardware. Toggle below to include extensions."
+                        : "Net revenue from retail product sales including extension hardware."
+                      } />
                     </div>
                     <AnimatedBlurredAmount 
                       value={prodRevenue}
@@ -1020,6 +1035,24 @@ export function AggregateSalesCard({
                       className="text-xl sm:text-2xl font-display tabular-nums"
                     />
                     <p className="text-xs text-muted-foreground/70 mt-1">{prodPct}%</p>
+                    {/* Extension toggle + note */}
+                    <div className="mt-2 flex flex-col items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                      <label className="flex items-center gap-1.5 cursor-pointer">
+                        <Switch
+                          checked={excludeExtensions}
+                          onCheckedChange={setExcludeExtensions}
+                          className="scale-75"
+                        />
+                        <span className="text-[10px] text-muted-foreground">Excl. Extensions</span>
+                      </label>
+                      {excludeExtensions && extRevenue > 0 && (
+                        <BlurredAmount>
+                          <span className="text-[10px] text-muted-foreground/60">
+                            {formatCurrencyWhole(extRevenue)} extensions
+                          </span>
+                        </BlurredAmount>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
@@ -1723,6 +1756,7 @@ export function AggregateSalesCard({
         dateFrom={dateFilters.dateFrom}
         dateTo={dateFilters.dateTo}
         parentLocationId={locationDrilldownTarget ?? filterContext?.locationId}
+        excludeExtensions={excludeExtensions}
       />
       <LocationMetricDrilldownSheet
         open={!!locationDrilldown}
