@@ -1,46 +1,23 @@
 
 
-## Add Product Photo Avatars to Table Rows
+## Timezone-Safe Scheduling (Implemented)
 
-### What
+### Problem
+`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
 
-Add a small circular avatar to each product row in both the **Products** table and **Inventory** table. If the product has an `image_url`, show the photo. Otherwise, show initials (first letter of each word, max 2 letters) with a colored background.
+### Solution
+- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
+- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
+- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
 
-### Changes
-
-**Edit: `src/components/dashboard/settings/RetailProductsSettingsContent.tsx`**
-
-**Products table (line ~219)** — Replace the plain text product name cell:
-```tsx
-// Before
-<TableCell className="font-medium text-sm">{p.name}</TableCell>
-
-// After
-<TableCell>
-  <div className="flex items-center gap-2.5">
-    <Avatar className="h-8 w-8 shrink-0">
-      {p.image_url ? (
-        <AvatarImage src={p.image_url} alt={p.name} className="object-cover" />
-      ) : null}
-      <AvatarFallback className="text-[10px] font-medium bg-muted">
-        {getInitials(p.name)}
-      </AvatarFallback>
-    </Avatar>
-    <span className="font-medium text-sm">{p.name}</span>
-  </div>
-</TableCell>
-```
-
-**Inventory table (line ~790)** — Same avatar treatment for the product name cell.
-
-**Helper function** — Add a `getInitials` utility at the top of the file:
-```ts
-function getInitials(name: string): string {
-  return name.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('');
-}
-```
-
-**Imports** — Add `Avatar, AvatarImage, AvatarFallback` from `@/components/ui/avatar`.
-
-No new files, no database changes. Just a UI enhancement to both product tables.
-
+### Files Updated
+- `ScheduleHeader.tsx` — today button, quick days, isToday checks
+- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
+- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
+- `MonthView.tsx` — today highlight
+- `AgendaView.tsx` — today/tomorrow labels, today border
+- `ScheduleActionBar.tsx` — payment queue timing
+- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
+- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
+- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
+- `useHuddles.ts` — today's huddle query
