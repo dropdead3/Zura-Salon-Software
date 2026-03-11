@@ -61,6 +61,10 @@ export function useProducts(filters: ProductFilters = {}) {
         query = query.eq('brand', filters.brand);
       }
 
+      if (filters.productType && filters.productType !== 'all') {
+        query = query.eq('product_type', filters.productType);
+      }
+
       if (filters.lowStockOnly) {
         query = query.not('reorder_level', 'is', null)
           .filter('quantity_on_hand', 'lt', 'reorder_level');
