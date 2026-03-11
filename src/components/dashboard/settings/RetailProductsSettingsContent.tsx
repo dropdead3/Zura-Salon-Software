@@ -338,7 +338,44 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
                   )}
                 </button>
               )}
-              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+
+              {/* Crop preview overlay */}
+              {cropPreviewUrl && (
+                <div className="w-full space-y-2">
+                  <div className="relative w-full aspect-square rounded-lg overflow-hidden border border-border bg-muted/30">
+                    <img src={cropPreviewUrl} alt="Preview" className="w-full h-full object-cover" />
+                    {/* Square crop boundary mask */}
+                    <div className="absolute inset-0 pointer-events-none" style={{ boxShadow: 'inset 0 0 0 2px hsl(var(--primary) / 0.6)' }} />
+                    <div className="absolute bottom-1.5 left-1.5 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded font-sans">
+                      Center-crop preview
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      size={tokens.button.inline}
+                      onClick={handleConfirmUpload}
+                      disabled={uploading}
+                      className="flex-1"
+                    >
+                      {uploading ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Check className="w-3 h-3 mr-1" />}
+                      Upload
+                    </Button>
+                    <Button
+                      type="button"
+                      size={tokens.button.inline}
+                      variant="outline"
+                      onClick={clearCropPreview}
+                      disabled={uploading}
+                    >
+                      <X className="w-3 h-3 mr-1" />
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileSelect} />
             </div>
           </div>
           <div><Label className="text-xs">Name *</Label><Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} /></div>
