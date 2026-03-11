@@ -58,6 +58,7 @@ import { useState, useMemo } from 'react';
 import { Package, Shirt, Gem as GemIcon, Gift } from 'lucide-react';
 
 import { ServiceProductDrilldown } from './ServiceProductDrilldown';
+import { RetailCategoryDrilldown } from './RetailCategoryDrilldown';
 import { LocationMetricDrilldownSheet, type LocationDrilldownType } from './LocationMetricDrilldownSheet';
 import { TipsDrilldownPanel } from './sales/TipsDrilldownPanel';
 import { TransactionsByHourPanel } from './sales/TransactionsByHourPanel';
@@ -151,6 +152,7 @@ export function AggregateSalesCard({
   const { hideNumbers } = useHideNumbers();
   const { formatCurrency, formatCurrencyWhole, currency } = useFormatCurrency();
   const [retailExpanded, setRetailExpanded] = useState(false);
+  const [retailCategoryDrilldown, setRetailCategoryDrilldown] = useState<'Products' | 'Merch' | 'Gift Cards' | 'Extensions' | null>(null);
 
   // Toggle a secondary KPI drilldown with mutual exclusivity
   const toggleDrilldown = (panel: 'revenue' | 'transactions' | 'avgTicket' | 'revPerHour' | 'goals' | 'expectedGap') => {
@@ -990,12 +992,12 @@ export function AggregateSalesCard({
                 ? (todayActual?.hasActualData ? todayActual.actualProductRevenue : 0)
                 : usePastActual ? pastActual.actualProductRevenue
                 : displayMetrics.productRevenue;
-              const totalBrkdn = svcRevenue + rawProdRevenue;
-              const svcPct = totalBrkdn > 0 ? Math.round((svcRevenue / totalBrkdn) * 100) : 0;
-              const prodPct = totalBrkdn > 0 ? Math.round((rawProdRevenue / totalBrkdn) * 100) : 0;
-
               // Retail breakdown sub-categories
               const rb = retailBreakdown;
+              const retailDisplayRevenue = rb?.totalRetailRevenue ?? rawProdRevenue;
+              const totalBrkdn = svcRevenue + retailDisplayRevenue;
+              const svcPct = totalBrkdn > 0 ? Math.round((svcRevenue / totalBrkdn) * 100) : 0;
+              const prodPct = totalBrkdn > 0 ? Math.round((retailDisplayRevenue / totalBrkdn) * 100) : 0;
               const retailTotal = rb?.totalRetailRevenue ?? rawProdRevenue;
               const subCategories = [
                 { label: 'Products', icon: Package, amount: rb?.productRevenue ?? rawProdRevenue, count: rb?.productCount ?? 0 },
@@ -1036,7 +1038,7 @@ export function AggregateSalesCard({
                         <MetricInfoTooltip description="Total retail revenue including products, merch, and extension hardware. Expand to see breakdown." />
                       </div>
                       <AnimatedBlurredAmount 
-                        value={rawProdRevenue}
+                        value={retailDisplayRevenue}
                         currency={currency}
                         className="text-xl sm:text-2xl font-display tabular-nums"
                       />
@@ -1066,14 +1068,19 @@ export function AggregateSalesCard({
                             {subCategories.map(({ label, icon: Icon, amount }) => {
                               const pct = retailTotal > 0 ? Math.round((amount / retailTotal) * 100) : 0;
                               return (
-                                <div key={label} className="flex items-center gap-2">
+                                <button
+                                  key={label}
+                                  type="button"
+                                  className="flex items-center gap-2 w-full text-left rounded-md px-1.5 py-1 -mx-1.5 transition-colors hover:bg-muted/60"
+                                  onClick={(e) => { e.stopPropagation(); setRetailCategoryDrilldown(label as any); }}
+                                >
                                   <Icon className="w-3 h-3 text-muted-foreground shrink-0" />
                                   <span className="text-[11px] text-muted-foreground flex-1">{label}</span>
                                   <BlurredAmount>
                                     <span className="text-[11px] tabular-nums font-medium">{formatCurrencyWhole(amount)}</span>
                                   </BlurredAmount>
                                   <span className="text-[10px] text-muted-foreground/60 w-8 text-right">{pct}%</span>
-                                </div>
+                                </button>
                               );
                             })}
                           </div>
@@ -1784,6 +1791,14 @@ export function AggregateSalesCard({
         dateTo={dateFilters.dateTo}
         parentLocationId={locationDrilldownTarget ?? filterContext?.locationId}
         
+      />
+      {/* Retail Category Drilldown Dialog */}
+      <RetailCategoryDrilldown
+        category={retailCategoryDrilldown}
+        onClose={() => setRetailCategoryDrilldown(null)}
+        dateFrom={dateFilters.dateFrom}
+        dateTo={dateFilters.dateTo}
+        locationId={filterContext?.locationId}
       />
       <LocationMetricDrilldownSheet
         open={!!locationDrilldown}
