@@ -464,7 +464,7 @@ export function WeekView({
                               {isUnassigned && <div className="text-amber-600 dark:text-amber-400">Unassigned</div>}
                               {block.assistant_profile && (
                                 <div className="text-primary">
-                                  {block.assistant_profile.display_name || block.assistant_profile.full_name}
+                                  {formatDisplayName(block.assistant_profile.full_name, block.assistant_profile.display_name)}
                                 </div>
                               )}
                             </div>

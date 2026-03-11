@@ -410,10 +410,10 @@ function AgendaContent({
                   <Avatar className="h-4 w-4">
                     <AvatarImage src={appointment.stylist_profile.photo_url || undefined} />
                     <AvatarFallback className="text-[8px]">
-                      {(appointment.stylist_profile.display_name || appointment.stylist_profile.full_name).slice(0, 2).toUpperCase()}
+                      {formatDisplayName(appointment.stylist_profile.full_name, appointment.stylist_profile.display_name).slice(0, 2).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
-                  {appointment.stylist_profile.display_name || appointment.stylist_profile.full_name}
+                  {formatDisplayName(appointment.stylist_profile.full_name, appointment.stylist_profile.display_name)}
                 </div>
               )}
               {hasAssistants && assistantNamesMap?.get(appointment.id) && (

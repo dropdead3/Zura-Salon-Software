@@ -269,7 +269,7 @@ export function EditAppointmentDialog({
               <SelectContent>
                 {staff.map(member => (
                   <SelectItem key={member.user_id} value={member.user_id}>
-                    {member.display_name || member.full_name}
+                    {formatDisplayName(member.full_name || '', member.display_name)}
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -277,7 +277,7 @@ export function ScheduleToolbar({
                     <SelectItem value="all">All stylists</SelectItem>
                     {stylists.map((s) => (
                       <SelectItem key={s.user_id} value={s.user_id}>
-                        {s.display_name || s.full_name}
+                        {formatDisplayName(s.full_name, s.display_name)}
                       </SelectItem>
                     ))}
                   </SelectContent>

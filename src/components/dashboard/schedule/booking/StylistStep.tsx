@@ -87,7 +87,7 @@ export function StylistStep({
             </h3>
             <div className="grid grid-cols-3 gap-2">
               {stylists.map((stylist) => {
-                const name = stylist.employee_profiles?.display_name || stylist.employee_profiles?.full_name || 'Unknown';
+                const name = formatDisplayName(stylist.employee_profiles?.full_name || '', stylist.employee_profiles?.display_name);
                 const isSelected = selectedStylist === stylist.user_id;
                 return (
                   <button

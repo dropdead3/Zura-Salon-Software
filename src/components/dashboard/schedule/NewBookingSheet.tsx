@@ -481,7 +481,7 @@ export function NewBookingSheet({
                 <SelectContent>
                   {stylists.map((s: any) => (
                     <SelectItem key={s.user_id} value={s.user_id}>
-                      {s.employee_profiles?.display_name || s.employee_profiles?.full_name || 'Unknown'}
+                      {formatDisplayName(s.employee_profiles?.full_name || '', s.employee_profiles?.display_name)}
                     </SelectItem>
                   ))}
                 </SelectContent>
