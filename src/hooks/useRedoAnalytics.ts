@@ -71,7 +71,7 @@ export function useRedoAnalytics(days: number = 30) {
           .select('user_id, display_name, full_name')
           .in('user_id', stylistIds);
         for (const p of profiles || []) {
-          stylistNameMap[p.user_id] = p.display_name || p.full_name || 'Unknown';
+          stylistNameMap[p.user_id] = formatDisplayName(p.full_name || '', p.display_name);
         }
       }
 

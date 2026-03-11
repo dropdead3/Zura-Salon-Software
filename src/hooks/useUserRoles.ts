@@ -199,7 +199,7 @@ export function useRoleChangeHistory(userId: string) {
         .in('user_id', performerIds);
 
       const performerMap = new Map(
-        performers?.map(p => [p.user_id, p.display_name || p.full_name]) || []
+        performers?.map(p => [p.user_id, formatDisplayName(p.full_name || '', p.display_name)]) || []
       );
 
       return (data || []).map(log => ({

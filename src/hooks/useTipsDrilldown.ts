@@ -167,7 +167,7 @@ export function useTipsDrilldown({ dateFrom, dateTo, locationId, minAppointments
 
     // Build profile map from employee_profiles
     const profileMap = new Map(
-      profiles.map(p => [p.user_id, { name: p.display_name || p.full_name || 'Unknown', photo: p.photo_url }])
+      profiles.map(p => [p.user_id, { name: formatDisplayName(p.full_name || '', p.display_name), photo: p.photo_url }])
     );
 
     // Build staff name map from phorest_staff_mapping for unmapped staff

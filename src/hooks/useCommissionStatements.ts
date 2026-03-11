@@ -94,7 +94,7 @@ export function useCommissionStatements(filters: {
       const empMap = new Map((empProfiles || []).map(e => [e.user_id, e]));
       const renterMap = new Map((renterProfiles || []).map((p: any) => {
         const emp = empMap.get(p.user_id);
-        return [p.id, { business_name: p.business_name, name: emp?.display_name || emp?.full_name }];
+        return [p.id, { business_name: p.business_name, name: emp ? formatDisplayName(emp.full_name || '', emp.display_name) : undefined }];
       }));
 
       return (data || []).map((statement: any) => {

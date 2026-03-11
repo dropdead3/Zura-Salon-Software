@@ -691,7 +691,7 @@ export function useSalesByPhorestStaff(dateFrom?: string, dateTo?: string) {
         const profile = m.employee_profiles as any;
         mappingLookup[m.phorest_staff_id] = {
           userId: m.user_id,
-          userName: profile?.display_name || profile?.full_name || 'Unknown',
+          userName: profile ? formatDisplayName(profile.full_name || '', profile.display_name) : 'Unknown',
           userPhoto: profile?.photo_url,
           phorestName: m.phorest_staff_name || 'Unknown',
           branchName: m.phorest_branch_name || undefined,

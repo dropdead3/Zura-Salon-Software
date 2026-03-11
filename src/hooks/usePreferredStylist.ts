@@ -62,5 +62,5 @@ export function usePreferredStylistsBatch(stylistUserIds: string[]) {
 /** Helper to get a stylist's display label */
 export function getStylistDisplayName(stylist: PreferredStylistInfo | null | undefined): string {
   if (!stylist) return 'None assigned';
-  return stylist.display_name || stylist.full_name || 'Unknown';
+  return formatDisplayName(stylist.full_name || '', stylist.display_name);
 }

@@ -553,7 +553,7 @@ export function useRetailAnalytics(dateFrom?: string, dateTo?: string, locationI
 
           return {
             userId: mapping?.user_id || null,
-            name: profile?.display_name || profile?.full_name || mapping?.phorest_staff_name || 'Unknown',
+            name: profile ? formatDisplayName(profile.full_name || '', profile.display_name) : (mapping?.phorest_staff_name || 'Unknown'),
             photoUrl: profile?.photo_url || null,
             productRevenue: d.revenue,
             unitsSold: d.units,
