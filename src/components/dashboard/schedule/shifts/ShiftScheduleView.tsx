@@ -44,7 +44,8 @@ interface ShiftScheduleViewProps {
 export function ShiftScheduleView({ locationId }: ShiftScheduleViewProps) {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
-  const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
+  const { isToday: shiftIsToday, todayDate: shiftToday } = useOrgNow();
+  const [weekStart, setWeekStart] = useState(() => startOfWeek(shiftToday, { weekStartsOn: 1 }));
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingShift, setEditingShift] = useState<StaffShift | null>(null);
   const [editorDefaultDate, setEditorDefaultDate] = useState<Date | undefined>();
