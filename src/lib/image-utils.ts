@@ -7,6 +7,7 @@ interface OptimizeOptions {
   maxHeight?: number;
   quality?: number;
   format?: 'jpeg' | 'webp' | 'png';
+  cropToSquare?: boolean;
 }
 
 const DEFAULT_OPTIONS: Required<OptimizeOptions> = {
@@ -14,6 +15,7 @@ const DEFAULT_OPTIONS: Required<OptimizeOptions> = {
   maxHeight: 1600,
   quality: 0.85,
   format: 'webp',
+  cropToSquare: false,
 };
 
 /**
