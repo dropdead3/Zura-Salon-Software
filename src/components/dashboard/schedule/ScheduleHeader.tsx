@@ -381,7 +381,7 @@ export function ScheduleHeader({
           )}
 
           {/* Today's Prep Button — only when viewing today */}
-          {isToday(currentDate) && (
+          {isOrgToday(currentDate) && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
