@@ -108,7 +108,7 @@ export function useTodaysQueue(locationId?: string) {
   const stylistMap = new Map(
     stylists?.map(s => [
       s.user_id, 
-      s.display_name || s.full_name.split(' ')[0]
+      formatDisplayName(s.full_name, s.display_name)
     ]) || []
   );
 

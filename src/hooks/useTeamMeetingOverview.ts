@@ -171,7 +171,7 @@ export function useTeamMeetingOverview() {
 
         return {
           userId: p.user_id,
-          name: p.display_name || p.full_name || 'Unknown',
+          name: formatDisplayName(p.full_name || '', p.display_name),
           displayName: p.display_name,
           photoUrl: p.photo_url,
           role: rolesMap.get(p.user_id) || null,

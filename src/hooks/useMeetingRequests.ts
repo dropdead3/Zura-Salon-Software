@@ -97,7 +97,7 @@ export function useCreateMeetingRequest() {
         .eq('user_id', user!.id)
         .single();
 
-      const managerName = managerProfile?.display_name || managerProfile?.full_name || 'Your manager';
+      const managerName = managerProfile ? formatDisplayName(managerProfile.full_name, managerProfile.display_name) : 'Your manager';
 
       await supabase.from('notifications').insert({
         user_id: data.team_member_id,

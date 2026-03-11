@@ -266,7 +266,7 @@ export function useTeamPinStatus() {
       return (data || []).map(profile => ({
         id: profile.id,
         user_id: profile.user_id,
-        name: profile.display_name || profile.full_name,
+        name: formatDisplayName(profile.full_name || '', profile.display_name),
         photo_url: profile.photo_url,
         is_super_admin: profile.is_super_admin,
         is_primary_owner: profile.is_primary_owner,

@@ -113,7 +113,7 @@ export function useServiceProductDrilldown({ dateFrom, dateTo, locationId }: Use
       const staffLookup: Record<string, string> = {};
       staffMappings?.forEach(m => {
         const profile = m.employee_profiles as any;
-        staffLookup[m.phorest_staff_id] = profile?.display_name || profile?.full_name || 'Unknown';
+        staffLookup[m.phorest_staff_id] = profile ? formatDisplayName(profile.full_name || '', profile.display_name) : 'Unknown';
       });
 
       // --- Aggregate services by staff ---
