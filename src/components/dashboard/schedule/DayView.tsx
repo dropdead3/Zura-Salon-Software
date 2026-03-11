@@ -42,7 +42,7 @@ interface DayViewProps {
   hoursEnd?: number;
   onAppointmentClick: (appointment: PhorestAppointment) => void;
   onSlotClick?: (stylistId: string, time: string) => void;
-  onSlotContextMenu?: (stylistId: string, time: string, e: React.MouseEvent) => void;
+  
   selectedAppointmentId?: string | null;
   locationHours?: { open: string; close: string } | null;
   isLocationClosed?: boolean;
