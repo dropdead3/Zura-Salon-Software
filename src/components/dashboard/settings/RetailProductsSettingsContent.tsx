@@ -279,6 +279,10 @@ function ProductsTab() {
 
 function ProductFormDialog({ product, onClose, onSave }: { product: Product | null; onClose: () => void; onSave: (data: Partial<Product>) => void }) {
   const { data: locations } = useActiveLocations();
+  const { data: existingCategories } = useProductCategories();
+  const { data: existingBrands } = useProductBrandsList();
+  const [customBrand, setCustomBrand] = useState(false);
+  const [customCategory, setCustomCategory] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [cropPreviewFile, setCropPreviewFile] = useState<File | null>(null);
