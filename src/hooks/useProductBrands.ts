@@ -13,6 +13,7 @@ export interface CategorySummary {
   productCount: number;
   totalInventoryValue: number;
   totalStock: number;
+  typeCounts: Record<string, number>;
 }
 
 export function useProductBrands() {
