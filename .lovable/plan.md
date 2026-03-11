@@ -1,18 +1,28 @@
 
 
-## Fix Category Hover Highlight Padding
+## Add "Timeblock / Break" Option to Schedule Type Selector
 
-The breakdown rows use `px-1.5 -mx-1.5` which is too narrow — the hover highlight doesn't extend to match the card's inner padding. Both the Retail and Services breakdown rows need wider horizontal padding/negative margin to fill the card width.
+### Change Summary
 
-### Changes — `src/components/dashboard/AggregateSalesCard.tsx`
+Add a third button to the `ScheduleTypeSelector` for creating timeblocks/breaks. This mirrors the existing break dialog flow already wired up in `Schedule.tsx`.
 
-**Retail breakdown rows** (line 1126):
-- Change `px-1.5 py-1 -mx-1.5` → `px-3 py-2 -mx-3` for proper edge-to-edge highlight
+### Changes (2 files)
 
-**Services breakdown rows** (line 1061):
-- Change `px-1.5 py-1 -mx-1.5` → `px-3 py-2 -mx-3` to match
+**1. `ScheduleTypeSelector.tsx`**
+- Add `onSelectTimeblock` callback prop
+- Add a third button with `Clock` icon (from lucide-react), label "Timeblock / Break", description "Lunch, personal time, focus block"
+- Same button styling as existing two options
 
-Also round up to `rounded-lg` for consistency with the card's `rounded-lg` inner containers.
+**2. `Schedule.tsx`**
+- Pass `onSelectTimeblock` to `ScheduleTypeSelector`
+- Handler: close type selector, set `breakDefaults` with the clicked time/stylist, open `breakDialogOpen`
 
-Single file, two line changes.
+```text
+Type Selector options:
+  ┌─ Client Appointment   (CalendarPlus)  → booking wizard
+  ├─ Internal Meeting      (Users)         → meeting wizard
+  └─ Timeblock / Break     (Clock)         → break/block form
+```
+
+Two files, ~15 lines total.
 
