@@ -56,6 +56,10 @@ export function useProducts(filters: ProductFilters = {}) {
         query = query.eq('location_id', filters.locationId);
       }
 
+      if (filters.brand && filters.brand !== 'all') {
+        query = query.eq('brand', filters.brand);
+      }
+
       if (filters.lowStockOnly) {
         query = query.not('reorder_level', 'is', null)
           .filter('quantity_on_hand', 'lt', 'reorder_level');
