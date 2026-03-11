@@ -145,7 +145,27 @@ function ProductsTab() {
           <Switch checked={lowStockOnly} onCheckedChange={setLowStockOnly} id="low-stock" />
           <Label htmlFor="low-stock" className="text-sm cursor-pointer">Low Stock</Label>
         </div>
-        <Button size={tokens.button.card} onClick={() => setShowWizard(true)} className="gap-1.5">
+        {drafts && drafts.length > 0 && (
+          <div className="flex items-center gap-1">
+            {drafts.map((d) => (
+              <Button
+                key={d.id}
+                variant="outline"
+                size={tokens.button.card}
+                className="gap-1.5 text-muted-foreground"
+                onClick={() => {
+                  setWizardDraftId(d.id);
+                  setWizardInitialDraft({ form_data: d.form_data, current_step: d.current_step });
+                  setShowWizard(true);
+                }}
+              >
+                <FileText className="w-3.5 h-3.5" />
+                Draft{drafts.length > 1 ? '' : ''}: {(d.form_data as any)?.name || 'Untitled'}
+              </Button>
+            ))}
+          </div>
+        )}
+        <Button size={tokens.button.card} onClick={() => { setWizardDraftId(undefined); setWizardInitialDraft(undefined); setShowWizard(true); }} className="gap-1.5">
           <Plus className="w-4 h-4" /> Add Product
         </Button>
       </div>
