@@ -32,7 +32,7 @@ import { useActiveLocations } from '@/hooks/useLocations';
 import { getRoleColorClasses } from '@/components/dashboard/RoleColorPicker';
 import { useCanApproveAdmin, useAccountApprovals, useToggleSuperAdmin } from '@/hooks/useAccountApproval';
 import { RoleHistoryPanel } from '@/components/dashboard/RoleHistoryPanel';
-import { cn } from '@/lib/utils';
+import { cn, formatDisplayName } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { Database } from '@/integrations/supabase/types';
 import type { UserWithRoles } from '@/hooks/useUserRoles';

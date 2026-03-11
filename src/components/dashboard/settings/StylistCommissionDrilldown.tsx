@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, Trash2, ExternalLink, Info } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatDisplayName } from '@/lib/utils';
 import { getLevelColor } from '@/lib/level-colors';
 import { useNavigate } from 'react-router-dom';
 import { useAssignStylistLevel } from '@/hooks/useAssignStylistLevel';
