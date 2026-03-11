@@ -4,7 +4,7 @@ import { Cake, PartyPopper, Eye } from 'lucide-react';
 import { useTodaysBirthdays, useUpcomingBirthdays } from '@/hooks/useBirthdays';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useViewAs } from '@/contexts/ViewAsContext';
-import { cn } from '@/lib/utils';
+import { cn, formatDisplayName } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 
 export function BirthdayWidget() {
