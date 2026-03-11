@@ -282,10 +282,10 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
           {locations && locations.length > 1 && (
             <div>
               <Label className="text-xs">Location</Label>
-              <Select value={form.location_id} onValueChange={v => setForm(f => ({ ...f, location_id: v }))}>
+              <Select value={form.location_id || 'all'} onValueChange={v => setForm(f => ({ ...f, location_id: v === 'all' ? '' : v }))}>
                 <SelectTrigger className="h-9"><SelectValue placeholder="All locations" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Locations</SelectItem>
+                  <SelectItem value="all">All Locations</SelectItem>
                   {locations.map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}
                 </SelectContent>
               </Select>
