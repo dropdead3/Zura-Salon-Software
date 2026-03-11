@@ -6,7 +6,7 @@
  * Agenda variant: renders full card with time column, divider, chevron.
  */
 import { useMemo } from 'react';
-import { cn, formatPhoneDisplay } from '@/lib/utils';
+import { cn, formatPhoneDisplay, formatDisplayName } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
