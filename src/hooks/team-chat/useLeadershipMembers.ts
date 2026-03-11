@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { formatDisplayName } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
@@ -56,7 +57,7 @@ export function useLeadershipMembers() {
 
       const mappedMembers = (profiles || []).map((p) => ({
         user_id: p.user_id,
-        display_name: p.display_name || p.full_name || 'Unknown',
+        display_name: formatDisplayName(p.full_name || '', p.display_name),
         full_name: p.full_name,
         photo_url: p.photo_url,
         role: roleMap.get(p.user_id) || 'manager',

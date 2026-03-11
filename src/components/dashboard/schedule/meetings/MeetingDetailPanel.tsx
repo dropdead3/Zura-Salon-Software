@@ -8,7 +8,7 @@ import {
   Users, Video, MapPin, Monitor, Clock, CalendarIcon, X,
   CheckCircle, XCircle, HelpCircle, Copy, ExternalLink,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatDisplayName } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUpdateMeetingStatus, useUpdateRsvp, type AdminMeeting, type MeetingAttendee, type MeetingMode } from '@/hooks/useAdminMeetings';
@@ -166,11 +166,11 @@ export function MeetingDetailPanel({ meeting, open, onOpenChange }: MeetingDetai
               <Avatar className="w-8 h-8">
                 <AvatarImage src={organizerProfile?.photo_url || undefined} />
                 <AvatarFallback className="text-xs">
-                  {(organizerProfile?.display_name || organizerProfile?.full_name || '?').slice(0, 2).toUpperCase()}
+                  {formatDisplayName(organizerProfile?.full_name || '', organizerProfile?.display_name).slice(0, 2).toUpperCase() || '?'}
                 </AvatarFallback>
               </Avatar>
               <span className="text-sm font-sans">
-                {organizerProfile?.display_name || organizerProfile?.full_name || 'Unknown'}
+                {formatDisplayName(organizerProfile?.full_name || '', organizerProfile?.display_name) || 'Unknown'}
                 {isOrganizer && <span className="text-muted-foreground ml-1">(you)</span>}
               </span>
             </div>
@@ -192,11 +192,11 @@ export function MeetingDetailPanel({ meeting, open, onOpenChange }: MeetingDetai
                     <Avatar className="w-7 h-7">
                       <AvatarImage src={profile?.photo_url || undefined} />
                       <AvatarFallback className="text-[10px]">
-                        {(profile?.display_name || profile?.full_name || '?').slice(0, 2).toUpperCase()}
+                        {formatDisplayName(profile?.full_name || '', profile?.display_name).slice(0, 2).toUpperCase() || '?'}
                       </AvatarFallback>
                     </Avatar>
                     <span className="text-sm font-sans flex-1 truncate">
-                      {profile?.display_name || profile?.full_name || 'Unknown'}
+                      {formatDisplayName(profile?.full_name || '', profile?.display_name) || 'Unknown'}
                       {att.user_id === user?.id && <span className="text-muted-foreground ml-1">(you)</span>}
                     </span>
                     <div className={cn('flex items-center gap-1', rsvp.className)}>

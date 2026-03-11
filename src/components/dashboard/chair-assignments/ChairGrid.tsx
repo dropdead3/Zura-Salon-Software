@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { User, X } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatDisplayName } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -63,11 +63,11 @@ export function ChairGrid({ chairs, assignments, stylists, onRemoveAssignment }:
                 <Avatar className="h-10 w-10">
                   <AvatarImage src={stylist.photo_url ?? undefined} />
                   <AvatarFallback className="text-xs bg-primary/10 text-primary">
-                    {(stylist.display_name || stylist.full_name || '?').slice(0, 2).toUpperCase()}
+                    {formatDisplayName(stylist.full_name || '', stylist.display_name).slice(0, 2).toUpperCase() || '?'}
                   </AvatarFallback>
                 </Avatar>
                 <span className={cn(tokens.body.emphasis, 'text-center text-xs leading-tight')}>
-                  {stylist.display_name || stylist.full_name || 'Unknown'}
+                  {formatDisplayName(stylist.full_name || '', stylist.display_name)}
                 </span>
                 <TooltipProvider>
                   <Tooltip>

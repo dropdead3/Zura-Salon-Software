@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { cn } from '@/lib/utils';
+import { cn, formatDisplayName } from '@/lib/utils';
 import { useMemo } from 'react';
 
 interface BusyBlock {
@@ -139,7 +139,7 @@ export function AttendeeAvailabilityOverlay({
       {/* Rows */}
       {attendeeUserIds.map((uid) => {
         const member = teamMembers.find(t => t.user_id === uid);
-        const name = member?.display_name || member?.full_name || 'Unknown';
+        const name = member ? formatDisplayName(member.full_name || '', member.display_name) : 'Unknown';
         const blocks = busyData?.get(uid) || [];
 
         return (

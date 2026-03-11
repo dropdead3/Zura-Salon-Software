@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { formatDisplayName } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -111,7 +112,7 @@ export function useRentPayments(filters: {
       const empMap = new Map((employeeProfiles || []).map(e => [e.user_id, e]));
       const profileMap = new Map((profiles || []).map((p: any) => {
         const emp = empMap.get(p.user_id);
-        return [p.id, { business_name: p.business_name, name: emp?.display_name || emp?.full_name }];
+        return [p.id, { business_name: p.business_name, name: emp ? formatDisplayName(emp.full_name || '', emp.display_name) : undefined }];
       }));
 
       return (data || []).map((payment: any) => {

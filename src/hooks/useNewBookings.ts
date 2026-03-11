@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { formatDisplayName } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { startOfWeek, startOfMonth, endOfMonth, subMonths, subDays } from 'date-fns';
 import type { DateRangeType } from '@/components/dashboard/PinnedAnalyticsCard';
@@ -100,7 +101,7 @@ export function useNewBookings(locationId?: string, dateRange?: DateRangeType) {
       const staffLookup: Record<string, string> = {};
       staffMappings?.forEach(m => {
         const profile = m.employee_profiles as any;
-        staffLookup[m.phorest_staff_id] = profile?.display_name || profile?.full_name || 'Unknown';
+        staffLookup[m.phorest_staff_id] = profile ? formatDisplayName(profile.full_name || '', profile.display_name) : 'Unknown';
       });
 
       // Helper to apply location filter

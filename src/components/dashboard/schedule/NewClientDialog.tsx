@@ -31,7 +31,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { CalendarIcon, Loader2, UserPlus } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatDisplayName } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -461,7 +461,7 @@ export function NewClientDialog({
                 )}
                 {teamMembers?.map(member => (
                   <SelectItem key={member.user_id} value={member.user_id}>
-                    {member.display_name || member.full_name}
+                    {formatDisplayName(member.full_name || '', member.display_name)}
                   </SelectItem>
                 ))}
               </SelectContent>

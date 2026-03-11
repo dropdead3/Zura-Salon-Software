@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { formatDisplayName } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { startOfMonth, endOfMonth, subMonths, format, startOfYear } from 'date-fns';
 
@@ -150,7 +151,7 @@ export function useRentRevenueAnalytics(organizationId: string | undefined, mont
         const paymentData = renterPaymentMap.get(r.id) || { collected: 0, outstanding: 0 };
         const emp = empMap.get(r.user_id);
         return {
-          renter_name: emp?.display_name || emp?.full_name || 'Unknown',
+          renter_name: emp ? formatDisplayName(emp.full_name || '', emp.display_name) : 'Unknown',
           business_name: r.business_name,
           monthly_rent: contractMap.get(r.id) || 0,
           collected_ytd: paymentData.collected,

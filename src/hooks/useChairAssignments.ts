@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { formatDisplayName } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
@@ -294,7 +295,7 @@ export function useRandomAssignment(
       if (excludeIds.includes(s.user_id)) {
         exclusions.push({
           stylistId: s.user_id,
-          stylistName: s.display_name || s.full_name || 'Unknown',
+          stylistName: formatDisplayName(s.full_name || '', s.display_name),
           reason: 'Manually excluded',
           details: 'Excluded from randomization by admin',
         });
@@ -304,7 +305,7 @@ export function useRandomAssignment(
         const matchingTimeOff = (timeOff ?? []).find(t => t.user_id === s.user_id);
         exclusions.push({
           stylistId: s.user_id,
-          stylistName: s.display_name || s.full_name || 'Unknown',
+          stylistName: formatDisplayName(s.full_name || '', s.display_name),
           reason: matchingTimeOff?.reason ?? 'Time off',
           details: `${matchingTimeOff?.start_date} – ${matchingTimeOff?.end_date}`,
         });

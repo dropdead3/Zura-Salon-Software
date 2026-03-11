@@ -4,7 +4,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Calendar } from '@/components/ui/calendar';
 import { Check, ChevronLeft, ChevronRight } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatDisplayName } from '@/lib/utils';
 import { addDays, subDays, isSameDay } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useState } from 'react';
@@ -87,7 +87,7 @@ export function StylistStep({
             </h3>
             <div className="grid grid-cols-3 gap-2">
               {stylists.map((stylist) => {
-                const name = stylist.employee_profiles?.display_name || stylist.employee_profiles?.full_name || 'Unknown';
+                const name = formatDisplayName(stylist.employee_profiles?.full_name || '', stylist.employee_profiles?.display_name);
                 const isSelected = selectedStylist === stylist.user_id;
                 return (
                   <button

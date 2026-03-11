@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { formatDisplayName } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
@@ -170,7 +171,7 @@ export function useTeamMeetingOverview() {
 
         return {
           userId: p.user_id,
-          name: p.display_name || p.full_name || 'Unknown',
+          name: formatDisplayName(p.full_name || '', p.display_name),
           displayName: p.display_name,
           photoUrl: p.photo_url,
           role: rolesMap.get(p.user_id) || null,

@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { formatDisplayName } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { Database } from '@/integrations/supabase/types';
@@ -198,7 +199,7 @@ export function useRoleChangeHistory(userId: string) {
         .in('user_id', performerIds);
 
       const performerMap = new Map(
-        performers?.map(p => [p.user_id, p.display_name || p.full_name]) || []
+        performers?.map(p => [p.user_id, formatDisplayName(p.full_name || '', p.display_name)]) || []
       );
 
       return (data || []).map(log => ({

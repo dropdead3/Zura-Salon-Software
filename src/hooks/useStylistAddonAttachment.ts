@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { formatDisplayName } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface StylistAddonPerformance {
@@ -49,7 +50,7 @@ export function useStylistAddonAttachment(organizationId?: string, days = 30) {
 
       const nameMap = new Map<string, string>();
       for (const p of profiles || []) {
-        nameMap.set(p.user_id, p.display_name || p.full_name || 'Unknown');
+        nameMap.set(p.user_id, formatDisplayName(p.full_name || '', p.display_name));
       }
 
       // Calculate per-stylist metrics

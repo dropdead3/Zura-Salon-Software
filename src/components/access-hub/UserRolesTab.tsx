@@ -32,7 +32,7 @@ import { useActiveLocations } from '@/hooks/useLocations';
 import { getRoleColorClasses } from '@/components/dashboard/RoleColorPicker';
 import { useCanApproveAdmin, useAccountApprovals, useToggleSuperAdmin } from '@/hooks/useAccountApproval';
 import { RoleHistoryPanel } from '@/components/dashboard/RoleHistoryPanel';
-import { cn } from '@/lib/utils';
+import { cn, formatDisplayName } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { Database } from '@/integrations/supabase/types';
 import type { UserWithRoles } from '@/hooks/useUserRoles';
@@ -280,7 +280,7 @@ export function UserRolesTab({ canManage }: UserRolesTabProps) {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="font-medium">
-                  {user.display_name || user.full_name}
+                  {formatDisplayName(user.full_name || '', user.display_name)}
                 </h3>
                 {isSuperAdmin && (
                   <Tooltip>
@@ -358,7 +358,7 @@ export function UserRolesTab({ canManage }: UserRolesTabProps) {
                   variant="ghost"
                   size={tokens.button.inline}
                   className="h-7 text-xs gap-1 mt-1"
-                  onClick={() => setResponsibilityDialog({ userId: user.user_id, userName: user.display_name || user.full_name })}
+                  onClick={() => setResponsibilityDialog({ userId: user.user_id, userName: formatDisplayName(user.full_name || '', user.display_name) })}
                 >
                   <Award className="h-3 w-3" />
                   Responsibilities
@@ -397,7 +397,7 @@ export function UserRolesTab({ canManage }: UserRolesTabProps) {
                       )}
                       <Switch
                         checked={isSuperAdmin || false}
-                        onCheckedChange={() => handleToggleSuperAdmin(user.user_id, user.display_name || user.full_name, isSuperAdmin || false)}
+                        onCheckedChange={() => handleToggleSuperAdmin(user.user_id, formatDisplayName(user.full_name || '', user.display_name), isSuperAdmin || false)}
                         disabled={toggleSuperAdmin.isPending || !canApproveAdmin || isPrimaryOwner}
                         className="data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-amber-400 data-[state=checked]:to-orange-400"
                       />

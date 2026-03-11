@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { formatDisplayName } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 
 interface PreferredStylistInfo {
@@ -61,5 +62,5 @@ export function usePreferredStylistsBatch(stylistUserIds: string[]) {
 /** Helper to get a stylist's display label */
 export function getStylistDisplayName(stylist: PreferredStylistInfo | null | undefined): string {
   if (!stylist) return 'None assigned';
-  return stylist.display_name || stylist.full_name || 'Unknown';
+  return formatDisplayName(stylist.full_name || '', stylist.display_name);
 }

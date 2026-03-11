@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { formatDisplayName } from '@/lib/utils';
 import { useMemo } from 'react';
 import { getDay } from 'date-fns';
 import { useAssistantsAtLocation } from '@/hooks/useAssistantAvailability';
@@ -129,7 +130,7 @@ export function useAssistantAutoSuggest(
 
         return {
           user_id: a.user_id,
-          name: a.display_name || a.full_name,
+          name: formatDisplayName(a.full_name, a.display_name),
           photo_url: a.photo_url,
           score,
           reasons,

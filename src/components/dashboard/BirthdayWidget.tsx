@@ -4,7 +4,7 @@ import { Cake, PartyPopper, Eye } from 'lucide-react';
 import { useTodaysBirthdays, useUpcomingBirthdays } from '@/hooks/useBirthdays';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useViewAs } from '@/contexts/ViewAsContext';
-import { cn } from '@/lib/utils';
+import { cn, formatDisplayName } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 
 export function BirthdayWidget() {
@@ -67,11 +67,11 @@ export function BirthdayWidget() {
                   )}>
                     <AvatarImage src={person.photo_url || undefined} />
                     <AvatarFallback className="text-[10px] bg-pink-100 text-pink-700">
-                      {(person.display_name || person.full_name)?.charAt(0)}
+                      {formatDisplayName(person.full_name || '', person.display_name)?.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
                   <span className="text-sm font-medium truncate flex items-center gap-1">
-                    {person.display_name || person.full_name}
+                    {formatDisplayName(person.full_name || '', person.display_name)}
                     {isViewingAsUser && person.isCurrentUser && (
                       <Eye className="w-3 h-3 text-primary shrink-0" />
                     )}
@@ -106,11 +106,11 @@ export function BirthdayWidget() {
                     )}>
                       <AvatarImage src={person.photo_url || undefined} />
                       <AvatarFallback className="text-[8px] bg-muted">
-                        {(person.display_name || person.full_name)?.charAt(0)}
+                        {formatDisplayName(person.full_name || '', person.display_name)?.charAt(0)}
                       </AvatarFallback>
                     </Avatar>
                     <span className="text-xs truncate flex items-center gap-1">
-                      {person.display_name || person.full_name}
+                      {formatDisplayName(person.full_name || '', person.display_name)}
                       {isViewingAsUser && person.isCurrentUser && (
                         <Eye className="w-3 h-3 text-primary shrink-0" />
                       )}

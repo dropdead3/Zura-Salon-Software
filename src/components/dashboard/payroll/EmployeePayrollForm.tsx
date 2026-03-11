@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { formatDisplayName } from '@/lib/utils';
 import { 
   useEmployeePayrollSettings, 
   EmployeePayrollSettings,
@@ -123,7 +124,7 @@ export function EmployeePayrollForm({
                                 {emp.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2)}
                               </AvatarFallback>
                             </Avatar>
-                            <span>{emp.display_name || emp.full_name}</span>
+                            <span>{formatDisplayName(emp.full_name || '', emp.display_name)}</span>
                           </div>
                         </SelectItem>
                       ))

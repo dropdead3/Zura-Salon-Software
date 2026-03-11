@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon, Loader2, AlertTriangle } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatDisplayName } from '@/lib/utils';
 import {
   useCreateShift,
   useUpdateShift,
@@ -161,7 +161,7 @@ export function ShiftEditorDialog({
               <SelectContent>
                 {staffMembers.map(m => (
                   <SelectItem key={m.user_id} value={m.user_id} className="font-sans">
-                    {m.display_name || m.full_name}
+                    {formatDisplayName(m.full_name, m.display_name)}
                   </SelectItem>
                 ))}
               </SelectContent>

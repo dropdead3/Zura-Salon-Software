@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { formatDisplayName } from '@/lib/utils';
 import { differenceInDays, parseISO, subDays, format, differenceInBusinessDays } from 'date-fns';
 import { useResolveCommission } from '@/hooks/useResolveCommission';
 
@@ -192,7 +193,7 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
 
       const profile: StaffProfile = {
         userId: staffUserId,
-        name: profileData?.display_name || profileData?.full_name || 'Unknown',
+        name: profileData ? formatDisplayName(profileData.full_name || '', profileData.display_name) : 'Unknown',
         displayName: profileData?.display_name || null,
         photoUrl: profileData?.photo_url || null,
         email: profileData?.email || null,

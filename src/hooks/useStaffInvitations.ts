@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { formatDisplayName } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -40,7 +41,7 @@ export function useStaffInvitations() {
         .in('user_id', inviterIds);
       
       const profileMap = new Map(
-        profiles?.map(p => [p.user_id, p.display_name || p.full_name]) || []
+        profiles?.map(p => [p.user_id, formatDisplayName(p.full_name || '', p.display_name)]) || []
       );
       
       return data?.map(invitation => ({

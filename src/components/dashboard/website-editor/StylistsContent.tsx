@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { tokens } from '@/lib/design-tokens';
+import { formatDisplayName } from '@/lib/utils';
 
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -250,7 +251,7 @@ export function StylistsContent() {
             
             <div className="flex-1 min-w-0">
               <h3 className="font-medium truncate">
-                {stylist.display_name || stylist.full_name}
+                {formatDisplayName(stylist.full_name || '', stylist.display_name)}
               </h3>
               {stylist.stylist_level && (
                 <p className="text-sm text-muted-foreground">{stylist.stylist_level}</p>

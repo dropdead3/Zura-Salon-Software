@@ -46,7 +46,7 @@ import {
   UserPlus
 } from 'lucide-react';
 import { NewClientDialog } from './NewClientDialog';
-import { cn } from '@/lib/utils';
+import { cn, formatDisplayName } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -481,7 +481,7 @@ export function NewBookingSheet({
                 <SelectContent>
                   {stylists.map((s: any) => (
                     <SelectItem key={s.user_id} value={s.user_id}>
-                      {s.employee_profiles?.display_name || s.employee_profiles?.full_name || 'Unknown'}
+                      {formatDisplayName(s.employee_profiles?.full_name || '', s.employee_profiles?.display_name)}
                     </SelectItem>
                   ))}
                 </SelectContent>

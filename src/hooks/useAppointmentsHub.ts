@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { formatDisplayName } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface HubFilters {
@@ -112,7 +113,7 @@ export function useAppointmentsHub(filters: HubFilters) {
           .select('user_id, display_name, full_name')
           .in('user_id', stylistIds);
         for (const p of profiles || []) {
-          stylistMap[p.user_id] = p.display_name || p.full_name || 'Unknown';
+          stylistMap[p.user_id] = formatDisplayName(p.full_name || '', p.display_name);
         }
       }
 
@@ -125,7 +126,7 @@ export function useAppointmentsHub(filters: HubFilters) {
           .select('user_id, display_name, full_name')
           .in('user_id', createdByIds);
         for (const p of profiles || []) {
-          createdByMap[p.user_id] = p.display_name || p.full_name || 'Unknown';
+          createdByMap[p.user_id] = formatDisplayName(p.full_name || '', p.display_name);
         }
       }
 

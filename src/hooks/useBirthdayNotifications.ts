@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { formatDisplayName } from '@/lib/utils';
 import { useUpcomingBirthdays } from './useBirthdays';
 import { useEffectiveRoles } from '@/hooks/useEffectiveUser';
 import { toast } from 'sonner';
@@ -28,7 +29,7 @@ export function useBirthdayNotifications() {
         if (sessionStorage.getItem(key)) return;
         
         toast.info(
-          `🎂 ${person.display_name || person.full_name}'s birthday is in 3 days!`,
+          `🎂 ${formatDisplayName(person.full_name || '', person.display_name)}'s birthday is in 3 days!`,
           {
             description: 'Consider planning something special for the team.',
             duration: 8000,

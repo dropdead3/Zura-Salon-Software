@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { formatDisplayName } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
@@ -196,7 +197,7 @@ export function usePayrollForecasting() {
 
       return {
         employeeId: emp.employee_id,
-        employeeName: emp.employee?.display_name || emp.employee?.full_name || 'Unknown',
+        employeeName: emp.employee ? formatDisplayName(emp.employee.full_name || '', emp.employee.display_name) : 'Unknown',
         photoUrl: emp.employee?.photo_url || null,
         payType: emp.pay_type,
         currentPeriodSales: sales,

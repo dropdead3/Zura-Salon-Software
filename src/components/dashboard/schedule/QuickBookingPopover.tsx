@@ -35,7 +35,7 @@ import {
   Users,
   FileText,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatDisplayName } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -297,7 +297,7 @@ export function QuickBookingPopover({
               .select('user_id, display_name, full_name')
               .in('user_id', stylistIds);
             for (const p of profiles || []) {
-              stylistMap[p.user_id] = p.display_name || p.full_name || 'Unknown';
+              stylistMap[p.user_id] = formatDisplayName(p.full_name || '', p.display_name);
             }
           }
           for (const a of data) {
@@ -809,7 +809,7 @@ export function QuickBookingPopover({
           client_id: selectedClient?.id || null,
           client_name: selectedClient?.name || null,
           staff_user_id: selectedStylist || null,
-          staff_name: selectedStylistData?.employee_profiles?.display_name || selectedStylistData?.employee_profiles?.full_name || null,
+          staff_name: selectedStylistData?.employee_profiles ? formatDisplayName(selectedStylistData.employee_profiles.full_name || '', selectedStylistData.employee_profiles.display_name) : null,
           selected_services: [...serviceDetails, ...addonDetails],
           notes: bookingNotes || undefined,
           step_reached: step,
@@ -946,7 +946,7 @@ export function QuickBookingPopover({
 
   // Handle stylist selection in stylist-first mode
   const handleStylistFirstSelect = (stylist: typeof allStylists[0]) => {
-    const fullName = stylist.employee_profiles?.display_name || stylist.employee_profiles?.full_name || 'Unknown';
+    const fullName = stylist.employee_profiles ? formatDisplayName(stylist.employee_profiles.full_name || '', stylist.employee_profiles.display_name) : 'Unknown';
     setPreSelectedStylistId(stylist.user_id);
     setPreSelectedStylistPhorestId(stylist.phorest_staff_id);
     setPreSelectedStylistName(fullName);

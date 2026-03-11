@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { formatDisplayName } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 
 // ── Types ──────────────────────────────────────────────────────
@@ -137,7 +138,7 @@ export function useClientEngagement(
       let resolvedNameCount = 0;
       mappings?.forEach(m => {
         const profile = m.employee_profiles as any;
-        const name = profile?.display_name || profile?.full_name || m.phorest_staff_name || null;
+        const name = profile ? formatDisplayName(profile.full_name || '', profile.display_name) : (m.phorest_staff_name || null);
         if (name) resolvedNameCount++;
         mappingLookup[m.phorest_staff_id] = {
           userId: m.user_id,

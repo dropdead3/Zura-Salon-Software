@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { formatDisplayName } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
@@ -225,7 +226,7 @@ export function usePinChangelog(profileId?: string) {
         .in('user_id', changerIds);
 
       const changerMap = new Map(
-        changers?.map(c => [c.user_id, c.display_name || c.full_name]) || []
+        changers?.map(c => [c.user_id, formatDisplayName(c.full_name || '', c.display_name)]) || []
       );
 
       return (data || []).map(entry => ({
@@ -265,7 +266,7 @@ export function useTeamPinStatus() {
       return (data || []).map(profile => ({
         id: profile.id,
         user_id: profile.user_id,
-        name: profile.display_name || profile.full_name,
+        name: formatDisplayName(profile.full_name || '', profile.display_name),
         photo_url: profile.photo_url,
         is_super_admin: profile.is_super_admin,
         is_primary_owner: profile.is_primary_owner,

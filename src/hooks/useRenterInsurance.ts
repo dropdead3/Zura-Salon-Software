@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { formatDisplayName } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { differenceInDays, addDays, format } from 'date-fns';
@@ -79,7 +80,7 @@ export function useRenterInsurance(boothRenterId: string | undefined) {
         ...insurance,
         days_until_expiry,
         expiry_status,
-        renter_name: employee?.display_name || employee?.full_name,
+        renter_name: employee ? formatDisplayName(employee.full_name || '', employee.display_name) : undefined,
       } as RenterInsurance;
     },
     enabled: !!boothRenterId,
@@ -126,7 +127,7 @@ export function useExpiringInsurance(organizationId: string | undefined, daysThr
 
         return {
           ...renter,
-          renter_name: emp?.display_name || emp?.full_name,
+          renter_name: emp ? formatDisplayName(emp.full_name || '', emp.display_name) : undefined,
           days_until_expiry,
           expiry_status: days_until_expiry < 0 ? 'expired' : 'expiring_soon',
         };

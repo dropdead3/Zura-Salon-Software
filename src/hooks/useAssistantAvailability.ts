@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format, getDay } from 'date-fns';
+import { formatDisplayName } from '@/lib/utils';
 
 const DAY_KEYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -145,7 +146,7 @@ export function useAssistantCoverageSummary() {
       acc[schedule.location_id].assistantCount++;
       acc[schedule.location_id].assistants.push({
         user_id: assistant.user_id,
-        name: assistant.display_name || assistant.full_name,
+        name: formatDisplayName(assistant.full_name, assistant.display_name),
         photo_url: assistant.photo_url,
         work_days: schedule.work_days || [],
       });

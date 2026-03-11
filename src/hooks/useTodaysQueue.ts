@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { formatDisplayName } from '@/lib/utils';
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { format, differenceInMinutes, parseISO, addMinutes, isAfter } from 'date-fns';
@@ -107,7 +108,7 @@ export function useTodaysQueue(locationId?: string) {
   const stylistMap = new Map(
     stylists?.map(s => [
       s.user_id, 
-      s.display_name || s.full_name.split(' ')[0]
+      formatDisplayName(s.full_name, s.display_name)
     ]) || []
   );
 

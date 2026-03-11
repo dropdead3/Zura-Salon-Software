@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { formatDisplayName } from '@/lib/utils';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
 
@@ -170,7 +171,7 @@ export function useCreateMeeting() {
           .eq('user_id', user.user.id)
           .maybeSingle();
 
-        const organizerName = organizerProfile?.display_name || organizerProfile?.full_name || 'Someone';
+        const organizerName = organizerProfile ? formatDisplayName(organizerProfile.full_name, organizerProfile.display_name) : 'Someone';
         const dateLabel = input.start_date;
 
         for (const uid of input.attendee_user_ids) {

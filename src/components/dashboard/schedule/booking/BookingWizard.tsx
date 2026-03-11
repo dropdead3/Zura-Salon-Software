@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { format } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
-import { cn } from '@/lib/utils';
+import { cn, formatDisplayName } from '@/lib/utils';
 import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -263,7 +263,7 @@ export function BookingWizard({
 
   const getStylistName = () => {
     const stylist = stylists.find(s => s.user_id === selectedStylist);
-    return stylist?.employee_profiles?.display_name || stylist?.employee_profiles?.full_name || '';
+    return stylist?.employee_profiles ? formatDisplayName(stylist.employee_profiles.full_name || '', stylist.employee_profiles.display_name) : '';
   };
 
   return (

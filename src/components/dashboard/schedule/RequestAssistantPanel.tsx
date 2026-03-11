@@ -276,7 +276,7 @@ export function RequestAssistantPanel({
                     return (
                       <CommandItem
                         key={member.user_id}
-                        value={member.display_name || member.full_name || ''}
+                        value={formatDisplayName(member.full_name || '', member.display_name)}
                         onSelect={() => {
                           hasManuallySelected.current = true;
                           setAssistantUserId(member.user_id);

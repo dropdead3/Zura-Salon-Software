@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { getServiceCategory } from '@/utils/serviceCategorization';
+import { formatDisplayName } from '@/lib/utils';
 
 export interface CategoryStylistData {
   phorestStaffId: string;
@@ -64,7 +65,7 @@ export function useRevenueByCategoryDrilldown({
           .in('phorest_staff_id', staffIds);
 
         (mappings || []).forEach((m: any) => {
-          const name = m.employee_profiles?.display_name || m.employee_profiles?.full_name || m.phorest_staff_name || 'Unknown';
+          const name = m.employee_profiles ? formatDisplayName(m.employee_profiles.full_name || '', m.employee_profiles.display_name) : (m.phorest_staff_name ? formatDisplayName(m.phorest_staff_name) : 'Unknown');
           staffNameMap[m.phorest_staff_id] = name;
         });
       }

@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { formatDisplayName } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { subDays, format } from 'date-fns';
 
@@ -169,7 +170,7 @@ export function useProductSalesAnalytics(timeRange: ProductTimeRange = 'month', 
         staffPerformance.push({
           phorestStaffId: staffId,
           userId: mapping?.user_id || null,
-          staffName: profile?.display_name || profile?.full_name || mapping?.phorest_staff_name || 'Unknown',
+          staffName: profile ? formatDisplayName(profile.full_name || '', profile.display_name) : (mapping?.phorest_staff_name || 'Unknown'),
           photoUrl: profile?.photo_url || null,
           productRevenue: data.productRevenue,
           productQuantity: data.productQuantity,

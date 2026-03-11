@@ -40,7 +40,7 @@ import { useRescheduleAppointment } from '@/hooks/useRescheduleAppointment';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
+import { cn, formatDisplayName } from '@/lib/utils';
 import type { QueueAppointment } from '@/hooks/useTodaysQueue';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
@@ -269,7 +269,7 @@ export function EditAppointmentDialog({
               <SelectContent>
                 {staff.map(member => (
                   <SelectItem key={member.user_id} value={member.user_id}>
-                    {member.display_name || member.full_name}
+                    {formatDisplayName(member.full_name || '', member.display_name)}
                   </SelectItem>
                 ))}
               </SelectContent>

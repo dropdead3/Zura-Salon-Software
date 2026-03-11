@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { cn } from '@/lib/utils';
+import { cn, formatDisplayName } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { motion } from 'framer-motion';
 import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
@@ -57,7 +57,7 @@ export default function PlatformOverview() {
   const greeting = useMemo(() => getGreeting(), []);
   const contextualMessage = useMemo(() => getContextualMessage(), []);
   
-  const firstName = profile?.display_name || profile?.full_name?.split(' ')[0] || '';
+  const firstName = profile ? formatDisplayName(profile.full_name || '', profile.display_name).split(' ')[0] : '';
 
   if (isLoading) {
     return (

@@ -66,7 +66,7 @@ import {
   Sparkles,
   Maximize2
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatDisplayName } from '@/lib/utils';
 import { QRCodeCanvas } from 'qrcode.react';
 import BrandLogo from '@/assets/brand-logo-secondary.svg';
 import { QRCodeFullScreen } from '@/components/dashboard/QRCodeFullScreen';
@@ -414,7 +414,7 @@ export function InvitationsTab({ canManage }: InvitationsTabProps) {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="font-display font-medium truncate">
-                  {account.display_name || account.full_name}
+                  {formatDisplayName(account.full_name || '', account.display_name)}
                 </h3>
                 {account.is_super_admin && (
                   <Tooltip>
