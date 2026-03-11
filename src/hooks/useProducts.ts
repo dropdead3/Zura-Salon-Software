@@ -26,6 +26,7 @@ export interface Product {
 export interface ProductFilters {
   search?: string;
   category?: string;
+  brand?: string;
   locationId?: string;
   lowStockOnly?: boolean;
   limit?: number;
@@ -53,6 +54,10 @@ export function useProducts(filters: ProductFilters = {}) {
 
       if (filters.locationId && filters.locationId !== 'all') {
         query = query.eq('location_id', filters.locationId);
+      }
+
+      if (filters.brand && filters.brand !== 'all') {
+        query = query.eq('brand', filters.brand);
       }
 
       if (filters.lowStockOnly) {
@@ -86,6 +91,24 @@ export function useProductCategories() {
       
       const categories = [...new Set(data.map(p => p.category).filter(Boolean))];
       return categories.sort() as string[];
+    },
+  });
+}
+
+export function useProductBrandsList() {
+  return useQuery({
+    queryKey: ['product-brands-list'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select('brand')
+        .eq('is_active', true)
+        .not('brand', 'is', null);
+
+      if (error) throw error;
+
+      const brands = [...new Set(data.map(p => p.brand).filter(Boolean))];
+      return brands.sort() as string[];
     },
   });
 }
