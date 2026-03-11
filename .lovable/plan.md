@@ -1,28 +1,23 @@
 
 
-## Add "Timeblock / Break" Option to Schedule Type Selector
+## Timezone-Safe Scheduling (Implemented)
 
-### Change Summary
+### Problem
+`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
 
-Add a third button to the `ScheduleTypeSelector` for creating timeblocks/breaks. This mirrors the existing break dialog flow already wired up in `Schedule.tsx`.
+### Solution
+- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
+- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
+- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
 
-### Changes (2 files)
-
-**1. `ScheduleTypeSelector.tsx`**
-- Add `onSelectTimeblock` callback prop
-- Add a third button with `Clock` icon (from lucide-react), label "Timeblock / Break", description "Lunch, personal time, focus block"
-- Same button styling as existing two options
-
-**2. `Schedule.tsx`**
-- Pass `onSelectTimeblock` to `ScheduleTypeSelector`
-- Handler: close type selector, set `breakDefaults` with the clicked time/stylist, open `breakDialogOpen`
-
-```text
-Type Selector options:
-  ┌─ Client Appointment   (CalendarPlus)  → booking wizard
-  ├─ Internal Meeting      (Users)         → meeting wizard
-  └─ Timeblock / Break     (Clock)         → break/block form
-```
-
-Two files, ~15 lines total.
-
+### Files Updated
+- `ScheduleHeader.tsx` — today button, quick days, isToday checks
+- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
+- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
+- `MonthView.tsx` — today highlight
+- `AgendaView.tsx` — today/tomorrow labels, today border
+- `ScheduleActionBar.tsx` — payment queue timing
+- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
+- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
+- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
+- `useHuddles.ts` — today's huddle query
