@@ -104,11 +104,13 @@ export function ScheduleHeader({
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [staffPopoverOpen, setStaffPopoverOpen] = useState(false);
 
-  // Get quick day buttons - show the next 7 days after today (tomorrow through +7)
-  const today = new Date();
-  const quickDays = Array.from({ length: 7 }, (_, i) => addDays(today, i + 1));
+  // Org-timezone-aware "today"
+  const { isToday: isOrgToday, todayDate: orgToday } = useOrgNow();
 
-  const goToToday = () => setCurrentDate(new Date());
+  // Get quick day buttons - show the next 7 days after today (tomorrow through +7)
+  const quickDays = Array.from({ length: 7 }, (_, i) => addDays(orgToday, i + 1));
+
+  const goToToday = () => setCurrentDate(orgToday);
   
   const goToPrevDay = () => setCurrentDate(addDays(currentDate, -1));
   const goToNextDay = () => setCurrentDate(addDays(currentDate, 1));
