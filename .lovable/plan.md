@@ -1,21 +1,28 @@
 
 
-## Remove Right-Click Context Menu from Schedule Grid
+## Add "Timeblock / Break" Option to Schedule Type Selector
 
-The right-click context menu ("Add Break / Block" and "Request Assistant") is no longer needed since these options are now available through the ScheduleTypeSelector dialog on left-click.
+### Change Summary
 
-### Changes
+Add a third button to the `ScheduleTypeSelector` for creating timeblocks/breaks. This mirrors the existing break dialog flow already wired up in `Schedule.tsx`.
 
-**1. `src/pages/dashboard/Schedule.tsx`**
-- Remove `breakContextMenu` state and `handleSlotContextMenu` function (~lines 194-230)
-- Remove the `onSlotContextMenu` prop from both `DayView` renders (~lines 649, 676)
-- Remove the fixed-position context menu JSX block (~lines 978-1010)
-- Remove the click-outside listener for the context menu
+### Changes (2 files)
 
-**2. `src/components/dashboard/schedule/DayView.tsx`**
-- Remove `onSlotContextMenu` from props interface (line 45)
-- Remove `onContextMenu` from `TimeSlot` props and its handler (lines 109, 120, 154-159)
-- Remove the `onContextMenu` pass-through in the grid render (lines 565-567)
+**1. `ScheduleTypeSelector.tsx`**
+- Add `onSelectTimeblock` callback prop
+- Add a third button with `Clock` icon (from lucide-react), label "Timeblock / Break", description "Lunch, personal time, focus block"
+- Same button styling as existing two options
 
-Two files, removal-only changes.
+**2. `Schedule.tsx`**
+- Pass `onSelectTimeblock` to `ScheduleTypeSelector`
+- Handler: close type selector, set `breakDefaults` with the clicked time/stylist, open `breakDialogOpen`
+
+```text
+Type Selector options:
+  ┌─ Client Appointment   (CalendarPlus)  → booking wizard
+  ├─ Internal Meeting      (Users)         → meeting wizard
+  └─ Timeblock / Break     (Clock)         → break/block form
+```
+
+Two files, ~15 lines total.
 

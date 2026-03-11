@@ -42,7 +42,7 @@ interface DayViewProps {
   hoursEnd?: number;
   onAppointmentClick: (appointment: PhorestAppointment) => void;
   onSlotClick?: (stylistId: string, time: string) => void;
-  onSlotContextMenu?: (stylistId: string, time: string, e: React.MouseEvent) => void;
+  
   selectedAppointmentId?: string | null;
   locationHours?: { open: string; close: string } | null;
   isLocationClosed?: boolean;
@@ -106,7 +106,7 @@ function DroppableSlot({
   isOutsideHours,
   showCurrentTime,
   onClick,
-  onContextMenu,
+  
   isOver,
 }: {
   id: string;
@@ -117,7 +117,7 @@ function DroppableSlot({
   isOutsideHours: boolean;
   showCurrentTime: boolean;
   onClick: () => void;
-  onContextMenu?: (e: React.MouseEvent) => void;
+  
   isOver: boolean;
 }) {
   const { setNodeRef, isOver: dndIsOver } = useDroppable({ id });
@@ -150,13 +150,6 @@ function DroppableSlot({
       } : undefined}
       onClick={() => {
         if (isPastSlot || isAvailable || isOutsideHours) onClick();
-      }}
-      onContextMenu={(e) => {
-        if ((isAvailable || isOutsideHours) && !isPastSlot && onContextMenu) {
-          e.preventDefault();
-          e.stopPropagation();
-          onContextMenu(e);
-        }
       }}
       onMouseMove={(e) => setMouseX(e.nativeEvent.offsetX)}
     >
@@ -279,7 +272,7 @@ export function DayView({
   hoursEnd = 21,
   onAppointmentClick,
   onSlotClick,
-  onSlotContextMenu,
+  
   selectedAppointmentId,
   locationHours,
   isLocationClosed,
@@ -561,9 +554,6 @@ export function DayView({
                           isOver={false}
                           onClick={() => {
                             onSlotClick?.(stylist.user_id, slotTime);
-                          }}
-                          onContextMenu={(e) => {
-                            onSlotContextMenu?.(stylist.user_id, slotTime, e);
                           }}
                         />
                       );
