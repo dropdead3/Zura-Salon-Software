@@ -166,11 +166,11 @@ export function MeetingDetailPanel({ meeting, open, onOpenChange }: MeetingDetai
               <Avatar className="w-8 h-8">
                 <AvatarImage src={organizerProfile?.photo_url || undefined} />
                 <AvatarFallback className="text-xs">
-                  {(organizerProfile?.display_name || organizerProfile?.full_name || '?').slice(0, 2).toUpperCase()}
+                  {formatDisplayName(organizerProfile?.full_name || '', organizerProfile?.display_name).slice(0, 2).toUpperCase() || '?'}
                 </AvatarFallback>
               </Avatar>
               <span className="text-sm font-sans">
-                {organizerProfile?.display_name || organizerProfile?.full_name || 'Unknown'}
+                {formatDisplayName(organizerProfile?.full_name || '', organizerProfile?.display_name) || 'Unknown'}
                 {isOrganizer && <span className="text-muted-foreground ml-1">(you)</span>}
               </span>
             </div>
