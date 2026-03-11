@@ -58,6 +58,7 @@ import { useState, useMemo } from 'react';
 import { Package, Shirt, Gem as GemIcon, Gift } from 'lucide-react';
 
 import { ServiceProductDrilldown } from './ServiceProductDrilldown';
+import { RetailCategoryDrilldown } from './RetailCategoryDrilldown';
 import { LocationMetricDrilldownSheet, type LocationDrilldownType } from './LocationMetricDrilldownSheet';
 import { TipsDrilldownPanel } from './sales/TipsDrilldownPanel';
 import { TransactionsByHourPanel } from './sales/TransactionsByHourPanel';
