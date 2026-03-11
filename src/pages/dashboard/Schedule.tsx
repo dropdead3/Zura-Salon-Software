@@ -196,32 +196,6 @@ export default function Schedule() {
   const [blockManagerOpen, setBlockManagerOpen] = useState(false);
   const [breakDefaults, setBreakDefaults] = useState<{ time: string; stylistId: string }>({ time: '09:00', stylistId: '' });
 
-  const handleSlotContextMenu = (stylistId: string, time: string, e: React.MouseEvent) => {
-    e.preventDefault();
-    const slotDateTime = new Date(currentDate);
-    const [slotH, slotM] = time.split(':').map(Number);
-    slotDateTime.setHours(slotH, slotM, 0, 0);
-    if (slotDateTime < new Date()) return;
-    setBreakContextMenu({ open: true, x: e.clientX, y: e.clientY, time, stylistId });
-  };
-
-  // Close context menu on any click (delayed to avoid closing on the same event)
-  useEffect(() => {
-    if (!breakContextMenu?.open) return;
-    const close = () => setBreakContextMenu(null);
-    // Use a rAF to avoid the current event from immediately closing the menu
-    const frameId = requestAnimationFrame(() => {
-      window.addEventListener('mousedown', close);
-      window.addEventListener('contextmenu', close);
-      window.addEventListener('scroll', close, true);
-    });
-    return () => {
-      cancelAnimationFrame(frameId);
-      window.removeEventListener('mousedown', close);
-      window.removeEventListener('contextmenu', close);
-      window.removeEventListener('scroll', close, true);
-    };
-  }, [breakContextMenu?.open]);
 
 
   // Set default location when locations load
