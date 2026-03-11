@@ -42,6 +42,8 @@ function ProductsTab() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [editingStockId, setEditingStockId] = useState<string | null>(null);
+  const [stockValue, setStockValue] = useState('');
 
   const toggleSelect = (id: string) => {
     setSelectedIds(prev => {
@@ -128,10 +130,41 @@ function ProductsTab() {
                     <TableCell className="text-right tabular-nums text-sm"><BlurredAmount>{p.retail_price != null ? formatCurrency(p.retail_price) : '—'}</BlurredAmount></TableCell>
                     <TableCell className="text-right tabular-nums text-sm text-muted-foreground"><BlurredAmount>{p.cost_price != null ? formatCurrency(p.cost_price) : '—'}</BlurredAmount></TableCell>
                     <TableCell className="text-right tabular-nums text-sm">
-                      <span className={cn(isLow && 'text-amber-600 dark:text-amber-400 font-medium')}>
-                        {p.quantity_on_hand ?? '—'}
-                        {isLow && <AlertTriangle className="inline w-3 h-3 ml-1" />}
-                      </span>
+                      {editingStockId === p.id ? (
+                        <Input
+                          type="number"
+                          value={stockValue}
+                          onChange={(e) => setStockValue(e.target.value)}
+                          onBlur={() => {
+                            const parsed = parseInt(stockValue);
+                            if (!isNaN(parsed) && parsed !== p.quantity_on_hand) {
+                              updateProduct.mutate({ id: p.id, updates: { quantity_on_hand: parsed } });
+                            }
+                            setEditingStockId(null);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                            if (e.key === 'Escape') setEditingStockId(null);
+                          }}
+                          autoFocus
+                          className="w-20 h-7 text-right text-sm rounded-md px-2"
+                        />
+                      ) : (
+                        <button
+                          type="button"
+                          className={cn(
+                            'hover:underline cursor-pointer bg-transparent border-none p-0',
+                            isLow && 'text-amber-600 dark:text-amber-400 font-medium'
+                          )}
+                          onClick={() => {
+                            setEditingStockId(p.id);
+                            setStockValue(String(p.quantity_on_hand ?? 0));
+                          }}
+                        >
+                          {p.quantity_on_hand ?? '—'}
+                          {isLow && <AlertTriangle className="inline w-3 h-3 ml-1" />}
+                        </button>
+                      )}
                     </TableCell>
                     <TableCell className="text-right tabular-nums text-sm text-muted-foreground">{p.reorder_level ?? '—'}</TableCell>
                     <TableCell>

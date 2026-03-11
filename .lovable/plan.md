@@ -1,20 +1,23 @@
 
 
-## Add Inline Stock Editing to Products Tab
+## Timezone-Safe Scheduling (Implemented)
 
-### What's changing
-Replace the static stock count display in the Products table (line 130-134) with an inline editable input. Clicking the stock number turns it into a small number input; pressing Enter or blurring saves the new value via `updateProduct.mutate`.
+### Problem
+`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
 
-### Changes
+### Solution
+- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
+- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
+- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
 
-**`src/components/dashboard/settings/RetailProductsSettingsContent.tsx`** — `ProductsTab`
-
-1. Add state: `const [editingStockId, setEditingStockId] = useState<string | null>(null)` and `const [stockValue, setStockValue] = useState('')`
-
-2. Replace the Stock `<TableCell>` (lines 130-135) with:
-   - **Default state**: Show the stock number as a clickable element (cursor-pointer, subtle hover underline). Clicking sets `editingStockId` to the product id and `stockValue` to the current quantity.
-   - **Editing state**: Show a small `<Input type="number">` (w-16, h-7, text-right). On blur or Enter, call `updateProduct.mutate({ id, updates: { quantity_on_hand: parseInt(stockValue) } })` and clear `editingStockId`. On Escape, cancel.
-   - Preserve the low-stock amber styling and warning triangle icon in both states.
-
-No new dependencies. Uses the existing `updateProduct` mutation already in scope.
-
+### Files Updated
+- `ScheduleHeader.tsx` — today button, quick days, isToday checks
+- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
+- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
+- `MonthView.tsx` — today highlight
+- `AgendaView.tsx` — today/tomorrow labels, today border
+- `ScheduleActionBar.tsx` — payment queue timing
+- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
+- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
+- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
+- `useHuddles.ts` — today's huddle query
