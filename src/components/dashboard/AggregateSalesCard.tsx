@@ -1048,7 +1048,7 @@ export function AggregateSalesCard({
                       <div className="flex justify-center mb-2">
                         <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                       </div>
-                      <AnimatedBlurredAmount value={Math.round(isToday ? (todayActual?.hasActualData && todayActual.actualServiceHours > 0 ? todayActual.actualRevenue / todayActual.actualServiceHours : 0) : revenuePerHour)} currency={currency} className="text-lg sm:text-xl md:text-2xl font-display tabular-nums" />
+                      <AnimatedBlurredAmount value={Math.round(isToday ? (todayActual?.hasActualData && todayActual.actualServiceHours > 0 ? todayActual.actualRevenue / todayActual.actualServiceHours : 0) : pastActualActive ? (metrics?.totalServiceHours && metrics.totalServiceHours > 0 ? pastActual.actualRevenue / metrics.totalServiceHours : 0) : revenuePerHour)} currency={currency} className="text-lg sm:text-xl md:text-2xl font-display tabular-nums" />
                       <div className="flex items-center gap-1 justify-center mt-1">
                         <p className="text-xs text-muted-foreground">{t('sales.rev_per_hour')}</p>
                         <ChevronDown className={cn("w-3 h-3 text-muted-foreground transition-transform duration-200", activeDrilldown === 'revPerHour' && "rotate-180")} />
