@@ -62,6 +62,21 @@ export const SERVICE_CATEGORIES = [
 export type ServiceCategory = typeof SERVICE_CATEGORIES[number];
 
 /**
+ * Extension product pattern — matches product names that are extension hardware/inventory
+ * (e.g. "20 inch SuperWeft Extensions", "Tape-In Hair 18\"", "Hand Tied Weft")
+ */
+const EXTENSION_PRODUCT_PATTERN = /extension|weft|tape.?in|hand.?tied|keratin.?bond|fusion|beaded.?row|i.?tip|k.?tip|u.?tip|nano.?ring/i;
+
+/**
+ * Returns true if the given product/item name is an extension product.
+ * Used to separate high-ticket extension hardware from standard retail metrics.
+ */
+export function isExtensionProduct(itemName: string | null): boolean {
+  if (!itemName) return false;
+  return EXTENSION_PRODUCT_PATTERN.test(itemName.trim());
+}
+
+/**
  * Category colors for charts (matches the service category theme)
  */
 export const CATEGORY_COLORS: Record<string, string> = {
