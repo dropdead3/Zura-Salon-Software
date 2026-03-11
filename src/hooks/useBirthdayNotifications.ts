@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { formatDisplayName } from '@/lib/utils';
 import { useUpcomingBirthdays } from './useBirthdays';
 import { useEffectiveRoles } from '@/hooks/useEffectiveUser';
 import { toast } from 'sonner';
