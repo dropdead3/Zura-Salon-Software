@@ -1058,7 +1058,7 @@ export function AggregateSalesCard({
                             {serviceCategoryData.slice(0, 4).map((cat, index) => (
                               <div
                                 key={cat.category}
-                                className="flex items-center gap-2 w-full text-left rounded-xl px-3 py-2.5 hover:bg-muted/50 transition-colors"
+                                className="flex items-center gap-2 w-full text-left rounded-lg px-3 py-2.5 hover:bg-muted/50 transition-colors"
                               >
                                 <span className="text-[10px] text-muted-foreground/50 w-3 tabular-nums">{index + 1}</span>
                                 <Scissors className="w-3 h-3 text-muted-foreground shrink-0" />
