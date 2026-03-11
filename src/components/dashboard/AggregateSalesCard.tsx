@@ -55,7 +55,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useState, useMemo } from 'react';
-import { Package, Shirt, Gem as GemIcon } from 'lucide-react';
+import { Package, Shirt, Gem as GemIcon, Gift } from 'lucide-react';
 
 import { ServiceProductDrilldown } from './ServiceProductDrilldown';
 import { LocationMetricDrilldownSheet, type LocationDrilldownType } from './LocationMetricDrilldownSheet';
