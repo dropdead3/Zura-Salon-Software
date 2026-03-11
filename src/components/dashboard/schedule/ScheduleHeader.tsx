@@ -443,10 +443,10 @@ export function ScheduleHeader({
                 onClick={goToToday}
                 className={cn(
                   'flex flex-col items-center justify-center min-w-[56px] px-3 py-2 rounded-lg text-sm font-sans transition-all duration-200',
-                  isToday(currentDate)
+                  isOrgToday(currentDate)
                     ? 'bg-primary text-primary-foreground shadow-sm'
                     : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
-                  todayClosed.isClosed && !isToday(currentDate) && 'opacity-60'
+                  todayClosed.isClosed && !isOrgToday(currentDate) && 'opacity-60'
                 )}
               >
                 <div className="flex items-center gap-1">
