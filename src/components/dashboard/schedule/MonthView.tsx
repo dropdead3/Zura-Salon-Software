@@ -35,14 +35,6 @@ const STATUS_DOT_COLORS: Record<AppointmentStatus, string> = {
 };
 
 export function MonthView({
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- used below after destructuring
-  ...props
-}: MonthViewProps) {
-  const { isToday: orgIsToday } = useOrgNow();
-  const {
-    currentDate,
-    appointments,
-    onDayClick,
   currentDate,
   appointments,
   onDayClick,
@@ -50,6 +42,7 @@ export function MonthView({
   locationHoursJson,
   locationHolidayClosures,
 }: MonthViewProps) {
+  const { isToday: orgIsToday } = useOrgNow();
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
   const calendarStart = startOfWeek(monthStart, { weekStartsOn: 0 });
