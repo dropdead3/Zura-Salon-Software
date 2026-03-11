@@ -19,6 +19,7 @@ export interface Product {
   is_active: boolean | null;
   available_online: boolean | null;
   image_url: string | null;
+  product_type: string | null;
   created_at: string | null;
   updated_at: string | null;
 }
