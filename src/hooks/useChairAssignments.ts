@@ -295,7 +295,7 @@ export function useRandomAssignment(
       if (excludeIds.includes(s.user_id)) {
         exclusions.push({
           stylistId: s.user_id,
-          stylistName: s.display_name || s.full_name || 'Unknown',
+          stylistName: formatDisplayName(s.full_name || '', s.display_name),
           reason: 'Manually excluded',
           details: 'Excluded from randomization by admin',
         });
