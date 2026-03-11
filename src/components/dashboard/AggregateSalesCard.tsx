@@ -978,7 +978,7 @@ export function AggregateSalesCard({
               </div>
             </div>
             
-            {/* Services & Products Sub-cards */}
+            {/* Services & Retail Sub-cards */}
             {(() => {
               // When today + actual data, show actual breakdown; for past ranges with POS data, use POS; otherwise show expected
               const usePastActual = isPastRange && pastActual?.hasActualData;
@@ -990,11 +990,18 @@ export function AggregateSalesCard({
                 ? (todayActual?.hasActualData ? todayActual.actualProductRevenue : 0)
                 : usePastActual ? pastActual.actualProductRevenue
                 : displayMetrics.productRevenue;
-              const extRevenue = extensionRevData?.extensionProductRevenue ?? 0;
-              const prodRevenue = excludeExtensions ? Math.max(0, rawProdRevenue - extRevenue) : rawProdRevenue;
-              const totalBrkdn = svcRevenue + prodRevenue;
+              const totalBrkdn = svcRevenue + rawProdRevenue;
               const svcPct = totalBrkdn > 0 ? Math.round((svcRevenue / totalBrkdn) * 100) : 0;
-              const prodPct = totalBrkdn > 0 ? Math.round((prodRevenue / totalBrkdn) * 100) : 0;
+              const prodPct = totalBrkdn > 0 ? Math.round((rawProdRevenue / totalBrkdn) * 100) : 0;
+
+              // Retail breakdown sub-categories
+              const rb = retailBreakdown;
+              const retailTotal = rb?.totalRetailRevenue ?? rawProdRevenue;
+              const subCategories = [
+                { label: 'Products', icon: Package, amount: rb?.productRevenue ?? rawProdRevenue, count: rb?.productCount ?? 0 },
+                { label: 'Merch', icon: Shirt, amount: rb?.merchRevenue ?? 0, count: rb?.merchCount ?? 0 },
+                { label: 'Extensions', icon: GemIcon, amount: rb?.extensionRevenue ?? 0, count: rb?.extensionCount ?? 0 },
+              ].filter(c => c.amount > 0 || c.count > 0);
 
               return (
                 <div className="grid grid-cols-2 gap-6">
@@ -1016,43 +1023,62 @@ export function AggregateSalesCard({
                     <p className="text-xs text-muted-foreground/70 mt-1">{svcPct}%</p>
                   </div>
                   
-                  {/* Products */}
-                  <div 
-                    className="text-center p-3 sm:p-4 bg-card-inner-deep rounded-lg border border-border/40 cursor-pointer transition-all hover:-translate-y-0.5 hover:border-border/80 dark:hover:border-border/60"
-                    onClick={() => setDrilldownMode('products')}
-                  >
-                    <div className="flex items-center justify-center gap-1.5 mb-2">
-                      <ShoppingBag className="w-3.5 h-3.5 text-primary" />
-                       <span className="text-xs text-muted-foreground">{t('sales.products')}</span>
-                      <MetricInfoTooltip description={excludeExtensions
-                        ? "Retail product sales excluding extension hardware. Toggle below to include extensions."
-                        : "Net revenue from retail product sales including extension hardware."
-                      } />
+                  {/* Retail (with expandable breakdown) */}
+                  <div className="text-center p-3 sm:p-4 bg-card-inner-deep rounded-lg border border-border/40 transition-all hover:border-border/80 dark:hover:border-border/60">
+                    <div 
+                      className="cursor-pointer"
+                      onClick={() => setDrilldownMode('products')}
+                    >
+                      <div className="flex items-center justify-center gap-1.5 mb-2">
+                        <ShoppingBag className="w-3.5 h-3.5 text-primary" />
+                        <span className="text-xs text-muted-foreground">{t('sales.products')}</span>
+                        <MetricInfoTooltip description="Total retail revenue including products, merch, and extension hardware. Expand to see breakdown." />
+                      </div>
+                      <AnimatedBlurredAmount 
+                        value={rawProdRevenue}
+                        currency={currency}
+                        className="text-xl sm:text-2xl font-display tabular-nums"
+                      />
+                      <p className="text-xs text-muted-foreground/70 mt-1">{prodPct}%</p>
                     </div>
-                    <AnimatedBlurredAmount 
-                      value={prodRevenue}
-                      currency={currency}
-                      className="text-xl sm:text-2xl font-display tabular-nums"
-                    />
-                    <p className="text-xs text-muted-foreground/70 mt-1">{prodPct}%</p>
-                    {/* Extension toggle + note */}
-                    <div className="mt-2 flex flex-col items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                      <label className="flex items-center gap-1.5 cursor-pointer">
-                        <Switch
-                          checked={excludeExtensions}
-                          onCheckedChange={setExcludeExtensions}
-                          className="scale-75"
-                        />
-                        <span className="text-[10px] text-muted-foreground">Excl. Extensions</span>
-                      </label>
-                      {excludeExtensions && extRevenue > 0 && (
-                        <BlurredAmount>
-                          <span className="text-[10px] text-muted-foreground/60">
-                            {formatCurrencyWhole(extRevenue)} extensions
-                          </span>
-                        </BlurredAmount>
+                    {/* Chevron toggle for breakdown */}
+                    {subCategories.length > 1 && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setRetailExpanded(prev => !prev); }}
+                        className="mt-2 mx-auto flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        <span>Breakdown</span>
+                        <ChevronDown className={cn("w-3 h-3 transition-transform duration-200", retailExpanded && "rotate-180")} />
+                      </button>
+                    )}
+                    {/* Expanded breakdown rows */}
+                    <AnimatePresence>
+                      {retailExpanded && subCategories.length > 1 && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="overflow-hidden"
+                        >
+                          <div className="mt-3 pt-3 border-t border-border/40 space-y-2 text-left">
+                            {subCategories.map(({ label, icon: Icon, amount }) => {
+                              const pct = retailTotal > 0 ? Math.round((amount / retailTotal) * 100) : 0;
+                              return (
+                                <div key={label} className="flex items-center gap-2">
+                                  <Icon className="w-3 h-3 text-muted-foreground shrink-0" />
+                                  <span className="text-[11px] text-muted-foreground flex-1">{label}</span>
+                                  <BlurredAmount>
+                                    <span className="text-[11px] tabular-nums font-medium">{formatCurrencyWhole(amount)}</span>
+                                  </BlurredAmount>
+                                  <span className="text-[10px] text-muted-foreground/60 w-8 text-right">{pct}%</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </motion.div>
                       )}
-                    </div>
+                    </AnimatePresence>
                   </div>
                 </div>
               );
