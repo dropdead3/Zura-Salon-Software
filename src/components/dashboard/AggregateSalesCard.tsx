@@ -1799,6 +1799,7 @@ export function AggregateSalesCard({
         dateFrom={dateFilters.dateFrom}
         dateTo={dateFilters.dateTo}
         locationId={filterContext?.locationId}
+      />
       <LocationMetricDrilldownSheet
         open={!!locationDrilldown}
         onOpenChange={(open) => !open && setLocationDrilldown(null)}
