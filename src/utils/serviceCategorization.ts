@@ -77,6 +77,19 @@ export function isExtensionProduct(itemName: string | null): boolean {
 }
 
 /**
+ * Merch product pattern — matches branded apparel and goods
+ */
+const MERCH_PRODUCT_PATTERN = /t.?shirt|tee|hat|cap|beanie|hoodie|sweatshirt|tote|bag|sticker|patch|pin|keychain|apparel|merch|branded/i;
+
+/**
+ * Returns true if the given product/item name is a merch item (apparel & branded goods).
+ */
+export function isMerchProduct(itemName: string | null): boolean {
+  if (!itemName) return false;
+  return MERCH_PRODUCT_PATTERN.test(itemName.trim());
+}
+
+/**
  * Category colors for charts (matches the service category theme)
  */
 export const CATEGORY_COLORS: Record<string, string> = {
