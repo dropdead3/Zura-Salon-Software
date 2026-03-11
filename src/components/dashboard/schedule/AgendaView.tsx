@@ -36,10 +36,10 @@ function formatTime12h(time: string): string {
   return `${hour12}:${minutes} ${ampm}`;
 }
 
-function getDateLabel(dateStr: string, formatDate: (date: Date, pattern: string) => string): string {
+function getDateLabel(dateStr: string, formatDate: (date: Date, pattern: string) => string, timezone: string): string {
   const date = parseISO(dateStr);
-  if (isToday(date)) return 'Today';
-  if (isTomorrow(date)) return 'Tomorrow';
+  if (isOrgToday(date, timezone)) return 'Today';
+  if (isOrgTomorrow(date, timezone)) return 'Tomorrow';
   return formatDate(date, 'EEEE, MMMM d');
 }
 
