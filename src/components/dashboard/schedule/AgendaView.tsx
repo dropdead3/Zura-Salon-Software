@@ -103,7 +103,7 @@ export function AgendaView({
       {dates.map((dateStr) => {
         const dayAppointments = appointmentsByDate.get(dateStr) || [];
         const date = parseISO(dateStr);
-        const dateLabel = getDateLabel(dateStr, formatDate);
+        const dateLabel = getDateLabel(dateStr, formatDate, timezone);
 
         return (
           <div key={dateStr}>
