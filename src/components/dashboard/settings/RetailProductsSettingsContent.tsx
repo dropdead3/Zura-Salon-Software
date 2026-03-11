@@ -440,6 +440,7 @@ function CategoriesTab() {
               </TableCell>
             </TableRow>
           );})}
+        </TableBody>
       </Table>
     </div>
   );
