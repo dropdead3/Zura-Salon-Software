@@ -72,12 +72,8 @@ function ProductsTab() {
   const [editingStockId, setEditingStockId] = useState<string | null>(null);
   const [stockValue, setStockValue] = useState('');
 
-  // Client-side type filtering
-  const filteredProducts = useMemo(() => {
-    if (!products) return [];
-    if (typeFilter === 'all') return products;
-    return products.filter(p => getProductType(p.name) === typeFilter);
-  }, [products, typeFilter]);
+  // Products are now filtered server-side via productType filter
+  const filteredProducts = products || [];
 
   const toggleSelect = (id: string) => {
     setSelectedIds(prev => {
