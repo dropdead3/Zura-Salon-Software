@@ -143,7 +143,7 @@ export function ShiftScheduleView({ locationId }: ShiftScheduleViewProps) {
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setWeekStart(addDays(weekStart, -7))}>
               <ChevronLeft className="w-4 h-4" />
             </Button>
-            <Button variant="ghost" size="sm" className="font-sans h-8" onClick={() => setWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }))}>
+            <Button variant="ghost" size="sm" className="font-sans h-8" onClick={() => setWeekStart(startOfWeek(shiftToday, { weekStartsOn: 1 }))}>
               This Week
             </Button>
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setWeekStart(addDays(weekStart, 7))}>
