@@ -992,9 +992,10 @@ export function AggregateSalesCard({
                 ? (todayActual?.hasActualData ? todayActual.actualProductRevenue : 0)
                 : usePastActual ? pastActual.actualProductRevenue
                 : displayMetrics.productRevenue;
-              const totalBrkdn = svcRevenue + rawProdRevenue;
+              const retailDisplayRevenue = rb?.totalRetailRevenue ?? rawProdRevenue;
+              const totalBrkdn = svcRevenue + retailDisplayRevenue;
               const svcPct = totalBrkdn > 0 ? Math.round((svcRevenue / totalBrkdn) * 100) : 0;
-              const prodPct = totalBrkdn > 0 ? Math.round((rawProdRevenue / totalBrkdn) * 100) : 0;
+              const prodPct = totalBrkdn > 0 ? Math.round((retailDisplayRevenue / totalBrkdn) * 100) : 0;
 
               // Retail breakdown sub-categories
               const rb = retailBreakdown;
