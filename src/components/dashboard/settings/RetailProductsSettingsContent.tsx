@@ -56,6 +56,7 @@ function ProductsTab() {
     search,
     category: categoryFilter,
     brand: brandFilter,
+    productType: typeFilter !== 'all' ? typeFilter : undefined,
     locationId: locationFilter !== 'all' ? locationFilter : undefined,
     lowStockOnly,
   });
