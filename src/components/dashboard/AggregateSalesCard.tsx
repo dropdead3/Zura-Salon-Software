@@ -752,13 +752,7 @@ export function AggregateSalesCard({
             </div>
             {/* Total Revenue - Hero */}
             <div
-              className={cn(
-                "text-center mb-4 sm:mb-6 cursor-pointer transition-all rounded-xl p-4 sm:p-6 group/revenue",
-                activeDrilldown === 'revenue'
-                  ? "ring-1 ring-primary/20 bg-primary/5"
-                  : ""
-              )}
-              onClick={() => toggleDrilldown('revenue')}
+              className="text-center mb-4 sm:mb-6 rounded-xl p-4 sm:p-6"
             >
               <AnimatedBlurredAmount
                 value={isToday ? (todayActual?.actualRevenue ?? 0) : (isPastRange && pastActual?.hasActualData ? pastActual.actualRevenue : displayMetrics.totalRevenue)}
@@ -979,13 +973,6 @@ export function AggregateSalesCard({
                   </Tooltip>
                 </div>
               )}
-              {/* Bottom center chevron indicator */}
-              <div className="flex justify-center mt-3">
-                <ChevronDown className={cn(
-                  "w-4 h-4 text-muted-foreground transition-all duration-200",
-                  activeDrilldown === 'revenue' ? "rotate-180 opacity-100" : "opacity-0 group-hover/revenue:opacity-100"
-                )} />
-              </div>
             </div>
             
             {/* Services & Retail Sub-cards */}
@@ -1017,11 +1004,13 @@ export function AggregateSalesCard({
               return (
                 <div className="grid grid-cols-2 gap-6">
                   {/* Services (with expandable category breakdown) */}
-                  <div className="text-center p-3 sm:p-4 bg-card-inner-deep rounded-lg border border-border/40 transition-all hover:border-border/80 dark:hover:border-border/60">
-                    <div 
-                      className="cursor-pointer"
-                      onClick={() => setDrilldownMode('services')}
-                    >
+                  <div className={cn(
+                    "text-center p-3 sm:p-4 bg-card-inner-deep rounded-lg border transition-all cursor-pointer",
+                    activeDrilldown === 'revenue'
+                      ? "ring-1 ring-primary/20 bg-primary/5 border-primary/30"
+                      : "border-border/40 hover:border-border/80 dark:hover:border-border/60"
+                  )} onClick={() => toggleDrilldown('revenue')}>
+                    <div>
                       <div className="flex items-center justify-center gap-1.5 mb-2">
                         <Scissors className="w-3.5 h-3.5 text-primary" />
                         <span className="text-xs text-muted-foreground">{t('sales.services')}</span>
