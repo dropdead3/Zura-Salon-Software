@@ -255,6 +255,13 @@ export function AggregateSalesCard({
     dateTo: dateFilters.dateTo,
     locationId: filterContext?.locationId,
   });
+  // Extension product revenue — for excluding from retail
+  const { data: extensionRevData } = useExtensionProductRevenue(
+    dateFilters.dateFrom,
+    dateFilters.dateTo,
+    true,
+    filterContext?.locationId
+  );
   // Tip attach rate from drilldown data (react-query deduplicates the fetch)
   const { byTotalTips: tipsByTotal } = useTipsDrilldown({
     dateFrom: dateFilters.dateFrom,
