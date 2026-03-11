@@ -88,6 +88,10 @@ export function ServiceProductDrilldown({
     locationId: effectiveLocationId,
   });
 
+  const staffData = drilldownData?.staffData || [];
+  const totalServiceRevenue = drilldownData?.totalServiceRevenue || 0;
+  const totalProductRevenue = drilldownData?.totalProductRevenue || 0;
+
   // When excluding extensions in products mode, filter out extension items and recalculate
   const adjustedStaffData = useMemo(() => {
     if (isServices || !excludeExtensions) return staffData;
