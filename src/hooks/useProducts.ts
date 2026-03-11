@@ -28,6 +28,7 @@ export interface ProductFilters {
   search?: string;
   category?: string;
   brand?: string;
+  productType?: string;
   locationId?: string;
   lowStockOnly?: boolean;
   limit?: number;
