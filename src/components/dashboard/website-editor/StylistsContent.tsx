@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { tokens } from '@/lib/design-tokens';
+import { formatDisplayName } from '@/lib/utils';
 
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
