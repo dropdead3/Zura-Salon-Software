@@ -1,28 +1,23 @@
 
 
-## Add `product_type` Column to Products
+## Timezone-Safe Scheduling (Implemented)
 
 ### Problem
-Product type (Products, Merch, Extensions, Gift Cards) is currently inferred from the product name via regex. Users need to explicitly set the type when creating/editing products, and the type should be stored in the database for reliable filtering.
+`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
 
-### Changes
+### Solution
+- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
+- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
+- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
 
-**Database Migration** — Add `product_type` column to `products` table
-- `ALTER TABLE products ADD COLUMN product_type text DEFAULT 'Products'`
-- Backfill existing rows using the same regex logic: update rows matching extension/gift card/merch patterns
-
-**`src/hooks/useProducts.ts`**
-- Add `product_type` to the `Product` interface
-- Add `product_type` to `ProductFilters` and query logic for server-side filtering
-- Include `product_type` in `useCreateProduct` insert data
-
-**`src/components/dashboard/settings/RetailProductsSettingsContent.tsx`**
-- Add `product_type` to the form state (default `'Products'`)
-- Add a "Type" `Select` field in the dialog (between Name and Brand/Category row)
-- Include `product_type` in `handleSubmit` output
-- Update `getProductType()` to prefer the DB column, falling back to regex inference
-- Switch the table's type filter to use the DB column instead of client-side regex
-
-### Summary
-One migration + two file edits. Moves product type from fragile name-matching to an explicit, user-settable database column.
-
+### Files Updated
+- `ScheduleHeader.tsx` — today button, quick days, isToday checks
+- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
+- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
+- `MonthView.tsx` — today highlight
+- `AgendaView.tsx` — today/tomorrow labels, today border
+- `ScheduleActionBar.tsx` — payment queue timing
+- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
+- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
+- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
+- `useHuddles.ts` — today's huddle query

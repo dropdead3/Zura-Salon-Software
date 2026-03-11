@@ -30,11 +30,14 @@ import { useWebsiteRetailSettings } from '@/hooks/useWebsiteSettings';
 import { supabase } from '@/integrations/supabase/client';
 import { toast as sonnerToast } from 'sonner';
 import { optimizeImage } from '@/lib/image-utils';
-// Helper to classify product type
-function getProductType(name: string | null): string {
-  if (isExtensionProduct(name)) return 'Extensions';
-  if (isGiftCardProduct(name)) return 'Gift Cards';
-  if (isMerchProduct(name)) return 'Merch';
+// Helper to classify product type — prefer DB column, fall back to regex
+function getProductType(product: Product): string {
+  if (product.product_type && product.product_type !== 'Products') return product.product_type;
+  if (product.product_type === 'Products') return 'Products';
+  // Fallback for legacy rows without product_type
+  if (isExtensionProduct(product.name)) return 'Extensions';
+  if (isGiftCardProduct(product.name)) return 'Gift Cards';
+  if (isMerchProduct(product.name)) return 'Merch';
   return 'Products';
 }
 
@@ -53,6 +56,7 @@ function ProductsTab() {
     search,
     category: categoryFilter,
     brand: brandFilter,
+    productType: typeFilter !== 'all' ? typeFilter : undefined,
     locationId: locationFilter !== 'all' ? locationFilter : undefined,
     lowStockOnly,
   });
@@ -68,12 +72,8 @@ function ProductsTab() {
   const [editingStockId, setEditingStockId] = useState<string | null>(null);
   const [stockValue, setStockValue] = useState('');
 
-  // Client-side type filtering
-  const filteredProducts = useMemo(() => {
-    if (!products) return [];
-    if (typeFilter === 'all') return products;
-    return products.filter(p => getProductType(p.name) === typeFilter);
-  }, [products, typeFilter]);
+  // Products are now filtered server-side via productType filter
+  const filteredProducts = products || [];
 
   const toggleSelect = (id: string) => {
     setSelectedIds(prev => {
@@ -184,7 +184,7 @@ function ProductsTab() {
                 <TableRow><TableCell colSpan={11} className="text-center py-8 text-muted-foreground">No products found</TableCell></TableRow>
               ) : filteredProducts.map(p => {
                 const isLow = p.reorder_level != null && p.quantity_on_hand != null && p.quantity_on_hand <= p.reorder_level;
-                const productType = getProductType(p.name);
+                const productType = getProductType(p);
                 return (
                   <TableRow key={p.id} className={cn(isLow && 'bg-amber-50/50 dark:bg-amber-950/10')}>
                     <TableCell><input type="checkbox" checked={selectedIds.has(p.id)} onChange={() => toggleSelect(p.id)} className="rounded border-border" /></TableCell>
@@ -291,6 +291,7 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
     name: product?.name || '',
     brand: product?.brand || '',
     category: product?.category || '',
+    product_type: product?.product_type || 'Products',
     sku: product?.sku || '',
     barcode: product?.barcode || '',
     retail_price: product?.retail_price?.toString() || '',
@@ -361,6 +362,7 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
       name: form.name,
       brand: form.brand || null,
       category: form.category || null,
+      product_type: form.product_type || 'Products',
       sku: form.sku || null,
       barcode: form.barcode || null,
       retail_price: form.retail_price ? parseFloat(form.retail_price) : null,
@@ -450,6 +452,15 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
             </div>
           </div>
           <div><Label className="text-xs">Name *</Label><Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} /></div>
+          <div>
+            <Label className="text-xs">Type</Label>
+            <Select value={form.product_type} onValueChange={v => setForm(f => ({ ...f, product_type: v }))}>
+              <SelectTrigger className="h-9"><SelectValue placeholder="Select type" /></SelectTrigger>
+              <SelectContent>
+                {PRODUCT_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label className="text-xs">Brand</Label>

@@ -11510,6 +11510,7 @@ export type Database = {
           location_id: string | null
           name: string
           organization_id: string | null
+          product_type: string
           quantity_on_hand: number | null
           reorder_level: number | null
           retail_price: number | null
@@ -11534,6 +11535,7 @@ export type Database = {
           location_id?: string | null
           name: string
           organization_id?: string | null
+          product_type?: string
           quantity_on_hand?: number | null
           reorder_level?: number | null
           retail_price?: number | null
@@ -11558,6 +11560,7 @@ export type Database = {
           location_id?: string | null
           name?: string
           organization_id?: string | null
+          product_type?: string
           quantity_on_hand?: number | null
           reorder_level?: number | null
           retail_price?: number | null

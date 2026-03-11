@@ -19,6 +19,7 @@ export interface Product {
   is_active: boolean | null;
   available_online: boolean | null;
   image_url: string | null;
+  product_type: string | null;
   created_at: string | null;
   updated_at: string | null;
 }
@@ -27,6 +28,7 @@ export interface ProductFilters {
   search?: string;
   category?: string;
   brand?: string;
+  productType?: string;
   locationId?: string;
   lowStockOnly?: boolean;
   limit?: number;
@@ -58,6 +60,10 @@ export function useProducts(filters: ProductFilters = {}) {
 
       if (filters.brand && filters.brand !== 'all') {
         query = query.eq('brand', filters.brand);
+      }
+
+      if (filters.productType && filters.productType !== 'all') {
+        query = query.eq('product_type', filters.productType);
       }
 
       if (filters.lowStockOnly) {
@@ -159,6 +165,7 @@ export function useCreateProduct() {
         organization_id: product.organization_id,
         location_id: product.location_id,
         image_url: product.image_url,
+        product_type: product.product_type || 'Products',
       };
       
       const { data, error } = await supabase
