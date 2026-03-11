@@ -1116,7 +1116,7 @@ export function AggregateSalesCard({
                           transition={{ duration: 0.2 }}
                           className="overflow-hidden"
                         >
-                          <div className="mt-3 pt-3 border-t border-border/40 space-y-2 text-left">
+                          <div className="mt-3 pt-3 border-t border-border/40 space-y-1 text-left -mx-1">
                             {subCategories.map(({ label, icon: Icon, amount }, index) => {
                               const pct = retailTotal > 0 ? Math.round((amount / retailTotal) * 100) : 0;
                               return (
