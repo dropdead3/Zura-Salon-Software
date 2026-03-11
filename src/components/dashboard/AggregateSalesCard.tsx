@@ -1004,7 +1004,7 @@ export function AggregateSalesCard({
                 { label: 'Merch', icon: Shirt, amount: rb?.merchRevenue ?? 0, count: rb?.merchCount ?? 0 },
                 { label: 'Gift Cards', icon: Gift, amount: rb?.giftCardRevenue ?? 0, count: rb?.giftCardCount ?? 0 },
                 { label: 'Extensions', icon: GemIcon, amount: rb?.extensionRevenue ?? 0, count: rb?.extensionCount ?? 0 },
-              ];
+               ].sort((a, b) => b.amount - a.amount);
 
               return (
                 <div className="grid grid-cols-2 gap-6">
