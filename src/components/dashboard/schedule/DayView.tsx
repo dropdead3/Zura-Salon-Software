@@ -151,13 +151,6 @@ function DroppableSlot({
       onClick={() => {
         if (isPastSlot || isAvailable || isOutsideHours) onClick();
       }}
-      onContextMenu={(e) => {
-        if ((isAvailable || isOutsideHours) && !isPastSlot && onContextMenu) {
-          e.preventDefault();
-          e.stopPropagation();
-          onContextMenu(e);
-        }
-      }}
       onMouseMove={(e) => setMouseX(e.nativeEvent.offsetX)}
     >
       {isPastSlot && (
