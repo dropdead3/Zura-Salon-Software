@@ -12,6 +12,7 @@ import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import {
   ArrowLeft, ArrowRight, Check, X, Loader2, Sparkles, ImagePlus, Link2, Package,
+  ScanLine, Save, PlusCircle,
 } from 'lucide-react';
 import { useCreateProduct, useProductCategories, useProductBrandsList, type Product } from '@/hooks/useProducts';
 import { useActiveLocations } from '@/hooks/useLocations';
@@ -20,6 +21,9 @@ import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { supabase } from '@/integrations/supabase/client';
 import { optimizeImage } from '@/lib/image-utils';
 import { toast } from 'sonner';
+import { BarcodeScanner } from '@/components/dashboard/settings/BarcodeScanner';
+import { useProductLookup } from '@/hooks/useProductLookup';
+import { useSaveProductDraft, useDeleteProductDraft } from '@/hooks/useProductDrafts';
 
 const PRODUCT_TYPES = ['Products', 'Extensions', 'Merch'] as const;
 const STEPS = ['Basics', 'Pricing & SKU', 'Description', 'Inventory', 'Review'] as const;
@@ -53,16 +57,23 @@ const initialForm: WizardForm = {
 interface ProductWizardProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  draftId?: string;
+  initialDraft?: { form_data: Record<string, any>; current_step: number };
 }
 
-export function ProductWizard({ open, onOpenChange }: ProductWizardProps) {
-  const [step, setStep] = useState(0);
-  const [form, setForm] = useState<WizardForm>({ ...initialForm });
+export function ProductWizard({ open, onOpenChange, draftId, initialDraft }: ProductWizardProps) {
+  const [step, setStep] = useState(initialDraft?.current_step ?? 0);
+  const [form, setForm] = useState<WizardForm>(() => {
+    if (initialDraft?.form_data) return { ...initialForm, ...initialDraft.form_data } as WizardForm;
+    return { ...initialForm };
+  });
   const [customBrand, setCustomBrand] = useState(false);
   const [customCategory, setCustomCategory] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [savedCount, setSavedCount] = useState(0);
+  const [activeDraftId, setActiveDraftId] = useState<string | undefined>(draftId);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: categories } = useProductCategories();
@@ -70,16 +81,34 @@ export function ProductWizard({ open, onOpenChange }: ProductWizardProps) {
   const { data: locations } = useActiveLocations();
   const createProduct = useCreateProduct();
   const { formatCurrency } = useFormatCurrency();
+  const saveDraft = useSaveProductDraft();
+  const deleteDraft = useDeleteProductDraft();
 
   const update = (patch: Partial<WizardForm>) => setForm(f => ({ ...f, ...patch }));
+
+  const resetForm = (preserveShared = false) => {
+    if (preserveShared) {
+      setForm(f => ({
+        ...initialForm,
+        brand: f.brand,
+        category: f.category,
+        product_type: f.product_type,
+        location_id: f.location_id,
+      }));
+    } else {
+      setForm({ ...initialForm });
+    }
+    setStep(0);
+    setCustomBrand(false);
+    setCustomCategory(false);
+    setActiveDraftId(undefined);
+  };
 
   const handleClose = () => {
     onOpenChange(false);
     setTimeout(() => {
-      setStep(0);
-      setForm({ ...initialForm });
-      setCustomBrand(false);
-      setCustomCategory(false);
+      resetForm();
+      setSavedCount(0);
     }, 200);
   };
 
@@ -118,8 +147,8 @@ export function ProductWizard({ open, onOpenChange }: ProductWizardProps) {
     } finally { setGenerating(false); }
   };
 
-  // ── Save ──
-  const handleSave = async () => {
+  // ── Save product ──
+  const handleSave = async (addAnother = false) => {
     if (!form.name.trim()) { toast.error('Product name is required'); return; }
     setSaving(true);
     try {
@@ -139,9 +168,34 @@ export function ProductWizard({ open, onOpenChange }: ProductWizardProps) {
         image_url: form.image_url || null,
         available_online: form.available_online,
       } as Partial<Product>);
-      handleClose();
+
+      // Delete draft if one was loaded
+      if (activeDraftId) {
+        deleteDraft.mutate(activeDraftId);
+      }
+
+      if (addAnother) {
+        setSavedCount(c => c + 1);
+        toast.success(`"${form.name}" created — add the next one!`);
+        resetForm(true); // preserve brand/category/location/type
+      } else {
+        handleClose();
+      }
     } catch { /* toast handled by mutation */ }
     finally { setSaving(false); }
+  };
+
+  // ── Save as Draft ──
+  const handleSaveDraft = async () => {
+    saveDraft.mutate(
+      { id: activeDraftId, formData: form as any, currentStep: step },
+      {
+        onSuccess: (data) => {
+          if (data?.id) setActiveDraftId(data.id);
+          handleClose();
+        },
+      }
+    );
   };
 
   const canNext = step === 0 ? !!form.name.trim() : true;
@@ -152,7 +206,17 @@ export function ProductWizard({ open, onOpenChange }: ProductWizardProps) {
       <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto p-0 gap-0">
         {/* Header */}
         <DialogHeader className="p-6 pb-0">
-          <DialogTitle className="font-display tracking-wide">Add Product</DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="font-display tracking-wide">
+              Add Product
+            </DialogTitle>
+            {savedCount > 0 && (
+              <Badge variant="secondary" className="text-xs gap-1">
+                <Check className="w-3 h-3" />
+                {savedCount} added
+              </Badge>
+            )}
+          </div>
           <div className="flex items-center gap-2 mt-3">
             {STEPS.map((label, i) => (
               <div key={label} className="flex items-center gap-1.5">
@@ -183,19 +247,34 @@ export function ProductWizard({ open, onOpenChange }: ProductWizardProps) {
 
         {/* Footer */}
         <div className="flex items-center justify-between p-6 pt-0 border-t mt-0 pt-4">
-          <Button variant="ghost" size={tokens.button.card} onClick={() => step > 0 ? setStep(s => s - 1) : handleClose()} className="gap-1.5">
-            <ArrowLeft className="w-3.5 h-3.5" />
-            {step === 0 ? 'Cancel' : 'Back'}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size={tokens.button.card} onClick={() => step > 0 ? setStep(s => s - 1) : handleClose()} className="gap-1.5">
+              <ArrowLeft className="w-3.5 h-3.5" />
+              {step === 0 ? 'Cancel' : 'Back'}
+            </Button>
+            {/* Save as Draft — all steps except Review */}
+            {step < STEPS.length - 1 && (
+              <Button variant="ghost" size={tokens.button.card} onClick={handleSaveDraft} disabled={saveDraft.isPending} className="gap-1.5 text-muted-foreground">
+                <Save className="w-3.5 h-3.5" />
+                Save Draft
+              </Button>
+            )}
+          </div>
           {step < STEPS.length - 1 ? (
             <Button size={tokens.button.card} onClick={() => setStep(s => s + 1)} disabled={!canNext} className="gap-1.5">
               Next <ArrowRight className="w-3.5 h-3.5" />
             </Button>
           ) : (
-            <Button size={tokens.button.card} onClick={handleSave} disabled={saving} className="gap-1.5">
-              {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-              Create Product
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size={tokens.button.card} onClick={() => handleSave(true)} disabled={saving} className="gap-1.5">
+                <PlusCircle className="w-3.5 h-3.5" />
+                Save & Add Another
+              </Button>
+              <Button size={tokens.button.card} onClick={() => handleSave(false)} disabled={saving} className="gap-1.5">
+                {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                Create Product
+              </Button>
+            </div>
           )}
         </div>
       </DialogContent>
@@ -307,9 +386,36 @@ function StepBasics({ form, update, brands, categories, customBrand, setCustomBr
 }
 
 function StepPricing({ form, update }: { form: WizardForm; update: (p: Partial<WizardForm>) => void }) {
+  const [showScanner, setShowScanner] = useState(false);
+  const productLookup = useProductLookup();
+
   const margin = form.retail_price && form.cost_price
     ? (((parseFloat(form.retail_price) - parseFloat(form.cost_price)) / parseFloat(form.retail_price)) * 100)
     : null;
+
+  const handleBarcodeScan = (code: string) => {
+    update({ barcode: code });
+    toast.success(`Barcode scanned: ${code}`);
+
+    // Try to look up the product by barcode to auto-fill fields
+    productLookup.mutate(code, {
+      onSuccess: (result) => {
+        if (result.product && result.matchType === 'barcode') {
+          const p = result.product;
+          // Auto-fill from existing product data
+          update({
+            name: form.name || p.name,
+            brand: form.brand || p.brand || '',
+            category: form.category || p.category || '',
+            retail_price: form.retail_price || (p.retail_price?.toString() ?? ''),
+            cost_price: form.cost_price || (p.cost_price?.toString() ?? ''),
+            sku: form.sku || p.sku || '',
+          });
+          toast.info(`Auto-filled from existing product: ${p.name}`);
+        }
+      },
+    });
+  };
 
   return (
     <div className="space-y-4">
@@ -340,9 +446,23 @@ function StepPricing({ form, update }: { form: WizardForm; update: (p: Partial<W
         </div>
         <div>
           <Label className="text-xs">Barcode</Label>
-          <Input value={form.barcode} onChange={e => update({ barcode: e.target.value })} placeholder="UPC / EAN" className="h-9 font-mono" />
+          <div className="flex gap-1.5">
+            <Input value={form.barcode} onChange={e => update({ barcode: e.target.value })} placeholder="UPC / EAN" className="h-9 font-mono flex-1" />
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="w-9 h-9 shrink-0"
+              onClick={() => setShowScanner(true)}
+              title="Scan barcode with camera"
+            >
+              <ScanLine className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
       </div>
+
+      <BarcodeScanner open={showScanner} onOpenChange={setShowScanner} onScan={handleBarcodeScan} />
     </div>
   );
 }
