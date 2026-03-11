@@ -1000,6 +1000,7 @@ export function AggregateSalesCard({
               const subCategories = [
                 { label: 'Products', icon: Package, amount: rb?.productRevenue ?? rawProdRevenue, count: rb?.productCount ?? 0 },
                 { label: 'Merch', icon: Shirt, amount: rb?.merchRevenue ?? 0, count: rb?.merchCount ?? 0 },
+                { label: 'Gift Cards', icon: Gift, amount: rb?.giftCardRevenue ?? 0, count: rb?.giftCardCount ?? 0 },
                 { label: 'Extensions', icon: GemIcon, amount: rb?.extensionRevenue ?? 0, count: rb?.extensionCount ?? 0 },
               ].filter(c => c.amount > 0 || c.count > 0);
 

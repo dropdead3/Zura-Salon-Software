@@ -77,6 +77,19 @@ export function isExtensionProduct(itemName: string | null): boolean {
 }
 
 /**
+ * Gift card product pattern — matches gift cards, vouchers, certificates
+ */
+const GIFT_CARD_PRODUCT_PATTERN = /gift.?card|voucher|gift.?cert|gift.?certificate/i;
+
+/**
+ * Returns true if the given product/item name is a gift card.
+ */
+export function isGiftCardProduct(itemName: string | null): boolean {
+  if (!itemName) return false;
+  return GIFT_CARD_PRODUCT_PATTERN.test(itemName.trim());
+}
+
+/**
  * Merch product pattern — matches branded apparel and goods
  */
 const MERCH_PRODUCT_PATTERN = /t.?shirt|tee|hat|cap|beanie|hoodie|sweatshirt|tote|bag|sticker|patch|pin|keychain|apparel|merch|branded/i;
