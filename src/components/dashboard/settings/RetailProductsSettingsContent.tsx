@@ -131,38 +131,48 @@ function ProductsTab() {
                     <TableCell className="text-right tabular-nums text-sm text-muted-foreground"><BlurredAmount>{p.cost_price != null ? formatCurrency(p.cost_price) : '—'}</BlurredAmount></TableCell>
                     <TableCell className="text-right tabular-nums text-sm">
                       {editingStockId === p.id ? (
-                        <Input
-                          type="number"
-                          value={stockValue}
-                          onChange={(e) => setStockValue(e.target.value)}
-                          onBlur={() => {
-                            const parsed = parseInt(stockValue);
-                            if (!isNaN(parsed) && parsed !== p.quantity_on_hand) {
-                              updateProduct.mutate({ id: p.id, updates: { quantity_on_hand: parsed } });
-                            }
-                            setEditingStockId(null);
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
-                            if (e.key === 'Escape') setEditingStockId(null);
-                          }}
-                          autoFocus
-                          className="w-20 h-7 text-right text-sm rounded-md px-2"
-                        />
+                        <div className="flex items-center justify-end gap-1">
+                          <input
+                            type="number"
+                            value={stockValue}
+                            onChange={(e) => setStockValue(e.target.value)}
+                            onBlur={() => {
+                              const parsed = parseInt(stockValue);
+                              if (!isNaN(parsed) && parsed !== p.quantity_on_hand) {
+                                updateProduct.mutate({ id: p.id, updates: { quantity_on_hand: parsed } });
+                              }
+                              setEditingStockId(null);
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                              if (e.key === 'Escape') setEditingStockId(null);
+                            }}
+                            autoFocus
+                            onFocus={(e) => e.target.select()}
+                            className={cn(
+                              'w-14 h-6 text-right text-sm tabular-nums rounded-md px-1.5 bg-muted border border-border/60 outline-none',
+                              'focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-colors',
+                              '[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none'
+                            )}
+                          />
+                          {isLow && <AlertTriangle className="w-3 h-3 text-amber-600 dark:text-amber-400 shrink-0" />}
+                        </div>
                       ) : (
                         <button
                           type="button"
                           className={cn(
-                            'hover:underline cursor-pointer bg-transparent border-none p-0',
-                            isLow && 'text-amber-600 dark:text-amber-400 font-medium'
+                            'inline-flex items-center gap-1 bg-transparent border-none p-0 cursor-pointer rounded transition-colors',
+                            'hover:text-primary',
+                            isLow ? 'text-amber-600 dark:text-amber-400 font-medium' : 'text-foreground'
                           )}
                           onClick={() => {
                             setEditingStockId(p.id);
                             setStockValue(String(p.quantity_on_hand ?? 0));
                           }}
+                          title="Click to edit stock"
                         >
                           {p.quantity_on_hand ?? '—'}
-                          {isLow && <AlertTriangle className="inline w-3 h-3 ml-1" />}
+                          {isLow && <AlertTriangle className="w-3 h-3" />}
                         </button>
                       )}
                     </TableCell>
