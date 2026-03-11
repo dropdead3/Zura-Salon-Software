@@ -1,28 +1,14 @@
 
 
-## Add "Timeblock / Break" Option to Schedule Type Selector
+## Remove Icons from Breakdown Category Rows
 
-### Change Summary
+Remove the icon elements from both the Services and Retail breakdown rows in `AggregateSalesCard.tsx`.
 
-Add a third button to the `ScheduleTypeSelector` for creating timeblocks/breaks. This mirrors the existing break dialog flow already wired up in `Schedule.tsx`.
+### Changes — `src/components/dashboard/AggregateSalesCard.tsx`
 
-### Changes (2 files)
+**Line 1053 (Services rows):** Remove `<Scissors className="w-3 h-3 text-muted-foreground shrink-0" />`
 
-**1. `ScheduleTypeSelector.tsx`**
-- Add `onSelectTimeblock` callback prop
-- Add a third button with `Clock` icon (from lucide-react), label "Timeblock / Break", description "Lunch, personal time, focus block"
-- Same button styling as existing two options
+**Line 1119 (Retail rows):** Remove `<Icon className="w-3 h-3 text-muted-foreground shrink-0" />`
 
-**2. `Schedule.tsx`**
-- Pass `onSelectTimeblock` to `ScheduleTypeSelector`
-- Handler: close type selector, set `breakDefaults` with the clicked time/stylist, open `breakDialogOpen`
-
-```text
-Type Selector options:
-  ┌─ Client Appointment   (CalendarPlus)  → booking wizard
-  ├─ Internal Meeting      (Users)         → meeting wizard
-  └─ Timeblock / Break     (Clock)         → break/block form
-```
-
-Two files, ~15 lines total.
+Two line deletions, same file. The rank number, label, amount, and percentage all remain.
 
