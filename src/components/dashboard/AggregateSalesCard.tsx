@@ -973,13 +973,6 @@ export function AggregateSalesCard({
                   </Tooltip>
                 </div>
               )}
-              {/* Bottom center chevron indicator */}
-              <div className="flex justify-center mt-3">
-                <ChevronDown className={cn(
-                  "w-4 h-4 text-muted-foreground transition-all duration-200",
-                  activeDrilldown === 'revenue' ? "rotate-180 opacity-100" : "opacity-0 group-hover/revenue:opacity-100"
-                )} />
-              </div>
             </div>
             
             {/* Services & Retail Sub-cards */}
