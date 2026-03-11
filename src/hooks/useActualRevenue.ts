@@ -62,7 +62,7 @@ export function useActualRevenue(dateFrom: string, dateTo: string, enabled: bool
           .gte('summary_date', dateFrom)
           .lte('summary_date', dateTo)
           .range(from, to);
-        q = applyLocationFilter(q, locationId);
+        q = addLocationFilter(q, locationId);
         return q;
       });
 
