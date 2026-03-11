@@ -35,7 +35,7 @@ export function useStaffKPIReport(dateFrom: string, dateTo: string, locationId?:
         const profile = m.employee_profiles as any;
         mappingLookup[m.phorest_staff_id] = {
           userId: m.user_id,
-          name: profile?.display_name || profile?.full_name || 'Unknown',
+          name: profile ? formatDisplayName(profile.full_name || '', profile.display_name) : 'Unknown',
         };
       });
 

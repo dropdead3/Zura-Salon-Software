@@ -72,7 +72,7 @@ export function useAssistantActivity(dateFrom: string, dateTo: string) {
 
       const getName = (uid: string) => {
         const p = profileMap.get(uid);
-        return p?.display_name || p?.full_name || 'Unknown';
+        return p ? formatDisplayName(p.full_name || '', p.display_name) : 'Unknown';
       };
 
       // Build activity summaries

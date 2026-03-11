@@ -191,7 +191,7 @@ export function useLiveSessionSnapshot(locationId?: string): LiveSessionSnapshot
         const userId = staffToUser.get(staffId);
         const profile = userId ? profileMap.get(userId) : null;
         const phorestName = staffToName.get(staffId);
-        const name = profile?.display_name || profile?.full_name || phorestName || `Stylist ${detailFallbackIndex}`;
+        const name = profile ? formatDisplayName(profile.full_name || '', profile.display_name) : (phorestName ? formatDisplayName(phorestName) : `Stylist ${detailFallbackIndex}`);
         const photoUrl = profile?.photo_url || null;
 
         // All appointments for this staff today, sorted chronologically

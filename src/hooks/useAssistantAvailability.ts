@@ -146,7 +146,7 @@ export function useAssistantCoverageSummary() {
       acc[schedule.location_id].assistantCount++;
       acc[schedule.location_id].assistants.push({
         user_id: assistant.user_id,
-        name: assistant.display_name || assistant.full_name,
+        name: formatDisplayName(assistant.full_name, assistant.display_name),
         photo_url: assistant.photo_url,
         work_days: schedule.work_days || [],
       });

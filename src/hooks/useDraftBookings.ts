@@ -75,7 +75,7 @@ export function useSaveDraft() {
         organization_id: input.organization_id,
         location_id: input.location_id || null,
         created_by: user?.id,
-        created_by_name: profile?.display_name || profile?.full_name || null,
+        created_by_name: profile ? formatDisplayName(profile.full_name, profile.display_name) : null,
         appointment_date: input.appointment_date || null,
         start_time: input.start_time || null,
         client_id: input.client_id || null,

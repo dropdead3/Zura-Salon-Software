@@ -76,7 +76,7 @@ export function useClientTransactionHistory(clientId: string | null) {
       const staffNameMap = new Map<string, string>();
       for (const mapping of mappings || []) {
         const profile = profiles?.find(p => p.user_id === mapping.user_id);
-        const name = profile?.display_name || profile?.full_name || mapping.phorest_staff_name || 'Unknown';
+        const name = profile ? formatDisplayName(profile.full_name || '', profile.display_name) : (mapping.phorest_staff_name ? formatDisplayName(mapping.phorest_staff_name) : 'Unknown');
         staffNameMap.set(mapping.phorest_staff_id, name);
       }
       
