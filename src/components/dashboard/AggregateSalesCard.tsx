@@ -255,8 +255,8 @@ export function AggregateSalesCard({
     dateTo: dateFilters.dateTo,
     locationId: filterContext?.locationId,
   });
-  // Extension product revenue — for excluding from retail
-  const { data: extensionRevData } = useExtensionProductRevenue(
+  // Retail breakdown — Products / Merch / Extensions
+  const { data: retailBreakdown } = useRetailBreakdown(
     dateFilters.dateFrom,
     dateFilters.dateTo,
     true,
