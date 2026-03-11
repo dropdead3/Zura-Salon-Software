@@ -95,6 +95,24 @@ export function useProductCategories() {
   });
 }
 
+export function useProductBrandsList() {
+  return useQuery({
+    queryKey: ['product-brands-list'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select('brand')
+        .eq('is_active', true)
+        .not('brand', 'is', null);
+
+      if (error) throw error;
+
+      const brands = [...new Set(data.map(p => p.brand).filter(Boolean))];
+      return brands.sort() as string[];
+    },
+  });
+}
+
 export function useUpdateProduct() {
   const queryClient = useQueryClient();
 
