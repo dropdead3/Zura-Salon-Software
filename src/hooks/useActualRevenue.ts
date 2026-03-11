@@ -1,5 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { isAllLocations, parseLocationIds } from '@/lib/locationFilter';
+
+/** Apply location filter directly to avoid deep type instantiation with generics. */
+function addLocationFilter(query: any, locationId?: string) {
+  if (isAllLocations(locationId)) return query;
+  const ids = parseLocationIds(locationId);
+  if (ids.length === 1) return query.eq('location_id', ids[0]);
+  return query.in('location_id', ids);
+}
 
 interface ActualRevenueData {
   actualRevenue: number;
@@ -9,22 +18,53 @@ interface ActualRevenueData {
   hasActualData: boolean;
 }
 
+/** Fetch all rows in batches to bypass the 1,000-row default limit. */
+async function fetchAllBatched<T>(
+  buildQuery: (from: number, to: number) => any,
+  batchSize = 1000,
+): Promise<T[]> {
+  const allData: T[] = [];
+  let from = 0;
+  let hasMore = true;
+  while (hasMore) {
+    const { data, error } = await buildQuery(from, from + batchSize - 1);
+    if (error) throw error;
+    if (data && data.length > 0) {
+      allData.push(...data);
+      from += batchSize;
+      hasMore = data.length === batchSize;
+    } else {
+      hasMore = false;
+    }
+  }
+  return allData;
+}
+
 /**
  * Generalized POS revenue hook for any date range.
  * Queries phorest_daily_sales_summary with fallback to phorest_transaction_items.
+ * Supports location filtering and batch fetching for >1000 rows.
  */
-export function useActualRevenue(dateFrom: string, dateTo: string, enabled: boolean) {
+export function useActualRevenue(dateFrom: string, dateTo: string, enabled: boolean, locationId?: string) {
   return useQuery<ActualRevenueData>({
-    queryKey: ['actual-revenue', dateFrom, dateTo],
+    queryKey: ['actual-revenue', dateFrom, dateTo, locationId ?? 'all'],
     queryFn: async () => {
-      // Primary: daily sales summary
-      const { data, error } = await supabase
-        .from('phorest_daily_sales_summary')
-        .select('total_revenue, service_revenue, product_revenue, total_transactions')
-        .gte('summary_date', dateFrom)
-        .lte('summary_date', dateTo);
-
-      if (error) throw error;
+      // Primary: daily sales summary (batched)
+      const data = await fetchAllBatched<{
+        total_revenue: number | null;
+        service_revenue: number | null;
+        product_revenue: number | null;
+        total_transactions: number | null;
+      }>((from, to) => {
+        let q = supabase
+          .from('phorest_daily_sales_summary')
+          .select('total_revenue, service_revenue, product_revenue, total_transactions')
+          .gte('summary_date', dateFrom)
+          .lte('summary_date', dateTo)
+          .range(from, to);
+        q = addLocationFilter(q, locationId);
+        return q;
+      });
 
       if (data && data.length > 0) {
         const totals = data.reduce(
@@ -45,14 +85,22 @@ export function useActualRevenue(dateFrom: string, dateTo: string, enabled: bool
         };
       }
 
-      // Fallback: raw transaction items
-      const { data: txnData, error: txnError } = await supabase
-        .from('phorest_transaction_items')
-        .select('item_type, total_amount, tax_amount, phorest_client_id')
-        .gte('transaction_date', `${dateFrom}T00:00:00`)
-        .lte('transaction_date', `${dateTo}T23:59:59`);
-
-      if (txnError) throw txnError;
+      // Fallback: raw transaction items (batched)
+      const txnData = await fetchAllBatched<{
+        item_type: string | null;
+        total_amount: number | null;
+        tax_amount: number | null;
+        phorest_client_id: string | null;
+      }>((from, to) => {
+        let q = supabase
+          .from('phorest_transaction_items')
+          .select('item_type, total_amount, tax_amount, phorest_client_id')
+          .gte('transaction_date', `${dateFrom}T00:00:00`)
+          .lte('transaction_date', `${dateTo}T23:59:59`)
+          .range(from, to);
+        q = addLocationFilter(q, locationId);
+        return q;
+      });
 
       if (!txnData || txnData.length === 0) {
         return { actualRevenue: 0, actualServiceRevenue: 0, actualProductRevenue: 0, actualTransactions: 0, hasActualData: false };
