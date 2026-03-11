@@ -1,6 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { applyLocationFilter } from '@/lib/locationFilter';
+import { isAllLocations, parseLocationIds } from '@/lib/locationFilter';
+
+/** Apply location filter directly to avoid deep type instantiation with generics. */
+function addLocationFilter(query: any, locationId?: string) {
+  if (isAllLocations(locationId)) return query;
+  const ids = parseLocationIds(locationId);
+  if (ids.length === 1) return query.eq('location_id', ids[0]);
+  return query.in('location_id', ids);
+}
 
 interface ActualRevenueData {
   actualRevenue: number;
