@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { User, X } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatDisplayName } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
