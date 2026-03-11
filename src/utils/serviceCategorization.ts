@@ -92,7 +92,7 @@ export function isGiftCardProduct(itemName: string | null): boolean {
 /**
  * Merch product pattern — matches branded apparel and goods
  */
-const MERCH_PRODUCT_PATTERN = /t.?shirt|tee|hat|cap|beanie|hoodie|sweatshirt|tote|bag|sticker|patch|pin|keychain|apparel|merch|branded/i;
+const MERCH_PRODUCT_PATTERN = /t.?shirt|\btee\b|\bhat\b|\bcap\b|beanie|hoodie|sweatshirt|tote|\bbag\b|sticker|patch|\bpin\b|keychain|apparel|merch|branded/i;
 
 /**
  * Returns true if the given product/item name is a merch item (apparel & branded goods).

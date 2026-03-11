@@ -1,25 +1,28 @@
 
 
-## Fix: "Shaping Heat Spray" Falsely Matching Merch Pattern
+## Add "Timeblock / Break" Option to Schedule Type Selector
 
-### Root Cause
+### Change Summary
 
-The merch regex pattern includes `pin` as a bare substring match. The word "Sha**pin**g" in "Shaping Heat Spray" triggers a false positive.
+Add a third button to the `ScheduleTypeSelector` for creating timeblocks/breaks. This mirrors the existing break dialog flow already wired up in `Schedule.tsx`.
 
-Current pattern:
+### Changes (2 files)
+
+**1. `ScheduleTypeSelector.tsx`**
+- Add `onSelectTimeblock` callback prop
+- Add a third button with `Clock` icon (from lucide-react), label "Timeblock / Break", description "Lunch, personal time, focus block"
+- Same button styling as existing two options
+
+**2. `Schedule.tsx`**
+- Pass `onSelectTimeblock` to `ScheduleTypeSelector`
+- Handler: close type selector, set `breakDefaults` with the clicked time/stylist, open `breakDialogOpen`
+
+```text
+Type Selector options:
+  ┌─ Client Appointment   (CalendarPlus)  → booking wizard
+  ├─ Internal Meeting      (Users)         → meeting wizard
+  └─ Timeblock / Break     (Clock)         → break/block form
 ```
-/t.?shirt|tee|hat|cap|beanie|hoodie|sweatshirt|tote|bag|sticker|patch|pin|keychain|apparel|merch|branded/i
-```
 
-### Fix
-
-Add word boundaries (`\b`) to ambiguous short terms that can appear as substrings in normal product names: `pin`, `cap`, `hat`, `tee`, `bag`.
-
-Updated pattern:
-```
-/t.?shirt|\btee\b|\bhat\b|\bcap\b|beanie|hoodie|sweatshirt|tote|\bbag\b|sticker|patch|\bpin\b|keychain|apparel|merch|branded/i
-```
-
-### File
-`src/utils/serviceCategorization.ts` — update `MERCH_PRODUCT_PATTERN` (line 95).
+Two files, ~15 lines total.
 
