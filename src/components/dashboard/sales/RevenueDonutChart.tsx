@@ -7,6 +7,13 @@ import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { AnalyticsFilterBadge, type FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
+interface RetailBreakdownData {
+  productOnlyRevenue?: number;
+  extensionRevenue?: number;
+  merchRevenue?: number;
+  giftCardRevenue?: number;
+}
+
 interface RevenueDonutChartProps {
   serviceRevenue: number;
   productRevenue: number;
@@ -14,6 +21,7 @@ interface RevenueDonutChartProps {
   filterContext?: FilterContext;
   retailAttachmentRate?: number;
   retailAttachmentLoading?: boolean;
+  retailBreakdown?: RetailBreakdownData;
 }
 
 export function RevenueDonutChart({ 
@@ -23,6 +31,7 @@ export function RevenueDonutChart({
   filterContext,
   retailAttachmentRate,
   retailAttachmentLoading,
+  retailBreakdown,
 }: RevenueDonutChartProps) {
   const { hideNumbers } = useHideNumbers();
   const { formatCurrencyWhole } = useFormatCurrency();
@@ -41,6 +50,24 @@ export function RevenueDonutChart({
   const total = serviceRevenue + productRevenue;
   const servicePercent = total > 0 ? Math.round((serviceRevenue / total) * 100) : 0;
   const retailPercent = total > 0 ? Math.round((productRevenue / total) * 100) : 0;
+
+  // Retail sub-category percentages (of total revenue)
+  const hasBreakdown = retailBreakdown && (
+    (retailBreakdown.productOnlyRevenue ?? 0) > 0 ||
+    (retailBreakdown.extensionRevenue ?? 0) > 0 ||
+    (retailBreakdown.merchRevenue ?? 0) > 0 ||
+    (retailBreakdown.giftCardRevenue ?? 0) > 0
+  );
+  const extRev = retailBreakdown?.extensionRevenue ?? 0;
+  const trueRetailRevenue = productRevenue - extRev;
+  const trueRetailPercent = total > 0 ? Math.round((trueRetailRevenue / total) * 100) : 0;
+
+  const subCategories = hasBreakdown ? [
+    { label: 'Products', value: retailBreakdown!.productOnlyRevenue ?? 0 },
+    { label: 'Extensions', value: retailBreakdown!.extensionRevenue ?? 0 },
+    { label: 'Merch', value: retailBreakdown!.merchRevenue ?? 0 },
+    { label: 'Gift Cards', value: retailBreakdown!.giftCardRevenue ?? 0 },
+  ].filter(s => s.value > 0) : [];
 
   const headerContent = (
     <div className="flex items-center justify-between w-full">
@@ -98,6 +125,7 @@ export function RevenueDonutChart({
             </ResponsiveContainer>
           </div>
           <div className="flex-1 min-w-0 text-xs space-y-1">
+            {/* Services row */}
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-foreground shrink-0" />
@@ -105,6 +133,7 @@ export function RevenueDonutChart({
               </div>
               <span className="font-medium tabular-nums">{servicePercent}%</span>
             </div>
+            {/* Retail row */}
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: 'hsl(var(--muted-foreground) / 0.4)' }} />
@@ -112,6 +141,17 @@ export function RevenueDonutChart({
               </div>
               <span className="font-medium tabular-nums">{retailPercent}%</span>
             </div>
+            {/* Retail sub-category rows */}
+            {subCategories.map((sub) => {
+              const subPct = total > 0 ? Math.round((sub.value / total) * 100) : 0;
+              return (
+                <div key={sub.label} className="flex items-center justify-between gap-2 pl-4">
+                  <span className="text-muted-foreground/70 text-[11px]">{sub.label}</span>
+                  <span className="text-muted-foreground tabular-nums text-[11px]">{subPct}%</span>
+                </div>
+              );
+            })}
+            {/* Metrics section */}
             <div className="pt-2 mt-2 border-t border-border/50 space-y-1">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-1.5">
@@ -122,6 +162,17 @@ export function RevenueDonutChart({
                   {retailPercent}%
                 </span>
               </div>
+              {hasBreakdown && (
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-muted-foreground">True Retail %</span>
+                    <MetricInfoTooltip description="Retail revenue excluding extensions (which are service inputs), as a percentage of total revenue. A more accurate measure of cross-selling effectiveness." />
+                  </div>
+                  <span className="font-medium text-foreground tabular-nums">
+                    {trueRetailPercent}%
+                  </span>
+                </div>
+              )}
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-1.5">
                   <span className="text-muted-foreground">Attach Rate</span>

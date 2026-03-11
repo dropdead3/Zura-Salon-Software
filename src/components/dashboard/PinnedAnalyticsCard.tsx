@@ -697,6 +697,12 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
               filterContext={filterContext}
               retailAttachmentRate={attachmentData?.attachmentRate}
               retailAttachmentLoading={isLoadingAttachment}
+              retailBreakdown={retailBreakdown ? {
+                productOnlyRevenue: retailBreakdown.productRevenue,
+                extensionRevenue: retailBreakdown.extensionRevenue,
+                merchRevenue: retailBreakdown.merchRevenue,
+                giftCardRevenue: retailBreakdown.giftCardRevenue,
+              } : undefined}
             />
           </PinnableCard>
         </VisibilityGate>
