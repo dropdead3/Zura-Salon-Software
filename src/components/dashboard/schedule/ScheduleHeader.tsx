@@ -222,7 +222,7 @@ export function ScheduleHeader({
         <div className="text-lg font-display tracking-wide">
           {formatDate(currentDate, 'EEEE, MMMM d, yyyy')}
         </div>
-          {isToday(currentDate) && (
+          {isOrgToday(currentDate) && (
             <div className="text-xs text-[hsl(40,20%,92%)]/70">Today</div>
           )}
         </div>
