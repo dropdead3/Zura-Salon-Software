@@ -1,23 +1,28 @@
 
 
-## Timezone-Safe Scheduling (Implemented)
+## Add Retail Type Column to Categories Tab
 
-### Problem
-`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
+### What's changing
+Add a "Type" column to the Categories table that classifies each product into one of the 4 retail types (Products, Merch, Extensions, Gift Cards) using the existing pattern-matching functions from `serviceCategorization.ts`.
 
-### Solution
-- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
-- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
-- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
+### Changes
 
-### Files Updated
-- `ScheduleHeader.tsx` — today button, quick days, isToday checks
-- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
-- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
-- `MonthView.tsx` — today highlight
-- `AgendaView.tsx` — today/tomorrow labels, today border
-- `ScheduleActionBar.tsx` — payment queue timing
-- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
-- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
-- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
-- `useHuddles.ts` — today's huddle query
+**1. `src/hooks/useProductBrands.ts` — `useProductCategorySummaries`**
+- Add `name` to the select query (`category, name, retail_price, quantity_on_hand`)
+- For each product, determine its retail type using `isExtensionProduct`, `isGiftCardProduct`, `isMerchProduct`
+- Extend `CategorySummary` to include a `typeCounts: Record<string, number>` showing how many products of each retail type are in that category (e.g., `{ Products: 2, Extensions: 1 }`)
+
+**2. `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — `CategoriesTab`**
+- Add a "Type" column after "Category" in the table header
+- Display the dominant retail type, or show a breakdown if mixed (e.g., badges like `Products (2) · Extensions (1)`)
+- Use small muted badges/pills for each type to keep it clean
+
+### Layout
+```text
+Category    | Type               | Products | Total Stock | Inventory Value |
+Hair Care   | Products           | 3        | 20          | $587.00         | ✎
+Styling     | Products           | 3        | 43          | $996.00         | ✎
+Extensions  | Extensions (2)     | 2        | 5           | $1,200.00       | ✎
+            | Products (1)       |          |             |                 |
+```
+
