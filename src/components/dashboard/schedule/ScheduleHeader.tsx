@@ -435,7 +435,7 @@ export function ScheduleHeader({
           {(() => {
             const selectedLoc = locations.find(l => l.id === selectedLocation);
             const todayClosed = selectedLoc
-              ? isClosedOnDate(selectedLoc.hours_json ?? null, selectedLoc.holiday_closures ?? null, new Date())
+              ? isClosedOnDate(selectedLoc.hours_json ?? null, selectedLoc.holiday_closures ?? null, orgToday)
               : { isClosed: false };
 
             const todayButton = (
