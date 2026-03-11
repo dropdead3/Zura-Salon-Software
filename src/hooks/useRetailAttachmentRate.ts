@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { isExtensionProduct } from '@/utils/serviceCategorization';
 
 export interface RetailAttachmentData {
   /** Total distinct client-visit combos that included at least one service */
@@ -62,7 +63,7 @@ export function useRetailAttachmentRate({ dateFrom, dateTo, locationId }: UseRet
       const productItems = await fetchAllPages((offset) => {
         let q = supabase
           .from('phorest_transaction_items')
-          .select('phorest_client_id, transaction_date')
+          .select('phorest_client_id, transaction_date, item_name')
           .gte('transaction_date', dateFrom)
           .lte('transaction_date', dateTo)
           .not('phorest_client_id', 'is', null)
@@ -79,8 +80,13 @@ export function useRetailAttachmentRate({ dateFrom, dateTo, locationId }: UseRet
         }
       }
 
+      // Filter out extension products — they are service inputs, not cross-sells
+      const nonExtensionProducts = productItems.filter(
+        (row: any) => !isExtensionProduct(row.item_name)
+      );
+
       const productVisitSet = new Set<string>();
-      for (const row of productItems) {
+      for (const row of nonExtensionProducts) {
         if (row.phorest_client_id && row.transaction_date) {
           productVisitSet.add(`${row.phorest_client_id}|${row.transaction_date}`);
         }
