@@ -36,7 +36,6 @@ function getProductType(product: Product): string {
   if (product.product_type === 'Products') return 'Products';
   // Fallback for legacy rows without product_type
   if (isExtensionProduct(product.name)) return 'Extensions';
-  if (isGiftCardProduct(product.name)) return 'Gift Cards';
   if (isMerchProduct(product.name)) return 'Merch';
   return 'Products';
 }
