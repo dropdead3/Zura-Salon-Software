@@ -1,8 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Scissors, ShoppingBag, MapPin, Globe, ChevronDown } from 'lucide-react';
 import { Scissors, ShoppingBag, MapPin, Globe, ChevronDown } from 'lucide-react';
 import {
   Select,
