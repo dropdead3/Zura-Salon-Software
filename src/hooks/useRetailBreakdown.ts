@@ -37,9 +37,11 @@ export interface RetailBreakdownData {
   productRevenue: number;
   merchRevenue: number;
   extensionRevenue: number;
+  giftCardRevenue: number;
   productCount: number;
   merchCount: number;
   extensionCount: number;
+  giftCardCount: number;
   totalRetailRevenue: number;
 }
 
