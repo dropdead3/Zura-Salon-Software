@@ -28,6 +28,7 @@ import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useWebsiteRetailSettings } from '@/hooks/useWebsiteSettings';
 import { supabase } from '@/integrations/supabase/client';
 import { toast as sonnerToast } from 'sonner';
+import { optimizeImage } from '@/lib/image-utils';
 // ─── Products Tab ───
 function ProductsTab() {
   const { formatCurrency } = useFormatCurrency();
@@ -232,17 +233,28 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
-    const ext = file.name.split('.').pop();
-    const path = `${crypto.randomUUID()}.${ext}`;
-    const { error } = await supabase.storage.from('product-images').upload(path, file, { upsert: true });
-    if (error) {
-      sonnerToast.error('Failed to upload image');
+    try {
+      const { blob } = await optimizeImage(file, {
+        maxWidth: 800,
+        maxHeight: 800,
+        quality: 0.82,
+        format: 'webp',
+        cropToSquare: true,
+      });
+      const path = `${crypto.randomUUID()}.webp`;
+      const { error } = await supabase.storage.from('product-images').upload(path, blob, { contentType: 'image/webp', upsert: true });
+      if (error) {
+        sonnerToast.error('Failed to upload image');
+        return;
+      }
+      const { data: { publicUrl } } = supabase.storage.from('product-images').getPublicUrl(path);
+      setForm(f => ({ ...f, image_url: publicUrl }));
+    } catch (err) {
+      console.error('Image optimization error:', err);
+      sonnerToast.error('Failed to process image');
+    } finally {
       setUploading(false);
-      return;
     }
-    const { data: { publicUrl } } = supabase.storage.from('product-images').getPublicUrl(path);
-    setForm(f => ({ ...f, image_url: publicUrl }));
-    setUploading(false);
   };
 
   const handleSubmit = () => {
@@ -274,7 +286,7 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
             <Label className="text-xs">Product Image</Label>
             <div className="mt-1.5">
               {form.image_url ? (
-                <div className="relative group w-full aspect-video rounded-lg overflow-hidden border border-border bg-muted/30">
+                <div className="relative group w-full aspect-square rounded-lg overflow-hidden border border-border bg-muted/30">
                   <img src={form.image_url} alt="Product" className="w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                     <Button variant="secondary" size={tokens.button.inline} onClick={() => fileInputRef.current?.click()}>Replace</Button>
@@ -285,7 +297,7 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-full aspect-video rounded-lg border-2 border-dashed border-border/60 bg-muted/20 flex flex-col items-center justify-center gap-1.5 hover:border-primary/40 transition-colors"
+                  className="w-full aspect-square rounded-lg border-2 border-dashed border-border/60 bg-muted/20 flex flex-col items-center justify-center gap-1.5 hover:border-primary/40 transition-colors"
                   disabled={uploading}
                 >
                   {uploading ? (
