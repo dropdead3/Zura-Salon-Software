@@ -39,7 +39,10 @@ export type MixSessionEventType =
   | 'device_reconnected'
   | 'sync_reconciled'
   | 'prep_mode_enabled'
-  | 'prep_approved';
+  | 'prep_approved'
+  | 'suggested_formula_generated'
+  | 'suggested_formula_applied'
+  | 'suggested_formula_dismissed';
 
 export type SourceMode = 'scale' | 'manual' | 'system' | 'offline_sync';
 
