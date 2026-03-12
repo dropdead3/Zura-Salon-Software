@@ -691,6 +691,8 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
     description: product?.description || '',
     location_id: product?.location_id || '',
     image_url: product?.image_url || '',
+    expires_at: product?.expires_at || '',
+    expiry_alert_days: product?.expiry_alert_days?.toString() || '30',
   });
 
   const clearCropPreview = () => {
