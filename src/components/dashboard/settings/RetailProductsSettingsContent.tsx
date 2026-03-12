@@ -1376,32 +1376,32 @@ function InventoryByLocationTab() {
 
           {/* Inventory Value Summary */}
           {products && products.length > 0 && (
-            <div className="grid grid-cols-4 gap-3">
-              <div className="p-3 rounded-lg border bg-card">
-                <div className="text-xs text-muted-foreground">Total Units</div>
-                <div className="text-lg font-medium tabular-nums mt-0.5">
-                  <AnimatedBlurredAmount value={summary.totalUnits} />
-                </div>
-              </div>
-              <div className="p-3 rounded-lg border bg-card">
-                <div className="text-xs text-muted-foreground">Cost Value</div>
-                <div className="text-lg font-medium tabular-nums mt-0.5">
-                  <AnimatedBlurredAmount value={summary.costValue} currency="USD" />
-                </div>
-              </div>
-              <div className="p-3 rounded-lg border bg-card">
-                <div className="text-xs text-muted-foreground">Retail Value</div>
-                <div className="text-lg font-medium tabular-nums mt-0.5">
-                  <AnimatedBlurredAmount value={summary.retailValue} currency="USD" />
-                </div>
-              </div>
-              <div className="p-3 rounded-lg border bg-card">
-                <div className="text-xs text-muted-foreground">Low Stock</div>
-                <div className={cn('text-lg font-medium tabular-nums mt-0.5', summary.lowStockCount > 0 && 'text-amber-600 dark:text-amber-400')}>
-                  {summary.lowStockCount}
-                </div>
-              </div>
-            </div>
+             <div className="grid grid-cols-4 gap-4">
+               <div className={tokens.kpi.tile}>
+                 <div className={tokens.kpi.label}>Total Units</div>
+                 <div className={cn(tokens.kpi.value, 'tabular-nums')}>
+                   <AnimatedBlurredAmount value={summary.totalUnits} />
+                 </div>
+               </div>
+               <div className={tokens.kpi.tile}>
+                 <div className={tokens.kpi.label}>Cost Value</div>
+                 <div className={cn(tokens.kpi.value, 'tabular-nums')}>
+                   <AnimatedBlurredAmount value={summary.costValue} currency="USD" />
+                 </div>
+               </div>
+               <div className={tokens.kpi.tile}>
+                 <div className={tokens.kpi.label}>Retail Value</div>
+                 <div className={cn(tokens.kpi.value, 'tabular-nums')}>
+                   <AnimatedBlurredAmount value={summary.retailValue} currency="USD" />
+                 </div>
+               </div>
+               <div className={tokens.kpi.tile}>
+                 <div className={tokens.kpi.label}>Low Stock</div>
+                 <div className={cn(tokens.kpi.value, 'tabular-nums', summary.lowStockCount > 0 && 'text-amber-600 dark:text-amber-400')}>
+                   {summary.lowStockCount}
+                 </div>
+               </div>
+             </div>
           )}
 
           {lowStockProducts.length > 0 && (
