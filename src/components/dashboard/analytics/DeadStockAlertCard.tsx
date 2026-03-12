@@ -12,7 +12,8 @@ import { useUpdateProduct, type Product } from '@/hooks/useProducts';
 import { Skull, Tag, Percent } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import type { MovementTier } from '@/lib/productMovementRating';
+import type { MovementTier, MovementRating } from '@/lib/productMovementRating';
+import type { ProductVelocityEntry } from '@/hooks/useProductVelocity';
 
 interface DeadStockAlertCardProps {
   products: Product[];
