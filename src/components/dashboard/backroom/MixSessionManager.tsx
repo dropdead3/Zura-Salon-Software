@@ -259,7 +259,7 @@ export function MixSessionManager({
     } else {
       toast.info('Session completed. No client linked — formula not saved.');
     }
-  }, [activeSession, bowls, clientId, organizationId, appointmentId, appointmentServiceId, serviceName, staffUserId, staffName, updateSessionStatus, saveFormula]);
+  }, [activeSession, bowls, clientId, organizationId, appointmentId, appointmentServiceId, serviceId, serviceName, staffUserId, staffName, updateSessionStatus, saveFormula, depleteInventory, calculateOverage]);
 
   // ─── Bowl Actions ─────────────────────────────────
   const handleAddBowl = useCallback(() => {
