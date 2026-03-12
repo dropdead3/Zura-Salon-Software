@@ -2035,10 +2035,12 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                     <TableRow>
                       <TableHead>Supplier</TableHead>
                       <TableHead className="text-center">Grade</TableHead>
+                      <TableHead className="text-center">Risk</TableHead>
                       <TableHead className="text-right">Orders</TableHead>
                       <TableHead className="text-right">Fill Rate</TableHead>
                       <TableHead className="text-right">Avg Lead Time</TableHead>
                       <TableHead className="text-right">On-Time %</TableHead>
+                      <TableHead className="text-right">Price Stability</TableHead>
                       <TableHead className="text-right">Spend</TableHead>
                     </TableRow>
                   </TableHeader>
