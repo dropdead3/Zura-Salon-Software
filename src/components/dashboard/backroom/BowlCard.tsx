@@ -40,6 +40,7 @@ interface BowlCardProps {
 export function BowlCard({
   bowl,
   lines,
+  serviceId,
   onAddLine,
   onDeleteLine,
   onSealBowl,
