@@ -168,7 +168,40 @@ function ProductsTab() {
     return arr;
   }, [products, sortField, sortDir]);
 
-  const filteredProducts = sortedProducts;
+  // Compute movement ratings for all products
+  const productRatings = useMemo(() => {
+    if (!velocityMap || !products) return new Map<string, ReturnType<typeof getMovementRating>>();
+    const allVelocities = products.map(p => {
+      const entry = velocityMap.get(p.name.toLowerCase().trim());
+      return entry?.velocity ?? 0;
+    });
+    const percentiles = computePercentiles(allVelocities);
+    const map = new Map<string, ReturnType<typeof getMovementRating>>();
+    for (const p of products) {
+      const entry = velocityMap.get(p.name.toLowerCase().trim());
+      const velocity = entry?.velocity ?? 0;
+      const pctRaw = percentiles.get(velocity);
+      const rating = getMovementRating({
+        velocity,
+        totalUnitsSold: entry?.totalUnitsSold ?? 0,
+        daysSinceLastSale: entry?.daysSinceLastSale ?? null,
+        hasStock: (p.quantity_on_hand ?? 0) > 0,
+        velocityPercentile: pctRaw ?? 0,
+      });
+      map.set(p.id, rating);
+    }
+    return map;
+  }, [products, velocityMap]);
+
+  // Apply movement filter
+  const filteredProducts = useMemo(() => {
+    if (movementFilter === 'all') return sortedProducts;
+    return sortedProducts.filter(p => {
+      const rating = productRatings.get(p.id);
+      return rating?.tier === movementFilter;
+    });
+  }, [sortedProducts, movementFilter, productRatings]);
+
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
   const toggleSort = (field: SortField) => {
