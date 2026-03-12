@@ -40,6 +40,9 @@ import {
   MapPin,
   X,
   FlaskConical,
+  Download,
+  Info,
+  Lightbulb,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
