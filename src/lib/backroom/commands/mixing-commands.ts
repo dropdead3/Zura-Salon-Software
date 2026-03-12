@@ -219,7 +219,7 @@ export async function executeStartMixSession(
 
 export async function executeCreateBowl(
   cmd: CreateBowlCommand,
-): Promise<CommandResult> {
+): Promise<CommandResult<unknown>> {
   const session = await fetchSessionState(cmd.mix_session_id);
   const errors = validateCreateBowl(cmd.meta.initiated_by, session);
 
