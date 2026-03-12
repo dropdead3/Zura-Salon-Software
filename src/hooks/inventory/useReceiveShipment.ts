@@ -1,121 +1,21 @@
+/**
+ * useReceiveShipment — Thin wrapper around PurchasingService.
+ * Delegates all receiving logic (PO updates + inventory posting) to the service.
+ */
+
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { receiveShipment, type ReceiveShipmentInput } from '@/lib/backroom/services/purchasing-service';
 
-export interface ReceivingLineInput {
-  po_line_id: string;
-  product_id: string;
-  quantity_received: number;
-  quantity_damaged?: number;
-  quantity_rejected?: number;
-  lot_number?: string;
-  expiry_date?: string;
-  notes?: string;
-}
-
-export interface ReceiveShipmentInput {
-  organization_id: string;
-  purchase_order_id: string;
-  notes?: string;
-  lines: ReceivingLineInput[];
-}
+// Re-export types for backward compatibility
+export type { ReceivingLineInput, ReceiveShipmentInput } from '@/lib/backroom/services/purchasing-service';
 
 export function useReceiveShipment() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (input: ReceiveShipmentInput) => {
-      const userId = (await supabase.auth.getUser()).data.user?.id;
-
-      // 1. Create receiving record
-      const { data: record, error: recErr } = await supabase
-        .from('receiving_records')
-        .insert({
-          organization_id: input.organization_id,
-          purchase_order_id: input.purchase_order_id,
-          received_by: userId,
-          notes: input.notes,
-          status: 'complete',
-        })
-        .select('id')
-        .single();
-
-      if (recErr) throw recErr;
-
-      // 2. Insert receiving_record_lines
-      const { error: rlErr } = await supabase
-        .from('receiving_record_lines')
-        .insert(
-          input.lines.map((line) => ({
-            receiving_record_id: record.id,
-            po_line_id: line.po_line_id,
-            product_id: line.product_id,
-            quantity_received: line.quantity_received,
-            quantity_damaged: line.quantity_damaged ?? 0,
-            quantity_rejected: line.quantity_rejected ?? 0,
-            lot_number: line.lot_number || null,
-            expiry_date: line.expiry_date || null,
-            notes: line.notes || null,
-          }))
-        );
-
-      if (rlErr) throw rlErr;
-
-      // 3. For each line: update PO line quantity_received, update product stock, log stock movement
-      for (const line of input.lines) {
-        const acceptedQty = line.quantity_received - (line.quantity_damaged ?? 0) - (line.quantity_rejected ?? 0);
-        if (acceptedQty <= 0) continue;
-
-        // Update PO line cumulative received
-        const { data: poLine } = await supabase
-          .from('purchase_order_lines')
-          .select('quantity_received')
-          .eq('id', line.po_line_id)
-          .single();
-
-        const newLineReceived = (poLine?.quantity_received ?? 0) + line.quantity_received;
-        await supabase
-          .from('purchase_order_lines')
-          .update({ quantity_received: newLineReceived })
-          .eq('id', line.po_line_id);
-
-        // Insert ledger entry — trigger handles projection + products.quantity_on_hand sync
-        await supabase.from('stock_movements').insert({
-          organization_id: input.organization_id,
-          product_id: line.product_id,
-          quantity_change: acceptedQty,
-          quantity_after: 0,
-          event_type: 'receiving',
-          reason: 'receiving',
-          reference_type: 'purchase_order',
-          reference_id: input.purchase_order_id,
-          notes: `Received via PO ${input.purchase_order_id}`,
-          created_by: userId,
-        });
-      }
-
-      // 4. Determine PO receiving status
-      const { data: allLines } = await supabase
-        .from('purchase_order_lines')
-        .select('quantity_ordered, quantity_received')
-        .eq('purchase_order_id', input.purchase_order_id);
-
-      const allFullyReceived = allLines?.every((l) => l.quantity_received >= l.quantity_ordered) ?? false;
-      const anyReceived = allLines?.some((l) => l.quantity_received > 0) ?? false;
-
-      const receivingStatus = allFullyReceived ? 'complete' : anyReceived ? 'partial' : 'not_received';
-      const poStatus = allFullyReceived ? 'received' : 'partially_received';
-
-      await supabase
-        .from('purchase_orders')
-        .update({
-          receiving_status: receivingStatus,
-          status: poStatus,
-          received_at: allFullyReceived ? new Date().toISOString() : null,
-        } as any)
-        .eq('id', input.purchase_order_id);
-
-      return { receivingRecordId: record.id, receivingStatus };
+      return receiveShipment(input);
     },
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['purchase-orders'] });
@@ -123,9 +23,10 @@ export function useReceiveShipment() {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['stock-movements'] });
       queryClient.invalidateQueries({ queryKey: ['receiving-records'] });
-      const msg = result.receivingStatus === 'complete'
-        ? 'Shipment fully received — stock updated'
-        : 'Partial shipment received — stock updated';
+      const msg =
+        result.receivingStatus === 'complete'
+          ? 'Shipment fully received — stock updated'
+          : 'Partial shipment received — stock updated';
       toast.success(msg);
     },
     onError: (error) => {
