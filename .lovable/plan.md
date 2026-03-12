@@ -1,153 +1,305 @@
 
 
-## Timezone-Safe Scheduling (Implemented)
+# Phase 5: Backroom Analytics & Intelligence Layer
 
-### Problem
-`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
+## Current State
 
-### Solution
-- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
-- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
-- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
+**Data already captured (Phases 1-4):**
+- `mix_sessions` — per-appointment sessions with status, staff, location, timestamps
+- `mix_bowls` / `mix_bowl_lines` — product-level dispensed quantities with weights
+- `waste_events` — 5 categories with quantities, linked to sessions/bowls
+- `reweigh_events` — leftover capture with `captured_via` (manual/scale)
+- `stock_movements` — append-only ledger with `reference_type`, `reference_id`, `location_id`
+- `service_recipe_baselines` — expected usage per service/product
+- `checkout_usage_charges` — overage billing with approval workflow
+- `products` — `quantity_on_hand`, `cost_price`, `reorder_level`
+- `useServiceCostsProfits` — appointment-based service cost/profit (uses `services.cost`)
+- `useShrinkageSummary` — stock count variance
+- `useUsageVariance` — per-session actual vs baseline comparison
+- `ai-business-insights` edge function — existing AI pattern with caching to `ai_business_insights` table
 
-### Files Updated
-- `ScheduleHeader.tsx` — today button, quick days, isToday checks
-- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
-- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
-- `MonthView.tsx` — today highlight
-- `AgendaView.tsx` — today/tomorrow labels, today border
-- `ScheduleActionBar.tsx` — payment queue timing
-- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
-- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
-- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
-- `useHuddles.ts` — today's huddle query
+**Key gaps:**
+1. No aggregated backroom metrics (chemical cost per service, waste %, reweigh compliance)
+2. No ghost loss detection (theoretical vs actual inventory divergence)
+3. No assistant performance tracking (who mixed, speed, accuracy)
+4. No inventory days-remaining projection
+5. No role-scoped backroom dashboards
+6. No exception inbox for anomalies
+7. No AI layer for backroom-specific insights
 
-## Auto-Reorder with Supplier Communication (Implemented)
+---
 
-### What It Does
-Organizations can opt into automatic reorder — when stock dips below threshold, POs are calculated (using MOQ and par levels) and sent directly to the supplier via email.
+## 1. Schema Changes
 
-### Database Changes
-- `products.par_level` (INT, nullable) — desired stock level to reorder up to
-- `product_suppliers.moq` (INT, default 1) — minimum order quantity
-- `inventory_alert_settings.auto_reorder_enabled` (BOOL, default false)
-- `inventory_alert_settings.auto_reorder_mode` (TEXT, default 'to_par') — 'to_par' or 'moq_only'
-- `inventory_alert_settings.max_auto_reorder_value` (NUMERIC, nullable) — daily spend cap
-- `purchase_orders.supplier_confirmed_at` (TIMESTAMPTZ, nullable) — for tracking confirmations
+### 1a. `backroom_analytics_snapshots` (daily materialized metrics)
 
-### Quantity Calculation
-```
-deficit = par_level - quantity_on_hand
-order_qty = max(moq, deficit)
-if moq > 1: round up to nearest MOQ multiple
-```
-Fallback: if par_level is null, uses `reorder_level * 2`.
+Stores pre-computed daily rollups to avoid expensive real-time aggregation.
 
-### Files Updated
-- Migration: Added columns to products, product_suppliers, inventory_alert_settings, purchase_orders
-- `check-reorder-levels/index.ts` — auto-send logic with MOQ/par calculation, spend cap, email invocation
-- `AlertSettingsCard.tsx` — auto-reorder toggle, mode selector, spend cap input
-- `useInventoryAlertSettings.ts` — updated interface
-- `useProducts.ts` — added par_level to Product interface
-- `useProductSuppliers.ts` — added moq to ProductSupplier interface
-- `ProductEditDialog.tsx` — added par level field
-- `RetailProductsSettingsContent.tsx` — added par level to product form
-- `SupplierDialog.tsx` — added MOQ field
-
-### Safety Features
-- Spend cap: daily auto-reorder pauses when cumulative PO value exceeds cap
-- Audit trail: auto_reorder logged as stock_movement reason
-- Supplier confirmation tracking via supplier_confirmed_at timestamp
-
-## Product Movement Rating Badges (Implemented)
-
-### What It Does
-Every product gets a dynamic movement rating badge (Best Seller, Popular, Steady, Slow Mover, Stagnant, Dead Weight) computed from 90-day sales velocity data.
-
-### Rating Tiers
-- **Best Seller**: Top 10% velocity AND >0.5 units/day (emerald)
-- **Popular**: Top 25% velocity AND >0.2 units/day (blue)
-- **Steady**: Velocity >0.05/day (muted)
-- **Slow Mover**: Velocity >0 but ≤0.05/day (amber)
-- **Stagnant**: Zero velocity, sold within 180 days (orange)
-- **Dead Weight**: Zero velocity, 180+ days or never sold (red)
-- Products with zero stock excluded from negative ratings
-
-### Files Created
-- `src/lib/productMovementRating.ts` — pure rating logic + badge config
-- `src/hooks/useProductVelocity.ts` — lightweight 90-day POS velocity query
-- `src/components/ui/MovementBadge.tsx` — shared badge component with tooltip
-
-### Files Updated
-- `RetailProductsSettingsContent.tsx` — Movement column + filter dropdown in products table
-- `RetailAnalyticsContent.tsx` — Movement badges on product performance table + Movement Distribution card (donut chart with actionable callouts)
-- `ProductCard.tsx` — Best Seller/Popular badges on public shop cards (positive only)
-- `ProductDetailModal.tsx` — Movement badge with velocity context
-
-## Inventory Intelligence Suite v2 (Implemented)
-
-### 1. Dead Stock Auto-Clearance Pipeline
-- `DeadStockAlertCard.tsx` — Surfaces Dead Weight/Stagnant products not yet in clearance with suggested discount tiers (10%/25%/50% based on idle days)
-- One-click "Mark for Clearance" applies discount and sets clearance_status
-
-### 2. Supplier Lead Time Tracker
-- `usePurchaseOrders.ts` — `useMarkPurchaseOrderReceived` already computes actual delivery days and updates `product_suppliers.avg_delivery_days` via running average
-- `parLevelSuggestion.ts` — Updated to accept supplier-provided lead time instead of hardcoded 7-day default, with bounds clamping
-
-### 3. Inventory Valuation Dashboard Card
-- `InventoryValuationCard.tsx` — Shows total inventory at cost/retail, potential margin %, capital-at-risk (slow/stagnant/dead weight), with donut chart breakdown
-
-### 4. Reorder Approval Queue
-- `ReorderApprovalCard.tsx` — Surfaces draft POs from auto-reorder with one-click approve (→ sent) or reject (→ cancelled)
-
-### 5. Stock Transfer Between Locations
-- Migration: Created `stock_transfers` table with RLS (org member read, org admin manage)
-- `useStockTransfers.ts` — CRUD hooks for stock transfers with stock movement logging
-- `StockTransferDialog.tsx` — Dialog for creating transfers between locations
-- `RetailProductsSettingsContent.tsx` — "Transfer Stock" button added to Inventory tab (visible for multi-location orgs)
-
-## Enhancement 1: Expiry Tracking (Implemented)
-
-### What It Does
-Products can have an optional expiration date (`expires_at`) and per-product alert threshold (`expiry_alert_days`, default 30). The system surfaces expiring inventory with color-coded badges in the product table and an analytics card with auto-clearance suggestions.
-
-### Database Changes
-- `products.expires_at` (DATE, nullable) — expiration date for perishable products
-- `products.expiry_alert_days` (INTEGER, default 30) — days before expiry to trigger alerts
-
-### Expiry Alert Buckets
-- **Expired** (red): past expiration → suggests 50% markdown
-- **Critical** (orange): within alert threshold → suggests 25% markdown
-- **Warning** (amber): within 2× alert threshold → suggests 10% markdown
-
-### Files Created
-- `src/components/dashboard/analytics/ExpiryAlertCard.tsx` — PinnableCard showing expiring products with one-click clearance actions
-
-### Files Updated
-- `src/hooks/useProducts.ts` — Added `expires_at`, `expiry_alert_days` to Product interface; added `expiringOnly` filter
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Expiry date + alert days in product form; color-coded Expiry column in product table
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ExpiryAlertCard into analytics hub
-
-## Enhancement 2: Shrinkage Detection (Implemented)
-
-### What It Does
-Physical stocktake workflow with variance reporting. Staff record actual counts via a Stocktake dialog, and the system compares against expected quantities (system records). A Shrinkage Report card in analytics surfaces products with negative variance (loss) ranked by estimated cost impact.
-
-### Database Changes
-- Created `stock_counts` table with computed `variance` column (counted - expected), RLS policies (org member read/insert, org admin update/delete), and indexes
-
-### Shrinkage Calculation
-```
-variance = counted_quantity - expected_quantity
-shrinkage_units = |variance| when variance < 0
-shrinkage_cost = shrinkage_units × cost_price
+```sql
+CREATE TABLE IF NOT EXISTS public.backroom_analytics_snapshots (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+  location_id TEXT,
+  snapshot_date DATE NOT NULL,
+  -- Session metrics
+  total_sessions INT DEFAULT 0,
+  completed_sessions INT DEFAULT 0,
+  avg_session_duration_minutes NUMERIC DEFAULT 0,
+  -- Cost metrics
+  total_product_cost NUMERIC DEFAULT 0,
+  total_service_revenue NUMERIC DEFAULT 0,
+  avg_chemical_cost_per_service NUMERIC DEFAULT 0,
+  -- Waste metrics
+  total_waste_qty NUMERIC DEFAULT 0,
+  total_dispensed_qty NUMERIC DEFAULT 0,
+  waste_pct NUMERIC DEFAULT 0,
+  waste_by_category JSONB DEFAULT '{}',
+  -- Reweigh compliance
+  bowls_requiring_reweigh INT DEFAULT 0,
+  bowls_reweighed INT DEFAULT 0,
+  reweigh_compliance_pct NUMERIC DEFAULT 0,
+  -- Variance
+  sessions_with_variance INT DEFAULT 0,
+  total_overage_qty NUMERIC DEFAULT 0,
+  total_underage_qty NUMERIC DEFAULT 0,
+  -- Ghost loss
+  theoretical_depletion NUMERIC DEFAULT 0,
+  actual_depletion NUMERIC DEFAULT 0,
+  ghost_loss_qty NUMERIC DEFAULT 0,
+  ghost_loss_cost NUMERIC DEFAULT 0,
+  -- Staff
+  staff_metrics JSONB DEFAULT '[]',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (organization_id, location_id, snapshot_date)
+);
+-- RLS: org_member SELECT, org_admin INSERT/UPDATE
+-- Indexes: organization_id, snapshot_date, location_id
 ```
 
-### Files Created
-- `src/hooks/useStockCounts.ts` — CRUD hooks for stock counts + `useShrinkageSummary` for aggregated shrinkage data
-- `src/components/dashboard/settings/inventory/StocktakeDialog.tsx` — Full stocktake UI with search, inline count entry, real-time variance display
-- `src/components/dashboard/analytics/ShrinkageReportCard.tsx` — PinnableCard showing products with shrinkage, severity badges, estimated loss
+### 1b. `backroom_exceptions` (exception inbox)
 
-### Files Updated
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Added "Stocktake" button to Inventory tab toolbar
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ShrinkageReportCard into analytics hub
+Anomaly events surfaced for manager review.
+
+```sql
+CREATE TABLE IF NOT EXISTS public.backroom_exceptions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+  location_id TEXT,
+  exception_type TEXT NOT NULL,
+    -- 'high_waste', 'ghost_loss', 'missing_reweigh', 'variance_outlier',
+    -- 'no_baseline', 'cost_spike', 'unresolved_session'
+  severity TEXT NOT NULL DEFAULT 'warning',  -- 'info', 'warning', 'critical'
+  title TEXT NOT NULL,
+  description TEXT,
+  reference_type TEXT,  -- 'mix_session', 'product', 'staff'
+  reference_id UUID,
+  staff_user_id UUID,
+  metric_value NUMERIC,
+  threshold_value NUMERIC,
+  status TEXT NOT NULL DEFAULT 'open',  -- 'open', 'acknowledged', 'resolved', 'dismissed'
+  resolved_by UUID REFERENCES auth.users(id),
+  resolved_at TIMESTAMPTZ,
+  resolved_notes TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+-- RLS: org_member SELECT, org_admin UPDATE
+-- Indexes: organization_id, status, exception_type, created_at
+```
+
+No new tables beyond these two. All metric calculations derive from existing Phase 1-4 tables.
+
+---
+
+## 2. Analytics Architecture
+
+### Computation engine: `src/lib/backroom/analytics-engine.ts`
+
+Pure functions, no side effects:
+
+```typescript
+// Core metric calculations
+calculateChemicalCostPerService(sessions, bowlLines, products): number
+calculateWastePercentage(wasteQty, dispensedQty): number
+calculateReweighCompliance(totalBowls, reweighedBowls): number
+calculateGhostLoss(theoreticalDepletion, actualStockChange): GhostLossResult
+calculateInventoryDaysRemaining(onHand, dailyUsageRate): number
+calculateContributionMargin(serviceRevenue, productCost, laborEstimate): ContributionMarginResult
+calculateStaffEfficiency(sessions): StaffMetric[]
+```
+
+**Contribution margin formula:**
+```
+contribution_margin = service_revenue - product_cost - labor_estimate
+margin_pct = contribution_margin / service_revenue * 100
+```
+
+**Ghost loss formula:**
+```
+ghost_loss = theoretical_depletion - actual_stock_decrease
+// theoretical = sum of all stock_movements(reason='usage') for period
+// actual = beginning_on_hand - ending_on_hand - receiving + transfers_out
+// positive ghost_loss = unexplained shrinkage
+```
+
+### Aggregation hook: `useBackroomAnalytics(dateRange, locationId?)`
+
+Fetches raw data from `mix_sessions`, `mix_bowls`, `mix_bowl_lines`, `waste_events`, `reweigh_events`, `stock_movements`, `products`, `checkout_usage_charges` and runs the analytics engine client-side for real-time views. Falls back to `backroom_analytics_snapshots` for historical ranges.
+
+### Snapshot generation: Edge function `generate-backroom-snapshots`
+
+Runs daily (or on-demand) to compute and upsert `backroom_analytics_snapshots` rows. Also detects exceptions and inserts into `backroom_exceptions`.
+
+---
+
+## 3. Dashboard Information Architecture
+
+### 3a. Owner Dashboard — Backroom P&L
+
+Full financial and operational visibility.
+
+| Card | Metrics |
+|---|---|
+| **Chemical Cost Summary** | Avg cost/service, total cost, cost trend vs prior period |
+| **Service Contribution Margin** | Revenue - product cost - labor estimate, by service category |
+| **Waste Analysis** | Waste %, waste by category (donut), waste cost trend |
+| **Ghost Loss Monitor** | Theoretical vs actual depletion, unexplained loss in $ |
+| **Inventory Days Remaining** | Per-product projection, items < 7 days highlighted |
+| **Exception Inbox** | Open exceptions count, severity breakdown |
+
+### 3b. Manager Dashboard — Operational Control
+
+| Card | Metrics |
+|---|---|
+| **Reweigh Compliance** | % of bowls reweighed, trend, non-compliant staff |
+| **Usage Variance** | Sessions with over/under usage, top offenders |
+| **Staff Performance** | Sessions/day, avg session time, waste per staff, variance per staff |
+| **Exception Inbox** | Filterable list with acknowledge/resolve actions |
+| **Overage Charges** | Pending approvals, total billed, waiver rate |
+
+### 3c. Stylist Dashboard — Personal Performance
+
+| Card | Metrics |
+|---|---|
+| **My Sessions** | Count, avg duration, completion rate |
+| **My Usage Accuracy** | Variance vs baselines, trend |
+| **My Waste** | Total waste %, comparison to team average |
+| **My Reweigh Rate** | Compliance %, streak counter |
+
+### Role scoping
+
+Stylists see only their own `mixed_by_staff_id` data. Managers see location-scoped data. Owners see all locations.
+
+---
+
+## 4. Exception Inbox Design
+
+### Exception types and detection rules
+
+| Type | Trigger | Severity |
+|---|---|---|
+| `high_waste` | Session waste % > org threshold (default 15%) | warning/critical |
+| `ghost_loss` | Daily ghost loss > $X threshold | critical |
+| `missing_reweigh` | Completed session with no reweigh event | warning |
+| `variance_outlier` | Usage variance > ±25% from baseline | warning |
+| `no_baseline` | Service has sessions but no recipe baseline defined | info |
+| `cost_spike` | Chemical cost/service > 2× rolling average | warning |
+| `unresolved_session` | Session completed with `unresolved_flag = true` | warning |
+
+### Exception lifecycle
+
+```
+open → acknowledged → resolved
+open → dismissed
+```
+
+### UI: `BackroomExceptionInbox` component
+
+- Filterable by type, severity, status, date range, staff
+- Bulk acknowledge/dismiss
+- Resolve with notes
+- Click-through to source entity (session, product)
+- Badge count on dashboard nav
+
+---
+
+## 5. AI Insight Layer
+
+### Constraints (read-only)
+
+AI may:
+- Explain anomalies ("waste spiked because 3 sessions had overmix events")
+- Suggest coaching ("Sarah's variance is consistently +20% on balayage")
+- Summarize trends ("chemical costs down 8% this month vs last")
+
+AI cannot:
+- Modify inventory quantities
+- Approve/waive billing charges
+- Change service allowance policies
+- Create/edit stock movements
+
+### Implementation: Edge function `ai-backroom-insights`
+
+Follows existing `ai-business-insights` pattern:
+1. Fetch backroom data (sessions, waste, variance, exceptions) via service role
+2. Build structured prompt with metrics context
+3. Call Lovable AI (gemini-2.5-flash)
+4. Parse structured response
+5. Cache to `ai_business_insights` table with `insight_type = 'backroom'`
+
+### Response schema
+
+```typescript
+interface BackroomAIInsight {
+  category: 'waste_analysis' | 'usage_efficiency' | 'staff_coaching' |
+            'cost_trend' | 'ghost_loss' | 'compliance';
+  title: string;
+  description: string;
+  severity: 'info' | 'warning' | 'critical';
+  staffMentions?: string[];
+  estimatedImpact?: string;
+  suggestedAction?: string;
+}
+```
+
+### Hook: `useBackroomAIInsights(locationId?)`
+
+Same caching/refresh pattern as `useAIInsights` — 2hr stale time, 1min cooldown, manual refresh button.
+
+### Integration points
+
+- Backroom analytics page: dedicated AI insights panel
+- Exception inbox: AI-generated explanation per exception (on-demand, not pre-computed)
+- Staff detail cards: AI coaching suggestion (fetched via `ai-card-analysis` pattern)
+
+---
+
+## 6. Hooks Summary
+
+| Hook | Purpose |
+|---|---|
+| `useBackroomAnalytics(dateRange, locationId?)` | Aggregate metrics from raw tables + engine |
+| `useBackroomExceptions(filters?)` | CRUD for exception inbox |
+| `useResolveException()` | Resolve/dismiss with notes |
+| `useBackroomStaffMetrics(dateRange, staffId?)` | Per-staff session/waste/variance metrics |
+| `useInventoryDaysRemaining()` | Per-product days-remaining projection |
+| `useContributionMargin(dateRange, locationId?)` | Service profitability with product cost + labor |
+| `useBackroomAIInsights(locationId?)` | Cached AI insights for backroom |
+| `useGhostLossDetection(dateRange, locationId?)` | Theoretical vs actual depletion comparison |
+
+---
+
+## 7. Implementation Order
+
+1. Create `backroom_analytics_snapshots` + `backroom_exceptions` tables via migration
+2. Build `analytics-engine.ts` — pure calculation functions
+3. Build `useBackroomAnalytics` + `useBackroomStaffMetrics` hooks
+4. Build `useBackroomExceptions` + `useResolveException` hooks
+5. Build `useContributionMargin` + `useGhostLossDetection` + `useInventoryDaysRemaining` hooks
+6. Build Owner dashboard cards (Chemical Cost, Contribution Margin, Waste, Ghost Loss)
+7. Build Manager dashboard cards (Compliance, Variance, Staff Performance)
+8. Build Stylist dashboard cards (My Sessions, My Accuracy, My Waste)
+9. Build `BackroomExceptionInbox` component
+10. Build `ai-backroom-insights` edge function
+11. Build `useBackroomAIInsights` hook + AI panel integration
+12. Build `generate-backroom-snapshots` edge function for daily rollups
+
