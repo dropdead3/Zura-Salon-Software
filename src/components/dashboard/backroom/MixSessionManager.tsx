@@ -528,14 +528,77 @@ export function MixSessionManager({
   // Active session
   return (
     <div className="space-y-4">
-      {/* Prep mode banner */}
+      {/* Prep mode banner — with per-bowl review for awaiting_stylist_approval */}
       <PrepModeBanner
         session={activeSession}
         currentUserId={user?.id}
         assignedStylistId={staffUserId}
         isManager={false}
+        bowls={bowls}
+        bowlLines={{}}
+        onApproveBowl={async (bowlId) => {
+          await emitSessionEvent({
+            mix_session_id: activeSession.id,
+            organization_id: organizationId,
+            location_id: locationId,
+            event_type: 'stylist_bowl_approved',
+            event_payload: { bowl_id: bowlId, approved_by: user?.id },
+            source_mode: 'manual',
+          });
+          updateBowlStatus.mutate({
+            id: bowlId,
+            sessionId: activeSession.id,
+            organizationId,
+            currentStatus: bowls.find(b => b.id === bowlId)?.status ?? 'awaiting_stylist_approval',
+            newStatus: 'open',
+            locationId,
+          });
+        }}
+        onAdjustBowl={async (bowlId) => {
+          await emitSessionEvent({
+            mix_session_id: activeSession.id,
+            organization_id: organizationId,
+            location_id: locationId,
+            event_type: 'stylist_bowl_adjusted',
+            event_payload: { bowl_id: bowlId, adjusted_by: user?.id },
+            source_mode: 'manual',
+          });
+          updateBowlStatus.mutate({
+            id: bowlId,
+            sessionId: activeSession.id,
+            organizationId,
+            currentStatus: bowls.find(b => b.id === bowlId)?.status ?? 'awaiting_stylist_approval',
+            newStatus: 'open',
+            locationId,
+          });
+          toast.info('Bowl opened for adjustments');
+        }}
+        onDiscardBowl={(bowlId) => handleDiscardBowl(bowlId)}
+        onApproveAll={async () => {
+          const reviewBowls = bowls.filter(b =>
+            b.status === 'awaiting_stylist_approval' || b.status === 'prepared_by_assistant'
+          );
+          for (const bowl of reviewBowls) {
+            await emitSessionEvent({
+              mix_session_id: activeSession.id,
+              organization_id: organizationId,
+              location_id: locationId,
+              event_type: 'stylist_bowl_approved',
+              event_payload: { bowl_id: bowl.id, approved_by: user?.id },
+              source_mode: 'manual',
+            });
+            updateBowlStatus.mutate({
+              id: bowl.id,
+              sessionId: activeSession.id,
+              organizationId,
+              currentStatus: bowl.status,
+              newStatus: 'open',
+              locationId,
+            });
+          }
+          toast.success('All bowls approved');
+        }}
         onApprove={async () => {
-          // Emit prep_approved event (source of truth)
           await emitSessionEvent({
             mix_session_id: activeSession.id,
             organization_id: organizationId,
@@ -544,7 +607,6 @@ export function MixSessionManager({
             event_payload: { approved_by: user?.id },
             source_mode: 'manual',
           });
-          // Projection update
           await supabase
             .from('mix_sessions')
             .update({
