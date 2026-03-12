@@ -11693,6 +11693,8 @@ export type Database = {
           cost_price: number | null
           created_at: string | null
           description: string | null
+          expires_at: string | null
+          expiry_alert_days: number | null
           external_id: string | null
           id: string
           image_url: string | null
@@ -11724,6 +11726,8 @@ export type Database = {
           cost_price?: number | null
           created_at?: string | null
           description?: string | null
+          expires_at?: string | null
+          expiry_alert_days?: number | null
           external_id?: string | null
           id?: string
           image_url?: string | null
@@ -11755,6 +11759,8 @@ export type Database = {
           cost_price?: number | null
           created_at?: string | null
           description?: string | null
+          expires_at?: string | null
+          expiry_alert_days?: number | null
           external_id?: string | null
           id?: string
           image_url?: string | null

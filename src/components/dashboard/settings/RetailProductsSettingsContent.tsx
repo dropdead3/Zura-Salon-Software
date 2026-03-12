@@ -485,13 +485,14 @@ function ProductsTab() {
                     <MetricInfoTooltip description="Current stock on hand. Products are flagged as low stock when quantity reaches or falls below the minimum stock level you set." />
                   </div>
                 </TableHead>
+                <TableHead className="w-24">Expiry</TableHead>
                 <TableHead className="text-center w-16">Online</TableHead>
                 <TableHead className="w-20" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {!filteredProducts?.length ? (
-                <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">No products found</TableCell></TableRow>
+                <TableRow><TableCell colSpan={10} className="text-center py-8 text-muted-foreground">No products found</TableCell></TableRow>
               ) : filteredProducts.map(p => {
                 const isLow = p.reorder_level != null && p.quantity_on_hand != null && p.quantity_on_hand <= p.reorder_level;
                 const productType = getProductType(p);
@@ -602,6 +603,42 @@ function ProductsTab() {
                         {p.reorder_level != null ? `Min. stock: ${p.reorder_level}` : '—'}
                       </div>
                     </TableCell>
+                    <TableCell className="py-3">
+                      {(() => {
+                        if (!p.expires_at) return <span className="text-xs text-muted-foreground">—</span>;
+                        const today = new Date();
+                        const expiryDate = new Date(p.expires_at);
+                        const daysUntil = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                        const alertDays = p.expiry_alert_days ?? 30;
+                        let badgeClass = '';
+                        let label = '';
+                        if (daysUntil <= 0) {
+                          badgeClass = 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+                          label = daysUntil === 0 ? 'Today' : `${Math.abs(daysUntil)}d ago`;
+                        } else if (daysUntil <= alertDays) {
+                          badgeClass = 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400';
+                          label = `${daysUntil}d`;
+                        } else if (daysUntil <= alertDays * 2) {
+                          badgeClass = 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400';
+                          label = `${daysUntil}d`;
+                        } else {
+                          return <span className="text-xs text-muted-foreground tabular-nums">{p.expires_at}</span>;
+                        }
+                        return (
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <Badge variant="outline" className={cn('text-[10px] tabular-nums', badgeClass)}>
+                                {label}
+                              </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="text-xs">Expires: {p.expires_at}</p>
+                              <p className="text-xs">{daysUntil <= 0 ? 'Expired' : `${daysUntil} days remaining`}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        );
+                      })()}
+                    </TableCell>
                     <TableCell className="py-3 text-center">
                       <Switch
                         checked={!!p.available_online}
@@ -691,6 +728,8 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
     description: product?.description || '',
     location_id: product?.location_id || '',
     image_url: product?.image_url || '',
+    expires_at: product?.expires_at || '',
+    expiry_alert_days: product?.expiry_alert_days?.toString() || '30',
   });
 
   const clearCropPreview = () => {
@@ -763,6 +802,8 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
       description: form.description || null,
       location_id: form.location_id || null,
       image_url: form.image_url || null,
+      expires_at: form.expires_at || null,
+      expiry_alert_days: form.expiry_alert_days ? parseInt(form.expiry_alert_days) : 30,
     });
   };
 
@@ -916,6 +957,10 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div><Label className="text-xs">Par Level (Target)</Label><Input type="number" value={form.par_level} onChange={e => setForm(f => ({ ...f, par_level: e.target.value }))} /><p className="text-[11px] text-muted-foreground mt-1">Desired stock level for auto-reorder</p></div>
+            <div><Label className="text-xs">Expiration Date</Label><Input type="date" value={form.expires_at} onChange={e => setForm(f => ({ ...f, expires_at: e.target.value }))} /><p className="text-[11px] text-muted-foreground mt-1">Optional — for perishable products</p></div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label className="text-xs">Expiry Alert (days)</Label><Input type="number" value={form.expiry_alert_days} onChange={e => setForm(f => ({ ...f, expiry_alert_days: e.target.value }))} /><p className="text-[11px] text-muted-foreground mt-1">Days before expiry to start alerting</p></div>
             <div />
           </div>
           <div>

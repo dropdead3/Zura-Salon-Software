@@ -22,6 +22,8 @@ export interface Product {
   image_url: string | null;
   product_type: string | null;
   supplier_id: string | null;
+  expires_at: string | null;
+  expiry_alert_days: number | null;
   created_at: string | null;
   updated_at: string | null;
 }
@@ -33,6 +35,7 @@ export interface ProductFilters {
   productType?: string;
   locationId?: string;
   lowStockOnly?: boolean;
+  expiringOnly?: boolean;
   limit?: number;
   page?: number;
   pageSize?: number;
@@ -78,6 +81,12 @@ export function useProducts(filters: ProductFilters = {}) {
       if (filters.lowStockOnly) {
         query = query.not('reorder_level', 'is', null)
           .filter('quantity_on_hand', 'lt', 'reorder_level');
+      }
+
+      if (filters.expiringOnly) {
+        const today = new Date().toISOString().slice(0, 10);
+        query = query.not('expires_at', 'is', null)
+          .lte('expires_at', today);
       }
 
       if (filters.limit) {
@@ -194,6 +203,8 @@ export function useCreateProduct() {
         image_url: product.image_url,
         product_type: product.product_type || 'Products',
         available_online: product.available_online,
+        expires_at: product.expires_at,
+        expiry_alert_days: product.expiry_alert_days ?? 30,
       };
       
       const { data, error } = await supabase

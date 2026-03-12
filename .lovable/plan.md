@@ -1,99 +1,129 @@
 
 
-# Enhancement 1: Expiry Tracking
+## Timezone-Safe Scheduling (Implemented)
 
-Add expiry date tracking to products with auto-clearance triggers for items nearing expiration, visual alerts in the product table, and an analytics card surfacing soon-to-expire inventory.
+### Problem
+`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
 
----
+### Solution
+- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
+- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
+- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
 
-## Database Migration
+### Files Updated
+- `ScheduleHeader.tsx` — today button, quick days, isToday checks
+- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
+- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
+- `MonthView.tsx` — today highlight
+- `AgendaView.tsx` — today/tomorrow labels, today border
+- `ScheduleActionBar.tsx` — payment queue timing
+- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
+- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
+- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
+- `useHuddles.ts` — today's huddle query
 
-Add two columns to the `products` table:
+## Auto-Reorder with Supplier Communication (Implemented)
 
-```sql
-ALTER TABLE public.products
-  ADD COLUMN IF NOT EXISTS expires_at DATE,
-  ADD COLUMN IF NOT EXISTS expiry_alert_days INTEGER DEFAULT 30;
+### What It Does
+Organizations can opt into automatic reorder — when stock dips below threshold, POs are calculated (using MOQ and par levels) and sent directly to the supplier via email.
+
+### Database Changes
+- `products.par_level` (INT, nullable) — desired stock level to reorder up to
+- `product_suppliers.moq` (INT, default 1) — minimum order quantity
+- `inventory_alert_settings.auto_reorder_enabled` (BOOL, default false)
+- `inventory_alert_settings.auto_reorder_mode` (TEXT, default 'to_par') — 'to_par' or 'moq_only'
+- `inventory_alert_settings.max_auto_reorder_value` (NUMERIC, nullable) — daily spend cap
+- `purchase_orders.supplier_confirmed_at` (TIMESTAMPTZ, nullable) — for tracking confirmations
+
+### Quantity Calculation
 ```
+deficit = par_level - quantity_on_hand
+order_qty = max(moq, deficit)
+if moq > 1: round up to nearest MOQ multiple
+```
+Fallback: if par_level is null, uses `reorder_level * 2`.
 
-- `expires_at`: optional expiration date for perishable or time-sensitive products
-- `expiry_alert_days`: per-product threshold (default 30) for when to start alerting
+### Files Updated
+- Migration: Added columns to products, product_suppliers, inventory_alert_settings, purchase_orders
+- `check-reorder-levels/index.ts` — auto-send logic with MOQ/par calculation, spend cap, email invocation
+- `AlertSettingsCard.tsx` — auto-reorder toggle, mode selector, spend cap input
+- `useInventoryAlertSettings.ts` — updated interface
+- `useProducts.ts` — added par_level to Product interface
+- `useProductSuppliers.ts` — added moq to ProductSupplier interface
+- `ProductEditDialog.tsx` — added par level field
+- `RetailProductsSettingsContent.tsx` — added par level to product form
+- `SupplierDialog.tsx` — added MOQ field
 
-No new tables needed. No RLS changes (existing product policies cover these columns).
+### Safety Features
+- Spend cap: daily auto-reorder pauses when cumulative PO value exceeds cap
+- Audit trail: auto_reorder logged as stock_movement reason
+- Supplier confirmation tracking via supplier_confirmed_at timestamp
 
----
+## Product Movement Rating Badges (Implemented)
 
-## Product Form (ProductFormDialog)
+### What It Does
+Every product gets a dynamic movement rating badge (Best Seller, Popular, Steady, Slow Mover, Stagnant, Dead Weight) computed from 90-day sales velocity data.
 
-**File:** `src/components/dashboard/settings/RetailProductsSettingsContent.tsx`
+### Rating Tiers
+- **Best Seller**: Top 10% velocity AND >0.5 units/day (emerald)
+- **Popular**: Top 25% velocity AND >0.2 units/day (blue)
+- **Steady**: Velocity >0.05/day (muted)
+- **Slow Mover**: Velocity >0 but ≤0.05/day (amber)
+- **Stagnant**: Zero velocity, sold within 180 days (orange)
+- **Dead Weight**: Zero velocity, 180+ days or never sold (red)
+- Products with zero stock excluded from negative ratings
 
-- Add `expires_at` and `expiry_alert_days` fields to the form state
-- Add a date input for "Expiration Date" and a number input for "Alert Threshold (days)" below the existing reorder/par fields
-- Wire both fields into `handleSubmit` so they persist on save
+### Files Created
+- `src/lib/productMovementRating.ts` — pure rating logic + badge config
+- `src/hooks/useProductVelocity.ts` — lightweight 90-day POS velocity query
+- `src/components/ui/MovementBadge.tsx` — shared badge component with tooltip
 
----
+### Files Updated
+- `RetailProductsSettingsContent.tsx` — Movement column + filter dropdown in products table
+- `RetailAnalyticsContent.tsx` — Movement badges on product performance table + Movement Distribution card (donut chart with actionable callouts)
+- `ProductCard.tsx` — Best Seller/Popular badges on public shop cards (positive only)
+- `ProductDetailModal.tsx` — Movement badge with velocity context
 
-## Product Table Column
+## Inventory Intelligence Suite v2 (Implemented)
 
-**File:** `src/components/dashboard/settings/RetailProductsSettingsContent.tsx`
+### 1. Dead Stock Auto-Clearance Pipeline
+- `DeadStockAlertCard.tsx` — Surfaces Dead Weight/Stagnant products not yet in clearance with suggested discount tiers (10%/25%/50% based on idle days)
+- One-click "Mark for Clearance" applies discount and sets clearance_status
 
-- Add an "Expiry" column to the products table (between Stock and Actions)
-- Display the date with color coding:
-  - **Red** badge: expired or expires within alert threshold
-  - **Amber** badge: expires within 2x alert threshold
-  - **No badge**: no expiry set or far out
-- Tooltip showing exact date and days remaining
+### 2. Supplier Lead Time Tracker
+- `usePurchaseOrders.ts` — `useMarkPurchaseOrderReceived` already computes actual delivery days and updates `product_suppliers.avg_delivery_days` via running average
+- `parLevelSuggestion.ts` — Updated to accept supplier-provided lead time instead of hardcoded 7-day default, with bounds clamping
 
----
+### 3. Inventory Valuation Dashboard Card
+- `InventoryValuationCard.tsx` — Shows total inventory at cost/retail, potential margin %, capital-at-risk (slow/stagnant/dead weight), with donut chart breakdown
 
-## useProducts Hook Update
+### 4. Reorder Approval Queue
+- `ReorderApprovalCard.tsx` — Surfaces draft POs from auto-reorder with one-click approve (→ sent) or reject (→ cancelled)
 
-**File:** `src/hooks/useProducts.ts`
+### 5. Stock Transfer Between Locations
+- Migration: Created `stock_transfers` table with RLS (org member read, org admin manage)
+- `useStockTransfers.ts` — CRUD hooks for stock transfers with stock movement logging
+- `StockTransferDialog.tsx` — Dialog for creating transfers between locations
+- `RetailProductsSettingsContent.tsx` — "Transfer Stock" button added to Inventory tab (visible for multi-location orgs)
 
-- Add `expires_at` and `expiry_alert_days` to the `Product` interface
-- Add optional `expiringOnly` filter to `ProductFilters` that filters products expiring within their alert window
-- Include both fields in `useCreateProduct` insert data
+## Enhancement 1: Expiry Tracking (Implemented)
 
----
+### What It Does
+Products can have an optional expiration date (`expires_at`) and per-product alert threshold (`expiry_alert_days`, default 30). The system surfaces expiring inventory with color-coded badges in the product table and an analytics card with auto-clearance suggestions.
 
-## Expiry Alerts Analytics Card
+### Database Changes
+- `products.expires_at` (DATE, nullable) — expiration date for perishable products
+- `products.expiry_alert_days` (INTEGER, default 30) — days before expiry to trigger alerts
 
-**File:** `src/components/dashboard/analytics/ExpiryAlertCard.tsx` (new)
+### Expiry Alert Buckets
+- **Expired** (red): past expiration → suggests 50% markdown
+- **Critical** (orange): within alert threshold → suggests 25% markdown
+- **Warning** (amber): within 2× alert threshold → suggests 10% markdown
 
-- Query products where `expires_at` is set and within the alert window
-- Group into three buckets: "Expired", "Critical" (within alert threshold), "Warning" (within 2x threshold)
-- Show product name, expiry date, quantity on hand, and estimated loss (cost_price x qty)
-- Include a "Mark for Clearance" action button for items approaching expiry (reuse the pattern from `DeadStockAlertCard`)
-- Pin-able via `PinnableCard`
+### Files Created
+- `src/components/dashboard/analytics/ExpiryAlertCard.tsx` — PinnableCard showing expiring products with one-click clearance actions
 
----
-
-## Wire into Analytics Hub
-
-**File:** `src/components/dashboard/analytics/RetailAnalyticsContent.tsx`
-
-- Import and render `ExpiryAlertCard` in the retail analytics section alongside the existing Dead Stock and Replenishment cards
-- Pass products data and filter context
-
----
-
-## Auto-Clearance Suggestion Logic
-
-Within the `ExpiryAlertCard`, suggest discount tiers based on proximity to expiry:
-- **Within alert threshold but not expired**: suggest 25% markdown
-- **Expired**: suggest 50% markdown
-- One-click action uses existing `useUpdateProduct` to set `clearance_status: 'discounted'`
-
----
-
-## Technical Details
-
-| Layer | Artifact |
-|-------|----------|
-| DB | Migration: add `expires_at DATE`, `expiry_alert_days INTEGER DEFAULT 30` to products |
-| Hook | Update `Product` interface and `useCreateProduct`; add `expiringOnly` filter |
-| Component (new) | `ExpiryAlertCard.tsx` — analytics card for expiry alerts |
-| Component (edit) | `ProductFormDialog` — add expiry date + alert days inputs |
-| Component (edit) | Products table — add Expiry column with color-coded badges |
-| Component (edit) | `RetailAnalyticsContent.tsx` — wire ExpiryAlertCard |
-
+### Files Updated
+- `src/hooks/useProducts.ts` — Added `expires_at`, `expiry_alert_days` to Product interface; added `expiringOnly` filter
+- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Expiry date + alert days in product form; color-coded Expiry column in product table
+- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ExpiryAlertCard into analytics hub

@@ -48,6 +48,7 @@ import { ReplenishmentTimelineCard } from './ReplenishmentTimelineCard';
 import { InventoryValuationCard } from './InventoryValuationCard';
 import { DeadStockAlertCard } from './DeadStockAlertCard';
 import { ReorderApprovalCard } from './ReorderApprovalCard';
+import { ExpiryAlertCard } from './ExpiryAlertCard';
 
 interface RetailAnalyticsContentProps {
   dateFrom: string;
@@ -2066,6 +2067,11 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
       {/* ─── Inventory Valuation ─── */}
       {allProducts && (
         <InventoryValuationCard products={allProducts} movementRatings={productMovementRatings} filterContext={filterContext} />
+      )}
+
+      {/* ─── Expiry Alerts ─── */}
+      {allProducts && (
+        <ExpiryAlertCard products={allProducts} filterContext={filterContext} />
       )}
 
       {/* ─── Dead Stock Auto-Clearance Suggestions ─── */}
