@@ -417,7 +417,7 @@ export async function executeCaptureReweigh(
 
 export async function executeCompleteSession(
   cmd: CompleteSessionCommand,
-): Promise<CommandResult> {
+): Promise<CommandResult<unknown>> {
   const session = await fetchSessionState(cmd.mix_session_id);
   const bowlsReady = await allBowlsTerminal(cmd.mix_session_id);
   const errors = validateCompleteSession(cmd.meta.initiated_by, session, bowlsReady);
