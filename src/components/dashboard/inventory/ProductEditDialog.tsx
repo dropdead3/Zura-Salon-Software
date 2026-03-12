@@ -95,6 +95,7 @@ export function ProductEditDialog({ productId, open, onOpenChange }: ProductEdit
       cost_price: data.cost_price ? parseFloat(data.cost_price) : null,
       quantity_on_hand: data.quantity_on_hand ? parseInt(data.quantity_on_hand) : null,
       reorder_level: data.reorder_level ? parseInt(data.reorder_level) : null,
+      par_level: data.par_level ? parseInt(data.par_level) : null,
     };
 
     try {
