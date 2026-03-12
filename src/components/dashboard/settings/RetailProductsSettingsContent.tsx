@@ -1310,6 +1310,14 @@ function InventoryByLocationTab() {
           )}
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size={tokens.button.inline}
+            className="gap-1.5"
+            onClick={() => setShowStocktake(true)}
+          >
+            <ClipboardCheck className="w-3.5 h-3.5" /> Stocktake
+          </Button>
           {locations && locations.length > 1 && (
             <Button
               variant="outline"
