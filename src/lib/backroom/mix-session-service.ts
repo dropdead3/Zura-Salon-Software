@@ -345,8 +345,8 @@ export async function replayOfflineQueue(): Promise<{ replayed: number; failed: 
   }
 
   // Emit sync_reconciled event for each session that had offline events
-  const sessionIds = new Set(queue.map(q => q.input.mix_session_id));
-  for (const sessionId of sessionIds) {
+  const reconcileSessionIds = new Set(queue.map(q => q.input.mix_session_id));
+  for (const sessionId of reconcileSessionIds) {
     const orgId = queue.find(q => q.input.mix_session_id === sessionId)?.input.organization_id;
     if (orgId) {
       await emitSessionEvent({
