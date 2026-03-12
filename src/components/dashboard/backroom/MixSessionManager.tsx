@@ -17,6 +17,7 @@ import { useMixBowlLines, useAddBowlLine, useDeleteBowlLine } from '@/hooks/back
 import { useCreateReweighEvent } from '@/hooks/backroom/useReweighEvents';
 import { useCreateWasteEvent, type WasteCategory } from '@/hooks/backroom/useWasteEvents';
 import { useSaveFormulaHistory } from '@/hooks/backroom/useClientFormulaHistory';
+import { supabase } from '@/integrations/supabase/client';
 import { calculateBowlWeight, calculateBowlCost, calculateNetUsage, extractActualFormula, extractRefinedFormula } from '@/lib/backroom/mix-calculations';
 import { isTerminalSessionStatus } from '@/lib/backroom/session-state-machine';
 import { useAuth } from '@/contexts/AuthContext';
@@ -47,7 +48,6 @@ export function MixSessionManager({
   const { user } = useAuth();
   const [stationId, setStationId] = useState<string | null>(null);
   const [showWasteDialog, setShowWasteDialog] = useState(false);
-  const [activeBowlLines, setActiveBowlLines] = useState<Record<string, ReturnType<typeof useMixBowlLines>>>({});
 
   // Data hooks
   const { data: sessions = [], isLoading: loadingSessions } = useMixSession(appointmentId);
@@ -90,20 +90,59 @@ export function MixSessionManager({
     });
   }, [activeSession, updateSessionStatus]);
 
-  const handleMoveToReweigh = useCallback(() => {
+  const handleMoveToReweigh = useCallback(async () => {
     if (!activeSession) return;
-    // Seal all open bowls first
+
     const openBowls = bowls.filter((b) => b.status === 'open');
     if (openBowls.length > 0) {
-      toast.error('Please seal all open bowls before moving to reweigh');
-      return;
+      // Batch-seal open bowls with lines, discard empty ones
+      const sealPromises: Promise<unknown>[] = [];
+      const sealed: number[] = [];
+      const discarded: number[] = [];
+
+      for (const bowl of openBowls) {
+        // Check if bowl has lines by looking at total_dispensed_weight
+        if (bowl.total_dispensed_weight > 0) {
+          sealPromises.push(
+            updateBowlStatus.mutateAsync({
+              id: bowl.id,
+              sessionId: activeSession.id,
+              currentStatus: bowl.status,
+              newStatus: 'sealed',
+            })
+          );
+          sealed.push(bowl.bowl_number);
+        } else {
+          sealPromises.push(
+            updateBowlStatus.mutateAsync({
+              id: bowl.id,
+              sessionId: activeSession.id,
+              currentStatus: bowl.status,
+              newStatus: 'discarded',
+            })
+          );
+          discarded.push(bowl.bowl_number);
+        }
+      }
+
+      try {
+        await Promise.all(sealPromises);
+        const parts: string[] = [];
+        if (sealed.length) parts.push(`Sealed bowl${sealed.length > 1 ? 's' : ''} ${sealed.join(', ')}`);
+        if (discarded.length) parts.push(`Discarded empty bowl${discarded.length > 1 ? 's' : ''} ${discarded.join(', ')}`);
+        if (parts.length) toast.info(parts.join('. '));
+      } catch {
+        toast.error('Failed to auto-seal bowls');
+        return;
+      }
     }
+
     updateSessionStatus.mutate({
       id: activeSession.id,
       currentStatus: activeSession.status,
       newStatus: 'pending_reweigh',
     });
-  }, [activeSession, bowls, updateSessionStatus]);
+  }, [activeSession, bowls, updateSessionStatus, updateBowlStatus]);
 
   const handleCompleteSession = useCallback(async () => {
     if (!activeSession) return;
@@ -123,11 +162,81 @@ export function MixSessionManager({
 
     // Save formulas if we have a client
     if (clientId) {
-      // Gather all lines across all bowls for formula
-      // This is a simplified version — in production we'd batch-fetch lines
-      toast.success('Session completed. Formula saved to client history.');
+      try {
+        // Gather bowl IDs (non-discarded only)
+        const validBowls = bowls.filter((b) => b.status !== 'discarded');
+        const bowlIds = validBowls.map((b) => b.id);
+
+        if (bowlIds.length > 0) {
+          // Batch-fetch all lines across all valid bowls
+          const { data: allLines, error: linesError } = await supabase
+            .from('mix_bowl_lines')
+            .select('*')
+            .in('bowl_id', bowlIds)
+            .order('sequence_order', { ascending: true });
+
+          if (linesError) throw linesError;
+
+          const castLines = (allLines ?? []) as unknown as Array<{
+            product_id: string | null;
+            product_name_snapshot: string;
+            brand_snapshot: string | null;
+            dispensed_quantity: number;
+            dispensed_unit: string;
+            dispensed_cost_snapshot: number;
+          }>;
+
+          if (castLines.length > 0) {
+            // Calculate aggregated totals for refined formula
+            const totalDispensed = calculateBowlWeight(castLines);
+            const totalNetUsage = validBowls.reduce(
+              (sum, b) => sum + (b.net_usage_weight ?? b.total_dispensed_weight ?? 0),
+              0
+            );
+
+            const actualFormula = extractActualFormula(castLines);
+            const refinedFormula = extractRefinedFormula(castLines, totalDispensed, totalNetUsage);
+
+            const baseParams = {
+              organization_id: organizationId,
+              client_id: clientId,
+              appointment_id: appointmentId,
+              appointment_service_id: appointmentServiceId,
+              mix_session_id: activeSession.id,
+              service_name: serviceName,
+              staff_id: staffUserId,
+              staff_name: staffName,
+            };
+
+            // Save both formula types
+            await Promise.all([
+              saveFormula.mutateAsync({
+                ...baseParams,
+                formula_type: 'actual',
+                formula_data: actualFormula,
+              }),
+              saveFormula.mutateAsync({
+                ...baseParams,
+                formula_type: 'refined',
+                formula_data: refinedFormula,
+              }),
+            ]);
+
+            toast.success('Session completed. Formula saved to client history.');
+          } else {
+            toast.success('Session completed. No products to save.');
+          }
+        } else {
+          toast.success('Session completed.');
+        }
+      } catch (error) {
+        console.error('Failed to save formula:', error);
+        toast.error('Session completed but formula save failed. Check client history.');
+      }
+    } else {
+      toast.info('Session completed. No client linked — formula not saved.');
     }
-  }, [activeSession, bowls, clientId, updateSessionStatus]);
+  }, [activeSession, bowls, clientId, organizationId, appointmentId, appointmentServiceId, serviceName, staffUserId, staffName, updateSessionStatus, saveFormula]);
 
   // ─── Bowl Actions ─────────────────────────────────
   const handleAddBowl = useCallback(() => {
@@ -157,7 +266,7 @@ export function MixSessionManager({
       dispensed_unit: unit,
       dispensed_cost_snapshot: costPerUnit,
       captured_via: capturedVia,
-      sequence_order: 0, // Will be calculated
+      sequence_order: 0, // Auto-incremented in hook
     });
   }, [addBowlLine]);
 
@@ -176,30 +285,35 @@ export function MixSessionManager({
     });
   }, [bowls, activeSession, updateBowlStatus]);
 
-  const handleReweighBowl = useCallback((bowlId: string, leftover: number, unit: string) => {
+  const handleReweighBowl = useCallback(async (bowlId: string, leftover: number, unit: string) => {
     if (!activeSession) return;
     const bowl = bowls.find((b) => b.id === bowlId);
     if (!bowl) return;
 
     const netUsage = calculateNetUsage(bowl.total_dispensed_weight ?? 0, leftover);
 
-    createReweigh.mutate({
-      bowl_id: bowlId,
-      mix_session_id: activeSession.id,
-      leftover_quantity: leftover,
-      leftover_unit: unit,
-    });
+    // Coordinate: reweigh event must succeed before status update
+    try {
+      await createReweigh.mutateAsync({
+        bowl_id: bowlId,
+        mix_session_id: activeSession.id,
+        leftover_quantity: leftover,
+        leftover_unit: unit,
+      });
 
-    updateBowlStatus.mutate({
-      id: bowlId,
-      sessionId: activeSession.id,
-      currentStatus: bowl.status,
-      newStatus: 'reweighed',
-      totals: {
-        leftover_weight: leftover,
-        net_usage_weight: netUsage,
-      },
-    });
+      updateBowlStatus.mutate({
+        id: bowlId,
+        sessionId: activeSession.id,
+        currentStatus: bowl.status,
+        newStatus: 'reweighed',
+        totals: {
+          leftover_weight: leftover,
+          net_usage_weight: netUsage,
+        },
+      });
+    } catch {
+      toast.error('Reweigh failed — bowl remains sealed. Please retry.');
+    }
   }, [activeSession, bowls, createReweigh, updateBowlStatus]);
 
   const handleDiscardBowl = useCallback((bowlId: string) => {
@@ -242,7 +356,7 @@ export function MixSessionManager({
           <div className="space-y-3">
             <h3 className="font-display text-sm tracking-wide text-muted-foreground">Previous Sessions</h3>
             {completedSessions.map((s) => (
-              <SessionSummary key={s.id} session={s} bowls={[]} />
+              <CompletedSessionSummary key={s.id} session={s} />
             ))}
           </div>
         )}
@@ -395,4 +509,13 @@ function BowlCardWithLines({
       onDiscardBowl={onDiscardBowl}
     />
   );
+}
+
+/**
+ * Wrapper that fetches bowls for a completed session and renders SessionSummary.
+ */
+function CompletedSessionSummary({ session }: { session: MixSession }) {
+  const { data: sessionBowls = [] } = useMixBowls(session.id);
+
+  return <SessionSummary session={session} bowls={sessionBowls} />;
 }

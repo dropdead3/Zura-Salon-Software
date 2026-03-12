@@ -1,157 +1,153 @@
 
 
-# Zura Backroom — Phase 1 Implementation Plan
+## Timezone-Safe Scheduling (Implemented)
 
-Phase 1 is already largely built. This plan addresses the **6 identified gaps** that prevent the end-to-end workflow from functioning correctly.
+### Problem
+`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
 
----
+### Solution
+- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
+- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
+- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
 
-## Gap Analysis
+### Files Updated
+- `ScheduleHeader.tsx` — today button, quick days, isToday checks
+- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
+- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
+- `MonthView.tsx` — today highlight
+- `AgendaView.tsx` — today/tomorrow labels, today border
+- `ScheduleActionBar.tsx` — payment queue timing
+- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
+- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
+- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
+- `useHuddles.ts` — today's huddle query
 
-| # | Gap | Impact |
-|---|---|---|
-| 1 | `handleCompleteSession` does not save formulas — lines 124-129 are a placeholder | Formula is never persisted to `client_formula_history` |
-| 2 | `SessionSummary` for completed sessions receives `bowls={[]}` (line 245) | Past session summaries show 0 bowls, 0 cost, 0 usage |
-| 3 | Bowl `total_dispensed_weight` and `total_dispensed_cost` are never updated when lines are added | Bowl card shows live-calculated values, but DB columns stay at 0; session summary breaks |
-| 4 | `sequence_order` is hardcoded to `0` on every line add (line 161) | All lines have the same order |
-| 5 | `handleMoveToReweigh` doesn't auto-seal — it rejects if any bowls are open, but there's no batch-seal UX | Friction: user must manually seal each bowl before moving to reweigh |
-| 6 | `ReweighPanel` is inline in `BowlCard` but reweigh + status update fire as two separate uncoordinated mutations | Race condition: bowl could be marked `reweighed` before reweigh event is committed |
+## Auto-Reorder with Supplier Communication (Implemented)
 
----
+### What It Does
+Organizations can opt into automatic reorder — when stock dips below threshold, POs are calculated (using MOQ and par levels) and sent directly to the supplier via email.
 
-## Implementation Tasks
+### Database Changes
+- `products.par_level` (INT, nullable) — desired stock level to reorder up to
+- `product_suppliers.moq` (INT, default 1) — minimum order quantity
+- `inventory_alert_settings.auto_reorder_enabled` (BOOL, default false)
+- `inventory_alert_settings.auto_reorder_mode` (TEXT, default 'to_par') — 'to_par' or 'moq_only'
+- `inventory_alert_settings.max_auto_reorder_value` (NUMERIC, nullable) — daily spend cap
+- `purchase_orders.supplier_confirmed_at` (TIMESTAMPTZ, nullable) — for tracking confirmations
 
-### 1. Wire formula save on session completion
+### Quantity Calculation
+```
+deficit = par_level - quantity_on_hand
+order_qty = max(moq, deficit)
+if moq > 1: round up to nearest MOQ multiple
+```
+Fallback: if par_level is null, uses `reorder_level * 2`.
 
-**File:** `src/components/dashboard/backroom/MixSessionManager.tsx` (lines 108-130)
+### Files Updated
+- Migration: Added columns to products, product_suppliers, inventory_alert_settings, purchase_orders
+- `check-reorder-levels/index.ts` — auto-send logic with MOQ/par calculation, spend cap, email invocation
+- `AlertSettingsCard.tsx` — auto-reorder toggle, mode selector, spend cap input
+- `useInventoryAlertSettings.ts` — updated interface
+- `useProducts.ts` — added par_level to Product interface
+- `useProductSuppliers.ts` — added moq to ProductSupplier interface
+- `ProductEditDialog.tsx` — added par level field
+- `RetailProductsSettingsContent.tsx` — added par level to product form
+- `SupplierDialog.tsx` — added MOQ field
 
-Replace the placeholder with a function that:
-- Fetches all bowl lines across all non-discarded bowls for the session (batch query: `mix_bowl_lines` WHERE `bowl_id` IN `[bowl_ids]`)
-- Calls `extractActualFormula()` from `mix-calculations.ts` to build the actual formula
-- Calls `extractRefinedFormula()` using each bowl's `total_dispensed_weight` and `net_usage_weight`
-- Calls `saveFormula.mutateAsync()` twice (once for `actual`, once for `refined`) with the session's `organization_id`, `client_id`, `appointment_id`, `mix_session_id`, `service_name`, `staff_id`, `staff_name`
-- Only saves if `clientId` is present
-- Shows toast on success/failure
+### Safety Features
+- Spend cap: daily auto-reorder pauses when cumulative PO value exceeds cap
+- Audit trail: auto_reorder logged as stock_movement reason
+- Supplier confirmation tracking via supplier_confirmed_at timestamp
 
-**API contract:** No new endpoints. Uses existing `useSaveFormulaHistory` and `supabase.from('mix_bowl_lines').select('*').in('bowl_id', bowlIds)`.
+## Product Movement Rating Badges (Implemented)
 
-### 2. Load bowls for completed session summaries
+### What It Does
+Every product gets a dynamic movement rating badge (Best Seller, Popular, Steady, Slow Mover, Stagnant, Dead Weight) computed from 90-day sales velocity data.
 
-**File:** `src/components/dashboard/backroom/MixSessionManager.tsx` (line 245)
+### Rating Tiers
+- **Best Seller**: Top 10% velocity AND >0.5 units/day (emerald)
+- **Popular**: Top 25% velocity AND >0.2 units/day (blue)
+- **Steady**: Velocity >0.05/day (muted)
+- **Slow Mover**: Velocity >0 but ≤0.05/day (amber)
+- **Stagnant**: Zero velocity, sold within 180 days (orange)
+- **Dead Weight**: Zero velocity, 180+ days or never sold (red)
+- Products with zero stock excluded from negative ratings
 
-Create a `CompletedSessionSummary` wrapper component (similar to `BowlCardWithLines`) that:
-- Takes a session ID
-- Calls `useMixBowls(session.id)` to fetch bowls
-- Renders `SessionSummary` with actual bowl data
+### Files Created
+- `src/lib/productMovementRating.ts` — pure rating logic + badge config
+- `src/hooks/useProductVelocity.ts` — lightweight 90-day POS velocity query
+- `src/components/ui/MovementBadge.tsx` — shared badge component with tooltip
 
-### 3. Update bowl totals when lines change
+### Files Updated
+- `RetailProductsSettingsContent.tsx` — Movement column + filter dropdown in products table
+- `RetailAnalyticsContent.tsx` — Movement badges on product performance table + Movement Distribution card (donut chart with actionable callouts)
+- `ProductCard.tsx` — Best Seller/Popular badges on public shop cards (positive only)
+- `ProductDetailModal.tsx` — Movement badge with velocity context
 
-**File:** `src/hooks/backroom/useMixBowlLines.ts`
+## Inventory Intelligence Suite v2 (Implemented)
 
-In the `onSuccess` callbacks of `useAddBowlLine` and `useDeleteBowlLine`:
-- After invalidating `mix-bowl-lines`, fetch all current lines for the bowl
-- Calculate `total_dispensed_weight` and `total_dispensed_cost` using `calculateBowlWeight()` and `calculateBowlCost()`
-- Update the bowl record via `supabase.from('mix_bowls').update({ total_dispensed_weight, total_dispensed_cost }).eq('id', bowlId)`
-- This ensures the DB columns are always in sync for session summary calculations
+### 1. Dead Stock Auto-Clearance Pipeline
+- `DeadStockAlertCard.tsx` — Surfaces Dead Weight/Stagnant products not yet in clearance with suggested discount tiers (10%/25%/50% based on idle days)
+- One-click "Mark for Clearance" applies discount and sets clearance_status
 
-### 4. Auto-increment sequence_order
+### 2. Supplier Lead Time Tracker
+- `usePurchaseOrders.ts` — `useMarkPurchaseOrderReceived` already computes actual delivery days and updates `product_suppliers.avg_delivery_days` via running average
+- `parLevelSuggestion.ts` — Updated to accept supplier-provided lead time instead of hardcoded 7-day default, with bounds clamping
 
-**File:** `src/components/dashboard/backroom/MixSessionManager.tsx` (line 161)
+### 3. Inventory Valuation Dashboard Card
+- `InventoryValuationCard.tsx` — Shows total inventory at cost/retail, potential margin %, capital-at-risk (slow/stagnant/dead weight), with donut chart breakdown
 
-Change `handleAddLine` to pass `sequence_order: lines.length + 1` where `lines` is available. Since `BowlCardWithLines` already fetches lines, thread the current line count up through the `onAddLine` callback, or calculate it from the bowl's lines in the hook.
+### 4. Reorder Approval Queue
+- `ReorderApprovalCard.tsx` — Surfaces draft POs from auto-reorder with one-click approve (→ sent) or reject (→ cancelled)
 
-Simpler approach: in `useAddBowlLine`, before inserting, query the max `sequence_order` for the bowl and use `max + 1`.
+### 5. Stock Transfer Between Locations
+- Migration: Created `stock_transfers` table with RLS (org member read, org admin manage)
+- `useStockTransfers.ts` — CRUD hooks for stock transfers with stock movement logging
+- `StockTransferDialog.tsx` — Dialog for creating transfers between locations
+- `RetailProductsSettingsContent.tsx` — "Transfer Stock" button added to Inventory tab (visible for multi-location orgs)
 
-### 5. Add batch-seal option before reweigh
+## Enhancement 1: Expiry Tracking (Implemented)
 
-**File:** `src/components/dashboard/backroom/MixSessionManager.tsx` (lines 93-106)
+### What It Does
+Products can have an optional expiration date (`expires_at`) and per-product alert threshold (`expiry_alert_days`, default 30). The system surfaces expiring inventory with color-coded badges in the product table and an analytics card with auto-clearance suggestions.
 
-Change `handleMoveToReweigh` to:
-- If open bowls exist with lines, auto-seal them all (fire `updateBowlStatus` for each)
-- If open bowls exist with no lines, auto-discard them
-- Then transition the session to `pending_reweigh`
-- Show a confirmation toast listing what was auto-sealed/discarded
+### Database Changes
+- `products.expires_at` (DATE, nullable) — expiration date for perishable products
+- `products.expiry_alert_days` (INTEGER, default 30) — days before expiry to trigger alerts
 
-### 6. Coordinate reweigh event + bowl status update
+### Expiry Alert Buckets
+- **Expired** (red): past expiration → suggests 50% markdown
+- **Critical** (orange): within alert threshold → suggests 25% markdown
+- **Warning** (amber): within 2× alert threshold → suggests 10% markdown
 
-**File:** `src/components/dashboard/backroom/MixSessionManager.tsx` (lines 179-203)
+### Files Created
+- `src/components/dashboard/analytics/ExpiryAlertCard.tsx` — PinnableCard showing expiring products with one-click clearance actions
 
-Change `handleReweighBowl` to:
-- `await createReweigh.mutateAsync(...)` first
-- Only then call `updateBowlStatus.mutate(...)` to mark as `reweighed`
-- If the reweigh insert fails, the bowl stays `sealed` (correct behavior)
+### Files Updated
+- `src/hooks/useProducts.ts` — Added `expires_at`, `expiry_alert_days` to Product interface; added `expiringOnly` filter
+- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Expiry date + alert days in product form; color-coded Expiry column in product table
+- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ExpiryAlertCard into analytics hub
 
----
+## Enhancement 2: Shrinkage Detection (Implemented)
 
-## No Schema Changes Required
+### What It Does
+Physical stocktake workflow with variance reporting. Staff record actual counts via a Stocktake dialog, and the system compares against expected quantities (system records). A Shrinkage Report card in analytics surfaces products with negative variance (loss) ranked by estimated cost impact.
 
-All 8 tables are already deployed. No new migrations needed for Phase 1 completion.
+### Database Changes
+- Created `stock_counts` table with computed `variance` column (counted - expected), RLS policies (org member read/insert, org admin update/delete), and indexes
 
----
+### Shrinkage Calculation
+```
+variance = counted_quantity - expected_quantity
+shrinkage_units = |variance| when variance < 0
+shrinkage_cost = shrinkage_units × cost_price
+```
 
-## State Machines (Already Implemented — No Changes)
+### Files Created
+- `src/hooks/useStockCounts.ts` — CRUD hooks for stock counts + `useShrinkageSummary` for aggregated shrinkage data
+- `src/components/dashboard/settings/inventory/StocktakeDialog.tsx` — Full stocktake UI with search, inline count entry, real-time variance display
+- `src/components/dashboard/analytics/ShrinkageReportCard.tsx` — PinnableCard showing products with shrinkage, severity badges, estimated loss
 
-- **Session:** `draft → mixing → pending_reweigh → completed` / `draft|mixing → cancelled`
-- **Bowl:** `open → sealed → reweighed` / `open|sealed → discarded`
-- **Scale:** `manual_override` only (Phase 1)
-
----
-
-## Service Boundaries (No Changes)
-
-| Module | File | Responsibility |
-|---|---|---|
-| Calculations | `src/lib/backroom/mix-calculations.ts` | Pure deterministic math |
-| Session FSM | `src/lib/backroom/session-state-machine.ts` | Session lifecycle |
-| Bowl FSM | `src/lib/backroom/bowl-state-machine.ts` | Bowl lifecycle |
-| Scale adapter | `src/lib/backroom/scale-adapter.ts` | Manual entry (Phase 1) |
-| Weight schema | `src/lib/backroom/weight-event-schema.ts` | Normalized events |
-
----
-
-## Frontend Components (No New Components)
-
-All 11 components exist. Changes are limited to:
-- `MixSessionManager.tsx` — wire formula save, fix sequence_order, batch-seal, coordinate reweigh
-- `useMixBowlLines.ts` — sync bowl totals on line add/delete
-- New `CompletedSessionSummary` wrapper (small inline component)
-
----
-
-## Edge Case Handling
-
-| Edge Case | Handling |
-|---|---|
-| **No client on appointment** | Skip formula save entirely; toast "No client linked — formula not saved" |
-| **Zero lines in a bowl** | Auto-discard on batch-seal during move-to-reweigh |
-| **Reweigh DB insert fails** | Bowl stays `sealed`; user can retry |
-| **Session completed with unreweighed bowls** | Already handled: `unresolved_flag = true` |
-| **Concurrent line adds** | `sequence_order` uses MAX query; last-writer-wins is acceptable |
-| **Bowl totals drift** | Recalculated on every line add/delete from source lines |
-
----
-
-## Test Plan
-
-| Test | Type | Verification |
-|---|---|---|
-| Start session → add bowl → add 2 lines → seal → reweigh → complete | E2E | Session status = `completed`, formula saved to `client_formula_history` |
-| Complete session with no client | E2E | No formula saved, no error, toast displayed |
-| Multi-bowl session (3 bowls) | E2E | Each bowl has independent lines, all reweighed, session cost = sum of bowl costs |
-| Discard a bowl mid-session | E2E | Discarded bowl excluded from formula, session completes normally |
-| Skip reweigh and force-complete | E2E | `unresolved_flag = true`, `unresolved_reason` populated |
-| Completed session summary shows real data | UI | `SessionSummary` displays correct bowl count, net usage, cost |
-| Bowl totals update on line add/delete | DB | `mix_bowls.total_dispensed_weight` matches sum of line quantities |
-| Sequence order auto-increments | DB | Lines ordered 1, 2, 3 in insertion order |
-
----
-
-## Implementation Order
-
-1. Fix bowl totals sync in `useMixBowlLines.ts` (prerequisite for correct summaries)
-2. Auto-increment `sequence_order` in `useAddBowlLine`
-3. Coordinate reweigh mutations in `handleReweighBowl`
-4. Add batch-seal in `handleMoveToReweigh`
-5. Wire formula save in `handleCompleteSession`
-6. Add `CompletedSessionSummary` wrapper for past sessions
-
+### Files Updated
+- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Added "Stocktake" button to Inventory tab toolbar
+- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ShrinkageReportCard into analytics hub
