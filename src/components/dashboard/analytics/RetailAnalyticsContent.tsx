@@ -834,8 +834,10 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                             <div className="flex items-center gap-2">
                               <span className="font-medium text-sm">{p.name}</span>
                               {(() => {
-                                const rating = productMovementRatings.get(p.name.toLowerCase().trim());
-                                return rating ? <MovementBadge rating={rating} compact /> : null;
+                                const nameLower = p.name.toLowerCase().trim();
+                                const rating = productMovementRatings.get(nameLower);
+                                const change = productVelocityChanges.get(nameLower);
+                                return rating ? <MovementBadge rating={rating} compact velocityChange={change} /> : null;
                               })()}
                             </div>
                           </TableCell>
