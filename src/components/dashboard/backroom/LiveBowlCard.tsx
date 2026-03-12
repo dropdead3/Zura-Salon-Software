@@ -65,6 +65,7 @@ export function LiveBowlCard({
   onDiscardBowl,
 }: LiveBowlCardProps) {
   const [lastCapturedId, setLastCapturedId] = useState<string | null>(null);
+  const [quickProduct, setQuickProduct] = useState<PinnedProduct | null>(null);
 
   const liveWeight = calculateBowlWeight(lines);
   const liveCost = calculateBowlCost(lines);
