@@ -1312,6 +1312,10 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
           <Tabs defaultValue="history" className="mt-0">
             <TabsList className="w-full rounded-xl">
               <TabsTrigger value="history" className="flex-1">Visit History</TabsTrigger>
+              <TabsTrigger value="transformations" className="flex-1 gap-1">
+                <Camera className="w-3.5 h-3.5" />
+                Transformations
+              </TabsTrigger>
               <TabsTrigger value="transactions" className="flex-1 gap-1">
                 <Receipt className="w-3.5 h-3.5" />
                 Transactions
@@ -1324,6 +1328,13 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
               <VisitHistoryTimeline 
                 visits={visitHistory || []} 
                 isLoading={historyLoading} 
+              />
+            </TabsContent>
+
+            <TabsContent value="transformations" className="mt-4">
+              <TransformationTimeline
+                clientId={client.id}
+                phorestClientId={client.phorest_client_id}
               />
             </TabsContent>
 
