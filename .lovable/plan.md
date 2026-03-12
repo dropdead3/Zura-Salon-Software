@@ -1,153 +1,306 @@
 
 
-## Timezone-Safe Scheduling (Implemented)
+# Phase 4: Inventory Replenishment & Purchasing — Architecture
 
-### Problem
-`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
+## Current State
 
-### Solution
-- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
-- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
-- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
+Already built:
+- `product_suppliers` — 1:1 per product, stores supplier_name, email, lead_time_days, moq, avg_delivery_days, delivery_count
+- `purchase_orders` — single-product POs with draft→sent→received workflow
+- `check-reorder-levels` edge function — batch low-stock detection, auto-creates draft/sent POs
+- `send-reorder-email` edge function — sends PO emails grouped by supplier
+- `useBatchReorder`, `usePurchaseOrders`, `useMarkPurchaseOrderReceived` hooks
+- `inventory_alert_settings` — org-level config for thresholds, auto-reorder, dead stock
+- `products.supplier_id` FK to `product_suppliers`
 
-### Files Updated
-- `ScheduleHeader.tsx` — today button, quick days, isToday checks
-- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
-- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
-- `MonthView.tsx` — today highlight
-- `AgendaView.tsx` — today/tomorrow labels, today border
-- `ScheduleActionBar.tsx` — payment queue timing
-- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
-- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
-- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
-- `useHuddles.ts` — today's huddle query
+**Key gaps:**
+1. No standalone vendor entity — suppliers are duplicated per product (same supplier name repeated across products)
+2. No multi-line POs — each PO is 1 product
+3. No receiving workflow (partial receipts, inspection, discrepancy logging)
+4. No vendor catalog (vendor-specific SKUs, pricing tiers, MOQs)
+5. Replenishment engine is embedded in edge function with basic logic — no usage variance, stddev, or safety stock formula
+6. No `purchase_order_lines` table
 
-## Auto-Reorder with Supplier Communication (Implemented)
+---
 
-### What It Does
-Organizations can opt into automatic reorder — when stock dips below threshold, POs are calculated (using MOQ and par levels) and sent directly to the supplier via email.
+## 1. Schema Changes
 
-### Database Changes
-- `products.par_level` (INT, nullable) — desired stock level to reorder up to
-- `product_suppliers.moq` (INT, default 1) — minimum order quantity
-- `inventory_alert_settings.auto_reorder_enabled` (BOOL, default false)
-- `inventory_alert_settings.auto_reorder_mode` (TEXT, default 'to_par') — 'to_par' or 'moq_only'
-- `inventory_alert_settings.max_auto_reorder_value` (NUMERIC, nullable) — daily spend cap
-- `purchase_orders.supplier_confirmed_at` (TIMESTAMPTZ, nullable) — for tracking confirmations
+### 1a. `vendors` (normalize suppliers into a standalone entity)
 
-### Quantity Calculation
-```
-deficit = par_level - quantity_on_hand
-order_qty = max(moq, deficit)
-if moq > 1: round up to nearest MOQ multiple
-```
-Fallback: if par_level is null, uses `reorder_level * 2`.
-
-### Files Updated
-- Migration: Added columns to products, product_suppliers, inventory_alert_settings, purchase_orders
-- `check-reorder-levels/index.ts` — auto-send logic with MOQ/par calculation, spend cap, email invocation
-- `AlertSettingsCard.tsx` — auto-reorder toggle, mode selector, spend cap input
-- `useInventoryAlertSettings.ts` — updated interface
-- `useProducts.ts` — added par_level to Product interface
-- `useProductSuppliers.ts` — added moq to ProductSupplier interface
-- `ProductEditDialog.tsx` — added par level field
-- `RetailProductsSettingsContent.tsx` — added par level to product form
-- `SupplierDialog.tsx` — added MOQ field
-
-### Safety Features
-- Spend cap: daily auto-reorder pauses when cumulative PO value exceeds cap
-- Audit trail: auto_reorder logged as stock_movement reason
-- Supplier confirmation tracking via supplier_confirmed_at timestamp
-
-## Product Movement Rating Badges (Implemented)
-
-### What It Does
-Every product gets a dynamic movement rating badge (Best Seller, Popular, Steady, Slow Mover, Stagnant, Dead Weight) computed from 90-day sales velocity data.
-
-### Rating Tiers
-- **Best Seller**: Top 10% velocity AND >0.5 units/day (emerald)
-- **Popular**: Top 25% velocity AND >0.2 units/day (blue)
-- **Steady**: Velocity >0.05/day (muted)
-- **Slow Mover**: Velocity >0 but ≤0.05/day (amber)
-- **Stagnant**: Zero velocity, sold within 180 days (orange)
-- **Dead Weight**: Zero velocity, 180+ days or never sold (red)
-- Products with zero stock excluded from negative ratings
-
-### Files Created
-- `src/lib/productMovementRating.ts` — pure rating logic + badge config
-- `src/hooks/useProductVelocity.ts` — lightweight 90-day POS velocity query
-- `src/components/ui/MovementBadge.tsx` — shared badge component with tooltip
-
-### Files Updated
-- `RetailProductsSettingsContent.tsx` — Movement column + filter dropdown in products table
-- `RetailAnalyticsContent.tsx` — Movement badges on product performance table + Movement Distribution card (donut chart with actionable callouts)
-- `ProductCard.tsx` — Best Seller/Popular badges on public shop cards (positive only)
-- `ProductDetailModal.tsx` — Movement badge with velocity context
-
-## Inventory Intelligence Suite v2 (Implemented)
-
-### 1. Dead Stock Auto-Clearance Pipeline
-- `DeadStockAlertCard.tsx` — Surfaces Dead Weight/Stagnant products not yet in clearance with suggested discount tiers (10%/25%/50% based on idle days)
-- One-click "Mark for Clearance" applies discount and sets clearance_status
-
-### 2. Supplier Lead Time Tracker
-- `usePurchaseOrders.ts` — `useMarkPurchaseOrderReceived` already computes actual delivery days and updates `product_suppliers.avg_delivery_days` via running average
-- `parLevelSuggestion.ts` — Updated to accept supplier-provided lead time instead of hardcoded 7-day default, with bounds clamping
-
-### 3. Inventory Valuation Dashboard Card
-- `InventoryValuationCard.tsx` — Shows total inventory at cost/retail, potential margin %, capital-at-risk (slow/stagnant/dead weight), with donut chart breakdown
-
-### 4. Reorder Approval Queue
-- `ReorderApprovalCard.tsx` — Surfaces draft POs from auto-reorder with one-click approve (→ sent) or reject (→ cancelled)
-
-### 5. Stock Transfer Between Locations
-- Migration: Created `stock_transfers` table with RLS (org member read, org admin manage)
-- `useStockTransfers.ts` — CRUD hooks for stock transfers with stock movement logging
-- `StockTransferDialog.tsx` — Dialog for creating transfers between locations
-- `RetailProductsSettingsContent.tsx` — "Transfer Stock" button added to Inventory tab (visible for multi-location orgs)
-
-## Enhancement 1: Expiry Tracking (Implemented)
-
-### What It Does
-Products can have an optional expiration date (`expires_at`) and per-product alert threshold (`expiry_alert_days`, default 30). The system surfaces expiring inventory with color-coded badges in the product table and an analytics card with auto-clearance suggestions.
-
-### Database Changes
-- `products.expires_at` (DATE, nullable) — expiration date for perishable products
-- `products.expiry_alert_days` (INTEGER, default 30) — days before expiry to trigger alerts
-
-### Expiry Alert Buckets
-- **Expired** (red): past expiration → suggests 50% markdown
-- **Critical** (orange): within alert threshold → suggests 25% markdown
-- **Warning** (amber): within 2× alert threshold → suggests 10% markdown
-
-### Files Created
-- `src/components/dashboard/analytics/ExpiryAlertCard.tsx` — PinnableCard showing expiring products with one-click clearance actions
-
-### Files Updated
-- `src/hooks/useProducts.ts` — Added `expires_at`, `expiry_alert_days` to Product interface; added `expiringOnly` filter
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Expiry date + alert days in product form; color-coded Expiry column in product table
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ExpiryAlertCard into analytics hub
-
-## Enhancement 2: Shrinkage Detection (Implemented)
-
-### What It Does
-Physical stocktake workflow with variance reporting. Staff record actual counts via a Stocktake dialog, and the system compares against expected quantities (system records). A Shrinkage Report card in analytics surfaces products with negative variance (loss) ranked by estimated cost impact.
-
-### Database Changes
-- Created `stock_counts` table with computed `variance` column (counted - expected), RLS policies (org member read/insert, org admin update/delete), and indexes
-
-### Shrinkage Calculation
-```
-variance = counted_quantity - expected_quantity
-shrinkage_units = |variance| when variance < 0
-shrinkage_cost = shrinkage_units × cost_price
+```sql
+CREATE TABLE IF NOT EXISTS public.vendors (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  email TEXT,
+  phone TEXT,
+  website TEXT,
+  account_number TEXT,
+  payment_terms TEXT,          -- 'net_30', 'net_60', 'cod', 'prepaid'
+  default_lead_time_days INT DEFAULT 7,
+  notes TEXT,
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  created_by UUID REFERENCES auth.users(id),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (organization_id, name)
+);
+-- RLS: org_member SELECT, org_admin ALL
+-- Trigger: update_backroom_updated_at
+-- Indexes: organization_id
 ```
 
-### Files Created
-- `src/hooks/useStockCounts.ts` — CRUD hooks for stock counts + `useShrinkageSummary` for aggregated shrinkage data
-- `src/components/dashboard/settings/inventory/StocktakeDialog.tsx` — Full stocktake UI with search, inline count entry, real-time variance display
-- `src/components/dashboard/analytics/ShrinkageReportCard.tsx` — PinnableCard showing products with shrinkage, severity badges, estimated loss
+### 1b. `vendor_products` (catalog: what each vendor sells)
 
-### Files Updated
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Added "Stocktake" button to Inventory tab toolbar
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ShrinkageReportCard into analytics hub
+```sql
+CREATE TABLE IF NOT EXISTS public.vendor_products (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  vendor_id UUID NOT NULL REFERENCES public.vendors(id) ON DELETE CASCADE,
+  product_id UUID NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
+  organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+  vendor_sku TEXT,              -- supplier's own SKU
+  unit_cost NUMERIC,            -- vendor price per unit
+  moq INT NOT NULL DEFAULT 1,
+  pack_size INT DEFAULT 1,      -- units per case
+  lead_time_days INT,           -- override vendor default
+  is_preferred BOOLEAN DEFAULT false,
+  notes TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (vendor_id, product_id)
+);
+-- RLS: org_member SELECT, org_admin ALL
+-- Trigger: update_backroom_updated_at
+-- Indexes: vendor_id, product_id, organization_id
+```
+
+### 1c. `purchase_order_lines` (multi-product POs)
+
+```sql
+CREATE TABLE IF NOT EXISTS public.purchase_order_lines (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  purchase_order_id UUID NOT NULL REFERENCES public.purchase_orders(id) ON DELETE CASCADE,
+  product_id UUID NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
+  vendor_product_id UUID REFERENCES public.vendor_products(id) ON DELETE SET NULL,
+  quantity_ordered INT NOT NULL,
+  quantity_received INT DEFAULT 0,
+  unit_cost NUMERIC,
+  line_total NUMERIC,
+  notes TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+-- RLS: via parent purchase_order org_member check
+-- Index: purchase_order_id, product_id
+```
+
+### 1d. `receiving_records` (partial receipt, inspection, discrepancy)
+
+```sql
+CREATE TABLE IF NOT EXISTS public.receiving_records (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+  purchase_order_id UUID NOT NULL REFERENCES public.purchase_orders(id) ON DELETE CASCADE,
+  received_by UUID REFERENCES auth.users(id),
+  received_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  notes TEXT,
+  status TEXT NOT NULL DEFAULT 'complete', -- 'partial', 'complete', 'rejected'
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+-- RLS: org_member SELECT/INSERT, org_admin UPDATE
+-- Index: purchase_order_id
+```
+
+### 1e. `receiving_record_lines` (per-product receipt quantities)
+
+```sql
+CREATE TABLE IF NOT EXISTS public.receiving_record_lines (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  receiving_record_id UUID NOT NULL REFERENCES public.receiving_records(id) ON DELETE CASCADE,
+  po_line_id UUID NOT NULL REFERENCES public.purchase_order_lines(id) ON DELETE CASCADE,
+  product_id UUID NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
+  quantity_received INT NOT NULL,
+  quantity_damaged INT DEFAULT 0,
+  quantity_rejected INT DEFAULT 0,
+  lot_number TEXT,
+  expiry_date DATE,
+  notes TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+-- RLS: via parent receiving_record
+-- Index: receiving_record_id, po_line_id
+```
+
+### 1f. `replenishment_recommendations` (engine output)
+
+```sql
+CREATE TABLE IF NOT EXISTS public.replenishment_recommendations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+  product_id UUID NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
+  vendor_id UUID REFERENCES public.vendors(id) ON DELETE SET NULL,
+  daily_usage_rate NUMERIC NOT NULL DEFAULT 0,
+  usage_stddev NUMERIC DEFAULT 0,
+  lead_time_days INT NOT NULL DEFAULT 7,
+  safety_stock NUMERIC NOT NULL DEFAULT 0,
+  reorder_point NUMERIC NOT NULL DEFAULT 0,
+  target_stock NUMERIC NOT NULL DEFAULT 0,
+  recommended_qty INT NOT NULL DEFAULT 0,
+  current_on_hand NUMERIC DEFAULT 0,
+  open_po_qty INT DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'pending',   -- pending, approved, ordered, dismissed
+  generated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  expires_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+-- RLS: org_member SELECT, org_member INSERT, org_admin UPDATE
+-- Indexes: organization_id, product_id, status
+```
+
+### 1g. Alter `purchase_orders` for multi-line support
+
+```sql
+ALTER TABLE public.purchase_orders
+  ADD COLUMN IF NOT EXISTS vendor_id UUID REFERENCES public.vendors(id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS po_number TEXT,
+  ADD COLUMN IF NOT EXISTS line_count INT DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS subtotal NUMERIC DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS shipping_cost NUMERIC DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS tax_amount NUMERIC DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS grand_total NUMERIC DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS receiving_status TEXT DEFAULT 'not_received'; -- not_received, partial, complete
+-- Make product_id nullable (legacy single-product POs keep it; new multi-line POs use lines)
+ALTER TABLE public.purchase_orders ALTER COLUMN product_id DROP NOT NULL;
+```
+
+---
+
+## 2. Replenishment Engine
+
+Pure calculation module at `src/lib/inventory/replenishment-engine.ts`:
+
+```typescript
+interface ReplenishmentInput {
+  trailingUsage28d: number;       // total units used in 28 days
+  usageValues: number[];          // daily usage array for stddev
+  leadTimeDays: number;
+  reviewPeriodDays: number;       // default 7 (weekly review)
+  safetyFactor: number;           // default 1.65 (95% service level)
+  minimumBuffer: number;          // default 2
+  currentOnHand: number;
+  openPoQty: number;
+  moq: number;
+  packSize: number;
+}
+
+interface ReplenishmentResult {
+  dailyUsageRate: number;
+  usageStddev: number;
+  leadTimeDemand: number;
+  safetyStock: number;
+  reorderPoint: number;
+  targetStock: number;
+  recommendedQty: number;        // rounded up to MOQ/pack_size
+  needsReorder: boolean;
+}
+
+// Formulas:
+// daily_usage_rate = trailing_28_day_usage / 28
+// lead_time_demand = daily_usage_rate × lead_time_days
+// safety_stock = max(usage_stddev × safety_factor, minimum_buffer)
+// reorder_point = lead_time_demand + safety_stock
+// target_stock = lead_time_demand + review_period_demand + safety_stock
+// recommended_qty = max(0, target_stock - current_on_hand - open_po_qty)
+// → round up to nearest MOQ/pack_size multiple
+```
+
+---
+
+## 3. PO Workflow (State Machine)
+
+```text
+draft → submitted → sent → partially_received → received → closed
+                  ↘ cancelled
+draft → cancelled
+```
+
+- **draft**: Lines being built, editable
+- **submitted**: Internal approval (manager review)
+- **sent**: Emailed to vendor
+- **partially_received**: At least one receiving_record exists, not all lines fulfilled
+- **received**: All lines fully received (quantity_received >= quantity_ordered)
+- **closed**: Archived after reconciliation
+- **cancelled**: Voided at any pre-received stage
+
+---
+
+## 4. Receiving Workflow
+
+1. User opens a PO → sees all `purchase_order_lines` with ordered vs received quantities
+2. "Receive Shipment" creates a `receiving_record` with status `partial` or `complete`
+3. For each line, user enters `quantity_received`, `quantity_damaged`, `quantity_rejected`
+4. System inserts `receiving_record_lines` → updates `purchase_order_lines.quantity_received` (cumulative)
+5. For each accepted product: inserts `stock_movements` (reason: `receiving`, reference_type: `purchase_order`) and updates `products.quantity_on_hand`
+6. If all lines fully received → PO status moves to `received`; otherwise `partially_received`
+7. Updates vendor `avg_delivery_days` (existing running average logic)
+
+---
+
+## 5. Hooks
+
+| Hook | Purpose |
+|---|---|
+| `useVendors()` | CRUD for vendor directory |
+| `useVendorProducts(vendorId?)` | CRUD for vendor catalog entries |
+| `usePreferredVendor(productId)` | Returns preferred vendor_product for a product |
+| `usePurchaseOrderLines(poId)` | CRUD for PO lines |
+| `useCreateMultiLinePO()` | Creates PO header + lines in one transaction |
+| `useReceiveShipment()` | Creates receiving_record + lines, updates stock, updates PO status |
+| `useReplenishmentRecommendations()` | Fetches pending recommendations |
+| `useGenerateReplenishment()` | Runs replenishment engine for all/selected products, inserts recommendations |
+| `useConvertRecommendationToPO()` | Groups recommendations by vendor → creates multi-line POs |
+
+### Extended hooks
+| Hook | Change |
+|---|---|
+| `useMarkPurchaseOrderReceived` | Delegate to `useReceiveShipment` for proper line-level receiving |
+| `check-reorder-levels` edge function | Call replenishment engine instead of inline math |
+
+---
+
+## 6. Vendor Architecture
+
+**Data model**: `vendors` is the master directory. `vendor_products` is the catalog linking vendors to products with vendor-specific pricing, SKUs, and MOQs. Each product can have multiple vendors; one is marked `is_preferred`.
+
+**Migration path**: Existing `product_suppliers` data can be migrated into `vendors` + `vendor_products` via a one-time migration. The `product_suppliers` table stays for backward compatibility but new code uses `vendors`/`vendor_products`.
+
+**Vendor selection for POs**: When generating a PO, the system selects the preferred vendor (`is_preferred = true`) or falls back to the vendor with the lowest unit_cost.
+
+---
+
+## 7. UI Surfaces
+
+| Surface | Location |
+|---|---|
+| Vendor Directory | `/dashboard/settings/inventory/vendors` — list, add, edit vendors |
+| Vendor Catalog | Vendor detail → products tab with SKUs, pricing |
+| Multi-line PO Builder | PO detail page — add products, set quantities, review totals |
+| Receiving Workspace | PO detail → "Receive" action — line-by-line quantity entry with damage/reject fields |
+| Replenishment Dashboard | Inventory tab — pending recommendations with approve/dismiss/convert-to-PO actions |
+| PO Status Timeline | PO detail — visual state progression with dates |
+
+---
+
+## 8. Implementation Order
+
+1. Create `vendors`, `vendor_products`, `purchase_order_lines`, `receiving_records`, `receiving_record_lines`, `replenishment_recommendations` tables + alter `purchase_orders`
+2. Build `replenishment-engine.ts` calculation module
+3. Build `useVendors` + `useVendorProducts` hooks
+4. Build `usePurchaseOrderLines` + `useCreateMultiLinePO` hooks
+5. Build `useReceiveShipment` hook (line-level receiving + stock updates)
+6. Build `useGenerateReplenishment` + `useConvertRecommendationToPO` hooks
+7. Update `check-reorder-levels` edge function to use new engine
+8. Build Vendor Directory UI
+9. Build multi-line PO builder UI
+10. Build Receiving Workspace UI
+11. Build Replenishment Dashboard UI
+
