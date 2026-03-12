@@ -30,7 +30,7 @@ async function fetchTask(taskId: string) {
     .select('id, organization_id, status, assigned_to, escalation_level')
     .eq('id', taskId)
     .single();
-  return data as { id: string; organization_id: string; status: string; assigned_to: string | null; escalation_level: number } | null;
+  return data as unknown as { id: string; organization_id: string; status: string; assigned_to: string | null; escalation_level: number } | null;
 }
 
 async function auditAndReject(
