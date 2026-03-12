@@ -33,6 +33,7 @@ interface MixSessionManagerProps {
   clientName?: string;
   staffUserId?: string;
   locationId?: string;
+  serviceId?: string;
   serviceName?: string;
   staffName?: string;
 }
