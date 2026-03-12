@@ -1,153 +1,177 @@
 
 
-## Timezone-Safe Scheduling (Implemented)
+# Domain Service Boundary Architecture
 
-### Problem
-`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
+## Current State
 
-### Solution
-- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
-- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
-- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
+Business logic is scattered across two layers with no enforced boundaries:
 
-### Files Updated
-- `ScheduleHeader.tsx` — today button, quick days, isToday checks
-- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
-- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
-- `MonthView.tsx` — today highlight
-- `AgendaView.tsx` — today/tomorrow labels, today border
-- `ScheduleActionBar.tsx` — payment queue timing
-- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
-- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
-- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
-- `useHuddles.ts` — today's huddle query
+- **`src/lib/backroom/`** — Pure calculation modules (good): `mix-calculations.ts`, `analytics-engine.ts`, `allowance-billing.ts`, `replenishment-engine.ts`, `session-state-machine.ts`, `bowl-state-machine.ts`, `mix-session-service.ts`
+- **`src/hooks/`** — React hooks that mix query logic with write operations and cross-domain mutations (problematic): `useDepleteMixSession` writes to `stock_movements`, `usePurchaseOrders` writes to `stock_movements`, `useStockTransfers` writes to `stock_movements`, `useReceiveShipment` writes to `stock_movements`, `useSaveFormulaHistory` writes to `client_formula_history`, `useResolveException` writes to `backroom_exceptions`
 
-## Auto-Reorder with Supplier Communication (Implemented)
+**Problems identified:**
+1. Multiple hooks write directly to `stock_movements` — no single inventory service owns this
+2. `useDepleteMixSession` crosses the MixSession → Inventory boundary directly
+3. Formula saving (`useSaveFormulaHistory`) is callable from anywhere, not gated by session completion
+4. No service-level module for inventory, purchasing, exceptions, or formulas — only hooks with embedded logic
+5. `useBackroomAIInsights` calls an edge function directly with no service abstraction
 
-### What It Does
-Organizations can opt into automatic reorder — when stock dips below threshold, POs are calculated (using MOQ and par levels) and sent directly to the supplier via email.
+---
 
-### Database Changes
-- `products.par_level` (INT, nullable) — desired stock level to reorder up to
-- `product_suppliers.moq` (INT, default 1) — minimum order quantity
-- `inventory_alert_settings.auto_reorder_enabled` (BOOL, default false)
-- `inventory_alert_settings.auto_reorder_mode` (TEXT, default 'to_par') — 'to_par' or 'moq_only'
-- `inventory_alert_settings.max_auto_reorder_value` (NUMERIC, nullable) — daily spend cap
-- `purchase_orders.supplier_confirmed_at` (TIMESTAMPTZ, nullable) — for tracking confirmations
+## Proposed Domain Service Structure
 
-### Quantity Calculation
-```
-deficit = par_level - quantity_on_hand
-order_qty = max(moq, deficit)
-if moq > 1: round up to nearest MOQ multiple
-```
-Fallback: if par_level is null, uses `reorder_level * 2`.
+### Folder Layout
 
-### Files Updated
-- Migration: Added columns to products, product_suppliers, inventory_alert_settings, purchase_orders
-- `check-reorder-levels/index.ts` — auto-send logic with MOQ/par calculation, spend cap, email invocation
-- `AlertSettingsCard.tsx` — auto-reorder toggle, mode selector, spend cap input
-- `useInventoryAlertSettings.ts` — updated interface
-- `useProducts.ts` — added par_level to Product interface
-- `useProductSuppliers.ts` — added moq to ProductSupplier interface
-- `ProductEditDialog.tsx` — added par level field
-- `RetailProductsSettingsContent.tsx` — added par level to product form
-- `SupplierDialog.tsx` — added MOQ field
+```text
+src/lib/backroom/
+  services/
+    mix-session-service.ts     ← (move existing, owns session lifecycle + events)
+    inventory-ledger-service.ts ← NEW: owns stock_movements writes
+    formula-service.ts          ← NEW: owns client_formula_history writes
+    allowance-billing-service.ts← NEW: wraps existing calculations + checkout projection writes
+    exception-service.ts        ← NEW: owns backroom_exceptions writes
+    purchasing-service.ts       ← NEW: owns PO receiving → inventory posting
+    replenishment-service.ts    ← NEW: wraps existing calculations + risk projection reads
+    projection-service.ts       ← NEW: rebuild functions, projection reads
+    analytics-service.ts        ← NEW: wraps existing engine + snapshot queries
+    ai-insight-service.ts       ← NEW: wraps edge function calls, read-only
 
-### Safety Features
-- Spend cap: daily auto-reorder pauses when cumulative PO value exceeds cap
-- Audit trail: auto_reorder logged as stock_movement reason
-- Supplier confirmation tracking via supplier_confirmed_at timestamp
+  calculations/                 ← Pure math (existing, no changes)
+    mix-calculations.ts
+    analytics-engine.ts
+    allowance-billing.ts
+    replenishment-engine.ts
 
-## Product Movement Rating Badges (Implemented)
+  state-machines/               ← Pure state logic (existing, no changes)
+    session-state-machine.ts
+    bowl-state-machine.ts
 
-### What It Does
-Every product gets a dynamic movement rating badge (Best Seller, Popular, Steady, Slow Mover, Stagnant, Dead Weight) computed from 90-day sales velocity data.
-
-### Rating Tiers
-- **Best Seller**: Top 10% velocity AND >0.5 units/day (emerald)
-- **Popular**: Top 25% velocity AND >0.2 units/day (blue)
-- **Steady**: Velocity >0.05/day (muted)
-- **Slow Mover**: Velocity >0 but ≤0.05/day (amber)
-- **Stagnant**: Zero velocity, sold within 180 days (orange)
-- **Dead Weight**: Zero velocity, 180+ days or never sold (red)
-- Products with zero stock excluded from negative ratings
-
-### Files Created
-- `src/lib/productMovementRating.ts` — pure rating logic + badge config
-- `src/hooks/useProductVelocity.ts` — lightweight 90-day POS velocity query
-- `src/components/ui/MovementBadge.tsx` — shared badge component with tooltip
-
-### Files Updated
-- `RetailProductsSettingsContent.tsx` — Movement column + filter dropdown in products table
-- `RetailAnalyticsContent.tsx` — Movement badges on product performance table + Movement Distribution card (donut chart with actionable callouts)
-- `ProductCard.tsx` — Best Seller/Popular badges on public shop cards (positive only)
-- `ProductDetailModal.tsx` — Movement badge with velocity context
-
-## Inventory Intelligence Suite v2 (Implemented)
-
-### 1. Dead Stock Auto-Clearance Pipeline
-- `DeadStockAlertCard.tsx` — Surfaces Dead Weight/Stagnant products not yet in clearance with suggested discount tiers (10%/25%/50% based on idle days)
-- One-click "Mark for Clearance" applies discount and sets clearance_status
-
-### 2. Supplier Lead Time Tracker
-- `usePurchaseOrders.ts` — `useMarkPurchaseOrderReceived` already computes actual delivery days and updates `product_suppliers.avg_delivery_days` via running average
-- `parLevelSuggestion.ts` — Updated to accept supplier-provided lead time instead of hardcoded 7-day default, with bounds clamping
-
-### 3. Inventory Valuation Dashboard Card
-- `InventoryValuationCard.tsx` — Shows total inventory at cost/retail, potential margin %, capital-at-risk (slow/stagnant/dead weight), with donut chart breakdown
-
-### 4. Reorder Approval Queue
-- `ReorderApprovalCard.tsx` — Surfaces draft POs from auto-reorder with one-click approve (→ sent) or reject (→ cancelled)
-
-### 5. Stock Transfer Between Locations
-- Migration: Created `stock_transfers` table with RLS (org member read, org admin manage)
-- `useStockTransfers.ts` — CRUD hooks for stock transfers with stock movement logging
-- `StockTransferDialog.tsx` — Dialog for creating transfers between locations
-- `RetailProductsSettingsContent.tsx` — "Transfer Stock" button added to Inventory tab (visible for multi-location orgs)
-
-## Enhancement 1: Expiry Tracking (Implemented)
-
-### What It Does
-Products can have an optional expiration date (`expires_at`) and per-product alert threshold (`expiry_alert_days`, default 30). The system surfaces expiring inventory with color-coded badges in the product table and an analytics card with auto-clearance suggestions.
-
-### Database Changes
-- `products.expires_at` (DATE, nullable) — expiration date for perishable products
-- `products.expiry_alert_days` (INTEGER, default 30) — days before expiry to trigger alerts
-
-### Expiry Alert Buckets
-- **Expired** (red): past expiration → suggests 50% markdown
-- **Critical** (orange): within alert threshold → suggests 25% markdown
-- **Warning** (amber): within 2× alert threshold → suggests 10% markdown
-
-### Files Created
-- `src/components/dashboard/analytics/ExpiryAlertCard.tsx` — PinnableCard showing expiring products with one-click clearance actions
-
-### Files Updated
-- `src/hooks/useProducts.ts` — Added `expires_at`, `expiry_alert_days` to Product interface; added `expiringOnly` filter
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Expiry date + alert days in product form; color-coded Expiry column in product table
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ExpiryAlertCard into analytics hub
-
-## Enhancement 2: Shrinkage Detection (Implemented)
-
-### What It Does
-Physical stocktake workflow with variance reporting. Staff record actual counts via a Stocktake dialog, and the system compares against expected quantities (system records). A Shrinkage Report card in analytics surfaces products with negative variance (loss) ranked by estimated cost impact.
-
-### Database Changes
-- Created `stock_counts` table with computed `variance` column (counted - expected), RLS policies (org member read/insert, org admin update/delete), and indexes
-
-### Shrinkage Calculation
-```
-variance = counted_quantity - expected_quantity
-shrinkage_units = |variance| when variance < 0
-shrinkage_cost = shrinkage_units × cost_price
+  events/                       ← Event type definitions
+    weight-event-schema.ts      ← (existing)
+    scale-adapter.ts            ← (existing)
 ```
 
-### Files Created
-- `src/hooks/useStockCounts.ts` — CRUD hooks for stock counts + `useShrinkageSummary` for aggregated shrinkage data
-- `src/components/dashboard/settings/inventory/StocktakeDialog.tsx` — Full stocktake UI with search, inline count entry, real-time variance display
-- `src/components/dashboard/analytics/ShrinkageReportCard.tsx` — PinnableCard showing products with shrinkage, severity badges, estimated loss
+### Hooks refactored to thin wrappers
 
-### Files Updated
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Added "Stocktake" button to Inventory tab toolbar
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ShrinkageReportCard into analytics hub
+Hooks become thin React wrappers that call service functions. They do not contain business logic or cross-domain writes.
+
+---
+
+## Service Responsibility Matrix
+
+| Service | Owns (writes) | Reads | Must NOT mutate |
+|---|---|---|---|
+| **MixSessionService** | `mix_session_events`, `mix_sessions`, `mix_bowls`, `mix_bowl_lines` | projections, products | `stock_movements`, `checkout_usage_projections`, `client_formula_history` |
+| **InventoryLedgerService** | `stock_movements` (via trigger: `inventory_projections`, `products.quantity_on_hand`) | `inventory_projections` | `mix_sessions`, checkout, formulas |
+| **FormulaService** | `client_formula_history` | finalized session data (projections) | `mix_sessions`, inventory, checkout |
+| **AllowanceBillingService** | `checkout_usage_projections` | session projections, allowance policies | `mix_sessions`, inventory |
+| **PurchasingService** | `purchase_orders`, `purchase_order_lines` | vendors, products | inventory directly (delegates to InventoryLedgerService) |
+| **ReplenishmentService** | `inventory_risk_projections` | `inventory_projections`, `stock_movements` (read) | purchase orders, inventory |
+| **ExceptionService** | `backroom_exceptions` | session projections, inventory projections | sessions, inventory, formulas |
+| **ProjectionService** | rebuilds of all projection tables | all event streams | source-of-truth tables |
+| **AnalyticsService** | `backroom_analytics_snapshots`, `service_profitability_snapshots`, `staff_backroom_performance` | all projections | operational tables |
+| **AIInsightService** | none (read-only) | analytics snapshots, projections | everything |
+
+---
+
+## Service Interaction Map
+
+```text
+MixSessionService
+  ├── publishes → session_completed event
+  │    ├── consumed by → InventoryLedgerService (posts usage to stock_movements)
+  │    ├── consumed by → FormulaService (saves client formula history)
+  │    ├── consumed by → AllowanceBillingService (computes checkout projection)
+  │    └── consumed by → ExceptionService (creates missing_reweigh, manual_override exceptions)
+  │
+  └── publishes → all mix_session_events
+       └── consumed by → ProjectionService (via DB trigger, updates projections)
+
+InventoryLedgerService
+  ├── publishes → stock_movements INSERT
+  │    └── consumed by → ProjectionService (via DB trigger, updates inventory_projections)
+  │
+  └── called by → PurchasingService (on PO line receive)
+       called by → MixSessionService completion handler
+       called by → useStockTransfers (transfer posting)
+       called by → useStockMovements (manual adjustments, counts, waste)
+
+PurchasingService
+  └── calls → InventoryLedgerService.postReceiving() on shipment receive
+
+ReplenishmentService
+  └── reads → InventoryProjection, stock_movements history
+       publishes → reorder recommendations (consumed by UI, not PurchasingService directly)
+
+ExceptionService
+  └── called by → MixSessionService on completion (deterministic rules)
+       called by → AnalyticsService on anomaly detection (daily)
+
+AnalyticsService
+  └── reads → all projections
+       writes → reporting snapshots only
+
+AIInsightService
+  └── reads → analytics snapshots, projections
+       writes → nothing
+```
+
+---
+
+## Forbidden Cross-Domain Access
+
+| Caller | Cannot |
+|---|---|
+| UI components | Write to `stock_movements`, `backroom_exceptions`, `client_formula_history` directly |
+| MixSessionService | Write to `stock_movements` or `checkout_usage_projections` |
+| InventoryLedgerService | Write to `mix_sessions`, `mix_bowls`, `client_formula_history` |
+| FormulaService | Write to inventory, checkout, or session tables |
+| AnalyticsService | Write to operational tables (`mix_sessions`, `stock_movements`, etc.) |
+| AIInsightService | Write to any table |
+| ProjectionService | Contain business logic; it only applies event→projection transforms |
+| ReplenishmentService | Create purchase orders directly |
+
+---
+
+## Implementation Plan
+
+### Phase 1: Create service modules
+1. Create `src/lib/backroom/services/inventory-ledger-service.ts` — extract `stock_movements` INSERT logic from `useDepleteMixSession`, `useReceiveShipment`, `usePurchaseOrders`, `useStockTransfers`, `useStockMovements` into a single `postLedgerEntry()` / `postLedgerEntries()` function
+2. Create `src/lib/backroom/services/formula-service.ts` — extract formula save logic from `useSaveFormulaHistory`
+3. Create `src/lib/backroom/services/exception-service.ts` — extract exception creation/resolution from `useBackroomExceptions`
+4. Create `src/lib/backroom/services/allowance-billing-service.ts` — wrap existing `calculateOverageCharge` + checkout projection write
+5. Create `src/lib/backroom/services/purchasing-service.ts` — extract PO receiving from `usePurchaseOrders` + `useReceiveShipment`, delegates inventory posting to InventoryLedgerService
+6. Move `mix-session-service.ts` into `services/` directory
+
+### Phase 2: Refactor hooks to thin wrappers
+7. Refactor `useDepleteMixSession` → calls `InventoryLedgerService.postUsageFromSession()`
+8. Refactor `useReceiveShipment` → calls `PurchasingService.receiveShipmentLine()` which calls `InventoryLedgerService.postReceiving()`
+9. Refactor `usePurchaseOrders` quick-receive → calls `PurchasingService.quickReceive()`
+10. Refactor `useStockTransfers` → calls `InventoryLedgerService.postTransfer()`
+11. Refactor `useStockMovements` → calls `InventoryLedgerService.postAdjustment()`
+12. Refactor `useSaveFormulaHistory` → calls `FormulaService.saveFormula()`
+
+### Phase 3: Wire completion handler
+13. Update `MixSessionService` session_completed handler to orchestrate: InventoryLedgerService → FormulaService → AllowanceBillingService → ExceptionService in sequence
+
+No database changes required — this is a code-only refactoring of where business logic lives.
+
+---
+
+## Risks If Boundaries Are Not Enforced
+
+- Multiple hooks writing to `stock_movements` independently means no single place to add validation, auditing, or rate limiting
+- Formula history can be saved from draft UI state if hooks are called directly
+- Exception creation logic will duplicate across components
+- Inventory posting logic already exists in 5 different hooks — any change to the ledger schema requires updating all 5
+- AI service could accidentally be given write access as features expand
+
+---
+
+## Zura Core Services to Reuse
+
+- **Auth context** (`useAuth`, `supabase.auth`) — do not duplicate user identity logic in services
+- **Organization context** (`useOrganizationContext`) — services receive `orgId` as parameter, hooks provide it
+- **Products query** (`useProducts`) — services read products, do not duplicate product queries
+- **Staff/employee data** — reuse existing hooks for staff lookups, do not create backroom-specific staff tables
+
