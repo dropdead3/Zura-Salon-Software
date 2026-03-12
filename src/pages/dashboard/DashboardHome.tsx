@@ -565,6 +565,12 @@ function DashboardSections({
       <TodaysPrepSection />
     ),
     
+    push_list: hasStylistRole && (
+      <VisibilityGate elementKey="push_list" elementName="Push List" elementCategory="retail">
+        <StylistPushList />
+      </VisibilityGate>
+    ),
+    
     schedule_tasks: (
       <VisibilityGate elementKey="my_tasks">
         <TasksCard
