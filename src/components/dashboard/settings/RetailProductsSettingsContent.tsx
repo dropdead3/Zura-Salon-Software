@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef } from 'react';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 function getInitials(name: string): string {
