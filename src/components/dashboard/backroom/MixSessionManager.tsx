@@ -484,6 +484,36 @@ export function MixSessionManager({
   // Active session
   return (
     <div className="space-y-4">
+      {/* Prep mode banner */}
+      <PrepModeBanner
+        session={activeSession}
+        currentUserId={user?.id}
+        assignedStylistId={staffUserId}
+        isManager={false}
+        onApprove={() => {
+          // Approve prep: update session + transition to mixing
+          supabase
+            .from('mix_sessions')
+            .update({
+              prep_approved_by: user?.id,
+              prep_approved_at: new Date().toISOString(),
+            } as any)
+            .eq('id', activeSession.id)
+            .then(() => {
+              handleBeginMixing();
+              toast.success('Prep approved — session is now active');
+            });
+        }}
+      />
+
+      {/* Formula clone panel */}
+      {clientId && (activeSession.status === 'draft' || activeSession.status === 'mixing') && (
+        <FormulaClonePanel
+          clientId={clientId}
+          bowlId={bowls.find((b) => b.status === 'open')?.id ?? null}
+        />
+      )}
+
       {/* Session header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -494,7 +524,7 @@ export function MixSessionManager({
         </div>
 
         <div className="flex items-center gap-2">
-          {activeSession.status === 'draft' && (
+          {activeSession.status === 'draft' && !activeSession.is_prep_mode && (
             <Button size="sm" onClick={handleBeginMixing} className="h-9 font-sans">
               <Play className="w-3.5 h-3.5 mr-1" />
               Begin Mixing
