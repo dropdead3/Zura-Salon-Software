@@ -35,6 +35,7 @@ export interface ProductFilters {
   productType?: string;
   locationId?: string;
   lowStockOnly?: boolean;
+  expiringOnly?: boolean;
   limit?: number;
   page?: number;
   pageSize?: number;
