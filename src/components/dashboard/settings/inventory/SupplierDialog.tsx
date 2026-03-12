@@ -75,6 +75,7 @@ export function SupplierDialog({ open, onOpenChange, productId, productName, org
       reorder_notes: form.reorder_notes || null,
       lead_time_days: form.lead_time_days ? parseInt(form.lead_time_days) : null,
       account_number: form.account_number || null,
+      moq: form.moq ? parseInt(form.moq) : 1,
     }, {
       onSuccess: () => onOpenChange(false),
     });
