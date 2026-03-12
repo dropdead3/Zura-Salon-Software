@@ -23,6 +23,17 @@ interface StockMovementHistoryProps {
 
 export function StockMovementHistory({ productId }: StockMovementHistoryProps) {
   const { data: movements, isLoading } = useStockMovements(productId);
+  const { effectiveOrganization } = useOrganizationContext();
+
+  const handleExport = async () => {
+    if (!effectiveOrganization?.id) return;
+    try {
+      await exportStockMovementsCsv(effectiveOrganization.id, productId);
+      toast.success('Stock movements exported');
+    } catch {
+      toast.error('Failed to export movements');
+    }
+  };
 
   return (
     <Popover>
