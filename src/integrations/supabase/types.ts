@@ -11687,6 +11687,9 @@ export type Database = {
           barcode: string | null
           brand: string | null
           category: string | null
+          clearance_discount_pct: number | null
+          clearance_marked_at: string | null
+          clearance_status: string | null
           cost_price: number | null
           created_at: string | null
           description: string | null
@@ -11700,6 +11703,7 @@ export type Database = {
           location_id: string | null
           name: string
           organization_id: string | null
+          original_retail_price: number | null
           par_level: number | null
           product_type: string
           quantity_on_hand: number | null
@@ -11714,6 +11718,9 @@ export type Database = {
           barcode?: string | null
           brand?: string | null
           category?: string | null
+          clearance_discount_pct?: number | null
+          clearance_marked_at?: string | null
+          clearance_status?: string | null
           cost_price?: number | null
           created_at?: string | null
           description?: string | null
@@ -11727,6 +11734,7 @@ export type Database = {
           location_id?: string | null
           name: string
           organization_id?: string | null
+          original_retail_price?: number | null
           par_level?: number | null
           product_type?: string
           quantity_on_hand?: number | null
@@ -11741,6 +11749,9 @@ export type Database = {
           barcode?: string | null
           brand?: string | null
           category?: string | null
+          clearance_discount_pct?: number | null
+          clearance_marked_at?: string | null
+          clearance_status?: string | null
           cost_price?: number | null
           created_at?: string | null
           description?: string | null
@@ -11754,6 +11765,7 @@ export type Database = {
           location_id?: string | null
           name?: string
           organization_id?: string | null
+          original_retail_price?: number | null
           par_level?: number | null
           product_type?: string
           quantity_on_hand?: number | null
@@ -12547,6 +12559,7 @@ export type Database = {
           created_by: string | null
           expected_delivery_date: string | null
           id: string
+          items_received_count: number | null
           notes: string | null
           organization_id: string
           product_id: string
@@ -12566,6 +12579,7 @@ export type Database = {
           created_by?: string | null
           expected_delivery_date?: string | null
           id?: string
+          items_received_count?: number | null
           notes?: string | null
           organization_id: string
           product_id: string
@@ -12585,6 +12599,7 @@ export type Database = {
           created_by?: string | null
           expected_delivery_date?: string | null
           id?: string
+          items_received_count?: number | null
           notes?: string | null
           organization_id?: string
           product_id?: string
