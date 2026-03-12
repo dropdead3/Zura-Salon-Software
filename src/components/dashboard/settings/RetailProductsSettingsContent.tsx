@@ -418,7 +418,7 @@ function ProductsTab() {
                 } as any,
               }));
               setSelectedIds(new Set());
-              toast.success(`${ids.length} product(s) marked for clearance`);
+              sonnerToast.success(`${ids.length} product(s) marked for clearance`);
             }}
           >
             <Tag className="w-3.5 h-3.5" /> Mark for Clearance
