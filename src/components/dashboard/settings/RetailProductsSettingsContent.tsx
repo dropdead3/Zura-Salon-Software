@@ -29,7 +29,7 @@ import { useProducts, useCreateProduct, useUpdateProduct, useProductBrandsList, 
 import { useProductBrands, useProductCategorySummaries } from '@/hooks/useProductBrands';
 import { useProductCategories } from '@/hooks/useProducts';
 import { isExtensionProduct, isMerchProduct } from '@/utils/serviceCategorization';
-import { useBulkUpdateProducts, useBulkToggleProducts } from '@/hooks/useBulkUpdateProducts';
+import { useBulkUpdateProducts, useBulkToggleProducts, useBulkUpdateProductTypeByCategory } from '@/hooks/useBulkUpdateProducts';
 import { useCreateProductCategory, useDeleteProductCategory } from '@/hooks/useProductCategoryManagement';
 import { CategoryFormDialog } from '@/components/dashboard/settings/CategoryFormDialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';

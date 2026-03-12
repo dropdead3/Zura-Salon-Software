@@ -30,6 +30,32 @@ export function useBulkUpdateProducts() {
   });
 }
 
+export function useBulkUpdateProductTypeByCategory() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ category, newType }: { category: string; newType: string }) => {
+      const { data, error } = await supabase
+        .from('products')
+        .update({ product_type: newType, updated_at: new Date().toISOString() })
+        .eq('category', category)
+        .eq('is_active', true)
+        .select('id');
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['product-category-summaries'] });
+      toast.success(`Updated ${data?.length || 0} products in "${variables.category}" to type "${variables.newType}"`);
+    },
+    onError: (error) => {
+      toast.error('Failed to update type: ' + error.message);
+    },
+  });
+}
+
 export function useBulkToggleProducts() {
   const queryClient = useQueryClient();
 
