@@ -8,7 +8,9 @@ import {
 } from '@/components/ui/select';
 import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
 import { tokens } from '@/lib/design-tokens';
-import { MapPin, UserCheck, X, Loader2, RotateCcw } from 'lucide-react';
+import { MapPin, UserCheck, X, Loader2, RotateCcw, Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { useActiveLocations } from '@/hooks/useLocations';
 import {
