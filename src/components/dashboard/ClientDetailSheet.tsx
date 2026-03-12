@@ -44,7 +44,8 @@ import {
   GitMerge,
   Users,
   ExternalLink,
-  Receipt
+  Receipt,
+  Camera
 } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn, formatPhoneDisplay } from '@/lib/utils';
