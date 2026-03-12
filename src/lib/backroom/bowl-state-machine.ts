@@ -7,13 +7,21 @@
  * sealed → discarded (if entire bowl is waste)
  */
 
-export type MixBowlStatus = 'open' | 'sealed' | 'reweighed' | 'discarded';
+export type MixBowlStatus =
+  | 'open'
+  | 'sealed'
+  | 'reweighed'
+  | 'discarded'
+  | 'prepared_by_assistant'
+  | 'awaiting_stylist_approval';
 
 const VALID_TRANSITIONS: Record<MixBowlStatus, MixBowlStatus[]> = {
   open: ['sealed', 'discarded'],
   sealed: ['reweighed', 'discarded'],
   reweighed: [],
   discarded: [],
+  prepared_by_assistant: ['awaiting_stylist_approval', 'discarded'],
+  awaiting_stylist_approval: ['open', 'discarded'],
 };
 
 export function canTransitionBowl(from: MixBowlStatus, to: MixBowlStatus): boolean {
@@ -30,4 +38,12 @@ export function isTerminalBowlStatus(status: MixBowlStatus): boolean {
 
 export function isBowlOpen(status: MixBowlStatus): boolean {
   return status === 'open';
+}
+
+export function isPreparedBowl(status: MixBowlStatus): boolean {
+  return status === 'prepared_by_assistant';
+}
+
+export function isAwaitingApproval(status: MixBowlStatus): boolean {
+  return status === 'awaiting_stylist_approval';
 }

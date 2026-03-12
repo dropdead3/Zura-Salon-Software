@@ -33,9 +33,10 @@ export function normalizeSessionStatus(status: MixSessionStatus): MixSessionStat
 }
 
 const VALID_TRANSITIONS: Record<string, MixSessionStatus[]> = {
-  draft: ['active', 'mixing', 'cancelled'],
+  draft: ['active', 'mixing', 'awaiting_stylist_approval', 'cancelled'],
   active: ['awaiting_reweigh', 'pending_reweigh', 'cancelled'],
   mixing: ['awaiting_reweigh', 'pending_reweigh', 'cancelled'], // legacy alias
+  awaiting_stylist_approval: ['active', 'mixing', 'cancelled'],
   awaiting_reweigh: ['completed', 'unresolved_exception'],
   pending_reweigh: ['completed', 'unresolved_exception'],       // legacy alias
   completed: [],
