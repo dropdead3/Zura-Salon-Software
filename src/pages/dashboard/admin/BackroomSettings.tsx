@@ -49,6 +49,9 @@ const sections: { id: BackroomSection; label: string; icon: typeof LayoutDashboa
 
 export default function BackroomSettings() {
   const [activeSection, setActiveSection] = useState<BackroomSection>('overview');
+  const handleNavigate = useCallback((section: string) => {
+    setActiveSection(section as BackroomSection);
+  }, []);
 
   return (
     <DashboardLayout>
