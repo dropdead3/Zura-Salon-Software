@@ -11,8 +11,11 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
 import { ManualWeightInput } from './ManualWeightInput';
-import { Search, X } from 'lucide-react';
+import { useStaffPinnedProducts, useTogglePinnedProduct } from '@/hooks/backroom/useStaffPinnedProducts';
+import { useProductSubstitutions } from '@/hooks/backroom/useProductSubstitutions';
+import { Search, X, Pin, PinOff, AlertTriangle, ArrowRight } from 'lucide-react';
 
 interface AddProductToBowlProps {
   bowlId: string;
@@ -39,14 +42,22 @@ export function AddProductToBowl({ bowlId, onAdd, onCancel, inline = false }: Ad
     name: string;
     brand: string | null;
     cost_price: number | null;
+    quantity_on_hand?: number | null;
   } | null>(null);
+
+  const { data: pinnedProducts = [] } = useStaffPinnedProducts();
+  const pinnedIds = new Set(pinnedProducts.map((p) => p.product_id));
+  const togglePin = useTogglePinnedProduct();
+  const { data: substitutions = [] } = useProductSubstitutions(
+    selectedProduct && (selectedProduct.quantity_on_hand ?? 1) <= 0 ? selectedProduct.id : null
+  );
 
   const { data: products = [] } = useQuery({
     queryKey: ['backroom-products', orgId, search],
     queryFn: async () => {
       let query = supabase
         .from('products')
-        .select('id, name, brand, cost_price, category')
+        .select('id, name, brand, cost_price, category, quantity_on_hand')
         .eq('organization_id', orgId!)
         .eq('is_active', true)
         .order('name')
@@ -65,6 +76,8 @@ export function AddProductToBowl({ bowlId, onAdd, onCancel, inline = false }: Ad
   });
 
   if (selectedProduct) {
+    const isOutOfStock = (selectedProduct.quantity_on_hand ?? 1) <= 0;
+
     return (
       <div className="rounded-lg border border-border bg-muted/20 p-3 space-y-3">
         <div className="flex items-center justify-between">
@@ -79,6 +92,58 @@ export function AddProductToBowl({ bowlId, onAdd, onCancel, inline = false }: Ad
           </Button>
         </div>
 
+        {/* Out of stock warning + substitutions */}
+        {isOutOfStock && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 rounded-md bg-warning/10 px-3 py-2">
+              <AlertTriangle className="w-3.5 h-3.5 text-warning shrink-0" />
+              <span className="font-sans text-xs text-warning">Out of stock</span>
+            </div>
+            {substitutions.length > 0 && (
+              <div className="space-y-1">
+                <p className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider">
+                  Suggested Substitutes
+                </p>
+                {substitutions.map((sub) => (
+                  <button
+                    key={sub.id}
+                    onClick={() => setSelectedProduct({
+                      id: sub.substitute_product_id,
+                      name: sub.substitute_name,
+                      brand: sub.substitute_brand,
+                      cost_price: sub.substitute_cost_price,
+                      quantity_on_hand: sub.substitute_quantity_on_hand,
+                    })}
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-md hover:bg-muted/50 transition-colors text-left"
+                  >
+                    <div className="flex items-center gap-2">
+                      <ArrowRight className="w-3 h-3 text-muted-foreground" />
+                      <div>
+                        <p className="font-sans text-xs">{sub.substitute_name}</p>
+                        {sub.substitute_brand && (
+                          <p className="font-sans text-[10px] text-muted-foreground">{sub.substitute_brand}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {sub.substitute_quantity_on_hand != null && (
+                        <Badge variant="outline" className="text-[10px]">
+                          {sub.substitute_quantity_on_hand} in stock
+                        </Badge>
+                      )}
+                      {sub.substitute_cost_price != null && (
+                        <span className="font-sans text-[10px] text-muted-foreground">
+                          ${sub.substitute_cost_price.toFixed(2)}
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         <ManualWeightInput
           onSubmit={(weight, unit) => {
             onAdd(
@@ -90,7 +155,6 @@ export function AddProductToBowl({ bowlId, onAdd, onCancel, inline = false }: Ad
               unit,
               'manual'
             );
-            // In inline mode, auto-clear for next product
             if (inline) {
               setSelectedProduct(null);
               setSearch('');
@@ -125,23 +189,52 @@ export function AddProductToBowl({ bowlId, onAdd, onCancel, inline = false }: Ad
       <ScrollArea className="max-h-[200px]">
         <div className="space-y-0.5">
           {products.map((product) => (
-            <button
+            <div
               key={product.id}
-              onClick={() => setSelectedProduct(product)}
-              className="w-full flex items-center justify-between px-3 py-2.5 rounded-md hover:bg-muted/50 transition-colors text-left min-h-[44px]"
+              className="flex items-center gap-1"
             >
-              <div>
-                <p className="font-sans text-sm">{product.name}</p>
-                {product.brand && (
-                  <p className="font-sans text-xs text-muted-foreground">{product.brand}</p>
+              <button
+                onClick={() => setSelectedProduct(product)}
+                className="flex-1 flex items-center justify-between px-3 py-2.5 rounded-md hover:bg-muted/50 transition-colors text-left min-h-[44px]"
+              >
+                <div>
+                  <p className="font-sans text-sm">{product.name}</p>
+                  {product.brand && (
+                    <p className="font-sans text-xs text-muted-foreground">{product.brand}</p>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  {(product as any).quantity_on_hand != null && (product as any).quantity_on_hand <= 0 && (
+                    <Badge variant="outline" className="text-[10px] text-warning border-warning/30">
+                      Out of stock
+                    </Badge>
+                  )}
+                  {product.cost_price != null && (
+                    <span className="font-sans text-xs text-muted-foreground shrink-0">
+                      ${product.cost_price.toFixed(2)}/unit
+                    </span>
+                  )}
+                </div>
+              </button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 shrink-0"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  togglePin.mutate({
+                    productId: product.id,
+                    isPinned: pinnedIds.has(product.id),
+                  });
+                }}
+              >
+                {pinnedIds.has(product.id) ? (
+                  <PinOff className="w-3.5 h-3.5 text-primary" />
+                ) : (
+                  <Pin className="w-3.5 h-3.5 text-muted-foreground" />
                 )}
-              </div>
-              {product.cost_price != null && (
-                <span className="font-sans text-xs text-muted-foreground shrink-0">
-                  ${product.cost_price.toFixed(2)}/unit
-                </span>
-              )}
-            </button>
+              </Button>
+            </div>
           ))}
           {products.length === 0 && (
             <p className="font-sans text-xs text-muted-foreground text-center py-3">

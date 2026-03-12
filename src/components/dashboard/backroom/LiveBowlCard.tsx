@@ -14,12 +14,14 @@ import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { BowlLineRow } from './BowlLineRow';
 import { AddProductToBowl } from './AddProductToBowl';
+import { QuickProductButtons } from './QuickProductButtons';
 import { ManualWeightInput } from './ManualWeightInput';
 import { useAllowanceRemaining } from '@/hooks/backroom/useAllowanceRemaining';
 import { calculateBowlWeight, calculateBowlCost } from '@/lib/backroom/mix-calculations';
 import { Lock, Trash2, Beaker } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import type { MixBowl } from '@/hooks/backroom/useMixBowls';
+import type { PinnedProduct } from '@/hooks/backroom/useStaffPinnedProducts';
 import type { MixBowlLine } from '@/hooks/backroom/useMixBowlLines';
 
 interface LiveBowlCardProps {
@@ -63,6 +65,7 @@ export function LiveBowlCard({
   onDiscardBowl,
 }: LiveBowlCardProps) {
   const [lastCapturedId, setLastCapturedId] = useState<string | null>(null);
+  const [quickProduct, setQuickProduct] = useState<PinnedProduct | null>(null);
 
   const liveWeight = calculateBowlWeight(lines);
   const liveCost = calculateBowlCost(lines);
@@ -187,13 +190,54 @@ export function LiveBowlCard({
           </div>
         )}
 
+        {/* ── Quick product buttons ── */}
+        {!quickProduct && (
+          <QuickProductButtons
+            onSelect={(product) => setQuickProduct(product)}
+          />
+        )}
+
+        {/* ── Quick product weight capture ── */}
+        {quickProduct && (
+          <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-sans text-sm font-medium">{quickProduct.product_name}</p>
+                {quickProduct.brand && (
+                  <p className="font-sans text-xs text-muted-foreground">{quickProduct.brand}</p>
+                )}
+              </div>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setQuickProduct(null)}>
+                <Trash2 className="w-3.5 h-3.5" />
+              </Button>
+            </div>
+            <ManualWeightInput
+              onSubmit={(weight, unit) => {
+                handleAddProduct(
+                  quickProduct.product_id,
+                  quickProduct.product_name,
+                  quickProduct.brand,
+                  quickProduct.cost_price ?? 0,
+                  weight,
+                  unit,
+                  'manual'
+                );
+                setQuickProduct(null);
+              }}
+              label="Dispensed amount"
+            />
+          </div>
+        )}
+
         {/* ── Inline product search (always visible) ── */}
-        <AddProductToBowl
-          bowlId={bowl.id}
-          onAdd={handleAddProduct}
-          onCancel={() => {}}
-          inline
-        />
+        {!quickProduct && (
+          <AddProductToBowl
+            bowlId={bowl.id}
+            onAdd={handleAddProduct}
+            onCancel={() => {}}
+            inline
+          />
+        )}
 
         {/* ── Bowl actions ── */}
         {lines.length > 0 && (

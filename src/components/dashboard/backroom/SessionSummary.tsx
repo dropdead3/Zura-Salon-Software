@@ -1,12 +1,13 @@
 /**
  * SessionSummary — Final summary of a completed mix session.
- * Shows total cost, net usage, formula, and status.
+ * Shows total cost, net usage, formula, status, and confidence score.
  */
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { CheckCircle2, AlertTriangle } from 'lucide-react';
+import { ConfidenceScoreBadge } from './ConfidenceScoreBadge';
 import type { MixSession } from '@/hooks/backroom/useMixSession';
 import type { MixBowl } from '@/hooks/backroom/useMixBowls';
 import { calculateSessionCost, calculateSessionNetUsage, type BowlSummary } from '@/lib/backroom/mix-calculations';
@@ -31,19 +32,24 @@ export function SessionSummary({ session, bowls }: SessionSummaryProps) {
   return (
     <Card className="bg-card/80 backdrop-blur-xl border-border">
       <CardHeader className="pb-3">
-        <div className="flex items-center gap-2">
-          {isUnresolved ? (
-            <AlertTriangle className="w-4 h-4 text-amber-500" />
-          ) : (
-            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-          )}
-          <CardTitle className="font-display text-base tracking-wide">
-            Session Summary
-          </CardTitle>
-          {isUnresolved && (
-            <Badge variant="outline" className="text-[10px] text-amber-500 border-amber-500/30">
-              Unresolved
-            </Badge>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            {isUnresolved ? (
+              <AlertTriangle className="w-4 h-4 text-amber-500" />
+            ) : (
+              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+            )}
+            <CardTitle className="font-display text-base tracking-wide">
+              Session Summary
+            </CardTitle>
+            {isUnresolved && (
+              <Badge variant="outline" className="text-[10px] text-amber-500 border-amber-500/30">
+                Unresolved
+              </Badge>
+            )}
+          </div>
+          {session.confidence_score > 0 && (
+            <ConfidenceScoreBadge score={session.confidence_score} compact />
           )}
         </div>
       </CardHeader>
@@ -71,6 +77,14 @@ export function SessionSummary({ session, bowls }: SessionSummaryProps) {
             <p className="font-sans text-xs text-amber-600 dark:text-amber-400">
               {session.unresolved_reason}
             </p>
+          </div>
+        )}
+
+        {session.is_prep_mode && (
+          <div className="mt-3">
+            <Badge variant="secondary" className="text-[10px]">
+              Assistant Prep
+            </Badge>
           </div>
         )}
       </CardContent>

@@ -5,12 +5,16 @@
 
 import { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { Plus, Play, CheckCircle2, Trash2, AlertTriangle } from 'lucide-react';
 import { BowlCard } from './BowlCard';
 import { SessionSummary } from './SessionSummary';
 import { WasteRecordDialog } from './WasteRecordDialog';
 import { ScaleConnectionStatus } from './ScaleConnectionStatus';
 import { StationSelector } from './StationSelector';
+import { FormulaClonePanel } from './FormulaClonePanel';
+import { PrepModeBanner } from './PrepModeBanner';
 import { useMixSession, useCreateMixSession, useUpdateMixSessionStatus, type MixSession } from '@/hooks/backroom/useMixSession';
 import { useMixBowls, useCreateMixBowl, useUpdateBowlStatus } from '@/hooks/backroom/useMixBowls';
 import { useMixBowlLines, useAddBowlLine, useDeleteBowlLine } from '@/hooks/backroom/useMixBowlLines';
@@ -21,6 +25,7 @@ import { useDepleteMixSession } from '@/hooks/backroom/useDepleteMixSession';
 import { useCalculateOverageCharge } from '@/hooks/billing/useCalculateOverageCharge';
 import { supabase } from '@/integrations/supabase/client';
 import { calculateBowlWeight, calculateBowlCost, calculateNetUsage, extractActualFormula, extractRefinedFormula } from '@/lib/backroom/mix-calculations';
+import { calculateMixConfidence } from '@/lib/backroom/analytics-engine';
 import { isTerminalSessionStatus } from '@/lib/backroom/session-state-machine';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -52,6 +57,7 @@ export function MixSessionManager({
   const { user } = useAuth();
   const [stationId, setStationId] = useState<string | null>(null);
   const [showWasteDialog, setShowWasteDialog] = useState(false);
+  const [isPrepMode, setIsPrepMode] = useState(false);
 
   // Data hooks
   const { data: sessions = [], isLoading: loadingSessions } = useMixSession(appointmentId);
@@ -85,8 +91,19 @@ export function MixSessionManager({
       service_performed_by_staff_id: staffUserId,
       station_id: stationId ?? undefined,
       location_id: locationId,
+    }, {
+      onSuccess: (data) => {
+        // If prep mode, set the flag
+        if (isPrepMode && data) {
+          supabase
+            .from('mix_sessions')
+            .update({ is_prep_mode: true } as any)
+            .eq('id', (data as any).id)
+            .then();
+        }
+      }
     });
-  }, [organizationId, appointmentId, appointmentServiceId, clientId, user?.id, staffUserId, stationId, locationId, createSession]);
+  }, [organizationId, appointmentId, appointmentServiceId, clientId, user?.id, staffUserId, stationId, locationId, createSession, isPrepMode]);
 
   const handleBeginMixing = useCallback(() => {
     if (!activeSession) return;
@@ -159,6 +176,42 @@ export function MixSessionManager({
     const unresolvedReason = sealedNotReweighed.length > 0
       ? `${sealedNotReweighed.length} bowl(s) not reweighed`
       : undefined;
+
+    // Calculate confidence score before completing
+    try {
+      const validBowls = bowls.filter((b) => b.status !== 'discarded');
+      const bowlIds = validBowls.map((b) => b.id);
+      const { data: allLines } = await supabase
+        .from('mix_bowl_lines')
+        .select('captured_via')
+        .in('bowl_id', bowlIds.length > 0 ? bowlIds : ['__none__']);
+
+      const { data: wasteEvents } = await supabase
+        .from('waste_events')
+        .select('waste_category')
+        .eq('mix_session_id', activeSession.id);
+
+      const castLines = (allLines ?? []) as any[];
+      const castWaste = (wasteEvents ?? []) as any[];
+
+      const confidence = calculateMixConfidence({
+        totalLines: castLines.length,
+        scaleLines: castLines.filter((l) => l.captured_via === 'scale').length,
+        totalBowls: validBowls.length,
+        reweighedBowls: validBowls.filter((b) => b.status === 'reweighed').length,
+        usageToBaselineRatio: 1, // Baseline comparison TBD
+        totalWasteEvents: castWaste.length,
+        categorizedWasteEvents: castWaste.filter((w) => w.waste_category && w.waste_category !== 'unclassified').length,
+      });
+
+      // Persist confidence score
+      await supabase
+        .from('mix_sessions')
+        .update({ confidence_score: confidence } as any)
+        .eq('id', activeSession.id);
+    } catch (err) {
+      console.error('Confidence score calculation failed:', err);
+    }
 
     updateSessionStatus.mutate({
       id: activeSession.id,
@@ -402,6 +455,18 @@ export function MixSessionManager({
             <ScaleConnectionStatus state="manual_override" />
           </div>
 
+          {/* Prep Mode Toggle */}
+          <div className="flex items-center justify-center gap-3">
+            <Switch
+              id="prep-mode"
+              checked={isPrepMode}
+              onCheckedChange={setIsPrepMode}
+            />
+            <Label htmlFor="prep-mode" className="font-sans text-sm text-muted-foreground cursor-pointer">
+              Assistant Prep Mode
+            </Label>
+          </div>
+
           <Button
             size="lg"
             onClick={handleStartSession}
@@ -409,7 +474,7 @@ export function MixSessionManager({
             className="h-12 px-8 font-sans"
           >
             <Play className="w-4 h-4 mr-2" />
-            Start Session
+            {isPrepMode ? 'Start Prep' : 'Start Session'}
           </Button>
         </div>
       </div>
@@ -419,6 +484,36 @@ export function MixSessionManager({
   // Active session
   return (
     <div className="space-y-4">
+      {/* Prep mode banner */}
+      <PrepModeBanner
+        session={activeSession}
+        currentUserId={user?.id}
+        assignedStylistId={staffUserId}
+        isManager={false}
+        onApprove={() => {
+          // Approve prep: update session + transition to mixing
+          supabase
+            .from('mix_sessions')
+            .update({
+              prep_approved_by: user?.id,
+              prep_approved_at: new Date().toISOString(),
+            } as any)
+            .eq('id', activeSession.id)
+            .then(() => {
+              handleBeginMixing();
+              toast.success('Prep approved — session is now active');
+            });
+        }}
+      />
+
+      {/* Formula clone panel */}
+      {clientId && (activeSession.status === 'draft' || activeSession.status === 'mixing') && (
+        <FormulaClonePanel
+          clientId={clientId}
+          bowlId={bowls.find((b) => b.status === 'open')?.id ?? null}
+        />
+      )}
+
       {/* Session header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -429,7 +524,7 @@ export function MixSessionManager({
         </div>
 
         <div className="flex items-center gap-2">
-          {activeSession.status === 'draft' && (
+          {activeSession.status === 'draft' && !activeSession.is_prep_mode && (
             <Button size="sm" onClick={handleBeginMixing} className="h-9 font-sans">
               <Play className="w-3.5 h-3.5 mr-1" />
               Begin Mixing

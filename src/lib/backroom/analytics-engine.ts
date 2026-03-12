@@ -84,6 +84,60 @@ export interface InventoryDaysResult {
   costAtRisk: number;
 }
 
+// ── Mix Confidence Score ───────────────────────────────────────────
+
+export interface MixConfidenceInput {
+  /** Total bowl lines */
+  totalLines: number;
+  /** Lines captured via scale (not manual) */
+  scaleLines: number;
+  /** Total bowls */
+  totalBowls: number;
+  /** Bowls that were reweighed */
+  reweighedBowls: number;
+  /** Actual usage relative to baseline (1.0 = exactly baseline) */
+  usageToBaselineRatio: number;
+  /** Total waste events */
+  totalWasteEvents: number;
+  /** Waste events with a category assigned */
+  categorizedWasteEvents: number;
+}
+
+/**
+ * Calculate mix session confidence score (0-100).
+ * Factors: scale usage (30%), reweigh completion (25%),
+ * variance from baseline (25%), waste classification (20%).
+ */
+export function calculateMixConfidence(input: MixConfidenceInput): number {
+  // Scale vs manual (30%)
+  const scalePct = input.totalLines > 0
+    ? (input.scaleLines / input.totalLines)
+    : 0;
+  const scaleScore = 60 + (scalePct * 40); // 60 if all manual, 100 if all scale
+
+  // Reweigh completion (25%)
+  const reweighScore = input.totalBowls > 0
+    ? (input.reweighedBowls / input.totalBowls) * 100
+    : 100;
+
+  // Variance from baseline (25%)
+  let varianceScore = 100;
+  if (input.usageToBaselineRatio > 0) {
+    const deviation = Math.abs(1 - input.usageToBaselineRatio);
+    if (deviation <= 0.1) varianceScore = 100;
+    else if (deviation >= 0.5) varianceScore = 0;
+    else varianceScore = Math.round(100 * (1 - (deviation - 0.1) / 0.4));
+  }
+
+  // Waste classification (20%)
+  const wasteScore = input.totalWasteEvents > 0
+    ? (input.categorizedWasteEvents / input.totalWasteEvents) * 100
+    : 100; // No waste = full score
+
+  const weighted = (scaleScore * 0.3) + (reweighScore * 0.25) + (varianceScore * 0.25) + (wasteScore * 0.2);
+  return Math.round(Math.min(100, Math.max(0, weighted)));
+}
+
 // ── Calculations ───────────────────────────────────────────────────
 
 /**

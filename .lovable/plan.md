@@ -1,147 +1,153 @@
 
 
-# Backroom Enhancements — Priority Features
+## Timezone-Safe Scheduling (Implemented)
 
-Six high-impact features that strengthen adoption, intelligence, and operational efficiency. Builds on existing Phase 1-5 infrastructure with minimal schema changes.
+### Problem
+`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
 
----
+### Solution
+- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
+- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
+- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
 
-## 1. Quick Product Buttons
+### Files Updated
+- `ScheduleHeader.tsx` — today button, quick days, isToday checks
+- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
+- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
+- `MonthView.tsx` — today highlight
+- `AgendaView.tsx` — today/tomorrow labels, today border
+- `ScheduleActionBar.tsx` — payment queue timing
+- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
+- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
+- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
+- `useHuddles.ts` — today's huddle query
 
-**Problem:** Stylists search the same 5-10 products every session. Searching is slow with gloves on.
+## Auto-Reorder with Supplier Communication (Implemented)
 
-**Schema change:** New table `staff_pinned_products` — per-user product shortcuts.
+### What It Does
+Organizations can opt into automatic reorder — when stock dips below threshold, POs are calculated (using MOQ and par levels) and sent directly to the supplier via email.
 
-```sql
-CREATE TABLE public.staff_pinned_products (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
-  display_order INT NOT NULL DEFAULT 0,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE (user_id, product_id)
-);
--- RLS: users can CRUD their own rows
+### Database Changes
+- `products.par_level` (INT, nullable) — desired stock level to reorder up to
+- `product_suppliers.moq` (INT, default 1) — minimum order quantity
+- `inventory_alert_settings.auto_reorder_enabled` (BOOL, default false)
+- `inventory_alert_settings.auto_reorder_mode` (TEXT, default 'to_par') — 'to_par' or 'moq_only'
+- `inventory_alert_settings.max_auto_reorder_value` (NUMERIC, nullable) — daily spend cap
+- `purchase_orders.supplier_confirmed_at` (TIMESTAMPTZ, nullable) — for tracking confirmations
+
+### Quantity Calculation
+```
+deficit = par_level - quantity_on_hand
+order_qty = max(moq, deficit)
+if moq > 1: round up to nearest MOQ multiple
+```
+Fallback: if par_level is null, uses `reorder_level * 2`.
+
+### Files Updated
+- Migration: Added columns to products, product_suppliers, inventory_alert_settings, purchase_orders
+- `check-reorder-levels/index.ts` — auto-send logic with MOQ/par calculation, spend cap, email invocation
+- `AlertSettingsCard.tsx` — auto-reorder toggle, mode selector, spend cap input
+- `useInventoryAlertSettings.ts` — updated interface
+- `useProducts.ts` — added par_level to Product interface
+- `useProductSuppliers.ts` — added moq to ProductSupplier interface
+- `ProductEditDialog.tsx` — added par level field
+- `RetailProductsSettingsContent.tsx` — added par level to product form
+- `SupplierDialog.tsx` — added MOQ field
+
+### Safety Features
+- Spend cap: daily auto-reorder pauses when cumulative PO value exceeds cap
+- Audit trail: auto_reorder logged as stock_movement reason
+- Supplier confirmation tracking via supplier_confirmed_at timestamp
+
+## Product Movement Rating Badges (Implemented)
+
+### What It Does
+Every product gets a dynamic movement rating badge (Best Seller, Popular, Steady, Slow Mover, Stagnant, Dead Weight) computed from 90-day sales velocity data.
+
+### Rating Tiers
+- **Best Seller**: Top 10% velocity AND >0.5 units/day (emerald)
+- **Popular**: Top 25% velocity AND >0.2 units/day (blue)
+- **Steady**: Velocity >0.05/day (muted)
+- **Slow Mover**: Velocity >0 but ≤0.05/day (amber)
+- **Stagnant**: Zero velocity, sold within 180 days (orange)
+- **Dead Weight**: Zero velocity, 180+ days or never sold (red)
+- Products with zero stock excluded from negative ratings
+
+### Files Created
+- `src/lib/productMovementRating.ts` — pure rating logic + badge config
+- `src/hooks/useProductVelocity.ts` — lightweight 90-day POS velocity query
+- `src/components/ui/MovementBadge.tsx` — shared badge component with tooltip
+
+### Files Updated
+- `RetailProductsSettingsContent.tsx` — Movement column + filter dropdown in products table
+- `RetailAnalyticsContent.tsx` — Movement badges on product performance table + Movement Distribution card (donut chart with actionable callouts)
+- `ProductCard.tsx` — Best Seller/Popular badges on public shop cards (positive only)
+- `ProductDetailModal.tsx` — Movement badge with velocity context
+
+## Inventory Intelligence Suite v2 (Implemented)
+
+### 1. Dead Stock Auto-Clearance Pipeline
+- `DeadStockAlertCard.tsx` — Surfaces Dead Weight/Stagnant products not yet in clearance with suggested discount tiers (10%/25%/50% based on idle days)
+- One-click "Mark for Clearance" applies discount and sets clearance_status
+
+### 2. Supplier Lead Time Tracker
+- `usePurchaseOrders.ts` — `useMarkPurchaseOrderReceived` already computes actual delivery days and updates `product_suppliers.avg_delivery_days` via running average
+- `parLevelSuggestion.ts` — Updated to accept supplier-provided lead time instead of hardcoded 7-day default, with bounds clamping
+
+### 3. Inventory Valuation Dashboard Card
+- `InventoryValuationCard.tsx` — Shows total inventory at cost/retail, potential margin %, capital-at-risk (slow/stagnant/dead weight), with donut chart breakdown
+
+### 4. Reorder Approval Queue
+- `ReorderApprovalCard.tsx` — Surfaces draft POs from auto-reorder with one-click approve (→ sent) or reject (→ cancelled)
+
+### 5. Stock Transfer Between Locations
+- Migration: Created `stock_transfers` table with RLS (org member read, org admin manage)
+- `useStockTransfers.ts` — CRUD hooks for stock transfers with stock movement logging
+- `StockTransferDialog.tsx` — Dialog for creating transfers between locations
+- `RetailProductsSettingsContent.tsx` — "Transfer Stock" button added to Inventory tab (visible for multi-location orgs)
+
+## Enhancement 1: Expiry Tracking (Implemented)
+
+### What It Does
+Products can have an optional expiration date (`expires_at`) and per-product alert threshold (`expiry_alert_days`, default 30). The system surfaces expiring inventory with color-coded badges in the product table and an analytics card with auto-clearance suggestions.
+
+### Database Changes
+- `products.expires_at` (DATE, nullable) — expiration date for perishable products
+- `products.expiry_alert_days` (INTEGER, default 30) — days before expiry to trigger alerts
+
+### Expiry Alert Buckets
+- **Expired** (red): past expiration → suggests 50% markdown
+- **Critical** (orange): within alert threshold → suggests 25% markdown
+- **Warning** (amber): within 2× alert threshold → suggests 10% markdown
+
+### Files Created
+- `src/components/dashboard/analytics/ExpiryAlertCard.tsx` — PinnableCard showing expiring products with one-click clearance actions
+
+### Files Updated
+- `src/hooks/useProducts.ts` — Added `expires_at`, `expiry_alert_days` to Product interface; added `expiringOnly` filter
+- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Expiry date + alert days in product form; color-coded Expiry column in product table
+- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ExpiryAlertCard into analytics hub
+
+## Enhancement 2: Shrinkage Detection (Implemented)
+
+### What It Does
+Physical stocktake workflow with variance reporting. Staff record actual counts via a Stocktake dialog, and the system compares against expected quantities (system records). A Shrinkage Report card in analytics surfaces products with negative variance (loss) ranked by estimated cost impact.
+
+### Database Changes
+- Created `stock_counts` table with computed `variance` column (counted - expected), RLS policies (org member read/insert, org admin update/delete), and indexes
+
+### Shrinkage Calculation
+```
+variance = counted_quantity - expected_quantity
+shrinkage_units = |variance| when variance < 0
+shrinkage_cost = shrinkage_units × cost_price
 ```
 
-**New hook:** `useStaffPinnedProducts(userId)` — fetch + reorder + toggle pin.
+### Files Created
+- `src/hooks/useStockCounts.ts` — CRUD hooks for stock counts + `useShrinkageSummary` for aggregated shrinkage data
+- `src/components/dashboard/settings/inventory/StocktakeDialog.tsx` — Full stocktake UI with search, inline count entry, real-time variance display
+- `src/components/dashboard/analytics/ShrinkageReportCard.tsx` — PinnableCard showing products with shrinkage, severity badges, estimated loss
 
-**UI change in `LiveBowlCard.tsx`:** Above the inline product search, render a row of large tap-target buttons (one per pinned product). Tapping a quick button opens the weight capture inline immediately — skipping the search step entirely. A "pin" icon in `AddProductToBowl` search results lets users pin/unpin products.
-
----
-
-## 2. Formula Cloning
-
-**Problem:** Stylists re-create the same formula manually every visit.
-
-**No schema change.** Uses existing `client_formula_history` table.
-
-**New component:** `FormulaClonePanel.tsx` — appears in `MixSessionManager` when a session is in `draft` or `mixing` status and the client has formula history.
-
-- Shows "Last Visit Formula" and any saved formulas
-- "Use This Formula" button clones all lines into the active bowl via batch `addBowlLine` calls
-- Product availability check: marks out-of-stock products with a warning badge
-
-**New hook:** `useCloneFormula()` — takes a `ClientFormula`, creates bowl lines from `formula_data`.
-
----
-
-## 3. Assistant Prep Mode
-
-**Problem:** Assistants pre-mix bowls before the stylist arrives, but there's no approval workflow.
-
-**Schema change:** Add column to `mix_sessions`:
-
-```sql
-ALTER TABLE public.mix_sessions
-  ADD COLUMN IF NOT EXISTS is_prep_mode BOOLEAN DEFAULT false,
-  ADD COLUMN IF NOT EXISTS prep_approved_by UUID REFERENCES auth.users(id),
-  ADD COLUMN IF NOT EXISTS prep_approved_at TIMESTAMPTZ;
-```
-
-**UI changes:**
-- `MixSessionManager`: New "Prep Mode" toggle on the start session screen. When enabled, `is_prep_mode = true` and session stays in `draft` status after bowls are prepared.
-- When the stylist opens the appointment, they see a "Review & Approve Prep" banner showing who prepared it. Approving transitions session to `mixing` and records `prep_approved_by`.
-- Only the assigned stylist or managers can approve prep.
-
----
-
-## 4. Mix Confidence Score
-
-**Problem:** Analytics are polluted by incomplete sessions. Managers can't tell which data is reliable.
-
-**Schema change:** Add column to `mix_sessions`:
-
-```sql
-ALTER TABLE public.mix_sessions
-  ADD COLUMN IF NOT EXISTS confidence_score NUMERIC DEFAULT 0;
-```
-
-**Calculation module:** `calculateMixConfidence()` in `analytics-engine.ts`:
-
-| Factor | Weight | Scoring |
-|---|---|---|
-| Scale vs manual entry | 30% | 100 if all scale, 60 if all manual |
-| Reweigh completion | 25% | 100 if all bowls reweighed, 0 if none |
-| Variance from baseline | 25% | 100 if within ±10%, scaled down to 0 at ±50% |
-| Waste classification | 20% | 100 if all waste categorized, 0 if unclassified |
-
-Score calculated on session completion in `handleCompleteSession` and persisted to the column.
-
-**UI:** Badge on `SessionSummary` and `CompletedSessionSummary` showing the score with color coding (green ≥ 85, amber ≥ 60, red < 60). Exception inbox generates a `low_confidence` exception when score < 60.
-
----
-
-## 5. Chemical Cost Trend Alerts
-
-**Problem:** Cost drift goes unnoticed until end-of-month reports.
-
-**No new tables.** Uses existing `backroom_exceptions` table.
-
-**New logic in `generate-backroom-snapshots` edge function:** After computing daily snapshot, compare `avg_chemical_cost_per_service` against the rolling 28-day average. If current day exceeds 2x the rolling average, insert a `cost_spike` exception with severity `warning`. If exceeding 3x, severity `critical`.
-
-**New hook:** `useChemicalCostTrend(serviceId?, days?)` — queries `backroom_analytics_snapshots` for the time series, returns trend data for a Recharts line chart.
-
-**UI:** Small trend sparkline on the Owner dashboard chemical cost card. Alert badge when cost spikes are detected.
-
----
-
-## 6. Smart Product Substitution
-
-**Problem:** Out-of-stock products halt service. Stylists improvise without guidance.
-
-**Schema change:** New table for product relationships:
-
-```sql
-CREATE TABLE public.product_substitutions (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-  product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
-  substitute_product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
-  priority INT DEFAULT 0,
-  notes TEXT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE (organization_id, product_id, substitute_product_id)
-);
--- RLS: org_member SELECT, org_admin ALL
-```
-
-**New hook:** `useProductSubstitutions(productId)` — returns ranked substitutes with stock availability.
-
-**UI change in `AddProductToBowl.tsx`:** When a selected product has `quantity_on_hand <= 0`, show an amber "Out of Stock" banner with substitute suggestions below it. Each substitute shows name, available quantity, and cost difference. Tapping a substitute selects it instead.
-
-**Settings UI:** Simple admin page under Inventory settings to manage substitution mappings per product.
-
----
-
-## Implementation Order
-
-1. **Migration:** Create `staff_pinned_products`, `product_substitutions` tables + alter `mix_sessions` (confidence_score, prep columns)
-2. **Quick Product Buttons:** Hook + UI in LiveBowlCard
-3. **Formula Cloning:** Hook + FormulaClonePanel in MixSessionManager
-4. **Mix Confidence Score:** Calculation in analytics-engine + persistence on session complete + UI badges
-5. **Assistant Prep Mode:** Session flag + approval workflow UI
-6. **Smart Product Substitution:** Hook + out-of-stock detection in AddProductToBowl
-7. **Chemical Cost Trend Alerts:** Logic in snapshot edge function + trend hook + sparkline
-
+### Files Updated
+- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Added "Stocktake" button to Inventory tab toolbar
+- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ShrinkageReportCard into analytics hub

@@ -9138,13 +9138,17 @@ export type Database = {
           appointment_service_id: string | null
           client_id: string | null
           completed_at: string | null
+          confidence_score: number | null
           created_at: string
           id: string
           is_manual_override: boolean
+          is_prep_mode: boolean | null
           location_id: string | null
           mixed_by_staff_id: string | null
           notes: string | null
           organization_id: string
+          prep_approved_at: string | null
+          prep_approved_by: string | null
           service_performed_by_staff_id: string | null
           started_at: string
           station_id: string | null
@@ -9158,13 +9162,17 @@ export type Database = {
           appointment_service_id?: string | null
           client_id?: string | null
           completed_at?: string | null
+          confidence_score?: number | null
           created_at?: string
           id?: string
           is_manual_override?: boolean
+          is_prep_mode?: boolean | null
           location_id?: string | null
           mixed_by_staff_id?: string | null
           notes?: string | null
           organization_id: string
+          prep_approved_at?: string | null
+          prep_approved_by?: string | null
           service_performed_by_staff_id?: string | null
           started_at?: string
           station_id?: string | null
@@ -9178,13 +9186,17 @@ export type Database = {
           appointment_service_id?: string | null
           client_id?: string | null
           completed_at?: string | null
+          confidence_score?: number | null
           created_at?: string
           id?: string
           is_manual_override?: boolean
+          is_prep_mode?: boolean | null
           location_id?: string | null
           mixed_by_staff_id?: string | null
           notes?: string | null
           organization_id?: string
+          prep_approved_at?: string | null
+          prep_approved_by?: string | null
           service_performed_by_staff_id?: string | null
           started_at?: string
           station_id?: string | null
@@ -12408,6 +12420,58 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      product_substitutions: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          organization_id: string
+          priority: number | null
+          product_id: string
+          substitute_product_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          organization_id: string
+          priority?: number | null
+          product_id: string
+          substitute_product_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          priority?: number | null
+          product_id?: string
+          substitute_product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_substitutions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_substitutions_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_substitutions_substitute_product_id_fkey"
+            columns: ["substitute_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       product_suppliers: {
         Row: {
@@ -17381,6 +17445,48 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      staff_pinned_products: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          organization_id: string
+          product_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          organization_id: string
+          product_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          organization_id?: string
+          product_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_pinned_products_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staff_pinned_products_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       staff_service_qualifications: {
         Row: {
