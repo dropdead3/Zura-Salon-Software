@@ -485,6 +485,7 @@ function ProductsTab() {
                     <MetricInfoTooltip description="Current stock on hand. Products are flagged as low stock when quantity reaches or falls below the minimum stock level you set." />
                   </div>
                 </TableHead>
+                <TableHead className="w-24">Expiry</TableHead>
                 <TableHead className="text-center w-16">Online</TableHead>
                 <TableHead className="w-20" />
               </TableRow>
