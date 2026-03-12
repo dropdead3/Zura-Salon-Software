@@ -1394,14 +1394,8 @@ function InventoryByLocationTab() {
         <PurchaseOrdersPanel />
       ) : (
         <>
-          {/* Coverage Warning Banner */}
-          <InventoryCoverageBanner />
-
-          {/* Alert Settings Card */}
-          <AlertSettingsCard />
-
-          {/* Inventory Lead Assignment */}
-          <InventoryLeadAssignmentCard />
+           {/* Alert Settings Card */}
+           <AlertSettingsCard />
 
           {/* Inventory Value Summary */}
           {products && products.length > 0 && (
