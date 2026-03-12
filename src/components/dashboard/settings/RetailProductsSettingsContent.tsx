@@ -1086,6 +1086,7 @@ function InventoryByLocationTab() {
   const [inventoryView, setInventoryView] = useState<'stock' | 'orders'>('stock');
   const [selectedInvIds, setSelectedInvIds] = useState<Set<string>>(new Set());
   const [showBatchReorder, setShowBatchReorder] = useState(false);
+  const logMovement = useLogStockMovement();
 
   // Dialog state
   const [reorderProduct, setReorderProduct] = useState<Product | null>(null);
@@ -1105,9 +1106,33 @@ function InventoryByLocationTab() {
     return products.filter(p => p.reorder_level != null && p.quantity_on_hand != null && p.quantity_on_hand <= p.reorder_level);
   }, [products]);
 
+  // Inventory value summary
+  const summary = useMemo(() => {
+    if (!products) return { totalUnits: 0, costValue: 0, retailValue: 0, lowStockCount: 0 };
+    let totalUnits = 0, costValue = 0, retailValue = 0, lowStockCount = 0;
+    for (const p of products) {
+      const qty = p.quantity_on_hand || 0;
+      totalUnits += qty;
+      costValue += (p.cost_price || 0) * qty;
+      retailValue += (p.retail_price || 0) * qty;
+      if (p.reorder_level != null && p.quantity_on_hand != null && p.quantity_on_hand <= p.reorder_level) lowStockCount++;
+    }
+    return { totalUnits, costValue, retailValue, lowStockCount };
+  }, [products]);
+
   const adjustStock = (product: Product, delta: number) => {
-    const newQty = Math.max(0, (product.quantity_on_hand || 0) + delta);
+    const oldQty = product.quantity_on_hand || 0;
+    const newQty = Math.max(0, oldQty + delta);
     updateProduct.mutate({ id: product.id, updates: { quantity_on_hand: newQty } });
+    if (orgId) {
+      logMovement.mutate({
+        organization_id: orgId,
+        product_id: product.id,
+        quantity_change: newQty - oldQty,
+        quantity_after: newQty,
+        reason: 'manual_adjust',
+      });
+    }
   };
 
   if (isLoading) return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
