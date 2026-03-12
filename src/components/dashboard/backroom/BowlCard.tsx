@@ -24,6 +24,8 @@ const STATUS_STYLES: Record<MixBowlStatus, { label: string; variant: 'default' |
   sealed: { label: 'Sealed', variant: 'secondary' },
   reweighed: { label: 'Reweighed', variant: 'outline' },
   discarded: { label: 'Discarded', variant: 'destructive' },
+  prepared_by_assistant: { label: 'Prepared', variant: 'secondary' },
+  awaiting_stylist_approval: { label: 'Awaiting Approval', variant: 'default' },
 };
 
 interface BowlCardProps {
