@@ -63,6 +63,7 @@ import { useProductVelocity } from '@/hooks/useProductVelocity';
 import { getMovementRating, computePercentiles, MOVEMENT_TIERS, type MovementTier } from '@/lib/productMovementRating';
 import { MovementBadge } from '@/components/ui/MovementBadge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { ClearancePanel } from '@/components/dashboard/settings/inventory/ClearancePanel';
 // Helper to classify product type — prefer DB column, fall back to regex
 function getProductType(product: Product): string {
   if (product.product_type && product.product_type !== 'Products') return product.product_type;
