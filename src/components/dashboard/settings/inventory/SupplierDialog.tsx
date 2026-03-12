@@ -22,6 +22,7 @@ interface SupplierDialogProps {
 export function SupplierDialog({ open, onOpenChange, productId, productName, organizationId }: SupplierDialogProps) {
   const { data: existing, isLoading } = useProductSupplier(open ? productId : undefined);
   const upsert = useUpsertSupplier();
+  const { data: supplierMetrics } = useSupplierPerformance();
 
   const [form, setForm] = useState({
     supplier_name: '',
