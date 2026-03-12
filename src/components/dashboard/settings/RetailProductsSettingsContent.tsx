@@ -133,6 +133,7 @@ function ProductsTab() {
   const { data: categories } = useProductCategories();
   const { data: brands } = useProductBrandsList();
   const { data: locations } = useActiveLocations();
+  const { data: velocityMap } = useProductVelocity(locationFilter !== 'all' ? locationFilter : undefined);
   const createProduct = useCreateProduct();
   const updateProduct = useUpdateProduct();
   const bulkToggle = useBulkToggleProducts();
