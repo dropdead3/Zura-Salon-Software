@@ -168,15 +168,16 @@ function ProductsTab() {
     return arr;
   }, [products, sortField, sortDir]);
 
-  // Compute movement ratings for all products
-  const productRatings = useMemo(() => {
-    if (!velocityMap || !products) return new Map<string, ReturnType<typeof getMovementRating>>();
+  // Compute movement ratings + velocity changes for all products
+  const { productRatings, velocityChanges } = useMemo(() => {
+    if (!velocityMap || !products) return { productRatings: new Map<string, ReturnType<typeof getMovementRating>>(), velocityChanges: new Map<string, number | null>() };
     const allVelocities = products.map(p => {
       const entry = velocityMap.get(p.name.toLowerCase().trim());
       return entry?.velocity ?? 0;
     });
     const percentiles = computePercentiles(allVelocities);
-    const map = new Map<string, ReturnType<typeof getMovementRating>>();
+    const ratings = new Map<string, ReturnType<typeof getMovementRating>>();
+    const changes = new Map<string, number | null>();
     for (const p of products) {
       const entry = velocityMap.get(p.name.toLowerCase().trim());
       const velocity = entry?.velocity ?? 0;
@@ -188,9 +189,10 @@ function ProductsTab() {
         hasStock: (p.quantity_on_hand ?? 0) > 0,
         velocityPercentile: pctRaw ?? 0,
       });
-      map.set(p.id, rating);
+      ratings.set(p.id, rating);
+      changes.set(p.id, entry?.velocityChange ?? null);
     }
-    return map;
+    return { productRatings: ratings, velocityChanges: changes };
   }, [products, velocityMap]);
 
   // Apply movement filter
