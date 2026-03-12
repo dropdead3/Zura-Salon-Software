@@ -45,11 +45,16 @@ export type MixSessionEventType =
   | 'suggested_formula_dismissed'
   | 'formula_memory_displayed'
   | 'formula_memory_used'
-  | 'formula_memory_dismissed';
+  | 'formula_memory_dismissed'
+  | 'assistant_prep_started'
+  | 'assistant_bowl_prepared'
+  | 'stylist_bowl_approved'
+  | 'stylist_bowl_adjusted'
+  | 'assistant_prep_discarded';
 
 export type SourceMode = 'scale' | 'manual' | 'system' | 'offline_sync';
 
-export type SessionStatus = 'draft' | 'active' | 'awaiting_reweigh' | 'completed' | 'unresolved_exception' | 'cancelled';
+export type SessionStatus = 'draft' | 'active' | 'awaiting_reweigh' | 'awaiting_stylist_approval' | 'completed' | 'unresolved_exception' | 'cancelled';
 
 // ─── Valid event types per session status ─────────────
 const VALID_EVENTS_BY_STATUS: Record<SessionStatus, MixSessionEventType[]> = {
