@@ -537,6 +537,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
   const [staffSortDir, setStaffSortDir] = useState<SortDir>('desc');
   const navigate = useNavigate();
 
+  const { effectiveOrganization } = useOrganizationContext();
   // Retail Goals
   const { data: currentGoals } = useCurrentRetailGoals();
   // Commission
