@@ -448,6 +448,7 @@ function ProductsTab() {
                     Category <SortIcon field="category" />
                   </button>
                 </TableHead>
+                <TableHead className="w-28">Movement</TableHead>
                 <TableHead className="text-right">
                   <button type="button" onClick={() => toggleSort('retail_price')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors ml-auto">
                     Price <SortIcon field="retail_price" />
