@@ -1,23 +1,20 @@
 
 
-## Timezone-Safe Scheduling (Implemented)
+## Make Reorder Level Self-Explanatory
 
-### Problem
-`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
+### Changes
 
-### Solution
-- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
-- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
-- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
+**File:** `src/components/dashboard/settings/RetailProductsSettingsContent.tsx`
 
-### Files Updated
-- `ScheduleHeader.tsx` — today button, quick days, isToday checks
-- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
-- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
-- `MonthView.tsx` — today highlight
-- `AgendaView.tsx` — today/tomorrow labels, today border
-- `ScheduleActionBar.tsx` — payment queue timing
-- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
-- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
-- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
-- `useHuddles.ts` — today's huddle query
+1. **Table inventory cell** (~line 491): Change `Reorder: ${p.reorder_level}` → `Min. stock: ${p.reorder_level}` — immediately communicates it's a threshold, not a quantity to order.
+
+2. **Table column header** (~line 397): Change "Inventory" tooltip or add a `MetricInfoTooltip` next to the header: *"Current stock on hand. When stock falls to or below the minimum stock level, the product is flagged as low stock."*
+
+3. **Product form** (~line 802): Change the label from "Reorder Level" → "Min. Stock Level" and add a helper text beneath the input: `<p className="text-[11px] text-muted-foreground mt-1">Alert when stock falls to this number</p>`
+
+4. **Low stock alert banner** (~line 1105): Change "below reorder level" → "at or below minimum stock level"
+
+5. **Low stock table header** (~line 1118): "Reorder Level" → "Min. Stock"
+
+All copy-only changes, no logic changes.
+
