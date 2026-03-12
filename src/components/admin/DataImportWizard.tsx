@@ -390,6 +390,43 @@ export function DataImportWizard({
               />
             </div>
 
+            {/* Download Template & Import Tips */}
+            <div className="space-y-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={generateTemplate}
+                className="gap-2"
+              >
+                <Download className="w-4 h-4" />
+                Download CSV Template
+              </Button>
+
+              <div className="rounded-lg border border-border bg-muted/50 p-4 space-y-3">
+                <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                  <Info className="w-4 h-4 text-primary" />
+                  Import Formatting Guide
+                </div>
+                <ul className="text-xs text-muted-foreground space-y-1.5 ml-6 list-disc">
+                  <li>File must be <span className="text-foreground">.csv</span> format (comma-separated values)</li>
+                  <li>First row must contain column headers</li>
+                  <li>
+                    Required fields: {' '}
+                    <span className="text-foreground">{requiredFieldNames.join(', ')}</span>
+                  </li>
+                  <li>Prices should be numeric without currency symbols (e.g. <span className="text-foreground">14.99</span>)</li>
+                  <li>Dates should use <span className="text-foreground">YYYY-MM-DD</span> format</li>
+                  <li>Save with <span className="text-foreground">UTF-8</span> encoding — avoid merged cells or special formatting</li>
+                </ul>
+                <div className="flex items-start gap-2 pt-1 border-t border-border/60">
+                  <Lightbulb className="w-3.5 h-3.5 mt-0.5 text-amber-500 shrink-0" />
+                  <p className="text-xs text-muted-foreground">
+                    Use the <span className="text-foreground font-medium">Dry Run</span> toggle on the preview step to validate your data before committing the import.
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {/* Location Selection */}
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
