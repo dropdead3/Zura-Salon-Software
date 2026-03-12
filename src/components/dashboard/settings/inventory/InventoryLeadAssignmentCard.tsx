@@ -60,6 +60,7 @@ function useOrgStaffOptions() {
 }
 
 export function InventoryLeadAssignmentCard() {
+  const [search, setSearch] = useState('');
   const { data: locations, isLoading: locationsLoading } = useActiveLocations();
   const { data: leads, isLoading: leadsLoading } = useLocationInventoryLeads();
   const { data: defaultLeads, isLoading: defaultsLoading } = useLocationDefaultLeads();
