@@ -18,6 +18,7 @@ import { useCreateReweighEvent } from '@/hooks/backroom/useReweighEvents';
 import { useCreateWasteEvent, type WasteCategory } from '@/hooks/backroom/useWasteEvents';
 import { useSaveFormulaHistory } from '@/hooks/backroom/useClientFormulaHistory';
 import { useDepleteMixSession } from '@/hooks/backroom/useDepleteMixSession';
+import { useCalculateOverageCharge } from '@/hooks/billing/useCalculateOverageCharge';
 import { supabase } from '@/integrations/supabase/client';
 import { calculateBowlWeight, calculateBowlCost, calculateNetUsage, extractActualFormula, extractRefinedFormula } from '@/lib/backroom/mix-calculations';
 import { isTerminalSessionStatus } from '@/lib/backroom/session-state-machine';
@@ -32,6 +33,7 @@ interface MixSessionManagerProps {
   clientName?: string;
   staffUserId?: string;
   locationId?: string;
+  serviceId?: string;
   serviceName?: string;
   staffName?: string;
 }
@@ -43,6 +45,7 @@ export function MixSessionManager({
   clientId,
   staffUserId,
   locationId,
+  serviceId,
   serviceName,
   staffName,
 }: MixSessionManagerProps) {
@@ -68,6 +71,8 @@ export function MixSessionManager({
   const createWaste = useCreateWasteEvent();
   const saveFormula = useSaveFormulaHistory();
   const depleteInventory = useDepleteMixSession();
+
+  const calculateOverage = useCalculateOverageCharge();
 
   // ─── Session Actions ──────────────────────────────
   const handleStartSession = useCallback(() => {
@@ -169,6 +174,15 @@ export function MixSessionManager({
       locationId,
     });
 
+    // Calculate overage charge if allowance policy exists
+    calculateOverage.mutate({
+      sessionId: activeSession.id,
+      appointmentId,
+      organizationId,
+      serviceId,
+      serviceName,
+    });
+
     // Save formulas if we have a client
     if (clientId) {
       try {
@@ -245,7 +259,7 @@ export function MixSessionManager({
     } else {
       toast.info('Session completed. No client linked — formula not saved.');
     }
-  }, [activeSession, bowls, clientId, organizationId, appointmentId, appointmentServiceId, serviceName, staffUserId, staffName, updateSessionStatus, saveFormula]);
+  }, [activeSession, bowls, clientId, organizationId, appointmentId, appointmentServiceId, serviceId, serviceName, staffUserId, staffName, updateSessionStatus, saveFormula, depleteInventory, calculateOverage]);
 
   // ─── Bowl Actions ─────────────────────────────────
   const handleAddBowl = useCallback(() => {

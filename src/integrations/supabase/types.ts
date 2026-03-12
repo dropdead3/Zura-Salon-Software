@@ -524,6 +524,57 @@ export type Database = {
           },
         ]
       }
+      allowance_override_log: {
+        Row: {
+          action: string
+          charge_id: string
+          created_at: string
+          id: string
+          new_amount: number | null
+          organization_id: string
+          performed_by: string | null
+          previous_amount: number | null
+          reason: string | null
+        }
+        Insert: {
+          action: string
+          charge_id: string
+          created_at?: string
+          id?: string
+          new_amount?: number | null
+          organization_id: string
+          performed_by?: string | null
+          previous_amount?: number | null
+          reason?: string | null
+        }
+        Update: {
+          action?: string
+          charge_id?: string
+          created_at?: string
+          id?: string
+          new_amount?: number | null
+          organization_id?: string
+          performed_by?: string | null
+          previous_amount?: number | null
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "allowance_override_log_charge_id_fkey"
+            columns: ["charge_id"]
+            isOneToOne: false
+            referencedRelation: "checkout_usage_charges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "allowance_override_log_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       announcement_reads: {
         Row: {
           announcement_id: string
@@ -3231,6 +3282,98 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      checkout_usage_charges: {
+        Row: {
+          actual_usage_qty: number
+          applied_at: string | null
+          appointment_id: string
+          approved_by: string | null
+          charge_amount: number
+          created_at: string
+          id: string
+          included_allowance_qty: number
+          mix_session_id: string
+          organization_id: string
+          overage_qty: number
+          overage_rate: number
+          policy_id: string | null
+          service_name: string | null
+          status: string
+          updated_at: string
+          waived_by: string | null
+          waived_reason: string | null
+        }
+        Insert: {
+          actual_usage_qty: number
+          applied_at?: string | null
+          appointment_id: string
+          approved_by?: string | null
+          charge_amount: number
+          created_at?: string
+          id?: string
+          included_allowance_qty: number
+          mix_session_id: string
+          organization_id: string
+          overage_qty: number
+          overage_rate: number
+          policy_id?: string | null
+          service_name?: string | null
+          status?: string
+          updated_at?: string
+          waived_by?: string | null
+          waived_reason?: string | null
+        }
+        Update: {
+          actual_usage_qty?: number
+          applied_at?: string | null
+          appointment_id?: string
+          approved_by?: string | null
+          charge_amount?: number
+          created_at?: string
+          id?: string
+          included_allowance_qty?: number
+          mix_session_id?: string
+          organization_id?: string
+          overage_qty?: number
+          overage_rate?: number
+          policy_id?: string | null
+          service_name?: string | null
+          status?: string
+          updated_at?: string
+          waived_by?: string | null
+          waived_reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checkout_usage_charges_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checkout_usage_charges_mix_session_id_fkey"
+            columns: ["mix_session_id"]
+            isOneToOne: false
+            referencedRelation: "mix_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checkout_usage_charges_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checkout_usage_charges_policy_id_fkey"
+            columns: ["policy_id"]
+            isOneToOne: false
+            referencedRelation: "service_allowance_policies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       churn_risk_scores: {
         Row: {
@@ -15517,6 +15660,69 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_allowance_policies: {
+        Row: {
+          allowance_unit: string
+          created_at: string
+          created_by: string | null
+          id: string
+          included_allowance_qty: number
+          is_active: boolean
+          notes: string | null
+          organization_id: string
+          overage_cap: number | null
+          overage_rate: number
+          overage_rate_type: string
+          service_id: string
+          updated_at: string
+        }
+        Insert: {
+          allowance_unit?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          included_allowance_qty?: number
+          is_active?: boolean
+          notes?: string | null
+          organization_id: string
+          overage_cap?: number | null
+          overage_rate?: number
+          overage_rate_type?: string
+          service_id: string
+          updated_at?: string
+        }
+        Update: {
+          allowance_unit?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          included_allowance_qty?: number
+          is_active?: boolean
+          notes?: string | null
+          organization_id?: string
+          overage_cap?: number | null
+          overage_rate?: number
+          overage_rate_type?: string
+          service_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_allowance_policies_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_allowance_policies_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
             referencedColumns: ["id"]
           },
         ]

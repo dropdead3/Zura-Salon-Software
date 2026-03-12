@@ -30,6 +30,7 @@ export function BackroomTab({ appointment, organizationId }: BackroomTabProps) {
         clientId={appointment.client_id ?? appointment.phorest_client_id ?? undefined}
         staffUserId={appointment.staff_user_id ?? undefined}
         locationId={appointment.location_id ?? undefined}
+        serviceId={appointment.service_id ?? undefined}
         serviceName={appointment.service_name ?? undefined}
         staffName={appointment.staff_name ?? undefined}
       />
