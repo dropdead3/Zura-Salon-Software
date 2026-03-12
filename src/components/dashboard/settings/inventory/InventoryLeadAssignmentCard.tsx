@@ -102,7 +102,7 @@ export function InventoryLeadAssignmentCard() {
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-2">
+      <CardContent className="space-y-3">
         {locations.map((location) => {
           const explicitLead = leadByLocation.get(location.id);
           const defaultLead = defaultLeads?.get(location.id);
@@ -116,7 +116,7 @@ export function InventoryLeadAssignmentCard() {
               key={location.id}
               className={cn(
                 tokens.card.inner,
-                'flex items-center justify-between px-4 py-3'
+                'flex items-center justify-between px-4 py-3.5'
               )}
             >
               <div className="flex items-center gap-3 min-w-0">

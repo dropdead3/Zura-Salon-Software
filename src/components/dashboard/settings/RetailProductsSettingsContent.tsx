@@ -1711,9 +1711,11 @@ export function RetailProductsSettingsContent() {
         </TabsList>
 
         <TabsContent value="inventory" className="mt-4">
-          <InventoryCoverageBanner />
-          <InventoryLeadAssignmentCard />
-          <InventoryByLocationTab />
+          <div className="space-y-6">
+            <InventoryCoverageBanner />
+            <InventoryLeadAssignmentCard />
+            <InventoryByLocationTab />
+          </div>
         </TabsContent>
 
         <TabsContent value="products" className="mt-4">
