@@ -326,7 +326,7 @@ export async function executeRecordLineItem(
 
 export async function executeRemoveLineItem(
   cmd: RemoveLineItemCommand,
-): Promise<CommandResult> {
+): Promise<CommandResult<unknown>> {
   const session = await fetchSessionState(cmd.mix_session_id);
   const bowl = await fetchBowlState(cmd.bowl_id);
   const lineExists = await checkLineExists(cmd.line_id);
