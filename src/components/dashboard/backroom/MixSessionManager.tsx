@@ -162,6 +162,13 @@ export function MixSessionManager({
       unresolvedReason,
     });
 
+    // Deplete inventory from stock
+    depleteInventory.mutate({
+      sessionId: activeSession.id,
+      organizationId,
+      locationId,
+    });
+
     // Save formulas if we have a client
     if (clientId) {
       try {
