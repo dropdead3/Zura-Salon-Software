@@ -7008,6 +7008,8 @@ export type Database = {
           alert_channels: string[]
           auto_create_draft_po: boolean
           created_at: string
+          dead_stock_days: number
+          dead_stock_enabled: boolean
           default_threshold_pct: number
           enabled: boolean
           id: string
@@ -7020,6 +7022,8 @@ export type Database = {
           alert_channels?: string[]
           auto_create_draft_po?: boolean
           created_at?: string
+          dead_stock_days?: number
+          dead_stock_enabled?: boolean
           default_threshold_pct?: number
           enabled?: boolean
           id?: string
@@ -7032,6 +7036,8 @@ export type Database = {
           alert_channels?: string[]
           auto_create_draft_po?: boolean
           created_at?: string
+          dead_stock_days?: number
+          dead_stock_enabled?: boolean
           default_threshold_pct?: number
           enabled?: boolean
           id?: string
@@ -11597,7 +11603,9 @@ export type Database = {
       product_suppliers: {
         Row: {
           account_number: string | null
+          avg_delivery_days: number | null
           created_at: string
+          delivery_count: number
           id: string
           lead_time_days: number | null
           organization_id: string
@@ -11612,7 +11620,9 @@ export type Database = {
         }
         Insert: {
           account_number?: string | null
+          avg_delivery_days?: number | null
           created_at?: string
+          delivery_count?: number
           id?: string
           lead_time_days?: number | null
           organization_id: string
@@ -11627,7 +11637,9 @@ export type Database = {
         }
         Update: {
           account_number?: string | null
+          avg_delivery_days?: number | null
           created_at?: string
+          delivery_count?: number
           id?: string
           lead_time_days?: number | null
           organization_id?: string
