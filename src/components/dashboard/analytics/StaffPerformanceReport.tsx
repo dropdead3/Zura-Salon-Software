@@ -198,7 +198,7 @@ function StylistRow({
         <TableCell>{row.retailConversion}%</TableCell>
         <TableCell>
           {row.avgChemicalCostPerService > 0
-            ? <BlurredAmount value={row.avgChemicalCostPerService} formatter={formatCurrency} />
+            ? <AnimatedBlurredAmount value={row.avgChemicalCostPerService} currency="USD" decimals={2} />
             : <span className="text-muted-foreground">—</span>
           }
         </TableCell>

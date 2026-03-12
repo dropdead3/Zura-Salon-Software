@@ -128,7 +128,7 @@ export function TrueProfitCard({ dateFrom, dateTo, locationId, className }: True
                     line.isProfit && getMarginHealthColor(avgMarginPct),
                     line.isCost && 'text-destructive',
                   )}>
-                    <BlurredAmount value={line.value} formatter={formatCurrency} />
+                    <AnimatedBlurredAmount value={line.value} currency="USD" decimals={2} />
                   </span>
                 </div>
               ))}
