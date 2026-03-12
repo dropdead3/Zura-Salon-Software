@@ -71,6 +71,11 @@ export const NOTIFICATION_TYPES = {
     description: 'When products fall below minimum stock levels',
     defaultChannels: ['in_app', 'email'],
   },
+  dead_stock_alert: {
+    label: 'Dead Stock Alerts',
+    description: 'When products have no sales activity for an extended period',
+    defaultChannels: ['in_app'],
+  },
 };
 
 export function usePlatformNotifications(limit = 50) {

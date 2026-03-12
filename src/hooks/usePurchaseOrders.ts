@@ -138,10 +138,19 @@ export function useMarkPurchaseOrderReceived() {
 
   return useMutation({
     mutationFn: async ({ poId, productId, quantity, organizationId }: { poId: string; productId: string; quantity: number; organizationId: string }) => {
+      const now = new Date().toISOString();
+
+      // Get PO created_at for lead-time calculation
+      const { data: poData } = await supabase
+        .from('purchase_orders')
+        .select('created_at, sent_at, supplier_name')
+        .eq('id', poId)
+        .single();
+
       // Update PO status
       const { error: poErr } = await supabase
         .from('purchase_orders')
-        .update({ status: 'received', received_at: new Date().toISOString() })
+        .update({ status: 'received', received_at: now })
         .eq('id', poId);
       if (poErr) throw poErr;
 
@@ -156,7 +165,7 @@ export function useMarkPurchaseOrderReceived() {
       const newQty = oldQty + quantity;
       const { error: prodErr } = await supabase
         .from('products')
-        .update({ quantity_on_hand: newQty, updated_at: new Date().toISOString() })
+        .update({ quantity_on_hand: newQty, updated_at: now })
         .eq('id', productId);
       if (prodErr) throw prodErr;
 
@@ -171,11 +180,47 @@ export function useMarkPurchaseOrderReceived() {
         notes: `PO ${poId} received`,
         created_by: userId,
       });
+
+      // Update supplier avg_delivery_days for lead-time tracking
+      if (poData) {
+        const sentOrCreated = poData.sent_at || poData.created_at;
+        const deliveryDays = Math.round(
+          (new Date(now).getTime() - new Date(sentOrCreated).getTime()) / (1000 * 60 * 60 * 24)
+        );
+
+        if (deliveryDays >= 0) {
+          // Get current supplier stats
+          const { data: supplier } = await supabase
+            .from('product_suppliers')
+            .select('id, avg_delivery_days, delivery_count')
+            .eq('product_id', productId)
+            .eq('organization_id', organizationId)
+            .maybeSingle();
+
+          if (supplier) {
+            const oldAvg = supplier.avg_delivery_days || deliveryDays;
+            const oldCount = supplier.delivery_count || 0;
+            const newCount = oldCount + 1;
+            // Running average
+            const newAvg = ((oldAvg * oldCount) + deliveryDays) / newCount;
+
+            await supabase
+              .from('product_suppliers')
+              .update({
+                avg_delivery_days: Math.round(newAvg * 10) / 10,
+                delivery_count: newCount,
+              })
+              .eq('id', supplier.id);
+          }
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['purchase-orders'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['stock-movements'] });
+      queryClient.invalidateQueries({ queryKey: ['product-suppliers'] });
+      queryClient.invalidateQueries({ queryKey: ['product-supplier'] });
       toast.success('Order marked as received — stock updated');
     },
     onError: (error) => {

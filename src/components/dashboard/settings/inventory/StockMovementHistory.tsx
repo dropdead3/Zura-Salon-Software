@@ -1,10 +1,13 @@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
-import { History, Loader2, ArrowUp, ArrowDown } from 'lucide-react';
+import { History, Loader2, ArrowUp, ArrowDown, Download } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { useStockMovements } from '@/hooks/useStockMovements';
 import { formatDistanceToNow } from 'date-fns';
+import { exportStockMovementsCsv } from '@/lib/exportStockMovementsCsv';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { toast } from 'sonner';
 
 const REASON_LABELS: Record<string, string> = {
   manual_adjust: 'Manual Adjustment',
@@ -20,6 +23,17 @@ interface StockMovementHistoryProps {
 
 export function StockMovementHistory({ productId }: StockMovementHistoryProps) {
   const { data: movements, isLoading } = useStockMovements(productId);
+  const { effectiveOrganization } = useOrganizationContext();
+
+  const handleExport = async () => {
+    if (!effectiveOrganization?.id) return;
+    try {
+      await exportStockMovementsCsv(effectiveOrganization.id, productId);
+      toast.success('Stock movements exported');
+    } catch {
+      toast.error('Failed to export movements');
+    }
+  };
 
   return (
     <Popover>
@@ -29,8 +43,11 @@ export function StockMovementHistory({ productId }: StockMovementHistoryProps) {
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-72 p-0" align="end">
-        <div className="p-3 border-b">
+        <div className="p-3 border-b flex items-center justify-between">
           <h4 className="font-display text-sm tracking-wide">Stock History</h4>
+          <Button variant="ghost" size="icon" className="w-7 h-7" onClick={handleExport} title="Export CSV">
+            <Download className="w-3.5 h-3.5" />
+          </Button>
         </div>
         <div className="max-h-60 overflow-y-auto">
           {isLoading ? (

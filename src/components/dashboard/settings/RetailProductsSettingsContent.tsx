@@ -1139,7 +1139,7 @@ function InventoryByLocationTab() {
 
   return (
     <div className="space-y-4">
-      {/* Location selector + view toggle */}
+      {/* Location selector + view toggle + export */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           {locations && locations.length > 1 && (
@@ -1158,23 +1158,43 @@ function InventoryByLocationTab() {
             </>
           )}
         </div>
-        <div className="flex items-center gap-1 bg-muted rounded-lg p-0.5">
-          <Button
-            variant={inventoryView === 'stock' ? 'default' : 'ghost'}
-            size="sm"
-            className="h-7 px-3 text-xs gap-1.5"
-            onClick={() => setInventoryView('stock')}
-          >
-            <Package className="w-3.5 h-3.5" /> Stock
-          </Button>
-          <Button
-            variant={inventoryView === 'orders' ? 'default' : 'ghost'}
-            size="sm"
-            className="h-7 px-3 text-xs gap-1.5"
-            onClick={() => setInventoryView('orders')}
-          >
-            <ShoppingCart className="w-3.5 h-3.5" /> Purchase Orders
-          </Button>
+        <div className="flex items-center gap-2">
+          {orgId && (
+            <Button
+              variant="outline"
+              size={tokens.button.inline}
+              className="gap-1.5"
+              onClick={async () => {
+                try {
+                  const { exportStockMovementsCsv } = await import('@/lib/exportStockMovementsCsv');
+                  await exportStockMovementsCsv(orgId);
+                  sonnerToast.success('Stock movements exported');
+                } catch {
+                  sonnerToast.error('Failed to export');
+                }
+              }}
+            >
+              <Download className="w-3.5 h-3.5" /> Export Movements
+            </Button>
+          )}
+          <div className="flex items-center gap-1 bg-muted rounded-lg p-0.5">
+            <Button
+              variant={inventoryView === 'stock' ? 'default' : 'ghost'}
+              size="sm"
+              className="h-7 px-3 text-xs gap-1.5"
+              onClick={() => setInventoryView('stock')}
+            >
+              <Package className="w-3.5 h-3.5" /> Stock
+            </Button>
+            <Button
+              variant={inventoryView === 'orders' ? 'default' : 'ghost'}
+              size="sm"
+              className="h-7 px-3 text-xs gap-1.5"
+              onClick={() => setInventoryView('orders')}
+            >
+              <ShoppingCart className="w-3.5 h-3.5" /> Purchase Orders
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -1280,6 +1300,7 @@ function InventoryByLocationTab() {
                   <TableHead>Supplier</TableHead>
                   <TableHead className="text-right">On Hand</TableHead>
                   <TableHead className="text-right">Min. Stock</TableHead>
+                  <TableHead className="text-right">Lead Time</TableHead>
                   <TableHead className="text-right">Status</TableHead>
                   <TableHead className="text-center w-32">Adjust</TableHead>
                   <TableHead className="w-8" />
@@ -1288,7 +1309,7 @@ function InventoryByLocationTab() {
               </TableHeader>
               <TableBody>
                 {!products?.length ? (
-                  <TableRow><TableCell colSpan={10} className="text-center py-8 text-muted-foreground">No products{selectedLocationId !== 'all' ? ' at this location' : ''}</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={11} className="text-center py-8 text-muted-foreground">No products{selectedLocationId !== 'all' ? ' at this location' : ''}</TableCell></TableRow>
                 ) : products.map(p => {
                   const isLow = p.reorder_level != null && p.quantity_on_hand != null && p.quantity_on_hand <= p.reorder_level;
                   const supplier = supplierMap.get(p.id);
@@ -1335,6 +1356,15 @@ function InventoryByLocationTab() {
                       </TableCell>
                       <TableCell className="text-right tabular-nums font-medium">{p.quantity_on_hand ?? '—'}</TableCell>
                       <TableCell className="text-right tabular-nums text-muted-foreground">{p.reorder_level ?? '—'}</TableCell>
+                      <TableCell className="text-right">
+                        {supplier?.avg_delivery_days ? (
+                          <span className="text-xs tabular-nums text-muted-foreground" title={`Based on ${supplier.delivery_count} delivery${supplier.delivery_count !== 1 ? 'ies' : ''}`}>
+                            {Math.round(supplier.avg_delivery_days as number)}d
+                          </span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground/50">—</span>
+                        )}
+                      </TableCell>
                       <TableCell className="text-right">
                         {isLow ? (
                           <Badge variant="outline" className="text-amber-600 border-amber-300 dark:text-amber-400 text-[10px]">Low</Badge>

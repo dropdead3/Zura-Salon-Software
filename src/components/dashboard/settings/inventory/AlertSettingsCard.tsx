@@ -22,6 +22,8 @@ export function AlertSettingsCard() {
   const [inApp, setInApp] = useState(true);
   const [email, setEmail] = useState(true);
   const [autoCreatePo, setAutoCreatePo] = useState(true);
+  const [deadStockEnabled, setDeadStockEnabled] = useState(true);
+  const [deadStockDays, setDeadStockDays] = useState(90);
 
   // Sync from server
   useEffect(() => {
@@ -31,6 +33,8 @@ export function AlertSettingsCard() {
       setInApp(settings.alert_channels.includes('in_app'));
       setEmail(settings.alert_channels.includes('email'));
       setAutoCreatePo(settings.auto_create_draft_po);
+      setDeadStockEnabled((settings as any).dead_stock_enabled ?? true);
+      setDeadStockDays((settings as any).dead_stock_days ?? 90);
     }
   }, [settings]);
 
@@ -39,7 +43,9 @@ export function AlertSettingsCard() {
     thresholdPct !== settings.default_threshold_pct ||
     inApp !== settings.alert_channels.includes('in_app') ||
     email !== settings.alert_channels.includes('email') ||
-    autoCreatePo !== settings.auto_create_draft_po
+    autoCreatePo !== settings.auto_create_draft_po ||
+    deadStockEnabled !== ((settings as any).dead_stock_enabled ?? true) ||
+    deadStockDays !== ((settings as any).dead_stock_days ?? 90)
   ) : true;
 
   const handleSave = () => {
@@ -52,7 +58,9 @@ export function AlertSettingsCard() {
       default_threshold_pct: thresholdPct,
       alert_channels: channels,
       auto_create_draft_po: autoCreatePo,
-    });
+      dead_stock_enabled: deadStockEnabled,
+      dead_stock_days: deadStockDays,
+    } as any);
   };
 
   if (isLoading) return null;
@@ -147,6 +155,40 @@ export function AlertSettingsCard() {
                     </p>
                   </div>
                   <Switch checked={autoCreatePo} onCheckedChange={setAutoCreatePo} />
+                </div>
+
+                {/* Dead Stock Detection */}
+                <div className="pt-3 border-t space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm">Dead stock alerts</Label>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Alert when products have zero sales for a configurable period
+                      </p>
+                    </div>
+                    <Switch checked={deadStockEnabled} onCheckedChange={setDeadStockEnabled} />
+                  </div>
+                  {deadStockEnabled && (
+                    <div className="space-y-2">
+                      <Label className="text-sm">No-sale threshold</Label>
+                      <p className="text-xs text-muted-foreground">
+                        Flag products with no sales for {deadStockDays} days
+                      </p>
+                      <Slider
+                        value={[deadStockDays]}
+                        onValueChange={([v]) => setDeadStockDays(v)}
+                        min={30}
+                        max={365}
+                        step={15}
+                        className="mt-2"
+                      />
+                      <div className="flex justify-between text-[10px] text-muted-foreground">
+                        <span>30 days</span>
+                        <span>90 days</span>
+                        <span>365 days</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </>
             )}
