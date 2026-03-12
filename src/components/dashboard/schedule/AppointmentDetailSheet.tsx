@@ -36,6 +36,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BackroomTab } from '@/components/dashboard/backroom/BackroomTab';
 import { CheckoutClarityPanel } from '@/components/dashboard/backroom/CheckoutClarityPanel';
 import { ClientMemoryPanel } from '@/components/dashboard/schedule/ClientMemoryPanel';
+import { TransformationTimeline } from '@/components/dashboard/clients/TransformationTimeline';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -72,7 +73,7 @@ import {
   ChevronDown, ChevronRight, Copy, Check, CheckCircle, UserCheck, XCircle, AlertTriangle,
   MessageSquare, Lock, Trash2, Loader2, UserPlus, X, Repeat, RotateCcw,
   CreditCard, CalendarClock, RefreshCw, Star, TrendingUp, ExternalLink,
-  UserX, ArrowRightLeft, Receipt, MoreHorizontal, Sparkles,
+  UserX, ArrowRightLeft, Receipt, MoreHorizontal, Sparkles, Camera,
 } from 'lucide-react';
 import { cn, formatPhoneDisplay } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -1051,6 +1052,7 @@ export function AppointmentDetailSheet({
                 <TabsList className="mx-6 mb-0 shrink-0">
                   <TabsTrigger value="details" className="font-sans">Details</TabsTrigger>
                   <TabsTrigger value="history" className="font-sans">History</TabsTrigger>
+                  <TabsTrigger value="photos" className="font-sans">Photos</TabsTrigger>
                   <TabsTrigger value="notes" className="font-sans">Notes</TabsTrigger>
                   <TabsTrigger value="backroom" className="font-sans">Backroom</TabsTrigger>
                 </TabsList>
@@ -1728,6 +1730,22 @@ export function AppointmentDetailSheet({
                       </motion.div>
                     )}
                     </motion.div>
+                  </TabsContent>
+
+                  {/* ─── TAB: Photos ──────────────────────────── */}
+                  <TabsContent value="photos" className="p-6 pt-4 mt-0">
+                    {appointment.phorest_client_id ? (
+                      <TransformationTimeline
+                        clientId={appointment.phorest_client_id}
+                        phorestClientId={appointment.phorest_client_id}
+                      />
+                    ) : (
+                      <div className={tokens.empty.container}>
+                        <Camera className={tokens.empty.icon} />
+                        <h3 className={tokens.empty.heading}>No client linked</h3>
+                        <p className={tokens.empty.description}>Link a client to this appointment to add transformation photos.</p>
+                      </div>
+                    )}
                   </TabsContent>
 
                   {/* ─── TAB: Backroom ─────────────────────────── */}
