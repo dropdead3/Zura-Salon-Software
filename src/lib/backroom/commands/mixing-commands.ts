@@ -191,7 +191,7 @@ async function emitAndAudit(
 
 export async function executeStartMixSession(
   cmd: StartMixSessionCommand,
-): Promise<CommandResult> {
+): Promise<CommandResult<unknown>> {
   const session = await fetchSessionState(cmd.mix_session_id);
   const errors = validateStartMixSession(cmd.meta.initiated_by, session);
 
