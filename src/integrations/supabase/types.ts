@@ -9366,6 +9366,7 @@ export type Database = {
           leftover_weight: number | null
           mix_session_id: string
           net_usage_weight: number | null
+          prepared_by_staff_id: string | null
           purpose: string | null
           started_at: string
           status: Database["public"]["Enums"]["mix_bowl_status"]
@@ -9382,6 +9383,7 @@ export type Database = {
           leftover_weight?: number | null
           mix_session_id: string
           net_usage_weight?: number | null
+          prepared_by_staff_id?: string | null
           purpose?: string | null
           started_at?: string
           status?: Database["public"]["Enums"]["mix_bowl_status"]
@@ -9398,6 +9400,7 @@ export type Database = {
           leftover_weight?: number | null
           mix_session_id?: string
           net_usage_weight?: number | null
+          prepared_by_staff_id?: string | null
           purpose?: string | null
           started_at?: string
           status?: Database["public"]["Enums"]["mix_bowl_status"]
