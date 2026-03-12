@@ -455,6 +455,18 @@ export function MixSessionManager({
             <ScaleConnectionStatus state="manual_override" />
           </div>
 
+          {/* Prep Mode Toggle */}
+          <div className="flex items-center justify-center gap-3">
+            <Switch
+              id="prep-mode"
+              checked={isPrepMode}
+              onCheckedChange={setIsPrepMode}
+            />
+            <Label htmlFor="prep-mode" className="font-sans text-sm text-muted-foreground cursor-pointer">
+              Assistant Prep Mode
+            </Label>
+          </div>
+
           <Button
             size="lg"
             onClick={handleStartSession}
@@ -462,7 +474,7 @@ export function MixSessionManager({
             className="h-12 px-8 font-sans"
           >
             <Play className="w-4 h-4 mr-2" />
-            Start Session
+            {isPrepMode ? 'Start Prep' : 'Start Session'}
           </Button>
         </div>
       </div>
