@@ -22,7 +22,11 @@ import {
   validateCaptureReweigh,
   validateCompleteSession,
   validateMarkSessionUnresolved,
+  validateApplySuggestedFormula,
+  validateDismissSuggestedFormula,
 } from './mixing-validators';
+import type { FormulaLine } from '../mix-calculations';
+import type { SuggestionSource } from '../services/smart-mix-assist-service';
 import { supabase } from '@/integrations/supabase/client';
 
 // ─── Command Definitions ─────────────────────────────
