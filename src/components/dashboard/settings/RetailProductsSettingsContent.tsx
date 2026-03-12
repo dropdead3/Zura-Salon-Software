@@ -66,7 +66,9 @@ function ProductsTab() {
   const { effectiveOrganization } = useOrganizationContext();
   const [search, setSearch] = useState('');
   const [showImportWizard, setShowImportWizard] = useState(false);
-  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [showHistory, setShowHistory] = useState(false);
+  const { data: importJobs } = useImportJobs({ organizationId: effectiveOrganization?.id });
+  const productImportJobs = useMemo(() => (importJobs || []).filter(j => j.entity_type === 'products'), [importJobs]);
   const [brandFilter, setBrandFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
   const [locationFilter, setLocationFilter] = useState('all');
