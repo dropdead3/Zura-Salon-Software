@@ -78,6 +78,7 @@ export function useUpsertSupplier() {
             reorder_notes: supplier.reorder_notes,
             lead_time_days: supplier.lead_time_days,
             account_number: supplier.account_number,
+            moq: supplier.moq ?? 1,
           })
           .eq('id', supplier.id)
           .select()
