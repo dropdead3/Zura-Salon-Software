@@ -70,22 +70,24 @@ export function useSaveFormulaHistory() {
 
       const versionNumber = (count ?? 0) + 1;
 
+      const insertPayload = {
+        organization_id: params.organization_id,
+        client_id: params.client_id,
+        appointment_id: params.appointment_id || null,
+        appointment_service_id: params.appointment_service_id || null,
+        mix_session_id: params.mix_session_id || null,
+        service_name: params.service_name || null,
+        formula_type: params.formula_type,
+        formula_data: JSON.parse(JSON.stringify(params.formula_data)),
+        staff_id: params.staff_id || null,
+        staff_name: params.staff_name || null,
+        notes: params.notes || null,
+        version_number: versionNumber,
+      };
+
       const { data, error } = await supabase
         .from('client_formula_history')
-        .insert({
-          organization_id: params.organization_id,
-          client_id: params.client_id,
-          appointment_id: params.appointment_id || null,
-          appointment_service_id: params.appointment_service_id || null,
-          mix_session_id: params.mix_session_id || null,
-          service_name: params.service_name || null,
-          formula_type: params.formula_type,
-          formula_data: params.formula_data as unknown as Record<string, unknown>[],
-          staff_id: params.staff_id || null,
-          staff_name: params.staff_name || null,
-          notes: params.notes || null,
-          version_number: versionNumber,
-        })
+        .insert(insertPayload as any)
         .select()
         .single();
 
