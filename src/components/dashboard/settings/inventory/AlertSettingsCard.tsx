@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Bell, ChevronDown, ChevronUp, Loader2, Users } from 'lucide-react';
+import { Bell, ChevronDown, ChevronUp, Loader2, Users, AlertTriangle } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { useInventoryAlertSettings, useUpsertInventoryAlertSettings } from '@/hooks/useInventoryAlertSettings';
@@ -22,6 +24,9 @@ export function AlertSettingsCard() {
   const [inApp, setInApp] = useState(true);
   const [email, setEmail] = useState(true);
   const [autoCreatePo, setAutoCreatePo] = useState(true);
+  const [autoReorderEnabled, setAutoReorderEnabled] = useState(false);
+  const [autoReorderMode, setAutoReorderMode] = useState('to_par');
+  const [maxAutoReorderValue, setMaxAutoReorderValue] = useState('');
   const [deadStockEnabled, setDeadStockEnabled] = useState(true);
   const [deadStockDays, setDeadStockDays] = useState(90);
 
@@ -33,6 +38,9 @@ export function AlertSettingsCard() {
       setInApp(settings.alert_channels.includes('in_app'));
       setEmail(settings.alert_channels.includes('email'));
       setAutoCreatePo(settings.auto_create_draft_po);
+      setAutoReorderEnabled(settings.auto_reorder_enabled ?? false);
+      setAutoReorderMode(settings.auto_reorder_mode ?? 'to_par');
+      setMaxAutoReorderValue(settings.max_auto_reorder_value?.toString() ?? '');
       setDeadStockEnabled((settings as any).dead_stock_enabled ?? true);
       setDeadStockDays((settings as any).dead_stock_days ?? 90);
     }
@@ -44,6 +52,9 @@ export function AlertSettingsCard() {
     inApp !== settings.alert_channels.includes('in_app') ||
     email !== settings.alert_channels.includes('email') ||
     autoCreatePo !== settings.auto_create_draft_po ||
+    autoReorderEnabled !== (settings.auto_reorder_enabled ?? false) ||
+    autoReorderMode !== (settings.auto_reorder_mode ?? 'to_par') ||
+    maxAutoReorderValue !== (settings.max_auto_reorder_value?.toString() ?? '') ||
     deadStockEnabled !== ((settings as any).dead_stock_enabled ?? true) ||
     deadStockDays !== ((settings as any).dead_stock_days ?? 90)
   ) : true;
@@ -58,6 +69,9 @@ export function AlertSettingsCard() {
       default_threshold_pct: thresholdPct,
       alert_channels: channels,
       auto_create_draft_po: autoCreatePo,
+      auto_reorder_enabled: autoReorderEnabled,
+      auto_reorder_mode: autoReorderMode,
+      max_auto_reorder_value: maxAutoReorderValue ? parseFloat(maxAutoReorderValue) : null,
       dead_stock_enabled: deadStockEnabled,
       dead_stock_days: deadStockDays,
     } as any);
@@ -154,8 +168,69 @@ export function AlertSettingsCard() {
                       Automatically generate draft POs for low-stock items with assigned suppliers
                     </p>
                   </div>
-                  <Switch checked={autoCreatePo} onCheckedChange={setAutoCreatePo} />
+                  <Switch checked={autoCreatePo} onCheckedChange={(v) => { setAutoCreatePo(v); if (!v) setAutoReorderEnabled(false); }} />
                 </div>
+
+                {/* Auto-reorder (send to supplier) */}
+                {autoCreatePo && (
+                  <div className="ml-4 pl-4 border-l border-border space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label className="text-sm">Auto-send POs to suppliers</Label>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Automatically email POs to suppliers without manual review
+                        </p>
+                      </div>
+                      <Switch checked={autoReorderEnabled} onCheckedChange={setAutoReorderEnabled} />
+                    </div>
+
+                    {autoReorderEnabled && (
+                      <>
+                        <div className="flex items-start gap-2 p-2 rounded-lg bg-destructive/10 text-destructive text-xs">
+                          <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                          <span>POs will be sent to suppliers without manual review</span>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label className="text-sm">Reorder mode</Label>
+                          <RadioGroup value={autoReorderMode} onValueChange={setAutoReorderMode} className="space-y-1.5">
+                            <label className="flex items-start gap-2 cursor-pointer">
+                              <RadioGroupItem value="to_par" className="mt-0.5" />
+                              <div>
+                                <span className="text-sm">Restock to par level</span>
+                                <p className="text-xs text-muted-foreground">Order enough to bring stock back to the target (par) level</p>
+                              </div>
+                            </label>
+                            <label className="flex items-start gap-2 cursor-pointer">
+                              <RadioGroupItem value="moq_only" className="mt-0.5" />
+                              <div>
+                                <span className="text-sm">Order minimum quantity (MOQ)</span>
+                                <p className="text-xs text-muted-foreground">Order only the supplier's minimum order quantity</p>
+                              </div>
+                            </label>
+                          </RadioGroup>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <Label className="text-sm">Daily spend cap</Label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={maxAutoReorderValue}
+                            onChange={e => setMaxAutoReorderValue(e.target.value)}
+                            placeholder="No limit"
+                            className="max-w-[180px]"
+                            autoCapitalize="off"
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Pause auto-reorders when daily PO value exceeds this amount
+                          </p>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
 
                 {/* Dead Stock Detection */}
                 <div className="pt-3 border-t space-y-3">

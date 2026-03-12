@@ -12,6 +12,9 @@ export interface InventoryAlertSettings {
   recipient_user_ids: string[];
   recipient_roles: string[];
   auto_create_draft_po: boolean;
+  auto_reorder_enabled: boolean;
+  auto_reorder_mode: string;
+  max_auto_reorder_value: number | null;
   created_at: string;
   updated_at: string;
 }

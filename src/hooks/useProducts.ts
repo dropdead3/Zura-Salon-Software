@@ -16,6 +16,7 @@ export interface Product {
   cost_price: number | null;
   quantity_on_hand: number | null;
   reorder_level: number | null;
+  par_level: number | null;
   is_active: boolean | null;
   available_online: boolean | null;
   image_url: string | null;

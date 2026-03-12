@@ -15,6 +15,7 @@ export interface ProductSupplier {
   reorder_notes: string | null;
   lead_time_days: number | null;
   account_number: string | null;
+  moq: number;
   avg_delivery_days: number | null;
   delivery_count: number;
   created_at: string;
@@ -77,6 +78,7 @@ export function useUpsertSupplier() {
             reorder_notes: supplier.reorder_notes,
             lead_time_days: supplier.lead_time_days,
             account_number: supplier.account_number,
+            moq: supplier.moq ?? 1,
           })
           .eq('id', supplier.id)
           .select()
@@ -97,6 +99,7 @@ export function useUpsertSupplier() {
             reorder_notes: supplier.reorder_notes,
             lead_time_days: supplier.lead_time_days,
             account_number: supplier.account_number,
+            moq: supplier.moq ?? 1,
           })
           .select()
           .single();

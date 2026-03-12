@@ -19,7 +19,7 @@ Deno.serve(async (req) => {
     // Find all active products with reorder info
     const { data: allProducts, error: queryErr } = await supabase
       .from("products")
-      .select("id, name, sku, organization_id, quantity_on_hand, reorder_level, supplier_id, is_active")
+      .select("id, name, sku, organization_id, quantity_on_hand, reorder_level, par_level, supplier_id, is_active")
       .eq("is_active", true)
       .not("quantity_on_hand", "is", null);
 
@@ -87,14 +87,35 @@ Deno.serve(async (req) => {
         if (result.inserted) notificationsCreated++;
       }
 
-      // Auto-create draft POs
+      // Auto-create draft POs or auto-send
       const autoCreatePo = settings?.auto_create_draft_po ?? true;
       if (!autoCreatePo) continue;
+
+      const autoReorderEnabled = settings?.auto_reorder_enabled ?? false;
+      const autoReorderMode = settings?.auto_reorder_mode ?? "to_par";
+      const maxAutoReorderValue = settings?.max_auto_reorder_value ?? null;
+
+      // Check daily spend cap if auto-reorder is enabled
+      let dailySpentSoFar = 0;
+      if (autoReorderEnabled && maxAutoReorderValue) {
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        const { data: todayPOs } = await supabase
+          .from("purchase_orders")
+          .select("quantity, unit_cost")
+          .eq("organization_id", orgId)
+          .eq("status", "sent")
+          .gte("created_at", todayStart.toISOString());
+
+        for (const po of todayPOs || []) {
+          dailySpentSoFar += (po.quantity || 0) * (po.unit_cost || 0);
+        }
+      }
 
       for (const product of orgProducts) {
         const { data: supplier } = await supabase
           .from("product_suppliers")
-          .select("id, supplier_name, supplier_email")
+          .select("id, supplier_name, supplier_email, moq")
           .eq("product_id", product.id)
           .eq("organization_id", orgId)
           .maybeSingle();
@@ -110,9 +131,48 @@ Deno.serve(async (req) => {
 
         if ((openPoCount ?? 0) > 0) continue;
 
-        const suggestedQty = Math.max(1, (product.reorder_level * 2) - product.quantity_on_hand);
+        // Calculate order quantity based on mode
+        const moq = supplier.moq || 1;
+        const parLevel = product.par_level ?? (product.reorder_level ? product.reorder_level * 2 : null);
+        let suggestedQty: number;
 
-        const { error: poErr } = await supabase
+        if (autoReorderEnabled && autoReorderMode === "moq_only") {
+          suggestedQty = moq;
+        } else if (parLevel) {
+          const deficit = parLevel - (product.quantity_on_hand || 0);
+          if (deficit <= 0) continue;
+          suggestedQty = Math.max(moq, deficit);
+          // Round up to nearest MOQ multiple
+          if (moq > 1) {
+            suggestedQty = Math.ceil(suggestedQty / moq) * moq;
+          }
+        } else {
+          suggestedQty = Math.max(moq, (product.reorder_level * 2) - (product.quantity_on_hand || 0));
+        }
+
+        if (suggestedQty <= 0) suggestedQty = moq;
+
+        // Determine PO status: auto-send or draft
+        let poStatus = "draft";
+        let shouldSendEmail = false;
+
+        if (autoReorderEnabled && supplier.supplier_email) {
+          // Check spend cap
+          const estimatedCost = suggestedQty * 0; // We don't have unit_cost here, use product cost_price
+          if (maxAutoReorderValue && dailySpentSoFar >= maxAutoReorderValue) {
+            // Spend cap exceeded, keep as draft
+            poStatus = "draft";
+          } else {
+            poStatus = "sent";
+            shouldSendEmail = true;
+          }
+        }
+
+        const notes = autoReorderEnabled && shouldSendEmail
+          ? "Auto-reorder: sent to supplier automatically"
+          : "Auto-generated: product below minimum stock level";
+
+        const { data: newPo, error: poErr } = await supabase
           .from("purchase_orders")
           .insert({
             organization_id: orgId,
@@ -120,11 +180,36 @@ Deno.serve(async (req) => {
             supplier_name: supplier.supplier_name,
             supplier_email: supplier.supplier_email,
             quantity: suggestedQty,
-            status: "draft",
-            notes: "Auto-generated: product below minimum stock level",
-          });
+            status: poStatus,
+            notes,
+          })
+          .select("id")
+          .single();
 
-        if (!poErr) draftPosCreated++;
+        if (!poErr) {
+          draftPosCreated++;
+
+          // Send email if auto-reorder
+          if (shouldSendEmail && newPo) {
+            try {
+              await supabase.functions.invoke("send-reorder-email", {
+                body: { purchase_order_id: newPo.id },
+              });
+
+              // Log stock movement for audit
+              await supabase.from("stock_movements").insert({
+                organization_id: orgId,
+                product_id: product.id,
+                quantity_change: 0,
+                quantity_after: product.quantity_on_hand || 0,
+                reason: "auto_reorder",
+                notes: `Auto-reorder PO created and sent: ${suggestedQty} units to ${supplier.supplier_name}`,
+              });
+            } catch (emailErr) {
+              console.error("Failed to send reorder email:", emailErr);
+            }
+          }
+        }
       }
     }
 

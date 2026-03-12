@@ -7007,12 +7007,15 @@ export type Database = {
         Row: {
           alert_channels: string[]
           auto_create_draft_po: boolean
+          auto_reorder_enabled: boolean
+          auto_reorder_mode: string
           created_at: string
           dead_stock_days: number
           dead_stock_enabled: boolean
           default_threshold_pct: number
           enabled: boolean
           id: string
+          max_auto_reorder_value: number | null
           organization_id: string
           recipient_roles: string[]
           recipient_user_ids: string[]
@@ -7021,12 +7024,15 @@ export type Database = {
         Insert: {
           alert_channels?: string[]
           auto_create_draft_po?: boolean
+          auto_reorder_enabled?: boolean
+          auto_reorder_mode?: string
           created_at?: string
           dead_stock_days?: number
           dead_stock_enabled?: boolean
           default_threshold_pct?: number
           enabled?: boolean
           id?: string
+          max_auto_reorder_value?: number | null
           organization_id: string
           recipient_roles?: string[]
           recipient_user_ids?: string[]
@@ -7035,12 +7041,15 @@ export type Database = {
         Update: {
           alert_channels?: string[]
           auto_create_draft_po?: boolean
+          auto_reorder_enabled?: boolean
+          auto_reorder_mode?: string
           created_at?: string
           dead_stock_days?: number
           dead_stock_enabled?: boolean
           default_threshold_pct?: number
           enabled?: boolean
           id?: string
+          max_auto_reorder_value?: number | null
           organization_id?: string
           recipient_roles?: string[]
           recipient_user_ids?: string[]
@@ -11608,6 +11617,7 @@ export type Database = {
           delivery_count: number
           id: string
           lead_time_days: number | null
+          moq: number
           organization_id: string
           product_id: string
           reorder_method: string | null
@@ -11625,6 +11635,7 @@ export type Database = {
           delivery_count?: number
           id?: string
           lead_time_days?: number | null
+          moq?: number
           organization_id: string
           product_id: string
           reorder_method?: string | null
@@ -11642,6 +11653,7 @@ export type Database = {
           delivery_count?: number
           id?: string
           lead_time_days?: number | null
+          moq?: number
           organization_id?: string
           product_id?: string
           reorder_method?: string | null
@@ -11688,6 +11700,7 @@ export type Database = {
           location_id: string | null
           name: string
           organization_id: string | null
+          par_level: number | null
           product_type: string
           quantity_on_hand: number | null
           reorder_level: number | null
@@ -11714,6 +11727,7 @@ export type Database = {
           location_id?: string | null
           name: string
           organization_id?: string | null
+          par_level?: number | null
           product_type?: string
           quantity_on_hand?: number | null
           reorder_level?: number | null
@@ -11740,6 +11754,7 @@ export type Database = {
           location_id?: string | null
           name?: string
           organization_id?: string | null
+          par_level?: number | null
           product_type?: string
           quantity_on_hand?: number | null
           reorder_level?: number | null
@@ -12539,6 +12554,7 @@ export type Database = {
           received_at: string | null
           sent_at: string | null
           status: string
+          supplier_confirmed_at: string | null
           supplier_email: string | null
           supplier_name: string | null
           total_cost: number | null
@@ -12557,6 +12573,7 @@ export type Database = {
           received_at?: string | null
           sent_at?: string | null
           status?: string
+          supplier_confirmed_at?: string | null
           supplier_email?: string | null
           supplier_name?: string | null
           total_cost?: number | null
@@ -12575,6 +12592,7 @@ export type Database = {
           received_at?: string | null
           sent_at?: string | null
           status?: string
+          supplier_confirmed_at?: string | null
           supplier_email?: string | null
           supplier_name?: string | null
           total_cost?: number | null

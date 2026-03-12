@@ -590,6 +590,7 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
     cost_price: product?.cost_price?.toString() || '',
     quantity_on_hand: product?.quantity_on_hand?.toString() || '',
     reorder_level: product?.reorder_level?.toString() || '',
+    par_level: (product as any)?.par_level?.toString() || '',
     description: product?.description || '',
     location_id: product?.location_id || '',
     image_url: product?.image_url || '',
@@ -661,6 +662,7 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
       cost_price: form.cost_price ? parseFloat(form.cost_price) : null,
       quantity_on_hand: form.quantity_on_hand ? parseInt(form.quantity_on_hand) : null,
       reorder_level: form.reorder_level ? parseInt(form.reorder_level) : null,
+      par_level: form.par_level ? parseInt(form.par_level) : null,
       description: form.description || null,
       location_id: form.location_id || null,
       image_url: form.image_url || null,
@@ -814,6 +816,10 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
           <div className="grid grid-cols-2 gap-3">
             <div><Label className="text-xs">Stock Qty</Label><Input type="number" value={form.quantity_on_hand} onChange={e => setForm(f => ({ ...f, quantity_on_hand: e.target.value }))} /></div>
             <div><Label className="text-xs">Min. Stock Level</Label><Input type="number" value={form.reorder_level} onChange={e => setForm(f => ({ ...f, reorder_level: e.target.value }))} /><p className="text-[11px] text-muted-foreground mt-1">Alert when stock falls to this number</p></div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label className="text-xs">Par Level (Target)</Label><Input type="number" value={form.par_level} onChange={e => setForm(f => ({ ...f, par_level: e.target.value }))} /><p className="text-[11px] text-muted-foreground mt-1">Desired stock level for auto-reorder</p></div>
+            <div />
           </div>
           <div>
             <Label className="text-xs">Description</Label>

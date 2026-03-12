@@ -24,6 +24,7 @@ interface FormData {
   cost_price: string;
   quantity_on_hand: string;
   reorder_level: string;
+  par_level: string;
 }
 
 export function ProductEditDialog({ productId, open, onOpenChange }: ProductEditDialogProps) {
@@ -46,6 +47,7 @@ export function ProductEditDialog({ productId, open, onOpenChange }: ProductEdit
       cost_price: '',
       quantity_on_hand: '',
       reorder_level: '',
+      par_level: '',
     },
   });
 
@@ -62,6 +64,7 @@ export function ProductEditDialog({ productId, open, onOpenChange }: ProductEdit
         cost_price: product.cost_price?.toString() || '',
         quantity_on_hand: product.quantity_on_hand?.toString() || '',
         reorder_level: product.reorder_level?.toString() || '',
+        par_level: product.par_level?.toString() || '',
       });
     } else {
       reset({
@@ -75,6 +78,7 @@ export function ProductEditDialog({ productId, open, onOpenChange }: ProductEdit
         cost_price: '',
         quantity_on_hand: '',
         reorder_level: '',
+        par_level: '',
       });
     }
   }, [product, reset]);
@@ -91,6 +95,7 @@ export function ProductEditDialog({ productId, open, onOpenChange }: ProductEdit
       cost_price: data.cost_price ? parseFloat(data.cost_price) : null,
       quantity_on_hand: data.quantity_on_hand ? parseInt(data.quantity_on_hand) : null,
       reorder_level: data.reorder_level ? parseInt(data.reorder_level) : null,
+      par_level: data.par_level ? parseInt(data.par_level) : null,
     };
 
     try {
@@ -200,6 +205,16 @@ export function ProductEditDialog({ productId, open, onOpenChange }: ProductEdit
                 type="number"
                 {...register('reorder_level')}
                 placeholder="Low stock alert"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="par_level">Par Level (Target)</Label>
+              <Input
+                id="par_level"
+                type="number"
+                {...register('par_level')}
+                placeholder="Target stock level"
               />
             </div>
 
