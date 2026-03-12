@@ -87,7 +87,7 @@ export function AlertSettingsCard() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className={tokens.card.iconBox}>
-                  <Bell className="w-5 h-5 text-primary" />
+                  <Bell className={tokens.card.icon} />
                 </div>
                 <div>
                   <CardTitle className={tokens.card.title}>Low Stock Alerts</CardTitle>
