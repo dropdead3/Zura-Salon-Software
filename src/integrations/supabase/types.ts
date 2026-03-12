@@ -11547,6 +11547,69 @@ export type Database = {
         }
         Relationships: []
       }
+      product_suppliers: {
+        Row: {
+          account_number: string | null
+          created_at: string
+          id: string
+          lead_time_days: number | null
+          organization_id: string
+          product_id: string
+          reorder_method: string | null
+          reorder_notes: string | null
+          supplier_email: string | null
+          supplier_name: string
+          supplier_phone: string | null
+          supplier_website: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_number?: string | null
+          created_at?: string
+          id?: string
+          lead_time_days?: number | null
+          organization_id: string
+          product_id: string
+          reorder_method?: string | null
+          reorder_notes?: string | null
+          supplier_email?: string | null
+          supplier_name: string
+          supplier_phone?: string | null
+          supplier_website?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_number?: string | null
+          created_at?: string
+          id?: string
+          lead_time_days?: number | null
+          organization_id?: string
+          product_id?: string
+          reorder_method?: string | null
+          reorder_notes?: string | null
+          supplier_email?: string | null
+          supplier_name?: string
+          supplier_phone?: string | null
+          supplier_website?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_suppliers_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_suppliers_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           available_online: boolean
@@ -11571,6 +11634,7 @@ export type Database = {
           reorder_level: number | null
           retail_price: number | null
           sku: string | null
+          supplier_id: string | null
           updated_at: string | null
         }
         Insert: {
@@ -11596,6 +11660,7 @@ export type Database = {
           reorder_level?: number | null
           retail_price?: number | null
           sku?: string | null
+          supplier_id?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -11621,6 +11686,7 @@ export type Database = {
           reorder_level?: number | null
           retail_price?: number | null
           sku?: string | null
+          supplier_id?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -11643,6 +11709,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "product_suppliers"
             referencedColumns: ["id"]
           },
         ]
@@ -12390,6 +12463,78 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_orders: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          expected_delivery_date: string | null
+          id: string
+          notes: string | null
+          organization_id: string
+          product_id: string
+          quantity: number
+          received_at: string | null
+          sent_at: string | null
+          status: string
+          supplier_email: string | null
+          supplier_name: string | null
+          total_cost: number | null
+          unit_cost: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          expected_delivery_date?: string | null
+          id?: string
+          notes?: string | null
+          organization_id: string
+          product_id: string
+          quantity?: number
+          received_at?: string | null
+          sent_at?: string | null
+          status?: string
+          supplier_email?: string | null
+          supplier_name?: string | null
+          total_cost?: number | null
+          unit_cost?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          expected_delivery_date?: string | null
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          product_id?: string
+          quantity?: number
+          received_at?: string | null
+          sent_at?: string | null
+          status?: string
+          supplier_email?: string | null
+          supplier_name?: string | null
+          total_cost?: number | null
+          unit_cost?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_orders_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_orders_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
             referencedColumns: ["id"]
           },
         ]
