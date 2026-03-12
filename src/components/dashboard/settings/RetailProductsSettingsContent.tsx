@@ -61,7 +61,7 @@ function getProductType(product: Product): string {
 const PRODUCT_TYPES = ['Products', 'Extensions', 'Merch'] as const;
 const PAGE_SIZE = 50;
 
-type SortField = 'name' | 'brand' | 'category' | 'product_type' | 'retail_price' | 'cost_price' | 'quantity_on_hand';
+type SortField = 'name' | 'brand' | 'category' | 'retail_price' | 'quantity_on_hand';
 type SortDir = 'asc' | 'desc';
 
 function exportProductsCsv(products: Product[]) {
@@ -139,10 +139,6 @@ function ProductsTab() {
     arr.sort((a, b) => {
       let aVal: any = a[sortField];
       let bVal: any = b[sortField];
-      if (sortField === 'product_type') {
-        aVal = getProductType(a);
-        bVal = getProductType(b);
-      }
       if (aVal == null && bVal == null) return 0;
       if (aVal == null) return 1;
       if (bVal == null) return -1;
@@ -376,7 +372,7 @@ function ProductsTab() {
         <div className="overflow-x-auto border rounded-lg">
           <Table>
             <TableHeader>
-              <TableRow>
+                <TableRow>
                 <TableHead className="w-10">
                   <input type="checkbox" checked={selectedIds.size === (filteredProducts?.length || 0) && (filteredProducts?.length || 0) > 0} onChange={toggleAll} className="rounded border-border" />
                 </TableHead>
@@ -395,114 +391,114 @@ function ProductsTab() {
                     Category <SortIcon field="category" />
                   </button>
                 </TableHead>
-                <TableHead>
-                  <button type="button" onClick={() => toggleSort('product_type')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
-                    Type <SortIcon field="product_type" />
-                  </button>
-                </TableHead>
-                <TableHead>SKU</TableHead>
                 <TableHead className="text-right">
                   <button type="button" onClick={() => toggleSort('retail_price')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors ml-auto">
-                    Retail <SortIcon field="retail_price" />
-                  </button>
-                </TableHead>
-                <TableHead className="text-right">
-                  <button type="button" onClick={() => toggleSort('cost_price')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors ml-auto">
-                    Cost <SortIcon field="cost_price" />
+                    Price <SortIcon field="retail_price" />
                   </button>
                 </TableHead>
                 <TableHead className="text-right">
                   <button type="button" onClick={() => toggleSort('quantity_on_hand')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors ml-auto">
-                    Stock <SortIcon field="quantity_on_hand" />
+                    Inventory <SortIcon field="quantity_on_hand" />
                   </button>
                 </TableHead>
-                <TableHead className="text-right">Reorder</TableHead>
                 <TableHead className="text-center w-16">Online</TableHead>
                 <TableHead className="w-20" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {!filteredProducts?.length ? (
-                <TableRow><TableCell colSpan={12} className="text-center py-8 text-muted-foreground">No products found</TableCell></TableRow>
+                <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No products found</TableCell></TableRow>
               ) : filteredProducts.map(p => {
                 const isLow = p.reorder_level != null && p.quantity_on_hand != null && p.quantity_on_hand <= p.reorder_level;
                 const productType = getProductType(p);
                 return (
                   <TableRow key={p.id} className={cn(isLow && 'bg-amber-50/50 dark:bg-amber-950/10')}>
-                    <TableCell><input type="checkbox" checked={selectedIds.has(p.id)} onChange={() => toggleSelect(p.id)} className="rounded border-border" /></TableCell>
-                    <TableCell>
+                    <TableCell className="py-3"><input type="checkbox" checked={selectedIds.has(p.id)} onChange={() => toggleSelect(p.id)} className="rounded border-border" /></TableCell>
+                    {/* Product: Avatar + Name / SKU · Type */}
+                    <TableCell className="py-3">
                       <div className="flex items-center gap-2.5">
                         <Avatar className="h-8 w-8 shrink-0">
                           {p.image_url && <AvatarImage src={p.image_url} alt={p.name} className="object-cover" />}
                           <AvatarFallback className="text-[10px] font-medium bg-muted">{getInitials(p.name)}</AvatarFallback>
                         </Avatar>
-                        <span className="font-medium text-sm">{p.name}</span>
+                        <div className="min-w-0">
+                          <div className="font-medium text-sm truncate">{p.name}</div>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            {p.sku && <span className="text-xs text-muted-foreground font-mono">{p.sku}</span>}
+                            {p.sku && <span className="text-muted-foreground/40 text-xs">·</span>}
+                            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">{productType}</Badge>
+                          </div>
+                        </div>
                       </div>
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{p.brand || '—'}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{p.category || '—'}</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary" className="text-[10px] px-2 py-0.5">{productType}</Badge>
+                    <TableCell className="py-3 text-sm text-muted-foreground">{p.brand || '—'}</TableCell>
+                    <TableCell className="py-3 text-sm text-muted-foreground">{p.category || '—'}</TableCell>
+                    {/* Price: Retail / Cost stacked */}
+                    <TableCell className="py-3 text-right">
+                      <div className="tabular-nums text-sm"><BlurredAmount>{p.retail_price != null ? formatCurrency(p.retail_price) : '—'}</BlurredAmount></div>
+                      <div className="tabular-nums text-xs text-muted-foreground mt-0.5"><BlurredAmount>{p.cost_price != null ? formatCurrency(p.cost_price) : '—'}</BlurredAmount></div>
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground font-mono">{p.sku || '—'}</TableCell>
-                    <TableCell className="text-right tabular-nums text-sm"><BlurredAmount>{p.retail_price != null ? formatCurrency(p.retail_price) : '—'}</BlurredAmount></TableCell>
-                    <TableCell className="text-right tabular-nums text-sm text-muted-foreground"><BlurredAmount>{p.cost_price != null ? formatCurrency(p.cost_price) : '—'}</BlurredAmount></TableCell>
-                    <TableCell className="text-right tabular-nums text-sm">
-                      {editingStockId === p.id ? (
-                        <div className="flex items-center justify-end gap-1">
-                          <input
-                            type="number"
-                            value={stockValue}
-                            onChange={(e) => setStockValue(e.target.value)}
-                            onBlur={() => {
-                              const parsed = parseInt(stockValue);
-                              if (!isNaN(parsed) && parsed !== p.quantity_on_hand) {
-                                updateProduct.mutate({ id: p.id, updates: { quantity_on_hand: parsed } });
-                              }
-                              setEditingStockId(null);
-                            }}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
-                              if (e.key === 'Escape') setEditingStockId(null);
-                            }}
-                            autoFocus
-                            onFocus={(e) => e.target.select()}
+                    {/* Inventory: Stock / Reorder stacked */}
+                    <TableCell className="py-3 text-right">
+                      <div>
+                        {editingStockId === p.id ? (
+                          <div className="flex items-center justify-end gap-1">
+                            <input
+                              type="number"
+                              value={stockValue}
+                              onChange={(e) => setStockValue(e.target.value)}
+                              onBlur={() => {
+                                const parsed = parseInt(stockValue);
+                                if (!isNaN(parsed) && parsed !== p.quantity_on_hand) {
+                                  updateProduct.mutate({ id: p.id, updates: { quantity_on_hand: parsed } });
+                                }
+                                setEditingStockId(null);
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                                if (e.key === 'Escape') setEditingStockId(null);
+                              }}
+                              autoFocus
+                              onFocus={(e) => e.target.select()}
+                              className={cn(
+                                'w-14 h-6 text-right text-sm tabular-nums rounded-md px-1.5 bg-muted border border-border/60 outline-none',
+                                'focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-colors',
+                                '[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none'
+                              )}
+                            />
+                            {isLow && <AlertTriangle className="w-3 h-3 text-amber-600 dark:text-amber-400 shrink-0" />}
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
                             className={cn(
-                              'w-14 h-6 text-right text-sm tabular-nums rounded-md px-1.5 bg-muted border border-border/60 outline-none',
-                              'focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-colors',
-                              '[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none'
+                              'inline-flex items-center gap-1 bg-transparent border-none p-0 cursor-pointer rounded transition-colors tabular-nums text-sm',
+                              'hover:text-primary',
+                              isLow ? 'text-amber-600 dark:text-amber-400 font-medium' : 'text-foreground'
                             )}
-                          />
-                          {isLow && <AlertTriangle className="w-3 h-3 text-amber-600 dark:text-amber-400 shrink-0" />}
-                        </div>
-                      ) : (
-                        <button
-                          type="button"
-                          className={cn(
-                            'inline-flex items-center gap-1 bg-transparent border-none p-0 cursor-pointer rounded transition-colors',
-                            'hover:text-primary',
-                            isLow ? 'text-amber-600 dark:text-amber-400 font-medium' : 'text-foreground'
-                          )}
-                          onClick={() => {
-                            setEditingStockId(p.id);
-                            setStockValue(String(p.quantity_on_hand ?? 0));
-                          }}
-                          title="Click to edit stock"
-                        >
-                          {p.quantity_on_hand ?? '—'}
-                          {isLow && <AlertTriangle className="w-3 h-3" />}
-                        </button>
-                      )}
+                            onClick={() => {
+                              setEditingStockId(p.id);
+                              setStockValue(String(p.quantity_on_hand ?? 0));
+                            }}
+                            title="Click to edit stock"
+                          >
+                            {p.quantity_on_hand ?? '—'}
+                            {isLow && <AlertTriangle className="w-3 h-3" />}
+                          </button>
+                        )}
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-0.5 tabular-nums">
+                        {p.reorder_level != null ? `Reorder: ${p.reorder_level}` : '—'}
+                      </div>
                     </TableCell>
-                    <TableCell className="text-right tabular-nums text-sm text-muted-foreground">{p.reorder_level ?? '—'}</TableCell>
-                    <TableCell className="text-center">
+                    <TableCell className="py-3 text-center">
                       <Switch
                         checked={!!p.available_online}
                         onCheckedChange={() => updateProduct.mutate({ id: p.id, updates: { available_online: !p.available_online } })}
                         className="scale-75"
                       />
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="py-3">
                       <div className="flex items-center gap-0.5">
                         <Button variant="ghost" size="icon" className="w-7 h-7" onClick={() => handleDuplicate(p)} title="Duplicate">
                           <Copy className="w-3.5 h-3.5" />
