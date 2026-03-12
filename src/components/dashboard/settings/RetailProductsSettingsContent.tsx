@@ -1182,6 +1182,39 @@ function InventoryByLocationTab() {
         <PurchaseOrdersPanel />
       ) : (
         <>
+          {/* Alert Settings Card */}
+          <AlertSettingsCard />
+
+          {/* Inventory Value Summary */}
+          {products && products.length > 0 && (
+            <div className="grid grid-cols-4 gap-3">
+              <div className="p-3 rounded-lg border bg-card">
+                <div className="text-xs text-muted-foreground">Total Units</div>
+                <div className="text-lg font-medium tabular-nums mt-0.5">
+                  <AnimatedBlurredAmount value={summary.totalUnits} />
+                </div>
+              </div>
+              <div className="p-3 rounded-lg border bg-card">
+                <div className="text-xs text-muted-foreground">Cost Value</div>
+                <div className="text-lg font-medium tabular-nums mt-0.5">
+                  <AnimatedBlurredAmount value={summary.costValue} currency="USD" />
+                </div>
+              </div>
+              <div className="p-3 rounded-lg border bg-card">
+                <div className="text-xs text-muted-foreground">Retail Value</div>
+                <div className="text-lg font-medium tabular-nums mt-0.5">
+                  <AnimatedBlurredAmount value={summary.retailValue} currency="USD" />
+                </div>
+              </div>
+              <div className="p-3 rounded-lg border bg-card">
+                <div className="text-xs text-muted-foreground">Low Stock</div>
+                <div className={cn('text-lg font-medium tabular-nums mt-0.5', summary.lowStockCount > 0 && 'text-amber-600 dark:text-amber-400')}>
+                  {summary.lowStockCount}
+                </div>
+              </div>
+            </div>
+          )}
+
           {lowStockProducts.length > 0 && (
             <div className="p-3 rounded-lg border border-amber-200 bg-amber-50/50 dark:border-amber-900/50 dark:bg-amber-950/20">
               <div className="flex items-center justify-between">
