@@ -177,6 +177,42 @@ export function MixSessionManager({
       ? `${sealedNotReweighed.length} bowl(s) not reweighed`
       : undefined;
 
+    // Calculate confidence score before completing
+    try {
+      const validBowls = bowls.filter((b) => b.status !== 'discarded');
+      const bowlIds = validBowls.map((b) => b.id);
+      const { data: allLines } = await supabase
+        .from('mix_bowl_lines')
+        .select('captured_via')
+        .in('bowl_id', bowlIds.length > 0 ? bowlIds : ['__none__']);
+
+      const { data: wasteEvents } = await supabase
+        .from('waste_events')
+        .select('waste_category')
+        .eq('mix_session_id', activeSession.id);
+
+      const castLines = (allLines ?? []) as any[];
+      const castWaste = (wasteEvents ?? []) as any[];
+
+      const confidence = calculateMixConfidence({
+        totalLines: castLines.length,
+        scaleLines: castLines.filter((l) => l.captured_via === 'scale').length,
+        totalBowls: validBowls.length,
+        reweighedBowls: validBowls.filter((b) => b.status === 'reweighed').length,
+        usageToBaselineRatio: 1, // Baseline comparison TBD
+        totalWasteEvents: castWaste.length,
+        categorizedWasteEvents: castWaste.filter((w) => w.waste_category && w.waste_category !== 'unclassified').length,
+      });
+
+      // Persist confidence score
+      await supabase
+        .from('mix_sessions')
+        .update({ confidence_score: confidence } as any)
+        .eq('id', activeSession.id);
+    } catch (err) {
+      console.error('Confidence score calculation failed:', err);
+    }
+
     updateSessionStatus.mutate({
       id: activeSession.id,
       currentStatus: activeSession.status,
