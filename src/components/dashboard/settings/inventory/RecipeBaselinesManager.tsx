@@ -141,7 +141,7 @@ export function RecipeBaselinesManager() {
                   ) : null}
                 </div>
               </SelectItem>
-            )))}
+            ))}
           </SelectContent>
         </Select>
 
