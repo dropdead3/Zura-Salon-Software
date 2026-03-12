@@ -78,7 +78,7 @@ export function PurchaseOrdersPanel() {
               variant="outline"
               size={tokens.button.inline}
               className="gap-1"
-              onClick={() => markReceived.mutate({ poId: po.id, productId: po.product_id, quantity: po.quantity })}
+              onClick={() => markReceived.mutate({ poId: po.id, productId: po.product_id, quantity: po.quantity, organizationId: po.organization_id })}
               disabled={markReceived.isPending}
             >
               <CheckCircle2 className="w-3.5 h-3.5" />

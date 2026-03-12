@@ -54,7 +54,11 @@ import { ReorderDialog } from '@/components/dashboard/settings/inventory/Reorder
 import { SupplierDialog } from '@/components/dashboard/settings/inventory/SupplierDialog';
 import { PurchaseOrdersPanel } from '@/components/dashboard/settings/inventory/PurchaseOrdersPanel';
 import { BatchReorderDialog } from '@/components/dashboard/settings/inventory/BatchReorderDialog';
+import { AlertSettingsCard } from '@/components/dashboard/settings/inventory/AlertSettingsCard';
+import { StockMovementHistory } from '@/components/dashboard/settings/inventory/StockMovementHistory';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useLogStockMovement } from '@/hooks/useStockMovements';
+import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
 // Helper to classify product type — prefer DB column, fall back to regex
 function getProductType(product: Product): string {
   if (product.product_type && product.product_type !== 'Products') return product.product_type;
@@ -1082,6 +1086,7 @@ function InventoryByLocationTab() {
   const [inventoryView, setInventoryView] = useState<'stock' | 'orders'>('stock');
   const [selectedInvIds, setSelectedInvIds] = useState<Set<string>>(new Set());
   const [showBatchReorder, setShowBatchReorder] = useState(false);
+  const logMovement = useLogStockMovement();
 
   // Dialog state
   const [reorderProduct, setReorderProduct] = useState<Product | null>(null);
@@ -1101,9 +1106,33 @@ function InventoryByLocationTab() {
     return products.filter(p => p.reorder_level != null && p.quantity_on_hand != null && p.quantity_on_hand <= p.reorder_level);
   }, [products]);
 
+  // Inventory value summary
+  const summary = useMemo(() => {
+    if (!products) return { totalUnits: 0, costValue: 0, retailValue: 0, lowStockCount: 0 };
+    let totalUnits = 0, costValue = 0, retailValue = 0, lowStockCount = 0;
+    for (const p of products) {
+      const qty = p.quantity_on_hand || 0;
+      totalUnits += qty;
+      costValue += (p.cost_price || 0) * qty;
+      retailValue += (p.retail_price || 0) * qty;
+      if (p.reorder_level != null && p.quantity_on_hand != null && p.quantity_on_hand <= p.reorder_level) lowStockCount++;
+    }
+    return { totalUnits, costValue, retailValue, lowStockCount };
+  }, [products]);
+
   const adjustStock = (product: Product, delta: number) => {
-    const newQty = Math.max(0, (product.quantity_on_hand || 0) + delta);
+    const oldQty = product.quantity_on_hand || 0;
+    const newQty = Math.max(0, oldQty + delta);
     updateProduct.mutate({ id: product.id, updates: { quantity_on_hand: newQty } });
+    if (orgId) {
+      logMovement.mutate({
+        organization_id: orgId,
+        product_id: product.id,
+        quantity_change: newQty - oldQty,
+        quantity_after: newQty,
+        reason: 'manual_adjust',
+      });
+    }
   };
 
   if (isLoading) return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
@@ -1153,6 +1182,39 @@ function InventoryByLocationTab() {
         <PurchaseOrdersPanel />
       ) : (
         <>
+          {/* Alert Settings Card */}
+          <AlertSettingsCard />
+
+          {/* Inventory Value Summary */}
+          {products && products.length > 0 && (
+            <div className="grid grid-cols-4 gap-3">
+              <div className="p-3 rounded-lg border bg-card">
+                <div className="text-xs text-muted-foreground">Total Units</div>
+                <div className="text-lg font-medium tabular-nums mt-0.5">
+                  <AnimatedBlurredAmount value={summary.totalUnits} />
+                </div>
+              </div>
+              <div className="p-3 rounded-lg border bg-card">
+                <div className="text-xs text-muted-foreground">Cost Value</div>
+                <div className="text-lg font-medium tabular-nums mt-0.5">
+                  <AnimatedBlurredAmount value={summary.costValue} currency="USD" />
+                </div>
+              </div>
+              <div className="p-3 rounded-lg border bg-card">
+                <div className="text-xs text-muted-foreground">Retail Value</div>
+                <div className="text-lg font-medium tabular-nums mt-0.5">
+                  <AnimatedBlurredAmount value={summary.retailValue} currency="USD" />
+                </div>
+              </div>
+              <div className="p-3 rounded-lg border bg-card">
+                <div className="text-xs text-muted-foreground">Low Stock</div>
+                <div className={cn('text-lg font-medium tabular-nums mt-0.5', summary.lowStockCount > 0 && 'text-amber-600 dark:text-amber-400')}>
+                  {summary.lowStockCount}
+                </div>
+              </div>
+            </div>
+          )}
+
           {lowStockProducts.length > 0 && (
             <div className="p-3 rounded-lg border border-amber-200 bg-amber-50/50 dark:border-amber-900/50 dark:bg-amber-950/20">
               <div className="flex items-center justify-between">
@@ -1220,12 +1282,13 @@ function InventoryByLocationTab() {
                   <TableHead className="text-right">Min. Stock</TableHead>
                   <TableHead className="text-right">Status</TableHead>
                   <TableHead className="text-center w-32">Adjust</TableHead>
+                  <TableHead className="w-8" />
                   <TableHead className="text-center w-24">Reorder</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {!products?.length ? (
-                  <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">No products{selectedLocationId !== 'all' ? ' at this location' : ''}</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={10} className="text-center py-8 text-muted-foreground">No products{selectedLocationId !== 'all' ? ' at this location' : ''}</TableCell></TableRow>
                 ) : products.map(p => {
                   const isLow = p.reorder_level != null && p.quantity_on_hand != null && p.quantity_on_hand <= p.reorder_level;
                   const supplier = supplierMap.get(p.id);
@@ -1289,6 +1352,9 @@ function InventoryByLocationTab() {
                             <Plus className="w-3 h-3" />
                           </Button>
                         </div>
+                      </TableCell>
+                      <TableCell>
+                        <StockMovementHistory productId={p.id} />
                       </TableCell>
                       <TableCell className="text-center">
                         <Button
