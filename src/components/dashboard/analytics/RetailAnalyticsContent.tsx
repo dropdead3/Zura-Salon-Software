@@ -2070,7 +2070,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
 
       {/* ─── Dead Stock Auto-Clearance Suggestions ─── */}
       {allProducts && (
-        <DeadStockAlertCard products={allProducts} movementRatings={productMovementRatings} filterContext={filterContext} />
+        <DeadStockAlertCard products={allProducts} movementRatings={productMovementRatings} velocityMap={velocityMap ?? undefined} filterContext={filterContext} />
       )}
 
       {/* ─── Reorder Approval Queue ─── */}
