@@ -202,7 +202,7 @@ export function AlertSettingsCard() {
                               </div>
                             </label>
                             <label className="flex items-start gap-2 cursor-pointer">
-                              <RadioGroupItem value="moq_only" className="mt-0.5" />
+                              <RadioGroupItem value="moq_only" className="mt-1" />
                               <div>
                                 <span className="text-sm">Order minimum quantity (MOQ)</span>
                                 <p className="text-xs text-muted-foreground">Order only the supplier's minimum order quantity</p>
