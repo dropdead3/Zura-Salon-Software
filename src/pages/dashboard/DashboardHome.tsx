@@ -64,6 +64,7 @@ import { HubQuickLinks } from '@/components/dashboard/HubQuickLinks';
 import { AIInsightsDrawer } from '@/components/dashboard/AIInsightsDrawer';
 import { PersonalInsightsDrawer } from '@/components/dashboard/PersonalInsightsDrawer';
 import { TodaysPrepSection } from '@/components/dashboard/TodaysPrepSection';
+import { StylistPushList } from '@/components/dashboard/StylistPushList';
 
 import { PaydayCountdownBanner } from '@/components/dashboard/mypay/PaydayCountdownBanner';
 import { InsightsNudgeBanner } from '@/components/dashboard/InsightsNudgeBanner';
@@ -562,6 +563,12 @@ function DashboardSections({
     
     todays_prep: hasStylistRole && (
       <TodaysPrepSection />
+    ),
+    
+    push_list: hasStylistRole && (
+      <VisibilityGate elementKey="push_list" elementName="Push List" elementCategory="retail">
+        <StylistPushList />
+      </VisibilityGate>
     ),
     
     schedule_tasks: (

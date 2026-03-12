@@ -168,15 +168,16 @@ function ProductsTab() {
     return arr;
   }, [products, sortField, sortDir]);
 
-  // Compute movement ratings for all products
-  const productRatings = useMemo(() => {
-    if (!velocityMap || !products) return new Map<string, ReturnType<typeof getMovementRating>>();
+  // Compute movement ratings + velocity changes for all products
+  const { productRatings, velocityChanges } = useMemo(() => {
+    if (!velocityMap || !products) return { productRatings: new Map<string, ReturnType<typeof getMovementRating>>(), velocityChanges: new Map<string, number | null>() };
     const allVelocities = products.map(p => {
       const entry = velocityMap.get(p.name.toLowerCase().trim());
       return entry?.velocity ?? 0;
     });
     const percentiles = computePercentiles(allVelocities);
-    const map = new Map<string, ReturnType<typeof getMovementRating>>();
+    const ratings = new Map<string, ReturnType<typeof getMovementRating>>();
+    const changes = new Map<string, number | null>();
     for (const p of products) {
       const entry = velocityMap.get(p.name.toLowerCase().trim());
       const velocity = entry?.velocity ?? 0;
@@ -188,9 +189,10 @@ function ProductsTab() {
         hasStock: (p.quantity_on_hand ?? 0) > 0,
         velocityPercentile: pctRaw ?? 0,
       });
-      map.set(p.id, rating);
+      ratings.set(p.id, rating);
+      changes.set(p.id, entry?.velocityChange ?? null);
     }
-    return map;
+    return { productRatings: ratings, velocityChanges: changes };
   }, [products, velocityMap]);
 
   // Apply movement filter
@@ -497,7 +499,26 @@ function ProductsTab() {
                     {/* Movement */}
                     <TableCell className="py-3">
                       {productRatings.has(p.id) ? (
-                        <MovementBadge rating={productRatings.get(p.id)!} compact />
+                        <div className="flex items-center gap-1">
+                          <MovementBadge rating={productRatings.get(p.id)!} compact velocityChange={velocityChanges.get(p.id)} />
+                          {/* Markdown warning for dead_weight/stagnant with high capital at risk */}
+                          {(() => {
+                            const rating = productRatings.get(p.id);
+                            if (!rating || !['dead_weight', 'stagnant'].includes(rating.tier)) return null;
+                            const capitalAtRisk = (p.cost_price ?? 0) * (p.quantity_on_hand ?? 0);
+                            if (capitalAtRisk <= 50) return null;
+                            return (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <AlertTriangle className="w-3 h-3 text-red-500 dark:text-red-400 shrink-0" />
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="text-xs max-w-[220px]">
+                                  Consider markdown — <BlurredAmount>{formatCurrency(capitalAtRisk)}</BlurredAmount> tied up in non-moving stock
+                                </TooltipContent>
+                              </Tooltip>
+                            );
+                          })()}
+                        </div>
                       ) : (
                         <span className="text-xs text-muted-foreground">—</span>
                       )}

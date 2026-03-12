@@ -598,12 +598,13 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
   }, [allProducts, data]);
 
   // Movement ratings for products
-  const productMovementRatings = useMemo(() => {
-    if (!data || !allProducts) return new Map<string, ReturnType<typeof getMovementRating>>();
+  const { productMovementRatings, productVelocityChanges } = useMemo(() => {
+    if (!data || !allProducts) return { productMovementRatings: new Map<string, ReturnType<typeof getMovementRating>>(), productVelocityChanges: new Map<string, number | null>() };
     const velocityMap = data.salesVelocity;
     const allVelocities = (allProducts || []).map(p => velocityMap.get(p.name.toLowerCase().trim()) ?? 0);
     const percentiles = computePercentiles(allVelocities);
     const map = new Map<string, ReturnType<typeof getMovementRating>>();
+    const changes = new Map<string, number | null>();
     for (const p of (allProducts || [])) {
       const nameLower = p.name.toLowerCase().trim();
       const velocity = velocityMap.get(nameLower) ?? 0;
@@ -618,8 +619,10 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
         velocityPercentile: percentiles.get(velocity) ?? 0,
       });
       map.set(nameLower, rating);
+      // We don't have prior velocity in the analytics hook, so leave null
+      changes.set(nameLower, null);
     }
-    return map;
+    return { productMovementRatings: map, productVelocityChanges: changes };
   }, [data, allProducts]);
 
   // Movement distribution for the chart
@@ -831,8 +834,10 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                             <div className="flex items-center gap-2">
                               <span className="font-medium text-sm">{p.name}</span>
                               {(() => {
-                                const rating = productMovementRatings.get(p.name.toLowerCase().trim());
-                                return rating ? <MovementBadge rating={rating} compact /> : null;
+                                const nameLower = p.name.toLowerCase().trim();
+                                const rating = productMovementRatings.get(nameLower);
+                                const change = productVelocityChanges.get(nameLower);
+                                return rating ? <MovementBadge rating={rating} compact velocityChange={change} /> : null;
                               })()}
                             </div>
                           </TableCell>
@@ -1139,6 +1144,93 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
           </Card>
         </PinnableCard>
       )}
+
+      {/* Section 4.9: Markdown Candidates */}
+      {(() => {
+        const candidates = (allProducts || [])
+          .filter(p => {
+            const nameLower = p.name.toLowerCase().trim();
+            const rating = productMovementRatings.get(nameLower);
+            if (!rating || !['dead_weight', 'stagnant'].includes(rating.tier)) return false;
+            const capitalAtRisk = (p.cost_price ?? 0) * (p.quantity_on_hand ?? 0);
+            return capitalAtRisk > 50;
+          })
+          .map(p => {
+            const capitalAtRisk = (p.cost_price ?? 0) * (p.quantity_on_hand ?? 0);
+            const nameLower = p.name.toLowerCase().trim();
+            const rating = productMovementRatings.get(nameLower)!;
+            const deadRow = data?.deadStock.find(d => d.name.toLowerCase().trim() === nameLower);
+            return {
+              ...p,
+              capitalAtRisk,
+              rating,
+              daysSinceLastSale: deadRow?.daysStale ?? null,
+              markdownSavings: capitalAtRisk * 0.3,
+            };
+          })
+          .sort((a, b) => b.capitalAtRisk - a.capitalAtRisk);
+
+        if (candidates.length === 0) return null;
+        const totalCapital = candidates.reduce((s, c) => s + c.capitalAtRisk, 0);
+
+        return (
+          <PinnableCard elementKey="retail_markdown_candidates" elementName="Markdown Candidates" category="Analytics Hub - Retail">
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+                      <Tag className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <CardTitle className="font-display text-base tracking-wide">MARKDOWN CANDIDATES</CardTitle>
+                        <MetricInfoTooltip description="Dead Weight and Stagnant products with more than $50 in capital at risk. Consider discounting these to free up capital and shelf space. 'Capital freed at 30%' estimates recovery if marked down by 30%." />
+                      </div>
+                      <CardDescription className="text-xs">
+                        <BlurredAmount>{formatCurrencyWhole(totalCapital)}</BlurredAmount> in capital at risk across {candidates.length} product{candidates.length !== 1 ? 's' : ''}
+                      </CardDescription>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {filterContext && <AnalyticsFilterBadge locationId={filterContext.locationId} dateRange={filterContext.dateRange} />}
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Product</TableHead>
+                        <TableHead>Movement</TableHead>
+                        <TableHead className="text-right">Cost Price</TableHead>
+                        <TableHead className="text-right">Stock</TableHead>
+                        <TableHead className="text-right">Capital at Risk</TableHead>
+                        <TableHead className="text-right">Days Since Sale</TableHead>
+                        <TableHead className="text-right">Capital Freed at 30%</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {candidates.slice(0, 15).map(c => (
+                        <TableRow key={c.id}>
+                          <TableCell className="font-medium text-sm">{c.name}</TableCell>
+                          <TableCell><MovementBadge rating={c.rating} compact /></TableCell>
+                          <TableCell className="text-right tabular-nums text-muted-foreground"><BlurredAmount>{formatCurrencyWhole(c.cost_price ?? 0)}</BlurredAmount></TableCell>
+                          <TableCell className="text-right tabular-nums">{c.quantity_on_hand}</TableCell>
+                          <TableCell className="text-right tabular-nums font-medium"><BlurredAmount>{formatCurrencyWhole(c.capitalAtRisk)}</BlurredAmount></TableCell>
+                          <TableCell className="text-right text-sm text-muted-foreground">{c.daysSinceLastSale != null ? `${c.daysSinceLastSale}d` : 'Never'}</TableCell>
+                          <TableCell className="text-right tabular-nums text-emerald-600 dark:text-emerald-400"><BlurredAmount>{formatCurrencyWhole(c.markdownSavings)}</BlurredAmount></TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </PinnableCard>
+        );
+      })()}
 
       {/* Section 5: Product Trend Chart */}
       <PinnableCard elementKey="retail_product_trend" elementName="Product Revenue Trend" category="Analytics Hub - Retail">

@@ -1,60 +1,85 @@
 
 
-## Four Product Intelligence Enhancements
+## Timezone-Safe Scheduling (Implemented)
 
-### 1. Push List Generator
+### Problem
+`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
 
-A new card on the stylist dashboard (Today's Prep section or standalone) showing Slow Mover + Stagnant products the stylist should actively recommend during today's appointments.
+### Solution
+- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
+- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
+- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
 
-**Files:**
-- `src/components/dashboard/StylistPushList.tsx` — New component: compact card listing 5-10 products rated slow_mover/stagnant with stock on hand, showing product name, movement badge, retail price, and a "why push this" tooltip (e.g., "12 units in stock, last sold 45 days ago")
-- `src/pages/dashboard/DashboardHome.tsx` — Add PushList card after TodaysPrepSection for stylist roles
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Add a "Push List" export/view section in the analytics hub for managers (full list with cost-at-risk)
+### Files Updated
+- `ScheduleHeader.tsx` — today button, quick days, isToday checks
+- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
+- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
+- `MonthView.tsx` — today highlight
+- `AgendaView.tsx` — today/tomorrow labels, today border
+- `ScheduleActionBar.tsx` — payment queue timing
+- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
+- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
+- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
+- `useHuddles.ts` — today's huddle query
 
-**Data:** Reuses `useProductVelocity` + `useProducts` hooks. Filters to products where movement tier is `slow_mover` or `stagnant`, sorted by capital at risk (cost_price × quantity_on_hand, descending).
+## Auto-Reorder with Supplier Communication (Implemented)
 
-### 2. Velocity Trend Arrows
+### What It Does
+Organizations can opt into automatic reorder — when stock dips below threshold, POs are calculated (using MOQ and par levels) and sent directly to the supplier via email.
 
-Compare current 90-day velocity to prior 90-day velocity to show acceleration/deceleration per product.
+### Database Changes
+- `products.par_level` (INT, nullable) — desired stock level to reorder up to
+- `product_suppliers.moq` (INT, default 1) — minimum order quantity
+- `inventory_alert_settings.auto_reorder_enabled` (BOOL, default false)
+- `inventory_alert_settings.auto_reorder_mode` (TEXT, default 'to_par') — 'to_par' or 'moq_only'
+- `inventory_alert_settings.max_auto_reorder_value` (NUMERIC, nullable) — daily spend cap
+- `purchase_orders.supplier_confirmed_at` (TIMESTAMPTZ, nullable) — for tracking confirmations
 
-**Files:**
-- `src/hooks/useProductVelocity.ts` — Add a second query for the prior 90-day window (days 91-180). Return `priorVelocity` alongside current velocity. Compute `velocityChange` as percentage change.
-- `src/lib/productMovementRating.ts` — Add `velocityTrend` field to `VelocityInput` (optional), expose in rating tooltip
-- `src/components/ui/MovementBadge.tsx` — Add optional trend arrow (↑/↓/—) next to the badge label when trend data is available
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Pass trend data to MovementBadge
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Show trend arrows in product performance table
-
-**Logic:**
-```text
-priorVelocity = units sold in days 91-180 / 90
-velocityChange = ((currentVelocity - priorVelocity) / priorVelocity) * 100
-Display: ↑+25% (green) | ↓-15% (red) | — (no change or no prior data)
+### Quantity Calculation
 ```
+deficit = par_level - quantity_on_hand
+order_qty = max(moq, deficit)
+if moq > 1: round up to nearest MOQ multiple
+```
+Fallback: if par_level is null, uses `reorder_level * 2`.
 
-### 3. Smart Par-Level Suggestions
+### Files Updated
+- Migration: Added columns to products, product_suppliers, inventory_alert_settings, purchase_orders
+- `check-reorder-levels/index.ts` — auto-send logic with MOQ/par calculation, spend cap, email invocation
+- `AlertSettingsCard.tsx` — auto-reorder toggle, mode selector, spend cap input
+- `useInventoryAlertSettings.ts` — updated interface
+- `useProducts.ts` — added par_level to Product interface
+- `useProductSuppliers.ts` — added moq to ProductSupplier interface
+- `ProductEditDialog.tsx` — added par level field
+- `RetailProductsSettingsContent.tsx` — added par level to product form
+- `SupplierDialog.tsx` — added MOQ field
 
-Use velocity data to recommend optimal par levels based on configurable days-of-supply (default 14 days).
+### Safety Features
+- Spend cap: daily auto-reorder pauses when cumulative PO value exceeds cap
+- Audit trail: auto_reorder logged as stock_movement reason
+- Supplier confirmation tracking via supplier_confirmed_at timestamp
 
-**Files:**
-- `src/lib/parLevelSuggestion.ts` — New pure utility: `suggestParLevel(velocity: number, leadTimeDays: number, safetyStockDays: number): number`. Formula: `ceil(velocity * (leadTimeDays + safetyStockDays))`. Default lead time = 7 days, safety = 7 days (totaling 14-day supply).
-- `src/components/dashboard/inventory/ProductEditDialog.tsx` — Add a "Suggested: X" hint next to the par_level input, computed from velocity data. Clickable to auto-fill.
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Add a bulk action "Apply suggested par levels" that updates all products without a par_level set
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Show suggested vs actual par in the inventory alerts table as a column
+## Product Movement Rating Badges (Implemented)
 
-### 4. Movement-Based Pricing Alerts
+### What It Does
+Every product gets a dynamic movement rating badge (Best Seller, Popular, Steady, Slow Mover, Stagnant, Dead Weight) computed from 90-day sales velocity data.
 
-Flag Dead Weight products with high cost price for markdown consideration.
+### Rating Tiers
+- **Best Seller**: Top 10% velocity AND >0.5 units/day (emerald)
+- **Popular**: Top 25% velocity AND >0.2 units/day (blue)
+- **Steady**: Velocity >0.05/day (muted)
+- **Slow Mover**: Velocity >0 but ≤0.05/day (amber)
+- **Stagnant**: Zero velocity, sold within 180 days (orange)
+- **Dead Weight**: Zero velocity, 180+ days or never sold (red)
+- Products with zero stock excluded from negative ratings
 
-**Files:**
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — New "Markdown Candidates" callout card: lists dead_weight + stagnant products sorted by capital at risk (cost_price × quantity_on_hand). Shows product, cost price, stock, days since last sale, and estimated capital freed if marked down by 30%.
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Add a subtle warning icon on products that are dead_weight with >$50 capital at risk, with tooltip "Consider markdown — $X tied up in non-moving stock"
+### Files Created
+- `src/lib/productMovementRating.ts` — pure rating logic + badge config
+- `src/hooks/useProductVelocity.ts` — lightweight 90-day POS velocity query
+- `src/components/ui/MovementBadge.tsx` — shared badge component with tooltip
 
-**Data:** Pure client-side computation from existing `useProducts` + `useProductVelocity` data. Capital at risk = `cost_price * quantity_on_hand`. Threshold for flagging: capital at risk > $50 and tier is dead_weight or stagnant.
-
-### Build Order
-
-1. Velocity trend arrows (hook change first — other features benefit from trend data)
-2. Smart par-level suggestions (pure utility + UI hints)
-3. Push list generator (depends on velocity + products)
-4. Markdown pricing alerts (depends on movement ratings)
-
+### Files Updated
+- `RetailProductsSettingsContent.tsx` — Movement column + filter dropdown in products table
+- `RetailAnalyticsContent.tsx` — Movement badges on product performance table + Movement Distribution card (donut chart with actionable callouts)
+- `ProductCard.tsx` — Best Seller/Popular badges on public shop cards (positive only)
+- `ProductDetailModal.tsx` — Movement badge with velocity context
