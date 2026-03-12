@@ -83,6 +83,12 @@ export function useProducts(filters: ProductFilters = {}) {
           .filter('quantity_on_hand', 'lt', 'reorder_level');
       }
 
+      if (filters.expiringOnly) {
+        const today = new Date().toISOString().slice(0, 10);
+        query = query.not('expires_at', 'is', null)
+          .lte('expires_at', today);
+      }
+
       if (filters.limit) {
         query = query.limit(filters.limit);
       } else if (filters.page != null && filters.pageSize) {
