@@ -65,6 +65,7 @@ import { ClientMarketingStatus } from './clients/ClientMarketingStatus';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useClientTransactionHistory } from '@/hooks/useClientTransactionHistory';
 import { TransactionHistoryTimeline } from './TransactionHistoryTimeline';
+import { ClientAffinityBadges } from './clients/ClientAffinityBadges';
 import { toast } from 'sonner';
 
 interface Client {
@@ -1302,6 +1303,9 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
             <ExternalLink className="w-3.5 h-3.5" />
             View All Appointments
           </Button>
+
+          {/* Client Product Affinity */}
+          <ClientAffinityBadges phorestClientId={client.phorest_client_id} className="mt-1" />
 
           {/* Tabs for History, Notes, Transactions, and Redos */}
           <Tabs defaultValue="history" className="mt-0">

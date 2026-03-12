@@ -22,6 +22,7 @@ import { cn } from '@/lib/utils';
 import { VisitHistoryTimeline } from '@/components/dashboard/VisitHistoryTimeline';
 import { ClientNotesSection } from '@/components/dashboard/ClientNotesSection';
 import { useClientVisitHistory } from '@/hooks/useClientVisitHistory';
+import { ClientAffinityBadges } from '@/components/dashboard/clients/ClientAffinityBadges';
 
 export interface ExtendedPhorestClient {
   id: string;
@@ -113,6 +114,11 @@ export function ClientProfileView({ client, onBack, onSelect }: ClientProfileVie
           </p>
           <p className="text-[10px] text-muted-foreground">Since Visit</p>
         </Card>
+      </div>
+
+      {/* Product Affinity */}
+      <div className="px-4 py-2 border-b border-border">
+        <ClientAffinityBadges phorestClientId={client.phorest_client_id} compact />
       </div>
 
       {/* Last Visit & Personal Info */}
