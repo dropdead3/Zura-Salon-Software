@@ -30,6 +30,10 @@ import { useProductBrands, useProductCategorySummaries } from '@/hooks/useProduc
 import { useProductCategories } from '@/hooks/useProducts';
 import { isExtensionProduct, isMerchProduct } from '@/utils/serviceCategorization';
 import { useBulkUpdateProducts, useBulkToggleProducts } from '@/hooks/useBulkUpdateProducts';
+import { useCreateProductCategory, useDeleteProductCategory } from '@/hooks/useProductCategoryManagement';
+import { CategoryFormDialog } from '@/components/dashboard/settings/CategoryFormDialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Trash2 } from 'lucide-react';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useWebsiteRetailSettings } from '@/hooks/useWebsiteSettings';
