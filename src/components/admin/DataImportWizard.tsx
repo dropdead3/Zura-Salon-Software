@@ -40,6 +40,9 @@ import {
   MapPin,
   X,
   FlaskConical,
+  Download,
+  Info,
+  Lightbulb,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -170,6 +173,36 @@ export function DataImportWizard({
   const [isProcessing, setIsProcessing] = useState(false);
 
   const fields = FIELD_DEFINITIONS[dataType] || [];
+  const requiredFieldNames = fields.filter(f => f.required).map(f => f.label);
+
+  const SAMPLE_VALUES: Record<string, Record<string, string>> = {
+    clients: { first_name: 'Jane', last_name: 'Doe', email: 'jane@example.com', phone: '555-123-4567', mobile: '555-987-6543', notes: 'Prefers balayage', external_id: 'CLT-001', visit_count: '12', total_spend: '1450.00', last_visit_date: '2025-11-15', is_vip: 'true' },
+    appointments: { client_name: 'Jane Doe', appointment_date: '2025-12-01', start_time: '10:00', end_time: '11:30', service_name: 'Balayage', staff_name: 'Sarah M', status: 'confirmed', total_price: '185.00', notes: '', external_id: 'APT-001' },
+    services: { name: 'Balayage', category: 'Color', duration_minutes: '90', price: '185.00', description: 'Hand-painted highlights', external_id: 'SVC-001' },
+    transactions: { transaction_date: '2025-12-01', client_name: 'Jane Doe', staff_name: 'Sarah M', item_name: 'Balayage', quantity: '1', unit_price: '185.00', total_amount: '185.00', payment_method: 'card', external_id: 'TXN-001' },
+    staff: { full_name: 'Sarah Martinez', email: 'sarah@salon.com', phone: '555-222-3333', hire_date: '2023-06-15', stylist_level: 'Senior', specialties: 'Color, Balayage', bio: 'Color specialist with 8 years experience', external_id: 'STF-001' },
+    locations: { name: 'Downtown Studio', address: '123 Main St', city: 'Austin', state_province: 'TX', phone: '555-000-1111', hours: 'Mon-Sat 9am-7pm', store_number: 'LOC-01', external_id: 'LOC-001' },
+    products: { name: 'Olaplex No. 3', sku: 'OLA-003', barcode: '896364002350', category: 'Hair Care', brand: 'Olaplex', retail_price: '30.00', cost_price: '14.50', quantity_on_hand: '24', description: 'Hair perfector treatment', external_id: 'PRD-001' },
+  };
+
+  const generateTemplate = useCallback(() => {
+    const defs = FIELD_DEFINITIONS[dataType];
+    if (!defs) return;
+    const samples = SAMPLE_VALUES[dataType] || {};
+    const headers = defs.map(f => f.field).join(',');
+    const sampleRow = defs.map(f => {
+      const val = samples[f.field] || '';
+      return val.includes(',') ? `"${val}"` : val;
+    }).join(',');
+    const csv = `${headers}\n${sampleRow}\n`;
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${dataType}_import_template.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [dataType]);
 
   const resetWizard = useCallback(() => {
     setStep('upload');
@@ -355,6 +388,43 @@ export function DataImportWizard({
                 className="max-w-xs mx-auto"
                 disabled={isProcessing}
               />
+            </div>
+
+            {/* Download Template & Import Tips */}
+            <div className="space-y-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={generateTemplate}
+                className="gap-2"
+              >
+                <Download className="w-4 h-4" />
+                Download CSV Template
+              </Button>
+
+              <div className="rounded-lg border border-border bg-muted/50 p-4 space-y-3">
+                <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                  <Info className="w-4 h-4 text-primary" />
+                  Import Formatting Guide
+                </div>
+                <ul className="text-xs text-muted-foreground space-y-1.5 ml-6 list-disc">
+                  <li>File must be <span className="text-foreground">.csv</span> format (comma-separated values)</li>
+                  <li>First row must contain column headers</li>
+                  <li>
+                    Required fields: {' '}
+                    <span className="text-foreground">{requiredFieldNames.join(', ')}</span>
+                  </li>
+                  <li>Prices should be numeric without currency symbols (e.g. <span className="text-foreground">14.99</span>)</li>
+                  <li>Dates should use <span className="text-foreground">YYYY-MM-DD</span> format</li>
+                  <li>Save with <span className="text-foreground">UTF-8</span> encoding — avoid merged cells or special formatting</li>
+                </ul>
+                <div className="flex items-start gap-2 pt-1 border-t border-border/60">
+                  <Lightbulb className="w-3.5 h-3.5 mt-0.5 text-amber-500 shrink-0" />
+                  <p className="text-xs text-muted-foreground">
+                    Use the <span className="text-foreground font-medium">Dry Run</span> toggle on the preview step to validate your data before committing the import.
+                  </p>
+                </div>
+              </div>
             </div>
 
             {/* Location Selection */}
