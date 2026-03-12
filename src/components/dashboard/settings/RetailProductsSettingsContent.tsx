@@ -1583,6 +1583,7 @@ export function RetailProductsSettingsContent() {
           <TabsTrigger value="brands">Brands</TabsTrigger>
           <TabsTrigger value="categories">Categories</TabsTrigger>
           <TabsTrigger value="inventory" className="gap-1.5"><MapPin className="w-3.5 h-3.5" /> Inventory</TabsTrigger>
+          <TabsTrigger value="clearance" className="gap-1.5"><Tag className="w-3.5 h-3.5" /> Clearance</TabsTrigger>
           <TabsTrigger value="gift-cards" className="gap-1.5"><Gift className="w-3.5 h-3.5" /> Gift Cards</TabsTrigger>
         </TabsList>
 
