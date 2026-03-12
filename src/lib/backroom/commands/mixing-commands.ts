@@ -446,7 +446,7 @@ export async function executeCompleteSession(
 
 export async function executeMarkSessionUnresolved(
   cmd: MarkSessionUnresolvedCommand,
-): Promise<CommandResult> {
+): Promise<CommandResult<unknown>> {
   const session = await fetchSessionState(cmd.mix_session_id);
   const errors = validateMarkSessionUnresolved(cmd.meta.initiated_by, session);
 
