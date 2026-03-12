@@ -1184,6 +1184,19 @@ function InventoryByLocationTab() {
               </div>
             </div>
           )}
+          {selectedInvIds.size > 0 && lowStockProducts.length === 0 && (
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 border">
+              <span className="text-sm font-medium">{selectedInvIds.size} selected</span>
+              <Button
+                size={tokens.button.inline}
+                className="gap-1"
+                onClick={() => setShowBatchReorder(true)}
+              >
+                <ShoppingCart className="w-3.5 h-3.5" />
+                Batch Reorder
+              </Button>
+            </div>
+          )}
           <div className="overflow-x-auto border rounded-lg">
             <Table>
               <TableHeader>
