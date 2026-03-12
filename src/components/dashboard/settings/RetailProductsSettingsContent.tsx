@@ -42,6 +42,9 @@ import { optimizeImage } from '@/lib/image-utils';
 import { GiftCardsHub } from '@/components/dashboard/settings/GiftCardsHub';
 import { ProductWizard } from '@/components/dashboard/settings/ProductWizard';
 import { useProductDrafts, useDeleteProductDraft, type ProductDraft } from '@/hooks/useProductDrafts';
+import { DataImportWizard } from '@/components/admin/DataImportWizard';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { Upload } from 'lucide-react';
 // Helper to classify product type — prefer DB column, fall back to regex
 function getProductType(product: Product): string {
   if (product.product_type && product.product_type !== 'Products') return product.product_type;
@@ -57,7 +60,9 @@ const PRODUCT_TYPES = ['Products', 'Extensions', 'Merch'] as const;
 // ─── Products Tab ───
 function ProductsTab() {
   const { formatCurrency } = useFormatCurrency();
+  const { effectiveOrganization } = useOrganizationContext();
   const [search, setSearch] = useState('');
+  const [showImportWizard, setShowImportWizard] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [brandFilter, setBrandFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
@@ -173,6 +178,9 @@ function ProductsTab() {
             ))}
           </div>
         )}
+        <Button variant="outline" size={tokens.button.card} onClick={() => setShowImportWizard(true)} className="gap-1.5">
+          <Upload className="w-4 h-4" /> Import
+        </Button>
         <Button size={tokens.button.card} onClick={() => { setWizardDraftId(undefined); setWizardInitialDraft(undefined); setShowWizard(true); }} className="gap-1.5">
           <Plus className="w-4 h-4" /> Add Product
         </Button>
@@ -314,6 +322,13 @@ function ProductsTab() {
       )}
 
       <ProductWizard open={showWizard} onOpenChange={setShowWizard} draftId={wizardDraftId} initialDraft={wizardInitialDraft} />
+      <DataImportWizard
+        open={showImportWizard}
+        onOpenChange={setShowImportWizard}
+        sourceType="csv"
+        dataType="products"
+        organizationId={effectiveOrganization?.id}
+      />
     </div>
   );
 }
