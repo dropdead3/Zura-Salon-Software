@@ -42,7 +42,10 @@ export type MixSessionEventType =
   | 'prep_approved'
   | 'suggested_formula_generated'
   | 'suggested_formula_applied'
-  | 'suggested_formula_dismissed';
+  | 'suggested_formula_dismissed'
+  | 'formula_memory_displayed'
+  | 'formula_memory_used'
+  | 'formula_memory_dismissed';
 
 export type SourceMode = 'scale' | 'manual' | 'system' | 'offline_sync';
 
