@@ -177,7 +177,7 @@ export function AlertSettingsCard() {
                     <div className="flex items-center justify-between">
                       <div>
                         <Label className="text-sm">Auto-send POs to suppliers</Label>
-                        <p className="text-xs text-muted-foreground mt-0.5">
+                        <p className="text-xs text-muted-foreground mt-1">
                           Automatically email POs to suppliers without manual review
                         </p>
                       </div>
