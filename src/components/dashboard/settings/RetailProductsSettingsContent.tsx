@@ -1530,6 +1530,7 @@ function InventoryByLocationTab() {
 // ─── Main Export ───
 export function RetailProductsSettingsContent() {
   const navigate = useNavigate();
+  const { effectiveOrganization } = useOrganizationContext();
   const { data: retailSettings, isLoading: retailLoading } = useWebsiteRetailSettings();
   const { data: allProducts } = useProducts({});
   const onlineCount = allProducts?.filter(p => p.available_online).length ?? 0;
