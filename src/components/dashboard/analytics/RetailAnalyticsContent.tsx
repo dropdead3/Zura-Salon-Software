@@ -53,6 +53,7 @@ import { ShrinkageReportCard } from './ShrinkageReportCard';
 import { SeasonalForecastCard } from './SeasonalForecastCard';
 import { MarginErosionCard } from './MarginErosionCard';
 import { AbcClassificationCard } from './AbcClassificationCard';
+import { RebalancingCard } from './RebalancingCard';
 import { useAbcClassification } from '@/hooks/useAbcClassification';
 
 interface RetailAnalyticsContentProps {
@@ -2115,6 +2116,9 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
       {allProducts && velocityMap && (
         <SeasonalForecastCard products={allProducts} velocityMap={velocityMap} filterContext={filterContext} />
       )}
+
+      {/* ─── Cross-Location Rebalancing ─── */}
+      <RebalancingCard filterContext={filterContext} />
 
       {/* ─── Margin Erosion Alerts ─── */}
       <MarginErosionCard filterContext={filterContext} />
