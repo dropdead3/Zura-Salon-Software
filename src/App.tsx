@@ -339,6 +339,7 @@ const App = () => (
                       <Route path="/dashboard/admin/feature-flags" element={<Navigate to="/dashboard/platform/feature-flags" replace />} />
                       
                       <Route path="/dashboard/admin/zura-config" element={<ProtectedRoute requiredPermission="manage_settings"><ZuraConfigPage /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/backroom-settings" element={<ProtectedRoute requiredPermission="manage_settings"><BackroomSettings /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/kpi-builder" element={<ProtectedRoute requiredPermission="manage_settings"><KpiBuilderPage /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/executive-brief" element={<ProtectedRoute requiredPermission="manage_settings"><ExecutiveBriefPage /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/decision-history" element={<ProtectedRoute requiredPermission="manage_settings"><DecisionHistoryPage /></ProtectedRoute>} />
