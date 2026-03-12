@@ -6,12 +6,14 @@ import { Button } from '@/components/ui/button';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
+import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
 import { tokens } from '@/lib/design-tokens';
-import { MapPin, UserCheck, X, Loader2 } from 'lucide-react';
+import { MapPin, UserCheck, X, Loader2, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useActiveLocations } from '@/hooks/useLocations';
 import {
   useLocationInventoryLeads,
+  useLocationDefaultLeads,
   useAssignInventoryLead,
   useRemoveInventoryLead,
 } from '@/hooks/useLocationInventoryLeads';
@@ -58,6 +60,7 @@ function useOrgStaffOptions() {
 export function InventoryLeadAssignmentCard() {
   const { data: locations, isLoading: locationsLoading } = useActiveLocations();
   const { data: leads, isLoading: leadsLoading } = useLocationInventoryLeads();
+  const { data: defaultLeads, isLoading: defaultsLoading } = useLocationDefaultLeads();
   const { data: staffOptions, isLoading: staffLoading } = useOrgStaffOptions();
   const assignLead = useAssignInventoryLead();
   const removeLead = useRemoveInventoryLead();
@@ -70,7 +73,7 @@ export function InventoryLeadAssignmentCard() {
     return map;
   }, [leads]);
 
-  const isLoading = locationsLoading || leadsLoading || staffLoading;
+  const isLoading = locationsLoading || leadsLoading || staffLoading || defaultsLoading;
 
   if (isLoading) {
     return (
@@ -94,14 +97,20 @@ export function InventoryLeadAssignmentCard() {
           <div className="flex-1">
             <CardTitle className={tokens.card.title}>Inventory Leads</CardTitle>
             <CardDescription className="text-xs mt-1">
-              Assign a team member to manage inventory at each location.
+              Assign a team member to manage inventory at each location. Defaults to the location's manager.
             </CardDescription>
           </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-2">
         {locations.map((location) => {
-          const lead = leadByLocation.get(location.id);
+          const explicitLead = leadByLocation.get(location.id);
+          const defaultLead = defaultLeads?.get(location.id);
+          const isDefault = !explicitLead && !!defaultLead;
+          const resolvedName = explicitLead?.display_name || defaultLead?.display_name;
+          const resolvedPhoto = explicitLead?.photo_url || defaultLead?.photo_url;
+          const hasAnyLead = !!explicitLead || !!defaultLead;
+
           return (
             <div
               key={location.id}
@@ -115,24 +124,63 @@ export function InventoryLeadAssignmentCard() {
                 <span className="text-sm font-medium truncate">{location.name}</span>
               </div>
               <div className="flex items-center gap-2">
-                {lead ? (
+                {hasAnyLead ? (
                   <div className="flex items-center gap-2">
                     <Avatar className="h-7 w-7">
-                      {lead.photo_url && <AvatarImage src={lead.photo_url} alt={lead.display_name} />}
+                      {resolvedPhoto && <AvatarImage src={resolvedPhoto} alt={resolvedName} />}
                       <AvatarFallback className="text-[10px]">
-                        {getInitials(lead.display_name || '')}
+                        {getInitials(resolvedName || '')}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="text-sm">{lead.display_name}</span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                      onClick={() => removeLead.mutate(lead.id)}
-                      disabled={removeLead.isPending}
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </Button>
+                    <span className="text-sm">{resolvedName}</span>
+                    {isDefault && (
+                      <PlatformBadge variant="info" size="sm">
+                        Default — Manager
+                      </PlatformBadge>
+                    )}
+                    {explicitLead ? (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                        title="Reset to default (manager)"
+                        onClick={() => removeLead.mutate(explicitLead.id)}
+                        disabled={removeLead.isPending}
+                      >
+                        {defaultLead ? (
+                          <RotateCcw className="w-3.5 h-3.5" />
+                        ) : (
+                          <X className="w-3.5 h-3.5" />
+                        )}
+                      </Button>
+                    ) : null}
+                    {/* Allow override even when default is shown */}
+                    {isDefault && (
+                      <Select
+                        onValueChange={(userId) => {
+                          assignLead.mutate({ locationId: location.id, userId });
+                        }}
+                      >
+                        <SelectTrigger className="w-[140px] h-7 text-xs">
+                          <SelectValue placeholder="Override…" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {(staffOptions || []).map((staff) => (
+                            <SelectItem key={staff.user_id} value={staff.user_id}>
+                              <div className="flex items-center gap-2">
+                                <Avatar className="h-5 w-5">
+                                  {staff.photo_url && <AvatarImage src={staff.photo_url} />}
+                                  <AvatarFallback className="text-[8px]">
+                                    {getInitials(staff.display_name)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                {staff.display_name}
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
                   </div>
                 ) : (
                   <Select
