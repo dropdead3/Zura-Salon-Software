@@ -1,121 +1,153 @@
 
 
-# Service Blueprinting — Implementation Plan
+## Timezone-Safe Scheduling (Implemented)
 
-## Existing Infrastructure
+### Problem
+`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
 
-- `services` table has `duration_minutes`, `processing_time_minutes`, `finishing_time_minutes`, `content_creation_time_minutes` — time segments already exist
-- `service_recipe_baselines` table already maps products to services with expected quantities
-- `RecipeBaselinesManager` component exists for managing baselines in settings
-- `FormulaResolver` uses baselines as the third-priority source for SmartMixAssist
-- `useAssistantDailyPrep` identifies color services for assistant prep
-- `useServicesData` provides full service CRUD
+### Solution
+- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
+- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
+- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
 
-## Architecture
+### Files Updated
+- `ScheduleHeader.tsx` — today button, quick days, isToday checks
+- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
+- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
+- `MonthView.tsx` — today highlight
+- `AgendaView.tsx` — today/tomorrow labels, today border
+- `ScheduleActionBar.tsx` — payment queue timing
+- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
+- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
+- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
+- `useHuddles.ts` — today's huddle query
 
-New table `service_blueprints` stores ordered steps per service. No changes to existing tables — baselines remain as-is and are referenced by `mix_step` entries.
+## Auto-Reorder with Supplier Communication (Implemented)
 
-```text
-services (existing)
-  → service_blueprints (new, 1:many)
-     → step_type, position, metadata JSON
-  → service_recipe_baselines (existing, referenced by mix steps)
+### What It Does
+Organizations can opt into automatic reorder — when stock dips below threshold, POs are calculated (using MOQ and par levels) and sent directly to the supplier via email.
 
-Blueprint consumed by:
-  → SmartMixAssist (mix steps enrich formula suggestions)
-  → AssistantDailyPrep (prep steps shown in daily view)
-  → Stylist appointment workspace (step checklist)
-  → Predictive Backroom (product usage forecasting)
+### Database Changes
+- `products.par_level` (INT, nullable) — desired stock level to reorder up to
+- `product_suppliers.moq` (INT, default 1) — minimum order quantity
+- `inventory_alert_settings.auto_reorder_enabled` (BOOL, default false)
+- `inventory_alert_settings.auto_reorder_mode` (TEXT, default 'to_par') — 'to_par' or 'moq_only'
+- `inventory_alert_settings.max_auto_reorder_value` (NUMERIC, nullable) — daily spend cap
+- `purchase_orders.supplier_confirmed_at` (TIMESTAMPTZ, nullable) — for tracking confirmations
+
+### Quantity Calculation
+```
+deficit = par_level - quantity_on_hand
+order_qty = max(moq, deficit)
+if moq > 1: round up to nearest MOQ multiple
+```
+Fallback: if par_level is null, uses `reorder_level * 2`.
+
+### Files Updated
+- Migration: Added columns to products, product_suppliers, inventory_alert_settings, purchase_orders
+- `check-reorder-levels/index.ts` — auto-send logic with MOQ/par calculation, spend cap, email invocation
+- `AlertSettingsCard.tsx` — auto-reorder toggle, mode selector, spend cap input
+- `useInventoryAlertSettings.ts` — updated interface
+- `useProducts.ts` — added par_level to Product interface
+- `useProductSuppliers.ts` — added moq to ProductSupplier interface
+- `ProductEditDialog.tsx` — added par level field
+- `RetailProductsSettingsContent.tsx` — added par level to product form
+- `SupplierDialog.tsx` — added MOQ field
+
+### Safety Features
+- Spend cap: daily auto-reorder pauses when cumulative PO value exceeds cap
+- Audit trail: auto_reorder logged as stock_movement reason
+- Supplier confirmation tracking via supplier_confirmed_at timestamp
+
+## Product Movement Rating Badges (Implemented)
+
+### What It Does
+Every product gets a dynamic movement rating badge (Best Seller, Popular, Steady, Slow Mover, Stagnant, Dead Weight) computed from 90-day sales velocity data.
+
+### Rating Tiers
+- **Best Seller**: Top 10% velocity AND >0.5 units/day (emerald)
+- **Popular**: Top 25% velocity AND >0.2 units/day (blue)
+- **Steady**: Velocity >0.05/day (muted)
+- **Slow Mover**: Velocity >0 but ≤0.05/day (amber)
+- **Stagnant**: Zero velocity, sold within 180 days (orange)
+- **Dead Weight**: Zero velocity, 180+ days or never sold (red)
+- Products with zero stock excluded from negative ratings
+
+### Files Created
+- `src/lib/productMovementRating.ts` — pure rating logic + badge config
+- `src/hooks/useProductVelocity.ts` — lightweight 90-day POS velocity query
+- `src/components/ui/MovementBadge.tsx` — shared badge component with tooltip
+
+### Files Updated
+- `RetailProductsSettingsContent.tsx` — Movement column + filter dropdown in products table
+- `RetailAnalyticsContent.tsx` — Movement badges on product performance table + Movement Distribution card (donut chart with actionable callouts)
+- `ProductCard.tsx` — Best Seller/Popular badges on public shop cards (positive only)
+- `ProductDetailModal.tsx` — Movement badge with velocity context
+
+## Inventory Intelligence Suite v2 (Implemented)
+
+### 1. Dead Stock Auto-Clearance Pipeline
+- `DeadStockAlertCard.tsx` — Surfaces Dead Weight/Stagnant products not yet in clearance with suggested discount tiers (10%/25%/50% based on idle days)
+- One-click "Mark for Clearance" applies discount and sets clearance_status
+
+### 2. Supplier Lead Time Tracker
+- `usePurchaseOrders.ts` — `useMarkPurchaseOrderReceived` already computes actual delivery days and updates `product_suppliers.avg_delivery_days` via running average
+- `parLevelSuggestion.ts` — Updated to accept supplier-provided lead time instead of hardcoded 7-day default, with bounds clamping
+
+### 3. Inventory Valuation Dashboard Card
+- `InventoryValuationCard.tsx` — Shows total inventory at cost/retail, potential margin %, capital-at-risk (slow/stagnant/dead weight), with donut chart breakdown
+
+### 4. Reorder Approval Queue
+- `ReorderApprovalCard.tsx` — Surfaces draft POs from auto-reorder with one-click approve (→ sent) or reject (→ cancelled)
+
+### 5. Stock Transfer Between Locations
+- Migration: Created `stock_transfers` table with RLS (org member read, org admin manage)
+- `useStockTransfers.ts` — CRUD hooks for stock transfers with stock movement logging
+- `StockTransferDialog.tsx` — Dialog for creating transfers between locations
+- `RetailProductsSettingsContent.tsx` — "Transfer Stock" button added to Inventory tab (visible for multi-location orgs)
+
+## Enhancement 1: Expiry Tracking (Implemented)
+
+### What It Does
+Products can have an optional expiration date (`expires_at`) and per-product alert threshold (`expiry_alert_days`, default 30). The system surfaces expiring inventory with color-coded badges in the product table and an analytics card with auto-clearance suggestions.
+
+### Database Changes
+- `products.expires_at` (DATE, nullable) — expiration date for perishable products
+- `products.expiry_alert_days` (INTEGER, default 30) — days before expiry to trigger alerts
+
+### Expiry Alert Buckets
+- **Expired** (red): past expiration → suggests 50% markdown
+- **Critical** (orange): within alert threshold → suggests 25% markdown
+- **Warning** (amber): within 2× alert threshold → suggests 10% markdown
+
+### Files Created
+- `src/components/dashboard/analytics/ExpiryAlertCard.tsx` — PinnableCard showing expiring products with one-click clearance actions
+
+### Files Updated
+- `src/hooks/useProducts.ts` — Added `expires_at`, `expiry_alert_days` to Product interface; added `expiringOnly` filter
+- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Expiry date + alert days in product form; color-coded Expiry column in product table
+- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ExpiryAlertCard into analytics hub
+
+## Enhancement 2: Shrinkage Detection (Implemented)
+
+### What It Does
+Physical stocktake workflow with variance reporting. Staff record actual counts via a Stocktake dialog, and the system compares against expected quantities (system records). A Shrinkage Report card in analytics surfaces products with negative variance (loss) ranked by estimated cost impact.
+
+### Database Changes
+- Created `stock_counts` table with computed `variance` column (counted - expected), RLS policies (org member read/insert, org admin update/delete), and indexes
+
+### Shrinkage Calculation
+```
+variance = counted_quantity - expected_quantity
+shrinkage_units = |variance| when variance < 0
+shrinkage_cost = shrinkage_units × cost_price
 ```
 
-## Database
+### Files Created
+- `src/hooks/useStockCounts.ts` — CRUD hooks for stock counts + `useShrinkageSummary` for aggregated shrinkage data
+- `src/components/dashboard/settings/inventory/StocktakeDialog.tsx` — Full stocktake UI with search, inline count entry, real-time variance display
+- `src/components/dashboard/analytics/ShrinkageReportCard.tsx` — PinnableCard showing products with shrinkage, severity badges, estimated loss
 
-### New table: `service_blueprints`
-
-| Column | Type | Notes |
-|---|---|---|
-| id | uuid PK | |
-| organization_id | uuid FK | |
-| service_id | uuid FK → services | |
-| position | integer | Step order |
-| step_type | text | `mix_step`, `assistant_prep_step`, `application_step`, `processing_step`, `rinse_step`, `finish_step` |
-| title | text | Display name |
-| description | text, nullable | Instructions/notes |
-| metadata | jsonb, default `{}` | Type-specific data (see below) |
-| created_by | uuid, nullable | |
-| created_at | timestamptz | |
-| updated_at | timestamptz | |
-
-Unique constraint on `(organization_id, service_id, position)`.
-
-RLS: org-member read, admin/manager write.
-
-### Metadata schemas by step type
-
-- **mix_step**: `{ product_id?, baseline_id?, target_weight_g?, ratio_guidance?, notes? }`
-- **assistant_prep_step**: `{ tasks: string[] }` — e.g. `["prepare foils", "stage bowls"]`
-- **processing_step**: `{ recommended_minutes?, timer_enabled? }`
-- **application_step / rinse_step / finish_step**: `{ notes? }`
-
-## Implementation Layers
-
-### 1. Migration
-Create `service_blueprints` table with RLS policies.
-
-### 2. Hook: `src/hooks/backroom/useServiceBlueprints.ts`
-- `useServiceBlueprint(serviceId)` — ordered steps for one service
-- `useUpsertBlueprintStep()` — create/update step
-- `useDeleteBlueprintStep()` — remove step
-- `useReorderBlueprintSteps()` — batch position update
-
-### 3. Pure engine: `src/lib/backroom/blueprint-engine.ts`
-- `BlueprintStep` interface + step type constants
-- `getBlueprintMixSteps(steps)` — filter mix steps for SmartMixAssist
-- `getBlueprintPrepTasks(steps)` — extract assistant prep tasks
-- `getProcessingTime(steps)` — sum recommended processing times
-- `resolveBlueprintForSession(steps, formulaLines)` — merge blueprint with actual formula data for runtime display
-
-### 4. Owner UI: `src/components/dashboard/settings/services/BlueprintEditor.tsx`
-- Step list with drag-to-reorder (existing dnd-kit)
-- Add step button with type picker
-- Per-step form: title, description, type-specific fields
-- Mix steps link to existing recipe baselines
-- Processing steps have optional timer duration
-- Accessible from service detail in Settings → Services & Schedule
-
-### 5. Stylist UI: `src/components/dashboard/backroom/BlueprintChecklist.tsx`
-- Rendered in appointment/mix session workspace
-- Ordered step list with checkboxes
-- Steps can be marked complete or skipped
-- Completion state stored in-memory (not persisted — advisory only)
-- Mix steps show linked formula suggestion
-- Processing steps show optional timer button
-- Empty state when service has no blueprint
-
-### 6. Integration Points
-
-**SmartMixAssist**: `FormulaResolver` already uses `service_recipe_baselines`. Blueprint mix steps reference the same baselines — no resolver changes needed. The `BlueprintChecklist` surfaces the resolved formula alongside the mix step.
-
-**Assistant Prep Mode**: `useAssistantDailyPrep` enhanced to also fetch blueprint `assistant_prep_step` entries for each appointment's service, displaying prep task lists in the daily prep view.
-
-**Predictive Backroom**: Blueprint mix steps with `target_weight_g` improve demand forecasting accuracy. The forecast service can read blueprints to get expected product quantities per service.
-
-## Build Order
-
-1. Database migration (table + RLS)
-2. `blueprint-engine.ts` (types + pure functions)
-3. `useServiceBlueprints.ts` (CRUD hooks)
-4. `BlueprintEditor.tsx` (owner settings UI)
-5. `BlueprintChecklist.tsx` (stylist runtime UI)
-6. Integration: enhance `useAssistantDailyPrep` to include blueprint prep tasks
-
-## Edge Cases
-
-| Case | Handling |
-|---|---|
-| Service without blueprint | No checklist shown; all existing flows unchanged |
-| Step overrides | Checklist is advisory; stylist can skip/ignore any step |
-| Blueprint edited mid-session | Active sessions use snapshot at session start (in-memory) |
-| Deleted service | Cascade delete blueprint steps via FK |
-| Multiple mix steps | Each rendered separately with its own product/baseline reference |
-
+### Files Updated
+- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Added "Stocktake" button to Inventory tab toolbar
+- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ShrinkageReportCard into analytics hub
