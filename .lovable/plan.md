@@ -1,23 +1,27 @@
 
 
-## Timezone-Safe Scheduling (Implemented)
+## Add Type Editing to the Categories Tab
 
 ### Problem
-`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
+The "Type" column in the Categories tab currently displays read-only badges showing the product types (Products, Extensions, Merch) of items in each category. There's no way to change the type for a category's products.
 
 ### Solution
-- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
-- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
-- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
+Add a clickable type selector on each category row that bulk-updates the `product_type` of all products in that category.
 
-### Files Updated
-- `ScheduleHeader.tsx` — today button, quick days, isToday checks
-- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
-- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
-- `MonthView.tsx` — today highlight
-- `AgendaView.tsx` — today/tomorrow labels, today border
-- `ScheduleActionBar.tsx` — payment queue timing
-- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
-- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
-- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
-- `useHuddles.ts` — today's huddle query
+### Changes
+
+**Edit: `src/components/dashboard/settings/RetailProductsSettingsContent.tsx`**
+
+Replace the static Type badges in the Categories table with an inline `Select` dropdown:
+- Clicking the Type cell opens a dropdown with the three options: Products, Extensions, Merch
+- Selecting a new type triggers a bulk update of all products in that category to the chosen `product_type`
+- Use the existing `useBulkUpdateProducts` hook (already imported) to perform the bulk update with `field: 'product_type'`
+- For categories with 0 products or "Uncategorized", show the badges as read-only (no dropdown)
+- The select is styled compact (small/inline) to match the table density
+
+**Edit: `src/hooks/useBulkUpdateProducts.ts`** (if needed)
+- Verify the bulk update hook supports updating by category filter (update all products where `category = X` to set `product_type = newValue`). If it only supports field-to-field renaming, add a `bulkUpdateByCategory` variant.
+
+### No database changes needed
+Product type is already a column on the `products` table. This is purely a UI + mutation change.
+
