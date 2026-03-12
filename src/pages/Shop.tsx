@@ -148,6 +148,7 @@ export default function Shop() {
                   <ProductCard
                     key={product.id}
                     product={product}
+                    continueSelling={continueSelling}
                     onClick={setSelectedProduct}
                   />
                 ))}

@@ -37,7 +37,7 @@ export function ProductCard({ product, continueSelling = false, onClick }: Produ
           <p className="text-base font-medium text-foreground">
             ${(product.retail_price ?? 0).toFixed(2)}
           </p>
-          {!inStock ? (
+          {showOutOfStock ? (
             <Badge variant="secondary" className="text-[10px] bg-destructive/10 text-destructive border-0">
               Out of stock
             </Badge>
