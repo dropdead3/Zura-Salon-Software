@@ -10,7 +10,7 @@ import { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Plus, Play, CheckCircle2, Trash2, AlertTriangle } from 'lucide-react';
+import { Plus, Play, CheckCircle2, Trash2, AlertTriangle, Send } from 'lucide-react';
 import { BowlCard } from './BowlCard';
 import { SessionSummary } from './SessionSummary';
 import { WasteRecordDialog } from './WasteRecordDialog';
@@ -528,14 +528,77 @@ export function MixSessionManager({
   // Active session
   return (
     <div className="space-y-4">
-      {/* Prep mode banner */}
+      {/* Prep mode banner — with per-bowl review for awaiting_stylist_approval */}
       <PrepModeBanner
         session={activeSession}
         currentUserId={user?.id}
         assignedStylistId={staffUserId}
         isManager={false}
+        bowls={bowls}
+        bowlLines={{}}
+        onApproveBowl={async (bowlId) => {
+          await emitSessionEvent({
+            mix_session_id: activeSession.id,
+            organization_id: organizationId,
+            location_id: locationId,
+            event_type: 'stylist_bowl_approved',
+            event_payload: { bowl_id: bowlId, approved_by: user?.id },
+            source_mode: 'manual',
+          });
+          updateBowlStatus.mutate({
+            id: bowlId,
+            sessionId: activeSession.id,
+            organizationId,
+            currentStatus: bowls.find(b => b.id === bowlId)?.status ?? 'awaiting_stylist_approval',
+            newStatus: 'open',
+            locationId,
+          });
+        }}
+        onAdjustBowl={async (bowlId) => {
+          await emitSessionEvent({
+            mix_session_id: activeSession.id,
+            organization_id: organizationId,
+            location_id: locationId,
+            event_type: 'stylist_bowl_adjusted',
+            event_payload: { bowl_id: bowlId, adjusted_by: user?.id },
+            source_mode: 'manual',
+          });
+          updateBowlStatus.mutate({
+            id: bowlId,
+            sessionId: activeSession.id,
+            organizationId,
+            currentStatus: bowls.find(b => b.id === bowlId)?.status ?? 'awaiting_stylist_approval',
+            newStatus: 'open',
+            locationId,
+          });
+          toast.info('Bowl opened for adjustments');
+        }}
+        onDiscardBowl={(bowlId) => handleDiscardBowl(bowlId)}
+        onApproveAll={async () => {
+          const reviewBowls = bowls.filter(b =>
+            b.status === 'awaiting_stylist_approval' || b.status === 'prepared_by_assistant'
+          );
+          for (const bowl of reviewBowls) {
+            await emitSessionEvent({
+              mix_session_id: activeSession.id,
+              organization_id: organizationId,
+              location_id: locationId,
+              event_type: 'stylist_bowl_approved',
+              event_payload: { bowl_id: bowl.id, approved_by: user?.id },
+              source_mode: 'manual',
+            });
+            updateBowlStatus.mutate({
+              id: bowl.id,
+              sessionId: activeSession.id,
+              organizationId,
+              currentStatus: bowl.status,
+              newStatus: 'open',
+              locationId,
+            });
+          }
+          toast.success('All bowls approved');
+        }}
         onApprove={async () => {
-          // Emit prep_approved event (source of truth)
           await emitSessionEvent({
             mix_session_id: activeSession.id,
             organization_id: organizationId,
@@ -544,7 +607,6 @@ export function MixSessionManager({
             event_payload: { approved_by: user?.id },
             source_mode: 'manual',
           });
-          // Projection update
           await supabase
             .from('mix_sessions')
             .update({
@@ -579,6 +641,46 @@ export function MixSessionManager({
             <Button size="sm" onClick={handleBeginMixing} className="h-9 font-sans">
               <Play className="w-3.5 h-3.5 mr-1" />
               Begin Mixing
+            </Button>
+          )}
+
+          {activeSession.status === 'draft' && activeSession.is_prep_mode && bowls.length > 0 && (
+            <Button
+              size="sm"
+              onClick={async () => {
+                // Transition bowls to awaiting_stylist_approval
+                for (const bowl of bowls.filter(b => b.status === 'open')) {
+                  updateBowlStatus.mutate({
+                    id: bowl.id,
+                    sessionId: activeSession.id,
+                    organizationId,
+                    currentStatus: bowl.status,
+                    newStatus: 'prepared_by_assistant',
+                    locationId,
+                  });
+                }
+                // Transition session
+                updateSessionStatus.mutate({
+                  id: activeSession.id,
+                  organizationId,
+                  currentStatus: activeSession.status,
+                  newStatus: 'awaiting_stylist_approval',
+                  locationId,
+                });
+                await emitSessionEvent({
+                  mix_session_id: activeSession.id,
+                  organization_id: organizationId,
+                  location_id: locationId,
+                  event_type: 'assistant_bowl_prepared',
+                  event_payload: { bowl_count: bowls.length },
+                  source_mode: 'manual',
+                });
+                toast.success('Submitted for stylist review');
+              }}
+              className="h-9 font-sans"
+            >
+              <Send className="w-3.5 h-3.5 mr-1" />
+              Submit for Review
             </Button>
           )}
 

@@ -1,0 +1,1 @@
+ALTER TABLE public.mix_bowls ADD COLUMN IF NOT EXISTS prepared_by_staff_id UUID REFERENCES auth.users(id) ON DELETE SET NULL;

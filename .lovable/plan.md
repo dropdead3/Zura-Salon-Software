@@ -1,132 +1,153 @@
 
 
-# Assistant Prep Mode — Implementation Plan
+## Timezone-Safe Scheduling (Implemented)
 
-## Current State
+### Problem
+`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
 
-The codebase already has **partial prep mode support**:
-- `MixSession` interface has `is_prep_mode`, `prep_approved_by`, `prep_approved_at` fields
-- `PrepModeBanner` component exists with approve/pending UI
-- `prep_mode_enabled` and `prep_approved` event types exist in `mix-session-service.ts`
-- Session creation supports `mixed_by_staff_id` and `service_performed_by_staff_id` (dual staff roles)
-- Prep mode toggle exists in `MixSessionManager`
+### Solution
+- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
+- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
+- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
 
-What's **missing**:
-1. Bowl-level prep states (`prepared_by_assistant`, `awaiting_stylist_approval`)
-2. Assistant-specific event types for granular tracking
-3. Stylist review workflow with Adjust/Discard actions on prepared bowls
-4. Assistant daily prep dashboard view
-5. Proper bowl state machine extensions
+### Files Updated
+- `ScheduleHeader.tsx` — today button, quick days, isToday checks
+- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
+- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
+- `MonthView.tsx` — today highlight
+- `AgendaView.tsx` — today/tomorrow labels, today border
+- `ScheduleActionBar.tsx` — payment queue timing
+- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
+- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
+- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
+- `useHuddles.ts` — today's huddle query
 
-## Architecture
+## Auto-Reorder with Supplier Communication (Implemented)
 
-```text
-Assistant opens appointment
-  → Enables Prep Mode toggle (existing)
-  → Creates session with mixed_by_staff_id = assistant
-  → Prepares bowls → status: prepared_by_assistant
-  → Session enters awaiting_stylist_approval state
+### What It Does
+Organizations can opt into automatic reorder — when stock dips below threshold, POs are calculated (using MOQ and par levels) and sent directly to the supplier via email.
 
-Stylist opens same appointment
-  → Sees PrepModeBanner (existing, enhanced)
-  → Reviews each bowl: Approve / Adjust / Discard
-  → Approved bowls → status: open (editable)
-  → Session transitions to active
+### Database Changes
+- `products.par_level` (INT, nullable) — desired stock level to reorder up to
+- `product_suppliers.moq` (INT, default 1) — minimum order quantity
+- `inventory_alert_settings.auto_reorder_enabled` (BOOL, default false)
+- `inventory_alert_settings.auto_reorder_mode` (TEXT, default 'to_par') — 'to_par' or 'moq_only'
+- `inventory_alert_settings.max_auto_reorder_value` (NUMERIC, nullable) — daily spend cap
+- `purchase_orders.supplier_confirmed_at` (TIMESTAMPTZ, nullable) — for tracking confirmations
+
+### Quantity Calculation
+```
+deficit = par_level - quantity_on_hand
+order_qty = max(moq, deficit)
+if moq > 1: round up to nearest MOQ multiple
+```
+Fallback: if par_level is null, uses `reorder_level * 2`.
+
+### Files Updated
+- Migration: Added columns to products, product_suppliers, inventory_alert_settings, purchase_orders
+- `check-reorder-levels/index.ts` — auto-send logic with MOQ/par calculation, spend cap, email invocation
+- `AlertSettingsCard.tsx` — auto-reorder toggle, mode selector, spend cap input
+- `useInventoryAlertSettings.ts` — updated interface
+- `useProducts.ts` — added par_level to Product interface
+- `useProductSuppliers.ts` — added moq to ProductSupplier interface
+- `ProductEditDialog.tsx` — added par level field
+- `RetailProductsSettingsContent.tsx` — added par level to product form
+- `SupplierDialog.tsx` — added MOQ field
+
+### Safety Features
+- Spend cap: daily auto-reorder pauses when cumulative PO value exceeds cap
+- Audit trail: auto_reorder logged as stock_movement reason
+- Supplier confirmation tracking via supplier_confirmed_at timestamp
+
+## Product Movement Rating Badges (Implemented)
+
+### What It Does
+Every product gets a dynamic movement rating badge (Best Seller, Popular, Steady, Slow Mover, Stagnant, Dead Weight) computed from 90-day sales velocity data.
+
+### Rating Tiers
+- **Best Seller**: Top 10% velocity AND >0.5 units/day (emerald)
+- **Popular**: Top 25% velocity AND >0.2 units/day (blue)
+- **Steady**: Velocity >0.05/day (muted)
+- **Slow Mover**: Velocity >0 but ≤0.05/day (amber)
+- **Stagnant**: Zero velocity, sold within 180 days (orange)
+- **Dead Weight**: Zero velocity, 180+ days or never sold (red)
+- Products with zero stock excluded from negative ratings
+
+### Files Created
+- `src/lib/productMovementRating.ts` — pure rating logic + badge config
+- `src/hooks/useProductVelocity.ts` — lightweight 90-day POS velocity query
+- `src/components/ui/MovementBadge.tsx` — shared badge component with tooltip
+
+### Files Updated
+- `RetailProductsSettingsContent.tsx` — Movement column + filter dropdown in products table
+- `RetailAnalyticsContent.tsx` — Movement badges on product performance table + Movement Distribution card (donut chart with actionable callouts)
+- `ProductCard.tsx` — Best Seller/Popular badges on public shop cards (positive only)
+- `ProductDetailModal.tsx` — Movement badge with velocity context
+
+## Inventory Intelligence Suite v2 (Implemented)
+
+### 1. Dead Stock Auto-Clearance Pipeline
+- `DeadStockAlertCard.tsx` — Surfaces Dead Weight/Stagnant products not yet in clearance with suggested discount tiers (10%/25%/50% based on idle days)
+- One-click "Mark for Clearance" applies discount and sets clearance_status
+
+### 2. Supplier Lead Time Tracker
+- `usePurchaseOrders.ts` — `useMarkPurchaseOrderReceived` already computes actual delivery days and updates `product_suppliers.avg_delivery_days` via running average
+- `parLevelSuggestion.ts` — Updated to accept supplier-provided lead time instead of hardcoded 7-day default, with bounds clamping
+
+### 3. Inventory Valuation Dashboard Card
+- `InventoryValuationCard.tsx` — Shows total inventory at cost/retail, potential margin %, capital-at-risk (slow/stagnant/dead weight), with donut chart breakdown
+
+### 4. Reorder Approval Queue
+- `ReorderApprovalCard.tsx` — Surfaces draft POs from auto-reorder with one-click approve (→ sent) or reject (→ cancelled)
+
+### 5. Stock Transfer Between Locations
+- Migration: Created `stock_transfers` table with RLS (org member read, org admin manage)
+- `useStockTransfers.ts` — CRUD hooks for stock transfers with stock movement logging
+- `StockTransferDialog.tsx` — Dialog for creating transfers between locations
+- `RetailProductsSettingsContent.tsx` — "Transfer Stock" button added to Inventory tab (visible for multi-location orgs)
+
+## Enhancement 1: Expiry Tracking (Implemented)
+
+### What It Does
+Products can have an optional expiration date (`expires_at`) and per-product alert threshold (`expiry_alert_days`, default 30). The system surfaces expiring inventory with color-coded badges in the product table and an analytics card with auto-clearance suggestions.
+
+### Database Changes
+- `products.expires_at` (DATE, nullable) — expiration date for perishable products
+- `products.expiry_alert_days` (INTEGER, default 30) — days before expiry to trigger alerts
+
+### Expiry Alert Buckets
+- **Expired** (red): past expiration → suggests 50% markdown
+- **Critical** (orange): within alert threshold → suggests 25% markdown
+- **Warning** (amber): within 2× alert threshold → suggests 10% markdown
+
+### Files Created
+- `src/components/dashboard/analytics/ExpiryAlertCard.tsx` — PinnableCard showing expiring products with one-click clearance actions
+
+### Files Updated
+- `src/hooks/useProducts.ts` — Added `expires_at`, `expiry_alert_days` to Product interface; added `expiringOnly` filter
+- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Expiry date + alert days in product form; color-coded Expiry column in product table
+- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ExpiryAlertCard into analytics hub
+
+## Enhancement 2: Shrinkage Detection (Implemented)
+
+### What It Does
+Physical stocktake workflow with variance reporting. Staff record actual counts via a Stocktake dialog, and the system compares against expected quantities (system records). A Shrinkage Report card in analytics surfaces products with negative variance (loss) ranked by estimated cost impact.
+
+### Database Changes
+- Created `stock_counts` table with computed `variance` column (counted - expected), RLS policies (org member read/insert, org admin update/delete), and indexes
+
+### Shrinkage Calculation
+```
+variance = counted_quantity - expected_quantity
+shrinkage_units = |variance| when variance < 0
+shrinkage_cost = shrinkage_units × cost_price
 ```
 
-## Implementation
+### Files Created
+- `src/hooks/useStockCounts.ts` — CRUD hooks for stock counts + `useShrinkageSummary` for aggregated shrinkage data
+- `src/components/dashboard/settings/inventory/StocktakeDialog.tsx` — Full stocktake UI with search, inline count entry, real-time variance display
+- `src/components/dashboard/analytics/ShrinkageReportCard.tsx` — PinnableCard showing products with shrinkage, severity badges, estimated loss
 
-### 1. Bowl State Machine Extensions
-
-Add two new statuses to `MixBowlStatus`:
-
-```
-prepared_by_assistant → awaiting_stylist_approval → open → sealed → reweighed
-                                                  → discarded
-prepared_by_assistant → discarded
-```
-
-New transitions in `bowl-state-machine.ts`:
-- `prepared_by_assistant` → `awaiting_stylist_approval`, `discarded`
-- `awaiting_stylist_approval` → `open` (approved), `discarded`
-
-Add helpers: `isPreparedBowl()`, `isAwaitingApproval()`
-
-### 2. Session State Machine Extensions
-
-Add `awaiting_stylist_approval` to `MixSessionStatus`:
-- `draft` → `awaiting_stylist_approval` (when assistant finishes prep)
-- `awaiting_stylist_approval` → `active` (stylist approves)
-- `awaiting_stylist_approval` → `cancelled`
-
-### 3. New Event Types
-
-Add to `mix-session-service.ts`:
-- `assistant_prep_started`
-- `assistant_bowl_prepared`
-- `stylist_bowl_approved`
-- `stylist_bowl_adjusted`
-- `assistant_prep_discarded`
-
-Add these to `VALID_EVENTS_BY_STATUS.draft` and a new `awaiting_stylist_approval` status entry.
-
-### 4. Enhanced PrepModeBanner + Stylist Review UI
-
-Extend `PrepModeBanner` to show per-bowl review when session is in `awaiting_stylist_approval`:
-- Each prepared bowl shows formula, weights, assistant name
-- Three actions per bowl: **Approve**, **Adjust Formula**, **Discard**
-- "Approve All" bulk action
-- Approval transitions bowl `awaiting_stylist_approval` → `open`, emits `stylist_bowl_approved`
-- Adjust opens bowl editor with pre-filled lines, emits `stylist_bowl_adjusted`
-
-Create `src/components/dashboard/backroom/StylistBowlReview.tsx` for the per-bowl review card.
-
-### 5. Assistant Daily Prep View
-
-Create `src/components/dashboard/backroom/AssistantDailyPrep.tsx`:
-- Fetches today's appointments that have color/chemical services
-- Shows list: time, service name, client name, suggested formula (via `resolveFormulaMemory`)
-- "Start Prep" action per appointment opens `MixSessionManager` in prep mode
-- Wire into dashboard for assistant role users
-
-Create hook `src/hooks/backroom/useAssistantDailyPrep.ts`:
-- Queries today's appointments with service types requiring mixing
-- Cross-references with existing mix sessions to show prep status
-
-### 6. Integration Updates
-
-**`MixSessionManager.tsx`**: 
-- When `is_prep_mode` and assistant finishes adding bowls, add "Submit for Review" button that transitions session to `awaiting_stylist_approval`
-- When stylist opens a session in `awaiting_stylist_approval`, show `StylistBowlReview` instead of normal bowl cards
-
-**`BackroomTab.tsx`**: No changes needed (already passes through correctly).
-
-### 7. Database Migration
-
-Add columns to `mix_bowls` table:
-- `prepared_by_staff_id` (uuid, nullable) — tracks which assistant prepared the bowl
-
-No new tables needed.
-
-## Build Order
-
-1. Extend bowl state machine with new statuses
-2. Extend session state machine with `awaiting_stylist_approval`
-3. Add new event types to `mix-session-service.ts`
-4. Database migration: add `prepared_by_staff_id` to `mix_bowls`
-5. Create `StylistBowlReview.tsx` component
-6. Update `PrepModeBanner` for per-bowl review
-7. Update `MixSessionManager` for submit-for-review flow
-8. Create `useAssistantDailyPrep` hook
-9. Create `AssistantDailyPrep` dashboard component
-
-## Edge Cases
-
-| Case | Handling |
-|---|---|
-| Stylist changes service after prep | Prepared bowls remain; stylist can discard and re-prep |
-| Assistant prep abandoned | Session stays in draft/awaiting; no auto-cleanup |
-| Stylist adjusts formula | `stylist_bowl_adjusted` event logged, bowl transitions to `open` with modified lines |
-| Multiple assistants prep same appointment | Second assistant sees existing prep session |
-| No formula available for prep | Assistant manually adds products (no SmartMixAssist bypass) |
-
+### Files Updated
+- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Added "Stocktake" button to Inventory tab toolbar
+- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ShrinkageReportCard into analytics hub

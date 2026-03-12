@@ -1,11 +1,16 @@
 /**
- * PrepModeBanner — Shows prep status and approval workflow for assistant-prepared sessions.
+ * PrepModeBanner — Shows prep status, per-bowl review, and approval workflow
+ * for assistant-prepared sessions.
  */
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { UserCheck, Clock } from 'lucide-react';
+import { UserCheck, Clock, CheckCircle2 } from 'lucide-react';
 import type { MixSession } from '@/hooks/backroom/useMixSession';
+import type { MixBowl } from '@/hooks/backroom/useMixBowls';
+import type { MixBowlLine } from '@/hooks/backroom/useMixBowlLines';
+import { StylistBowlReview } from './StylistBowlReview';
+import { isAwaitingApproval, isPreparedBowl } from '@/lib/backroom/bowl-state-machine';
 
 interface PrepModeBannerProps {
   session: MixSession;
@@ -14,6 +19,13 @@ interface PrepModeBannerProps {
   isManager?: boolean;
   onApprove: () => void;
   isApproving?: boolean;
+  // Per-bowl review props (for awaiting_stylist_approval sessions)
+  bowls?: MixBowl[];
+  bowlLines?: Record<string, MixBowlLine[]>;
+  onApproveBowl?: (bowlId: string) => void;
+  onAdjustBowl?: (bowlId: string) => void;
+  onDiscardBowl?: (bowlId: string) => void;
+  onApproveAll?: () => void;
 }
 
 export function PrepModeBanner({
@@ -23,6 +35,12 @@ export function PrepModeBanner({
   isManager,
   onApprove,
   isApproving,
+  bowls = [],
+  bowlLines = {},
+  onApproveBowl,
+  onAdjustBowl,
+  onDiscardBowl,
+  onApproveAll,
 }: PrepModeBannerProps) {
   if (!session.is_prep_mode) return null;
 
@@ -30,7 +48,9 @@ export function PrepModeBanner({
   const canApprove = !isApproved && (
     currentUserId === assignedStylistId || isManager
   );
+  const isAwaitingStylistReview = session.status === 'awaiting_stylist_approval';
 
+  // Approved state
   if (isApproved) {
     return (
       <div className="rounded-lg border border-success/30 bg-success/5 px-4 py-3 flex items-center gap-3">
@@ -48,6 +68,53 @@ export function PrepModeBanner({
     );
   }
 
+  // Awaiting stylist approval — show per-bowl review
+  if (isAwaitingStylistReview && canApprove) {
+    const reviewBowls = bowls.filter(
+      (b) => isAwaitingApproval(b.status) || isPreparedBowl(b.status)
+    );
+
+    return (
+      <div className="space-y-3">
+        <div className="rounded-lg border border-warning/30 bg-warning/5 px-4 py-3 flex items-center gap-3">
+          <Clock className="w-4 h-4 text-warning shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="font-sans text-sm text-foreground">
+              Assistant Prep — Ready for Review
+            </p>
+            <p className="font-sans text-xs text-muted-foreground">
+              {reviewBowls.length} bowl{reviewBowls.length !== 1 ? 's' : ''} prepared and awaiting your approval
+            </p>
+          </div>
+          {reviewBowls.length > 1 && onApproveAll && (
+            <Button
+              size="sm"
+              className="h-9 px-4 font-sans text-sm shrink-0"
+              onClick={onApproveAll}
+              disabled={isApproving}
+            >
+              <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
+              Approve All
+            </Button>
+          )}
+        </div>
+
+        {reviewBowls.map((bowl) => (
+          <StylistBowlReview
+            key={bowl.id}
+            bowl={bowl}
+            lines={bowlLines[bowl.id] ?? []}
+            onApprove={onApproveBowl ?? (() => {})}
+            onAdjust={onAdjustBowl ?? (() => {})}
+            onDiscard={onDiscardBowl ?? (() => {})}
+            isApproving={isApproving}
+          />
+        ))}
+      </div>
+    );
+  }
+
+  // Default: pending prep
   return (
     <div className="rounded-lg border border-warning/30 bg-warning/5 px-4 py-3 flex items-center gap-3">
       <Clock className="w-4 h-4 text-warning shrink-0" />

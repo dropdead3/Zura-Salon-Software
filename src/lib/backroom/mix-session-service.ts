@@ -45,16 +45,25 @@ export type MixSessionEventType =
   | 'suggested_formula_dismissed'
   | 'formula_memory_displayed'
   | 'formula_memory_used'
-  | 'formula_memory_dismissed';
+  | 'formula_memory_dismissed'
+  | 'assistant_prep_started'
+  | 'assistant_bowl_prepared'
+  | 'stylist_bowl_approved'
+  | 'stylist_bowl_adjusted'
+  | 'assistant_prep_discarded';
 
 export type SourceMode = 'scale' | 'manual' | 'system' | 'offline_sync';
 
-export type SessionStatus = 'draft' | 'active' | 'awaiting_reweigh' | 'completed' | 'unresolved_exception' | 'cancelled';
+export type SessionStatus = 'draft' | 'active' | 'awaiting_reweigh' | 'awaiting_stylist_approval' | 'completed' | 'unresolved_exception' | 'cancelled';
 
 // ─── Valid event types per session status ─────────────
 const VALID_EVENTS_BY_STATUS: Record<SessionStatus, MixSessionEventType[]> = {
   draft: ['session_started', 'bowl_created', 'prep_mode_enabled',
-    'formula_memory_displayed', 'formula_memory_used', 'formula_memory_dismissed'],
+    'formula_memory_displayed', 'formula_memory_used', 'formula_memory_dismissed',
+    'assistant_prep_started', 'assistant_bowl_prepared', 'assistant_prep_discarded',
+    'product_selected', 'weight_captured', 'weight_adjusted',
+    'line_item_recorded', 'line_item_removed',
+  ],
   active: [
     'bowl_created', 'product_selected', 'weight_captured', 'weight_adjusted',
     'line_item_recorded', 'line_item_removed', 'bowl_sealed', 'bowl_discarded',
@@ -62,6 +71,10 @@ const VALID_EVENTS_BY_STATUS: Record<SessionStatus, MixSessionEventType[]> = {
     'device_disconnected', 'device_reconnected', 'manual_override_used',
     'suggested_formula_generated', 'suggested_formula_applied', 'suggested_formula_dismissed',
     'formula_memory_displayed', 'formula_memory_used', 'formula_memory_dismissed',
+  ],
+  awaiting_stylist_approval: [
+    'stylist_bowl_approved', 'stylist_bowl_adjusted', 'assistant_prep_discarded',
+    'bowl_discarded', 'session_started',
   ],
   awaiting_reweigh: [
     'reweigh_captured', 'session_completed', 'session_marked_unresolved',
