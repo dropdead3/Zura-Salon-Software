@@ -203,6 +203,8 @@ export function useCreateProduct() {
         image_url: product.image_url,
         product_type: product.product_type || 'Products',
         available_online: product.available_online,
+        expires_at: product.expires_at,
+        expiry_alert_days: product.expiry_alert_days ?? 30,
       };
       
       const { data, error } = await supabase
