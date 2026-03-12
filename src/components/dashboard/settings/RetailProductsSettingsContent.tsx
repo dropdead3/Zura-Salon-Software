@@ -1139,7 +1139,7 @@ function InventoryByLocationTab() {
 
   return (
     <div className="space-y-4">
-      {/* Location selector + view toggle */}
+      {/* Location selector + view toggle + export */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           {locations && locations.length > 1 && (
@@ -1158,23 +1158,43 @@ function InventoryByLocationTab() {
             </>
           )}
         </div>
-        <div className="flex items-center gap-1 bg-muted rounded-lg p-0.5">
-          <Button
-            variant={inventoryView === 'stock' ? 'default' : 'ghost'}
-            size="sm"
-            className="h-7 px-3 text-xs gap-1.5"
-            onClick={() => setInventoryView('stock')}
-          >
-            <Package className="w-3.5 h-3.5" /> Stock
-          </Button>
-          <Button
-            variant={inventoryView === 'orders' ? 'default' : 'ghost'}
-            size="sm"
-            className="h-7 px-3 text-xs gap-1.5"
-            onClick={() => setInventoryView('orders')}
-          >
-            <ShoppingCart className="w-3.5 h-3.5" /> Purchase Orders
-          </Button>
+        <div className="flex items-center gap-2">
+          {orgId && (
+            <Button
+              variant="outline"
+              size={tokens.button.inline}
+              className="gap-1.5"
+              onClick={async () => {
+                try {
+                  const { exportStockMovementsCsv } = await import('@/lib/exportStockMovementsCsv');
+                  await exportStockMovementsCsv(orgId);
+                  sonnerToast.success('Stock movements exported');
+                } catch {
+                  sonnerToast.error('Failed to export');
+                }
+              }}
+            >
+              <Download className="w-3.5 h-3.5" /> Export Movements
+            </Button>
+          )}
+          <div className="flex items-center gap-1 bg-muted rounded-lg p-0.5">
+            <Button
+              variant={inventoryView === 'stock' ? 'default' : 'ghost'}
+              size="sm"
+              className="h-7 px-3 text-xs gap-1.5"
+              onClick={() => setInventoryView('stock')}
+            >
+              <Package className="w-3.5 h-3.5" /> Stock
+            </Button>
+            <Button
+              variant={inventoryView === 'orders' ? 'default' : 'ghost'}
+              size="sm"
+              className="h-7 px-3 text-xs gap-1.5"
+              onClick={() => setInventoryView('orders')}
+            >
+              <ShoppingCart className="w-3.5 h-3.5" /> Purchase Orders
+            </Button>
+          </div>
         </div>
       </div>
 
