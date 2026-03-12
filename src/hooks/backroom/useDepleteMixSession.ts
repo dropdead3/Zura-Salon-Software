@@ -63,7 +63,7 @@ export function useDepleteMixSession() {
       const productMap = new Map((products as any[]).map((p) => [p.id, p.quantity_on_hand ?? 0]));
 
       const movements: any[] = [];
-      const productUpdates: Array<{ id: string; newQty: number }> = [];
+      
 
       for (const [productId, usedQty] of productUsage) {
         const currentQty = productMap.get(productId) ?? 0;

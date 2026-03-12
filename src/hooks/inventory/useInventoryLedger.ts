@@ -12,11 +12,13 @@ export interface LedgerEntry {
   product_id: string;
   quantity_change: number;
   quantity_after: number;
+  event_type: string;
   reason: string;
   notes: string | null;
   reference_type: string | null;
   reference_id: string | null;
   location_id: string | null;
+  unit: string | null;
   created_by: string | null;
   created_at: string;
 }
