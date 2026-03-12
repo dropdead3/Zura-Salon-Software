@@ -51,6 +51,7 @@ import { ReorderApprovalCard } from './ReorderApprovalCard';
 import { ExpiryAlertCard } from './ExpiryAlertCard';
 import { ShrinkageReportCard } from './ShrinkageReportCard';
 import { SeasonalForecastCard } from './SeasonalForecastCard';
+import { MarginErosionCard } from './MarginErosionCard';
 
 interface RetailAnalyticsContentProps {
   dateFrom: string;
