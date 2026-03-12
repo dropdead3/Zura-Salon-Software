@@ -160,7 +160,7 @@ async function emitAndAudit(
   currentStatus: SessionStatus,
   payload?: Record<string, unknown>,
   locationId?: string,
-): Promise<CommandResult> {
+): Promise<CommandResult<unknown>> {
   const event = await emitSessionEvent(
     {
       mix_session_id: sessionId,
