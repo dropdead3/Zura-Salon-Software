@@ -115,9 +115,11 @@ export function AddProductToBowl({ bowlId, onAdd, onCancel, inline = false }: Ad
             autoFocus
           />
         </div>
-        <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0" onClick={onCancel}>
-          <X className="w-4 h-4" />
-        </Button>
+        {!inline && (
+          <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0" onClick={onCancel}>
+            <X className="w-4 h-4" />
+          </Button>
+        )}
       </div>
 
       <ScrollArea className="max-h-[200px]">
