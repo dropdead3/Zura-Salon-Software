@@ -71,7 +71,7 @@ export function BowlCard({
           <div className="flex items-center gap-3 font-display text-sm tabular-nums">
             <span>{liveWeight.toFixed(1)}g</span>
             <span className="text-muted-foreground">
-              <BlurredAmount value={liveCost} prefix="$" />
+              <BlurredAmount>${liveCost.toFixed(2)}</BlurredAmount>
             </span>
           </div>
         </div>

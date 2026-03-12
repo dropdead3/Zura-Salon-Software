@@ -40,7 +40,7 @@ export function BowlLineRow({ line, onEdit, onDelete, readonly = false }: BowlLi
         </Badge>
 
         <span className="font-sans text-xs text-muted-foreground min-w-[50px] text-right">
-          <BlurredAmount value={lineCost} prefix="$" />
+          <BlurredAmount>${lineCost.toFixed(2)}</BlurredAmount>
         </span>
 
         {!readonly && (

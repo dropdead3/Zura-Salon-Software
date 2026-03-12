@@ -61,7 +61,7 @@ export function SessionSummary({ session, bowls }: SessionSummaryProps) {
           <div>
             <p className="font-sans text-xs text-muted-foreground">Total Cost</p>
             <p className="font-display text-lg tabular-nums">
-              <BlurredAmount value={totalCost} prefix="$" />
+              <BlurredAmount>${totalCost.toFixed(2)}</BlurredAmount>
             </p>
           </div>
         </div>
