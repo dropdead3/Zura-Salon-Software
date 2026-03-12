@@ -357,7 +357,7 @@ export async function executeRemoveLineItem(
 
 export async function executeSealBowl(
   cmd: SealBowlCommand,
-): Promise<CommandResult> {
+): Promise<CommandResult<unknown>> {
   const session = await fetchSessionState(cmd.mix_session_id);
   const bowl = await fetchBowlState(cmd.bowl_id);
   const errors = validateSealBowl(cmd.meta.initiated_by, session, bowl);
