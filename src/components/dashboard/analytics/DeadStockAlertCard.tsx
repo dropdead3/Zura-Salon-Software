@@ -17,7 +17,8 @@ import type { ProductVelocityEntry } from '@/hooks/useProductVelocity';
 
 interface DeadStockAlertCardProps {
   products: Product[];
-  movementRatings?: Map<string, { tier: MovementTier; daysSinceLastSale?: number | null }>;
+  movementRatings?: Map<string, MovementRating>;
+  velocityMap?: Map<string, ProductVelocityEntry>;
   filterContext?: FilterContext;
 }
 
