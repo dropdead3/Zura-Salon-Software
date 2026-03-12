@@ -1496,12 +1496,29 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                 </div>
                 <div className="flex items-center gap-2">
                   {filterContext && <AnalyticsFilterBadge locationId={filterContext.locationId} dateRange={filterContext.dateRange} />}
-                  <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => exportInventoryAlertsCSV(inventoryAlerts)}>
-                    <Download className="w-3.5 h-3.5" /> Export
-                  </Button>
-                  <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate('/dashboard/admin/settings?category=retail-products')}>
-                    <Settings2 className="w-3.5 h-3.5" /> Manage Inventory
-                  </Button>
+                   <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => exportInventoryAlertsCSV(inventoryAlerts)}>
+                     <Download className="w-3.5 h-3.5" /> Export Alerts
+                   </Button>
+                   {effectiveOrganization?.id && (
+                     <Button
+                       variant="ghost"
+                       size={tokens.button.inline}
+                       className="text-xs gap-1 text-muted-foreground"
+                       onClick={async () => {
+                         try {
+                           await exportStockMovementsCsv(effectiveOrganization.id);
+                           toast.success('Stock movements exported');
+                         } catch {
+                           toast.error('Failed to export');
+                         }
+                       }}
+                     >
+                       <Download className="w-3.5 h-3.5" /> Export Movements
+                     </Button>
+                   )}
+                   <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate('/dashboard/admin/settings?category=retail-products')}>
+                     <Settings2 className="w-3.5 h-3.5" /> Manage Inventory
+                   </Button>
                 </div>
               </div>
             </CardHeader>
