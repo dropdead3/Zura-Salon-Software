@@ -1304,6 +1304,9 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
             View All Appointments
           </Button>
 
+          {/* Client Product Affinity */}
+          <ClientAffinityBadges phorestClientId={client.phorest_client_id} className="mt-1" />
+
           {/* Tabs for History, Notes, Transactions, and Redos */}
           <Tabs defaultValue="history" className="mt-0">
             <TabsList className="w-full rounded-xl">

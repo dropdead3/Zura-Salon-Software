@@ -22,6 +22,7 @@ import { cn } from '@/lib/utils';
 import { VisitHistoryTimeline } from '@/components/dashboard/VisitHistoryTimeline';
 import { ClientNotesSection } from '@/components/dashboard/ClientNotesSection';
 import { useClientVisitHistory } from '@/hooks/useClientVisitHistory';
+import { ClientAffinityBadges } from '@/components/dashboard/clients/ClientAffinityBadges';
 
 export interface ExtendedPhorestClient {
   id: string;
