@@ -254,10 +254,10 @@ function ProductsTab() {
         </span>
         <div className="flex items-center gap-2">
           <Button variant="outline" size={tokens.button.card} onClick={() => exportProductsCsv(filteredProducts)} className="gap-1.5">
-            <Download className="w-4 h-4" /> Export
+            <Upload className="w-4 h-4" /> Export
           </Button>
           <Button variant="outline" size={tokens.button.card} onClick={() => setShowImportWizard(true)} className="gap-1.5">
-            <Upload className="w-4 h-4" /> Import
+            <Download className="w-4 h-4" /> Import
           </Button>
           {productImportJobs.length > 0 && (
             <Button variant="ghost" size={tokens.button.card} onClick={() => setShowHistory(!showHistory)} className="gap-1.5 text-muted-foreground">
