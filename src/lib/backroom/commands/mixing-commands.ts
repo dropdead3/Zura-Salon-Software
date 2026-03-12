@@ -102,6 +102,27 @@ export interface MarkSessionUnresolvedCommand {
   reason?: string;
 }
 
+export interface ApplySuggestedFormulaCommand {
+  meta: CommandMeta;
+  organization_id: string;
+  mix_session_id: string;
+  bowl_id: string;
+  suggestion_source: SuggestionSource;
+  reference_formula_id?: string;
+  formula_data: FormulaLine[];
+  client_id?: string;
+  staff_id?: string;
+  service_type?: string;
+}
+
+export interface DismissSuggestedFormulaCommand {
+  meta: CommandMeta;
+  organization_id: string;
+  mix_session_id: string;
+  bowl_id: string;
+  suggestion_source?: string;
+}
+
 // ─── State Fetchers (thin queries) ───────────────────
 
 async function fetchSessionState(sessionId: string) {
