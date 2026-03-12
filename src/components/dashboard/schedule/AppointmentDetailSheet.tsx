@@ -33,6 +33,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { BackroomTab } from '@/components/dashboard/backroom/BackroomTab';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -1049,6 +1050,7 @@ export function AppointmentDetailSheet({
                   <TabsTrigger value="details" className="font-sans">Details</TabsTrigger>
                   <TabsTrigger value="history" className="font-sans">History</TabsTrigger>
                   <TabsTrigger value="notes" className="font-sans">Notes</TabsTrigger>
+                  <TabsTrigger value="backroom" className="font-sans">Backroom</TabsTrigger>
                 </TabsList>
 
                 <ScrollArea className="flex-1">
@@ -1706,6 +1708,14 @@ export function AppointmentDetailSheet({
                       </motion.div>
                     )}
                     </motion.div>
+                  </TabsContent>
+
+                  {/* ─── TAB: Backroom ─────────────────────────── */}
+                  <TabsContent value="backroom" className="p-6 pt-4 mt-0">
+                    <BackroomTab
+                      appointment={appointment}
+                      organizationId={effectiveOrganization?.id ?? ''}
+                    />
                   </TabsContent>
                 </ScrollArea>
               </Tabs>

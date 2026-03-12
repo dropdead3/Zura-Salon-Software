@@ -1613,6 +1613,110 @@ export type Database = {
           },
         ]
       }
+      backroom_devices: {
+        Row: {
+          connection_type: string
+          created_at: string
+          device_name: string
+          device_type: string
+          id: string
+          is_paired: boolean
+          last_seen_at: string | null
+          location_id: string
+          organization_id: string
+          paired_station_id: string | null
+          serial_number: string | null
+        }
+        Insert: {
+          connection_type?: string
+          created_at?: string
+          device_name: string
+          device_type?: string
+          id?: string
+          is_paired?: boolean
+          last_seen_at?: string | null
+          location_id: string
+          organization_id: string
+          paired_station_id?: string | null
+          serial_number?: string | null
+        }
+        Update: {
+          connection_type?: string
+          created_at?: string
+          device_name?: string
+          device_type?: string
+          id?: string
+          is_paired?: boolean
+          last_seen_at?: string | null
+          location_id?: string
+          organization_id?: string
+          paired_station_id?: string | null
+          serial_number?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "backroom_devices_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "backroom_devices_paired_station_id_fkey"
+            columns: ["paired_station_id"]
+            isOneToOne: false
+            referencedRelation: "backroom_stations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      backroom_stations: {
+        Row: {
+          assigned_device_id: string | null
+          assigned_scale_id: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          last_seen_at: string | null
+          location_id: string
+          organization_id: string
+          station_name: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_device_id?: string | null
+          assigned_scale_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_seen_at?: string | null
+          location_id: string
+          organization_id: string
+          station_name: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_device_id?: string | null
+          assigned_scale_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_seen_at?: string | null
+          location_id?: string
+          organization_id?: string
+          station_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "backroom_stations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       balance_transactions: {
         Row: {
           amount: number
@@ -3617,6 +3721,72 @@ export type Database = {
             columns: ["form_template_id"]
             isOneToOne: false
             referencedRelation: "form_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_formula_history: {
+        Row: {
+          appointment_id: string | null
+          appointment_service_id: string | null
+          client_id: string | null
+          created_at: string
+          formula_data: Json
+          formula_type: Database["public"]["Enums"]["formula_type"]
+          id: string
+          mix_session_id: string | null
+          notes: string | null
+          organization_id: string
+          service_name: string | null
+          staff_id: string | null
+          staff_name: string | null
+          version_number: number
+        }
+        Insert: {
+          appointment_id?: string | null
+          appointment_service_id?: string | null
+          client_id?: string | null
+          created_at?: string
+          formula_data?: Json
+          formula_type?: Database["public"]["Enums"]["formula_type"]
+          id?: string
+          mix_session_id?: string | null
+          notes?: string | null
+          organization_id: string
+          service_name?: string | null
+          staff_id?: string | null
+          staff_name?: string | null
+          version_number?: number
+        }
+        Update: {
+          appointment_id?: string | null
+          appointment_service_id?: string | null
+          client_id?: string | null
+          created_at?: string
+          formula_data?: Json
+          formula_type?: Database["public"]["Enums"]["formula_type"]
+          id?: string
+          mix_session_id?: string | null
+          notes?: string | null
+          organization_id?: string
+          service_name?: string | null
+          staff_id?: string | null
+          staff_name?: string | null
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_formula_history_mix_session_id_fkey"
+            columns: ["mix_session_id"]
+            isOneToOne: false
+            referencedRelation: "mix_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_formula_history_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -8483,6 +8653,200 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mix_bowl_lines: {
+        Row: {
+          bowl_id: string
+          brand_snapshot: string | null
+          captured_via: string
+          created_at: string
+          dispensed_cost_snapshot: number
+          dispensed_quantity: number
+          dispensed_unit: string
+          id: string
+          product_id: string | null
+          product_name_snapshot: string
+          sequence_order: number
+        }
+        Insert: {
+          bowl_id: string
+          brand_snapshot?: string | null
+          captured_via?: string
+          created_at?: string
+          dispensed_cost_snapshot?: number
+          dispensed_quantity?: number
+          dispensed_unit?: string
+          id?: string
+          product_id?: string | null
+          product_name_snapshot: string
+          sequence_order?: number
+        }
+        Update: {
+          bowl_id?: string
+          brand_snapshot?: string | null
+          captured_via?: string
+          created_at?: string
+          dispensed_cost_snapshot?: number
+          dispensed_quantity?: number
+          dispensed_unit?: string
+          id?: string
+          product_id?: string | null
+          product_name_snapshot?: string
+          sequence_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mix_bowl_lines_bowl_id_fkey"
+            columns: ["bowl_id"]
+            isOneToOne: false
+            referencedRelation: "mix_bowls"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mix_bowl_lines_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mix_bowls: {
+        Row: {
+          bowl_name: string | null
+          bowl_number: number
+          completed_at: string | null
+          created_at: string
+          id: string
+          leftover_weight: number | null
+          mix_session_id: string
+          net_usage_weight: number | null
+          purpose: string | null
+          started_at: string
+          status: Database["public"]["Enums"]["mix_bowl_status"]
+          total_dispensed_cost: number | null
+          total_dispensed_weight: number | null
+          updated_at: string
+        }
+        Insert: {
+          bowl_name?: string | null
+          bowl_number?: number
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          leftover_weight?: number | null
+          mix_session_id: string
+          net_usage_weight?: number | null
+          purpose?: string | null
+          started_at?: string
+          status?: Database["public"]["Enums"]["mix_bowl_status"]
+          total_dispensed_cost?: number | null
+          total_dispensed_weight?: number | null
+          updated_at?: string
+        }
+        Update: {
+          bowl_name?: string | null
+          bowl_number?: number
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          leftover_weight?: number | null
+          mix_session_id?: string
+          net_usage_weight?: number | null
+          purpose?: string | null
+          started_at?: string
+          status?: Database["public"]["Enums"]["mix_bowl_status"]
+          total_dispensed_cost?: number | null
+          total_dispensed_weight?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mix_bowls_mix_session_id_fkey"
+            columns: ["mix_session_id"]
+            isOneToOne: false
+            referencedRelation: "mix_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mix_sessions: {
+        Row: {
+          appointment_id: string | null
+          appointment_service_id: string | null
+          client_id: string | null
+          completed_at: string | null
+          created_at: string
+          id: string
+          is_manual_override: boolean
+          location_id: string | null
+          mixed_by_staff_id: string | null
+          notes: string | null
+          organization_id: string
+          service_performed_by_staff_id: string | null
+          started_at: string
+          station_id: string | null
+          status: Database["public"]["Enums"]["mix_session_status"]
+          unresolved_flag: boolean
+          unresolved_reason: string | null
+          updated_at: string
+        }
+        Insert: {
+          appointment_id?: string | null
+          appointment_service_id?: string | null
+          client_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          is_manual_override?: boolean
+          location_id?: string | null
+          mixed_by_staff_id?: string | null
+          notes?: string | null
+          organization_id: string
+          service_performed_by_staff_id?: string | null
+          started_at?: string
+          station_id?: string | null
+          status?: Database["public"]["Enums"]["mix_session_status"]
+          unresolved_flag?: boolean
+          unresolved_reason?: string | null
+          updated_at?: string
+        }
+        Update: {
+          appointment_id?: string | null
+          appointment_service_id?: string | null
+          client_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          is_manual_override?: boolean
+          location_id?: string | null
+          mixed_by_staff_id?: string | null
+          notes?: string | null
+          organization_id?: string
+          service_performed_by_staff_id?: string | null
+          started_at?: string
+          station_id?: string | null
+          status?: Database["public"]["Enums"]["mix_session_status"]
+          unresolved_flag?: boolean
+          unresolved_reason?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mix_sessions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mix_sessions_station_id_fkey"
+            columns: ["station_id"]
+            isOneToOne: false
+            referencedRelation: "backroom_stations"
             referencedColumns: ["id"]
           },
         ]
@@ -14233,6 +14597,60 @@ export type Database = {
           },
         ]
       }
+      reweigh_events: {
+        Row: {
+          bowl_id: string
+          captured_via: string
+          created_at: string
+          id: string
+          leftover_quantity: number
+          leftover_unit: string
+          mix_session_id: string
+          notes: string | null
+          weighed_at: string
+          weighed_by_staff_id: string | null
+        }
+        Insert: {
+          bowl_id: string
+          captured_via?: string
+          created_at?: string
+          id?: string
+          leftover_quantity?: number
+          leftover_unit?: string
+          mix_session_id: string
+          notes?: string | null
+          weighed_at?: string
+          weighed_by_staff_id?: string | null
+        }
+        Update: {
+          bowl_id?: string
+          captured_via?: string
+          created_at?: string
+          id?: string
+          leftover_quantity?: number
+          leftover_unit?: string
+          mix_session_id?: string
+          notes?: string | null
+          weighed_at?: string
+          weighed_by_staff_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reweigh_events_bowl_id_fkey"
+            columns: ["bowl_id"]
+            isOneToOne: false
+            referencedRelation: "mix_bowls"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reweigh_events_mix_session_id_fkey"
+            columns: ["mix_session_id"]
+            isOneToOne: false
+            referencedRelation: "mix_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ring_the_bell_entries: {
         Row: {
           closing_script: string | null
@@ -18759,6 +19177,67 @@ export type Database = {
           },
         ]
       }
+      waste_events: {
+        Row: {
+          bowl_id: string | null
+          created_at: string
+          id: string
+          mix_session_id: string
+          notes: string | null
+          product_id: string | null
+          quantity: number
+          recorded_by_staff_id: string | null
+          unit: string
+          waste_category: Database["public"]["Enums"]["waste_category"]
+        }
+        Insert: {
+          bowl_id?: string | null
+          created_at?: string
+          id?: string
+          mix_session_id: string
+          notes?: string | null
+          product_id?: string | null
+          quantity?: number
+          recorded_by_staff_id?: string | null
+          unit?: string
+          waste_category: Database["public"]["Enums"]["waste_category"]
+        }
+        Update: {
+          bowl_id?: string | null
+          created_at?: string
+          id?: string
+          mix_session_id?: string
+          notes?: string | null
+          product_id?: string | null
+          quantity?: number
+          recorded_by_staff_id?: string | null
+          unit?: string
+          waste_category?: Database["public"]["Enums"]["waste_category"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "waste_events_bowl_id_fkey"
+            columns: ["bowl_id"]
+            isOneToOne: false
+            referencedRelation: "mix_bowls"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waste_events_mix_session_id_fkey"
+            columns: ["mix_session_id"]
+            isOneToOne: false
+            referencedRelation: "mix_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waste_events_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       website_analytics_cache: {
         Row: {
           avg_session_duration: number | null
@@ -19828,6 +20307,7 @@ export type Database = {
         | "cancelled"
         | "no_show"
       discount_type: "percentage" | "fixed_amount" | "promotional"
+      formula_type: "actual" | "refined"
       inquiry_source:
         | "website_form"
         | "google_business"
@@ -19860,6 +20340,13 @@ export type Database = {
         | "manager_meeting"
         | "training"
         | "other"
+      mix_bowl_status: "open" | "sealed" | "reweighed" | "discarded"
+      mix_session_status:
+        | "draft"
+        | "mixing"
+        | "pending_reweigh"
+        | "completed"
+        | "cancelled"
       payroll_provider:
         | "gusto"
         | "quickbooks"
@@ -19888,6 +20375,12 @@ export type Database = {
         | "resolved"
         | "closed"
       touchpoint_type: "call" | "text" | "email" | "social" | "in_person"
+      waste_category:
+        | "leftover_bowl_waste"
+        | "overmix_waste"
+        | "spill_waste"
+        | "expired_product_discard"
+        | "contamination_discard"
       zura_guardrail_severity: "soft_warn" | "hard_block"
       zura_guardrail_type:
         | "topic_block"
@@ -20070,6 +20563,7 @@ export const Constants = {
         "no_show",
       ],
       discount_type: ["percentage", "fixed_amount", "promotional"],
+      formula_type: ["actual", "refined"],
       inquiry_source: [
         "website_form",
         "google_business",
@@ -20106,6 +20600,14 @@ export const Constants = {
         "training",
         "other",
       ],
+      mix_bowl_status: ["open", "sealed", "reweighed", "discarded"],
+      mix_session_status: [
+        "draft",
+        "mixing",
+        "pending_reweigh",
+        "completed",
+        "cancelled",
+      ],
       payroll_provider: [
         "gusto",
         "quickbooks",
@@ -20137,6 +20639,13 @@ export const Constants = {
         "closed",
       ],
       touchpoint_type: ["call", "text", "email", "social", "in_person"],
+      waste_category: [
+        "leftover_bowl_waste",
+        "overmix_waste",
+        "spill_waste",
+        "expired_product_discard",
+        "contamination_discard",
+      ],
       zura_guardrail_severity: ["soft_warn", "hard_block"],
       zura_guardrail_type: [
         "topic_block",

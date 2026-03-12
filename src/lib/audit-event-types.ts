@@ -20,6 +20,12 @@ export const AUDIT_EVENTS = {
   
   // Notes
   NOTE_ADDED: 'note_added',
+
+  // Backroom
+  MIX_SESSION_STARTED: 'mix_session_started',
+  MIX_SESSION_COMPLETED: 'mix_session_completed',
+  BOWL_REWEIGHED: 'bowl_reweighed',
+  WASTE_RECORDED: 'waste_recorded',
 } as const;
 
 export type AuditEventType = (typeof AUDIT_EVENTS)[keyof typeof AUDIT_EVENTS];
