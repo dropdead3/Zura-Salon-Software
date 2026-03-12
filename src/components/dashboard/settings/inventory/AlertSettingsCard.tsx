@@ -211,7 +211,7 @@ export function AlertSettingsCard() {
                           </RadioGroup>
                         </div>
 
-                        <div className="space-y-1.5">
+                        <div className="space-y-2">
                           <Label className="text-sm">Daily spend cap</Label>
                           <Input
                             type="number"
