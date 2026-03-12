@@ -55,7 +55,9 @@ import { SupplierDialog } from '@/components/dashboard/settings/inventory/Suppli
 import { PurchaseOrdersPanel } from '@/components/dashboard/settings/inventory/PurchaseOrdersPanel';
 import { BatchReorderDialog } from '@/components/dashboard/settings/inventory/BatchReorderDialog';
 import { AlertSettingsCard } from '@/components/dashboard/settings/inventory/AlertSettingsCard';
+import { InventoryLeadAssignmentCard } from '@/components/dashboard/settings/inventory/InventoryLeadAssignmentCard';
 import { StockMovementHistory } from '@/components/dashboard/settings/inventory/StockMovementHistory';
+import { useLocationCoverageWarnings } from '@/hooks/useLocationInventoryLeads';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useLogStockMovement } from '@/hooks/useStockMovements';
 import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
