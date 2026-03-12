@@ -1119,7 +1119,7 @@ function InventoryByLocationTab() {
               <TableHead>Category</TableHead>
               <TableHead className="text-right">Retail Price</TableHead>
               <TableHead className="text-right">On Hand</TableHead>
-              <TableHead className="text-right">Reorder Level</TableHead>
+              <TableHead className="text-right">Min. Stock</TableHead>
               <TableHead className="text-right">Status</TableHead>
               <TableHead className="text-center w-32">Adjust</TableHead>
             </TableRow>
