@@ -58,35 +58,30 @@ async function fetchUpcomingServices(
   locationId?: string | null,
 ): Promise<UpcomingService[]> {
   // Query phorest_appointments (primary source)
-  const phorestFilters: Record<string, any> = {
-    organization_id: orgId,
-  };
-  let phorestQuery = supabase
-    .from('phorest_appointments')
-    .select('id, service_name, phorest_client_id, stylist_user_id, appointment_date')
-    .eq('organization_id', orgId)
-    .gte('appointment_date', startDate)
-    .lte('appointment_date', endDate);
-
-  if (locationId) {
-    phorestQuery = phorestQuery.eq('location_id', locationId);
-  }
-
-  const { data: phorestData } = await phorestQuery.limit(500) as { data: any[] | null };
+  const phorestResult = await (async () => {
+    const base = supabase
+      .from('phorest_appointments')
+      .select('id, service_name, phorest_client_id, stylist_user_id, appointment_date')
+      .eq('organization_id', orgId)
+      .gte('appointment_date', startDate)
+      .lte('appointment_date', endDate);
+    const q = locationId ? base.eq('location_id', locationId) : base;
+    return q.limit(500);
+  })();
+  const phorestData = (phorestResult.data ?? []) as any[];
 
   // Query local appointments as fallback
-  let localQuery = supabase
-    .from('appointments')
-    .select('id, service_name, client_id, staff_user_id, appointment_date')
-    .eq('organization_id', orgId)
-    .gte('appointment_date', startDate)
-    .lte('appointment_date', endDate);
-
-  if (locationId) {
-    localQuery = localQuery.eq('location_id', locationId);
-  }
-
-  const { data: localData } = await localQuery.limit(500) as { data: any[] | null };
+  const localResult = await (async () => {
+    const base = supabase
+      .from('appointments')
+      .select('id, service_name, client_id, staff_user_id, appointment_date')
+      .eq('organization_id', orgId)
+      .gte('appointment_date', startDate)
+      .lte('appointment_date', endDate);
+    const q = locationId ? base.eq('location_id', locationId) : base;
+    return q.limit(500);
+  })();
+  const localData = (localResult.data ?? []) as any[];
 
   const services: UpcomingService[] = [];
 
