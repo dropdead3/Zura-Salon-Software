@@ -492,7 +492,7 @@ function ProductsTab() {
                         )}
                       </div>
                       <div className="text-xs text-muted-foreground mt-0.5 tabular-nums">
-                        {p.reorder_level != null ? `Reorder: ${p.reorder_level}` : '—'}
+                        {p.reorder_level != null ? `Min. stock: ${p.reorder_level}` : '—'}
                       </div>
                     </TableCell>
                     <TableCell className="py-3 text-center">
