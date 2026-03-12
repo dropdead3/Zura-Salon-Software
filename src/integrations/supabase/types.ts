@@ -4421,6 +4421,69 @@ export type Database = {
           },
         ]
       }
+      client_transformation_photos: {
+        Row: {
+          after_url: string | null
+          appointment_id: string | null
+          before_url: string | null
+          client_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          organization_id: string
+          portfolio_approved: boolean
+          portfolio_category: string | null
+          service_name: string | null
+          stylist_user_id: string | null
+          taken_at: string | null
+        }
+        Insert: {
+          after_url?: string | null
+          appointment_id?: string | null
+          before_url?: string | null
+          client_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          organization_id: string
+          portfolio_approved?: boolean
+          portfolio_category?: string | null
+          service_name?: string | null
+          stylist_user_id?: string | null
+          taken_at?: string | null
+        }
+        Update: {
+          after_url?: string | null
+          appointment_id?: string | null
+          before_url?: string | null
+          client_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          portfolio_approved?: boolean
+          portfolio_category?: string | null
+          service_name?: string | null
+          stylist_user_id?: string | null
+          taken_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_transformation_photos_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_transformation_photos_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           address_line1: string | null
