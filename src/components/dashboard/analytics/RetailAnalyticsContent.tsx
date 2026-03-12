@@ -45,6 +45,9 @@ import { useProductVelocity } from '@/hooks/useProductVelocity';
 import { useSupplierPerformance } from '@/hooks/useSupplierPerformance';
 import { BundleSuggestionsCard } from './BundleSuggestionsCard';
 import { ReplenishmentTimelineCard } from './ReplenishmentTimelineCard';
+import { InventoryValuationCard } from './InventoryValuationCard';
+import { DeadStockAlertCard } from './DeadStockAlertCard';
+import { ReorderApprovalCard } from './ReorderApprovalCard';
 
 interface RetailAnalyticsContentProps {
   dateFrom: string;
