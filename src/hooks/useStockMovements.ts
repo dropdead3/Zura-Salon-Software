@@ -48,6 +48,9 @@ export function useLogStockMovement() {
       quantity_after: number;
       reason: string;
       notes?: string;
+      reference_type?: string;
+      reference_id?: string;
+      location_id?: string;
     }) => {
       const userId = (await supabase.auth.getUser()).data.user?.id;
       const { error } = await supabase
