@@ -603,6 +603,42 @@ function ProductsTab() {
                         {p.reorder_level != null ? `Min. stock: ${p.reorder_level}` : '—'}
                       </div>
                     </TableCell>
+                    <TableCell className="py-3">
+                      {(() => {
+                        if (!p.expires_at) return <span className="text-xs text-muted-foreground">—</span>;
+                        const today = new Date();
+                        const expiryDate = new Date(p.expires_at);
+                        const daysUntil = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                        const alertDays = p.expiry_alert_days ?? 30;
+                        let badgeClass = '';
+                        let label = '';
+                        if (daysUntil <= 0) {
+                          badgeClass = 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+                          label = daysUntil === 0 ? 'Today' : `${Math.abs(daysUntil)}d ago`;
+                        } else if (daysUntil <= alertDays) {
+                          badgeClass = 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400';
+                          label = `${daysUntil}d`;
+                        } else if (daysUntil <= alertDays * 2) {
+                          badgeClass = 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400';
+                          label = `${daysUntil}d`;
+                        } else {
+                          return <span className="text-xs text-muted-foreground tabular-nums">{p.expires_at}</span>;
+                        }
+                        return (
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <Badge variant="outline" className={cn('text-[10px] tabular-nums', badgeClass)}>
+                                {label}
+                              </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="text-xs">Expires: {p.expires_at}</p>
+                              <p className="text-xs">{daysUntil <= 0 ? 'Expired' : `${daysUntil} days remaining`}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        );
+                      })()}
+                    </TableCell>
                     <TableCell className="py-3 text-center">
                       <Switch
                         checked={!!p.available_online}

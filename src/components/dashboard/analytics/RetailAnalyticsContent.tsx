@@ -2069,6 +2069,11 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
         <InventoryValuationCard products={allProducts} movementRatings={productMovementRatings} filterContext={filterContext} />
       )}
 
+      {/* ─── Expiry Alerts ─── */}
+      {allProducts && (
+        <ExpiryAlertCard products={allProducts} filterContext={filterContext} />
+      )}
+
       {/* ─── Dead Stock Auto-Clearance Suggestions ─── */}
       {allProducts && (
         <DeadStockAlertCard products={allProducts} movementRatings={productMovementRatings} velocityMap={velocityMap ?? undefined} filterContext={filterContext} />
