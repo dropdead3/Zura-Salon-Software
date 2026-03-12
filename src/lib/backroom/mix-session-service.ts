@@ -289,7 +289,29 @@ export async function replayOfflineQueue(): Promise<{ replayed: number; failed: 
   let failed = 0;
   const remaining: QueuedEvent[] = [];
 
+  // BUG-8 fix: Fetch current session statuses before replay to filter invalid events
+  const sessionIds = new Set(queue.map(q => q.input.mix_session_id));
+  const sessionStatuses = new Map<string, string>();
+  for (const sid of sessionIds) {
+    const { data: sessionData } = await supabase
+      .from('mix_sessions')
+      .select('status')
+      .eq('id', sid)
+      .single();
+    if (sessionData) {
+      sessionStatuses.set(sid, (sessionData as any).status);
+    }
+  }
+
   for (const queued of queue) {
+    // Skip events for sessions that are now in terminal state
+    const currentStatus = sessionStatuses.get(queued.input.mix_session_id);
+    if (currentStatus && ['completed', 'cancelled', 'unresolved_exception'].includes(currentStatus)) {
+      console.warn('[MixSessionService] Skipping event for terminal session:', queued.input.mix_session_id);
+      replayed++; // Count as handled
+      continue;
+    }
+
     const eventRow = {
       mix_session_id: queued.input.mix_session_id,
       organization_id: queued.input.organization_id,
