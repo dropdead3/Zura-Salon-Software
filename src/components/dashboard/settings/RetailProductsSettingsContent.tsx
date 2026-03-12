@@ -139,10 +139,6 @@ function ProductsTab() {
     arr.sort((a, b) => {
       let aVal: any = a[sortField];
       let bVal: any = b[sortField];
-      if (sortField === 'product_type') {
-        aVal = getProductType(a);
-        bVal = getProductType(b);
-      }
       if (aVal == null && bVal == null) return 0;
       if (aVal == null) return 1;
       if (bVal == null) return -1;
