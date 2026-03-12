@@ -19,7 +19,7 @@ Deno.serve(async (req) => {
     // Find all active products with reorder info
     const { data: allProducts, error: queryErr } = await supabase
       .from("products")
-      .select("id, name, sku, organization_id, quantity_on_hand, reorder_level, supplier_id, is_active")
+      .select("id, name, sku, organization_id, quantity_on_hand, reorder_level, par_level, supplier_id, is_active")
       .eq("is_active", true)
       .not("quantity_on_hand", "is", null);
 
