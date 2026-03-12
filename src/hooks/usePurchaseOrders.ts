@@ -137,7 +137,7 @@ export function useMarkPurchaseOrderReceived() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ poId, productId, quantity }: { poId: string; productId: string; quantity: number }) => {
+    mutationFn: async ({ poId, productId, quantity, organizationId }: { poId: string; productId: string; quantity: number; organizationId: string }) => {
       // Update PO status
       const { error: poErr } = await supabase
         .from('purchase_orders')
@@ -152,16 +152,30 @@ export function useMarkPurchaseOrderReceived() {
         .eq('id', productId)
         .single();
 
-      const newQty = (product?.quantity_on_hand || 0) + quantity;
+      const oldQty = product?.quantity_on_hand || 0;
+      const newQty = oldQty + quantity;
       const { error: prodErr } = await supabase
         .from('products')
         .update({ quantity_on_hand: newQty, updated_at: new Date().toISOString() })
         .eq('id', productId);
       if (prodErr) throw prodErr;
+
+      // Log stock movement
+      const userId = (await supabase.auth.getUser()).data.user?.id;
+      await supabase.from('stock_movements').insert({
+        organization_id: organizationId,
+        product_id: productId,
+        quantity_change: quantity,
+        quantity_after: newQty,
+        reason: 'po_received',
+        notes: `PO ${poId} received`,
+        created_by: userId,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['purchase-orders'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['stock-movements'] });
       toast.success('Order marked as received — stock updated');
     },
     onError: (error) => {

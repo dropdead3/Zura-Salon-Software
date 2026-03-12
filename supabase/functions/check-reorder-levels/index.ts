@@ -16,7 +16,7 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Find all active products at or below reorder level
+    // Find all active products with reorder info
     const { data: lowStockProducts, error: queryErr } = await supabase
       .from("products")
       .select("id, name, sku, organization_id, quantity_on_hand, reorder_level, supplier_id")
@@ -26,10 +26,25 @@ Deno.serve(async (req) => {
 
     if (queryErr) throw queryErr;
 
-    // Filter in-memory: quantity_on_hand <= reorder_level
-    const belowThreshold = (lowStockProducts || []).filter(
-      (p) => p.quantity_on_hand <= p.reorder_level
-    );
+    // Load all org alert settings
+    const { data: allSettings } = await supabase
+      .from("inventory_alert_settings")
+      .select("*");
+
+    const settingsMap = new Map<string, any>();
+    for (const s of allSettings || []) {
+      settingsMap.set(s.organization_id, s);
+    }
+
+    // Filter products based on org threshold settings
+    const belowThreshold = (lowStockProducts || []).filter((p) => {
+      const settings = settingsMap.get(p.organization_id);
+      // If settings exist and disabled, skip
+      if (settings && !settings.enabled) return false;
+      const thresholdPct = settings?.default_threshold_pct ?? 100;
+      const threshold = (p.reorder_level * thresholdPct) / 100;
+      return p.quantity_on_hand <= threshold;
+    });
 
     if (belowThreshold.length === 0) {
       return new Response(
@@ -51,23 +66,44 @@ Deno.serve(async (req) => {
     let draftPosCreated = 0;
 
     for (const [orgId, orgProducts] of byOrg) {
+      const settings = settingsMap.get(orgId);
       const productNames = orgProducts.slice(0, 10).map((p) => p.name).join(", ");
       const suffix = orgProducts.length > 10 ? ` and ${orgProducts.length - 10} more` : "";
 
-      // Create throttled notification (120min cooldown)
-      const result = await createNotification(supabase, {
-        type: "low_stock_alert",
-        severity: "warning",
-        title: `${orgProducts.length} product(s) below minimum stock`,
-        message: `Low stock: ${productNames}${suffix}. Review your inventory and consider reordering.`,
-        metadata: { organization_id: orgId, product_count: orgProducts.length },
-      }, { cooldownMinutes: 120 });
+      // Determine recipients
+      const recipientUserIds: string[] = settings?.recipient_user_ids || [];
 
-      if (result.inserted) notificationsCreated++;
+      if (recipientUserIds.length > 0) {
+        // Targeted notifications to specific users
+        for (const userId of recipientUserIds) {
+          const result = await createNotification(supabase, {
+            type: "low_stock_alert",
+            severity: "warning",
+            title: `${orgProducts.length} product(s) below minimum stock`,
+            message: `Low stock: ${productNames}${suffix}. Review your inventory and consider reordering.`,
+            metadata: { organization_id: orgId, product_count: orgProducts.length, recipient_id: userId },
+          }, { cooldownMinutes: 120 });
 
-      // Auto-create draft POs for products that have a supplier but no open PO
+          if (result.inserted) notificationsCreated++;
+        }
+      } else {
+        // Broadcast notification (all admins/managers)
+        const result = await createNotification(supabase, {
+          type: "low_stock_alert",
+          severity: "warning",
+          title: `${orgProducts.length} product(s) below minimum stock`,
+          message: `Low stock: ${productNames}${suffix}. Review your inventory and consider reordering.`,
+          metadata: { organization_id: orgId, product_count: orgProducts.length },
+        }, { cooldownMinutes: 120 });
+
+        if (result.inserted) notificationsCreated++;
+      }
+
+      // Auto-create draft POs if enabled (default true)
+      const autoCreatePo = settings?.auto_create_draft_po ?? true;
+      if (!autoCreatePo) continue;
+
       for (const product of orgProducts) {
-        // Check if product has a supplier
         const { data: supplier } = await supabase
           .from("product_suppliers")
           .select("id, supplier_name, supplier_email")
@@ -77,7 +113,6 @@ Deno.serve(async (req) => {
 
         if (!supplier) continue;
 
-        // Check for existing open PO
         const { count: openPoCount } = await supabase
           .from("purchase_orders")
           .select("id", { count: "exact", head: true })
@@ -87,7 +122,6 @@ Deno.serve(async (req) => {
 
         if ((openPoCount ?? 0) > 0) continue;
 
-        // Calculate suggested quantity: reorder to 2x reorder_level
         const suggestedQty = Math.max(1, (product.reorder_level * 2) - product.quantity_on_hand);
 
         const { error: poErr } = await supabase

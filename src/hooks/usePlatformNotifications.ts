@@ -66,6 +66,11 @@ export const NOTIFICATION_TYPES = {
     description: 'When failed payments are recovered',
     defaultChannels: ['in_app'],
   },
+  low_stock_alert: {
+    label: 'Low Stock Alerts',
+    description: 'When products fall below minimum stock levels',
+    defaultChannels: ['in_app', 'email'],
+  },
 };
 
 export function usePlatformNotifications(limit = 50) {
