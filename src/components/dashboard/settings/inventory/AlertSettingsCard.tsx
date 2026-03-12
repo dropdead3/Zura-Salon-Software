@@ -58,7 +58,9 @@ export function AlertSettingsCard() {
       default_threshold_pct: thresholdPct,
       alert_channels: channels,
       auto_create_draft_po: autoCreatePo,
-    });
+      dead_stock_enabled: deadStockEnabled,
+      dead_stock_days: deadStockDays,
+    } as any);
   };
 
   if (isLoading) return null;
