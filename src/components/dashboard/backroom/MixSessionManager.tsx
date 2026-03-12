@@ -5,12 +5,16 @@
 
 import { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { Plus, Play, CheckCircle2, Trash2, AlertTriangle } from 'lucide-react';
 import { BowlCard } from './BowlCard';
 import { SessionSummary } from './SessionSummary';
 import { WasteRecordDialog } from './WasteRecordDialog';
 import { ScaleConnectionStatus } from './ScaleConnectionStatus';
 import { StationSelector } from './StationSelector';
+import { FormulaClonePanel } from './FormulaClonePanel';
+import { PrepModeBanner } from './PrepModeBanner';
 import { useMixSession, useCreateMixSession, useUpdateMixSessionStatus, type MixSession } from '@/hooks/backroom/useMixSession';
 import { useMixBowls, useCreateMixBowl, useUpdateBowlStatus } from '@/hooks/backroom/useMixBowls';
 import { useMixBowlLines, useAddBowlLine, useDeleteBowlLine } from '@/hooks/backroom/useMixBowlLines';
@@ -21,6 +25,7 @@ import { useDepleteMixSession } from '@/hooks/backroom/useDepleteMixSession';
 import { useCalculateOverageCharge } from '@/hooks/billing/useCalculateOverageCharge';
 import { supabase } from '@/integrations/supabase/client';
 import { calculateBowlWeight, calculateBowlCost, calculateNetUsage, extractActualFormula, extractRefinedFormula } from '@/lib/backroom/mix-calculations';
+import { calculateMixConfidence } from '@/lib/backroom/analytics-engine';
 import { isTerminalSessionStatus } from '@/lib/backroom/session-state-machine';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
