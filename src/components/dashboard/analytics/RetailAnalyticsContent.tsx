@@ -2091,6 +2091,11 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
         </PinnableCard>
       )}
 
+      {/* ─── ABC Classification ─── */}
+      {abcResult && (
+        <AbcClassificationCard abcResult={abcResult} filterContext={filterContext} />
+      )}
+
       {/* ─── Inventory Valuation ─── */}
       {allProducts && (
         <InventoryValuationCard products={allProducts} movementRatings={productMovementRatings} filterContext={filterContext} />
