@@ -7594,6 +7594,57 @@ export type Database = {
           },
         ]
       }
+      inventory_projections: {
+        Row: {
+          allocated: number
+          available: number | null
+          id: string
+          last_calculated_at: string
+          location_id: string | null
+          on_hand: number
+          on_order: number
+          organization_id: string
+          product_id: string
+        }
+        Insert: {
+          allocated?: number
+          available?: number | null
+          id?: string
+          last_calculated_at?: string
+          location_id?: string | null
+          on_hand?: number
+          on_order?: number
+          organization_id: string
+          product_id: string
+        }
+        Update: {
+          allocated?: number
+          available?: number | null
+          id?: string
+          last_calculated_at?: string
+          location_id?: string | null
+          on_hand?: number
+          on_order?: number
+          organization_id?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_projections_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_projections_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inventory_reorder_queue: {
         Row: {
           created_at: string
@@ -17828,6 +17879,7 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          event_type: string
           id: string
           location_id: string | null
           notes: string | null
@@ -17838,10 +17890,12 @@ export type Database = {
           reason: string
           reference_id: string | null
           reference_type: string | null
+          unit: string | null
         }
         Insert: {
           created_at?: string
           created_by?: string | null
+          event_type: string
           id?: string
           location_id?: string | null
           notes?: string | null
@@ -17852,10 +17906,12 @@ export type Database = {
           reason?: string
           reference_id?: string | null
           reference_type?: string | null
+          unit?: string | null
         }
         Update: {
           created_at?: string
           created_by?: string | null
+          event_type?: string
           id?: string
           location_id?: string | null
           notes?: string | null
@@ -17866,6 +17922,7 @@ export type Database = {
           reason?: string
           reference_id?: string | null
           reference_type?: string | null
+          unit?: string | null
         }
         Relationships: [
           {
@@ -21298,6 +21355,10 @@ export type Database = {
           _org_id: string
         }
         Returns: string
+      }
+      rebuild_inventory_projection: {
+        Args: { p_location_id?: string; p_org_id: string; p_product_id: string }
+        Returns: undefined
       }
       reschedule_booking: {
         Args: {
