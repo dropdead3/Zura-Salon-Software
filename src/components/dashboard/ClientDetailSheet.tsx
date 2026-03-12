@@ -56,6 +56,7 @@ import { usePreferredStylist, getStylistDisplayName } from '@/hooks/usePreferred
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import { ClientNotesSection } from './ClientNotesSection';
 import { useClientVisitHistory } from '@/hooks/useClientVisitHistory';
+import { TransformationTimeline } from './clients/TransformationTimeline';
 import { BannedClientAlert } from './clients/BannedClientAlert';
 import { BannedClientBadge } from './clients/BannedClientBadge';
 import { BanClientToggle } from './clients/BanClientToggle';
