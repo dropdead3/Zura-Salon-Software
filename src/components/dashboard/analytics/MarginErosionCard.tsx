@@ -30,12 +30,12 @@ export function MarginErosionCard({ filterContext }: MarginErosionCardProps) {
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
-                <TrendingDown className="w-5 h-5 text-primary" />
+              <div className={tokens.card.iconBox}>
+                <TrendingDown className={tokens.card.icon} />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <CardTitle className="font-display text-base tracking-wide">MARGIN EROSION ALERTS</CardTitle>
+                  <CardTitle className={tokens.card.title}>MARGIN EROSION ALERTS</CardTitle>
                   <MetricInfoTooltip description="Products where supplier cost increased >5% in 90 days or margin compressed below 30%. Annual impact estimates assume 4x current stock turnover or minimum 12 units/year." />
                 </div>
                 <CardDescription className="text-xs">
@@ -57,14 +57,14 @@ export function MarginErosionCard({ filterContext }: MarginErosionCardProps) {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Product</TableHead>
-                  <TableHead>Supplier</TableHead>
-                  <TableHead className="text-right">Old Cost</TableHead>
-                  <TableHead className="text-right">New Cost</TableHead>
-                  <TableHead className="text-right">Change</TableHead>
-                  <TableHead className="text-right">Margin</TableHead>
-                  <TableHead className="text-right">Annual Risk</TableHead>
-                  <TableHead className="text-center">Severity</TableHead>
+                  <TableHead className={tokens.table.columnHeader}>Product</TableHead>
+                  <TableHead className={tokens.table.columnHeader}>Supplier</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Old Cost</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>New Cost</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Change</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Margin</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Annual Risk</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-center')}>Severity</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

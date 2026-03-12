@@ -67,12 +67,12 @@ export function AbcClassificationCard({ abcResult, filterContext }: AbcClassific
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
-                <Layers className="w-5 h-5 text-primary" />
+              <div className={tokens.card.iconBox}>
+                <Layers className={tokens.card.icon} />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <CardTitle className="font-display text-base tracking-wide">ABC CLASSIFICATION</CardTitle>
+                  <CardTitle className={tokens.card.title}>ABC CLASSIFICATION</CardTitle>
                   <MetricInfoTooltip description="Products classified by cumulative revenue contribution. A = top 80% of revenue (cycle count weekly), B = next 15% (monthly), C = bottom 5% (quarterly). Drives reorder priority and stocktake frequency." />
                 </div>
                 <CardDescription className="text-xs">
@@ -157,13 +157,13 @@ export function AbcClassificationCard({ abcResult, filterContext }: AbcClassific
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-10">#</TableHead>
-                      <TableHead>Class</TableHead>
-                      <TableHead>Product</TableHead>
-                      <TableHead className="text-right">Revenue</TableHead>
-                      <TableHead className="text-right">Cumulative %</TableHead>
-                      <TableHead className="text-right">Stock</TableHead>
-                      <TableHead>Cycle Count</TableHead>
+                      <TableHead className={cn(tokens.table.columnHeader, 'w-10')}>#</TableHead>
+                      <TableHead className={tokens.table.columnHeader}>Class</TableHead>
+                      <TableHead className={tokens.table.columnHeader}>Product</TableHead>
+                      <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Revenue</TableHead>
+                      <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Cumulative %</TableHead>
+                      <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Stock</TableHead>
+                      <TableHead className={tokens.table.columnHeader}>Cycle Count</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>

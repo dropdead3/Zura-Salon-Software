@@ -199,12 +199,12 @@ function BrandPerformanceCard({ brands, totalRevenue, formatCurrencyWhole, data,
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
-                <ShoppingBag className="w-5 h-5 text-primary" />
+              <div className={tokens.card.iconBox}>
+                <ShoppingBag className={tokens.card.icon} />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <CardTitle className="font-display text-base tracking-wide">SALES BY BRAND</CardTitle>
+                  <CardTitle className={tokens.card.title}>SALES BY BRAND</CardTitle>
                   <MetricInfoTooltip description="Revenue breakdown by product brand. Click a row to see full product-level drill-down with margin, stock, and trend data. Brands are resolved from the product catalog." />
                 </div>
                 <CardDescription className="text-xs">{brands.length} brand{brands.length !== 1 ? 's' : ''} with sales</CardDescription>
