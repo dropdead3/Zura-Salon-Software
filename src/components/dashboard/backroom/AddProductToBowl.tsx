@@ -76,6 +76,8 @@ export function AddProductToBowl({ bowlId, onAdd, onCancel, inline = false }: Ad
   });
 
   if (selectedProduct) {
+    const isOutOfStock = (selectedProduct.quantity_on_hand ?? 1) <= 0;
+
     return (
       <div className="rounded-lg border border-border bg-muted/20 p-3 space-y-3">
         <div className="flex items-center justify-between">
@@ -90,6 +92,58 @@ export function AddProductToBowl({ bowlId, onAdd, onCancel, inline = false }: Ad
           </Button>
         </div>
 
+        {/* Out of stock warning + substitutions */}
+        {isOutOfStock && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 rounded-md bg-warning/10 px-3 py-2">
+              <AlertTriangle className="w-3.5 h-3.5 text-warning shrink-0" />
+              <span className="font-sans text-xs text-warning">Out of stock</span>
+            </div>
+            {substitutions.length > 0 && (
+              <div className="space-y-1">
+                <p className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider">
+                  Suggested Substitutes
+                </p>
+                {substitutions.map((sub) => (
+                  <button
+                    key={sub.id}
+                    onClick={() => setSelectedProduct({
+                      id: sub.substitute_product_id,
+                      name: sub.substitute_name,
+                      brand: sub.substitute_brand,
+                      cost_price: sub.substitute_cost_price,
+                      quantity_on_hand: sub.substitute_quantity_on_hand,
+                    })}
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-md hover:bg-muted/50 transition-colors text-left"
+                  >
+                    <div className="flex items-center gap-2">
+                      <ArrowRight className="w-3 h-3 text-muted-foreground" />
+                      <div>
+                        <p className="font-sans text-xs">{sub.substitute_name}</p>
+                        {sub.substitute_brand && (
+                          <p className="font-sans text-[10px] text-muted-foreground">{sub.substitute_brand}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {sub.substitute_quantity_on_hand != null && (
+                        <Badge variant="outline" className="text-[10px]">
+                          {sub.substitute_quantity_on_hand} in stock
+                        </Badge>
+                      )}
+                      {sub.substitute_cost_price != null && (
+                        <span className="font-sans text-[10px] text-muted-foreground">
+                          ${sub.substitute_cost_price.toFixed(2)}
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         <ManualWeightInput
           onSubmit={(weight, unit) => {
             onAdd(
@@ -101,7 +155,6 @@ export function AddProductToBowl({ bowlId, onAdd, onCancel, inline = false }: Ad
               unit,
               'manual'
             );
-            // In inline mode, auto-clear for next product
             if (inline) {
               setSelectedProduct(null);
               setSearch('');
