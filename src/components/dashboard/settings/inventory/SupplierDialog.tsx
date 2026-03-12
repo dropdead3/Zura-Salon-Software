@@ -127,9 +127,16 @@ export function SupplierDialog({ open, onOpenChange, productId, productName, org
                 <Input type="number" min="0" value={form.lead_time_days} onChange={e => setForm(f => ({ ...f, lead_time_days: e.target.value }))} placeholder="7" />
               </div>
             </div>
-            <div className="space-y-1.5">
-              <Label>Account Number</Label>
-              <Input value={form.account_number} onChange={e => setForm(f => ({ ...f, account_number: e.target.value }))} placeholder="Optional" />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Account Number</Label>
+                <Input value={form.account_number} onChange={e => setForm(f => ({ ...f, account_number: e.target.value }))} placeholder="Optional" />
+              </div>
+              <div className="space-y-1.5">
+                <Label>MOQ</Label>
+                <Input type="number" min="1" value={form.moq} onChange={e => setForm(f => ({ ...f, moq: e.target.value }))} placeholder="1" />
+                <p className="text-[11px] text-muted-foreground">Minimum order quantity</p>
+              </div>
             </div>
             <div className="space-y-1.5">
               <Label>Reorder Notes</Label>

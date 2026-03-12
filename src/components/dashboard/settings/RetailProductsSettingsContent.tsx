@@ -817,6 +817,10 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
             <div><Label className="text-xs">Stock Qty</Label><Input type="number" value={form.quantity_on_hand} onChange={e => setForm(f => ({ ...f, quantity_on_hand: e.target.value }))} /></div>
             <div><Label className="text-xs">Min. Stock Level</Label><Input type="number" value={form.reorder_level} onChange={e => setForm(f => ({ ...f, reorder_level: e.target.value }))} /><p className="text-[11px] text-muted-foreground mt-1">Alert when stock falls to this number</p></div>
           </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label className="text-xs">Par Level (Target)</Label><Input type="number" value={form.par_level} onChange={e => setForm(f => ({ ...f, par_level: e.target.value }))} /><p className="text-[11px] text-muted-foreground mt-1">Desired stock level for auto-reorder</p></div>
+            <div />
+          </div>
           <div>
             <Label className="text-xs">Description</Label>
             <Input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Brief product description" />
