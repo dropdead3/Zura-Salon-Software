@@ -105,3 +105,25 @@ Every product gets a dynamic movement rating badge (Best Seller, Popular, Steady
 - `useStockTransfers.ts` — CRUD hooks for stock transfers with stock movement logging
 - `StockTransferDialog.tsx` — Dialog for creating transfers between locations
 - `RetailProductsSettingsContent.tsx` — "Transfer Stock" button added to Inventory tab (visible for multi-location orgs)
+
+## Enhancement 1: Expiry Tracking (Implemented)
+
+### What It Does
+Products can have an optional expiration date (`expires_at`) and per-product alert threshold (`expiry_alert_days`, default 30). The system surfaces expiring inventory with color-coded badges in the product table and an analytics card with auto-clearance suggestions.
+
+### Database Changes
+- `products.expires_at` (DATE, nullable) — expiration date for perishable products
+- `products.expiry_alert_days` (INTEGER, default 30) — days before expiry to trigger alerts
+
+### Expiry Alert Buckets
+- **Expired** (red): past expiration → suggests 50% markdown
+- **Critical** (orange): within alert threshold → suggests 25% markdown
+- **Warning** (amber): within 2× alert threshold → suggests 10% markdown
+
+### Files Created
+- `src/components/dashboard/analytics/ExpiryAlertCard.tsx` — PinnableCard showing expiring products with one-click clearance actions
+
+### Files Updated
+- `src/hooks/useProducts.ts` — Added `expires_at`, `expiry_alert_days` to Product interface; added `expiringOnly` filter
+- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Expiry date + alert days in product form; color-coded Expiry column in product table
+- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ExpiryAlertCard into analytics hub
