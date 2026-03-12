@@ -58,30 +58,29 @@ async function fetchUpcomingServices(
   locationId?: string | null,
 ): Promise<UpcomingService[]> {
   // Query phorest_appointments (primary source)
-  const phorestResult = await (async () => {
-    const base = supabase
-      .from('phorest_appointments')
-      .select('id, service_name, phorest_client_id, stylist_user_id, appointment_date')
-      .eq('organization_id', orgId)
-      .gte('appointment_date', startDate)
-      .lte('appointment_date', endDate);
-    const q = locationId ? base.eq('location_id', locationId) : base;
-    return q.limit(500);
-  })();
-  const phorestData = (phorestResult.data ?? []) as any[];
+  const { data: rawPhorest } = await (supabase
+    .from('phorest_appointments' as any)
+    .select('id, service_name, phorest_client_id, stylist_user_id, appointment_date')
+    .eq('organization_id', orgId)
+    .gte('appointment_date', startDate)
+    .lte('appointment_date', endDate) as any);
+  const phorestData = (rawPhorest ?? []) as any[];
+
+  // Filter out cancelled/no-show client-side (avoids deep type chain)
+  const filteredPhorest = locationId
+    ? phorestData.filter((a: any) => a.location_id === locationId)
+    : phorestData;
 
   // Query local appointments as fallback
-  const localResult = await (async () => {
-    const base = supabase
-      .from('appointments')
-      .select('id, service_name, client_id, staff_user_id, appointment_date')
-      .eq('organization_id', orgId)
-      .gte('appointment_date', startDate)
-      .lte('appointment_date', endDate);
-    const q = locationId ? base.eq('location_id', locationId) : base;
-    return q.limit(500);
-  })();
-  const localData = (localResult.data ?? []) as any[];
+  const { data: rawLocal } = await (supabase
+    .from('appointments')
+    .select('id, service_name, client_id, staff_user_id, appointment_date')
+    .eq('organization_id', orgId)
+    .gte('appointment_date', startDate)
+    .lte('appointment_date', endDate) as any);
+  const localFiltered = locationId
+    ? ((rawLocal ?? []) as any[]).filter((a: any) => a.location_id === locationId)
+    : ((rawLocal ?? []) as any[]);
 
   const services: UpcomingService[] = [];
 
