@@ -22,6 +22,10 @@ export interface MixSession {
   unresolved_flag: boolean;
   unresolved_reason: string | null;
   notes: string | null;
+  is_prep_mode: boolean;
+  prep_approved_by: string | null;
+  prep_approved_at: string | null;
+  confidence_score: number;
   created_at: string;
   updated_at: string;
 }
