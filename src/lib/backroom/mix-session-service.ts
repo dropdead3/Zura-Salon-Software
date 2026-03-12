@@ -56,6 +56,7 @@ const VALID_EVENTS_BY_STATUS: Record<SessionStatus, MixSessionEventType[]> = {
     'line_item_recorded', 'line_item_removed', 'bowl_sealed', 'bowl_discarded',
     'waste_recorded', 'session_awaiting_reweigh', 'station_changed',
     'device_disconnected', 'device_reconnected', 'manual_override_used',
+    'suggested_formula_generated', 'suggested_formula_applied', 'suggested_formula_dismissed',
   ],
   awaiting_reweigh: [
     'reweigh_captured', 'session_completed', 'session_marked_unresolved',
