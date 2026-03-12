@@ -20,6 +20,7 @@ export interface Product {
   available_online: boolean | null;
   image_url: string | null;
   product_type: string | null;
+  supplier_id: string | null;
   created_at: string | null;
   updated_at: string | null;
 }
