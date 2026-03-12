@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { postReceiving } from '@/lib/backroom/services/inventory-ledger-service';
 
 export interface PurchaseOrder {
   id: string;
@@ -133,6 +134,10 @@ export function useUpdatePurchaseOrder() {
   });
 }
 
+/**
+ * Mark PO as received: routes through InventoryLedgerService.postReceiving()
+ * instead of writing directly to stock_movements.
+ */
 export function useMarkPurchaseOrderReceived() {
   const queryClient = useQueryClient();
 
@@ -147,28 +152,21 @@ export function useMarkPurchaseOrderReceived() {
         .eq('id', poId)
         .single();
 
-      // Update PO status
+      // Update PO status (projection)
       const { error: poErr } = await supabase
         .from('purchase_orders')
         .update({ status: 'received', received_at: now })
         .eq('id', poId);
       if (poErr) throw poErr;
 
-      // Insert ledger entry — trigger handles projection + products.quantity_on_hand sync
-      const userId = (await supabase.auth.getUser()).data.user?.id;
-      const { error: mvErr } = await supabase.from('stock_movements').insert({
-        organization_id: organizationId,
-        product_id: productId,
-        quantity_change: quantity,
-        quantity_after: 0,
-        event_type: 'receiving',
-        reason: 'po_received',
-        reference_type: 'purchase_order',
-        reference_id: poId,
+      // Route through InventoryLedgerService (source of truth)
+      await postReceiving({
+        organizationId,
+        productId,
+        acceptedQty: quantity,
+        purchaseOrderId: poId,
         notes: `PO ${poId} received`,
-        created_by: userId,
       });
-      if (mvErr) throw mvErr;
 
       // Update supplier avg_delivery_days for lead-time tracking
       if (poData) {
@@ -178,7 +176,6 @@ export function useMarkPurchaseOrderReceived() {
         );
 
         if (deliveryDays >= 0) {
-          // Get current supplier stats
           const { data: supplier } = await supabase
             .from('product_suppliers')
             .select('id, avg_delivery_days, delivery_count')
@@ -190,7 +187,6 @@ export function useMarkPurchaseOrderReceived() {
             const oldAvg = supplier.avg_delivery_days || deliveryDays;
             const oldCount = supplier.delivery_count || 0;
             const newCount = oldCount + 1;
-            // Running average
             const newAvg = ((oldAvg * oldCount) + deliveryDays) / newCount;
 
             await supabase

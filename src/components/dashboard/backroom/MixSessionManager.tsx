@@ -1,6 +1,9 @@
 /**
  * MixSessionManager — Orchestrates the full mixing workflow for an appointment.
  * Manages session lifecycle, bowls, lines, reweigh, waste, and formula saving.
+ *
+ * All mutations route through the event stream / command layer.
+ * Direct supabase writes are projection updates only.
  */
 
 import { useState, useCallback } from 'react';
@@ -24,6 +27,7 @@ import { useSaveFormulaHistory } from '@/hooks/backroom/useClientFormulaHistory'
 import { useDepleteMixSession } from '@/hooks/backroom/useDepleteMixSession';
 import { useCalculateOverageCharge } from '@/hooks/billing/useCalculateOverageCharge';
 import { supabase } from '@/integrations/supabase/client';
+import { emitSessionEvent } from '@/lib/backroom/mix-session-service';
 import { calculateBowlWeight, calculateBowlCost, calculateNetUsage, extractActualFormula, extractRefinedFormula } from '@/lib/backroom/mix-calculations';
 import { calculateMixConfidence } from '@/lib/backroom/analytics-engine';
 import { isTerminalSessionStatus } from '@/lib/backroom/session-state-machine';
@@ -92,14 +96,21 @@ export function MixSessionManager({
       station_id: stationId ?? undefined,
       location_id: locationId,
     }, {
-      onSuccess: (data) => {
-        // If prep mode, set the flag
+      onSuccess: async (data) => {
+        // If prep mode, emit event + write projection
         if (isPrepMode && data) {
-          supabase
+          await emitSessionEvent({
+            mix_session_id: (data as any).id,
+            organization_id: organizationId,
+            location_id: locationId,
+            event_type: 'prep_mode_enabled',
+            source_mode: 'manual',
+          });
+          // Projection update
+          await supabase
             .from('mix_sessions')
             .update({ is_prep_mode: true } as any)
-            .eq('id', (data as any).id)
-            .then();
+            .eq('id', (data as any).id);
         }
       }
     });
@@ -109,10 +120,12 @@ export function MixSessionManager({
     if (!activeSession) return;
     updateSessionStatus.mutate({
       id: activeSession.id,
+      organizationId,
       currentStatus: activeSession.status,
       newStatus: 'mixing',
+      locationId,
     });
-  }, [activeSession, updateSessionStatus]);
+  }, [activeSession, organizationId, locationId, updateSessionStatus]);
 
   const handleMoveToReweigh = useCallback(async () => {
     if (!activeSession) return;
@@ -125,14 +138,15 @@ export function MixSessionManager({
       const discarded: number[] = [];
 
       for (const bowl of openBowls) {
-        // Check if bowl has lines by looking at total_dispensed_weight
         if (bowl.total_dispensed_weight > 0) {
           sealPromises.push(
             updateBowlStatus.mutateAsync({
               id: bowl.id,
               sessionId: activeSession.id,
+              organizationId,
               currentStatus: bowl.status,
               newStatus: 'sealed',
+              locationId,
             })
           );
           sealed.push(bowl.bowl_number);
@@ -141,8 +155,10 @@ export function MixSessionManager({
             updateBowlStatus.mutateAsync({
               id: bowl.id,
               sessionId: activeSession.id,
+              organizationId,
               currentStatus: bowl.status,
               newStatus: 'discarded',
+              locationId,
             })
           );
           discarded.push(bowl.bowl_number);
@@ -163,10 +179,12 @@ export function MixSessionManager({
 
     updateSessionStatus.mutate({
       id: activeSession.id,
+      organizationId,
       currentStatus: activeSession.status,
       newStatus: 'pending_reweigh',
+      locationId,
     });
-  }, [activeSession, bowls, updateSessionStatus, updateBowlStatus]);
+  }, [activeSession, bowls, organizationId, locationId, updateSessionStatus, updateBowlStatus]);
 
   const handleCompleteSession = useCallback(async () => {
     if (!activeSession) return;
@@ -199,12 +217,22 @@ export function MixSessionManager({
         scaleLines: castLines.filter((l) => l.captured_via === 'scale').length,
         totalBowls: validBowls.length,
         reweighedBowls: validBowls.filter((b) => b.status === 'reweighed').length,
-        usageToBaselineRatio: 1, // Baseline comparison TBD
+        usageToBaselineRatio: 1,
         totalWasteEvents: castWaste.length,
         categorizedWasteEvents: castWaste.filter((w) => w.waste_category && w.waste_category !== 'unclassified').length,
       });
 
-      // Persist confidence score
+      // Emit confidence as event payload, then write projection
+      await emitSessionEvent({
+        mix_session_id: activeSession.id,
+        organization_id: organizationId,
+        location_id: locationId,
+        event_type: 'session_completed',
+        event_payload: { confidence_score: confidence },
+        source_mode: 'manual',
+      });
+
+      // Projection update
       await supabase
         .from('mix_sessions')
         .update({ confidence_score: confidence } as any)
@@ -215,9 +243,11 @@ export function MixSessionManager({
 
     updateSessionStatus.mutate({
       id: activeSession.id,
+      organizationId,
       currentStatus: activeSession.status,
       newStatus: 'completed',
       unresolvedReason,
+      locationId,
     });
 
     // Deplete inventory from stock
@@ -239,12 +269,10 @@ export function MixSessionManager({
     // Save formulas if we have a client
     if (clientId) {
       try {
-        // Gather bowl IDs (non-discarded only)
         const validBowls = bowls.filter((b) => b.status !== 'discarded');
         const bowlIds = validBowls.map((b) => b.id);
 
         if (bowlIds.length > 0) {
-          // Batch-fetch all lines across all valid bowls
           const { data: allLines, error: linesError } = await supabase
             .from('mix_bowl_lines')
             .select('*')
@@ -263,7 +291,6 @@ export function MixSessionManager({
           }>;
 
           if (castLines.length > 0) {
-            // Calculate aggregated totals for refined formula
             const totalDispensed = calculateBowlWeight(castLines);
             const totalNetUsage = validBowls.reduce(
               (sum, b) => sum + (b.net_usage_weight ?? b.total_dispensed_weight ?? 0),
@@ -284,7 +311,6 @@ export function MixSessionManager({
               staff_name: staffName,
             };
 
-            // Save both formula types
             await Promise.all([
               saveFormula.mutateAsync({
                 ...baseParams,
@@ -312,16 +338,18 @@ export function MixSessionManager({
     } else {
       toast.info('Session completed. No client linked — formula not saved.');
     }
-  }, [activeSession, bowls, clientId, organizationId, appointmentId, appointmentServiceId, serviceId, serviceName, staffUserId, staffName, updateSessionStatus, saveFormula, depleteInventory, calculateOverage]);
+  }, [activeSession, bowls, clientId, organizationId, appointmentId, appointmentServiceId, serviceId, serviceName, staffUserId, staffName, locationId, updateSessionStatus, saveFormula, depleteInventory, calculateOverage]);
 
   // ─── Bowl Actions ─────────────────────────────────
   const handleAddBowl = useCallback(() => {
     if (!activeSession) return;
     createBowl.mutate({
       mix_session_id: activeSession.id,
+      organization_id: organizationId,
       bowl_number: bowls.length + 1,
+      location_id: locationId,
     });
-  }, [activeSession, bowls.length, createBowl]);
+  }, [activeSession, bowls.length, organizationId, locationId, createBowl]);
 
   const handleAddLine = useCallback((
     bowlId: string,
@@ -333,8 +361,11 @@ export function MixSessionManager({
     unit: string,
     capturedVia: string
   ) => {
+    if (!activeSession) return;
     addBowlLine.mutate({
       bowl_id: bowlId,
+      mix_session_id: activeSession.id,
+      organization_id: organizationId,
       product_id: productId,
       product_name_snapshot: productName,
       brand_snapshot: brand ?? undefined,
@@ -343,23 +374,33 @@ export function MixSessionManager({
       dispensed_cost_snapshot: costPerUnit,
       captured_via: capturedVia,
       sequence_order: 0, // Auto-incremented in hook
+      location_id: locationId,
     });
-  }, [addBowlLine]);
+  }, [activeSession, organizationId, locationId, addBowlLine]);
 
   const handleDeleteLine = useCallback((lineId: string, bowlId: string) => {
-    deleteBowlLine.mutate({ id: lineId, bowlId });
-  }, [deleteBowlLine]);
+    if (!activeSession) return;
+    deleteBowlLine.mutate({
+      id: lineId,
+      bowlId,
+      mixSessionId: activeSession.id,
+      organizationId,
+      locationId,
+    });
+  }, [activeSession, organizationId, locationId, deleteBowlLine]);
 
   const handleSealBowl = useCallback((bowlId: string) => {
     const bowl = bowls.find((b) => b.id === bowlId);
-    if (!bowl) return;
+    if (!bowl || !activeSession) return;
     updateBowlStatus.mutate({
       id: bowlId,
-      sessionId: activeSession!.id,
+      sessionId: activeSession.id,
+      organizationId,
       currentStatus: bowl.status,
       newStatus: 'sealed',
+      locationId,
     });
-  }, [bowls, activeSession, updateBowlStatus]);
+  }, [bowls, activeSession, organizationId, locationId, updateBowlStatus]);
 
   const handleReweighBowl = useCallback(async (bowlId: string, leftover: number, unit: string) => {
     if (!activeSession) return;
@@ -368,7 +409,6 @@ export function MixSessionManager({
 
     const netUsage = calculateNetUsage(bowl.total_dispensed_weight ?? 0, leftover);
 
-    // Coordinate: reweigh event must succeed before status update
     try {
       await createReweigh.mutateAsync({
         bowl_id: bowlId,
@@ -380,8 +420,10 @@ export function MixSessionManager({
       updateBowlStatus.mutate({
         id: bowlId,
         sessionId: activeSession.id,
+        organizationId,
         currentStatus: bowl.status,
         newStatus: 'reweighed',
+        locationId,
         totals: {
           leftover_weight: leftover,
           net_usage_weight: netUsage,
@@ -390,7 +432,7 @@ export function MixSessionManager({
     } catch {
       toast.error('Reweigh failed — bowl remains sealed. Please retry.');
     }
-  }, [activeSession, bowls, createReweigh, updateBowlStatus]);
+  }, [activeSession, bowls, organizationId, locationId, createReweigh, updateBowlStatus]);
 
   const handleDiscardBowl = useCallback((bowlId: string) => {
     const bowl = bowls.find((b) => b.id === bowlId);
@@ -398,10 +440,12 @@ export function MixSessionManager({
     updateBowlStatus.mutate({
       id: bowlId,
       sessionId: activeSession.id,
+      organizationId,
       currentStatus: bowl.status,
       newStatus: 'discarded',
+      locationId,
     });
-  }, [bowls, activeSession, updateBowlStatus]);
+  }, [bowls, activeSession, organizationId, locationId, updateBowlStatus]);
 
   // ─── Waste ────────────────────────────────────────
   const handleRecordWaste = useCallback((category: WasteCategory, quantity: number, unit: string, notes: string) => {
@@ -490,19 +534,26 @@ export function MixSessionManager({
         currentUserId={user?.id}
         assignedStylistId={staffUserId}
         isManager={false}
-        onApprove={() => {
-          // Approve prep: update session + transition to mixing
-          supabase
+        onApprove={async () => {
+          // Emit prep_approved event (source of truth)
+          await emitSessionEvent({
+            mix_session_id: activeSession.id,
+            organization_id: organizationId,
+            location_id: locationId,
+            event_type: 'prep_approved',
+            event_payload: { approved_by: user?.id },
+            source_mode: 'manual',
+          });
+          // Projection update
+          await supabase
             .from('mix_sessions')
             .update({
               prep_approved_by: user?.id,
               prep_approved_at: new Date().toISOString(),
             } as any)
-            .eq('id', activeSession.id)
-            .then(() => {
-              handleBeginMixing();
-              toast.success('Prep approved — session is now active');
-            });
+            .eq('id', activeSession.id);
+          handleBeginMixing();
+          toast.success('Prep approved — session is now active');
         }}
       />
 
