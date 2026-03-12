@@ -59,7 +59,7 @@ export function AlertSettingsCard() {
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
-      <Card className={cn(tokens.card.base)}>
+      <Card className={cn(tokens.card.wrapper)}>
         <CollapsibleTrigger asChild>
           <CardHeader className="cursor-pointer hover:bg-muted/30 transition-colors rounded-t-xl">
             <div className="flex items-center justify-between">
