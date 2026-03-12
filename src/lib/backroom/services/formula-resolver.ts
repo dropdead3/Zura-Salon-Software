@@ -182,6 +182,40 @@ export async function fetchSalonRecipe(
   };
 }
 
+// ─── Priority 2b: Client's Any Service Formula ─────
+
+export async function fetchClientAnyFormula(
+  orgId: string,
+  clientId: string,
+): Promise<ResolvedFormulaMemory | null> {
+  const { data } = await supabase
+    .from('client_formula_history')
+    .select('id, formula_data, service_name, staff_name, notes, created_at')
+    .eq('organization_id', orgId)
+    .eq('client_id', clientId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (!data) return null;
+
+  const row = data as any;
+  const lines = row.formula_data as FormulaLine[];
+  if (!lines?.length) return null;
+
+  return {
+    lines,
+    source: 'client_any_service',
+    sourceLabel: SOURCE_LABELS.client_any_service,
+    referenceId: row.id,
+    ratio: computeRatio(lines),
+    serviceName: row.service_name ?? null,
+    staffName: row.staff_name ?? null,
+    notes: row.notes ?? null,
+    createdAt: row.created_at ?? null,
+  };
+}
+
 // ─── Main Resolution ────────────────────────────────
 
 /**
@@ -210,6 +244,59 @@ export async function resolveFormula(
   // Priority 3: Salon recipe baseline
   const result = await fetchSalonRecipe(organization_id, service_name);
   if (result) return result;
+
+  return null;
+}
+
+// ─── Formula Memory Resolution ──────────────────────
+
+/**
+ * Resolve a formula for Instant Formula Memory.
+ * Client-centric 3-priority: same service → any service → salon recipe.
+ */
+export async function resolveFormulaMemory(
+  orgId: string,
+  clientId: string,
+  serviceName?: string | null,
+): Promise<ResolvedFormulaMemory | null> {
+  // Priority 1: Client's last formula for the same service
+  if (serviceName) {
+    const match = await fetchClientLastFormula(orgId, clientId, serviceName);
+    if (match) {
+      // Fetch metadata for the matched formula
+      const { data: meta } = await supabase
+        .from('client_formula_history')
+        .select('service_name, staff_name, notes, created_at')
+        .eq('id', match.referenceId!)
+        .maybeSingle();
+      const m = meta as any;
+      return {
+        ...match,
+        serviceName: m?.service_name ?? serviceName,
+        staffName: m?.staff_name ?? null,
+        notes: m?.notes ?? null,
+        createdAt: m?.created_at ?? null,
+      };
+    }
+  }
+
+  // Priority 2: Client's most recent formula (any service)
+  const anyResult = await fetchClientAnyFormula(orgId, clientId);
+  if (anyResult) return anyResult;
+
+  // Priority 3: Salon recipe baseline
+  if (serviceName) {
+    const recipe = await fetchSalonRecipe(orgId, serviceName);
+    if (recipe) {
+      return {
+        ...recipe,
+        serviceName: serviceName,
+        staffName: null,
+        notes: null,
+        createdAt: null,
+      };
+    }
+  }
 
   return null;
 }
