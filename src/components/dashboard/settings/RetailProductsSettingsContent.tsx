@@ -1106,7 +1106,7 @@ function InventoryByLocationTab() {
         <div className="p-3 rounded-lg border border-amber-200 bg-amber-50/50 dark:border-amber-900/50 dark:bg-amber-950/20">
           <div className="flex items-center gap-2 mb-1">
             <AlertTriangle className="w-4 h-4 text-amber-500" />
-            <span className="text-sm font-medium">{lowStockProducts.length} product(s) below reorder level</span>
+            <span className="text-sm font-medium">{lowStockProducts.length} product(s) at or below minimum stock level</span>
           </div>
         </div>
       )}
