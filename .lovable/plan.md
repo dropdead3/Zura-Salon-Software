@@ -1,153 +1,362 @@
 
 
-## Timezone-Safe Scheduling (Implemented)
+# Zura Backroom — Phase 2: Inventory Ledger Architecture
 
-### Problem
-`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
+## Current State
 
-### Solution
-- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
-- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
-- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
+Existing inventory infrastructure:
+- `products` table with `quantity_on_hand` (mutable), `cost_price`, `reorder_level`, `par_level`, `location_id`
+- `stock_movements` — append-only ledger with `quantity_change`, `quantity_after`, `reason` (free text), `product_id`
+- `stock_counts` — per-product count with `counted_quantity`, `expected_quantity`, `variance`
+- `stock_transfers` — approval flow with `from_location_id`, `to_location_id`, `quantity`, `status`
+- `waste_events` — backroom waste with 5 categories
+- `inventory_reorder_queue` — reorder suggestions
+- `product_cost_history` — cost change audit trail via trigger
+- `useLogStockMovement()` — mutation hook for stock_movements inserts
 
-### Files Updated
-- `ScheduleHeader.tsx` — today button, quick days, isToday checks
-- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
-- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
-- `MonthView.tsx` — today highlight
-- `AgendaView.tsx` — today/tomorrow labels, today border
-- `ScheduleActionBar.tsx` — payment queue timing
-- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
-- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
-- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
-- `useHuddles.ts` — today's huddle query
+Key constraint: `stock_movements.reason` is free-text `string`, not an enum. This is actually flexible — we extend by convention, not schema change.
 
-## Auto-Reorder with Supplier Communication (Implemented)
+---
 
-### What It Does
-Organizations can opt into automatic reorder — when stock dips below threshold, POs are calculated (using MOQ and par levels) and sent directly to the supplier via email.
+## 1. Schema Changes
 
-### Database Changes
-- `products.par_level` (INT, nullable) — desired stock level to reorder up to
-- `product_suppliers.moq` (INT, default 1) — minimum order quantity
-- `inventory_alert_settings.auto_reorder_enabled` (BOOL, default false)
-- `inventory_alert_settings.auto_reorder_mode` (TEXT, default 'to_par') — 'to_par' or 'moq_only'
-- `inventory_alert_settings.max_auto_reorder_value` (NUMERIC, nullable) — daily spend cap
-- `purchase_orders.supplier_confirmed_at` (TIMESTAMPTZ, nullable) — for tracking confirmations
+### 1a. New table: `service_recipe_baselines`
 
-### Quantity Calculation
-```
-deficit = par_level - quantity_on_hand
-order_qty = max(moq, deficit)
-if moq > 1: round up to nearest MOQ multiple
-```
-Fallback: if par_level is null, uses `reorder_level * 2`.
+Defines expected product usage per service type. Used for variance detection.
 
-### Files Updated
-- Migration: Added columns to products, product_suppliers, inventory_alert_settings, purchase_orders
-- `check-reorder-levels/index.ts` — auto-send logic with MOQ/par calculation, spend cap, email invocation
-- `AlertSettingsCard.tsx` — auto-reorder toggle, mode selector, spend cap input
-- `useInventoryAlertSettings.ts` — updated interface
-- `useProducts.ts` — added par_level to Product interface
-- `useProductSuppliers.ts` — added moq to ProductSupplier interface
-- `ProductEditDialog.tsx` — added par level field
-- `RetailProductsSettingsContent.tsx` — added par level to product form
-- `SupplierDialog.tsx` — added MOQ field
+```sql
+CREATE TABLE IF NOT EXISTS public.service_recipe_baselines (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+  service_id UUID NOT NULL REFERENCES public.services(id) ON DELETE CASCADE,
+  product_id UUID NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
+  expected_quantity NUMERIC NOT NULL DEFAULT 0,
+  unit TEXT NOT NULL DEFAULT 'g',
+  notes TEXT,
+  created_by UUID REFERENCES auth.users(id),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (organization_id, service_id, product_id)
+);
 
-### Safety Features
-- Spend cap: daily auto-reorder pauses when cumulative PO value exceeds cap
-- Audit trail: auto_reorder logged as stock_movement reason
-- Supplier confirmation tracking via supplier_confirmed_at timestamp
+ALTER TABLE public.service_recipe_baselines ENABLE ROW LEVEL SECURITY;
 
-## Product Movement Rating Badges (Implemented)
+CREATE POLICY "Org members can view baselines"
+  ON public.service_recipe_baselines FOR SELECT
+  USING (public.is_org_member(auth.uid(), organization_id));
 
-### What It Does
-Every product gets a dynamic movement rating badge (Best Seller, Popular, Steady, Slow Mover, Stagnant, Dead Weight) computed from 90-day sales velocity data.
+CREATE POLICY "Org admins can manage baselines"
+  ON public.service_recipe_baselines FOR ALL
+  USING (public.is_org_admin(auth.uid(), organization_id))
+  WITH CHECK (public.is_org_admin(auth.uid(), organization_id));
 
-### Rating Tiers
-- **Best Seller**: Top 10% velocity AND >0.5 units/day (emerald)
-- **Popular**: Top 25% velocity AND >0.2 units/day (blue)
-- **Steady**: Velocity >0.05/day (muted)
-- **Slow Mover**: Velocity >0 but ≤0.05/day (amber)
-- **Stagnant**: Zero velocity, sold within 180 days (orange)
-- **Dead Weight**: Zero velocity, 180+ days or never sold (red)
-- Products with zero stock excluded from negative ratings
+CREATE TRIGGER update_service_recipe_baselines_updated_at
+  BEFORE UPDATE ON public.service_recipe_baselines
+  FOR EACH ROW EXECUTE FUNCTION public.update_backroom_updated_at();
 
-### Files Created
-- `src/lib/productMovementRating.ts` — pure rating logic + badge config
-- `src/hooks/useProductVelocity.ts` — lightweight 90-day POS velocity query
-- `src/components/ui/MovementBadge.tsx` — shared badge component with tooltip
-
-### Files Updated
-- `RetailProductsSettingsContent.tsx` — Movement column + filter dropdown in products table
-- `RetailAnalyticsContent.tsx` — Movement badges on product performance table + Movement Distribution card (donut chart with actionable callouts)
-- `ProductCard.tsx` — Best Seller/Popular badges on public shop cards (positive only)
-- `ProductDetailModal.tsx` — Movement badge with velocity context
-
-## Inventory Intelligence Suite v2 (Implemented)
-
-### 1. Dead Stock Auto-Clearance Pipeline
-- `DeadStockAlertCard.tsx` — Surfaces Dead Weight/Stagnant products not yet in clearance with suggested discount tiers (10%/25%/50% based on idle days)
-- One-click "Mark for Clearance" applies discount and sets clearance_status
-
-### 2. Supplier Lead Time Tracker
-- `usePurchaseOrders.ts` — `useMarkPurchaseOrderReceived` already computes actual delivery days and updates `product_suppliers.avg_delivery_days` via running average
-- `parLevelSuggestion.ts` — Updated to accept supplier-provided lead time instead of hardcoded 7-day default, with bounds clamping
-
-### 3. Inventory Valuation Dashboard Card
-- `InventoryValuationCard.tsx` — Shows total inventory at cost/retail, potential margin %, capital-at-risk (slow/stagnant/dead weight), with donut chart breakdown
-
-### 4. Reorder Approval Queue
-- `ReorderApprovalCard.tsx` — Surfaces draft POs from auto-reorder with one-click approve (→ sent) or reject (→ cancelled)
-
-### 5. Stock Transfer Between Locations
-- Migration: Created `stock_transfers` table with RLS (org member read, org admin manage)
-- `useStockTransfers.ts` — CRUD hooks for stock transfers with stock movement logging
-- `StockTransferDialog.tsx` — Dialog for creating transfers between locations
-- `RetailProductsSettingsContent.tsx` — "Transfer Stock" button added to Inventory tab (visible for multi-location orgs)
-
-## Enhancement 1: Expiry Tracking (Implemented)
-
-### What It Does
-Products can have an optional expiration date (`expires_at`) and per-product alert threshold (`expiry_alert_days`, default 30). The system surfaces expiring inventory with color-coded badges in the product table and an analytics card with auto-clearance suggestions.
-
-### Database Changes
-- `products.expires_at` (DATE, nullable) — expiration date for perishable products
-- `products.expiry_alert_days` (INTEGER, default 30) — days before expiry to trigger alerts
-
-### Expiry Alert Buckets
-- **Expired** (red): past expiration → suggests 50% markdown
-- **Critical** (orange): within alert threshold → suggests 25% markdown
-- **Warning** (amber): within 2× alert threshold → suggests 10% markdown
-
-### Files Created
-- `src/components/dashboard/analytics/ExpiryAlertCard.tsx` — PinnableCard showing expiring products with one-click clearance actions
-
-### Files Updated
-- `src/hooks/useProducts.ts` — Added `expires_at`, `expiry_alert_days` to Product interface; added `expiringOnly` filter
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Expiry date + alert days in product form; color-coded Expiry column in product table
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ExpiryAlertCard into analytics hub
-
-## Enhancement 2: Shrinkage Detection (Implemented)
-
-### What It Does
-Physical stocktake workflow with variance reporting. Staff record actual counts via a Stocktake dialog, and the system compares against expected quantities (system records). A Shrinkage Report card in analytics surfaces products with negative variance (loss) ranked by estimated cost impact.
-
-### Database Changes
-- Created `stock_counts` table with computed `variance` column (counted - expected), RLS policies (org member read/insert, org admin update/delete), and indexes
-
-### Shrinkage Calculation
-```
-variance = counted_quantity - expected_quantity
-shrinkage_units = |variance| when variance < 0
-shrinkage_cost = shrinkage_units × cost_price
+CREATE INDEX IF NOT EXISTS idx_recipe_baselines_service
+  ON public.service_recipe_baselines(service_id);
 ```
 
-### Files Created
-- `src/hooks/useStockCounts.ts` — CRUD hooks for stock counts + `useShrinkageSummary` for aggregated shrinkage data
-- `src/components/dashboard/settings/inventory/StocktakeDialog.tsx` — Full stocktake UI with search, inline count entry, real-time variance display
-- `src/components/dashboard/analytics/ShrinkageReportCard.tsx` — PinnableCard showing products with shrinkage, severity badges, estimated loss
+### 1b. New table: `count_sessions`
 
-### Files Updated
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Added "Stocktake" button to Inventory tab toolbar
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ShrinkageReportCard into analytics hub
+Groups individual `stock_counts` into a single counting event.
+
+```sql
+CREATE TABLE IF NOT EXISTS public.count_sessions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+  location_id TEXT,
+  status TEXT NOT NULL DEFAULT 'in_progress', -- in_progress, completed, cancelled
+  started_by UUID REFERENCES auth.users(id),
+  completed_at TIMESTAMPTZ,
+  notes TEXT,
+  total_products_counted INTEGER DEFAULT 0,
+  total_variance_units NUMERIC DEFAULT 0,
+  total_variance_cost NUMERIC DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+ALTER TABLE public.count_sessions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Org members can view count sessions"
+  ON public.count_sessions FOR SELECT
+  USING (public.is_org_member(auth.uid(), organization_id));
+
+CREATE POLICY "Org members can manage count sessions"
+  ON public.count_sessions FOR ALL
+  USING (public.is_org_member(auth.uid(), organization_id))
+  WITH CHECK (public.is_org_member(auth.uid(), organization_id));
+```
+
+### 1c. Add `count_session_id` to existing `stock_counts`
+
+```sql
+ALTER TABLE public.stock_counts
+  ADD COLUMN IF NOT EXISTS count_session_id UUID REFERENCES public.count_sessions(id) ON DELETE SET NULL;
+```
+
+### 1d. New table: `stock_transfer_lines`
+
+Extends `stock_transfers` to support multi-product transfers.
+
+```sql
+CREATE TABLE IF NOT EXISTS public.stock_transfer_lines (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  transfer_id UUID NOT NULL REFERENCES public.stock_transfers(id) ON DELETE CASCADE,
+  product_id UUID NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
+  quantity NUMERIC NOT NULL,
+  unit TEXT NOT NULL DEFAULT 'units',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+ALTER TABLE public.stock_transfer_lines ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Transfer line access via parent"
+  ON public.stock_transfer_lines FOR SELECT
+  USING (EXISTS (
+    SELECT 1 FROM public.stock_transfers t
+    WHERE t.id = transfer_id
+    AND public.is_org_member(auth.uid(), t.organization_id)
+  ));
+
+CREATE POLICY "Transfer line write via parent"
+  ON public.stock_transfer_lines FOR ALL
+  USING (EXISTS (
+    SELECT 1 FROM public.stock_transfers t
+    WHERE t.id = transfer_id
+    AND public.is_org_member(auth.uid(), t.organization_id)
+  ))
+  WITH CHECK (EXISTS (
+    SELECT 1 FROM public.stock_transfers t
+    WHERE t.id = transfer_id
+    AND public.is_org_member(auth.uid(), t.organization_id)
+  ));
+```
+
+### 1e. Add `location_id` to `stock_movements` (if not present)
+
+```sql
+ALTER TABLE public.stock_movements
+  ADD COLUMN IF NOT EXISTS location_id TEXT,
+  ADD COLUMN IF NOT EXISTS reference_type TEXT,    -- 'mix_session', 'purchase_order', 'transfer', 'count', 'waste', 'manual'
+  ADD COLUMN IF NOT EXISTS reference_id UUID;      -- FK to the source entity
+```
+
+No enum change needed — `reason` stays free text. We standardize reason codes by convention:
+
+```text
+Reason codes (convention):
+  usage              — backroom mix session depletion
+  receiving          — PO received
+  transfer_out       — stock transfer outbound
+  transfer_in        — stock transfer inbound
+  count_adjustment   — physical count variance
+  waste_adjustment   — waste event depletion
+  expiration_discard — expired product removal
+  manual_adjust      — manual correction
+  sale               — retail sale
+  return             — retail return
+  po_received        — legacy (existing)
+```
+
+---
+
+## 2. Ledger Architecture
+
+### Append-only principle
+
+`stock_movements` is the source of truth. `products.quantity_on_hand` is a **derived cache** that must always equal the latest `quantity_after` for that product.
+
+```text
+stock_movements (append-only)
+  ├── reason: usage | receiving | transfer_out | transfer_in | count_adjustment | waste_adjustment | expiration_discard
+  ├── reference_type + reference_id → links to source entity
+  ├── quantity_change: signed (+/-)
+  ├── quantity_after: running balance (computed at insert time)
+  └── location_id: where the movement happened
+
+products.quantity_on_hand = latest stock_movements.quantity_after for that product
+```
+
+### Inventory math
+
+```text
+available = on_hand - allocated
+
+theoretical_remaining =
+    previous_balance
+  + receipts
+  + transfers_in
+  - usage
+  - waste
+  - transfers_out
+
+shrinkage = theoretical_remaining - physical_count
+```
+
+### Movement logging flow
+
+Session completion triggers a batch of `stock_movements`:
+
+```text
+MixSession completed
+  → For each non-discarded bowl:
+      → For each bowl_line:
+          → INSERT stock_movement(
+              product_id,
+              quantity_change = -dispensed_quantity,
+              reason = 'usage',
+              reference_type = 'mix_session',
+              reference_id = session.id,
+              location_id = session.location_id
+            )
+          → UPDATE products SET quantity_on_hand = quantity_on_hand - dispensed_quantity
+
+  → For each waste_event:
+      → INSERT stock_movement(
+              quantity_change = -quantity,
+              reason = 'waste_adjustment',
+              reference_type = 'waste_event',
+              reference_id = waste_event.id
+            )
+```
+
+---
+
+## 3. Inventory APIs (Hooks)
+
+### New hooks
+
+| Hook | Purpose |
+|---|---|
+| `useDepleteMixSession(sessionId)` | On session completion: batch-insert stock_movements for all lines + waste, update products.quantity_on_hand |
+| `useServiceRecipeBaselines(serviceId?)` | CRUD for recipe baselines |
+| `useUsageVariance(sessionId)` | Compare actual bowl lines vs recipe baseline for the session's service |
+| `useCountSessions()` | CRUD for count sessions with grouped stock_counts |
+| `useStockTransferLines(transferId)` | CRUD for multi-product transfer lines |
+| `useInventoryLedger(productId, filters?)` | Enhanced stock_movements query with reference_type filtering |
+| `useTheoreticalBalance(productId, dateRange?)` | Compute theoretical remaining from ledger events |
+
+### Extended hooks
+
+| Hook | Change |
+|---|---|
+| `useLogStockMovement` | Add `reference_type`, `reference_id`, `location_id` params |
+| `useCompleteStockTransfer` | Insert `stock_transfer_lines`-based movements instead of single-product |
+| `useCreateStockCount` | Accept optional `count_session_id` |
+
+---
+
+## 4. Variance Logic
+
+### Service Recipe Variance
+
+```typescript
+interface UsageVariance {
+  product_id: string;
+  product_name: string;
+  expected_quantity: number;  // from service_recipe_baselines
+  actual_quantity: number;    // from sum of bowl_lines for this product
+  variance: number;           // actual - expected
+  variance_pct: number;       // (variance / expected) * 100
+  status: 'under' | 'over' | 'within_tolerance';
+}
+```
+
+Tolerance threshold: configurable per org (default ±10%).
+
+Calculation:
+1. Look up `service_recipe_baselines` for the session's service
+2. Aggregate `mix_bowl_lines` by `product_id` across all non-discarded bowls
+3. Compare actual vs expected per product
+4. Flag products not in baseline as "unplanned usage"
+5. Flag baseline products with zero actual as "missing products"
+
+### Shrinkage Variance (existing, enhanced)
+
+Current `useShrinkageSummary` already computes `expected - counted`. Enhanced with:
+- `theoretical_remaining` from ledger instead of static `expected_quantity`
+- Time-bounded queries (count period)
+
+---
+
+## 5. Inventory UI Surfaces
+
+### 5a. Session completion — usage summary (in BackroomTab)
+
+After `handleCompleteSession`, show a summary panel:
+- Products used with quantities and costs
+- Variance vs recipe baseline (if baseline exists for this service)
+- Waste events with categories
+- Total session cost
+
+### 5b. Product detail — ledger timeline (extends StockMovementHistory)
+
+Enhance existing `StockMovementHistory` popover to:
+- Show `reference_type` badges (mix session, PO, transfer, count, waste)
+- Filter by reason code
+- Link to source entity (e.g., click to open appointment)
+
+### 5c. Inventory workspace — recipe baselines manager
+
+New section in `/dashboard/settings/inventory/`:
+- Table: service name | product count | last updated
+- Drill-in: product list with expected quantities per service
+- Bulk edit support
+
+### 5d. Count session UI (extends existing stock counts)
+
+- "Start Count" button creates a `count_session`
+- Scan/search products → enter counted quantity
+- Auto-calculates variance vs `quantity_on_hand`
+- "Complete Count" finalizes and logs `count_adjustment` stock_movements
+
+### 5e. Manager variance dashboard widget
+
+New widget on `DashboardHome`:
+- Top 5 products with highest usage variance (actual vs baseline)
+- Sessions with unresolved flags
+- Shrinkage trend chart
+
+---
+
+## 6. Entity Relationship (Phase 2 additions)
+
+```text
+services
+  |
+  +-- service_recipe_baselines (service_id, product_id, expected_quantity)
+        |
+        └── products
+
+stock_transfers
+  |
+  +-- stock_transfer_lines (transfer_id, product_id, quantity)
+
+count_sessions
+  |
+  +-- stock_counts (count_session_id FK)
+
+stock_movements (extended)
+  ├── location_id
+  ├── reference_type
+  └── reference_id → mix_sessions | purchase_orders | stock_transfers | count_sessions | waste_events
+```
+
+---
+
+## 7. Implementation Order
+
+1. **Extend `stock_movements`** — Add `location_id`, `reference_type`, `reference_id` columns
+2. **Create `service_recipe_baselines`** — Table + RLS + hook
+3. **Create `count_sessions`** — Table + RLS + extend `stock_counts` with FK
+4. **Create `stock_transfer_lines`** — Table + RLS
+5. **Build `useDepleteMixSession`** — Wire session completion to stock_movements + products.quantity_on_hand update
+6. **Build `useUsageVariance`** — Compare actual vs baseline
+7. **Enhance `StockMovementHistory`** — Show reference_type badges
+8. **Build recipe baselines manager UI** — Settings page
+9. **Build count session UI** — Grouped counting workflow
+10. **Build variance dashboard widget** — DashboardHome integration
+
