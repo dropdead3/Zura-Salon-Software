@@ -376,7 +376,7 @@ function ProductsTab() {
         <div className="overflow-x-auto border rounded-lg">
           <Table>
             <TableHeader>
-              <TableRow>
+                <TableRow>
                 <TableHead className="w-10">
                   <input type="checkbox" checked={selectedIds.size === (filteredProducts?.length || 0) && (filteredProducts?.length || 0) > 0} onChange={toggleAll} className="rounded border-border" />
                 </TableHead>
@@ -395,28 +395,16 @@ function ProductsTab() {
                     Category <SortIcon field="category" />
                   </button>
                 </TableHead>
-                <TableHead>
-                  <button type="button" onClick={() => toggleSort('product_type')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
-                    Type <SortIcon field="product_type" />
-                  </button>
-                </TableHead>
-                <TableHead>SKU</TableHead>
                 <TableHead className="text-right">
                   <button type="button" onClick={() => toggleSort('retail_price')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors ml-auto">
-                    Retail <SortIcon field="retail_price" />
-                  </button>
-                </TableHead>
-                <TableHead className="text-right">
-                  <button type="button" onClick={() => toggleSort('cost_price')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors ml-auto">
-                    Cost <SortIcon field="cost_price" />
+                    Price <SortIcon field="retail_price" />
                   </button>
                 </TableHead>
                 <TableHead className="text-right">
                   <button type="button" onClick={() => toggleSort('quantity_on_hand')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors ml-auto">
-                    Stock <SortIcon field="quantity_on_hand" />
+                    Inventory <SortIcon field="quantity_on_hand" />
                   </button>
                 </TableHead>
-                <TableHead className="text-right">Reorder</TableHead>
                 <TableHead className="text-center w-16">Online</TableHead>
                 <TableHead className="w-20" />
               </TableRow>
