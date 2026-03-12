@@ -16,104 +16,150 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { purchase_order_id } = await req.json();
-    if (!purchase_order_id) {
-      return new Response(JSON.stringify({ error: "purchase_order_id required" }), {
+    const body = await req.json();
+    const { purchase_order_id, purchase_order_ids } = body;
+
+    // Support single or batch mode
+    const poIds: string[] = purchase_order_ids
+      ? purchase_order_ids
+      : purchase_order_id
+        ? [purchase_order_id]
+        : [];
+
+    if (poIds.length === 0) {
+      return new Response(JSON.stringify({ error: "purchase_order_id or purchase_order_ids required" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Fetch purchase order
-    const { data: po, error: poErr } = await supabase
+    // Fetch all purchase orders
+    const { data: purchaseOrders, error: poErr } = await supabase
       .from("purchase_orders")
       .select("*")
-      .eq("id", purchase_order_id)
-      .single();
+      .in("id", poIds);
 
-    if (poErr || !po) {
-      return new Response(JSON.stringify({ error: "Purchase order not found" }), {
+    if (poErr || !purchaseOrders?.length) {
+      return new Response(JSON.stringify({ error: "Purchase order(s) not found" }), {
         status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    if (!po.supplier_email) {
-      return new Response(JSON.stringify({ error: "No supplier email configured" }), {
+    // Group POs by supplier email for consolidated emails
+    const bySupplier = new Map<string, typeof purchaseOrders>();
+    for (const po of purchaseOrders) {
+      if (!po.supplier_email) continue;
+      const list = bySupplier.get(po.supplier_email) || [];
+      list.push(po);
+      bySupplier.set(po.supplier_email, list);
+    }
+
+    const noEmailPOs = purchaseOrders.filter(po => !po.supplier_email);
+    if (noEmailPOs.length > 0 && bySupplier.size === 0) {
+      return new Response(JSON.stringify({ error: "No supplier email configured on any PO" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Fetch product details
-    const { data: product } = await supabase
-      .from("products")
-      .select("name, sku, barcode")
-      .eq("id", po.product_id)
-      .single();
-
-    // Fetch organization details for the email
+    // Get org info (all POs should be same org)
+    const orgId = purchaseOrders[0].organization_id;
     const { data: org } = await supabase
       .from("organizations")
       .select("name")
-      .eq("id", po.organization_id)
+      .eq("id", orgId)
       .single();
-
-    const productName = product?.name || "Product";
-    const sku = product?.sku ? ` (SKU: ${product.sku})` : "";
     const orgName = org?.name || "Our Organization";
 
-    const emailHtml = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <h2 style="color: #1a1a1a; margin-bottom: 24px;">Purchase Order Request</h2>
-        
-        <p>Dear ${po.supplier_name || "Supplier"},</p>
-        
-        <p>We would like to place the following order:</p>
-        
-        <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
-          <tr style="background: #f5f5f5;">
-            <th style="text-align: left; padding: 10px; border: 1px solid #ddd;">Product</th>
-            <th style="text-align: right; padding: 10px; border: 1px solid #ddd;">Quantity</th>
-            ${po.unit_cost ? '<th style="text-align: right; padding: 10px; border: 1px solid #ddd;">Unit Cost</th>' : ""}
-            ${po.total_cost ? '<th style="text-align: right; padding: 10px; border: 1px solid #ddd;">Total</th>' : ""}
-          </tr>
+    const results: { supplier: string; success: boolean; messageId?: string; error?: string }[] = [];
+
+    for (const [supplierEmail, supplierPOs] of bySupplier) {
+      // Fetch product details for all POs in this group
+      const productIds = supplierPOs.map(po => po.product_id);
+      const { data: products } = await supabase
+        .from("products")
+        .select("id, name, sku, barcode")
+        .in("id", productIds);
+
+      const productMap = new Map((products || []).map(p => [p.id, p]));
+      const supplierName = supplierPOs[0].supplier_name || "Supplier";
+
+      // Build multi-row product table
+      const productRows = supplierPOs.map(po => {
+        const prod = productMap.get(po.product_id);
+        const name = prod?.name || "Product";
+        const sku = prod?.sku ? ` (SKU: ${prod.sku})` : "";
+        return `
           <tr>
-            <td style="padding: 10px; border: 1px solid #ddd;">${productName}${sku}</td>
+            <td style="padding: 10px; border: 1px solid #ddd;">${name}${sku}</td>
             <td style="text-align: right; padding: 10px; border: 1px solid #ddd;">${po.quantity}</td>
-            ${po.unit_cost ? `<td style="text-align: right; padding: 10px; border: 1px solid #ddd;">$${Number(po.unit_cost).toFixed(2)}</td>` : ""}
-            ${po.total_cost ? `<td style="text-align: right; padding: 10px; border: 1px solid #ddd;">$${Number(po.total_cost).toFixed(2)}</td>` : ""}
-          </tr>
-        </table>
+            ${po.unit_cost != null ? `<td style="text-align: right; padding: 10px; border: 1px solid #ddd;">$${Number(po.unit_cost).toFixed(2)}</td>` : ""}
+            ${po.total_cost != null ? `<td style="text-align: right; padding: 10px; border: 1px solid #ddd;">$${Number(po.total_cost).toFixed(2)}</td>` : ""}
+          </tr>`;
+      }).join("");
 
-        ${po.notes ? `<p><strong>Notes:</strong> ${po.notes}</p>` : ""}
-        ${po.expected_delivery_date ? `<p><strong>Requested delivery by:</strong> ${po.expected_delivery_date}</p>` : ""}
-        
-        <p>Please confirm receipt of this order and provide an estimated delivery date.</p>
-        
-        <p>Thank you,<br/>${orgName}</p>
-      </div>
-    `;
+      const hasUnitCost = supplierPOs.some(po => po.unit_cost != null);
+      const hasTotalCost = supplierPOs.some(po => po.total_cost != null);
+      const grandTotal = supplierPOs.reduce((sum, po) => sum + (Number(po.total_cost) || 0), 0);
 
-    // Send email via org email infrastructure
-    const emailResult = await sendOrgEmail(supabase, po.organization_id, {
-      to: [po.supplier_email],
-      subject: `Purchase Order: ${po.quantity}x ${productName}${sku}`,
-      html: emailHtml,
-    }, { emailType: "transactional" });
+      const allNotes = supplierPOs.filter(po => po.notes).map(po => po.notes).join("; ");
 
-    if (!emailResult.success) {
-      return new Response(JSON.stringify({ error: emailResult.error || "Failed to send email" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      const emailHtml = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2 style="color: #1a1a1a; margin-bottom: 24px;">Purchase Order Request</h2>
+          
+          <p>Dear ${supplierName},</p>
+          
+          <p>We would like to place the following order${supplierPOs.length > 1 ? ` (${supplierPOs.length} items)` : ""}:</p>
+          
+          <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+            <tr style="background: #f5f5f5;">
+              <th style="text-align: left; padding: 10px; border: 1px solid #ddd;">Product</th>
+              <th style="text-align: right; padding: 10px; border: 1px solid #ddd;">Quantity</th>
+              ${hasUnitCost ? '<th style="text-align: right; padding: 10px; border: 1px solid #ddd;">Unit Cost</th>' : ""}
+              ${hasTotalCost ? '<th style="text-align: right; padding: 10px; border: 1px solid #ddd;">Total</th>' : ""}
+            </tr>
+            ${productRows}
+            ${hasTotalCost && supplierPOs.length > 1 ? `
+            <tr style="background: #f9f9f9; font-weight: bold;">
+              <td style="padding: 10px; border: 1px solid #ddd;" colspan="${hasUnitCost ? 3 : 2}">Grand Total</td>
+              <td style="text-align: right; padding: 10px; border: 1px solid #ddd;">$${grandTotal.toFixed(2)}</td>
+            </tr>` : ""}
+          </table>
+
+          ${allNotes ? `<p><strong>Notes:</strong> ${allNotes}</p>` : ""}
+          
+          <p>Please confirm receipt of this order and provide an estimated delivery date.</p>
+          
+          <p>Thank you,<br/>${orgName}</p>
+        </div>
+      `;
+
+      const subjectProducts = supplierPOs.length === 1
+        ? `${supplierPOs[0].quantity}x ${productMap.get(supplierPOs[0].product_id)?.name || "Product"}`
+        : `${supplierPOs.length} products`;
+
+      const emailResult = await sendOrgEmail(supabase, orgId, {
+        to: [supplierEmail],
+        subject: `Purchase Order: ${subjectProducts}`,
+        html: emailHtml,
+      }, { emailType: "transactional" });
+
+      if (!emailResult.success) {
+        results.push({ supplier: supplierEmail, success: false, error: emailResult.error });
+        continue;
+      }
+
+      results.push({ supplier: supplierEmail, success: true, messageId: emailResult.messageId });
+
+      // Update all POs in this group to 'sent'
+      const sentIds = supplierPOs.map(po => po.id);
+      await supabase
+        .from("purchase_orders")
+        .update({ status: "sent", sent_at: new Date().toISOString() })
+        .in("id", sentIds);
     }
-
-    // Update PO status to sent
-    await supabase
-      .from("purchase_orders")
-      .update({ status: "sent", sent_at: new Date().toISOString() })
-      .eq("id", purchase_order_id);
 
     return new Response(JSON.stringify({ success: true, messageId: emailResult.messageId }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
