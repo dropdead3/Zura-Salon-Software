@@ -590,6 +590,7 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
     cost_price: product?.cost_price?.toString() || '',
     quantity_on_hand: product?.quantity_on_hand?.toString() || '',
     reorder_level: product?.reorder_level?.toString() || '',
+    par_level: (product as any)?.par_level?.toString() || '',
     description: product?.description || '',
     location_id: product?.location_id || '',
     image_url: product?.image_url || '',
