@@ -102,7 +102,7 @@ export function InventoryLeadAssignmentCard() {
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-2">
+      <CardContent className="space-y-3">
         {locations.map((location) => {
           const explicitLead = leadByLocation.get(location.id);
           const defaultLead = defaultLeads?.get(location.id);
