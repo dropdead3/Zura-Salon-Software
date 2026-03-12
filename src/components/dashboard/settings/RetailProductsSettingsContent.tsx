@@ -1700,19 +1700,21 @@ export function RetailProductsSettingsContent() {
         )
       )}
 
-      {/* Inventory Lead Coverage */}
-      <InventoryCoverageBanner />
-      <InventoryLeadAssignmentCard />
-
-      <Tabs defaultValue="products" className="w-full">
+      <Tabs defaultValue="inventory" className="w-full">
         <TabsList>
+          <TabsTrigger value="inventory" className="gap-1.5"><MapPin className="w-3.5 h-3.5" /> Inventory</TabsTrigger>
           <TabsTrigger value="products" className="gap-1.5"><Package className="w-3.5 h-3.5" /> Products</TabsTrigger>
           <TabsTrigger value="brands">Brands</TabsTrigger>
           <TabsTrigger value="categories">Categories</TabsTrigger>
-          <TabsTrigger value="inventory" className="gap-1.5"><MapPin className="w-3.5 h-3.5" /> Inventory</TabsTrigger>
           <TabsTrigger value="clearance" className="gap-1.5"><Tag className="w-3.5 h-3.5" /> Clearance</TabsTrigger>
           <TabsTrigger value="gift-cards" className="gap-1.5"><Gift className="w-3.5 h-3.5" /> Gift Cards</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="inventory" className="mt-4">
+          <InventoryCoverageBanner />
+          <InventoryLeadAssignmentCard />
+          <InventoryByLocationTab />
+        </TabsContent>
 
         <TabsContent value="products" className="mt-4">
           <ProductsTab />
@@ -1724,10 +1726,6 @@ export function RetailProductsSettingsContent() {
 
         <TabsContent value="categories" className="mt-4">
           <CategoriesTab />
-        </TabsContent>
-
-        <TabsContent value="inventory" className="mt-4">
-          <InventoryByLocationTab />
         </TabsContent>
 
         <TabsContent value="clearance" className="mt-4">
