@@ -17,6 +17,7 @@ import { useMixBowlLines, useAddBowlLine, useDeleteBowlLine } from '@/hooks/back
 import { useCreateReweighEvent } from '@/hooks/backroom/useReweighEvents';
 import { useCreateWasteEvent, type WasteCategory } from '@/hooks/backroom/useWasteEvents';
 import { useSaveFormulaHistory } from '@/hooks/backroom/useClientFormulaHistory';
+import { useDepleteMixSession } from '@/hooks/backroom/useDepleteMixSession';
 import { supabase } from '@/integrations/supabase/client';
 import { calculateBowlWeight, calculateBowlCost, calculateNetUsage, extractActualFormula, extractRefinedFormula } from '@/lib/backroom/mix-calculations';
 import { isTerminalSessionStatus } from '@/lib/backroom/session-state-machine';
@@ -66,6 +67,7 @@ export function MixSessionManager({
   const createReweigh = useCreateReweighEvent();
   const createWaste = useCreateWasteEvent();
   const saveFormula = useSaveFormulaHistory();
+  const depleteInventory = useDepleteMixSession();
 
   // ─── Session Actions ──────────────────────────────
   const handleStartSession = useCallback(() => {
@@ -158,6 +160,13 @@ export function MixSessionManager({
       currentStatus: activeSession.status,
       newStatus: 'completed',
       unresolvedReason,
+    });
+
+    // Deplete inventory from stock
+    depleteInventory.mutate({
+      sessionId: activeSession.id,
+      organizationId,
+      locationId,
     });
 
     // Save formulas if we have a client

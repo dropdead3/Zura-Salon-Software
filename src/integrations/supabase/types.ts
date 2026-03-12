@@ -4461,6 +4461,59 @@ export type Database = {
           },
         ]
       }
+      count_sessions: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          location_id: string | null
+          notes: string | null
+          organization_id: string
+          started_by: string | null
+          status: string
+          total_products_counted: number | null
+          total_variance_cost: number | null
+          total_variance_units: number | null
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          location_id?: string | null
+          notes?: string | null
+          organization_id: string
+          started_by?: string | null
+          status?: string
+          total_products_counted?: number | null
+          total_variance_cost?: number | null
+          total_variance_units?: number | null
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          location_id?: string | null
+          notes?: string | null
+          organization_id?: string
+          started_by?: string | null
+          status?: string
+          total_products_counted?: number | null
+          total_variance_cost?: number | null
+          total_variance_units?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "count_sessions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       custom_report_templates: {
         Row: {
           config: Json
@@ -16040,6 +16093,67 @@ export type Database = {
           },
         ]
       }
+      service_recipe_baselines: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          expected_quantity: number
+          id: string
+          notes: string | null
+          organization_id: string
+          product_id: string
+          service_id: string
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          expected_quantity?: number
+          id?: string
+          notes?: string | null
+          organization_id: string
+          product_id: string
+          service_id: string
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          expected_quantity?: number
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          product_id?: string
+          service_id?: string
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_recipe_baselines_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_recipe_baselines_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_recipe_baselines_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       service_seasonal_adjustments: {
         Row: {
           adjustment_type: string
@@ -16884,6 +16998,7 @@ export type Database = {
       }
       stock_counts: {
         Row: {
+          count_session_id: string | null
           counted_at: string
           counted_by: string | null
           counted_quantity: number
@@ -16897,6 +17012,7 @@ export type Database = {
           variance: number | null
         }
         Insert: {
+          count_session_id?: string | null
           counted_at?: string
           counted_by?: string | null
           counted_quantity: number
@@ -16910,6 +17026,7 @@ export type Database = {
           variance?: number | null
         }
         Update: {
+          count_session_id?: string | null
           counted_at?: string
           counted_by?: string | null
           counted_quantity?: number
@@ -16923,6 +17040,13 @@ export type Database = {
           variance?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "stock_counts_count_session_id_fkey"
+            columns: ["count_session_id"]
+            isOneToOne: false
+            referencedRelation: "count_sessions"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "stock_counts_organization_id_fkey"
             columns: ["organization_id"]
@@ -16944,34 +17068,43 @@ export type Database = {
           created_at: string
           created_by: string | null
           id: string
+          location_id: string | null
           notes: string | null
           organization_id: string
           product_id: string
           quantity_after: number
           quantity_change: number
           reason: string
+          reference_id: string | null
+          reference_type: string | null
         }
         Insert: {
           created_at?: string
           created_by?: string | null
           id?: string
+          location_id?: string | null
           notes?: string | null
           organization_id: string
           product_id: string
           quantity_after: number
           quantity_change: number
           reason?: string
+          reference_id?: string | null
+          reference_type?: string | null
         }
         Update: {
           created_at?: string
           created_by?: string | null
           id?: string
+          location_id?: string | null
           notes?: string | null
           organization_id?: string
           product_id?: string
           quantity_after?: number
           quantity_change?: number
           reason?: string
+          reference_id?: string | null
+          reference_type?: string | null
         }
         Relationships: [
           {
@@ -16986,6 +17119,48 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_transfer_lines: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: string
+          quantity: number
+          transfer_id: string
+          unit: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id: string
+          quantity: number
+          transfer_id: string
+          unit?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: string
+          quantity?: number
+          transfer_id?: string
+          unit?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_transfer_lines_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_transfer_lines_transfer_id_fkey"
+            columns: ["transfer_id"]
+            isOneToOne: false
+            referencedRelation: "stock_transfers"
             referencedColumns: ["id"]
           },
         ]

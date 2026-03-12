@@ -48,6 +48,9 @@ export function useLogStockMovement() {
       quantity_after: number;
       reason: string;
       notes?: string;
+      reference_type?: string;
+      reference_id?: string;
+      location_id?: string;
     }) => {
       const userId = (await supabase.auth.getUser()).data.user?.id;
       const { error } = await supabase
@@ -59,6 +62,9 @@ export function useLogStockMovement() {
           quantity_after: params.quantity_after,
           reason: params.reason,
           notes: params.notes || null,
+          reference_type: params.reference_type || null,
+          reference_id: params.reference_id || null,
+          location_id: params.location_id || null,
           created_by: userId,
         });
 
