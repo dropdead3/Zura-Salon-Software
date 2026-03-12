@@ -45,6 +45,7 @@ export function MixSessionManager({
   clientId,
   staffUserId,
   locationId,
+  serviceId,
   serviceName,
   staffName,
 }: MixSessionManagerProps) {
