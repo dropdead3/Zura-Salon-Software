@@ -61,8 +61,8 @@ export function useStylistIncomeForecast() {
         .maybeSingle();
 
       if (profile?.stylist_level) {
-        const { data: level } = await supabase
-          .from('stylist_levels')
+        const { data: level } = await (supabase
+          .from('stylist_levels') as any)
           .select('service_commission_rate')
           .eq('organization_id', orgId)
           .eq('slug', profile.stylist_level)
