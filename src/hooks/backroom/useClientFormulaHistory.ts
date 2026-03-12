@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
+import { saveFormula } from '@/lib/backroom/services/formula-service';
 import type { FormulaLine } from '@/lib/backroom/mix-calculations';
 
 export interface ClientFormula {
@@ -43,6 +44,9 @@ export function useClientFormulaHistory(clientId: string | null) {
   });
 }
 
+/**
+ * Thin wrapper — delegates to FormulaService.saveFormula().
+ */
 export function useSaveFormulaHistory() {
   const queryClient = useQueryClient();
 
@@ -60,39 +64,7 @@ export function useSaveFormulaHistory() {
       staff_name?: string;
       notes?: string;
     }) => {
-      // Determine version number
-      const { count } = await supabase
-        .from('client_formula_history')
-        .select('*', { count: 'exact', head: true })
-        .eq('organization_id', params.organization_id)
-        .eq('client_id', params.client_id)
-        .eq('formula_type', params.formula_type);
-
-      const versionNumber = (count ?? 0) + 1;
-
-      const insertPayload = {
-        organization_id: params.organization_id,
-        client_id: params.client_id,
-        appointment_id: params.appointment_id || null,
-        appointment_service_id: params.appointment_service_id || null,
-        mix_session_id: params.mix_session_id || null,
-        service_name: params.service_name || null,
-        formula_type: params.formula_type,
-        formula_data: JSON.parse(JSON.stringify(params.formula_data)),
-        staff_id: params.staff_id || null,
-        staff_name: params.staff_name || null,
-        notes: params.notes || null,
-        version_number: versionNumber,
-      };
-
-      const { data, error } = await supabase
-        .from('client_formula_history')
-        .insert(insertPayload as any)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data as unknown as ClientFormula;
+      return saveFormula(params);
     },
     onSuccess: (_data, vars) => {
       queryClient.invalidateQueries({ queryKey: ['client-formula-history', vars.organization_id, vars.client_id] });

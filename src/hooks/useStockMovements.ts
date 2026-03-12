@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { postLedgerEntry } from '@/lib/backroom/services/inventory-ledger-service';
 
 export interface StockMovement {
   id: string;
@@ -37,6 +38,9 @@ export function useStockMovements(productId: string | null, limit = 20) {
   });
 }
 
+/**
+ * Thin wrapper — delegates to InventoryLedgerService.postLedgerEntry().
+ */
 export function useLogStockMovement() {
   const queryClient = useQueryClient();
 
@@ -52,24 +56,18 @@ export function useLogStockMovement() {
       reference_id?: string;
       location_id?: string;
     }) => {
-      const userId = (await supabase.auth.getUser()).data.user?.id;
-      const { error } = await supabase
-        .from('stock_movements')
-        .insert({
-          organization_id: params.organization_id,
-          product_id: params.product_id,
-          quantity_change: params.quantity_change,
-          quantity_after: params.quantity_after,
-          event_type: params.reason,
-          reason: params.reason,
-          notes: params.notes || null,
-          reference_type: params.reference_type || null,
-          reference_id: params.reference_id || null,
-          location_id: params.location_id || null,
-          created_by: userId,
-        });
-
-      if (error) throw error;
+      await postLedgerEntry({
+        organization_id: params.organization_id,
+        product_id: params.product_id,
+        quantity_change: params.quantity_change,
+        quantity_after: params.quantity_after,
+        event_type: params.reason as any,
+        reason: params.reason,
+        notes: params.notes || null,
+        reference_type: params.reference_type || null,
+        reference_id: params.reference_id || null,
+        location_id: params.location_id || null,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['stock-movements'] });

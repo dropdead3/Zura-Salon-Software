@@ -1,12 +1,13 @@
 /**
- * useBackroomExceptions — CRUD for the exception inbox.
- * useResolveException — Resolve/dismiss with notes.
+ * useBackroomExceptions — Query hook (read-only).
+ * useResolveException — Thin wrapper around ExceptionService.
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
+import { resolveException } from '@/lib/backroom/services/exception-service';
 
 export interface BackroomException {
   id: string;
@@ -68,6 +69,9 @@ export function useBackroomExceptions(filters?: ExceptionFilters) {
   });
 }
 
+/**
+ * Thin wrapper — delegates to ExceptionService.resolveException().
+ */
 export function useResolveException() {
   const queryClient = useQueryClient();
 
@@ -77,19 +81,7 @@ export function useResolveException() {
       action: 'acknowledged' | 'resolved' | 'dismissed';
       notes?: string;
     }) => {
-      const userId = (await supabase.auth.getUser()).data.user?.id;
-
-      const { error } = await supabase
-        .from('backroom_exceptions' as any)
-        .update({
-          status: params.action,
-          resolved_by: userId,
-          resolved_at: new Date().toISOString(),
-          resolved_notes: params.notes ?? null,
-        } as any)
-        .eq('id', params.exceptionId);
-
-      if (error) throw error;
+      await resolveException(params);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['backroom-exceptions'] });

@@ -1,34 +1,23 @@
 /**
- * useBackroomAIInsights — Cached AI insights for backroom analytics.
- * Follows the same pattern as useAIInsights with 2hr stale, 1min cooldown.
+ * useBackroomAIInsights — Thin wrapper around AIInsightService.
+ * Cached AI insights for backroom analytics with 2hr stale, 1min cooldown.
  */
 
 import { useState, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { toast } from 'sonner';
-
-export interface BackroomAIInsight {
-  category: 'waste_analysis' | 'usage_efficiency' | 'staff_coaching' |
-            'cost_trend' | 'ghost_loss' | 'compliance';
-  title: string;
-  description: string;
-  severity: 'info' | 'warning' | 'critical';
-  staffMentions?: string[] | null;
-  estimatedImpact?: string | null;
-  suggestedAction?: string | null;
-}
-
-export interface BackroomAIInsightsData {
-  summaryLine: string;
-  overallSentiment: 'positive' | 'neutral' | 'concerning';
-  insights: BackroomAIInsight[];
-}
+import {
+  fetchCachedInsights,
+  refreshInsights,
+  type BackroomAIInsightsData,
+} from '@/lib/backroom/services/ai-insight-service';
 
 const STALE_TIME = 2 * 60 * 60 * 1000; // 2 hours
 const COOLDOWN_MS = 60 * 1000;
+
+export type { BackroomAIInsight, BackroomAIInsightsData } from '@/lib/backroom/services/ai-insight-service';
 
 export function useBackroomAIInsights(locationId?: string) {
   const { user } = useAuth();
@@ -43,27 +32,7 @@ export function useBackroomAIInsights(locationId?: string) {
     queryKey: ['ai-backroom-insights', orgId, locationId],
     queryFn: async () => {
       if (!orgId) return null;
-
-      let query = supabase
-        .from('ai_business_insights' as any)
-        .select('*')
-        .eq('organization_id', orgId)
-        .order('generated_at', { ascending: false })
-        .limit(1);
-
-      // Use a convention to distinguish backroom insights
-      // We filter by location_id pattern or a dedicated field
-      if (locationId) {
-        query = query.eq('location_id', `backroom:${locationId}`);
-      } else {
-        query = query.eq('location_id', 'backroom:all');
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-
-      const row = (data as any)?.[0];
-      return row || null;
+      return fetchCachedInsights(orgId, locationId);
     },
     enabled: !!user && !!orgId,
     staleTime: STALE_TIME,
@@ -85,38 +54,7 @@ export function useBackroomAIInsights(locationId?: string) {
     setLastRefreshTime(now);
 
     try {
-      const { data: session } = await supabase.auth.getSession();
-      const token = session?.session?.access_token;
-      if (!token) throw new Error('Not authenticated');
-
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-backroom-insights`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            forceRefresh: true,
-            locationId: locationId || null,
-          }),
-        }
-      );
-
-      if (response.status === 429) {
-        toast.error('Rate limit exceeded. Please try again later.');
-        return;
-      }
-      if (response.status === 402) {
-        toast.error('AI credits exhausted. Please contact support.');
-        return;
-      }
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        throw new Error(err.error || 'Failed to generate insights');
-      }
-
+      await refreshInsights(locationId);
       queryClient.invalidateQueries({ queryKey: ['ai-backroom-insights', orgId, locationId] });
       toast.success('Backroom insights refreshed');
     } catch (err) {

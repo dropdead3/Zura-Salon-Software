@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { postTransfer } from '@/lib/backroom/services/inventory-ledger-service';
 
 export interface StockTransfer {
   id: string;
@@ -80,6 +81,9 @@ export function useCreateStockTransfer() {
   });
 }
 
+/**
+ * Thin wrapper — delegates inventory posting to InventoryLedgerService.
+ */
 export function useCompleteStockTransfer() {
   const queryClient = useQueryClient();
 
@@ -102,35 +106,15 @@ export function useCompleteStockTransfer() {
         .eq('id', transferId);
       if (tErr) throw tErr;
 
-      // Insert ledger entries — trigger handles projection + products.quantity_on_hand sync
-      await supabase.from('stock_movements').insert([
-        {
-          organization_id: organizationId,
-          product_id: productId,
-          quantity_change: -quantity,
-          quantity_after: 0,
-          event_type: 'transfer_out',
-          reason: 'transfer_out',
-          reference_type: 'stock_transfer',
-          reference_id: transferId,
-          location_id: fromLocationId,
-          notes: `Transfer to location ${toLocationId}`,
-          created_by: userId,
-        },
-        {
-          organization_id: organizationId,
-          product_id: productId,
-          quantity_change: quantity,
-          quantity_after: 0,
-          event_type: 'transfer_in',
-          reason: 'transfer_in',
-          reference_type: 'stock_transfer',
-          reference_id: transferId,
-          location_id: toLocationId,
-          notes: `Transfer from location ${fromLocationId}`,
-          created_by: userId,
-        },
-      ]);
+      // Delegate ledger entries to InventoryLedgerService
+      await postTransfer({
+        organizationId,
+        productId,
+        quantity,
+        fromLocationId,
+        toLocationId,
+        transferId,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['stock-transfers'] });
