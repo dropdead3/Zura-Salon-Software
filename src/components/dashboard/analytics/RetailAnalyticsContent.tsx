@@ -2081,6 +2081,11 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
         <DeadStockAlertCard products={allProducts} movementRatings={productMovementRatings} velocityMap={velocityMap ?? undefined} filterContext={filterContext} />
       )}
 
+      {/* ─── Seasonal Demand Forecast ─── */}
+      {allProducts && velocityMap && (
+        <SeasonalForecastCard products={allProducts} velocityMap={velocityMap} filterContext={filterContext} />
+      )}
+
       {/* ─── Shrinkage Report ─── */}
       <ShrinkageReportCard filterContext={filterContext} />
 
