@@ -80,7 +80,7 @@ export function RebalancingCard({ filterContext }: RebalancingCardProps) {
               {highCount > 0 && (
                 <Badge variant="destructive" className="text-xs">{highCount} urgent</Badge>
               )}
-              {filterContext && <AnalyticsFilterBadge context={filterContext} />}
+              
             </div>
           </div>
         </CardHeader>

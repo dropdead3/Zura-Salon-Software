@@ -2116,6 +2116,9 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
         <SeasonalForecastCard products={allProducts} velocityMap={velocityMap} filterContext={filterContext} />
       )}
 
+      {/* ─── Cross-Location Rebalancing ─── */}
+      <RebalancingCard filterContext={filterContext} />
+
       {/* ─── Margin Erosion Alerts ─── */}
       <MarginErosionCard filterContext={filterContext} />
 
