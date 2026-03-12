@@ -114,11 +114,28 @@ export function InventoryLeadAssignmentCard() {
             <CardDescription className="text-xs mt-1">
               Assign a team member to manage inventory at each location. Defaults to the location's manager.
             </CardDescription>
+            <p className="text-xs text-muted-foreground mt-1">
+              {assignedCount} of {locations.length} locations covered
+            </p>
           </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
-        {locations.map((location) => {
+        {locations.length > 5 && (
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+            <Input
+              placeholder="Search locations…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              autoCapitalize="off"
+              className="pl-9 h-8 text-xs"
+            />
+          </div>
+        )}
+        <ScrollArea className="max-h-[320px]">
+          <div className="space-y-2">
+        {filteredLocations.map((location) => {
           const explicitLead = leadByLocation.get(location.id);
           const defaultLead = defaultLeads?.get(location.id);
           const isDefault = !explicitLead && !!defaultLead;
