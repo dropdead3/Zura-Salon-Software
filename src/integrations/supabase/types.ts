@@ -4684,6 +4684,59 @@ export type Database = {
           },
         ]
       }
+      command_audit_log: {
+        Row: {
+          command_name: string
+          command_payload: Json
+          id: string
+          idempotency_key: string | null
+          initiated_at: string
+          initiated_by: string | null
+          organization_id: string
+          outcome: string
+          result_entity_id: string | null
+          result_entity_type: string | null
+          source: string
+          validation_errors: Json | null
+        }
+        Insert: {
+          command_name: string
+          command_payload?: Json
+          id?: string
+          idempotency_key?: string | null
+          initiated_at?: string
+          initiated_by?: string | null
+          organization_id: string
+          outcome?: string
+          result_entity_id?: string | null
+          result_entity_type?: string | null
+          source?: string
+          validation_errors?: Json | null
+        }
+        Update: {
+          command_name?: string
+          command_payload?: Json
+          id?: string
+          idempotency_key?: string | null
+          initiated_at?: string
+          initiated_by?: string | null
+          organization_id?: string
+          outcome?: string
+          result_entity_id?: string | null
+          result_entity_type?: string | null
+          source?: string
+          validation_errors?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "command_audit_log_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       commission_rate_history: {
         Row: {
           change_type: string
