@@ -71,7 +71,7 @@ export function ReorderDialog({ open, onOpenChange, product, organizationId, onO
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className={tokens.heading.dialog}>Reorder — {product.name}</DialogTitle>
+          <DialogTitle className={tokens.heading.section}>Reorder — {product.name}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">

@@ -81,7 +81,7 @@ export function SupplierDialog({ open, onOpenChange, productId, productName, org
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className={tokens.heading.dialog}>Supplier for {productName}</DialogTitle>
+          <DialogTitle className={tokens.heading.section}>Supplier for {productName}</DialogTitle>
         </DialogHeader>
         {isLoading ? (
           <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>
