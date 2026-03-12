@@ -93,21 +93,48 @@ export function useUpsertBackroomSetting() {
       location_id?: string | null;
     }) => {
       const userId = (await supabase.auth.getUser()).data.user?.id;
+      const locId = params.location_id || null;
 
-      const { data, error } = await supabase
+      // BUG-19 fix: Use select-then-insert/update instead of upsert
+      // since partial unique indexes don't work with onConflict
+      let query = supabase
         .from('backroom_settings')
-        .upsert(
-          {
+        .select('id')
+        .eq('organization_id', params.organization_id)
+        .eq('setting_key', params.setting_key);
+
+      if (locId) {
+        query = query.eq('location_id', locId);
+      } else {
+        query = query.is('location_id', null);
+      }
+
+      const { data: existing } = await query.maybeSingle();
+
+      let data, error;
+      if (existing) {
+        ({ data, error } = await supabase
+          .from('backroom_settings')
+          .update({
+            setting_value: params.setting_value as unknown as Record<string, never>,
+            updated_by: userId,
+          })
+          .eq('id', existing.id)
+          .select()
+          .single());
+      } else {
+        ({ data, error } = await supabase
+          .from('backroom_settings')
+          .insert({
             organization_id: params.organization_id,
-            location_id: params.location_id || null,
+            location_id: locId,
             setting_key: params.setting_key,
             setting_value: params.setting_value as unknown as Record<string, never>,
             updated_by: userId,
-          },
-          { onConflict: 'organization_id,location_id,setting_key' }
-        )
-        .select()
-        .single();
+          })
+          .select()
+          .single());
+      }
 
       if (error) throw error;
 
