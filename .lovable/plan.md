@@ -1,153 +1,90 @@
 
 
-## Timezone-Safe Scheduling (Implemented)
+# Design System Governor — Retail Products Page
 
-### Problem
-`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
+## Scope
+`RetailProductsSettingsContent.tsx` (1718 lines) + `AlertSettingsCard.tsx` — the page shown in the screenshot.
 
-### Solution
-- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
-- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
-- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
+---
 
-### Files Updated
-- `ScheduleHeader.tsx` — today button, quick days, isToday checks
-- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
-- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
-- `MonthView.tsx` — today highlight
-- `AgendaView.tsx` — today/tomorrow labels, today border
-- `ScheduleActionBar.tsx` — payment queue timing
-- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
-- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
-- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
-- `useHuddles.ts` — today's huddle query
+## Canon Map
 
-## Auto-Reorder with Supplier Communication (Implemented)
+| Token | Source | Status |
+|---|---|---|
+| Card icon box | `tokens.card.iconBox` / `tokens.card.icon` | **AlertSettingsCard** ✅ uses tokens; rest N/A |
+| Card title | `tokens.card.title` | **AlertSettingsCard** ✅ |
+| Table column headers | `tokens.table.columnHeader` | ❌ **Missing on ALL 4 tables** (Products, Brands, Categories, Inventory) |
+| Button sizes | `tokens.button.*` | ✅ Compliant |
+| Typography weight | max `font-medium` | ✅ Compliant |
+| KPI tiles | `tokens.kpi.*` | ❌ Inventory summary tiles use raw classes |
+| Spacing rhythm | 4/8px grid | ⚠️ Minor `gap-3`, `space-y-3`, `mt-0.5` deviations |
+| Page container | `tokens.layout.pageContainer` | N/A — embedded in settings shell |
 
-### What It Does
-Organizations can opt into automatic reorder — when stock dips below threshold, POs are calculated (using MOQ and par levels) and sent directly to the supplier via email.
+---
 
-### Database Changes
-- `products.par_level` (INT, nullable) — desired stock level to reorder up to
-- `product_suppliers.moq` (INT, default 1) — minimum order quantity
-- `inventory_alert_settings.auto_reorder_enabled` (BOOL, default false)
-- `inventory_alert_settings.auto_reorder_mode` (TEXT, default 'to_par') — 'to_par' or 'moq_only'
-- `inventory_alert_settings.max_auto_reorder_value` (NUMERIC, nullable) — daily spend cap
-- `purchase_orders.supplier_confirmed_at` (TIMESTAMPTZ, nullable) — for tracking confirmations
+## Quantified Violations (19 total)
 
-### Quantity Calculation
-```
-deficit = par_level - quantity_on_hand
-order_qty = max(moq, deficit)
-if moq > 1: round up to nearest MOQ multiple
-```
-Fallback: if par_level is null, uses `reorder_level * 2`.
+### V1 — Missing `tokens.table.columnHeader` on ALL TableHead elements (4 tables, ~30 instances)
 
-### Files Updated
-- Migration: Added columns to products, product_suppliers, inventory_alert_settings, purchase_orders
-- `check-reorder-levels/index.ts` — auto-send logic with MOQ/par calculation, spend cap, email invocation
-- `AlertSettingsCard.tsx` — auto-reorder toggle, mode selector, spend cap input
-- `useInventoryAlertSettings.ts` — updated interface
-- `useProducts.ts` — added par_level to Product interface
-- `useProductSuppliers.ts` — added moq to ProductSupplier interface
-- `ProductEditDialog.tsx` — added par level field
-- `RetailProductsSettingsContent.tsx` — added par level to product form
-- `SupplierDialog.tsx` — added MOQ field
+| Table | Lines | Count |
+|---|---|---|
+| Products tab | 457–491 | 10 headers |
+| Brands tab | 1020–1024 | 4 headers |
+| Categories tab | 1122–1127 | 5 headers |
+| Inventory tab | 1467–1476 | 10 headers |
 
-### Safety Features
-- Spend cap: daily auto-reorder pauses when cumulative PO value exceeds cap
-- Audit trail: auto_reorder logged as stock_movement reason
-- Supplier confirmation tracking via supplier_confirmed_at timestamp
+### V2 — Inventory summary tiles use raw classes instead of `tokens.kpi.*` (lines 1379–1404)
+- `p-3 rounded-lg border bg-card` → should use `tokens.kpi.tile` (or at minimum match the canonical KPI pattern)
+- `text-xs text-muted-foreground` label → `tokens.kpi.label`
+- `text-lg font-medium` value → `tokens.kpi.value` (or `tokens.stat.large` for consistency)
 
-## Product Movement Rating Badges (Implemented)
+### V3 — Non-8px spacing: `gap-3` on inventory summary grid (line 1379)
+- `grid grid-cols-4 gap-3` → `gap-4` (16px, standard 4/8 rhythm)
 
-### What It Does
-Every product gets a dynamic movement rating badge (Best Seller, Popular, Steady, Slow Mover, Stagnant, Dead Weight) computed from 90-day sales velocity data.
+### V4 — Non-8px spacing: `space-y-1.5` in AlertSettingsCard recipients section (line 155)
+- Should be `space-y-2`
 
-### Rating Tiers
-- **Best Seller**: Top 10% velocity AND >0.5 units/day (emerald)
-- **Popular**: Top 25% velocity AND >0.2 units/day (blue)
-- **Steady**: Velocity >0.05/day (muted)
-- **Slow Mover**: Velocity >0 but ≤0.05/day (amber)
-- **Stagnant**: Zero velocity, sold within 180 days (orange)
-- **Dead Weight**: Zero velocity, 180+ days or never sold (red)
-- Products with zero stock excluded from negative ratings
+### V5 — `mt-0.5` on KPI tile values (lines 1382, 1388, 1394, 1400)
+- 2px gap — should be `mt-1` (4px minimum rhythm)
 
-### Files Created
-- `src/lib/productMovementRating.ts` — pure rating logic + badge config
-- `src/hooks/useProductVelocity.ts` — lightweight 90-day POS velocity query
-- `src/components/ui/MovementBadge.tsx` — shared badge component with tooltip
+### V6 — Bell icon in AlertSettingsCard uses raw classes (line 90)
+- `className="w-5 h-5 text-primary"` → `tokens.card.icon`
 
-### Files Updated
-- `RetailProductsSettingsContent.tsx` — Movement column + filter dropdown in products table
-- `RetailAnalyticsContent.tsx` — Movement badges on product performance table + Movement Distribution card (donut chart with actionable callouts)
-- `ProductCard.tsx` — Best Seller/Popular badges on public shop cards (positive only)
-- `ProductDetailModal.tsx` — Movement badge with velocity context
+### V7 — `gap-1.5` on tab triggers (lines 1682, 1685, 1686, 1687)
+- Non-standard 6px gap inside tab triggers. This is a minor cosmetic deviation but consistent across all triggers — **acceptable, no correction needed** (matches TabsTrigger convention).
 
-## Inventory Intelligence Suite v2 (Implemented)
+### V8 — View Retail Analytics button `gap-1.5` (line 1643)
+- Same pattern as buttons elsewhere — **acceptable**.
 
-### 1. Dead Stock Auto-Clearance Pipeline
-- `DeadStockAlertCard.tsx` — Surfaces Dead Weight/Stagnant products not yet in clearance with suggested discount tiers (10%/25%/50% based on idle days)
-- One-click "Mark for Clearance" applies discount and sets clearance_status
+### V9 — `space-y-3` in AlertSettingsCard auto-reorder section (line 176)
+- Should be `space-y-4` for 4/8 rhythm consistency.
 
-### 2. Supplier Lead Time Tracker
-- `usePurchaseOrders.ts` — `useMarkPurchaseOrderReceived` already computes actual delivery days and updates `product_suppliers.avg_delivery_days` via running average
-- `parLevelSuggestion.ts` — Updated to accept supplier-provided lead time instead of hardcoded 7-day default, with bounds clamping
+---
 
-### 3. Inventory Valuation Dashboard Card
-- `InventoryValuationCard.tsx` — Shows total inventory at cost/retail, potential margin %, capital-at-risk (slow/stagnant/dead weight), with donut chart breakdown
+## Corrections to Apply
 
-### 4. Reorder Approval Queue
-- `ReorderApprovalCard.tsx` — Surfaces draft POs from auto-reorder with one-click approve (→ sent) or reject (→ cancelled)
+| # | File | Line(s) | Fix |
+|---|---|---|---|
+| 1 | RetailProductsSettingsContent.tsx | 457–491 | Add `className={tokens.table.columnHeader}` to Products table TableHead elements (use `cn()` for alignment overrides) |
+| 2 | RetailProductsSettingsContent.tsx | 1020–1024 | Add `tokens.table.columnHeader` to Brands table TableHead |
+| 3 | RetailProductsSettingsContent.tsx | 1122–1127 | Add `tokens.table.columnHeader` to Categories table TableHead |
+| 4 | RetailProductsSettingsContent.tsx | 1467–1476 | Add `tokens.table.columnHeader` to Inventory table TableHead |
+| 5 | RetailProductsSettingsContent.tsx | 1379 | `gap-3` → `gap-4` |
+| 6 | RetailProductsSettingsContent.tsx | 1380, 1386, 1392, 1398 | KPI tile containers: `p-3 rounded-lg border bg-card` → `tokens.kpi.tile` |
+| 7 | RetailProductsSettingsContent.tsx | 1381, 1387, 1393, 1399 | KPI labels: `text-xs text-muted-foreground` → `tokens.kpi.label` |
+| 8 | RetailProductsSettingsContent.tsx | 1382, 1388, 1394, 1400 | KPI values: `text-lg font-medium tabular-nums mt-0.5` → `cn(tokens.kpi.value, 'tabular-nums')`, remove `mt-0.5` (token includes gap via flex-col) |
+| 9 | AlertSettingsCard.tsx | 90 | `className="w-5 h-5 text-primary"` → `className={tokens.card.icon}` |
+| 10 | AlertSettingsCard.tsx | 155 | `space-y-1.5` → `space-y-2` |
 
-### 5. Stock Transfer Between Locations
-- Migration: Created `stock_transfers` table with RLS (org member read, org admin manage)
-- `useStockTransfers.ts` — CRUD hooks for stock transfers with stock movement logging
-- `StockTransferDialog.tsx` — Dialog for creating transfers between locations
-- `RetailProductsSettingsContent.tsx` — "Transfer Stock" button added to Inventory tab (visible for multi-location orgs)
+**Total: 10 correction categories across 2 files (~35 individual class replacements).**
 
-## Enhancement 1: Expiry Tracking (Implemented)
+No new tokens. No new colors. No layout redesign.
 
-### What It Does
-Products can have an optional expiration date (`expires_at`) and per-product alert threshold (`expiry_alert_days`, default 30). The system surfaces expiring inventory with color-coded badges in the product table and an analytics card with auto-clearance suggestions.
+---
 
-### Database Changes
-- `products.expires_at` (DATE, nullable) — expiration date for perishable products
-- `products.expiry_alert_days` (INTEGER, default 30) — days before expiry to trigger alerts
+## System Integrity Score
 
-### Expiry Alert Buckets
-- **Expired** (red): past expiration → suggests 50% markdown
-- **Critical** (orange): within alert threshold → suggests 25% markdown
-- **Warning** (amber): within 2× alert threshold → suggests 10% markdown
+**Pre-correction: 78/100** — The main gap is zero table header tokenization across the entire page (4 tables). KPI tiles use raw classes instead of the canonical `tokens.kpi.*` system. AlertSettingsCard is mostly compliant.
 
-### Files Created
-- `src/components/dashboard/analytics/ExpiryAlertCard.tsx` — PinnableCard showing expiring products with one-click clearance actions
+**Post-correction: 96/100** — Remaining 4 points: `gap-1.5` inside TabsTrigger/buttons is a codebase-wide convention (not worth tokenizing); `text-[10px]` badge pattern is established; `text-[11px]` form hints are consistent with ProductFormDialog convention.
 
-### Files Updated
-- `src/hooks/useProducts.ts` — Added `expires_at`, `expiry_alert_days` to Product interface; added `expiringOnly` filter
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Expiry date + alert days in product form; color-coded Expiry column in product table
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ExpiryAlertCard into analytics hub
-
-## Enhancement 2: Shrinkage Detection (Implemented)
-
-### What It Does
-Physical stocktake workflow with variance reporting. Staff record actual counts via a Stocktake dialog, and the system compares against expected quantities (system records). A Shrinkage Report card in analytics surfaces products with negative variance (loss) ranked by estimated cost impact.
-
-### Database Changes
-- Created `stock_counts` table with computed `variance` column (counted - expected), RLS policies (org member read/insert, org admin update/delete), and indexes
-
-### Shrinkage Calculation
-```
-variance = counted_quantity - expected_quantity
-shrinkage_units = |variance| when variance < 0
-shrinkage_cost = shrinkage_units × cost_price
-```
-
-### Files Created
-- `src/hooks/useStockCounts.ts` — CRUD hooks for stock counts + `useShrinkageSummary` for aggregated shrinkage data
-- `src/components/dashboard/settings/inventory/StocktakeDialog.tsx` — Full stocktake UI with search, inline count entry, real-time variance display
-- `src/components/dashboard/analytics/ShrinkageReportCard.tsx` — PinnableCard showing products with shrinkage, severity badges, estimated loss
-
-### Files Updated
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Added "Stocktake" button to Inventory tab toolbar
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ShrinkageReportCard into analytics hub
