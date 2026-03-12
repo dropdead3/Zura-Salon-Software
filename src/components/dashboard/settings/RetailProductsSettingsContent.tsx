@@ -187,10 +187,26 @@ function ProductsTab() {
         <Button variant="outline" size={tokens.button.card} onClick={() => setShowImportWizard(true)} className="gap-1.5">
           <Upload className="w-4 h-4" /> Import
         </Button>
+        {productImportJobs.length > 0 && (
+          <Button variant="ghost" size={tokens.button.card} onClick={() => setShowHistory(!showHistory)} className="gap-1.5 text-muted-foreground">
+            <History className="w-4 h-4" /> History
+          </Button>
+        )}
         <Button size={tokens.button.card} onClick={() => { setWizardDraftId(undefined); setWizardInitialDraft(undefined); setShowWizard(true); }} className="gap-1.5">
           <Plus className="w-4 h-4" /> Add Product
         </Button>
       </div>
+
+      {showHistory && productImportJobs.length > 0 && (
+        <Collapsible open={showHistory} onOpenChange={setShowHistory}>
+          <CollapsibleContent className="space-y-3">
+            <h4 className={cn(tokens.label.default, 'text-muted-foreground')}>Recent Product Imports</h4>
+            {productImportJobs.map((job) => (
+              <ImportHistoryCard key={job.id} job={job} showRollback={true} />
+            ))}
+          </CollapsibleContent>
+        </Collapsible>
+      )}
 
       {/* Product count */}
       <div className="flex items-center gap-2">
