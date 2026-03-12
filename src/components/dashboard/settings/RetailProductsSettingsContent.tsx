@@ -1603,6 +1603,12 @@ export function RetailProductsSettingsContent() {
           <InventoryByLocationTab />
         </TabsContent>
 
+        <TabsContent value="clearance" className="mt-4">
+          {effectiveOrganization?.id ? (
+            <ClearancePanel organizationId={effectiveOrganization.id} />
+          ) : null}
+        </TabsContent>
+
         <TabsContent value="gift-cards" className="mt-4">
           <GiftCardsHub />
         </TabsContent>
