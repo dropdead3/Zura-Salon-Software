@@ -187,7 +187,7 @@ export function AlertSettingsCard() {
                     {autoReorderEnabled && (
                       <>
                         <div className="flex items-start gap-2 p-2 rounded-lg bg-destructive/10 text-destructive text-xs">
-                          <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                          <AlertTriangle className="w-3.5 h-3.5 mt-1 shrink-0" />
                           <span>POs will be sent to suppliers without manual review</span>
                         </div>
 
