@@ -17,6 +17,7 @@ import { useMixBowlLines, useAddBowlLine, useDeleteBowlLine } from '@/hooks/back
 import { useCreateReweighEvent } from '@/hooks/backroom/useReweighEvents';
 import { useCreateWasteEvent, type WasteCategory } from '@/hooks/backroom/useWasteEvents';
 import { useSaveFormulaHistory } from '@/hooks/backroom/useClientFormulaHistory';
+import { useDepleteMixSession } from '@/hooks/backroom/useDepleteMixSession';
 import { supabase } from '@/integrations/supabase/client';
 import { calculateBowlWeight, calculateBowlCost, calculateNetUsage, extractActualFormula, extractRefinedFormula } from '@/lib/backroom/mix-calculations';
 import { isTerminalSessionStatus } from '@/lib/backroom/session-state-machine';
