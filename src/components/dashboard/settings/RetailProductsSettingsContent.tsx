@@ -1080,6 +1080,8 @@ function InventoryByLocationTab() {
   const updateProduct = useUpdateProduct();
   const { data: allSuppliers } = useProductSuppliers();
   const [inventoryView, setInventoryView] = useState<'stock' | 'orders'>('stock');
+  const [selectedInvIds, setSelectedInvIds] = useState<Set<string>>(new Set());
+  const [showBatchReorder, setShowBatchReorder] = useState(false);
 
   // Dialog state
   const [reorderProduct, setReorderProduct] = useState<Product | null>(null);
