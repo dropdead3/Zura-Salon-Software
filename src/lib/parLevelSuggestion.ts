@@ -24,23 +24,29 @@ const DEFAULT_SAFETY_STOCK_DAYS = 7;
 /**
  * Calculate suggested par level from velocity.
  * Formula: ceil(velocity × (leadTime + safetyStock))
+ * 
+ * @param velocity - units sold per day
+ * @param leadTimeDays - supplier lead time (uses avg_delivery_days from supplier if available, else default 7)
+ * @param safetyStockDays - safety buffer in days
  */
 export function suggestParLevel(
   velocity: number,
   leadTimeDays: number = DEFAULT_LEAD_TIME_DAYS,
   safetyStockDays: number = DEFAULT_SAFETY_STOCK_DAYS,
 ): ParLevelSuggestion {
-  const totalSupplyDays = leadTimeDays + safetyStockDays;
+  // Clamp lead time to reasonable bounds
+  const effectiveLeadTime = Math.max(1, Math.min(leadTimeDays, 90));
+  const totalSupplyDays = effectiveLeadTime + safetyStockDays;
   const suggestedPar = velocity > 0 ? Math.ceil(velocity * totalSupplyDays) : 0;
 
   return {
     suggestedPar,
     velocity,
-    leadTimeDays,
+    leadTimeDays: effectiveLeadTime,
     safetyStockDays,
     totalSupplyDays,
     explanation: velocity > 0
-      ? `${velocity.toFixed(2)} units/day × ${totalSupplyDays} days supply = ${suggestedPar} units`
+      ? `${velocity.toFixed(2)} units/day × ${totalSupplyDays} days supply (${effectiveLeadTime}d lead + ${safetyStockDays}d safety) = ${suggestedPar} units`
       : 'No recent sales — par level not recommended',
   };
 }
