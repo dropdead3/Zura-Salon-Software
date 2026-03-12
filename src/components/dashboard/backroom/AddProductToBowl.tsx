@@ -11,8 +11,11 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
 import { ManualWeightInput } from './ManualWeightInput';
-import { Search, X } from 'lucide-react';
+import { useStaffPinnedProducts, useTogglePinnedProduct } from '@/hooks/backroom/useStaffPinnedProducts';
+import { useProductSubstitutions } from '@/hooks/backroom/useProductSubstitutions';
+import { Search, X, Pin, PinOff, AlertTriangle, ArrowRight } from 'lucide-react';
 
 interface AddProductToBowlProps {
   bowlId: string;
