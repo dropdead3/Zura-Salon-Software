@@ -1,0 +1,168 @@
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Slider } from '@/components/ui/slider';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Bell, ChevronDown, ChevronUp, Loader2, Users } from 'lucide-react';
+import { tokens } from '@/lib/design-tokens';
+import { cn } from '@/lib/utils';
+import { useInventoryAlertSettings, useUpsertInventoryAlertSettings } from '@/hooks/useInventoryAlertSettings';
+
+export function AlertSettingsCard() {
+  const { data: settings, isLoading } = useInventoryAlertSettings();
+  const upsert = useUpsertInventoryAlertSettings();
+  const [open, setOpen] = useState(false);
+
+  const [enabled, setEnabled] = useState(true);
+  const [thresholdPct, setThresholdPct] = useState(100);
+  const [inApp, setInApp] = useState(true);
+  const [email, setEmail] = useState(true);
+  const [autoCreatePo, setAutoCreatePo] = useState(true);
+
+  // Sync from server
+  useEffect(() => {
+    if (settings) {
+      setEnabled(settings.enabled);
+      setThresholdPct(settings.default_threshold_pct);
+      setInApp(settings.alert_channels.includes('in_app'));
+      setEmail(settings.alert_channels.includes('email'));
+      setAutoCreatePo(settings.auto_create_draft_po);
+    }
+  }, [settings]);
+
+  const isDirty = settings ? (
+    enabled !== settings.enabled ||
+    thresholdPct !== settings.default_threshold_pct ||
+    inApp !== settings.alert_channels.includes('in_app') ||
+    email !== settings.alert_channels.includes('email') ||
+    autoCreatePo !== settings.auto_create_draft_po
+  ) : true;
+
+  const handleSave = () => {
+    const channels: string[] = [];
+    if (inApp) channels.push('in_app');
+    if (email) channels.push('email');
+
+    upsert.mutate({
+      enabled,
+      default_threshold_pct: thresholdPct,
+      alert_channels: channels,
+      auto_create_draft_po: autoCreatePo,
+    });
+  };
+
+  if (isLoading) return null;
+
+  return (
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <Card className={cn(tokens.card.base)}>
+        <CollapsibleTrigger asChild>
+          <CardHeader className="cursor-pointer hover:bg-muted/30 transition-colors rounded-t-xl">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className={tokens.card.iconBox}>
+                  <Bell className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className={tokens.card.title}>Low Stock Alerts</CardTitle>
+                  <CardDescription className="text-xs mt-0.5">
+                    Configure when and how you're notified about low inventory
+                  </CardDescription>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant={enabled ? 'default' : 'secondary'} className="text-[10px]">
+                  {enabled ? 'Active' : 'Disabled'}
+                </Badge>
+                {open ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+              </div>
+            </div>
+          </CardHeader>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <CardContent className="space-y-5 pt-0">
+            {/* Enable toggle */}
+            <div className="flex items-center justify-between">
+              <Label className="text-sm">Enable low stock alerts</Label>
+              <Switch checked={enabled} onCheckedChange={setEnabled} />
+            </div>
+
+            {enabled && (
+              <>
+                {/* Threshold slider */}
+                <div className="space-y-2">
+                  <Label className="text-sm">Alert threshold</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Alert when stock falls to {thresholdPct}% of minimum stock level
+                  </p>
+                  <Slider
+                    value={[thresholdPct]}
+                    onValueChange={([v]) => setThresholdPct(v)}
+                    min={50}
+                    max={200}
+                    step={10}
+                    className="mt-2"
+                  />
+                  <div className="flex justify-between text-[10px] text-muted-foreground">
+                    <span>50%</span>
+                    <span>100% (at level)</span>
+                    <span>200%</span>
+                  </div>
+                </div>
+
+                {/* Channels */}
+                <div className="space-y-2">
+                  <Label className="text-sm">Notification channels</Label>
+                  <div className="flex items-center gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <Checkbox checked={inApp} onCheckedChange={(v) => setInApp(!!v)} />
+                      <span className="text-sm">In-app</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <Checkbox checked={email} onCheckedChange={(v) => setEmail(!!v)} />
+                      <span className="text-sm">Email</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Recipients */}
+                <div className="space-y-1.5">
+                  <Label className="text-sm">Recipients</Label>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Users className="w-3.5 h-3.5" />
+                    <span>All admins &amp; managers receive alerts by default</span>
+                  </div>
+                </div>
+
+                {/* Auto-create PO */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-sm">Auto-create draft purchase orders</Label>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Automatically generate draft POs for low-stock items with assigned suppliers
+                    </p>
+                  </div>
+                  <Switch checked={autoCreatePo} onCheckedChange={setAutoCreatePo} />
+                </div>
+              </>
+            )}
+
+            {/* Save */}
+            {isDirty && (
+              <div className="flex justify-end pt-2">
+                <Button size={tokens.button.card} onClick={handleSave} disabled={upsert.isPending} className="gap-1.5">
+                  {upsert.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  Save Settings
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>
+  );
+}
