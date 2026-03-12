@@ -736,6 +736,7 @@ function RetailTab() {
     delivery: false,
     shipping: false,
     featured_products: true,
+    continue_selling_when_out_of_stock: false,
   });
   const [linkCopied, setLinkCopied] = useState(false);
 
