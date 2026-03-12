@@ -26,9 +26,13 @@ export function ProfitByServiceTable({ data, className }: ProfitByServiceTablePr
   const [sortAsc, setSortAsc] = useState(false);
 
   const sorted = [...data].sort((a, b) => {
+    if (sortKey === 'serviceName') {
+      return sortAsc
+        ? a.serviceName.localeCompare(b.serviceName)
+        : b.serviceName.localeCompare(a.serviceName);
+    }
     const av = a[sortKey] as number;
     const bv = b[sortKey] as number;
-    if (typeof av === 'string') return sortAsc ? (av as string).localeCompare(bv as string) : (bv as string).localeCompare(av as string);
     return sortAsc ? av - bv : bv - av;
   });
 
