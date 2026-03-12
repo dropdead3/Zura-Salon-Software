@@ -21,7 +21,7 @@ import { tokens } from '@/lib/design-tokens';
 import {
   Search, Plus, BarChart3, Package, Edit2, AlertTriangle, Minus,
   Loader2, Check, X, MapPin, CheckCircle2, Info, ExternalLink, ImagePlus, Gift,
-  FileText,
+  FileText, Trash2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
@@ -33,7 +33,6 @@ import { useBulkUpdateProducts, useBulkToggleProducts } from '@/hooks/useBulkUpd
 import { useCreateProductCategory, useDeleteProductCategory } from '@/hooks/useProductCategoryManagement';
 import { CategoryFormDialog } from '@/components/dashboard/settings/CategoryFormDialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Trash2 } from 'lucide-react';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useWebsiteRetailSettings } from '@/hooks/useWebsiteSettings';
