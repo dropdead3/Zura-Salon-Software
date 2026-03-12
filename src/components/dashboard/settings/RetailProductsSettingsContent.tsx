@@ -43,8 +43,11 @@ import { GiftCardsHub } from '@/components/dashboard/settings/GiftCardsHub';
 import { ProductWizard } from '@/components/dashboard/settings/ProductWizard';
 import { useProductDrafts, useDeleteProductDraft, type ProductDraft } from '@/hooks/useProductDrafts';
 import { DataImportWizard } from '@/components/admin/DataImportWizard';
+import { ImportHistoryCard } from '@/components/admin/ImportHistoryCard';
+import { useImportJobs } from '@/hooks/useImportJobs';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { Upload } from 'lucide-react';
+import { Upload, History } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 // Helper to classify product type — prefer DB column, fall back to regex
 function getProductType(product: Product): string {
   if (product.product_type && product.product_type !== 'Products') return product.product_type;
@@ -63,6 +66,9 @@ function ProductsTab() {
   const { effectiveOrganization } = useOrganizationContext();
   const [search, setSearch] = useState('');
   const [showImportWizard, setShowImportWizard] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const { data: importJobs } = useImportJobs({ organizationId: effectiveOrganization?.id });
+  const productImportJobs = useMemo(() => (importJobs || []).filter(j => j.entity_type === 'products'), [importJobs]);
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [brandFilter, setBrandFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
@@ -181,10 +187,26 @@ function ProductsTab() {
         <Button variant="outline" size={tokens.button.card} onClick={() => setShowImportWizard(true)} className="gap-1.5">
           <Upload className="w-4 h-4" /> Import
         </Button>
+        {productImportJobs.length > 0 && (
+          <Button variant="ghost" size={tokens.button.card} onClick={() => setShowHistory(!showHistory)} className="gap-1.5 text-muted-foreground">
+            <History className="w-4 h-4" /> History
+          </Button>
+        )}
         <Button size={tokens.button.card} onClick={() => { setWizardDraftId(undefined); setWizardInitialDraft(undefined); setShowWizard(true); }} className="gap-1.5">
           <Plus className="w-4 h-4" /> Add Product
         </Button>
       </div>
+
+      {showHistory && productImportJobs.length > 0 && (
+        <Collapsible open={showHistory} onOpenChange={setShowHistory}>
+          <CollapsibleContent className="space-y-3">
+            <h4 className={cn(tokens.label.default, 'text-muted-foreground')}>Recent Product Imports</h4>
+            {productImportJobs.map((job) => (
+              <ImportHistoryCard key={job.id} job={job} showRollback={true} />
+            ))}
+          </CollapsibleContent>
+        </Collapsible>
+      )}
 
       {/* Product count */}
       <div className="flex items-center gap-2">
