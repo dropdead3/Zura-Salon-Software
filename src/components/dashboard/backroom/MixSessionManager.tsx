@@ -57,6 +57,7 @@ export function MixSessionManager({
   const { user } = useAuth();
   const [stationId, setStationId] = useState<string | null>(null);
   const [showWasteDialog, setShowWasteDialog] = useState(false);
+  const [isPrepMode, setIsPrepMode] = useState(false);
 
   // Data hooks
   const { data: sessions = [], isLoading: loadingSessions } = useMixSession(appointmentId);
