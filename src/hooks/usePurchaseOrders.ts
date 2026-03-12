@@ -154,32 +154,21 @@ export function useMarkPurchaseOrderReceived() {
         .eq('id', poId);
       if (poErr) throw poErr;
 
-      // Update product stock
-      const { data: product } = await supabase
-        .from('products')
-        .select('quantity_on_hand')
-        .eq('id', productId)
-        .single();
-
-      const oldQty = product?.quantity_on_hand || 0;
-      const newQty = oldQty + quantity;
-      const { error: prodErr } = await supabase
-        .from('products')
-        .update({ quantity_on_hand: newQty, updated_at: now })
-        .eq('id', productId);
-      if (prodErr) throw prodErr;
-
-      // Log stock movement
+      // Insert ledger entry — trigger handles projection + products.quantity_on_hand sync
       const userId = (await supabase.auth.getUser()).data.user?.id;
-      await supabase.from('stock_movements').insert({
+      const { error: mvErr } = await supabase.from('stock_movements').insert({
         organization_id: organizationId,
         product_id: productId,
         quantity_change: quantity,
-        quantity_after: newQty,
+        quantity_after: 0,
+        event_type: 'receiving',
         reason: 'po_received',
+        reference_type: 'purchase_order',
+        reference_id: poId,
         notes: `PO ${poId} received`,
         created_by: userId,
       });
+      if (mvErr) throw mvErr;
 
       // Update supplier avg_delivery_days for lead-time tracking
       if (poData) {

@@ -63,7 +63,7 @@ export function useDepleteMixSession() {
       const productMap = new Map((products as any[]).map((p) => [p.id, p.quantity_on_hand ?? 0]));
 
       const movements: any[] = [];
-      const productUpdates: Array<{ id: string; newQty: number }> = [];
+      
 
       for (const [productId, usedQty] of productUsage) {
         const currentQty = productMap.get(productId) ?? 0;
@@ -74,6 +74,7 @@ export function useDepleteMixSession() {
           product_id: productId,
           quantity_change: -usedQty,
           quantity_after: newQty,
+          event_type: 'usage',
           reason: 'usage',
           reference_type: 'mix_session',
           reference_id: sessionId,
@@ -81,26 +82,14 @@ export function useDepleteMixSession() {
           notes: `Backroom mix session depletion`,
           created_by: userId,
         });
-
-        productUpdates.push({ id: productId, newQty });
       }
 
-      // 5. Batch insert movements
+      // 5. Batch insert movements — trigger handles projection + products.quantity_on_hand sync
       const { error: mvErr } = await supabase
         .from('stock_movements')
         .insert(movements);
 
       if (mvErr) throw mvErr;
-
-      // 6. Update product quantities
-      for (const { id, newQty } of productUpdates) {
-        const { error: upErr } = await supabase
-          .from('products')
-          .update({ quantity_on_hand: newQty })
-          .eq('id', id);
-
-        if (upErr) console.error('Failed to update product qty:', id, upErr);
-      }
 
       return { movementsInserted: movements.length };
     },

@@ -79,27 +79,13 @@ export function useReceiveShipment() {
           .update({ quantity_received: newLineReceived })
           .eq('id', line.po_line_id);
 
-        // Update product stock
-        const { data: product } = await supabase
-          .from('products')
-          .select('quantity_on_hand')
-          .eq('id', line.product_id)
-          .single();
-
-        const oldQty = product?.quantity_on_hand ?? 0;
-        const newQty = oldQty + acceptedQty;
-
-        await supabase
-          .from('products')
-          .update({ quantity_on_hand: newQty, updated_at: new Date().toISOString() })
-          .eq('id', line.product_id);
-
-        // Log stock movement
+        // Insert ledger entry — trigger handles projection + products.quantity_on_hand sync
         await supabase.from('stock_movements').insert({
           organization_id: input.organization_id,
           product_id: line.product_id,
           quantity_change: acceptedQty,
-          quantity_after: newQty,
+          quantity_after: 0,
+          event_type: 'receiving',
           reason: 'receiving',
           reference_type: 'purchase_order',
           reference_id: input.purchase_order_id,
