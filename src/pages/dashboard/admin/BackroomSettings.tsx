@@ -103,7 +103,7 @@ export default function BackroomSettings() {
 
           {/* Content area */}
           <div className="flex-1 min-w-0">
-            {activeSection === 'overview' && <BackroomSetupOverview onNavigate={setActiveSection} />}
+            {activeSection === 'overview' && <BackroomSetupOverview onNavigate={handleNavigate} />}
             {activeSection === 'products' && <BackroomProductCatalogSection />}
             {activeSection === 'services' && <ServiceTrackingSection />}
             {activeSection === 'recipes' && <RecipeBaselineSection />}
