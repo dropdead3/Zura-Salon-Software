@@ -484,6 +484,58 @@ export function CommandCenterAnalytics() {
             </PinnableCard>
           </VisibilityGate>
         );
+      case 'true_profit':
+        return (
+          <VisibilityGate key={cardId} elementKey="true_profit">
+            <PinnableCard elementKey="true_profit" elementName="True Profit" category="Command Center">
+              <TrueProfitCard
+                dateFrom={dateFilters.dateFrom}
+                dateTo={dateFilters.dateTo}
+                locationId={locationFilter}
+              />
+            </PinnableCard>
+          </VisibilityGate>
+        );
+      case 'staff_performance':
+        return (
+          <VisibilityGate key={cardId} elementKey="staff_performance">
+            <PinnableCard elementKey="staff_performance" elementName="Staff Performance" category="Command Center">
+              <StaffPerformanceReport
+                dateFrom={dateFilters.dateFrom}
+                dateTo={dateFilters.dateTo}
+                locationId={locationFilter}
+              />
+            </PinnableCard>
+          </VisibilityGate>
+        );
+      case 'service_profitability':
+        return (
+          <VisibilityGate key={cardId} elementKey="service_profitability">
+            <PinnableCard elementKey="service_profitability" elementName="Service Profitability" category="Command Center">
+              <ServiceProfitabilityCard
+                dateFrom={dateFilters.dateFrom}
+                dateTo={dateFilters.dateTo}
+                locationId={locationFilter}
+              />
+            </PinnableCard>
+          </VisibilityGate>
+        );
+      case 'control_tower':
+        return (
+          <VisibilityGate key={cardId} elementKey="control_tower">
+            <PinnableCard elementKey="control_tower" elementName="Control Tower" category="Command Center">
+              <BackroomControlTower locationId={locationFilter} />
+            </PinnableCard>
+          </VisibilityGate>
+        );
+      case 'predictive_inventory':
+        return (
+          <VisibilityGate key={cardId} elementKey="predictive_inventory">
+            <PinnableCard elementKey="predictive_inventory" elementName="Predictive Inventory" category="Command Center">
+              <PredictiveBackroomSummary locationId={locationFilter} />
+            </PinnableCard>
+          </VisibilityGate>
+        );
       default:
         return null;
     }
