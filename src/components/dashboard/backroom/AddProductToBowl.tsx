@@ -30,7 +30,7 @@ interface AddProductToBowlProps {
   inline?: boolean;
 }
 
-export function AddProductToBowl({ bowlId, onAdd, onCancel }: AddProductToBowlProps) {
+export function AddProductToBowl({ bowlId, onAdd, onCancel, inline = false }: AddProductToBowlProps) {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
   const [search, setSearch] = useState('');
