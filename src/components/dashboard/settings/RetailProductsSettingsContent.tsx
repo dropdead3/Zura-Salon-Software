@@ -494,6 +494,14 @@ function ProductsTab() {
                     </TableCell>
                     <TableCell className="py-3 text-sm text-muted-foreground">{p.brand || '—'}</TableCell>
                     <TableCell className="py-3 text-sm text-muted-foreground">{p.category || '—'}</TableCell>
+                    {/* Movement */}
+                    <TableCell className="py-3">
+                      {productRatings.has(p.id) ? (
+                        <MovementBadge rating={productRatings.get(p.id)!} compact />
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
                     {/* Price: Retail / Cost stacked */}
                     <TableCell className="py-3 text-right">
                       <div className="tabular-nums text-sm"><BlurredAmount>{p.retail_price != null ? formatCurrency(p.retail_price) : '—'}</BlurredAmount></div>
