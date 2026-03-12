@@ -99,7 +99,8 @@ export async function fetchClientLastFormula(
   };
 }
 
-// ─── Priority 2: Stylist's Most Used Formula ────────
+// ─── Priority 2: Stylist's Most Recent Formula ─────
+// BUG-16 fix: Renamed to accurately reflect behavior (returns most recent, not most frequent)
 
 export async function fetchStylistMostUsed(
   orgId: string,
@@ -111,9 +112,9 @@ export async function fetchStylistMostUsed(
     .select('id, formula_data')
     .eq('organization_id', orgId)
     .eq('staff_id', staffId)
-    .eq('service_name', serviceName)
+    .ilike('service_name', serviceName)
     .order('created_at', { ascending: false })
-    .limit(50);
+    .limit(1);
 
   if (!data?.length) return null;
 
@@ -124,7 +125,7 @@ export async function fetchStylistMostUsed(
   return {
     lines,
     source: 'stylist_most_used',
-    sourceLabel: SOURCE_LABELS.stylist_most_used,
+    sourceLabel: "Stylist's Most Recent Formula",
     referenceId: latest.id,
     ratio: computeRatio(lines),
   };

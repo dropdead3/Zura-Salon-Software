@@ -139,13 +139,14 @@ export function useUpdateMixSessionStatus() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, organizationId, currentStatus, newStatus, unresolvedReason, locationId }: {
+    mutationFn: async ({ id, organizationId, currentStatus, newStatus, unresolvedReason, locationId, confidencePayload }: {
       id: string;
       organizationId: string;
       currentStatus: MixSessionStatus;
       newStatus: MixSessionStatus;
       unresolvedReason?: string;
       locationId?: string;
+      confidencePayload?: Record<string, unknown>;
     }) => {
       if (!canTransitionSession(currentStatus, newStatus)) {
         throw new Error(`Invalid transition: ${currentStatus} → ${newStatus}`);
@@ -160,23 +161,18 @@ export function useUpdateMixSessionStatus() {
           organization_id: organizationId,
           mix_session_id: id,
         });
+        // BUG-2 fix: Do NOT fall back to raw event emission on validation failure
         if (!result.success) {
-          // Fall back to direct event if command validation fails (e.g. bowls not terminal)
-          await emitSessionEvent({
-            mix_session_id: id,
-            organization_id: organizationId,
-            location_id: locationId,
-            event_type: 'session_completed',
-            source_mode: 'manual',
-          });
+          const errorMsg = result.validation_errors?.map((e: any) => e.message).join(', ') || 'Validation failed';
+          throw new Error(`Cannot complete session: ${errorMsg}`);
         }
-      } else if (newStatus === 'mixing') {
+      } else if (newStatus === 'mixing' || newStatus === 'active') {
         await executeStartMixSession({
           meta,
           organization_id: organizationId,
           mix_session_id: id,
         });
-      } else if (newStatus === 'pending_reweigh') {
+      } else if (newStatus === 'awaiting_reweigh' || newStatus === 'pending_reweigh') {
         await emitSessionEvent({
           mix_session_id: id,
           organization_id: organizationId,

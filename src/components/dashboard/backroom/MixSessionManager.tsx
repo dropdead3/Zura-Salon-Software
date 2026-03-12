@@ -181,7 +181,7 @@ export function MixSessionManager({
       id: activeSession.id,
       organizationId,
       currentStatus: activeSession.status,
-      newStatus: 'pending_reweigh',
+      newStatus: 'awaiting_reweigh',
       locationId,
     });
   }, [activeSession, bowls, organizationId, locationId, updateSessionStatus, updateBowlStatus]);

@@ -251,6 +251,20 @@ export async function emitSessionEvent(
       console.warn('[MixSessionService] Duplicate event ignored:', idempotencyKey);
       return null;
     }
+    // BUG-7 fix: Handle sequence collision — re-fetch and retry once
+    if (error.code === '23505' && error.message?.includes('sequence')) {
+      console.warn('[MixSessionService] Sequence collision, re-syncing...');
+      await initializeSessionSequence(input.mix_session_id);
+      const retrySeq = getNextSequence(input.mix_session_id);
+      const retryRow = { ...eventRow, sequence_number: retrySeq, idempotency_key: crypto.randomUUID() };
+      const { data: retryData, error: retryError } = await supabase
+        .from('mix_session_events' as any)
+        .insert(retryRow as any)
+        .select()
+        .single();
+      if (retryError) throw retryError;
+      return retryData as unknown as MixSessionEvent;
+    }
     throw error;
   }
 

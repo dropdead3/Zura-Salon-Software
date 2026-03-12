@@ -75,12 +75,18 @@ export function validateCreateBowl(
   const errors: ValidationError[] = [];
   errors.push(...requireAuth(initiatedBy));
   errors.push(...requireSessionExists(session));
-  if (session && !isActiveSession(session.current_status as any)) {
-    errors.push({
-      code: 'SESSION_NOT_ACTIVE',
-      field: 'status',
-      message: `Cannot create bowl — session is "${session.current_status}"`,
-    });
+  // BUG-9 fix: Allow bowl creation in both 'draft' (prep mode) and 'active' sessions
+  // BUG-10 fix: Use normalizeSessionStatus for proper type handling
+  if (session) {
+    const status = session.current_status;
+    const allowedForBowl = status === 'draft' || status === 'active' || status === 'mixing';
+    if (!allowedForBowl) {
+      errors.push({
+        code: 'SESSION_NOT_ACTIVE',
+        field: 'status',
+        message: `Cannot create bowl — session is "${session.current_status}"`,
+      });
+    }
   }
   return errors;
 }

@@ -90,8 +90,9 @@ export function calculateServiceProfiles(
     const reweighCount = items.filter((i) => i.reweighCompliant).length;
 
     const avgDuration = totalDuration / count;
-    // Estimated labor cost: $30/hr * avg duration
-    const laborEstimate = (avgDuration / 60) * 30 * count;
+    // BUG-17 fix: Use configurable labor rate instead of hardcoded $30/hr
+    const effectiveLaborRate = laborRatePerHour ?? 30;
+    const laborEstimate = (avgDuration / 60) * effectiveLaborRate * count;
     const margin = totalRevenue - totalCost - laborEstimate;
     const marginPct = totalRevenue > 0 ? (margin / totalRevenue) * 100 : 0;
 
