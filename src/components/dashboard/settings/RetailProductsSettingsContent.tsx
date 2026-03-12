@@ -1217,8 +1217,19 @@ function InventoryByLocationTab() {
                   const isLow = p.reorder_level != null && p.quantity_on_hand != null && p.quantity_on_hand <= p.reorder_level;
                   const supplier = supplierMap.get(p.id);
                   return (
-                    <TableRow key={p.id} className={cn(isLow && 'bg-amber-50/50 dark:bg-amber-950/10')}>
+                      <TableRow key={p.id} className={cn(isLow && 'bg-amber-50/50 dark:bg-amber-950/10')}>
                       <TableCell>
+                        <Checkbox
+                          checked={selectedInvIds.has(p.id)}
+                          onCheckedChange={(checked) => {
+                            setSelectedInvIds(prev => {
+                              const next = new Set(prev);
+                              if (checked) next.add(p.id); else next.delete(p.id);
+                              return next;
+                            });
+                          }}
+                        />
+                      </TableCell>
                         <div className="flex items-center gap-2.5">
                           <Avatar className="h-8 w-8 shrink-0">
                             {p.image_url && <AvatarImage src={p.image_url} alt={p.name} className="object-cover" />}
