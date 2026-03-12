@@ -45,6 +45,9 @@ import { useProductVelocity } from '@/hooks/useProductVelocity';
 import { useSupplierPerformance } from '@/hooks/useSupplierPerformance';
 import { BundleSuggestionsCard } from './BundleSuggestionsCard';
 import { ReplenishmentTimelineCard } from './ReplenishmentTimelineCard';
+import { InventoryValuationCard } from './InventoryValuationCard';
+import { DeadStockAlertCard } from './DeadStockAlertCard';
+import { ReorderApprovalCard } from './ReorderApprovalCard';
 
 interface RetailAnalyticsContentProps {
   dateFrom: string;
@@ -2059,6 +2062,19 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
           </Card>
         </PinnableCard>
       )}
+
+      {/* ─── Inventory Valuation ─── */}
+      {allProducts && (
+        <InventoryValuationCard products={allProducts} movementRatings={productMovementRatings} filterContext={filterContext} />
+      )}
+
+      {/* ─── Dead Stock Auto-Clearance Suggestions ─── */}
+      {allProducts && (
+        <DeadStockAlertCard products={allProducts} movementRatings={productMovementRatings} velocityMap={velocityMap ?? undefined} filterContext={filterContext} />
+      )}
+
+      {/* ─── Reorder Approval Queue ─── */}
+      <ReorderApprovalCard />
     </div>
   );
 }

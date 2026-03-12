@@ -16432,6 +16432,66 @@ export type Database = {
           },
         ]
       }
+      stock_transfers: {
+        Row: {
+          approved_by: string | null
+          created_at: string
+          created_by: string | null
+          from_location_id: string
+          id: string
+          notes: string | null
+          organization_id: string
+          product_id: string
+          quantity: number
+          status: string
+          to_location_id: string
+          updated_at: string
+        }
+        Insert: {
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          from_location_id: string
+          id?: string
+          notes?: string | null
+          organization_id: string
+          product_id: string
+          quantity: number
+          status?: string
+          to_location_id: string
+          updated_at?: string
+        }
+        Update: {
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          from_location_id?: string
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          product_id?: string
+          quantity?: number
+          status?: string
+          to_location_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_transfers_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_transfers_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stylist_commission_overrides: {
         Row: {
           created_at: string

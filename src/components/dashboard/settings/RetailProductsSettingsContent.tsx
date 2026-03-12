@@ -22,7 +22,7 @@ import { tokens } from '@/lib/design-tokens';
 import {
   Search, Plus, BarChart3, Package, Edit2, AlertTriangle, Minus,
   Loader2, Check, X, MapPin, CheckCircle2, Info, ExternalLink, ImagePlus, Gift,
-  FileText, Trash2, Copy, Download, ChevronUp, ChevronDown, ChevronsUpDown, ShoppingCart, Tag,
+  FileText, Trash2, Copy, Download, ChevronUp, ChevronDown, ChevronsUpDown, ShoppingCart, Tag, ArrowRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
@@ -64,6 +64,7 @@ import { getMovementRating, computePercentiles, MOVEMENT_TIERS, type MovementTie
 import { MovementBadge } from '@/components/ui/MovementBadge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { ClearancePanel } from '@/components/dashboard/settings/inventory/ClearancePanel';
+import { StockTransferDialog } from '@/components/dashboard/settings/inventory/StockTransferDialog';
 // Helper to classify product type — prefer DB column, fall back to regex
 function getProductType(product: Product): string {
   if (product.product_type && product.product_type !== 'Products') return product.product_type;
@@ -1188,6 +1189,7 @@ function InventoryByLocationTab() {
   const [inventoryView, setInventoryView] = useState<'stock' | 'orders'>('stock');
   const [selectedInvIds, setSelectedInvIds] = useState<Set<string>>(new Set());
   const [showBatchReorder, setShowBatchReorder] = useState(false);
+  const [showTransferDialog, setShowTransferDialog] = useState(false);
   const logMovement = useLogStockMovement();
 
   // Dialog state
@@ -1261,6 +1263,16 @@ function InventoryByLocationTab() {
           )}
         </div>
         <div className="flex items-center gap-2">
+          {locations && locations.length > 1 && (
+            <Button
+              variant="outline"
+              size={tokens.button.inline}
+              className="gap-1.5"
+              onClick={() => setShowTransferDialog(true)}
+            >
+              <ArrowRight className="w-3.5 h-3.5" /> Transfer Stock
+            </Button>
+          )}
           {orgId && (
             <Button
               variant="outline"
@@ -1542,6 +1554,12 @@ function InventoryByLocationTab() {
           organizationId={orgId}
         />
       )}
+
+      {/* Stock Transfer Dialog */}
+      <StockTransferDialog
+        open={showTransferDialog}
+        onOpenChange={setShowTransferDialog}
+      />
     </div>
   );
 }
