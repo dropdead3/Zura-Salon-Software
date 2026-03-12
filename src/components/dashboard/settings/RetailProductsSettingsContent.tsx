@@ -60,7 +60,9 @@ const PRODUCT_TYPES = ['Products', 'Extensions', 'Merch'] as const;
 // ─── Products Tab ───
 function ProductsTab() {
   const { formatCurrency } = useFormatCurrency();
+  const { effectiveOrganization } = useOrganizationContext();
   const [search, setSearch] = useState('');
+  const [showImportWizard, setShowImportWizard] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [brandFilter, setBrandFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
