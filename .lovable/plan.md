@@ -21,3 +21,40 @@
 - `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
 - `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
 - `useHuddles.ts` — today's huddle query
+
+## Auto-Reorder with Supplier Communication (Implemented)
+
+### What It Does
+Organizations can opt into automatic reorder — when stock dips below threshold, POs are calculated (using MOQ and par levels) and sent directly to the supplier via email.
+
+### Database Changes
+- `products.par_level` (INT, nullable) — desired stock level to reorder up to
+- `product_suppliers.moq` (INT, default 1) — minimum order quantity
+- `inventory_alert_settings.auto_reorder_enabled` (BOOL, default false)
+- `inventory_alert_settings.auto_reorder_mode` (TEXT, default 'to_par') — 'to_par' or 'moq_only'
+- `inventory_alert_settings.max_auto_reorder_value` (NUMERIC, nullable) — daily spend cap
+- `purchase_orders.supplier_confirmed_at` (TIMESTAMPTZ, nullable) — for tracking confirmations
+
+### Quantity Calculation
+```
+deficit = par_level - quantity_on_hand
+order_qty = max(moq, deficit)
+if moq > 1: round up to nearest MOQ multiple
+```
+Fallback: if par_level is null, uses `reorder_level * 2`.
+
+### Files Updated
+- Migration: Added columns to products, product_suppliers, inventory_alert_settings, purchase_orders
+- `check-reorder-levels/index.ts` — auto-send logic with MOQ/par calculation, spend cap, email invocation
+- `AlertSettingsCard.tsx` — auto-reorder toggle, mode selector, spend cap input
+- `useInventoryAlertSettings.ts` — updated interface
+- `useProducts.ts` — added par_level to Product interface
+- `useProductSuppliers.ts` — added moq to ProductSupplier interface
+- `ProductEditDialog.tsx` — added par level field
+- `RetailProductsSettingsContent.tsx` — added par level to product form
+- `SupplierDialog.tsx` — added MOQ field
+
+### Safety Features
+- Spend cap: daily auto-reorder pauses when cumulative PO value exceeds cap
+- Audit trail: auto_reorder logged as stock_movement reason
+- Supplier confirmation tracking via supplier_confirmed_at timestamp
