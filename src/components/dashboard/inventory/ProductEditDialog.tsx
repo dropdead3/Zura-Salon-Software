@@ -208,6 +208,16 @@ export function ProductEditDialog({ productId, open, onOpenChange }: ProductEdit
               />
             </div>
 
+            <div>
+              <Label htmlFor="par_level">Par Level (Target)</Label>
+              <Input
+                id="par_level"
+                type="number"
+                {...register('par_level')}
+                placeholder="Target stock level"
+              />
+            </div>
+
             <div className="col-span-2">
               <Label htmlFor="description">Description</Label>
               <Textarea
