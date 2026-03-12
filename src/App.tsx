@@ -147,6 +147,7 @@ import RewardShop from "./pages/dashboard/RewardShop";
 import PointsConfig from "./pages/dashboard/admin/PointsConfig";
 import DailyHuddle from "./pages/dashboard/admin/DailyHuddle";
 import ZuraConfigPage from "./pages/dashboard/admin/ZuraConfigPage";
+import BackroomSettings from "./pages/dashboard/admin/BackroomSettings";
 
 // V1 Zura Intelligence
 import KpiBuilderPage from "./pages/dashboard/admin/KpiBuilderPage";
