@@ -497,3 +497,85 @@ export async function executeMarkSessionUnresolved(
     { reason: cmd.reason },
   );
 }
+
+// ─── ApplySuggestedFormula ───────────────────────────
+
+export async function executeApplySuggestedFormula(
+  cmd: ApplySuggestedFormulaCommand,
+): Promise<CommandResult<unknown>> {
+  const session = await fetchSessionState(cmd.mix_session_id);
+  const bowl = await fetchBowlState(cmd.bowl_id);
+  const errors = validateApplySuggestedFormula(cmd.meta.initiated_by, session, bowl);
+
+  if (errors.length > 0) {
+    await logCommandAudit({
+      organization_id: cmd.organization_id,
+      command_name: 'ApplySuggestedFormula',
+      command_payload: {
+        mix_session_id: cmd.mix_session_id,
+        bowl_id: cmd.bowl_id,
+        suggestion_source: cmd.suggestion_source,
+      },
+      meta: cmd.meta,
+      outcome: 'rejected',
+      validation_errors: errors,
+    });
+    return rejected(cmd.meta.idempotency_key, errors);
+  }
+
+  return emitAndAudit(
+    'ApplySuggestedFormula',
+    cmd.meta,
+    cmd.organization_id,
+    cmd.mix_session_id,
+    'suggested_formula_applied',
+    session!.current_status,
+    {
+      bowl_id: cmd.bowl_id,
+      suggestion_source: cmd.suggestion_source,
+      reference_formula_id: cmd.reference_formula_id,
+      formula_data: cmd.formula_data,
+      client_id: cmd.client_id,
+      staff_id: cmd.staff_id,
+      service_type: cmd.service_type,
+    },
+  );
+}
+
+// ─── DismissSuggestedFormula ─────────────────────────
+
+export async function executeDismissSuggestedFormula(
+  cmd: DismissSuggestedFormulaCommand,
+): Promise<CommandResult<unknown>> {
+  const session = await fetchSessionState(cmd.mix_session_id);
+  const errors = validateDismissSuggestedFormula(cmd.meta.initiated_by, session);
+
+  if (errors.length > 0) {
+    await logCommandAudit({
+      organization_id: cmd.organization_id,
+      command_name: 'DismissSuggestedFormula',
+      command_payload: {
+        mix_session_id: cmd.mix_session_id,
+        bowl_id: cmd.bowl_id,
+        suggestion_source: cmd.suggestion_source,
+      },
+      meta: cmd.meta,
+      outcome: 'rejected',
+      validation_errors: errors,
+    });
+    return rejected(cmd.meta.idempotency_key, errors);
+  }
+
+  return emitAndAudit(
+    'DismissSuggestedFormula',
+    cmd.meta,
+    cmd.organization_id,
+    cmd.mix_session_id,
+    'suggested_formula_dismissed',
+    session!.current_status,
+    {
+      bowl_id: cmd.bowl_id,
+      suggestion_source: cmd.suggestion_source,
+    },
+  );
+}
