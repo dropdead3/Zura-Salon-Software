@@ -72,7 +72,7 @@ export function AbcClassificationCard({ abcResult, filterContext }: AbcClassific
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <CardTitle className="font-display text-base tracking-wide">ABC CLASSIFICATION</CardTitle>
+                  <CardTitle className={tokens.card.title}>ABC CLASSIFICATION</CardTitle>
                   <MetricInfoTooltip description="Products classified by cumulative revenue contribution. A = top 80% of revenue (cycle count weekly), B = next 15% (monthly), C = bottom 5% (quarterly). Drives reorder priority and stocktake frequency." />
                 </div>
                 <CardDescription className="text-xs">
