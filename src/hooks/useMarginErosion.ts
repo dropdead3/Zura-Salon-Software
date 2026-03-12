@@ -44,7 +44,7 @@ export function useMarginErosion() {
       // Get current products for retail price and current cost
       const { data: products } = await supabase
         .from('products')
-        .select('id, name, cost_price, retail_price, supplier_name, quantity_on_hand')
+        .select('id, name, cost_price, retail_price, supplier_id, quantity_on_hand')
         .eq('organization_id', orgId!)
         .eq('is_active', true);
 
