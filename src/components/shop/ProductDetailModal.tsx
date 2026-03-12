@@ -2,7 +2,7 @@ import type { Product } from '@/hooks/useProducts';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Package, AlertTriangle, MessageCircle } from 'lucide-react';
+import { Package, AlertTriangle, MessageCircle, Link2 } from 'lucide-react';
 import { usePublicOrg } from '@/contexts/PublicOrgContext';
 import { MovementBadge } from '@/components/ui/MovementBadge';
 import type { MovementRating } from '@/lib/productMovementRating';
@@ -12,9 +12,17 @@ interface ProductDetailModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   movementRating?: MovementRating | null;
+  /** Co-purchase pairs for this product (from useProductCoPurchase) */
+  coPurchases?: { pairedWith: string; count: number }[];
+  /** Callback when a paired product is clicked */
+  onSelectProduct?: (productName: string) => void;
 }
 
-export function ProductDetailModal({ product, open, onOpenChange, movementRating }: ProductDetailModalProps) {
+function titleCase(s: string): string {
+  return s.replace(/\b\w/g, c => c.toUpperCase());
+}
+
+export function ProductDetailModal({ product, open, onOpenChange, movementRating, coPurchases, onSelectProduct }: ProductDetailModalProps) {
   const { organization } = usePublicOrg();
 
   if (!product) return null;
@@ -30,6 +38,8 @@ export function ProductDetailModal({ product, open, onOpenChange, movementRating
       window.open(`mailto:${email}?subject=${subject}&body=${body}`, '_blank');
     }
   };
+
+  const topPairs = coPurchases?.slice(0, 3) || [];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -83,6 +93,28 @@ export function ProductDetailModal({ product, open, onOpenChange, movementRating
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">Category:</span>
               <Badge variant="outline" className="text-xs">{product.category}</Badge>
+            </div>
+          )}
+
+          {/* Frequently bought with */}
+          {topPairs.length > 0 && (
+            <div className="pt-2 border-t border-border/50">
+              <div className="flex items-center gap-1.5 mb-2">
+                <Link2 className="w-3.5 h-3.5 text-muted-foreground" />
+                <p className="text-xs font-medium text-muted-foreground">Frequently bought with</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {topPairs.map(pair => (
+                  <button
+                    key={pair.pairedWith}
+                    onClick={() => onSelectProduct?.(pair.pairedWith)}
+                    className="text-xs px-3 py-1.5 rounded-full border border-border/60 bg-muted/30 hover:bg-muted/60 transition-colors text-foreground"
+                  >
+                    {titleCase(pair.pairedWith)}
+                    <span className="text-muted-foreground ml-1">({pair.count}×)</span>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
