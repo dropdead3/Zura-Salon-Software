@@ -387,7 +387,7 @@ export async function executeSealBowl(
 
 export async function executeCaptureReweigh(
   cmd: CaptureReweighCommand,
-): Promise<CommandResult> {
+): Promise<CommandResult<unknown>> {
   const session = await fetchSessionState(cmd.mix_session_id);
   const bowl = await fetchBowlState(cmd.bowl_id);
   const errors = validateCaptureReweigh(cmd.meta.initiated_by, session, bowl, cmd.weight);
