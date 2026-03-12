@@ -1155,9 +1155,32 @@ function InventoryByLocationTab() {
         <>
           {lowStockProducts.length > 0 && (
             <div className="p-3 rounded-lg border border-amber-200 bg-amber-50/50 dark:border-amber-900/50 dark:bg-amber-950/20">
-              <div className="flex items-center gap-2 mb-1">
-                <AlertTriangle className="w-4 h-4 text-amber-500" />
-                <span className="text-sm font-medium">{lowStockProducts.length} product(s) at or below minimum stock level</span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-amber-500" />
+                  <span className="text-sm font-medium">{lowStockProducts.length} product(s) at or below minimum stock level</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size={tokens.button.inline}
+                    className="gap-1"
+                    onClick={() => {
+                      setSelectedInvIds(new Set(lowStockProducts.map(p => p.id)));
+                    }}
+                  >
+                    Select All Low Stock
+                  </Button>
+                  <Button
+                    size={tokens.button.inline}
+                    className="gap-1"
+                    disabled={selectedInvIds.size === 0}
+                    onClick={() => setShowBatchReorder(true)}
+                  >
+                    <ShoppingCart className="w-3.5 h-3.5" />
+                    Batch Reorder ({selectedInvIds.size})
+                  </Button>
+                </div>
               </div>
             </div>
           )}
