@@ -1058,6 +1058,13 @@ export function AppointmentDetailSheet({
                 <ScrollArea className="flex-1">
                   {/* ─── TAB: Details ──────────────────────────── */}
                   <TabsContent value="details" className="p-6 pt-4 mt-0">
+                    {/* Client Memory Panel */}
+                    <ClientMemoryPanel
+                      clientId={appointment.phorest_client_id}
+                      serviceName={appointment.service_name}
+                      orgId={resolvedOrgId}
+                      className="-mx-4 -mt-2 mb-4 border-b border-border/40 pb-4"
+                    />
                     <motion.div variants={staggerContainer} initial={false} animate="show" className="space-y-5">
                     {/* Redo approval actions */}
                     {appointment.is_redo && appointment.status === 'pending' && isManagerOrAdmin && (
