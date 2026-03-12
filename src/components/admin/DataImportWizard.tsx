@@ -173,6 +173,36 @@ export function DataImportWizard({
   const [isProcessing, setIsProcessing] = useState(false);
 
   const fields = FIELD_DEFINITIONS[dataType] || [];
+  const requiredFieldNames = fields.filter(f => f.required).map(f => f.label);
+
+  const SAMPLE_VALUES: Record<string, Record<string, string>> = {
+    clients: { first_name: 'Jane', last_name: 'Doe', email: 'jane@example.com', phone: '555-123-4567', mobile: '555-987-6543', notes: 'Prefers balayage', external_id: 'CLT-001', visit_count: '12', total_spend: '1450.00', last_visit_date: '2025-11-15', is_vip: 'true' },
+    appointments: { client_name: 'Jane Doe', appointment_date: '2025-12-01', start_time: '10:00', end_time: '11:30', service_name: 'Balayage', staff_name: 'Sarah M', status: 'confirmed', total_price: '185.00', notes: '', external_id: 'APT-001' },
+    services: { name: 'Balayage', category: 'Color', duration_minutes: '90', price: '185.00', description: 'Hand-painted highlights', external_id: 'SVC-001' },
+    transactions: { transaction_date: '2025-12-01', client_name: 'Jane Doe', staff_name: 'Sarah M', item_name: 'Balayage', quantity: '1', unit_price: '185.00', total_amount: '185.00', payment_method: 'card', external_id: 'TXN-001' },
+    staff: { full_name: 'Sarah Martinez', email: 'sarah@salon.com', phone: '555-222-3333', hire_date: '2023-06-15', stylist_level: 'Senior', specialties: 'Color, Balayage', bio: 'Color specialist with 8 years experience', external_id: 'STF-001' },
+    locations: { name: 'Downtown Studio', address: '123 Main St', city: 'Austin', state_province: 'TX', phone: '555-000-1111', hours: 'Mon-Sat 9am-7pm', store_number: 'LOC-01', external_id: 'LOC-001' },
+    products: { name: 'Olaplex No. 3', sku: 'OLA-003', barcode: '896364002350', category: 'Hair Care', brand: 'Olaplex', retail_price: '30.00', cost_price: '14.50', quantity_on_hand: '24', description: 'Hair perfector treatment', external_id: 'PRD-001' },
+  };
+
+  const generateTemplate = useCallback(() => {
+    const defs = FIELD_DEFINITIONS[dataType];
+    if (!defs) return;
+    const samples = SAMPLE_VALUES[dataType] || {};
+    const headers = defs.map(f => f.field).join(',');
+    const sampleRow = defs.map(f => {
+      const val = samples[f.field] || '';
+      return val.includes(',') ? `"${val}"` : val;
+    }).join(',');
+    const csv = `${headers}\n${sampleRow}\n`;
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${dataType}_import_template.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [dataType]);
 
   const resetWizard = useCallback(() => {
     setStep('upload');
