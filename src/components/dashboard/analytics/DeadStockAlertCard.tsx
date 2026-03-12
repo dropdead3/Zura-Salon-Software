@@ -35,7 +35,7 @@ function getSuggestedDiscount(daysSinceLastSale: number | null): typeof DISCOUNT
   return DISCOUNT_TIERS[0];
 }
 
-export function DeadStockAlertCard({ products, movementRatings, filterContext }: DeadStockAlertCardProps) {
+export function DeadStockAlertCard({ products, movementRatings, velocityMap, filterContext }: DeadStockAlertCardProps) {
   const { formatCurrency } = useFormatCurrency();
   const updateProduct = useUpdateProduct();
 
