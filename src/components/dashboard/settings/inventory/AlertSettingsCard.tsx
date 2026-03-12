@@ -193,7 +193,7 @@ export function AlertSettingsCard() {
 
                         <div className="space-y-2">
                           <Label className="text-sm">Reorder mode</Label>
-                          <RadioGroup value={autoReorderMode} onValueChange={setAutoReorderMode} className="space-y-1.5">
+                          <RadioGroup value={autoReorderMode} onValueChange={setAutoReorderMode} className="space-y-2">
                             <label className="flex items-start gap-2 cursor-pointer">
                               <RadioGroupItem value="to_par" className="mt-0.5" />
                               <div>
