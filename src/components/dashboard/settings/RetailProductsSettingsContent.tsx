@@ -54,7 +54,11 @@ import { ReorderDialog } from '@/components/dashboard/settings/inventory/Reorder
 import { SupplierDialog } from '@/components/dashboard/settings/inventory/SupplierDialog';
 import { PurchaseOrdersPanel } from '@/components/dashboard/settings/inventory/PurchaseOrdersPanel';
 import { BatchReorderDialog } from '@/components/dashboard/settings/inventory/BatchReorderDialog';
+import { AlertSettingsCard } from '@/components/dashboard/settings/inventory/AlertSettingsCard';
+import { StockMovementHistory } from '@/components/dashboard/settings/inventory/StockMovementHistory';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useLogStockMovement } from '@/hooks/useStockMovements';
+import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
 // Helper to classify product type — prefer DB column, fall back to regex
 function getProductType(product: Product): string {
   if (product.product_type && product.product_type !== 'Products') return product.product_type;
