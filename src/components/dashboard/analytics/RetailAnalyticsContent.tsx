@@ -566,6 +566,8 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
   const { data: velocityMap } = useProductVelocity(locationId);
   // Supplier performance
   const { data: supplierMetrics } = useSupplierPerformance();
+  // ABC Classification
+  const abcResult = useAbcClassification(data?.products);
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) setSortDir(d => (d === 'desc' ? 'asc' : 'desc'));
