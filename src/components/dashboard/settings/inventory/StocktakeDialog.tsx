@@ -403,10 +403,10 @@ export function StocktakeDialog({ open, onOpenChange, locationId }: StocktakeDia
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Product</TableHead>
-                      <TableHead className="text-right w-24">System Qty</TableHead>
-                      <TableHead className="text-right w-28">Actual Count</TableHead>
-                      <TableHead className="text-right w-20">Variance</TableHead>
+                      <TableHead className={tokens.table.columnHeader}>Product</TableHead>
+                      <TableHead className={cn(tokens.table.columnHeader, 'text-right w-24')}>System Qty</TableHead>
+                      <TableHead className={cn(tokens.table.columnHeader, 'text-right w-28')}>Actual Count</TableHead>
+                      <TableHead className={cn(tokens.table.columnHeader, 'text-right w-20')}>Variance</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>

@@ -24,7 +24,7 @@ export function ClientAffinityBadges({ phorestClientId, className, compact = fal
           <span className="font-sans">Frequently Purchased</span>
         </div>
       )}
-      <div className="flex flex-wrap gap-1.5">
+      <div className="flex flex-wrap gap-2">
         {affinities.map((a) => {
           const daysAgo = a.lastPurchaseDate
             ? differenceInDays(new Date(), new Date(a.lastPurchaseDate))

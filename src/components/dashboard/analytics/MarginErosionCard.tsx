@@ -57,14 +57,14 @@ export function MarginErosionCard({ filterContext }: MarginErosionCardProps) {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Product</TableHead>
-                  <TableHead>Supplier</TableHead>
-                  <TableHead className="text-right">Old Cost</TableHead>
-                  <TableHead className="text-right">New Cost</TableHead>
-                  <TableHead className="text-right">Change</TableHead>
-                  <TableHead className="text-right">Margin</TableHead>
-                  <TableHead className="text-right">Annual Risk</TableHead>
-                  <TableHead className="text-center">Severity</TableHead>
+                  <TableHead className={tokens.table.columnHeader}>Product</TableHead>
+                  <TableHead className={tokens.table.columnHeader}>Supplier</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Old Cost</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>New Cost</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Change</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Margin</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Annual Risk</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-center')}>Severity</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

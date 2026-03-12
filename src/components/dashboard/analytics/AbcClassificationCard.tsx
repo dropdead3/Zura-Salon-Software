@@ -157,13 +157,13 @@ export function AbcClassificationCard({ abcResult, filterContext }: AbcClassific
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-10">#</TableHead>
-                      <TableHead>Class</TableHead>
-                      <TableHead>Product</TableHead>
-                      <TableHead className="text-right">Revenue</TableHead>
-                      <TableHead className="text-right">Cumulative %</TableHead>
-                      <TableHead className="text-right">Stock</TableHead>
-                      <TableHead>Cycle Count</TableHead>
+                      <TableHead className={cn(tokens.table.columnHeader, 'w-10')}>#</TableHead>
+                      <TableHead className={tokens.table.columnHeader}>Class</TableHead>
+                      <TableHead className={tokens.table.columnHeader}>Product</TableHead>
+                      <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Revenue</TableHead>
+                      <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Cumulative %</TableHead>
+                      <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Stock</TableHead>
+                      <TableHead className={tokens.table.columnHeader}>Cycle Count</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
