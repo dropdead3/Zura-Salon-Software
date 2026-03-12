@@ -59,8 +59,35 @@ function getProductType(product: Product): string {
 }
 
 const PRODUCT_TYPES = ['Products', 'Extensions', 'Merch'] as const;
+const PAGE_SIZE = 50;
 
-// ─── Products Tab ───
+type SortField = 'name' | 'brand' | 'category' | 'product_type' | 'retail_price' | 'cost_price' | 'quantity_on_hand';
+type SortDir = 'asc' | 'desc';
+
+function exportProductsCsv(products: Product[]) {
+  const headers = ['Name', 'Brand', 'Category', 'Type', 'SKU', 'Barcode', 'Retail Price', 'Cost Price', 'Stock', 'Reorder Level', 'Available Online'];
+  const rows = products.map(p => [
+    `"${(p.name || '').replace(/"/g, '""')}"`,
+    `"${(p.brand || '').replace(/"/g, '""')}"`,
+    `"${(p.category || '').replace(/"/g, '""')}"`,
+    `"${(p.product_type || getProductType(p)).replace(/"/g, '""')}"`,
+    `"${(p.sku || '').replace(/"/g, '""')}"`,
+    `"${(p.barcode || '').replace(/"/g, '""')}"`,
+    p.retail_price ?? '',
+    p.cost_price ?? '',
+    p.quantity_on_hand ?? '',
+    p.reorder_level ?? '',
+    p.available_online ? 'Yes' : 'No',
+  ].join(','));
+  const csv = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `products_export_${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 function ProductsTab() {
   const { formatCurrency } = useFormatCurrency();
   const { effectiveOrganization } = useOrganizationContext();
