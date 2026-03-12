@@ -28,6 +28,9 @@ import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { PinnableCard } from '@/components/dashboard/PinnableCard';
 import { VisibilityGate } from '@/components/visibility/VisibilityGate';
 import { useRetailAnalytics, exportRetailCSV, type ProductRow, type RedFlag, type BrandRow, type RetailAnalyticsResult } from '@/hooks/useRetailAnalytics';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { exportStockMovementsCsv } from '@/lib/exportStockMovementsCsv';
+import { toast } from 'sonner';
 import { useServiceRetailAttachment } from '@/hooks/useServiceRetailAttachment';
 import { AnalyticsFilterBadge, type FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 import { useCurrentRetailGoals } from '@/hooks/useRetailGoals';
@@ -534,6 +537,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
   const [staffSortDir, setStaffSortDir] = useState<SortDir>('desc');
   const navigate = useNavigate();
 
+  const { effectiveOrganization } = useOrganizationContext();
   // Retail Goals
   const { data: currentGoals } = useCurrentRetailGoals();
   // Commission
@@ -1492,12 +1496,29 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                 </div>
                 <div className="flex items-center gap-2">
                   {filterContext && <AnalyticsFilterBadge locationId={filterContext.locationId} dateRange={filterContext.dateRange} />}
-                  <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => exportInventoryAlertsCSV(inventoryAlerts)}>
-                    <Download className="w-3.5 h-3.5" /> Export
-                  </Button>
-                  <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate('/dashboard/admin/settings?category=retail-products')}>
-                    <Settings2 className="w-3.5 h-3.5" /> Manage Inventory
-                  </Button>
+                   <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => exportInventoryAlertsCSV(inventoryAlerts)}>
+                     <Download className="w-3.5 h-3.5" /> Export Alerts
+                   </Button>
+                   {effectiveOrganization?.id && (
+                     <Button
+                       variant="ghost"
+                       size={tokens.button.inline}
+                       className="text-xs gap-1 text-muted-foreground"
+                       onClick={async () => {
+                         try {
+                           await exportStockMovementsCsv(effectiveOrganization.id);
+                           toast.success('Stock movements exported');
+                         } catch {
+                           toast.error('Failed to export');
+                         }
+                       }}
+                     >
+                       <Download className="w-3.5 h-3.5" /> Export Movements
+                     </Button>
+                   )}
+                   <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate('/dashboard/admin/settings?category=retail-products')}>
+                     <Settings2 className="w-3.5 h-3.5" /> Manage Inventory
+                   </Button>
                 </div>
               </div>
             </CardHeader>
