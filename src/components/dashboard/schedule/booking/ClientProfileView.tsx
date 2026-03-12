@@ -116,6 +116,11 @@ export function ClientProfileView({ client, onBack, onSelect }: ClientProfileVie
         </Card>
       </div>
 
+      {/* Product Affinity */}
+      <div className="px-4 py-2 border-b border-border">
+        <ClientAffinityBadges phorestClientId={client.phorest_client_id} compact />
+      </div>
+
       {/* Last Visit & Personal Info */}
       {(lastVisit || client.birthday || client.client_since) && (
         <div className="px-4 py-2 border-b border-border bg-muted/20">
