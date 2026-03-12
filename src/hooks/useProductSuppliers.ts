@@ -15,6 +15,7 @@ export interface ProductSupplier {
   reorder_notes: string | null;
   lead_time_days: number | null;
   account_number: string | null;
+  moq: number;
   avg_delivery_days: number | null;
   delivery_count: number;
   created_at: string;
