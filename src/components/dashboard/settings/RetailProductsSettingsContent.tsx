@@ -765,6 +765,8 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
       description: form.description || null,
       location_id: form.location_id || null,
       image_url: form.image_url || null,
+      expires_at: form.expires_at || null,
+      expiry_alert_days: form.expiry_alert_days ? parseInt(form.expiry_alert_days) : 30,
     });
   };
 
