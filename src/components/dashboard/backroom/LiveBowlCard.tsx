@@ -14,12 +14,14 @@ import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { BowlLineRow } from './BowlLineRow';
 import { AddProductToBowl } from './AddProductToBowl';
+import { QuickProductButtons } from './QuickProductButtons';
 import { ManualWeightInput } from './ManualWeightInput';
 import { useAllowanceRemaining } from '@/hooks/backroom/useAllowanceRemaining';
 import { calculateBowlWeight, calculateBowlCost } from '@/lib/backroom/mix-calculations';
 import { Lock, Trash2, Beaker } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import type { MixBowl } from '@/hooks/backroom/useMixBowls';
+import type { PinnedProduct } from '@/hooks/backroom/useStaffPinnedProducts';
 import type { MixBowlLine } from '@/hooks/backroom/useMixBowlLines';
 
 interface LiveBowlCardProps {
