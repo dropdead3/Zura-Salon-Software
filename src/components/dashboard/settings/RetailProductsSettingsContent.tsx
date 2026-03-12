@@ -1320,6 +1320,17 @@ function InventoryByLocationTab() {
           organizationId={orgId}
         />
       )}
+
+      {/* Batch Reorder Dialog */}
+      {showBatchReorder && orgId && (
+        <BatchReorderDialog
+          open={showBatchReorder}
+          onOpenChange={(open) => { if (!open) { setShowBatchReorder(false); setSelectedInvIds(new Set()); } }}
+          products={(products || []).filter(p => selectedInvIds.has(p.id))}
+          supplierMap={supplierMap}
+          organizationId={orgId}
+        />
+      )}
     </div>
   );
 }
