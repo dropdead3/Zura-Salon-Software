@@ -1615,6 +1615,13 @@ function InventoryByLocationTab() {
         open={showTransferDialog}
         onOpenChange={setShowTransferDialog}
       />
+
+      {/* Stocktake Dialog */}
+      <StocktakeDialog
+        open={showStocktake}
+        onOpenChange={setShowStocktake}
+        locationId={selectedLocationId}
+      />
     </div>
   );
 }

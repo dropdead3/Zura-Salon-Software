@@ -49,6 +49,7 @@ import { InventoryValuationCard } from './InventoryValuationCard';
 import { DeadStockAlertCard } from './DeadStockAlertCard';
 import { ReorderApprovalCard } from './ReorderApprovalCard';
 import { ExpiryAlertCard } from './ExpiryAlertCard';
+import { ShrinkageReportCard } from './ShrinkageReportCard';
 
 interface RetailAnalyticsContentProps {
   dateFrom: string;
