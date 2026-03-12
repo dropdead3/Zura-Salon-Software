@@ -4,12 +4,14 @@ import { Badge } from '@/components/ui/badge';
 
 interface ProductCardProps {
   product: Product;
+  continueSelling?: boolean;
   onClick?: (product: Product) => void;
 }
 
-export function ProductCard({ product, onClick }: ProductCardProps) {
+export function ProductCard({ product, continueSelling = false, onClick }: ProductCardProps) {
   const inStock = product.quantity_on_hand != null && product.quantity_on_hand > 0;
   const lowStock = product.quantity_on_hand != null && product.reorder_level != null && product.quantity_on_hand <= product.reorder_level && product.quantity_on_hand > 0;
+  const showOutOfStock = !inStock && !continueSelling;
 
   return (
     <button
