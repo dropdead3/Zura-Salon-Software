@@ -24,6 +24,7 @@ interface FormData {
   cost_price: string;
   quantity_on_hand: string;
   reorder_level: string;
+  par_level: string;
 }
 
 export function ProductEditDialog({ productId, open, onOpenChange }: ProductEditDialogProps) {
