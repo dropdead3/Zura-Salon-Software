@@ -90,6 +90,11 @@ export function AddProductToBowl({ bowlId, onAdd, onCancel, inline = false }: Ad
               unit,
               'manual'
             );
+            // In inline mode, auto-clear for next product
+            if (inline) {
+              setSelectedProduct(null);
+              setSearch('');
+            }
           }}
           label="Dispensed amount"
         />
