@@ -662,6 +662,7 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
       cost_price: form.cost_price ? parseFloat(form.cost_price) : null,
       quantity_on_hand: form.quantity_on_hand ? parseInt(form.quantity_on_hand) : null,
       reorder_level: form.reorder_level ? parseInt(form.reorder_level) : null,
+      par_level: form.par_level ? parseInt(form.par_level) : null,
       description: form.description || null,
       location_id: form.location_id || null,
       image_url: form.image_url || null,
