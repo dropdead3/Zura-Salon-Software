@@ -65,6 +65,7 @@ import { MovementBadge } from '@/components/ui/MovementBadge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { ClearancePanel } from '@/components/dashboard/settings/inventory/ClearancePanel';
 import { StockTransferDialog } from '@/components/dashboard/settings/inventory/StockTransferDialog';
+import { StocktakeDialog } from '@/components/dashboard/settings/inventory/StocktakeDialog';
 // Helper to classify product type — prefer DB column, fall back to regex
 function getProductType(product: Product): string {
   if (product.product_type && product.product_type !== 'Products') return product.product_type;
