@@ -138,22 +138,22 @@ function buildExceptionAlerts(items: BackroomException[]): ControlTowerAlert[] {
 
 function buildProfitabilityAlerts(outliers: MarginOutlier[]): ControlTowerAlert[] {
   return outliers.map((o) => ({
-    id: `profit-${o.snapshotId}`,
+    id: `profit-${o.appointmentId}`,
     category: 'profitability' as AlertCategory,
     priority: o.marginPct < 20 ? 'high' : 'medium',
     title: 'Low Margin Alert',
-    description: `${o.serviceName} at ${o.marginPct}% margin (avg ${o.serviceAvgMarginPct}% for this service).`,
+    description: `${o.serviceName} at ${o.marginPct}% margin (avg ${o.avgMarginPctForService}% for this service).`,
     metrics: {
       Service: o.serviceName,
       Margin: `${o.marginPct}%`,
-      'Service Avg': `${o.serviceAvgMarginPct}%`,
+      'Service Avg': `${o.avgMarginPctForService}%`,
       Deviation: `${o.deviationPct}%`,
     },
     entityType: 'appointment',
-    entityId: o.appointmentId ?? null,
+    entityId: o.appointmentId,
     suggestedAction: 'Review service profitability',
     actionRoute: '/dashboard/backroom/analytics',
-    createdAt: o.createdAt,
+    createdAt: new Date().toISOString(),
   }));
 }
 
