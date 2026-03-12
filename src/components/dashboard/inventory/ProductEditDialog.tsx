@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -6,6 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useProducts, useUpdateProduct, useCreateProduct, Product } from '@/hooks/useProducts';
+import { useProductVelocity } from '@/hooks/useProductVelocity';
+import { suggestParLevel } from '@/lib/parLevelSuggestion';
+import { Sparkles } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface ProductEditDialogProps {
   productId: string | null;
@@ -31,11 +35,12 @@ export function ProductEditDialog({ productId, open, onOpenChange }: ProductEdit
   const { data: products = [] } = useProducts();
   const updateProduct = useUpdateProduct();
   const createProduct = useCreateProduct();
+  const { data: velocityMap } = useProductVelocity();
   
   const product = productId ? products.find(p => p.id === productId) : null;
   const isEditing = !!productId;
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<FormData>({
     defaultValues: {
       name: '',
       sku: '',
@@ -50,6 +55,16 @@ export function ProductEditDialog({ productId, open, onOpenChange }: ProductEdit
       par_level: '',
     },
   });
+
+  const watchedName = watch('name');
+
+  // Compute par-level suggestion from velocity data
+  const parSuggestion = useMemo(() => {
+    if (!velocityMap || !watchedName) return null;
+    const entry = velocityMap.get(watchedName.toLowerCase().trim());
+    if (!entry || entry.velocity <= 0) return null;
+    return suggestParLevel(entry.velocity);
+  }, [velocityMap, watchedName]);
 
   useEffect(() => {
     if (product) {
@@ -216,6 +231,19 @@ export function ProductEditDialog({ productId, open, onOpenChange }: ProductEdit
                 {...register('par_level')}
                 placeholder="Target stock level"
               />
+              {parSuggestion && parSuggestion.suggestedPar > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setValue('par_level', String(parSuggestion.suggestedPar))}
+                  className={cn(
+                    'mt-1 inline-flex items-center gap-1 text-[11px] text-primary hover:underline cursor-pointer transition-colors',
+                  )}
+                  title={parSuggestion.explanation}
+                >
+                  <Sparkles className="w-3 h-3" />
+                  Suggested: {parSuggestion.suggestedPar} units ({parSuggestion.totalSupplyDays}-day supply)
+                </button>
+              )}
             </div>
 
             <div className="col-span-2">
