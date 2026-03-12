@@ -161,7 +161,14 @@ Deno.serve(async (req) => {
         .in("id", sentIds);
     }
 
-    return new Response(JSON.stringify({ success: true, messageId: emailResult.messageId }), {
+    const allSuccess = results.every(r => r.success);
+    return new Response(JSON.stringify({ 
+      success: allSuccess, 
+      results,
+      sent_count: results.filter(r => r.success).length,
+      skipped_no_email: noEmailPOs.length,
+    }), {
+      status: allSuccess ? 200 : 207,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {

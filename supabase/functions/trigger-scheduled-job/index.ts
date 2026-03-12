@@ -17,6 +17,7 @@ const ALLOWED_FUNCTIONS = [
   'record-staffing-snapshot',
   'update-sales-leaderboard',
   'check-expired-assignments',
+  'check-reorder-levels',
 ];
 
 Deno.serve(async (req) => {

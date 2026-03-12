@@ -83,7 +83,7 @@ export function BatchReorderDialog({ open, onOpenChange, products, supplierMap, 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className={cn(tokens.heading.cardTitle, 'flex items-center gap-2')}>
+          <DialogTitle className={cn(tokens.heading.card, 'flex items-center gap-2')}>
             <Package className="w-5 h-5 text-primary" />
             Batch Reorder — {products.length} Product(s)
           </DialogTitle>
