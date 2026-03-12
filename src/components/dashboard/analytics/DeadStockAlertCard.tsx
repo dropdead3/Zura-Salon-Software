@@ -46,7 +46,6 @@ export function DeadStockAlertCard({ products, movementRatings, velocityMap, fil
         const nameLower = p.name.toLowerCase().trim();
         const rating = movementRatings.get(nameLower);
         if (!rating) return false;
-        // Only dead_weight and stagnant with stock, not already in clearance
         return ['dead_weight', 'stagnant'].includes(rating.tier) &&
           (p.quantity_on_hand ?? 0) > 0 &&
           !(p as any).clearance_status;
@@ -54,12 +53,13 @@ export function DeadStockAlertCard({ products, movementRatings, velocityMap, fil
       .map(p => {
         const nameLower = p.name.toLowerCase().trim();
         const rating = movementRatings.get(nameLower)!;
-        const daysSince = (rating as any).daysSinceLastSale ?? null;
-        return { product: p, tier: rating.tier, daysSinceLastSale: daysSince, discount: getSuggestedDiscount(daysSince) };
+        const velocityEntry = velocityMap?.get(nameLower);
+        const daysSince = velocityEntry?.daysSinceLastSale ?? null;
+        return { product: p, tier: rating.tier as MovementTier, daysSinceLastSale: daysSince, discount: getSuggestedDiscount(daysSince) };
       })
       .sort((a, b) => (b.daysSinceLastSale ?? 999) - (a.daysSinceLastSale ?? 999))
       .slice(0, 8);
-  }, [products, movementRatings]);
+  }, [products, movementRatings, velocityMap]);
 
   const handleMarkClearance = (product: Product, discountPct: number) => {
     const originalPrice = product.retail_price ?? 0;
