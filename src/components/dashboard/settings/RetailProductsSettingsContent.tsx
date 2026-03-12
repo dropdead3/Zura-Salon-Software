@@ -53,6 +53,8 @@ import { useProductSuppliers, type ProductSupplier } from '@/hooks/useProductSup
 import { ReorderDialog } from '@/components/dashboard/settings/inventory/ReorderDialog';
 import { SupplierDialog } from '@/components/dashboard/settings/inventory/SupplierDialog';
 import { PurchaseOrdersPanel } from '@/components/dashboard/settings/inventory/PurchaseOrdersPanel';
+import { BatchReorderDialog } from '@/components/dashboard/settings/inventory/BatchReorderDialog';
+import { Checkbox } from '@/components/ui/checkbox';
 // Helper to classify product type — prefer DB column, fall back to regex
 function getProductType(product: Product): string {
   if (product.product_type && product.product_type !== 'Products') return product.product_type;
@@ -1078,6 +1080,8 @@ function InventoryByLocationTab() {
   const updateProduct = useUpdateProduct();
   const { data: allSuppliers } = useProductSuppliers();
   const [inventoryView, setInventoryView] = useState<'stock' | 'orders'>('stock');
+  const [selectedInvIds, setSelectedInvIds] = useState<Set<string>>(new Set());
+  const [showBatchReorder, setShowBatchReorder] = useState(false);
 
   // Dialog state
   const [reorderProduct, setReorderProduct] = useState<Product | null>(null);
@@ -1151,16 +1155,64 @@ function InventoryByLocationTab() {
         <>
           {lowStockProducts.length > 0 && (
             <div className="p-3 rounded-lg border border-amber-200 bg-amber-50/50 dark:border-amber-900/50 dark:bg-amber-950/20">
-              <div className="flex items-center gap-2 mb-1">
-                <AlertTriangle className="w-4 h-4 text-amber-500" />
-                <span className="text-sm font-medium">{lowStockProducts.length} product(s) at or below minimum stock level</span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-amber-500" />
+                  <span className="text-sm font-medium">{lowStockProducts.length} product(s) at or below minimum stock level</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size={tokens.button.inline}
+                    className="gap-1"
+                    onClick={() => {
+                      setSelectedInvIds(new Set(lowStockProducts.map(p => p.id)));
+                    }}
+                  >
+                    Select All Low Stock
+                  </Button>
+                  <Button
+                    size={tokens.button.inline}
+                    className="gap-1"
+                    disabled={selectedInvIds.size === 0}
+                    onClick={() => setShowBatchReorder(true)}
+                  >
+                    <ShoppingCart className="w-3.5 h-3.5" />
+                    Batch Reorder ({selectedInvIds.size})
+                  </Button>
+                </div>
               </div>
+            </div>
+          )}
+          {selectedInvIds.size > 0 && lowStockProducts.length === 0 && (
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 border">
+              <span className="text-sm font-medium">{selectedInvIds.size} selected</span>
+              <Button
+                size={tokens.button.inline}
+                className="gap-1"
+                onClick={() => setShowBatchReorder(true)}
+              >
+                <ShoppingCart className="w-3.5 h-3.5" />
+                Batch Reorder
+              </Button>
             </div>
           )}
           <div className="overflow-x-auto border rounded-lg">
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-10">
+                    <Checkbox
+                      checked={products?.length ? selectedInvIds.size === products.length : false}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setSelectedInvIds(new Set(products?.map(p => p.id)));
+                        } else {
+                          setSelectedInvIds(new Set());
+                        }
+                      }}
+                    />
+                  </TableHead>
                   <TableHead>Product</TableHead>
                   <TableHead>Brand</TableHead>
                   <TableHead>Supplier</TableHead>
@@ -1173,12 +1225,24 @@ function InventoryByLocationTab() {
               </TableHeader>
               <TableBody>
                 {!products?.length ? (
-                  <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No products{selectedLocationId !== 'all' ? ' at this location' : ''}</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">No products{selectedLocationId !== 'all' ? ' at this location' : ''}</TableCell></TableRow>
                 ) : products.map(p => {
                   const isLow = p.reorder_level != null && p.quantity_on_hand != null && p.quantity_on_hand <= p.reorder_level;
                   const supplier = supplierMap.get(p.id);
                   return (
-                    <TableRow key={p.id} className={cn(isLow && 'bg-amber-50/50 dark:bg-amber-950/10')}>
+                      <TableRow key={p.id} className={cn(isLow && 'bg-amber-50/50 dark:bg-amber-950/10')}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedInvIds.has(p.id)}
+                          onCheckedChange={(checked) => {
+                            setSelectedInvIds(prev => {
+                              const next = new Set(prev);
+                              if (checked) next.add(p.id); else next.delete(p.id);
+                              return next;
+                            });
+                          }}
+                        />
+                      </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2.5">
                           <Avatar className="h-8 w-8 shrink-0">
@@ -1266,6 +1330,17 @@ function InventoryByLocationTab() {
           onOpenChange={open => !open && setSupplierProduct(null)}
           productId={supplierProduct.id}
           productName={supplierProduct.name}
+          organizationId={orgId}
+        />
+      )}
+
+      {/* Batch Reorder Dialog */}
+      {showBatchReorder && orgId && (
+        <BatchReorderDialog
+          open={showBatchReorder}
+          onOpenChange={(open) => { if (!open) { setShowBatchReorder(false); setSelectedInvIds(new Set()); } }}
+          products={(products || []).filter(p => selectedInvIds.has(p.id))}
+          supplierMap={supplierMap}
           organizationId={orgId}
         />
       )}
