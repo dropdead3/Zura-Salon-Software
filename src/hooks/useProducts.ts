@@ -22,6 +22,8 @@ export interface Product {
   image_url: string | null;
   product_type: string | null;
   supplier_id: string | null;
+  expires_at: string | null;
+  expiry_alert_days: number | null;
   created_at: string | null;
   updated_at: string | null;
 }
