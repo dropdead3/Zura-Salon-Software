@@ -748,13 +748,27 @@ function CategoriesTab() {
                     )}
                   </TableCell>
                   <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      {typeEntries.map(([type, count]) => (
-                        <Badge key={type} variant="secondary" className="text-[10px] px-2 py-0.5">
-                          {isSingleType ? type : `${type} (${count})`}
-                        </Badge>
-                      ))}
-                    </div>
+                    {isUncategorized || c.productCount === 0 ? (
+                      <div className="flex flex-wrap gap-1">
+                        {typeEntries.length > 0 ? typeEntries.map(([type]) => (
+                          <Badge key={type} variant="secondary" className="text-[10px] px-2 py-0.5">{type}</Badge>
+                        )) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </div>
+                    ) : (
+                      <Select
+                        value={isSingleType ? typeEntries[0][0] : undefined}
+                        onValueChange={(val) => bulkUpdateType.mutate({ category: c.category, newType: val })}
+                      >
+                        <SelectTrigger className="h-7 w-[130px] text-xs rounded-md px-2">
+                          <SelectValue placeholder={isSingleType ? typeEntries[0][0] : 'Mixed'} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {PRODUCT_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    )}
                   </TableCell>
                   <TableCell className="text-right tabular-nums">{c.productCount}</TableCell>
                   <TableCell className="text-right tabular-nums">{c.totalStock}</TableCell>
