@@ -237,6 +237,44 @@ function ProductsTab() {
 
   return (
     <div className="space-y-4">
+      {/* Row 1: Count + Action Buttons */}
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-xs text-muted-foreground">
+          {totalCount > PAGE_SIZE
+            ? `Showing ${page * PAGE_SIZE + 1}–${Math.min((page + 1) * PAGE_SIZE, totalCount)} of ${totalCount} products`
+            : `${filteredProducts.length} product${filteredProducts.length !== 1 ? 's' : ''}`
+          }
+        </span>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size={tokens.button.card} onClick={() => exportProductsCsv(filteredProducts)} className="gap-1.5">
+            <Download className="w-4 h-4" /> Export
+          </Button>
+          <Button variant="outline" size={tokens.button.card} onClick={() => setShowImportWizard(true)} className="gap-1.5">
+            <Upload className="w-4 h-4" /> Import
+          </Button>
+          {productImportJobs.length > 0 && (
+            <Button variant="ghost" size={tokens.button.card} onClick={() => setShowHistory(!showHistory)} className="gap-1.5 text-muted-foreground">
+              <History className="w-4 h-4" /> History
+            </Button>
+          )}
+          <Button size={tokens.button.card} onClick={() => { setWizardDraftId(undefined); setWizardInitialDraft(undefined); setShowWizard(true); }} className="gap-1.5">
+            <Plus className="w-4 h-4" /> Add Product
+          </Button>
+        </div>
+      </div>
+
+      {showHistory && productImportJobs.length > 0 && (
+        <Collapsible open={showHistory} onOpenChange={setShowHistory}>
+          <CollapsibleContent className="space-y-3">
+            <h4 className={cn(tokens.label.default, 'text-muted-foreground')}>Recent Product Imports</h4>
+            {productImportJobs.map((job) => (
+              <ImportHistoryCard key={job.id} job={job} showRollback={true} />
+            ))}
+          </CollapsibleContent>
+        </Collapsible>
+      )}
+
+      {/* Row 2: Search + Filters */}
       <div className="flex items-center gap-3 flex-wrap">
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
@@ -299,40 +337,6 @@ function ProductsTab() {
             ))}
           </div>
         )}
-        <Button variant="outline" size={tokens.button.card} onClick={() => exportProductsCsv(filteredProducts)} className="gap-1.5">
-          <Download className="w-4 h-4" /> Export
-        </Button>
-        <Button variant="outline" size={tokens.button.card} onClick={() => setShowImportWizard(true)} className="gap-1.5">
-          <Upload className="w-4 h-4" /> Import
-        </Button>
-        {productImportJobs.length > 0 && (
-          <Button variant="ghost" size={tokens.button.card} onClick={() => setShowHistory(!showHistory)} className="gap-1.5 text-muted-foreground">
-            <History className="w-4 h-4" /> History
-          </Button>
-        )}
-        <Button size={tokens.button.card} onClick={() => { setWizardDraftId(undefined); setWizardInitialDraft(undefined); setShowWizard(true); }} className="gap-1.5">
-          <Plus className="w-4 h-4" /> Add Product
-        </Button>
-      </div>
-
-      {showHistory && productImportJobs.length > 0 && (
-        <Collapsible open={showHistory} onOpenChange={setShowHistory}>
-          <CollapsibleContent className="space-y-3">
-            <h4 className={cn(tokens.label.default, 'text-muted-foreground')}>Recent Product Imports</h4>
-            {productImportJobs.map((job) => (
-              <ImportHistoryCard key={job.id} job={job} showRollback={true} />
-            ))}
-          </CollapsibleContent>
-        </Collapsible>
-      )}
-
-      <div className="flex items-center gap-2">
-        <span className="text-xs text-muted-foreground">
-          {totalCount > PAGE_SIZE
-            ? `Showing ${page * PAGE_SIZE + 1}–${Math.min((page + 1) * PAGE_SIZE, totalCount)} of ${totalCount} products`
-            : `${filteredProducts.length} product${filteredProducts.length !== 1 ? 's' : ''}`
-          }
-        </span>
       </div>
 
       {selectedIds.size > 0 && (
