@@ -43,7 +43,9 @@ export function AlertSettingsCard() {
     thresholdPct !== settings.default_threshold_pct ||
     inApp !== settings.alert_channels.includes('in_app') ||
     email !== settings.alert_channels.includes('email') ||
-    autoCreatePo !== settings.auto_create_draft_po
+    autoCreatePo !== settings.auto_create_draft_po ||
+    deadStockEnabled !== ((settings as any).dead_stock_enabled ?? true) ||
+    deadStockDays !== ((settings as any).dead_stock_days ?? 90)
   ) : true;
 
   const handleSave = () => {
