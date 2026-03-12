@@ -78,7 +78,7 @@ export function validateCreateBowl(
   // BUG-9 fix: Allow bowl creation in both 'draft' (prep mode) and 'active' sessions
   // BUG-10 fix: Use normalizeSessionStatus for proper type handling
   if (session) {
-    const status = session.current_status;
+    const status = String(session.current_status);
     const allowedForBowl = status === 'draft' || status === 'active' || status === 'mixing';
     if (!allowedForBowl) {
       errors.push({

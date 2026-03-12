@@ -196,6 +196,7 @@ export function MixSessionManager({
       : undefined;
 
     // Calculate confidence score before completing
+    let confidence: number = 0;
     try {
       const validBowls = bowls.filter((b) => b.status !== 'discarded');
       const bowlIds = validBowls.map((b) => b.id);
@@ -212,7 +213,7 @@ export function MixSessionManager({
       const castLines = (allLines ?? []) as any[];
       const castWaste = (wasteEvents ?? []) as any[];
 
-      const confidence = calculateMixConfidence({
+      confidence = calculateMixConfidence({
         totalLines: castLines.length,
         scaleLines: castLines.filter((l) => l.captured_via === 'scale').length,
         totalBowls: validBowls.length,

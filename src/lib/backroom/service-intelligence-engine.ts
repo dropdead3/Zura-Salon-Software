@@ -66,7 +66,8 @@ export interface CostTrendPeriod {
 export function calculateServiceProfiles(
   sessions: ServiceSessionData[],
   staffUsages: StaffServiceUsage[],
-  defaultDurationMinutes: number = 60
+  defaultDurationMinutes: number = 60,
+  laborRatePerHour: number = 30,
 ): ServiceProfile[] {
   const groups = new Map<string, ServiceSessionData[]>();
   for (const s of sessions) {

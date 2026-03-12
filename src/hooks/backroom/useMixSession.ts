@@ -163,7 +163,7 @@ export function useUpdateMixSessionStatus() {
         });
         // BUG-2 fix: Do NOT fall back to raw event emission on validation failure
         if (!result.success) {
-          const errorMsg = result.validation_errors?.map((e: any) => e.message).join(', ') || 'Validation failed';
+          const errorMsg = result.errors?.map((e) => e.message).join(', ') || 'Validation failed';
           throw new Error(`Cannot complete session: ${errorMsg}`);
         }
       } else if (newStatus === 'mixing' || newStatus === 'active') {
