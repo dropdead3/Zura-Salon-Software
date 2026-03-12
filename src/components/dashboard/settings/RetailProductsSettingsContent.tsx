@@ -1353,6 +1353,9 @@ function InventoryByLocationTab() {
                           </Button>
                         </div>
                       </TableCell>
+                      <TableCell>
+                        <StockMovementHistory productId={p.id} />
+                      </TableCell>
                       <TableCell className="text-center">
                         <Button
                           variant={isLow ? 'default' : 'outline'}
