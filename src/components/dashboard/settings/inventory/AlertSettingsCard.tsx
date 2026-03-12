@@ -33,6 +33,8 @@ export function AlertSettingsCard() {
       setInApp(settings.alert_channels.includes('in_app'));
       setEmail(settings.alert_channels.includes('email'));
       setAutoCreatePo(settings.auto_create_draft_po);
+      setDeadStockEnabled((settings as any).dead_stock_enabled ?? true);
+      setDeadStockDays((settings as any).dead_stock_days ?? 90);
     }
   }, [settings]);
 
