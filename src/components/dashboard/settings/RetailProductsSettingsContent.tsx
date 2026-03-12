@@ -1282,6 +1282,7 @@ function InventoryByLocationTab() {
                   <TableHead className="text-right">Min. Stock</TableHead>
                   <TableHead className="text-right">Status</TableHead>
                   <TableHead className="text-center w-32">Adjust</TableHead>
+                  <TableHead className="w-8" />
                   <TableHead className="text-center w-24">Reorder</TableHead>
                 </TableRow>
               </TableHeader>
