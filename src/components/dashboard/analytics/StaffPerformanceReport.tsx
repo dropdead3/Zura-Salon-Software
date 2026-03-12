@@ -192,7 +192,7 @@ function StylistRow({
           </div>
         </TableCell>
         <TableCell>
-          <BlurredAmount value={row.revenue} formatter={formatCurrency} />
+          <AnimatedBlurredAmount value={row.revenue} currency="USD" decimals={2} />
         </TableCell>
         <TableCell>{row.rebookRate}%</TableCell>
         <TableCell>{row.retailConversion}%</TableCell>
