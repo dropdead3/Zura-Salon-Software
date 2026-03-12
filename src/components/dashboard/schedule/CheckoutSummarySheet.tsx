@@ -21,6 +21,8 @@ import type { BusinessSettings } from '@/hooks/useBusinessSettings';
 import { PromoCodeInput } from '@/components/dashboard/checkout/PromoCodeInput';
 import type { PromoValidationResult } from '@/hooks/usePromoCodeValidation';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { NextVisitRecommendation } from '@/components/dashboard/schedule/NextVisitRecommendation';
+import type { RebookInterval } from '@/lib/scheduling/rebook-recommender';
 
 // Constants
 const RECEIPT_WIDTH = 80; // mm
