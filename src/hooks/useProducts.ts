@@ -42,9 +42,9 @@ export interface PaginatedProducts {
 }
 
 export function useProducts(filters: ProductFilters = {}) {
-  return useQuery({
+  const result = useQuery({
     queryKey: ['products', filters],
-    queryFn: async (): Promise<PaginatedProducts> => {
+    queryFn: async () => {
       let query = supabase
         .from('products')
         .select('*', { count: 'exact' })
@@ -89,9 +89,15 @@ export function useProducts(filters: ProductFilters = {}) {
       const { data, error, count } = await query;
 
       if (error) throw error;
-      return { data: (data || []) as Product[], count: count ?? 0 };
+      return { data: (data || []) as Product[], totalCount: count ?? 0 };
     },
   });
+
+  return {
+    ...result,
+    data: result.data?.data,
+    totalCount: result.data?.totalCount ?? 0,
+  };
 }
 
 export function useProductCategories() {
