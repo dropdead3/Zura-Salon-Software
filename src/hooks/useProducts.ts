@@ -87,16 +87,26 @@ export function useProductCategories() {
   return useQuery({
     queryKey: ['product-categories'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('products')
-        .select('category')
-        .eq('is_active', true)
-        .not('category', 'is', null);
+      // Fetch from both products table and product_categories table
+      const [productsResult, categoriesResult] = await Promise.all([
+        supabase
+          .from('products')
+          .select('category')
+          .eq('is_active', true)
+          .not('category', 'is', null),
+        supabase
+          .from('product_categories')
+          .select('name'),
+      ]);
 
-      if (error) throw error;
-      
-      const categories = [...new Set(data.map(p => p.category).filter(Boolean))];
-      return categories.sort() as string[];
+      if (productsResult.error) throw productsResult.error;
+      if (categoriesResult.error) throw categoriesResult.error;
+
+      const fromProducts = (productsResult.data || []).map(p => p.category).filter(Boolean) as string[];
+      const fromTable = (categoriesResult.data || []).map(c => c.name).filter(Boolean);
+
+      const merged = [...new Set([...fromProducts, ...fromTable])];
+      return merged.sort();
     },
   });
 }
