@@ -17,6 +17,7 @@ import type { FormulaLine } from '@/lib/backroom/mix-calculations';
 
 export type SuggestionSource =
   | 'client_last_visit'
+  | 'client_any_service'
   | 'stylist_most_used'
   | 'salon_recipe';
 
@@ -26,6 +27,13 @@ export interface ResolvedFormula {
   sourceLabel: string;
   referenceId: string | null;
   ratio: string | null;
+}
+
+export interface ResolvedFormulaMemory extends ResolvedFormula {
+  serviceName: string | null;
+  staffName: string | null;
+  notes: string | null;
+  createdAt: string | null;
 }
 
 export interface FormulaResolutionRequest {
