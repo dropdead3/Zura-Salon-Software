@@ -91,8 +91,19 @@ export function MixSessionManager({
       service_performed_by_staff_id: staffUserId,
       station_id: stationId ?? undefined,
       location_id: locationId,
+    }, {
+      onSuccess: (data) => {
+        // If prep mode, set the flag
+        if (isPrepMode && data) {
+          supabase
+            .from('mix_sessions')
+            .update({ is_prep_mode: true } as any)
+            .eq('id', (data as any).id)
+            .then();
+        }
+      }
     });
-  }, [organizationId, appointmentId, appointmentServiceId, clientId, user?.id, staffUserId, stationId, locationId, createSession]);
+  }, [organizationId, appointmentId, appointmentServiceId, clientId, user?.id, staffUserId, stationId, locationId, createSession, isPrepMode]);
 
   const handleBeginMixing = useCallback(() => {
     if (!activeSession) return;
