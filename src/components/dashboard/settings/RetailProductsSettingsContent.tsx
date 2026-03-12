@@ -1017,11 +1017,11 @@ function BrandsTab() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Brand</TableHead>
-            <TableHead className="text-right">Products</TableHead>
-            <TableHead className="text-right">Total Stock</TableHead>
-            <TableHead className="text-right">Inventory Value</TableHead>
-            <TableHead className="w-20" />
+             <TableHead className={tokens.table.columnHeader}>Brand</TableHead>
+             <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Products</TableHead>
+             <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Total Stock</TableHead>
+             <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Inventory Value</TableHead>
+             <TableHead className="w-20" />
           </TableRow>
         </TableHeader>
         <TableBody>
