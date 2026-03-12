@@ -1,153 +1,304 @@
 
 
-## Timezone-Safe Scheduling (Implemented)
+# Projection + Read Model Architecture for Zura Backroom
 
-### Problem
-`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
+## Current State
 
-### Solution
-- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
-- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
-- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
+The system already has two projection layers in place:
 
-### Files Updated
-- `ScheduleHeader.tsx` — today button, quick days, isToday checks
-- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
-- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
-- `MonthView.tsx` — today highlight
-- `AgendaView.tsx` — today/tomorrow labels, today border
-- `ScheduleActionBar.tsx` — payment queue timing
-- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
-- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
-- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
-- `useHuddles.ts` — today's huddle query
+1. **`inventory_projections`** — Derived from `stock_movements` via trigger. Works. Fields: `on_hand`, `allocated`, `on_order`, `available`.
+2. **`mix_session_projections`** — Derived from `mix_session_events` via trigger. Works. Fields: session-level counters (bowl counts, weight, cost, flags).
 
-## Auto-Reorder with Supplier Communication (Implemented)
+The existing `mix_bowls`, `mix_bowl_lines`, `reweigh_events`, `waste_events` tables already serve as de facto projection/read-model tables — they are the materialized state that the UI queries. Multiple hooks (`useMixBowls`, `useMixBowlLines`, `useBackroomAnalytics`, `useContributionMargin`, `useDepleteMixSession`) query these tables directly.
 
-### What It Does
-Organizations can opt into automatic reorder — when stock dips below threshold, POs are calculated (using MOQ and par levels) and sent directly to the supplier via email.
+**What's missing:** Bowl-level and line-level projections driven by events, checkout usage projections, inventory risk projections, staff performance projections, and service profitability projections. Several hooks also scan raw bowl/line tables with ad-hoc aggregation instead of reading pre-computed values.
 
-### Database Changes
-- `products.par_level` (INT, nullable) — desired stock level to reorder up to
-- `product_suppliers.moq` (INT, default 1) — minimum order quantity
-- `inventory_alert_settings.auto_reorder_enabled` (BOOL, default false)
-- `inventory_alert_settings.auto_reorder_mode` (TEXT, default 'to_par') — 'to_par' or 'moq_only'
-- `inventory_alert_settings.max_auto_reorder_value` (NUMERIC, nullable) — daily spend cap
-- `purchase_orders.supplier_confirmed_at` (TIMESTAMPTZ, nullable) — for tracking confirmations
+---
 
-### Quantity Calculation
-```
-deficit = par_level - quantity_on_hand
-order_qty = max(moq, deficit)
-if moq > 1: round up to nearest MOQ multiple
-```
-Fallback: if par_level is null, uses `reorder_level * 2`.
+## Architecture Overview
 
-### Files Updated
-- Migration: Added columns to products, product_suppliers, inventory_alert_settings, purchase_orders
-- `check-reorder-levels/index.ts` — auto-send logic with MOQ/par calculation, spend cap, email invocation
-- `AlertSettingsCard.tsx` — auto-reorder toggle, mode selector, spend cap input
-- `useInventoryAlertSettings.ts` — updated interface
-- `useProducts.ts` — added par_level to Product interface
-- `useProductSuppliers.ts` — added moq to ProductSupplier interface
-- `ProductEditDialog.tsx` — added par level field
-- `RetailProductsSettingsContent.tsx` — added par level to product form
-- `SupplierDialog.tsx` — added MOQ field
+```text
+Source Events                    Projections (DB trigger or edge fn)         UI Queries
+──────────────                   ───────────────────────────────────         ──────────
+mix_session_events        →      mix_session_projections (exists)      →     MixSessionManager
+                          →      mix_bowl_projections (NEW)            →     LiveBowlCard
+                          →      mix_bowl_line_projections (NEW)       →     AddProductToBowl
+                          →      checkout_usage_projections (NEW)      →     Checkout panel
+                          →      client_formula_history (exists)       →     Client profile
 
-### Safety Features
-- Spend cap: daily auto-reorder pauses when cumulative PO value exceeds cap
-- Audit trail: auto_reorder logged as stock_movement reason
-- Supplier confirmation tracking via supplier_confirmed_at timestamp
+stock_movements           →      inventory_projections (exists)        →     Inventory screens
+                          →      inventory_risk_projections (NEW)      →     Low-stock alerts
 
-## Product Movement Rating Badges (Implemented)
+backroom_exceptions       →      (already queryable, no new proj)      →     Exception inbox
 
-### What It Does
-Every product gets a dynamic movement rating badge (Best Seller, Popular, Steady, Slow Mover, Stagnant, Dead Weight) computed from 90-day sales velocity data.
-
-### Rating Tiers
-- **Best Seller**: Top 10% velocity AND >0.5 units/day (emerald)
-- **Popular**: Top 25% velocity AND >0.2 units/day (blue)
-- **Steady**: Velocity >0.05/day (muted)
-- **Slow Mover**: Velocity >0 but ≤0.05/day (amber)
-- **Stagnant**: Zero velocity, sold within 180 days (orange)
-- **Dead Weight**: Zero velocity, 180+ days or never sold (red)
-- Products with zero stock excluded from negative ratings
-
-### Files Created
-- `src/lib/productMovementRating.ts` — pure rating logic + badge config
-- `src/hooks/useProductVelocity.ts` — lightweight 90-day POS velocity query
-- `src/components/ui/MovementBadge.tsx` — shared badge component with tooltip
-
-### Files Updated
-- `RetailProductsSettingsContent.tsx` — Movement column + filter dropdown in products table
-- `RetailAnalyticsContent.tsx` — Movement badges on product performance table + Movement Distribution card (donut chart with actionable callouts)
-- `ProductCard.tsx` — Best Seller/Popular badges on public shop cards (positive only)
-- `ProductDetailModal.tsx` — Movement badge with velocity context
-
-## Inventory Intelligence Suite v2 (Implemented)
-
-### 1. Dead Stock Auto-Clearance Pipeline
-- `DeadStockAlertCard.tsx` — Surfaces Dead Weight/Stagnant products not yet in clearance with suggested discount tiers (10%/25%/50% based on idle days)
-- One-click "Mark for Clearance" applies discount and sets clearance_status
-
-### 2. Supplier Lead Time Tracker
-- `usePurchaseOrders.ts` — `useMarkPurchaseOrderReceived` already computes actual delivery days and updates `product_suppliers.avg_delivery_days` via running average
-- `parLevelSuggestion.ts` — Updated to accept supplier-provided lead time instead of hardcoded 7-day default, with bounds clamping
-
-### 3. Inventory Valuation Dashboard Card
-- `InventoryValuationCard.tsx` — Shows total inventory at cost/retail, potential margin %, capital-at-risk (slow/stagnant/dead weight), with donut chart breakdown
-
-### 4. Reorder Approval Queue
-- `ReorderApprovalCard.tsx` — Surfaces draft POs from auto-reorder with one-click approve (→ sent) or reject (→ cancelled)
-
-### 5. Stock Transfer Between Locations
-- Migration: Created `stock_transfers` table with RLS (org member read, org admin manage)
-- `useStockTransfers.ts` — CRUD hooks for stock transfers with stock movement logging
-- `StockTransferDialog.tsx` — Dialog for creating transfers between locations
-- `RetailProductsSettingsContent.tsx` — "Transfer Stock" button added to Inventory tab (visible for multi-location orgs)
-
-## Enhancement 1: Expiry Tracking (Implemented)
-
-### What It Does
-Products can have an optional expiration date (`expires_at`) and per-product alert threshold (`expiry_alert_days`, default 30). The system surfaces expiring inventory with color-coded badges in the product table and an analytics card with auto-clearance suggestions.
-
-### Database Changes
-- `products.expires_at` (DATE, nullable) — expiration date for perishable products
-- `products.expiry_alert_days` (INTEGER, default 30) — days before expiry to trigger alerts
-
-### Expiry Alert Buckets
-- **Expired** (red): past expiration → suggests 50% markdown
-- **Critical** (orange): within alert threshold → suggests 25% markdown
-- **Warning** (amber): within 2× alert threshold → suggests 10% markdown
-
-### Files Created
-- `src/components/dashboard/analytics/ExpiryAlertCard.tsx` — PinnableCard showing expiring products with one-click clearance actions
-
-### Files Updated
-- `src/hooks/useProducts.ts` — Added `expires_at`, `expiry_alert_days` to Product interface; added `expiringOnly` filter
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Expiry date + alert days in product form; color-coded Expiry column in product table
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ExpiryAlertCard into analytics hub
-
-## Enhancement 2: Shrinkage Detection (Implemented)
-
-### What It Does
-Physical stocktake workflow with variance reporting. Staff record actual counts via a Stocktake dialog, and the system compares against expected quantities (system records). A Shrinkage Report card in analytics surfaces products with negative variance (loss) ranked by estimated cost impact.
-
-### Database Changes
-- Created `stock_counts` table with computed `variance` column (counted - expected), RLS policies (org member read/insert, org admin update/delete), and indexes
-
-### Shrinkage Calculation
-```
-variance = counted_quantity - expected_quantity
-shrinkage_units = |variance| when variance < 0
-shrinkage_cost = shrinkage_units × cost_price
+Periodic edge fn / cron   →      staff_backroom_performance (NEW)      →     Owner dashboard
+                          →      service_profitability_snapshots (NEW) →     Profitability reports
+                          →      backroom_analytics_snapshots (exists) →     Dashboard cards
 ```
 
-### Files Created
-- `src/hooks/useStockCounts.ts` — CRUD hooks for stock counts + `useShrinkageSummary` for aggregated shrinkage data
-- `src/components/dashboard/settings/inventory/StocktakeDialog.tsx` — Full stocktake UI with search, inline count entry, real-time variance display
-- `src/components/dashboard/analytics/ShrinkageReportCard.tsx` — PinnableCard showing products with shrinkage, severity badges, estimated loss
+---
 
-### Files Updated
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Added "Stocktake" button to Inventory tab toolbar
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ShrinkageReportCard into analytics hub
+## Required Projections
+
+### Already Implemented (no changes needed)
+- **`mix_session_projections`** — session-level counters, updated by trigger on `mix_session_events`
+- **`inventory_projections`** — on_hand/allocated/on_order per product+location, updated by trigger on `stock_movements`
+- **`backroom_analytics_snapshots`** — daily aggregates, updated by edge function
+- **`backroom_exceptions`** — already a queryable entity, not a raw event stream
+
+### New Projections to Create
+
+#### 1. `mix_bowl_projections`
+Purpose: Fast bowl-state view without scanning events.
+
+```sql
+CREATE TABLE public.mix_bowl_projections (
+  mix_bowl_id UUID PRIMARY KEY REFERENCES mix_bowls(id) ON DELETE CASCADE,
+  mix_session_id UUID NOT NULL,
+  organization_id UUID NOT NULL,
+  bowl_number INTEGER DEFAULT 1,
+  purpose TEXT,
+  current_status TEXT DEFAULT 'open',
+  line_item_count INTEGER DEFAULT 0,
+  dispensed_total NUMERIC(10,2) DEFAULT 0,
+  estimated_cost NUMERIC(10,4) DEFAULT 0,
+  leftover_total NUMERIC(10,2) DEFAULT 0,
+  net_usage_total NUMERIC(10,2) DEFAULT 0,
+  has_reweigh BOOLEAN DEFAULT false,
+  last_event_at TIMESTAMPTZ,
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+```
+
+Updated by: trigger on `mix_session_events` (same trigger, extended logic for bowl-level events like `line_item_recorded`, `bowl_sealed`, `reweigh_captured`).
+
+Consistency: **Near-immediate** (trigger).
+
+#### 2. `checkout_usage_projections`
+Purpose: Pre-computed checkout charge summary per appointment service.
+
+```sql
+CREATE TABLE public.checkout_usage_projections (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID NOT NULL,
+  appointment_id UUID,
+  appointment_service_id UUID,
+  mix_session_id UUID,
+  client_id UUID,
+  total_dispensed_weight NUMERIC(10,2) DEFAULT 0,
+  total_dispensed_cost NUMERIC(10,4) DEFAULT 0,
+  service_allowance_grams NUMERIC(10,2),
+  overage_grams NUMERIC(10,2) DEFAULT 0,
+  overage_charge NUMERIC(10,4) DEFAULT 0,
+  requires_manager_review BOOLEAN DEFAULT false,
+  last_calculated_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE (organization_id, mix_session_id)
+);
+```
+
+Updated by: service-layer call on `session_completed` event. Reads finalized bowl/line data, applies allowance policy, computes overage.
+
+Consistency: **Near-immediate** (computed synchronously during session completion).
+
+#### 3. `inventory_risk_projections`
+Purpose: Low-stock alerts, depletion forecasting.
+
+```sql
+CREATE TABLE public.inventory_risk_projections (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID NOT NULL,
+  product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  location_id TEXT,
+  current_on_hand NUMERIC DEFAULT 0,
+  avg_daily_usage NUMERIC(10,4) DEFAULT 0,
+  projected_depletion_date DATE,
+  stockout_risk_level TEXT DEFAULT 'none',
+  recommended_order_qty NUMERIC DEFAULT 0,
+  open_po_quantity NUMERIC DEFAULT 0,
+  last_forecast_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE (organization_id, product_id, location_id)
+);
+```
+
+Updated by: periodic edge function (daily) that reads `inventory_projections` + recent `stock_movements` usage rates.
+
+Consistency: **Eventually consistent** (daily refresh acceptable).
+
+#### 4. `service_profitability_snapshots`
+Purpose: Per-service contribution margin for owner reporting.
+
+```sql
+CREATE TABLE public.service_profitability_snapshots (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID NOT NULL,
+  location_id TEXT,
+  appointment_id UUID,
+  appointment_service_id UUID,
+  staff_id UUID,
+  service_name TEXT,
+  service_revenue NUMERIC(10,2) DEFAULT 0,
+  product_cost NUMERIC(10,4) DEFAULT 0,
+  overage_revenue NUMERIC(10,4) DEFAULT 0,
+  waste_cost NUMERIC(10,4) DEFAULT 0,
+  contribution_margin NUMERIC(10,4) DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+```
+
+Updated by: edge function on session completion or daily batch. Reads checkout projection + revenue data.
+
+Consistency: **Eventually consistent**.
+
+#### 5. `staff_backroom_performance`
+Purpose: Stylist/assistant analytics aggregates.
+
+```sql
+CREATE TABLE public.staff_backroom_performance (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID NOT NULL,
+  staff_id UUID NOT NULL,
+  location_id TEXT,
+  period_start DATE NOT NULL,
+  period_end DATE NOT NULL,
+  mix_session_count INTEGER DEFAULT 0,
+  manual_override_rate NUMERIC(5,2) DEFAULT 0,
+  reweigh_compliance_rate NUMERIC(5,2) DEFAULT 0,
+  avg_usage_variance NUMERIC(5,2) DEFAULT 0,
+  waste_rate NUMERIC(5,2) DEFAULT 0,
+  total_dispensed_weight NUMERIC(10,2) DEFAULT 0,
+  total_product_cost NUMERIC(10,4) DEFAULT 0,
+  last_calculated_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE (organization_id, staff_id, location_id, period_start, period_end)
+);
+```
+
+Updated by: periodic edge function (daily). Aggregates from `mix_session_projections` + `mix_session_events`.
+
+Consistency: **Eventually consistent**.
+
+---
+
+## Event-to-Projection Update Map
+
+| Event Source | Projection Updated | Mechanism | Timing |
+|---|---|---|---|
+| `mix_session_events` INSERT | `mix_session_projections` | DB trigger (exists) | Synchronous |
+| `mix_session_events` INSERT (bowl-level) | `mix_bowl_projections` | DB trigger (extend existing) | Synchronous |
+| `mix_session_events` `session_completed` | `checkout_usage_projections` | Service layer in completion handler | Synchronous |
+| `mix_session_events` `session_completed` | `client_formula_history` | Service layer (exists) | Synchronous |
+| `stock_movements` INSERT | `inventory_projections` | DB trigger (exists) | Synchronous |
+| `stock_movements` INSERT | `inventory_risk_projections` | Edge function (daily) | Eventually consistent |
+| Completed sessions (batch) | `service_profitability_snapshots` | Edge function (daily) | Eventually consistent |
+| Completed sessions (batch) | `staff_backroom_performance` | Edge function (daily) | Eventually consistent |
+| Completed sessions (batch) | `backroom_analytics_snapshots` | Edge function (exists) | Eventually consistent |
+
+---
+
+## Consistency Model
+
+**Near-immediate (trigger or synchronous service call):**
+- `mix_session_projections`
+- `mix_bowl_projections`
+- `checkout_usage_projections`
+- `inventory_projections`
+- `client_formula_history`
+
+**Eventually consistent (daily edge function):**
+- `inventory_risk_projections`
+- `service_profitability_snapshots`
+- `staff_backroom_performance`
+- `backroom_analytics_snapshots`
+
+---
+
+## Idempotency Strategy
+
+- **Trigger-based projections**: Use `ON CONFLICT ... DO UPDATE` with additive/subtractive logic keyed on event type. The `sequence_number` UNIQUE constraint on `mix_session_events` prevents duplicate event insertion at the source.
+- **Edge function batch projections**: Each run deletes and re-inserts for the target period (full rebuild per period window). This is inherently idempotent.
+- **Offline replay**: `idempotency_key` on `mix_session_events` rejects duplicates. The trigger only fires on successful INSERT, so projections never double-count.
+- **Checkpoint**: `last_event_sequence` on `mix_session_projections` tracks the highest processed event. Bowl projections will track `last_event_at`.
+
+---
+
+## Conflict Handling
+
+| Scenario | Strategy |
+|---|---|
+| Two devices emitting for same session | `sequence_number` UNIQUE rejects duplicates; trigger uses additive math |
+| Late offline events arriving | Replayed via idempotency_key; if accepted, trigger updates projection normally |
+| Manager override after checkout projection | Re-run checkout projection calculation; `last_calculated_at` updated |
+| Count adjustment after stockout warning | Next daily risk projection run picks up new `inventory_projections` values |
+| Projection corruption | Call `rebuild_inventory_projection()` (exists) or reprocess events for session projections |
+
+---
+
+## Projection Rebuild Strategy
+
+All projections are rebuildable:
+
+1. **`inventory_projections`**: `rebuild_inventory_projection(org, product, location)` function exists. Sums all `stock_movements`.
+2. **`mix_session_projections`** + **`mix_bowl_projections`**: New rebuild function that replays all `mix_session_events` for a session in sequence order, applying the same trigger logic.
+3. **Batch projections** (risk, profitability, performance): Simply re-run the edge function for the target date range.
+
+A new `rebuild_mix_session_projection(session_id)` DB function will be created that truncates + replays.
+
+---
+
+## Frontend Query Boundaries
+
+| UI Surface | Queries | Does NOT query |
+|---|---|---|
+| MixSessionManager (active mixing) | `mix_session_projections`, `mix_bowls`, `mix_bowl_lines` | `mix_session_events` |
+| LiveBowlCard | `mix_bowl_projections` (new), `mix_bowl_lines` | raw events |
+| Checkout panel | `checkout_usage_projections` | raw bowls/lines |
+| Inventory workspace | `inventory_projections` | `stock_movements` |
+| Low-stock alerts | `inventory_risk_projections` | raw movements |
+| Exception inbox | `backroom_exceptions` | raw events |
+| Client formula history | `client_formula_history` | raw events |
+| Owner dashboard | `backroom_analytics_snapshots`, `service_profitability_snapshots`, `staff_backroom_performance` | raw events |
+| Audit/history views (only) | `mix_session_events`, `stock_movements` | — |
+
+---
+
+## Indexing Recommendations
+
+```sql
+-- mix_bowl_projections
+CREATE INDEX idx_mix_bowl_proj_session ON mix_bowl_projections(mix_session_id);
+
+-- checkout_usage_projections
+CREATE INDEX idx_checkout_proj_appt ON checkout_usage_projections(appointment_id);
+CREATE INDEX idx_checkout_proj_session ON checkout_usage_projections(mix_session_id);
+
+-- inventory_risk_projections
+CREATE INDEX idx_inv_risk_org ON inventory_risk_projections(organization_id, stockout_risk_level);
+
+-- service_profitability_snapshots
+CREATE INDEX idx_svc_profit_org ON service_profitability_snapshots(organization_id, created_at);
+
+-- staff_backroom_performance
+CREATE INDEX idx_staff_perf_org ON staff_backroom_performance(organization_id, period_start);
+```
+
+---
+
+## Implementation Order
+
+1. **Migration**: Create `mix_bowl_projections`, `checkout_usage_projections`, `inventory_risk_projections`, `service_profitability_snapshots`, `staff_backroom_performance` tables with RLS + indexes
+2. **Extend trigger**: Update `update_mix_session_projection_on_event()` to also upsert `mix_bowl_projections` for bowl-level events
+3. **Checkout projection**: Add projection computation to session completion handler
+4. **Rebuild functions**: Create `rebuild_mix_session_projection()` and `rebuild_mix_bowl_projection()`
+5. **Daily edge function**: Extend `generate-backroom-snapshots` to also compute risk, profitability, and staff performance projections
+6. **Refactor hooks**: Update `useBackroomAnalytics`, `useContributionMargin`, `useDepleteMixSession` to read from projections instead of ad-hoc aggregation
+
+---
+
+## Risks & Unknowns
+
+| Risk | Mitigation |
+|---|---|
+| Trigger complexity growing (session + bowl projections in one trigger) | Split into separate triggers if needed; monitor execution time |
+| Checkout projection stale if session re-opened | Invalidate checkout projection on any post-completion event |
+| Edge function timeout for large orgs | Paginate by location; process in batches |
+| Backward compat during migration | Existing tables (`mix_bowls`, `mix_bowl_lines`) remain as-is; new projections supplement, don't replace |
+
