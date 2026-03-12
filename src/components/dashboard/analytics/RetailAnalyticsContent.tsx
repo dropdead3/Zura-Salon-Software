@@ -39,6 +39,8 @@ import { useProducts } from '@/hooks/useProducts';
 import { calculateInventoryAlerts } from '@/hooks/useInventoryAlerts';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useAggregatedRetailGoals } from '@/hooks/useAggregatedRetailGoals';
+import { getMovementRating, computePercentiles, getTierConfig, MOVEMENT_TIERS, type MovementTier } from '@/lib/productMovementRating';
+import { MovementBadge } from '@/components/ui/MovementBadge';
 
 interface RetailAnalyticsContentProps {
   dateFrom: string;
