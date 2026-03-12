@@ -22,7 +22,11 @@ import {
   validateCaptureReweigh,
   validateCompleteSession,
   validateMarkSessionUnresolved,
+  validateApplySuggestedFormula,
+  validateDismissSuggestedFormula,
 } from './mixing-validators';
+import type { FormulaLine } from '../mix-calculations';
+import type { SuggestionSource } from '../services/smart-mix-assist-service';
 import { supabase } from '@/integrations/supabase/client';
 
 // ─── Command Definitions ─────────────────────────────
@@ -96,6 +100,27 @@ export interface MarkSessionUnresolvedCommand {
   organization_id: string;
   mix_session_id: string;
   reason?: string;
+}
+
+export interface ApplySuggestedFormulaCommand {
+  meta: CommandMeta;
+  organization_id: string;
+  mix_session_id: string;
+  bowl_id: string;
+  suggestion_source: SuggestionSource;
+  reference_formula_id?: string;
+  formula_data: FormulaLine[];
+  client_id?: string;
+  staff_id?: string;
+  service_type?: string;
+}
+
+export interface DismissSuggestedFormulaCommand {
+  meta: CommandMeta;
+  organization_id: string;
+  mix_session_id: string;
+  bowl_id: string;
+  suggestion_source?: string;
 }
 
 // ─── State Fetchers (thin queries) ───────────────────
@@ -470,5 +495,87 @@ export async function executeMarkSessionUnresolved(
     'session_marked_unresolved',
     session!.current_status,
     { reason: cmd.reason },
+  );
+}
+
+// ─── ApplySuggestedFormula ───────────────────────────
+
+export async function executeApplySuggestedFormula(
+  cmd: ApplySuggestedFormulaCommand,
+): Promise<CommandResult<unknown>> {
+  const session = await fetchSessionState(cmd.mix_session_id);
+  const bowl = await fetchBowlState(cmd.bowl_id);
+  const errors = validateApplySuggestedFormula(cmd.meta.initiated_by, session, bowl);
+
+  if (errors.length > 0) {
+    await logCommandAudit({
+      organization_id: cmd.organization_id,
+      command_name: 'ApplySuggestedFormula',
+      command_payload: {
+        mix_session_id: cmd.mix_session_id,
+        bowl_id: cmd.bowl_id,
+        suggestion_source: cmd.suggestion_source,
+      },
+      meta: cmd.meta,
+      outcome: 'rejected',
+      validation_errors: errors,
+    });
+    return rejected(cmd.meta.idempotency_key, errors);
+  }
+
+  return emitAndAudit(
+    'ApplySuggestedFormula',
+    cmd.meta,
+    cmd.organization_id,
+    cmd.mix_session_id,
+    'suggested_formula_applied',
+    session!.current_status,
+    {
+      bowl_id: cmd.bowl_id,
+      suggestion_source: cmd.suggestion_source,
+      reference_formula_id: cmd.reference_formula_id,
+      formula_data: cmd.formula_data,
+      client_id: cmd.client_id,
+      staff_id: cmd.staff_id,
+      service_type: cmd.service_type,
+    },
+  );
+}
+
+// ─── DismissSuggestedFormula ─────────────────────────
+
+export async function executeDismissSuggestedFormula(
+  cmd: DismissSuggestedFormulaCommand,
+): Promise<CommandResult<unknown>> {
+  const session = await fetchSessionState(cmd.mix_session_id);
+  const errors = validateDismissSuggestedFormula(cmd.meta.initiated_by, session);
+
+  if (errors.length > 0) {
+    await logCommandAudit({
+      organization_id: cmd.organization_id,
+      command_name: 'DismissSuggestedFormula',
+      command_payload: {
+        mix_session_id: cmd.mix_session_id,
+        bowl_id: cmd.bowl_id,
+        suggestion_source: cmd.suggestion_source,
+      },
+      meta: cmd.meta,
+      outcome: 'rejected',
+      validation_errors: errors,
+    });
+    return rejected(cmd.meta.idempotency_key, errors);
+  }
+
+  return emitAndAudit(
+    'DismissSuggestedFormula',
+    cmd.meta,
+    cmd.organization_id,
+    cmd.mix_session_id,
+    'suggested_formula_dismissed',
+    session!.current_status,
+    {
+      bowl_id: cmd.bowl_id,
+      suggestion_source: cmd.suggestion_source,
+    },
   );
 }

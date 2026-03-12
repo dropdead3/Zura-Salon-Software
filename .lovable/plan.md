@@ -1,102 +1,153 @@
 
 
-# Smart Mix Assist — Implementation Plan
+## Timezone-Safe Scheduling (Implemented)
 
-## Overview
+### Problem
+`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
 
-Smart Mix Assist is a suggestion engine that recommends starting formulas when a stylist begins a new bowl. It pulls from three data sources in priority order and presents a non-blocking suggestion card. The stylist must explicitly accept or dismiss the suggestion.
+### Solution
+- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
+- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
+- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
 
-## Implementation Layers
+### Files Updated
+- `ScheduleHeader.tsx` — today button, quick days, isToday checks
+- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
+- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
+- `MonthView.tsx` — today highlight
+- `AgendaView.tsx` — today/tomorrow labels, today border
+- `ScheduleActionBar.tsx` — payment queue timing
+- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
+- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
+- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
+- `useHuddles.ts` — today's huddle query
 
-### 1. Database Migration
+## Auto-Reorder with Supplier Communication (Implemented)
 
-**New table: `smart_mix_assist_settings`**
-- `id`, `organization_id`, `is_enabled` (default false), `ratio_lock_enabled` (default false), `acknowledged_by` (UUID), `acknowledged_at` (timestamptz), `created_at`, `updated_at`
-- RLS: org members SELECT, org admins UPDATE/INSERT
+### What It Does
+Organizations can opt into automatic reorder — when stock dips below threshold, POs are calculated (using MOQ and par levels) and sent directly to the supplier via email.
 
-**New event types added to `mix_session_events`**: No schema change needed — event_type is TEXT. We add three new event type constants: `suggested_formula_generated`, `suggested_formula_applied`, `suggested_formula_dismissed`.
+### Database Changes
+- `products.par_level` (INT, nullable) — desired stock level to reorder up to
+- `product_suppliers.moq` (INT, default 1) — minimum order quantity
+- `inventory_alert_settings.auto_reorder_enabled` (BOOL, default false)
+- `inventory_alert_settings.auto_reorder_mode` (TEXT, default 'to_par') — 'to_par' or 'moq_only'
+- `inventory_alert_settings.max_auto_reorder_value` (NUMERIC, nullable) — daily spend cap
+- `purchase_orders.supplier_confirmed_at` (TIMESTAMPTZ, nullable) — for tracking confirmations
 
-### 2. Service Layer: `src/lib/backroom/services/smart-mix-assist-service.ts`
+### Quantity Calculation
+```
+deficit = par_level - quantity_on_hand
+order_qty = max(moq, deficit)
+if moq > 1: round up to nearest MOQ multiple
+```
+Fallback: if par_level is null, uses `reorder_level * 2`.
 
-**`generateSuggestion(params)`** — Core suggestion logic:
-1. Check if Smart Mix Assist is enabled for the org (cache-friendly query)
-2. If `client_id` + `service_name` provided → query `client_formula_history` for most recent matching formula (Priority 1)
-3. If no client match and `staff_id` + `service_name` provided → query `client_formula_history` for the staff member's most-used formula for that service type (Priority 2)
-4. If no staff match → query `service_recipe_baselines` for the service (Priority 3)
-5. Return `{ suggestion: FormulaLine[], source: 'client_last_visit' | 'stylist_most_used' | 'salon_recipe' | null, referenceId: string | null, ratio: string | null }`
+### Files Updated
+- Migration: Added columns to products, product_suppliers, inventory_alert_settings, purchase_orders
+- `check-reorder-levels/index.ts` — auto-send logic with MOQ/par calculation, spend cap, email invocation
+- `AlertSettingsCard.tsx` — auto-reorder toggle, mode selector, spend cap input
+- `useInventoryAlertSettings.ts` — updated interface
+- `useProducts.ts` — added par_level to Product interface
+- `useProductSuppliers.ts` — added moq to ProductSupplier interface
+- `ProductEditDialog.tsx` — added par level field
+- `RetailProductsSettingsContent.tsx` — added par level to product form
+- `SupplierDialog.tsx` — added MOQ field
 
-All queries hit projection/read tables only. Ratio is computed from the returned formula lines.
+### Safety Features
+- Spend cap: daily auto-reorder pauses when cumulative PO value exceeds cap
+- Audit trail: auto_reorder logged as stock_movement reason
+- Supplier confirmation tracking via supplier_confirmed_at timestamp
 
-### 3. Command Layer: `src/lib/backroom/commands/mixing-commands.ts`
+## Product Movement Rating Badges (Implemented)
 
-Add two new commands to the existing file:
+### What It Does
+Every product gets a dynamic movement rating badge (Best Seller, Popular, Steady, Slow Mover, Stagnant, Dead Weight) computed from 90-day sales velocity data.
 
-- **`ApplySuggestedFormulaCommand`** — emits `suggested_formula_applied` event with payload: `{ suggestion_source, reference_formula_id, formula_data, service_type, client_id, staff_id }`
-- **`DismissSuggestedFormulaCommand`** — emits `suggested_formula_dismissed` event
+### Rating Tiers
+- **Best Seller**: Top 10% velocity AND >0.5 units/day (emerald)
+- **Popular**: Top 25% velocity AND >0.2 units/day (blue)
+- **Steady**: Velocity >0.05/day (muted)
+- **Slow Mover**: Velocity >0 but ≤0.05/day (amber)
+- **Stagnant**: Zero velocity, sold within 180 days (orange)
+- **Dead Weight**: Zero velocity, 180+ days or never sold (red)
+- Products with zero stock excluded from negative ratings
 
-Add corresponding validators in `mixing-validators.ts` (session must be active, bowl must exist and be open).
+### Files Created
+- `src/lib/productMovementRating.ts` — pure rating logic + badge config
+- `src/hooks/useProductVelocity.ts` — lightweight 90-day POS velocity query
+- `src/components/ui/MovementBadge.tsx` — shared badge component with tooltip
 
-### 4. Event Type Constants
+### Files Updated
+- `RetailProductsSettingsContent.tsx` — Movement column + filter dropdown in products table
+- `RetailAnalyticsContent.tsx` — Movement badges on product performance table + Movement Distribution card (donut chart with actionable callouts)
+- `ProductCard.tsx` — Best Seller/Popular badges on public shop cards (positive only)
+- `ProductDetailModal.tsx` — Movement badge with velocity context
 
-Update `MixSessionEventType` union in `mix-session-service.ts` to include `suggested_formula_generated`, `suggested_formula_applied`, `suggested_formula_dismissed`. Add these to `VALID_EVENTS_BY_STATUS.active`.
+## Inventory Intelligence Suite v2 (Implemented)
 
-### 5. Hook Layer: `src/hooks/backroom/useSmartMixAssist.ts`
+### 1. Dead Stock Auto-Clearance Pipeline
+- `DeadStockAlertCard.tsx` — Surfaces Dead Weight/Stagnant products not yet in clearance with suggested discount tiers (10%/25%/50% based on idle days)
+- One-click "Mark for Clearance" applies discount and sets clearance_status
 
-- **`useSmartMixAssistSettings()`** — Query + mutation for org settings (enable/disable, ratio lock toggle)
-- **`useFormulaSuggestion(params)`** — Calls `generateSuggestion()` from the service. Returns suggestion data. Uses `staleTime: Infinity` since suggestions don't change mid-bowl.
-- **`useApplySuggestion()`** — Mutation that calls `executeApplySuggestedFormula()` command handler
-- **`useDismissSuggestion()`** — Mutation that calls `executeDismissSuggestedFormula()` command handler
+### 2. Supplier Lead Time Tracker
+- `usePurchaseOrders.ts` — `useMarkPurchaseOrderReceived` already computes actual delivery days and updates `product_suppliers.avg_delivery_days` via running average
+- `parLevelSuggestion.ts` — Updated to accept supplier-provided lead time instead of hardcoded 7-day default, with bounds clamping
 
-### 6. UI Components: `src/components/dashboard/backroom/smart-mix-assist/`
+### 3. Inventory Valuation Dashboard Card
+- `InventoryValuationCard.tsx` — Shows total inventory at cost/retail, potential margin %, capital-at-risk (slow/stagnant/dead weight), with donut chart breakdown
 
-**`SmartMixAssistCard.tsx`** — The suggestion card shown when a bowl starts:
-- Displays suggestion source label, line items with target weights, computed ratio
-- Two actions: "Use Suggested Formula" / "Start Empty Bowl"
-- Inline disclaimer text below the card
-- Calls `useFormulaSuggestion()` for data
+### 4. Reorder Approval Queue
+- `ReorderApprovalCard.tsx` — Surfaces draft POs from auto-reorder with one-click approve (→ sent) or reject (→ cancelled)
 
-**`TargetWeightProgress.tsx`** — Per-line progress indicator shown after suggestion is applied:
-- Shows target vs current weight with a `Progress` bar (uses existing `src/components/ui/progress.tsx`)
-- Green indicator when target reached, amber when exceeded
-- Does not block mixing
+### 5. Stock Transfer Between Locations
+- Migration: Created `stock_transfers` table with RLS (org member read, org admin manage)
+- `useStockTransfers.ts` — CRUD hooks for stock transfers with stock movement logging
+- `StockTransferDialog.tsx` — Dialog for creating transfers between locations
+- `RetailProductsSettingsContent.tsx` — "Transfer Stock" button added to Inventory tab (visible for multi-location orgs)
 
-**`RatioLockIndicator.tsx`** — Small badge/indicator showing ratio lock is active, with auto-adjusted targets when base ingredient weight changes
+## Enhancement 1: Expiry Tracking (Implemented)
 
-**`SmartMixAssistSettingsCard.tsx`** — Settings panel for enabling/disabling the feature:
-- Toggle for Smart Mix Assist
-- Toggle for Ratio Lock
-- One-time acknowledgment dialog with the required disclaimer copy before first enable
+### What It Does
+Products can have an optional expiration date (`expires_at`) and per-product alert threshold (`expiry_alert_days`, default 30). The system surfaces expiring inventory with color-coded badges in the product table and an analytics card with auto-clearance suggestions.
 
-### 7. Settings Integration
+### Database Changes
+- `products.expires_at` (DATE, nullable) — expiration date for perishable products
+- `products.expiry_alert_days` (INTEGER, default 30) — days before expiry to trigger alerts
 
-Add `SmartMixAssistSettingsCard` to the existing backroom settings page. The acknowledgment dialog uses `AlertDialog` from the existing UI library.
+### Expiry Alert Buckets
+- **Expired** (red): past expiration → suggests 50% markdown
+- **Critical** (orange): within alert threshold → suggests 25% markdown
+- **Warning** (amber): within 2× alert threshold → suggests 10% markdown
 
-### 8. Disclaimer Locations
+### Files Created
+- `src/components/dashboard/analytics/ExpiryAlertCard.tsx` — PinnableCard showing expiring products with one-click clearance actions
 
-1. **Settings activation**: `AlertDialog` with full disclaimer copy, requires acknowledge button before enabling
-2. **Inline on suggestion card**: Static text below the card: "Suggested formula based on history and service recipes. Always review and adjust as needed. Final formulation decisions are the responsibility of the licensed stylist."
-3. **Help docs**: Content update (not code — documentation text)
+### Files Updated
+- `src/hooks/useProducts.ts` — Added `expires_at`, `expiry_alert_days` to Product interface; added `expiringOnly` filter
+- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Expiry date + alert days in product form; color-coded Expiry column in product table
+- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ExpiryAlertCard into analytics hub
 
-## Build Order
+## Enhancement 2: Shrinkage Detection (Implemented)
 
-1. Migration (settings table)
-2. Service (`smart-mix-assist-service.ts`)
-3. Event types update in `mix-session-service.ts`
-4. Commands + validators (add to existing mixing files)
-5. Hook (`useSmartMixAssist.ts`)
-6. UI components (card, progress, settings)
-7. Wire into existing bowl creation flow
+### What It Does
+Physical stocktake workflow with variance reporting. Staff record actual counts via a Stocktake dialog, and the system compares against expected quantities (system records). A Shrinkage Report card in analytics surfaces products with negative variance (loss) ranked by estimated cost impact.
 
-## Edge Cases
+### Database Changes
+- Created `stock_counts` table with computed `variance` column (counted - expected), RLS policies (org member read/insert, org admin update/delete), and indexes
 
-- **No history exists**: No suggestion shown, bowl starts empty
-- **Multiple formulas for same service**: Most recent wins (Priority 1) or most frequent wins (Priority 2)
-- **Mismatched service name**: Exact match on `service_name` only; no fuzzy matching
-- **Ratio lock with manual override**: If stylist adds/removes lines after applying suggestion, ratio lock disengages for that bowl
+### Shrinkage Calculation
+```
+variance = counted_quantity - expected_quantity
+shrinkage_units = |variance| when variance < 0
+shrinkage_cost = shrinkage_units × cost_price
+```
 
-## Performance
+### Files Created
+- `src/hooks/useStockCounts.ts` — CRUD hooks for stock counts + `useShrinkageSummary` for aggregated shrinkage data
+- `src/components/dashboard/settings/inventory/StocktakeDialog.tsx` — Full stocktake UI with search, inline count entry, real-time variance display
+- `src/components/dashboard/analytics/ShrinkageReportCard.tsx` — PinnableCard showing products with shrinkage, severity badges, estimated loss
 
-- Suggestion generation queries `client_formula_history` (indexed by org+client, ordered by created_at) and `service_recipe_baselines` (indexed by org+service) — both are fast indexed reads
-- Suggestion is fetched once per bowl start, cached with `staleTime: Infinity`
-- No raw event stream queries during rendering
-
+### Files Updated
+- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Added "Stocktake" button to Inventory tab toolbar
+- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ShrinkageReportCard into analytics hub

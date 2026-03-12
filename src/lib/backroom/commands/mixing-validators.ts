@@ -270,3 +270,47 @@ export function validateMarkSessionUnresolved(
   }
   return errors;
 }
+
+// ─── ApplySuggestedFormula ───────────────────────────
+
+export function validateApplySuggestedFormula(
+  initiatedBy: string,
+  session: SessionState | null,
+  bowl: BowlState | null,
+): ValidationError[] {
+  const errors: ValidationError[] = [];
+  errors.push(...requireAuth(initiatedBy));
+  errors.push(...requireSessionExists(session));
+  errors.push(...requireBowlExists(bowl));
+  if (session && !isActiveSession(session.current_status as any)) {
+    errors.push({
+      code: 'SESSION_NOT_ACTIVE',
+      message: `Cannot apply suggestion — session is "${session.current_status}"`,
+    });
+  }
+  if (bowl && !isBowlOpen(bowl.status)) {
+    errors.push({
+      code: 'BOWL_NOT_OPEN',
+      message: `Cannot apply suggestion — bowl is "${bowl.status}"`,
+    });
+  }
+  return errors;
+}
+
+// ─── DismissSuggestedFormula ─────────────────────────
+
+export function validateDismissSuggestedFormula(
+  initiatedBy: string,
+  session: SessionState | null,
+): ValidationError[] {
+  const errors: ValidationError[] = [];
+  errors.push(...requireAuth(initiatedBy));
+  errors.push(...requireSessionExists(session));
+  if (session && !isActiveSession(session.current_status as any)) {
+    errors.push({
+      code: 'SESSION_NOT_ACTIVE',
+      message: `Cannot dismiss suggestion — session is "${session.current_status}"`,
+    });
+  }
+  return errors;
+}

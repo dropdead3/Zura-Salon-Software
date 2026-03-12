@@ -17895,6 +17895,47 @@ export type Database = {
           },
         ]
       }
+      smart_mix_assist_settings: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          created_at: string
+          id: string
+          is_enabled: boolean
+          organization_id: string
+          ratio_lock_enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          organization_id: string
+          ratio_lock_enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          organization_id?: string
+          ratio_lock_enabled?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "smart_mix_assist_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sms_templates: {
         Row: {
           created_at: string | null
