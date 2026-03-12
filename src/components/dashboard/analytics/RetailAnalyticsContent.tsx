@@ -2062,6 +2062,19 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
           </Card>
         </PinnableCard>
       )}
+
+      {/* ─── Inventory Valuation ─── */}
+      {allProducts && (
+        <InventoryValuationCard products={allProducts} movementRatings={productMovementRatings} filterContext={filterContext} />
+      )}
+
+      {/* ─── Dead Stock Auto-Clearance Suggestions ─── */}
+      {allProducts && (
+        <DeadStockAlertCard products={allProducts} movementRatings={productMovementRatings} filterContext={filterContext} />
+      )}
+
+      {/* ─── Reorder Approval Queue ─── */}
+      <ReorderApprovalCard />
     </div>
   );
 }
