@@ -96,7 +96,7 @@ export function useMarginErosion() {
         items.push({
           productId,
           productName: product.name,
-          supplierName: product.supplier_name ?? history[0].supplier_name,
+          supplierName: history[0].supplier_name,
           oldCost,
           newCost,
           costChangePercent: Math.round(costChangePercent * 10) / 10,
