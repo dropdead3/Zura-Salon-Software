@@ -91,7 +91,7 @@ export function AlertSettingsCard() {
                 </div>
                 <div>
                   <CardTitle className={tokens.card.title}>Low Stock Alerts</CardTitle>
-                  <CardDescription className="text-xs mt-0.5">
+                  <CardDescription className="text-xs mt-1">
                     Configure when and how you're notified about low inventory
                   </CardDescription>
                 </div>
