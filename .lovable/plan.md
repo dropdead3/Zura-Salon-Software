@@ -1,153 +1,58 @@
 
 
-## Timezone-Safe Scheduling (Implemented)
+# 5 Owner-Switch Features — Assessment & Implementation Plan
 
-### Problem
-`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
+## Current State Analysis
 
-### Solution
-- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
-- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
-- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
+Most of these features **already exist** in the codebase in some form. The gap is not building from scratch — it's surfacing, compositing, and elevating existing data into owner-facing dashboards.
 
-### Files Updated
-- `ScheduleHeader.tsx` — today button, quick days, isToday checks
-- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
-- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
-- `MonthView.tsx` — today highlight
-- `AgendaView.tsx` — today/tomorrow labels, today border
-- `ScheduleActionBar.tsx` — payment queue timing
-- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
-- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
-- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
-- `useHuddles.ts` — today's huddle query
+| Feature | Existing Infrastructure | Gap |
+|---|---|---|
+| 1. True Profit Dashboard | `useAppointmentProfitSummary` has totalRevenue, totalMargin, chemicalCost, laborEstimate, wasteCost. `ProfitDashboardSummary`, `ProfitByServiceTable`, `ProfitTrendChart` exist. | No unified "Today's P&L" card on the Command Center. Existing components are backroom-scoped, not owner-facing. Need a top-level `TrueProfitCard` that shows Revenue → Costs → Net Profit. |
+| 2. Staff Performance Intelligence | `StylistExperienceCard` scores stylists on rebook rate (35%), tip rate (30%), retention (20%). `StaffRevenueLeaderboard` exists. Backroom has `useStaffBackroomPerformance` for chemical cost per stylist. | No unified per-stylist report combining revenue + rebook + retail + chemical cost + avg service time. Need a `StaffPerformanceReport` that composites existing hooks. |
+| 3. Predictive Inventory | `useDemandForecast`, `useStockoutAlerts`, `StockoutAlertCard`, `PredictiveBackroomSummary` all exist and are functional. | Already built. Needs wiring into Command Center as a pinnable card if not already. |
+| 4. Real Service Profitability | `ProfitByServiceTable` with `rankServicesByMargin()` already ranks services by contribution margin. `AppointmentProfitCard` shows per-service breakdown. | Already built. Need an owner-facing `ServiceProfitabilityCard` that shows the comparison view (side-by-side services ranked by margin) on the Command Center. |
+| 5. Control Tower | `BackroomControlTower` with alert aggregation, priority scoring, category filters — fully implemented. | Already built. Needs integration into the owner's Command Center as a pinnable card. |
 
-## Auto-Reorder with Supplier Communication (Implemented)
+## What Actually Needs Building
 
-### What It Does
-Organizations can opt into automatic reorder — when stock dips below threshold, POs are calculated (using MOQ and par levels) and sent directly to the supplier via email.
+### 1. TrueProfitCard — Owner-facing P&L summary
 
-### Database Changes
-- `products.par_level` (INT, nullable) — desired stock level to reorder up to
-- `product_suppliers.moq` (INT, default 1) — minimum order quantity
-- `inventory_alert_settings.auto_reorder_enabled` (BOOL, default false)
-- `inventory_alert_settings.auto_reorder_mode` (TEXT, default 'to_par') — 'to_par' or 'moq_only'
-- `inventory_alert_settings.max_auto_reorder_value` (NUMERIC, nullable) — daily spend cap
-- `purchase_orders.supplier_confirmed_at` (TIMESTAMPTZ, nullable) — for tracking confirmations
+New component: `src/components/dashboard/sales/TrueProfitCard.tsx`
 
-### Quantity Calculation
-```
-deficit = par_level - quantity_on_hand
-order_qty = max(moq, deficit)
-if moq > 1: round up to nearest MOQ multiple
-```
-Fallback: if par_level is null, uses `reorder_level * 2`.
+- Composites `useAppointmentProfitSummary` + `useTodayActualRevenue` 
+- Shows: Revenue | Chemical Cost | Labor Cost | Waste | **Net Profit**
+- Profit margin health indicator (green/amber/red)
+- Trend sparkline from `trendByDay`
+- Pinnable to Command Center via existing `PinnableCard` pattern
+- Register in `CommandCenterAnalytics.tsx` CARD_COMPONENTS
 
-### Files Updated
-- Migration: Added columns to products, product_suppliers, inventory_alert_settings, purchase_orders
-- `check-reorder-levels/index.ts` — auto-send logic with MOQ/par calculation, spend cap, email invocation
-- `AlertSettingsCard.tsx` — auto-reorder toggle, mode selector, spend cap input
-- `useInventoryAlertSettings.ts` — updated interface
-- `useProducts.ts` — added par_level to Product interface
-- `useProductSuppliers.ts` — added moq to ProductSupplier interface
-- `ProductEditDialog.tsx` — added par level field
-- `RetailProductsSettingsContent.tsx` — added par level to product form
-- `SupplierDialog.tsx` — added MOQ field
+### 2. StaffPerformanceReport — Unified stylist scorecard
 
-### Safety Features
-- Spend cap: daily auto-reorder pauses when cumulative PO value exceeds cap
-- Audit trail: auto_reorder logged as stock_movement reason
-- Supplier confirmation tracking via supplier_confirmed_at timestamp
+New component: `src/components/dashboard/analytics/StaffPerformanceReport.tsx`
 
-## Product Movement Rating Badges (Implemented)
+- Composites: `useStylistExperienceScore` (rebook, tip, retention) + `useSalesByStylist` (revenue) + `useStaffBackroomPerformance` (chemical cost, waste rate)
+- Per-stylist row: Revenue | Rebook Rate | Retail Conversion | Chemical Cost/Service | Avg Service Time
+- Sortable by any column
+- Expandable row with coaching signals (e.g., "Chemical cost 25% above salon average")
+- New hook: `src/hooks/useStaffPerformanceComposite.ts` — merges the 3 data sources by `user_id`
+- Register as pinnable card
 
-### What It Does
-Every product gets a dynamic movement rating badge (Best Seller, Popular, Steady, Slow Mover, Stagnant, Dead Weight) computed from 90-day sales velocity data.
+### 3. Wire existing features into Command Center
 
-### Rating Tiers
-- **Best Seller**: Top 10% velocity AND >0.5 units/day (emerald)
-- **Popular**: Top 25% velocity AND >0.2 units/day (blue)
-- **Steady**: Velocity >0.05/day (muted)
-- **Slow Mover**: Velocity >0 but ≤0.05/day (amber)
-- **Stagnant**: Zero velocity, sold within 180 days (orange)
-- **Dead Weight**: Zero velocity, 180+ days or never sold (red)
-- Products with zero stock excluded from negative ratings
+- Add `BackroomControlTower` as a pinnable card in `CommandCenterAnalytics`
+- Add `StockoutAlertCard` / `PredictiveBackroomSummary` as a pinnable card
+- Add `ServiceProfitabilityCard` (wrapper around `ProfitByServiceTable`) as a pinnable card
 
-### Files Created
-- `src/lib/productMovementRating.ts` — pure rating logic + badge config
-- `src/hooks/useProductVelocity.ts` — lightweight 90-day POS velocity query
-- `src/components/ui/MovementBadge.tsx` — shared badge component with tooltip
+## Build Order
 
-### Files Updated
-- `RetailProductsSettingsContent.tsx` — Movement column + filter dropdown in products table
-- `RetailAnalyticsContent.tsx` — Movement badges on product performance table + Movement Distribution card (donut chart with actionable callouts)
-- `ProductCard.tsx` — Best Seller/Popular badges on public shop cards (positive only)
-- `ProductDetailModal.tsx` — Movement badge with velocity context
+1. `useStaffPerformanceComposite.ts` — merge hook combining experience scores + revenue + backroom metrics
+2. `TrueProfitCard.tsx` — owner P&L card
+3. `StaffPerformanceReport.tsx` — unified stylist scorecard
+4. `ServiceProfitabilityCard.tsx` — owner-facing service comparison wrapper
+5. Wire all 5 features into `CommandCenterAnalytics.tsx` as pinnable cards
 
-## Inventory Intelligence Suite v2 (Implemented)
+## No Database Changes Required
 
-### 1. Dead Stock Auto-Clearance Pipeline
-- `DeadStockAlertCard.tsx` — Surfaces Dead Weight/Stagnant products not yet in clearance with suggested discount tiers (10%/25%/50% based on idle days)
-- One-click "Mark for Clearance" applies discount and sets clearance_status
+All data sources already exist. This is a composition and presentation layer build.
 
-### 2. Supplier Lead Time Tracker
-- `usePurchaseOrders.ts` — `useMarkPurchaseOrderReceived` already computes actual delivery days and updates `product_suppliers.avg_delivery_days` via running average
-- `parLevelSuggestion.ts` — Updated to accept supplier-provided lead time instead of hardcoded 7-day default, with bounds clamping
-
-### 3. Inventory Valuation Dashboard Card
-- `InventoryValuationCard.tsx` — Shows total inventory at cost/retail, potential margin %, capital-at-risk (slow/stagnant/dead weight), with donut chart breakdown
-
-### 4. Reorder Approval Queue
-- `ReorderApprovalCard.tsx` — Surfaces draft POs from auto-reorder with one-click approve (→ sent) or reject (→ cancelled)
-
-### 5. Stock Transfer Between Locations
-- Migration: Created `stock_transfers` table with RLS (org member read, org admin manage)
-- `useStockTransfers.ts` — CRUD hooks for stock transfers with stock movement logging
-- `StockTransferDialog.tsx` — Dialog for creating transfers between locations
-- `RetailProductsSettingsContent.tsx` — "Transfer Stock" button added to Inventory tab (visible for multi-location orgs)
-
-## Enhancement 1: Expiry Tracking (Implemented)
-
-### What It Does
-Products can have an optional expiration date (`expires_at`) and per-product alert threshold (`expiry_alert_days`, default 30). The system surfaces expiring inventory with color-coded badges in the product table and an analytics card with auto-clearance suggestions.
-
-### Database Changes
-- `products.expires_at` (DATE, nullable) — expiration date for perishable products
-- `products.expiry_alert_days` (INTEGER, default 30) — days before expiry to trigger alerts
-
-### Expiry Alert Buckets
-- **Expired** (red): past expiration → suggests 50% markdown
-- **Critical** (orange): within alert threshold → suggests 25% markdown
-- **Warning** (amber): within 2× alert threshold → suggests 10% markdown
-
-### Files Created
-- `src/components/dashboard/analytics/ExpiryAlertCard.tsx` — PinnableCard showing expiring products with one-click clearance actions
-
-### Files Updated
-- `src/hooks/useProducts.ts` — Added `expires_at`, `expiry_alert_days` to Product interface; added `expiringOnly` filter
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Expiry date + alert days in product form; color-coded Expiry column in product table
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ExpiryAlertCard into analytics hub
-
-## Enhancement 2: Shrinkage Detection (Implemented)
-
-### What It Does
-Physical stocktake workflow with variance reporting. Staff record actual counts via a Stocktake dialog, and the system compares against expected quantities (system records). A Shrinkage Report card in analytics surfaces products with negative variance (loss) ranked by estimated cost impact.
-
-### Database Changes
-- Created `stock_counts` table with computed `variance` column (counted - expected), RLS policies (org member read/insert, org admin update/delete), and indexes
-
-### Shrinkage Calculation
-```
-variance = counted_quantity - expected_quantity
-shrinkage_units = |variance| when variance < 0
-shrinkage_cost = shrinkage_units × cost_price
-```
-
-### Files Created
-- `src/hooks/useStockCounts.ts` — CRUD hooks for stock counts + `useShrinkageSummary` for aggregated shrinkage data
-- `src/components/dashboard/settings/inventory/StocktakeDialog.tsx` — Full stocktake UI with search, inline count entry, real-time variance display
-- `src/components/dashboard/analytics/ShrinkageReportCard.tsx` — PinnableCard showing products with shrinkage, severity badges, estimated loss
-
-### Files Updated
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Added "Stocktake" button to Inventory tab toolbar
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ShrinkageReportCard into analytics hub
