@@ -11,16 +11,43 @@ export interface SupplierMetrics {
   promisedLeadTimeDays: number | null;
   leadTimeAccuracy: number | null; // percentage (100 = perfect)
   totalSpend: number;
+  priceConsistency: number | null; // 0–100%, higher = more stable
+  priceChanges: number;
   grade: 'A' | 'B' | 'C' | 'D';
+  riskLevel: 'none' | 'warning' | 'critical';
 }
 
-function computeGrade(fillRate: number, leadTimeAccuracy: number | null): 'A' | 'B' | 'C' | 'D' {
+function computeGrade(fillRate: number, leadTimeAccuracy: number | null, priceConsistency: number | null): 'A' | 'B' | 'C' | 'D' {
   const ltScore = leadTimeAccuracy ?? 80;
-  const combined = (fillRate * 0.6) + (ltScore * 0.4);
+  const pcScore = priceConsistency ?? 80;
+  // Fill 50%, Lead Time 30%, Price Consistency 20%
+  const combined = (fillRate * 0.5) + (ltScore * 0.3) + (pcScore * 0.2);
   if (combined >= 90) return 'A';
   if (combined >= 75) return 'B';
   if (combined >= 60) return 'C';
   return 'D';
+}
+
+function computeRiskLevel(grade: 'A' | 'B' | 'C' | 'D'): 'none' | 'warning' | 'critical' {
+  if (grade === 'D') return 'critical';
+  if (grade === 'C') return 'warning';
+  return 'none';
+}
+
+/**
+ * Compute coefficient of variation as a "consistency" score.
+ * CV = stddev / mean. Low CV → high consistency.
+ * Map to 0–100 where 0% CV = 100% consistency, 50%+ CV = 0% consistency.
+ */
+function computePriceConsistency(prices: number[]): number | null {
+  if (prices.length < 2) return null;
+  const mean = prices.reduce((a, b) => a + b, 0) / prices.length;
+  if (mean === 0) return null;
+  const variance = prices.reduce((sum, p) => sum + Math.pow(p - mean, 2), 0) / prices.length;
+  const stddev = Math.sqrt(variance);
+  const cv = stddev / mean;
+  // Map: 0 CV → 100%, 0.5+ CV → 0%
+  return Math.max(0, Math.round((1 - Math.min(cv / 0.5, 1)) * 100));
 }
 
 export function useSupplierPerformance() {
@@ -37,10 +64,16 @@ export function useSupplierPerformance() {
 
       if (error) throw error;
 
-      // Also get supplier lead time data from product_suppliers
+      // Get supplier lead time data from product_suppliers
       const { data: suppliers } = await supabase
         .from('product_suppliers')
         .select('supplier_name, lead_time_days, avg_delivery_days, delivery_count')
+        .eq('organization_id', orgId!);
+
+      // Get cost history for price consistency analysis
+      const { data: costHistory } = await supabase
+        .from('product_cost_history')
+        .select('supplier_name, cost_price')
         .eq('organization_id', orgId!);
 
       // Group POs by supplier
@@ -58,6 +91,14 @@ export function useSupplierPerformance() {
         if (!supplierLeadTimes.has(name)) {
           supplierLeadTimes.set(name, { promised: s.lead_time_days, actual: s.avg_delivery_days });
         }
+      }
+
+      // Build price consistency lookup by supplier
+      const supplierPrices = new Map<string, number[]>();
+      for (const ch of (costHistory || [])) {
+        const name = ch.supplier_name || 'Unknown';
+        if (!supplierPrices.has(name)) supplierPrices.set(name, []);
+        supplierPrices.get(name)!.push(Number(ch.cost_price));
       }
 
       const metrics: SupplierMetrics[] = [];
@@ -86,9 +127,15 @@ export function useSupplierPerformance() {
 
         let leadTimeAccuracy: number | null = null;
         if (avgLeadTimeDays != null && promisedLeadTimeDays != null && promisedLeadTimeDays > 0) {
-          // 100% = delivered exactly on time. Lower = late.
           leadTimeAccuracy = Math.min(100, Math.round((promisedLeadTimeDays / avgLeadTimeDays) * 100));
         }
+
+        // Price consistency
+        const prices = supplierPrices.get(name) ?? [];
+        const priceConsistency = computePriceConsistency(prices);
+        const priceChanges = Math.max(0, prices.length - 1);
+
+        const grade = computeGrade(fillRate, leadTimeAccuracy, priceConsistency);
 
         metrics.push({
           supplierName: name,
@@ -99,7 +146,10 @@ export function useSupplierPerformance() {
           promisedLeadTimeDays,
           leadTimeAccuracy,
           totalSpend,
-          grade: computeGrade(fillRate, leadTimeAccuracy),
+          priceConsistency,
+          priceChanges,
+          grade,
+          riskLevel: computeRiskLevel(grade),
         });
       }
 

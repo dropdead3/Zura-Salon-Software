@@ -51,6 +51,7 @@ import { ReorderApprovalCard } from './ReorderApprovalCard';
 import { ExpiryAlertCard } from './ExpiryAlertCard';
 import { ShrinkageReportCard } from './ShrinkageReportCard';
 import { SeasonalForecastCard } from './SeasonalForecastCard';
+import { MarginErosionCard } from './MarginErosionCard';
 
 interface RetailAnalyticsContentProps {
   dateFrom: string;
@@ -2019,7 +2020,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                   <div>
                     <div className="flex items-center gap-2">
                       <CardTitle className="font-display text-base tracking-wide">SUPPLIER PERFORMANCE</CardTitle>
-                      <MetricInfoTooltip description="Supplier scorecard based on purchase order data. Grade combines fill rate (60%) and on-time delivery accuracy (40%). A = 90%+, B = 75%+, C = 60%+, D = below 60%." />
+                      <MetricInfoTooltip description="Supplier scorecard based on purchase order data. Grade combines fill rate (50%), on-time delivery accuracy (30%), and price consistency (20%). A = 90%+, B = 75%+, C = 60%+, D = below 60%." />
                     </div>
                     <CardDescription className="text-xs">{supplierMetrics.length} supplier{supplierMetrics.length !== 1 ? 's' : ''} tracked</CardDescription>
                   </div>
@@ -2034,10 +2035,12 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                     <TableRow>
                       <TableHead>Supplier</TableHead>
                       <TableHead className="text-center">Grade</TableHead>
+                      <TableHead className="text-center">Risk</TableHead>
                       <TableHead className="text-right">Orders</TableHead>
                       <TableHead className="text-right">Fill Rate</TableHead>
                       <TableHead className="text-right">Avg Lead Time</TableHead>
                       <TableHead className="text-right">On-Time %</TableHead>
+                      <TableHead className="text-right">Price Stability</TableHead>
                       <TableHead className="text-right">Spend</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -2050,10 +2053,28 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                           <TableCell className="text-center">
                             <Badge variant="outline" className={cn('text-xs', gradeColor)}>{s.grade}</Badge>
                           </TableCell>
+                          <TableCell className="text-center">
+                            {s.riskLevel === 'critical' ? (
+                              <Badge variant="outline" className="text-[10px] text-red-500 border-red-200 dark:border-red-800">
+                                <AlertTriangle className="w-2.5 h-2.5 mr-0.5" />High
+                              </Badge>
+                            ) : s.riskLevel === 'warning' ? (
+                              <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-200 dark:border-amber-800">Moderate</Badge>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
                           <TableCell className="text-right tabular-nums">{s.totalOrders}</TableCell>
                           <TableCell className="text-right tabular-nums">{s.fillRate}%</TableCell>
                           <TableCell className="text-right tabular-nums">{s.avgLeadTimeDays != null ? `${s.avgLeadTimeDays}d` : '—'}</TableCell>
                           <TableCell className="text-right tabular-nums">{s.leadTimeAccuracy != null ? `${s.leadTimeAccuracy}%` : '—'}</TableCell>
+                          <TableCell className="text-right tabular-nums">
+                            {s.priceConsistency != null ? (
+                              <span className={cn('text-xs', s.priceConsistency >= 90 ? 'text-emerald-600 dark:text-emerald-400' : s.priceConsistency >= 70 ? 'text-amber-600 dark:text-amber-400' : 'text-red-500 dark:text-red-400')}>
+                                {s.priceConsistency}%
+                              </span>
+                            ) : '—'}
+                          </TableCell>
                           <TableCell className="text-right tabular-nums"><BlurredAmount>{formatCurrencyWhole(s.totalSpend)}</BlurredAmount></TableCell>
                         </TableRow>
                       );
@@ -2085,6 +2106,9 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
       {allProducts && velocityMap && (
         <SeasonalForecastCard products={allProducts} velocityMap={velocityMap} filterContext={filterContext} />
       )}
+
+      {/* ─── Margin Erosion Alerts ─── */}
+      <MarginErosionCard filterContext={filterContext} />
 
       {/* ─── Shrinkage Report ─── */}
       <ShrinkageReportCard filterContext={filterContext} />
