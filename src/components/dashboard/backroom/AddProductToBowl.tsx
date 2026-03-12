@@ -42,7 +42,15 @@ export function AddProductToBowl({ bowlId, onAdd, onCancel, inline = false }: Ad
     name: string;
     brand: string | null;
     cost_price: number | null;
+    quantity_on_hand?: number | null;
   } | null>(null);
+
+  const { data: pinnedProducts = [] } = useStaffPinnedProducts();
+  const pinnedIds = new Set(pinnedProducts.map((p) => p.product_id));
+  const togglePin = useTogglePinnedProduct();
+  const { data: substitutions = [] } = useProductSubstitutions(
+    selectedProduct && (selectedProduct.quantity_on_hand ?? 1) <= 0 ? selectedProduct.id : null
+  );
 
   const { data: products = [] } = useQuery({
     queryKey: ['backroom-products', orgId, search],
