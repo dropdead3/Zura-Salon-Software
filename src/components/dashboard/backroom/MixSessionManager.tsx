@@ -67,6 +67,7 @@ export function MixSessionManager({
   const createReweigh = useCreateReweighEvent();
   const createWaste = useCreateWasteEvent();
   const saveFormula = useSaveFormulaHistory();
+  const depleteInventory = useDepleteMixSession();
 
   // ─── Session Actions ──────────────────────────────
   const handleStartSession = useCallback(() => {
