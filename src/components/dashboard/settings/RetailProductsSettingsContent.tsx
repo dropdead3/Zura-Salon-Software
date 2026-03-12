@@ -53,6 +53,8 @@ import { useProductSuppliers, type ProductSupplier } from '@/hooks/useProductSup
 import { ReorderDialog } from '@/components/dashboard/settings/inventory/ReorderDialog';
 import { SupplierDialog } from '@/components/dashboard/settings/inventory/SupplierDialog';
 import { PurchaseOrdersPanel } from '@/components/dashboard/settings/inventory/PurchaseOrdersPanel';
+import { BatchReorderDialog } from '@/components/dashboard/settings/inventory/BatchReorderDialog';
+import { Checkbox } from '@/components/ui/checkbox';
 // Helper to classify product type — prefer DB column, fall back to regex
 function getProductType(product: Product): string {
   if (product.product_type && product.product_type !== 'Products') return product.product_type;
