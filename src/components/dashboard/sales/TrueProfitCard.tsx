@@ -12,7 +12,7 @@ import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useAppointmentProfitSummary } from '@/hooks/backroom/useAppointmentProfit';
 import { TrendSparkline } from '@/components/dashboard/TrendSparkline';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
-import { BlurredAmount } from '@/components/ui/BlurredAmount';
+import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
 
 interface TrueProfitCardProps {
   dateFrom: string;

@@ -17,7 +17,7 @@ import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
 import { useStaffPerformanceComposite, type StaffPerformanceRow } from '@/hooks/useStaffPerformanceComposite';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
-import { BlurredAmount } from '@/components/ui/BlurredAmount';
+import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 type SortKey = 'revenue' | 'rebookRate' | 'retailConversion' | 'avgChemicalCostPerService' | 'experienceScore';
