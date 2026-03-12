@@ -26,9 +26,11 @@ interface AddProductToBowlProps {
     capturedVia: string
   ) => void;
   onCancel: () => void;
+  /** When true, renders always-visible search without cancel button */
+  inline?: boolean;
 }
 
-export function AddProductToBowl({ bowlId, onAdd, onCancel }: AddProductToBowlProps) {
+export function AddProductToBowl({ bowlId, onAdd, onCancel, inline = false }: AddProductToBowlProps) {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
   const [search, setSearch] = useState('');
@@ -88,6 +90,11 @@ export function AddProductToBowl({ bowlId, onAdd, onCancel }: AddProductToBowlPr
               unit,
               'manual'
             );
+            // In inline mode, auto-clear for next product
+            if (inline) {
+              setSelectedProduct(null);
+              setSearch('');
+            }
           }}
           label="Dispensed amount"
         />
@@ -108,9 +115,11 @@ export function AddProductToBowl({ bowlId, onAdd, onCancel }: AddProductToBowlPr
             autoFocus
           />
         </div>
-        <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0" onClick={onCancel}>
-          <X className="w-4 h-4" />
-        </Button>
+        {!inline && (
+          <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0" onClick={onCancel}>
+            <X className="w-4 h-4" />
+          </Button>
+        )}
       </div>
 
       <ScrollArea className="max-h-[200px]">

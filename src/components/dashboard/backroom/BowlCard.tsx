@@ -12,6 +12,7 @@ import { Plus, Lock, Scale, Trash2 } from 'lucide-react';
 import { BowlLineRow } from './BowlLineRow';
 import { ManualWeightInput } from './ManualWeightInput';
 import { AddProductToBowl } from './AddProductToBowl';
+import { LiveBowlCard } from './LiveBowlCard';
 import type { MixBowl } from '@/hooks/backroom/useMixBowls';
 import type { MixBowlLine } from '@/hooks/backroom/useMixBowlLines';
 import { calculateBowlWeight, calculateBowlCost } from '@/lib/backroom/mix-calculations';
@@ -28,6 +29,7 @@ const STATUS_STYLES: Record<MixBowlStatus, { label: string; variant: 'default' |
 interface BowlCardProps {
   bowl: MixBowl;
   lines: MixBowlLine[];
+  serviceId?: string | null;
   onAddLine: (bowlId: string, productId: string, productName: string, brand: string | null, costPerUnit: number, quantity: number, unit: string, capturedVia: string) => void;
   onDeleteLine: (lineId: string, bowlId: string) => void;
   onSealBowl: (bowlId: string) => void;
@@ -38,6 +40,7 @@ interface BowlCardProps {
 export function BowlCard({
   bowl,
   lines,
+  serviceId,
   onAddLine,
   onDeleteLine,
   onSealBowl,
@@ -51,6 +54,21 @@ export function BowlCard({
 
   const liveWeight = calculateBowlWeight(lines);
   const liveCost = calculateBowlCost(lines);
+
+  // Open bowls use the LiveBowlCard mixing console experience
+  if (isOpen) {
+    return (
+      <LiveBowlCard
+        bowl={bowl}
+        lines={lines}
+        serviceId={serviceId}
+        onAddLine={onAddLine}
+        onDeleteLine={onDeleteLine}
+        onSealBowl={onSealBowl}
+        onDiscardBowl={onDiscardBowl}
+      />
+    );
+  }
 
   return (
     <Card className="bg-card/80 backdrop-blur-xl border-border">
