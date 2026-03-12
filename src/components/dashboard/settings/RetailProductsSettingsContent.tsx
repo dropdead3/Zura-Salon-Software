@@ -22,7 +22,7 @@ import { tokens } from '@/lib/design-tokens';
 import {
   Search, Plus, BarChart3, Package, Edit2, AlertTriangle, Minus,
   Loader2, Check, X, MapPin, CheckCircle2, Info, ExternalLink, ImagePlus, Gift,
-  FileText, Trash2, Copy, Download, ChevronUp, ChevronDown, ChevronsUpDown,
+  FileText, Trash2, Copy, Download, ChevronUp, ChevronDown, ChevronsUpDown, ShoppingCart,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
@@ -49,6 +49,10 @@ import { useImportJobs } from '@/hooks/useImportJobs';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { Upload, History } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { useProductSuppliers, type ProductSupplier } from '@/hooks/useProductSuppliers';
+import { ReorderDialog } from '@/components/dashboard/settings/inventory/ReorderDialog';
+import { SupplierDialog } from '@/components/dashboard/settings/inventory/SupplierDialog';
+import { PurchaseOrdersPanel } from '@/components/dashboard/settings/inventory/PurchaseOrdersPanel';
 // Helper to classify product type — prefer DB column, fall back to regex
 function getProductType(product: Product): string {
   if (product.product_type && product.product_type !== 'Products') return product.product_type;
@@ -1067,9 +1071,26 @@ function CategoriesTab() {
 function InventoryByLocationTab() {
   const { formatCurrency } = useFormatCurrency();
   const { data: locations } = useActiveLocations();
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id;
   const [selectedLocationId, setSelectedLocationId] = useState<string>('all');
   const { data: products, isLoading } = useProducts({ locationId: selectedLocationId !== 'all' ? selectedLocationId : undefined });
   const updateProduct = useUpdateProduct();
+  const { data: allSuppliers } = useProductSuppliers();
+  const [inventoryView, setInventoryView] = useState<'stock' | 'orders'>('stock');
+
+  // Dialog state
+  const [reorderProduct, setReorderProduct] = useState<Product | null>(null);
+  const [supplierProduct, setSupplierProduct] = useState<{ id: string; name: string } | null>(null);
+
+  // Build supplier lookup
+  const supplierMap = useMemo(() => {
+    const map = new Map<string, ProductSupplier>();
+    for (const s of allSuppliers || []) {
+      map.set(s.product_id, s);
+    }
+    return map;
+  }, [allSuppliers]);
 
   const lowStockProducts = useMemo(() => {
     if (!products) return [];
@@ -1085,92 +1106,169 @@ function InventoryByLocationTab() {
 
   return (
     <div className="space-y-4">
-      {/* Location selector */}
-      {locations && locations.length > 1 && (
+      {/* Location selector + view toggle */}
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <MapPin className="w-4 h-4 text-muted-foreground" />
-          <Select value={selectedLocationId} onValueChange={setSelectedLocationId}>
-            <SelectTrigger className="w-[220px] h-9"><SelectValue placeholder="Select location" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Locations</SelectItem>
-              {locations.map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          {selectedLocationId !== 'all' && (
-            <span className="text-xs text-muted-foreground">{products?.length ?? 0} product(s) at this location</span>
+          {locations && locations.length > 1 && (
+            <>
+              <MapPin className="w-4 h-4 text-muted-foreground" />
+              <Select value={selectedLocationId} onValueChange={setSelectedLocationId}>
+                <SelectTrigger className="w-[220px] h-9"><SelectValue placeholder="Select location" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Locations</SelectItem>
+                  {locations.map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              {selectedLocationId !== 'all' && (
+                <span className="text-xs text-muted-foreground">{products?.length ?? 0} product(s)</span>
+              )}
+            </>
           )}
         </div>
+        <div className="flex items-center gap-1 bg-muted rounded-lg p-0.5">
+          <Button
+            variant={inventoryView === 'stock' ? 'default' : 'ghost'}
+            size="sm"
+            className="h-7 px-3 text-xs gap-1.5"
+            onClick={() => setInventoryView('stock')}
+          >
+            <Package className="w-3.5 h-3.5" /> Stock
+          </Button>
+          <Button
+            variant={inventoryView === 'orders' ? 'default' : 'ghost'}
+            size="sm"
+            className="h-7 px-3 text-xs gap-1.5"
+            onClick={() => setInventoryView('orders')}
+          >
+            <ShoppingCart className="w-3.5 h-3.5" /> Purchase Orders
+          </Button>
+        </div>
+      </div>
+
+      {inventoryView === 'orders' ? (
+        <PurchaseOrdersPanel />
+      ) : (
+        <>
+          {lowStockProducts.length > 0 && (
+            <div className="p-3 rounded-lg border border-amber-200 bg-amber-50/50 dark:border-amber-900/50 dark:bg-amber-950/20">
+              <div className="flex items-center gap-2 mb-1">
+                <AlertTriangle className="w-4 h-4 text-amber-500" />
+                <span className="text-sm font-medium">{lowStockProducts.length} product(s) at or below minimum stock level</span>
+              </div>
+            </div>
+          )}
+          <div className="overflow-x-auto border rounded-lg">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Product</TableHead>
+                  <TableHead>Brand</TableHead>
+                  <TableHead>Supplier</TableHead>
+                  <TableHead className="text-right">On Hand</TableHead>
+                  <TableHead className="text-right">Min. Stock</TableHead>
+                  <TableHead className="text-right">Status</TableHead>
+                  <TableHead className="text-center w-32">Adjust</TableHead>
+                  <TableHead className="text-center w-24">Reorder</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {!products?.length ? (
+                  <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No products{selectedLocationId !== 'all' ? ' at this location' : ''}</TableCell></TableRow>
+                ) : products.map(p => {
+                  const isLow = p.reorder_level != null && p.quantity_on_hand != null && p.quantity_on_hand <= p.reorder_level;
+                  const supplier = supplierMap.get(p.id);
+                  return (
+                    <TableRow key={p.id} className={cn(isLow && 'bg-amber-50/50 dark:bg-amber-950/10')}>
+                      <TableCell>
+                        <div className="flex items-center gap-2.5">
+                          <Avatar className="h-8 w-8 shrink-0">
+                            {p.image_url && <AvatarImage src={p.image_url} alt={p.name} className="object-cover" />}
+                            <AvatarFallback className="text-[10px] font-medium bg-muted">{getInitials(p.name)}</AvatarFallback>
+                          </Avatar>
+                          <span className="font-medium text-sm">{p.name}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{p.brand || '—'}</TableCell>
+                      <TableCell>
+                        {supplier ? (
+                          <button
+                            className="text-sm text-primary hover:underline cursor-pointer"
+                            onClick={() => setSupplierProduct({ id: p.id, name: p.name })}
+                          >
+                            {supplier.supplier_name}
+                          </button>
+                        ) : (
+                          <button
+                            className="text-xs text-muted-foreground hover:text-primary cursor-pointer"
+                            onClick={() => setSupplierProduct({ id: p.id, name: p.name })}
+                          >
+                            + Add
+                          </button>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums font-medium">{p.quantity_on_hand ?? '—'}</TableCell>
+                      <TableCell className="text-right tabular-nums text-muted-foreground">{p.reorder_level ?? '—'}</TableCell>
+                      <TableCell className="text-right">
+                        {isLow ? (
+                          <Badge variant="outline" className="text-amber-600 border-amber-300 dark:text-amber-400 text-[10px]">Low</Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-emerald-600 border-emerald-300 dark:text-emerald-400 text-[10px]">OK</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <Button variant="outline" size="icon" className="w-7 h-7" onClick={() => adjustStock(p, -1)} disabled={!p.quantity_on_hand}>
+                            <Minus className="w-3 h-3" />
+                          </Button>
+                          <span className="w-8 text-center text-sm tabular-nums">{p.quantity_on_hand ?? 0}</span>
+                          <Button variant="outline" size="icon" className="w-7 h-7" onClick={() => adjustStock(p, 1)}>
+                            <Plus className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Button
+                          variant={isLow ? 'default' : 'outline'}
+                          size={tokens.button.inline}
+                          className="gap-1"
+                          onClick={() => setReorderProduct(p)}
+                        >
+                          <ShoppingCart className="w-3.5 h-3.5" />
+                          {isLow ? 'Reorder' : 'Order'}
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        </>
       )}
 
-      {lowStockProducts.length > 0 && (
-        <div className="p-3 rounded-lg border border-amber-200 bg-amber-50/50 dark:border-amber-900/50 dark:bg-amber-950/20">
-          <div className="flex items-center gap-2 mb-1">
-            <AlertTriangle className="w-4 h-4 text-amber-500" />
-            <span className="text-sm font-medium">{lowStockProducts.length} product(s) at or below minimum stock level</span>
-          </div>
-        </div>
+      {/* Reorder Dialog */}
+      {reorderProduct && orgId && (
+        <ReorderDialog
+          open={!!reorderProduct}
+          onOpenChange={open => !open && setReorderProduct(null)}
+          product={reorderProduct}
+          organizationId={orgId}
+          onOpenSupplier={() => {
+            setSupplierProduct({ id: reorderProduct.id, name: reorderProduct.name });
+          }}
+        />
       )}
-      <div className="overflow-x-auto border rounded-lg">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Product</TableHead>
-              <TableHead>Brand</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead className="text-right">Retail Price</TableHead>
-              <TableHead className="text-right">On Hand</TableHead>
-              <TableHead className="text-right">Min. Stock</TableHead>
-              <TableHead className="text-right">Status</TableHead>
-              <TableHead className="text-center w-32">Adjust</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {!products?.length ? (
-              <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No products{selectedLocationId !== 'all' ? ' at this location' : ''}</TableCell></TableRow>
-            ) : products.map(p => {
-              const isLow = p.reorder_level != null && p.quantity_on_hand != null && p.quantity_on_hand <= p.reorder_level;
-              return (
-                <TableRow key={p.id} className={cn(isLow && 'bg-amber-50/50 dark:bg-amber-950/10')}>
-                  <TableCell>
-                    <div className="flex items-center gap-2.5">
-                      <Avatar className="h-8 w-8 shrink-0">
-                        {p.image_url && <AvatarImage src={p.image_url} alt={p.name} className="object-cover" />}
-                        <AvatarFallback className="text-[10px] font-medium bg-muted">{getInitials(p.name)}</AvatarFallback>
-                      </Avatar>
-                      <span className="font-medium text-sm">{p.name}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{p.brand || '—'}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{p.category || '—'}</TableCell>
-                  <TableCell className="text-right tabular-nums text-sm text-muted-foreground">
-                    <BlurredAmount>{p.retail_price != null ? formatCurrency(p.retail_price) : '—'}</BlurredAmount>
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums font-medium">{p.quantity_on_hand ?? '—'}</TableCell>
-                  <TableCell className="text-right tabular-nums text-muted-foreground">{p.reorder_level ?? '—'}</TableCell>
-                  <TableCell className="text-right">
-                    {isLow ? (
-                      <Badge variant="outline" className="text-amber-600 border-amber-300 dark:text-amber-400 text-[10px]">Low</Badge>
-                    ) : (
-                      <Badge variant="outline" className="text-emerald-600 border-emerald-300 dark:text-emerald-400 text-[10px]">OK</Badge>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <div className="flex items-center justify-center gap-1">
-                      <Button variant="outline" size="icon" className="w-7 h-7" onClick={() => adjustStock(p, -1)} disabled={!p.quantity_on_hand}>
-                        <Minus className="w-3 h-3" />
-                      </Button>
-                      <span className="w-8 text-center text-sm tabular-nums">{p.quantity_on_hand ?? 0}</span>
-                      <Button variant="outline" size="icon" className="w-7 h-7" onClick={() => adjustStock(p, 1)}>
-                        <Plus className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </div>
+
+      {/* Supplier Dialog */}
+      {supplierProduct && orgId && (
+        <SupplierDialog
+          open={!!supplierProduct}
+          onOpenChange={open => !open && setSupplierProduct(null)}
+          productId={supplierProduct.id}
+          productName={supplierProduct.name}
+          organizationId={orgId}
+        />
+      )}
     </div>
   );
 }
