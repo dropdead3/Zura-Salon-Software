@@ -492,7 +492,7 @@ function ProductsTab() {
             </TableHeader>
             <TableBody>
               {!filteredProducts?.length ? (
-                <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">No products found</TableCell></TableRow>
+                <TableRow><TableCell colSpan={10} className="text-center py-8 text-muted-foreground">No products found</TableCell></TableRow>
               ) : filteredProducts.map(p => {
                 const isLow = p.reorder_level != null && p.quantity_on_hand != null && p.quantity_on_hand <= p.reorder_level;
                 const productType = getProductType(p);
