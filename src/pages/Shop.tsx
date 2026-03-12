@@ -14,6 +14,7 @@ import type { WebsiteRetailThemeSettings } from '@/hooks/useWebsiteSettings';
 
 interface RetailSettings {
   enabled: boolean;
+  continue_selling_when_out_of_stock?: boolean;
   [key: string]: unknown;
 }
 
@@ -75,6 +76,7 @@ export default function Shop() {
 
   const isLoading = loadingSettings || loadingProducts;
   const storeEnabled = retailSettings?.enabled ?? false;
+  const continueSelling = retailSettings?.continue_selling_when_out_of_stock ?? false;
 
   // Build CSS variable overrides from theme
   const themeStyle = useMemo(() => {
@@ -146,6 +148,7 @@ export default function Shop() {
                   <ProductCard
                     key={product.id}
                     product={product}
+                    continueSelling={continueSelling}
                     onClick={setSelectedProduct}
                   />
                 ))}

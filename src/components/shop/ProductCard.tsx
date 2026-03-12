@@ -4,12 +4,14 @@ import { Badge } from '@/components/ui/badge';
 
 interface ProductCardProps {
   product: Product;
+  continueSelling?: boolean;
   onClick?: (product: Product) => void;
 }
 
-export function ProductCard({ product, onClick }: ProductCardProps) {
+export function ProductCard({ product, continueSelling = false, onClick }: ProductCardProps) {
   const inStock = product.quantity_on_hand != null && product.quantity_on_hand > 0;
   const lowStock = product.quantity_on_hand != null && product.reorder_level != null && product.quantity_on_hand <= product.reorder_level && product.quantity_on_hand > 0;
+  const showOutOfStock = !inStock && !continueSelling;
 
   return (
     <button
@@ -35,7 +37,7 @@ export function ProductCard({ product, onClick }: ProductCardProps) {
           <p className="text-base font-medium text-foreground">
             ${(product.retail_price ?? 0).toFixed(2)}
           </p>
-          {!inStock ? (
+          {showOutOfStock ? (
             <Badge variant="secondary" className="text-[10px] bg-destructive/10 text-destructive border-0">
               Out of stock
             </Badge>

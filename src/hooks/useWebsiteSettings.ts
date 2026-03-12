@@ -25,6 +25,7 @@ export interface WebsiteRetailSettings {
   delivery: boolean;
   shipping: boolean;
   featured_products: boolean;
+  continue_selling_when_out_of_stock: boolean;
 }
 
 export function useWebsiteRetailSettings() {
