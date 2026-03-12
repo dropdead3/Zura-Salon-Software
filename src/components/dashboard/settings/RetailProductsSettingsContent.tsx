@@ -663,6 +663,7 @@ function CategoriesTab() {
   const { formatCurrency } = useFormatCurrency();
   const { data: categories, isLoading } = useProductCategorySummaries();
   const { data: allCategoryNames } = useProductCategories();
+  const bulkUpdateType = useBulkUpdateProductTypeByCategory();
   const bulkUpdate = useBulkUpdateProducts();
   const createCategory = useCreateProductCategory();
   const deleteCategory = useDeleteProductCategory();
