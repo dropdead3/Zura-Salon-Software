@@ -13,8 +13,7 @@ import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { PinnableCard } from '@/components/dashboard/PinnableCard';
-import { AnalyticsFilterBadge, type FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
-import { EmptyState } from '@/components/ui/empty-state';
+import { type FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 
 interface RebalancingCardProps {
   filterContext?: FilterContext;
