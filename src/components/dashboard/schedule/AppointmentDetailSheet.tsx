@@ -1196,6 +1196,17 @@ export function AppointmentDetailSheet({
                       )}
                     </motion.div>
 
+                    {/* Checkout Clarity Panel — Product usage charges */}
+                    {appointment.id && effectiveOrganization?.id && (
+                      <motion.div variants={staggerItem}>
+                        <CheckoutClarityPanel
+                          appointmentId={appointment.id}
+                          organizationId={effectiveOrganization.id}
+                          isManagerOrAdmin={isManagerOrAdmin}
+                        />
+                      </motion.div>
+                    )}
+
                     <Separator />
 
                     {/* Stylist + Preferred Comparison */}
