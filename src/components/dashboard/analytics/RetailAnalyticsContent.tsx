@@ -52,6 +52,8 @@ import { ExpiryAlertCard } from './ExpiryAlertCard';
 import { ShrinkageReportCard } from './ShrinkageReportCard';
 import { SeasonalForecastCard } from './SeasonalForecastCard';
 import { MarginErosionCard } from './MarginErosionCard';
+import { AbcClassificationCard } from './AbcClassificationCard';
+import { useAbcClassification } from '@/hooks/useAbcClassification';
 
 interface RetailAnalyticsContentProps {
   dateFrom: string;
