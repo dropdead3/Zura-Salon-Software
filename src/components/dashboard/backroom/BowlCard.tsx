@@ -55,6 +55,21 @@ export function BowlCard({
   const liveWeight = calculateBowlWeight(lines);
   const liveCost = calculateBowlCost(lines);
 
+  // Open bowls use the LiveBowlCard mixing console experience
+  if (isOpen) {
+    return (
+      <LiveBowlCard
+        bowl={bowl}
+        lines={lines}
+        serviceId={serviceId}
+        onAddLine={onAddLine}
+        onDeleteLine={onDeleteLine}
+        onSealBowl={onSealBowl}
+        onDiscardBowl={onDiscardBowl}
+      />
+    );
+  }
+
   return (
     <Card className="bg-card/80 backdrop-blur-xl border-border">
       <CardHeader className="pb-3">
