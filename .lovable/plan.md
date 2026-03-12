@@ -58,3 +58,28 @@ Fallback: if par_level is null, uses `reorder_level * 2`.
 - Spend cap: daily auto-reorder pauses when cumulative PO value exceeds cap
 - Audit trail: auto_reorder logged as stock_movement reason
 - Supplier confirmation tracking via supplier_confirmed_at timestamp
+
+## Product Movement Rating Badges (Implemented)
+
+### What It Does
+Every product gets a dynamic movement rating badge (Best Seller, Popular, Steady, Slow Mover, Stagnant, Dead Weight) computed from 90-day sales velocity data.
+
+### Rating Tiers
+- **Best Seller**: Top 10% velocity AND >0.5 units/day (emerald)
+- **Popular**: Top 25% velocity AND >0.2 units/day (blue)
+- **Steady**: Velocity >0.05/day (muted)
+- **Slow Mover**: Velocity >0 but ≤0.05/day (amber)
+- **Stagnant**: Zero velocity, sold within 180 days (orange)
+- **Dead Weight**: Zero velocity, 180+ days or never sold (red)
+- Products with zero stock excluded from negative ratings
+
+### Files Created
+- `src/lib/productMovementRating.ts` — pure rating logic + badge config
+- `src/hooks/useProductVelocity.ts` — lightweight 90-day POS velocity query
+- `src/components/ui/MovementBadge.tsx` — shared badge component with tooltip
+
+### Files Updated
+- `RetailProductsSettingsContent.tsx` — Movement column + filter dropdown in products table
+- `RetailAnalyticsContent.tsx` — Movement badges on product performance table + Movement Distribution card (donut chart with actionable callouts)
+- `ProductCard.tsx` — Best Seller/Popular badges on public shop cards (positive only)
+- `ProductDetailModal.tsx` — Movement badge with velocity context
