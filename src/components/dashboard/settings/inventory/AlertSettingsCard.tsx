@@ -156,6 +156,40 @@ export function AlertSettingsCard() {
                   </div>
                   <Switch checked={autoCreatePo} onCheckedChange={setAutoCreatePo} />
                 </div>
+
+                {/* Dead Stock Detection */}
+                <div className="pt-3 border-t space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm">Dead stock alerts</Label>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Alert when products have zero sales for a configurable period
+                      </p>
+                    </div>
+                    <Switch checked={deadStockEnabled} onCheckedChange={setDeadStockEnabled} />
+                  </div>
+                  {deadStockEnabled && (
+                    <div className="space-y-2">
+                      <Label className="text-sm">No-sale threshold</Label>
+                      <p className="text-xs text-muted-foreground">
+                        Flag products with no sales for {deadStockDays} days
+                      </p>
+                      <Slider
+                        value={[deadStockDays]}
+                        onValueChange={([v]) => setDeadStockDays(v)}
+                        min={30}
+                        max={365}
+                        step={15}
+                        className="mt-2"
+                      />
+                      <div className="flex justify-between text-[10px] text-muted-foreground">
+                        <span>30 days</span>
+                        <span>90 days</span>
+                        <span>365 days</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </>
             )}
 

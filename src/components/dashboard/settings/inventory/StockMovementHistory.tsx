@@ -43,8 +43,11 @@ export function StockMovementHistory({ productId }: StockMovementHistoryProps) {
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-72 p-0" align="end">
-        <div className="p-3 border-b">
+        <div className="p-3 border-b flex items-center justify-between">
           <h4 className="font-display text-sm tracking-wide">Stock History</h4>
+          <Button variant="ghost" size="icon" className="w-7 h-7" onClick={handleExport} title="Export CSV">
+            <Download className="w-3.5 h-3.5" />
+          </Button>
         </div>
         <div className="max-h-60 overflow-y-auto">
           {isLoading ? (
