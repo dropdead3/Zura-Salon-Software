@@ -1189,6 +1189,7 @@ function InventoryByLocationTab() {
   const [inventoryView, setInventoryView] = useState<'stock' | 'orders'>('stock');
   const [selectedInvIds, setSelectedInvIds] = useState<Set<string>>(new Set());
   const [showBatchReorder, setShowBatchReorder] = useState(false);
+  const [showTransferDialog, setShowTransferDialog] = useState(false);
   const logMovement = useLogStockMovement();
 
   // Dialog state
