@@ -3538,6 +3538,62 @@ export type Database = {
           },
         ]
       }
+      checkout_usage_projections: {
+        Row: {
+          appointment_id: string | null
+          appointment_service_id: string | null
+          client_id: string | null
+          id: string
+          last_calculated_at: string | null
+          mix_session_id: string | null
+          organization_id: string
+          overage_charge: number | null
+          overage_grams: number | null
+          requires_manager_review: boolean | null
+          service_allowance_grams: number | null
+          total_dispensed_cost: number | null
+          total_dispensed_weight: number | null
+        }
+        Insert: {
+          appointment_id?: string | null
+          appointment_service_id?: string | null
+          client_id?: string | null
+          id?: string
+          last_calculated_at?: string | null
+          mix_session_id?: string | null
+          organization_id: string
+          overage_charge?: number | null
+          overage_grams?: number | null
+          requires_manager_review?: boolean | null
+          service_allowance_grams?: number | null
+          total_dispensed_cost?: number | null
+          total_dispensed_weight?: number | null
+        }
+        Update: {
+          appointment_id?: string | null
+          appointment_service_id?: string | null
+          client_id?: string | null
+          id?: string
+          last_calculated_at?: string | null
+          mix_session_id?: string | null
+          organization_id?: string
+          overage_charge?: number | null
+          overage_grams?: number | null
+          requires_manager_review?: boolean | null
+          service_allowance_grams?: number | null
+          total_dispensed_cost?: number | null
+          total_dispensed_weight?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checkout_usage_projections_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       churn_risk_scores: {
         Row: {
           analyzed_at: string | null
@@ -7699,6 +7755,63 @@ export type Database = {
           },
         ]
       }
+      inventory_risk_projections: {
+        Row: {
+          avg_daily_usage: number | null
+          current_on_hand: number | null
+          id: string
+          last_forecast_at: string | null
+          location_id: string | null
+          open_po_quantity: number | null
+          organization_id: string
+          product_id: string
+          projected_depletion_date: string | null
+          recommended_order_qty: number | null
+          stockout_risk_level: string | null
+        }
+        Insert: {
+          avg_daily_usage?: number | null
+          current_on_hand?: number | null
+          id?: string
+          last_forecast_at?: string | null
+          location_id?: string | null
+          open_po_quantity?: number | null
+          organization_id: string
+          product_id: string
+          projected_depletion_date?: string | null
+          recommended_order_qty?: number | null
+          stockout_risk_level?: string | null
+        }
+        Update: {
+          avg_daily_usage?: number | null
+          current_on_hand?: number | null
+          id?: string
+          last_forecast_at?: string | null
+          location_id?: string | null
+          open_po_quantity?: number | null
+          organization_id?: string
+          product_id?: string
+          projected_depletion_date?: string | null
+          recommended_order_qty?: number | null
+          stockout_risk_level?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_risk_projections_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_risk_projections_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       job_application_notes: {
         Row: {
           application_id: string
@@ -9120,6 +9233,72 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mix_bowl_projections: {
+        Row: {
+          bowl_number: number | null
+          current_status: string | null
+          dispensed_total: number | null
+          estimated_cost: number | null
+          has_reweigh: boolean | null
+          last_event_at: string | null
+          leftover_total: number | null
+          line_item_count: number | null
+          mix_bowl_id: string
+          mix_session_id: string
+          net_usage_total: number | null
+          organization_id: string
+          purpose: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          bowl_number?: number | null
+          current_status?: string | null
+          dispensed_total?: number | null
+          estimated_cost?: number | null
+          has_reweigh?: boolean | null
+          last_event_at?: string | null
+          leftover_total?: number | null
+          line_item_count?: number | null
+          mix_bowl_id: string
+          mix_session_id: string
+          net_usage_total?: number | null
+          organization_id: string
+          purpose?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          bowl_number?: number | null
+          current_status?: string | null
+          dispensed_total?: number | null
+          estimated_cost?: number | null
+          has_reweigh?: boolean | null
+          last_event_at?: string | null
+          leftover_total?: number | null
+          line_item_count?: number | null
+          mix_bowl_id?: string
+          mix_session_id?: string
+          net_usage_total?: number | null
+          organization_id?: string
+          purpose?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mix_bowl_projections_mix_bowl_id_fkey"
+            columns: ["mix_bowl_id"]
+            isOneToOne: true
+            referencedRelation: "mix_bowls"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mix_bowl_projections_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -16998,6 +17177,62 @@ export type Database = {
           },
         ]
       }
+      service_profitability_snapshots: {
+        Row: {
+          appointment_id: string | null
+          appointment_service_id: string | null
+          contribution_margin: number | null
+          created_at: string | null
+          id: string
+          location_id: string | null
+          organization_id: string
+          overage_revenue: number | null
+          product_cost: number | null
+          service_name: string | null
+          service_revenue: number | null
+          staff_id: string | null
+          waste_cost: number | null
+        }
+        Insert: {
+          appointment_id?: string | null
+          appointment_service_id?: string | null
+          contribution_margin?: number | null
+          created_at?: string | null
+          id?: string
+          location_id?: string | null
+          organization_id: string
+          overage_revenue?: number | null
+          product_cost?: number | null
+          service_name?: string | null
+          service_revenue?: number | null
+          staff_id?: string | null
+          waste_cost?: number | null
+        }
+        Update: {
+          appointment_id?: string | null
+          appointment_service_id?: string | null
+          contribution_margin?: number | null
+          created_at?: string | null
+          id?: string
+          location_id?: string | null
+          organization_id?: string
+          overage_revenue?: number | null
+          product_cost?: number | null
+          service_name?: string | null
+          service_revenue?: number | null
+          staff_id?: string | null
+          waste_cost?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_profitability_snapshots_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       service_recipe_baselines: {
         Row: {
           created_at: string
@@ -17530,6 +17765,65 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      staff_backroom_performance: {
+        Row: {
+          avg_usage_variance: number | null
+          id: string
+          last_calculated_at: string | null
+          location_id: string | null
+          manual_override_rate: number | null
+          mix_session_count: number | null
+          organization_id: string
+          period_end: string
+          period_start: string
+          reweigh_compliance_rate: number | null
+          staff_id: string
+          total_dispensed_weight: number | null
+          total_product_cost: number | null
+          waste_rate: number | null
+        }
+        Insert: {
+          avg_usage_variance?: number | null
+          id?: string
+          last_calculated_at?: string | null
+          location_id?: string | null
+          manual_override_rate?: number | null
+          mix_session_count?: number | null
+          organization_id: string
+          period_end: string
+          period_start: string
+          reweigh_compliance_rate?: number | null
+          staff_id: string
+          total_dispensed_weight?: number | null
+          total_product_cost?: number | null
+          waste_rate?: number | null
+        }
+        Update: {
+          avg_usage_variance?: number | null
+          id?: string
+          last_calculated_at?: string | null
+          location_id?: string | null
+          manual_override_rate?: number | null
+          mix_session_count?: number | null
+          organization_id?: string
+          period_end?: string
+          period_start?: string
+          reweigh_compliance_rate?: number | null
+          staff_id?: string
+          total_dispensed_weight?: number | null
+          total_product_cost?: number | null
+          waste_rate?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_backroom_performance_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       staff_documents: {
         Row: {
@@ -21493,6 +21787,10 @@ export type Database = {
       }
       rebuild_inventory_projection: {
         Args: { p_location_id?: string; p_org_id: string; p_product_id: string }
+        Returns: undefined
+      }
+      rebuild_mix_session_projection: {
+        Args: { p_session_id: string }
         Returns: undefined
       }
       reschedule_booking: {
