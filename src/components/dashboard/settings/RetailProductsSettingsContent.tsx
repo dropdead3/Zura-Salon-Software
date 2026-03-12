@@ -43,8 +43,11 @@ import { GiftCardsHub } from '@/components/dashboard/settings/GiftCardsHub';
 import { ProductWizard } from '@/components/dashboard/settings/ProductWizard';
 import { useProductDrafts, useDeleteProductDraft, type ProductDraft } from '@/hooks/useProductDrafts';
 import { DataImportWizard } from '@/components/admin/DataImportWizard';
+import { ImportHistoryCard } from '@/components/admin/ImportHistoryCard';
+import { useImportJobs } from '@/hooks/useImportJobs';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { Upload } from 'lucide-react';
+import { Upload, History } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 // Helper to classify product type — prefer DB column, fall back to regex
 function getProductType(product: Product): string {
   if (product.product_type && product.product_type !== 'Products') return product.product_type;
