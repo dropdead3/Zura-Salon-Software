@@ -11528,6 +11528,48 @@ export type Database = {
           },
         ]
       }
+      product_cost_history: {
+        Row: {
+          cost_price: number
+          id: string
+          organization_id: string
+          product_id: string
+          recorded_at: string
+          supplier_name: string | null
+        }
+        Insert: {
+          cost_price: number
+          id?: string
+          organization_id: string
+          product_id: string
+          recorded_at?: string
+          supplier_name?: string | null
+        }
+        Update: {
+          cost_price?: number
+          id?: string
+          organization_id?: string
+          product_id?: string
+          recorded_at?: string
+          supplier_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_cost_history_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_cost_history_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_drafts: {
         Row: {
           created_at: string
