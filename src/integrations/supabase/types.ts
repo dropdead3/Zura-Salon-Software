@@ -9183,6 +9183,141 @@ export type Database = {
           },
         ]
       }
+      mix_session_events: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          device_id: string | null
+          event_payload: Json
+          event_type: string
+          id: string
+          idempotency_key: string | null
+          location_id: string | null
+          mix_session_id: string
+          organization_id: string
+          sequence_number: number
+          source_mode: string
+          station_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          device_id?: string | null
+          event_payload?: Json
+          event_type: string
+          id?: string
+          idempotency_key?: string | null
+          location_id?: string | null
+          mix_session_id: string
+          organization_id: string
+          sequence_number: number
+          source_mode?: string
+          station_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          device_id?: string | null
+          event_payload?: Json
+          event_type?: string
+          id?: string
+          idempotency_key?: string | null
+          location_id?: string | null
+          mix_session_id?: string
+          organization_id?: string
+          sequence_number?: number
+          source_mode?: string
+          station_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mix_session_events_mix_session_id_fkey"
+            columns: ["mix_session_id"]
+            isOneToOne: false
+            referencedRelation: "mix_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mix_session_events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mix_session_projections: {
+        Row: {
+          active_bowl_count: number
+          awaiting_reweigh_count: number
+          current_status: string
+          has_device_disconnect: boolean
+          has_manual_override: boolean
+          last_event_at: string | null
+          last_event_sequence: number
+          mix_session_id: string
+          organization_id: string
+          reweighed_bowl_count: number
+          running_dispensed_weight: number
+          running_estimated_cost: number
+          sealed_bowl_count: number
+          total_line_items: number
+          unresolved_flag: boolean
+          updated_at: string
+        }
+        Insert: {
+          active_bowl_count?: number
+          awaiting_reweigh_count?: number
+          current_status?: string
+          has_device_disconnect?: boolean
+          has_manual_override?: boolean
+          last_event_at?: string | null
+          last_event_sequence?: number
+          mix_session_id: string
+          organization_id: string
+          reweighed_bowl_count?: number
+          running_dispensed_weight?: number
+          running_estimated_cost?: number
+          sealed_bowl_count?: number
+          total_line_items?: number
+          unresolved_flag?: boolean
+          updated_at?: string
+        }
+        Update: {
+          active_bowl_count?: number
+          awaiting_reweigh_count?: number
+          current_status?: string
+          has_device_disconnect?: boolean
+          has_manual_override?: boolean
+          last_event_at?: string | null
+          last_event_sequence?: number
+          mix_session_id?: string
+          organization_id?: string
+          reweighed_bowl_count?: number
+          running_dispensed_weight?: number
+          running_estimated_cost?: number
+          sealed_bowl_count?: number
+          total_line_items?: number
+          unresolved_flag?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mix_session_projections_mix_session_id_fkey"
+            columns: ["mix_session_id"]
+            isOneToOne: true
+            referencedRelation: "mix_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mix_session_projections_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mix_sessions: {
         Row: {
           appointment_id: string | null
