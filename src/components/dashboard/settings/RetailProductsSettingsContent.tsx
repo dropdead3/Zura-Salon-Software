@@ -1357,6 +1357,15 @@ function InventoryByLocationTab() {
                       <TableCell className="text-right tabular-nums font-medium">{p.quantity_on_hand ?? '—'}</TableCell>
                       <TableCell className="text-right tabular-nums text-muted-foreground">{p.reorder_level ?? '—'}</TableCell>
                       <TableCell className="text-right">
+                        {supplier?.avg_delivery_days ? (
+                          <span className="text-xs tabular-nums text-muted-foreground" title={`Based on ${supplier.delivery_count} delivery${supplier.delivery_count !== 1 ? 'ies' : ''}`}>
+                            {Math.round(supplier.avg_delivery_days as number)}d
+                          </span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground/50">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
                         {isLow ? (
                           <Badge variant="outline" className="text-amber-600 border-amber-300 dark:text-amber-400 text-[10px]">Low</Badge>
                         ) : (
