@@ -398,9 +398,12 @@ function ProductsTab() {
                   </button>
                 </TableHead>
                 <TableHead className="text-right">
-                  <button type="button" onClick={() => toggleSort('quantity_on_hand')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors ml-auto">
-                    Inventory <SortIcon field="quantity_on_hand" />
-                  </button>
+                  <div className="inline-flex items-center gap-1.5 ml-auto">
+                    <button type="button" onClick={() => toggleSort('quantity_on_hand')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
+                      Inventory <SortIcon field="quantity_on_hand" />
+                    </button>
+                    <MetricInfoTooltip description="Current stock on hand. Products are flagged as low stock when quantity reaches or falls below the minimum stock level you set." />
+                  </div>
                 </TableHead>
                 <TableHead className="text-center w-16">Online</TableHead>
                 <TableHead className="w-20" />
