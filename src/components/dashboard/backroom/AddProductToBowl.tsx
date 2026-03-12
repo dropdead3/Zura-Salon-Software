@@ -189,23 +189,52 @@ export function AddProductToBowl({ bowlId, onAdd, onCancel, inline = false }: Ad
       <ScrollArea className="max-h-[200px]">
         <div className="space-y-0.5">
           {products.map((product) => (
-            <button
+            <div
               key={product.id}
-              onClick={() => setSelectedProduct(product)}
-              className="w-full flex items-center justify-between px-3 py-2.5 rounded-md hover:bg-muted/50 transition-colors text-left min-h-[44px]"
+              className="flex items-center gap-1"
             >
-              <div>
-                <p className="font-sans text-sm">{product.name}</p>
-                {product.brand && (
-                  <p className="font-sans text-xs text-muted-foreground">{product.brand}</p>
+              <button
+                onClick={() => setSelectedProduct(product)}
+                className="flex-1 flex items-center justify-between px-3 py-2.5 rounded-md hover:bg-muted/50 transition-colors text-left min-h-[44px]"
+              >
+                <div>
+                  <p className="font-sans text-sm">{product.name}</p>
+                  {product.brand && (
+                    <p className="font-sans text-xs text-muted-foreground">{product.brand}</p>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  {(product as any).quantity_on_hand != null && (product as any).quantity_on_hand <= 0 && (
+                    <Badge variant="outline" className="text-[10px] text-warning border-warning/30">
+                      Out of stock
+                    </Badge>
+                  )}
+                  {product.cost_price != null && (
+                    <span className="font-sans text-xs text-muted-foreground shrink-0">
+                      ${product.cost_price.toFixed(2)}/unit
+                    </span>
+                  )}
+                </div>
+              </button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 shrink-0"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  togglePin.mutate({
+                    productId: product.id,
+                    isPinned: pinnedIds.has(product.id),
+                  });
+                }}
+              >
+                {pinnedIds.has(product.id) ? (
+                  <PinOff className="w-3.5 h-3.5 text-primary" />
+                ) : (
+                  <Pin className="w-3.5 h-3.5 text-muted-foreground" />
                 )}
-              </div>
-              {product.cost_price != null && (
-                <span className="font-sans text-xs text-muted-foreground shrink-0">
-                  ${product.cost_price.toFixed(2)}/unit
-                </span>
-              )}
-            </button>
+              </Button>
+            </div>
           ))}
           {products.length === 0 && (
             <p className="font-sans text-xs text-muted-foreground text-center py-3">
