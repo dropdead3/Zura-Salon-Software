@@ -2020,7 +2020,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                   <div>
                     <div className="flex items-center gap-2">
                       <CardTitle className="font-display text-base tracking-wide">SUPPLIER PERFORMANCE</CardTitle>
-                      <MetricInfoTooltip description="Supplier scorecard based on purchase order data. Grade combines fill rate (60%) and on-time delivery accuracy (40%). A = 90%+, B = 75%+, C = 60%+, D = below 60%." />
+                      <MetricInfoTooltip description="Supplier scorecard based on purchase order data. Grade combines fill rate (50%), on-time delivery accuracy (30%), and price consistency (20%). A = 90%+, B = 75%+, C = 60%+, D = below 60%." />
                     </div>
                     <CardDescription className="text-xs">{supplierMetrics.length} supplier{supplierMetrics.length !== 1 ? 's' : ''} tracked</CardDescription>
                   </div>
