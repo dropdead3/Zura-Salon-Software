@@ -598,12 +598,13 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
   }, [allProducts, data]);
 
   // Movement ratings for products
-  const productMovementRatings = useMemo(() => {
-    if (!data || !allProducts) return new Map<string, ReturnType<typeof getMovementRating>>();
+  const { productMovementRatings, productVelocityChanges } = useMemo(() => {
+    if (!data || !allProducts) return { productMovementRatings: new Map<string, ReturnType<typeof getMovementRating>>(), productVelocityChanges: new Map<string, number | null>() };
     const velocityMap = data.salesVelocity;
     const allVelocities = (allProducts || []).map(p => velocityMap.get(p.name.toLowerCase().trim()) ?? 0);
     const percentiles = computePercentiles(allVelocities);
     const map = new Map<string, ReturnType<typeof getMovementRating>>();
+    const changes = new Map<string, number | null>();
     for (const p of (allProducts || [])) {
       const nameLower = p.name.toLowerCase().trim();
       const velocity = velocityMap.get(nameLower) ?? 0;
@@ -618,8 +619,10 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
         velocityPercentile: percentiles.get(velocity) ?? 0,
       });
       map.set(nameLower, rating);
+      // We don't have prior velocity in the analytics hook, so leave null
+      changes.set(nameLower, null);
     }
-    return map;
+    return { productMovementRatings: map, productVelocityChanges: changes };
   }, [data, allProducts]);
 
   // Movement distribution for the chart
