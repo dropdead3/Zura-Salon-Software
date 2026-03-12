@@ -359,6 +359,13 @@ function ProductsTab() {
             </SelectContent>
           </Select>
         )}
+        <Select value={movementFilter} onValueChange={(v) => { setMovementFilter(v); setPage(0); }}>
+          <SelectTrigger className="w-[150px] h-9"><SelectValue placeholder="Movement" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Movement</SelectItem>
+            {MOVEMENT_TIERS.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+          </SelectContent>
+        </Select>
         <div className="flex items-center gap-2">
           <Switch checked={lowStockOnly} onCheckedChange={(v) => { setLowStockOnly(v); setPage(0); }} id="low-stock" />
           <Label htmlFor="low-stock" className="text-sm cursor-pointer">Low Stock</Label>
