@@ -16387,6 +16387,63 @@ export type Database = {
           },
         ]
       }
+      stock_counts: {
+        Row: {
+          counted_at: string
+          counted_by: string | null
+          counted_quantity: number
+          created_at: string
+          expected_quantity: number
+          id: string
+          location_id: string | null
+          notes: string | null
+          organization_id: string
+          product_id: string
+          variance: number | null
+        }
+        Insert: {
+          counted_at?: string
+          counted_by?: string | null
+          counted_quantity: number
+          created_at?: string
+          expected_quantity: number
+          id?: string
+          location_id?: string | null
+          notes?: string | null
+          organization_id: string
+          product_id: string
+          variance?: number | null
+        }
+        Update: {
+          counted_at?: string
+          counted_by?: string | null
+          counted_quantity?: number
+          created_at?: string
+          expected_quantity?: number
+          id?: string
+          location_id?: string | null
+          notes?: string | null
+          organization_id?: string
+          product_id?: string
+          variance?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_counts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_counts_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stock_movements: {
         Row: {
           created_at: string

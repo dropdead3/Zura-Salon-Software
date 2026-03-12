@@ -22,7 +22,7 @@ import { tokens } from '@/lib/design-tokens';
 import {
   Search, Plus, BarChart3, Package, Edit2, AlertTriangle, Minus,
   Loader2, Check, X, MapPin, CheckCircle2, Info, ExternalLink, ImagePlus, Gift,
-  FileText, Trash2, Copy, Download, ChevronUp, ChevronDown, ChevronsUpDown, ShoppingCart, Tag, ArrowRight,
+  FileText, Trash2, Copy, Download, ChevronUp, ChevronDown, ChevronsUpDown, ShoppingCart, Tag, ArrowRight, ClipboardCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
@@ -65,6 +65,7 @@ import { MovementBadge } from '@/components/ui/MovementBadge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { ClearancePanel } from '@/components/dashboard/settings/inventory/ClearancePanel';
 import { StockTransferDialog } from '@/components/dashboard/settings/inventory/StockTransferDialog';
+import { StocktakeDialog } from '@/components/dashboard/settings/inventory/StocktakeDialog';
 // Helper to classify product type — prefer DB column, fall back to regex
 function getProductType(product: Product): string {
   if (product.product_type && product.product_type !== 'Products') return product.product_type;
@@ -1235,6 +1236,7 @@ function InventoryByLocationTab() {
   const [selectedInvIds, setSelectedInvIds] = useState<Set<string>>(new Set());
   const [showBatchReorder, setShowBatchReorder] = useState(false);
   const [showTransferDialog, setShowTransferDialog] = useState(false);
+  const [showStocktake, setShowStocktake] = useState(false);
   const logMovement = useLogStockMovement();
 
   // Dialog state
@@ -1308,6 +1310,14 @@ function InventoryByLocationTab() {
           )}
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size={tokens.button.inline}
+            className="gap-1.5"
+            onClick={() => setShowStocktake(true)}
+          >
+            <ClipboardCheck className="w-3.5 h-3.5" /> Stocktake
+          </Button>
           {locations && locations.length > 1 && (
             <Button
               variant="outline"
@@ -1604,6 +1614,13 @@ function InventoryByLocationTab() {
       <StockTransferDialog
         open={showTransferDialog}
         onOpenChange={setShowTransferDialog}
+      />
+
+      {/* Stocktake Dialog */}
+      <StocktakeDialog
+        open={showStocktake}
+        onOpenChange={setShowStocktake}
+        locationId={selectedLocationId}
       />
     </div>
   );

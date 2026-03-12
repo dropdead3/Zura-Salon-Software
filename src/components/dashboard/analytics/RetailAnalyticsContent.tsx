@@ -49,6 +49,7 @@ import { InventoryValuationCard } from './InventoryValuationCard';
 import { DeadStockAlertCard } from './DeadStockAlertCard';
 import { ReorderApprovalCard } from './ReorderApprovalCard';
 import { ExpiryAlertCard } from './ExpiryAlertCard';
+import { ShrinkageReportCard } from './ShrinkageReportCard';
 
 interface RetailAnalyticsContentProps {
   dateFrom: string;
@@ -2078,6 +2079,9 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
       {allProducts && (
         <DeadStockAlertCard products={allProducts} movementRatings={productMovementRatings} velocityMap={velocityMap ?? undefined} filterContext={filterContext} />
       )}
+
+      {/* ─── Shrinkage Report ─── */}
+      <ShrinkageReportCard filterContext={filterContext} />
 
       {/* ─── Reorder Approval Queue ─── */}
       <ReorderApprovalCard />
