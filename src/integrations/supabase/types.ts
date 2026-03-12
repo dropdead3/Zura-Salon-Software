@@ -524,6 +524,87 @@ export type Database = {
           },
         ]
       }
+      allowance_buckets: {
+        Row: {
+          billing_label: string
+          bucket_name: string
+          created_at: string
+          display_order: number
+          id: string
+          included_quantity: number
+          included_unit: string
+          is_taxable: boolean
+          mapped_product_categories: string[]
+          mapped_product_ids: string[]
+          min_charge_threshold: number
+          organization_id: string
+          overage_cap: number | null
+          overage_rate: number
+          overage_rate_type: string
+          policy_id: string
+          requires_manager_override: boolean
+          rounding_rule: string
+          updated_at: string
+        }
+        Insert: {
+          billing_label?: string
+          bucket_name: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          included_quantity?: number
+          included_unit?: string
+          is_taxable?: boolean
+          mapped_product_categories?: string[]
+          mapped_product_ids?: string[]
+          min_charge_threshold?: number
+          organization_id: string
+          overage_cap?: number | null
+          overage_rate?: number
+          overage_rate_type?: string
+          policy_id: string
+          requires_manager_override?: boolean
+          rounding_rule?: string
+          updated_at?: string
+        }
+        Update: {
+          billing_label?: string
+          bucket_name?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          included_quantity?: number
+          included_unit?: string
+          is_taxable?: boolean
+          mapped_product_categories?: string[]
+          mapped_product_ids?: string[]
+          min_charge_threshold?: number
+          organization_id?: string
+          overage_cap?: number | null
+          overage_rate?: number
+          overage_rate_type?: string
+          policy_id?: string
+          requires_manager_override?: boolean
+          rounding_rule?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "allowance_buckets_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "allowance_buckets_policy_id_fkey"
+            columns: ["policy_id"]
+            isOneToOne: false
+            referencedRelation: "service_allowance_policies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       allowance_override_log: {
         Row: {
           action: string
@@ -1664,6 +1745,69 @@ export type Database = {
           },
         ]
       }
+      backroom_alert_rules: {
+        Row: {
+          created_at: string
+          creates_exception: boolean
+          creates_task: boolean
+          id: string
+          is_active: boolean
+          location_id: string | null
+          notify_roles: string[]
+          organization_id: string
+          rule_type: string
+          severity: string
+          threshold_unit: string
+          threshold_value: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          creates_exception?: boolean
+          creates_task?: boolean
+          id?: string
+          is_active?: boolean
+          location_id?: string | null
+          notify_roles?: string[]
+          organization_id: string
+          rule_type: string
+          severity?: string
+          threshold_unit?: string
+          threshold_value: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          creates_exception?: boolean
+          creates_task?: boolean
+          id?: string
+          is_active?: boolean
+          location_id?: string | null
+          notify_roles?: string[]
+          organization_id?: string
+          rule_type?: string
+          severity?: string
+          threshold_unit?: string
+          threshold_value?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "backroom_alert_rules_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "backroom_alert_rules_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       backroom_analytics_snapshots: {
         Row: {
           actual_depletion: number | null
@@ -1877,6 +2021,120 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "backroom_exceptions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      backroom_pricing_display_rules: {
+        Row: {
+          allow_edit: boolean
+          allow_waive: boolean
+          apply_tax: boolean
+          auto_insert_checkout: boolean
+          created_at: string
+          display_mode: string
+          id: string
+          line_item_label: string
+          organization_id: string
+          requires_manager_approval: boolean
+          service_id: string | null
+          show_usage_to_client: boolean
+          show_usage_to_staff: boolean
+          updated_at: string
+        }
+        Insert: {
+          allow_edit?: boolean
+          allow_waive?: boolean
+          apply_tax?: boolean
+          auto_insert_checkout?: boolean
+          created_at?: string
+          display_mode?: string
+          id?: string
+          line_item_label?: string
+          organization_id: string
+          requires_manager_approval?: boolean
+          service_id?: string | null
+          show_usage_to_client?: boolean
+          show_usage_to_staff?: boolean
+          updated_at?: string
+        }
+        Update: {
+          allow_edit?: boolean
+          allow_waive?: boolean
+          apply_tax?: boolean
+          auto_insert_checkout?: boolean
+          created_at?: string
+          display_mode?: string
+          id?: string
+          line_item_label?: string
+          organization_id?: string
+          requires_manager_approval?: boolean
+          service_id?: string | null
+          show_usage_to_client?: boolean
+          show_usage_to_staff?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "backroom_pricing_display_rules_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "backroom_pricing_display_rules_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      backroom_settings: {
+        Row: {
+          created_at: string
+          id: string
+          location_id: string | null
+          organization_id: string
+          setting_key: string
+          setting_value: Json
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          location_id?: string | null
+          organization_id: string
+          setting_key: string
+          setting_value?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          location_id?: string | null
+          organization_id?: string
+          setting_key?: string
+          setting_value?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "backroom_settings_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "backroom_settings_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -13180,8 +13438,10 @@ export type Database = {
           clearance_discount_pct: number | null
           clearance_marked_at: string | null
           clearance_status: string | null
+          cost_per_gram: number | null
           cost_price: number | null
           created_at: string | null
+          depletion_method: string
           description: string | null
           expires_at: string | null
           expiry_alert_days: number | null
@@ -13192,6 +13452,10 @@ export type Database = {
           import_source: string | null
           imported_at: string | null
           is_active: boolean | null
+          is_backroom_tracked: boolean
+          is_billable_to_client: boolean
+          is_forecast_eligible: boolean
+          is_overage_eligible: boolean
           location_id: string | null
           name: string
           organization_id: string | null
@@ -13201,9 +13465,13 @@ export type Database = {
           quantity_on_hand: number | null
           reorder_level: number | null
           retail_price: number | null
+          size: string | null
           sku: string | null
+          subcategory: string | null
           supplier_id: string | null
+          unit_of_measure: string
           updated_at: string | null
+          variant: string | null
         }
         Insert: {
           available_online?: boolean
@@ -13213,8 +13481,10 @@ export type Database = {
           clearance_discount_pct?: number | null
           clearance_marked_at?: string | null
           clearance_status?: string | null
+          cost_per_gram?: number | null
           cost_price?: number | null
           created_at?: string | null
+          depletion_method?: string
           description?: string | null
           expires_at?: string | null
           expiry_alert_days?: number | null
@@ -13225,6 +13495,10 @@ export type Database = {
           import_source?: string | null
           imported_at?: string | null
           is_active?: boolean | null
+          is_backroom_tracked?: boolean
+          is_billable_to_client?: boolean
+          is_forecast_eligible?: boolean
+          is_overage_eligible?: boolean
           location_id?: string | null
           name: string
           organization_id?: string | null
@@ -13234,9 +13508,13 @@ export type Database = {
           quantity_on_hand?: number | null
           reorder_level?: number | null
           retail_price?: number | null
+          size?: string | null
           sku?: string | null
+          subcategory?: string | null
           supplier_id?: string | null
+          unit_of_measure?: string
           updated_at?: string | null
+          variant?: string | null
         }
         Update: {
           available_online?: boolean
@@ -13246,8 +13524,10 @@ export type Database = {
           clearance_discount_pct?: number | null
           clearance_marked_at?: string | null
           clearance_status?: string | null
+          cost_per_gram?: number | null
           cost_price?: number | null
           created_at?: string | null
+          depletion_method?: string
           description?: string | null
           expires_at?: string | null
           expiry_alert_days?: number | null
@@ -13258,6 +13538,10 @@ export type Database = {
           import_source?: string | null
           imported_at?: string | null
           is_active?: boolean | null
+          is_backroom_tracked?: boolean
+          is_billable_to_client?: boolean
+          is_forecast_eligible?: boolean
+          is_overage_eligible?: boolean
           location_id?: string | null
           name?: string
           organization_id?: string | null
@@ -13267,9 +13551,13 @@ export type Database = {
           quantity_on_hand?: number | null
           reorder_level?: number | null
           retail_price?: number | null
+          size?: string | null
           sku?: string | null
+          subcategory?: string | null
           supplier_id?: string | null
+          unit_of_measure?: string
           updated_at?: string | null
+          variant?: string | null
         }
         Relationships: [
           {
@@ -17731,10 +18019,84 @@ export type Database = {
           },
         ]
       }
+      service_tracking_components: {
+        Row: {
+          component_role: string
+          contributes_to_billing: boolean
+          contributes_to_cost: boolean
+          contributes_to_forecast: boolean
+          contributes_to_inventory: boolean
+          contributes_to_waste: boolean
+          created_at: string
+          estimated_quantity: number | null
+          id: string
+          organization_id: string
+          product_id: string
+          service_id: string
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          component_role?: string
+          contributes_to_billing?: boolean
+          contributes_to_cost?: boolean
+          contributes_to_forecast?: boolean
+          contributes_to_inventory?: boolean
+          contributes_to_waste?: boolean
+          created_at?: string
+          estimated_quantity?: number | null
+          id?: string
+          organization_id: string
+          product_id: string
+          service_id: string
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          component_role?: string
+          contributes_to_billing?: boolean
+          contributes_to_cost?: boolean
+          contributes_to_forecast?: boolean
+          contributes_to_inventory?: boolean
+          contributes_to_waste?: boolean
+          created_at?: string
+          estimated_quantity?: number | null
+          id?: string
+          organization_id?: string
+          product_id?: string
+          service_id?: string
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_tracking_components_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_tracking_components_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_tracking_components_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       services: {
         Row: {
           allow_same_day_booking: boolean | null
           archived_at: string | null
+          assistant_prep_allowed: boolean
           bookable_online: boolean
           category: string | null
           content_creation_time_minutes: number
@@ -17748,29 +18110,35 @@ export type Database = {
           duration_minutes: number
           external_id: string | null
           finishing_time_minutes: number
+          formula_memory_enabled: boolean
           id: string
           import_job_id: string | null
           import_source: string | null
           imported_at: string | null
           is_active: boolean | null
           is_archived: boolean
+          is_backroom_tracked: boolean
           is_popular: boolean
           lead_time_days: number | null
           location_id: string | null
           name: string
           organization_id: string | null
+          predictive_backroom_enabled: boolean
           price: number | null
           processing_time_minutes: number
           requires_deposit: boolean
           requires_new_client_consultation: boolean
           requires_qualification: boolean | null
           same_day_restriction_reason: string | null
+          smart_mix_assist_enabled: boolean
           updated_at: string | null
+          variance_threshold_pct: number
           website_description: string | null
         }
         Insert: {
           allow_same_day_booking?: boolean | null
           archived_at?: string | null
+          assistant_prep_allowed?: boolean
           bookable_online?: boolean
           category?: string | null
           content_creation_time_minutes?: number
@@ -17784,29 +18152,35 @@ export type Database = {
           duration_minutes?: number
           external_id?: string | null
           finishing_time_minutes?: number
+          formula_memory_enabled?: boolean
           id?: string
           import_job_id?: string | null
           import_source?: string | null
           imported_at?: string | null
           is_active?: boolean | null
           is_archived?: boolean
+          is_backroom_tracked?: boolean
           is_popular?: boolean
           lead_time_days?: number | null
           location_id?: string | null
           name: string
           organization_id?: string | null
+          predictive_backroom_enabled?: boolean
           price?: number | null
           processing_time_minutes?: number
           requires_deposit?: boolean
           requires_new_client_consultation?: boolean
           requires_qualification?: boolean | null
           same_day_restriction_reason?: string | null
+          smart_mix_assist_enabled?: boolean
           updated_at?: string | null
+          variance_threshold_pct?: number
           website_description?: string | null
         }
         Update: {
           allow_same_day_booking?: boolean | null
           archived_at?: string | null
+          assistant_prep_allowed?: boolean
           bookable_online?: boolean
           category?: string | null
           content_creation_time_minutes?: number
@@ -17820,24 +18194,29 @@ export type Database = {
           duration_minutes?: number
           external_id?: string | null
           finishing_time_minutes?: number
+          formula_memory_enabled?: boolean
           id?: string
           import_job_id?: string | null
           import_source?: string | null
           imported_at?: string | null
           is_active?: boolean | null
           is_archived?: boolean
+          is_backroom_tracked?: boolean
           is_popular?: boolean
           lead_time_days?: number | null
           location_id?: string | null
           name?: string
           organization_id?: string | null
+          predictive_backroom_enabled?: boolean
           price?: number | null
           processing_time_minutes?: number
           requires_deposit?: boolean
           requires_new_client_consultation?: boolean
           requires_qualification?: boolean | null
           same_day_restriction_reason?: string | null
+          smart_mix_assist_enabled?: boolean
           updated_at?: string | null
+          variance_threshold_pct?: number
           website_description?: string | null
         }
         Relationships: [
