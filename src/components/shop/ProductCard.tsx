@@ -34,6 +34,13 @@ export function ProductCard({ product, continueSelling = false, onClick, movemen
             <MovementBadge rating={movementRating} positiveOnly compact />
           </div>
         )}
+        {(product as any).clearance_status === 'discounted' && (
+          <div className="absolute top-2 right-2">
+            <Badge variant="secondary" className="text-[10px] bg-red-500 text-white border-0">
+              On Sale{(product as any).clearance_discount_pct ? ` ${(product as any).clearance_discount_pct}% off` : ''}
+            </Badge>
+          </div>
+        )}
       </div>
 
       <div className="p-4 space-y-2">

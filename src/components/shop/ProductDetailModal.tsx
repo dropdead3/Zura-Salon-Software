@@ -54,7 +54,12 @@ export function ProductDetailModal({ product, open, onOpenChange, movementRating
           {/* Price & availability */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <p className="text-2xl font-medium text-foreground">${(product.retail_price ?? 0).toFixed(2)}</p>
+              <div className="flex items-baseline gap-2">
+                <p className="text-2xl font-medium text-foreground">${(product.retail_price ?? 0).toFixed(2)}</p>
+                {(product as any).clearance_status === 'discounted' && (product as any).original_retail_price && (
+                  <p className="text-sm text-muted-foreground line-through">${((product as any).original_retail_price ?? 0).toFixed(2)}</p>
+                )}
+              </div>
               {movementRating && <MovementBadge rating={movementRating} positiveOnly />}
             </div>
             {!inStock ? (

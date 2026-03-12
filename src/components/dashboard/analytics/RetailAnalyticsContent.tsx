@@ -1984,6 +1984,74 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
           </Card>
         </PinnableCard>
       ) : null}
+
+      {/* ─── Bundle Suggestions ─── */}
+      <BundleSuggestionsCard locationId={locationId} filterContext={filterContext} movementRatings={productMovementRatings} />
+
+      {/* ─── Replenishment Timeline ─── */}
+      {allProducts && velocityMap && (
+        <ReplenishmentTimelineCard products={allProducts} velocityMap={velocityMap} filterContext={filterContext} />
+      )}
+
+      {/* ─── Supplier Performance Summary ─── */}
+      {supplierMetrics && supplierMetrics.length > 0 && (
+        <PinnableCard elementKey="retail_supplier_performance" elementName="Supplier Performance" category="Analytics Hub - Retail">
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+                    <Package className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <CardTitle className="font-display text-base tracking-wide">SUPPLIER PERFORMANCE</CardTitle>
+                      <MetricInfoTooltip description="Supplier scorecard based on purchase order data. Grade combines fill rate (60%) and on-time delivery accuracy (40%). A = 90%+, B = 75%+, C = 60%+, D = below 60%." />
+                    </div>
+                    <CardDescription className="text-xs">{supplierMetrics.length} supplier{supplierMetrics.length !== 1 ? 's' : ''} tracked</CardDescription>
+                  </div>
+                </div>
+                {filterContext && <AnalyticsFilterBadge locationId={filterContext.locationId} dateRange={filterContext.dateRange} />}
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Supplier</TableHead>
+                      <TableHead className="text-center">Grade</TableHead>
+                      <TableHead className="text-right">Orders</TableHead>
+                      <TableHead className="text-right">Fill Rate</TableHead>
+                      <TableHead className="text-right">Avg Lead Time</TableHead>
+                      <TableHead className="text-right">On-Time %</TableHead>
+                      <TableHead className="text-right">Spend</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {supplierMetrics.map(s => {
+                      const gradeColor = s.grade === 'A' ? 'text-emerald-600 dark:text-emerald-400' : s.grade === 'B' ? 'text-blue-600 dark:text-blue-400' : s.grade === 'C' ? 'text-amber-600 dark:text-amber-400' : 'text-red-500 dark:text-red-400';
+                      return (
+                        <TableRow key={s.supplierName}>
+                          <TableCell className="font-medium text-sm">{s.supplierName}</TableCell>
+                          <TableCell className="text-center">
+                            <Badge variant="outline" className={cn('text-xs', gradeColor)}>{s.grade}</Badge>
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums">{s.totalOrders}</TableCell>
+                          <TableCell className="text-right tabular-nums">{s.fillRate}%</TableCell>
+                          <TableCell className="text-right tabular-nums">{s.avgLeadTimeDays != null ? `${s.avgLeadTimeDays}d` : '—'}</TableCell>
+                          <TableCell className="text-right tabular-nums">{s.leadTimeAccuracy != null ? `${s.leadTimeAccuracy}%` : '—'}</TableCell>
+                          <TableCell className="text-right tabular-nums"><BlurredAmount>{formatCurrencyWhole(s.totalSpend)}</BlurredAmount></TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </PinnableCard>
+      )}
     </div>
   );
 }

@@ -145,6 +145,13 @@ export function SupplierDialog({ open, onOpenChange, productId, productName, org
               <Label>Reorder Notes</Label>
               <Textarea value={form.reorder_notes} onChange={e => setForm(f => ({ ...f, reorder_notes: e.target.value }))} placeholder="Special instructions for reordering…" rows={2} />
             </div>
+            {/* Supplier Scorecard */}
+            {(() => {
+              const supplierName = form.supplier_name.trim();
+              const metrics = supplierMetrics?.find(s => s.supplierName.toLowerCase() === supplierName.toLowerCase());
+              if (!metrics) return null;
+              return <SupplierScorecard metrics={metrics} />;
+            })()}
           </div>
         )}
         <DialogFooter>
