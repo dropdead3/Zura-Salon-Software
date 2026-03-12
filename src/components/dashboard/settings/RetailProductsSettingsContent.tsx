@@ -1230,6 +1230,7 @@ function InventoryByLocationTab() {
                           }}
                         />
                       </TableCell>
+                      <TableCell>
                         <div className="flex items-center gap-2.5">
                           <Avatar className="h-8 w-8 shrink-0">
                             {p.image_url && <AvatarImage src={p.image_url} alt={p.name} className="object-cover" />}
