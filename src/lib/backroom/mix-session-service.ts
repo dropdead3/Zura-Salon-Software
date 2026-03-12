@@ -42,7 +42,10 @@ export type MixSessionEventType =
   | 'prep_approved'
   | 'suggested_formula_generated'
   | 'suggested_formula_applied'
-  | 'suggested_formula_dismissed';
+  | 'suggested_formula_dismissed'
+  | 'formula_memory_displayed'
+  | 'formula_memory_used'
+  | 'formula_memory_dismissed';
 
 export type SourceMode = 'scale' | 'manual' | 'system' | 'offline_sync';
 
@@ -50,13 +53,15 @@ export type SessionStatus = 'draft' | 'active' | 'awaiting_reweigh' | 'completed
 
 // ─── Valid event types per session status ─────────────
 const VALID_EVENTS_BY_STATUS: Record<SessionStatus, MixSessionEventType[]> = {
-  draft: ['session_started', 'bowl_created', 'prep_mode_enabled'],
+  draft: ['session_started', 'bowl_created', 'prep_mode_enabled',
+    'formula_memory_displayed', 'formula_memory_used', 'formula_memory_dismissed'],
   active: [
     'bowl_created', 'product_selected', 'weight_captured', 'weight_adjusted',
     'line_item_recorded', 'line_item_removed', 'bowl_sealed', 'bowl_discarded',
     'waste_recorded', 'session_awaiting_reweigh', 'station_changed',
     'device_disconnected', 'device_reconnected', 'manual_override_used',
     'suggested_formula_generated', 'suggested_formula_applied', 'suggested_formula_dismissed',
+    'formula_memory_displayed', 'formula_memory_used', 'formula_memory_dismissed',
   ],
   awaiting_reweigh: [
     'reweigh_captured', 'session_completed', 'session_marked_unresolved',
