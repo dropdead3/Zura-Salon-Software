@@ -1,153 +1,266 @@
 
 
-## Timezone-Safe Scheduling (Implemented)
+# Mix Session Event Stream Architecture
 
-### Problem
-`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
+## Current State
 
-### Solution
-- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
-- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
-- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
+The system has: `mix_sessions`, `mix_bowls`, `mix_bowl_lines`, `reweigh_events`, `waste_events`, `client_formula_history`, `backroom_exceptions`, and the inventory ledger (`stock_movements` + `inventory_projections`).
 
-### Files Updated
-- `ScheduleHeader.tsx` — today button, quick days, isToday checks
-- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
-- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
-- `MonthView.tsx` — today highlight
-- `AgendaView.tsx` — today/tomorrow labels, today border
-- `ScheduleActionBar.tsx` — payment queue timing
-- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
-- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
-- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
-- `useHuddles.ts` — today's huddle query
+Currently, `MixSessionManager.tsx` is the workflow authority — it directly mutates tables (insert lines, update bowl status, deplete inventory, save formulas) from UI callbacks. There is no event stream. Session history is reconstructed from final table state, not from a sequence of events.
 
-## Auto-Reorder with Supplier Communication (Implemented)
+---
 
-### What It Does
-Organizations can opt into automatic reorder — when stock dips below threshold, POs are calculated (using MOQ and par levels) and sent directly to the supplier via email.
+## Architecture Overview
 
-### Database Changes
-- `products.par_level` (INT, nullable) — desired stock level to reorder up to
-- `product_suppliers.moq` (INT, default 1) — minimum order quantity
-- `inventory_alert_settings.auto_reorder_enabled` (BOOL, default false)
-- `inventory_alert_settings.auto_reorder_mode` (TEXT, default 'to_par') — 'to_par' or 'moq_only'
-- `inventory_alert_settings.max_auto_reorder_value` (NUMERIC, nullable) — daily spend cap
-- `purchase_orders.supplier_confirmed_at` (TIMESTAMPTZ, nullable) — for tracking confirmations
-
-### Quantity Calculation
-```
-deficit = par_level - quantity_on_hand
-order_qty = max(moq, deficit)
-if moq > 1: round up to nearest MOQ multiple
-```
-Fallback: if par_level is null, uses `reorder_level * 2`.
-
-### Files Updated
-- Migration: Added columns to products, product_suppliers, inventory_alert_settings, purchase_orders
-- `check-reorder-levels/index.ts` — auto-send logic with MOQ/par calculation, spend cap, email invocation
-- `AlertSettingsCard.tsx` — auto-reorder toggle, mode selector, spend cap input
-- `useInventoryAlertSettings.ts` — updated interface
-- `useProducts.ts` — added par_level to Product interface
-- `useProductSuppliers.ts` — added moq to ProductSupplier interface
-- `ProductEditDialog.tsx` — added par level field
-- `RetailProductsSettingsContent.tsx` — added par level to product form
-- `SupplierDialog.tsx` — added MOQ field
-
-### Safety Features
-- Spend cap: daily auto-reorder pauses when cumulative PO value exceeds cap
-- Audit trail: auto_reorder logged as stock_movement reason
-- Supplier confirmation tracking via supplier_confirmed_at timestamp
-
-## Product Movement Rating Badges (Implemented)
-
-### What It Does
-Every product gets a dynamic movement rating badge (Best Seller, Popular, Steady, Slow Mover, Stagnant, Dead Weight) computed from 90-day sales velocity data.
-
-### Rating Tiers
-- **Best Seller**: Top 10% velocity AND >0.5 units/day (emerald)
-- **Popular**: Top 25% velocity AND >0.2 units/day (blue)
-- **Steady**: Velocity >0.05/day (muted)
-- **Slow Mover**: Velocity >0 but ≤0.05/day (amber)
-- **Stagnant**: Zero velocity, sold within 180 days (orange)
-- **Dead Weight**: Zero velocity, 180+ days or never sold (red)
-- Products with zero stock excluded from negative ratings
-
-### Files Created
-- `src/lib/productMovementRating.ts` — pure rating logic + badge config
-- `src/hooks/useProductVelocity.ts` — lightweight 90-day POS velocity query
-- `src/components/ui/MovementBadge.tsx` — shared badge component with tooltip
-
-### Files Updated
-- `RetailProductsSettingsContent.tsx` — Movement column + filter dropdown in products table
-- `RetailAnalyticsContent.tsx` — Movement badges on product performance table + Movement Distribution card (donut chart with actionable callouts)
-- `ProductCard.tsx` — Best Seller/Popular badges on public shop cards (positive only)
-- `ProductDetailModal.tsx` — Movement badge with velocity context
-
-## Inventory Intelligence Suite v2 (Implemented)
-
-### 1. Dead Stock Auto-Clearance Pipeline
-- `DeadStockAlertCard.tsx` — Surfaces Dead Weight/Stagnant products not yet in clearance with suggested discount tiers (10%/25%/50% based on idle days)
-- One-click "Mark for Clearance" applies discount and sets clearance_status
-
-### 2. Supplier Lead Time Tracker
-- `usePurchaseOrders.ts` — `useMarkPurchaseOrderReceived` already computes actual delivery days and updates `product_suppliers.avg_delivery_days` via running average
-- `parLevelSuggestion.ts` — Updated to accept supplier-provided lead time instead of hardcoded 7-day default, with bounds clamping
-
-### 3. Inventory Valuation Dashboard Card
-- `InventoryValuationCard.tsx` — Shows total inventory at cost/retail, potential margin %, capital-at-risk (slow/stagnant/dead weight), with donut chart breakdown
-
-### 4. Reorder Approval Queue
-- `ReorderApprovalCard.tsx` — Surfaces draft POs from auto-reorder with one-click approve (→ sent) or reject (→ cancelled)
-
-### 5. Stock Transfer Between Locations
-- Migration: Created `stock_transfers` table with RLS (org member read, org admin manage)
-- `useStockTransfers.ts` — CRUD hooks for stock transfers with stock movement logging
-- `StockTransferDialog.tsx` — Dialog for creating transfers between locations
-- `RetailProductsSettingsContent.tsx` — "Transfer Stock" button added to Inventory tab (visible for multi-location orgs)
-
-## Enhancement 1: Expiry Tracking (Implemented)
-
-### What It Does
-Products can have an optional expiration date (`expires_at`) and per-product alert threshold (`expiry_alert_days`, default 30). The system surfaces expiring inventory with color-coded badges in the product table and an analytics card with auto-clearance suggestions.
-
-### Database Changes
-- `products.expires_at` (DATE, nullable) — expiration date for perishable products
-- `products.expiry_alert_days` (INTEGER, default 30) — days before expiry to trigger alerts
-
-### Expiry Alert Buckets
-- **Expired** (red): past expiration → suggests 50% markdown
-- **Critical** (orange): within alert threshold → suggests 25% markdown
-- **Warning** (amber): within 2× alert threshold → suggests 10% markdown
-
-### Files Created
-- `src/components/dashboard/analytics/ExpiryAlertCard.tsx` — PinnableCard showing expiring products with one-click clearance actions
-
-### Files Updated
-- `src/hooks/useProducts.ts` — Added `expires_at`, `expiry_alert_days` to Product interface; added `expiringOnly` filter
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Expiry date + alert days in product form; color-coded Expiry column in product table
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ExpiryAlertCard into analytics hub
-
-## Enhancement 2: Shrinkage Detection (Implemented)
-
-### What It Does
-Physical stocktake workflow with variance reporting. Staff record actual counts via a Stocktake dialog, and the system compares against expected quantities (system records). A Shrinkage Report card in analytics surfaces products with negative variance (loss) ranked by estimated cost impact.
-
-### Database Changes
-- Created `stock_counts` table with computed `variance` column (counted - expected), RLS policies (org member read/insert, org admin update/delete), and indexes
-
-### Shrinkage Calculation
-```
-variance = counted_quantity - expected_quantity
-shrinkage_units = |variance| when variance < 0
-shrinkage_cost = shrinkage_units × cost_price
+```text
+iPad UI
+  → emitSessionEvent() (client-side service)
+  → INSERT into mix_session_events (append-only ledger)
+  → DB trigger updates mix_session_projections (read model)
+  → On session_completed:
+      → Deterministic usage calc → stock_movements INSERT (inventory ledger)
+      → Formula extraction → client_formula_history INSERT
+      → Exception detection → backroom_exceptions INSERT
+      → Analytics snapshot update
 ```
 
-### Files Created
-- `src/hooks/useStockCounts.ts` — CRUD hooks for stock counts + `useShrinkageSummary` for aggregated shrinkage data
-- `src/components/dashboard/settings/inventory/StocktakeDialog.tsx` — Full stocktake UI with search, inline count entry, real-time variance display
-- `src/components/dashboard/analytics/ShrinkageReportCard.tsx` — PinnableCard showing products with shrinkage, severity badges, estimated loss
+The existing `mix_sessions`, `mix_bowls`, `mix_bowl_lines`, `reweigh_events`, and `waste_events` tables become the **projection layer** — they remain as-is for fast reads and backward compatibility, but are updated via triggers from the event stream rather than direct UI mutations.
 
-### Files Updated
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Added "Stocktake" button to Inventory tab toolbar
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ShrinkageReportCard into analytics hub
+---
+
+## 1. MixSessionEvent Schema (New Table)
+
+```sql
+CREATE TABLE public.mix_session_events (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  mix_session_id UUID NOT NULL REFERENCES mix_sessions(id) ON DELETE CASCADE,
+  organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  location_id TEXT,
+  event_type TEXT NOT NULL,
+  event_payload JSONB NOT NULL DEFAULT '{}',
+  sequence_number INTEGER NOT NULL,
+  source_mode TEXT NOT NULL DEFAULT 'manual',
+  device_id UUID,
+  station_id UUID,
+  idempotency_key TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  created_by UUID REFERENCES auth.users(id),
+  UNIQUE (mix_session_id, sequence_number),
+  UNIQUE (idempotency_key)
+);
+```
+
+**event_type values:** `session_created`, `session_started`, `bowl_created`, `product_selected`, `weight_captured`, `weight_adjusted`, `line_item_recorded`, `line_item_removed`, `bowl_sealed`, `bowl_discarded`, `reweigh_captured`, `waste_recorded`, `session_awaiting_reweigh`, `session_completed`, `session_marked_unresolved`, `manual_override_used`, `station_changed`, `device_disconnected`, `device_reconnected`, `sync_reconciled`, `prep_mode_enabled`, `prep_approved`
+
+**source_mode values:** `scale`, `manual`, `system`, `offline_sync`
+
+**Immutability:** RLS policies block UPDATE and DELETE.
+
+---
+
+## 2. MixSessionProjection Schema (New Table)
+
+```sql
+CREATE TABLE public.mix_session_projections (
+  mix_session_id UUID PRIMARY KEY REFERENCES mix_sessions(id) ON DELETE CASCADE,
+  organization_id UUID NOT NULL,
+  current_status TEXT NOT NULL DEFAULT 'draft',
+  active_bowl_count INTEGER DEFAULT 0,
+  sealed_bowl_count INTEGER DEFAULT 0,
+  reweighed_bowl_count INTEGER DEFAULT 0,
+  total_line_items INTEGER DEFAULT 0,
+  running_dispensed_weight NUMERIC(10,2) DEFAULT 0,
+  running_estimated_cost NUMERIC(10,4) DEFAULT 0,
+  has_manual_override BOOLEAN DEFAULT false,
+  has_device_disconnect BOOLEAN DEFAULT false,
+  awaiting_reweigh_count INTEGER DEFAULT 0,
+  unresolved_flag BOOLEAN DEFAULT false,
+  last_event_sequence INTEGER DEFAULT 0,
+  last_event_at TIMESTAMPTZ,
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+```
+
+This is a **read-optimized view** rebuilt incrementally by a trigger on `mix_session_events` INSERT. The existing `mix_sessions`, `mix_bowls`, `mix_bowl_lines` tables continue to be populated (via the same trigger or via the service layer) for backward compatibility with all existing queries, hooks, and UI components.
+
+---
+
+## 3. State Machines
+
+### Session Lifecycle
+```text
+States: draft → active → awaiting_reweigh → completed
+                                          → unresolved_exception
+        draft → cancelled
+        active → cancelled
+```
+
+Extends existing `mix_session_status` enum by adding `active` (rename of `mixing`) and `unresolved_exception`.
+
+### Bowl Lifecycle
+```text
+States: open → sealed → reweighed
+        open → discarded
+        sealed → discarded
+```
+
+No changes needed — existing `mix_bowl_status` enum already covers this.
+
+### Device State (Client-Side Only)
+```text
+States: disconnected → scanning → pairing → connected
+        connected → unstable_reading → stable_reading
+        connected → reconnecting → connected
+        any → manual_override
+```
+
+Already defined in `weight-event-schema.ts` as `ConnectionState`. No DB table needed — this is ephemeral UI state. Device state transitions emit events (`device_disconnected`, `device_reconnected`, `manual_override_used`) into the event stream.
+
+---
+
+## 4. Event Flow Diagrams
+
+### Normal Session
+```text
+session_created → session_started → bowl_created →
+product_selected → weight_captured → line_item_recorded →
+product_selected → weight_captured → line_item_recorded →
+bowl_sealed → session_awaiting_reweigh →
+reweigh_captured → session_completed
+```
+
+### Disconnect / Manual Fallback
+```text
+session_created → session_started → bowl_created →
+product_selected → weight_captured → device_disconnected →
+manual_override_used → weight_captured → line_item_recorded →
+device_reconnected → bowl_sealed →
+session_awaiting_reweigh → session_marked_unresolved
+```
+
+### Missing Reweigh
+```text
+session_created → session_started → bowl_created →
+line_item_recorded → bowl_sealed →
+session_awaiting_reweigh → session_completed
+  → system generates backroom_exception (missing_reweigh)
+```
+
+### Offline Sync
+```text
+[Online] session_created → session_started → bowl_created
+[Offline] product_selected → weight_captured → line_item_recorded
+  (buffered locally with idempotency_key + sequence_number)
+[Reconnect] sync_reconciled
+  (events replayed with idempotency_key; duplicates ignored via UNIQUE constraint)
+```
+
+---
+
+## 5. Event Validation & Sequencing Rules
+
+- `sequence_number` is monotonically increasing per session, enforced by UNIQUE constraint
+- Events are validated against current session/bowl state before INSERT (service layer check)
+- `idempotency_key` (UUID generated client-side) prevents duplicate events during offline sync
+- Only valid event types for current session status are accepted:
+  - `draft`: `session_started`, `bowl_created`, `prep_mode_enabled`, `cancelled`
+  - `active`: `bowl_created`, `product_selected`, `weight_captured`, `line_item_recorded`, `line_item_removed`, `bowl_sealed`, `bowl_discarded`, `waste_recorded`, `session_awaiting_reweigh`, `station_changed`, `device_*`, `manual_override_used`
+  - `awaiting_reweigh`: `reweigh_captured`, `session_completed`, `session_marked_unresolved`
+
+---
+
+## 6. Relationship to Inventory Ledger
+
+```text
+mix_session_events (how the bowl was mixed)
+  ↓ on session_completed
+deterministic usage calculation (mix-calculations.ts)
+  ↓
+stock_movements INSERT (what stock moved)
+  ↓ trigger
+inventory_projections UPDATE (current balance)
+```
+
+These are **separate systems**. `mix_session_events` never writes to `stock_movements`. Only the completion handler does, after deterministic calculation. This is already how `useDepleteMixSession` works — it reads finalized bowl/line data and inserts into `stock_movements`.
+
+---
+
+## 7. Relationship to Formula History
+
+```text
+mix_session_events → session_completed
+  ↓
+read finalized mix_bowl_lines (projection tables)
+  ↓
+extractActualFormula() + extractRefinedFormula()
+  ↓
+client_formula_history INSERT
+```
+
+Formulas are only saved from finalized session data, never from draft UI state. This is already the pattern in `MixSessionManager.handleCompleteSession`.
+
+---
+
+## 8. Concurrency & Idempotency Strategy
+
+- **Append-only events**: no read-modify-write; concurrent INSERTs don't conflict
+- **Sequence number UNIQUE constraint**: prevents out-of-order or duplicate events at DB level
+- **Idempotency key UNIQUE constraint**: offline sync replays are safe — duplicates rejected silently
+- **Projection trigger**: atomically updates projection on each event INSERT
+- **Existing table updates**: trigger applies event to `mix_sessions`, `mix_bowls`, `mix_bowl_lines` tables so all existing hooks and queries continue working without changes
+
+---
+
+## 9. Client-Side Service Layer
+
+New module: `src/lib/backroom/mix-session-service.ts`
+
+```typescript
+// Thin client-side service that:
+// 1. Validates event against current state
+// 2. Assigns sequence_number + idempotency_key
+// 3. INSERTs into mix_session_events
+// 4. Falls back to local queue if offline
+// 5. Replays queue on reconnect
+```
+
+`MixSessionManager` refactored to call `emitSessionEvent()` instead of directly mutating tables. All existing hooks (`useMixBowls`, `useMixBowlLines`, etc.) continue to read from the projection tables unchanged.
+
+---
+
+## 10. Edge Cases
+
+| Case | Handling |
+|---|---|
+| Two stylists emit events for same session | sequence_number UNIQUE rejects duplicate; last-writer-wins on projection |
+| Offline iPad buffers 20 events then syncs | idempotency_key prevents duplicates; events replayed in sequence order |
+| Scale disconnects mid-weight | `device_disconnected` event; UI offers manual override |
+| Session abandoned (no completion) | Cron/edge function detects sessions in `active` state >24h, creates exception |
+| Bowl sealed without lines | `bowl_discarded` event auto-generated (existing pattern) |
+| Reweigh never happens | On `session_completed`, if sealed bowls exist without reweigh, exception created |
+| Station switched mid-session | `station_changed` event with new station_id in payload |
+
+---
+
+## 11. Risks & Technical Unknowns
+
+| Risk | Mitigation |
+|---|---|
+| Trigger complexity for projecting events to existing tables | Start with service-layer writes to both event table and existing tables; migrate to trigger-only later |
+| Offline sync ordering conflicts | Client assigns sequence_number from local counter; server validates monotonicity |
+| Event stream volume | Index on `(mix_session_id, sequence_number)`; partition by month if needed later |
+| Backward compatibility during migration | Existing tables remain populated; dual-write during transition |
+| BLE scale integration timing | Device state is client-side only; events capture the result, not the BLE protocol |
+
+---
+
+## Implementation Plan (After Approval)
+
+1. **Migration**: Create `mix_session_events` + `mix_session_projections` tables with RLS and immutability policies
+2. **Service layer**: Create `mix-session-service.ts` with `emitSessionEvent()`, validation, and sequence management
+3. **Refactor MixSessionManager**: Replace direct table mutations with `emitSessionEvent()` calls
+4. **Projection trigger**: DB trigger that updates `mix_session_projections` on event INSERT
+5. **Dual-write bridge**: Service also writes to existing tables (`mix_bowls`, `mix_bowl_lines`, etc.) for backward compatibility
+6. **Offline queue**: LocalStorage-based event buffer with sync-on-reconnect
+7. **Exception automation**: On `session_completed` event, auto-generate exceptions for missing reweigh, manual override, device disconnect
+
