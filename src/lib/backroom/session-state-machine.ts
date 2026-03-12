@@ -2,32 +2,73 @@
  * Zura Backroom — Mix Session State Machine
  * 
  * Enforces valid lifecycle transitions for mix sessions.
- * draft → mixing → pending_reweigh → completed
- * draft | mixing → cancelled
+ *
+ * Session lifecycle:
+ *   draft → active → awaiting_reweigh → completed
+ *                                     → unresolved_exception
+ *   draft → cancelled
+ *   active → cancelled
+ *
+ * Legacy alias: 'mixing' maps to 'active' for backward compatibility.
  */
 
-export type MixSessionStatus = 'draft' | 'mixing' | 'pending_reweigh' | 'completed' | 'cancelled';
+export type MixSessionStatus =
+  | 'draft'
+  | 'mixing'           // legacy alias → treated as 'active'
+  | 'active'
+  | 'pending_reweigh'  // legacy alias → treated as 'awaiting_reweigh'
+  | 'awaiting_reweigh'
+  | 'completed'
+  | 'unresolved_exception'
+  | 'cancelled';
 
-const VALID_TRANSITIONS: Record<MixSessionStatus, MixSessionStatus[]> = {
-  draft: ['mixing', 'cancelled'],
-  mixing: ['pending_reweigh', 'cancelled'],
-  pending_reweigh: ['completed'],
+/**
+ * Normalize legacy status values to canonical form.
+ */
+export function normalizeSessionStatus(status: MixSessionStatus): MixSessionStatus {
+  if (status === 'mixing') return 'active';
+  if (status === 'pending_reweigh') return 'awaiting_reweigh';
+  return status;
+}
+
+const VALID_TRANSITIONS: Record<string, MixSessionStatus[]> = {
+  draft: ['active', 'mixing', 'cancelled'],
+  active: ['awaiting_reweigh', 'pending_reweigh', 'cancelled'],
+  mixing: ['awaiting_reweigh', 'pending_reweigh', 'cancelled'], // legacy alias
+  awaiting_reweigh: ['completed', 'unresolved_exception'],
+  pending_reweigh: ['completed', 'unresolved_exception'],       // legacy alias
   completed: [],
+  unresolved_exception: [],
   cancelled: [],
 };
 
 export function canTransitionSession(from: MixSessionStatus, to: MixSessionStatus): boolean {
-  return VALID_TRANSITIONS[from]?.includes(to) ?? false;
+  const normalizedFrom = normalizeSessionStatus(from);
+  const normalizedTo = normalizeSessionStatus(to);
+  // Check both normalized and raw for backward compat
+  return (
+    VALID_TRANSITIONS[normalizedFrom]?.includes(normalizedTo) ??
+    VALID_TRANSITIONS[normalizedFrom]?.includes(to) ??
+    false
+  );
 }
 
 export function getValidSessionTransitions(current: MixSessionStatus): MixSessionStatus[] {
-  return VALID_TRANSITIONS[current] ?? [];
+  const normalized = normalizeSessionStatus(current);
+  return VALID_TRANSITIONS[normalized] ?? [];
 }
 
 export function isTerminalSessionStatus(status: MixSessionStatus): boolean {
-  return status === 'completed' || status === 'cancelled';
+  const normalized = normalizeSessionStatus(status);
+  return normalized === 'completed' || normalized === 'cancelled' || normalized === 'unresolved_exception';
 }
 
 export function requiresReweigh(status: MixSessionStatus): boolean {
-  return status === 'pending_reweigh';
+  const normalized = normalizeSessionStatus(status);
+  return normalized === 'awaiting_reweigh';
+}
+
+export function isActiveSession(status: MixSessionStatus): boolean {
+  const normalized = normalizeSessionStatus(status);
+  return normalized === 'active';
 }
