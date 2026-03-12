@@ -62,6 +62,9 @@ export function useLogStockMovement() {
           quantity_after: params.quantity_after,
           reason: params.reason,
           notes: params.notes || null,
+          reference_type: params.reference_type || null,
+          reference_id: params.reference_id || null,
+          location_id: params.location_id || null,
           created_by: userId,
         });
 
