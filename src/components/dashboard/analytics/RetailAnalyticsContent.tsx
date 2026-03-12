@@ -830,9 +830,10 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                           <TableCell>
                             <div className="flex items-center gap-2">
                               <span className="font-medium text-sm">{p.name}</span>
-                              {isBestSeller && (
-                                <Badge variant="outline" className="text-[9px] py-0 px-1.5 text-chart-2 border-chart-2/30">Best Seller</Badge>
-                              )}
+                              {(() => {
+                                const rating = productMovementRatings.get(p.name.toLowerCase().trim());
+                                return rating ? <MovementBadge rating={rating} compact /> : null;
+                              })()}
                             </div>
                           </TableCell>
                           <TableCell className="text-muted-foreground text-sm">{p.brand || '\u2014'}</TableCell>
