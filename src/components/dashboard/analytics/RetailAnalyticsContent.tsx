@@ -2107,6 +2107,9 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
         <SeasonalForecastCard products={allProducts} velocityMap={velocityMap} filterContext={filterContext} />
       )}
 
+      {/* ─── Margin Erosion Alerts ─── */}
+      <MarginErosionCard filterContext={filterContext} />
+
       {/* ─── Shrinkage Report ─── */}
       <ShrinkageReportCard filterContext={filterContext} />
 
