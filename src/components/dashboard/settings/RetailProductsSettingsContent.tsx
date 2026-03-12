@@ -1554,6 +1554,12 @@ function InventoryByLocationTab() {
           organizationId={orgId}
         />
       )}
+
+      {/* Stock Transfer Dialog */}
+      <StockTransferDialog
+        open={showTransferDialog}
+        onOpenChange={setShowTransferDialog}
+      />
     </div>
   );
 }
