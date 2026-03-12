@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Bell, ChevronDown, ChevronUp, Loader2, Users } from 'lucide-react';
+import { Bell, ChevronDown, ChevronUp, Loader2, Users, AlertTriangle } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { useInventoryAlertSettings, useUpsertInventoryAlertSettings } from '@/hooks/useInventoryAlertSettings';
@@ -22,6 +24,9 @@ export function AlertSettingsCard() {
   const [inApp, setInApp] = useState(true);
   const [email, setEmail] = useState(true);
   const [autoCreatePo, setAutoCreatePo] = useState(true);
+  const [autoReorderEnabled, setAutoReorderEnabled] = useState(false);
+  const [autoReorderMode, setAutoReorderMode] = useState('to_par');
+  const [maxAutoReorderValue, setMaxAutoReorderValue] = useState('');
   const [deadStockEnabled, setDeadStockEnabled] = useState(true);
   const [deadStockDays, setDeadStockDays] = useState(90);
 
@@ -33,6 +38,9 @@ export function AlertSettingsCard() {
       setInApp(settings.alert_channels.includes('in_app'));
       setEmail(settings.alert_channels.includes('email'));
       setAutoCreatePo(settings.auto_create_draft_po);
+      setAutoReorderEnabled(settings.auto_reorder_enabled ?? false);
+      setAutoReorderMode(settings.auto_reorder_mode ?? 'to_par');
+      setMaxAutoReorderValue(settings.max_auto_reorder_value?.toString() ?? '');
       setDeadStockEnabled((settings as any).dead_stock_enabled ?? true);
       setDeadStockDays((settings as any).dead_stock_days ?? 90);
     }
@@ -44,6 +52,9 @@ export function AlertSettingsCard() {
     inApp !== settings.alert_channels.includes('in_app') ||
     email !== settings.alert_channels.includes('email') ||
     autoCreatePo !== settings.auto_create_draft_po ||
+    autoReorderEnabled !== (settings.auto_reorder_enabled ?? false) ||
+    autoReorderMode !== (settings.auto_reorder_mode ?? 'to_par') ||
+    maxAutoReorderValue !== (settings.max_auto_reorder_value?.toString() ?? '') ||
     deadStockEnabled !== ((settings as any).dead_stock_enabled ?? true) ||
     deadStockDays !== ((settings as any).dead_stock_days ?? 90)
   ) : true;
