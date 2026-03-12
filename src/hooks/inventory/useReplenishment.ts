@@ -261,14 +261,16 @@ export function useConvertRecommendationsToPO() {
 
         // Fetch vendor_products for unit costs
         const productIds = vendorRecs.map((r) => r.product_id);
-        const { data: vps } = vendorId
-          ? await supabase
-              .from('vendor_products')
-              .select('product_id, unit_cost, id')
-              .eq('vendor_id', vendorId)
-              .in('product_id', productIds)
-          : { data: [] };
-        const vpMap = new Map(vps?.map((vp) => [vp.product_id, vp]) ?? []);
+        let vps: { product_id: string; unit_cost: number | null; id: string }[] = [];
+        if (vendorId) {
+          const { data } = await supabase
+            .from('vendor_products')
+            .select('product_id, unit_cost, id')
+            .eq('vendor_id', vendorId)
+            .in('product_id', productIds);
+          vps = (data ?? []) as { product_id: string; unit_cost: number | null; id: string }[];
+        }
+        const vpMap = new Map(vps.map((vp) => [vp.product_id, vp] as const));
 
         // Build PO lines
         const lines = vendorRecs.map((rec) => {
