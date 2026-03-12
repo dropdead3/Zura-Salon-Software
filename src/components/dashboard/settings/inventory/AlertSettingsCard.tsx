@@ -164,7 +164,7 @@ export function AlertSettingsCard() {
                 <div className="flex items-center justify-between">
                   <div>
                     <Label className="text-sm">Auto-create draft purchase orders</Label>
-                    <p className="text-xs text-muted-foreground mt-0.5">
+                    <p className="text-xs text-muted-foreground mt-1">
                       Automatically generate draft POs for low-stock items with assigned suppliers
                     </p>
                   </div>
