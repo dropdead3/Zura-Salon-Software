@@ -244,6 +244,11 @@ export function InventoryLeadAssignmentCard() {
             </div>
           );
         })}
+          </div>
+        </ScrollArea>
+        {filteredLocations.length === 0 && search && (
+          <p className="text-xs text-muted-foreground text-center py-4">No locations match "{search}"</p>
+        )}
       </CardContent>
     </Card>
   );
