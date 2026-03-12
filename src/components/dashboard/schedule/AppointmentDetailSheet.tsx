@@ -1049,6 +1049,7 @@ export function AppointmentDetailSheet({
                   <TabsTrigger value="details" className="font-sans">Details</TabsTrigger>
                   <TabsTrigger value="history" className="font-sans">History</TabsTrigger>
                   <TabsTrigger value="notes" className="font-sans">Notes</TabsTrigger>
+                  <TabsTrigger value="backroom" className="font-sans">Backroom</TabsTrigger>
                 </TabsList>
 
                 <ScrollArea className="flex-1">
