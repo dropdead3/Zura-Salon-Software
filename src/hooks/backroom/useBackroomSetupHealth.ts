@@ -38,7 +38,7 @@ export function useBackroomSetupHealth() {
       // Parallel queries
       const [productsRes, servicesRes, recipesRes, policiesRes, stationsRes, alertsRes, componentsRes] = await Promise.all([
         supabase.from('products').select('id, is_backroom_tracked, cost_price, cost_per_gram, is_active', { count: 'exact' }).eq('organization_id', orgId!).eq('is_active', true),
-        supabase.from('services').select('id, is_backroom_tracked, name', { count: 'exact' }).eq('organization_id', orgId!),
+        supabase.from('services').select('id, is_backroom_tracked, name', { count: 'exact' }).eq('organization_id', orgId!).eq('is_active', true),
         supabase.from('service_recipe_baselines').select('id', { count: 'exact' }).eq('organization_id', orgId!),
         supabase.from('service_allowance_policies').select('id', { count: 'exact' }).eq('organization_id', orgId!),
         supabase.from('backroom_stations').select('id', { count: 'exact' }).eq('organization_id', orgId!),

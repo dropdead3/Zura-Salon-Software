@@ -56,8 +56,10 @@ export function calculateOverageCharge(input: AllowanceBillingInput): AllowanceB
         charge = overageRate;
         break;
       case 'tiered':
-        // Future: implement tiered pricing brackets
-        // For now, falls back to per_unit
+        // BUG-6 fix: Guard against unimplemented tiered pricing
+        // Tiered pricing requires bracket configuration not yet available.
+        // Fall back to per_unit with a console warning so salons don't get silent miscalculation.
+        console.warn('[AllowanceBilling] Tiered pricing not yet implemented — falling back to per_unit rate');
         charge = overageQty * overageRate;
         break;
     }

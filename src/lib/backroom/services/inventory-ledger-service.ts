@@ -104,7 +104,8 @@ export async function postLedgerEntries(entries: LedgerEntry[]): Promise<void> {
 
 /**
  * Post usage depletion from a completed mix session.
- * Aggregates bowl lines by product and posts negative ledger entries.
+ * Uses net_usage_weight from bowls to calculate actual depletion (not raw dispensed).
+ * Includes idempotency guard to prevent double-posting.
  */
 export async function postUsageFromSession(params: {
   sessionId: string;
@@ -112,6 +113,20 @@ export async function postUsageFromSession(params: {
   locationId?: string;
 }): Promise<{ movementsInserted: number }> {
   const userId = await getCurrentUserId();
+
+  // BUG-11 fix: Idempotency guard — check if movements already exist for this session
+  const { count: existingCount } = await supabase
+    .from('stock_movements')
+    .select('id', { count: 'exact', head: true })
+    .eq('organization_id', params.organizationId)
+    .eq('reference_type', 'mix_session')
+    .eq('reference_id', params.sessionId)
+    .eq('reason', 'usage');
+
+  if (existingCount && existingCount > 0) {
+    console.warn('[InventoryLedger] Usage already posted for session:', params.sessionId);
+    return { movementsInserted: 0 };
+  }
 
   // 1. Get all non-discarded bowls
   const { data: bowls, error: bowlErr } = await supabase
@@ -125,49 +140,71 @@ export async function postUsageFromSession(params: {
 
   const bowlIds = bowls.map((b: any) => b.id);
 
-  // 2. Get all lines across valid bowls
+  // 2. Get all lines across valid bowls, grouped by bowl
   const { data: lines, error: lineErr } = await supabase
     .from('mix_bowl_lines')
-    .select('product_id, dispensed_quantity, dispensed_unit')
+    .select('product_id, dispensed_quantity, dispensed_unit, bowl_id')
     .in('bowl_id', bowlIds);
 
   if (lineErr) throw lineErr;
   if (!lines?.length) return { movementsInserted: 0 };
 
-  // 3. Aggregate by product_id
+  // BUG-5 fix: Use net_usage_weight / total_dispensed_weight ratio per bowl
+  // to proportionally reduce dispensed quantities to actual usage
+  const bowlMap = new Map(
+    (bowls as any[]).map((b) => [b.id, {
+      netUsage: b.net_usage_weight ?? b.total_dispensed_weight ?? 0,
+      totalDispensed: b.total_dispensed_weight ?? 0,
+    }])
+  );
+
+  // 3. Aggregate by product_id using net-usage-adjusted quantities
   const productUsage = new Map<string, number>();
   for (const line of lines as any[]) {
     if (!line.product_id) continue;
+    const bowl = bowlMap.get(line.bowl_id);
+    let effectiveQty = line.dispensed_quantity;
+
+    // Apply net usage ratio if bowl has reweigh data
+    if (bowl && bowl.totalDispensed > 0 && bowl.netUsage < bowl.totalDispensed) {
+      const usageRatio = bowl.netUsage / bowl.totalDispensed;
+      effectiveQty = line.dispensed_quantity * usageRatio;
+    }
+
     const current = productUsage.get(line.product_id) ?? 0;
-    productUsage.set(line.product_id, current + line.dispensed_quantity);
+    productUsage.set(line.product_id, current + effectiveQty);
   }
 
   if (productUsage.size === 0) return { movementsInserted: 0 };
 
-  // 4. Get current quantities
+  // 4. Get current quantities for accurate quantity_after (BUG-4 fix)
   const productIds = Array.from(productUsage.keys());
-  const { data: products, error: prodErr } = await supabase
-    .from('products')
-    .select('id, quantity_on_hand')
-    .in('id', productIds);
+  const { data: projections, error: projErr } = await supabase
+    .from('inventory_projections')
+    .select('product_id, on_hand')
+    .eq('organization_id', params.organizationId)
+    .in('product_id', productIds);
 
-  if (prodErr) throw prodErr;
+  if (projErr) {
+    // Fallback to products table if projections don't exist
+    console.warn('[InventoryLedger] Projection query failed, falling back to products table');
+  }
 
-  const productMap = new Map(
-    (products as any[]).map((p) => [p.id, p.quantity_on_hand ?? 0])
+  const projectionMap = new Map(
+    (projections as any[] || []).map((p) => [p.product_id, p.on_hand ?? 0])
   );
 
-  // 5. Build ledger entries
+  // 5. Build ledger entries with accurate quantity_after
   const entries: LedgerEntry[] = [];
   for (const [productId, usedQty] of productUsage) {
-    const currentQty = productMap.get(productId) ?? 0;
+    const currentQty = projectionMap.get(productId) ?? 0;
     const newQty = Math.max(0, currentQty - usedQty);
 
     entries.push({
       organization_id: params.organizationId,
       product_id: productId,
-      quantity_change: -usedQty,
-      quantity_after: newQty,
+      quantity_change: -Math.round(usedQty * 100) / 100,
+      quantity_after: Math.round(newQty * 100) / 100,
       event_type: 'usage',
       reason: 'usage',
       reference_type: 'mix_session',

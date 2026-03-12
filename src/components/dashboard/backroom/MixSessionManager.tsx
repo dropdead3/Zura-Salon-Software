@@ -181,7 +181,7 @@ export function MixSessionManager({
       id: activeSession.id,
       organizationId,
       currentStatus: activeSession.status,
-      newStatus: 'pending_reweigh',
+      newStatus: 'awaiting_reweigh',
       locationId,
     });
   }, [activeSession, bowls, organizationId, locationId, updateSessionStatus, updateBowlStatus]);
@@ -196,6 +196,7 @@ export function MixSessionManager({
       : undefined;
 
     // Calculate confidence score before completing
+    let confidence: number = 0;
     try {
       const validBowls = bowls.filter((b) => b.status !== 'discarded');
       const bowlIds = validBowls.map((b) => b.id);
@@ -212,7 +213,7 @@ export function MixSessionManager({
       const castLines = (allLines ?? []) as any[];
       const castWaste = (wasteEvents ?? []) as any[];
 
-      const confidence = calculateMixConfidence({
+      confidence = calculateMixConfidence({
         totalLines: castLines.length,
         scaleLines: castLines.filter((l) => l.captured_via === 'scale').length,
         totalBowls: validBowls.length,
@@ -222,17 +223,7 @@ export function MixSessionManager({
         categorizedWasteEvents: castWaste.filter((w) => w.waste_category && w.waste_category !== 'unclassified').length,
       });
 
-      // Emit confidence as event payload, then write projection
-      await emitSessionEvent({
-        mix_session_id: activeSession.id,
-        organization_id: organizationId,
-        location_id: locationId,
-        event_type: 'session_completed',
-        event_payload: { confidence_score: confidence },
-        source_mode: 'manual',
-      });
-
-      // Projection update
+      // Store confidence for use after status update (BUG-1 fix: don't emit duplicate session_completed event here)
       await supabase
         .from('mix_sessions')
         .update({ confidence_score: confidence } as any)
@@ -241,30 +232,37 @@ export function MixSessionManager({
       console.error('Confidence score calculation failed:', err);
     }
 
-    updateSessionStatus.mutate({
-      id: activeSession.id,
-      organizationId,
-      currentStatus: activeSession.status,
-      newStatus: 'completed',
-      unresolvedReason,
-      locationId,
-    });
+    // BUG-3 fix: Chain mutations sequentially using mutateAsync
+    try {
+      await updateSessionStatus.mutateAsync({
+        id: activeSession.id,
+        organizationId,
+        currentStatus: activeSession.status,
+        newStatus: 'completed',
+        unresolvedReason,
+        locationId,
+        confidencePayload: { confidence_score: confidence ?? 0 },
+      });
 
-    // Deplete inventory from stock
-    depleteInventory.mutate({
-      sessionId: activeSession.id,
-      organizationId,
-      locationId,
-    });
+      // Only deplete inventory after successful status update
+      await depleteInventory.mutateAsync({
+        sessionId: activeSession.id,
+        organizationId,
+        locationId,
+      });
 
-    // Calculate overage charge if allowance policy exists
-    calculateOverage.mutate({
-      sessionId: activeSession.id,
-      appointmentId,
-      organizationId,
-      serviceId,
-      serviceName,
-    });
+      // Calculate overage charge if allowance policy exists
+      calculateOverage.mutate({
+        sessionId: activeSession.id,
+        appointmentId,
+        organizationId,
+        serviceId,
+        serviceName,
+      });
+    } catch (err) {
+      console.error('Session completion chain failed:', err);
+      // Status update error is already toasted by the mutation's onError
+    }
 
     // Save formulas if we have a client
     if (clientId) {

@@ -251,6 +251,20 @@ export async function emitSessionEvent(
       console.warn('[MixSessionService] Duplicate event ignored:', idempotencyKey);
       return null;
     }
+    // BUG-7 fix: Handle sequence collision — re-fetch and retry once
+    if (error.code === '23505' && error.message?.includes('sequence')) {
+      console.warn('[MixSessionService] Sequence collision, re-syncing...');
+      await initializeSessionSequence(input.mix_session_id);
+      const retrySeq = getNextSequence(input.mix_session_id);
+      const retryRow = { ...eventRow, sequence_number: retrySeq, idempotency_key: crypto.randomUUID() };
+      const { data: retryData, error: retryError } = await supabase
+        .from('mix_session_events' as any)
+        .insert(retryRow as any)
+        .select()
+        .single();
+      if (retryError) throw retryError;
+      return retryData as unknown as MixSessionEvent;
+    }
     throw error;
   }
 
@@ -275,7 +289,29 @@ export async function replayOfflineQueue(): Promise<{ replayed: number; failed: 
   let failed = 0;
   const remaining: QueuedEvent[] = [];
 
+  // BUG-8 fix: Fetch current session statuses before replay to filter invalid events
+  const sessionIds = new Set(queue.map(q => q.input.mix_session_id));
+  const sessionStatuses = new Map<string, string>();
+  for (const sid of sessionIds) {
+    const { data: sessionData } = await supabase
+      .from('mix_sessions')
+      .select('status')
+      .eq('id', sid)
+      .single();
+    if (sessionData) {
+      sessionStatuses.set(sid, (sessionData as any).status);
+    }
+  }
+
   for (const queued of queue) {
+    // Skip events for sessions that are now in terminal state
+    const currentStatus = sessionStatuses.get(queued.input.mix_session_id);
+    if (currentStatus && ['completed', 'cancelled', 'unresolved_exception'].includes(currentStatus)) {
+      console.warn('[MixSessionService] Skipping event for terminal session:', queued.input.mix_session_id);
+      replayed++; // Count as handled
+      continue;
+    }
+
     const eventRow = {
       mix_session_id: queued.input.mix_session_id,
       organization_id: queued.input.organization_id,
@@ -309,8 +345,8 @@ export async function replayOfflineQueue(): Promise<{ replayed: number; failed: 
   }
 
   // Emit sync_reconciled event for each session that had offline events
-  const sessionIds = new Set(queue.map(q => q.input.mix_session_id));
-  for (const sessionId of sessionIds) {
+  const reconcileSessionIds = new Set(queue.map(q => q.input.mix_session_id));
+  for (const sessionId of reconcileSessionIds) {
     const orgId = queue.find(q => q.input.mix_session_id === sessionId)?.input.organization_id;
     if (orgId) {
       await emitSessionEvent({
