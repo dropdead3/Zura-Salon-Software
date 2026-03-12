@@ -117,6 +117,11 @@ const CARD_COMPONENTS: Record<string, string> = {
   'retail_effectiveness': 'RetailEffectiveness',
   'commission_summary': 'CommissionSummary',
   'staff_commission_breakdown': 'StaffCommissionBreakdown',
+  'true_profit': 'TrueProfit',
+  'staff_performance': 'StaffPerformance',
+  'service_profitability': 'ServiceProfitability',
+  'control_tower': 'ControlTower',
+  'predictive_inventory': 'PredictiveInventory',
 };
 
 /**
