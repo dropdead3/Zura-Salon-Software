@@ -47,6 +47,7 @@ export function ProductEditDialog({ productId, open, onOpenChange }: ProductEdit
       cost_price: '',
       quantity_on_hand: '',
       reorder_level: '',
+      par_level: '',
     },
   });
 
