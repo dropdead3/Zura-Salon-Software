@@ -1,23 +1,29 @@
 
 
-## Timezone-Safe Scheduling (Implemented)
+## Add Import History with Rollback to Retail Products Page
 
-### Problem
-`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
+### Current State
+All the rollback infrastructure already exists:
+- `rollback-import` edge function deletes products by `import_job_id` and marks the job as rolled back
+- `useImportJobs` hook fetches import job history; `useRollbackImport` hook triggers rollback
+- `ImportHistoryCard` component renders job details with a "Rollback" button and confirmation dialog
+- The `products` table has an `import_job_id` column linking imported records to their jobs
 
-### Solution
-- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
-- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
-- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
+This is currently only surfaced on the platform admin import page. The salon-level Retail Products settings page has no visibility into past imports.
 
-### Files Updated
-- `ScheduleHeader.tsx` — today button, quick days, isToday checks
-- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
-- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
-- `MonthView.tsx` — today highlight
-- `AgendaView.tsx` — today/tomorrow labels, today border
-- `ScheduleActionBar.tsx` — payment queue timing
-- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
-- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
-- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
-- `useHuddles.ts` — today's huddle query
+### Plan
+
+**Edit: `src/components/dashboard/settings/RetailProductsSettingsContent.tsx`**
+
+1. Import `useImportJobs` and `ImportHistoryCard`
+2. In the `ProductsTab` component, fetch import jobs filtered to `entity_type = 'products'` for the current organization
+3. Add a collapsible "Import History" section below the Import button / above the products table that:
+   - Shows recent product imports as `ImportHistoryCard` entries (with `showRollback={true}`)
+   - Only renders when there are import jobs to display
+   - Uses a small toggle (e.g. `History` icon button) to expand/collapse the list so it doesn't clutter the main view
+
+This reuses all existing components — no new files, no database changes, no edge function changes. One file edited.
+
+### Files
+- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` (edit)
+
