@@ -644,6 +644,46 @@ export function MixSessionManager({
             </Button>
           )}
 
+          {activeSession.status === 'draft' && activeSession.is_prep_mode && bowls.length > 0 && (
+            <Button
+              size="sm"
+              onClick={async () => {
+                // Transition bowls to awaiting_stylist_approval
+                for (const bowl of bowls.filter(b => b.status === 'open')) {
+                  updateBowlStatus.mutate({
+                    id: bowl.id,
+                    sessionId: activeSession.id,
+                    organizationId,
+                    currentStatus: bowl.status,
+                    newStatus: 'prepared_by_assistant',
+                    locationId,
+                  });
+                }
+                // Transition session
+                updateSessionStatus.mutate({
+                  id: activeSession.id,
+                  organizationId,
+                  currentStatus: activeSession.status,
+                  newStatus: 'awaiting_stylist_approval',
+                  locationId,
+                });
+                await emitSessionEvent({
+                  mix_session_id: activeSession.id,
+                  organization_id: organizationId,
+                  location_id: locationId,
+                  event_type: 'assistant_bowl_prepared',
+                  event_payload: { bowl_count: bowls.length },
+                  source_mode: 'manual',
+                });
+                toast.success('Submitted for stylist review');
+              }}
+              className="h-9 font-sans"
+            >
+              <Send className="w-3.5 h-3.5 mr-1" />
+              Submit for Review
+            </Button>
+          )}
+
           {activeSession.status === 'mixing' && (
             <>
               <Button
