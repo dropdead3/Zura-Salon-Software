@@ -457,28 +457,28 @@ function ProductsTab() {
                 <TableHead className="w-10">
                   <input type="checkbox" checked={selectedIds.size === (filteredProducts?.length || 0) && (filteredProducts?.length || 0) > 0} onChange={toggleAll} className="rounded border-border" />
                 </TableHead>
-                <TableHead>
+                <TableHead className={tokens.table.columnHeader}>
                   <button type="button" onClick={() => toggleSort('name')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
                     Product <SortIcon field="name" />
                   </button>
                 </TableHead>
-                <TableHead>
+                <TableHead className={tokens.table.columnHeader}>
                   <button type="button" onClick={() => toggleSort('brand')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
                     Brand <SortIcon field="brand" />
                   </button>
                 </TableHead>
-                <TableHead>
+                <TableHead className={tokens.table.columnHeader}>
                   <button type="button" onClick={() => toggleSort('category')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
                     Category <SortIcon field="category" />
                   </button>
                 </TableHead>
-                <TableHead className="w-28">Movement</TableHead>
-                <TableHead className="text-right">
+                <TableHead className={cn(tokens.table.columnHeader, 'w-28')}>Movement</TableHead>
+                <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>
                   <button type="button" onClick={() => toggleSort('retail_price')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors ml-auto">
                     Price <SortIcon field="retail_price" />
                   </button>
                 </TableHead>
-                <TableHead className="text-right">
+                <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>
                   <div className="inline-flex items-center gap-1.5 ml-auto">
                     <button type="button" onClick={() => toggleSort('quantity_on_hand')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
                       Inventory <SortIcon field="quantity_on_hand" />
@@ -486,8 +486,8 @@ function ProductsTab() {
                     <MetricInfoTooltip description="Current stock on hand. Products are flagged as low stock when quantity reaches or falls below the minimum stock level you set." />
                   </div>
                 </TableHead>
-                <TableHead className="w-24">Expiry</TableHead>
-                <TableHead className="text-center w-16">Online</TableHead>
+                <TableHead className={cn(tokens.table.columnHeader, 'w-24')}>Expiry</TableHead>
+                <TableHead className={cn(tokens.table.columnHeader, 'text-center w-16')}>Online</TableHead>
                 <TableHead className="w-20" />
               </TableRow>
             </TableHeader>
@@ -1017,11 +1017,11 @@ function BrandsTab() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Brand</TableHead>
-            <TableHead className="text-right">Products</TableHead>
-            <TableHead className="text-right">Total Stock</TableHead>
-            <TableHead className="text-right">Inventory Value</TableHead>
-            <TableHead className="w-20" />
+             <TableHead className={tokens.table.columnHeader}>Brand</TableHead>
+             <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Products</TableHead>
+             <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Total Stock</TableHead>
+             <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Inventory Value</TableHead>
+             <TableHead className="w-20" />
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -1119,12 +1119,12 @@ function CategoriesTab() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Category</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead className="text-right">Products</TableHead>
-              <TableHead className="text-right">Total Stock</TableHead>
-              <TableHead className="text-right">Inventory Value</TableHead>
-              <TableHead className="w-24" />
+               <TableHead className={tokens.table.columnHeader}>Category</TableHead>
+               <TableHead className={tokens.table.columnHeader}>Type</TableHead>
+               <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Products</TableHead>
+               <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Total Stock</TableHead>
+               <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Inventory Value</TableHead>
+               <TableHead className="w-24" />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -1376,32 +1376,32 @@ function InventoryByLocationTab() {
 
           {/* Inventory Value Summary */}
           {products && products.length > 0 && (
-            <div className="grid grid-cols-4 gap-3">
-              <div className="p-3 rounded-lg border bg-card">
-                <div className="text-xs text-muted-foreground">Total Units</div>
-                <div className="text-lg font-medium tabular-nums mt-0.5">
-                  <AnimatedBlurredAmount value={summary.totalUnits} />
-                </div>
-              </div>
-              <div className="p-3 rounded-lg border bg-card">
-                <div className="text-xs text-muted-foreground">Cost Value</div>
-                <div className="text-lg font-medium tabular-nums mt-0.5">
-                  <AnimatedBlurredAmount value={summary.costValue} currency="USD" />
-                </div>
-              </div>
-              <div className="p-3 rounded-lg border bg-card">
-                <div className="text-xs text-muted-foreground">Retail Value</div>
-                <div className="text-lg font-medium tabular-nums mt-0.5">
-                  <AnimatedBlurredAmount value={summary.retailValue} currency="USD" />
-                </div>
-              </div>
-              <div className="p-3 rounded-lg border bg-card">
-                <div className="text-xs text-muted-foreground">Low Stock</div>
-                <div className={cn('text-lg font-medium tabular-nums mt-0.5', summary.lowStockCount > 0 && 'text-amber-600 dark:text-amber-400')}>
-                  {summary.lowStockCount}
-                </div>
-              </div>
-            </div>
+             <div className="grid grid-cols-4 gap-4">
+               <div className={tokens.kpi.tile}>
+                 <div className={tokens.kpi.label}>Total Units</div>
+                 <div className={cn(tokens.kpi.value, 'tabular-nums')}>
+                   <AnimatedBlurredAmount value={summary.totalUnits} />
+                 </div>
+               </div>
+               <div className={tokens.kpi.tile}>
+                 <div className={tokens.kpi.label}>Cost Value</div>
+                 <div className={cn(tokens.kpi.value, 'tabular-nums')}>
+                   <AnimatedBlurredAmount value={summary.costValue} currency="USD" />
+                 </div>
+               </div>
+               <div className={tokens.kpi.tile}>
+                 <div className={tokens.kpi.label}>Retail Value</div>
+                 <div className={cn(tokens.kpi.value, 'tabular-nums')}>
+                   <AnimatedBlurredAmount value={summary.retailValue} currency="USD" />
+                 </div>
+               </div>
+               <div className={tokens.kpi.tile}>
+                 <div className={tokens.kpi.label}>Low Stock</div>
+                 <div className={cn(tokens.kpi.value, 'tabular-nums', summary.lowStockCount > 0 && 'text-amber-600 dark:text-amber-400')}>
+                   {summary.lowStockCount}
+                 </div>
+               </div>
+             </div>
           )}
 
           {lowStockProducts.length > 0 && (
@@ -1464,16 +1464,16 @@ function InventoryByLocationTab() {
                       }}
                     />
                   </TableHead>
-                  <TableHead>Product</TableHead>
-                  <TableHead>Brand</TableHead>
-                  <TableHead>Supplier</TableHead>
-                  <TableHead className="text-right">On Hand</TableHead>
-                  <TableHead className="text-right">Min. Stock</TableHead>
-                  <TableHead className="text-right">Lead Time</TableHead>
-                  <TableHead className="text-right">Status</TableHead>
-                  <TableHead className="text-center w-32">Adjust</TableHead>
-                  <TableHead className="w-8" />
-                  <TableHead className="text-center w-24">Reorder</TableHead>
+                   <TableHead className={tokens.table.columnHeader}>Product</TableHead>
+                   <TableHead className={tokens.table.columnHeader}>Brand</TableHead>
+                   <TableHead className={tokens.table.columnHeader}>Supplier</TableHead>
+                   <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>On Hand</TableHead>
+                   <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Min. Stock</TableHead>
+                   <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Lead Time</TableHead>
+                   <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Status</TableHead>
+                   <TableHead className={cn(tokens.table.columnHeader, 'text-center w-32')}>Adjust</TableHead>
+                   <TableHead className="w-8" />
+                   <TableHead className={cn(tokens.table.columnHeader, 'text-center w-24')}>Reorder</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

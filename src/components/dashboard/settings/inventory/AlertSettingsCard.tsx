@@ -87,7 +87,7 @@ export function AlertSettingsCard() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className={tokens.card.iconBox}>
-                  <Bell className="w-5 h-5 text-primary" />
+                  <Bell className={tokens.card.icon} />
                 </div>
                 <div>
                   <CardTitle className={tokens.card.title}>Low Stock Alerts</CardTitle>
@@ -152,7 +152,7 @@ export function AlertSettingsCard() {
                 </div>
 
                 {/* Recipients */}
-                <div className="space-y-1.5">
+                 <div className="space-y-2">
                   <Label className="text-sm">Recipients</Label>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Users className="w-3.5 h-3.5" />
@@ -173,7 +173,7 @@ export function AlertSettingsCard() {
 
                 {/* Auto-reorder (send to supplier) */}
                 {autoCreatePo && (
-                  <div className="ml-4 pl-4 border-l border-border space-y-3">
+                  <div className="ml-4 pl-4 border-l border-border space-y-4">
                     <div className="flex items-center justify-between">
                       <div>
                         <Label className="text-sm">Auto-send POs to suppliers</Label>
