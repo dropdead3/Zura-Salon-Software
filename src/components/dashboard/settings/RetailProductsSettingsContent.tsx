@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef } from 'react';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 function getInitials(name: string): string {
@@ -397,9 +398,12 @@ function ProductsTab() {
                   </button>
                 </TableHead>
                 <TableHead className="text-right">
-                  <button type="button" onClick={() => toggleSort('quantity_on_hand')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors ml-auto">
-                    Inventory <SortIcon field="quantity_on_hand" />
-                  </button>
+                  <div className="inline-flex items-center gap-1.5 ml-auto">
+                    <button type="button" onClick={() => toggleSort('quantity_on_hand')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
+                      Inventory <SortIcon field="quantity_on_hand" />
+                    </button>
+                    <MetricInfoTooltip description="Current stock on hand. Products are flagged as low stock when quantity reaches or falls below the minimum stock level you set." />
+                  </div>
                 </TableHead>
                 <TableHead className="text-center w-16">Online</TableHead>
                 <TableHead className="w-20" />
@@ -488,7 +492,7 @@ function ProductsTab() {
                         )}
                       </div>
                       <div className="text-xs text-muted-foreground mt-0.5 tabular-nums">
-                        {p.reorder_level != null ? `Reorder: ${p.reorder_level}` : '—'}
+                        {p.reorder_level != null ? `Min. stock: ${p.reorder_level}` : '—'}
                       </div>
                     </TableCell>
                     <TableCell className="py-3 text-center">
@@ -799,7 +803,7 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div><Label className="text-xs">Stock Qty</Label><Input type="number" value={form.quantity_on_hand} onChange={e => setForm(f => ({ ...f, quantity_on_hand: e.target.value }))} /></div>
-            <div><Label className="text-xs">Reorder Level</Label><Input type="number" value={form.reorder_level} onChange={e => setForm(f => ({ ...f, reorder_level: e.target.value }))} /></div>
+            <div><Label className="text-xs">Min. Stock Level</Label><Input type="number" value={form.reorder_level} onChange={e => setForm(f => ({ ...f, reorder_level: e.target.value }))} /><p className="text-[11px] text-muted-foreground mt-1">Alert when stock falls to this number</p></div>
           </div>
           <div>
             <Label className="text-xs">Description</Label>
@@ -1102,7 +1106,7 @@ function InventoryByLocationTab() {
         <div className="p-3 rounded-lg border border-amber-200 bg-amber-50/50 dark:border-amber-900/50 dark:bg-amber-950/20">
           <div className="flex items-center gap-2 mb-1">
             <AlertTriangle className="w-4 h-4 text-amber-500" />
-            <span className="text-sm font-medium">{lowStockProducts.length} product(s) below reorder level</span>
+            <span className="text-sm font-medium">{lowStockProducts.length} product(s) at or below minimum stock level</span>
           </div>
         </div>
       )}
@@ -1115,7 +1119,7 @@ function InventoryByLocationTab() {
               <TableHead>Category</TableHead>
               <TableHead className="text-right">Retail Price</TableHead>
               <TableHead className="text-right">On Hand</TableHead>
-              <TableHead className="text-right">Reorder Level</TableHead>
+              <TableHead className="text-right">Min. Stock</TableHead>
               <TableHead className="text-right">Status</TableHead>
               <TableHead className="text-center w-32">Adjust</TableHead>
             </TableRow>
