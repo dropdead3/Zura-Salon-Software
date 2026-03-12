@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import DashboardLayout from '@/components/dashboard/DashboardLayout';
+import { useState, useCallback } from 'react';
+import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
