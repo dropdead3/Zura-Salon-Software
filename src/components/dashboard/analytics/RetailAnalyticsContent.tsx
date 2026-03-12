@@ -2080,6 +2080,9 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
         <DeadStockAlertCard products={allProducts} movementRatings={productMovementRatings} velocityMap={velocityMap ?? undefined} filterContext={filterContext} />
       )}
 
+      {/* ─── Shrinkage Report ─── */}
+      <ShrinkageReportCard filterContext={filterContext} />
+
       {/* ─── Reorder Approval Queue ─── */}
       <ReorderApprovalCard />
     </div>
