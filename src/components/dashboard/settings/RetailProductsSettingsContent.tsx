@@ -21,7 +21,7 @@ import { tokens } from '@/lib/design-tokens';
 import {
   Search, Plus, BarChart3, Package, Edit2, AlertTriangle, Minus,
   Loader2, Check, X, MapPin, CheckCircle2, Info, ExternalLink, ImagePlus, Gift,
-  FileText, Trash2,
+  FileText, Trash2, Copy, Download, ChevronUp, ChevronDown, ChevronsUpDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
@@ -59,8 +59,35 @@ function getProductType(product: Product): string {
 }
 
 const PRODUCT_TYPES = ['Products', 'Extensions', 'Merch'] as const;
+const PAGE_SIZE = 50;
 
-// ─── Products Tab ───
+type SortField = 'name' | 'brand' | 'category' | 'product_type' | 'retail_price' | 'cost_price' | 'quantity_on_hand';
+type SortDir = 'asc' | 'desc';
+
+function exportProductsCsv(products: Product[]) {
+  const headers = ['Name', 'Brand', 'Category', 'Type', 'SKU', 'Barcode', 'Retail Price', 'Cost Price', 'Stock', 'Reorder Level', 'Available Online'];
+  const rows = products.map(p => [
+    `"${(p.name || '').replace(/"/g, '""')}"`,
+    `"${(p.brand || '').replace(/"/g, '""')}"`,
+    `"${(p.category || '').replace(/"/g, '""')}"`,
+    `"${(p.product_type || getProductType(p)).replace(/"/g, '""')}"`,
+    `"${(p.sku || '').replace(/"/g, '""')}"`,
+    `"${(p.barcode || '').replace(/"/g, '""')}"`,
+    p.retail_price ?? '',
+    p.cost_price ?? '',
+    p.quantity_on_hand ?? '',
+    p.reorder_level ?? '',
+    p.available_online ? 'Yes' : 'No',
+  ].join(','));
+  const csv = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `products_export_${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 function ProductsTab() {
   const { formatCurrency } = useFormatCurrency();
   const { effectiveOrganization } = useOrganizationContext();
@@ -74,13 +101,18 @@ function ProductsTab() {
   const [typeFilter, setTypeFilter] = useState('all');
   const [locationFilter, setLocationFilter] = useState('all');
   const [lowStockOnly, setLowStockOnly] = useState(false);
-  const { data: products, isLoading } = useProducts({
+  const [page, setPage] = useState(0);
+  const [sortField, setSortField] = useState<SortField>('name');
+  const [sortDir, setSortDir] = useState<SortDir>('asc');
+  const { data: products, isLoading, totalCount } = useProducts({
     search,
     category: categoryFilter,
     brand: brandFilter,
     productType: typeFilter !== 'all' ? typeFilter : undefined,
     locationId: locationFilter !== 'all' ? locationFilter : undefined,
     lowStockOnly,
+    page,
+    pageSize: PAGE_SIZE,
   });
   const { data: categories } = useProductCategories();
   const { data: brands } = useProductBrandsList();
@@ -98,9 +130,47 @@ function ProductsTab() {
   const [stockValue, setStockValue] = useState('');
   const { data: drafts } = useProductDrafts();
   const deleteDraft = useDeleteProductDraft();
+  const [bulkCategory, setBulkCategory] = useState('');
+  const [bulkBrand, setBulkBrand] = useState('');
+  const [bulkType, setBulkType] = useState('');
 
-  // Products are now filtered server-side via productType filter
-  const filteredProducts = products || [];
+  const sortedProducts = useMemo(() => {
+    const arr = [...(products || [])];
+    arr.sort((a, b) => {
+      let aVal: any = a[sortField];
+      let bVal: any = b[sortField];
+      if (sortField === 'product_type') {
+        aVal = getProductType(a);
+        bVal = getProductType(b);
+      }
+      if (aVal == null && bVal == null) return 0;
+      if (aVal == null) return 1;
+      if (bVal == null) return -1;
+      if (typeof aVal === 'string') {
+        const cmp = aVal.localeCompare(bVal, undefined, { sensitivity: 'base' });
+        return sortDir === 'asc' ? cmp : -cmp;
+      }
+      return sortDir === 'asc' ? aVal - bVal : bVal - aVal;
+    });
+    return arr;
+  }, [products, sortField, sortDir]);
+
+  const filteredProducts = sortedProducts;
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+
+  const toggleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDir('asc');
+    }
+  };
+
+  const SortIcon = ({ field }: { field: SortField }) => {
+    if (sortField !== field) return <ChevronsUpDown className="w-3 h-3 text-muted-foreground/50" />;
+    return sortDir === 'asc' ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />;
+  };
 
   const toggleSelect = (id: string) => {
     setSelectedIds(prev => {
@@ -118,6 +188,51 @@ function ProductsTab() {
     }
   };
 
+  const handleDuplicate = (p: Product) => {
+    createProduct.mutate({
+      name: `${p.name} (Copy)`,
+      brand: p.brand,
+      category: p.category,
+      product_type: p.product_type,
+      description: p.description,
+      retail_price: p.retail_price,
+      cost_price: p.cost_price,
+      quantity_on_hand: p.quantity_on_hand,
+      reorder_level: p.reorder_level,
+      organization_id: p.organization_id,
+      location_id: p.location_id,
+      image_url: p.image_url,
+      available_online: p.available_online,
+    });
+  };
+
+  const handleBulkDuplicate = () => {
+    const selected = filteredProducts.filter(p => selectedIds.has(p.id));
+    selected.forEach(p => handleDuplicate(p));
+    setSelectedIds(new Set());
+  };
+
+  const handleBulkCategoryAssign = (cat: string) => {
+    const ids = Array.from(selectedIds);
+    ids.forEach(id => updateProduct.mutate({ id, updates: { category: cat } }));
+    setSelectedIds(new Set());
+    setBulkCategory('');
+  };
+
+  const handleBulkBrandAssign = (brand: string) => {
+    const ids = Array.from(selectedIds);
+    ids.forEach(id => updateProduct.mutate({ id, updates: { brand } }));
+    setSelectedIds(new Set());
+    setBulkBrand('');
+  };
+
+  const handleBulkTypeAssign = (type: string) => {
+    const ids = Array.from(selectedIds);
+    ids.forEach(id => updateProduct.mutate({ id, updates: { product_type: type } }));
+    setSelectedIds(new Set());
+    setBulkType('');
+  };
+
   const showLocationFilter = locations && locations.length > 1;
 
   return (
@@ -127,21 +242,21 @@ function ProductsTab() {
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
           <Input placeholder="Search products, SKU, barcode..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8 h-9 text-sm" />
         </div>
-        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+        <Select value={categoryFilter} onValueChange={(v) => { setCategoryFilter(v); setPage(0); }}>
           <SelectTrigger className="w-[160px] h-9"><SelectValue placeholder="Category" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Categories</SelectItem>
             {categories?.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
           </SelectContent>
         </Select>
-        <Select value={brandFilter} onValueChange={setBrandFilter}>
+        <Select value={brandFilter} onValueChange={(v) => { setBrandFilter(v); setPage(0); }}>
           <SelectTrigger className="w-[150px] h-9"><SelectValue placeholder="Brand" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Brands</SelectItem>
             {brands?.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}
           </SelectContent>
         </Select>
-        <Select value={typeFilter} onValueChange={setTypeFilter}>
+        <Select value={typeFilter} onValueChange={(v) => { setTypeFilter(v); setPage(0); }}>
           <SelectTrigger className="w-[140px] h-9"><SelectValue placeholder="Type" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Types</SelectItem>
@@ -149,7 +264,7 @@ function ProductsTab() {
           </SelectContent>
         </Select>
         {showLocationFilter && (
-          <Select value={locationFilter} onValueChange={setLocationFilter}>
+          <Select value={locationFilter} onValueChange={(v) => { setLocationFilter(v); setPage(0); }}>
             <SelectTrigger className="w-[160px] h-9">
               <MapPin className="w-3.5 h-3.5 mr-1.5 text-muted-foreground shrink-0" />
               <SelectValue placeholder="Location" />
@@ -161,7 +276,7 @@ function ProductsTab() {
           </Select>
         )}
         <div className="flex items-center gap-2">
-          <Switch checked={lowStockOnly} onCheckedChange={setLowStockOnly} id="low-stock" />
+          <Switch checked={lowStockOnly} onCheckedChange={(v) => { setLowStockOnly(v); setPage(0); }} id="low-stock" />
           <Label htmlFor="low-stock" className="text-sm cursor-pointer">Low Stock</Label>
         </div>
         {drafts && drafts.length > 0 && (
@@ -184,6 +299,9 @@ function ProductsTab() {
             ))}
           </div>
         )}
+        <Button variant="outline" size={tokens.button.card} onClick={() => exportProductsCsv(filteredProducts)} className="gap-1.5">
+          <Download className="w-4 h-4" /> Export
+        </Button>
         <Button variant="outline" size={tokens.button.card} onClick={() => setShowImportWizard(true)} className="gap-1.5">
           <Upload className="w-4 h-4" /> Import
         </Button>
@@ -208,17 +326,42 @@ function ProductsTab() {
         </Collapsible>
       )}
 
-      {/* Product count */}
       <div className="flex items-center gap-2">
-        <span className="text-xs text-muted-foreground">{filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''}</span>
+        <span className="text-xs text-muted-foreground">
+          {totalCount > PAGE_SIZE
+            ? `Showing ${page * PAGE_SIZE + 1}–${Math.min((page + 1) * PAGE_SIZE, totalCount)} of ${totalCount} products`
+            : `${filteredProducts.length} product${filteredProducts.length !== 1 ? 's' : ''}`
+          }
+        </span>
       </div>
 
       {selectedIds.size > 0 && (
-        <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 border">
+        <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 border flex-wrap">
           <span className="text-sm font-medium">{selectedIds.size} selected</span>
           <Button size={tokens.button.inline} variant="outline" onClick={() => bulkToggle.mutate({ ids: Array.from(selectedIds), isActive: false })}>
             Deactivate
           </Button>
+          <Button size={tokens.button.inline} variant="outline" onClick={handleBulkDuplicate}>
+            <Copy className="w-3.5 h-3.5 mr-1" /> Duplicate
+          </Button>
+          <Select value={bulkCategory} onValueChange={handleBulkCategoryAssign}>
+            <SelectTrigger className="w-[150px] h-8 text-xs"><SelectValue placeholder="Set Category" /></SelectTrigger>
+            <SelectContent>
+              {categories?.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={bulkBrand} onValueChange={handleBulkBrandAssign}>
+            <SelectTrigger className="w-[140px] h-8 text-xs"><SelectValue placeholder="Set Brand" /></SelectTrigger>
+            <SelectContent>
+              {brands?.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={bulkType} onValueChange={handleBulkTypeAssign}>
+            <SelectTrigger className="w-[130px] h-8 text-xs"><SelectValue placeholder="Set Type" /></SelectTrigger>
+            <SelectContent>
+              {PRODUCT_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+            </SelectContent>
+          </Select>
           <Button size={tokens.button.inline} variant="ghost" onClick={() => setSelectedIds(new Set())}>Clear</Button>
         </div>
       )}
@@ -233,21 +376,50 @@ function ProductsTab() {
                 <TableHead className="w-10">
                   <input type="checkbox" checked={selectedIds.size === (filteredProducts?.length || 0) && (filteredProducts?.length || 0) > 0} onChange={toggleAll} className="rounded border-border" />
                 </TableHead>
-                <TableHead>Product</TableHead>
-                <TableHead>Brand</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Type</TableHead>
+                <TableHead>
+                  <button type="button" onClick={() => toggleSort('name')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
+                    Product <SortIcon field="name" />
+                  </button>
+                </TableHead>
+                <TableHead>
+                  <button type="button" onClick={() => toggleSort('brand')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
+                    Brand <SortIcon field="brand" />
+                  </button>
+                </TableHead>
+                <TableHead>
+                  <button type="button" onClick={() => toggleSort('category')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
+                    Category <SortIcon field="category" />
+                  </button>
+                </TableHead>
+                <TableHead>
+                  <button type="button" onClick={() => toggleSort('product_type')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
+                    Type <SortIcon field="product_type" />
+                  </button>
+                </TableHead>
                 <TableHead>SKU</TableHead>
-                <TableHead className="text-right">Retail</TableHead>
-                <TableHead className="text-right">Cost</TableHead>
-                <TableHead className="text-right">Stock</TableHead>
+                <TableHead className="text-right">
+                  <button type="button" onClick={() => toggleSort('retail_price')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors ml-auto">
+                    Retail <SortIcon field="retail_price" />
+                  </button>
+                </TableHead>
+                <TableHead className="text-right">
+                  <button type="button" onClick={() => toggleSort('cost_price')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors ml-auto">
+                    Cost <SortIcon field="cost_price" />
+                  </button>
+                </TableHead>
+                <TableHead className="text-right">
+                  <button type="button" onClick={() => toggleSort('quantity_on_hand')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors ml-auto">
+                    Stock <SortIcon field="quantity_on_hand" />
+                  </button>
+                </TableHead>
                 <TableHead className="text-right">Reorder</TableHead>
-                <TableHead className="w-10" />
+                <TableHead className="text-center w-16">Online</TableHead>
+                <TableHead className="w-20" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {!filteredProducts?.length ? (
-                <TableRow><TableCell colSpan={11} className="text-center py-8 text-muted-foreground">No products found</TableCell></TableRow>
+                <TableRow><TableCell colSpan={12} className="text-center py-8 text-muted-foreground">No products found</TableCell></TableRow>
               ) : filteredProducts.map(p => {
                 const isLow = p.reorder_level != null && p.quantity_on_hand != null && p.quantity_on_hand <= p.reorder_level;
                 const productType = getProductType(p);
@@ -319,16 +491,44 @@ function ProductsTab() {
                       )}
                     </TableCell>
                     <TableCell className="text-right tabular-nums text-sm text-muted-foreground">{p.reorder_level ?? '—'}</TableCell>
+                    <TableCell className="text-center">
+                      <Switch
+                        checked={!!p.available_online}
+                        onCheckedChange={() => updateProduct.mutate({ id: p.id, updates: { available_online: !p.available_online } })}
+                        className="scale-75"
+                      />
+                    </TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="icon" className="w-7 h-7" onClick={() => setEditProduct(p)}>
-                        <Edit2 className="w-3.5 h-3.5" />
-                      </Button>
+                      <div className="flex items-center gap-0.5">
+                        <Button variant="ghost" size="icon" className="w-7 h-7" onClick={() => handleDuplicate(p)} title="Duplicate">
+                          <Copy className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="w-7 h-7" onClick={() => setEditProduct(p)} title="Edit">
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 );
               })}
             </TableBody>
           </Table>
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between pt-2">
+          <span className="text-xs text-muted-foreground">
+            Page {page + 1} of {totalPages}
+          </span>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size={tokens.button.inline} disabled={page === 0} onClick={() => setPage(p => p - 1)}>
+              Previous
+            </Button>
+            <Button variant="outline" size={tokens.button.inline} disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>
+              Next
+            </Button>
+          </div>
         </div>
       )}
 

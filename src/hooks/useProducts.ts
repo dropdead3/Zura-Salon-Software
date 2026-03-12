@@ -32,15 +32,22 @@ export interface ProductFilters {
   locationId?: string;
   lowStockOnly?: boolean;
   limit?: number;
+  page?: number;
+  pageSize?: number;
+}
+
+export interface PaginatedProducts {
+  data: Product[];
+  count: number;
 }
 
 export function useProducts(filters: ProductFilters = {}) {
-  return useQuery({
+  const result = useQuery({
     queryKey: ['products', filters],
     queryFn: async () => {
       let query = supabase
         .from('products')
-        .select('*')
+        .select('*', { count: 'exact' })
         .eq('is_active', true)
         .order('name', { ascending: true });
 
@@ -73,21 +80,30 @@ export function useProducts(filters: ProductFilters = {}) {
 
       if (filters.limit) {
         query = query.limit(filters.limit);
+      } else if (filters.page != null && filters.pageSize) {
+        const from = filters.page * filters.pageSize;
+        const to = from + filters.pageSize - 1;
+        query = query.range(from, to);
       }
 
-      const { data, error } = await query;
+      const { data, error, count } = await query;
 
       if (error) throw error;
-      return data as Product[];
+      return { data: (data || []) as Product[], totalCount: count ?? 0 };
     },
   });
+
+  return {
+    ...result,
+    data: result.data?.data,
+    totalCount: result.data?.totalCount ?? 0,
+  };
 }
 
 export function useProductCategories() {
   return useQuery({
     queryKey: ['product-categories'],
     queryFn: async () => {
-      // Fetch from both products table and product_categories table
       const [productsResult, categoriesResult] = await Promise.all([
         supabase
           .from('products')
@@ -159,7 +175,6 @@ export function useCreateProduct() {
 
   return useMutation({
     mutationFn: async (product: Partial<Product>) => {
-      // Ensure required fields exist for insert
       const insertData = {
         name: product.name || 'Unnamed Product',
         sku: product.sku,
@@ -176,6 +191,7 @@ export function useCreateProduct() {
         location_id: product.location_id,
         image_url: product.image_url,
         product_type: product.product_type || 'Products',
+        available_online: product.available_online,
       };
       
       const { data, error } = await supabase
