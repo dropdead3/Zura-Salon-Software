@@ -57,7 +57,7 @@ export function AddProductToBowl({ bowlId, onAdd, onCancel, inline = false }: Ad
     queryFn: async () => {
       let query = supabase
         .from('products')
-        .select('id, name, brand, cost_price, category')
+        .select('id, name, brand, cost_price, category, quantity_on_hand')
         .eq('organization_id', orgId!)
         .eq('is_active', true)
         .order('name')
