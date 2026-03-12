@@ -2053,10 +2053,28 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                           <TableCell className="text-center">
                             <Badge variant="outline" className={cn('text-xs', gradeColor)}>{s.grade}</Badge>
                           </TableCell>
+                          <TableCell className="text-center">
+                            {s.riskLevel === 'critical' ? (
+                              <Badge variant="outline" className="text-[10px] text-red-500 border-red-200 dark:border-red-800">
+                                <AlertTriangle className="w-2.5 h-2.5 mr-0.5" />High
+                              </Badge>
+                            ) : s.riskLevel === 'warning' ? (
+                              <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-200 dark:border-amber-800">Moderate</Badge>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
                           <TableCell className="text-right tabular-nums">{s.totalOrders}</TableCell>
                           <TableCell className="text-right tabular-nums">{s.fillRate}%</TableCell>
                           <TableCell className="text-right tabular-nums">{s.avgLeadTimeDays != null ? `${s.avgLeadTimeDays}d` : '—'}</TableCell>
                           <TableCell className="text-right tabular-nums">{s.leadTimeAccuracy != null ? `${s.leadTimeAccuracy}%` : '—'}</TableCell>
+                          <TableCell className="text-right tabular-nums">
+                            {s.priceConsistency != null ? (
+                              <span className={cn('text-xs', s.priceConsistency >= 90 ? 'text-emerald-600 dark:text-emerald-400' : s.priceConsistency >= 70 ? 'text-amber-600 dark:text-amber-400' : 'text-red-500 dark:text-red-400')}>
+                                {s.priceConsistency}%
+                              </span>
+                            ) : '—'}
+                          </TableCell>
                           <TableCell className="text-right tabular-nums"><BlurredAmount>{formatCurrencyWhole(s.totalSpend)}</BlurredAmount></TableCell>
                         </TableRow>
                       );
