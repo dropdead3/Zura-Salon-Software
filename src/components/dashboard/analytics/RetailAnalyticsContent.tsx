@@ -597,7 +597,57 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
     return calculateInventoryAlerts(allProducts, data.salesVelocity);
   }, [allProducts, data]);
 
-  // Goal progress — prefer aggregated staff commitments, fall back to top-down org goal
+  // Movement ratings for products
+  const productMovementRatings = useMemo(() => {
+    if (!data || !allProducts) return new Map<string, ReturnType<typeof getMovementRating>>();
+    const velocityMap = data.salesVelocity;
+    const allVelocities = (allProducts || []).map(p => velocityMap.get(p.name.toLowerCase().trim()) ?? 0);
+    const percentiles = computePercentiles(allVelocities);
+    const map = new Map<string, ReturnType<typeof getMovementRating>>();
+    for (const p of (allProducts || [])) {
+      const nameLower = p.name.toLowerCase().trim();
+      const velocity = velocityMap.get(nameLower) ?? 0;
+      // Find days since last sale from deadStock data
+      const deadRow = data.deadStock.find(d => d.name.toLowerCase().trim() === nameLower);
+      const daysSinceLastSale = deadRow ? deadRow.daysStale : (velocity > 0 ? 0 : null);
+      const rating = getMovementRating({
+        velocity,
+        totalUnitsSold: 0,
+        daysSinceLastSale,
+        hasStock: (p.quantity_on_hand ?? 0) > 0,
+        velocityPercentile: percentiles.get(velocity) ?? 0,
+      });
+      map.set(nameLower, rating);
+    }
+    return map;
+  }, [data, allProducts]);
+
+  // Movement distribution for the chart
+  const movementDistribution = useMemo(() => {
+    if (productMovementRatings.size === 0) return [];
+    const counts: Record<MovementTier, { count: number; revenue: number }> = {
+      best_seller: { count: 0, revenue: 0 },
+      popular: { count: 0, revenue: 0 },
+      steady: { count: 0, revenue: 0 },
+      slow_mover: { count: 0, revenue: 0 },
+      stagnant: { count: 0, revenue: 0 },
+      dead_weight: { count: 0, revenue: 0 },
+    };
+    for (const [name, rating] of productMovementRatings) {
+      counts[rating.tier].count++;
+      // Find revenue from product performance data
+      const productRow = data?.products.find(p => p.name.toLowerCase().trim() === name);
+      if (productRow) counts[rating.tier].revenue += productRow.revenue;
+    }
+    return MOVEMENT_TIERS.map(t => ({
+      tier: t.value,
+      label: t.label,
+      count: counts[t.value].count,
+      revenue: counts[t.value].revenue,
+      config: getTierConfig(t.value),
+    })).filter(d => d.count > 0);
+  }, [productMovementRatings, data]);
+
   const goalProgress = useMemo(() => {
     if (!data) return null;
     const agg = aggregatedRetailGoals;
