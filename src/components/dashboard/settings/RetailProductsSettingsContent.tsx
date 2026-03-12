@@ -1405,7 +1405,7 @@ function InventoryByLocationTab() {
           )}
 
           {lowStockProducts.length > 0 && (
-            <div className="p-3 rounded-lg border border-amber-200 bg-amber-50/50 dark:border-amber-900/50 dark:bg-amber-950/20">
+            <div className="p-4 rounded-lg border border-amber-200 bg-amber-50/50 dark:border-amber-900/50 dark:bg-amber-950/20">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4 text-amber-500" />

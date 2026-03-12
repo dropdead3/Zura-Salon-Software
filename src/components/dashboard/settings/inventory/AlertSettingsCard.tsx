@@ -91,7 +91,7 @@ export function AlertSettingsCard() {
                 </div>
                 <div>
                   <CardTitle className={tokens.card.title}>Low Stock Alerts</CardTitle>
-                  <CardDescription className="text-xs mt-0.5">
+                  <CardDescription className="text-xs mt-1">
                     Configure when and how you're notified about low inventory
                   </CardDescription>
                 </div>
@@ -164,7 +164,7 @@ export function AlertSettingsCard() {
                 <div className="flex items-center justify-between">
                   <div>
                     <Label className="text-sm">Auto-create draft purchase orders</Label>
-                    <p className="text-xs text-muted-foreground mt-0.5">
+                    <p className="text-xs text-muted-foreground mt-1">
                       Automatically generate draft POs for low-stock items with assigned suppliers
                     </p>
                   </div>
@@ -177,7 +177,7 @@ export function AlertSettingsCard() {
                     <div className="flex items-center justify-between">
                       <div>
                         <Label className="text-sm">Auto-send POs to suppliers</Label>
-                        <p className="text-xs text-muted-foreground mt-0.5">
+                        <p className="text-xs text-muted-foreground mt-1">
                           Automatically email POs to suppliers without manual review
                         </p>
                       </div>
@@ -187,22 +187,22 @@ export function AlertSettingsCard() {
                     {autoReorderEnabled && (
                       <>
                         <div className="flex items-start gap-2 p-2 rounded-lg bg-destructive/10 text-destructive text-xs">
-                          <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                          <AlertTriangle className="w-3.5 h-3.5 mt-1 shrink-0" />
                           <span>POs will be sent to suppliers without manual review</span>
                         </div>
 
                         <div className="space-y-2">
                           <Label className="text-sm">Reorder mode</Label>
-                          <RadioGroup value={autoReorderMode} onValueChange={setAutoReorderMode} className="space-y-1.5">
+                          <RadioGroup value={autoReorderMode} onValueChange={setAutoReorderMode} className="space-y-2">
                             <label className="flex items-start gap-2 cursor-pointer">
-                              <RadioGroupItem value="to_par" className="mt-0.5" />
+                              <RadioGroupItem value="to_par" className="mt-1" />
                               <div>
                                 <span className="text-sm">Restock to par level</span>
                                 <p className="text-xs text-muted-foreground">Order enough to bring stock back to the target (par) level</p>
                               </div>
                             </label>
                             <label className="flex items-start gap-2 cursor-pointer">
-                              <RadioGroupItem value="moq_only" className="mt-0.5" />
+                              <RadioGroupItem value="moq_only" className="mt-1" />
                               <div>
                                 <span className="text-sm">Order minimum quantity (MOQ)</span>
                                 <p className="text-xs text-muted-foreground">Order only the supplier's minimum order quantity</p>
@@ -211,7 +211,7 @@ export function AlertSettingsCard() {
                           </RadioGroup>
                         </div>
 
-                        <div className="space-y-1.5">
+                        <div className="space-y-2">
                           <Label className="text-sm">Daily spend cap</Label>
                           <Input
                             type="number"
