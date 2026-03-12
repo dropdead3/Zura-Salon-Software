@@ -58,19 +58,21 @@ async function fetchUpcomingServices(
   locationId?: string | null,
 ): Promise<UpcomingService[]> {
   // Query phorest_appointments (primary source)
+  const phorestFilters: Record<string, any> = {
+    organization_id: orgId,
+  };
   let phorestQuery = supabase
     .from('phorest_appointments')
     .select('id, service_name, phorest_client_id, stylist_user_id, appointment_date')
     .eq('organization_id', orgId)
     .gte('appointment_date', startDate)
-    .lte('appointment_date', endDate)
-    .not('status', 'in', '("cancelled","no_show")');
+    .lte('appointment_date', endDate);
 
   if (locationId) {
     phorestQuery = phorestQuery.eq('location_id', locationId);
   }
 
-  const { data: phorestData } = await phorestQuery.limit(500);
+  const { data: phorestData } = await phorestQuery.limit(500) as { data: any[] | null };
 
   // Query local appointments as fallback
   let localQuery = supabase
@@ -78,14 +80,13 @@ async function fetchUpcomingServices(
     .select('id, service_name, client_id, staff_user_id, appointment_date')
     .eq('organization_id', orgId)
     .gte('appointment_date', startDate)
-    .lte('appointment_date', endDate)
-    .not('status', 'in', '("cancelled","no_show")');
+    .lte('appointment_date', endDate);
 
   if (locationId) {
     localQuery = localQuery.eq('location_id', locationId);
   }
 
-  const { data: localData } = await localQuery.limit(500);
+  const { data: localData } = await localQuery.limit(500) as { data: any[] | null };
 
   const services: UpcomingService[] = [];
 
