@@ -116,6 +116,7 @@ function ProductsTab() {
   const [typeFilter, setTypeFilter] = useState('all');
   const [locationFilter, setLocationFilter] = useState('all');
   const [lowStockOnly, setLowStockOnly] = useState(false);
+  const [movementFilter, setMovementFilter] = useState<string>('all');
   const [page, setPage] = useState(0);
   const [sortField, setSortField] = useState<SortField>('name');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
