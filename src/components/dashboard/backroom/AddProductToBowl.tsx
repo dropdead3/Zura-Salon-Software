@@ -26,6 +26,8 @@ interface AddProductToBowlProps {
     capturedVia: string
   ) => void;
   onCancel: () => void;
+  /** When true, renders always-visible search without cancel button */
+  inline?: boolean;
 }
 
 export function AddProductToBowl({ bowlId, onAdd, onCancel }: AddProductToBowlProps) {
