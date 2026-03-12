@@ -1708,6 +1708,14 @@ export function AppointmentDetailSheet({
                     )}
                     </motion.div>
                   </TabsContent>
+
+                  {/* ─── TAB: Backroom ─────────────────────────── */}
+                  <TabsContent value="backroom" className="p-6 pt-4 mt-0">
+                    <BackroomTab
+                      appointment={appointment}
+                      organizationId={effectiveOrganization?.id ?? ''}
+                    />
+                  </TabsContent>
                 </ScrollArea>
               </Tabs>
 
