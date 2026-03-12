@@ -102,23 +102,18 @@ export function useCompleteStockTransfer() {
         .eq('id', transferId);
       if (tErr) throw tErr;
 
-      // Get current stock for the product (we adjust overall quantity_on_hand)
-      const { data: product } = await supabase
-        .from('products')
-        .select('quantity_on_hand')
-        .eq('id', productId)
-        .single();
-
-      const currentQty = product?.quantity_on_hand ?? 0;
-
-      // Log stock movements (outbound from source, inbound to destination)
+      // Insert ledger entries — trigger handles projection + products.quantity_on_hand sync
       await supabase.from('stock_movements').insert([
         {
           organization_id: organizationId,
           product_id: productId,
           quantity_change: -quantity,
-          quantity_after: currentQty - quantity,
+          quantity_after: 0,
+          event_type: 'transfer_out',
           reason: 'transfer_out',
+          reference_type: 'stock_transfer',
+          reference_id: transferId,
+          location_id: fromLocationId,
           notes: `Transfer to location ${toLocationId}`,
           created_by: userId,
         },
@@ -126,8 +121,12 @@ export function useCompleteStockTransfer() {
           organization_id: organizationId,
           product_id: productId,
           quantity_change: quantity,
-          quantity_after: currentQty, // net zero on org level
+          quantity_after: 0,
+          event_type: 'transfer_in',
           reason: 'transfer_in',
+          reference_type: 'stock_transfer',
+          reference_id: transferId,
+          location_id: toLocationId,
           notes: `Transfer from location ${fromLocationId}`,
           created_by: userId,
         },

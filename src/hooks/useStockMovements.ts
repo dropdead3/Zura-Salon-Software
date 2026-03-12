@@ -60,6 +60,7 @@ export function useLogStockMovement() {
           product_id: params.product_id,
           quantity_change: params.quantity_change,
           quantity_after: params.quantity_after,
+          event_type: params.reason,
           reason: params.reason,
           notes: params.notes || null,
           reference_type: params.reference_type || null,
