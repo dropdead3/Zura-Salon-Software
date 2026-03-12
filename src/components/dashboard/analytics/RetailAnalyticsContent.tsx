@@ -41,6 +41,10 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { useAggregatedRetailGoals } from '@/hooks/useAggregatedRetailGoals';
 import { getMovementRating, computePercentiles, getTierConfig, MOVEMENT_TIERS, type MovementTier } from '@/lib/productMovementRating';
 import { MovementBadge } from '@/components/ui/MovementBadge';
+import { useProductVelocity } from '@/hooks/useProductVelocity';
+import { useSupplierPerformance } from '@/hooks/useSupplierPerformance';
+import { BundleSuggestionsCard } from './BundleSuggestionsCard';
+import { ReplenishmentTimelineCard } from './ReplenishmentTimelineCard';
 
 interface RetailAnalyticsContentProps {
   dateFrom: string;
