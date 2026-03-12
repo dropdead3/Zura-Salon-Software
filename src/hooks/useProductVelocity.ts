@@ -4,7 +4,9 @@ import { subDays, format, differenceInDays, parseISO } from 'date-fns';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 
 export interface ProductVelocityEntry {
-  velocity: number; // units/day (current 90 days)
+  velocity: number; // units/day (current 90 days, flat average)
+  /** Weighted velocity using 3:2:1 buckets (recent 30d weighted 3x) */
+  weightedVelocity: number;
   totalUnitsSold: number;
   lastSoldDate: string | null;
   daysSinceLastSale: number | null;
@@ -34,7 +36,8 @@ async function fetchAllBatched(query: any) {
 /**
  * Lightweight hook that queries last 180 days of POS transaction items
  * and returns a velocity map keyed by product name (lowercase),
- * including current and prior 90-day velocity for trend comparison.
+ * including current and prior 90-day velocity, plus weighted velocity
+ * using 3:2:1 exponential decay across 30-day buckets.
  */
 export function useProductVelocity(locationId?: string) {
   const { effectiveOrganization } = useOrganizationContext();
@@ -48,6 +51,10 @@ export function useProductVelocity(locationId?: string) {
       const dateFrom = format(subDays(now, ANALYSIS_DAYS * 2), 'yyyy-MM-dd');
       const dateTo = format(now, 'yyyy-MM-dd');
       const midpoint = format(subDays(now, ANALYSIS_DAYS), 'yyyy-MM-dd');
+      // 30-day bucket boundaries for weighted velocity
+      const bucket1Start = format(subDays(now, 30), 'yyyy-MM-dd');  // 0-30 days (weight 3)
+      const bucket2Start = format(subDays(now, 60), 'yyyy-MM-dd');  // 31-60 days (weight 2)
+      // bucket3 = 61-90 days (weight 1), starts at midpoint
 
       let query = supabase
         .from('phorest_transaction_items')
@@ -62,22 +69,33 @@ export function useProductVelocity(locationId?: string) {
 
       const items = await fetchAllBatched(query);
 
-      // Split into current (0-90 days) and prior (91-180 days)
-      const currentMap = new Map<string, { totalUnits: number; lastDate: string | null }>();
+      // Split into current buckets and prior window
+      const currentMap = new Map<string, { totalUnits: number; lastDate: string | null; bucket1: number; bucket2: number; bucket3: number }>();
       const priorMap = new Map<string, { totalUnits: number }>();
 
       for (const item of items) {
         const name = (item.product_name || '').toLowerCase().trim();
         if (!name) continue;
         const qty = Math.abs(item.quantity || 0);
-        const isCurrent = item.transaction_date >= midpoint;
+        const txDate = item.transaction_date;
+        const isCurrent = txDate >= midpoint;
 
         if (isCurrent) {
-          const existing = currentMap.get(name) || { totalUnits: 0, lastDate: null };
+          const existing = currentMap.get(name) || { totalUnits: 0, lastDate: null, bucket1: 0, bucket2: 0, bucket3: 0 };
           existing.totalUnits += qty;
-          if (item.transaction_date) {
-            if (!existing.lastDate || item.transaction_date > existing.lastDate) {
-              existing.lastDate = item.transaction_date;
+
+          // Assign to weighted bucket
+          if (txDate >= bucket1Start) {
+            existing.bucket1 += qty; // most recent 30 days
+          } else if (txDate >= bucket2Start) {
+            existing.bucket2 += qty; // 31-60 days
+          } else {
+            existing.bucket3 += qty; // 61-90 days
+          }
+
+          if (txDate) {
+            if (!existing.lastDate || txDate > existing.lastDate) {
+              existing.lastDate = txDate;
             }
           }
           currentMap.set(name, existing);
@@ -92,11 +110,19 @@ export function useProductVelocity(locationId?: string) {
       const allNames = new Set([...currentMap.keys(), ...priorMap.keys()]);
 
       const result = new Map<string, ProductVelocityEntry>();
+      const totalWeight = 3 + 2 + 1; // = 6
+
       for (const name of allNames) {
         const current = currentMap.get(name);
         const prior = priorMap.get(name);
         const currentVelocity = (current?.totalUnits ?? 0) / ANALYSIS_DAYS;
         const priorVelocity = (prior?.totalUnits ?? 0) / ANALYSIS_DAYS;
+
+        // Weighted velocity: each bucket covers ~30 days
+        // weightedVelocity = (bucket1 * 3 + bucket2 * 2 + bucket3 * 1) / (30 * totalWeight)
+        const weightedUnits = ((current?.bucket1 ?? 0) * 3) + ((current?.bucket2 ?? 0) * 2) + ((current?.bucket3 ?? 0) * 1);
+        const weightedVelocity = weightedUnits / (30 * totalWeight);
+
         const daysSinceLastSale = current?.lastDate
           ? differenceInDays(now, parseISO(current.lastDate))
           : null;
@@ -110,6 +136,7 @@ export function useProductVelocity(locationId?: string) {
 
         result.set(name, {
           velocity: currentVelocity,
+          weightedVelocity,
           totalUnitsSold: current?.totalUnits ?? 0,
           lastSoldDate: current?.lastDate ?? null,
           daysSinceLastSale,

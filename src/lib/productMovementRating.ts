@@ -29,6 +29,8 @@ export interface VelocityInput {
   hasStock: boolean;
   /** Percentile rank among all products (0-100, 100 = highest velocity) */
   velocityPercentile: number;
+  /** Optional weighted velocity (3:2:1 decay) — preferred for tier classification when provided */
+  weightedVelocity?: number;
 }
 
 const TIER_CONFIG: Record<MovementTier, Omit<MovementRating, 'tooltip'>> = {
@@ -84,28 +86,31 @@ const TIER_CONFIG: Record<MovementTier, Omit<MovementRating, 'tooltip'>> = {
 
 /**
  * Compute the movement rating for a product.
+ * Uses weightedVelocity when provided for more accurate tier classification.
  * Products with zero stock are excluded from negative ratings.
  */
 export function getMovementRating(input: VelocityInput): MovementRating {
-  const { velocity, daysSinceLastSale, hasStock, velocityPercentile } = input;
+  const { velocity, daysSinceLastSale, hasStock, velocityPercentile, weightedVelocity } = input;
+  // Prefer weighted velocity for tier thresholds
+  const effectiveVelocity = weightedVelocity ?? velocity;
 
   // Positive tiers (apply regardless of stock)
-  if (velocityPercentile >= 90 && velocity > 0.5) {
+  if (velocityPercentile >= 90 && effectiveVelocity > 0.5) {
     return {
       ...TIER_CONFIG.best_seller,
-      tooltip: `Top 10% velocity · ${velocity.toFixed(2)} units/day`,
+      tooltip: `Top 10% velocity · ${effectiveVelocity.toFixed(2)} units/day${weightedVelocity != null ? ' (weighted)' : ''}`,
     };
   }
-  if (velocityPercentile >= 75 && velocity > 0.2) {
+  if (velocityPercentile >= 75 && effectiveVelocity > 0.2) {
     return {
       ...TIER_CONFIG.popular,
-      tooltip: `Top 25% velocity · ${velocity.toFixed(2)} units/day`,
+      tooltip: `Top 25% velocity · ${effectiveVelocity.toFixed(2)} units/day${weightedVelocity != null ? ' (weighted)' : ''}`,
     };
   }
-  if (velocity > 0.05) {
+  if (effectiveVelocity > 0.05) {
     return {
       ...TIER_CONFIG.steady,
-      tooltip: `${velocity.toFixed(2)} units/day — selling regularly`,
+      tooltip: `${effectiveVelocity.toFixed(2)} units/day — selling regularly${weightedVelocity != null ? ' (weighted)' : ''}`,
     };
   }
 
@@ -117,10 +122,10 @@ export function getMovementRating(input: VelocityInput): MovementRating {
     };
   }
 
-  if (velocity > 0) {
+  if (effectiveVelocity > 0) {
     return {
       ...TIER_CONFIG.slow_mover,
-      tooltip: `${velocity.toFixed(3)} units/day — consider promotion`,
+      tooltip: `${effectiveVelocity.toFixed(3)} units/day — consider promotion`,
     };
   }
 

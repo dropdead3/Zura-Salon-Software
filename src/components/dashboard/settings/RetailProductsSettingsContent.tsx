@@ -22,7 +22,7 @@ import { tokens } from '@/lib/design-tokens';
 import {
   Search, Plus, BarChart3, Package, Edit2, AlertTriangle, Minus,
   Loader2, Check, X, MapPin, CheckCircle2, Info, ExternalLink, ImagePlus, Gift,
-  FileText, Trash2, Copy, Download, ChevronUp, ChevronDown, ChevronsUpDown, ShoppingCart,
+  FileText, Trash2, Copy, Download, ChevronUp, ChevronDown, ChevronsUpDown, ShoppingCart, Tag,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
@@ -63,6 +63,7 @@ import { useProductVelocity } from '@/hooks/useProductVelocity';
 import { getMovementRating, computePercentiles, MOVEMENT_TIERS, type MovementTier } from '@/lib/productMovementRating';
 import { MovementBadge } from '@/components/ui/MovementBadge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { ClearancePanel } from '@/components/dashboard/settings/inventory/ClearancePanel';
 // Helper to classify product type — prefer DB column, fall back to regex
 function getProductType(product: Product): string {
   if (product.product_type && product.product_type !== 'Products') return product.product_type;
@@ -1529,6 +1530,7 @@ function InventoryByLocationTab() {
 // ─── Main Export ───
 export function RetailProductsSettingsContent() {
   const navigate = useNavigate();
+  const { effectiveOrganization } = useOrganizationContext();
   const { data: retailSettings, isLoading: retailLoading } = useWebsiteRetailSettings();
   const { data: allProducts } = useProducts({});
   const onlineCount = allProducts?.filter(p => p.available_online).length ?? 0;
@@ -1582,6 +1584,7 @@ export function RetailProductsSettingsContent() {
           <TabsTrigger value="brands">Brands</TabsTrigger>
           <TabsTrigger value="categories">Categories</TabsTrigger>
           <TabsTrigger value="inventory" className="gap-1.5"><MapPin className="w-3.5 h-3.5" /> Inventory</TabsTrigger>
+          <TabsTrigger value="clearance" className="gap-1.5"><Tag className="w-3.5 h-3.5" /> Clearance</TabsTrigger>
           <TabsTrigger value="gift-cards" className="gap-1.5"><Gift className="w-3.5 h-3.5" /> Gift Cards</TabsTrigger>
         </TabsList>
 
@@ -1599,6 +1602,12 @@ export function RetailProductsSettingsContent() {
 
         <TabsContent value="inventory" className="mt-4">
           <InventoryByLocationTab />
+        </TabsContent>
+
+        <TabsContent value="clearance" className="mt-4">
+          {effectiveOrganization?.id ? (
+            <ClearancePanel organizationId={effectiveOrganization.id} />
+          ) : null}
         </TabsContent>
 
         <TabsContent value="gift-cards" className="mt-4">
