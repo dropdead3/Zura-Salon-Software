@@ -17,9 +17,9 @@ export function ClientAffinityBadges({ phorestClientId, className, compact = fal
   if (isLoading || !affinities || affinities.length === 0) return null;
 
   return (
-    <div className={cn('space-y-1.5', className)}>
+    <div className={cn('space-y-2', className)}>
       {!compact && (
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <ShoppingBag className="w-3 h-3" />
           <span className="font-sans">Frequently Purchased</span>
         </div>
