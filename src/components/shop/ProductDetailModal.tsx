@@ -14,7 +14,7 @@ interface ProductDetailModalProps {
   movementRating?: MovementRating | null;
 }
 
-export function ProductDetailModal({ product, open, onOpenChange }: ProductDetailModalProps) {
+export function ProductDetailModal({ product, open, onOpenChange, movementRating }: ProductDetailModalProps) {
   const { organization } = usePublicOrg();
 
   if (!product) return null;
