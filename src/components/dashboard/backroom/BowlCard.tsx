@@ -12,6 +12,7 @@ import { Plus, Lock, Scale, Trash2 } from 'lucide-react';
 import { BowlLineRow } from './BowlLineRow';
 import { ManualWeightInput } from './ManualWeightInput';
 import { AddProductToBowl } from './AddProductToBowl';
+import { LiveBowlCard } from './LiveBowlCard';
 import type { MixBowl } from '@/hooks/backroom/useMixBowls';
 import type { MixBowlLine } from '@/hooks/backroom/useMixBowlLines';
 import { calculateBowlWeight, calculateBowlCost } from '@/lib/backroom/mix-calculations';
