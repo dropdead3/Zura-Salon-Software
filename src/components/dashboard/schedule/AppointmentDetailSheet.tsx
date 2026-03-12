@@ -1731,6 +1731,22 @@ export function AppointmentDetailSheet({
                     </motion.div>
                   </TabsContent>
 
+                  {/* ─── TAB: Photos ──────────────────────────── */}
+                  <TabsContent value="photos" className="p-6 pt-4 mt-0">
+                    {appointment.phorest_client_id ? (
+                      <TransformationTimeline
+                        clientId={appointment.phorest_client_id}
+                        phorestClientId={appointment.phorest_client_id}
+                      />
+                    ) : (
+                      <div className={tokens.empty.container}>
+                        <Camera className={tokens.empty.icon} />
+                        <h3 className={tokens.empty.heading}>No client linked</h3>
+                        <p className={tokens.empty.description}>Link a client to this appointment to add transformation photos.</p>
+                      </div>
+                    )}
+                  </TabsContent>
+
                   {/* ─── TAB: Backroom ─────────────────────────── */}
                   <TabsContent value="backroom" className="p-6 pt-4 mt-0">
                     <BackroomTab
