@@ -304,7 +304,7 @@ export function TransformationTimeline({ clientId, phorestClientId }: Transforma
                               {f.service_name && <span className={tokens.body.emphasis}>{f.service_name}</span>}
                               {f.formula_data?.map((line, i) => (
                                 <div key={i} className={tokens.body.muted}>
-                                  {line.productName} — {line.quantity}{line.unit || 'g'}
+                                  {line.product_name} — {line.quantity}{line.unit || 'g'}
                                 </div>
                               ))}
                               {f.notes && <div className={cn(tokens.body.muted, 'italic')}>{f.notes}</div>}
