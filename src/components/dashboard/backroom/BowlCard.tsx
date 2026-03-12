@@ -29,6 +29,7 @@ const STATUS_STYLES: Record<MixBowlStatus, { label: string; variant: 'default' |
 interface BowlCardProps {
   bowl: MixBowl;
   lines: MixBowlLine[];
+  serviceId?: string | null;
   onAddLine: (bowlId: string, productId: string, productName: string, brand: string | null, costPerUnit: number, quantity: number, unit: string, capturedVia: string) => void;
   onDeleteLine: (lineId: string, bowlId: string) => void;
   onSealBowl: (bowlId: string) => void;
