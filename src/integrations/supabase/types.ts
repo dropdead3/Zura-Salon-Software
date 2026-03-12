@@ -7869,6 +7869,41 @@ export type Database = {
           },
         ]
       }
+      location_inventory_leads: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          id: string
+          location_id: string
+          organization_id: string
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          id?: string
+          location_id: string
+          organization_id: string
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          id?: string
+          location_id?: string
+          organization_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "location_inventory_leads_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       locations: {
         Row: {
           address: string
