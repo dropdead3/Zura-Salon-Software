@@ -1263,6 +1263,16 @@ function InventoryByLocationTab() {
           )}
         </div>
         <div className="flex items-center gap-2">
+          {locations && locations.length > 1 && (
+            <Button
+              variant="outline"
+              size={tokens.button.inline}
+              className="gap-1.5"
+              onClick={() => setShowTransferDialog(true)}
+            >
+              <ArrowRight className="w-3.5 h-3.5" /> Transfer Stock
+            </Button>
+          )}
           {orgId && (
             <Button
               variant="outline"
