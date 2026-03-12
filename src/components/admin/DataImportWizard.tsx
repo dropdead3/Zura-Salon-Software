@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   Dialog,
@@ -43,11 +43,15 @@ import {
   Download,
   Info,
   Lightbulb,
+  Link2,
+  Plus,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useLocations } from '@/hooks/useLocations';
+import { useProductCategories } from '@/hooks/useProducts';
+import { useCreateProductCategory } from '@/hooks/useProductCategoryManagement';
 
 interface DataImportWizardProps {
   open: boolean;
@@ -59,6 +63,9 @@ interface DataImportWizardProps {
 
 // Entity types that require location selection for data isolation
 const LOCATION_REQUIRED_TYPES = ['clients', 'appointments', 'staff', 'products'];
+
+// Known product types in the system
+const KNOWN_PRODUCT_TYPES = ['Products', 'Merch', 'Extensions'];
 
 // Field definitions for each data type
 const FIELD_DEFINITIONS: Record<string, { field: string; label: string; required: boolean }[]> = {
@@ -132,6 +139,7 @@ const FIELD_DEFINITIONS: Record<string, { field: string; label: string; required
     { field: 'barcode', label: 'Barcode', required: false },
     { field: 'category', label: 'Category', required: false },
     { field: 'brand', label: 'Brand', required: false },
+    { field: 'product_type', label: 'Product Type', required: false },
     { field: 'retail_price', label: 'Retail Price', required: false },
     { field: 'cost_price', label: 'Cost Price', required: false },
     { field: 'quantity_on_hand', label: 'Quantity', required: false },
@@ -140,7 +148,10 @@ const FIELD_DEFINITIONS: Record<string, { field: string; label: string; required
   ],
 };
 
-type WizardStep = 'upload' | 'mapping' | 'preview' | 'importing' | 'complete';
+type WizardStep = 'upload' | 'mapping' | 'reconcile' | 'preview' | 'importing' | 'complete';
+
+// Sentinel value for "Add as new" in reconciliation selects
+const ADD_AS_NEW = '__add_as_new__';
 
 export function DataImportWizard({
   open,
@@ -151,8 +162,11 @@ export function DataImportWizard({
 }: DataImportWizardProps) {
   const queryClient = useQueryClient();
   const { data: locations } = useLocations(organizationId);
+  const { data: existingCategories } = useProductCategories();
+  const createCategory = useCreateProductCategory();
   
   const requiresLocation = LOCATION_REQUIRED_TYPES.includes(dataType);
+  const isProductImport = dataType === 'products';
   
   const [step, setStep] = useState<WizardStep>('upload');
   const [file, setFile] = useState<File | null>(null);
@@ -172,6 +186,10 @@ export function DataImportWizard({
   } | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // Reconciliation state
+  const [categoryMap, setCategoryMap] = useState<Record<string, string>>({});
+  const [typeMap, setTypeMap] = useState<Record<string, string>>({});
+
   const fields = FIELD_DEFINITIONS[dataType] || [];
   const requiredFieldNames = fields.filter(f => f.required).map(f => f.label);
 
@@ -182,8 +200,67 @@ export function DataImportWizard({
     transactions: { transaction_date: '2025-12-01', client_name: 'Jane Doe', staff_name: 'Sarah M', item_name: 'Balayage', quantity: '1', unit_price: '185.00', total_amount: '185.00', payment_method: 'card', external_id: 'TXN-001' },
     staff: { full_name: 'Sarah Martinez', email: 'sarah@salon.com', phone: '555-222-3333', hire_date: '2023-06-15', stylist_level: 'Senior', specialties: 'Color, Balayage', bio: 'Color specialist with 8 years experience', external_id: 'STF-001' },
     locations: { name: 'Downtown Studio', address: '123 Main St', city: 'Austin', state_province: 'TX', phone: '555-000-1111', hours: 'Mon-Sat 9am-7pm', store_number: 'LOC-01', external_id: 'LOC-001' },
-    products: { name: 'Olaplex No. 3', sku: 'OLA-003', barcode: '896364002350', category: 'Hair Care', brand: 'Olaplex', retail_price: '30.00', cost_price: '14.50', quantity_on_hand: '24', description: 'Hair perfector treatment', external_id: 'PRD-001' },
+    products: { name: 'Olaplex No. 3', sku: 'OLA-003', barcode: '896364002350', category: 'Hair Care', brand: 'Olaplex', product_type: 'Products', retail_price: '30.00', cost_price: '14.50', quantity_on_hand: '24', description: 'Hair perfector treatment', external_id: 'PRD-001' },
   };
+
+  // Extract unique categories & types from mapped CSV data
+  const { uniqueCategories, uniqueTypes } = useMemo(() => {
+    if (!isProductImport) return { uniqueCategories: [], uniqueTypes: [] };
+
+    const catCol = fieldMapping['category'];
+    const typeCol = fieldMapping['product_type'];
+    const cats = new Set<string>();
+    const types = new Set<string>();
+
+    csvData.forEach(row => {
+      if (catCol && row[catCol]?.trim()) cats.add(row[catCol].trim());
+      if (typeCol && row[typeCol]?.trim()) types.add(row[typeCol].trim());
+    });
+
+    return {
+      uniqueCategories: Array.from(cats).sort(),
+      uniqueTypes: Array.from(types).sort(),
+    };
+  }, [csvData, fieldMapping, isProductImport]);
+
+  // Count how many rows have each category/type value
+  const valueCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    const catCol = fieldMapping['category'];
+    const typeCol = fieldMapping['product_type'];
+
+    csvData.forEach(row => {
+      if (catCol && row[catCol]?.trim()) {
+        const k = `cat:${row[catCol].trim()}`;
+        counts[k] = (counts[k] || 0) + 1;
+      }
+      if (typeCol && row[typeCol]?.trim()) {
+        const k = `type:${row[typeCol].trim()}`;
+        counts[k] = (counts[k] || 0) + 1;
+      }
+    });
+    return counts;
+  }, [csvData, fieldMapping]);
+
+  // Initialize reconciliation maps with auto-matched values
+  const initReconciliationMaps = useCallback(() => {
+    const catMap: Record<string, string> = {};
+    const tMap: Record<string, string> = {};
+    const existingCatsLower = (existingCategories || []).map(c => ({ original: c, lower: c.toLowerCase() }));
+
+    uniqueCategories.forEach(csvCat => {
+      const exactMatch = existingCatsLower.find(c => c.lower === csvCat.toLowerCase());
+      catMap[csvCat] = exactMatch ? exactMatch.original : ADD_AS_NEW;
+    });
+
+    uniqueTypes.forEach(csvType => {
+      const exactMatch = KNOWN_PRODUCT_TYPES.find(t => t.toLowerCase() === csvType.toLowerCase());
+      tMap[csvType] = exactMatch || ADD_AS_NEW;
+    });
+
+    setCategoryMap(catMap);
+    setTypeMap(tMap);
+  }, [uniqueCategories, uniqueTypes, existingCategories]);
 
   const generateTemplate = useCallback(() => {
     const defs = FIELD_DEFINITIONS[dataType];
@@ -214,6 +291,8 @@ export function DataImportWizard({
     setImportProgress(0);
     setImportResult(null);
     setIsProcessing(false);
+    setCategoryMap({});
+    setTypeMap({});
   }, []);
 
   const handleClose = () => {
@@ -225,10 +304,8 @@ export function DataImportWizard({
     const lines = text.split('\n').filter(line => line.trim());
     if (lines.length === 0) return { headers: [], data: [] };
 
-    // Parse headers
     const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
     
-    // Parse data rows
     const data = lines.slice(1).map(line => {
       const values = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
       const row: Record<string, string> = {};
@@ -255,7 +332,6 @@ export function DataImportWizard({
       setCsvHeaders(headers);
       setCsvData(data);
 
-      // Auto-map fields based on header names
       const autoMapping: Record<string, string> = {};
       fields.forEach(field => {
         const matchingHeader = headers.find(h => 
@@ -289,7 +365,15 @@ export function DataImportWizard({
       const mapped: Record<string, string> = {};
       Object.entries(fieldMapping).forEach(([field, csvColumn]) => {
         if (csvColumn) {
-          mapped[field] = row[csvColumn] || '';
+          let val = row[csvColumn] || '';
+          // Apply reconciliation maps for preview
+          if (isProductImport && field === 'category' && categoryMap[val]) {
+            val = categoryMap[val] === ADD_AS_NEW ? val : categoryMap[val];
+          }
+          if (isProductImport && field === 'product_type' && typeMap[val]) {
+            val = typeMap[val] === ADD_AS_NEW ? val : typeMap[val];
+          }
+          mapped[field] = val;
         }
       });
       return mapped;
@@ -302,6 +386,8 @@ export function DataImportWizard({
     return missingRequired.length === 0;
   };
 
+  const needsReconciliation = isProductImport && (uniqueCategories.length > 0 || uniqueTypes.length > 0);
+
   const handleImport = async () => {
     if (!validateMapping()) {
       toast.error('Please map all required fields');
@@ -312,18 +398,25 @@ export function DataImportWizard({
     setImportProgress(0);
 
     try {
-      // Transform data according to mapping
+      // Transform data according to mapping + reconciliation
       const transformedData = csvData.map(row => {
         const mapped: Record<string, any> = {};
         Object.entries(fieldMapping).forEach(([field, csvColumn]) => {
           if (csvColumn && row[csvColumn] !== undefined) {
-            mapped[field] = row[csvColumn];
+            let val = row[csvColumn];
+            // Apply reconciliation
+            if (isProductImport && field === 'category' && val && categoryMap[val]) {
+              val = categoryMap[val] === ADD_AS_NEW ? val : categoryMap[val];
+            }
+            if (isProductImport && field === 'product_type' && val && typeMap[val]) {
+              val = typeMap[val] === ADD_AS_NEW ? val : typeMap[val];
+            }
+            mapped[field] = val;
           }
         });
         return mapped;
       });
 
-      // Call import edge function
       const { data, error } = await supabase.functions.invoke('import-data', {
         body: {
           source_type: sourceType,
@@ -349,9 +442,23 @@ export function DataImportWizard({
       setImportProgress(100);
       setStep('complete');
 
-      // Invalidate relevant queries
+      // Auto-create new categories after successful non-dry-run import
+      if (!isDryRun && isProductImport) {
+        const newCategories = Object.entries(categoryMap)
+          .filter(([_, v]) => v === ADD_AS_NEW)
+          .map(([k]) => k);
+        for (const cat of newCategories) {
+          try {
+            await createCategory.mutateAsync(cat);
+          } catch {
+            // Ignore duplicates silently
+          }
+        }
+      }
+
       queryClient.invalidateQueries({ queryKey: [dataType] });
       queryClient.invalidateQueries({ queryKey: ['import-jobs'] });
+      queryClient.invalidateQueries({ queryKey: ['product-categories'] });
 
       if (isDryRun) {
         toast.success(`Dry run complete: ${data.summary?.would_import || 0} records would be imported`);
@@ -362,6 +469,18 @@ export function DataImportWizard({
       toast.error('Import failed: ' + error.message);
       setStep('preview');
     }
+  };
+
+  const stepList = isProductImport && needsReconciliation
+    ? ['upload', 'mapping', 'reconcile', 'preview', 'complete'] as const
+    : ['upload', 'mapping', 'preview', 'complete'] as const;
+
+  const stepLabels: Record<string, string> = {
+    upload: 'Upload',
+    mapping: 'Mapping',
+    reconcile: 'Reconcile',
+    preview: 'Preview',
+    complete: 'Complete',
   };
 
   const renderStep = () => {
@@ -523,6 +642,124 @@ export function DataImportWizard({
           </div>
         );
 
+      case 'reconcile':
+        return (
+          <div className="space-y-6">
+            <div className="flex items-center gap-3 p-4 bg-muted rounded-lg">
+              <Link2 className="w-5 h-5 text-primary" />
+              <div>
+                <p className="font-medium text-sm">Match Categories & Types</p>
+                <p className="text-xs text-muted-foreground">
+                  Map values from your CSV to existing entries or create new ones
+                </p>
+              </div>
+            </div>
+
+            {uniqueCategories.length > 0 && (
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Categories</Label>
+                <div className="space-y-2">
+                  {uniqueCategories.map(csvCat => {
+                    const count = valueCounts[`cat:${csvCat}`] || 0;
+                    const currentVal = categoryMap[csvCat] || ADD_AS_NEW;
+                    const isNew = currentVal === ADD_AS_NEW;
+                    return (
+                      <div key={csvCat} className="flex items-center gap-3">
+                        <div className="w-1/3 flex items-center gap-2 min-w-0">
+                          <span className="text-sm truncate">{csvCat}</span>
+                          <Badge variant="secondary" className="text-[10px] shrink-0">
+                            {count}
+                          </Badge>
+                        </div>
+                        <ArrowRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                        <Select
+                          value={currentVal}
+                          onValueChange={(v) => setCategoryMap(prev => ({ ...prev, [csvCat]: v }))}
+                        >
+                          <SelectTrigger className="w-1/2">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value={ADD_AS_NEW}>
+                              <span className="flex items-center gap-1.5">
+                                <Plus className="w-3 h-3" />
+                                Add as new
+                              </span>
+                            </SelectItem>
+                            {(existingCategories || []).map(cat => (
+                              <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {isNew && (
+                          <Badge variant="outline" className="text-[10px] shrink-0 text-primary border-primary/30">
+                            New
+                          </Badge>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {uniqueTypes.length > 0 && (
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Product Types</Label>
+                <div className="space-y-2">
+                  {uniqueTypes.map(csvType => {
+                    const count = valueCounts[`type:${csvType}`] || 0;
+                    const currentVal = typeMap[csvType] || ADD_AS_NEW;
+                    const isNew = currentVal === ADD_AS_NEW;
+                    return (
+                      <div key={csvType} className="flex items-center gap-3">
+                        <div className="w-1/3 flex items-center gap-2 min-w-0">
+                          <span className="text-sm truncate">{csvType}</span>
+                          <Badge variant="secondary" className="text-[10px] shrink-0">
+                            {count}
+                          </Badge>
+                        </div>
+                        <ArrowRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                        <Select
+                          value={currentVal}
+                          onValueChange={(v) => setTypeMap(prev => ({ ...prev, [csvType]: v }))}
+                        >
+                          <SelectTrigger className="w-1/2">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value={ADD_AS_NEW}>
+                              <span className="flex items-center gap-1.5">
+                                <Plus className="w-3 h-3" />
+                                Add as new
+                              </span>
+                            </SelectItem>
+                            {KNOWN_PRODUCT_TYPES.map(t => (
+                              <SelectItem key={t} value={t}>{t}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {isNew && (
+                          <Badge variant="outline" className="text-[10px] shrink-0 text-primary border-primary/30">
+                            New
+                          </Badge>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {uniqueCategories.length === 0 && uniqueTypes.length === 0 && (
+              <div className="py-8 text-center text-sm text-muted-foreground">
+                <CheckCircle2 className="w-8 h-8 mx-auto mb-2 text-green-500" />
+                No categories or product types found in your CSV data — nothing to reconcile.
+              </div>
+            )}
+          </div>
+        );
+
       case 'preview':
         const previewData = getPreviewData();
         return (
@@ -678,21 +915,36 @@ export function DataImportWizard({
 
   const canGoNext = () => {
     switch (step) {
-      case 'upload': return false; // Next is automatic after file upload
+      case 'upload': return false;
       case 'mapping': return true;
+      case 'reconcile': return true;
       case 'preview': return validateMapping();
       default: return false;
     }
   };
 
   const handleNext = () => {
-    if (step === 'mapping') setStep('preview');
-    else if (step === 'preview') handleImport();
+    if (step === 'mapping') {
+      if (needsReconciliation) {
+        initReconciliationMaps();
+        setStep('reconcile');
+      } else {
+        setStep('preview');
+      }
+    } else if (step === 'reconcile') {
+      setStep('preview');
+    } else if (step === 'preview') {
+      handleImport();
+    }
   };
 
   const handleBack = () => {
     if (step === 'mapping') setStep('upload');
-    else if (step === 'preview') setStep('mapping');
+    else if (step === 'reconcile') setStep('mapping');
+    else if (step === 'preview') {
+      if (needsReconciliation) setStep('reconcile');
+      else setStep('mapping');
+    }
   };
 
   return (
@@ -706,6 +958,7 @@ export function DataImportWizard({
           <DialogDescription>
             {step === 'upload' && 'Upload your CSV file to begin'}
             {step === 'mapping' && 'Map your CSV columns to the correct fields'}
+            {step === 'reconcile' && 'Match categories and types to existing values'}
             {step === 'preview' && 'Review your data before importing'}
             {step === 'importing' && 'Processing your import...'}
             {step === 'complete' && 'Your import has finished'}
@@ -714,19 +967,26 @@ export function DataImportWizard({
 
         {/* Progress Indicator */}
         <div className="flex items-center justify-center gap-2 py-4">
-          {['upload', 'mapping', 'preview', 'complete'].map((s, i) => (
-            <div key={s} className="flex items-center">
-              <div className={cn(
-                "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium",
-                step === s ? "bg-primary text-primary-foreground" :
-                ['mapping', 'preview', 'complete'].indexOf(step) > i - 1 ? "bg-primary/20 text-primary" :
-                "bg-muted text-muted-foreground"
-              )}>
-                {i + 1}
+          {stepList.map((s, i) => {
+            const currentIdx = stepList.indexOf(step as any);
+            const isImporting = step === 'importing';
+            const stepIdx = i;
+            return (
+              <div key={s} className="flex items-center">
+                <div className={cn(
+                  "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium",
+                  (step === s || (isImporting && s === 'preview'))
+                    ? "bg-primary text-primary-foreground"
+                    : (isImporting ? stepIdx < stepList.length - 1 : currentIdx > stepIdx)
+                      ? "bg-primary/20 text-primary"
+                      : "bg-muted text-muted-foreground"
+                )}>
+                  {i + 1}
+                </div>
+                {i < stepList.length - 1 && <div className="w-8 h-0.5 bg-muted" />}
               </div>
-              {i < 3 && <div className="w-8 h-0.5 bg-muted" />}
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {renderStep()}
