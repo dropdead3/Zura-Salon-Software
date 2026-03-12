@@ -1,222 +1,153 @@
 
 
-# Operational Task Engine Architecture — Zura Backroom
+## Timezone-Safe Scheduling (Implemented)
 
-## Current State
+### Problem
+`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
 
-**Existing `tasks` table**: Personal employee tasks scoped by `user_id`. Supports title, description, priority, due_date, completion, recurrence, snoozing. RLS is user-scoped (`auth.uid() = user_id`). No organization scope. No linkage to exceptions, entities, or operational rules. This is a personal productivity tool — not an operational task system.
+### Solution
+- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
+- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
+- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
 
-**Existing `backroom_exceptions`**: Org-scoped, tracks operational issues with type/severity/status/resolution. No assignment, no due timing, no escalation, no task linkage.
+### Files Updated
+- `ScheduleHeader.tsx` — today button, quick days, isToday checks
+- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
+- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
+- `MonthView.tsx` — today highlight
+- `AgendaView.tsx` — today/tomorrow labels, today border
+- `ScheduleActionBar.tsx` — payment queue timing
+- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
+- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
+- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
+- `useHuddles.ts` — today's huddle query
 
-**Gap**: No mechanism to turn exceptions or operational conditions into assigned, trackable, escalatable work items. These are two completely separate systems that need a bridge — the Operational Task Engine.
+## Auto-Reorder with Supplier Communication (Implemented)
 
-## Architecture Overview
+### What It Does
+Organizations can opt into automatic reorder — when stock dips below threshold, POs are calculated (using MOQ and par levels) and sent directly to the supplier via email.
 
-```text
-Operational Condition (rule fires)
-  → ExceptionService creates exception (optional)
-  → TaskRuleEngine evaluates condition
-  → OperationalTaskService creates operational_task
-  → Assignment routing applies
-  → Task appears in manager inbox
-  → Escalation timer starts
-  → Resolution audited
+### Database Changes
+- `products.par_level` (INT, nullable) — desired stock level to reorder up to
+- `product_suppliers.moq` (INT, default 1) — minimum order quantity
+- `inventory_alert_settings.auto_reorder_enabled` (BOOL, default false)
+- `inventory_alert_settings.auto_reorder_mode` (TEXT, default 'to_par') — 'to_par' or 'moq_only'
+- `inventory_alert_settings.max_auto_reorder_value` (NUMERIC, nullable) — daily spend cap
+- `purchase_orders.supplier_confirmed_at` (TIMESTAMPTZ, nullable) — for tracking confirmations
+
+### Quantity Calculation
+```
+deficit = par_level - quantity_on_hand
+order_qty = max(moq, deficit)
+if moq > 1: round up to nearest MOQ multiple
+```
+Fallback: if par_level is null, uses `reorder_level * 2`.
+
+### Files Updated
+- Migration: Added columns to products, product_suppliers, inventory_alert_settings, purchase_orders
+- `check-reorder-levels/index.ts` — auto-send logic with MOQ/par calculation, spend cap, email invocation
+- `AlertSettingsCard.tsx` — auto-reorder toggle, mode selector, spend cap input
+- `useInventoryAlertSettings.ts` — updated interface
+- `useProducts.ts` — added par_level to Product interface
+- `useProductSuppliers.ts` — added moq to ProductSupplier interface
+- `ProductEditDialog.tsx` — added par level field
+- `RetailProductsSettingsContent.tsx` — added par level to product form
+- `SupplierDialog.tsx` — added MOQ field
+
+### Safety Features
+- Spend cap: daily auto-reorder pauses when cumulative PO value exceeds cap
+- Audit trail: auto_reorder logged as stock_movement reason
+- Supplier confirmation tracking via supplier_confirmed_at timestamp
+
+## Product Movement Rating Badges (Implemented)
+
+### What It Does
+Every product gets a dynamic movement rating badge (Best Seller, Popular, Steady, Slow Mover, Stagnant, Dead Weight) computed from 90-day sales velocity data.
+
+### Rating Tiers
+- **Best Seller**: Top 10% velocity AND >0.5 units/day (emerald)
+- **Popular**: Top 25% velocity AND >0.2 units/day (blue)
+- **Steady**: Velocity >0.05/day (muted)
+- **Slow Mover**: Velocity >0 but ≤0.05/day (amber)
+- **Stagnant**: Zero velocity, sold within 180 days (orange)
+- **Dead Weight**: Zero velocity, 180+ days or never sold (red)
+- Products with zero stock excluded from negative ratings
+
+### Files Created
+- `src/lib/productMovementRating.ts` — pure rating logic + badge config
+- `src/hooks/useProductVelocity.ts` — lightweight 90-day POS velocity query
+- `src/components/ui/MovementBadge.tsx` — shared badge component with tooltip
+
+### Files Updated
+- `RetailProductsSettingsContent.tsx` — Movement column + filter dropdown in products table
+- `RetailAnalyticsContent.tsx` — Movement badges on product performance table + Movement Distribution card (donut chart with actionable callouts)
+- `ProductCard.tsx` — Best Seller/Popular badges on public shop cards (positive only)
+- `ProductDetailModal.tsx` — Movement badge with velocity context
+
+## Inventory Intelligence Suite v2 (Implemented)
+
+### 1. Dead Stock Auto-Clearance Pipeline
+- `DeadStockAlertCard.tsx` — Surfaces Dead Weight/Stagnant products not yet in clearance with suggested discount tiers (10%/25%/50% based on idle days)
+- One-click "Mark for Clearance" applies discount and sets clearance_status
+
+### 2. Supplier Lead Time Tracker
+- `usePurchaseOrders.ts` — `useMarkPurchaseOrderReceived` already computes actual delivery days and updates `product_suppliers.avg_delivery_days` via running average
+- `parLevelSuggestion.ts` — Updated to accept supplier-provided lead time instead of hardcoded 7-day default, with bounds clamping
+
+### 3. Inventory Valuation Dashboard Card
+- `InventoryValuationCard.tsx` — Shows total inventory at cost/retail, potential margin %, capital-at-risk (slow/stagnant/dead weight), with donut chart breakdown
+
+### 4. Reorder Approval Queue
+- `ReorderApprovalCard.tsx` — Surfaces draft POs from auto-reorder with one-click approve (→ sent) or reject (→ cancelled)
+
+### 5. Stock Transfer Between Locations
+- Migration: Created `stock_transfers` table with RLS (org member read, org admin manage)
+- `useStockTransfers.ts` — CRUD hooks for stock transfers with stock movement logging
+- `StockTransferDialog.tsx` — Dialog for creating transfers between locations
+- `RetailProductsSettingsContent.tsx` — "Transfer Stock" button added to Inventory tab (visible for multi-location orgs)
+
+## Enhancement 1: Expiry Tracking (Implemented)
+
+### What It Does
+Products can have an optional expiration date (`expires_at`) and per-product alert threshold (`expiry_alert_days`, default 30). The system surfaces expiring inventory with color-coded badges in the product table and an analytics card with auto-clearance suggestions.
+
+### Database Changes
+- `products.expires_at` (DATE, nullable) — expiration date for perishable products
+- `products.expiry_alert_days` (INTEGER, default 30) — days before expiry to trigger alerts
+
+### Expiry Alert Buckets
+- **Expired** (red): past expiration → suggests 50% markdown
+- **Critical** (orange): within alert threshold → suggests 25% markdown
+- **Warning** (amber): within 2× alert threshold → suggests 10% markdown
+
+### Files Created
+- `src/components/dashboard/analytics/ExpiryAlertCard.tsx` — PinnableCard showing expiring products with one-click clearance actions
+
+### Files Updated
+- `src/hooks/useProducts.ts` — Added `expires_at`, `expiry_alert_days` to Product interface; added `expiringOnly` filter
+- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Expiry date + alert days in product form; color-coded Expiry column in product table
+- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ExpiryAlertCard into analytics hub
+
+## Enhancement 2: Shrinkage Detection (Implemented)
+
+### What It Does
+Physical stocktake workflow with variance reporting. Staff record actual counts via a Stocktake dialog, and the system compares against expected quantities (system records). A Shrinkage Report card in analytics surfaces products with negative variance (loss) ranked by estimated cost impact.
+
+### Database Changes
+- Created `stock_counts` table with computed `variance` column (counted - expected), RLS policies (org member read/insert, org admin update/delete), and indexes
+
+### Shrinkage Calculation
+```
+variance = counted_quantity - expected_quantity
+shrinkage_units = |variance| when variance < 0
+shrinkage_cost = shrinkage_units × cost_price
 ```
 
-Three distinct concepts maintained:
-- **Event**: Something happened (mix_session_event, stock_movement)
-- **Exception**: A rule was violated (backroom_exceptions record)
-- **Operational Task**: Action required from a human (operational_tasks record)
+### Files Created
+- `src/hooks/useStockCounts.ts` — CRUD hooks for stock counts + `useShrinkageSummary` for aggregated shrinkage data
+- `src/components/dashboard/settings/inventory/StocktakeDialog.tsx` — Full stocktake UI with search, inline count entry, real-time variance display
+- `src/components/dashboard/analytics/ShrinkageReportCard.tsx` — PinnableCard showing products with shrinkage, severity badges, estimated loss
 
-## Entity Schema: `operational_tasks`
-
-```sql
-CREATE TABLE public.operational_tasks (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-  location_id TEXT,
-
-  -- What
-  title TEXT NOT NULL,
-  description TEXT,
-  task_type TEXT NOT NULL,           -- 'missing_reweigh_review', 'po_approval', 'stockout_reorder', etc.
-  priority TEXT NOT NULL DEFAULT 'normal',  -- 'low', 'normal', 'high', 'urgent'
-  
-  -- Lifecycle
-  status TEXT NOT NULL DEFAULT 'open',      -- see state machine below
-  
-  -- Assignment
-  assigned_to UUID REFERENCES auth.users(id),
-  assigned_role TEXT,                -- fallback: visible to anyone with this role
-  assigned_at TIMESTAMPTZ,
-  
-  -- Timing
-  due_at TIMESTAMPTZ,
-  escalated_at TIMESTAMPTZ,
-  escalation_level INTEGER DEFAULT 0,
-  
-  -- Source linkage
-  source_type TEXT NOT NULL,         -- 'exception', 'replenishment', 'purchasing', 'billing', 'inventory'
-  source_id UUID,                    -- FK to backroom_exceptions.id, purchase_orders.id, etc.
-  source_rule TEXT,                  -- rule name that created this task
-  
-  -- Entity linkage
-  reference_type TEXT,               -- 'mix_session', 'purchase_order', 'product', 'appointment'
-  reference_id UUID,
-  
-  -- Resolution
-  resolved_by UUID REFERENCES auth.users(id),
-  resolved_at TIMESTAMPTZ,
-  resolution_notes TEXT,
-  resolution_action TEXT,            -- 'completed', 'dismissed', 'expired'
-  
-  -- Audit
-  created_by UUID REFERENCES auth.users(id),
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-```
-
-**Indexes**: org+status, org+task_type, assigned_to+status, source_type+source_id, due_at.
-
-**RLS**: Org members can SELECT. Org admins and assigned user can UPDATE. System/service can INSERT.
-
-## Task Lifecycle State Machine
-
-```text
-open → assigned → in_progress → resolved
-                              → dismissed
-       open → expired (via escalation timer)
-       assigned → blocked → in_progress
-       any active state → escalated (increases escalation_level, may reassign)
-```
-
-Valid states: `open`, `assigned`, `in_progress`, `blocked`, `resolved`, `dismissed`, `expired`
-
-Transitions:
-- `open` → `assigned` (manual or auto-routing)
-- `assigned` → `in_progress` (assignee starts work)
-- `in_progress` → `resolved` | `dismissed`
-- `in_progress` → `blocked` → `in_progress`
-- Any active → escalation increases `escalation_level`, may change `assigned_to`
-- Unresolved past `due_at` → `expired` (via daily edge function)
-
-## Task History Table: `operational_task_history`
-
-```sql
-CREATE TABLE public.operational_task_history (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  task_id UUID NOT NULL REFERENCES operational_tasks(id) ON DELETE CASCADE,
-  action TEXT NOT NULL,              -- 'created', 'assigned', 'status_changed', 'escalated', 'resolved'
-  previous_status TEXT,
-  new_status TEXT,
-  previous_assigned_to UUID,
-  new_assigned_to UUID,
-  performed_by UUID,
-  notes TEXT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-```
-
-## Task Creation Rules
-
-| Condition | Exception Type | Task Type | Priority | Default Assignee | Due |
-|---|---|---|---|---|---|
-| Missing reweigh on completed session | `missing_reweigh` | `missing_reweigh_review` | high | Location manager | +24h |
-| Manual override used | `manual_override_used` | `manual_override_review` | normal | Location manager | +24h |
-| Usage charge requires manager review | (billing flag) | `charge_override_review` | high | Manager on duty | +4h |
-| PO awaiting approval | (PO status) | `po_approval` | normal | Owner/purchasing mgr | +48h |
-| Stockout risk critical | `stockout_risk` | `stockout_reorder` | urgent | Inventory manager | +24h |
-| Receiving discrepancy | `receiving_discrepancy` | `receiving_review` | high | Warehouse manager | +24h |
-| Ghost loss detected | `ghost_loss` | `ghost_loss_investigation` | high | Location manager | +48h |
-| Negative inventory | `negative_inventory` | `negative_inventory_resolve` | urgent | Inventory manager | +12h |
-
-Rules are evaluated by a `TaskRuleEngine` service that maps exception types and operational conditions to task creation parameters.
-
-## Assignment & Routing Rules
-
-1. **Rule-based default**: Each task type has a default role. Task is created with `assigned_role` and optionally auto-assigned to a specific user if the org has configured a default assignee for that role+location.
-2. **Location-based**: Tasks inherit `location_id` from source. Assignment routing uses location to find the right manager.
-3. **Manual override**: Any manager can reassign tasks from the inbox.
-4. **Queue visibility**: Tasks with only `assigned_role` (no specific `assigned_to`) are visible to all users with that role in the org/location.
-
-## Escalation Strategy
-
-Evaluated by a daily edge function (or extend existing `generate-backroom-snapshots`):
-
-1. Task past `due_at` and still `open`/`assigned` → escalation_level +1
-2. Level 1: Reassign to next-level manager, increase priority
-3. Level 2: Notify owner, mark urgent
-4. Level 3: Auto-expire with audit trail
-
-## Service Layer
-
-**New file**: `src/lib/backroom/services/operational-task-service.ts`
-
-Functions:
-- `createOperationalTask(params)` — Creates task + history entry
-- `assignTask(taskId, userId)` — Assigns + history
-- `updateTaskStatus(taskId, newStatus, notes)` — Transition + history
-- `resolveTask(taskId, action, notes)` — Close + history
-- `escalateTask(taskId)` — Bump level + reassign + history
-
-**New file**: `src/lib/backroom/services/task-rule-engine.ts`
-
-Functions:
-- `evaluateExceptionForTask(exception)` — Maps exception → task creation params
-- `evaluateConditionForTask(conditionType, context)` — For non-exception sources (PO status, billing flags)
-
-## Hook Layer
-
-**New file**: `src/hooks/backroom/useOperationalTasks.ts`
-
-- Query operational tasks by org, filtered by status/type/assignee/location
-- Mutations for assign, status change, resolve (via command layer)
-
-## Read Models
-
-No separate projection needed initially — `operational_tasks` itself is the read model. Filter by:
-- Manager inbox: `status IN ('open','assigned') AND (assigned_to = me OR assigned_role IN (my_roles))`
-- Owner queue: all tasks for org, priority desc
-- Location view: filtered by location_id
-- Entity view: filtered by reference_type + reference_id
-
-## Relationship to Existing Systems
-
-- **`backroom_exceptions`** remains unchanged. When an exception is created, `TaskRuleEngine.evaluateExceptionForTask()` decides whether to also create an operational task.
-- **`tasks` (personal)** remains separate. Personal productivity tasks are user-scoped. Operational tasks are org-scoped with assignment and escalation.
-- **Notifications**: Out of scope for this layer. A future notification service can subscribe to operational task creation/escalation events.
-
-## Exception → Task Auto-Generation Rules
-
-Auto-generate task when exception severity is `warning` or `critical` AND exception type is in the configured task-generating set. Informational exceptions (`severity = 'info'`) do not auto-generate tasks unless explicitly configured.
-
-## Command Layer Integration
-
-New commands in `src/lib/backroom/commands/task-commands.ts`:
-- `AssignOperationalTask`
-- `UpdateOperationalTaskStatus`
-- `ResolveOperationalTask`
-- `EscalateOperationalTask`
-
-Each flows through validation → service → audit, consistent with existing command architecture.
-
-## Implementation Order
-
-1. **Migration**: Create `operational_tasks` + `operational_task_history` tables with RLS + indexes
-2. **Service**: `operational-task-service.ts` (CRUD + history tracking)
-3. **Rule engine**: `task-rule-engine.ts` (exception-to-task mapping)
-4. **Commands + validators**: `task-commands.ts` + `task-validators.ts`
-5. **Hook**: `useOperationalTasks.ts`
-6. **Wire ExceptionService**: After creating an exception, call TaskRuleEngine to optionally create a task
-7. **Escalation**: Add escalation logic to daily edge function
-
-## Risks
-
-| Risk | Mitigation |
-|---|---|
-| Task spam from high-frequency exceptions | Dedup: one open task per source_type+source_id; don't create if active task exists |
-| Assignment routing complexity | Start with role-based queues, add user-level routing later |
-| Escalation edge function timeout | Process by org, paginate |
-| Confusion between personal tasks and operational tasks | Completely separate tables, hooks, and UI surfaces |
-
+### Files Updated
+- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Added "Stocktake" button to Inventory tab toolbar
+- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ShrinkageReportCard into analytics hub
