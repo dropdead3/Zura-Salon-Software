@@ -1236,6 +1236,7 @@ function InventoryByLocationTab() {
   const [selectedInvIds, setSelectedInvIds] = useState<Set<string>>(new Set());
   const [showBatchReorder, setShowBatchReorder] = useState(false);
   const [showTransferDialog, setShowTransferDialog] = useState(false);
+  const [showStocktake, setShowStocktake] = useState(false);
   const logMovement = useLogStockMovement();
 
   // Dialog state
