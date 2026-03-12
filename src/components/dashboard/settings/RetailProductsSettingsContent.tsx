@@ -61,7 +61,7 @@ function getProductType(product: Product): string {
 const PRODUCT_TYPES = ['Products', 'Extensions', 'Merch'] as const;
 const PAGE_SIZE = 50;
 
-type SortField = 'name' | 'brand' | 'category' | 'product_type' | 'retail_price' | 'cost_price' | 'quantity_on_hand';
+type SortField = 'name' | 'brand' | 'category' | 'retail_price' | 'quantity_on_hand';
 type SortDir = 'asc' | 'desc';
 
 function exportProductsCsv(products: Product[]) {
