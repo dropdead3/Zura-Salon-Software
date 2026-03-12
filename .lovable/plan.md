@@ -1,153 +1,257 @@
 
 
-## Timezone-Safe Scheduling (Implemented)
+# Inventory Ledger Architecture — Redesign Plan
 
-### Problem
-`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
+## Current State Analysis
 
-### Solution
-- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
-- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
-- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
+The codebase currently uses a **dual-write anti-pattern**:
 
-### Files Updated
-- `ScheduleHeader.tsx` — today button, quick days, isToday checks
-- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
-- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
-- `MonthView.tsx` — today highlight
-- `AgendaView.tsx` — today/tomorrow labels, today border
-- `ScheduleActionBar.tsx` — payment queue timing
-- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
-- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
-- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
-- `useHuddles.ts` — today's huddle query
+1. **`products.quantity_on_hand`** — a mutable integer field treated as the source of truth for stock levels
+2. **`stock_movements`** — an append-only log that records changes, but is secondary to the mutable field
 
-## Auto-Reorder with Supplier Communication (Implemented)
+**Direct mutations found in 3 locations:**
+- `useDepleteMixSession.ts` — updates `products.quantity_on_hand` after mix session
+- `useReceiveShipment.ts` — updates `products.quantity_on_hand` after PO receiving
+- `usePurchaseOrders.ts` — updates `products.quantity_on_hand` after quick-receive
 
-### What It Does
-Organizations can opt into automatic reorder — when stock dips below threshold, POs are calculated (using MOQ and par levels) and sent directly to the supplier via email.
+These are race-condition-prone because they read the current quantity, compute a new value, and write it back — without transactions. Two concurrent mix sessions can overwrite each other.
 
-### Database Changes
-- `products.par_level` (INT, nullable) — desired stock level to reorder up to
-- `product_suppliers.moq` (INT, default 1) — minimum order quantity
-- `inventory_alert_settings.auto_reorder_enabled` (BOOL, default false)
-- `inventory_alert_settings.auto_reorder_mode` (TEXT, default 'to_par') — 'to_par' or 'moq_only'
-- `inventory_alert_settings.max_auto_reorder_value` (NUMERIC, nullable) — daily spend cap
-- `purchase_orders.supplier_confirmed_at` (TIMESTAMPTZ, nullable) — for tracking confirmations
+Additionally, there is no `product_variants` table — products are flat. The plan references `product_variant_id`, but the current schema uses `product_id`. We will use `product_id` for now and add variant support as a future extension.
 
-### Quantity Calculation
-```
-deficit = par_level - quantity_on_hand
-order_qty = max(moq, deficit)
-if moq > 1: round up to nearest MOQ multiple
-```
-Fallback: if par_level is null, uses `reorder_level * 2`.
+---
 
-### Files Updated
-- Migration: Added columns to products, product_suppliers, inventory_alert_settings, purchase_orders
-- `check-reorder-levels/index.ts` — auto-send logic with MOQ/par calculation, spend cap, email invocation
-- `AlertSettingsCard.tsx` — auto-reorder toggle, mode selector, spend cap input
-- `useInventoryAlertSettings.ts` — updated interface
-- `useProducts.ts` — added par_level to Product interface
-- `useProductSuppliers.ts` — added moq to ProductSupplier interface
-- `ProductEditDialog.tsx` — added par level field
-- `RetailProductsSettingsContent.tsx` — added par level to product form
-- `SupplierDialog.tsx` — added MOQ field
+## Architecture
 
-### Safety Features
-- Spend cap: daily auto-reorder pauses when cumulative PO value exceeds cap
-- Audit trail: auto_reorder logged as stock_movement reason
-- Supplier confirmation tracking via supplier_confirmed_at timestamp
+### Layer 1: Inventory Ledger (Source of Truth)
 
-## Product Movement Rating Badges (Implemented)
+Rename/extend existing `stock_movements` table to serve as the canonical ledger. No new table needed — the existing table already has the right shape. We add the missing fields.
 
-### What It Does
-Every product gets a dynamic movement rating badge (Best Seller, Popular, Steady, Slow Mover, Stagnant, Dead Weight) computed from 90-day sales velocity data.
+```sql
+-- Extend stock_movements to full ledger spec
+ALTER TABLE public.stock_movements
+  ADD COLUMN IF NOT EXISTS event_type TEXT,
+  ADD COLUMN IF NOT EXISTS unit TEXT DEFAULT 'units';
 
-### Rating Tiers
-- **Best Seller**: Top 10% velocity AND >0.5 units/day (emerald)
-- **Popular**: Top 25% velocity AND >0.2 units/day (blue)
-- **Steady**: Velocity >0.05/day (muted)
-- **Slow Mover**: Velocity >0 but ≤0.05/day (amber)
-- **Stagnant**: Zero velocity, sold within 180 days (orange)
-- **Dead Weight**: Zero velocity, 180+ days or never sold (red)
-- Products with zero stock excluded from negative ratings
+-- Backfill event_type from existing reason column
+UPDATE public.stock_movements SET event_type = reason WHERE event_type IS NULL;
 
-### Files Created
-- `src/lib/productMovementRating.ts` — pure rating logic + badge config
-- `src/hooks/useProductVelocity.ts` — lightweight 90-day POS velocity query
-- `src/components/ui/MovementBadge.tsx` — shared badge component with tooltip
-
-### Files Updated
-- `RetailProductsSettingsContent.tsx` — Movement column + filter dropdown in products table
-- `RetailAnalyticsContent.tsx` — Movement badges on product performance table + Movement Distribution card (donut chart with actionable callouts)
-- `ProductCard.tsx` — Best Seller/Popular badges on public shop cards (positive only)
-- `ProductDetailModal.tsx` — Movement badge with velocity context
-
-## Inventory Intelligence Suite v2 (Implemented)
-
-### 1. Dead Stock Auto-Clearance Pipeline
-- `DeadStockAlertCard.tsx` — Surfaces Dead Weight/Stagnant products not yet in clearance with suggested discount tiers (10%/25%/50% based on idle days)
-- One-click "Mark for Clearance" applies discount and sets clearance_status
-
-### 2. Supplier Lead Time Tracker
-- `usePurchaseOrders.ts` — `useMarkPurchaseOrderReceived` already computes actual delivery days and updates `product_suppliers.avg_delivery_days` via running average
-- `parLevelSuggestion.ts` — Updated to accept supplier-provided lead time instead of hardcoded 7-day default, with bounds clamping
-
-### 3. Inventory Valuation Dashboard Card
-- `InventoryValuationCard.tsx` — Shows total inventory at cost/retail, potential margin %, capital-at-risk (slow/stagnant/dead weight), with donut chart breakdown
-
-### 4. Reorder Approval Queue
-- `ReorderApprovalCard.tsx` — Surfaces draft POs from auto-reorder with one-click approve (→ sent) or reject (→ cancelled)
-
-### 5. Stock Transfer Between Locations
-- Migration: Created `stock_transfers` table with RLS (org member read, org admin manage)
-- `useStockTransfers.ts` — CRUD hooks for stock transfers with stock movement logging
-- `StockTransferDialog.tsx` — Dialog for creating transfers between locations
-- `RetailProductsSettingsContent.tsx` — "Transfer Stock" button added to Inventory tab (visible for multi-location orgs)
-
-## Enhancement 1: Expiry Tracking (Implemented)
-
-### What It Does
-Products can have an optional expiration date (`expires_at`) and per-product alert threshold (`expiry_alert_days`, default 30). The system surfaces expiring inventory with color-coded badges in the product table and an analytics card with auto-clearance suggestions.
-
-### Database Changes
-- `products.expires_at` (DATE, nullable) — expiration date for perishable products
-- `products.expiry_alert_days` (INTEGER, default 30) — days before expiry to trigger alerts
-
-### Expiry Alert Buckets
-- **Expired** (red): past expiration → suggests 50% markdown
-- **Critical** (orange): within alert threshold → suggests 25% markdown
-- **Warning** (amber): within 2× alert threshold → suggests 10% markdown
-
-### Files Created
-- `src/components/dashboard/analytics/ExpiryAlertCard.tsx` — PinnableCard showing expiring products with one-click clearance actions
-
-### Files Updated
-- `src/hooks/useProducts.ts` — Added `expires_at`, `expiry_alert_days` to Product interface; added `expiringOnly` filter
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Expiry date + alert days in product form; color-coded Expiry column in product table
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ExpiryAlertCard into analytics hub
-
-## Enhancement 2: Shrinkage Detection (Implemented)
-
-### What It Does
-Physical stocktake workflow with variance reporting. Staff record actual counts via a Stocktake dialog, and the system compares against expected quantities (system records). A Shrinkage Report card in analytics surfaces products with negative variance (loss) ranked by estimated cost impact.
-
-### Database Changes
-- Created `stock_counts` table with computed `variance` column (counted - expected), RLS policies (org member read/insert, org admin update/delete), and indexes
-
-### Shrinkage Calculation
-```
-variance = counted_quantity - expected_quantity
-shrinkage_units = |variance| when variance < 0
-shrinkage_cost = shrinkage_units × cost_price
+-- Add NOT NULL constraint after backfill
+ALTER TABLE public.stock_movements ALTER COLUMN event_type SET NOT NULL;
 ```
 
-### Files Created
-- `src/hooks/useStockCounts.ts` — CRUD hooks for stock counts + `useShrinkageSummary` for aggregated shrinkage data
-- `src/components/dashboard/settings/inventory/StocktakeDialog.tsx` — Full stocktake UI with search, inline count entry, real-time variance display
-- `src/components/dashboard/analytics/ShrinkageReportCard.tsx` — PinnableCard showing products with shrinkage, severity badges, estimated loss
+**Existing fields already present:** `id`, `organization_id`, `product_id`, `quantity_change`, `reason`, `notes`, `reference_type` (= source_entity_type), `reference_id` (= source_entity_id), `location_id`, `created_by`, `created_at`.
 
-### Files Updated
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Added "Stocktake" button to Inventory tab toolbar
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ShrinkageReportCard into analytics hub
+**`event_type` values:** `usage`, `receiving`, `transfer_out`, `transfer_in`, `count_adjustment`, `waste_adjustment`, `expiration_discard`, `manual_correction`.
+
+**Immutability enforcement:** Add an UPDATE/DELETE policy that blocks all modifications:
+
+```sql
+CREATE POLICY "Ledger entries are immutable"
+  ON public.stock_movements FOR UPDATE TO authenticated
+  USING (false);
+
+CREATE POLICY "Ledger entries cannot be deleted"
+  ON public.stock_movements FOR DELETE TO authenticated
+  USING (false);
+```
+
+### Layer 2: Inventory Projection (Derived Balance)
+
+New table for fast queries. Replaces `products.quantity_on_hand` as the read path.
+
+```sql
+CREATE TABLE public.inventory_projections (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  location_id TEXT,
+  on_hand NUMERIC NOT NULL DEFAULT 0,
+  allocated NUMERIC NOT NULL DEFAULT 0,
+  on_order NUMERIC NOT NULL DEFAULT 0,
+  available NUMERIC GENERATED ALWAYS AS (on_hand - allocated) STORED,
+  last_calculated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (organization_id, product_id, location_id)
+);
+```
+
+### Layer 3: Projection Rebuild Function
+
+A database function that recalculates a projection from the ledger:
+
+```sql
+CREATE OR REPLACE FUNCTION public.rebuild_inventory_projection(
+  p_org_id UUID, p_product_id UUID, p_location_id TEXT DEFAULT NULL
+) RETURNS void AS $$
+  INSERT INTO inventory_projections (organization_id, product_id, location_id, on_hand, last_calculated_at)
+  SELECT p_org_id, p_product_id, p_location_id,
+    COALESCE(SUM(quantity_change), 0),
+    now()
+  FROM stock_movements
+  WHERE organization_id = p_org_id
+    AND product_id = p_product_id
+    AND (p_location_id IS NULL OR location_id = p_location_id)
+  ON CONFLICT (organization_id, product_id, location_id)
+  DO UPDATE SET
+    on_hand = EXCLUDED.on_hand,
+    last_calculated_at = now();
+$$ LANGUAGE sql SECURITY DEFINER;
+```
+
+### Layer 4: Trigger-Based Projection Update
+
+A trigger on `stock_movements` INSERT that incrementally updates the projection:
+
+```sql
+CREATE OR REPLACE FUNCTION public.update_projection_on_ledger_insert()
+RETURNS trigger AS $$
+BEGIN
+  INSERT INTO inventory_projections (organization_id, product_id, location_id, on_hand)
+  VALUES (NEW.organization_id, NEW.product_id, NEW.location_id, NEW.quantity_change)
+  ON CONFLICT (organization_id, product_id, location_id)
+  DO UPDATE SET
+    on_hand = inventory_projections.on_hand + NEW.quantity_change,
+    last_calculated_at = now();
+
+  -- Sync to products.quantity_on_hand for backward compatibility
+  UPDATE products SET quantity_on_hand = (
+    SELECT COALESCE(SUM(on_hand), 0) FROM inventory_projections
+    WHERE product_id = NEW.product_id AND organization_id = NEW.organization_id
+  ) WHERE id = NEW.product_id;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER trg_projection_on_ledger_insert
+  AFTER INSERT ON public.stock_movements
+  FOR EACH ROW EXECUTE FUNCTION update_projection_on_ledger_insert();
+```
+
+This trigger eliminates all client-side `products.quantity_on_hand` updates — the database handles it atomically.
+
+---
+
+## Event Flow
+
+```text
+Source System          Ledger (stock_movements)        Projection
+─────────────         ────────────────────────         ──────────
+Mix Session     →     INSERT event_type='usage'    →   trigger updates on_hand
+PO Receiving    →     INSERT event_type='receiving' →  trigger updates on_hand
+Transfer        →     INSERT transfer_out + in     →   trigger updates on_hand
+Cycle Count     →     INSERT count_adjustment      →   trigger updates on_hand
+Waste Event     →     INSERT waste_adjustment      →   trigger updates on_hand
+Expiration      →     INSERT expiration_discard    →   trigger updates on_hand
+Manager Adjust  →     INSERT manual_correction     →   trigger updates on_hand
+```
+
+---
+
+## Inventory Math
+
+```text
+available = on_hand - allocated
+
+theoretical_remaining =
+  previous_balance
+  + receipts + transfers_in
+  - usage - waste - transfers_out
+
+ghost_loss = theoretical_remaining - physical_count
+```
+
+Ghost loss is computed by comparing a `count_adjustment` event's implied balance against the theoretical balance from all other events in the period.
+
+---
+
+## Ledger Entry Rules by Subsystem
+
+| Source | event_type | quantity_change | reference_type | reference_id |
+|---|---|---|---|---|
+| Mix session completion | `usage` | negative | `mix_session` | session ID |
+| PO line received | `receiving` | positive | `purchase_order` | PO ID |
+| Transfer out | `transfer_out` | negative | `stock_transfer` | transfer ID |
+| Transfer in | `transfer_in` | positive | `stock_transfer` | transfer ID |
+| Cycle count | `count_adjustment` | delta | `stock_count` | count ID |
+| Waste event | `waste_adjustment` | negative | `waste_event` | waste event ID |
+| Expiration discard | `expiration_discard` | negative | `waste_event` | waste event ID |
+| Manager manual | `manual_correction` | +/- | `manual` | null |
+
+---
+
+## Code Refactoring Required
+
+**Remove direct `products.quantity_on_hand` mutations from:**
+1. `useDepleteMixSession.ts` — remove lines 96-102 (product update loop)
+2. `useReceiveShipment.ts` — remove lines 83-95 (product qty update)
+3. `usePurchaseOrders.ts` — remove lines 166-169 (product qty update)
+4. `useCompleteStockTransfer()` in `useStockTransfers.ts` — remove product query + movement quantity_after calculation
+
+The trigger handles all projection updates. Client code only needs to INSERT into `stock_movements`.
+
+**Remove `quantity_after` field requirement** — currently every movement stores a snapshot. With the trigger, this becomes redundant but can be kept for audit purposes (populated by the trigger).
+
+**Update read paths:**
+- `useInventoryDaysRemaining` — query `inventory_projections` instead of `products.quantity_on_hand`
+- Product list/detail views — join or query `inventory_projections` for on_hand display
+- `products.quantity_on_hand` remains synced via trigger for backward compatibility during migration
+
+---
+
+## Concurrency Strategy
+
+- **Append-only ledger** — no read-modify-write on stock_movements; concurrent INSERTs never conflict
+- **Trigger-based projection** — `ON CONFLICT DO UPDATE SET on_hand = on_hand + NEW.quantity_change` is atomic at the row level in Postgres
+- **No client-side quantity calculation** — eliminates race conditions entirely
+
+---
+
+## Audit Visibility
+
+Every `stock_movements` row contains: `created_by` (who), `created_at` (when), `reference_type` + `reference_id` (what caused it), `event_type` (what happened), `notes` (context). The existing `useInventoryLedger` hook already queries this table with filtering by reference_type and reason.
+
+---
+
+## Example Ledger Entries
+
+**Mix session usage (45g lightener):**
+```json
+{ "event_type": "usage", "product_id": "abc", "quantity_change": -45,
+  "reference_type": "mix_session", "reference_id": "sess-1",
+  "location_id": "loc-1", "notes": "Backroom mix session depletion" }
+```
+
+**Receiving inventory (24 units via PO):**
+```json
+{ "event_type": "receiving", "product_id": "abc", "quantity_change": 24,
+  "reference_type": "purchase_order", "reference_id": "po-1",
+  "notes": "Received via PO po-1" }
+```
+
+**Transfer between locations:**
+```json
+[
+  { "event_type": "transfer_out", "product_id": "abc", "quantity_change": -10,
+    "location_id": "loc-1", "reference_type": "stock_transfer", "reference_id": "xfer-1" },
+  { "event_type": "transfer_in", "product_id": "abc", "quantity_change": 10,
+    "location_id": "loc-2", "reference_type": "stock_transfer", "reference_id": "xfer-1" }
+]
+```
+
+**Count adjustment (found 5 fewer than expected):**
+```json
+{ "event_type": "count_adjustment", "product_id": "abc", "quantity_change": -5,
+  "reference_type": "stock_count", "reference_id": "count-1",
+  "notes": "Physical count: 95, Expected: 100" }
+```
+
+---
+
+## Implementation Order
+
+1. Migration: extend `stock_movements`, create `inventory_projections`, create trigger + rebuild function, add immutability policies
+2. Backfill: populate `inventory_projections` from existing `stock_movements` data
+3. Refactor: remove direct `products.quantity_on_hand` mutations from 4 hooks
+4. Update read paths to use `inventory_projections` where location-specific data needed
+5. Verify backward compatibility via trigger sync to `products.quantity_on_hand`
+
