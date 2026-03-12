@@ -22,6 +22,8 @@ export function AlertSettingsCard() {
   const [inApp, setInApp] = useState(true);
   const [email, setEmail] = useState(true);
   const [autoCreatePo, setAutoCreatePo] = useState(true);
+  const [deadStockEnabled, setDeadStockEnabled] = useState(true);
+  const [deadStockDays, setDeadStockDays] = useState(90);
 
   // Sync from server
   useEffect(() => {
