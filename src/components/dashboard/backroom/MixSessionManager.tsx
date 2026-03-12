@@ -174,6 +174,15 @@ export function MixSessionManager({
       locationId,
     });
 
+    // Calculate overage charge if allowance policy exists
+    calculateOverage.mutate({
+      sessionId: activeSession.id,
+      appointmentId,
+      organizationId,
+      serviceId,
+      serviceName,
+    });
+
     // Save formulas if we have a client
     if (clientId) {
       try {
