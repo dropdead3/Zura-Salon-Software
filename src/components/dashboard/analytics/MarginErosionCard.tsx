@@ -35,7 +35,7 @@ export function MarginErosionCard({ filterContext }: MarginErosionCardProps) {
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <CardTitle className="font-display text-base tracking-wide">MARGIN EROSION ALERTS</CardTitle>
+                  <CardTitle className={tokens.card.title}>MARGIN EROSION ALERTS</CardTitle>
                   <MetricInfoTooltip description="Products where supplier cost increased >5% in 90 days or margin compressed below 30%. Annual impact estimates assume 4x current stock turnover or minimum 12 units/year." />
                 </div>
                 <CardDescription className="text-xs">
