@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -8,7 +8,9 @@ import {
 } from '@/components/ui/select';
 import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
 import { tokens } from '@/lib/design-tokens';
-import { MapPin, UserCheck, X, Loader2, RotateCcw } from 'lucide-react';
+import { MapPin, UserCheck, X, Loader2, RotateCcw, Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { useActiveLocations } from '@/hooks/useLocations';
 import {
@@ -58,6 +60,7 @@ function useOrgStaffOptions() {
 }
 
 export function InventoryLeadAssignmentCard() {
+  const [search, setSearch] = useState('');
   const { data: locations, isLoading: locationsLoading } = useActiveLocations();
   const { data: leads, isLoading: leadsLoading } = useLocationInventoryLeads();
   const { data: defaultLeads, isLoading: defaultsLoading } = useLocationDefaultLeads();
@@ -74,6 +77,18 @@ export function InventoryLeadAssignmentCard() {
   }, [leads]);
 
   const isLoading = locationsLoading || leadsLoading || staffLoading || defaultsLoading;
+
+  const filteredLocations = useMemo(() => {
+    if (!locations) return [];
+    if (!search.trim()) return locations;
+    const q = search.toLowerCase();
+    return locations.filter(loc => loc.name.toLowerCase().includes(q));
+  }, [locations, search]);
+
+  const assignedCount = useMemo(() => {
+    if (!locations || !leads || !defaultLeads) return 0;
+    return locations.filter(loc => leadByLocation.has(loc.id) || defaultLeads.has(loc.id)).length;
+  }, [locations, leads, defaultLeads, leadByLocation]);
 
   if (isLoading) {
     return (
@@ -99,11 +114,28 @@ export function InventoryLeadAssignmentCard() {
             <CardDescription className="text-xs mt-1">
               Assign a team member to manage inventory at each location. Defaults to the location's manager.
             </CardDescription>
+            <p className="text-xs text-muted-foreground mt-1">
+              {assignedCount} of {locations.length} locations covered
+            </p>
           </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
-        {locations.map((location) => {
+        {locations.length > 5 && (
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+            <Input
+              placeholder="Search locations…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              autoCapitalize="off"
+              className="pl-9 h-8 text-xs"
+            />
+          </div>
+        )}
+        <ScrollArea className="max-h-[320px]">
+          <div className="space-y-2">
+        {filteredLocations.map((location) => {
           const explicitLead = leadByLocation.get(location.id);
           const defaultLead = defaultLeads?.get(location.id);
           const isDefault = !explicitLead && !!defaultLead;
@@ -116,7 +148,7 @@ export function InventoryLeadAssignmentCard() {
               key={location.id}
               className={cn(
                 tokens.card.inner,
-                'flex items-center justify-between px-4 py-3.5'
+                'flex items-center justify-between px-4 py-2.5'
               )}
             >
               <div className="flex items-center gap-3 min-w-0">
@@ -212,6 +244,11 @@ export function InventoryLeadAssignmentCard() {
             </div>
           );
         })}
+          </div>
+        </ScrollArea>
+        {filteredLocations.length === 0 && search && (
+          <p className="text-xs text-muted-foreground text-center py-4">No locations match "{search}"</p>
+        )}
       </CardContent>
     </Card>
   );
