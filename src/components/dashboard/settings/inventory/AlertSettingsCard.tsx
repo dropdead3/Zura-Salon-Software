@@ -195,7 +195,7 @@ export function AlertSettingsCard() {
                           <Label className="text-sm">Reorder mode</Label>
                           <RadioGroup value={autoReorderMode} onValueChange={setAutoReorderMode} className="space-y-2">
                             <label className="flex items-start gap-2 cursor-pointer">
-                              <RadioGroupItem value="to_par" className="mt-0.5" />
+                              <RadioGroupItem value="to_par" className="mt-1" />
                               <div>
                                 <span className="text-sm">Restock to par level</span>
                                 <p className="text-xs text-muted-foreground">Order enough to bring stock back to the target (par) level</p>
