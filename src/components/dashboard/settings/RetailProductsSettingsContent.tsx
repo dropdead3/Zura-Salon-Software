@@ -1300,6 +1300,7 @@ function InventoryByLocationTab() {
                   <TableHead>Supplier</TableHead>
                   <TableHead className="text-right">On Hand</TableHead>
                   <TableHead className="text-right">Min. Stock</TableHead>
+                  <TableHead className="text-right">Lead Time</TableHead>
                   <TableHead className="text-right">Status</TableHead>
                   <TableHead className="text-center w-32">Adjust</TableHead>
                   <TableHead className="w-8" />
