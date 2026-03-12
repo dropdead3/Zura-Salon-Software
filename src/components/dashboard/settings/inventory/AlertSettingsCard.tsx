@@ -173,7 +173,7 @@ export function AlertSettingsCard() {
 
                 {/* Auto-reorder (send to supplier) */}
                 {autoCreatePo && (
-                  <div className="ml-4 pl-4 border-l border-border space-y-3">
+                  <div className="ml-4 pl-4 border-l border-border space-y-4">
                     <div className="flex items-center justify-between">
                       <div>
                         <Label className="text-sm">Auto-send POs to suppliers</Label>

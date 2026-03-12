@@ -1464,16 +1464,16 @@ function InventoryByLocationTab() {
                       }}
                     />
                   </TableHead>
-                  <TableHead>Product</TableHead>
-                  <TableHead>Brand</TableHead>
-                  <TableHead>Supplier</TableHead>
-                  <TableHead className="text-right">On Hand</TableHead>
-                  <TableHead className="text-right">Min. Stock</TableHead>
-                  <TableHead className="text-right">Lead Time</TableHead>
-                  <TableHead className="text-right">Status</TableHead>
-                  <TableHead className="text-center w-32">Adjust</TableHead>
-                  <TableHead className="w-8" />
-                  <TableHead className="text-center w-24">Reorder</TableHead>
+                   <TableHead className={tokens.table.columnHeader}>Product</TableHead>
+                   <TableHead className={tokens.table.columnHeader}>Brand</TableHead>
+                   <TableHead className={tokens.table.columnHeader}>Supplier</TableHead>
+                   <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>On Hand</TableHead>
+                   <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Min. Stock</TableHead>
+                   <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Lead Time</TableHead>
+                   <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Status</TableHead>
+                   <TableHead className={cn(tokens.table.columnHeader, 'text-center w-32')}>Adjust</TableHead>
+                   <TableHead className="w-8" />
+                   <TableHead className={cn(tokens.table.columnHeader, 'text-center w-24')}>Reorder</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
