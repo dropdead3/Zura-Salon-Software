@@ -76,6 +76,7 @@ export default function Shop() {
 
   const isLoading = loadingSettings || loadingProducts;
   const storeEnabled = retailSettings?.enabled ?? false;
+  const continueSelling = retailSettings?.continue_selling_when_out_of_stock ?? false;
 
   // Build CSS variable overrides from theme
   const themeStyle = useMemo(() => {
