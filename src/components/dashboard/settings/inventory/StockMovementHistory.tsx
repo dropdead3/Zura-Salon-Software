@@ -1,10 +1,13 @@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
-import { History, Loader2, ArrowUp, ArrowDown } from 'lucide-react';
+import { History, Loader2, ArrowUp, ArrowDown, Download } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { useStockMovements } from '@/hooks/useStockMovements';
 import { formatDistanceToNow } from 'date-fns';
+import { exportStockMovementsCsv } from '@/lib/exportStockMovementsCsv';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { toast } from 'sonner';
 
 const REASON_LABELS: Record<string, string> = {
   manual_adjust: 'Manual Adjustment',
