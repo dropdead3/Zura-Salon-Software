@@ -80,7 +80,7 @@ export async function fetchClientLastFormula(
     .select('id, formula_data, service_name')
     .eq('organization_id', orgId)
     .eq('client_id', clientId)
-    .eq('service_name', serviceName)
+    .ilike('service_name', serviceName)
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle();
