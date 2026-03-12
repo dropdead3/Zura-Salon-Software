@@ -78,6 +78,18 @@ export function InventoryLeadAssignmentCard() {
 
   const isLoading = locationsLoading || leadsLoading || staffLoading || defaultsLoading;
 
+  const filteredLocations = useMemo(() => {
+    if (!locations) return [];
+    if (!search.trim()) return locations;
+    const q = search.toLowerCase();
+    return locations.filter(loc => loc.name.toLowerCase().includes(q));
+  }, [locations, search]);
+
+  const assignedCount = useMemo(() => {
+    if (!locations || !leads || !defaultLeads) return 0;
+    return locations.filter(loc => leadByLocation.has(loc.id) || defaultLeads.has(loc.id)).length;
+  }, [locations, leads, defaultLeads, leadByLocation]);
+
   if (isLoading) {
     return (
       <Card className={tokens.card.wrapper}>
