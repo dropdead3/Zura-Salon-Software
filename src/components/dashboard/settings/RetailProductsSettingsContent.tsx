@@ -663,9 +663,14 @@ function BrandsTab() {
 function CategoriesTab() {
   const { formatCurrency } = useFormatCurrency();
   const { data: categories, isLoading } = useProductCategorySummaries();
+  const { data: allCategoryNames } = useProductCategories();
   const bulkUpdate = useBulkUpdateProducts();
+  const createCategory = useCreateProductCategory();
+  const deleteCategory = useDeleteProductCategory();
   const [renamingCat, setRenamingCat] = useState<string | null>(null);
   const [newName, setNewName] = useState('');
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [deletingCat, setDeletingCat] = useState<string | null>(null);
 
   const startRename = (cat: string) => { setRenamingCat(cat); setNewName(cat); };
   const confirmRename = () => {
@@ -675,63 +680,130 @@ function CategoriesTab() {
     setRenamingCat(null);
   };
 
+  const handleCreateCategory = (name: string) => {
+    createCategory.mutate(name, { onSuccess: () => setShowCreateDialog(false) });
+  };
+
+  const handleDeleteCategory = () => {
+    if (deletingCat) {
+      deleteCategory.mutate(deletingCat, { onSuccess: () => setDeletingCat(null) });
+    }
+  };
+
+  // Merge: show summaries for categories with products + empty categories from the table
+  const mergedCategories = useMemo(() => {
+    const summaryMap = new Map((categories || []).map(c => [c.category, c]));
+    // Add empty categories from the dedicated table that don't appear in summaries
+    (allCategoryNames || []).forEach(name => {
+      if (!summaryMap.has(name)) {
+        summaryMap.set(name, { category: name, productCount: 0, totalInventoryValue: 0, totalStock: 0, typeCounts: {} });
+      }
+    });
+    return Array.from(summaryMap.values()).sort((a, b) => {
+      if (a.category === 'Uncategorized') return 1;
+      if (b.category === 'Uncategorized') return -1;
+      return b.productCount - a.productCount;
+    });
+  }, [categories, allCategoryNames]);
+
   if (isLoading) return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
 
   return (
-    <div className="overflow-x-auto border rounded-lg">
-      <Table>
-         <TableHeader>
-          <TableRow>
-            <TableHead>Category</TableHead>
-            <TableHead>Type</TableHead>
-            <TableHead className="text-right">Products</TableHead>
-            <TableHead className="text-right">Total Stock</TableHead>
-            <TableHead className="text-right">Inventory Value</TableHead>
-            <TableHead className="w-20" />
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {!categories?.length ? (
-            <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No categories found</TableCell></TableRow>
-          ) : categories.map(c => {
-            const typeEntries = Object.entries(c.typeCounts || {}).sort((a, b) => b[1] - a[1]);
-            const isSingleType = typeEntries.length === 1;
-            return (
-            <TableRow key={c.category}>
-              <TableCell>
-                {renamingCat === c.category ? (
-                  <div className="flex items-center gap-2">
-                    <Input value={newName} onChange={e => setNewName(e.target.value)} className="h-8 w-48" autoFocus onKeyDown={e => e.key === 'Enter' && confirmRename()} />
-                    <Button size="icon" variant="ghost" className="w-7 h-7" onClick={confirmRename}><Check className="w-3.5 h-3.5" /></Button>
-                    <Button size="icon" variant="ghost" className="w-7 h-7" onClick={() => setRenamingCat(null)}><X className="w-3.5 h-3.5" /></Button>
-                  </div>
-                ) : (
-                  <span className="font-medium text-sm">{c.category}</span>
-                )}
-              </TableCell>
-              <TableCell>
-                <div className="flex flex-wrap gap-1">
-                  {typeEntries.map(([type, count]) => (
-                    <Badge key={type} variant="secondary" className="text-[10px] px-2 py-0.5">
-                      {isSingleType ? type : `${type} (${count})`}
-                    </Badge>
-                  ))}
-                </div>
-              </TableCell>
-              <TableCell className="text-right tabular-nums">{c.productCount}</TableCell>
-              <TableCell className="text-right tabular-nums">{c.totalStock}</TableCell>
-              <TableCell className="text-right tabular-nums"><BlurredAmount>{formatCurrency(c.totalInventoryValue)}</BlurredAmount></TableCell>
-              <TableCell>
-                {renamingCat !== c.category && c.category !== 'Uncategorized' && (
-                  <Button variant="ghost" size="icon" className="w-7 h-7" onClick={() => startRename(c.category)}>
-                    <Edit2 className="w-3.5 h-3.5" />
-                  </Button>
-                )}
-              </TableCell>
+    <div className="space-y-3">
+      <div className="flex justify-end">
+        <Button size="sm" onClick={() => setShowCreateDialog(true)}>
+          <Plus className="w-4 h-4 mr-1.5" /> New Category
+        </Button>
+      </div>
+      <div className="overflow-x-auto border rounded-lg">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Category</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead className="text-right">Products</TableHead>
+              <TableHead className="text-right">Total Stock</TableHead>
+              <TableHead className="text-right">Inventory Value</TableHead>
+              <TableHead className="w-24" />
             </TableRow>
-          );})}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {!mergedCategories.length ? (
+              <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No categories found</TableCell></TableRow>
+            ) : mergedCategories.map(c => {
+              const typeEntries = Object.entries(c.typeCounts || {}).sort((a, b) => b[1] - a[1]);
+              const isSingleType = typeEntries.length === 1;
+              const isUncategorized = c.category === 'Uncategorized';
+              return (
+                <TableRow key={c.category}>
+                  <TableCell>
+                    {renamingCat === c.category ? (
+                      <div className="flex items-center gap-2">
+                        <Input value={newName} onChange={e => setNewName(e.target.value)} className="h-8 w-48" autoFocus onKeyDown={e => e.key === 'Enter' && confirmRename()} />
+                        <Button size="icon" variant="ghost" className="w-7 h-7" onClick={confirmRename}><Check className="w-3.5 h-3.5" /></Button>
+                        <Button size="icon" variant="ghost" className="w-7 h-7" onClick={() => setRenamingCat(null)}><X className="w-3.5 h-3.5" /></Button>
+                      </div>
+                    ) : (
+                      <span className={cn("font-medium text-sm", isUncategorized && "text-muted-foreground italic")}>{c.category}</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap gap-1">
+                      {typeEntries.map(([type, count]) => (
+                        <Badge key={type} variant="secondary" className="text-[10px] px-2 py-0.5">
+                          {isSingleType ? type : `${type} (${count})`}
+                        </Badge>
+                      ))}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">{c.productCount}</TableCell>
+                  <TableCell className="text-right tabular-nums">{c.totalStock}</TableCell>
+                  <TableCell className="text-right tabular-nums"><BlurredAmount>{formatCurrency(c.totalInventoryValue)}</BlurredAmount></TableCell>
+                  <TableCell>
+                    {!isUncategorized && renamingCat !== c.category && (
+                      <div className="flex items-center gap-0.5">
+                        <Button variant="ghost" size="icon" className="w-7 h-7" onClick={() => startRename(c.category)}>
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="w-7 h-7 text-destructive hover:text-destructive" onClick={() => setDeletingCat(c.category)}>
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    )}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
+
+      <CategoryFormDialog
+        open={showCreateDialog}
+        onOpenChange={setShowCreateDialog}
+        onSubmit={handleCreateCategory}
+        isPending={createCategory.isPending}
+        mode="create"
+        existingCategories={allCategoryNames || []}
+      />
+
+      <AlertDialog open={!!deletingCat} onOpenChange={open => !open && setDeletingCat(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Category</AlertDialogTitle>
+            <AlertDialogDescription>
+              All products in "{deletingCat}" will be moved to Uncategorized. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteCategory} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {deleteCategory.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
