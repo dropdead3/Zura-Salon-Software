@@ -1706,6 +1706,10 @@ export function RetailProductsSettingsContent() {
         )
       )}
 
+      {/* Inventory Lead Coverage */}
+      <InventoryCoverageBanner />
+      <InventoryLeadAssignmentCard />
+
       <Tabs defaultValue="products" className="w-full">
         <TabsList>
           <TabsTrigger value="products" className="gap-1.5"><Package className="w-3.5 h-3.5" /> Products</TabsTrigger>
