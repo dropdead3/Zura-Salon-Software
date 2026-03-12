@@ -64,6 +64,7 @@ export function ProductEditDialog({ productId, open, onOpenChange }: ProductEdit
         cost_price: product.cost_price?.toString() || '',
         quantity_on_hand: product.quantity_on_hand?.toString() || '',
         reorder_level: product.reorder_level?.toString() || '',
+        par_level: product.par_level?.toString() || '',
       });
     } else {
       reset({
@@ -77,6 +78,7 @@ export function ProductEditDialog({ productId, open, onOpenChange }: ProductEdit
         cost_price: '',
         quantity_on_hand: '',
         reorder_level: '',
+        par_level: '',
       });
     }
   }, [product, reset]);
