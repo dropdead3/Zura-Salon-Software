@@ -14,6 +14,7 @@ import type { WebsiteRetailThemeSettings } from '@/hooks/useWebsiteSettings';
 
 interface RetailSettings {
   enabled: boolean;
+  continue_selling_when_out_of_stock?: boolean;
   [key: string]: unknown;
 }
 

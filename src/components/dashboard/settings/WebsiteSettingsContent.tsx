@@ -818,6 +818,14 @@ function RetailTab() {
             <Switch checked={local.featured_products} onCheckedChange={(v) => setLocal(prev => ({ ...prev, featured_products: v }))} />
           </div>
 
+          <div className="flex items-center justify-between py-3">
+            <div>
+              <Label className="text-sm">Continue selling when out of stock</Label>
+              <p className="text-xs text-muted-foreground">Allow customers to purchase products even when stock reaches zero</p>
+            </div>
+            <Switch checked={local.continue_selling_when_out_of_stock} onCheckedChange={(v) => setLocal(prev => ({ ...prev, continue_selling_when_out_of_stock: v }))} />
+          </div>
+
           {hasChanges && (
             <Button onClick={handleSave} disabled={updateRetail.isPending} className="w-full">
               {updateRetail.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
