@@ -1,153 +1,142 @@
 
 
-## Timezone-Safe Scheduling (Implemented)
+# Source of Truth Verification Report — Zura Backroom
 
-### Problem
-`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
+## 1. Event Streams Identified
 
-### Solution
-- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
-- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
-- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
+| Stream | Table | Role |
+|---|---|---|
+| **MixSessionEvent** | `mix_session_events` | Append-only mixing workflow history |
+| **InventoryLedgerEntry** | `stock_movements` | Append-only inventory movement history |
+| **CommandAuditLog** | `command_audit_log` | Append-only command execution history |
+| **OperationalTaskHistory** | `operational_task_history` | Append-only task lifecycle audit trail |
 
-### Files Updated
-- `ScheduleHeader.tsx` — today button, quick days, isToday checks
-- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
-- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
-- `MonthView.tsx` — today highlight
-- `AgendaView.tsx` — today/tomorrow labels, today border
-- `ScheduleActionBar.tsx` — payment queue timing
-- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
-- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
-- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
-- `useHuddles.ts` — today's huddle query
+## 2. Projection Tables Identified
 
-## Auto-Reorder with Supplier Communication (Implemented)
+| Projection | Purpose | Rebuildable? |
+|---|---|---|
+| `mix_session_projections` | Derived session state from events | Yes — `rebuild_mix_session_projection` RPC exists |
+| `mix_bowl_projections` | Derived bowl state from events | Yes — via same event replay mechanism |
+| `inventory_projections` | Derived stock balances from `stock_movements` | Yes — `rebuild_inventory_projection` RPC exists |
+| `products.quantity_on_hand` | Cached aggregate from `inventory_projections` | Yes — recomputed by DB trigger on `stock_movements` insert |
+| `checkout_usage_projections` | Billing charge projections | Partially — derived from session data but written directly by `AllowanceBillingService` |
+| `backroom_analytics_snapshots` | Reporting aggregates | No rebuild mechanism — snapshot-based, acceptable |
+| `service_profitability_snapshots` | Reporting | Same as above |
+| `staff_backroom_performance` | Reporting | Same as above |
 
-### What It Does
-Organizations can opt into automatic reorder — when stock dips below threshold, POs are calculated (using MOQ and par levels) and sent directly to the supplier via email.
+## 3. VIOLATIONS FOUND
 
-### Database Changes
-- `products.par_level` (INT, nullable) — desired stock level to reorder up to
-- `product_suppliers.moq` (INT, default 1) — minimum order quantity
-- `inventory_alert_settings.auto_reorder_enabled` (BOOL, default false)
-- `inventory_alert_settings.auto_reorder_mode` (TEXT, default 'to_par') — 'to_par' or 'moq_only'
-- `inventory_alert_settings.max_auto_reorder_value` (NUMERIC, nullable) — daily spend cap
-- `purchase_orders.supplier_confirmed_at` (TIMESTAMPTZ, nullable) — for tracking confirmations
+### CRITICAL: Direct mutation of operational tables bypassing event stream and command layer
 
-### Quantity Calculation
-```
-deficit = par_level - quantity_on_hand
-order_qty = max(moq, deficit)
-if moq > 1: round up to nearest MOQ multiple
-```
-Fallback: if par_level is null, uses `reorder_level * 2`.
+**Violation 1 — `useMixBowls.ts` directly inserts/updates `mix_bowls`**
+- `useCreateBowl()` inserts directly into `mix_bowls` via `supabase.from('mix_bowls').insert()`
+- `useUpdateBowlStatus()` updates `mix_bowls` directly via `supabase.from('mix_bowls').update()`
+- These bypass the event stream entirely. No `mix_session_event` is emitted for bowl creation or status change when these hooks are used.
 
-### Files Updated
-- Migration: Added columns to products, product_suppliers, inventory_alert_settings, purchase_orders
-- `check-reorder-levels/index.ts` — auto-send logic with MOQ/par calculation, spend cap, email invocation
-- `AlertSettingsCard.tsx` — auto-reorder toggle, mode selector, spend cap input
-- `useInventoryAlertSettings.ts` — updated interface
-- `useProducts.ts` — added par_level to Product interface
-- `useProductSuppliers.ts` — added moq to ProductSupplier interface
-- `ProductEditDialog.tsx` — added par level field
-- `RetailProductsSettingsContent.tsx` — added par level to product form
-- `SupplierDialog.tsx` — added MOQ field
+**Violation 2 — `useMixBowlLines.ts` directly inserts/updates/deletes `mix_bowl_lines`**
+- `useAddBowlLine()` inserts directly into `mix_bowl_lines`
+- `useUpdateBowlLine()` updates `mix_bowl_lines` directly
+- `useDeleteBowlLine()` deletes from `mix_bowl_lines` directly
+- No events emitted. These are direct DB mutations from the UI layer.
 
-### Safety Features
-- Spend cap: daily auto-reorder pauses when cumulative PO value exceeds cap
-- Audit trail: auto_reorder logged as stock_movement reason
-- Supplier confirmation tracking via supplier_confirmed_at timestamp
+**Violation 3 — `useMixSession.ts` directly inserts/updates `mix_sessions`**
+- `useCreateMixSession()` inserts into `mix_sessions` directly
+- `useUpdateMixSessionStatus()` updates `mix_sessions.status` directly without emitting a `mix_session_event`
 
-## Product Movement Rating Badges (Implemented)
+**Violation 4 — `MixSessionManager.tsx` directly updates `mix_sessions`**
+- Lines 98-100: directly updates `is_prep_mode`
+- Lines 208-210: directly updates `confidence_score`
+- Lines 495-498: directly updates `prep_approved_by`
+- UI component directly mutating operational state.
 
-### What It Does
-Every product gets a dynamic movement rating badge (Best Seller, Popular, Steady, Slow Mover, Stagnant, Dead Weight) computed from 90-day sales velocity data.
+**Violation 5 — `usePurchaseOrders.ts` directly inserts into `stock_movements`**
+- Lines 159-170: The `quickReceive` mutation writes directly to `stock_movements`, bypassing `InventoryLedgerService` and the command layer.
 
-### Rating Tiers
-- **Best Seller**: Top 10% velocity AND >0.5 units/day (emerald)
-- **Popular**: Top 25% velocity AND >0.2 units/day (blue)
-- **Steady**: Velocity >0.05/day (muted)
-- **Slow Mover**: Velocity >0 but ≤0.05/day (amber)
-- **Stagnant**: Zero velocity, sold within 180 days (orange)
-- **Dead Weight**: Zero velocity, 180+ days or never sold (red)
-- Products with zero stock excluded from negative ratings
+**Violation 6 — `useMixBowlLines.ts` `syncBowlTotals()` directly updates `mix_bowls`**
+- After line operations, this function recalculates and directly writes `total_dispensed_weight` and `total_dispensed_cost` to `mix_bowls`. This treats `mix_bowls` as a mutable projection updated outside the event stream.
 
-### Files Created
-- `src/lib/productMovementRating.ts` — pure rating logic + badge config
-- `src/hooks/useProductVelocity.ts` — lightweight 90-day POS velocity query
-- `src/components/ui/MovementBadge.tsx` — shared badge component with tooltip
+### Summary: 6 violations across 5 files
 
-### Files Updated
-- `RetailProductsSettingsContent.tsx` — Movement column + filter dropdown in products table
-- `RetailAnalyticsContent.tsx` — Movement badges on product performance table + Movement Distribution card (donut chart with actionable callouts)
-- `ProductCard.tsx` — Best Seller/Popular badges on public shop cards (positive only)
-- `ProductDetailModal.tsx` — Movement badge with velocity context
+The command layer (`mixing-commands.ts`) correctly emits events via `emitSessionEvent()`, but the **original CRUD hooks still exist and are still used by UI components**. The old hooks were never removed or redirected through the command layer.
 
-## Inventory Intelligence Suite v2 (Implemented)
+## 4. Event Immutability
 
-### 1. Dead Stock Auto-Clearance Pipeline
-- `DeadStockAlertCard.tsx` — Surfaces Dead Weight/Stagnant products not yet in clearance with suggested discount tiers (10%/25%/50% based on idle days)
-- One-click "Mark for Clearance" applies discount and sets clearance_status
+- **MixSessionEvents**: Append-only. No update operations found against `mix_session_events`. Corrections use compensating events. CONFIRMED IMMUTABLE.
+- **stock_movements**: Append-only. No update or delete operations found. CONFIRMED IMMUTABLE.
+- **command_audit_log**: Append-only. Insert-only RLS. CONFIRMED IMMUTABLE.
 
-### 2. Supplier Lead Time Tracker
-- `usePurchaseOrders.ts` — `useMarkPurchaseOrderReceived` already computes actual delivery days and updates `product_suppliers.avg_delivery_days` via running average
-- `parLevelSuggestion.ts` — Updated to accept supplier-provided lead time instead of hardcoded 7-day default, with bounds clamping
+## 5. Event Ordering and Sequencing
 
-### 3. Inventory Valuation Dashboard Card
-- `InventoryValuationCard.tsx` — Shows total inventory at cost/retail, potential margin %, capital-at-risk (slow/stagnant/dead weight), with donut chart breakdown
+| Mechanism | Details |
+|---|---|
+| `sequence_number` | Per-session monotonic counter in `mix_session_events` |
+| `idempotency_key` | UUID per event, UNIQUE constraint on `mix_session_events` |
+| `created_at` | Timestamp on all events |
+| `source_mode` | Tracks origin: `scale`, `manual`, `system`, `offline_sync` |
+| `device_id` | Captures source device |
+| `CommandMeta.idempotency_key` | Client-generated UUID per command |
 
-### 4. Reorder Approval Queue
-- `ReorderApprovalCard.tsx` — Surfaces draft POs from auto-reorder with one-click approve (→ sent) or reject (→ cancelled)
+CONFIRMED: Sequencing strategy is sound.
 
-### 5. Stock Transfer Between Locations
-- Migration: Created `stock_transfers` table with RLS (org member read, org admin manage)
-- `useStockTransfers.ts` — CRUD hooks for stock transfers with stock movement logging
-- `StockTransferDialog.tsx` — Dialog for creating transfers between locations
-- `RetailProductsSettingsContent.tsx` — "Transfer Stock" button added to Inventory tab (visible for multi-location orgs)
+## 6. Idempotency Safeguards
 
-## Enhancement 1: Expiry Tracking (Implemented)
+- `mix_session_events`: UNIQUE constraint on `idempotency_key`. Duplicate inserts return 23505 error, handled gracefully in `emitSessionEvent()`.
+- `stock_movements`: Uses `reference_type` + `reference_id` for logical dedup (not enforced by DB constraint — **risk**: duplicate ledger entries possible on retry).
+- `command_audit_log`: Records every command attempt with `idempotency_key`.
+- Offline queue: Uses `idempotency_key` for safe replay.
 
-### What It Does
-Products can have an optional expiration date (`expires_at`) and per-product alert threshold (`expiry_alert_days`, default 30). The system surfaces expiring inventory with color-coded badges in the product table and an analytics card with auto-clearance suggestions.
+**Risk**: `stock_movements` has no DB-level unique constraint for dedup. A retried `postUsageFromSession()` call could insert duplicate usage entries.
 
-### Database Changes
-- `products.expires_at` (DATE, nullable) — expiration date for perishable products
-- `products.expiry_alert_days` (INTEGER, default 30) — days before expiry to trigger alerts
+## 7. Inventory Ledger Enforcement
 
-### Expiry Alert Buckets
-- **Expired** (red): past expiration → suggests 50% markdown
-- **Critical** (orange): within alert threshold → suggests 25% markdown
-- **Warning** (amber): within 2× alert threshold → suggests 10% markdown
+`InventoryLedgerService` is the sole service-layer owner of `stock_movements` writes. The DB trigger `update_projection_on_ledger_insert()` handles projection sync automatically.
 
-### Files Created
-- `src/components/dashboard/analytics/ExpiryAlertCard.tsx` — PinnableCard showing expiring products with one-click clearance actions
+**However**: `usePurchaseOrders.ts` bypasses the service and writes directly to `stock_movements` (Violation 5).
 
-### Files Updated
-- `src/hooks/useProducts.ts` — Added `expires_at`, `expiry_alert_days` to Product interface; added `expiringOnly` filter
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Expiry date + alert days in product form; color-coded Expiry column in product table
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ExpiryAlertCard into analytics hub
+## 8. Recommended Corrections
 
-## Enhancement 2: Shrinkage Detection (Implemented)
+### Phase 1: Eliminate direct-mutation hooks (CRITICAL)
 
-### What It Does
-Physical stocktake workflow with variance reporting. Staff record actual counts via a Stocktake dialog, and the system compares against expected quantities (system records). A Shrinkage Report card in analytics surfaces products with negative variance (loss) ranked by estimated cost impact.
+These hooks must be refactored to route through the command layer:
 
-### Database Changes
-- Created `stock_counts` table with computed `variance` column (counted - expected), RLS policies (org member read/insert, org admin update/delete), and indexes
+1. **`useMixBowls.ts`** — `useCreateBowl()` and `useUpdateBowlStatus()` must call `executeCreateBowl()` and `executeSealBowl()`/related commands instead of writing to `mix_bowls` directly.
 
-### Shrinkage Calculation
-```
-variance = counted_quantity - expected_quantity
-shrinkage_units = |variance| when variance < 0
-shrinkage_cost = shrinkage_units × cost_price
-```
+2. **`useMixBowlLines.ts`** — `useAddBowlLine()`, `useUpdateBowlLine()`, `useDeleteBowlLine()` must call `executeRecordLineItem()` and `executeRemoveLineItem()` commands. The `syncBowlTotals()` function must be replaced by event-driven projection updates.
 
-### Files Created
-- `src/hooks/useStockCounts.ts` — CRUD hooks for stock counts + `useShrinkageSummary` for aggregated shrinkage data
-- `src/components/dashboard/settings/inventory/StocktakeDialog.tsx` — Full stocktake UI with search, inline count entry, real-time variance display
-- `src/components/dashboard/analytics/ShrinkageReportCard.tsx` — PinnableCard showing products with shrinkage, severity badges, estimated loss
+3. **`useMixSession.ts`** — `useCreateMixSession()` should emit a `session_created` event. `useUpdateMixSessionStatus()` must call the appropriate command handler (e.g., `executeCompleteSession()`).
 
-### Files Updated
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Added "Stocktake" button to Inventory tab toolbar
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ShrinkageReportCard into analytics hub
+4. **`MixSessionManager.tsx`** — All three direct `mix_sessions` updates must route through the command/event layer (emit `prep_mode_enabled`, `prep_approved`, and store `confidence_score` in event payload).
+
+5. **`usePurchaseOrders.ts`** — The `quickReceive` mutation must call `PurchasingService.receiveShipment()` or `InventoryLedgerService.postReceiving()` instead of writing to `stock_movements` directly.
+
+### Phase 2: Add dedup constraint to `stock_movements`
+
+Add a unique constraint or dedup check on `(reference_type, reference_id, product_id, event_type)` to prevent duplicate ledger entries on retry.
+
+### Phase 3: Add missing projection rebuilds
+
+- `checkout_usage_projections` — add a rebuild function that recomputes from session event data
+- Bowl projections — ensure `mix_bowl_projections` can be fully rebuilt from `mix_session_events` without relying on `mix_bowls` table state
+
+### Phase 4: Clarify dual-write strategy
+
+The `mix_sessions`, `mix_bowls`, and `mix_bowl_lines` tables currently serve as BOTH operational truth AND working state. The architecture comment in `mix-session-service.ts` mentions "dual-write for backward compatibility." This must be resolved:
+- Either these tables become pure projections (rebuilt from events)
+- Or the event stream is the write path and these tables are updated only by DB triggers on `mix_session_events`
+
+Currently they are being written from two separate paths (old hooks + event stream), creating split-brain risk.
+
+## 9. Architecture Risk Summary
+
+| Risk | Severity | Status |
+|---|---|---|
+| Old CRUD hooks bypass event stream | CRITICAL | 6 violations found |
+| `stock_movements` lacks dedup constraint | HIGH | Retry could create duplicates |
+| `mix_sessions`/`mix_bowls` dual-write split-brain | HIGH | Two write paths exist |
+| Analytics snapshots not rebuildable | LOW | Acceptable for reporting snapshots |
+| `checkout_usage_projections` not rebuildable | MEDIUM | No replay mechanism |
+
+## 10. Verdict
+
+The **service layer and command layer** are correctly architected — they enforce event-sourced truth. However, the **original CRUD hooks have not been removed or redirected**, so UI components can still bypass the entire command/validation/event pipeline. This is the primary architectural violation that must be corrected before the system can be considered event-sourced.
+
