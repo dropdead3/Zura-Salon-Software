@@ -8,6 +8,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Loader2 } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { useProductSupplier, useUpsertSupplier, type ProductSupplier } from '@/hooks/useProductSuppliers';
+import { useSupplierPerformance } from '@/hooks/useSupplierPerformance';
+import { SupplierScorecard } from './SupplierScorecard';
 
 interface SupplierDialogProps {
   open: boolean;
