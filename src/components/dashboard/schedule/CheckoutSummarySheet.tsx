@@ -534,33 +534,28 @@ export function CheckoutSummarySheet({
               <div className="bg-primary/5 p-4 border-b border-border/50">
                 <h3 className="font-medium flex items-center gap-2 text-primary">
                   <CalendarPlus className="h-4 w-4" />
-                  Rebooking Check
+                  Next Visit Recommendation
                 </h3>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Did the client rebook their next appointment?
+                  Book the next appointment in seconds
                 </p>
               </div>
               
               <div className="p-4 space-y-4">
                 {gatePhase === 'gate' && (
-                  <div className="grid grid-cols-2 gap-3">
-                    <Button 
-                      variant="outline" 
-                      className="h-24 flex flex-col gap-2 hover:bg-red-50 hover:text-red-600 hover:border-red-200 dark:hover:bg-red-900/10"
-                      onClick={() => setGatePhase('declining')}
-                    >
-                      <XCircle className="h-6 w-6" />
-                      No, Declined
-                    </Button>
-                    <Button 
-                      className="h-24 flex flex-col gap-2 bg-primary/10 text-primary hover:bg-primary/20 border-primary/20"
-                      variant="outline"
-                      onClick={handleScheduleNextClick}
-                    >
-                      <CalendarCheck className="h-6 w-6" />
-                      Yes, Schedule Now
-                    </Button>
-                  </div>
+                  <NextVisitRecommendation
+                    serviceName={appointment.service_name}
+                    serviceCategory={appointment.service_category}
+                    appointmentDate={appointment.appointment_date}
+                    onBookInterval={(interval: RebookInterval) => {
+                      // Trigger the schedule-next flow with pre-filled date
+                      if (onScheduleNext && appointment) {
+                        onScheduleNext(appointment);
+                      }
+                    }}
+                    onScheduleManually={handleScheduleNextClick}
+                    onDecline={() => setGatePhase('declining')}
+                  />
                 )}
 
                 {gatePhase === 'declining' && (

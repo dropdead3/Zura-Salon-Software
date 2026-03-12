@@ -35,6 +35,7 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BackroomTab } from '@/components/dashboard/backroom/BackroomTab';
 import { CheckoutClarityPanel } from '@/components/dashboard/backroom/CheckoutClarityPanel';
+import { ClientMemoryPanel } from '@/components/dashboard/schedule/ClientMemoryPanel';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
