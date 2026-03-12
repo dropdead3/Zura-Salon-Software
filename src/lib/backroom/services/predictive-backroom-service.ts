@@ -85,9 +85,8 @@ async function fetchUpcomingServices(
   const services: UpcomingService[] = [];
 
   // Map phorest appointments
-  for (const appt of (phorestData as any[] || [])) {
+  for (const appt of filteredPhorest) {
     if (appt.service_name) {
-      // Split comma-separated services
       const names = (appt.service_name as string).split(',').map((s: string) => s.trim()).filter(Boolean);
       for (const name of names) {
         services.push({
@@ -103,7 +102,7 @@ async function fetchUpcomingServices(
 
   // Map local appointments (deduplicate by appointment_id)
   const seenIds = new Set(services.map((s) => s.appointment_id));
-  for (const appt of (localData as any[] || [])) {
+  for (const appt of localFiltered) {
     if (!seenIds.has(appt.id) && appt.service_name) {
       services.push({
         appointment_id: appt.id,
