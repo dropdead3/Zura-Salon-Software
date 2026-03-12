@@ -1311,6 +1311,22 @@ function InventoryByLocationTab() {
 
   if (isLoading) return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
 
+  if (!products || products.length === 0) {
+    return (
+      <Card className={tokens.card.wrapper}>
+        <CardContent className="py-0">
+          <div className={tokens.empty.container}>
+            <Package className={tokens.empty.icon} />
+            <h3 className={tokens.empty.heading}>No inventory yet</h3>
+            <p className={tokens.empty.description}>
+              Products need to be created before you can manage inventory. Head over to the Products tab to add your first product.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <div className="space-y-4">
       {/* Location selector + view toggle + export */}
