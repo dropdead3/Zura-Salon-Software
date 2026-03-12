@@ -53,7 +53,10 @@ export function ProductDetailModal({ product, open, onOpenChange, movementRating
 
           {/* Price & availability */}
           <div className="flex items-center justify-between">
-            <p className="text-2xl font-medium text-foreground">${(product.retail_price ?? 0).toFixed(2)}</p>
+            <div className="flex items-center gap-2">
+              <p className="text-2xl font-medium text-foreground">${(product.retail_price ?? 0).toFixed(2)}</p>
+              {movementRating && <MovementBadge rating={movementRating} positiveOnly />}
+            </div>
             {!inStock ? (
               <Badge variant="secondary" className="bg-destructive/10 text-destructive border-0">Out of stock</Badge>
             ) : lowStock ? (
