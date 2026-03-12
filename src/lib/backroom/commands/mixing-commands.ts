@@ -290,7 +290,7 @@ export async function executeCaptureWeight(
 
 export async function executeRecordLineItem(
   cmd: RecordLineItemCommand,
-): Promise<CommandResult> {
+): Promise<CommandResult<unknown>> {
   const session = await fetchSessionState(cmd.mix_session_id);
   const bowl = await fetchBowlState(cmd.bowl_id);
   const errors = validateRecordLineItem(
