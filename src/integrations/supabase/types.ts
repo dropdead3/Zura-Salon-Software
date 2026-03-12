@@ -9938,6 +9938,148 @@ export type Database = {
         }
         Relationships: []
       }
+      operational_task_history: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          new_assigned_to: string | null
+          new_status: string | null
+          notes: string | null
+          performed_by: string | null
+          previous_assigned_to: string | null
+          previous_status: string | null
+          task_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          new_assigned_to?: string | null
+          new_status?: string | null
+          notes?: string | null
+          performed_by?: string | null
+          previous_assigned_to?: string | null
+          previous_status?: string | null
+          task_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          new_assigned_to?: string | null
+          new_status?: string | null
+          notes?: string | null
+          performed_by?: string | null
+          previous_assigned_to?: string | null
+          previous_status?: string | null
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "operational_task_history_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "operational_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      operational_tasks: {
+        Row: {
+          assigned_at: string | null
+          assigned_role: string | null
+          assigned_to: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          due_at: string | null
+          escalated_at: string | null
+          escalation_level: number
+          id: string
+          location_id: string | null
+          organization_id: string
+          priority: string
+          reference_id: string | null
+          reference_type: string | null
+          resolution_action: string | null
+          resolution_notes: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          source_id: string | null
+          source_rule: string | null
+          source_type: string
+          status: string
+          task_type: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_role?: string | null
+          assigned_to?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          due_at?: string | null
+          escalated_at?: string | null
+          escalation_level?: number
+          id?: string
+          location_id?: string | null
+          organization_id: string
+          priority?: string
+          reference_id?: string | null
+          reference_type?: string | null
+          resolution_action?: string | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          source_id?: string | null
+          source_rule?: string | null
+          source_type: string
+          status?: string
+          task_type: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_role?: string | null
+          assigned_to?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          due_at?: string | null
+          escalated_at?: string | null
+          escalation_level?: number
+          id?: string
+          location_id?: string | null
+          organization_id?: string
+          priority?: string
+          reference_id?: string | null
+          reference_type?: string | null
+          resolution_action?: string | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          source_id?: string | null
+          source_rule?: string | null
+          source_type?: string
+          status?: string
+          task_type?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "operational_tasks_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_admins: {
         Row: {
           created_at: string | null
