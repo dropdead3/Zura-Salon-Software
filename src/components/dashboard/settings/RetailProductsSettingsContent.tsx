@@ -70,7 +70,6 @@ function ProductsTab() {
   const { data: importJobs } = useImportJobs({ organizationId: effectiveOrganization?.id });
   const productImportJobs = useMemo(() => (importJobs || []).filter(j => j.entity_type === 'products'), [importJobs]);
   const [categoryFilter, setCategoryFilter] = useState('all');
-  const [categoryFilter, setCategoryFilter] = useState('all');
   const [brandFilter, setBrandFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
   const [locationFilter, setLocationFilter] = useState('all');
