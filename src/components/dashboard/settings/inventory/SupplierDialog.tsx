@@ -30,6 +30,7 @@ export function SupplierDialog({ open, onOpenChange, productId, productName, org
     reorder_notes: '',
     lead_time_days: '',
     account_number: '',
+    moq: '',
   });
 
   useEffect(() => {
