@@ -1,8 +1,9 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Loader2, Clock } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Clock, ShoppingCart } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { PinnableCard } from '@/components/dashboard/PinnableCard';
@@ -13,11 +14,14 @@ import type { ProductVelocityEntry } from '@/hooks/useProductVelocity';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { format } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 
 interface ReplenishmentTimelineCardProps {
   products: Product[];
   velocityMap: Map<string, ProductVelocityEntry>;
   filterContext?: FilterContext;
+  /** Callback to trigger PO creation for a product */
+  onCreatePO?: (product: Product) => void;
 }
 
 interface ForecastRow {
@@ -28,7 +32,8 @@ interface ForecastRow {
 
 const MAX_BAR_DAYS = 60;
 
-export function ReplenishmentTimelineCard({ products, velocityMap, filterContext }: ReplenishmentTimelineCardProps) {
+export function ReplenishmentTimelineCard({ products, velocityMap, filterContext, onCreatePO }: ReplenishmentTimelineCardProps) {
+  const navigate = useNavigate();
   const rows = useMemo(() => {
     if (!products || !velocityMap) return [];
     const result: ForecastRow[] = [];
@@ -61,7 +66,7 @@ export function ReplenishmentTimelineCard({ products, velocityMap, filterContext
               <div>
                 <div className="flex items-center gap-2">
                   <CardTitle className="font-display text-base tracking-wide">REPLENISHMENT TIMELINE</CardTitle>
-                  <MetricInfoTooltip description="Projected stock-out dates based on weighted sales velocity. Products are sorted by urgency — those running out soonest appear first. Red = stockout within 7 days, amber = within 14 days." />
+                  <MetricInfoTooltip description="Projected stock-out dates based on weighted sales velocity. Products are sorted by urgency — those running out soonest appear first. Red = stockout within 7 days, amber = within 14 days. Click the cart icon to create a purchase order." />
                 </div>
                 <CardDescription className="text-xs">
                   {criticalCount > 0 && <span className="text-red-500">{criticalCount} critical</span>}
@@ -71,11 +76,19 @@ export function ReplenishmentTimelineCard({ products, velocityMap, filterContext
                 </CardDescription>
               </div>
             </div>
-            {filterContext && (
-              <div className="flex items-center gap-2">
-                <AnalyticsFilterBadge locationId={filterContext.locationId} dateRange={filterContext.dateRange} />
-              </div>
-            )}
+            <div className="flex items-center gap-2">
+              {filterContext && <AnalyticsFilterBadge locationId={filterContext.locationId} dateRange={filterContext.dateRange} />}
+              {criticalCount > 0 && (
+                <Button
+                  variant="outline"
+                  size={tokens.button.inline}
+                  className="gap-1.5 text-xs"
+                  onClick={() => navigate('/dashboard/admin/settings?category=retail-products&tab=inventory')}
+                >
+                  <ShoppingCart className="w-3.5 h-3.5" /> Reorder
+                </Button>
+              )}
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -89,6 +102,7 @@ export function ReplenishmentTimelineCard({ products, velocityMap, filterContext
                   : row.forecast.urgency === 'warning'
                   ? '[&>div]:bg-amber-500'
                   : '[&>div]:bg-emerald-500';
+                const isCritical = row.forecast.urgency === 'critical';
 
                 return (
                   <div key={row.product.id} className="flex items-center gap-3">
@@ -115,6 +129,17 @@ export function ReplenishmentTimelineCard({ products, velocityMap, filterContext
                         </p>
                       )}
                     </div>
+                    {isCritical && onCreatePO && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="w-7 h-7 shrink-0"
+                        onClick={() => onCreatePO(row.product)}
+                        title="Create purchase order"
+                      >
+                        <ShoppingCart className="w-3.5 h-3.5 text-red-500" />
+                      </Button>
+                    )}
                   </div>
                 );
               })}

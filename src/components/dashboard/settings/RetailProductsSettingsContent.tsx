@@ -404,6 +404,25 @@ function ProductsTab() {
           <Button size={tokens.button.inline} variant="outline" onClick={handleBulkDuplicate}>
             <Copy className="w-3.5 h-3.5 mr-1" /> Duplicate
           </Button>
+          <Button
+            size={tokens.button.inline}
+            variant="outline"
+            className="gap-1.5"
+            onClick={() => {
+              const ids = Array.from(selectedIds);
+              ids.forEach(id => updateProduct.mutate({
+                id,
+                updates: {
+                  clearance_status: 'marked',
+                  clearance_marked_at: new Date().toISOString(),
+                } as any,
+              }));
+              setSelectedIds(new Set());
+              toast.success(`${ids.length} product(s) marked for clearance`);
+            }}
+          >
+            <Tag className="w-3.5 h-3.5" /> Mark for Clearance
+          </Button>
           <Select value={bulkCategory} onValueChange={handleBulkCategoryAssign}>
             <SelectTrigger className="w-[150px] h-8 text-xs"><SelectValue placeholder="Set Category" /></SelectTrigger>
             <SelectContent>

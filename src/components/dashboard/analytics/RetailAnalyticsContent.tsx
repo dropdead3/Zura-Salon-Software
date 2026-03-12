@@ -605,33 +605,40 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
     return calculateInventoryAlerts(allProducts, data.salesVelocity);
   }, [allProducts, data]);
 
-  // Movement ratings for products
+  // Movement ratings for products — use weighted velocity when available
   const { productMovementRatings, productVelocityChanges } = useMemo(() => {
     if (!data || !allProducts) return { productMovementRatings: new Map<string, ReturnType<typeof getMovementRating>>(), productVelocityChanges: new Map<string, number | null>() };
-    const velocityMap = data.salesVelocity;
-    const allVelocities = (allProducts || []).map(p => velocityMap.get(p.name.toLowerCase().trim()) ?? 0);
+    const flatVelocityMap = data.salesVelocity;
+    // Prefer weighted velocity from useProductVelocity when available
+    const allVelocities = (allProducts || []).map(p => {
+      const nameLower = p.name.toLowerCase().trim();
+      const weightedEntry = velocityMap?.get(nameLower);
+      return weightedEntry?.weightedVelocity ?? flatVelocityMap.get(nameLower) ?? 0;
+    });
     const percentiles = computePercentiles(allVelocities);
     const map = new Map<string, ReturnType<typeof getMovementRating>>();
     const changes = new Map<string, number | null>();
     for (const p of (allProducts || [])) {
       const nameLower = p.name.toLowerCase().trim();
-      const velocity = velocityMap.get(nameLower) ?? 0;
-      // Find days since last sale from deadStock data
+      const weightedEntry = velocityMap?.get(nameLower);
+      const velocity = weightedEntry?.weightedVelocity ?? flatVelocityMap.get(nameLower) ?? 0;
+      // Find days since last sale from deadStock data or velocity hook
       const deadRow = data.deadStock.find(d => d.name.toLowerCase().trim() === nameLower);
-      const daysSinceLastSale = deadRow ? deadRow.daysStale : (velocity > 0 ? 0 : null);
+      const daysSinceLastSale = weightedEntry?.daysSinceLastSale ?? (deadRow ? deadRow.daysStale : (velocity > 0 ? 0 : null));
       const rating = getMovementRating({
-        velocity,
-        totalUnitsSold: 0,
+        velocity: flatVelocityMap.get(nameLower) ?? 0,
+        weightedVelocity: weightedEntry?.weightedVelocity,
+        totalUnitsSold: weightedEntry?.totalUnitsSold ?? 0,
         daysSinceLastSale,
         hasStock: (p.quantity_on_hand ?? 0) > 0,
         velocityPercentile: percentiles.get(velocity) ?? 0,
       });
       map.set(nameLower, rating);
-      // We don't have prior velocity in the analytics hook, so leave null
-      changes.set(nameLower, null);
+      // Use velocity change from weighted hook when available
+      changes.set(nameLower, weightedEntry?.velocityChange ?? null);
     }
     return { productMovementRatings: map, productVelocityChanges: changes };
-  }, [data, allProducts]);
+  }, [data, allProducts, velocityMap]);
 
   // Movement distribution for the chart
   const movementDistribution = useMemo(() => {
