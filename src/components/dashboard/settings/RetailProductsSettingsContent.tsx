@@ -178,6 +178,9 @@ function ProductsTab() {
             ))}
           </div>
         )}
+        <Button variant="outline" size={tokens.button.card} onClick={() => setShowImportWizard(true)} className="gap-1.5">
+          <Upload className="w-4 h-4" /> Import
+        </Button>
         <Button size={tokens.button.card} onClick={() => { setWizardDraftId(undefined); setWizardInitialDraft(undefined); setShowWizard(true); }} className="gap-1.5">
           <Plus className="w-4 h-4" /> Add Product
         </Button>
