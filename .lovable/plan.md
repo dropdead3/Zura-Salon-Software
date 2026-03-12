@@ -1,153 +1,134 @@
 
 
-## Timezone-Safe Scheduling (Implemented)
+# Predictive Backroom — Implementation Design
 
-### Problem
-`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
+## Architecture
 
-### Solution
-- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
-- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
-- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
-
-### Files Updated
-- `ScheduleHeader.tsx` — today button, quick days, isToday checks
-- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
-- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
-- `MonthView.tsx` — today highlight
-- `AgendaView.tsx` — today/tomorrow labels, today border
-- `ScheduleActionBar.tsx` — payment queue timing
-- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
-- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
-- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
-- `useHuddles.ts` — today's huddle query
-
-## Auto-Reorder with Supplier Communication (Implemented)
-
-### What It Does
-Organizations can opt into automatic reorder — when stock dips below threshold, POs are calculated (using MOQ and par levels) and sent directly to the supplier via email.
-
-### Database Changes
-- `products.par_level` (INT, nullable) — desired stock level to reorder up to
-- `product_suppliers.moq` (INT, default 1) — minimum order quantity
-- `inventory_alert_settings.auto_reorder_enabled` (BOOL, default false)
-- `inventory_alert_settings.auto_reorder_mode` (TEXT, default 'to_par') — 'to_par' or 'moq_only'
-- `inventory_alert_settings.max_auto_reorder_value` (NUMERIC, nullable) — daily spend cap
-- `purchase_orders.supplier_confirmed_at` (TIMESTAMPTZ, nullable) — for tracking confirmations
-
-### Quantity Calculation
-```
-deficit = par_level - quantity_on_hand
-order_qty = max(moq, deficit)
-if moq > 1: round up to nearest MOQ multiple
-```
-Fallback: if par_level is null, uses `reorder_level * 2`.
-
-### Files Updated
-- Migration: Added columns to products, product_suppliers, inventory_alert_settings, purchase_orders
-- `check-reorder-levels/index.ts` — auto-send logic with MOQ/par calculation, spend cap, email invocation
-- `AlertSettingsCard.tsx` — auto-reorder toggle, mode selector, spend cap input
-- `useInventoryAlertSettings.ts` — updated interface
-- `useProducts.ts` — added par_level to Product interface
-- `useProductSuppliers.ts` — added moq to ProductSupplier interface
-- `ProductEditDialog.tsx` — added par level field
-- `RetailProductsSettingsContent.tsx` — added par level to product form
-- `SupplierDialog.tsx` — added MOQ field
-
-### Safety Features
-- Spend cap: daily auto-reorder pauses when cumulative PO value exceeds cap
-- Audit trail: auto_reorder logged as stock_movement reason
-- Supplier confirmation tracking via supplier_confirmed_at timestamp
-
-## Product Movement Rating Badges (Implemented)
-
-### What It Does
-Every product gets a dynamic movement rating badge (Best Seller, Popular, Steady, Slow Mover, Stagnant, Dead Weight) computed from 90-day sales velocity data.
-
-### Rating Tiers
-- **Best Seller**: Top 10% velocity AND >0.5 units/day (emerald)
-- **Popular**: Top 25% velocity AND >0.2 units/day (blue)
-- **Steady**: Velocity >0.05/day (muted)
-- **Slow Mover**: Velocity >0 but ≤0.05/day (amber)
-- **Stagnant**: Zero velocity, sold within 180 days (orange)
-- **Dead Weight**: Zero velocity, 180+ days or never sold (red)
-- Products with zero stock excluded from negative ratings
-
-### Files Created
-- `src/lib/productMovementRating.ts` — pure rating logic + badge config
-- `src/hooks/useProductVelocity.ts` — lightweight 90-day POS velocity query
-- `src/components/ui/MovementBadge.tsx` — shared badge component with tooltip
-
-### Files Updated
-- `RetailProductsSettingsContent.tsx` — Movement column + filter dropdown in products table
-- `RetailAnalyticsContent.tsx` — Movement badges on product performance table + Movement Distribution card (donut chart with actionable callouts)
-- `ProductCard.tsx` — Best Seller/Popular badges on public shop cards (positive only)
-- `ProductDetailModal.tsx` — Movement badge with velocity context
-
-## Inventory Intelligence Suite v2 (Implemented)
-
-### 1. Dead Stock Auto-Clearance Pipeline
-- `DeadStockAlertCard.tsx` — Surfaces Dead Weight/Stagnant products not yet in clearance with suggested discount tiers (10%/25%/50% based on idle days)
-- One-click "Mark for Clearance" applies discount and sets clearance_status
-
-### 2. Supplier Lead Time Tracker
-- `usePurchaseOrders.ts` — `useMarkPurchaseOrderReceived` already computes actual delivery days and updates `product_suppliers.avg_delivery_days` via running average
-- `parLevelSuggestion.ts` — Updated to accept supplier-provided lead time instead of hardcoded 7-day default, with bounds clamping
-
-### 3. Inventory Valuation Dashboard Card
-- `InventoryValuationCard.tsx` — Shows total inventory at cost/retail, potential margin %, capital-at-risk (slow/stagnant/dead weight), with donut chart breakdown
-
-### 4. Reorder Approval Queue
-- `ReorderApprovalCard.tsx` — Surfaces draft POs from auto-reorder with one-click approve (→ sent) or reject (→ cancelled)
-
-### 5. Stock Transfer Between Locations
-- Migration: Created `stock_transfers` table with RLS (org member read, org admin manage)
-- `useStockTransfers.ts` — CRUD hooks for stock transfers with stock movement logging
-- `StockTransferDialog.tsx` — Dialog for creating transfers between locations
-- `RetailProductsSettingsContent.tsx` — "Transfer Stock" button added to Inventory tab (visible for multi-location orgs)
-
-## Enhancement 1: Expiry Tracking (Implemented)
-
-### What It Does
-Products can have an optional expiration date (`expires_at`) and per-product alert threshold (`expiry_alert_days`, default 30). The system surfaces expiring inventory with color-coded badges in the product table and an analytics card with auto-clearance suggestions.
-
-### Database Changes
-- `products.expires_at` (DATE, nullable) — expiration date for perishable products
-- `products.expiry_alert_days` (INTEGER, default 30) — days before expiry to trigger alerts
-
-### Expiry Alert Buckets
-- **Expired** (red): past expiration → suggests 50% markdown
-- **Critical** (orange): within alert threshold → suggests 25% markdown
-- **Warning** (amber): within 2× alert threshold → suggests 10% markdown
-
-### Files Created
-- `src/components/dashboard/analytics/ExpiryAlertCard.tsx` — PinnableCard showing expiring products with one-click clearance actions
-
-### Files Updated
-- `src/hooks/useProducts.ts` — Added `expires_at`, `expiry_alert_days` to Product interface; added `expiringOnly` filter
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Expiry date + alert days in product form; color-coded Expiry column in product table
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ExpiryAlertCard into analytics hub
-
-## Enhancement 2: Shrinkage Detection (Implemented)
-
-### What It Does
-Physical stocktake workflow with variance reporting. Staff record actual counts via a Stocktake dialog, and the system compares against expected quantities (system records). A Shrinkage Report card in analytics surfaces products with negative variance (loss) ranked by estimated cost impact.
-
-### Database Changes
-- Created `stock_counts` table with computed `variance` column (counted - expected), RLS policies (org member read/insert, org admin update/delete), and indexes
-
-### Shrinkage Calculation
-```
-variance = counted_quantity - expected_quantity
-shrinkage_units = |variance| when variance < 0
-shrinkage_cost = shrinkage_units × cost_price
+```text
+Upcoming Appointments (phorest_appointments + appointments)
+  → FormulaResolver (reuses SmartMixAssist priority hierarchy)
+  → Per-product demand aggregation
+  → Compare against InventoryProjection + ReplenishmentEngine
+  → Stockout risk alerts + reorder suggestions
+  → Dashboard read model
 ```
 
-### Files Created
-- `src/hooks/useStockCounts.ts` — CRUD hooks for stock counts + `useShrinkageSummary` for aggregated shrinkage data
-- `src/components/dashboard/settings/inventory/StocktakeDialog.tsx` — Full stocktake UI with search, inline count entry, real-time variance display
-- `src/components/dashboard/analytics/ShrinkageReportCard.tsx` — PinnableCard showing products with shrinkage, severity badges, estimated loss
+Predictive Backroom is a **read-only forecasting layer**. It computes demand projections from existing data sources without creating events or mutating state.
 
-### Files Updated
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Added "Stocktake" button to Inventory tab toolbar
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ShrinkageReportCard into analytics hub
+## Data Inputs (all projections, no raw event streams)
+
+| Source | Table | Purpose |
+|---|---|---|
+| Upcoming appointments | `phorest_appointments`, `appointments` | Schedule for next 1-7 days |
+| Client formula history | `client_formula_history` | Priority 1: client's last formula |
+| Service recipe baselines | `service_recipe_baselines` | Priority 3: salon defaults |
+| Inventory state | `inventory_projections` | Current on-hand quantities |
+| Risk projections | `inventory_risk_projections` | Safety stock thresholds |
+| Products | `products` | Product metadata, cost, units |
+
+## Forecast Calculation Model
+
+**Per appointment-service:**
+1. Resolve expected formula using SmartMixAssist priority hierarchy (client last visit → stylist most used → salon recipe baseline)
+2. If no formula found, skip (unmapped service — no chemical demand)
+3. Sum `FormulaLine[]` quantities per product across all services in the forecast window
+
+**Output structure:**
+```typescript
+interface ProductDemandForecast {
+  product_id: string;
+  product_name: string;
+  brand: string | null;
+  unit: string;
+  predicted_usage_1d: number;   // tomorrow
+  predicted_usage_7d: number;   // next 7 days
+  current_on_hand: number;
+  remaining_after_1d: number;
+  remaining_after_7d: number;
+  safety_stock: number;
+  stockout_risk: 'none' | 'low' | 'medium' | 'high' | 'critical';
+  recommended_order_qty: number;
+  appointment_count_1d: number;
+  appointment_count_7d: number;
+}
+```
+
+## Inventory Risk Detection
+
+```text
+remaining = current_on_hand - predicted_usage
+risk =
+  remaining <= 0           → 'critical'
+  remaining < safety_stock → 'high'
+  remaining < 2× safety    → 'medium'
+  remaining < 3× safety    → 'low'
+  else                     → 'none'
+```
+
+Safety stock sourced from `inventory_risk_projections` or computed via `ReplenishmentEngine` defaults.
+
+## Recommended Reorder Logic
+
+When `stockout_risk` is `high` or `critical`, compute reorder quantity using the existing `calculateReplenishment()` engine, substituting `predicted_usage_7d / 7` as the daily usage rate instead of trailing actuals. This gives a forward-looking reorder recommendation.
+
+## Implementation Plan
+
+### 1. Service: `src/lib/backroom/services/predictive-backroom-service.ts`
+
+Core functions:
+- `fetchUpcomingServices(orgId, startDate, endDate)` — Query upcoming appointments with service names, client IDs, staff IDs
+- `resolveExpectedFormulas(services[])` — Reuse SmartMixAssist's `fetchClientLastFormula`, `fetchStylistMostUsed`, `fetchSalonRecipe` functions (extract into shared utility)
+- `aggregateDemandByProduct(formulas[])` — Sum quantities per product_id
+- `evaluateStockoutRisk(demand, projections, riskProjections)` — Compare demand vs inventory
+- `generateForecast(orgId, locationId?)` — Orchestrator returning `ProductDemandForecast[]`
+
+### 2. Shared formula resolution
+
+Extract the formula resolution logic from `smart-mix-assist-service.ts` into a shared module `src/lib/backroom/services/formula-resolver.ts` that both SmartMixAssist and Predictive Backroom can use. This avoids duplicating the 3-priority query logic.
+
+### 3. Hook: `src/hooks/backroom/usePredictiveBackroom.ts`
+
+- `useDemandForecast(locationId?)` — Returns `ProductDemandForecast[]` for the org
+- `useStockoutAlerts(locationId?)` — Filtered to high/critical risk only
+- `staleTime: 5 * 60_000` — Forecast is eventually consistent, 5-min cache acceptable
+
+### 4. UI Components: `src/components/dashboard/backroom/predictive-backroom/`
+
+**`DemandForecastTable.tsx`** — Sortable table showing all products with predicted usage, current stock, remaining, risk badge. Columns: Product, Brand, Usage (1d), Usage (7d), On Hand, Remaining, Risk, Reorder.
+
+**`StockoutAlertCard.tsx`** — Compact alert cards for high/critical risk products. Shows product name, predicted depletion, recommended order. Displayed prominently at top of inventory workspace.
+
+**`PredictiveBackroomSummary.tsx`** — Overview card for owner dashboard: total services forecast, products at risk count, top 3 urgent reorders. Compact format for dashboard embedding.
+
+### 5. Integration points
+
+- **Owner dashboard**: Embed `PredictiveBackroomSummary` widget
+- **Inventory workspace**: Add `StockoutAlertCard` banner + `DemandForecastTable` tab
+- **No database migration needed** — Pure read-only computation from existing tables
+
+## Edge Cases
+
+| Case | Handling |
+|---|---|
+| No formula history for client or service | Skip — product not included in forecast; show "unmapped services" count |
+| Unknown/new service type | Falls through all 3 priorities, excluded from demand |
+| Cancelled appointments | Filter `status NOT IN ('cancelled', 'no_show')` |
+| Same client, multiple services | Each service resolved independently |
+| Product in formula but not in inventory | Show with `current_on_hand: 0`, immediate critical risk |
+| No appointments in window | Return empty forecast with zero demand |
+
+## Performance
+
+- All queries use indexed projection tables (no event replay)
+- Forecast computed once per hook mount, cached 5 minutes
+- Formula resolution batched: fetch all client formulas in one query, all baselines in one query
+- For large salons (50+ appointments/day), batch appointment query with `.limit(500)` and process in chunks
+
+## Build Order
+
+1. Extract shared formula resolver from SmartMixAssist
+2. Build `predictive-backroom-service.ts`
+3. Build `usePredictiveBackroom.ts` hook
+4. Build UI components (table, alerts, summary)
+5. Wire into owner dashboard and inventory workspace
+
