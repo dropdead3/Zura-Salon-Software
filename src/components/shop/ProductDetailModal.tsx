@@ -4,11 +4,14 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Package, AlertTriangle, MessageCircle } from 'lucide-react';
 import { usePublicOrg } from '@/contexts/PublicOrgContext';
+import { MovementBadge } from '@/components/ui/MovementBadge';
+import type { MovementRating } from '@/lib/productMovementRating';
 
 interface ProductDetailModalProps {
   product: Product | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  movementRating?: MovementRating | null;
 }
 
 export function ProductDetailModal({ product, open, onOpenChange }: ProductDetailModalProps) {
