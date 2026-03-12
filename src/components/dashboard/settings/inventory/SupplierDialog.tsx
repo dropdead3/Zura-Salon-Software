@@ -44,6 +44,7 @@ export function SupplierDialog({ open, onOpenChange, productId, productName, org
         reorder_notes: existing.reorder_notes || '',
         lead_time_days: existing.lead_time_days?.toString() || '',
         account_number: existing.account_number || '',
+        moq: (existing as any).moq?.toString() || '1',
       });
     } else if (!isLoading) {
       setForm({
@@ -55,6 +56,7 @@ export function SupplierDialog({ open, onOpenChange, productId, productName, org
         reorder_notes: '',
         lead_time_days: '',
         account_number: '',
+        moq: '1',
       });
     }
   }, [existing, isLoading]);
