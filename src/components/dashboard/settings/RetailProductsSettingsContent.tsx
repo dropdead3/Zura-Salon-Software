@@ -1119,12 +1119,12 @@ function CategoriesTab() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Category</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead className="text-right">Products</TableHead>
-              <TableHead className="text-right">Total Stock</TableHead>
-              <TableHead className="text-right">Inventory Value</TableHead>
-              <TableHead className="w-24" />
+               <TableHead className={tokens.table.columnHeader}>Category</TableHead>
+               <TableHead className={tokens.table.columnHeader}>Type</TableHead>
+               <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Products</TableHead>
+               <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Total Stock</TableHead>
+               <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Inventory Value</TableHead>
+               <TableHead className="w-24" />
             </TableRow>
           </TableHeader>
           <TableBody>
