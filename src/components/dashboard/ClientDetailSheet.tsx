@@ -65,6 +65,7 @@ import { ClientMarketingStatus } from './clients/ClientMarketingStatus';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useClientTransactionHistory } from '@/hooks/useClientTransactionHistory';
 import { TransactionHistoryTimeline } from './TransactionHistoryTimeline';
+import { ClientAffinityBadges } from './clients/ClientAffinityBadges';
 import { toast } from 'sonner';
 
 interface Client {
