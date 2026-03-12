@@ -457,28 +457,28 @@ function ProductsTab() {
                 <TableHead className="w-10">
                   <input type="checkbox" checked={selectedIds.size === (filteredProducts?.length || 0) && (filteredProducts?.length || 0) > 0} onChange={toggleAll} className="rounded border-border" />
                 </TableHead>
-                <TableHead>
+                <TableHead className={tokens.table.columnHeader}>
                   <button type="button" onClick={() => toggleSort('name')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
                     Product <SortIcon field="name" />
                   </button>
                 </TableHead>
-                <TableHead>
+                <TableHead className={tokens.table.columnHeader}>
                   <button type="button" onClick={() => toggleSort('brand')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
                     Brand <SortIcon field="brand" />
                   </button>
                 </TableHead>
-                <TableHead>
+                <TableHead className={tokens.table.columnHeader}>
                   <button type="button" onClick={() => toggleSort('category')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
                     Category <SortIcon field="category" />
                   </button>
                 </TableHead>
-                <TableHead className="w-28">Movement</TableHead>
-                <TableHead className="text-right">
+                <TableHead className={cn(tokens.table.columnHeader, 'w-28')}>Movement</TableHead>
+                <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>
                   <button type="button" onClick={() => toggleSort('retail_price')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors ml-auto">
                     Price <SortIcon field="retail_price" />
                   </button>
                 </TableHead>
-                <TableHead className="text-right">
+                <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>
                   <div className="inline-flex items-center gap-1.5 ml-auto">
                     <button type="button" onClick={() => toggleSort('quantity_on_hand')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
                       Inventory <SortIcon field="quantity_on_hand" />
@@ -486,8 +486,8 @@ function ProductsTab() {
                     <MetricInfoTooltip description="Current stock on hand. Products are flagged as low stock when quantity reaches or falls below the minimum stock level you set." />
                   </div>
                 </TableHead>
-                <TableHead className="w-24">Expiry</TableHead>
-                <TableHead className="text-center w-16">Online</TableHead>
+                <TableHead className={cn(tokens.table.columnHeader, 'w-24')}>Expiry</TableHead>
+                <TableHead className={cn(tokens.table.columnHeader, 'text-center w-16')}>Online</TableHead>
                 <TableHead className="w-20" />
               </TableRow>
             </TableHeader>
