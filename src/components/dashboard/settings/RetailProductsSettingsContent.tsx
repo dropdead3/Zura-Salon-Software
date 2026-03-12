@@ -322,6 +322,13 @@ function ProductsTab() {
       )}
 
       <ProductWizard open={showWizard} onOpenChange={setShowWizard} draftId={wizardDraftId} initialDraft={wizardInitialDraft} />
+      <DataImportWizard
+        open={showImportWizard}
+        onOpenChange={setShowImportWizard}
+        sourceType="csv"
+        dataType="products"
+        organizationId={effectiveOrganization?.id}
+      />
     </div>
   );
 }
