@@ -53,6 +53,7 @@ import { ShrinkageReportCard } from './ShrinkageReportCard';
 import { SeasonalForecastCard } from './SeasonalForecastCard';
 import { MarginErosionCard } from './MarginErosionCard';
 import { AbcClassificationCard } from './AbcClassificationCard';
+import { RebalancingCard } from './RebalancingCard';
 import { useAbcClassification } from '@/hooks/useAbcClassification';
 
 interface RetailAnalyticsContentProps {
