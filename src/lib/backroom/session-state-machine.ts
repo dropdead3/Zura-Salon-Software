@@ -18,6 +18,7 @@ export type MixSessionStatus =
   | 'active'
   | 'pending_reweigh'  // legacy alias → treated as 'awaiting_reweigh'
   | 'awaiting_reweigh'
+  | 'awaiting_stylist_approval'
   | 'completed'
   | 'unresolved_exception'
   | 'cancelled';
