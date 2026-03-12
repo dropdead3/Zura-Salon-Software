@@ -72,6 +72,8 @@ export function MixSessionManager({
   const saveFormula = useSaveFormulaHistory();
   const depleteInventory = useDepleteMixSession();
 
+  const calculateOverage = useCalculateOverageCharge();
+
   // ─── Session Actions ──────────────────────────────
   const handleStartSession = useCallback(() => {
     createSession.mutate({
