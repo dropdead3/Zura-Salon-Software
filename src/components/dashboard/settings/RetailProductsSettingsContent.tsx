@@ -1188,6 +1188,18 @@ function InventoryByLocationTab() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-10">
+                    <Checkbox
+                      checked={products?.length ? selectedInvIds.size === products.length : false}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setSelectedInvIds(new Set(products?.map(p => p.id)));
+                        } else {
+                          setSelectedInvIds(new Set());
+                        }
+                      }}
+                    />
+                  </TableHead>
                   <TableHead>Product</TableHead>
                   <TableHead>Brand</TableHead>
                   <TableHead>Supplier</TableHead>
