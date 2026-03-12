@@ -1224,6 +1224,27 @@ function CategoriesTab() {
   );
 }
 
+// ─── Inventory Coverage Warning Banner ───
+function InventoryCoverageBanner() {
+  const { uncoveredLocations, isLoading } = useLocationCoverageWarnings();
+
+  if (isLoading || uncoveredLocations.length === 0) return null;
+
+  return (
+    <div className="p-4 rounded-lg border border-amber-200 bg-amber-50/50 dark:border-amber-900/50 dark:bg-amber-950/20">
+      <div className="flex items-center gap-2">
+        <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
+        <span className="text-sm font-medium">
+          {uncoveredLocations.length} location{uncoveredLocations.length !== 1 ? 's have' : ' has'} no inventory lead assigned
+        </span>
+      </div>
+      <p className="text-xs text-muted-foreground mt-1 ml-6">
+        Assign a team member below to ensure inventory is managed at every location.
+      </p>
+    </div>
+  );
+}
+
 // ─── Inventory by Location Tab ───
 function InventoryByLocationTab() {
   const { formatCurrency } = useFormatCurrency();
