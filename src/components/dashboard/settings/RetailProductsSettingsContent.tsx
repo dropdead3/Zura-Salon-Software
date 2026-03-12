@@ -55,7 +55,9 @@ import { SupplierDialog } from '@/components/dashboard/settings/inventory/Suppli
 import { PurchaseOrdersPanel } from '@/components/dashboard/settings/inventory/PurchaseOrdersPanel';
 import { BatchReorderDialog } from '@/components/dashboard/settings/inventory/BatchReorderDialog';
 import { AlertSettingsCard } from '@/components/dashboard/settings/inventory/AlertSettingsCard';
+import { InventoryLeadAssignmentCard } from '@/components/dashboard/settings/inventory/InventoryLeadAssignmentCard';
 import { StockMovementHistory } from '@/components/dashboard/settings/inventory/StockMovementHistory';
+import { useLocationCoverageWarnings } from '@/hooks/useLocationInventoryLeads';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useLogStockMovement } from '@/hooks/useStockMovements';
 import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
@@ -1222,6 +1224,27 @@ function CategoriesTab() {
   );
 }
 
+// ─── Inventory Coverage Warning Banner ───
+function InventoryCoverageBanner() {
+  const { uncoveredLocations, isLoading } = useLocationCoverageWarnings();
+
+  if (isLoading || uncoveredLocations.length === 0) return null;
+
+  return (
+    <div className="p-4 rounded-lg border border-amber-200 bg-amber-50/50 dark:border-amber-900/50 dark:bg-amber-950/20">
+      <div className="flex items-center gap-2">
+        <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
+        <span className="text-sm font-medium">
+          {uncoveredLocations.length} location{uncoveredLocations.length !== 1 ? 's have' : ' has'} no inventory lead assigned
+        </span>
+      </div>
+      <p className="text-xs text-muted-foreground mt-1 ml-6">
+        Assign a team member below to ensure inventory is managed at every location.
+      </p>
+    </div>
+  );
+}
+
 // ─── Inventory by Location Tab ───
 function InventoryByLocationTab() {
   const { formatCurrency } = useFormatCurrency();
@@ -1371,8 +1394,14 @@ function InventoryByLocationTab() {
         <PurchaseOrdersPanel />
       ) : (
         <>
+          {/* Coverage Warning Banner */}
+          <InventoryCoverageBanner />
+
           {/* Alert Settings Card */}
           <AlertSettingsCard />
+
+          {/* Inventory Lead Assignment */}
+          <InventoryLeadAssignmentCard />
 
           {/* Inventory Value Summary */}
           {products && products.length > 0 && (
