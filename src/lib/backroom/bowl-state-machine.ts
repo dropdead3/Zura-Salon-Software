@@ -16,7 +16,7 @@ export type MixBowlStatus =
   | 'awaiting_stylist_approval';
 
 const VALID_TRANSITIONS: Record<MixBowlStatus, MixBowlStatus[]> = {
-  open: ['sealed', 'discarded'],
+  open: ['sealed', 'discarded', 'prepared_by_assistant'],
   sealed: ['reweighed', 'discarded'],
   reweighed: [],
   discarded: [],
