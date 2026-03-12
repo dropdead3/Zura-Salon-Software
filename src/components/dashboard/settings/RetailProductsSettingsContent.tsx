@@ -59,6 +59,10 @@ import { StockMovementHistory } from '@/components/dashboard/settings/inventory/
 import { Checkbox } from '@/components/ui/checkbox';
 import { useLogStockMovement } from '@/hooks/useStockMovements';
 import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
+import { useProductVelocity } from '@/hooks/useProductVelocity';
+import { getMovementRating, computePercentiles, MOVEMENT_TIERS, type MovementTier } from '@/lib/productMovementRating';
+import { MovementBadge } from '@/components/ui/MovementBadge';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 // Helper to classify product type — prefer DB column, fall back to regex
 function getProductType(product: Product): string {
   if (product.product_type && product.product_type !== 'Products') return product.product_type;
@@ -112,6 +116,7 @@ function ProductsTab() {
   const [typeFilter, setTypeFilter] = useState('all');
   const [locationFilter, setLocationFilter] = useState('all');
   const [lowStockOnly, setLowStockOnly] = useState(false);
+  const [movementFilter, setMovementFilter] = useState<string>('all');
   const [page, setPage] = useState(0);
   const [sortField, setSortField] = useState<SortField>('name');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
@@ -128,6 +133,7 @@ function ProductsTab() {
   const { data: categories } = useProductCategories();
   const { data: brands } = useProductBrandsList();
   const { data: locations } = useActiveLocations();
+  const { data: velocityMap } = useProductVelocity(locationFilter !== 'all' ? locationFilter : undefined);
   const createProduct = useCreateProduct();
   const updateProduct = useUpdateProduct();
   const bulkToggle = useBulkToggleProducts();
@@ -162,7 +168,40 @@ function ProductsTab() {
     return arr;
   }, [products, sortField, sortDir]);
 
-  const filteredProducts = sortedProducts;
+  // Compute movement ratings for all products
+  const productRatings = useMemo(() => {
+    if (!velocityMap || !products) return new Map<string, ReturnType<typeof getMovementRating>>();
+    const allVelocities = products.map(p => {
+      const entry = velocityMap.get(p.name.toLowerCase().trim());
+      return entry?.velocity ?? 0;
+    });
+    const percentiles = computePercentiles(allVelocities);
+    const map = new Map<string, ReturnType<typeof getMovementRating>>();
+    for (const p of products) {
+      const entry = velocityMap.get(p.name.toLowerCase().trim());
+      const velocity = entry?.velocity ?? 0;
+      const pctRaw = percentiles.get(velocity);
+      const rating = getMovementRating({
+        velocity,
+        totalUnitsSold: entry?.totalUnitsSold ?? 0,
+        daysSinceLastSale: entry?.daysSinceLastSale ?? null,
+        hasStock: (p.quantity_on_hand ?? 0) > 0,
+        velocityPercentile: pctRaw ?? 0,
+      });
+      map.set(p.id, rating);
+    }
+    return map;
+  }, [products, velocityMap]);
+
+  // Apply movement filter
+  const filteredProducts = useMemo(() => {
+    if (movementFilter === 'all') return sortedProducts;
+    return sortedProducts.filter(p => {
+      const rating = productRatings.get(p.id);
+      return rating?.tier === movementFilter;
+    });
+  }, [sortedProducts, movementFilter, productRatings]);
+
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
   const toggleSort = (field: SortField) => {
@@ -320,6 +359,13 @@ function ProductsTab() {
             </SelectContent>
           </Select>
         )}
+        <Select value={movementFilter} onValueChange={(v) => { setMovementFilter(v); setPage(0); }}>
+          <SelectTrigger className="w-[150px] h-9"><SelectValue placeholder="Movement" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Movement</SelectItem>
+            {MOVEMENT_TIERS.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+          </SelectContent>
+        </Select>
         <div className="flex items-center gap-2">
           <Switch checked={lowStockOnly} onCheckedChange={(v) => { setLowStockOnly(v); setPage(0); }} id="low-stock" />
           <Label htmlFor="low-stock" className="text-sm cursor-pointer">Low Stock</Label>
@@ -402,6 +448,7 @@ function ProductsTab() {
                     Category <SortIcon field="category" />
                   </button>
                 </TableHead>
+                <TableHead className="w-28">Movement</TableHead>
                 <TableHead className="text-right">
                   <button type="button" onClick={() => toggleSort('retail_price')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors ml-auto">
                     Price <SortIcon field="retail_price" />
@@ -421,7 +468,7 @@ function ProductsTab() {
             </TableHeader>
             <TableBody>
               {!filteredProducts?.length ? (
-                <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No products found</TableCell></TableRow>
+                <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">No products found</TableCell></TableRow>
               ) : filteredProducts.map(p => {
                 const isLow = p.reorder_level != null && p.quantity_on_hand != null && p.quantity_on_hand <= p.reorder_level;
                 const productType = getProductType(p);
@@ -447,6 +494,14 @@ function ProductsTab() {
                     </TableCell>
                     <TableCell className="py-3 text-sm text-muted-foreground">{p.brand || '—'}</TableCell>
                     <TableCell className="py-3 text-sm text-muted-foreground">{p.category || '—'}</TableCell>
+                    {/* Movement */}
+                    <TableCell className="py-3">
+                      {productRatings.has(p.id) ? (
+                        <MovementBadge rating={productRatings.get(p.id)!} compact />
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
                     {/* Price: Retail / Cost stacked */}
                     <TableCell className="py-3 text-right">
                       <div className="tabular-nums text-sm"><BlurredAmount>{p.retail_price != null ? formatCurrency(p.retail_price) : '—'}</BlurredAmount></div>

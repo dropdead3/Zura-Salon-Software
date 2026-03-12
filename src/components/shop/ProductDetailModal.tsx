@@ -4,14 +4,17 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Package, AlertTriangle, MessageCircle } from 'lucide-react';
 import { usePublicOrg } from '@/contexts/PublicOrgContext';
+import { MovementBadge } from '@/components/ui/MovementBadge';
+import type { MovementRating } from '@/lib/productMovementRating';
 
 interface ProductDetailModalProps {
   product: Product | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  movementRating?: MovementRating | null;
 }
 
-export function ProductDetailModal({ product, open, onOpenChange }: ProductDetailModalProps) {
+export function ProductDetailModal({ product, open, onOpenChange, movementRating }: ProductDetailModalProps) {
   const { organization } = usePublicOrg();
 
   if (!product) return null;
@@ -50,7 +53,10 @@ export function ProductDetailModal({ product, open, onOpenChange }: ProductDetai
 
           {/* Price & availability */}
           <div className="flex items-center justify-between">
-            <p className="text-2xl font-medium text-foreground">${(product.retail_price ?? 0).toFixed(2)}</p>
+            <div className="flex items-center gap-2">
+              <p className="text-2xl font-medium text-foreground">${(product.retail_price ?? 0).toFixed(2)}</p>
+              {movementRating && <MovementBadge rating={movementRating} positiveOnly />}
+            </div>
             {!inStock ? (
               <Badge variant="secondary" className="bg-destructive/10 text-destructive border-0">Out of stock</Badge>
             ) : lowStock ? (

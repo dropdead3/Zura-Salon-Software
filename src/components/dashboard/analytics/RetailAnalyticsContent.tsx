@@ -39,6 +39,8 @@ import { useProducts } from '@/hooks/useProducts';
 import { calculateInventoryAlerts } from '@/hooks/useInventoryAlerts';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useAggregatedRetailGoals } from '@/hooks/useAggregatedRetailGoals';
+import { getMovementRating, computePercentiles, getTierConfig, MOVEMENT_TIERS, type MovementTier } from '@/lib/productMovementRating';
+import { MovementBadge } from '@/components/ui/MovementBadge';
 
 interface RetailAnalyticsContentProps {
   dateFrom: string;
@@ -595,7 +597,57 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
     return calculateInventoryAlerts(allProducts, data.salesVelocity);
   }, [allProducts, data]);
 
-  // Goal progress — prefer aggregated staff commitments, fall back to top-down org goal
+  // Movement ratings for products
+  const productMovementRatings = useMemo(() => {
+    if (!data || !allProducts) return new Map<string, ReturnType<typeof getMovementRating>>();
+    const velocityMap = data.salesVelocity;
+    const allVelocities = (allProducts || []).map(p => velocityMap.get(p.name.toLowerCase().trim()) ?? 0);
+    const percentiles = computePercentiles(allVelocities);
+    const map = new Map<string, ReturnType<typeof getMovementRating>>();
+    for (const p of (allProducts || [])) {
+      const nameLower = p.name.toLowerCase().trim();
+      const velocity = velocityMap.get(nameLower) ?? 0;
+      // Find days since last sale from deadStock data
+      const deadRow = data.deadStock.find(d => d.name.toLowerCase().trim() === nameLower);
+      const daysSinceLastSale = deadRow ? deadRow.daysStale : (velocity > 0 ? 0 : null);
+      const rating = getMovementRating({
+        velocity,
+        totalUnitsSold: 0,
+        daysSinceLastSale,
+        hasStock: (p.quantity_on_hand ?? 0) > 0,
+        velocityPercentile: percentiles.get(velocity) ?? 0,
+      });
+      map.set(nameLower, rating);
+    }
+    return map;
+  }, [data, allProducts]);
+
+  // Movement distribution for the chart
+  const movementDistribution = useMemo(() => {
+    if (productMovementRatings.size === 0) return [];
+    const counts: Record<MovementTier, { count: number; revenue: number }> = {
+      best_seller: { count: 0, revenue: 0 },
+      popular: { count: 0, revenue: 0 },
+      steady: { count: 0, revenue: 0 },
+      slow_mover: { count: 0, revenue: 0 },
+      stagnant: { count: 0, revenue: 0 },
+      dead_weight: { count: 0, revenue: 0 },
+    };
+    for (const [name, rating] of productMovementRatings) {
+      counts[rating.tier].count++;
+      // Find revenue from product performance data
+      const productRow = data?.products.find(p => p.name.toLowerCase().trim() === name);
+      if (productRow) counts[rating.tier].revenue += productRow.revenue;
+    }
+    return MOVEMENT_TIERS.map(t => ({
+      tier: t.value,
+      label: t.label,
+      count: counts[t.value].count,
+      revenue: counts[t.value].revenue,
+      config: getTierConfig(t.value),
+    })).filter(d => d.count > 0);
+  }, [productMovementRatings, data]);
+
   const goalProgress = useMemo(() => {
     if (!data) return null;
     const agg = aggregatedRetailGoals;
@@ -778,9 +830,10 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                           <TableCell>
                             <div className="flex items-center gap-2">
                               <span className="font-medium text-sm">{p.name}</span>
-                              {isBestSeller && (
-                                <Badge variant="outline" className="text-[9px] py-0 px-1.5 text-chart-2 border-chart-2/30">Best Seller</Badge>
-                              )}
+                              {(() => {
+                                const rating = productMovementRatings.get(p.name.toLowerCase().trim());
+                                return rating ? <MovementBadge rating={rating} compact /> : null;
+                              })()}
                             </div>
                           </TableCell>
                           <TableCell className="text-muted-foreground text-sm">{p.brand || '\u2014'}</TableCell>
@@ -950,6 +1003,141 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
       {/* Section 4.7: Inventory Turnover by Brand */}
       {data.brandPerformance.length > 0 && (
         <InventoryTurnoverCard brands={data.brandPerformance} filterContext={filterContext} />
+      )}
+
+      {/* Section 4.8: Movement Distribution */}
+      {movementDistribution.length > 0 && (
+        <PinnableCard elementKey="retail_movement_distribution" elementName="Movement Distribution" category="Analytics Hub - Retail">
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+                    <TrendingUp className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <CardTitle className="font-display text-base tracking-wide">MOVEMENT DISTRIBUTION</CardTitle>
+                      <MetricInfoTooltip description="Classifies every catalog product by sales velocity over the last 90 days. Best Seller = top 10% velocity (>0.5/day), Popular = top 25% (>0.2/day), Steady = regular sales, Slow Mover = barely selling, Stagnant = no recent sales, Dead Weight = never sold or 180+ days stale." />
+                    </div>
+                    <CardDescription className="text-xs">{productMovementRatings.size} products rated by 90-day velocity</CardDescription>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {filterContext && <AnalyticsFilterBadge locationId={filterContext.locationId} dateRange={filterContext.dateRange} />}
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Donut chart */}
+                <div className="h-[220px] flex items-center justify-center">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={movementDistribution}
+                        dataKey="count"
+                        nameKey="label"
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={50}
+                        outerRadius={80}
+                        paddingAngle={0}
+                        stroke="hsl(var(--border) / 0.4)"
+                        strokeWidth={1}
+                      >
+                        {movementDistribution.map((d, i) => {
+                          const colorMap: Record<string, string> = {
+                            best_seller: 'hsl(145, 60%, 45%)',
+                            popular: 'hsl(215, 70%, 55%)',
+                            steady: 'hsl(var(--muted-foreground))',
+                            slow_mover: 'hsl(38, 80%, 50%)',
+                            stagnant: 'hsl(25, 80%, 50%)',
+                            dead_weight: 'hsl(0, 70%, 50%)',
+                          };
+                          return <Cell key={d.tier} fill={colorMap[d.tier] || BAR_COLORS[i % BAR_COLORS.length]} />;
+                        })}
+                      </Pie>
+                      <Tooltip
+                        formatter={(value: number, name: string) => [`${value} products`, name]}
+                        contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Breakdown table */}
+                <div className="space-y-2">
+                  {movementDistribution.map(d => {
+                    const totalProducts = productMovementRatings.size;
+                    const pct = totalProducts > 0 ? Math.round((d.count / totalProducts) * 100) : 0;
+                    return (
+                      <div key={d.tier} className="flex items-center gap-3 py-1.5">
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            'text-[10px] px-2 py-0.5 w-24 justify-center',
+                            d.config.colorClass,
+                            d.config.borderClass,
+                            d.config.bgClass,
+                          )}
+                        >
+                          {d.label}
+                        </Badge>
+                        <div className="flex-1">
+                          <Progress value={pct} className="h-1.5" />
+                        </div>
+                        <span className="text-xs tabular-nums text-muted-foreground w-20 text-right">
+                          {d.count} ({pct}%)
+                        </span>
+                        <span className="text-xs tabular-nums text-muted-foreground w-20 text-right">
+                          <BlurredAmount>{formatCurrencyWhole(d.revenue)}</BlurredAmount>
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Actionable callouts */}
+              {(() => {
+                const deadWeight = movementDistribution.find(d => d.tier === 'dead_weight');
+                const slowMovers = movementDistribution.find(d => d.tier === 'slow_mover');
+                const stagnant = movementDistribution.find(d => d.tier === 'stagnant');
+                const concerns = [deadWeight, stagnant, slowMovers].filter(Boolean);
+                if (concerns.length === 0) return null;
+                return (
+                  <div className="mt-4 pt-4 border-t border-border/50 space-y-2">
+                    {deadWeight && deadWeight.count > 0 && (
+                      <div className="flex items-center gap-2 text-xs">
+                        <AlertTriangle className="w-3.5 h-3.5 text-red-500 shrink-0" />
+                        <span className="text-muted-foreground">
+                          <span className="font-medium text-foreground">{deadWeight.count} Dead Weight</span> product{deadWeight.count !== 1 ? 's' : ''} — consider discontinuing or running a clearance promotion.
+                        </span>
+                      </div>
+                    )}
+                    {(stagnant && stagnant.count > 0) && (
+                      <div className="flex items-center gap-2 text-xs">
+                        <AlertTriangle className="w-3.5 h-3.5 text-orange-500 shrink-0" />
+                        <span className="text-muted-foreground">
+                          <span className="font-medium text-foreground">{stagnant.count} Stagnant</span> product{stagnant.count !== 1 ? 's' : ''} — have stylists actively recommend these during appointments.
+                        </span>
+                      </div>
+                    )}
+                    {(slowMovers && slowMovers.count > 0) && (
+                      <div className="flex items-center gap-2 text-xs">
+                        <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                        <span className="text-muted-foreground">
+                          <span className="font-medium text-foreground">{slowMovers.count} Slow Mover</span> product{slowMovers.count !== 1 ? 's' : ''} — consider bundling or promotional pricing.
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+            </CardContent>
+          </Card>
+        </PinnableCard>
       )}
 
       {/* Section 5: Product Trend Chart */}
