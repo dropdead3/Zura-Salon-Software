@@ -920,6 +920,10 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div><Label className="text-xs">Par Level (Target)</Label><Input type="number" value={form.par_level} onChange={e => setForm(f => ({ ...f, par_level: e.target.value }))} /><p className="text-[11px] text-muted-foreground mt-1">Desired stock level for auto-reorder</p></div>
+            <div><Label className="text-xs">Expiration Date</Label><Input type="date" value={form.expires_at} onChange={e => setForm(f => ({ ...f, expires_at: e.target.value }))} /><p className="text-[11px] text-muted-foreground mt-1">Optional — for perishable products</p></div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label className="text-xs">Expiry Alert (days)</Label><Input type="number" value={form.expiry_alert_days} onChange={e => setForm(f => ({ ...f, expiry_alert_days: e.target.value }))} /><p className="text-[11px] text-muted-foreground mt-1">Days before expiry to start alerting</p></div>
             <div />
           </div>
           <div>
