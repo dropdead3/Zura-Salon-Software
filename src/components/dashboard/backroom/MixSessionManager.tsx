@@ -10,7 +10,7 @@ import { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Plus, Play, CheckCircle2, Trash2, AlertTriangle } from 'lucide-react';
+import { Plus, Play, CheckCircle2, Trash2, AlertTriangle, Send } from 'lucide-react';
 import { BowlCard } from './BowlCard';
 import { SessionSummary } from './SessionSummary';
 import { WasteRecordDialog } from './WasteRecordDialog';
