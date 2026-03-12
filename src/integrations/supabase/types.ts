@@ -1664,6 +1664,101 @@ export type Database = {
           },
         ]
       }
+      backroom_analytics_snapshots: {
+        Row: {
+          actual_depletion: number | null
+          avg_chemical_cost_per_service: number | null
+          avg_session_duration_minutes: number | null
+          bowls_requiring_reweigh: number | null
+          bowls_reweighed: number | null
+          completed_sessions: number | null
+          created_at: string
+          ghost_loss_cost: number | null
+          ghost_loss_qty: number | null
+          id: string
+          location_id: string | null
+          organization_id: string
+          reweigh_compliance_pct: number | null
+          sessions_with_variance: number | null
+          snapshot_date: string
+          staff_metrics: Json | null
+          theoretical_depletion: number | null
+          total_dispensed_qty: number | null
+          total_overage_qty: number | null
+          total_product_cost: number | null
+          total_service_revenue: number | null
+          total_sessions: number | null
+          total_underage_qty: number | null
+          total_waste_qty: number | null
+          waste_by_category: Json | null
+          waste_pct: number | null
+        }
+        Insert: {
+          actual_depletion?: number | null
+          avg_chemical_cost_per_service?: number | null
+          avg_session_duration_minutes?: number | null
+          bowls_requiring_reweigh?: number | null
+          bowls_reweighed?: number | null
+          completed_sessions?: number | null
+          created_at?: string
+          ghost_loss_cost?: number | null
+          ghost_loss_qty?: number | null
+          id?: string
+          location_id?: string | null
+          organization_id: string
+          reweigh_compliance_pct?: number | null
+          sessions_with_variance?: number | null
+          snapshot_date: string
+          staff_metrics?: Json | null
+          theoretical_depletion?: number | null
+          total_dispensed_qty?: number | null
+          total_overage_qty?: number | null
+          total_product_cost?: number | null
+          total_service_revenue?: number | null
+          total_sessions?: number | null
+          total_underage_qty?: number | null
+          total_waste_qty?: number | null
+          waste_by_category?: Json | null
+          waste_pct?: number | null
+        }
+        Update: {
+          actual_depletion?: number | null
+          avg_chemical_cost_per_service?: number | null
+          avg_session_duration_minutes?: number | null
+          bowls_requiring_reweigh?: number | null
+          bowls_reweighed?: number | null
+          completed_sessions?: number | null
+          created_at?: string
+          ghost_loss_cost?: number | null
+          ghost_loss_qty?: number | null
+          id?: string
+          location_id?: string | null
+          organization_id?: string
+          reweigh_compliance_pct?: number | null
+          sessions_with_variance?: number | null
+          snapshot_date?: string
+          staff_metrics?: Json | null
+          theoretical_depletion?: number | null
+          total_dispensed_qty?: number | null
+          total_overage_qty?: number | null
+          total_product_cost?: number | null
+          total_service_revenue?: number | null
+          total_sessions?: number | null
+          total_underage_qty?: number | null
+          total_waste_qty?: number | null
+          waste_by_category?: Json | null
+          waste_pct?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "backroom_analytics_snapshots_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       backroom_devices: {
         Row: {
           connection_type: string
@@ -1717,6 +1812,74 @@ export type Database = {
             columns: ["paired_station_id"]
             isOneToOne: false
             referencedRelation: "backroom_stations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      backroom_exceptions: {
+        Row: {
+          created_at: string
+          description: string | null
+          exception_type: string
+          id: string
+          location_id: string | null
+          metric_value: number | null
+          organization_id: string
+          reference_id: string | null
+          reference_type: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          resolved_notes: string | null
+          severity: string
+          staff_user_id: string | null
+          status: string
+          threshold_value: number | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          exception_type: string
+          id?: string
+          location_id?: string | null
+          metric_value?: number | null
+          organization_id: string
+          reference_id?: string | null
+          reference_type?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          resolved_notes?: string | null
+          severity?: string
+          staff_user_id?: string | null
+          status?: string
+          threshold_value?: number | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          exception_type?: string
+          id?: string
+          location_id?: string | null
+          metric_value?: number | null
+          organization_id?: string
+          reference_id?: string | null
+          reference_type?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          resolved_notes?: string | null
+          severity?: string
+          staff_user_id?: string | null
+          status?: string
+          threshold_value?: number | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "backroom_exceptions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
