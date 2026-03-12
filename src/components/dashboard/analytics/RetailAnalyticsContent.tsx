@@ -553,6 +553,10 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
   const { data: allProducts } = useProducts(locationId ? { locationId } : {});
   // Aggregated staff retail goals
   const { data: aggregatedRetailGoals } = useAggregatedRetailGoals(data?.summary?.totalRevenue ?? 0);
+  // Velocity data for forecasting + weighted ratings
+  const { data: velocityMap } = useProductVelocity(locationId);
+  // Supplier performance
+  const { data: supplierMetrics } = useSupplierPerformance();
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) setSortDir(d => (d === 'desc' ? 'asc' : 'desc'));
