@@ -7003,6 +7003,53 @@ export type Database = {
           },
         ]
       }
+      inventory_alert_settings: {
+        Row: {
+          alert_channels: string[]
+          auto_create_draft_po: boolean
+          created_at: string
+          default_threshold_pct: number
+          enabled: boolean
+          id: string
+          organization_id: string
+          recipient_roles: string[]
+          recipient_user_ids: string[]
+          updated_at: string
+        }
+        Insert: {
+          alert_channels?: string[]
+          auto_create_draft_po?: boolean
+          created_at?: string
+          default_threshold_pct?: number
+          enabled?: boolean
+          id?: string
+          organization_id: string
+          recipient_roles?: string[]
+          recipient_user_ids?: string[]
+          updated_at?: string
+        }
+        Update: {
+          alert_channels?: string[]
+          auto_create_draft_po?: boolean
+          created_at?: string
+          default_threshold_pct?: number
+          enabled?: boolean
+          id?: string
+          organization_id?: string
+          recipient_roles?: string[]
+          recipient_user_ids?: string[]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_alert_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inventory_reorder_queue: {
         Row: {
           created_at: string
@@ -16285,6 +16332,57 @@ export type Database = {
             columns: ["station_id"]
             isOneToOne: false
             referencedRelation: "rental_stations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_movements: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string | null
+          organization_id: string
+          product_id: string
+          quantity_after: number
+          quantity_change: number
+          reason: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          organization_id: string
+          product_id: string
+          quantity_after: number
+          quantity_change: number
+          reason?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          product_id?: string
+          quantity_after?: number
+          quantity_change?: number
+          reason?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_movements_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movements_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
             referencedColumns: ["id"]
           },
         ]
