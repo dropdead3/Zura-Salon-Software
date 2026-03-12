@@ -152,7 +152,7 @@ export function AlertSettingsCard() {
                 </div>
 
                 {/* Recipients */}
-                <div className="space-y-1.5">
+                 <div className="space-y-2">
                   <Label className="text-sm">Recipients</Label>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Users className="w-3.5 h-3.5" />
