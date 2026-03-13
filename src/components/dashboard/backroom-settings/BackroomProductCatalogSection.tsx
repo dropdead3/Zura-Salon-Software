@@ -12,6 +12,8 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, Search, Package } from 'lucide-react';
 import { toast } from 'sonner';
+import { Infotainer } from '@/components/ui/Infotainer';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 
 const DEPLETION_METHODS = [
   { value: 'weighed', label: 'Weighed' },
@@ -102,6 +104,12 @@ export function BackroomProductCatalogSection() {
 
   return (
     <div className="space-y-4">
+      <Infotainer
+        id="backroom-products-guide"
+        title="Products & Supplies"
+        description="Choose which products stylists use at the mixing station. Toggle tracking on, set costs, and pick how each product is measured (weighed, pumped, etc). Do this first — services can't be tracked without products."
+        icon={<Package className="h-4 w-4 text-primary" />}
+      />
       <Card className={tokens.card.wrapper}>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -156,10 +164,15 @@ export function BackroomProductCatalogSection() {
 
           {/* Product rows */}
           <div className="space-y-1">
-            {filtered.length === 0 ? (
+          {filtered.length === 0 ? (
               <div className={tokens.empty.container}>
                 <Package className={tokens.empty.icon} />
-                <p className={tokens.empty.description}>No products match your filters.</p>
+                <h3 className={tokens.empty.heading}>No products found</h3>
+                <p className={tokens.empty.description}>
+                  {showTrackedOnly
+                    ? 'No tracked products yet. Start by toggling on your most-used color products below.'
+                    : 'No products match your filters.'}
+                </p>
               </div>
             ) : (
               filtered.map((product) => (
@@ -184,10 +197,13 @@ function ProductRow({ product, onUpdate }: { product: BackroomProduct; onUpdate:
       product.is_backroom_tracked ? 'border-border bg-card' : 'border-border/40 bg-muted/20'
     )}>
       {/* Toggle */}
-      <Switch
-        checked={product.is_backroom_tracked}
-        onCheckedChange={(checked) => onUpdate({ is_backroom_tracked: checked })}
-      />
+      <div className="flex items-center gap-1">
+        <Switch
+          checked={product.is_backroom_tracked}
+          onCheckedChange={(checked) => onUpdate({ is_backroom_tracked: checked })}
+        />
+        <MetricInfoTooltip description="When on, this product appears in the mixing dashboard and its usage is recorded per appointment." />
+      </div>
 
       {/* Info */}
       <div className="flex-1 min-w-0">
@@ -199,7 +215,10 @@ function ProductRow({ product, onUpdate }: { product: BackroomProduct; onUpdate:
           {product.category && <Badge variant="outline" className="text-[10px] capitalize">{product.category}</Badge>}
           {product.sku && <span className="text-[10px] text-muted-foreground">{product.sku}</span>}
           {!product.cost_price && product.is_backroom_tracked && (
-            <Badge variant="destructive" className="text-[10px]">No cost</Badge>
+            <span className="flex items-center gap-0.5">
+              <Badge variant="destructive" className="text-[10px]">No cost</Badge>
+              <MetricInfoTooltip description="This product has no unit cost set. Add a cost so Zura can calculate margins and overage charges." />
+            </span>
           )}
         </div>
       </div>
@@ -207,22 +226,26 @@ function ProductRow({ product, onUpdate }: { product: BackroomProduct; onUpdate:
       {/* Depletion method */}
       {product.is_backroom_tracked && (
         <div className="flex items-center gap-2 shrink-0">
-          <Select
-            value={product.depletion_method}
-            onValueChange={(v) => onUpdate({ depletion_method: v })}
-          >
-            <SelectTrigger className="w-[120px] h-8 text-xs font-sans">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {DEPLETION_METHODS.map((m) => (
-                <SelectItem key={m.value} value={m.value} className="text-xs">{m.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-0.5">
+            <MetricInfoTooltip description="How this product is measured when used. 'Weighed' uses a scale; 'Per Pump' counts pumps dispensed." />
+            <Select
+              value={product.depletion_method}
+              onValueChange={(v) => onUpdate({ depletion_method: v })}
+            >
+              <SelectTrigger className="w-[120px] h-8 text-xs font-sans">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {DEPLETION_METHODS.map((m) => (
+                  <SelectItem key={m.value} value={m.value} className="text-xs">{m.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
           <div className="flex items-center gap-1">
             <label className="text-[10px] text-muted-foreground">Billable</label>
+            <MetricInfoTooltip description="When on, overage usage of this product can be charged to the client." />
             <Switch
               checked={product.is_billable_to_client}
               onCheckedChange={(v) => onUpdate({ is_billable_to_client: v })}
@@ -232,6 +255,7 @@ function ProductRow({ product, onUpdate }: { product: BackroomProduct; onUpdate:
 
           <div className="flex items-center gap-1">
             <label className="text-[10px] text-muted-foreground">Overage</label>
+            <MetricInfoTooltip description="When on, usage beyond the service allowance triggers an overage charge." />
             <Switch
               checked={product.is_overage_eligible}
               onCheckedChange={(v) => onUpdate({ is_overage_eligible: v })}

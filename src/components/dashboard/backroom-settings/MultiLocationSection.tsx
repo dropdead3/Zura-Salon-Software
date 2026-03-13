@@ -12,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Loader2, Building2, Copy, RotateCcw, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
+import { Infotainer } from '@/components/ui/Infotainer';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 
 export function MultiLocationSection() {
   const { effectiveOrganization } = useOrganizationContext();
@@ -118,6 +120,12 @@ export function MultiLocationSection() {
 
   return (
     <div className="space-y-6">
+      <Infotainer
+        id="backroom-multilocation-guide"
+        title="Multi-Location Settings"
+        description="View and manage setting differences between locations. Copy settings from one location to another or compare side-by-side."
+        icon={<Building2 className="h-4 w-4 text-primary" />}
+      />
       {/* Override Summary */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
@@ -126,7 +134,7 @@ export function MultiLocationSection() {
               <Building2 className={tokens.card.icon} />
             </div>
             <div>
-              <CardTitle className={tokens.card.title}>Multi-Location Settings</CardTitle>
+              <div className="flex items-center gap-2"><CardTitle className={tokens.card.title}>Multi-Location Settings</CardTitle><MetricInfoTooltip description="Shows all backroom settings with their org-level defaults and any location-specific overrides. Reset an override to fall back to the org default." /></div>
               <CardDescription className={tokens.body.muted}>Manage org defaults and location-specific overrides for backroom settings.</CardDescription>
             </div>
           </div>
@@ -175,7 +183,7 @@ export function MultiLocationSection() {
       {/* Copy Settings */}
       <Card>
         <CardHeader>
-          <CardTitle className={tokens.card.title}>Copy Settings</CardTitle>
+          <div className="flex items-center gap-2"><CardTitle className={tokens.card.title}>Copy Settings</CardTitle><MetricInfoTooltip description="Copies all backroom setting overrides from the source location to the target. Existing overrides at the target will be replaced." /></div>
           <CardDescription className={tokens.body.muted}>Duplicate all backroom settings from one location to another.</CardDescription>
         </CardHeader>
         <CardContent>
@@ -207,7 +215,7 @@ export function MultiLocationSection() {
       {/* Compare Mode */}
       <Card>
         <CardHeader>
-          <CardTitle className={tokens.card.title}>Compare Locations</CardTitle>
+          <div className="flex items-center gap-2"><CardTitle className={tokens.card.title}>Compare Locations</CardTitle><MetricInfoTooltip description="Select two locations to see which backroom settings differ. 'Different' means one or both have overrides with non-matching values." /></div>
           <CardDescription className={tokens.body.muted}>See which settings differ between two locations.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

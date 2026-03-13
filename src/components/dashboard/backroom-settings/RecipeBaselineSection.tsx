@@ -11,6 +11,8 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Loader2, BarChart3, Plus, Trash2 } from 'lucide-react';
+import { Infotainer } from '@/components/ui/Infotainer';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 
 export function RecipeBaselineSection() {
   const { effectiveOrganization } = useOrganizationContext();
@@ -51,6 +53,12 @@ export function RecipeBaselineSection() {
 
   return (
     <div className="space-y-4">
+      <Infotainer
+        id="backroom-recipes-guide"
+        title="Recipe Baselines"
+        description="Set the expected product quantities per service — e.g. 'A full highlight uses ~30g lightener + 60ml developer.' Powers Smart Mix Assist suggestions and flags when a stylist uses significantly more or less than expected."
+        icon={<BarChart3 className="h-4 w-4 text-primary" />}
+      />
       <Card className={tokens.card.wrapper}>
         <CardHeader>
           <div className="flex items-center gap-3">
@@ -58,7 +66,10 @@ export function RecipeBaselineSection() {
               <BarChart3 className={tokens.card.icon} />
             </div>
             <div>
-              <CardTitle className={tokens.card.title}>Recipe Baselines</CardTitle>
+              <div className="flex items-center gap-2">
+                <CardTitle className={tokens.card.title}>Recipe Baselines</CardTitle>
+                <MetricInfoTooltip description="The expected amount of each product for a standard application. Zura flags deviations beyond the variance threshold." />
+              </div>
               <CardDescription className={tokens.body.muted}>
                 Define expected product usage per service. Powers Smart Mix Assist and variance detection.
               </CardDescription>
@@ -67,7 +78,11 @@ export function RecipeBaselineSection() {
         </CardHeader>
         <CardContent className="space-y-2">
           {(services || []).length === 0 ? (
-            <p className={tokens.body.muted}>Enable backroom tracking on services first.</p>
+            <div className={tokens.empty.container}>
+              <BarChart3 className={tokens.empty.icon} />
+              <h3 className={tokens.empty.heading}>No tracked services</h3>
+              <p className={tokens.empty.description}>Products → Services → then Baselines. Enable backroom tracking on services first.</p>
+            </div>
           ) : (
             (services || []).map((service) => {
               const count = baselinesByService.get(service.id) || 0;

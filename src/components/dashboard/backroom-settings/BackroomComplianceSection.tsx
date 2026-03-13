@@ -19,6 +19,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { Infotainer } from '@/components/ui/Infotainer';
 import { format, subDays } from 'date-fns';
 import { useBackroomComplianceTracker } from '@/hooks/backroom/useBackroomComplianceTracker';
 import { useEvaluateComplianceLog } from '@/hooks/backroom/useEvaluateComplianceLog';
@@ -76,6 +77,12 @@ export function BackroomComplianceSection() {
 
   return (
     <div className="space-y-6">
+      <Infotainer
+        id="backroom-compliance-guide"
+        title="Backroom Compliance"
+        description="Track whether color/chemical appointments are being properly logged. Shows which stylists are weighing their bowls and which are skipping steps."
+        icon={<ShieldCheck className="h-4 w-4 text-primary" />}
+      />
       {/* Header + Controls */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">

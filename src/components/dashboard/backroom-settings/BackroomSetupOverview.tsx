@@ -7,8 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Loader2, AlertTriangle, CheckCircle2, Info, Package, Wrench, DollarSign, Monitor, BarChart3, Bell, Sparkles } from 'lucide-react';
+import { Loader2, AlertTriangle, CheckCircle2, Info, Package, Wrench, DollarSign, Monitor, BarChart3, Bell, Sparkles, LayoutDashboard } from 'lucide-react';
 import { BackroomSetupWizard } from './BackroomSetupWizard';
+import { Infotainer } from '@/components/ui/Infotainer';
 
 interface Props {
   onNavigate: (section: string) => void;
@@ -63,6 +64,12 @@ export function BackroomSetupOverview({ onNavigate }: Props) {
 
   return (
     <div className="space-y-6">
+      <Infotainer
+        id="backroom-overview-guide"
+        title="Setup Overview"
+        description="This dashboard shows your Backroom configuration progress. Complete each area to unlock full tracking, billing, and compliance features. Use the Setup Wizard for a guided walkthrough, or configure each section individually from the left navigation."
+        icon={<LayoutDashboard className="h-4 w-4 text-primary" />}
+      />
       {/* Wizard launch CTA */}
       {!wizardCompleted && completedCount < checklistItems.length && (
         <Card className={cn(tokens.card.wrapper, 'border-primary/30 bg-primary/5')}>

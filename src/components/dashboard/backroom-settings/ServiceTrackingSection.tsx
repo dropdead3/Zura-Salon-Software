@@ -13,6 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Loader2, Wrench, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { Infotainer } from '@/components/ui/Infotainer';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 
 interface ServiceRow {
   id: string;
@@ -87,6 +89,12 @@ export function ServiceTrackingSection() {
 
   return (
     <div className="space-y-6">
+      <Infotainer
+        id="backroom-services-guide"
+        title="Service Tracking"
+        description="Link your services (e.g. Balayage, Root Touch-Up) to the products they consume. This tells Zura which products to expect when a stylist mixes for that service. Requires products to be tracked first."
+        icon={<Wrench className="h-4 w-4 text-primary" />}
+      />
       {/* Tracked services */}
       <Card className={tokens.card.wrapper}>
         <CardHeader>
@@ -104,7 +112,11 @@ export function ServiceTrackingSection() {
         </CardHeader>
         <CardContent className="space-y-2">
           {tracked.length === 0 ? (
-            <p className={tokens.body.muted}>No services are tracked yet. Enable tracking below.</p>
+            <div className={tokens.empty.container}>
+              <Wrench className={tokens.empty.icon} />
+              <h3 className={tokens.empty.heading}>No services tracked</h3>
+              <p className={tokens.empty.description}>Enable tracking on your color and chemical services below. Make sure you've tracked products first in Products & Supplies.</p>
+            </div>
           ) : (
             tracked.map((service) => (
               <div key={service.id} className="flex items-center gap-4 rounded-lg border border-border p-3">
@@ -119,6 +131,7 @@ export function ServiceTrackingSection() {
                 <div className="flex items-center gap-2 shrink-0">
                   <div className="flex items-center gap-1">
                     <label className="text-[10px] text-muted-foreground whitespace-nowrap">Asst. Prep</label>
+                    <MetricInfoTooltip description="Allows assistants to pre-mix bowls for this service before the stylist arrives." />
                     <Switch
                       checked={service.assistant_prep_allowed}
                       onCheckedChange={(v) => updateService.mutate({ id: service.id, updates: { assistant_prep_allowed: v } })}
@@ -127,20 +140,24 @@ export function ServiceTrackingSection() {
                   </div>
                   <div className="flex items-center gap-1">
                     <label className="text-[10px] text-muted-foreground whitespace-nowrap">Mix Assist</label>
+                    <MetricInfoTooltip description="Enables AI-powered formula suggestions when mixing for this service." />
                     <Switch
                       checked={service.smart_mix_assist_enabled}
                       onCheckedChange={(v) => updateService.mutate({ id: service.id, updates: { smart_mix_assist_enabled: v } })}
                       className="scale-75"
                     />
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setSelectedServiceId(service.id)}
-                    className="text-xs font-sans"
-                  >
-                    Components
-                  </Button>
+                  <div className="flex items-center gap-0.5">
+                    <MetricInfoTooltip description="Map which tracked products are consumed during this service." />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSelectedServiceId(service.id)}
+                      className="text-xs font-sans"
+                    >
+                      Components
+                    </Button>
+                  </div>
                 </div>
               </div>
             ))
@@ -246,24 +263,27 @@ function ComponentMappingDialog({ serviceId, serviceName, orgId, onClose }: {
                       )}
                     </div>
                   </div>
-                  <Select
-                    value={comp.component_role}
-                    onValueChange={(v) => upsertComponent.mutate({
-                      organization_id: orgId,
-                      service_id: serviceId,
-                      product_id: comp.product_id,
-                      component_role: v,
-                    })}
-                  >
-                    <SelectTrigger className="w-[100px] h-7 text-[10px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {['required', 'optional', 'conditional', 'estimated', 'manual'].map((r) => (
-                        <SelectItem key={r} value={r} className="text-xs capitalize">{r}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="flex items-center gap-0.5">
+                    <MetricInfoTooltip description="Required = always used. Optional = sometimes used. Conditional = depends on technique." />
+                    <Select
+                      value={comp.component_role}
+                      onValueChange={(v) => upsertComponent.mutate({
+                        organization_id: orgId,
+                        service_id: serviceId,
+                        product_id: comp.product_id,
+                        component_role: v,
+                      })}
+                    >
+                      <SelectTrigger className="w-[100px] h-7 text-[10px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {['required', 'optional', 'conditional', 'estimated', 'manual'].map((r) => (
+                          <SelectItem key={r} value={r} className="text-xs capitalize">{r}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <Button
                     variant="ghost"
                     size="sm"

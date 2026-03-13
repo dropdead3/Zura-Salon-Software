@@ -10,6 +10,8 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Loader2, Package, Save } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Infotainer } from '@/components/ui/Infotainer';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 
 interface InventoryConfig {
   tracking_enabled: boolean;
@@ -66,6 +68,12 @@ export function InventoryReplenishmentSection() {
 
   return (
     <div className="space-y-6">
+      <Infotainer
+        id="backroom-inventory-guide"
+        title="Inventory & Replenishment"
+        description="Control how Zura monitors stock levels, triggers reorder alerts, and forecasts demand based on upcoming appointments."
+        icon={<Package className="h-4 w-4 text-primary" />}
+      />
       {/* General Inventory Settings */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
@@ -94,12 +102,12 @@ export function InventoryReplenishmentSection() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className={cn(tokens.card.inner, 'p-4')}>
-              <label className={tokens.label.default}>Reorder Cycle (days)</label>
+              <div className="flex items-center gap-1"><label className={tokens.label.default}>Reorder Cycle (days)</label><MetricInfoTooltip description="How often Zura checks if any products need reordering." /></div>
               <p className={cn(tokens.body.muted, 'mb-2')}>How often to evaluate inventory for reordering</p>
               <Input type="number" value={current.reorder_cycle_days} onChange={e => update('reorder_cycle_days', Number(e.target.value))} />
             </div>
             <div className={cn(tokens.card.inner, 'p-4')}>
-              <label className={tokens.label.default}>Default Lead Time (days)</label>
+              <div className="flex items-center gap-1"><label className={tokens.label.default}>Default Lead Time (days)</label><MetricInfoTooltip description="Expected days between placing an order and receiving delivery." /></div>
               <p className={cn(tokens.body.muted, 'mb-2')}>Expected delivery time from suppliers</p>
               <Input type="number" value={current.default_lead_time_days} onChange={e => update('default_lead_time_days', Number(e.target.value))} />
             </div>
@@ -110,7 +118,7 @@ export function InventoryReplenishmentSection() {
             </div>
             <div className={cn(tokens.card.inner, 'p-4 flex items-center justify-between')}>
               <div>
-                <p className={tokens.body.emphasis}>Forecast Participation</p>
+                <div className="flex items-center gap-1"><p className={tokens.body.emphasis}>Forecast Participation</p><MetricInfoTooltip description="Uses upcoming appointment data to predict demand and adjust reorder quantities." /></div>
                 <p className={tokens.body.muted}>Include demand forecasting in reorder calculations</p>
               </div>
               <Switch checked={current.forecast_participation} onCheckedChange={v => update('forecast_participation', v)} />

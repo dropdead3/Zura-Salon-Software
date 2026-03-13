@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Loader2, Sparkles, Save } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Infotainer } from '@/components/ui/Infotainer';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 
 const DEFAULT_DISCLAIMER = 'Smart Mix Assist suggestions are based on historical usage data and recipe baselines. Always verify formulas with your professional judgment before applying.';
 
@@ -67,6 +69,12 @@ export function FormulaAssistanceSection() {
 
   return (
     <div className="space-y-6">
+      <Infotainer
+        id="backroom-formula-guide"
+        title="Formula Assistance"
+        description="Smart Mix Assist suggests formulas based on client history and recipe baselines. Configure the suggestion priority, auto-populate behavior, and the disclaimer shown to staff."
+        icon={<Sparkles className="h-4 w-4 text-primary" />}
+      />
       {/* Smart Mix Assist Toggle */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
@@ -87,7 +95,7 @@ export function FormulaAssistanceSection() {
         <CardContent className="space-y-4">
           <div className={cn(tokens.card.inner, 'p-4 flex items-center justify-between')}>
             <div>
-              <p className={tokens.body.emphasis}>Ratio Lock</p>
+              <div className="flex items-center gap-1"><p className={tokens.body.emphasis}>Ratio Lock</p><MetricInfoTooltip description="When enabled, Smart Mix Assist enforces the same product ratios used in previous formulas, preventing ratio drift between sessions." /></div>
               <p className={tokens.body.muted}>Enforce consistent ratios when suggesting formulas</p>
             </div>
             <Switch
@@ -129,7 +137,7 @@ export function FormulaAssistanceSection() {
           ))}
           <div className={cn(tokens.card.inner, 'p-4 flex items-center justify-between')}>
             <div>
-              <p className={tokens.body.emphasis}>Auto-Populate Formulas</p>
+              <div className="flex items-center gap-1"><p className={tokens.body.emphasis}>Auto-Populate Formulas</p><MetricInfoTooltip description="When a formula match is found (via client history or recipe baseline), automatically fills in the product fields instead of requiring manual entry." /></div>
               <p className={tokens.body.muted}>Automatically fill formula fields when a match is found</p>
             </div>
             <Switch

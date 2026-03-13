@@ -10,6 +10,8 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, Bell, Plus, Trash2 } from 'lucide-react';
+import { Infotainer } from '@/components/ui/Infotainer';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 
 const NOTIFY_ROLE_OPTIONS = ['owner', 'manager', 'inventory_manager', 'front_desk'];
 
@@ -72,6 +74,12 @@ export function AlertsExceptionsSection() {
 
   return (
     <div className="space-y-6">
+      <Infotainer
+        id="backroom-alerts-guide"
+        title="Alerts & Exceptions"
+        description="Set up automatic alerts for operational issues — like a stylist skipping the reweigh step, using 50% more product than expected, or running low on stock."
+        icon={<Bell className="h-4 w-4 text-primary" />}
+      />
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div className="flex items-center gap-3">
@@ -117,7 +125,7 @@ export function AlertsExceptionsSection() {
                   </Select>
                 </div>
                 <div>
-                  <label className={tokens.label.default}>Threshold Value</label>
+                  <div className="flex items-center gap-1"><label className={tokens.label.default}>Threshold Value</label><MetricInfoTooltip description="The numeric trigger point. For 'Missing Reweigh' use count; for 'Excess Usage' use percentage." /></div>
                   <Input type="number" value={form.threshold_value} onChange={e => setForm(f => ({ ...f, threshold_value: Number(e.target.value) }))} className="mt-1" />
                 </div>
                 <div>
@@ -138,10 +146,12 @@ export function AlertsExceptionsSection() {
                 <label className="flex items-center gap-2 text-sm font-sans">
                   <Switch checked={form.creates_exception} onCheckedChange={c => setForm(f => ({ ...f, creates_exception: c }))} />
                   Creates Exception
+                  <MetricInfoTooltip description="Logs an exception report that managers can review in the Control Tower." />
                 </label>
                 <label className="flex items-center gap-2 text-sm font-sans">
                   <Switch checked={form.creates_task} onCheckedChange={c => setForm(f => ({ ...f, creates_task: c }))} />
                   Creates Task
+                  <MetricInfoTooltip description="Automatically creates an operational task assigned to the relevant manager." />
                 </label>
                 <label className="flex items-center gap-2 text-sm font-sans">
                   <Switch checked={form.is_active} onCheckedChange={c => setForm(f => ({ ...f, is_active: c }))} />

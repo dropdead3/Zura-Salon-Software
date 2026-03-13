@@ -11,6 +11,8 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, DollarSign, Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
+import { Infotainer } from '@/components/ui/Infotainer';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 
 function buildSummary(policy: any, buckets: any[]): string {
   if (!buckets.length) {
@@ -81,6 +83,12 @@ export function AllowancesBillingSection() {
 
   return (
     <div className="space-y-6">
+      <Infotainer
+        id="backroom-allowances-guide"
+        title="Allowances & Billing"
+        description="Define how much product is included in each service price and what to charge when a stylist uses more. Example: 30g of color included, $0.50/g overage. Requires services to be tracked first."
+        icon={<DollarSign className="h-4 w-4 text-primary" />}
+      />
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div className="flex items-center gap-3">
@@ -98,7 +106,7 @@ export function AllowancesBillingSection() {
             <div className={tokens.empty.container}>
               <DollarSign className={tokens.empty.icon} />
               <h3 className={tokens.empty.heading}>No allowance policies</h3>
-              <p className={tokens.empty.description}>Allowance policies are created from the Service Tracking section. Map services first, then define allowances here.</p>
+              <p className={tokens.empty.description}>Allowances are created per tracked service. Track services first in Service Tracking, then define billing rules here.</p>
             </div>
           ) : (
             policies.map((policy) => {
@@ -129,15 +137,24 @@ export function AllowancesBillingSection() {
                       {/* Policy summary */}
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                         <div>
-                          <p className={tokens.label.tiny}>Included Qty</p>
+                          <div className="flex items-center gap-1">
+                            <p className={tokens.label.tiny}>Included Qty</p>
+                            <MetricInfoTooltip description="Amount of product included in the service price at no extra charge." />
+                          </div>
                           <p className={tokens.body.emphasis}>{policy.included_allowance_qty} {policy.allowance_unit}</p>
                         </div>
                         <div>
-                          <p className={tokens.label.tiny}>Overage Rate</p>
+                          <div className="flex items-center gap-1">
+                            <p className={tokens.label.tiny}>Overage Rate</p>
+                            <MetricInfoTooltip description="Price charged per unit when usage exceeds the included quantity." />
+                          </div>
                           <p className={tokens.body.emphasis}>${policy.overage_rate} / {policy.overage_rate_type}</p>
                         </div>
                         <div>
-                          <p className={tokens.label.tiny}>Overage Cap</p>
+                          <div className="flex items-center gap-1">
+                            <p className={tokens.label.tiny}>Overage Cap</p>
+                            <MetricInfoTooltip description="Maximum overage charge per service, regardless of how much extra was used." />
+                          </div>
                           <p className={tokens.body.emphasis}>{policy.overage_cap ? `$${policy.overage_cap}` : 'No cap'}</p>
                         </div>
                         <div className="flex gap-2">
@@ -150,7 +167,10 @@ export function AllowancesBillingSection() {
                       {/* Buckets */}
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className={tokens.heading.subsection}>Buckets</span>
+                          <div className="flex items-center gap-1">
+                            <span className={tokens.heading.subsection}>Buckets</span>
+                            <MetricInfoTooltip description="Separate billing tiers within one policy — e.g. one bucket for color, another for lightener." />
+                          </div>
                           <Button variant="outline" size={tokens.button.inline} onClick={() => setShowBucketForm(policy.id)}>
                             <Plus className="w-3 h-3 mr-1" /> Add Bucket
                           </Button>
@@ -176,7 +196,7 @@ export function AllowancesBillingSection() {
                           <div className={cn(tokens.card.innerDeep, 'p-4 space-y-3')}>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                               <div>
-                                <label className={tokens.label.default}>Bucket Name</label>
+                                <div className="flex items-center gap-1"><label className={tokens.label.default}>Bucket Name</label></div>
                                 <Input value={bucketForm.bucket_name} onChange={e => setBucketForm(f => ({ ...f, bucket_name: e.target.value }))} className="mt-1" placeholder="e.g. Color" />
                               </div>
                               <div>
@@ -184,7 +204,7 @@ export function AllowancesBillingSection() {
                                 <Input value={bucketForm.billing_label} onChange={e => setBucketForm(f => ({ ...f, billing_label: e.target.value }))} className="mt-1" placeholder="Label on invoice" />
                               </div>
                               <div>
-                                <label className={tokens.label.default}>Included Quantity</label>
+                                <div className="flex items-center gap-1"><label className={tokens.label.default}>Included Quantity</label><MetricInfoTooltip description="Amount of product included at no extra charge." /></div>
                                 <Input type="number" value={bucketForm.included_quantity} onChange={e => setBucketForm(f => ({ ...f, included_quantity: Number(e.target.value) }))} className="mt-1" />
                               </div>
                               <div>
@@ -200,7 +220,7 @@ export function AllowancesBillingSection() {
                                 </Select>
                               </div>
                               <div>
-                                <label className={tokens.label.default}>Overage Rate ($)</label>
+                                <div className="flex items-center gap-1"><label className={tokens.label.default}>Overage Rate ($)</label><MetricInfoTooltip description="Price charged per unit when usage exceeds the included quantity." /></div>
                                 <Input type="number" step="0.01" value={bucketForm.overage_rate} onChange={e => setBucketForm(f => ({ ...f, overage_rate: Number(e.target.value) }))} className="mt-1" />
                               </div>
                               <div>
@@ -214,11 +234,11 @@ export function AllowancesBillingSection() {
                                 </Select>
                               </div>
                               <div>
-                                <label className={tokens.label.default}>Overage Cap ($, optional)</label>
+                                <div className="flex items-center gap-1"><label className={tokens.label.default}>Overage Cap ($, optional)</label><MetricInfoTooltip description="Maximum overage charge per service, regardless of how much extra was used." /></div>
                                 <Input type="number" step="0.01" value={bucketForm.overage_cap} onChange={e => setBucketForm(f => ({ ...f, overage_cap: e.target.value }))} className="mt-1" placeholder="No cap" />
                               </div>
                               <div>
-                                <label className={tokens.label.default}>Rounding Rule</label>
+                                <div className="flex items-center gap-1"><label className={tokens.label.default}>Rounding Rule</label><MetricInfoTooltip description="How fractional overage amounts are rounded for billing." /></div>
                                 <Select value={bucketForm.rounding_rule} onValueChange={v => setBucketForm(f => ({ ...f, rounding_rule: v }))}>
                                   <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                                   <SelectContent>
@@ -236,6 +256,7 @@ export function AllowancesBillingSection() {
                               </label>
                               <label className="flex items-center gap-2 text-sm">
                                 <Switch checked={bucketForm.requires_manager_override} onCheckedChange={c => setBucketForm(f => ({ ...f, requires_manager_override: c }))} />
+                                <MetricInfoTooltip description="When on, a manager must approve the overage charge before it's applied." />
                                 Manager Override Required
                               </label>
                             </div>

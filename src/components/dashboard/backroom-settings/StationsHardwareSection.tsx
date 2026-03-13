@@ -19,6 +19,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Monitor, Plus, Trash2, Pencil, Wand2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { Infotainer } from '@/components/ui/Infotainer';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { StationHardwareWizard } from './StationHardwareWizard';
 
 const HEALTH_DOT: Record<string, string> = {
@@ -100,6 +102,12 @@ export function StationsHardwareSection() {
 
   return (
     <div className="space-y-6">
+      <Infotainer
+        id="backroom-stations-guide"
+        title="Stations & Hardware"
+        description="Register your physical mixing stations and optionally pair Bluetooth scales. Each station is tied to a location so Zura knows where mixing happens."
+        icon={<Monitor className="h-4 w-4 text-primary" />}
+      />
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div className="flex items-center gap-3">
@@ -144,11 +152,11 @@ export function StationsHardwareSection() {
                   </Select>
                 </div>
                 <div>
-                  <label className={tokens.label.default}>Device ID (optional)</label>
+                  <div className="flex items-center gap-1"><label className={tokens.label.default}>Device ID (optional)</label><MetricInfoTooltip description="Identifier for the tablet or device at this station (e.g. 'tablet-001')." /></div>
                   <Input value={form.assigned_device_id} onChange={(e) => setForm(f => ({ ...f, assigned_device_id: e.target.value }))} placeholder="e.g. tablet-001" className="mt-1" />
                 </div>
                 <div>
-                  <label className={tokens.label.default}>Scale ID (optional)</label>
+                  <div className="flex items-center gap-1"><label className={tokens.label.default}>Scale ID (optional)</label><MetricInfoTooltip description="Identifier for the Bluetooth scale paired to this station." /></div>
                   <Input value={form.assigned_scale_id} onChange={(e) => setForm(f => ({ ...f, assigned_scale_id: e.target.value }))} placeholder="e.g. scale-001" className="mt-1" />
                 </div>
               </div>
@@ -186,6 +194,7 @@ export function StationsHardwareSection() {
                               'absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full ring-2 ring-card',
                               HEALTH_DOT[healthColor]
                             )}
+                            title={healthColor === 'green' ? 'Seen in last hour' : healthColor === 'yellow' ? 'Seen in last 24h' : 'Offline for 24h+'}
                           />
                         )}
                       </div>
