@@ -70,3 +70,50 @@ export function useCreateBackroomStation() {
     },
   });
 }
+
+export function useUpdateBackroomStation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (params: { id: string; station_name?: string; assigned_device_id?: string | null; assigned_scale_id?: string | null; is_active?: boolean }) => {
+      const { id, ...updates } = params;
+      const { data, error } = await supabase
+        .from('backroom_stations')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data as unknown as BackroomStation;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['backroom-stations'] });
+      toast.success('Station updated');
+    },
+    onError: (error) => {
+      toast.error('Failed to update station: ' + error.message);
+    },
+  });
+}
+
+export function useDeleteBackroomStation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (stationId: string) => {
+      const { error } = await supabase
+        .from('backroom_stations')
+        .delete()
+        .eq('id', stationId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['backroom-stations'] });
+      toast.success('Station removed');
+    },
+    onError: (error) => {
+      toast.error('Failed to remove station: ' + error.message);
+    },
+  });
+}

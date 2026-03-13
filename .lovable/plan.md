@@ -1,106 +1,153 @@
 
 
-# Close All Backroom Gaps — Implementation Plan
+## Timezone-Safe Scheduling (Implemented)
 
-## Scope
+### Problem
+`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
 
-Build the 7 remaining placeholder settings sections plus the additional enhancements identified. All database tables already exist (`allowance_buckets`, `backroom_alert_rules`, `backroom_pricing_display_rules`, `backroom_settings`, `backroom_stations`). All existing hooks (`useServiceAllowancePolicies`, `useBackroomStations`, `useInventoryAlertSettings`, `useSmartMixAssist`, `useBackroomSettings`, `useDashboardVisibility`) will be reused. No new migrations needed.
+### Solution
+- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
+- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
+- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
 
-## What Gets Built
+### Files Updated
+- `ScheduleHeader.tsx` — today button, quick days, isToday checks
+- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
+- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
+- `MonthView.tsx` — today highlight
+- `AgendaView.tsx` — today/tomorrow labels, today border
+- `ScheduleActionBar.tsx` — payment queue timing
+- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
+- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
+- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
+- `useHuddles.ts` — today's huddle query
 
-### 1. Allowances & Billing Section
-**Component:** `AllowancesBillingSection.tsx`
-- List all `service_allowance_policies` with inline edit
-- Per-policy: manage `allowance_buckets` (add/edit/delete buckets)
-- Bucket form: name, mapped categories/products, included qty/unit, overage rate/type/cap, billing label, taxable, manager override, min threshold, rounding rule
-- Pricing display rules: manage `backroom_pricing_display_rules` per service (display mode, label, staff/client visibility, auto-insert, waive/edit, tax)
-- Plain-English rule summary (e.g., "Full Highlight includes 180g before overage at $0.40/g")
-- **Hooks:** New `useAllowanceBuckets.ts` (CRUD for `allowance_buckets`), new `usePricingDisplayRules.ts` (CRUD for `backroom_pricing_display_rules`). Reuses existing `useServiceAllowancePolicies`.
+## Auto-Reorder with Supplier Communication (Implemented)
 
-### 2. Stations & Hardware Section
-**Component:** `StationsHardwareSection.tsx`
-- List/create/edit stations via existing `useBackroomStations`
-- Add update/delete mutations (currently only create exists)
-- Fields: station name, location, device ID, scale ID, active toggle
-- Show last seen timestamp
-- **Hook changes:** Add `useUpdateBackroomStation` and `useDeleteBackroomStation` to existing `useBackroomStations.ts`
+### What It Does
+Organizations can opt into automatic reorder — when stock dips below threshold, POs are calculated (using MOQ and par levels) and sent directly to the supplier via email.
 
-### 3. Inventory & Replenishment Section
-**Component:** `InventoryReplenishmentSection.tsx`
-- Org-level inventory settings via `backroom_settings` (key-value): tracking enabled, reorder cycle days, default lead time, forecast participation
-- Per-product overrides: reorder point, safety stock, lead time, min order qty, preferred vendor
-- Location override support via `backroom_settings` with location_id
-- Reuses existing `useBackroomSettings` hook + `useInventoryAlertSettings`
-- Alert threshold config (low stock %, stockout alerts)
+### Database Changes
+- `products.par_level` (INT, nullable) — desired stock level to reorder up to
+- `product_suppliers.moq` (INT, default 1) — minimum order quantity
+- `inventory_alert_settings.auto_reorder_enabled` (BOOL, default false)
+- `inventory_alert_settings.auto_reorder_mode` (TEXT, default 'to_par') — 'to_par' or 'moq_only'
+- `inventory_alert_settings.max_auto_reorder_value` (NUMERIC, nullable) — daily spend cap
+- `purchase_orders.supplier_confirmed_at` (TIMESTAMPTZ, nullable) — for tracking confirmations
 
-### 4. Permissions Section
-**Component:** `BackroomPermissionsSection.tsx`
-- Role × permission matrix using `backroom_settings` (key: `backroom_permissions`, value: JSON permission map)
-- Roles: owner, manager, inventory_manager, front_desk, stylist, assistant, independent_stylist, booth_renter
-- Permissions: view_backroom, mix_bowls, smart_mix_assist, formula_memory, assistant_prep, approve_assistant, view_costs, view_charges, override_charges, waive_overage, edit_inventory, perform_counts, receive_po, resolve_exceptions, configure_settings
-- Checkbox grid with role columns and permission rows
-- Save via `useUpsertBackroomSetting`
-
-### 5. Alerts & Exceptions Section
-**Component:** `AlertsExceptionsSection.tsx`
-- CRUD for `backroom_alert_rules` table
-- Rule types: missing_reweigh, usage_variance, negative_inventory, waste_spike, stockout_risk, profitability, assistant_workflow
-- Per rule: threshold value/unit, severity (info/warning/critical), creates exception, creates task, notify roles, active toggle
-- Location-specific overrides supported via nullable `location_id`
-- **Hook:** New `useBackroomAlertRules.ts`
-
-### 6. Formula Assistance Section
-**Component:** `FormulaAssistanceSection.tsx`
-- Wraps existing `useSmartMixAssistSettings` for enable/disable + ratio lock
-- Disclaimer text configuration via `backroom_settings` (key: `formula_disclaimer`)
-- Default disclaimer text pre-populated
-- Formula recall behavior settings (key: `formula_recall_config`)
-- Suggestion hierarchy config (client history → stylist most recent → recipe baseline)
-- Acknowledgment tracking (already in smart_mix_assist_settings)
-
-### 7. Multi-Location Section
-**Component:** `MultiLocationSection.tsx`
-- Show org defaults vs location overrides side by side
-- List all `backroom_settings` entries, grouped by key, showing which locations have overrides
-- "Copy settings" action: duplicate all settings from one location to another
-- "Reset to org default" action: delete location override
-- Location picker using existing `useLocations` hook
-- Compare mode: select 2 locations, show diff of overridden keys
-
-## File Structure
-
+### Quantity Calculation
 ```
-src/hooks/backroom/
-  useAllowanceBuckets.ts          (new)
-  usePricingDisplayRules.ts       (new)
-  useBackroomAlertRules.ts        (new)
-  useBackroomStations.ts          (extend with update/delete)
+deficit = par_level - quantity_on_hand
+order_qty = max(moq, deficit)
+if moq > 1: round up to nearest MOQ multiple
+```
+Fallback: if par_level is null, uses `reorder_level * 2`.
 
-src/components/dashboard/backroom-settings/
-  AllowancesBillingSection.tsx     (new)
-  StationsHardwareSection.tsx      (new)
-  InventoryReplenishmentSection.tsx (new)
-  BackroomPermissionsSection.tsx   (new)
-  AlertsExceptionsSection.tsx      (new)
-  FormulaAssistanceSection.tsx     (new)
-  MultiLocationSection.tsx         (new)
+### Files Updated
+- Migration: Added columns to products, product_suppliers, inventory_alert_settings, purchase_orders
+- `check-reorder-levels/index.ts` — auto-send logic with MOQ/par calculation, spend cap, email invocation
+- `AlertSettingsCard.tsx` — auto-reorder toggle, mode selector, spend cap input
+- `useInventoryAlertSettings.ts` — updated interface
+- `useProducts.ts` — added par_level to Product interface
+- `useProductSuppliers.ts` — added moq to ProductSupplier interface
+- `ProductEditDialog.tsx` — added par level field
+- `RetailProductsSettingsContent.tsx` — added par level to product form
+- `SupplierDialog.tsx` — added MOQ field
 
-src/pages/dashboard/admin/BackroomSettings.tsx (wire new sections)
+### Safety Features
+- Spend cap: daily auto-reorder pauses when cumulative PO value exceeds cap
+- Audit trail: auto_reorder logged as stock_movement reason
+- Supplier confirmation tracking via supplier_confirmed_at timestamp
+
+## Product Movement Rating Badges (Implemented)
+
+### What It Does
+Every product gets a dynamic movement rating badge (Best Seller, Popular, Steady, Slow Mover, Stagnant, Dead Weight) computed from 90-day sales velocity data.
+
+### Rating Tiers
+- **Best Seller**: Top 10% velocity AND >0.5 units/day (emerald)
+- **Popular**: Top 25% velocity AND >0.2 units/day (blue)
+- **Steady**: Velocity >0.05/day (muted)
+- **Slow Mover**: Velocity >0 but ≤0.05/day (amber)
+- **Stagnant**: Zero velocity, sold within 180 days (orange)
+- **Dead Weight**: Zero velocity, 180+ days or never sold (red)
+- Products with zero stock excluded from negative ratings
+
+### Files Created
+- `src/lib/productMovementRating.ts` — pure rating logic + badge config
+- `src/hooks/useProductVelocity.ts` — lightweight 90-day POS velocity query
+- `src/components/ui/MovementBadge.tsx` — shared badge component with tooltip
+
+### Files Updated
+- `RetailProductsSettingsContent.tsx` — Movement column + filter dropdown in products table
+- `RetailAnalyticsContent.tsx` — Movement badges on product performance table + Movement Distribution card (donut chart with actionable callouts)
+- `ProductCard.tsx` — Best Seller/Popular badges on public shop cards (positive only)
+- `ProductDetailModal.tsx` — Movement badge with velocity context
+
+## Inventory Intelligence Suite v2 (Implemented)
+
+### 1. Dead Stock Auto-Clearance Pipeline
+- `DeadStockAlertCard.tsx` — Surfaces Dead Weight/Stagnant products not yet in clearance with suggested discount tiers (10%/25%/50% based on idle days)
+- One-click "Mark for Clearance" applies discount and sets clearance_status
+
+### 2. Supplier Lead Time Tracker
+- `usePurchaseOrders.ts` — `useMarkPurchaseOrderReceived` already computes actual delivery days and updates `product_suppliers.avg_delivery_days` via running average
+- `parLevelSuggestion.ts` — Updated to accept supplier-provided lead time instead of hardcoded 7-day default, with bounds clamping
+
+### 3. Inventory Valuation Dashboard Card
+- `InventoryValuationCard.tsx` — Shows total inventory at cost/retail, potential margin %, capital-at-risk (slow/stagnant/dead weight), with donut chart breakdown
+
+### 4. Reorder Approval Queue
+- `ReorderApprovalCard.tsx` — Surfaces draft POs from auto-reorder with one-click approve (→ sent) or reject (→ cancelled)
+
+### 5. Stock Transfer Between Locations
+- Migration: Created `stock_transfers` table with RLS (org member read, org admin manage)
+- `useStockTransfers.ts` — CRUD hooks for stock transfers with stock movement logging
+- `StockTransferDialog.tsx` — Dialog for creating transfers between locations
+- `RetailProductsSettingsContent.tsx` — "Transfer Stock" button added to Inventory tab (visible for multi-location orgs)
+
+## Enhancement 1: Expiry Tracking (Implemented)
+
+### What It Does
+Products can have an optional expiration date (`expires_at`) and per-product alert threshold (`expiry_alert_days`, default 30). The system surfaces expiring inventory with color-coded badges in the product table and an analytics card with auto-clearance suggestions.
+
+### Database Changes
+- `products.expires_at` (DATE, nullable) — expiration date for perishable products
+- `products.expiry_alert_days` (INTEGER, default 30) — days before expiry to trigger alerts
+
+### Expiry Alert Buckets
+- **Expired** (red): past expiration → suggests 50% markdown
+- **Critical** (orange): within alert threshold → suggests 25% markdown
+- **Warning** (amber): within 2× alert threshold → suggests 10% markdown
+
+### Files Created
+- `src/components/dashboard/analytics/ExpiryAlertCard.tsx` — PinnableCard showing expiring products with one-click clearance actions
+
+### Files Updated
+- `src/hooks/useProducts.ts` — Added `expires_at`, `expiry_alert_days` to Product interface; added `expiringOnly` filter
+- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Expiry date + alert days in product form; color-coded Expiry column in product table
+- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ExpiryAlertCard into analytics hub
+
+## Enhancement 2: Shrinkage Detection (Implemented)
+
+### What It Does
+Physical stocktake workflow with variance reporting. Staff record actual counts via a Stocktake dialog, and the system compares against expected quantities (system records). A Shrinkage Report card in analytics surfaces products with negative variance (loss) ranked by estimated cost impact.
+
+### Database Changes
+- Created `stock_counts` table with computed `variance` column (counted - expected), RLS policies (org member read/insert, org admin update/delete), and indexes
+
+### Shrinkage Calculation
+```
+variance = counted_quantity - expected_quantity
+shrinkage_units = |variance| when variance < 0
+shrinkage_cost = shrinkage_units × cost_price
 ```
 
-## Build Order
+### Files Created
+- `src/hooks/useStockCounts.ts` — CRUD hooks for stock counts + `useShrinkageSummary` for aggregated shrinkage data
+- `src/components/dashboard/settings/inventory/StocktakeDialog.tsx` — Full stocktake UI with search, inline count entry, real-time variance display
+- `src/components/dashboard/analytics/ShrinkageReportCard.tsx` — PinnableCard showing products with shrinkage, severity badges, estimated loss
 
-1. **Hooks first:** `useAllowanceBuckets`, `usePricingDisplayRules`, `useBackroomAlertRules`, extend `useBackroomStations`
-2. **Simpler sections:** Stations & Hardware, Permissions, Formula Assistance
-3. **Complex sections:** Allowances & Billing, Alerts & Exceptions, Inventory & Replenishment
-4. **Multi-Location** (depends on all others being functional)
-5. **Wire all into BackroomSettings.tsx** (replace ComingSoon placeholders)
-
-## Technical Notes
-
-- All tables + RLS already exist from Phase 1 migration
-- No new migrations required
-- All sections follow the same Card-based layout pattern as existing sections
-- All mutations audit via `log_platform_action` where the hooks already do this
-- Multi-location inheritance uses existing `useBackroomSetting(key, locationId)` with org→location fallback
-
+### Files Updated
+- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Added "Stocktake" button to Inventory tab toolbar
+- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ShrinkageReportCard into analytics hub
