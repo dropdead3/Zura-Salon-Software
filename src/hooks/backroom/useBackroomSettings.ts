@@ -22,8 +22,7 @@ export interface BackroomSetting {
  * and any location overrides. Consumer can resolve inheritance.
  */
 export function useBackroomSettingsAll() {
-  const { effectiveOrganization } = useOrganizationContext();
-  const orgId = effectiveOrganization?.id;
+  const orgId = useBackroomOrgId();
 
   return useQuery({
     queryKey: ['backroom-settings', orgId],
