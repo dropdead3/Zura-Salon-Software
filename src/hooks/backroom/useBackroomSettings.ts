@@ -4,6 +4,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { useBackroomOrgId } from './useBackroomOrgId';
 import { toast } from 'sonner';
 
 export interface BackroomSetting {
