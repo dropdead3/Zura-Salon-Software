@@ -44,7 +44,6 @@ import {
   Receipt,
   Armchair,
   Package,
-  Beaker,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
