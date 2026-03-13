@@ -460,9 +460,11 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
                 </div>
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center h-full py-16 px-6 text-center">
-                <Package className="w-10 h-10 text-muted-foreground/40 mb-3" />
-                <p className="font-sans text-sm text-muted-foreground">
+              <div className="flex flex-col items-center justify-center h-full py-20 px-8 text-center">
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl border border-border/60 bg-muted/40">
+                  <Package className="w-7 h-7 text-muted-foreground/50" />
+                </div>
+                <p className="font-sans text-sm text-muted-foreground max-w-xs">
                   Select a brand from the left to browse their professional supply products.
                 </p>
               </div>
