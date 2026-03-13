@@ -106,7 +106,7 @@ export function AllowancesBillingSection() {
             <div className={tokens.empty.container}>
               <DollarSign className={tokens.empty.icon} />
               <h3 className={tokens.empty.heading}>No allowance policies</h3>
-              <p className={tokens.empty.description}>Allowance policies are created from the Service Tracking section. Map services first, then define allowances here.</p>
+              <p className={tokens.empty.description}>Allowances are created per tracked service. Track services first in Service Tracking, then define billing rules here.</p>
             </div>
           ) : (
             policies.map((policy) => {
