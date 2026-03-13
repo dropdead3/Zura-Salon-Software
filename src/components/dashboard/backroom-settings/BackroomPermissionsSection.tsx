@@ -117,6 +117,12 @@ export function BackroomPermissionsSection() {
 
   return (
     <div className="space-y-6">
+      <Infotainer
+        id="backroom-permissions-guide"
+        title="Backroom Permissions"
+        description="Decide who can do what in Backroom — from mixing bowls to viewing costs to overriding charges. Each column is a role, each row is a capability."
+        icon={<Shield className="h-4 w-4 text-primary" />}
+      />
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div className="flex items-center gap-3">
