@@ -391,7 +391,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
 
           {/* Brand sub-row for selected letter */}
           {activeLetter && !activeBrand && (
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+            <div className="flex flex-wrap items-center gap-2">
               {(brandsByLetter.get(activeLetter) || []).map((brand) => {
                 const allAdded = brandFullyAdded(brand);
                 const inCatalog = brandCatalogCount(brand);
