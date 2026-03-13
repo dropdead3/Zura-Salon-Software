@@ -24,6 +24,7 @@ export function StationsHardwareSection() {
   const deleteStation = useDeleteBackroomStation();
 
   const [showForm, setShowForm] = useState(false);
+  const [showWizard, setShowWizard] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ station_name: '', location_id: '', assigned_device_id: '', assigned_scale_id: '' });
 
