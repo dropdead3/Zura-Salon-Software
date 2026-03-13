@@ -7,7 +7,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { Search, Package, Check, Library, Loader2 } from 'lucide-react';
+import { Search, Package, Check, Library, Loader2, MessageSquarePlus, Send } from 'lucide-react';
+import { PLATFORM_NAME } from '@/lib/brand';
 import {
   SUPPLY_LIBRARY,
   getSupplyBrands,
@@ -42,6 +43,10 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [isAdding, setIsAdding] = useState(false);
+  const [showSuggest, setShowSuggest] = useState(false);
+  const [suggestBrand, setSuggestBrand] = useState('');
+  const [suggestDetails, setSuggestDetails] = useState('');
+  const [isSuggesting, setIsSuggesting] = useState(false);
 
   const brands = useMemo(() => getSupplyBrands(), []);
 
@@ -187,6 +192,41 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
     );
   };
 
+  const handleSuggestBrand = async () => {
+    if (!suggestBrand.trim()) return;
+    setIsSuggesting(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { data: profileData } = await supabase
+        .from('employee_profiles')
+        .select('organization_id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      await supabase.from('platform_feedback' as any).insert({
+        type: 'feature_request',
+        title: `Brand Request: ${suggestBrand.trim()}`,
+        description: suggestDetails.trim() || `Salon would like the brand "${suggestBrand.trim()}" added to the Professional Supply Library.`,
+        category: 'supply_library',
+        submitted_by: user.id,
+        organization_id: profileData?.organization_id || null,
+      });
+
+      toast.success('Brand suggestion submitted', {
+        description: `Thank you — the ${PLATFORM_NAME} team will review your request.`,
+      });
+      setSuggestBrand('');
+      setSuggestDetails('');
+      setShowSuggest(false);
+    } catch (err: any) {
+      toast.error('Failed to submit suggestion', { description: err.message });
+    } finally {
+      setIsSuggesting(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl p-0 gap-0 max-h-[85vh] flex flex-col">
@@ -249,6 +289,55 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
                   </button>
                 );
               })}
+
+              {/* Suggest Missing Brand */}
+              <div className="mt-3 pt-3 border-t border-border/30 px-1">
+                {!showSuggest ? (
+                  <button
+                    onClick={() => setShowSuggest(true)}
+                    className="w-full flex items-center gap-2 px-2 py-2 rounded-lg text-xs font-sans text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+                  >
+                    <MessageSquarePlus className="w-3.5 h-3.5 shrink-0" />
+                    <span>Missing a brand?</span>
+                  </button>
+                ) : (
+                  <div className="space-y-2">
+                    <p className="text-[11px] font-sans text-muted-foreground">Suggest a brand:</p>
+                    <Input
+                      placeholder="Brand name"
+                      value={suggestBrand}
+                      onChange={(e) => setSuggestBrand(e.target.value)}
+                      className="h-8 text-xs font-sans rounded-lg"
+                      autoCapitalize="words"
+                    />
+                    <Input
+                      placeholder="Products (optional)"
+                      value={suggestDetails}
+                      onChange={(e) => setSuggestDetails(e.target.value)}
+                      className="h-8 text-xs font-sans rounded-lg"
+                    />
+                    <div className="flex gap-1.5">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="flex-1 h-7 text-xs font-sans"
+                        onClick={() => { setShowSuggest(false); setSuggestBrand(''); setSuggestDetails(''); }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        size="sm"
+                        className="flex-1 h-7 text-xs font-sans"
+                        disabled={!suggestBrand.trim() || isSuggesting}
+                        onClick={handleSuggestBrand}
+                      >
+                        {isSuggesting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
+                        Send
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </ScrollArea>
 
