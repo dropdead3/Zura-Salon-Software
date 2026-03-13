@@ -193,6 +193,54 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
     );
   };
 
+  const handleAddEntireBrand = async (brand: string) => {
+    setAddingBrand(brand);
+    try {
+      const items = getProductsByBrand(brand);
+      const itemsToInsert: Array<{
+        name: string; brand: string; category: string; product_type: string;
+        is_backroom_tracked: boolean; depletion_method: string; unit_of_measure: string;
+        organization_id: string; is_active: boolean;
+      }> = [];
+
+      items.forEach((item) => {
+        getItemKeys(item).forEach(({ size }) => {
+          if (isExisting(item.brand, item.name, size)) return;
+          itemsToInsert.push({
+            name: sizedName(item.name, size),
+            brand: item.brand,
+            category: item.category,
+            product_type: 'Supplies',
+            is_backroom_tracked: true,
+            depletion_method: item.defaultDepletion,
+            unit_of_measure: item.defaultUnit,
+            organization_id: orgId,
+            is_active: true,
+          });
+        });
+      });
+
+      if (itemsToInsert.length === 0) {
+        toast.info(`All ${brand} products are already in your catalog`);
+        return;
+      }
+
+      const { error } = await supabase.from('products').insert(itemsToInsert);
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ['backroom-product-catalog'] });
+      queryClient.invalidateQueries({ queryKey: ['backroom-setup-health'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+
+      toast.success(`Added ${itemsToInsert.length} ${brand} products to your catalog`);
+      setSelected(new Set());
+    } catch (err: any) {
+      toast.error('Failed to add products: ' + err.message);
+    } finally {
+      setAddingBrand(null);
+    }
+  };
+
   const handleSuggestBrand = async () => {
     if (!suggestBrand.trim()) return;
     setIsSuggesting(true);
