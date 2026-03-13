@@ -125,6 +125,7 @@ export interface IndividualStaffReportData {
   commission: CommissionData;
   teamAverages: TeamAverages;
   multiPeriodTrend: MultiPeriodTrend;
+  backroomCompliance: BackroomCompliance;
 }
 
 // ---------------------------------------------------------------------------
