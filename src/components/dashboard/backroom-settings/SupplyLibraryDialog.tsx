@@ -370,7 +370,7 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
                   </Button>
                 </div>
 
-                <div className="space-y-1">
+                <div className="space-y-2">
                   {brandProducts.map((item) => {
                     const hasSizes = item.sizeOptions && item.sizeOptions.length > 0;
                     const itemKeys = getItemKeys(item);
