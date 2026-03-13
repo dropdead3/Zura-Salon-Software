@@ -152,7 +152,7 @@ export function StationsHardwareSection() {
                   </Select>
                 </div>
                 <div>
-                  <label className={tokens.label.default}>Device ID (optional)</label>
+                  <div className="flex items-center gap-1"><label className={tokens.label.default}>Device ID (optional)</label><MetricInfoTooltip description="Identifier for the tablet or device at this station (e.g. 'tablet-001')." /></div>
                   <Input value={form.assigned_device_id} onChange={(e) => setForm(f => ({ ...f, assigned_device_id: e.target.value }))} placeholder="e.g. tablet-001" className="mt-1" />
                 </div>
                 <div>
