@@ -19,6 +19,13 @@ import { BackroomSetupOverview } from '@/components/dashboard/backroom-settings/
 import { BackroomProductCatalogSection } from '@/components/dashboard/backroom-settings/BackroomProductCatalogSection';
 import { ServiceTrackingSection } from '@/components/dashboard/backroom-settings/ServiceTrackingSection';
 import { RecipeBaselineSection } from '@/components/dashboard/backroom-settings/RecipeBaselineSection';
+import { AllowancesBillingSection } from '@/components/dashboard/backroom-settings/AllowancesBillingSection';
+import { StationsHardwareSection } from '@/components/dashboard/backroom-settings/StationsHardwareSection';
+import { InventoryReplenishmentSection } from '@/components/dashboard/backroom-settings/InventoryReplenishmentSection';
+import { BackroomPermissionsSection } from '@/components/dashboard/backroom-settings/BackroomPermissionsSection';
+import { AlertsExceptionsSection } from '@/components/dashboard/backroom-settings/AlertsExceptionsSection';
+import { FormulaAssistanceSection } from '@/components/dashboard/backroom-settings/FormulaAssistanceSection';
+import { MultiLocationSection } from '@/components/dashboard/backroom-settings/MultiLocationSection';
 
 type BackroomSection =
   | 'overview'
@@ -107,25 +114,16 @@ export default function BackroomSettings() {
             {activeSection === 'products' && <BackroomProductCatalogSection />}
             {activeSection === 'services' && <ServiceTrackingSection />}
             {activeSection === 'recipes' && <RecipeBaselineSection />}
-            {activeSection === 'allowances' && <ComingSoon label="Allowances & Billing" />}
-            {activeSection === 'stations' && <ComingSoon label="Stations & Hardware" />}
-            {activeSection === 'inventory' && <ComingSoon label="Inventory & Replenishment" />}
-            {activeSection === 'permissions' && <ComingSoon label="Permissions" />}
-            {activeSection === 'alerts' && <ComingSoon label="Alerts & Exceptions" />}
-            {activeSection === 'formula' && <ComingSoon label="Formula Assistance" />}
-            {activeSection === 'multi-location' && <ComingSoon label="Multi-Location" />}
+            {activeSection === 'allowances' && <AllowancesBillingSection />}
+            {activeSection === 'stations' && <StationsHardwareSection />}
+            {activeSection === 'inventory' && <InventoryReplenishmentSection />}
+            {activeSection === 'permissions' && <BackroomPermissionsSection />}
+            {activeSection === 'alerts' && <AlertsExceptionsSection />}
+            {activeSection === 'formula' && <FormulaAssistanceSection />}
+            {activeSection === 'multi-location' && <MultiLocationSection />}
           </div>
         </div>
       </div>
     </DashboardLayout>
-  );
-}
-
-function ComingSoon({ label }: { label: string }) {
-  return (
-    <div className={tokens.empty.container}>
-      <div className={tokens.empty.heading}>{label}</div>
-      <p className={tokens.empty.description}>This section will be available in Phase 2.</p>
-    </div>
   );
 }
