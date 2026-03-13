@@ -45,8 +45,7 @@ export function useBackroomSettingsAll() {
  * Resolve a single setting value with location→org fallback.
  */
 export function useBackroomSetting(key: string, locationId?: string | null) {
-  const { effectiveOrganization } = useOrganizationContext();
-  const orgId = effectiveOrganization?.id;
+  const orgId = useBackroomOrgId();
 
   return useQuery({
     queryKey: ['backroom-settings', orgId, key, locationId],

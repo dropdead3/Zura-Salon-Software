@@ -27,8 +27,7 @@ export interface SetupHealthMetrics {
 }
 
 export function useBackroomSetupHealth() {
-  const { effectiveOrganization } = useOrganizationContext();
-  const orgId = effectiveOrganization?.id;
+  const orgId = useBackroomOrgId();
 
   return useQuery({
     queryKey: ['backroom-setup-health', orgId],
