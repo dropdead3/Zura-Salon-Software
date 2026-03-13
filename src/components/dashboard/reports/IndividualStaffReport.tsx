@@ -226,6 +226,8 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
     csv += `New Clients,${data.clientMetrics.newClients},${Math.round(data.teamAverages.newClients)}\n`;
     csv += `Commission Earned,${data.commission.totalCommission},\n`;
     csv += `Experience Score,${data.experienceScore.composite},\n`;
+    csv += `Backroom Compliance,${data.backroomCompliance.complianceRate}%,${data.teamAverages.complianceRate}%\n`;
+    csv += `Color Appointments,${data.backroomCompliance.totalColorAppointments} (${data.backroomCompliance.tracked} tracked),\n`;
     csv += '\nTop Services\nService,Count,Revenue,Avg Price\n';
     data.topServices.forEach(s => { csv += `"${s.name}",${s.count},${s.revenue},${s.avgPrice}\n`; });
     csv += '\nTop Clients\nClient,Visits,Revenue,Avg Ticket,Last Visit,Status\n';
