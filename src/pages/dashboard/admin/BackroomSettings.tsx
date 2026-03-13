@@ -40,7 +40,8 @@ type BackroomSection =
   | 'permissions'
   | 'alerts'
   | 'formula'
-  | 'multi-location';
+  | 'multi-location'
+  | 'compliance';
 
 const sections: { id: BackroomSection; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
