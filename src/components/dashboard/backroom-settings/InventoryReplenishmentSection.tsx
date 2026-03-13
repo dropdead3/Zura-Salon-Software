@@ -68,6 +68,12 @@ export function InventoryReplenishmentSection() {
 
   return (
     <div className="space-y-6">
+      <Infotainer
+        id="backroom-inventory-guide"
+        title="Inventory & Replenishment"
+        description="Control how Zura monitors stock levels, triggers reorder alerts, and forecasts demand based on upcoming appointments."
+        icon={<Package className="h-4 w-4 text-primary" />}
+      />
       {/* General Inventory Settings */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
