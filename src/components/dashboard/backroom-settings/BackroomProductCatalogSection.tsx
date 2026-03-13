@@ -455,9 +455,9 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
               ) : (
                 <>
                   {/* Category & tracked filters */}
-                  <div className="flex flex-wrap items-center gap-3">
+                   <div className="flex flex-wrap items-center gap-3">
                     <Select value={filterCategory} onValueChange={setFilterCategory}>
-                      <SelectTrigger className="w-[180px] font-sans">
+                      <SelectTrigger className="w-full sm:w-[180px] font-sans">
                         <SelectValue placeholder="Category" />
                       </SelectTrigger>
                       <SelectContent>
