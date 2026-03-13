@@ -53,6 +53,24 @@ export function BackroomSetupOverview({ onNavigate }: Props) {
 
   return (
     <div className="space-y-6">
+      {/* Wizard launch CTA */}
+      {!wizardCompleted && completedCount < checklistItems.length && (
+        <Card className={cn(tokens.card.wrapper, 'border-primary/30 bg-primary/5')}>
+          <CardContent className="py-6 flex items-center gap-4">
+            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+              <Sparkles className="w-5 h-5 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className={tokens.body.emphasis}>First time? Use the Setup Wizard</p>
+              <p className={tokens.body.muted}>Walk through product selection, service mapping, allowances, and station setup step by step.</p>
+            </div>
+            <Button onClick={() => setShowWizard(true)} className="font-sans shrink-0">
+              Launch Wizard
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Progress card */}
       <Card className={tokens.card.wrapper}>
         <CardHeader>
