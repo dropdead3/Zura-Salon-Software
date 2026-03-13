@@ -298,39 +298,39 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
                 {!showSuggest ? (
                   <button
                     onClick={() => setShowSuggest(true)}
-                    className="w-full flex items-center gap-2 px-2 py-2 rounded-lg text-xs font-sans text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+                    className="w-full flex items-center gap-2 px-2 py-2.5 rounded-lg text-xs font-sans text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
                   >
                     <MessageSquarePlus className="w-3.5 h-3.5 shrink-0" />
                     <span>Missing a brand?</span>
                   </button>
                 ) : (
-                  <div className="space-y-2">
-                    <p className="text-[11px] font-sans text-muted-foreground">Suggest a brand:</p>
+                  <div className="space-y-2.5 pb-1">
+                    <p className="text-[11px] font-sans font-medium text-muted-foreground">Suggest a brand:</p>
                     <Input
                       placeholder="Brand name"
                       value={suggestBrand}
                       onChange={(e) => setSuggestBrand(e.target.value)}
-                      className="h-8 text-xs font-sans rounded-lg"
+                      className="h-9 text-xs font-sans rounded-lg"
                       autoCapitalize="words"
                     />
                     <Input
                       placeholder="Products (optional)"
                       value={suggestDetails}
                       onChange={(e) => setSuggestDetails(e.target.value)}
-                      className="h-8 text-xs font-sans rounded-lg"
+                      className="h-9 text-xs font-sans rounded-lg"
                     />
-                    <div className="flex gap-1.5">
+                    <div className="flex gap-2">
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="flex-1 h-7 text-xs font-sans"
+                        className="flex-1 h-8 text-xs font-sans"
                         onClick={() => { setShowSuggest(false); setSuggestBrand(''); setSuggestDetails(''); }}
                       >
                         Cancel
                       </Button>
                       <Button
                         size="sm"
-                        className="flex-1 h-7 text-xs font-sans"
+                        className="flex-1 h-8 text-xs font-sans"
                         disabled={!suggestBrand.trim() || isSuggesting}
                         onClick={handleSuggestBrand}
                       >
