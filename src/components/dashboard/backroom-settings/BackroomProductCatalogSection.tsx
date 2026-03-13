@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Search, Package } from 'lucide-react';
+import { Loader2, Search, Package, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { Infotainer } from '@/components/ui/Infotainer';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
@@ -46,7 +46,11 @@ interface BackroomProduct {
   unit_of_measure: string;
 }
 
-export function BackroomProductCatalogSection() {
+interface Props {
+  onNavigate?: (section: string) => void;
+}
+
+export function BackroomProductCatalogSection({ onNavigate }: Props) {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
   const queryClient = useQueryClient();
@@ -81,6 +85,12 @@ export function BackroomProductCatalogSection() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['backroom-product-catalog'] });
       queryClient.invalidateQueries({ queryKey: ['backroom-setup-health'] });
+      toast.success('Product updated', {
+        action: onNavigate ? {
+          label: 'Next: Services →',
+          onClick: () => onNavigate('services'),
+        } : undefined,
+      });
     },
     onError: (error) => {
       toast.error('Failed to update: ' + error.message);
@@ -184,6 +194,15 @@ export function BackroomProductCatalogSection() {
               ))
             )}
           </div>
+
+          {/* Next step hint */}
+          {onNavigate && (products || []).filter(p => p.is_backroom_tracked).length > 0 && (
+            <div className="flex justify-end pt-2 border-t border-border/40">
+              <Button variant="ghost" size="sm" className="text-xs font-sans text-muted-foreground" onClick={() => onNavigate('services')}>
+                Next: Service Tracking <ArrowRight className="w-3 h-3 ml-1" />
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

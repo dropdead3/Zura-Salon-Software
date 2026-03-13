@@ -9,11 +9,59 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Bell, Plus, Trash2 } from 'lucide-react';
+import { Loader2, Bell, Plus, Trash2, Zap } from 'lucide-react';
 import { Infotainer } from '@/components/ui/Infotainer';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { toast } from 'sonner';
 
 const NOTIFY_ROLE_OPTIONS = ['owner', 'manager', 'inventory_manager', 'front_desk'];
+
+const RECOMMENDED_RULES = [
+  {
+    rule_type: 'missing_reweigh',
+    threshold_value: 1,
+    threshold_unit: 'count',
+    severity: 'warning',
+    creates_exception: true,
+    creates_task: false,
+    notify_roles: ['manager'],
+    is_active: true,
+    label: 'Missing Reweigh',
+  },
+  {
+    rule_type: 'usage_variance',
+    threshold_value: 25,
+    threshold_unit: '%',
+    severity: 'warning',
+    creates_exception: true,
+    creates_task: false,
+    notify_roles: ['manager'],
+    is_active: true,
+    label: 'Excess Usage > 25%',
+  },
+  {
+    rule_type: 'stockout_risk',
+    threshold_value: 5,
+    threshold_unit: 'count',
+    severity: 'info',
+    creates_exception: false,
+    creates_task: true,
+    notify_roles: ['inventory_manager', 'manager'],
+    is_active: true,
+    label: 'Low Stock Alert',
+  },
+  {
+    rule_type: 'assistant_workflow',
+    threshold_value: 1,
+    threshold_unit: 'count',
+    severity: 'warning',
+    creates_exception: true,
+    creates_task: false,
+    notify_roles: ['manager'],
+    is_active: true,
+    label: 'No Mix Session for Color Appointment',
+  },
+];
 
 export function AlertsExceptionsSection() {
   const { effectiveOrganization } = useOrganizationContext();
@@ -58,6 +106,32 @@ export function AlertsExceptionsSection() {
     }, { onSuccess: resetForm });
   };
 
+  const handleApplyRecommended = async () => {
+    if (!orgId) return;
+    const existingTypes = new Set((rules || []).map(r => r.rule_type));
+    const toCreate = RECOMMENDED_RULES.filter(r => !existingTypes.has(r.rule_type));
+
+    if (toCreate.length === 0) {
+      toast.info('All recommended rules are already configured.');
+      return;
+    }
+
+    for (const rule of toCreate) {
+      upsertRule.mutate({
+        organization_id: orgId,
+        rule_type: rule.rule_type,
+        threshold_value: rule.threshold_value,
+        threshold_unit: rule.threshold_unit,
+        severity: rule.severity,
+        creates_exception: rule.creates_exception,
+        creates_task: rule.creates_task,
+        notify_roles: rule.notify_roles,
+        is_active: rule.is_active,
+      });
+    }
+    toast.success(`${toCreate.length} recommended rules added.`);
+  };
+
   const severityColor = (s: string) => {
     if (s === 'critical') return 'destructive';
     if (s === 'warning') return 'secondary';
@@ -91,12 +165,20 @@ export function AlertsExceptionsSection() {
               <CardDescription className={tokens.body.muted}>Define rules that trigger alerts and exception reports.</CardDescription>
             </div>
           </div>
-          {!showForm && (
-            <Button size={tokens.button.card} className={tokens.button.cardAction} variant="outline" onClick={() => setShowForm(true)}>
-              <Plus className="w-4 h-4 mr-1.5" />
-              Add Rule
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            {(!rules || rules.length === 0) && (
+              <Button size={tokens.button.card} className={tokens.button.cardAction} variant="default" onClick={handleApplyRecommended}>
+                <Zap className="w-4 h-4 mr-1.5" />
+                Use Recommended
+              </Button>
+            )}
+            {!showForm && (
+              <Button size={tokens.button.card} className={tokens.button.cardAction} variant="outline" onClick={() => setShowForm(true)}>
+                <Plus className="w-4 h-4 mr-1.5" />
+                Add Rule
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="space-y-3">
           {showForm && (
@@ -189,7 +271,11 @@ export function AlertsExceptionsSection() {
             <div className={tokens.empty.container}>
               <Bell className={tokens.empty.icon} />
               <h3 className={tokens.empty.heading}>No alert rules configured</h3>
-              <p className={tokens.empty.description}>Add rules to automatically detect operational issues.</p>
+              <p className={tokens.empty.description}>Add rules to automatically detect operational issues, or use the recommended set to get started quickly.</p>
+              <Button variant="outline" size="sm" className="font-sans mt-2" onClick={handleApplyRecommended}>
+                <Zap className="w-3.5 h-3.5 mr-1.5" />
+                Use Recommended Rules
+              </Button>
             </div>
           ) : (
             rules?.map((rule) => {

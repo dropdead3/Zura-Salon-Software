@@ -15,7 +15,10 @@ import {
   Sparkles,
   Building2,
   ShieldCheck,
+  Lock,
 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useBackroomSetupHealth } from '@/hooks/backroom/useBackroomSetupHealth';
 import { BackroomSetupOverview } from '@/components/dashboard/backroom-settings/BackroomSetupOverview';
 import { BackroomProductCatalogSection } from '@/components/dashboard/backroom-settings/BackroomProductCatalogSection';
 import { ServiceTrackingSection } from '@/components/dashboard/backroom-settings/ServiceTrackingSection';
@@ -43,23 +46,54 @@ type BackroomSection =
   | 'multi-location'
   | 'compliance';
 
-const sections: { id: BackroomSection; label: string; icon: typeof LayoutDashboard }[] = [
-  { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-  { id: 'products', label: 'Products & Supplies', icon: Package },
-  { id: 'services', label: 'Service Tracking', icon: Wrench },
-  { id: 'recipes', label: 'Recipe Baselines', icon: BarChart3 },
-  { id: 'allowances', label: 'Allowances & Billing', icon: DollarSign },
-  { id: 'stations', label: 'Stations & Hardware', icon: Monitor },
-  { id: 'inventory', label: 'Inventory', icon: Package },
-  { id: 'permissions', label: 'Permissions', icon: Shield },
-  { id: 'alerts', label: 'Alerts & Exceptions', icon: Bell },
-  { id: 'formula', label: 'Formula Assistance', icon: Sparkles },
-  { id: 'compliance', label: 'Compliance', icon: ShieldCheck },
-  { id: 'multi-location', label: 'Multi-Location', icon: Building2 },
+interface SectionMeta {
+  id: BackroomSection;
+  label: string;
+  icon: typeof LayoutDashboard;
+  tooltip: string;
+  /** Section IDs that must have data before this section is useful */
+  requires?: BackroomSection[];
+  requiresLabel?: string;
+}
+
+const sections: SectionMeta[] = [
+  { id: 'overview', label: 'Overview', icon: LayoutDashboard, tooltip: 'Dashboard showing overall Backroom configuration progress.' },
+  { id: 'products', label: 'Products & Supplies', icon: Package, tooltip: 'Choose which products are tracked at the mixing station.' },
+  { id: 'services', label: 'Service Tracking', icon: Wrench, tooltip: 'Link services to the products they consume.', requires: ['products'], requiresLabel: 'Products' },
+  { id: 'recipes', label: 'Recipe Baselines', icon: BarChart3, tooltip: 'Expected product quantities per service.', requires: ['products', 'services'], requiresLabel: 'Services' },
+  { id: 'allowances', label: 'Allowances & Billing', icon: DollarSign, tooltip: 'Define included amounts and overage billing rules.', requires: ['products', 'services'], requiresLabel: 'Services' },
+  { id: 'stations', label: 'Stations & Hardware', icon: Monitor, tooltip: 'Register mixing stations and pair scales.' },
+  { id: 'inventory', label: 'Inventory', icon: Package, tooltip: 'Stock monitoring, reorder alerts, and demand forecasting.' },
+  { id: 'permissions', label: 'Permissions', icon: Shield, tooltip: 'Control who can do what in Backroom.' },
+  { id: 'alerts', label: 'Alerts & Exceptions', icon: Bell, tooltip: 'Automatic alerts for operational issues.' },
+  { id: 'formula', label: 'Formula Assistance', icon: Sparkles, tooltip: 'Smart Mix Assist suggestion settings.' },
+  { id: 'compliance', label: 'Compliance', icon: ShieldCheck, tooltip: 'Color/chemical logging compliance tracking.' },
+  { id: 'multi-location', label: 'Multi-Location', icon: Building2, tooltip: 'Compare and copy settings between locations.' },
 ];
+
+/** Map section IDs to health-check keys for completion status */
+function getSectionStatus(sectionId: BackroomSection, health: ReturnType<typeof useBackroomSetupHealth>['data']): 'done' | 'warning' | 'none' {
+  if (!health) return 'none';
+  switch (sectionId) {
+    case 'products': return health.trackedProducts > 0 ? 'done' : 'none';
+    case 'services': return health.trackedServices > 0 ? 'done' : 'none';
+    case 'recipes': return health.recipesConfigured > 0 ? 'done' : 'none';
+    case 'allowances': return health.allowancePolicies > 0 ? 'done' : 'none';
+    case 'stations': return health.stationsConfigured > 0 ? 'done' : 'none';
+    case 'alerts': return health.alertRulesConfigured > 0 ? 'done' : 'none';
+    default: return 'none';
+  }
+}
+
+function isPrereqMet(section: SectionMeta, health: ReturnType<typeof useBackroomSetupHealth>['data']): boolean {
+  if (!section.requires || !health) return true;
+  return section.requires.every(req => getSectionStatus(req, health) === 'done');
+}
 
 export default function BackroomSettings() {
   const [activeSection, setActiveSection] = useState<BackroomSection>('overview');
+  const { data: health } = useBackroomSetupHealth();
+
   const handleNavigate = useCallback((section: string) => {
     setActiveSection(section as BackroomSection);
   }, []);
@@ -76,27 +110,50 @@ export default function BackroomSettings() {
         <div className="flex gap-6">
           {/* Sidebar nav */}
           <nav className="w-56 shrink-0 hidden lg:block">
-            <div className="space-y-0.5 sticky top-24">
-              {sections.map((s) => {
-                const Icon = s.icon;
-                const isActive = activeSection === s.id;
-                return (
-                  <button
-                    key={s.id}
-                    onClick={() => setActiveSection(s.id)}
-                    className={cn(
-                      'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-sans transition-colors text-left',
-                      isActive
-                        ? 'bg-muted text-foreground font-medium'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-                    )}
-                  >
-                    <Icon className="w-4 h-4 shrink-0" />
-                    {s.label}
-                  </button>
-                );
-              })}
-            </div>
+            <TooltipProvider delayDuration={300}>
+              <div className="space-y-0.5 sticky top-24">
+                {sections.map((s) => {
+                  const Icon = s.icon;
+                  const isActive = activeSection === s.id;
+                  const status = getSectionStatus(s.id, health);
+                  const prereqOk = isPrereqMet(s, health);
+
+                  return (
+                    <Tooltip key={s.id}>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={() => setActiveSection(s.id)}
+                          className={cn(
+                            'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-sans transition-colors text-left',
+                            isActive
+                              ? 'bg-muted text-foreground font-medium'
+                              : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
+                            !prereqOk && !isActive && 'opacity-60'
+                          )}
+                        >
+                          {!prereqOk ? (
+                            <Lock className="w-4 h-4 shrink-0 text-muted-foreground/60" />
+                          ) : (
+                            <Icon className="w-4 h-4 shrink-0" />
+                          )}
+                          <span className="flex-1 truncate">{s.label}</span>
+                          {/* Completion dot */}
+                          {status === 'done' && (
+                            <span className="w-2 h-2 rounded-full bg-primary shrink-0" />
+                          )}
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="right" className="max-w-[220px]">
+                        <p className="text-xs font-sans">{s.tooltip}</p>
+                        {!prereqOk && s.requiresLabel && (
+                          <p className="text-xs text-muted-foreground mt-1">Requires {s.requiresLabel} first</p>
+                        )}
+                      </TooltipContent>
+                    </Tooltip>
+                  );
+                })}
+              </div>
+            </TooltipProvider>
           </nav>
 
           {/* Mobile section selector */}
@@ -115,11 +172,11 @@ export default function BackroomSettings() {
           {/* Content area */}
           <div className="flex-1 min-w-0">
             {activeSection === 'overview' && <BackroomSetupOverview onNavigate={handleNavigate} />}
-            {activeSection === 'products' && <BackroomProductCatalogSection />}
-            {activeSection === 'services' && <ServiceTrackingSection />}
-            {activeSection === 'recipes' && <RecipeBaselineSection />}
-            {activeSection === 'allowances' && <AllowancesBillingSection />}
-            {activeSection === 'stations' && <StationsHardwareSection />}
+            {activeSection === 'products' && <BackroomProductCatalogSection onNavigate={handleNavigate} />}
+            {activeSection === 'services' && <ServiceTrackingSection onNavigate={handleNavigate} />}
+            {activeSection === 'recipes' && <RecipeBaselineSection onNavigate={handleNavigate} />}
+            {activeSection === 'allowances' && <AllowancesBillingSection onNavigate={handleNavigate} />}
+            {activeSection === 'stations' && <StationsHardwareSection onNavigate={handleNavigate} />}
             {activeSection === 'inventory' && <InventoryReplenishmentSection />}
             {activeSection === 'permissions' && <BackroomPermissionsSection />}
             {activeSection === 'alerts' && <AlertsExceptionsSection />}

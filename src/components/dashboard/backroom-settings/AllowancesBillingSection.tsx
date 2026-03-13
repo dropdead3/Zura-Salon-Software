@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, DollarSign, Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
+import { Loader2, DollarSign, Plus, Trash2, ChevronDown, ChevronRight, ArrowRight } from 'lucide-react';
 import { Infotainer } from '@/components/ui/Infotainer';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 
@@ -23,7 +23,11 @@ function buildSummary(policy: any, buckets: any[]): string {
   ).join(' · ');
 }
 
-export function AllowancesBillingSection() {
+interface Props {
+  onNavigate?: (section: string) => void;
+}
+
+export function AllowancesBillingSection({ onNavigate }: Props) {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
   const { data: policies, isLoading } = useServiceAllowancePolicies();
@@ -107,173 +111,187 @@ export function AllowancesBillingSection() {
               <DollarSign className={tokens.empty.icon} />
               <h3 className={tokens.empty.heading}>No allowance policies</h3>
               <p className={tokens.empty.description}>Allowances are created per tracked service. Track services first in Service Tracking, then define billing rules here.</p>
+              {onNavigate && (
+                <Button variant="outline" size="sm" className="font-sans mt-2" onClick={() => onNavigate('services')}>
+                  Go to Service Tracking
+                </Button>
+              )}
             </div>
           ) : (
-            policies.map((policy) => {
-              const buckets = (allBuckets || []).filter(b => b.policy_id === policy.id);
-              const isExpanded = expandedPolicy === policy.id;
+            <>
+              {policies.map((policy) => {
+                const buckets = (allBuckets || []).filter(b => b.policy_id === policy.id);
+                const isExpanded = expandedPolicy === policy.id;
 
-              return (
-                <div key={policy.id} className={cn(tokens.card.inner, 'overflow-hidden')}>
-                  <button
-                    onClick={() => setExpandedPolicy(isExpanded ? null : policy.id)}
-                    className="w-full p-4 flex items-center justify-between text-left"
-                  >
-                    <div className="flex-1">
+                return (
+                  <div key={policy.id} className={cn(tokens.card.inner, 'overflow-hidden')}>
+                    <button
+                      onClick={() => setExpandedPolicy(isExpanded ? null : policy.id)}
+                      className="w-full p-4 flex items-center justify-between text-left"
+                    >
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          {isExpanded ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+                          <p className={tokens.body.emphasis}>Service: {policy.service_id.slice(0, 8)}…</p>
+                          <Badge variant={policy.is_active ? 'default' : 'secondary'}>{policy.is_active ? 'Active' : 'Inactive'}</Badge>
+                        </div>
+                        <p className={cn(tokens.body.muted, 'ml-6 mt-1')}>{buildSummary(policy, buckets)}</p>
+                      </div>
                       <div className="flex items-center gap-2">
-                        {isExpanded ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
-                        <p className={tokens.body.emphasis}>Service: {policy.service_id.slice(0, 8)}…</p>
-                        <Badge variant={policy.is_active ? 'default' : 'secondary'}>{policy.is_active ? 'Active' : 'Inactive'}</Badge>
+                        <span className={tokens.body.muted}>{buckets.length} bucket{buckets.length !== 1 ? 's' : ''}</span>
                       </div>
-                      <p className={cn(tokens.body.muted, 'ml-6 mt-1')}>{buildSummary(policy, buckets)}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className={tokens.body.muted}>{buckets.length} bucket{buckets.length !== 1 ? 's' : ''}</span>
-                    </div>
-                  </button>
+                    </button>
 
-                  {isExpanded && (
-                    <div className="border-t border-border/50 p-4 space-y-3">
-                      {/* Policy summary */}
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        <div>
-                          <div className="flex items-center gap-1">
-                            <p className={tokens.label.tiny}>Included Qty</p>
-                            <MetricInfoTooltip description="Amount of product included in the service price at no extra charge." />
-                          </div>
-                          <p className={tokens.body.emphasis}>{policy.included_allowance_qty} {policy.allowance_unit}</p>
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-1">
-                            <p className={tokens.label.tiny}>Overage Rate</p>
-                            <MetricInfoTooltip description="Price charged per unit when usage exceeds the included quantity." />
-                          </div>
-                          <p className={tokens.body.emphasis}>${policy.overage_rate} / {policy.overage_rate_type}</p>
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-1">
-                            <p className={tokens.label.tiny}>Overage Cap</p>
-                            <MetricInfoTooltip description="Maximum overage charge per service, regardless of how much extra was used." />
-                          </div>
-                          <p className={tokens.body.emphasis}>{policy.overage_cap ? `$${policy.overage_cap}` : 'No cap'}</p>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button variant="destructive" size={tokens.button.inline} onClick={() => deletePolicy.mutate(policy.id)}>
-                            <Trash2 className="w-3 h-3 mr-1" /> Remove
-                          </Button>
-                        </div>
-                      </div>
-
-                      {/* Buckets */}
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-1">
-                            <span className={tokens.heading.subsection}>Buckets</span>
-                            <MetricInfoTooltip description="Separate billing tiers within one policy — e.g. one bucket for color, another for lightener." />
-                          </div>
-                          <Button variant="outline" size={tokens.button.inline} onClick={() => setShowBucketForm(policy.id)}>
-                            <Plus className="w-3 h-3 mr-1" /> Add Bucket
-                          </Button>
-                        </div>
-
-                        {buckets.map(bucket => (
-                          <div key={bucket.id} className={cn(tokens.card.innerDeep, 'p-3 flex items-center justify-between')}>
-                            <div>
-                              <p className={tokens.body.emphasis}>{bucket.bucket_name}</p>
-                              <p className={tokens.body.muted}>
-                                {bucket.included_quantity}{bucket.included_unit} included · ${bucket.overage_rate}/{bucket.overage_rate_type}
-                                {bucket.is_taxable && ' · Taxable'}
-                                {bucket.requires_manager_override && ' · Manager override required'}
-                              </p>
+                    {isExpanded && (
+                      <div className="border-t border-border/50 p-4 space-y-3">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                          <div>
+                            <div className="flex items-center gap-1">
+                              <p className={tokens.label.tiny}>Included Qty</p>
+                              <MetricInfoTooltip description="Amount of product included in the service price at no extra charge." />
                             </div>
-                            <Button variant="ghost" size="icon" onClick={() => deleteBucket.mutate(bucket.id)}>
-                              <Trash2 className="w-4 h-4 text-destructive" />
+                            <p className={tokens.body.emphasis}>{policy.included_allowance_qty} {policy.allowance_unit}</p>
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-1">
+                              <p className={tokens.label.tiny}>Overage Rate</p>
+                              <MetricInfoTooltip description="Price charged per unit when usage exceeds the included quantity." />
+                            </div>
+                            <p className={tokens.body.emphasis}>${policy.overage_rate} / {policy.overage_rate_type}</p>
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-1">
+                              <p className={tokens.label.tiny}>Overage Cap</p>
+                              <MetricInfoTooltip description="Maximum overage charge per service, regardless of how much extra was used." />
+                            </div>
+                            <p className={tokens.body.emphasis}>{policy.overage_cap ? `$${policy.overage_cap}` : 'No cap'}</p>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button variant="destructive" size={tokens.button.inline} onClick={() => deletePolicy.mutate(policy.id)}>
+                              <Trash2 className="w-3 h-3 mr-1" /> Remove
                             </Button>
                           </div>
-                        ))}
+                        </div>
 
-                        {showBucketForm === policy.id && (
-                          <div className={cn(tokens.card.innerDeep, 'p-4 space-y-3')}>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                              <div>
-                                <div className="flex items-center gap-1"><label className={tokens.label.default}>Bucket Name</label></div>
-                                <Input value={bucketForm.bucket_name} onChange={e => setBucketForm(f => ({ ...f, bucket_name: e.target.value }))} className="mt-1" placeholder="e.g. Color" />
-                              </div>
-                              <div>
-                                <label className={tokens.label.default}>Billing Label</label>
-                                <Input value={bucketForm.billing_label} onChange={e => setBucketForm(f => ({ ...f, billing_label: e.target.value }))} className="mt-1" placeholder="Label on invoice" />
-                              </div>
-                              <div>
-                                <div className="flex items-center gap-1"><label className={tokens.label.default}>Included Quantity</label><MetricInfoTooltip description="Amount of product included at no extra charge." /></div>
-                                <Input type="number" value={bucketForm.included_quantity} onChange={e => setBucketForm(f => ({ ...f, included_quantity: Number(e.target.value) }))} className="mt-1" />
-                              </div>
-                              <div>
-                                <label className={tokens.label.default}>Unit</label>
-                                <Select value={bucketForm.included_unit} onValueChange={v => setBucketForm(f => ({ ...f, included_unit: v }))}>
-                                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="g">Grams (g)</SelectItem>
-                                    <SelectItem value="ml">Milliliters (ml)</SelectItem>
-                                    <SelectItem value="oz">Ounces (oz)</SelectItem>
-                                    <SelectItem value="units">Units</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                              <div>
-                                <div className="flex items-center gap-1"><label className={tokens.label.default}>Overage Rate ($)</label><MetricInfoTooltip description="Price charged per unit when usage exceeds the included quantity." /></div>
-                                <Input type="number" step="0.01" value={bucketForm.overage_rate} onChange={e => setBucketForm(f => ({ ...f, overage_rate: Number(e.target.value) }))} className="mt-1" />
-                              </div>
-                              <div>
-                                <label className={tokens.label.default}>Overage Type</label>
-                                <Select value={bucketForm.overage_rate_type} onValueChange={v => setBucketForm(f => ({ ...f, overage_rate_type: v }))}>
-                                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="per_unit">Per Unit</SelectItem>
-                                    <SelectItem value="flat">Flat Fee</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                              <div>
-                                <div className="flex items-center gap-1"><label className={tokens.label.default}>Overage Cap ($, optional)</label><MetricInfoTooltip description="Maximum overage charge per service, regardless of how much extra was used." /></div>
-                                <Input type="number" step="0.01" value={bucketForm.overage_cap} onChange={e => setBucketForm(f => ({ ...f, overage_cap: e.target.value }))} className="mt-1" placeholder="No cap" />
-                              </div>
-                              <div>
-                                <div className="flex items-center gap-1"><label className={tokens.label.default}>Rounding Rule</label><MetricInfoTooltip description="How fractional overage amounts are rounded for billing." /></div>
-                                <Select value={bucketForm.rounding_rule} onValueChange={v => setBucketForm(f => ({ ...f, rounding_rule: v }))}>
-                                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="round_up">Round Up</SelectItem>
-                                    <SelectItem value="round_down">Round Down</SelectItem>
-                                    <SelectItem value="round_nearest">Round Nearest</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-1">
+                              <span className={tokens.heading.subsection}>Buckets</span>
+                              <MetricInfoTooltip description="Separate billing tiers within one policy — e.g. one bucket for color, another for lightener." />
                             </div>
-                            <div className="flex gap-4">
-                              <label className="flex items-center gap-2 text-sm">
-                                <Switch checked={bucketForm.is_taxable} onCheckedChange={c => setBucketForm(f => ({ ...f, is_taxable: c }))} />
-                                Taxable
-                              </label>
-                              <label className="flex items-center gap-2 text-sm">
-                                <Switch checked={bucketForm.requires_manager_override} onCheckedChange={c => setBucketForm(f => ({ ...f, requires_manager_override: c }))} />
-                                <MetricInfoTooltip description="When on, a manager must approve the overage charge before it's applied." />
-                                Manager Override Required
-                              </label>
-                            </div>
-                            <div className="flex gap-2 justify-end">
-                              <Button variant="ghost" size={tokens.button.card} onClick={resetBucketForm}>Cancel</Button>
-                              <Button size={tokens.button.card} onClick={() => handleSaveBucket(policy.id)} disabled={!bucketForm.bucket_name}>
-                                Save Bucket
+                            <Button variant="outline" size={tokens.button.inline} onClick={() => setShowBucketForm(policy.id)}>
+                              <Plus className="w-3 h-3 mr-1" /> Add Bucket
+                            </Button>
+                          </div>
+
+                          {buckets.map(bucket => (
+                            <div key={bucket.id} className={cn(tokens.card.innerDeep, 'p-3 flex items-center justify-between')}>
+                              <div>
+                                <p className={tokens.body.emphasis}>{bucket.bucket_name}</p>
+                                <p className={tokens.body.muted}>
+                                  {bucket.included_quantity}{bucket.included_unit} included · ${bucket.overage_rate}/{bucket.overage_rate_type}
+                                  {bucket.is_taxable && ' · Taxable'}
+                                  {bucket.requires_manager_override && ' · Manager override required'}
+                                </p>
+                              </div>
+                              <Button variant="ghost" size="icon" onClick={() => deleteBucket.mutate(bucket.id)}>
+                                <Trash2 className="w-4 h-4 text-destructive" />
                               </Button>
                             </div>
-                          </div>
-                        )}
+                          ))}
+
+                          {showBucketForm === policy.id && (
+                            <div className={cn(tokens.card.innerDeep, 'p-4 space-y-3')}>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                  <label className={tokens.label.default}>Bucket Name</label>
+                                  <Input value={bucketForm.bucket_name} onChange={e => setBucketForm(f => ({ ...f, bucket_name: e.target.value }))} className="mt-1" placeholder="e.g. Color" />
+                                </div>
+                                <div>
+                                  <label className={tokens.label.default}>Billing Label</label>
+                                  <Input value={bucketForm.billing_label} onChange={e => setBucketForm(f => ({ ...f, billing_label: e.target.value }))} className="mt-1" placeholder="Label on invoice" />
+                                </div>
+                                <div>
+                                  <div className="flex items-center gap-1"><label className={tokens.label.default}>Included Quantity</label><MetricInfoTooltip description="Amount of product included at no extra charge." /></div>
+                                  <Input type="number" value={bucketForm.included_quantity} onChange={e => setBucketForm(f => ({ ...f, included_quantity: Number(e.target.value) }))} className="mt-1" />
+                                </div>
+                                <div>
+                                  <label className={tokens.label.default}>Unit</label>
+                                  <Select value={bucketForm.included_unit} onValueChange={v => setBucketForm(f => ({ ...f, included_unit: v }))}>
+                                    <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="g">Grams (g)</SelectItem>
+                                      <SelectItem value="ml">Milliliters (ml)</SelectItem>
+                                      <SelectItem value="oz">Ounces (oz)</SelectItem>
+                                      <SelectItem value="units">Units</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                <div>
+                                  <div className="flex items-center gap-1"><label className={tokens.label.default}>Overage Rate ($)</label><MetricInfoTooltip description="Price charged per unit when usage exceeds the included quantity." /></div>
+                                  <Input type="number" step="0.01" value={bucketForm.overage_rate} onChange={e => setBucketForm(f => ({ ...f, overage_rate: Number(e.target.value) }))} className="mt-1" />
+                                </div>
+                                <div>
+                                  <label className={tokens.label.default}>Overage Type</label>
+                                  <Select value={bucketForm.overage_rate_type} onValueChange={v => setBucketForm(f => ({ ...f, overage_rate_type: v }))}>
+                                    <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="per_unit">Per Unit</SelectItem>
+                                      <SelectItem value="flat">Flat Fee</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                <div>
+                                  <div className="flex items-center gap-1"><label className={tokens.label.default}>Overage Cap ($, optional)</label><MetricInfoTooltip description="Maximum overage charge per service, regardless of how much extra was used." /></div>
+                                  <Input type="number" step="0.01" value={bucketForm.overage_cap} onChange={e => setBucketForm(f => ({ ...f, overage_cap: e.target.value }))} className="mt-1" placeholder="No cap" />
+                                </div>
+                                <div>
+                                  <div className="flex items-center gap-1"><label className={tokens.label.default}>Rounding Rule</label><MetricInfoTooltip description="How fractional overage amounts are rounded for billing." /></div>
+                                  <Select value={bucketForm.rounding_rule} onValueChange={v => setBucketForm(f => ({ ...f, rounding_rule: v }))}>
+                                    <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="round_up">Round Up</SelectItem>
+                                      <SelectItem value="round_down">Round Down</SelectItem>
+                                      <SelectItem value="round_nearest">Round Nearest</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              </div>
+                              <div className="flex gap-4">
+                                <label className="flex items-center gap-2 text-sm">
+                                  <Switch checked={bucketForm.is_taxable} onCheckedChange={c => setBucketForm(f => ({ ...f, is_taxable: c }))} />
+                                  Taxable
+                                </label>
+                                <label className="flex items-center gap-2 text-sm">
+                                  <Switch checked={bucketForm.requires_manager_override} onCheckedChange={c => setBucketForm(f => ({ ...f, requires_manager_override: c }))} />
+                                  <MetricInfoTooltip description="When on, a manager must approve the overage charge before it's applied." />
+                                  Manager Override Required
+                                </label>
+                              </div>
+                              <div className="flex gap-2 justify-end">
+                                <Button variant="ghost" size={tokens.button.card} onClick={resetBucketForm}>Cancel</Button>
+                                <Button size={tokens.button.card} onClick={() => handleSaveBucket(policy.id)} disabled={!bucketForm.bucket_name}>
+                                  Save Bucket
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
+                );
+              })}
+
+              {/* Next step hint */}
+              {onNavigate && (
+                <div className="flex justify-end pt-2 border-t border-border/40">
+                  <Button variant="ghost" size="sm" className="text-xs font-sans text-muted-foreground" onClick={() => onNavigate('stations')}>
+                    Next: Stations & Hardware <ArrowRight className="w-3 h-3 ml-1" />
+                  </Button>
                 </div>
-              );
-            })
+              )}
+            </>
           )}
         </CardContent>
       </Card>

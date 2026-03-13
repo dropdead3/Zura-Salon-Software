@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useServiceTrackingComponents, useUpsertTrackingComponent, useDeleteTrackingComponent } from '@/hooks/backroom/useServiceTrackingComponents';
+import { isColorOrChemicalService } from '@/utils/serviceCategorization';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -11,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Loader2, Wrench, Plus, Trash2 } from 'lucide-react';
+import { Loader2, Wrench, Plus, Trash2, Zap, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { Infotainer } from '@/components/ui/Infotainer';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
@@ -27,11 +28,16 @@ interface ServiceRow {
   variance_threshold_pct: number;
 }
 
-export function ServiceTrackingSection() {
+interface Props {
+  onNavigate?: (section: string) => void;
+}
+
+export function ServiceTrackingSection({ onNavigate }: Props) {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
   const queryClient = useQueryClient();
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
+  const [showSuggested, setShowSuggested] = useState(false);
 
   const { data: services, isLoading } = useQuery({
     queryKey: ['backroom-services', orgId],
@@ -62,6 +68,28 @@ export function ServiceTrackingSection() {
     onError: (e) => toast.error(e.message),
   });
 
+  const bulkTrackMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase
+        .from('services')
+        .update({ is_backroom_tracked: true })
+        .in('id', ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['backroom-services'] });
+      queryClient.invalidateQueries({ queryKey: ['backroom-setup-health'] });
+      setShowSuggested(false);
+      toast.success('Color/chemical services tracked', {
+        action: onNavigate ? {
+          label: 'Next: Recipe Baselines →',
+          onClick: () => onNavigate('recipes'),
+        } : undefined,
+      });
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
   const updateService = useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<ServiceRow> }) => {
       const { error } = await supabase
@@ -86,6 +114,7 @@ export function ServiceTrackingSection() {
 
   const tracked = (services || []).filter((s) => s.is_backroom_tracked);
   const untracked = (services || []).filter((s) => !s.is_backroom_tracked);
+  const suggestedServices = untracked.filter((s) => isColorOrChemicalService(s.name, s.category));
 
   return (
     <div className="space-y-6">
@@ -95,6 +124,62 @@ export function ServiceTrackingSection() {
         description="Link your services (e.g. Balayage, Root Touch-Up) to the products they consume. This tells Zura which products to expect when a stylist mixes for that service. Requires products to be tracked first."
         icon={<Wrench className="h-4 w-4 text-primary" />}
       />
+
+      {/* Auto-detect CTA */}
+      {suggestedServices.length > 0 && !showSuggested && (
+        <Card className={cn(tokens.card.wrapper, 'border-primary/30 bg-primary/5')}>
+          <CardContent className="py-4 flex items-center gap-4">
+            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+              <Zap className="w-5 h-5 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className={tokens.body.emphasis}>Auto-detected {suggestedServices.length} color/chemical services</p>
+              <p className={tokens.body.muted}>Zura identified services that likely need backroom tracking based on their names.</p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <Button variant="outline" size="sm" className="font-sans" onClick={() => setShowSuggested(true)}>
+                Review
+              </Button>
+              <Button size="sm" className="font-sans" onClick={() => bulkTrackMutation.mutate(suggestedServices.map(s => s.id))}>
+                Track All
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Suggested services detail */}
+      {showSuggested && suggestedServices.length > 0 && (
+        <Card className={tokens.card.wrapper}>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className={tokens.card.title}>Suggested Services</CardTitle>
+              <div className="flex gap-2">
+                <Button variant="ghost" size="sm" className="font-sans" onClick={() => setShowSuggested(false)}>Dismiss</Button>
+                <Button size="sm" className="font-sans" onClick={() => bulkTrackMutation.mutate(suggestedServices.map(s => s.id))}>
+                  Track All {suggestedServices.length}
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-1">
+            {suggestedServices.map((service) => (
+              <div key={service.id} className="flex items-center gap-4 rounded-lg border border-primary/20 bg-primary/5 p-3">
+                <Switch
+                  checked={false}
+                  onCheckedChange={() => toggleTracking.mutate({ id: service.id, tracked: true })}
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-sans font-medium truncate">{service.name}</p>
+                  {service.category && <span className="text-xs text-muted-foreground">{service.category}</span>}
+                </div>
+                <Badge variant="outline" className="text-[10px] border-primary/30 text-primary">Suggested</Badge>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Tracked services */}
       <Card className={tokens.card.wrapper}>
         <CardHeader>
@@ -162,6 +247,15 @@ export function ServiceTrackingSection() {
               </div>
             ))
           )}
+
+          {/* Next step hint */}
+          {onNavigate && tracked.length > 0 && (
+            <div className="flex justify-end pt-2 border-t border-border/40">
+              <Button variant="ghost" size="sm" className="text-xs font-sans text-muted-foreground" onClick={() => onNavigate('recipes')}>
+                Next: Recipe Baselines <ArrowRight className="w-3 h-3 ml-1" />
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -185,6 +279,9 @@ export function ServiceTrackingSection() {
                   <p className="text-sm font-sans text-muted-foreground truncate">{service.name}</p>
                   {service.category && <span className="text-xs text-muted-foreground">{service.category}</span>}
                 </div>
+                {isColorOrChemicalService(service.name, service.category) && (
+                  <Badge variant="outline" className="text-[10px] border-primary/30 text-primary">Suggested</Badge>
+                )}
               </div>
             ))}
           </CardContent>
