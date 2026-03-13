@@ -49,7 +49,7 @@ export function useAssistantDailyPrep(locationId?: string) {
 
       // Filter to color/chemical services
       const colorAppointments = (appointments ?? []).filter((a: any) =>
-        isColorService(a.service_name, a.service_category)
+        isColorOrChemicalService(a.service_name, a.service_category)
       );
 
       if (colorAppointments.length === 0) return [];
