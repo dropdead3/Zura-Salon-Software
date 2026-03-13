@@ -26,7 +26,7 @@ export function Infotainer({ id, title, description, icon, className }: Infotain
   return (
     <div
       className={cn(
-        'relative rounded-2xl border bg-card/80 backdrop-blur-sm p-5 pr-12',
+        'relative rounded-xl border bg-card/80 backdrop-blur-sm p-5 pr-12',
         'shadow-sm transition-all duration-300',
         className
       )}
