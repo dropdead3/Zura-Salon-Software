@@ -384,7 +384,7 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
                       <div
                         key={`${item.brand}::${item.name}`}
                         className={cn(
-                          'rounded-lg border p-3 transition-colors',
+                          'rounded-lg border p-4 transition-colors',
                           allExisting
                             ? 'border-border/30 bg-muted/20 opacity-60'
                             : anySelected
