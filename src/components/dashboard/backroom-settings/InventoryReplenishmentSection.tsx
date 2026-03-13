@@ -102,7 +102,7 @@ export function InventoryReplenishmentSection() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className={cn(tokens.card.inner, 'p-4')}>
-              <label className={tokens.label.default}>Reorder Cycle (days)</label>
+              <div className="flex items-center gap-1"><label className={tokens.label.default}>Reorder Cycle (days)</label><MetricInfoTooltip description="How often Zura checks if any products need reordering." /></div>
               <p className={cn(tokens.body.muted, 'mb-2')}>How often to evaluate inventory for reordering</p>
               <Input type="number" value={current.reorder_cycle_days} onChange={e => update('reorder_cycle_days', Number(e.target.value))} />
             </div>
