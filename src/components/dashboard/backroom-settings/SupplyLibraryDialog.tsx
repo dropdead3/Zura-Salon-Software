@@ -43,6 +43,10 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [isAdding, setIsAdding] = useState(false);
+  const [showSuggest, setShowSuggest] = useState(false);
+  const [suggestBrand, setSuggestBrand] = useState('');
+  const [suggestDetails, setSuggestDetails] = useState('');
+  const [isSuggesting, setIsSuggesting] = useState(false);
 
   const brands = useMemo(() => getSupplyBrands(), []);
 
