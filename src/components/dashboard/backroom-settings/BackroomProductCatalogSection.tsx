@@ -291,7 +291,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
 
       <Card className={tokens.card.wrapper}>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex items-center gap-3">
               <div className={tokens.card.iconBox}>
                 <Package className={tokens.card.icon} />
@@ -303,7 +303,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                 </CardDescription>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 self-start sm:self-auto">
               <Badge variant="outline" className="text-xs whitespace-nowrap">
                 {trackedCount} tracked
               </Badge>
@@ -332,13 +332,13 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
           </div>
 
           {/* Alphabet selector bar */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+          <div className="flex flex-wrap items-center gap-1 sm:gap-1.5">
             {/* My Catalog chip */}
             <button
               type="button"
               onClick={() => { setActiveLetter(null); setActiveBrand(null); setSelectedItems(new Set()); }}
               className={cn(
-                'inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-sans font-medium transition-all whitespace-nowrap shrink-0',
+                'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] sm:text-xs font-sans font-medium transition-all whitespace-nowrap',
                 activeLetter === null && activeBrand === null
                   ? 'bg-foreground text-background'
                   : 'bg-muted/60 text-foreground/70 hover:bg-muted hover:text-foreground'
@@ -356,7 +356,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
               )}
             </button>
 
-            <div className="w-px h-5 bg-border/40 shrink-0" />
+            <div className="w-px h-5 bg-border/40" />
 
             {/* A–Z letters */}
             {alphabet.map((letter) => {
@@ -375,7 +375,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                     setSearch('');
                   }}
                   className={cn(
-                    'w-7 h-7 flex items-center justify-center rounded-md text-xs font-sans font-medium transition-all shrink-0',
+                    'w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center rounded-md text-[10px] sm:text-xs font-sans font-medium transition-all',
                     isActive
                       ? 'bg-foreground text-background'
                       : hasBrands
@@ -391,7 +391,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
 
           {/* Brand sub-row for selected letter */}
           {activeLetter && !activeBrand && (
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+            <div className="flex flex-wrap items-center gap-2">
               {(brandsByLetter.get(activeLetter) || []).map((brand) => {
                 const allAdded = brandFullyAdded(brand);
                 const inCatalog = brandCatalogCount(brand);
@@ -455,9 +455,9 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
               ) : (
                 <>
                   {/* Category & tracked filters */}
-                  <div className="flex flex-wrap items-center gap-3">
+                   <div className="flex flex-wrap items-center gap-3">
                     <Select value={filterCategory} onValueChange={setFilterCategory}>
-                      <SelectTrigger className="w-[180px] font-sans">
+                      <SelectTrigger className="w-full sm:w-[180px] font-sans">
                         <SelectValue placeholder="Category" />
                       </SelectTrigger>
                       <SelectContent>
@@ -559,14 +559,14 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
 
               {/* Sticky add footer */}
               {selectedItems.size > 0 && (
-                <div className="sticky bottom-0 flex items-center justify-between bg-card/95 backdrop-blur-sm rounded-lg border border-border/60 px-4 py-3 shadow-[0_-4px_12px_-4px_hsl(var(--foreground)/0.06)]">
-                  <span className="text-sm font-sans text-muted-foreground">
+                <div className="sticky bottom-0 flex flex-col sm:flex-row items-stretch sm:items-center sm:justify-between gap-2 bg-card/95 backdrop-blur-sm rounded-lg border border-border/60 px-4 py-3 shadow-[0_-4px_12px_-4px_hsl(var(--foreground)/0.06)]">
+                  <span className="text-sm font-sans text-muted-foreground text-center sm:text-left">
                     {selectedItems.size} product{selectedItems.size === 1 ? '' : 's'} selected
                   </span>
                   <Button
                     onClick={handleAddFromBrand}
                     disabled={isAdding}
-                    className="font-sans"
+                    className="font-sans w-full sm:w-auto"
                     size="sm"
                   >
                     {isAdding ? (
@@ -620,7 +620,7 @@ function BrandProductRow({
   return (
     <div
       className={cn(
-        'rounded-lg border p-4 transition-colors',
+        'rounded-lg border p-3 sm:p-4 transition-colors',
         allExisting
           ? 'border-border/30 bg-muted/20 opacity-60'
           : anySelected
@@ -698,46 +698,48 @@ function BrandProductRow({
 function ProductRow({ product, onUpdate }: { product: BackroomProduct; onUpdate: (u: Partial<BackroomProduct>) => void }) {
   return (
     <div className={cn(
-      'flex items-center gap-5 rounded-lg border p-4 transition-colors',
+      'flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-5 rounded-lg border p-3 sm:p-4 transition-colors',
       product.is_backroom_tracked ? 'border-border bg-card' : 'border-border/40 bg-muted/20'
     )}>
-      {/* Toggle */}
-      <div className="flex items-center gap-1">
-        <Switch
-          checked={product.is_backroom_tracked}
-          onCheckedChange={(checked) => onUpdate({ is_backroom_tracked: checked })}
-        />
-        <MetricInfoTooltip description="When on, this product appears in the mixing dashboard and its usage is recorded per appointment." />
-      </div>
-
-      {/* Info */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-sans font-medium text-foreground truncate">{product.name}</span>
-          {product.brand && <span className="text-xs text-muted-foreground">{product.brand}</span>}
+      <div className="flex items-center gap-3 sm:gap-5">
+        {/* Toggle */}
+        <div className="flex items-center gap-1 shrink-0">
+          <Switch
+            checked={product.is_backroom_tracked}
+            onCheckedChange={(checked) => onUpdate({ is_backroom_tracked: checked })}
+          />
+          <MetricInfoTooltip description="When on, this product appears in the mixing dashboard and its usage is recorded per appointment." />
         </div>
-        <div className="flex items-center gap-2 mt-0.5">
-          {product.category && <Badge variant="outline" className="text-[10px] capitalize">{product.category}</Badge>}
-          {product.sku && <span className="text-[10px] text-muted-foreground">{product.sku}</span>}
-          {!product.cost_price && product.is_backroom_tracked && (
-            <span className="flex items-center gap-0.5">
-              <Badge variant="destructive" className="text-[10px]">No cost</Badge>
-              <MetricInfoTooltip description="This product has no unit cost set. Add a cost so Zura can calculate margins and overage charges." />
-            </span>
-          )}
+
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-sans font-medium text-foreground truncate">{product.name}</span>
+            {product.brand && <span className="text-xs text-muted-foreground">{product.brand}</span>}
+          </div>
+          <div className="flex items-center gap-2 mt-0.5">
+            {product.category && <Badge variant="outline" className="text-[10px] capitalize">{product.category}</Badge>}
+            {product.sku && <span className="text-[10px] text-muted-foreground">{product.sku}</span>}
+            {!product.cost_price && product.is_backroom_tracked && (
+              <span className="flex items-center gap-0.5">
+                <Badge variant="destructive" className="text-[10px]">No cost</Badge>
+                <MetricInfoTooltip description="This product has no unit cost set. Add a cost so Zura can calculate margins and overage charges." />
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Depletion method */}
       {product.is_backroom_tracked && (
-        <div className="flex items-center gap-3 shrink-0 bg-muted/30 rounded-lg px-3 py-2">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 bg-muted/30 rounded-lg px-3 py-2 sm:shrink-0">
           <div className="flex items-center gap-1">
             <MetricInfoTooltip description="How this product is measured when used. 'Weighed' uses a scale; 'Per Pump' counts pumps dispensed." />
             <Select
               value={product.depletion_method}
               onValueChange={(v) => onUpdate({ depletion_method: v })}
             >
-              <SelectTrigger className="w-[120px] h-8 text-xs font-sans">
+              <SelectTrigger className="w-[110px] sm:w-[120px] h-8 text-xs font-sans">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -748,7 +750,7 @@ function ProductRow({ product, onUpdate }: { product: BackroomProduct; onUpdate:
             </Select>
           </div>
 
-          <div className="w-px h-5 bg-border/40" />
+          <div className="w-px h-5 bg-border/40 hidden sm:block" />
 
           <div className="flex items-center gap-1">
             <label className="text-[10px] text-muted-foreground">Billable</label>
