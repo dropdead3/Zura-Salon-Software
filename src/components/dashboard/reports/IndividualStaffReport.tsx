@@ -281,6 +281,14 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
 
     if (data.experienceScore.composite >= 70) strengths.push(`Experience score of ${data.experienceScore.composite}/100 shows strong overall performance`);
     else if (data.experienceScore.composite < 50 && data.experienceScore.composite > 0) improvements.push(`Experience score of ${data.experienceScore.composite}/100 needs focused improvement`);
+
+    // Backroom compliance
+    if (data.backroomCompliance.totalColorAppointments > 0) {
+      if (data.backroomCompliance.complianceRate === 100) strengths.push('100% backroom compliance — all color services tracked');
+      else if (data.backroomCompliance.complianceRate >= 90) strengths.push(`Strong backroom compliance at ${data.backroomCompliance.complianceRate}%`);
+      else if (data.backroomCompliance.complianceRate < 70) improvements.push(`Backroom compliance at ${data.backroomCompliance.complianceRate}% — ${data.backroomCompliance.missed} color services not tracked`);
+      else improvements.push(`Backroom compliance at ${data.backroomCompliance.complianceRate}% — review backroom habits`);
+    }
   }
 
   // ── Render ──
