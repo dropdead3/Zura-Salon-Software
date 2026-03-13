@@ -44,6 +44,7 @@ import {
   Receipt,
   Armchair,
   Package,
+  Beaker,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -78,6 +79,7 @@ export const mainNavItems: DashboardNavItem[] = [
 
 export const myToolsNavItems: DashboardNavItem[] = [
   { href: '/dashboard/today-prep', label: "Today's Prep", labelKey: 'todays_prep', icon: ClipboardCheck, permission: 'view_booking_calendar', roles: ['stylist', 'stylist_assistant'] },
+  { href: '/dashboard/mixing', label: 'My Mixing', labelKey: 'my_mixing', icon: Beaker, roles: ['stylist', 'stylist_assistant'] },
   { href: '/dashboard/waitlist', label: 'Waitlist', labelKey: 'waitlist', icon: ClipboardList, permission: 'view_booking_calendar', roles: ['super_admin', 'admin', 'manager', 'receptionist'] },
   { href: '/dashboard/stats', label: 'My Stats', labelKey: 'my_stats', icon: BarChart3, permission: 'view_own_stats' },
   { href: '/dashboard/my-pay', label: 'My Pay', labelKey: 'my_pay', icon: Wallet, permission: 'view_my_pay' },
