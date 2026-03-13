@@ -204,7 +204,7 @@ export function AllowancesBillingSection() {
                                 <Input value={bucketForm.billing_label} onChange={e => setBucketForm(f => ({ ...f, billing_label: e.target.value }))} className="mt-1" placeholder="Label on invoice" />
                               </div>
                               <div>
-                                <label className={tokens.label.default}>Included Quantity</label>
+                                <div className="flex items-center gap-1"><label className={tokens.label.default}>Included Quantity</label><MetricInfoTooltip description="Amount of product included at no extra charge." /></div>
                                 <Input type="number" value={bucketForm.included_quantity} onChange={e => setBucketForm(f => ({ ...f, included_quantity: Number(e.target.value) }))} className="mt-1" />
                               </div>
                               <div>
