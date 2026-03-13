@@ -140,7 +140,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className="text-xs whitespace-nowrap">
                 {trackedCount} tracked
               </Badge>
               <Button
