@@ -620,7 +620,7 @@ function BrandProductRow({
   return (
     <div
       className={cn(
-        'rounded-lg border p-4 transition-colors',
+        'rounded-lg border p-3 sm:p-4 transition-colors',
         allExisting
           ? 'border-border/30 bg-muted/20 opacity-60'
           : anySelected
