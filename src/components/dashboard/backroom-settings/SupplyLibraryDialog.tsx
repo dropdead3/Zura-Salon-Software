@@ -255,7 +255,7 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
 
         <div className="flex flex-1 min-h-0">
           {/* Brand list */}
-          <ScrollArea className="w-[200px] border-r border-border/40">
+          <ScrollArea className="w-[220px] border-r border-border/40">
             <div className="p-2 space-y-0.5">
               {filteredBrands.map((brand) => {
                 const count = getProductsByBrand(brand).length;
@@ -267,14 +267,17 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
                     key={brand}
                     onClick={() => setSelectedBrand(brand)}
                     className={cn(
-                      'w-full text-left px-3 py-2 rounded-lg text-sm font-sans transition-colors flex items-center justify-between gap-2',
+                      'w-full text-left px-3 py-2.5 rounded-lg text-sm font-sans transition-colors flex items-center justify-between gap-2 relative',
                       selectedBrand === brand
                         ? 'bg-accent text-accent-foreground'
                         : 'hover:bg-muted/60 text-foreground'
                     )}
                   >
+                    {selectedBrand === brand && (
+                      <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-full bg-primary" />
+                    )}
                     <span className="truncate">{brand}</span>
-                    <div className="flex items-center gap-1 shrink-0">
+                    <div className="flex items-center gap-1.5 shrink-0">
                       {selCount > 0 && (
                         <Badge className="h-5 min-w-[20px] px-1.5 text-[10px] bg-primary text-primary-foreground">
                           {selCount}
