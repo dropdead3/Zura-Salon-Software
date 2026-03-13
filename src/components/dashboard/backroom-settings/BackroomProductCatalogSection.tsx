@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Search, Package, ArrowRight, Library, Check, ChevronLeft } from 'lucide-react';
+import { Loader2, Search, Package, ArrowRight, Library, Check, ChevronLeft, PackagePlus } from 'lucide-react';
 import { toast } from 'sonner';
 import { Infotainer } from '@/components/ui/Infotainer';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
@@ -273,6 +273,58 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
     return (products || []).filter((p) => p.brand === brand).length;
   };
 
+  // Add entire brand in one click
+  const [addingBrand, setAddingBrand] = useState<string | null>(null);
+
+  const handleAddEntireBrand = async (brand: string) => {
+    if (!orgId) return;
+    setAddingBrand(brand);
+    try {
+      const items = getProductsByBrand(brand);
+      const itemsToInsert: Array<{
+        name: string; brand: string; category: string; product_type: string;
+        is_backroom_tracked: boolean; depletion_method: string; unit_of_measure: string;
+        organization_id: string; is_active: boolean;
+      }> = [];
+
+      items.forEach((item) => {
+        getItemKeys(item).forEach(({ size }) => {
+          if (isExisting(item.brand, item.name, size)) return;
+          itemsToInsert.push({
+            name: sizedName(item.name, size),
+            brand: item.brand,
+            category: item.category,
+            product_type: 'Supplies',
+            is_backroom_tracked: true,
+            depletion_method: item.defaultDepletion,
+            unit_of_measure: item.defaultUnit,
+            organization_id: orgId,
+            is_active: true,
+          });
+        });
+      });
+
+      if (itemsToInsert.length === 0) {
+        toast.info(`All ${brand} products are already in your catalog`);
+        return;
+      }
+
+      const { error } = await supabase.from('products').insert(itemsToInsert);
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ['backroom-product-catalog'] });
+      queryClient.invalidateQueries({ queryKey: ['backroom-setup-health'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+
+      toast.success(`Added ${itemsToInsert.length} ${brand} products to your catalog`);
+      setSelectedItems(new Set());
+    } catch (err: any) {
+      toast.error('Failed to add products: ' + err.message);
+    } finally {
+      setAddingBrand(null);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -396,29 +448,50 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
               {(brandsByLetter.get(activeLetter) || []).map((brand) => {
                 const allAdded = brandFullyAdded(brand);
                 const inCatalog = brandCatalogCount(brand);
+                const isBrandAdding = addingBrand === brand;
 
                 return (
-                  <button
-                    key={brand}
-                    type="button"
-                    onClick={() => {
-                      setActiveBrand(brand);
-                      setSelectedItems(new Set());
-                      setSearch('');
-                    }}
-                    className={cn(
-                      'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-sans font-medium transition-all whitespace-nowrap shrink-0',
-                      allAdded
-                        ? 'bg-muted/40 text-muted-foreground'
-                        : 'bg-muted/60 text-foreground/70 hover:bg-muted hover:text-foreground'
+                  <div key={brand} className="inline-flex items-center gap-0 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveBrand(brand);
+                        setSelectedItems(new Set());
+                        setSearch('');
+                      }}
+                      className={cn(
+                        'inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-sans font-medium transition-all whitespace-nowrap',
+                        allAdded ? 'rounded-full' : 'rounded-l-full',
+                        allAdded
+                          ? 'bg-muted/40 text-muted-foreground'
+                          : 'bg-muted/60 text-foreground/70 hover:bg-muted hover:text-foreground'
+                      )}
+                    >
+                      {brand}
+                      {allAdded && <Check className="w-3 h-3" />}
+                      {!allAdded && inCatalog > 0 && (
+                        <span className="text-[10px] text-muted-foreground">{inCatalog}</span>
+                      )}
+                    </button>
+                    {!allAdded && (
+                      <button
+                        type="button"
+                        disabled={isBrandAdding}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAddEntireBrand(brand);
+                        }}
+                        title={`Add all ${brand} products`}
+                        className="inline-flex items-center justify-center w-7 h-7 rounded-r-full bg-muted/60 text-muted-foreground hover:bg-primary/10 hover:text-primary transition-all border-l border-border/30"
+                      >
+                        {isBrandAdding ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <PackagePlus className="w-3 h-3" />
+                        )}
+                      </button>
                     )}
-                  >
-                    {brand}
-                    {allAdded && <Check className="w-3 h-3" />}
-                    {!allAdded && inCatalog > 0 && (
-                      <span className="text-[10px] text-muted-foreground">{inCatalog}</span>
-                    )}
-                  </button>
+                  </div>
                 );
               })}
             </div>
@@ -517,24 +590,42 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="font-sans text-sm font-medium text-foreground">{activeBrand}</h3>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={toggleAllBrand}
-                  className="text-xs font-sans h-7"
-                >
-                  {(() => {
-                    const allKeys: string[] = [];
-                    brandProducts.forEach((p) => {
-                      getItemKeys(p).forEach(({ key, size }) => {
-                        if (!isExisting(p.brand, p.name, size)) allKeys.push(key);
+                <div className="flex items-center gap-1.5">
+                  {activeBrand && !brandFullyAdded(activeBrand) && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleAddEntireBrand(activeBrand)}
+                      disabled={addingBrand === activeBrand}
+                      className="text-xs font-sans h-7 gap-1"
+                    >
+                      {addingBrand === activeBrand ? (
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                      ) : (
+                        <PackagePlus className="w-3 h-3" />
+                      )}
+                      Add Entire Brand
+                    </Button>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={toggleAllBrand}
+                    className="text-xs font-sans h-7"
+                  >
+                    {(() => {
+                      const allKeys: string[] = [];
+                      brandProducts.forEach((p) => {
+                        getItemKeys(p).forEach(({ key, size }) => {
+                          if (!isExisting(p.brand, p.name, size)) allKeys.push(key);
+                        });
                       });
-                    });
-                    return allKeys.length > 0 && allKeys.every((k) => selectedItems.has(k))
-                      ? 'Deselect All'
-                      : 'Select All';
-                  })()}
-                </Button>
+                      return allKeys.length > 0 && allKeys.every((k) => selectedItems.has(k))
+                        ? 'Deselect All'
+                        : 'Select All';
+                    })()}
+                  </Button>
+                </div>
               </div>
 
               <div className="space-y-2">

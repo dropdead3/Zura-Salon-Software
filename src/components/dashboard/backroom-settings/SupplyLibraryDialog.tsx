@@ -7,7 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { Search, Package, Check, Library, Loader2, MessageSquarePlus, Send } from 'lucide-react';
+import { Search, Package, Check, Library, Loader2, MessageSquarePlus, Send, PackagePlus } from 'lucide-react';
 import { PLATFORM_NAME } from '@/lib/brand';
 import {
   SUPPLY_LIBRARY,
@@ -43,6 +43,7 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [isAdding, setIsAdding] = useState(false);
+  const [addingBrand, setAddingBrand] = useState<string | null>(null);
   const [showSuggest, setShowSuggest] = useState(false);
   const [suggestBrand, setSuggestBrand] = useState('');
   const [suggestDetails, setSuggestDetails] = useState('');
@@ -190,6 +191,54 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
     return items.every((p) =>
       getItemKeys(p).every(({ size }) => isExisting(p.brand, p.name, size))
     );
+  };
+
+  const handleAddEntireBrand = async (brand: string) => {
+    setAddingBrand(brand);
+    try {
+      const items = getProductsByBrand(brand);
+      const itemsToInsert: Array<{
+        name: string; brand: string; category: string; product_type: string;
+        is_backroom_tracked: boolean; depletion_method: string; unit_of_measure: string;
+        organization_id: string; is_active: boolean;
+      }> = [];
+
+      items.forEach((item) => {
+        getItemKeys(item).forEach(({ size }) => {
+          if (isExisting(item.brand, item.name, size)) return;
+          itemsToInsert.push({
+            name: sizedName(item.name, size),
+            brand: item.brand,
+            category: item.category,
+            product_type: 'Supplies',
+            is_backroom_tracked: true,
+            depletion_method: item.defaultDepletion,
+            unit_of_measure: item.defaultUnit,
+            organization_id: orgId,
+            is_active: true,
+          });
+        });
+      });
+
+      if (itemsToInsert.length === 0) {
+        toast.info(`All ${brand} products are already in your catalog`);
+        return;
+      }
+
+      const { error } = await supabase.from('products').insert(itemsToInsert);
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ['backroom-product-catalog'] });
+      queryClient.invalidateQueries({ queryKey: ['backroom-setup-health'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+
+      toast.success(`Added ${itemsToInsert.length} ${brand} products to your catalog`);
+      setSelected(new Set());
+    } catch (err: any) {
+      toast.error('Failed to add products: ' + err.message);
+    } finally {
+      setAddingBrand(null);
+    }
   };
 
   const handleSuggestBrand = async () => {
@@ -350,24 +399,42 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
               <div className="p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="font-sans text-sm font-medium text-foreground">{selectedBrand}</h3>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={toggleAllBrand}
-                    className="text-xs font-sans h-7"
-                  >
-                    {(() => {
-                      const allKeys: string[] = [];
-                      brandProducts.forEach((p) => {
-                        getItemKeys(p).forEach(({ key, size }) => {
-                          if (!isExisting(p.brand, p.name, size)) allKeys.push(key);
+                  <div className="flex items-center gap-1.5">
+                    {selectedBrand && !brandFullyAdded(selectedBrand) && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleAddEntireBrand(selectedBrand)}
+                        disabled={addingBrand === selectedBrand}
+                        className="text-xs font-sans h-7 gap-1"
+                      >
+                        {addingBrand === selectedBrand ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <PackagePlus className="w-3 h-3" />
+                        )}
+                        Add Entire Brand
+                      </Button>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={toggleAllBrand}
+                      className="text-xs font-sans h-7"
+                    >
+                      {(() => {
+                        const allKeys: string[] = [];
+                        brandProducts.forEach((p) => {
+                          getItemKeys(p).forEach(({ key, size }) => {
+                            if (!isExisting(p.brand, p.name, size)) allKeys.push(key);
+                          });
                         });
-                      });
-                      return allKeys.length > 0 && allKeys.every((k) => selected.has(k))
-                        ? 'Deselect All'
-                        : 'Select All';
-                    })()}
-                  </Button>
+                        return allKeys.length > 0 && allKeys.every((k) => selected.has(k))
+                          ? 'Deselect All'
+                          : 'Select All';
+                      })()}
+                    </Button>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
