@@ -19,6 +19,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Monitor, Plus, Trash2, Pencil, Wand2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { Infotainer } from '@/components/ui/Infotainer';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { StationHardwareWizard } from './StationHardwareWizard';
 
 const HEALTH_DOT: Record<string, string> = {
