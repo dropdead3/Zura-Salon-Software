@@ -52,8 +52,7 @@ interface Props {
 }
 
 export function BackroomProductCatalogSection({ onNavigate }: Props) {
-  const { effectiveOrganization } = useOrganizationContext();
-  const orgId = effectiveOrganization?.id;
+  const orgId = useBackroomOrgId();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('all');
