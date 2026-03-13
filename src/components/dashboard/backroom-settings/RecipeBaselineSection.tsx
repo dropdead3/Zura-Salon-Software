@@ -66,7 +66,10 @@ export function RecipeBaselineSection() {
               <BarChart3 className={tokens.card.icon} />
             </div>
             <div>
-              <CardTitle className={tokens.card.title}>Recipe Baselines</CardTitle>
+              <div className="flex items-center gap-2">
+                <CardTitle className={tokens.card.title}>Recipe Baselines</CardTitle>
+                <MetricInfoTooltip description="The expected amount of each product for a standard application. Zura flags deviations beyond the variance threshold." />
+              </div>
               <CardDescription className={tokens.body.muted}>
                 Define expected product usage per service. Powers Smart Mix Assist and variance detection.
               </CardDescription>
