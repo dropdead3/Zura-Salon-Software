@@ -332,13 +332,13 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
           </div>
 
           {/* Alphabet selector bar */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+          <div className="flex flex-wrap items-center gap-1 sm:gap-1.5">
             {/* My Catalog chip */}
             <button
               type="button"
               onClick={() => { setActiveLetter(null); setActiveBrand(null); setSelectedItems(new Set()); }}
               className={cn(
-                'inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-sans font-medium transition-all whitespace-nowrap shrink-0',
+                'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] sm:text-xs font-sans font-medium transition-all whitespace-nowrap',
                 activeLetter === null && activeBrand === null
                   ? 'bg-foreground text-background'
                   : 'bg-muted/60 text-foreground/70 hover:bg-muted hover:text-foreground'
@@ -356,7 +356,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
               )}
             </button>
 
-            <div className="w-px h-5 bg-border/40 shrink-0" />
+            <div className="w-px h-5 bg-border/40" />
 
             {/* A–Z letters */}
             {alphabet.map((letter) => {
@@ -375,7 +375,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                     setSearch('');
                   }}
                   className={cn(
-                    'w-7 h-7 flex items-center justify-center rounded-md text-xs font-sans font-medium transition-all shrink-0',
+                    'w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center rounded-md text-[10px] sm:text-xs font-sans font-medium transition-all',
                     isActive
                       ? 'bg-foreground text-background'
                       : hasBrands
