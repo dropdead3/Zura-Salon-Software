@@ -14,6 +14,7 @@ import {
   Bell,
   Sparkles,
   Building2,
+  ShieldCheck,
 } from 'lucide-react';
 import { BackroomSetupOverview } from '@/components/dashboard/backroom-settings/BackroomSetupOverview';
 import { BackroomProductCatalogSection } from '@/components/dashboard/backroom-settings/BackroomProductCatalogSection';
