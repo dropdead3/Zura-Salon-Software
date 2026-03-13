@@ -238,7 +238,7 @@ export function AllowancesBillingSection() {
                                 <Input type="number" step="0.01" value={bucketForm.overage_cap} onChange={e => setBucketForm(f => ({ ...f, overage_cap: e.target.value }))} className="mt-1" placeholder="No cap" />
                               </div>
                               <div>
-                                <label className={tokens.label.default}>Rounding Rule</label>
+                                <div className="flex items-center gap-1"><label className={tokens.label.default}>Rounding Rule</label><MetricInfoTooltip description="How fractional overage amounts are rounded for billing." /></div>
                                 <Select value={bucketForm.rounding_rule} onValueChange={v => setBucketForm(f => ({ ...f, rounding_rule: v }))}>
                                   <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                                   <SelectContent>
