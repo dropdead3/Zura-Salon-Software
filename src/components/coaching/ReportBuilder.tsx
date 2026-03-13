@@ -13,6 +13,8 @@ import { useMeetingAccountabilityItems, type AccountabilityItem } from '@/hooks/
 import { useMeetingReports, useCreateMeetingReport, useSendMeetingReport } from '@/hooks/useMeetingReports';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import ReactMarkdown from 'react-markdown';
+import { useStaffComplianceSummary } from '@/hooks/backroom/useStaffComplianceSummary';
+import { format, subDays } from 'date-fns';
 
 interface ReportBuilderProps {
   meetingId: string;
@@ -28,9 +30,15 @@ export function ReportBuilder({ meetingId, teamMemberId, teamMemberName }: Repor
   const createReport = useCreateMeetingReport();
   const sendReport = useSendMeetingReport();
 
+  // Compliance data for the trailing 30 days
+  const complianceDateTo = format(new Date(), 'yyyy-MM-dd');
+  const complianceDateFrom = format(subDays(new Date(), 30), 'yyyy-MM-dd');
+  const { data: complianceData } = useStaffComplianceSummary(teamMemberId, complianceDateFrom, complianceDateTo);
+
   const [isBuilding, setIsBuilding] = useState(false);
   const [selectedNotes, setSelectedNotes] = useState<string[]>([]);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [includeCompliance, setIncludeCompliance] = useState(true);
   const [additionalContent, setAdditionalContent] = useState('');
   const [previewContent, setPreviewContent] = useState('');
   const [showPreview, setShowPreview] = useState(false);
