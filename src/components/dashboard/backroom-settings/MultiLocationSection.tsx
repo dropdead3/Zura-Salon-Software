@@ -183,7 +183,7 @@ export function MultiLocationSection() {
       {/* Copy Settings */}
       <Card>
         <CardHeader>
-          <CardTitle className={tokens.card.title}>Copy Settings</CardTitle>
+          <div className="flex items-center gap-2"><CardTitle className={tokens.card.title}>Copy Settings</CardTitle><MetricInfoTooltip description="Copies all backroom setting overrides from the source location to the target. Existing overrides at the target will be replaced." /></div>
           <CardDescription className={tokens.body.muted}>Duplicate all backroom settings from one location to another.</CardDescription>
         </CardHeader>
         <CardContent>
