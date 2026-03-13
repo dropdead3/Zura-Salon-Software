@@ -112,7 +112,11 @@ export function ServiceTrackingSection() {
         </CardHeader>
         <CardContent className="space-y-2">
           {tracked.length === 0 ? (
-            <p className={tokens.body.muted}>No services are tracked yet. Enable tracking below.</p>
+            <div className={tokens.empty.container}>
+              <Wrench className={tokens.empty.icon} />
+              <h3 className={tokens.empty.heading}>No services tracked</h3>
+              <p className={tokens.empty.description}>Enable tracking on your color and chemical services below. Make sure you've tracked products first in Products & Supplies.</p>
+            </div>
           ) : (
             tracked.map((service) => (
               <div key={service.id} className="flex items-center gap-4 rounded-lg border border-border p-3">
