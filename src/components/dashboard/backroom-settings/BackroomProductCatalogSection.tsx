@@ -331,15 +331,15 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
             />
           </div>
 
-          {/* Brand chips bar */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+          {/* Alphabet selector bar */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
             {/* My Catalog chip */}
             <button
               type="button"
-              onClick={() => { setActiveBrand(null); setSelectedItems(new Set()); }}
+              onClick={() => { setActiveLetter(null); setActiveBrand(null); setSelectedItems(new Set()); }}
               className={cn(
                 'inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-sans font-medium transition-all whitespace-nowrap shrink-0',
-                activeBrand === null
+                activeLetter === null && activeBrand === null
                   ? 'bg-foreground text-background'
                   : 'bg-muted/60 text-foreground/70 hover:bg-muted hover:text-foreground'
               )}
@@ -349,7 +349,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
               {hasProducts && (
                 <span className={cn(
                   'ml-0.5 text-[10px]',
-                  activeBrand === null ? 'text-background/70' : 'text-muted-foreground'
+                  activeLetter === null && activeBrand === null ? 'text-background/70' : 'text-muted-foreground'
                 )}>
                   {(products || []).length}
                 </span>
@@ -358,44 +358,85 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
 
             <div className="w-px h-5 bg-border/40 shrink-0" />
 
-            {/* Brand chips */}
-            {brands.map((brand) => {
-              const isActive = activeBrand === brand;
-              const allAdded = brandFullyAdded(brand);
-              const inCatalog = brandCatalogCount(brand);
+            {/* A–Z letters */}
+            {alphabet.map((letter) => {
+              const hasBrands = brandsByLetter.has(letter);
+              const isActive = activeLetter === letter;
 
               return (
                 <button
-                  key={brand}
+                  key={letter}
                   type="button"
+                  disabled={!hasBrands}
                   onClick={() => {
-                    setActiveBrand(brand);
+                    setActiveLetter(letter);
+                    setActiveBrand(null);
                     setSelectedItems(new Set());
                     setSearch('');
                   }}
                   className={cn(
-                    'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-sans font-medium transition-all whitespace-nowrap shrink-0',
+                    'w-7 h-7 flex items-center justify-center rounded-md text-xs font-sans font-medium transition-all shrink-0',
                     isActive
                       ? 'bg-foreground text-background'
-                      : allAdded
-                      ? 'bg-muted/40 text-muted-foreground'
-                      : 'bg-muted/60 text-foreground/70 hover:bg-muted hover:text-foreground'
+                      : hasBrands
+                      ? 'text-foreground/70 hover:bg-muted hover:text-foreground'
+                      : 'text-muted-foreground/30 cursor-default'
                   )}
                 >
-                  {brand}
-                  {allAdded && <Check className="w-3 h-3" />}
-                  {!allAdded && inCatalog > 0 && (
-                    <span className={cn(
-                      'text-[10px]',
-                      isActive ? 'text-background/70' : 'text-muted-foreground'
-                    )}>
-                      {inCatalog}
-                    </span>
-                  )}
+                  {letter}
                 </button>
               );
             })}
           </div>
+
+          {/* Brand sub-row for selected letter */}
+          {activeLetter && !activeBrand && (
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+              {(brandsByLetter.get(activeLetter) || []).map((brand) => {
+                const allAdded = brandFullyAdded(brand);
+                const inCatalog = brandCatalogCount(brand);
+
+                return (
+                  <button
+                    key={brand}
+                    type="button"
+                    onClick={() => {
+                      setActiveBrand(brand);
+                      setSelectedItems(new Set());
+                      setSearch('');
+                    }}
+                    className={cn(
+                      'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-sans font-medium transition-all whitespace-nowrap shrink-0',
+                      allAdded
+                        ? 'bg-muted/40 text-muted-foreground'
+                        : 'bg-muted/60 text-foreground/70 hover:bg-muted hover:text-foreground'
+                    )}
+                  >
+                    {brand}
+                    {allAdded && <Check className="w-3 h-3" />}
+                    {!allAdded && inCatalog > 0 && (
+                      <span className="text-[10px] text-muted-foreground">{inCatalog}</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Breadcrumb when brand is active */}
+          {activeBrand && (
+            <div className="flex items-center gap-1.5 text-xs font-sans text-muted-foreground">
+              <button
+                type="button"
+                onClick={() => { setActiveBrand(null); setSelectedItems(new Set()); }}
+                className="hover:text-foreground transition-colors"
+              >
+                {activeLetter || '←'}
+              </button>
+              <span>/</span>
+              <span className="text-foreground font-medium">{activeBrand}</span>
+            </div>
+          )}
 
           {/* Dual view */}
           {activeBrand === null ? (
