@@ -134,7 +134,7 @@ export function MultiLocationSection() {
               <Building2 className={tokens.card.icon} />
             </div>
             <div>
-              <CardTitle className={tokens.card.title}>Multi-Location Settings</CardTitle>
+              <div className="flex items-center gap-2"><CardTitle className={tokens.card.title}>Multi-Location Settings</CardTitle><MetricInfoTooltip description="Shows all backroom settings with their org-level defaults and any location-specific overrides. Reset an override to fall back to the org default." /></div>
               <CardDescription className={tokens.body.muted}>Manage org defaults and location-specific overrides for backroom settings.</CardDescription>
             </div>
           </div>
