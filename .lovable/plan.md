@@ -1,31 +1,70 @@
 
 
-# Zura Backroom Setup Wizard — Already Built
+# Stations & Hardware Setup Wizard
 
-The setup wizard already exists and is fully functional at `src/components/dashboard/backroom-settings/BackroomSetupWizard.tsx` (729 lines). It includes:
+## What We're Building
 
-1. **Welcome** — Overview of what gets configured
-2. **Products** — Select products for backroom tracking, set cost-per-gram, grouped by category with bulk toggle
-3. **Services** — Toggle services for tracking, map each to a primary product
-4. **Allowances** — Set included quantity, unit, and overage rate per tracked service
-5. **Station** — Create a mixing station with name and location assignment
+A dedicated multi-step wizard for connecting stations to hardware (iPad tablets and Bluetooth scales). Launched from the Stations & Hardware section. Guides the admin through: naming a station, assigning it to a location, choosing a connection method (Bluetooth or direct iPad), and pairing a scale — with live connection status feedback.
 
-**Already wired up:**
-- The Overview page (`BackroomSetupOverview.tsx`) shows a "Launch Wizard" CTA when setup is incomplete
-- Progress bar with step labels and animated slide transitions (framer-motion)
-- Skip and Back navigation per step
-- Each step saves data on advance (bulk product updates, service tracking components, allowance policies, station creation)
-- Completion is persisted via `backroom_settings` with key `setup_wizard_completed`
+## Existing Infrastructure
 
-**No changes are needed** — the wizard is fully implemented and accessible from the Backroom Settings Overview page. You can test it by navigating to the Overview tab and clicking "Launch Wizard."
+- `backroom_stations` table has `assigned_device_id`, `assigned_scale_id`, `last_seen_at`, `is_active`
+- `ScaleAdapter` interface + `ManualScaleAdapter` already exist with `ConnectionState` types (disconnected, scanning, pairing, connected, stable_reading, manual_override)
+- `ScaleConnectionStatus` badge component exists
+- `useCreateBackroomStation` / `useUpdateBackroomStation` hooks ready
+- The main setup wizard (5-step) already creates a basic station in step 5 — this new wizard is a deeper, hardware-focused flow
 
-If you'd like to **enhance** the existing wizard, here are some options:
+## New Database Columns (migration)
 
-| Enhancement | Description |
-|---|---|
-| **Recipe Baselines step** | Add a 6th step for defining recipe baselines (currently skipped) |
-| **Bulk import** | Allow CSV upload of products/costs in the Products step |
-| **Resume progress** | Save partial wizard state so users can resume later |
-| **Validation gates** | Prevent advancing without minimum selections (e.g., at least 1 product) |
-| **Smart defaults** | Pre-select products in common backroom categories (color, lightener, developer) |
+Add to `backroom_stations`:
+- `connection_type` (text, default `'manual'`) — values: `manual`, `ble`, `direct`
+- `device_name` (text, nullable) — friendly name of iPad/tablet
+- `scale_model` (text, nullable) — scale brand/model for display
+- `pairing_code` (text, nullable) — stored pairing reference for BLE reconnect
+
+## New Files
+
+| File | Purpose |
+|------|---------|
+| `src/components/dashboard/backroom-settings/StationHardwareWizard.tsx` | 4-step wizard component |
+
+## Modified Files
+
+| File | Change |
+|------|--------|
+| `src/components/dashboard/backroom-settings/StationsHardwareSection.tsx` | Add "Setup New Station" button launching the wizard |
+| `src/lib/backroom/scale-adapter.ts` | Add `BLEScaleAdapter` stub with simulated scanning/pairing states |
+
+## Wizard Steps (4 steps)
+
+### Step 1 — Station Identity
+- Station name input
+- Location selector (from existing locations)
+- Optional description/notes
+
+### Step 2 — Device Assignment
+- Choose connection type: **Bluetooth** or **Direct (iPad)**
+- If Direct: enter device name/identifier, show instructions for installing the Zura Backroom iPad app
+- If Bluetooth: show "We'll scan for devices in the next step"
+- Visual cards for each option with icons
+
+### Step 3 — Scale Pairing
+- If Bluetooth: simulated BLE scan animation → show discovered devices list → select to pair → pairing animation → confirmation
+- If Direct: manual scale ID entry with "Test Connection" button
+- If Manual fallback: skip to confirmation with "Manual Mode" badge
+- Uses `ScaleConnectionStatus` component to show live state transitions
+- "Use Manual Entry Instead" fallback link
+
+### Step 4 — Confirmation
+- Summary card: station name, location, connection type, device, scale
+- Status badges for each component
+- "Create Station" button persists to `backroom_stations` with all fields
+
+## Technical Details
+
+- Wizard uses same `framer-motion` slide pattern as the main setup wizard
+- BLE scanning is simulated in Phase 1 (no real Capacitor BLE yet) — shows realistic state transitions with timeouts
+- `BLEScaleAdapter` stub cycles through: `disconnected` → `scanning` (2s) → `pairing` (1.5s) → `connected`
+- Station is created via `useCreateBackroomStation` with new fields on completion
+- Wizard is rendered inline in `StationsHardwareSection` (replaces content when active), not a dialog
 
