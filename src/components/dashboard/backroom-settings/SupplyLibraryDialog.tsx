@@ -26,6 +26,16 @@ interface Props {
   existingProducts: Array<{ name: string; brand: string | null }>;
 }
 
+/** Build a selection key — includes size when present */
+function sizedKey(brand: string, name: string, size?: string) {
+  return size ? `${brand}::${name}::${size}` : `${brand}::${name}`;
+}
+
+/** Build the product name with optional size suffix */
+function sizedName(name: string, size?: string) {
+  return size ? `${name} — ${size}` : name;
+}
+
 export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProducts }: Props) {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
@@ -35,16 +45,21 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
 
   const brands = useMemo(() => getSupplyBrands(), []);
 
-  // Build a set of "brand::name" for already-added products
+  // Build set of existing keys — match both "Product Name" and "Product Name — 60ml"
   const existingKeys = useMemo(() => {
     const s = new Set<string>();
     existingProducts.forEach((p) => {
-      if (p.brand && p.name) s.add(`${p.brand}::${p.name}`);
+      if (p.brand && p.name) {
+        s.add(`${p.brand}::${p.name}`);
+      }
     });
     return s;
   }, [existingProducts]);
 
-  const itemKey = (item: SupplyLibraryItem) => `${item.brand}::${item.name}`;
+  const isExisting = (brand: string, name: string, size?: string) => {
+    return existingKeys.has(sizedKey(brand, name, size))
+      || existingKeys.has(`${brand}::${sizedName(name, size)}`);
+  };
 
   // Filter brands by search
   const filteredBrands = useMemo(() => {
@@ -66,9 +81,17 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
     return products.filter((p) => p.name.toLowerCase().includes(q));
   }, [selectedBrand, search]);
 
-  const toggleItem = (item: SupplyLibraryItem) => {
-    const key = itemKey(item);
-    if (existingKeys.has(key)) return;
+  /** Get all selectable keys for an item (one per size, or one if no sizes) */
+  const getItemKeys = (item: SupplyLibraryItem): { key: string; size?: string }[] => {
+    if (item.sizeOptions && item.sizeOptions.length > 0) {
+      return item.sizeOptions.map((size) => ({ key: sizedKey(item.brand, item.name, size), size }));
+    }
+    return [{ key: sizedKey(item.brand, item.name) }];
+  };
+
+  const toggleSize = (item: SupplyLibraryItem, size?: string) => {
+    const key = sizedKey(item.brand, item.name, size);
+    if (isExisting(item.brand, item.name, size)) return;
     const next = new Set(selected);
     if (next.has(key)) next.delete(key);
     else next.add(key);
@@ -77,13 +100,17 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
 
   const toggleAllBrand = () => {
     if (!selectedBrand) return;
-    const items = brandProducts.filter((p) => !existingKeys.has(itemKey(p)));
-    const allSelected = items.every((p) => selected.has(itemKey(p)));
+    const allKeys: string[] = [];
+    brandProducts.forEach((p) => {
+      getItemKeys(p).forEach(({ key, size }) => {
+        if (!isExisting(p.brand, p.name, size)) allKeys.push(key);
+      });
+    });
+    const allSelected = allKeys.length > 0 && allKeys.every((k) => selected.has(k));
     const next = new Set(selected);
-    items.forEach((p) => {
-      const key = itemKey(p);
-      if (allSelected) next.delete(key);
-      else next.add(key);
+    allKeys.forEach((k) => {
+      if (allSelected) next.delete(k);
+      else next.add(k);
     });
     setSelected(next);
   };
@@ -93,19 +120,36 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
     setIsAdding(true);
 
     try {
-      const itemsToInsert = SUPPLY_LIBRARY
-        .filter((item) => selected.has(itemKey(item)))
-        .map((item) => ({
-          name: item.name,
-          brand: item.brand,
-          category: item.category,
-          product_type: 'Supplies',
-          is_backroom_tracked: true,
-          depletion_method: item.defaultDepletion,
-          unit_of_measure: item.defaultUnit,
-          organization_id: orgId,
-          is_active: true,
-        }));
+      const itemsToInsert: Array<{
+        name: string;
+        brand: string;
+        category: string;
+        product_type: string;
+        is_backroom_tracked: boolean;
+        depletion_method: string;
+        unit_of_measure: string;
+        organization_id: string;
+        is_active: boolean;
+      }> = [];
+
+      SUPPLY_LIBRARY.forEach((item) => {
+        getItemKeys(item).forEach(({ key, size }) => {
+          if (!selected.has(key)) return;
+          itemsToInsert.push({
+            name: sizedName(item.name, size),
+            brand: item.brand,
+            category: item.category,
+            product_type: 'Supplies',
+            is_backroom_tracked: true,
+            depletion_method: item.defaultDepletion,
+            unit_of_measure: item.defaultUnit,
+            organization_id: orgId,
+            is_active: true,
+          });
+        });
+      });
+
+      if (itemsToInsert.length === 0) return;
 
       const { error } = await supabase.from('products').insert(itemsToInsert);
       if (error) throw error;
@@ -126,7 +170,21 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
 
   // Count selected per brand for badges
   const selectedCountForBrand = (brand: string) => {
-    return getProductsByBrand(brand).filter((p) => selected.has(itemKey(p))).length;
+    let count = 0;
+    getProductsByBrand(brand).forEach((p) => {
+      getItemKeys(p).forEach(({ key }) => {
+        if (selected.has(key)) count++;
+      });
+    });
+    return count;
+  };
+
+  // Check if all selectable items for a brand are fully in catalog
+  const brandFullyAdded = (brand: string) => {
+    const items = getProductsByBrand(brand);
+    return items.every((p) =>
+      getItemKeys(p).every(({ size }) => isExisting(p.brand, p.name, size))
+    );
   };
 
   return (
@@ -140,7 +198,7 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
             <div>
               <DialogTitle className={tokens.card.title}>Professional Supply Library</DialogTitle>
               <DialogDescription className={tokens.body.muted}>
-                Browse 26+ brands. Select products and add them to your catalog with tracking enabled.
+                Browse 26+ brands. Select products and sizes to add to your catalog.
               </DialogDescription>
             </div>
           </div>
@@ -162,7 +220,7 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
               {filteredBrands.map((brand) => {
                 const count = getProductsByBrand(brand).length;
                 const selCount = selectedCountForBrand(brand);
-                const existCount = getProductsByBrand(brand).filter((p) => existingKeys.has(itemKey(p))).length;
+                const allAdded = brandFullyAdded(brand);
 
                 return (
                   <button
@@ -182,7 +240,7 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
                           {selCount}
                         </Badge>
                       )}
-                      {existCount > 0 && existCount === count ? (
+                      {allAdded ? (
                         <Check className="w-3.5 h-3.5 text-muted-foreground" />
                       ) : (
                         <span className="text-[10px] text-muted-foreground">{count}</span>
@@ -206,54 +264,105 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
                     onClick={toggleAllBrand}
                     className="text-xs font-sans h-7"
                   >
-                    {brandProducts.filter((p) => !existingKeys.has(itemKey(p))).every((p) => selected.has(itemKey(p)))
-                      ? 'Deselect All'
-                      : 'Select All'}
+                    {(() => {
+                      const allKeys: string[] = [];
+                      brandProducts.forEach((p) => {
+                        getItemKeys(p).forEach(({ key, size }) => {
+                          if (!isExisting(p.brand, p.name, size)) allKeys.push(key);
+                        });
+                      });
+                      return allKeys.length > 0 && allKeys.every((k) => selected.has(k))
+                        ? 'Deselect All'
+                        : 'Select All';
+                    })()}
                   </Button>
                 </div>
 
                 <div className="space-y-1">
                   {brandProducts.map((item) => {
-                    const key = itemKey(item);
-                    const alreadyAdded = existingKeys.has(key);
-                    const isSelected = selected.has(key);
+                    const hasSizes = item.sizeOptions && item.sizeOptions.length > 0;
+                    const itemKeys = getItemKeys(item);
+                    const allExisting = itemKeys.every(({ size }) => isExisting(item.brand, item.name, size));
+                    const anySelected = itemKeys.some(({ key }) => selected.has(key));
+                    const allSelected = itemKeys.every(({ key, size }) =>
+                      selected.has(key) || isExisting(item.brand, item.name, size)
+                    );
 
                     return (
-                      <button
-                        key={key}
-                        onClick={() => toggleItem(item)}
-                        disabled={alreadyAdded}
+                      <div
+                        key={`${item.brand}::${item.name}`}
                         className={cn(
-                          'w-full flex items-center gap-3 rounded-lg border p-3 text-left transition-colors',
-                          alreadyAdded
-                            ? 'border-border/30 bg-muted/20 opacity-60 cursor-default'
-                            : isSelected
+                          'rounded-lg border p-3 transition-colors',
+                          allExisting
+                            ? 'border-border/30 bg-muted/20 opacity-60'
+                            : anySelected
                             ? 'border-primary/40 bg-primary/5'
                             : 'border-border/40 hover:border-border hover:bg-muted/30'
                         )}
                       >
-                        <Checkbox
-                          checked={alreadyAdded || isSelected}
-                          disabled={alreadyAdded}
-                          className="shrink-0"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <span className="text-sm font-sans text-foreground">{item.name}</span>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <Badge variant="outline" className="text-[10px] capitalize">
-                              {SUPPLY_CATEGORY_LABELS[item.category] || item.category}
-                            </Badge>
-                            <span className="text-[10px] text-muted-foreground capitalize">
-                              {item.defaultDepletion === 'per_pump' ? 'Per Pump' : item.defaultDepletion} · {item.defaultUnit}
-                            </span>
+                        <div className="flex items-start gap-3">
+                          {/* If no sizes, single checkbox */}
+                          {!hasSizes && (
+                            <Checkbox
+                              checked={allExisting || selected.has(sizedKey(item.brand, item.name))}
+                              disabled={allExisting}
+                              onCheckedChange={() => toggleSize(item)}
+                              className="shrink-0 mt-0.5"
+                            />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-sans text-foreground">{item.name}</span>
+                              {allExisting && (
+                                <Badge variant="secondary" className="text-[10px] shrink-0">
+                                  <Check className="w-3 h-3 mr-0.5" /> Added
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <Badge variant="outline" className="text-[10px] capitalize">
+                                {SUPPLY_CATEGORY_LABELS[item.category] || item.category}
+                              </Badge>
+                              <span className="text-[10px] text-muted-foreground capitalize">
+                                {item.defaultDepletion === 'per_pump' ? 'Per Pump' : item.defaultDepletion} · {item.defaultUnit}
+                              </span>
+                            </div>
+
+                            {/* Size chips */}
+                            {hasSizes && (
+                              <div className="flex flex-wrap gap-1.5 mt-2">
+                                {item.sizeOptions!.map((size) => {
+                                  const key = sizedKey(item.brand, item.name, size);
+                                  const sizeExisting = isExisting(item.brand, item.name, size);
+                                  const sizeSelected = selected.has(key);
+
+                                  return (
+                                    <button
+                                      key={size}
+                                      type="button"
+                                      disabled={sizeExisting}
+                                      onClick={() => toggleSize(item, size)}
+                                      className={cn(
+                                        'inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-sans transition-colors border',
+                                        sizeExisting
+                                          ? 'border-border/30 bg-muted/30 text-muted-foreground cursor-default'
+                                          : sizeSelected
+                                          ? 'border-primary bg-primary/10 text-primary'
+                                          : 'border-border/60 hover:border-border text-foreground/70 hover:text-foreground'
+                                      )}
+                                    >
+                                      {(sizeExisting || sizeSelected) && (
+                                        <Check className="w-3 h-3" />
+                                      )}
+                                      {size}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            )}
                           </div>
                         </div>
-                        {alreadyAdded && (
-                          <Badge variant="secondary" className="text-[10px] shrink-0">
-                            <Check className="w-3 h-3 mr-0.5" /> Added
-                          </Badge>
-                        )}
-                      </button>
+                      </div>
                     );
                   })}
                 </div>
