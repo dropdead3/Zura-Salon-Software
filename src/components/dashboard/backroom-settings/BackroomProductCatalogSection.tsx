@@ -104,6 +104,12 @@ export function BackroomProductCatalogSection() {
 
   return (
     <div className="space-y-4">
+      <Infotainer
+        id="backroom-products-guide"
+        title="Products & Supplies"
+        description="Choose which products stylists use at the mixing station. Toggle tracking on, set costs, and pick how each product is measured (weighed, pumped, etc). Do this first — services can't be tracked without products."
+        icon={<Package className="h-4 w-4 text-primary" />}
+      />
       <Card className={tokens.card.wrapper}>
         <CardHeader>
           <div className="flex items-center justify-between">
