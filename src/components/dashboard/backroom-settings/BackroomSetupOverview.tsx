@@ -1,10 +1,14 @@
+import { useState } from 'react';
 import { useBackroomSetupHealth, type SetupWarning } from '@/hooks/backroom/useBackroomSetupHealth';
+import { useBackroomSetting } from '@/hooks/backroom/useBackroomSettings';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Loader2, AlertTriangle, CheckCircle2, Info, Package, Wrench, DollarSign, Monitor, BarChart3, Bell } from 'lucide-react';
+import { Loader2, AlertTriangle, CheckCircle2, Info, Package, Wrench, DollarSign, Monitor, BarChart3, Bell, Sparkles } from 'lucide-react';
+import { BackroomSetupWizard } from './BackroomSetupWizard';
 
 interface Props {
   onNavigate: (section: string) => void;
@@ -12,6 +16,9 @@ interface Props {
 
 export function BackroomSetupOverview({ onNavigate }: Props) {
   const { data: health, isLoading } = useBackroomSetupHealth();
+  const { data: wizardSetting } = useBackroomSetting('setup_wizard_completed');
+  const [showWizard, setShowWizard] = useState(false);
+  const wizardCompleted = !!(wizardSetting?.value as Record<string, unknown>)?.completed;
 
   if (isLoading) {
     return (
