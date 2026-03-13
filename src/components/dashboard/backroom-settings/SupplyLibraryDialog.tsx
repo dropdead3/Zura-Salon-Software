@@ -399,24 +399,42 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
               <div className="p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="font-sans text-sm font-medium text-foreground">{selectedBrand}</h3>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={toggleAllBrand}
-                    className="text-xs font-sans h-7"
-                  >
-                    {(() => {
-                      const allKeys: string[] = [];
-                      brandProducts.forEach((p) => {
-                        getItemKeys(p).forEach(({ key, size }) => {
-                          if (!isExisting(p.brand, p.name, size)) allKeys.push(key);
+                  <div className="flex items-center gap-1.5">
+                    {selectedBrand && !brandFullyAdded(selectedBrand) && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleAddEntireBrand(selectedBrand)}
+                        disabled={addingBrand === selectedBrand}
+                        className="text-xs font-sans h-7 gap-1"
+                      >
+                        {addingBrand === selectedBrand ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <PackagePlus className="w-3 h-3" />
+                        )}
+                        Add Entire Brand
+                      </Button>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={toggleAllBrand}
+                      className="text-xs font-sans h-7"
+                    >
+                      {(() => {
+                        const allKeys: string[] = [];
+                        brandProducts.forEach((p) => {
+                          getItemKeys(p).forEach(({ key, size }) => {
+                            if (!isExisting(p.brand, p.name, size)) allKeys.push(key);
+                          });
                         });
-                      });
-                      return allKeys.length > 0 && allKeys.every((k) => selected.has(k))
-                        ? 'Deselect All'
-                        : 'Select All';
-                    })()}
-                  </Button>
+                        return allKeys.length > 0 && allKeys.every((k) => selected.has(k))
+                          ? 'Deselect All'
+                          : 'Select All';
+                      })()}
+                    </Button>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
