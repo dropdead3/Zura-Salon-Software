@@ -28,7 +28,7 @@ const slideVariants = {
   exit: (dir: number) => ({ x: dir > 0 ? -80 : 80, opacity: 0 }),
 };
 
-const springTransition = { type: 'spring', damping: 26, stiffness: 300, mass: 0.8 };
+const springTransition = { type: 'spring' as const, damping: 26, stiffness: 300, mass: 0.8 };
 
 interface Props {
   onComplete: () => void;
