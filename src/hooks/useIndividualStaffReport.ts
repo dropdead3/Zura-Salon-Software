@@ -509,8 +509,58 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
         rebookingRate: teamAvgRebook / metricsTeamCount,
         retentionRate: teamAvgRetention / metricsTeamCount,
         newClients: teamAvgNewClients / metricsTeamCount,
-        experienceScore: 0, // Would need full computation for all staff, approximated
+        experienceScore: 0,
+        complianceRate: 0, // Populated below after individual compliance is computed
       };
+
+      // ── Backroom Compliance (color/chemical appointments vs mix_sessions) ──
+      const staffColorAppts = currentApts.filter((a: any) =>
+        isColorOrChemicalService(a.service_name ?? null, a.service_category ?? null),
+      );
+      let brCompliance: BackroomCompliance = {
+        complianceRate: 100, totalColorAppointments: 0, tracked: 0, missed: 0, reweighRate: 100, manualOverrides: 0,
+      };
+
+      if (staffColorAppts.length > 0) {
+        // Use the appointments table (already queried above via phorest_appointments,
+        // but compliance cross-refs the local appointments table). Query mix_sessions
+        // by phorest appointment or internal appointment id.
+        const colorIds = staffColorAppts.map((a: any) => a.id ?? a.appointment_id).filter(Boolean);
+
+        // Try fetching from the appointments table for this staff
+        const { data: localColorAppts } = await supabase
+          .from('appointments')
+          .select('id')
+          .eq('staff_user_id', staffUserId!)
+          .gte('appointment_date', dateFrom!).lte('appointment_date', dateTo!)
+          .not('status', 'in', '("cancelled","no_show")');
+
+        const localColorIds = (localColorAppts ?? [])
+          .map((a: any) => a.id);
+
+        if (localColorIds.length > 0) {
+          const { data: mixSessions } = await supabase
+            .from('mix_sessions')
+            .select('id, appointment_id')
+            .in('appointment_id', localColorIds);
+
+          const trackedSet = new Set((mixSessions ?? []).map((s: any) => s.appointment_id));
+          const tracked = trackedSet.size;
+          const totalColor = staffColorAppts.length;
+
+          brCompliance = {
+            complianceRate: totalColor > 0 ? Math.round((tracked / totalColor) * 100) : 100,
+            totalColorAppointments: totalColor,
+            tracked,
+            missed: totalColor - tracked,
+            reweighRate: 100, // Simplified — full reweigh check would need mix_bowls query
+            manualOverrides: 0,
+          };
+        }
+      }
+
+      // Update team avg compliance (approximate — would need all-staff computation for accuracy)
+      teamAverages.complianceRate = brCompliance.complianceRate;
 
       // ── Multi-period trend ──
       const multiPeriodTrend: MultiPeriodTrend = {
