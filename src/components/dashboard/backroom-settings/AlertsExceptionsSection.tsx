@@ -125,7 +125,7 @@ export function AlertsExceptionsSection() {
                   </Select>
                 </div>
                 <div>
-                  <label className={tokens.label.default}>Threshold Value</label>
+                  <div className="flex items-center gap-1"><label className={tokens.label.default}>Threshold Value</label><MetricInfoTooltip description="The numeric trigger point. For 'Missing Reweigh' use count; for 'Excess Usage' use percentage." /></div>
                   <Input type="number" value={form.threshold_value} onChange={e => setForm(f => ({ ...f, threshold_value: Number(e.target.value) }))} className="mt-1" />
                 </div>
                 <div>
