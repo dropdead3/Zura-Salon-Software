@@ -192,6 +192,41 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
     );
   };
 
+  const handleSuggestBrand = async () => {
+    if (!suggestBrand.trim()) return;
+    setIsSuggesting(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { data: profileData } = await supabase
+        .from('employee_profiles')
+        .select('organization_id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      await supabase.from('platform_feedback' as any).insert({
+        type: 'feature_request',
+        title: `Brand Request: ${suggestBrand.trim()}`,
+        description: suggestDetails.trim() || `Salon would like the brand "${suggestBrand.trim()}" added to the Professional Supply Library.`,
+        category: 'supply_library',
+        submitted_by: user.id,
+        organization_id: profileData?.organization_id || null,
+      });
+
+      toast.success('Brand suggestion submitted', {
+        description: `Thank you — the ${PLATFORM_NAME} team will review your request.`,
+      });
+      setSuggestBrand('');
+      setSuggestDetails('');
+      setShowSuggest(false);
+    } catch (err: any) {
+      toast.error('Failed to submit suggestion', { description: err.message });
+    } finally {
+      setIsSuggesting(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl p-0 gap-0 max-h-[85vh] flex flex-col">
