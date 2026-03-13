@@ -95,7 +95,7 @@ export function FormulaAssistanceSection() {
         <CardContent className="space-y-4">
           <div className={cn(tokens.card.inner, 'p-4 flex items-center justify-between')}>
             <div>
-              <p className={tokens.body.emphasis}>Ratio Lock</p>
+              <div className="flex items-center gap-1"><p className={tokens.body.emphasis}>Ratio Lock</p><MetricInfoTooltip description="When enabled, Smart Mix Assist enforces the same product ratios used in previous formulas, preventing ratio drift between sessions." /></div>
               <p className={tokens.body.muted}>Enforce consistent ratios when suggesting formulas</p>
             </div>
             <Switch
