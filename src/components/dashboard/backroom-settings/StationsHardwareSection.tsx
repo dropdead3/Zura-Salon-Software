@@ -156,7 +156,7 @@ export function StationsHardwareSection() {
                   <Input value={form.assigned_device_id} onChange={(e) => setForm(f => ({ ...f, assigned_device_id: e.target.value }))} placeholder="e.g. tablet-001" className="mt-1" />
                 </div>
                 <div>
-                  <label className={tokens.label.default}>Scale ID (optional)</label>
+                  <div className="flex items-center gap-1"><label className={tokens.label.default}>Scale ID (optional)</label><MetricInfoTooltip description="Identifier for the Bluetooth scale paired to this station." /></div>
                   <Input value={form.assigned_scale_id} onChange={(e) => setForm(f => ({ ...f, assigned_scale_id: e.target.value }))} placeholder="e.g. scale-001" className="mt-1" />
                 </div>
               </div>
