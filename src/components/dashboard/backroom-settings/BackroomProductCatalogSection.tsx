@@ -259,7 +259,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
 function ProductRow({ product, onUpdate }: { product: BackroomProduct; onUpdate: (u: Partial<BackroomProduct>) => void }) {
   return (
     <div className={cn(
-      'flex items-center gap-4 rounded-lg border p-3 transition-colors',
+      'flex items-center gap-5 rounded-lg border p-4 transition-colors',
       product.is_backroom_tracked ? 'border-border bg-card' : 'border-border/40 bg-muted/20'
     )}>
       {/* Toggle */}
