@@ -176,7 +176,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
           ) : (
             <>
               {/* Filters */}
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 <div className="relative flex-1 min-w-[200px]">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
@@ -208,7 +208,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
               </div>
 
               {/* Product rows */}
-              <div className="space-y-1">
+              <div className="space-y-2">
                 {filtered.length === 0 ? (
                   <div className={tokens.empty.container}>
                     <Package className={tokens.empty.icon} />
@@ -259,7 +259,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
 function ProductRow({ product, onUpdate }: { product: BackroomProduct; onUpdate: (u: Partial<BackroomProduct>) => void }) {
   return (
     <div className={cn(
-      'flex items-center gap-4 rounded-lg border p-3 transition-colors',
+      'flex items-center gap-5 rounded-lg border p-4 transition-colors',
       product.is_backroom_tracked ? 'border-border bg-card' : 'border-border/40 bg-muted/20'
     )}>
       {/* Toggle */}
@@ -291,8 +291,8 @@ function ProductRow({ product, onUpdate }: { product: BackroomProduct; onUpdate:
 
       {/* Depletion method */}
       {product.is_backroom_tracked && (
-        <div className="flex items-center gap-2 shrink-0">
-          <div className="flex items-center gap-0.5">
+        <div className="flex items-center gap-3 shrink-0 bg-muted/30 rounded-lg px-3 py-2">
+          <div className="flex items-center gap-1">
             <MetricInfoTooltip description="How this product is measured when used. 'Weighed' uses a scale; 'Per Pump' counts pumps dispensed." />
             <Select
               value={product.depletion_method}
@@ -308,6 +308,8 @@ function ProductRow({ product, onUpdate }: { product: BackroomProduct; onUpdate:
               </SelectContent>
             </Select>
           </div>
+
+          <div className="w-px h-5 bg-border/40" />
 
           <div className="flex items-center gap-1">
             <label className="text-[10px] text-muted-foreground">Billable</label>

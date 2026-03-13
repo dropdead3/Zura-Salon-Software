@@ -229,7 +229,7 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl p-0 gap-0 max-h-[85vh] flex flex-col">
+      <DialogContent className="max-w-3xl p-0 gap-0 max-h-[80vh] flex flex-col">
         <DialogHeader className="px-6 pt-6 pb-4 border-b border-border/40">
           <div className="flex items-center gap-3">
             <div className={tokens.card.iconBox}>
@@ -255,7 +255,7 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
 
         <div className="flex flex-1 min-h-0">
           {/* Brand list */}
-          <ScrollArea className="w-[200px] border-r border-border/40">
+          <ScrollArea className="w-[220px] border-r border-border/40">
             <div className="p-2 space-y-0.5">
               {filteredBrands.map((brand) => {
                 const count = getProductsByBrand(brand).length;
@@ -267,14 +267,17 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
                     key={brand}
                     onClick={() => setSelectedBrand(brand)}
                     className={cn(
-                      'w-full text-left px-3 py-2 rounded-lg text-sm font-sans transition-colors flex items-center justify-between gap-2',
+                      'w-full text-left px-3 py-2.5 rounded-lg text-sm font-sans transition-colors flex items-center justify-between gap-2 relative',
                       selectedBrand === brand
                         ? 'bg-accent text-accent-foreground'
                         : 'hover:bg-muted/60 text-foreground'
                     )}
                   >
+                    {selectedBrand === brand && (
+                      <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-full bg-primary" />
+                    )}
                     <span className="truncate">{brand}</span>
-                    <div className="flex items-center gap-1 shrink-0">
+                    <div className="flex items-center gap-1.5 shrink-0">
                       {selCount > 0 && (
                         <Badge className="h-5 min-w-[20px] px-1.5 text-[10px] bg-primary text-primary-foreground">
                           {selCount}
@@ -295,39 +298,39 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
                 {!showSuggest ? (
                   <button
                     onClick={() => setShowSuggest(true)}
-                    className="w-full flex items-center gap-2 px-2 py-2 rounded-lg text-xs font-sans text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+                    className="w-full flex items-center gap-2 px-2 py-2.5 rounded-lg text-xs font-sans text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
                   >
                     <MessageSquarePlus className="w-3.5 h-3.5 shrink-0" />
                     <span>Missing a brand?</span>
                   </button>
                 ) : (
-                  <div className="space-y-2">
-                    <p className="text-[11px] font-sans text-muted-foreground">Suggest a brand:</p>
+                  <div className="space-y-2.5 pb-1">
+                    <p className="text-[11px] font-sans font-medium text-muted-foreground">Suggest a brand:</p>
                     <Input
                       placeholder="Brand name"
                       value={suggestBrand}
                       onChange={(e) => setSuggestBrand(e.target.value)}
-                      className="h-8 text-xs font-sans rounded-lg"
+                      className="h-9 text-xs font-sans rounded-lg"
                       autoCapitalize="words"
                     />
                     <Input
                       placeholder="Products (optional)"
                       value={suggestDetails}
                       onChange={(e) => setSuggestDetails(e.target.value)}
-                      className="h-8 text-xs font-sans rounded-lg"
+                      className="h-9 text-xs font-sans rounded-lg"
                     />
-                    <div className="flex gap-1.5">
+                    <div className="flex gap-2">
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="flex-1 h-7 text-xs font-sans"
+                        className="flex-1 h-8 text-xs font-sans"
                         onClick={() => { setShowSuggest(false); setSuggestBrand(''); setSuggestDetails(''); }}
                       >
                         Cancel
                       </Button>
                       <Button
                         size="sm"
-                        className="flex-1 h-7 text-xs font-sans"
+                        className="flex-1 h-8 text-xs font-sans"
                         disabled={!suggestBrand.trim() || isSuggesting}
                         onClick={handleSuggestBrand}
                       >
@@ -367,7 +370,7 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
                   </Button>
                 </div>
 
-                <div className="space-y-1">
+                <div className="space-y-2">
                   {brandProducts.map((item) => {
                     const hasSizes = item.sizeOptions && item.sizeOptions.length > 0;
                     const itemKeys = getItemKeys(item);
@@ -381,7 +384,7 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
                       <div
                         key={`${item.brand}::${item.name}`}
                         className={cn(
-                          'rounded-lg border p-3 transition-colors',
+                          'rounded-lg border p-4 transition-colors',
                           allExisting
                             ? 'border-border/30 bg-muted/20 opacity-60'
                             : anySelected
@@ -419,7 +422,7 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
 
                             {/* Size chips */}
                             {hasSizes && (
-                              <div className="flex flex-wrap gap-1.5 mt-2">
+                              <div className="flex flex-wrap gap-2 mt-2.5">
                                 {item.sizeOptions!.map((size) => {
                                   const key = sizedKey(item.brand, item.name, size);
                                   const sizeExisting = isExisting(item.brand, item.name, size);
@@ -432,7 +435,7 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
                                       disabled={sizeExisting}
                                       onClick={() => toggleSize(item, size)}
                                       className={cn(
-                                        'inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-sans transition-colors border',
+                                        'inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-sans transition-colors border',
                                         sizeExisting
                                           ? 'border-border/30 bg-muted/30 text-muted-foreground cursor-default'
                                           : sizeSelected
@@ -457,9 +460,11 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
                 </div>
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center h-full py-16 px-6 text-center">
-                <Package className="w-10 h-10 text-muted-foreground/40 mb-3" />
-                <p className="font-sans text-sm text-muted-foreground">
+              <div className="flex flex-col items-center justify-center h-full py-20 px-8 text-center">
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl border border-border/60 bg-muted/40">
+                  <Package className="w-7 h-7 text-muted-foreground/50" />
+                </div>
+                <p className="font-sans text-sm text-muted-foreground max-w-xs">
                   Select a brand from the left to browse their professional supply products.
                 </p>
               </div>
@@ -468,7 +473,7 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-border/40 flex items-center justify-between bg-muted/20">
+        <div className="px-6 py-4 border-t border-border/40 flex items-center justify-between bg-muted/20 shadow-[0_-4px_12px_-4px_hsl(var(--foreground)/0.04)]">
           <span className="text-sm font-sans text-muted-foreground">
             {selected.size > 0
               ? `${selected.size} product${selected.size === 1 ? '' : 's'} selected`
