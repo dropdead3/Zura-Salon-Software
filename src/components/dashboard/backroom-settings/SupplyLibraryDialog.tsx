@@ -7,7 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { Search, Package, Check, Library, Loader2, MessageSquarePlus, Send } from 'lucide-react';
+import { Search, Package, Check, Library, Loader2, MessageSquarePlus, Send, PackagePlus } from 'lucide-react';
 import { PLATFORM_NAME } from '@/lib/brand';
 import {
   SUPPLY_LIBRARY,
