@@ -229,7 +229,7 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl p-0 gap-0 max-h-[85vh] flex flex-col">
+      <DialogContent className="max-w-3xl p-0 gap-0 max-h-[80vh] flex flex-col">
         <DialogHeader className="px-6 pt-6 pb-4 border-b border-border/40">
           <div className="flex items-center gap-3">
             <div className={tokens.card.iconBox}>
