@@ -10,6 +10,8 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Loader2, Package, Save } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Infotainer } from '@/components/ui/Infotainer';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 
 interface InventoryConfig {
   tracking_enabled: boolean;
