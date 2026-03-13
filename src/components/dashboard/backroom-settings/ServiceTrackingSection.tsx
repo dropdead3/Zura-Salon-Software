@@ -131,6 +131,7 @@ export function ServiceTrackingSection() {
                 <div className="flex items-center gap-2 shrink-0">
                   <div className="flex items-center gap-1">
                     <label className="text-[10px] text-muted-foreground whitespace-nowrap">Asst. Prep</label>
+                    <MetricInfoTooltip description="Allows assistants to pre-mix bowls for this service before the stylist arrives." />
                     <Switch
                       checked={service.assistant_prep_allowed}
                       onCheckedChange={(v) => updateService.mutate({ id: service.id, updates: { assistant_prep_allowed: v } })}
@@ -139,20 +140,24 @@ export function ServiceTrackingSection() {
                   </div>
                   <div className="flex items-center gap-1">
                     <label className="text-[10px] text-muted-foreground whitespace-nowrap">Mix Assist</label>
+                    <MetricInfoTooltip description="Enables AI-powered formula suggestions when mixing for this service." />
                     <Switch
                       checked={service.smart_mix_assist_enabled}
                       onCheckedChange={(v) => updateService.mutate({ id: service.id, updates: { smart_mix_assist_enabled: v } })}
                       className="scale-75"
                     />
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setSelectedServiceId(service.id)}
-                    className="text-xs font-sans"
-                  >
-                    Components
-                  </Button>
+                  <div className="flex items-center gap-0.5">
+                    <MetricInfoTooltip description="Map which tracked products are consumed during this service." />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSelectedServiceId(service.id)}
+                      className="text-xs font-sans"
+                    >
+                      Components
+                    </Button>
+                  </div>
                 </div>
               </div>
             ))
