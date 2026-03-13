@@ -435,7 +435,7 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
                                       disabled={sizeExisting}
                                       onClick={() => toggleSize(item, size)}
                                       className={cn(
-                                        'inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-sans transition-colors border',
+                                        'inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-sans transition-colors border',
                                         sizeExisting
                                           ? 'border-border/30 bg-muted/30 text-muted-foreground cursor-default'
                                           : sizeSelected
