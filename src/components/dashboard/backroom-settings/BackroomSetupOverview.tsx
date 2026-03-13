@@ -28,7 +28,17 @@ export function BackroomSetupOverview({ onNavigate }: Props) {
     );
   }
 
-  if (!health) return null;
+  if (!health) {
+    return (
+      <Card className={tokens.card.wrapper}>
+        <CardContent className="py-12 text-center">
+          <Info className="w-10 h-10 mx-auto mb-3 text-muted-foreground" />
+          <p className={tokens.body.emphasis}>No organization selected</p>
+          <p className={tokens.body.muted}>Select an organization from the switcher to view Backroom setup status.</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (showWizard) {
     return (

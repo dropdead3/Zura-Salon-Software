@@ -4,7 +4,7 @@
  */
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { useBackroomOrgId } from './useBackroomOrgId';
 
 export interface SetupWarning {
   id: string;
@@ -27,8 +27,7 @@ export interface SetupHealthMetrics {
 }
 
 export function useBackroomSetupHealth() {
-  const { effectiveOrganization } = useOrganizationContext();
-  const orgId = effectiveOrganization?.id;
+  const orgId = useBackroomOrgId();
 
   return useQuery({
     queryKey: ['backroom-setup-health', orgId],

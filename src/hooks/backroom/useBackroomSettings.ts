@@ -4,6 +4,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { useBackroomOrgId } from './useBackroomOrgId';
 import { toast } from 'sonner';
 
 export interface BackroomSetting {
@@ -21,8 +22,7 @@ export interface BackroomSetting {
  * and any location overrides. Consumer can resolve inheritance.
  */
 export function useBackroomSettingsAll() {
-  const { effectiveOrganization } = useOrganizationContext();
-  const orgId = effectiveOrganization?.id;
+  const orgId = useBackroomOrgId();
 
   return useQuery({
     queryKey: ['backroom-settings', orgId],
@@ -45,8 +45,7 @@ export function useBackroomSettingsAll() {
  * Resolve a single setting value with location→org fallback.
  */
 export function useBackroomSetting(key: string, locationId?: string | null) {
-  const { effectiveOrganization } = useOrganizationContext();
-  const orgId = effectiveOrganization?.id;
+  const orgId = useBackroomOrgId();
 
   return useQuery({
     queryKey: ['backroom-settings', orgId, key, locationId],
