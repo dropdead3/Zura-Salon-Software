@@ -95,6 +95,16 @@ export interface TeamAverages {
   retentionRate: number;
   newClients: number;
   experienceScore: number;
+  complianceRate: number;
+}
+
+export interface BackroomCompliance {
+  complianceRate: number;
+  totalColorAppointments: number;
+  tracked: number;
+  missed: number;
+  reweighRate: number;
+  manualOverrides: number;
 }
 
 export interface MultiPeriodTrend {
