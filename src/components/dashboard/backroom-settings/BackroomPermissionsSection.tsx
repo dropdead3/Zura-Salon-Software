@@ -7,6 +7,26 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Loader2, Shield, Save } from 'lucide-react';
+import { Infotainer } from '@/components/ui/Infotainer';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+
+const PERMISSION_TOOLTIPS: Record<string, string> = {
+  view_backroom: 'Access to the Backroom mixing dashboard.',
+  mix_bowls: 'Ability to create and manage mixing bowls.',
+  smart_mix_assist: 'Access to AI-powered formula suggestions during mixing.',
+  formula_memory: 'View and recall past formulas for returning clients.',
+  assistant_prep: 'Pre-mix bowls before the stylist arrives.',
+  approve_assistant: 'Approve or reject assistant-prepared bowls.',
+  view_costs: 'See product cost data and margin information.',
+  view_charges: 'See overage charges applied to services.',
+  override_charges: 'Modify or override overage charges after calculation.',
+  waive_overage: 'Waive overage charges entirely for a service.',
+  edit_inventory: 'Modify inventory counts and par levels.',
+  perform_counts: 'Conduct physical inventory counts.',
+  receive_po: 'Mark purchase orders as received and update stock.',
+  resolve_exceptions: 'Review and resolve operational exception reports.',
+  configure_settings: 'Access and modify Backroom configuration settings.',
+};
 
 const ROLES = [
   { key: 'owner', label: 'Owner' },
