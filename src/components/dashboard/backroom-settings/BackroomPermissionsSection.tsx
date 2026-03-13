@@ -160,7 +160,12 @@ export function BackroomPermissionsSection() {
                     </tr>
                     {PERMISSIONS.filter(p => p.group === group).map(perm => (
                       <tr key={perm.key} className="border-b border-border/30">
-                        <td className={cn(tokens.body.default, 'py-2.5 pr-4')}>{perm.label}</td>
+                        <td className={cn(tokens.body.default, 'py-2.5 pr-4')}>
+                          <span className="flex items-center gap-1">
+                            {perm.label}
+                            {PERMISSION_TOOLTIPS[perm.key] && <MetricInfoTooltip description={PERMISSION_TOOLTIPS[perm.key]} />}
+                          </span>
+                        </td>
                         {ROLES.map(role => (
                           <td key={role.key} className="text-center py-2.5">
                             <Checkbox

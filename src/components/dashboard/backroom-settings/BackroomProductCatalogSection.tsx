@@ -226,22 +226,26 @@ function ProductRow({ product, onUpdate }: { product: BackroomProduct; onUpdate:
       {/* Depletion method */}
       {product.is_backroom_tracked && (
         <div className="flex items-center gap-2 shrink-0">
-          <Select
-            value={product.depletion_method}
-            onValueChange={(v) => onUpdate({ depletion_method: v })}
-          >
-            <SelectTrigger className="w-[120px] h-8 text-xs font-sans">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {DEPLETION_METHODS.map((m) => (
-                <SelectItem key={m.value} value={m.value} className="text-xs">{m.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-0.5">
+            <MetricInfoTooltip description="How this product is measured when used. 'Weighed' uses a scale; 'Per Pump' counts pumps dispensed." />
+            <Select
+              value={product.depletion_method}
+              onValueChange={(v) => onUpdate({ depletion_method: v })}
+            >
+              <SelectTrigger className="w-[120px] h-8 text-xs font-sans">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {DEPLETION_METHODS.map((m) => (
+                  <SelectItem key={m.value} value={m.value} className="text-xs">{m.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
           <div className="flex items-center gap-1">
             <label className="text-[10px] text-muted-foreground">Billable</label>
+            <MetricInfoTooltip description="When on, overage usage of this product can be charged to the client." />
             <Switch
               checked={product.is_billable_to_client}
               onCheckedChange={(v) => onUpdate({ is_billable_to_client: v })}
@@ -251,6 +255,7 @@ function ProductRow({ product, onUpdate }: { product: BackroomProduct; onUpdate:
 
           <div className="flex items-center gap-1">
             <label className="text-[10px] text-muted-foreground">Overage</label>
+            <MetricInfoTooltip description="When on, usage beyond the service allowance triggers an overage charge." />
             <Switch
               checked={product.is_overage_eligible}
               onCheckedChange={(v) => onUpdate({ is_overage_eligible: v })}

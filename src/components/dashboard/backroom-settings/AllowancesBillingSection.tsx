@@ -256,6 +256,7 @@ export function AllowancesBillingSection() {
                               </label>
                               <label className="flex items-center gap-2 text-sm">
                                 <Switch checked={bucketForm.requires_manager_override} onCheckedChange={c => setBucketForm(f => ({ ...f, requires_manager_override: c }))} />
+                                <MetricInfoTooltip description="When on, a manager must approve the overage charge before it's applied." />
                                 Manager Override Required
                               </label>
                             </div>

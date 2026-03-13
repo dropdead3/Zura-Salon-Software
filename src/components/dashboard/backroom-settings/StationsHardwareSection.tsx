@@ -194,6 +194,7 @@ export function StationsHardwareSection() {
                               'absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full ring-2 ring-card',
                               HEALTH_DOT[healthColor]
                             )}
+                            title={healthColor === 'green' ? 'Seen in last hour' : healthColor === 'yellow' ? 'Seen in last 24h' : 'Offline for 24h+'}
                           />
                         )}
                       </div>

@@ -146,10 +146,12 @@ export function AlertsExceptionsSection() {
                 <label className="flex items-center gap-2 text-sm font-sans">
                   <Switch checked={form.creates_exception} onCheckedChange={c => setForm(f => ({ ...f, creates_exception: c }))} />
                   Creates Exception
+                  <MetricInfoTooltip description="Logs an exception report that managers can review in the Control Tower." />
                 </label>
                 <label className="flex items-center gap-2 text-sm font-sans">
                   <Switch checked={form.creates_task} onCheckedChange={c => setForm(f => ({ ...f, creates_task: c }))} />
                   Creates Task
+                  <MetricInfoTooltip description="Automatically creates an operational task assigned to the relevant manager." />
                 </label>
                 <label className="flex items-center gap-2 text-sm font-sans">
                   <Switch checked={form.is_active} onCheckedChange={c => setForm(f => ({ ...f, is_active: c }))} />

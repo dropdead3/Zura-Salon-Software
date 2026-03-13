@@ -263,24 +263,27 @@ function ComponentMappingDialog({ serviceId, serviceName, orgId, onClose }: {
                       )}
                     </div>
                   </div>
-                  <Select
-                    value={comp.component_role}
-                    onValueChange={(v) => upsertComponent.mutate({
-                      organization_id: orgId,
-                      service_id: serviceId,
-                      product_id: comp.product_id,
-                      component_role: v,
-                    })}
-                  >
-                    <SelectTrigger className="w-[100px] h-7 text-[10px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {['required', 'optional', 'conditional', 'estimated', 'manual'].map((r) => (
-                        <SelectItem key={r} value={r} className="text-xs capitalize">{r}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="flex items-center gap-0.5">
+                    <MetricInfoTooltip description="Required = always used. Optional = sometimes used. Conditional = depends on technique." />
+                    <Select
+                      value={comp.component_role}
+                      onValueChange={(v) => upsertComponent.mutate({
+                        organization_id: orgId,
+                        service_id: serviceId,
+                        product_id: comp.product_id,
+                        component_role: v,
+                      })}
+                    >
+                      <SelectTrigger className="w-[100px] h-7 text-[10px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {['required', 'optional', 'conditional', 'estimated', 'manual'].map((r) => (
+                          <SelectItem key={r} value={r} className="text-xs capitalize">{r}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <Button
                     variant="ghost"
                     size="sm"

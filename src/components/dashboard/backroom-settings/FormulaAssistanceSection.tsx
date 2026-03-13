@@ -137,7 +137,7 @@ export function FormulaAssistanceSection() {
           ))}
           <div className={cn(tokens.card.inner, 'p-4 flex items-center justify-between')}>
             <div>
-              <p className={tokens.body.emphasis}>Auto-Populate Formulas</p>
+              <div className="flex items-center gap-1"><p className={tokens.body.emphasis}>Auto-Populate Formulas</p><MetricInfoTooltip description="When a formula match is found (via client history or recipe baseline), automatically fills in the product fields instead of requiring manual entry." /></div>
               <p className={tokens.body.muted}>Automatically fill formula fields when a match is found</p>
             </div>
             <Switch

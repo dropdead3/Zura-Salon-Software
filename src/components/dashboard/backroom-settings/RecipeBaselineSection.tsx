@@ -78,7 +78,11 @@ export function RecipeBaselineSection() {
         </CardHeader>
         <CardContent className="space-y-2">
           {(services || []).length === 0 ? (
-            <p className={tokens.body.muted}>Enable backroom tracking on services first.</p>
+            <div className={tokens.empty.container}>
+              <BarChart3 className={tokens.empty.icon} />
+              <h3 className={tokens.empty.heading}>No tracked services</h3>
+              <p className={tokens.empty.description}>Products → Services → then Baselines. Enable backroom tracking on services first.</p>
+            </div>
           ) : (
             (services || []).map((service) => {
               const count = baselinesByService.get(service.id) || 0;

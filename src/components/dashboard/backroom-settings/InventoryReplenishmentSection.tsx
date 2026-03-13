@@ -118,7 +118,7 @@ export function InventoryReplenishmentSection() {
             </div>
             <div className={cn(tokens.card.inner, 'p-4 flex items-center justify-between')}>
               <div>
-                <p className={tokens.body.emphasis}>Forecast Participation</p>
+                <div className="flex items-center gap-1"><p className={tokens.body.emphasis}>Forecast Participation</p><MetricInfoTooltip description="Uses upcoming appointment data to predict demand and adjust reorder quantities." /></div>
                 <p className={tokens.body.muted}>Include demand forecasting in reorder calculations</p>
               </div>
               <Switch checked={current.forecast_participation} onCheckedChange={v => update('forecast_participation', v)} />

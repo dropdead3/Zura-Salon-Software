@@ -215,7 +215,7 @@ export function MultiLocationSection() {
       {/* Compare Mode */}
       <Card>
         <CardHeader>
-          <CardTitle className={tokens.card.title}>Compare Locations</CardTitle>
+          <div className="flex items-center gap-2"><CardTitle className={tokens.card.title}>Compare Locations</CardTitle><MetricInfoTooltip description="Select two locations to see which backroom settings differ. 'Different' means one or both have overrides with non-matching values." /></div>
           <CardDescription className={tokens.body.muted}>See which settings differ between two locations.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
