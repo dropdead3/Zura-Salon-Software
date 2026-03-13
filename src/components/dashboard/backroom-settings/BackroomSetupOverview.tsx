@@ -1,10 +1,14 @@
+import { useState } from 'react';
 import { useBackroomSetupHealth, type SetupWarning } from '@/hooks/backroom/useBackroomSetupHealth';
+import { useBackroomSetting } from '@/hooks/backroom/useBackroomSettings';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Loader2, AlertTriangle, CheckCircle2, Info, Package, Wrench, DollarSign, Monitor, BarChart3, Bell } from 'lucide-react';
+import { Loader2, AlertTriangle, CheckCircle2, Info, Package, Wrench, DollarSign, Monitor, BarChart3, Bell, Sparkles } from 'lucide-react';
+import { BackroomSetupWizard } from './BackroomSetupWizard';
 
 interface Props {
   onNavigate: (section: string) => void;
@@ -12,6 +16,9 @@ interface Props {
 
 export function BackroomSetupOverview({ onNavigate }: Props) {
   const { data: health, isLoading } = useBackroomSetupHealth();
+  const { data: wizardSetting } = useBackroomSetting('setup_wizard_completed');
+  const [showWizard, setShowWizard] = useState(false);
+  const wizardCompleted = !!(wizardSetting?.value as Record<string, unknown>)?.completed;
 
   if (isLoading) {
     return (
@@ -22,6 +29,15 @@ export function BackroomSetupOverview({ onNavigate }: Props) {
   }
 
   if (!health) return null;
+
+  if (showWizard) {
+    return (
+      <BackroomSetupWizard
+        onComplete={() => setShowWizard(false)}
+        onCancel={() => setShowWizard(false)}
+      />
+    );
+  }
 
   const checklistItems = [
     { label: 'Backroom products configured', value: health.trackedProducts, total: health.totalProducts, section: 'products', icon: Package, done: health.trackedProducts > 0 },
@@ -37,6 +53,24 @@ export function BackroomSetupOverview({ onNavigate }: Props) {
 
   return (
     <div className="space-y-6">
+      {/* Wizard launch CTA */}
+      {!wizardCompleted && completedCount < checklistItems.length && (
+        <Card className={cn(tokens.card.wrapper, 'border-primary/30 bg-primary/5')}>
+          <CardContent className="py-6 flex items-center gap-4">
+            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+              <Sparkles className="w-5 h-5 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className={tokens.body.emphasis}>First time? Use the Setup Wizard</p>
+              <p className={tokens.body.muted}>Walk through product selection, service mapping, allowances, and station setup step by step.</p>
+            </div>
+            <Button onClick={() => setShowWizard(true)} className="font-sans shrink-0">
+              Launch Wizard
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Progress card */}
       <Card className={tokens.card.wrapper}>
         <CardHeader>
