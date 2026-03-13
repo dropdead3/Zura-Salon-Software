@@ -1903,6 +1903,75 @@ export type Database = {
           },
         ]
       }
+      backroom_compliance_log: {
+        Row: {
+          appointment_date: string
+          appointment_id: string
+          compliance_status: string
+          evaluated_at: string
+          has_mix_session: boolean
+          has_reweigh: boolean
+          id: string
+          is_manual_override: boolean
+          location_id: string | null
+          mix_session_id: string | null
+          notes: string | null
+          organization_id: string
+          service_name: string | null
+          staff_name: string | null
+          staff_user_id: string | null
+        }
+        Insert: {
+          appointment_date: string
+          appointment_id: string
+          compliance_status?: string
+          evaluated_at?: string
+          has_mix_session?: boolean
+          has_reweigh?: boolean
+          id?: string
+          is_manual_override?: boolean
+          location_id?: string | null
+          mix_session_id?: string | null
+          notes?: string | null
+          organization_id: string
+          service_name?: string | null
+          staff_name?: string | null
+          staff_user_id?: string | null
+        }
+        Update: {
+          appointment_date?: string
+          appointment_id?: string
+          compliance_status?: string
+          evaluated_at?: string
+          has_mix_session?: boolean
+          has_reweigh?: boolean
+          id?: string
+          is_manual_override?: boolean
+          location_id?: string | null
+          mix_session_id?: string | null
+          notes?: string | null
+          organization_id?: string
+          service_name?: string | null
+          staff_name?: string | null
+          staff_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "backroom_compliance_log_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: true
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "backroom_compliance_log_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       backroom_devices: {
         Row: {
           connection_type: string

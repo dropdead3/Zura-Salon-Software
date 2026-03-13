@@ -13,6 +13,8 @@ import { useMeetingAccountabilityItems, type AccountabilityItem } from '@/hooks/
 import { useMeetingReports, useCreateMeetingReport, useSendMeetingReport } from '@/hooks/useMeetingReports';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import ReactMarkdown from 'react-markdown';
+import { useStaffComplianceSummary } from '@/hooks/backroom/useStaffComplianceSummary';
+import { format, subDays } from 'date-fns';
 
 interface ReportBuilderProps {
   meetingId: string;
@@ -28,9 +30,15 @@ export function ReportBuilder({ meetingId, teamMemberId, teamMemberName }: Repor
   const createReport = useCreateMeetingReport();
   const sendReport = useSendMeetingReport();
 
+  // Compliance data for the trailing 30 days
+  const complianceDateTo = format(new Date(), 'yyyy-MM-dd');
+  const complianceDateFrom = format(subDays(new Date(), 30), 'yyyy-MM-dd');
+  const { data: complianceData } = useStaffComplianceSummary(teamMemberId, complianceDateFrom, complianceDateTo);
+
   const [isBuilding, setIsBuilding] = useState(false);
   const [selectedNotes, setSelectedNotes] = useState<string[]>([]);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [includeCompliance, setIncludeCompliance] = useState(true);
   const [additionalContent, setAdditionalContent] = useState('');
   const [previewContent, setPreviewContent] = useState('');
   const [showPreview, setShowPreview] = useState(false);
@@ -75,7 +83,29 @@ export function ReportBuilder({ meetingId, teamMemberId, teamMemberName }: Repor
     }
 
     if (additionalContent.trim()) {
-      content += `## Additional Notes\n\n${additionalContent}\n`;
+      content += `## Additional Notes\n\n${additionalContent}\n\n`;
+    }
+
+    // Backroom compliance section
+    if (includeCompliance && complianceData && complianceData.totalColorAppointments > 0) {
+      content += `## Backroom Compliance (Last 30 Days)\n\n`;
+      content += `- **Compliance Rate:** ${complianceData.complianceRate}%\n`;
+      content += `- **Color Appointments:** ${complianceData.totalColorAppointments}\n`;
+      content += `- **Tracked Sessions:** ${complianceData.tracked}\n`;
+      content += `- **Missed Sessions:** ${complianceData.missed}\n`;
+      content += `- **Reweigh Rate:** ${complianceData.reweighRate}%\n`;
+
+      if (complianceData.missedAppointments.length > 0) {
+        content += `\n### Recent Missed Sessions\n\n`;
+        complianceData.missedAppointments.forEach((m) => {
+          content += `- ${m.date} — ${m.serviceName}\n`;
+        });
+      }
+
+      if (complianceData.complianceRate < 90) {
+        content += `\n> ⚠️ Compliance is below 90%. Review backroom habits and ensure all color services are tracked through Zura Backroom.\n`;
+      }
+      content += '\n';
     }
 
     return content;
@@ -182,6 +212,25 @@ export function ReportBuilder({ meetingId, teamMemberId, teamMemberName }: Repor
                 </div>
               )}
             </div>
+
+            {/* Backroom Compliance */}
+            {complianceData && complianceData.totalColorAppointments > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-start gap-2">
+                  <Checkbox
+                    id="include-compliance"
+                    checked={includeCompliance}
+                    onCheckedChange={(checked) => setIncludeCompliance(!!checked)}
+                  />
+                  <label htmlFor="include-compliance" className="text-sm cursor-pointer flex-1">
+                    <span className="font-medium">Include Backroom Compliance</span>
+                    <span className="text-muted-foreground ml-2">
+                      ({complianceData.complianceRate}% — {complianceData.missed} missed)
+                    </span>
+                  </label>
+                </div>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label>Additional Message (optional)</Label>

@@ -14,6 +14,7 @@ import {
   Bell,
   Sparkles,
   Building2,
+  ShieldCheck,
 } from 'lucide-react';
 import { BackroomSetupOverview } from '@/components/dashboard/backroom-settings/BackroomSetupOverview';
 import { BackroomProductCatalogSection } from '@/components/dashboard/backroom-settings/BackroomProductCatalogSection';
@@ -26,6 +27,7 @@ import { BackroomPermissionsSection } from '@/components/dashboard/backroom-sett
 import { AlertsExceptionsSection } from '@/components/dashboard/backroom-settings/AlertsExceptionsSection';
 import { FormulaAssistanceSection } from '@/components/dashboard/backroom-settings/FormulaAssistanceSection';
 import { MultiLocationSection } from '@/components/dashboard/backroom-settings/MultiLocationSection';
+import { BackroomComplianceSection } from '@/components/dashboard/backroom-settings/BackroomComplianceSection';
 
 type BackroomSection =
   | 'overview'
@@ -38,7 +40,8 @@ type BackroomSection =
   | 'permissions'
   | 'alerts'
   | 'formula'
-  | 'multi-location';
+  | 'multi-location'
+  | 'compliance';
 
 const sections: { id: BackroomSection; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
@@ -51,6 +54,7 @@ const sections: { id: BackroomSection; label: string; icon: typeof LayoutDashboa
   { id: 'permissions', label: 'Permissions', icon: Shield },
   { id: 'alerts', label: 'Alerts & Exceptions', icon: Bell },
   { id: 'formula', label: 'Formula Assistance', icon: Sparkles },
+  { id: 'compliance', label: 'Compliance', icon: ShieldCheck },
   { id: 'multi-location', label: 'Multi-Location', icon: Building2 },
 ];
 
@@ -120,6 +124,7 @@ export default function BackroomSettings() {
             {activeSection === 'permissions' && <BackroomPermissionsSection />}
             {activeSection === 'alerts' && <AlertsExceptionsSection />}
             {activeSection === 'formula' && <FormulaAssistanceSection />}
+            {activeSection === 'compliance' && <BackroomComplianceSection />}
             {activeSection === 'multi-location' && <MultiLocationSection />}
           </div>
         </div>

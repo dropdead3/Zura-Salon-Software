@@ -62,6 +62,26 @@ export const SERVICE_CATEGORIES = [
 export type ServiceCategory = typeof SERVICE_CATEGORIES[number];
 
 /**
+ * Color/chemical service keywords — union of Blonding + Color categories
+ * plus additional chemical-processing terms.
+ */
+const COLOR_CHEMICAL_PATTERN =
+  /color|colour|toner|glaze|gloss|demi|semi|permanent|root touch|grey.?blend|coverage|vivid|fashion color|balayage|highlight|foil|lightener|blonde|bleach|ombre|root smudge|baby lights|teasy lights|chemical/i;
+
+/**
+ * Returns true if the given service name or category indicates a color/chemical service.
+ * Consolidated single source of truth — use everywhere instead of inline keyword lists.
+ */
+export function isColorOrChemicalService(
+  serviceName: string | null,
+  serviceCategory?: string | null,
+): boolean {
+  if (!serviceName && !serviceCategory) return false;
+  const combined = `${serviceName ?? ''} ${serviceCategory ?? ''}`.trim();
+  return COLOR_CHEMICAL_PATTERN.test(combined);
+}
+
+/**
  * Extension product pattern — matches product names that are extension hardware/inventory
  * (e.g. "20 inch SuperWeft Extensions", "Tape-In Hair 18\"", "Hand Tied Weft")
  */

@@ -7,6 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { format } from 'date-fns';
+import { isColorOrChemicalService } from '@/utils/serviceCategorization';
 
 export interface DailyPrepItem {
   appointmentId: string;
@@ -21,13 +22,6 @@ export interface DailyPrepItem {
   sessionStatus: string | null;
 }
 
-const COLOR_SERVICE_CATEGORIES = ['color', 'colour', 'chemical', 'highlight', 'balayage', 'lightener', 'toner', 'gloss'];
-
-function isColorService(serviceName: string | null, serviceCategory: string | null): boolean {
-  if (!serviceName && !serviceCategory) return false;
-  const combined = `${serviceName ?? ''} ${serviceCategory ?? ''}`.toLowerCase();
-  return COLOR_SERVICE_CATEGORIES.some((cat) => combined.includes(cat));
-}
 
 export function useAssistantDailyPrep(locationId?: string) {
   const { effectiveOrganization } = useOrganizationContext();
@@ -55,7 +49,7 @@ export function useAssistantDailyPrep(locationId?: string) {
 
       // Filter to color/chemical services
       const colorAppointments = (appointments ?? []).filter((a: any) =>
-        isColorService(a.service_name, a.service_category)
+        isColorOrChemicalService(a.service_name, a.service_category)
       );
 
       if (colorAppointments.length === 0) return [];
