@@ -141,6 +141,8 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
           ['New Clients', data.clientMetrics.newClients.toString(), Math.round(data.teamAverages.newClients).toString()],
           ['Commission Earned', formatCurrencyWhole(data.commission.totalCommission), ''],
           ['Experience Score', `${data.experienceScore.composite}/100`, ''],
+          ['Backroom Compliance', `${data.backroomCompliance.complianceRate}%`, `${data.teamAverages.complianceRate}%`],
+          ['Color Appointments', `${data.backroomCompliance.totalColorAppointments} (${data.backroomCompliance.tracked} tracked)`, ''],
         ],
         theme: 'striped',
         headStyles: { fillColor: [51, 51, 51] },
