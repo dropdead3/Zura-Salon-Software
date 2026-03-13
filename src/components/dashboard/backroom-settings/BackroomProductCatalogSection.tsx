@@ -164,10 +164,15 @@ export function BackroomProductCatalogSection() {
 
           {/* Product rows */}
           <div className="space-y-1">
-            {filtered.length === 0 ? (
+          {filtered.length === 0 ? (
               <div className={tokens.empty.container}>
                 <Package className={tokens.empty.icon} />
-                <p className={tokens.empty.description}>No products match your filters.</p>
+                <h3 className={tokens.empty.heading}>No products found</h3>
+                <p className={tokens.empty.description}>
+                  {showTrackedOnly
+                    ? 'No tracked products yet. Start by toggling on your most-used color products below.'
+                    : 'No products match your filters.'}
+                </p>
               </div>
             ) : (
               filtered.map((product) => (
