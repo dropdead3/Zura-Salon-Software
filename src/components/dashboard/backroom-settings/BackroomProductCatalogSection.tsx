@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Search, Package, ArrowRight, Library, Check, ChevronLeft } from 'lucide-react';
+import { Loader2, Search, Package, ArrowRight, Library, Check, ChevronLeft, PackagePlus } from 'lucide-react';
 import { toast } from 'sonner';
 import { Infotainer } from '@/components/ui/Infotainer';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
