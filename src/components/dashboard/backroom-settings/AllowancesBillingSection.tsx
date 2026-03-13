@@ -234,7 +234,7 @@ export function AllowancesBillingSection() {
                                 </Select>
                               </div>
                               <div>
-                                <label className={tokens.label.default}>Overage Cap ($, optional)</label>
+                                <div className="flex items-center gap-1"><label className={tokens.label.default}>Overage Cap ($, optional)</label><MetricInfoTooltip description="Maximum overage charge per service, regardless of how much extra was used." /></div>
                                 <Input type="number" step="0.01" value={bucketForm.overage_cap} onChange={e => setBucketForm(f => ({ ...f, overage_cap: e.target.value }))} className="mt-1" placeholder="No cap" />
                               </div>
                               <div>
