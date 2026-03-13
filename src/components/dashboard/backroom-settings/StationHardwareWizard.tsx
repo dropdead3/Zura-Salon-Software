@@ -510,7 +510,7 @@ function StepScalePairing({
                   <button
                     key={d.id}
                     onClick={() => onPairDevice(d.id, d.name)}
-                    disabled={bleState === 'pairing'}
+                    disabled={false}
                     className={cn(
                       tokens.card.inner,
                       'p-3 w-full flex items-center justify-between hover:bg-muted/80 transition-colors rounded-lg'
