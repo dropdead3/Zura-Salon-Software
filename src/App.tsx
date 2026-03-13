@@ -105,6 +105,7 @@ import ClientDirectory from "./pages/dashboard/ClientDirectory";
 import Schedule from "./pages/dashboard/Schedule";
 import AllNotifications from "./pages/dashboard/AllNotifications";
 import Changelog from "./pages/dashboard/Changelog";
+import StylistMixingDashboard from "./pages/dashboard/StylistMixingDashboard";
 
 import MetricsGlossary from "./pages/dashboard/MetricsGlossary";
 import PublicBooking from "./pages/PublicBooking";
