@@ -291,8 +291,8 @@ function ProductRow({ product, onUpdate }: { product: BackroomProduct; onUpdate:
 
       {/* Depletion method */}
       {product.is_backroom_tracked && (
-        <div className="flex items-center gap-2 shrink-0">
-          <div className="flex items-center gap-0.5">
+        <div className="flex items-center gap-3 shrink-0 bg-muted/30 rounded-lg px-3 py-2">
+          <div className="flex items-center gap-1">
             <MetricInfoTooltip description="How this product is measured when used. 'Weighed' uses a scale; 'Per Pump' counts pumps dispensed." />
             <Select
               value={product.depletion_method}
@@ -308,6 +308,8 @@ function ProductRow({ product, onUpdate }: { product: BackroomProduct; onUpdate:
               </SelectContent>
             </Select>
           </div>
+
+          <div className="w-px h-5 bg-border/40" />
 
           <div className="flex items-center gap-1">
             <label className="text-[10px] text-muted-foreground">Billable</label>

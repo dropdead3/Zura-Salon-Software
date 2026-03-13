@@ -473,7 +473,7 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-border/40 flex items-center justify-between bg-muted/20">
+        <div className="px-6 py-4 border-t border-border/40 flex items-center justify-between bg-muted/20 shadow-[0_-4px_12px_-4px_hsl(var(--foreground)/0.04)]">
           <span className="text-sm font-sans text-muted-foreground">
             {selected.size > 0
               ? `${selected.size} product${selected.size === 1 ? '' : 's'} selected`
