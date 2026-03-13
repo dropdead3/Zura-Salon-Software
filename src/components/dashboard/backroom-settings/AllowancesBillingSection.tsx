@@ -220,7 +220,7 @@ export function AllowancesBillingSection() {
                                 </Select>
                               </div>
                               <div>
-                                <label className={tokens.label.default}>Overage Rate ($)</label>
+                                <div className="flex items-center gap-1"><label className={tokens.label.default}>Overage Rate ($)</label><MetricInfoTooltip description="Price charged per unit when usage exceeds the included quantity." /></div>
                                 <Input type="number" step="0.01" value={bucketForm.overage_rate} onChange={e => setBucketForm(f => ({ ...f, overage_rate: Number(e.target.value) }))} className="mt-1" />
                               </div>
                               <div>
