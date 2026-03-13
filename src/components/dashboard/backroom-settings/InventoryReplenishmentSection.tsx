@@ -107,7 +107,7 @@ export function InventoryReplenishmentSection() {
               <Input type="number" value={current.reorder_cycle_days} onChange={e => update('reorder_cycle_days', Number(e.target.value))} />
             </div>
             <div className={cn(tokens.card.inner, 'p-4')}>
-              <label className={tokens.label.default}>Default Lead Time (days)</label>
+              <div className="flex items-center gap-1"><label className={tokens.label.default}>Default Lead Time (days)</label><MetricInfoTooltip description="Expected days between placing an order and receiving delivery." /></div>
               <p className={cn(tokens.body.muted, 'mb-2')}>Expected delivery time from suppliers</p>
               <Input type="number" value={current.default_lead_time_days} onChange={e => update('default_lead_time_days', Number(e.target.value))} />
             </div>
