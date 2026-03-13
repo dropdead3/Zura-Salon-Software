@@ -197,10 +197,13 @@ function ProductRow({ product, onUpdate }: { product: BackroomProduct; onUpdate:
       product.is_backroom_tracked ? 'border-border bg-card' : 'border-border/40 bg-muted/20'
     )}>
       {/* Toggle */}
-      <Switch
-        checked={product.is_backroom_tracked}
-        onCheckedChange={(checked) => onUpdate({ is_backroom_tracked: checked })}
-      />
+      <div className="flex items-center gap-1">
+        <Switch
+          checked={product.is_backroom_tracked}
+          onCheckedChange={(checked) => onUpdate({ is_backroom_tracked: checked })}
+        />
+        <MetricInfoTooltip description="When on, this product appears in the mixing dashboard and its usage is recorded per appointment." />
+      </div>
 
       {/* Info */}
       <div className="flex-1 min-w-0">
