@@ -167,7 +167,10 @@ export function AllowancesBillingSection() {
                       {/* Buckets */}
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className={tokens.heading.subsection}>Buckets</span>
+                          <div className="flex items-center gap-1">
+                            <span className={tokens.heading.subsection}>Buckets</span>
+                            <MetricInfoTooltip description="Separate billing tiers within one policy — e.g. one bucket for color, another for lightener." />
+                          </div>
                           <Button variant="outline" size={tokens.button.inline} onClick={() => setShowBucketForm(policy.id)}>
                             <Plus className="w-3 h-3 mr-1" /> Add Bucket
                           </Button>
