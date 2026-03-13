@@ -89,6 +89,12 @@ export function ServiceTrackingSection() {
 
   return (
     <div className="space-y-6">
+      <Infotainer
+        id="backroom-services-guide"
+        title="Service Tracking"
+        description="Link your services (e.g. Balayage, Root Touch-Up) to the products they consume. This tells Zura which products to expect when a stylist mixes for that service. Requires products to be tracked first."
+        icon={<Wrench className="h-4 w-4 text-primary" />}
+      />
       {/* Tracked services */}
       <Card className={tokens.card.wrapper}>
         <CardHeader>
