@@ -46,6 +46,7 @@ import {
   Store,
   Armchair,
   Globe,
+  Beaker,
 } from 'lucide-react';
 
 interface ManagementCardProps {
