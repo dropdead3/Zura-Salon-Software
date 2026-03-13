@@ -137,15 +137,24 @@ export function AllowancesBillingSection() {
                       {/* Policy summary */}
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                         <div>
-                          <p className={tokens.label.tiny}>Included Qty</p>
+                          <div className="flex items-center gap-1">
+                            <p className={tokens.label.tiny}>Included Qty</p>
+                            <MetricInfoTooltip description="Amount of product included in the service price at no extra charge." />
+                          </div>
                           <p className={tokens.body.emphasis}>{policy.included_allowance_qty} {policy.allowance_unit}</p>
                         </div>
                         <div>
-                          <p className={tokens.label.tiny}>Overage Rate</p>
+                          <div className="flex items-center gap-1">
+                            <p className={tokens.label.tiny}>Overage Rate</p>
+                            <MetricInfoTooltip description="Price charged per unit when usage exceeds the included quantity." />
+                          </div>
                           <p className={tokens.body.emphasis}>${policy.overage_rate} / {policy.overage_rate_type}</p>
                         </div>
                         <div>
-                          <p className={tokens.label.tiny}>Overage Cap</p>
+                          <div className="flex items-center gap-1">
+                            <p className={tokens.label.tiny}>Overage Cap</p>
+                            <MetricInfoTooltip description="Maximum overage charge per service, regardless of how much extra was used." />
+                          </div>
                           <p className={tokens.body.emphasis}>{policy.overage_cap ? `$${policy.overage_cap}` : 'No cap'}</p>
                         </div>
                         <div className="flex gap-2">
