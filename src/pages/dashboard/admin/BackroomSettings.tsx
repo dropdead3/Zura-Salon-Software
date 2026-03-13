@@ -54,6 +54,7 @@ const sections: { id: BackroomSection; label: string; icon: typeof LayoutDashboa
   { id: 'permissions', label: 'Permissions', icon: Shield },
   { id: 'alerts', label: 'Alerts & Exceptions', icon: Bell },
   { id: 'formula', label: 'Formula Assistance', icon: Sparkles },
+  { id: 'compliance', label: 'Compliance', icon: ShieldCheck },
   { id: 'multi-location', label: 'Multi-Location', icon: Building2 },
 ];
 
