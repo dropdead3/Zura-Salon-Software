@@ -11,6 +11,8 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, DollarSign, Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
+import { Infotainer } from '@/components/ui/Infotainer';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 
 function buildSummary(policy: any, buckets: any[]): string {
   if (!buckets.length) {
