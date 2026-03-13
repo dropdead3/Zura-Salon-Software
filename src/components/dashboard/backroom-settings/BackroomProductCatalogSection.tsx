@@ -208,7 +208,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
               </div>
 
               {/* Product rows */}
-              <div className="space-y-1">
+              <div className="space-y-2">
                 {filtered.length === 0 ? (
                   <div className={tokens.empty.container}>
                     <Package className={tokens.empty.icon} />
