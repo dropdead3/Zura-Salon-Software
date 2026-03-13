@@ -10,8 +10,9 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Monitor, Plus, Trash2, Pencil } from 'lucide-react';
+import { Loader2, Monitor, Plus, Trash2, Pencil, Wand2 } from 'lucide-react';
 import { format } from 'date-fns';
+import { StationHardwareWizard } from './StationHardwareWizard';
 
 export function StationsHardwareSection() {
   const { effectiveOrganization } = useOrganizationContext();
