@@ -1,6 +1,13 @@
 import { useState } from 'react';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { useBackroomStations, useCreateBackroomStation, useUpdateBackroomStation, useDeleteBackroomStation } from '@/hooks/backroom/useBackroomStations';
+import {
+  useBackroomStations,
+  useCreateBackroomStation,
+  useUpdateBackroomStation,
+  useDeleteBackroomStation,
+  getHealthColor,
+  type BackroomStation,
+} from '@/hooks/backroom/useBackroomStations';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
@@ -11,8 +18,15 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Monitor, Plus, Trash2, Pencil, Wand2 } from 'lucide-react';
-import { format } from 'date-fns';
+import { formatDistanceToNow } from 'date-fns';
 import { StationHardwareWizard } from './StationHardwareWizard';
+
+const HEALTH_DOT: Record<string, string> = {
+  green: 'bg-emerald-500',
+  yellow: 'bg-amber-400',
+  red: 'bg-destructive',
+  gray: 'bg-muted-foreground/40',
+};
 
 export function StationsHardwareSection() {
   const { effectiveOrganization } = useOrganizationContext();
@@ -25,6 +39,7 @@ export function StationsHardwareSection() {
 
   const [showForm, setShowForm] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
+  const [editingStation, setEditingStation] = useState<BackroomStation | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ station_name: '', location_id: '', assigned_device_id: '', assigned_scale_id: '' });
 
@@ -53,15 +68,15 @@ export function StationsHardwareSection() {
     }
   };
 
-  const handleEdit = (station: any) => {
-    setForm({
-      station_name: station.station_name,
-      location_id: station.location_id,
-      assigned_device_id: station.assigned_device_id || '',
-      assigned_scale_id: station.assigned_scale_id || '',
-    });
-    setEditingId(station.id);
-    setShowForm(true);
+  const handleEdit = (station: BackroomStation) => {
+    // Open the full wizard in edit mode
+    setEditingStation(station);
+    setShowWizard(true);
+  };
+
+  const handleWizardClose = () => {
+    setShowWizard(false);
+    setEditingStation(null);
   };
 
   if (isLoading) {
@@ -75,7 +90,10 @@ export function StationsHardwareSection() {
   if (showWizard) {
     return (
       <div className="space-y-6">
-        <StationHardwareWizard onClose={() => setShowWizard(false)} />
+        <StationHardwareWizard
+          onClose={handleWizardClose}
+          initialStation={editingStation ?? undefined}
+        />
       </div>
     );
   }
@@ -95,7 +113,7 @@ export function StationsHardwareSection() {
           </div>
           {!showForm && (
             <div className="flex items-center gap-2">
-              <Button size={tokens.button.card} className={tokens.button.cardAction} variant="default" onClick={() => setShowWizard(true)}>
+              <Button size={tokens.button.card} className={tokens.button.cardAction} variant="default" onClick={() => { setEditingStation(null); setShowWizard(true); }}>
                 <Wand2 className="w-4 h-4 mr-1.5" />
                 Setup Station
               </Button>
@@ -153,23 +171,44 @@ export function StationsHardwareSection() {
             <div className="space-y-2">
               {stations?.map((station) => {
                 const loc = locations?.find(l => l.id === station.location_id);
+                const healthColor = getHealthColor(station.last_seen_at);
+                const connType = station.connection_type ?? 'manual';
+                const showHealth = connType !== 'manual';
+
                 return (
                   <div key={station.id} className={cn(tokens.card.inner, 'p-4 flex items-center justify-between')}>
                     <div className="flex items-center gap-3">
-                      <Monitor className="w-4 h-4 text-muted-foreground" />
+                      <div className="relative">
+                        <Monitor className="w-4 h-4 text-muted-foreground" />
+                        {showHealth && (
+                          <span
+                            className={cn(
+                              'absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full ring-2 ring-card',
+                              HEALTH_DOT[healthColor]
+                            )}
+                          />
+                        )}
+                      </div>
                       <div>
-                        <p className={tokens.body.emphasis}>{station.station_name}</p>
+                        <div className="flex items-center gap-2">
+                          <p className={tokens.body.emphasis}>{station.station_name}</p>
+                          {connType !== 'manual' && (
+                            <Badge variant="outline" className="text-[10px]">
+                              {connType === 'ble' ? 'BLE' : 'Direct'}
+                            </Badge>
+                          )}
+                        </div>
                         <p className={tokens.body.muted}>
                           {loc?.name || 'Unknown location'}
-                          {station.assigned_device_id && ` · Device: ${station.assigned_device_id}`}
-                          {station.assigned_scale_id && ` · Scale: ${station.assigned_scale_id}`}
+                          {station.device_name && ` · ${station.device_name}`}
+                          {station.scale_model && ` · ${station.scale_model}`}
+                          {showHealth && station.last_seen_at && (
+                            <> · Last seen {formatDistanceToNow(new Date(station.last_seen_at), { addSuffix: true })}</>
+                          )}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      {station.last_seen_at && (
-                        <span className={tokens.body.muted}>Last seen {format(new Date(station.last_seen_at), 'MMM d, h:mm a')}</span>
-                      )}
                       <Badge variant={station.is_active ? 'default' : 'secondary'}>{station.is_active ? 'Active' : 'Inactive'}</Badge>
                       <Switch
                         checked={station.is_active}

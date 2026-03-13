@@ -1,6 +1,7 @@
 /**
  * StationHardwareWizard — 4-step guided setup for connecting
  * mixing stations to iPads and Bluetooth scales.
+ * Supports create (new) and edit (pre-filled) modes.
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -9,7 +10,11 @@ import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useActiveLocations } from '@/hooks/useLocations';
-import { useCreateBackroomStation } from '@/hooks/backroom/useBackroomStations';
+import {
+  useCreateBackroomStation,
+  useUpdateBackroomStation,
+  type BackroomStation,
+} from '@/hooks/backroom/useBackroomStations';
 import { ScaleConnectionStatus } from '@/components/dashboard/backroom/ScaleConnectionStatus';
 import type { ConnectionState } from '@/lib/backroom/weight-event-schema';
 import { Card, CardContent } from '@/components/ui/card';
@@ -69,30 +74,54 @@ const slideTransition = {
   mass: 0.8,
 };
 
-interface Props {
-  onClose: () => void;
+function buildInitialState(station?: BackroomStation): WizardState {
+  if (!station) {
+    return {
+      stationName: '',
+      locationId: '',
+      connectionType: null,
+      deviceName: '',
+      scaleModel: '',
+      pairingCode: '',
+      useManualFallback: false,
+    };
+  }
+  const ct = station.connection_type as ConnectionType | null;
+  return {
+    stationName: station.station_name,
+    locationId: station.location_id,
+    connectionType: ct === 'ble' || ct === 'direct' ? ct : null,
+    deviceName: station.device_name ?? '',
+    scaleModel: station.scale_model ?? '',
+    pairingCode: station.pairing_code ?? '',
+    useManualFallback: station.connection_type === 'manual',
+  };
 }
 
-export function StationHardwareWizard({ onClose }: Props) {
+interface Props {
+  onClose: () => void;
+  /** When provided, wizard opens in edit mode with fields pre-filled. */
+  initialStation?: BackroomStation;
+}
+
+export function StationHardwareWizard({ onClose, initialStation }: Props) {
+  const isEditMode = !!initialStation;
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
   const { data: locations } = useActiveLocations();
   const createStation = useCreateBackroomStation();
+  const updateStation = useUpdateBackroomStation();
 
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(1);
-  const [state, setState] = useState<WizardState>({
-    stationName: '',
-    locationId: '',
-    connectionType: null,
-    deviceName: '',
-    scaleModel: '',
-    pairingCode: '',
-    useManualFallback: false,
-  });
+  const [state, setState] = useState<WizardState>(() => buildInitialState(initialStation));
 
   // BLE simulation state
-  const [bleState, setBleState] = useState<ConnectionState>('disconnected');
+  const [bleState, setBleState] = useState<ConnectionState>(() =>
+    initialStation?.connection_type === 'ble' && initialStation?.pairing_code
+      ? 'connected'
+      : 'disconnected'
+  );
   const [discoveredDevices, setDiscoveredDevices] = useState<{ name: string; id: string }[]>([]);
   const [selectedBleDevice, setSelectedBleDevice] = useState<string | null>(null);
 
@@ -132,18 +161,41 @@ export function StationHardwareWizard({ onClose }: Props) {
     }, 1500);
   }, []);
 
-  const handleCreate = useCallback(() => {
+  const handleSubmit = useCallback(() => {
     if (!orgId || !state.stationName || !state.locationId) return;
 
-    createStation.mutate(
-      {
-        organization_id: orgId,
-        location_id: state.locationId,
-        station_name: state.stationName,
-      },
-      { onSuccess: onClose }
-    );
-  }, [orgId, state, createStation, onClose]);
+    const hardwareFields = {
+      connection_type: state.useManualFallback
+        ? 'manual'
+        : state.connectionType ?? 'manual',
+      device_name: state.deviceName || undefined,
+      scale_model: state.scaleModel || undefined,
+      pairing_code: state.pairingCode || undefined,
+    };
+
+    if (isEditMode && initialStation) {
+      updateStation.mutate(
+        {
+          id: initialStation.id,
+          station_name: state.stationName,
+          ...hardwareFields,
+        },
+        { onSuccess: onClose }
+      );
+    } else {
+      createStation.mutate(
+        {
+          organization_id: orgId,
+          location_id: state.locationId,
+          station_name: state.stationName,
+          ...hardwareFields,
+        },
+        { onSuccess: onClose }
+      );
+    }
+  }, [orgId, state, isEditMode, initialStation, createStation, updateStation, onClose]);
+
+  const isPending = createStation.isPending || updateStation.isPending;
 
   const canAdvance = (): boolean => {
     switch (step) {
@@ -222,6 +274,7 @@ export function StationHardwareWizard({ onClose }: Props) {
               state={state}
               setState={setState}
               locations={locations ?? []}
+              isEditMode={isEditMode}
             />
           )}
           {step === 1 && (
@@ -239,7 +292,7 @@ export function StationHardwareWizard({ onClose }: Props) {
             />
           )}
           {step === 3 && (
-            <StepConfirmation state={state} locationName={locationName} bleState={bleState} />
+            <StepConfirmation state={state} locationName={locationName} bleState={bleState} isEditMode={isEditMode} />
           )}
         </motion.div>
       </AnimatePresence>
@@ -257,9 +310,9 @@ export function StationHardwareWizard({ onClose }: Props) {
             <ArrowRight className="w-4 h-4 ml-1.5" />
           </Button>
         ) : (
-          <Button size="sm" onClick={handleCreate} disabled={createStation.isPending}>
-            {createStation.isPending && <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />}
-            Create Station
+          <Button size="sm" onClick={handleSubmit} disabled={isPending}>
+            {isPending && <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />}
+            {isEditMode ? 'Update Station' : 'Create Station'}
           </Button>
         )}
       </div>
@@ -272,10 +325,12 @@ function StepStationIdentity({
   state,
   setState,
   locations,
+  isEditMode,
 }: {
   state: WizardState;
   setState: React.Dispatch<React.SetStateAction<WizardState>>;
   locations: { id: string; name: string }[];
+  isEditMode: boolean;
 }) {
   return (
     <Card>
@@ -300,6 +355,7 @@ function StepStationIdentity({
             <Select
               value={state.locationId}
               onValueChange={(v) => setState((s) => ({ ...s, locationId: v }))}
+              disabled={isEditMode}
             >
               <SelectTrigger className="mt-1">
                 <SelectValue placeholder="Select location" />
@@ -312,6 +368,9 @@ function StepStationIdentity({
                 ))}
               </SelectContent>
             </Select>
+            {isEditMode && (
+              <p className={cn(tokens.body.muted, 'text-xs mt-1')}>Location cannot be changed after creation.</p>
+            )}
           </div>
         </div>
       </CardContent>
@@ -568,10 +627,12 @@ function StepConfirmation({
   state,
   locationName,
   bleState,
+  isEditMode,
 }: {
   state: WizardState;
   locationName: string;
   bleState: ConnectionState;
+  isEditMode: boolean;
 }) {
   const rows: { label: string; value: string; badge?: { text: string; variant: 'default' | 'outline' | 'secondary' } }[] = [
     { label: 'Station Name', value: state.stationName },
@@ -601,8 +662,12 @@ function StepConfirmation({
             <CheckCircle2 className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <h3 className={tokens.heading.section}>Ready to Create</h3>
-            <p className={tokens.body.muted}>Review your station configuration.</p>
+            <h3 className={tokens.heading.section}>
+              {isEditMode ? 'Review Changes' : 'Ready to Create'}
+            </h3>
+            <p className={tokens.body.muted}>
+              {isEditMode ? 'Review your updated station configuration.' : 'Review your station configuration.'}
+            </p>
           </div>
         </div>
 
