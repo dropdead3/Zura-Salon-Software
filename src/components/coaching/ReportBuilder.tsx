@@ -213,6 +213,25 @@ export function ReportBuilder({ meetingId, teamMemberId, teamMemberName }: Repor
               )}
             </div>
 
+            {/* Backroom Compliance */}
+            {complianceData && complianceData.totalColorAppointments > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-start gap-2">
+                  <Checkbox
+                    id="include-compliance"
+                    checked={includeCompliance}
+                    onCheckedChange={(checked) => setIncludeCompliance(!!checked)}
+                  />
+                  <label htmlFor="include-compliance" className="text-sm cursor-pointer flex-1">
+                    <span className="font-medium">Include Backroom Compliance</span>
+                    <span className="text-muted-foreground ml-2">
+                      ({complianceData.complianceRate}% — {complianceData.missed} missed)
+                    </span>
+                  </label>
+                </div>
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label>Additional Message (optional)</Label>
               <Textarea
