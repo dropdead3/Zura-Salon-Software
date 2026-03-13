@@ -2146,36 +2146,48 @@ export type Database = {
         Row: {
           assigned_device_id: string | null
           assigned_scale_id: string | null
+          connection_type: string
           created_at: string
+          device_name: string | null
           id: string
           is_active: boolean
           last_seen_at: string | null
           location_id: string
           organization_id: string
+          pairing_code: string | null
+          scale_model: string | null
           station_name: string
           updated_at: string
         }
         Insert: {
           assigned_device_id?: string | null
           assigned_scale_id?: string | null
+          connection_type?: string
           created_at?: string
+          device_name?: string | null
           id?: string
           is_active?: boolean
           last_seen_at?: string | null
           location_id: string
           organization_id: string
+          pairing_code?: string | null
+          scale_model?: string | null
           station_name: string
           updated_at?: string
         }
         Update: {
           assigned_device_id?: string | null
           assigned_scale_id?: string | null
+          connection_type?: string
           created_at?: string
+          device_name?: string | null
           id?: string
           is_active?: boolean
           last_seen_at?: string | null
           location_id?: string
           organization_id?: string
+          pairing_code?: string | null
+          scale_model?: string | null
           station_name?: string
           updated_at?: string
         }

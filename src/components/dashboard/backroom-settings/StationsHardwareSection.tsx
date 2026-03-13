@@ -10,8 +10,9 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Monitor, Plus, Trash2, Pencil } from 'lucide-react';
+import { Loader2, Monitor, Plus, Trash2, Pencil, Wand2 } from 'lucide-react';
 import { format } from 'date-fns';
+import { StationHardwareWizard } from './StationHardwareWizard';
 
 export function StationsHardwareSection() {
   const { effectiveOrganization } = useOrganizationContext();
@@ -23,6 +24,7 @@ export function StationsHardwareSection() {
   const deleteStation = useDeleteBackroomStation();
 
   const [showForm, setShowForm] = useState(false);
+  const [showWizard, setShowWizard] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ station_name: '', location_id: '', assigned_device_id: '', assigned_scale_id: '' });
 
@@ -70,6 +72,14 @@ export function StationsHardwareSection() {
     );
   }
 
+  if (showWizard) {
+    return (
+      <div className="space-y-6">
+        <StationHardwareWizard onClose={() => setShowWizard(false)} />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <Card>
@@ -84,10 +94,16 @@ export function StationsHardwareSection() {
             </div>
           </div>
           {!showForm && (
-            <Button size={tokens.button.card} className={tokens.button.cardAction} variant="outline" onClick={() => setShowForm(true)}>
-              <Plus className="w-4 h-4 mr-1.5" />
-              Add Station
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button size={tokens.button.card} className={tokens.button.cardAction} variant="default" onClick={() => setShowWizard(true)}>
+                <Wand2 className="w-4 h-4 mr-1.5" />
+                Setup Station
+              </Button>
+              <Button size={tokens.button.card} className={tokens.button.cardAction} variant="outline" onClick={() => setShowForm(true)}>
+                <Plus className="w-4 h-4 mr-1.5" />
+                Quick Add
+              </Button>
+            </div>
           )}
         </CardHeader>
         <CardContent className="space-y-4">

@@ -64,10 +64,44 @@ export class ManualScaleAdapter implements ScaleAdapter {
 }
 
 /**
- * Factory to create the appropriate scale adapter.
- * Phase 1: Always returns ManualScaleAdapter.
+ * BLE Scale Adapter Stub — simulates Bluetooth scanning/pairing.
+ * Phase 1: No real Capacitor BLE. State transitions are time-based.
  */
-export function createScaleAdapter(_type: 'manual' | 'ble' = 'manual'): ScaleAdapter {
-  // Future: if (type === 'ble') return new BLEScaleAdapter();
+export class BLEScaleAdapter implements ScaleAdapter {
+  readonly type = 'ble' as const;
+  private listeners: Set<(event: WeightEvent) => void> = new Set();
+  private state: ConnectionState = 'disconnected';
+
+  async connect(): Promise<void> {
+    this.state = 'scanning';
+    await new Promise((r) => setTimeout(r, 2000));
+    this.state = 'pairing';
+    await new Promise((r) => setTimeout(r, 1500));
+    this.state = 'connected';
+  }
+
+  async disconnect(): Promise<void> {
+    this.state = 'disconnected';
+    this.listeners.clear();
+  }
+
+  onReading(callback: (event: WeightEvent) => void): void {
+    this.listeners.add(callback);
+  }
+
+  offReading(callback: (event: WeightEvent) => void): void {
+    this.listeners.delete(callback);
+  }
+
+  getConnectionState(): ConnectionState {
+    return this.state;
+  }
+}
+
+/**
+ * Factory to create the appropriate scale adapter.
+ */
+export function createScaleAdapter(type: 'manual' | 'ble' = 'manual'): ScaleAdapter {
+  if (type === 'ble') return new BLEScaleAdapter();
   return new ManualScaleAdapter();
 }
