@@ -79,11 +79,23 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
   const [libraryOpen, setLibraryOpen] = useState(false);
 
   // Brand browsing state
+  const [activeLetter, setActiveLetter] = useState<string | null>(null);
   const [activeBrand, setActiveBrand] = useState<string | null>(null); // null = "My Catalog"
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [isAdding, setIsAdding] = useState(false);
 
   const brands = useMemo(() => getSupplyBrands(), []);
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+  const brandsByLetter = useMemo(() => {
+    const map = new Map<string, string[]>();
+    brands.forEach((b) => {
+      const letter = b[0]?.toUpperCase();
+      if (!letter) return;
+      if (!map.has(letter)) map.set(letter, []);
+      map.get(letter)!.push(b);
+    });
+    return map;
+  }, [brands]);
 
   const { data: products, isLoading } = useQuery({
     queryKey: ['backroom-product-catalog', orgId],
