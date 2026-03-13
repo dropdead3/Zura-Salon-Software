@@ -647,6 +647,40 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
             </Card>
           )}
 
+          {/* Section 8b: Backroom Compliance */}
+          {data.backroomCompliance.totalColorAppointments > 0 && (
+            <Card>
+              <CardHeader className="pb-2">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-primary" />
+                  <CardTitle className="font-display text-sm tracking-wide uppercase">Backroom Compliance</CardTitle>
+                  <MetricInfoTooltip description="Percentage of color/chemical appointments that were tracked in Zura Backroom with a mix session and reweigh." />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-4 gap-4">
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">Compliance Rate</p>
+                    <p className="text-xl font-display tabular-nums">{data.backroomCompliance.complianceRate}%</p>
+                    <p className="text-[10px] text-muted-foreground">Team Avg: {data.teamAverages.complianceRate}%</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">Color Appointments</p>
+                    <p className="text-xl font-display tabular-nums">{data.backroomCompliance.totalColorAppointments}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">Tracked</p>
+                    <p className="text-xl font-display tabular-nums">{data.backroomCompliance.tracked}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">Missed</p>
+                    <p className={cn('text-xl font-display tabular-nums', data.backroomCompliance.missed > 0 && 'text-destructive')}>{data.backroomCompliance.missed}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Section 9: Strengths & Areas for Improvement */}
           {(strengths.length > 0 || improvements.length > 0) && (
             <div className="grid md:grid-cols-2 gap-4">
