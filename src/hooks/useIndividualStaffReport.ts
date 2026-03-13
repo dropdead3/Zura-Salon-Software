@@ -612,6 +612,7 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
         commission,
         teamAverages,
         multiPeriodTrend,
+        backroomCompliance: brCompliance,
       };
     },
     enabled: !!staffUserId && !!dateFrom && !!dateTo,
