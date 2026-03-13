@@ -83,7 +83,29 @@ export function ReportBuilder({ meetingId, teamMemberId, teamMemberName }: Repor
     }
 
     if (additionalContent.trim()) {
-      content += `## Additional Notes\n\n${additionalContent}\n`;
+      content += `## Additional Notes\n\n${additionalContent}\n\n`;
+    }
+
+    // Backroom compliance section
+    if (includeCompliance && complianceData && complianceData.totalColorAppointments > 0) {
+      content += `## Backroom Compliance (Last 30 Days)\n\n`;
+      content += `- **Compliance Rate:** ${complianceData.complianceRate}%\n`;
+      content += `- **Color Appointments:** ${complianceData.totalColorAppointments}\n`;
+      content += `- **Tracked Sessions:** ${complianceData.tracked}\n`;
+      content += `- **Missed Sessions:** ${complianceData.missed}\n`;
+      content += `- **Reweigh Rate:** ${complianceData.reweighRate}%\n`;
+
+      if (complianceData.missedAppointments.length > 0) {
+        content += `\n### Recent Missed Sessions\n\n`;
+        complianceData.missedAppointments.forEach((m) => {
+          content += `- ${m.date} — ${m.serviceName}\n`;
+        });
+      }
+
+      if (complianceData.complianceRate < 90) {
+        content += `\n> ⚠️ Compliance is below 90%. Review backroom habits and ensure all color services are tracked through Zura Backroom.\n`;
+      }
+      content += '\n';
     }
 
     return content;
