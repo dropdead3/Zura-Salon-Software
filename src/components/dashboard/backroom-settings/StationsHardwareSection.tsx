@@ -17,7 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Monitor, Plus, Trash2, Pencil, Wand2 } from 'lucide-react';
+import { Loader2, Monitor, Plus, Trash2, Pencil, Wand2, ArrowRight } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Infotainer } from '@/components/ui/Infotainer';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
@@ -30,7 +30,11 @@ const HEALTH_DOT: Record<string, string> = {
   gray: 'bg-muted-foreground/40',
 };
 
-export function StationsHardwareSection() {
+interface Props {
+  onNavigate?: (section: string) => void;
+}
+
+export function StationsHardwareSection({ onNavigate }: Props) {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
   const { data: stations, isLoading } = useBackroomStations();
@@ -71,7 +75,6 @@ export function StationsHardwareSection() {
   };
 
   const handleEdit = (station: BackroomStation) => {
-    // Open the full wizard in edit mode
     setEditingStation(station);
     setShowWizard(true);
   };
@@ -233,6 +236,15 @@ export function StationsHardwareSection() {
                   </div>
                 );
               })}
+            </div>
+          )}
+
+          {/* Next step hint */}
+          {onNavigate && stations && stations.length > 0 && (
+            <div className="flex justify-end pt-2 border-t border-border/40">
+              <Button variant="ghost" size="sm" className="text-xs font-sans text-muted-foreground" onClick={() => onNavigate('alerts')}>
+                Next: Alerts & Exceptions <ArrowRight className="w-3 h-3 ml-1" />
+              </Button>
             </div>
           )}
         </CardContent>

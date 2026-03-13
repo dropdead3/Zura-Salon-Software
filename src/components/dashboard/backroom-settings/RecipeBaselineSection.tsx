@@ -10,16 +10,19 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Loader2, BarChart3, Plus, Trash2 } from 'lucide-react';
+import { Loader2, BarChart3, Plus, Trash2, ArrowRight } from 'lucide-react';
 import { Infotainer } from '@/components/ui/Infotainer';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 
-export function RecipeBaselineSection() {
+interface Props {
+  onNavigate?: (section: string) => void;
+}
+
+export function RecipeBaselineSection({ onNavigate }: Props) {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
 
-  // Fetch tracked services
   const { data: services, isLoading } = useQuery({
     queryKey: ['backroom-tracked-services', orgId],
     queryFn: async () => {
@@ -45,7 +48,6 @@ export function RecipeBaselineSection() {
     );
   }
 
-  // Group baselines by service
   const baselinesByService = new Map<string, number>();
   (allBaselines || []).forEach((b) => {
     baselinesByService.set(b.service_id, (baselinesByService.get(b.service_id) || 0) + 1);
@@ -82,26 +84,42 @@ export function RecipeBaselineSection() {
               <BarChart3 className={tokens.empty.icon} />
               <h3 className={tokens.empty.heading}>No tracked services</h3>
               <p className={tokens.empty.description}>Products → Services → then Baselines. Enable backroom tracking on services first.</p>
+              {onNavigate && (
+                <Button variant="outline" size="sm" className="font-sans mt-2" onClick={() => onNavigate('services')}>
+                  Go to Service Tracking
+                </Button>
+              )}
             </div>
           ) : (
-            (services || []).map((service) => {
-              const count = baselinesByService.get(service.id) || 0;
-              return (
-                <button
-                  key={service.id}
-                  onClick={() => setSelectedServiceId(service.id)}
-                  className="flex items-center gap-3 rounded-lg border border-border p-3 w-full text-left hover:bg-muted/50 transition-colors"
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-sans font-medium truncate">{service.name}</p>
-                    {service.category && <span className="text-xs text-muted-foreground">{service.category}</span>}
-                  </div>
-                  <Badge variant={count > 0 ? 'default' : 'outline'} className="text-xs shrink-0">
-                    {count} baseline{count !== 1 ? 's' : ''}
-                  </Badge>
-                </button>
-              );
-            })
+            <>
+              {(services || []).map((service) => {
+                const count = baselinesByService.get(service.id) || 0;
+                return (
+                  <button
+                    key={service.id}
+                    onClick={() => setSelectedServiceId(service.id)}
+                    className="flex items-center gap-3 rounded-lg border border-border p-3 w-full text-left hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-sans font-medium truncate">{service.name}</p>
+                      {service.category && <span className="text-xs text-muted-foreground">{service.category}</span>}
+                    </div>
+                    <Badge variant={count > 0 ? 'default' : 'outline'} className="text-xs shrink-0">
+                      {count} baseline{count !== 1 ? 's' : ''}
+                    </Badge>
+                  </button>
+                );
+              })}
+
+              {/* Next step hint */}
+              {onNavigate && (
+                <div className="flex justify-end pt-2 border-t border-border/40">
+                  <Button variant="ghost" size="sm" className="text-xs font-sans text-muted-foreground" onClick={() => onNavigate('allowances')}>
+                    Next: Allowances & Billing <ArrowRight className="w-3 h-3 ml-1" />
+                  </Button>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
@@ -193,7 +211,6 @@ function RecipeBaselineDialog({ serviceId, serviceName, orgId, onClose }: {
                 </div>
               ))}
 
-              {/* Add baseline */}
               <div className="flex items-center gap-2">
                 <Select value={newProductId} onValueChange={setNewProductId}>
                   <SelectTrigger className="flex-1 text-sm font-sans">
