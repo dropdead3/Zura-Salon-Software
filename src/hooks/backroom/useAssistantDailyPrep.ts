@@ -22,13 +22,6 @@ export interface DailyPrepItem {
   sessionStatus: string | null;
 }
 
-const COLOR_SERVICE_CATEGORIES = ['color', 'colour', 'chemical', 'highlight', 'balayage', 'lightener', 'toner', 'gloss'];
-
-function isColorService(serviceName: string | null, serviceCategory: string | null): boolean {
-  if (!serviceName && !serviceCategory) return false;
-  const combined = `${serviceName ?? ''} ${serviceCategory ?? ''}`.toLowerCase();
-  return COLOR_SERVICE_CATEGORIES.some((cat) => combined.includes(cat));
-}
 
 export function useAssistantDailyPrep(locationId?: string) {
   const { effectiveOrganization } = useOrganizationContext();
