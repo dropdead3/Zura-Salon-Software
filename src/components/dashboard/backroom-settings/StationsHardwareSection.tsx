@@ -102,6 +102,12 @@ export function StationsHardwareSection() {
 
   return (
     <div className="space-y-6">
+      <Infotainer
+        id="backroom-stations-guide"
+        title="Stations & Hardware"
+        description="Register your physical mixing stations and optionally pair Bluetooth scales. Each station is tied to a location so Zura knows where mixing happens."
+        icon={<Monitor className="h-4 w-4 text-primary" />}
+      />
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div className="flex items-center gap-3">
