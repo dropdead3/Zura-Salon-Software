@@ -191,8 +191,10 @@ export const SUPPLY_LIBRARY: SupplyLibraryItem[] = [
   { brand: 'K18', name: 'Professional Molecular Repair Hair Mask', category: 'treatment', defaultDepletion: 'weighed', defaultUnit: 'g', sizeOptions: ['150ml', '300ml'] },
 
   // ── Danger Jones ──
-  { brand: 'Danger Jones', name: 'Epilogue Permanent Color', category: 'color', defaultDepletion: 'weighed', defaultUnit: 'g', sizeOptions: ['60ml', '120ml'] },
+  { brand: 'Danger Jones', name: 'Epilogue Permanent Color', category: 'color', defaultDepletion: 'weighed', defaultUnit: 'g', sizeOptions: ['60ml'] },
   { brand: 'Danger Jones', name: 'Epilogue Lightener', category: 'lightener', defaultDepletion: 'weighed', defaultUnit: 'g', sizeOptions: ['450g', '900g'] },
+  { brand: 'Danger Jones', name: 'Artistic Toners', category: 'toner', defaultDepletion: 'weighed', defaultUnit: 'g', sizeOptions: ['90ml'] },
+  { brand: 'Danger Jones', name: 'Gloss Toners with Bonder', category: 'toner', defaultDepletion: 'weighed', defaultUnit: 'g', sizeOptions: ['60ml'] },
   { brand: 'Danger Jones', name: 'Semi-Permanent Vivids', category: 'color', defaultDepletion: 'weighed', defaultUnit: 'g', sizeOptions: ['118ml'] },
   { brand: 'Danger Jones', name: 'Liquid Semi-Permanent', category: 'color', defaultDepletion: 'weighed', defaultUnit: 'ml', sizeOptions: ['118ml'] },
 
