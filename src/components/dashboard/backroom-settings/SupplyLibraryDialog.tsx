@@ -232,7 +232,27 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
       queryClient.invalidateQueries({ queryKey: ['backroom-setup-health'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
 
-      toast.success(`Added ${itemsToInsert.length} ${brand} products to your catalog`);
+      const insertedNames = itemsToInsert.map(i => i.name);
+      toast.success(`Added ${insertedNames.length} ${brand} products to your catalog`, {
+        action: {
+          label: 'Undo',
+          onClick: async () => {
+            const { error: undoError } = await supabase
+              .from('products')
+              .delete()
+              .eq('organization_id', orgId)
+              .eq('brand', brand)
+              .in('name', insertedNames);
+            if (!undoError) {
+              queryClient.invalidateQueries({ queryKey: ['backroom-product-catalog'] });
+              queryClient.invalidateQueries({ queryKey: ['backroom-setup-health'] });
+              queryClient.invalidateQueries({ queryKey: ['products'] });
+              toast.success(`Removed ${insertedNames.length} ${brand} products`);
+            }
+          },
+        },
+        duration: 8000,
+      });
       setSelected(new Set());
     } catch (err: any) {
       toast.error('Failed to add products: ' + err.message);
