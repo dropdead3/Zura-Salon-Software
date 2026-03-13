@@ -698,46 +698,48 @@ function BrandProductRow({
 function ProductRow({ product, onUpdate }: { product: BackroomProduct; onUpdate: (u: Partial<BackroomProduct>) => void }) {
   return (
     <div className={cn(
-      'flex items-center gap-5 rounded-lg border p-4 transition-colors',
+      'flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-5 rounded-lg border p-3 sm:p-4 transition-colors',
       product.is_backroom_tracked ? 'border-border bg-card' : 'border-border/40 bg-muted/20'
     )}>
-      {/* Toggle */}
-      <div className="flex items-center gap-1">
-        <Switch
-          checked={product.is_backroom_tracked}
-          onCheckedChange={(checked) => onUpdate({ is_backroom_tracked: checked })}
-        />
-        <MetricInfoTooltip description="When on, this product appears in the mixing dashboard and its usage is recorded per appointment." />
-      </div>
-
-      {/* Info */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-sans font-medium text-foreground truncate">{product.name}</span>
-          {product.brand && <span className="text-xs text-muted-foreground">{product.brand}</span>}
+      <div className="flex items-center gap-3 sm:gap-5">
+        {/* Toggle */}
+        <div className="flex items-center gap-1 shrink-0">
+          <Switch
+            checked={product.is_backroom_tracked}
+            onCheckedChange={(checked) => onUpdate({ is_backroom_tracked: checked })}
+          />
+          <MetricInfoTooltip description="When on, this product appears in the mixing dashboard and its usage is recorded per appointment." />
         </div>
-        <div className="flex items-center gap-2 mt-0.5">
-          {product.category && <Badge variant="outline" className="text-[10px] capitalize">{product.category}</Badge>}
-          {product.sku && <span className="text-[10px] text-muted-foreground">{product.sku}</span>}
-          {!product.cost_price && product.is_backroom_tracked && (
-            <span className="flex items-center gap-0.5">
-              <Badge variant="destructive" className="text-[10px]">No cost</Badge>
-              <MetricInfoTooltip description="This product has no unit cost set. Add a cost so Zura can calculate margins and overage charges." />
-            </span>
-          )}
+
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-sans font-medium text-foreground truncate">{product.name}</span>
+            {product.brand && <span className="text-xs text-muted-foreground">{product.brand}</span>}
+          </div>
+          <div className="flex items-center gap-2 mt-0.5">
+            {product.category && <Badge variant="outline" className="text-[10px] capitalize">{product.category}</Badge>}
+            {product.sku && <span className="text-[10px] text-muted-foreground">{product.sku}</span>}
+            {!product.cost_price && product.is_backroom_tracked && (
+              <span className="flex items-center gap-0.5">
+                <Badge variant="destructive" className="text-[10px]">No cost</Badge>
+                <MetricInfoTooltip description="This product has no unit cost set. Add a cost so Zura can calculate margins and overage charges." />
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Depletion method */}
       {product.is_backroom_tracked && (
-        <div className="flex items-center gap-3 shrink-0 bg-muted/30 rounded-lg px-3 py-2">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 bg-muted/30 rounded-lg px-3 py-2 sm:shrink-0">
           <div className="flex items-center gap-1">
             <MetricInfoTooltip description="How this product is measured when used. 'Weighed' uses a scale; 'Per Pump' counts pumps dispensed." />
             <Select
               value={product.depletion_method}
               onValueChange={(v) => onUpdate({ depletion_method: v })}
             >
-              <SelectTrigger className="w-[120px] h-8 text-xs font-sans">
+              <SelectTrigger className="w-[110px] sm:w-[120px] h-8 text-xs font-sans">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -748,7 +750,7 @@ function ProductRow({ product, onUpdate }: { product: BackroomProduct; onUpdate:
             </Select>
           </div>
 
-          <div className="w-px h-5 bg-border/40" />
+          <div className="w-px h-5 bg-border/40 hidden sm:block" />
 
           <div className="flex items-center gap-1">
             <label className="text-[10px] text-muted-foreground">Billable</label>
