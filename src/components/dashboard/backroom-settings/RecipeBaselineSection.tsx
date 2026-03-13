@@ -53,6 +53,12 @@ export function RecipeBaselineSection() {
 
   return (
     <div className="space-y-4">
+      <Infotainer
+        id="backroom-recipes-guide"
+        title="Recipe Baselines"
+        description="Set the expected product quantities per service — e.g. 'A full highlight uses ~30g lightener + 60ml developer.' Powers Smart Mix Assist suggestions and flags when a stylist uses significantly more or less than expected."
+        icon={<BarChart3 className="h-4 w-4 text-primary" />}
+      />
       <Card className={tokens.card.wrapper}>
         <CardHeader>
           <div className="flex items-center gap-3">
