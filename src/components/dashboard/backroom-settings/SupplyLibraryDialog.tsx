@@ -120,7 +120,17 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
     setIsAdding(true);
 
     try {
-      const itemsToInsert: Array<Record<string, unknown>> = [];
+      const itemsToInsert: Array<{
+        name: string;
+        brand: string;
+        category: string;
+        product_type: string;
+        is_backroom_tracked: boolean;
+        depletion_method: string;
+        unit_of_measure: string;
+        organization_id: string;
+        is_active: boolean;
+      }> = [];
 
       SUPPLY_LIBRARY.forEach((item) => {
         getItemKeys(item).forEach(({ key, size }) => {
