@@ -27,6 +27,7 @@ import { BackroomPermissionsSection } from '@/components/dashboard/backroom-sett
 import { AlertsExceptionsSection } from '@/components/dashboard/backroom-settings/AlertsExceptionsSection';
 import { FormulaAssistanceSection } from '@/components/dashboard/backroom-settings/FormulaAssistanceSection';
 import { MultiLocationSection } from '@/components/dashboard/backroom-settings/MultiLocationSection';
+import { BackroomComplianceSection } from '@/components/dashboard/backroom-settings/BackroomComplianceSection';
 
 type BackroomSection =
   | 'overview'
