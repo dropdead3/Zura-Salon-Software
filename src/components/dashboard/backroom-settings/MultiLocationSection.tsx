@@ -243,15 +243,15 @@ export function MultiLocationSection() {
             <div className="space-y-4">
               <div className="flex flex-wrap gap-4">
                 <div className={cn(tokens.card.inner, 'px-4 py-3 flex-1 min-w-[140px]')}>
-                  <p className={tokens.label.muted}>Settings</p>
+                  <p className={tokens.label.default}>Settings</p>
                   <p className={tokens.body.emphasis}>{pushPreFlight?.settingsCount ?? 0} org default(s)</p>
                 </div>
                 <div className={cn(tokens.card.inner, 'px-4 py-3 flex-1 min-w-[140px]')}>
-                  <p className={tokens.label.muted}>Locations</p>
+                  <p className={tokens.label.default}>Locations</p>
                   <p className={tokens.body.emphasis}>{pushPreFlight?.locationsCount ?? 0} active</p>
                 </div>
                 <div className={cn(tokens.card.inner, 'px-4 py-3 flex-1 min-w-[140px]')}>
-                  <p className={tokens.label.muted}>Alert Rules</p>
+                  <p className={tokens.label.default}>Alert Rules</p>
                   <p className={tokens.body.emphasis}>{pushPreFlight?.alertRulesCount ?? 0} org rule(s)</p>
                 </div>
                 {(pushPreFlight?.existingOverrideCount ?? 0) > 0 && (
