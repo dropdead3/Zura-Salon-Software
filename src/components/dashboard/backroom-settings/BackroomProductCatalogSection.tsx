@@ -215,7 +215,10 @@ function ProductRow({ product, onUpdate }: { product: BackroomProduct; onUpdate:
           {product.category && <Badge variant="outline" className="text-[10px] capitalize">{product.category}</Badge>}
           {product.sku && <span className="text-[10px] text-muted-foreground">{product.sku}</span>}
           {!product.cost_price && product.is_backroom_tracked && (
-            <Badge variant="destructive" className="text-[10px]">No cost</Badge>
+            <span className="flex items-center gap-0.5">
+              <Badge variant="destructive" className="text-[10px]">No cost</Badge>
+              <MetricInfoTooltip description="This product has no unit cost set. Add a cost so Zura can calculate margins and overage charges." />
+            </span>
           )}
         </div>
       </div>
