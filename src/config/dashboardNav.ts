@@ -44,7 +44,6 @@ import {
   Receipt,
   Armchair,
   Package,
-  Beaker,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -96,7 +95,6 @@ export const myToolsNavItems: DashboardNavItem[] = [
 export const manageNavItems: DashboardNavItem[] = [
   { href: '/dashboard/admin/analytics', label: 'Analytics Hub', labelKey: 'analytics_hub', icon: TrendingUp, permission: 'view_team_overview' },
   { href: '/dashboard/admin/team-hub', label: 'Operations Hub', labelKey: 'team_hub', icon: Users, permission: 'view_team_overview' },
-  { href: '/dashboard/admin/backroom-settings', label: 'Backroom Settings', labelKey: 'backroom_settings', icon: Beaker, permission: 'manage_settings' },
 ];
 
 // ─── SECTION: system (admin config) ──────────────────────────────────────────

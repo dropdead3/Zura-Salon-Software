@@ -46,6 +46,7 @@ import {
   Store,
   Armchair,
   Globe,
+  Beaker,
 } from 'lucide-react';
 
 interface ManagementCardProps {
@@ -245,6 +246,12 @@ export default function TeamHub() {
             icon={Globe}
             title="Website Hub"
             description="Website themes, editor, settings, and content management"
+          />
+          <HubGatewayCard
+            href="/dashboard/admin/backroom-settings"
+            icon={Beaker}
+            title="Zura Backroom Hub"
+            description="Backroom color & supply management, formulas, and station tracking"
           />
         </CategorySection>
 
