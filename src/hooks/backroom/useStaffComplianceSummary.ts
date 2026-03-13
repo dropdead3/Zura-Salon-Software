@@ -96,9 +96,9 @@ export function useStaffComplianceSummary(
       let reweighCount = 0;
       let manualOverrides = 0;
       if (sessionIds.length > 0) {
-        const { data: bowlData } = await supabase
+        const { data: bowlData } = await (supabase
           .from('mix_bowls')
-          .select('session_id, post_service_weight_g, is_manual_override')
+          .select('session_id, post_service_weight_g, is_manual_override') as any)
           .in('session_id', sessionIds);
 
         const reweighSessions = new Set<string>();
