@@ -72,6 +72,14 @@ export function StationsHardwareSection() {
     );
   }
 
+  if (showWizard) {
+    return (
+      <div className="space-y-6">
+        <StationHardwareWizard onClose={() => setShowWizard(false)} />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <Card>
@@ -86,10 +94,16 @@ export function StationsHardwareSection() {
             </div>
           </div>
           {!showForm && (
-            <Button size={tokens.button.card} className={tokens.button.cardAction} variant="outline" onClick={() => setShowForm(true)}>
-              <Plus className="w-4 h-4 mr-1.5" />
-              Add Station
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button size={tokens.button.card} className={tokens.button.cardAction} variant="default" onClick={() => setShowWizard(true)}>
+                <Wand2 className="w-4 h-4 mr-1.5" />
+                Setup Station
+              </Button>
+              <Button size={tokens.button.card} className={tokens.button.cardAction} variant="outline" onClick={() => setShowForm(true)}>
+                <Plus className="w-4 h-4 mr-1.5" />
+                Quick Add
+              </Button>
+            </div>
           )}
         </CardHeader>
         <CardContent className="space-y-4">
