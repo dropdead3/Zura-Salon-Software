@@ -559,14 +559,14 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
 
               {/* Sticky add footer */}
               {selectedItems.size > 0 && (
-                <div className="sticky bottom-0 flex items-center justify-between bg-card/95 backdrop-blur-sm rounded-lg border border-border/60 px-4 py-3 shadow-[0_-4px_12px_-4px_hsl(var(--foreground)/0.06)]">
-                  <span className="text-sm font-sans text-muted-foreground">
+                <div className="sticky bottom-0 flex flex-col sm:flex-row items-stretch sm:items-center sm:justify-between gap-2 bg-card/95 backdrop-blur-sm rounded-lg border border-border/60 px-4 py-3 shadow-[0_-4px_12px_-4px_hsl(var(--foreground)/0.06)]">
+                  <span className="text-sm font-sans text-muted-foreground text-center sm:text-left">
                     {selectedItems.size} product{selectedItems.size === 1 ? '' : 's'} selected
                   </span>
                   <Button
                     onClick={handleAddFromBrand}
                     disabled={isAdding}
-                    className="font-sans"
+                    className="font-sans w-full sm:w-auto"
                     size="sm"
                   >
                     {isAdding ? (
