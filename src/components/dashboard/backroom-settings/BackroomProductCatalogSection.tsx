@@ -10,10 +10,11 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Search, Package, ArrowRight } from 'lucide-react';
+import { Loader2, Search, Package, ArrowRight, Library } from 'lucide-react';
 import { toast } from 'sonner';
 import { Infotainer } from '@/components/ui/Infotainer';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { SupplyLibraryDialog } from './SupplyLibraryDialog';
 
 const DEPLETION_METHODS = [
   { value: 'weighed', label: 'Weighed' },
@@ -57,6 +58,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [showTrackedOnly, setShowTrackedOnly] = useState(false);
+  const [libraryOpen, setLibraryOpen] = useState(false);
 
   const { data: products, isLoading } = useQuery({
     queryKey: ['backroom-product-catalog', orgId],
@@ -104,6 +106,9 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
     return true;
   });
 
+  const trackedCount = (products || []).filter((p) => p.is_backroom_tracked).length;
+  const hasProducts = (products || []).length > 0;
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -120,6 +125,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
         description="Choose which products stylists use at the mixing station. Toggle tracking on, set costs, and pick how each product is measured (weighed, pumped, etc). Do this first — services can't be tracked without products."
         icon={<Package className="h-4 w-4 text-primary" />}
       />
+
       <Card className={tokens.card.wrapper}>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -134,77 +140,119 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                 </CardDescription>
               </div>
             </div>
-            <Badge variant="outline" className="text-xs">
-              {(products || []).filter((p) => p.is_backroom_tracked).length} tracked
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="text-xs">
+                {trackedCount} tracked
+              </Badge>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setLibraryOpen(true)}
+                className="font-sans gap-1.5"
+              >
+                <Library className="w-4 h-4" />
+                Supply Library
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Filters */}
-          <div className="flex flex-wrap gap-3">
-            <div className="relative flex-1 min-w-[200px]">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Search products..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 font-sans"
-              />
-            </div>
-            <Select value={filterCategory} onValueChange={setFilterCategory}>
-              <SelectTrigger className="w-[180px] font-sans">
-                <SelectValue placeholder="Category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                {CATEGORIES.map((c) => (
-                  <SelectItem key={c} value={c} className="capitalize">{c}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button
-              variant={showTrackedOnly ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setShowTrackedOnly(!showTrackedOnly)}
-              className="font-sans"
-            >
-              Tracked Only
-            </Button>
-          </div>
-
-          {/* Product rows */}
-          <div className="space-y-1">
-          {filtered.length === 0 ? (
-              <div className={tokens.empty.container}>
-                <Package className={tokens.empty.icon} />
-                <h3 className={tokens.empty.heading}>No products found</h3>
-                <p className={tokens.empty.description}>
-                  {showTrackedOnly
-                    ? 'No tracked products yet. Start by toggling on your most-used color products below.'
-                    : 'No products match your filters.'}
-                </p>
+          {/* Empty state for no products at all */}
+          {!hasProducts ? (
+            <div className={cn(tokens.empty.container, 'py-14')}>
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl border border-border/60 bg-muted/40">
+                <Library className="h-7 w-7 text-muted-foreground" />
               </div>
-            ) : (
-              filtered.map((product) => (
-                <ProductRow
-                  key={product.id}
-                  product={product}
-                  onUpdate={(updates) => updateMutation.mutate({ id: product.id, updates })}
-                />
-              ))
-            )}
-          </div>
-
-          {/* Next step hint */}
-          {onNavigate && (products || []).filter(p => p.is_backroom_tracked).length > 0 && (
-            <div className="flex justify-end pt-2 border-t border-border/40">
-              <Button variant="ghost" size="sm" className="text-xs font-sans text-muted-foreground" onClick={() => onNavigate('services')}>
-                Next: Service Tracking <ArrowRight className="w-3 h-3 ml-1" />
-              </Button>
+              <h3 className={tokens.empty.heading}>Build Your Supply Catalog</h3>
+              <p className={cn(tokens.empty.description, 'max-w-sm mx-auto mt-2')}>
+                Add professional products from 26+ brands like Schwarzkopf, Wella, Redken, and more — or create your own custom products.
+              </p>
+              <div className="mt-5 flex items-center justify-center gap-3">
+                <Button onClick={() => setLibraryOpen(true)} className="font-sans gap-1.5">
+                  <Library className="w-4 h-4" />
+                  Browse Supply Library
+                </Button>
+              </div>
             </div>
+          ) : (
+            <>
+              {/* Filters */}
+              <div className="flex flex-wrap gap-3">
+                <div className="relative flex-1 min-w-[200px]">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search products..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="pl-9 font-sans"
+                  />
+                </div>
+                <Select value={filterCategory} onValueChange={setFilterCategory}>
+                  <SelectTrigger className="w-[180px] font-sans">
+                    <SelectValue placeholder="Category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Categories</SelectItem>
+                    {CATEGORIES.map((c) => (
+                      <SelectItem key={c} value={c} className="capitalize">{c}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant={showTrackedOnly ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setShowTrackedOnly(!showTrackedOnly)}
+                  className="font-sans"
+                >
+                  Tracked Only
+                </Button>
+              </div>
+
+              {/* Product rows */}
+              <div className="space-y-1">
+                {filtered.length === 0 ? (
+                  <div className={tokens.empty.container}>
+                    <Package className={tokens.empty.icon} />
+                    <h3 className={tokens.empty.heading}>No products found</h3>
+                    <p className={tokens.empty.description}>
+                      {showTrackedOnly
+                        ? 'No tracked products yet. Start by toggling on your most-used color products below.'
+                        : 'No products match your filters.'}
+                    </p>
+                  </div>
+                ) : (
+                  filtered.map((product) => (
+                    <ProductRow
+                      key={product.id}
+                      product={product}
+                      onUpdate={(updates) => updateMutation.mutate({ id: product.id, updates })}
+                    />
+                  ))
+                )}
+              </div>
+
+              {/* Next step hint */}
+              {onNavigate && trackedCount > 0 && (
+                <div className="flex justify-end pt-2 border-t border-border/40">
+                  <Button variant="ghost" size="sm" className="text-xs font-sans text-muted-foreground" onClick={() => onNavigate('services')}>
+                    Next: Service Tracking <ArrowRight className="w-3 h-3 ml-1" />
+                  </Button>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
+
+      {/* Supply Library Dialog */}
+      {orgId && (
+        <SupplyLibraryDialog
+          open={libraryOpen}
+          onOpenChange={setLibraryOpen}
+          orgId={orgId}
+          existingProducts={(products || []).map((p) => ({ name: p.name, brand: p.brand }))}
+        />
+      )}
     </div>
   );
 }
