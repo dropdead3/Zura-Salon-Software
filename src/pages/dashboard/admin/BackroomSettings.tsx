@@ -124,6 +124,7 @@ export default function BackroomSettings() {
             {activeSection === 'permissions' && <BackroomPermissionsSection />}
             {activeSection === 'alerts' && <AlertsExceptionsSection />}
             {activeSection === 'formula' && <FormulaAssistanceSection />}
+            {activeSection === 'compliance' && <BackroomComplianceSection />}
             {activeSection === 'multi-location' && <MultiLocationSection />}
           </div>
         </div>
