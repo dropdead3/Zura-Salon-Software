@@ -247,6 +247,12 @@ export default function TeamHub() {
             title="Website Hub"
             description="Website themes, editor, settings, and content management"
           />
+          <HubGatewayCard
+            href="/dashboard/admin/backroom-settings"
+            icon={Beaker}
+            title="Zura Backroom Hub"
+            description="Backroom color & supply management, formulas, and station tracking"
+          />
         </CategorySection>
 
         {/* People & Development */}
