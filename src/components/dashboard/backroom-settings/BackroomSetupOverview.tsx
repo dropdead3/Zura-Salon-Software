@@ -30,6 +30,15 @@ export function BackroomSetupOverview({ onNavigate }: Props) {
 
   if (!health) return null;
 
+  if (showWizard) {
+    return (
+      <BackroomSetupWizard
+        onComplete={() => setShowWizard(false)}
+        onCancel={() => setShowWizard(false)}
+      />
+    );
+  }
+
   const checklistItems = [
     { label: 'Backroom products configured', value: health.trackedProducts, total: health.totalProducts, section: 'products', icon: Package, done: health.trackedProducts > 0 },
     { label: 'Services mapped for tracking', value: health.trackedServices, total: health.totalServices, section: 'services', icon: Wrench, done: health.trackedServices > 0 },
