@@ -448,29 +448,50 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
               {(brandsByLetter.get(activeLetter) || []).map((brand) => {
                 const allAdded = brandFullyAdded(brand);
                 const inCatalog = brandCatalogCount(brand);
+                const isBrandAdding = addingBrand === brand;
 
                 return (
-                  <button
-                    key={brand}
-                    type="button"
-                    onClick={() => {
-                      setActiveBrand(brand);
-                      setSelectedItems(new Set());
-                      setSearch('');
-                    }}
-                    className={cn(
-                      'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-sans font-medium transition-all whitespace-nowrap shrink-0',
-                      allAdded
-                        ? 'bg-muted/40 text-muted-foreground'
-                        : 'bg-muted/60 text-foreground/70 hover:bg-muted hover:text-foreground'
+                  <div key={brand} className="inline-flex items-center gap-0 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveBrand(brand);
+                        setSelectedItems(new Set());
+                        setSearch('');
+                      }}
+                      className={cn(
+                        'inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-sans font-medium transition-all whitespace-nowrap',
+                        allAdded ? 'rounded-full' : 'rounded-l-full',
+                        allAdded
+                          ? 'bg-muted/40 text-muted-foreground'
+                          : 'bg-muted/60 text-foreground/70 hover:bg-muted hover:text-foreground'
+                      )}
+                    >
+                      {brand}
+                      {allAdded && <Check className="w-3 h-3" />}
+                      {!allAdded && inCatalog > 0 && (
+                        <span className="text-[10px] text-muted-foreground">{inCatalog}</span>
+                      )}
+                    </button>
+                    {!allAdded && (
+                      <button
+                        type="button"
+                        disabled={isBrandAdding}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAddEntireBrand(brand);
+                        }}
+                        title={`Add all ${brand} products`}
+                        className="inline-flex items-center justify-center w-7 h-7 rounded-r-full bg-muted/60 text-muted-foreground hover:bg-primary/10 hover:text-primary transition-all border-l border-border/30"
+                      >
+                        {isBrandAdding ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <PackagePlus className="w-3 h-3" />
+                        )}
+                      </button>
                     )}
-                  >
-                    {brand}
-                    {allAdded && <Check className="w-3 h-3" />}
-                    {!allAdded && inCatalog > 0 && (
-                      <span className="text-[10px] text-muted-foreground">{inCatalog}</span>
-                    )}
-                  </button>
+                  </div>
                 );
               })}
             </div>
