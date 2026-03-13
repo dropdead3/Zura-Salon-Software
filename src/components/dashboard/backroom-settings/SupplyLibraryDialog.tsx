@@ -422,7 +422,7 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
 
                             {/* Size chips */}
                             {hasSizes && (
-                              <div className="flex flex-wrap gap-1.5 mt-2">
+                              <div className="flex flex-wrap gap-2 mt-2.5">
                                 {item.sizeOptions!.map((size) => {
                                   const key = sizedKey(item.brand, item.name, size);
                                   const sizeExisting = isExisting(item.brand, item.name, size);
