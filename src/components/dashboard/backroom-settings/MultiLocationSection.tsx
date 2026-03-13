@@ -120,6 +120,12 @@ export function MultiLocationSection() {
 
   return (
     <div className="space-y-6">
+      <Infotainer
+        id="backroom-multilocation-guide"
+        title="Multi-Location Settings"
+        description="View and manage setting differences between locations. Copy settings from one location to another or compare side-by-side."
+        icon={<Building2 className="h-4 w-4 text-primary" />}
+      />
       {/* Override Summary */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
