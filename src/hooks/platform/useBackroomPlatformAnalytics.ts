@@ -9,6 +9,7 @@ export interface BackroomPlatformMetrics {
   orgUsageStats: OrgUsageStat[];
   adoptionTimeline: { month: string; count: number }[];
   coachingSignals: CoachingSignal[];
+  coachingEmailsSent: number;
 }
 
 export interface CoachingSignal {
