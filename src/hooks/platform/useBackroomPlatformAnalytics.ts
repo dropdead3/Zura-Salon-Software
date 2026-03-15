@@ -8,6 +8,19 @@ export interface BackroomPlatformMetrics {
   avgWasteReduction: number | null;
   orgUsageStats: OrgUsageStat[];
   adoptionTimeline: { month: string; count: number }[];
+  coachingSignals: CoachingSignal[];
+}
+
+export interface CoachingSignal {
+  orgId: string;
+  orgName: string;
+  healthScore: 'green' | 'amber' | 'red';
+  avgReweighPct: number | null;
+  avgWastePct: number | null;
+  sessionCount: number;
+  lastActiveDate: string | null;
+  daysSinceActive: number | null;
+  reason: string;
 }
 
 export interface OrgUsageStat {
