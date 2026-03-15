@@ -175,6 +175,27 @@ export function SupplyIntelligenceDashboard({ locationId }: SupplyIntelligenceDa
           )}
         </CardContent>
       </Card>
+
+      {/* Benchmarking Roadmap Placeholder */}
+      <Card className={cn(tokens.card.wrapper, 'border-dashed opacity-75')}>
+        <CardContent className="flex items-center gap-4 py-6">
+          <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
+            <BarChart3 className="w-5 h-5 text-muted-foreground" />
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-0.5">
+              <h3 className={tokens.body.emphasis}>Price Benchmarking</h3>
+              <Badge variant="secondary" className="font-sans text-[10px]">
+                <Lock className="w-3 h-3 mr-1" />
+                Coming Soon
+              </Badge>
+            </div>
+            <p className={tokens.body.muted}>
+              Compare your supply costs against anonymized industry data from comparable salons in your region.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

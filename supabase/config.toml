@@ -221,3 +221,6 @@ verify_jwt = false
 
 [functions.supply-intelligence]
 verify_jwt = false
+
+[functions.supply-intelligence-digest]
+verify_jwt = false
