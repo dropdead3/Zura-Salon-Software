@@ -1,14 +1,21 @@
 import { useState } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+import {
+  PlatformCard,
+  PlatformCardContent,
+  PlatformCardHeader,
+  PlatformCardTitle,
+  PlatformCardDescription,
+} from '@/components/platform/ui/PlatformCard';
+import { PlatformButton } from '@/components/platform/ui/PlatformButton';
+import { PlatformInput } from '@/components/platform/ui/PlatformInput';
+import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Loader2, Search, Package, Plus, Database, Pencil, Trash2, AlertTriangle, Upload, Download, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -40,7 +47,6 @@ export function SupplyLibraryTab() {
   const [csvOpen, setCsvOpen] = useState(false);
   const [page, setPage] = useState(0);
 
-  // Inline editing state
   const [inlineEditing, setInlineEditing] = useState<{ id: string; field: string; value: string } | null>(null);
 
   const { data: initStatus, isLoading: initLoading } = useSupplyLibraryInitStatus();
@@ -52,12 +58,10 @@ export function SupplyLibraryTab() {
   });
   const { data: brands = [] } = useSupplyLibraryBrands();
 
-  // Client-side category filter
   const products = categoryFilter === 'all' ? allProducts : allProducts.filter((p) => p.category === categoryFilter);
   const totalPages = Math.ceil(products.length / PAGE_SIZE);
   const pagedProducts = products.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
-  // Category counts
   const categoryCounts = allProducts.reduce<Record<string, number>>((acc, p) => {
     acc[p.category] = (acc[p.category] || 0) + 1;
     return acc;
@@ -120,70 +124,65 @@ export function SupplyLibraryTab() {
   // Show initialization panel if DB is empty
   if (!initLoading && initStatus && !initStatus.isInitialized) {
     return (
-      <Card>
-        <CardContent className="p-12 text-center space-y-4">
-          <div className="mx-auto w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center">
-            <Database className="w-7 h-7 text-primary" />
+      <PlatformCard variant="glass">
+        <PlatformCardContent className="p-12 text-center space-y-4">
+          <div className="mx-auto w-14 h-14 rounded-xl bg-violet-500/20 flex items-center justify-center">
+            <Database className="w-7 h-7 text-violet-400" />
           </div>
-          <h3 className={cn(tokens.heading.section)}>Initialize Supply Library</h3>
-          <p className="text-muted-foreground font-sans text-sm max-w-md mx-auto">
+          <h3 className="font-display text-lg tracking-wide text-[hsl(var(--platform-foreground))]">Initialize Supply Library</h3>
+          <p className="text-slate-400 font-sans text-sm max-w-md mx-auto">
             The supply library database is empty. Import the built-in library of 2,000+ professional products to get started.
           </p>
-          <Button onClick={() => seedMutation.mutate()} disabled={seedMutation.isPending} className="font-sans">
-            {seedMutation.isPending ? (
-              <><Loader2 className="w-4 h-4 animate-spin" /> Importing...</>
-            ) : (
-              <><Database className="w-4 h-4" /> Import Built-in Library</>
-            )}
-          </Button>
-        </CardContent>
-      </Card>
+          <PlatformButton onClick={() => seedMutation.mutate()} loading={seedMutation.isPending}>
+            <Database className="w-4 h-4" /> Import Built-in Library
+          </PlatformButton>
+        </PlatformCardContent>
+      </PlatformCard>
     );
   }
 
   return (
     <div className="space-y-4">
-      <Card className="rounded-xl border-border/60 bg-card/80 backdrop-blur-xl">
-        <CardHeader>
+      <PlatformCard variant="glass">
+        <PlatformCardHeader>
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-3">
-              <div className={tokens.card.iconBox}>
-                <Package className="w-5 h-5 text-primary" />
+              <div className="w-10 h-10 rounded-lg bg-[hsl(var(--platform-bg-hover))] flex items-center justify-center">
+                <Package className="w-5 h-5 text-violet-400" />
               </div>
               <div>
-                <CardTitle className={tokens.card.title}>Supply Library</CardTitle>
-                <CardDescription className="font-sans text-sm">
+                <PlatformCardTitle>Supply Library</PlatformCardTitle>
+                <PlatformCardDescription>
                   {initStatus?.count ?? 0} products across {brands.length} brands
-                </CardDescription>
+                </PlatformCardDescription>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={handleExportCSV} className="font-sans gap-1.5">
-                <Download className="w-3.5 h-3.5" /> Export
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => setCsvOpen(true)} className="font-sans gap-1.5">
-                <Upload className="w-3.5 h-3.5" /> Import CSV
-              </Button>
-              <Button size="sm" onClick={() => { setEditProduct(null); setAddOpen(true); }} className="font-sans gap-1.5">
-                <Plus className="w-3.5 h-3.5" /> Add Product
-              </Button>
+              <PlatformButton variant="outline" size="sm" onClick={handleExportCSV}>
+                <Download className="w-3.5 h-3.5 mr-1" /> Export
+              </PlatformButton>
+              <PlatformButton variant="outline" size="sm" onClick={() => setCsvOpen(true)}>
+                <Upload className="w-3.5 h-3.5 mr-1" /> Import CSV
+              </PlatformButton>
+              <PlatformButton size="sm" onClick={() => { setEditProduct(null); setAddOpen(true); }}>
+                <Plus className="w-3.5 h-3.5 mr-1" /> Add Product
+              </PlatformButton>
             </div>
           </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
+        </PlatformCardHeader>
+        <PlatformCardContent className="space-y-4">
           {/* Filters */}
           <div className="flex items-center gap-3 flex-wrap">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
+            <div className="flex-1 max-w-sm">
+              <PlatformInput
+                icon={<Search className="w-4 h-4" />}
                 placeholder="Search products..."
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setPage(0); }}
-                className="pl-9 font-sans"
               />
             </div>
             <Select value={brandFilter} onValueChange={(v) => { setBrandFilter(v); setPage(0); }}>
-              <SelectTrigger className="w-[180px] font-sans">
+              <SelectTrigger className="w-[180px] font-sans bg-slate-800/50 border-slate-700/50 text-slate-300">
                 <SelectValue placeholder="All Brands" />
               </SelectTrigger>
               <SelectContent>
@@ -194,7 +193,7 @@ export function SupplyLibraryTab() {
               </SelectContent>
             </Select>
             <Select value={categoryFilter} onValueChange={(v) => { setCategoryFilter(v); setPage(0); }}>
-              <SelectTrigger className="w-[160px] font-sans">
+              <SelectTrigger className="w-[160px] font-sans bg-slate-800/50 border-slate-700/50 text-slate-300">
                 <SelectValue placeholder="All Categories" />
               </SelectTrigger>
               <SelectContent>
@@ -220,71 +219,71 @@ export function SupplyLibraryTab() {
               <p className={tokens.empty.description}>Try adjusting your filters</p>
             </div>
           ) : (
-            <div className="rounded-lg border border-border/50">
+            <div className="rounded-lg border border-slate-700/40">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead className={tokens.table.columnHeader}>Brand</TableHead>
-                    <TableHead className={tokens.table.columnHeader}>Name</TableHead>
-                    <TableHead className={tokens.table.columnHeader}>Category</TableHead>
-                    <TableHead className={tokens.table.columnHeader}>Depletion</TableHead>
-                    <TableHead className={tokens.table.columnHeader}>Unit</TableHead>
-                    <TableHead className={tokens.table.columnHeader}>Sizes</TableHead>
-                    <TableHead className={cn(tokens.table.columnHeader, 'w-[80px]')}>Actions</TableHead>
+                  <TableRow className="border-slate-700/50">
+                    <TableHead className="font-sans text-xs text-slate-400">Brand</TableHead>
+                    <TableHead className="font-sans text-xs text-slate-400">Name</TableHead>
+                    <TableHead className="font-sans text-xs text-slate-400">Category</TableHead>
+                    <TableHead className="font-sans text-xs text-slate-400">Depletion</TableHead>
+                    <TableHead className="font-sans text-xs text-slate-400">Unit</TableHead>
+                    <TableHead className="font-sans text-xs text-slate-400">Sizes</TableHead>
+                    <TableHead className="font-sans text-xs text-slate-400 w-[80px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {pagedProducts.map((p) => (
-                    <TableRow key={p.id}>
-                      <TableCell className="font-sans text-sm">
+                    <TableRow key={p.id} className="border-slate-700/30">
+                      <TableCell className="font-sans text-sm text-slate-300">
                         {inlineEditing?.id === p.id && inlineEditing.field === 'brand' ? (
-                          <Input
+                          <input
                             autoFocus
                             value={inlineEditing.value}
                             onChange={(e) => setInlineEditing({ ...inlineEditing, value: e.target.value })}
                             onBlur={handleInlineSave}
                             onKeyDown={(e) => e.key === 'Enter' && handleInlineSave()}
-                            className="h-7 w-28 font-sans text-sm"
+                            className="h-7 w-28 font-sans text-sm rounded-lg border border-slate-700/50 bg-slate-800/50 text-slate-200 px-1.5 focus:border-violet-500/50 focus:outline-none"
                           />
                         ) : (
                           <span
-                            className="cursor-pointer hover:text-primary transition-colors"
+                            className="cursor-pointer hover:text-violet-400 transition-colors"
                             onDoubleClick={() => setInlineEditing({ id: p.id, field: 'brand', value: p.brand })}
                           >
                             {p.brand}
                           </span>
                         )}
                       </TableCell>
-                      <TableCell className="font-sans text-sm font-medium">{p.name}</TableCell>
+                      <TableCell className="font-sans text-sm font-medium text-slate-200">{p.name}</TableCell>
                       <TableCell>
                         {inlineEditing?.id === p.id && inlineEditing.field === 'category' ? (
                           <Select
                             value={inlineEditing.value}
                             onValueChange={(v) => {
                               setInlineEditing({ ...inlineEditing, value: v });
-                              // Auto-save on select
                               supabase.from('supply_library_products').update({ category: v }).eq('id', p.id).then(() => {
                                 queryClient.invalidateQueries({ queryKey: ['supply-library-products'] });
                               });
                               setInlineEditing(null);
                             }}
                           >
-                            <SelectTrigger className="h-7 w-28 font-sans text-xs"><SelectValue /></SelectTrigger>
+                            <SelectTrigger className="h-7 w-28 font-sans text-xs bg-slate-800/50 border-slate-700/50 text-slate-300"><SelectValue /></SelectTrigger>
                             <SelectContent>
                               {CATEGORIES.map((c) => <SelectItem key={c} value={c}>{SUPPLY_CATEGORY_LABELS[c] || c}</SelectItem>)}
                             </SelectContent>
                           </Select>
                         ) : (
-                          <Badge
-                            variant="secondary"
-                            className="font-sans text-xs cursor-pointer"
+                          <PlatformBadge
+                            variant="default"
+                            size="sm"
+                            className="cursor-pointer"
                             onDoubleClick={() => setInlineEditing({ id: p.id, field: 'category', value: p.category })}
                           >
                             {SUPPLY_CATEGORY_LABELS[p.category] || p.category}
-                          </Badge>
+                          </PlatformBadge>
                         )}
                       </TableCell>
-                      <TableCell className="font-sans text-xs text-muted-foreground">
+                      <TableCell className="font-sans text-xs text-slate-500">
                         {inlineEditing?.id === p.id && inlineEditing.field === 'default_depletion' ? (
                           <Select
                             value={inlineEditing.value}
@@ -295,21 +294,21 @@ export function SupplyLibraryTab() {
                               setInlineEditing(null);
                             }}
                           >
-                            <SelectTrigger className="h-7 w-24 font-sans text-xs"><SelectValue /></SelectTrigger>
+                            <SelectTrigger className="h-7 w-24 font-sans text-xs bg-slate-800/50 border-slate-700/50 text-slate-300"><SelectValue /></SelectTrigger>
                             <SelectContent>
                               {DEPLETION_METHODS.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
                             </SelectContent>
                           </Select>
                         ) : (
                           <span
-                            className="cursor-pointer hover:text-primary transition-colors"
+                            className="cursor-pointer hover:text-violet-400 transition-colors"
                             onDoubleClick={() => setInlineEditing({ id: p.id, field: 'default_depletion', value: p.default_depletion })}
                           >
                             {p.default_depletion}
                           </span>
                         )}
                       </TableCell>
-                      <TableCell className="font-sans text-xs text-muted-foreground">
+                      <TableCell className="font-sans text-xs text-slate-500">
                         {inlineEditing?.id === p.id && inlineEditing.field === 'default_unit' ? (
                           <Select
                             value={inlineEditing.value}
@@ -320,41 +319,40 @@ export function SupplyLibraryTab() {
                               setInlineEditing(null);
                             }}
                           >
-                            <SelectTrigger className="h-7 w-16 font-sans text-xs"><SelectValue /></SelectTrigger>
+                            <SelectTrigger className="h-7 w-16 font-sans text-xs bg-slate-800/50 border-slate-700/50 text-slate-300"><SelectValue /></SelectTrigger>
                             <SelectContent>
                               {UNITS.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}
                             </SelectContent>
                           </Select>
                         ) : (
                           <span
-                            className="cursor-pointer hover:text-primary transition-colors"
+                            className="cursor-pointer hover:text-violet-400 transition-colors"
                             onDoubleClick={() => setInlineEditing({ id: p.id, field: 'default_unit', value: p.default_unit })}
                           >
                             {p.default_unit}
                           </span>
                         )}
                       </TableCell>
-                      <TableCell className="font-sans text-xs text-muted-foreground">
+                      <TableCell className="font-sans text-xs text-slate-500">
                         {p.size_options?.join(', ') || '—'}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
-                          <Button
+                          <PlatformButton
                             variant="ghost"
-                            size="icon"
-                            className="h-7 w-7"
+                            size="icon-sm"
                             onClick={() => { setEditProduct(p); setAddOpen(true); }}
                           >
                             <Pencil className="w-3.5 h-3.5" />
-                          </Button>
-                          <Button
+                          </PlatformButton>
+                          <PlatformButton
                             variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 text-destructive"
+                            size="icon-sm"
+                            className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
                             onClick={() => setDeleteTarget(p)}
                           >
                             <Trash2 className="w-3.5 h-3.5" />
-                          </Button>
+                          </PlatformButton>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -363,24 +361,24 @@ export function SupplyLibraryTab() {
               </Table>
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-between px-4 py-3 border-t border-border/40">
-                  <span className="font-sans text-xs text-muted-foreground">
+                <div className="flex items-center justify-between px-4 py-3 border-t border-slate-700/30">
+                  <span className="font-sans text-xs text-slate-500">
                     Page {page + 1} of {totalPages} · {products.length} products
                   </span>
                   <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)} className="h-7 w-7 p-0">
+                    <PlatformButton variant="ghost" size="icon-sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
                       <ChevronLeft className="w-4 h-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage((p) => p + 1)} className="h-7 w-7 p-0">
+                    </PlatformButton>
+                    <PlatformButton variant="ghost" size="icon-sm" disabled={page >= totalPages - 1} onClick={() => setPage((p) => p + 1)}>
                       <ChevronRight className="w-4 h-4" />
-                    </Button>
+                    </PlatformButton>
                   </div>
                 </div>
               )}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </PlatformCardContent>
+      </PlatformCard>
 
       {/* CSV Import Dialog */}
       <CSVImportDialog open={csvOpen} onOpenChange={setCsvOpen} />
@@ -398,17 +396,17 @@ export function SupplyLibraryTab() {
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle className="font-sans text-base flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-destructive" /> Remove Product
+              <AlertTriangle className="w-4 h-4 text-red-400" /> Remove Product
             </DialogTitle>
             <DialogDescription className="font-sans text-sm">
               This will soft-delete "{deleteTarget?.name}" from the supply library. Organizations that already added it will keep their copy.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteTarget(null)} className="font-sans">Cancel</Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={isDeleting} className="font-sans">
-              {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Remove'}
-            </Button>
+            <PlatformButton variant="outline" onClick={() => setDeleteTarget(null)}>Cancel</PlatformButton>
+            <PlatformButton variant="destructive" onClick={handleDelete} loading={isDeleting}>
+              Remove
+            </PlatformButton>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -543,10 +541,10 @@ function AddEditDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} className="font-sans">Cancel</Button>
-          <Button onClick={handleSave} disabled={saving || !brand.trim() || !name.trim()} className="font-sans">
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : isEdit ? 'Save Changes' : 'Add Product'}
-          </Button>
+          <PlatformButton variant="outline" onClick={() => onOpenChange(false)}>Cancel</PlatformButton>
+          <PlatformButton onClick={handleSave} loading={saving} disabled={!brand.trim() || !name.trim()}>
+            {isEdit ? 'Save Changes' : 'Add Product'}
+          </PlatformButton>
         </DialogFooter>
       </DialogContent>
     </Dialog>

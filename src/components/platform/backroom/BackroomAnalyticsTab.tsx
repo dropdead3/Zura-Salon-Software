@@ -1,27 +1,33 @@
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import {
+  PlatformCard,
+  PlatformCardContent,
+  PlatformCardHeader,
+  PlatformCardTitle,
+  PlatformCardDescription,
+} from '@/components/platform/ui/PlatformCard';
+import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
 import { BarChart3, Building2, DollarSign, TrendingDown, Loader2, Activity } from 'lucide-react';
 import { useBackroomPlatformAnalytics } from '@/hooks/platform/useBackroomPlatformAnalytics';
 
 function KPICard({ icon: Icon, label, value, subtitle }: { icon: any; label: string; value: string; subtitle?: string }) {
   return (
-    <Card className="rounded-xl border-border/60 bg-card/80 backdrop-blur-xl relative">
-      <CardContent className="p-5">
+    <PlatformCard variant="glass" className="relative">
+      <PlatformCardContent className="p-5 pt-5">
         <div className="flex items-start justify-between">
           <div className="space-y-1">
-            <p className={tokens.kpi.label}>{label}</p>
-            <p className={tokens.kpi.value}>{value}</p>
-            {subtitle && <p className="font-sans text-xs text-muted-foreground">{subtitle}</p>}
+            <p className="font-display text-xs tracking-wide uppercase text-slate-400">{label}</p>
+            <p className="font-display text-2xl tracking-tight text-[hsl(var(--platform-foreground))]">{value}</p>
+            {subtitle && <p className="font-sans text-xs text-slate-500">{subtitle}</p>}
           </div>
-          <div className={tokens.card.iconBox}>
-            <Icon className="w-5 h-5 text-primary" />
+          <div className="w-10 h-10 rounded-lg bg-[hsl(var(--platform-bg-hover))] flex items-center justify-center">
+            <Icon className="w-5 h-5 text-violet-400" />
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </PlatformCardContent>
+    </PlatformCard>
   );
 }
 
@@ -70,55 +76,55 @@ export function BackroomAnalyticsTab() {
 
       {/* Adoption Timeline */}
       {metrics.adoptionTimeline.length > 0 && (
-        <Card className="rounded-xl border-border/60 bg-card/80 backdrop-blur-xl">
-          <CardHeader>
+        <PlatformCard variant="glass">
+          <PlatformCardHeader>
             <div className="flex items-center gap-3">
-              <div className={tokens.card.iconBox}>
-                <BarChart3 className="w-5 h-5 text-primary" />
+              <div className="w-10 h-10 rounded-lg bg-[hsl(var(--platform-bg-hover))] flex items-center justify-center">
+                <BarChart3 className="w-5 h-5 text-violet-400" />
               </div>
               <div>
-                <CardTitle className={tokens.card.title}>Adoption Timeline</CardTitle>
-                <CardDescription className="font-sans text-sm">Monthly backroom activations</CardDescription>
+                <PlatformCardTitle>Adoption Timeline</PlatformCardTitle>
+                <PlatformCardDescription>Monthly backroom activations</PlatformCardDescription>
               </div>
             </div>
-          </CardHeader>
-          <CardContent>
+          </PlatformCardHeader>
+          <PlatformCardContent>
             <div className="flex items-end gap-2 h-32">
               {metrics.adoptionTimeline.map((m) => {
                 const maxCount = Math.max(...metrics.adoptionTimeline.map((t) => t.count), 1);
                 const heightPct = (m.count / maxCount) * 100;
                 return (
                   <div key={m.month} className="flex-1 flex flex-col items-center gap-1">
-                    <span className="font-sans text-[10px] text-muted-foreground tabular-nums">{m.count}</span>
+                    <span className="font-sans text-[10px] text-slate-500 tabular-nums">{m.count}</span>
                     <div
-                      className="w-full rounded-t bg-primary/20 border border-primary/30 min-h-[4px] transition-all"
+                      className="w-full rounded-t bg-violet-500/20 border border-violet-500/30 min-h-[4px] transition-all"
                       style={{ height: `${Math.max(heightPct, 4)}%` }}
                     />
-                    <span className="font-sans text-[10px] text-muted-foreground">{m.month.slice(5)}</span>
+                    <span className="font-sans text-[10px] text-slate-500">{m.month.slice(5)}</span>
                   </div>
                 );
               })}
             </div>
-          </CardContent>
-        </Card>
+          </PlatformCardContent>
+        </PlatformCard>
       )}
 
       {/* Per-Org Usage */}
-      <Card className="rounded-xl border-border/60 bg-card/80 backdrop-blur-xl">
-        <CardHeader>
+      <PlatformCard variant="glass">
+        <PlatformCardHeader>
           <div className="flex items-center gap-3">
-            <div className={tokens.card.iconBox}>
-              <Building2 className="w-5 h-5 text-primary" />
+            <div className="w-10 h-10 rounded-lg bg-[hsl(var(--platform-bg-hover))] flex items-center justify-center">
+              <Building2 className="w-5 h-5 text-violet-400" />
             </div>
             <div>
-              <CardTitle className={tokens.card.title}>Organization Usage</CardTitle>
-              <CardDescription className="font-sans text-sm">
+              <PlatformCardTitle>Organization Usage</PlatformCardTitle>
+              <PlatformCardDescription>
                 {metrics.orgUsageStats.length} backroom-enabled organizations
-              </CardDescription>
+              </PlatformCardDescription>
             </div>
           </div>
-        </CardHeader>
-        <CardContent className="p-0">
+        </PlatformCardHeader>
+        <PlatformCardContent className="p-0">
           {metrics.orgUsageStats.length === 0 ? (
             <div className={cn(tokens.empty.container, 'py-12')}>
               <Building2 className={tokens.empty.icon} />
@@ -127,38 +133,33 @@ export function BackroomAnalyticsTab() {
           ) : (
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead className={tokens.table.columnHeader}>Organization</TableHead>
-                  <TableHead className={tokens.table.columnHeader}>Snapshots</TableHead>
-                  <TableHead className={tokens.table.columnHeader}>Avg Waste %</TableHead>
-                  <TableHead className={tokens.table.columnHeader}>Sessions</TableHead>
-                  <TableHead className={tokens.table.columnHeader}>Last Activity</TableHead>
+                <TableRow className="border-slate-700/50">
+                  <TableHead className="font-sans text-xs text-slate-400">Organization</TableHead>
+                  <TableHead className="font-sans text-xs text-slate-400">Snapshots</TableHead>
+                  <TableHead className="font-sans text-xs text-slate-400">Avg Waste %</TableHead>
+                  <TableHead className="font-sans text-xs text-slate-400">Sessions</TableHead>
+                  <TableHead className="font-sans text-xs text-slate-400">Last Activity</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {metrics.orgUsageStats.map((org) => (
-                  <TableRow key={org.orgId}>
-                    <TableCell className="font-sans text-sm font-medium">{org.orgName}</TableCell>
-                    <TableCell className="font-sans text-sm tabular-nums">{org.snapshotCount}</TableCell>
+                  <TableRow key={org.orgId} className="border-slate-700/30">
+                    <TableCell className="font-sans text-sm font-medium text-slate-200">{org.orgName}</TableCell>
+                    <TableCell className="font-sans text-sm tabular-nums text-slate-300">{org.snapshotCount}</TableCell>
                     <TableCell className="font-sans text-sm tabular-nums">
                       {org.avgWastePct != null ? (
-                        <Badge
-                          variant="outline"
-                          className={cn(
-                            'font-sans text-xs',
-                            org.avgWastePct > 10
-                              ? 'text-destructive border-destructive/20'
-                              : 'text-emerald-600 border-emerald-500/20'
-                          )}
+                        <PlatformBadge
+                          variant={org.avgWastePct > 10 ? 'error' : 'success'}
+                          size="sm"
                         >
                           {org.avgWastePct.toFixed(1)}%
-                        </Badge>
+                        </PlatformBadge>
                       ) : (
-                        <span className="text-muted-foreground">—</span>
+                        <span className="text-slate-500">—</span>
                       )}
                     </TableCell>
-                    <TableCell className="font-sans text-sm tabular-nums">{org.totalSessions.toLocaleString()}</TableCell>
-                    <TableCell className="font-sans text-xs text-muted-foreground">
+                    <TableCell className="font-sans text-sm tabular-nums text-slate-300">{org.totalSessions.toLocaleString()}</TableCell>
+                    <TableCell className="font-sans text-xs text-slate-500">
                       {org.lastSnapshotDate ? new Date(org.lastSnapshotDate).toLocaleDateString() : 'Never'}
                     </TableCell>
                   </TableRow>
@@ -166,8 +167,8 @@ export function BackroomAnalyticsTab() {
               </TableBody>
             </Table>
           )}
-        </CardContent>
-      </Card>
+        </PlatformCardContent>
+      </PlatformCard>
     </div>
   );
 }
