@@ -96,10 +96,6 @@ const plans: PlanConfig[] = [
 const SCALE_LICENSE_MONTHLY = 10;
 const SCALE_HARDWARE_PRICE = 199;
 
-const TRIAL_OPTIONS = [
-  { days: 7, label: '7-day free trial' },
-  { days: 14, label: '14-day free trial' },
-] as const;
 
 export function BackroomPaywall() {
   const [loading, setLoading] = useState(false);
