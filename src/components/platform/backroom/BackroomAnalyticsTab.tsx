@@ -11,7 +11,7 @@ import {
 import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
 import { PlatformButton } from '@/components/platform/ui/PlatformButton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { BarChart3, Building2, DollarSign, TrendingDown, Loader2, Activity, AlertCircle, CheckCircle2, Mail } from 'lucide-react';
+import { BarChart3, Building2, DollarSign, TrendingDown, Loader2, Activity, AlertCircle, CheckCircle2, Mail, History } from 'lucide-react';
 import { useBackroomPlatformAnalytics, type CoachingSignal } from '@/hooks/platform/useBackroomPlatformAnalytics';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
