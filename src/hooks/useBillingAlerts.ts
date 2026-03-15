@@ -109,6 +109,7 @@ export function useBillingAlerts(): { alerts: BillingAlert[]; isLoading: boolean
         description: `You have ${failedInvoices.length} unpaid invoice${failedInvoices.length > 1 ? 's' : ''}. Update your payment method to resolve.`,
         ctaLabel: 'Retry Payment',
         ctaAction: 'open-portal',
+        dismissible: false,
       });
     }
 
