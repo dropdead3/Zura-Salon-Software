@@ -570,21 +570,32 @@ function LocationEntitlementPanel({
             {activeLocCount} of {locations.length} locations active
           </span>
         </div>
-        <PlatformButton
-          size="sm"
-          variant="ghost"
-          onClick={() => {
-            // Enable all locations
-            locations.forEach((loc) => {
-              const ent = entitlementMap.get(loc.id);
-              if (!ent || ent.status === 'cancelled' || ent.status === 'suspended') {
-                onToggle(orgId, loc.id);
-              }
-            });
-          }}
-        >
-          Enable All
-        </PlatformButton>
+        <div className="flex items-center gap-2">
+          <PlatformButton
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              locations.forEach((loc) => {
+                const ent = entitlementMap.get(loc.id);
+                if (!ent || ent.status === 'cancelled' || ent.status === 'suspended') {
+                  onToggle(orgId, loc.id);
+                }
+              });
+            }}
+          >
+            Enable All
+          </PlatformButton>
+          {hasStripeCustomer && (
+            <PlatformButton
+              size="sm"
+              variant="default"
+              onClick={() => setShowActivateDialog(true)}
+            >
+              <CreditCard className="w-3.5 h-3.5" />
+              Activate & Charge
+            </PlatformButton>
+          )}
+        </div>
       </div>
 
       {/* Location rows */}
