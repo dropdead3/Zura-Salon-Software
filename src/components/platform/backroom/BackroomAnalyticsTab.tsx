@@ -350,6 +350,13 @@ export function BackroomAnalyticsTab() {
           </PlatformCardContent>
         </PlatformCard>
       )}
+
+      <CoachingHistoryDrawer
+        orgId={historyOrg?.id ?? null}
+        orgName={historyOrg?.name ?? ''}
+        open={!!historyOrg}
+        onOpenChange={(open) => { if (!open) setHistoryOrg(null); }}
+      />
     </div>
   );
 }
