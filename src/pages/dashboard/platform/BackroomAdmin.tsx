@@ -31,6 +31,10 @@ export default function BackroomAdmin() {
             <Building2 className="w-3.5 h-3.5" />
             Entitlements
           </TabsTrigger>
+          <TabsTrigger value="library" className="font-sans text-sm gap-1.5">
+            <Package className="w-3.5 h-3.5" />
+            Supply Library
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="queue" className="mt-6">
@@ -41,6 +45,9 @@ export default function BackroomAdmin() {
         </TabsContent>
         <TabsContent value="entitlements" className="mt-6">
           <BackroomEntitlementsTab />
+        </TabsContent>
+        <TabsContent value="library" className="mt-6">
+          <SupplyLibraryTab />
         </TabsContent>
       </Tabs>
     </div>

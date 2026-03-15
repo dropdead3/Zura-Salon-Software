@@ -10,12 +10,10 @@ import { cn } from '@/lib/utils';
 import { Search, Package, Check, Library, Loader2, MessageSquarePlus, Send, PackagePlus } from 'lucide-react';
 import { PLATFORM_NAME } from '@/lib/brand';
 import {
-  SUPPLY_LIBRARY,
-  getSupplyBrands,
-  getProductsByBrand,
   SUPPLY_CATEGORY_LABELS,
   type SupplyLibraryItem,
 } from '@/data/professional-supply-library';
+import { useSupplyLibraryItems } from '@/hooks/platform/useSupplyLibrary';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
