@@ -356,8 +356,6 @@ async function handleCheckoutCompleted(
         plan: backroomPlan,
         scale_count: scaleCount,
         billing_interval: billingInterval,
-        trial_days: trialDays,
-        trial_end: trialEndDate,
         location_ids: locationIds,
       }),
       updated_at: new Date().toISOString(),
