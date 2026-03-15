@@ -217,6 +217,13 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
     return filtered.filter((p) => p.is_backroom_tracked).map((p) => p.id);
   }, [filtered]);
 
+  // Items needing reorder (for bulk reorder button)
+  const reorderItems = useMemo(() => {
+    return (inventoryRows || []).filter(
+      (r) => r.status === 'replenish' || r.status === 'urgent_reorder' || r.status === 'out_of_stock'
+    );
+  }, [inventoryRows]);
+
   /** Get all selectable keys for an item */
   const getItemKeys = (item: SupplyLibraryItem): { key: string; size?: string }[] => {
     if (item.sizeOptions && item.sizeOptions.length > 0) {
