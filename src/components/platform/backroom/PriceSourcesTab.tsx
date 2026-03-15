@@ -77,6 +77,13 @@ export function PriceSourcesTab() {
     });
   };
 
+  // Last auto-sync timestamp
+  const lastSyncTime = sources.reduce<string | null>((latest, s) => {
+    if (!s.last_polled_at) return latest;
+    if (!latest || s.last_polled_at > latest) return s.last_polled_at;
+    return latest;
+  }, null);
+
   return (
     <Card className="rounded-xl border-border/60 bg-card/80 backdrop-blur-xl">
       <CardHeader className="flex flex-row items-center justify-between gap-4">
@@ -88,6 +95,11 @@ export function PriceSourcesTab() {
             <CardTitle className={tokens.card.title}>Price Sources</CardTitle>
             <CardDescription className="font-sans text-sm">
               Configure distributor API integrations for wholesale pricing
+              {lastSyncTime && (
+                <span className="block text-xs text-muted-foreground mt-0.5">
+                  Last auto-sync: {new Date(lastSyncTime).toLocaleString()}
+                </span>
+              )}
             </CardDescription>
           </div>
         </div>

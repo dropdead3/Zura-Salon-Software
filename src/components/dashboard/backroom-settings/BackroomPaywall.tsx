@@ -1,8 +1,12 @@
+import { useState } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { Package, Beaker, BarChart3, Shield, Zap, ArrowRight } from 'lucide-react';
+import { Package, Beaker, BarChart3, Shield, Zap, ArrowRight, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { supabase } from '@/integrations/supabase/client';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { toast } from 'sonner';
 
 const features = [
   {
@@ -28,6 +32,35 @@ const features = [
 ];
 
 export function BackroomPaywall() {
+  const [loading, setLoading] = useState(false);
+  const { effectiveOrganization } = useOrganizationContext();
+
+  const handleCheckout = async () => {
+    if (!effectiveOrganization?.id) {
+      toast.error('No organization found');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-backroom-checkout', {
+        body: { organization_id: effectiveOrganization.id },
+      });
+
+      if (error) throw error;
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error('No checkout URL returned');
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Checkout failed';
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] px-4">
       <div className="max-w-2xl w-full text-center space-y-8">
@@ -63,12 +96,26 @@ export function BackroomPaywall() {
 
         {/* CTA */}
         <div className="space-y-3">
-          <Button size="lg" className="font-sans font-medium gap-2">
-            Contact Sales to Enable
-            <ArrowRight className="w-4 h-4" />
+          <Button
+            size="lg"
+            className="font-sans font-medium gap-2"
+            onClick={handleCheckout}
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Redirecting…
+              </>
+            ) : (
+              <>
+                Subscribe — $49/mo
+                <ArrowRight className="w-4 h-4" />
+              </>
+            )}
           </Button>
           <p className="text-xs text-muted-foreground font-sans">
-            Available as a paid add-on to your Zura subscription.
+            Billed monthly. Cancel anytime from your subscription settings.
           </p>
         </div>
       </div>

@@ -15,12 +15,13 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
-import { Loader2, Search, Package, ArrowRight, Library, Check, ChevronLeft, PackagePlus, LayoutGrid, TableIcon, DollarSign, AlertTriangle, Archive } from 'lucide-react';
+import { Loader2, Search, Package, ArrowRight, Library, Check, ChevronLeft, PackagePlus, LayoutGrid, TableIcon, DollarSign, AlertTriangle, Archive, ShoppingCart } from 'lucide-react';
 import { toast } from 'sonner';
 import { Infotainer } from '@/components/ui/Infotainer';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { SupplyLibraryDialog } from './SupplyLibraryDialog';
 import { BackroomBulkPricingDialog } from './BackroomBulkPricingDialog';
+import { BackroomBulkReorderDialog } from './BackroomBulkReorderDialog';
 import {
   SUPPLY_CATEGORY_LABELS,
   type SupplyLibraryItem,
@@ -87,6 +88,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
   const [catalogView, setCatalogView] = useState<CatalogView>('cards');
   const [stockFilter, setStockFilter] = useState<StockFilter>('all');
   const [bulkPricingOpen, setBulkPricingOpen] = useState(false);
+  const [bulkReorderOpen, setBulkReorderOpen] = useState(false);
 
   // Brand browsing state
   const [activeLetter, setActiveLetter] = useState<string | null>(null);
@@ -215,6 +217,13 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
   const bulkProductIds = useMemo(() => {
     return filtered.filter((p) => p.is_backroom_tracked).map((p) => p.id);
   }, [filtered]);
+
+  // Items needing reorder (for bulk reorder button)
+  const reorderItems = useMemo(() => {
+    return (inventoryRows || []).filter(
+      (r) => r.status === 'replenish' || r.status === 'urgent_reorder' || r.status === 'out_of_stock'
+    );
+  }, [inventoryRows]);
 
   /** Get all selectable keys for an item */
   const getItemKeys = (item: SupplyLibraryItem): { key: string; size?: string }[] => {
@@ -531,6 +540,18 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                   >
                     <DollarSign className="w-3.5 h-3.5" />
                     Set Pricing
+                  </Button>
+                )}
+                {reorderItems.length > 0 && orgId && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setBulkReorderOpen(true)}
+                    className="font-sans gap-1.5"
+                  >
+                    <ShoppingCart className="w-3.5 h-3.5" />
+                    Reorder All
+                    <Badge variant="secondary" className="ml-1 text-[10px] px-1.5 py-0">{reorderItems.length}</Badge>
                   </Button>
                 )}
               </div>
@@ -903,6 +924,16 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
           orgId={orgId}
           productIds={catalogView === 'table' ? filteredInventory.map((r) => r.id) : bulkProductIds}
           scopeLabel={filterCategory !== 'all' ? filterCategory : 'all tracked products'}
+        />
+      )}
+
+      {/* Bulk Reorder Dialog */}
+      {orgId && (
+        <BackroomBulkReorderDialog
+          open={bulkReorderOpen}
+          onOpenChange={setBulkReorderOpen}
+          orgId={orgId}
+          reorderItems={reorderItems}
         />
       )}
     </div>
