@@ -101,7 +101,7 @@ const TRIAL_OPTIONS = [
   { days: 14, label: '14-day free trial' },
 ] as const;
 
-export function BackroomPaywall({ isPendingActivation = false }: BackroomPaywallProps) {
+export function BackroomPaywall() {
   const [loading, setLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string>('professional');
   const [scaleCount, setScaleCount] = useState(1);
