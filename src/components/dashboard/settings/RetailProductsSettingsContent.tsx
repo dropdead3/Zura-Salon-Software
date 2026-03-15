@@ -734,6 +734,7 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
     image_url: product?.image_url || '',
     expires_at: product?.expires_at || '',
     expiry_alert_days: product?.expiry_alert_days?.toString() || '30',
+    container_size: product?.container_size || '',
   });
 
   const clearCropPreview = () => {
