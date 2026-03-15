@@ -186,6 +186,7 @@ export function BackroomEntitlementsTab() {
   const deleteFlag = useDeleteOrgFeatureFlag();
   const upsertLocEnt = useUpsertLocationEntitlement();
   const deleteLocEnt = useDeleteLocationEntitlement();
+  const sendSetupLink = useSendPaymentSetupLink();
 
   const toggleBackroom = (org: OrgWithBackroom) => {
     if (org.backroom_enabled && org.override_id) {
