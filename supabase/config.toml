@@ -218,3 +218,6 @@ verify_jwt = false
 
 [functions.ai-content-writer]
 verify_jwt = false
+
+[functions.supply-intelligence]
+verify_jwt = false

@@ -179,6 +179,7 @@ export default function BackroomSettings() {
           {/* Content area */}
           <div className="flex-1 min-w-0">
             {activeSection === 'overview' && <BackroomSetupOverview onNavigate={handleNavigate} />}
+            {activeSection === 'supply-intelligence' && <SupplyIntelligenceDashboard />}
             {activeSection === 'insights' && <BackroomInsightsSection />}
             {activeSection === 'products' && <BackroomProductCatalogSection onNavigate={handleNavigate} />}
             {activeSection === 'services' && <ServiceTrackingSection onNavigate={handleNavigate} />}
