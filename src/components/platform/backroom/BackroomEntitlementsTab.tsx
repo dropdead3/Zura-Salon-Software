@@ -408,6 +408,7 @@ export function BackroomEntitlementsTab() {
                 <TableHead className="font-sans text-xs text-slate-400">Organization</TableHead>
                 <TableHead className="font-sans text-xs text-slate-400">Locations</TableHead>
                 <TableHead className="font-sans text-xs text-slate-400">Org Tier</TableHead>
+                <TableHead className="font-sans text-xs text-slate-400">Payment</TableHead>
                 <TableHead className="font-sans text-xs text-slate-400">Activated</TableHead>
                 <TableHead className="font-sans text-xs text-slate-400 text-right pr-4">Master Switch</TableHead>
               </TableRow>
