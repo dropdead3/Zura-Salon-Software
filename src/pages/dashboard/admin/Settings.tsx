@@ -66,7 +66,9 @@ import {
   Lightbulb,
   ShoppingBag,
   ArrowLeft,
+  Wallet,
 } from 'lucide-react';
+import { AccountBillingContent } from '@/components/dashboard/settings/AccountBillingContent';
 import { useBusinessCapacity } from '@/hooks/useBusinessCapacity';
 import { UserCapacityBar } from '@/components/dashboard/settings/UserCapacityBar';
 import { AddUserSeatsDialog } from '@/components/dashboard/settings/AddUserSeatsDialog';
@@ -140,7 +142,7 @@ interface UserWithRole {
 }
 
 
-type SettingsCategory = 'my-profile' | 'business' | 'email' | 'sms' | 'service-flows' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'access-hub' | 'locations' | 'dayrate' | 'forms' | 'loyalty' | 'feedback' | 'leaderboard' | 'team-rewards' | 'kiosk' | 'services' | 'retail-products' | null;
+type SettingsCategory = 'my-profile' | 'business' | 'email' | 'sms' | 'service-flows' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'access-hub' | 'locations' | 'dayrate' | 'forms' | 'loyalty' | 'feedback' | 'leaderboard' | 'team-rewards' | 'kiosk' | 'services' | 'retail-products' | 'account-billing' | null;
 
 // Preset colors for icon customization
 const PRESET_COLORS = [
@@ -631,7 +633,7 @@ export default function Settings() {
     const param = searchParams.get('category');
     if (param === 'schedule') return 'services' as SettingsCategory;
     if (param === 'website') return null; // Redirected to Website Hub
-    if (param && param in { business: 1, email: 1, sms: 1, 'service-flows': 1, users: 1, onboarding: 1, integrations: 1, system: 1, program: 1, levels: 1, 'access-hub': 1, locations: 1, dayrate: 1, forms: 1, loyalty: 1, feedback: 1, leaderboard: 1, 'team-rewards': 1, kiosk: 1, services: 1, 'retail-products': 1 }) {
+    if (param && param in { business: 1, email: 1, sms: 1, 'service-flows': 1, users: 1, onboarding: 1, integrations: 1, system: 1, program: 1, levels: 1, 'access-hub': 1, locations: 1, dayrate: 1, forms: 1, loyalty: 1, feedback: 1, leaderboard: 1, 'team-rewards': 1, kiosk: 1, services: 1, 'retail-products': 1, 'account-billing': 1 }) {
       return param as SettingsCategory;
     }
     return null;
@@ -914,6 +916,12 @@ export default function Settings() {
       label: 'Retail Products',
       description: 'Brands, categories, inventory & pricing',
       icon: ShoppingBag,
+    },
+    'account-billing': {
+      id: 'account-billing',
+      label: 'Account & Billing',
+      description: 'Subscription, payments & invoices',
+      icon: Wallet,
     },
   };
 
@@ -1445,6 +1453,8 @@ export default function Settings() {
           {activeCategory === 'kiosk' && <KioskSettingsContent />}
 
           {activeCategory === 'retail-products' && <RetailProductsSettingsContent />}
+
+          {activeCategory === 'account-billing' && <AccountBillingContent />}
         </div>
       </DashboardLayout>
     );

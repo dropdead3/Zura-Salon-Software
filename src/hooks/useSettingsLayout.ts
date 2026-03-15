@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 // Default icon colors for each category
 export const DEFAULT_ICON_COLORS: Record<string, string> = {
+  'account-billing': '#10B981',
   'my-profile': '#8B5CF6',
   business: '#D946EF',
   email: '#8B5CF6',
@@ -33,6 +34,11 @@ export const DEFAULT_ICON_COLORS: Record<string, string> = {
 
 // Section groups for organized layout
 export const SECTION_GROUPS = [
+  {
+    id: 'account',
+    label: 'Account',
+    categories: ['account-billing'],
+  },
   {
     id: 'operations',
     label: 'Business Operations',
