@@ -391,6 +391,9 @@ async function handleCheckoutCompleted(
       : 0;
     const remainder = scaleCount - (scalesPerLocation * locationPlans.length);
 
+    const activatedAt = new Date().toISOString();
+    const refundEligibleUntil = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
     const entitlementRows = locationPlans.map((lp, idx) => ({
       organization_id: orgId,
       location_id: lp.location_id,
@@ -400,7 +403,8 @@ async function handleCheckoutCompleted(
       trial_end_date: null,
       billing_interval: billingInterval,
       stripe_subscription_id: stripeSubId,
-      activated_at: new Date().toISOString(),
+      activated_at: activatedAt,
+      refund_eligible_until: refundEligibleUntil,
       notes: `Created via Stripe checkout — ${lp.plan_tier} (${lp.stylist_count} stylists)`,
     }));
 

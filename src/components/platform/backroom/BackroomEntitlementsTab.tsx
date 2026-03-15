@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Building2, Search, Loader2, ChevronDown, ChevronRight, MapPin, Scale, Clock, Play, AlertTriangle } from 'lucide-react';
+import { Building2, Search, Loader2, ChevronDown, ChevronRight, MapPin, Scale, Clock, Play, AlertTriangle, ShieldCheck } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import {
@@ -456,7 +456,7 @@ export function BackroomEntitlementsTab() {
                       </CollapsibleTrigger>
                       <CollapsibleContent asChild>
                         <TableRow className="bg-slate-800/20 border-slate-700/20">
-                          <TableCell colSpan={6} className="p-0">
+                          <TableCell colSpan={7} className="p-0">
                             <LocationEntitlementPanel
                               orgId={org.id}
                               orgEnabled={org.backroom_enabled}
@@ -581,6 +581,7 @@ function LocationEntitlementPanel({
               <th className="font-sans text-xs text-slate-400 text-left px-4 py-2">Location</th>
               <th className="font-sans text-xs text-slate-400 text-left px-4 py-2">Status</th>
               <th className="font-sans text-xs text-slate-400 text-left px-4 py-2">Plan</th>
+              <th className="font-sans text-xs text-slate-400 text-left px-4 py-2">Refund</th>
               <th className="font-sans text-xs text-slate-400 text-left px-4 py-2">Scales</th>
               <th className="font-sans text-xs text-slate-400 text-left px-4 py-2">Trial End</th>
               <th className="font-sans text-xs text-slate-400 text-left px-4 py-2">Actions</th>
@@ -632,6 +633,23 @@ function LocationEntitlementPanel({
                           <SelectItem value="unlimited">Unlimited</SelectItem>
                         </SelectContent>
                       </Select>
+                    ) : (
+                      <span className="font-sans text-xs text-slate-500">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-2.5">
+                    {isActive && ent?.refund_eligible_until ? (
+                      new Date(ent.refund_eligible_until) > new Date() ? (
+                        <PlatformBadge variant="success" size="sm">
+                          <ShieldCheck className="w-3 h-3 mr-1" />
+                          {(() => {
+                            const days = Math.ceil((new Date(ent.refund_eligible_until).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                            return `${days}d left`;
+                          })()}
+                        </PlatformBadge>
+                      ) : (
+                        <PlatformBadge variant="default" size="sm">Closed</PlatformBadge>
+                      )
                     ) : (
                       <span className="font-sans text-xs text-slate-500">—</span>
                     )}
