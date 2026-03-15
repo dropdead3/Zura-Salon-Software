@@ -376,7 +376,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                 </CardDescription>
               </div>
             </div>
-            <div className="flex items-center gap-2 self-start sm:self-auto flex-shrink-0">
+            <div className="flex items-center gap-2 self-start sm:self-auto flex-shrink-0 flex-wrap">
               <Badge variant="outline" className="text-xs whitespace-nowrap">
                 {trackedCount} tracked
               </Badge>
