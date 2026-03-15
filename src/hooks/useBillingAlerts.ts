@@ -90,6 +90,7 @@ export function useBillingAlerts(): { alerts: BillingAlert[]; isLoading: boolean
         description: 'Your trial period has ended. Select a plan to restore full access.',
         ctaLabel: 'Choose a Plan',
         ctaAction: 'scroll-plans',
+        dismissible: false,
       });
     }
 
