@@ -27,6 +27,7 @@ export function PurchaseOrdersPanel() {
   const { formatCurrency } = useFormatCurrency();
   const [statusFilter, setStatusFilter] = useState('all');
   const [groupBySupplier, setGroupBySupplier] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | null>(null);
   const { data: orders, isLoading } = usePurchaseOrders({ status: statusFilter });
   const { data: products } = useProducts({});
   const markReceived = useMarkPurchaseOrderReceived();
