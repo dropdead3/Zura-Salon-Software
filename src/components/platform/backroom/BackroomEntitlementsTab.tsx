@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { AdminActivateDialog } from '@/components/platform/backroom/AdminActivateDialog';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import {
@@ -22,7 +23,7 @@ import {
 } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Building2, Search, Loader2, ChevronDown, ChevronRight, MapPin, Scale, Clock, Play, AlertTriangle, ShieldCheck, Undo2 } from 'lucide-react';
+import { Building2, Search, Loader2, ChevronDown, ChevronRight, MapPin, Scale, Clock, Play, AlertTriangle, ShieldCheck, Undo2, CreditCard } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import {
@@ -53,6 +54,7 @@ interface OrgWithBackroom {
   subscription_tier: string | null;
   created_at: string | null;
   flag_created_at: string | null;
+  stripe_customer_id: string | null;
 }
 
 interface OrgLocation {
@@ -105,7 +107,7 @@ export function BackroomEntitlementsTab() {
     queryFn: async (): Promise<OrgWithBackroom[]> => {
       const { data: organizations, error: orgErr } = await supabase
         .from('organizations')
-        .select('id, name, subscription_tier, created_at')
+        .select('id, name, subscription_tier, created_at, stripe_customer_id')
         .order('name');
 
       if (orgErr) throw orgErr;
@@ -132,6 +134,7 @@ export function BackroomEntitlementsTab() {
           subscription_tier: org.subscription_tier || null,
           created_at: org.created_at || null,
           flag_created_at: flag?.created_at || null,
+          stripe_customer_id: org.stripe_customer_id || null,
         };
       });
     },
@@ -460,7 +463,9 @@ export function BackroomEntitlementsTab() {
                           <TableCell colSpan={7} className="p-0">
                             <LocationEntitlementPanel
                               orgId={org.id}
+                              orgName={org.name}
                               orgEnabled={org.backroom_enabled}
+                              hasStripeCustomer={!!org.stripe_customer_id}
                               locations={orgLocations}
                               entitlementMap={entitlementMap}
                               isLoading={locsLoading || entsLoading}
@@ -492,7 +497,9 @@ export function BackroomEntitlementsTab() {
 
 interface LocationPanelProps {
   orgId: string;
+  orgName: string;
   orgEnabled: boolean;
+  hasStripeCustomer: boolean;
   locations: OrgLocation[];
   entitlementMap: Map<string, BackroomLocationEntitlement>;
   isLoading: boolean;
@@ -505,7 +512,9 @@ interface LocationPanelProps {
 
 function LocationEntitlementPanel({
   orgId,
+  orgName,
   orgEnabled,
+  hasStripeCustomer,
   locations,
   entitlementMap,
   isLoading,
@@ -514,6 +523,7 @@ function LocationEntitlementPanel({
 }: LocationPanelProps) {
   const [refundTarget, setRefundTarget] = useState<{ locId: string; locName: string } | null>(null);
   const [refunding, setRefunding] = useState(false);
+  const [showActivateDialog, setShowActivateDialog] = useState(false);
   const refundQueryClient = useQueryClient();
   if (!orgEnabled) {
     return (
@@ -560,21 +570,32 @@ function LocationEntitlementPanel({
             {activeLocCount} of {locations.length} locations active
           </span>
         </div>
-        <PlatformButton
-          size="sm"
-          variant="ghost"
-          onClick={() => {
-            // Enable all locations
-            locations.forEach((loc) => {
-              const ent = entitlementMap.get(loc.id);
-              if (!ent || ent.status === 'cancelled' || ent.status === 'suspended') {
-                onToggle(orgId, loc.id);
-              }
-            });
-          }}
-        >
-          Enable All
-        </PlatformButton>
+        <div className="flex items-center gap-2">
+          <PlatformButton
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              locations.forEach((loc) => {
+                const ent = entitlementMap.get(loc.id);
+                if (!ent || ent.status === 'cancelled' || ent.status === 'suspended') {
+                  onToggle(orgId, loc.id);
+                }
+              });
+            }}
+          >
+            Enable All
+          </PlatformButton>
+          {hasStripeCustomer && (
+            <PlatformButton
+              size="sm"
+              variant="default"
+              onClick={() => setShowActivateDialog(true)}
+            >
+              <CreditCard className="w-3.5 h-3.5" />
+              Activate & Charge
+            </PlatformButton>
+          )}
+        </div>
       </div>
 
       {/* Location rows */}
@@ -788,6 +809,16 @@ function LocationEntitlementPanel({
           </tbody>
         </table>
       </div>
+
+      {/* Admin Activate Dialog */}
+      <AdminActivateDialog
+        open={showActivateDialog}
+        onOpenChange={setShowActivateDialog}
+        orgId={orgId}
+        orgName={orgName}
+        hasStripeCustomer={hasStripeCustomer}
+        locations={locations.map((l) => ({ id: l.id, name: l.name, city: l.city }))}
+      />
 
       {/* Refund Confirmation Dialog */}
       <Dialog open={!!refundTarget} onOpenChange={(open) => !open && setRefundTarget(null)}>
