@@ -509,6 +509,10 @@ Deno.serve(async (req) => {
 
     // Route to appropriate handler
     switch (event.type) {
+      case "checkout.session.completed":
+        await handleCheckoutCompleted(supabase, event.data.object);
+        break;
+
       case "invoice.payment_failed":
         await handlePaymentFailed(supabase, resend, event.data.object);
         break;
