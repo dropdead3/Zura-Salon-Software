@@ -106,6 +106,7 @@ export default function BackroomSettings() {
   const [activeSection, setActiveSection] = useState<BackroomSection>('overview');
   const { data: health } = useBackroomSetupHealth();
   const { isEntitled, isLoading: entitlementLoading } = useBackroomEntitlement();
+  const navigate = useNavigate();
 
   const handleNavigate = useCallback((section: string) => {
     setActiveSection(section as BackroomSection);
