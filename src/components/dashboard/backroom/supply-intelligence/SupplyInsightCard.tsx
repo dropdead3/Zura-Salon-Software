@@ -89,8 +89,12 @@ export function SupplyInsightCard({ insight }: SupplyInsightCardProps) {
           )}
         </div>
 
-        {/* Impact + action */}
+        {/* Impact + sparkline + action */}
         <div className="flex flex-col items-end gap-2 shrink-0">
+          {/* Cost trend sparkline for price insights */}
+          {insight.category === 'price' && sparklineData && sparklineData.length >= 2 && (
+            <TrendSparkline data={sparklineData} width={72} height={24} />
+          )}
           {insight.estimated_annual_impact > 0 && (
             <div className="text-right">
               <span className={tokens.label.tiny}>Annual Impact</span>

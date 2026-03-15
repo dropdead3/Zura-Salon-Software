@@ -94,6 +94,9 @@ export function SupplyIntelligenceDashboard({ locationId }: SupplyIntelligenceDa
         overallHealth={data?.overall_health}
       />
 
+      {/* Product Cost Trends */}
+      <ProductCostTrendSection />
+
       {/* Insight Feed */}
       <Card className={tokens.card.wrapper}>
         <CardHeader className="pb-3">
