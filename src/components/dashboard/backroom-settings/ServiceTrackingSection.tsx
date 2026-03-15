@@ -39,6 +39,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
   const queryClient = useQueryClient();
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
   const [showSuggested, setShowSuggested] = useState(false);
+  const { data: allowancePolicies } = useServiceAllowancePolicies();
 
   const { data: services, isLoading } = useQuery({
     queryKey: ['backroom-services', orgId],
