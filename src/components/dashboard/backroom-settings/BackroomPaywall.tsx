@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { Package, Beaker, BarChart3, Shield, Zap, ArrowRight, Loader2, Check, Minus, Plus, Scale, Gift, CalendarDays, Clock } from 'lucide-react';
+import { Package, Beaker, BarChart3, Shield, Zap, ArrowRight, Loader2, Check, Minus, Plus, Scale, Gift, CalendarDays, Clock, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { useLocations } from '@/hooks/useLocations';
 import { toast } from 'sonner';
 
 const features = [
@@ -102,19 +104,51 @@ export function BackroomPaywall() {
   const [scaleCount, setScaleCount] = useState(1);
   const [isAnnual, setIsAnnual] = useState(false);
   const [trialDays, setTrialDays] = useState<7 | 14>(7);
+  const [selectedLocationIds, setSelectedLocationIds] = useState<Set<string>>(new Set());
   const { effectiveOrganization } = useOrganizationContext();
+  const { data: locations = [] } = useLocations(effectiveOrganization?.id);
+
+  const activeLocations = locations.filter((l) => l.is_active);
+  const locationCount = selectedLocationIds.size || 1; // minimum 1
 
   const currentPlan = plans.find((p) => p.key === selectedPlan)!;
-  const displayPrice = isAnnual ? currentPlan.annualPrice : currentPlan.price;
-  const monthlyTotal = displayPrice + scaleCount * SCALE_LICENSE_MONTHLY;
+  const perLocationPrice = isAnnual ? currentPlan.annualPrice : currentPlan.price;
+  const planTotal = perLocationPrice * locationCount;
+  const scaleTotal = scaleCount * SCALE_LICENSE_MONTHLY;
+  const monthlyTotal = planTotal + scaleTotal;
 
   // Annual: 1 free scale, so hardware charges are (scaleCount - 1) minimum 0
   const hardwareQty = isAnnual ? Math.max(0, scaleCount - 1) : scaleCount;
   const hardwareTotal = hardwareQty * SCALE_HARDWARE_PRICE;
 
+  const toggleLocation = (locId: string) => {
+    setSelectedLocationIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(locId)) {
+        next.delete(locId);
+      } else {
+        next.add(locId);
+      }
+      return next;
+    });
+  };
+
+  const selectAllLocations = () => {
+    if (selectedLocationIds.size === activeLocations.length) {
+      setSelectedLocationIds(new Set());
+    } else {
+      setSelectedLocationIds(new Set(activeLocations.map((l) => l.id)));
+    }
+  };
+
   const handleCheckout = async () => {
     if (!effectiveOrganization?.id) {
       toast.error('No organization found');
+      return;
+    }
+
+    if (selectedLocationIds.size === 0) {
+      toast.error('Please select at least one location');
       return;
     }
 
@@ -127,6 +161,7 @@ export function BackroomPaywall() {
           scale_count: scaleCount,
           billing_interval: isAnnual ? 'annual' : 'monthly',
           trial_days: trialDays,
+          location_ids: Array.from(selectedLocationIds),
         },
       });
 
@@ -213,6 +248,9 @@ export function BackroomPaywall() {
         {/* Plan Selector */}
         <div className="space-y-2">
           <h2 className={cn(tokens.heading.section, 'text-center')}>Choose Your Plan</h2>
+          <p className="text-center text-xs text-muted-foreground font-sans">
+            Pricing is per location, per month
+          </p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {plans.map((plan) => {
               const isSelected = selectedPlan === plan.key;
@@ -257,12 +295,12 @@ export function BackroomPaywall() {
                       <span className={cn(tokens.stat.large, 'text-foreground')}>
                         ${shownPrice}
                       </span>
-                      <span className="text-sm text-muted-foreground font-sans">/mo</span>
+                      <span className="text-sm text-muted-foreground font-sans">/mo/location</span>
                     </div>
                     {isAnnual && (
                       <p className="text-[10px] text-primary font-sans flex items-center gap-1">
                         <CalendarDays className="w-3 h-3" />
-                        ${(shownPrice * 12).toLocaleString()}/yr billed annually
+                        ${(shownPrice * 12).toLocaleString()}/yr per location billed annually
                       </p>
                     )}
                     <ul className="space-y-1.5 pt-2 border-t border-border/40">
@@ -279,6 +317,79 @@ export function BackroomPaywall() {
             })}
           </div>
         </div>
+
+        {/* Location Selector */}
+        {activeLocations.length > 0 && (
+          <Card className="bg-card/60 border-border/40 max-w-2xl mx-auto">
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                    <MapPin className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className={cn(tokens.label.default, 'text-foreground')}>Select Locations</p>
+                    <p className="text-xs text-muted-foreground font-sans mt-0.5">
+                      Choose which locations need Backroom · ${perLocationPrice}/mo each
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="font-sans text-xs"
+                  onClick={selectAllLocations}
+                >
+                  {selectedLocationIds.size === activeLocations.length ? 'Deselect All' : 'Select All'}
+                </Button>
+              </div>
+              <div className="space-y-1.5">
+                {activeLocations.map((loc) => {
+                  const isChecked = selectedLocationIds.has(loc.id);
+                  const cityLabel = loc.city ? loc.city.split(',')[0]?.trim() : '';
+                  return (
+                    <label
+                      key={loc.id}
+                      className={cn(
+                        'flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all',
+                        isChecked
+                          ? 'bg-primary/5 border border-primary/30'
+                          : 'border border-transparent hover:bg-accent/30',
+                      )}
+                    >
+                      <Checkbox
+                        checked={isChecked}
+                        onCheckedChange={() => toggleLocation(loc.id)}
+                      />
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <MapPin className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                        <span className="font-sans text-sm text-foreground truncate">{loc.name}</span>
+                        {cityLabel && (
+                          <span className="font-sans text-xs text-muted-foreground">{cityLabel}</span>
+                        )}
+                      </div>
+                      {isChecked && (
+                        <span className="font-sans text-xs text-primary shrink-0">
+                          +${perLocationPrice}/mo
+                        </span>
+                      )}
+                    </label>
+                  );
+                })}
+              </div>
+              {selectedLocationIds.size > 0 && (
+                <div className="mt-3 pt-3 border-t border-border/40 flex justify-between items-center">
+                  <span className="font-sans text-xs text-muted-foreground">
+                    {selectedLocationIds.size} location{selectedLocationIds.size > 1 ? 's' : ''} selected
+                  </span>
+                  <span className="font-sans text-sm text-foreground font-medium">
+                    ${planTotal}/mo
+                  </span>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Scale Configurator */}
         <Card className="bg-card/60 border-border/40 max-w-2xl mx-auto">
@@ -362,13 +473,13 @@ export function BackroomPaywall() {
             <CardContent className="p-5 space-y-3">
               <div className="flex justify-between items-center font-sans text-sm">
                 <span className="text-muted-foreground">
-                  {currentPlan.name} plan {isAnnual ? '(annual)' : ''}
+                  {currentPlan.name} plan × {locationCount} location{locationCount > 1 ? 's' : ''} {isAnnual ? '(annual)' : ''}
                 </span>
                 <span className="text-foreground font-medium">
-                  ${displayPrice}/mo
+                  ${planTotal}/mo
                   {isAnnual && (
                     <span className="text-xs text-muted-foreground ml-1">
-                      (${(displayPrice * 12).toLocaleString()}/yr)
+                      (${(planTotal * 12).toLocaleString()}/yr)
                     </span>
                   )}
                 </span>
@@ -379,7 +490,7 @@ export function BackroomPaywall() {
                     <span className="text-muted-foreground">
                       Scale license × {scaleCount}
                     </span>
-                    <span className="text-foreground font-medium">${scaleCount * SCALE_LICENSE_MONTHLY}/mo</span>
+                    <span className="text-foreground font-medium">${scaleTotal}/mo</span>
                   </div>
                   <div className="flex justify-between items-center font-sans text-sm">
                     <span className="text-muted-foreground">
@@ -418,7 +529,7 @@ export function BackroomPaywall() {
               size="lg"
               className="font-sans font-medium gap-2"
               onClick={handleCheckout}
-              disabled={loading}
+              disabled={loading || selectedLocationIds.size === 0}
             >
               {loading ? (
                 <>
@@ -433,6 +544,11 @@ export function BackroomPaywall() {
                 </>
               )}
             </Button>
+            {selectedLocationIds.size === 0 && activeLocations.length > 0 && (
+              <p className="text-xs text-destructive font-sans">
+                Select at least one location to continue
+              </p>
+            )}
             <p className="text-xs text-muted-foreground font-sans">
               No charge for {trialDays} days. Then ${monthlyTotal}/mo
               {hardwareTotal > 0 ? ` + $${hardwareTotal} hardware` : ''}.{' '}

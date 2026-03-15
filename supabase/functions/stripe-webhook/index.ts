@@ -17,7 +17,7 @@ async function verifyStripeSignature(
 ): Promise<boolean> {
   if (!secret) {
     console.warn("STRIPE_WEBHOOK_SECRET not configured - skipping verification");
-    return true; // Allow in dev mode without secret
+    return true;
   }
 
   if (!signature) {
@@ -34,7 +34,6 @@ async function verifyStripeSignature(
     return false;
   }
 
-  // Check timestamp freshness (within 5 minutes)
   const now = Math.floor(Date.now() / 1000);
   if (Math.abs(now - parseInt(timestamp)) > 300) {
     console.error("Webhook timestamp too old");
@@ -70,7 +69,6 @@ async function verifyStripeSignature(
   }
 }
 
-// Send payment failure email to platform admins
 async function sendPaymentFailedEmail(
   resend: Resend | null,
   org: { id: string; name: string; slug: string; billing_email?: string },
@@ -96,7 +94,7 @@ async function sendPaymentFailedEmail(
   try {
     await resend.emails.send({
       from: "Platform Alerts <alerts@mail.yourdomain.com>",
-      to: ["platform-admins@yourdomain.com"], // Configure your admin emails
+      to: ["platform-admins@yourdomain.com"],
       subject: `🚨 Payment Failed: ${org.name}`,
       html: `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -105,39 +103,19 @@ async function sendPaymentFailedEmail(
           </div>
           <div style="background: #f8fafc; padding: 24px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 8px 8px;">
             <p style="margin-top: 0;">A subscription payment has failed and requires attention:</p>
-            
             <div style="background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin: 16px 0;">
               <table style="width: 100%; border-collapse: collapse;">
-                <tr>
-                  <td style="padding: 8px 0; color: #64748b;">Organization:</td>
-                  <td style="padding: 8px 0; font-weight: 600;">${org.name}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 8px 0; color: #64748b;">Amount:</td>
-                  <td style="padding: 8px 0; font-weight: 600;">$${amount.toFixed(2)}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 8px 0; color: #64748b;">Failed At:</td>
-                  <td style="padding: 8px 0;">${failedAt}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 8px 0; color: #64748b;">Reason:</td>
-                  <td style="padding: 8px 0; color: #dc2626;">${reason}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 8px 0; color: #64748b;">Attempt:</td>
-                  <td style="padding: 8px 0;">${attemptCount} of 4</td>
-                </tr>
-                <tr>
-                  <td style="padding: 8px 0; color: #64748b;">Next Retry:</td>
-                  <td style="padding: 8px 0;">${nextAttempt}</td>
-                </tr>
+                <tr><td style="padding: 8px 0; color: #64748b;">Organization:</td><td style="padding: 8px 0; font-weight: 600;">${org.name}</td></tr>
+                <tr><td style="padding: 8px 0; color: #64748b;">Amount:</td><td style="padding: 8px 0; font-weight: 600;">$${amount.toFixed(2)}</td></tr>
+                <tr><td style="padding: 8px 0; color: #64748b;">Failed At:</td><td style="padding: 8px 0;">${failedAt}</td></tr>
+                <tr><td style="padding: 8px 0; color: #64748b;">Reason:</td><td style="padding: 8px 0; color: #dc2626;">${reason}</td></tr>
+                <tr><td style="padding: 8px 0; color: #64748b;">Attempt:</td><td style="padding: 8px 0;">${attemptCount} of 4</td></tr>
+                <tr><td style="padding: 8px 0; color: #64748b;">Next Retry:</td><td style="padding: 8px 0;">${nextAttempt}</td></tr>
               </table>
             </div>
-            
             <div style="margin-top: 24px;">
               <a href="https://yourdomain.com/dashboard/platform/accounts/${org.slug}" 
-                 style="background: #7c3aed; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; display: inline-block; margin-right: 8px;">
+                 style="background: #7c3aed; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; display: inline-block;">
                 View Account
               </a>
             </div>
@@ -151,7 +129,6 @@ async function sendPaymentFailedEmail(
   }
 }
 
-// Handler for invoice.payment_failed
 async function handlePaymentFailed(
   supabase: SupabaseClientAny,
   resend: Resend | null,
@@ -160,7 +137,6 @@ async function handlePaymentFailed(
   const customerId = invoice.customer as string;
   console.log(`Handling payment failure for customer: ${customerId}`);
 
-  // Find organization by stripe_customer_id
   const { data: org, error: orgError } = await supabase
     .from('organizations')
     .select('id, name, slug, billing_email')
@@ -174,7 +150,6 @@ async function handlePaymentFailed(
 
   console.log(`Found organization: ${org.name} (${org.id})`);
 
-  // Update organization subscription status
   const { error: updateError } = await supabase
     .from('organizations')
     .update({ subscription_status: 'past_due' })
@@ -184,7 +159,6 @@ async function handlePaymentFailed(
     console.error("Failed to update org status:", updateError);
   }
 
-  // Create platform notification
   const amount = ((invoice.amount_due as number) || 0) / 100;
   const reason = (invoice.last_payment_error as Record<string, unknown>)?.message || 'Unknown';
   
@@ -210,7 +184,6 @@ async function handlePaymentFailed(
     console.error("Failed to create notification:", notifError);
   }
 
-  // Log to subscription_invoices
   await supabase.from('subscription_invoices').upsert({
     organization_id: org.id,
     stripe_invoice_id: invoice.id as string,
@@ -221,13 +194,10 @@ async function handlePaymentFailed(
     onConflict: 'stripe_invoice_id'
   });
 
-  // Send email alert
   await sendPaymentFailedEmail(resend, org, invoice);
-
   console.log(`Payment failure processed for ${org.name}`);
 }
 
-// Handler for invoice.payment_succeeded
 async function handlePaymentSucceeded(
   supabase: SupabaseClientAny,
   invoice: Record<string, unknown>
@@ -246,13 +216,11 @@ async function handlePaymentSucceeded(
     return;
   }
 
-  // Update organization subscription status to active
   await supabase
     .from('organizations')
     .update({ subscription_status: 'active' })
     .eq('id', org.id);
 
-  // Check if this was a recovery from past_due
   const { data: prevNotifs } = await supabase
     .from('platform_notifications')
     .select('id')
@@ -262,7 +230,6 @@ async function handlePaymentSucceeded(
     .limit(1);
 
   if (prevNotifs && prevNotifs.length > 0) {
-    // Create recovery notification
     const amount = ((invoice.amount_due as number) || 0) / 100;
     await supabase.from('platform_notifications').insert({
       type: 'payment_recovered',
@@ -277,7 +244,6 @@ async function handlePaymentSucceeded(
       }
     });
 
-    // Mark old failure notifications as read
     await supabase
       .from('platform_notifications')
       .update({ is_read: true, read_at: new Date().toISOString() })
@@ -285,7 +251,6 @@ async function handlePaymentSucceeded(
       .eq('metadata->>organization_id', org.id);
   }
 
-  // Update invoice record
   await supabase.from('subscription_invoices').upsert({
     organization_id: org.id,
     stripe_invoice_id: invoice.id as string,
@@ -299,7 +264,6 @@ async function handlePaymentSucceeded(
   console.log(`Payment success processed for ${org.name}`);
 }
 
-// Handler for charge.failed (standalone charges, not invoice-related)
 async function handleChargeFailed(
   supabase: SupabaseClientAny,
   charge: Record<string, unknown>
@@ -359,21 +323,23 @@ async function handleCheckoutCompleted(
   const scaleCount = parseInt(metadata.scale_count || '0', 10);
   const billingInterval = metadata.billing_interval || 'monthly';
   const trialDays = parseInt(metadata.trial_days || '0', 10);
-  console.log(`Enabling backroom for organization: ${orgId}, plan: ${backroomPlan}, scales: ${scaleCount}, interval: ${billingInterval}, trial: ${trialDays}d`);
+  const locationIds = metadata.location_ids ? JSON.parse(metadata.location_ids) as string[] : [];
+  
+  console.log(`Enabling backroom for organization: ${orgId}, plan: ${backroomPlan}, scales: ${scaleCount}, interval: ${billingInterval}, trial: ${trialDays}d, locations: ${locationIds.length}`);
 
   // Calculate trial end date if applicable
   const trialEndDate = trialDays > 0
     ? new Date(Date.now() + trialDays * 86400000).toISOString()
     : null;
 
-  // Upsert the feature flag with plan metadata
+  // 1. Upsert the org-level feature flag (master switch)
   const { error } = await supabase
     .from('organization_feature_flags')
     .upsert({
       organization_id: orgId,
       flag_key: 'backroom_enabled',
       is_enabled: true,
-      override_reason: `Stripe checkout completed — ${backroomPlan} plan, ${scaleCount} scale(s)${trialDays > 0 ? `, ${trialDays}-day trial` : ''}`,
+      override_reason: `Stripe checkout completed — ${backroomPlan} plan, ${scaleCount} scale(s), ${locationIds.length} location(s)${trialDays > 0 ? `, ${trialDays}-day trial` : ''}`,
       updated_at: new Date().toISOString(),
     }, {
       onConflict: 'organization_id,flag_key',
@@ -382,10 +348,10 @@ async function handleCheckoutCompleted(
   if (error) {
     console.error("Failed to enable backroom flag:", error);
   } else {
-    console.log(`Backroom enabled for org ${orgId} (${backroomPlan}, ${scaleCount} scales)`);
+    console.log(`Backroom master switch enabled for org ${orgId}`);
   }
 
-  // Store plan details in a separate flag for reference
+  // 2. Store plan details in a separate flag for reference
   await supabase
     .from('organization_feature_flags')
     .upsert({
@@ -398,11 +364,47 @@ async function handleCheckoutCompleted(
         billing_interval: billingInterval,
         trial_days: trialDays,
         trial_end: trialEndDate,
+        location_ids: locationIds,
       }),
       updated_at: new Date().toISOString(),
     }, {
       onConflict: 'organization_id,flag_key',
     });
+
+  // 3. Create per-location entitlement rows
+  if (locationIds.length > 0) {
+    const stripeSubId = (session.subscription as string) || null;
+    const status = trialDays > 0 ? 'trial' : 'active';
+    const scalesPerLocation = locationIds.length > 0
+      ? Math.max(0, Math.floor(scaleCount / locationIds.length))
+      : 0;
+    const remainder = scaleCount - (scalesPerLocation * locationIds.length);
+
+    const entitlementRows = locationIds.map((locId: string, idx: number) => ({
+      organization_id: orgId,
+      location_id: locId,
+      plan_tier: backroomPlan,
+      scale_count: scalesPerLocation + (idx === 0 ? remainder : 0),
+      status,
+      trial_end_date: trialEndDate,
+      billing_interval: billingInterval,
+      stripe_subscription_id: stripeSubId,
+      activated_at: new Date().toISOString(),
+      notes: `Created via Stripe checkout`,
+    }));
+
+    const { error: entError } = await supabase
+      .from('backroom_location_entitlements')
+      .upsert(entitlementRows, {
+        onConflict: 'organization_id,location_id',
+      });
+
+    if (entError) {
+      console.error("Failed to create location entitlements:", entError);
+    } else {
+      console.log(`Created ${locationIds.length} location entitlement(s) for org ${orgId}`);
+    }
+  }
 }
 
 // Handler for customer.subscription.deleted
@@ -428,7 +430,7 @@ async function handleSubscriptionDeleted(
   // Check if this was a backroom subscription
   const subMetadata = subscription.metadata as Record<string, string> | null;
   if (subMetadata?.addon_type === 'backroom') {
-    // Disable backroom feature flag
+    // Disable backroom feature flag (master switch)
     await supabase
       .from('organization_feature_flags')
       .upsert({
@@ -440,6 +442,21 @@ async function handleSubscriptionDeleted(
       }, {
         onConflict: 'organization_id,flag_key',
       });
+
+    // Cancel all location entitlements tied to this subscription
+    const stripeSubId = subscription.id as string;
+    const { error: entError } = await supabase
+      .from('backroom_location_entitlements')
+      .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+      .eq('organization_id', org.id)
+      .eq('stripe_subscription_id', stripeSubId);
+
+    if (entError) {
+      console.error("Failed to cancel location entitlements:", entError);
+    } else {
+      console.log(`Location entitlements cancelled for org ${org.id} (sub ${stripeSubId})`);
+    }
+
     console.log(`Backroom disabled for org ${org.id} after subscription cancellation`);
   }
 
@@ -485,7 +502,6 @@ async function handleSubscriptionUpdated(
     return;
   }
 
-  // Map Stripe subscription status to our status
   const statusMap: Record<string, string> = {
     'active': 'active',
     'past_due': 'past_due',
@@ -500,6 +516,20 @@ async function handleSubscriptionUpdated(
     .from('organizations')
     .update({ subscription_status: mappedStatus })
     .eq('id', org.id);
+
+  // If backroom subscription moves to active from trialing, update location entitlements
+  const subMetadata = subscription.metadata as Record<string, string> | null;
+  if (subMetadata?.addon_type === 'backroom' && status === 'active') {
+    const stripeSubId = subscription.id as string;
+    await supabase
+      .from('backroom_location_entitlements')
+      .update({ status: 'active', updated_at: new Date().toISOString() })
+      .eq('organization_id', org.id)
+      .eq('stripe_subscription_id', stripeSubId)
+      .eq('status', 'trial');
+    
+    console.log(`Backroom location entitlements activated for org ${org.id}`);
+  }
 
   console.log(`Subscription status updated to ${mappedStatus} for ${org.name}`);
 }
@@ -519,11 +549,9 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
-    // Get raw body and signature
     const payload = await req.text();
     const signature = req.headers.get("stripe-signature");
 
-    // Verify signature (will pass if no secret configured - for dev)
     if (webhookSecret && !await verifyStripeSignature(payload, signature, webhookSecret)) {
       console.error("Invalid Stripe webhook signature");
       return new Response(JSON.stringify({ error: "Invalid signature" }), {
@@ -535,7 +563,6 @@ Deno.serve(async (req) => {
     const event = JSON.parse(payload);
     console.log(`Stripe webhook received: ${event.type}`, event.id);
 
-    // Route to appropriate handler
     switch (event.type) {
       case "checkout.session.completed":
         await handleCheckoutCompleted(supabase, event.data.object);

@@ -13,12 +13,24 @@ import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
 import { PlatformInput } from '@/components/platform/ui/PlatformInput';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Building2, Search, Loader2, ChevronDown, ChevronRight } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { Building2, Search, Loader2, ChevronDown, ChevronRight, MapPin, Scale } from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useUpdateOrgFeatureFlag, useDeleteOrgFeatureFlag } from '@/hooks/useOrganizationFeatureFlags';
+import {
+  useUpsertLocationEntitlement,
+  useDeleteLocationEntitlement,
+  type BackroomLocationEntitlement,
+} from '@/hooks/backroom/useBackroomLocationEntitlements';
 import { toast } from 'sonner';
 
 interface OrgWithBackroom {
@@ -32,22 +44,26 @@ interface OrgWithBackroom {
   flag_created_at: string | null;
 }
 
-function getPlanTier(reason: string | null): string {
-  if (!reason) return 'unknown';
-  const r = reason.toLowerCase();
-  if (r.includes('unlimited')) return 'unlimited';
-  if (r.includes('professional')) return 'professional';
-  if (r.includes('starter')) return 'starter';
-  if (r.includes('trial')) return 'trial';
-  return 'unknown';
+interface OrgLocation {
+  id: string;
+  name: string;
+  city: string | null;
+  is_active: boolean;
 }
 
-function getStatusFromReason(reason: string | null, enabled: boolean): { label: string; variant: 'default' | 'warning' | 'error' | 'success' } {
-  if (!enabled) return { label: 'Inactive', variant: 'default' };
-  const r = (reason || '').toLowerCase();
-  if (r.includes('trial')) return { label: 'Trial', variant: 'warning' };
-  if (r.includes('cancel')) return { label: 'Cancelled', variant: 'error' };
-  return { label: 'Active', variant: 'success' };
+function statusBadge(status: string) {
+  const map: Record<string, { label: string; variant: 'default' | 'success' | 'warning' | 'error' }> = {
+    active: { label: 'Active', variant: 'success' },
+    trial: { label: 'Trial', variant: 'warning' },
+    cancelled: { label: 'Cancelled', variant: 'error' },
+    suspended: { label: 'Suspended', variant: 'error' },
+  };
+  const cfg = map[status] ?? { label: status, variant: 'default' as const };
+  return (
+    <PlatformBadge variant={cfg.variant} size="sm">
+      {cfg.label}
+    </PlatformBadge>
+  );
 }
 
 function planBadge(tier: string) {
@@ -55,11 +71,10 @@ function planBadge(tier: string) {
     starter: 'default',
     professional: 'primary',
     unlimited: 'warning',
-    trial: 'info',
   };
   return (
     <PlatformBadge variant={map[tier] || 'default'} size="sm">
-      {tier === 'unknown' ? '—' : tier}
+      {tier}
     </PlatformBadge>
   );
 }
@@ -68,8 +83,10 @@ export function BackroomEntitlementsTab() {
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [expandedOrg, setExpandedOrg] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
-  const { data: orgs = [], isLoading } = useQuery({
+  // Fetch all orgs with their backroom flag
+  const { data: orgs = [], isLoading: orgsLoading } = useQuery({
     queryKey: ['platform-backroom-entitlements'],
     queryFn: async (): Promise<OrgWithBackroom[]> => {
       const { data: organizations, error: orgErr } = await supabase
@@ -106,8 +123,43 @@ export function BackroomEntitlementsTab() {
     },
   });
 
+  // Fetch locations for the expanded org
+  const { data: orgLocations = [], isLoading: locsLoading } = useQuery({
+    queryKey: ['platform-org-locations', expandedOrg],
+    queryFn: async (): Promise<OrgLocation[]> => {
+      const { data, error } = await supabase
+        .from('locations')
+        .select('id, name, city, is_active')
+        .eq('organization_id', expandedOrg!)
+        .order('display_order', { ascending: true });
+
+      if (error) throw error;
+      return (data ?? []) as unknown as OrgLocation[];
+    },
+    enabled: !!expandedOrg,
+  });
+
+  // Fetch location entitlements for the expanded org
+  const { data: locEntitlements = [], isLoading: entsLoading } = useQuery({
+    queryKey: ['backroom-location-entitlements', expandedOrg],
+    queryFn: async (): Promise<BackroomLocationEntitlement[]> => {
+      const { data, error } = await supabase
+        .from('backroom_location_entitlements')
+        .select('*')
+        .eq('organization_id', expandedOrg!);
+
+      if (error) throw error;
+      return (data ?? []) as unknown as BackroomLocationEntitlement[];
+    },
+    enabled: !!expandedOrg,
+  });
+
+  const entitlementMap = new Map(locEntitlements.map((e) => [e.location_id, e]));
+
   const updateFlag = useUpdateOrgFeatureFlag();
   const deleteFlag = useDeleteOrgFeatureFlag();
+  const upsertLocEnt = useUpsertLocationEntitlement();
+  const deleteLocEnt = useDeleteLocationEntitlement();
 
   const toggleBackroom = (org: OrgWithBackroom) => {
     if (org.backroom_enabled && org.override_id) {
@@ -117,8 +169,28 @@ export function BackroomEntitlementsTab() {
       );
     } else {
       updateFlag.mutate(
-        { organizationId: org.id, flagKey: 'backroom_enabled', isEnabled: true, reason: 'Enabled via Platform Backroom Admin' },
+        {
+          organizationId: org.id,
+          flagKey: 'backroom_enabled',
+          isEnabled: true,
+          reason: 'Enabled via Platform Backroom Admin',
+        },
         { onSuccess: () => toast.success(`Backroom enabled for ${org.name}`) }
+      );
+    }
+  };
+
+  const toggleLocationEntitlement = (orgId: string, locationId: string) => {
+    const existing = entitlementMap.get(locationId);
+    if (existing && (existing.status === 'active' || existing.status === 'trial')) {
+      deleteLocEnt.mutate(
+        { organization_id: orgId, location_id: locationId },
+        { onSuccess: () => toast.success('Location entitlement removed') }
+      );
+    } else {
+      upsertLocEnt.mutate(
+        { organization_id: orgId, location_id: locationId, status: 'active' },
+        { onSuccess: () => toast.success('Location entitlement activated') }
       );
     }
   };
@@ -127,7 +199,9 @@ export function BackroomEntitlementsTab() {
     const toEnable = orgs.filter((o) => selected.has(o.id) && !o.backroom_enabled);
     toEnable.forEach((org) => {
       updateFlag.mutate({
-        organizationId: org.id, flagKey: 'backroom_enabled', isEnabled: true,
+        organizationId: org.id,
+        flagKey: 'backroom_enabled',
+        isEnabled: true,
         reason: 'Batch enabled via Platform Backroom Admin',
       });
     });
@@ -136,7 +210,9 @@ export function BackroomEntitlementsTab() {
   };
 
   const handleBatchDisable = () => {
-    const toDisable = orgs.filter((o) => selected.has(o.id) && o.backroom_enabled && o.override_id);
+    const toDisable = orgs.filter(
+      (o) => selected.has(o.id) && o.backroom_enabled && o.override_id
+    );
     toDisable.forEach((org) => {
       deleteFlag.mutate({ organizationId: org.id, flagKey: 'backroom_enabled' });
     });
@@ -157,7 +233,6 @@ export function BackroomEntitlementsTab() {
   );
 
   const enabledCount = orgs.filter((o) => o.backroom_enabled).length;
-  const trialCount = orgs.filter((o) => getPlanTier(o.override_reason) === 'trial').length;
 
   return (
     <PlatformCard variant="glass">
@@ -169,7 +244,7 @@ export function BackroomEntitlementsTab() {
           <div>
             <PlatformCardTitle>Backroom Entitlements</PlatformCardTitle>
             <PlatformCardDescription>
-              {enabledCount} active · {trialCount} trial · {orgs.length} total organizations
+              {enabledCount} active orgs · {orgs.length} total · Per-location activation
             </PlatformCardDescription>
           </div>
         </div>
@@ -194,7 +269,7 @@ export function BackroomEntitlementsTab() {
         </div>
       </PlatformCardHeader>
       <PlatformCardContent className="p-0">
-        {isLoading ? (
+        {orgsLoading ? (
           <div className="flex items-center justify-center h-40">
             <Loader2 className={tokens.loading.spinner} />
           </div>
@@ -216,21 +291,23 @@ export function BackroomEntitlementsTab() {
                   />
                 </TableHead>
                 <TableHead className="font-sans text-xs text-slate-400">Organization</TableHead>
-                <TableHead className="font-sans text-xs text-slate-400">Status</TableHead>
-                <TableHead className="font-sans text-xs text-slate-400">Plan</TableHead>
+                <TableHead className="font-sans text-xs text-slate-400">Locations</TableHead>
                 <TableHead className="font-sans text-xs text-slate-400">Org Tier</TableHead>
                 <TableHead className="font-sans text-xs text-slate-400">Activated</TableHead>
-                <TableHead className="font-sans text-xs text-slate-400 text-right pr-4">Access</TableHead>
+                <TableHead className="font-sans text-xs text-slate-400 text-right pr-4">Master Switch</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.map((org) => {
-                const status = getStatusFromReason(org.override_reason, org.backroom_enabled);
-                const tier = getPlanTier(org.override_reason);
                 const isExpanded = expandedOrg === org.id;
 
                 return (
-                  <Collapsible key={org.id} asChild open={isExpanded} onOpenChange={() => setExpandedOrg(isExpanded ? null : org.id)}>
+                  <Collapsible
+                    key={org.id}
+                    asChild
+                    open={isExpanded}
+                    onOpenChange={() => setExpandedOrg(isExpanded ? null : org.id)}
+                  >
                     <>
                       <CollapsibleTrigger asChild>
                         <TableRow className="cursor-pointer border-slate-700/30 hover:bg-slate-800/30">
@@ -242,21 +319,28 @@ export function BackroomEntitlementsTab() {
                           </TableCell>
                           <TableCell className="font-sans text-sm font-medium text-slate-200">
                             <div className="flex items-center gap-1.5">
-                              {isExpanded ? <ChevronDown className="w-3.5 h-3.5 text-slate-500" /> : <ChevronRight className="w-3.5 h-3.5 text-slate-500" />}
+                              {isExpanded ? (
+                                <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
+                              ) : (
+                                <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
+                              )}
                               {org.name}
                             </div>
                           </TableCell>
-                          <TableCell>
-                            <PlatformBadge variant={status.variant} size="sm">
-                              {status.label}
-                            </PlatformBadge>
+                          <TableCell className="font-sans text-xs text-slate-400">
+                            {org.backroom_enabled ? (
+                              <span className="text-slate-300">Expand to manage</span>
+                            ) : (
+                              <span className="text-slate-500">—</span>
+                            )}
                           </TableCell>
-                          <TableCell>{planBadge(tier)}</TableCell>
                           <TableCell className="font-sans text-xs text-slate-500 capitalize">
                             {org.subscription_tier || '—'}
                           </TableCell>
                           <TableCell className="font-sans text-xs text-slate-500">
-                            {org.flag_created_at ? new Date(org.flag_created_at).toLocaleDateString() : '—'}
+                            {org.flag_created_at
+                              ? new Date(org.flag_created_at).toLocaleDateString()
+                              : '—'}
                           </TableCell>
                           <TableCell className="text-right pr-4" onClick={(e) => e.stopPropagation()}>
                             <Switch
@@ -268,25 +352,22 @@ export function BackroomEntitlementsTab() {
                       </CollapsibleTrigger>
                       <CollapsibleContent asChild>
                         <TableRow className="bg-slate-800/20 border-slate-700/20">
-                          <TableCell colSpan={7} className="p-4">
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                              <div>
-                                <span className="font-sans text-xs text-slate-500 block">Org Created</span>
-                                <span className="font-sans text-sm text-slate-300">{org.created_at ? new Date(org.created_at).toLocaleDateString() : '—'}</span>
-                              </div>
-                              <div>
-                                <span className="font-sans text-xs text-slate-500 block">Backroom Plan</span>
-                                <span className="font-sans text-sm capitalize text-slate-300">{tier === 'unknown' ? 'Not set' : tier}</span>
-                              </div>
-                              <div>
-                                <span className="font-sans text-xs text-slate-500 block">Override Reason</span>
-                                <span className="font-sans text-xs text-slate-400">{org.override_reason || '—'}</span>
-                              </div>
-                              <div>
-                                <span className="font-sans text-xs text-slate-500 block">Org Subscription</span>
-                                <span className="font-sans text-sm capitalize text-slate-300">{org.subscription_tier || 'Free'}</span>
-                              </div>
-                            </div>
+                          <TableCell colSpan={6} className="p-0">
+                            <LocationEntitlementPanel
+                              orgId={org.id}
+                              orgEnabled={org.backroom_enabled}
+                              locations={orgLocations}
+                              entitlementMap={entitlementMap}
+                              isLoading={locsLoading || entsLoading}
+                              onToggle={toggleLocationEntitlement}
+                              onUpdateEntitlement={(locId, updates) =>
+                                upsertLocEnt.mutate({
+                                  organization_id: org.id,
+                                  location_id: locId,
+                                  ...updates,
+                                })
+                              }
+                            />
                           </TableCell>
                         </TableRow>
                       </CollapsibleContent>
@@ -299,5 +380,198 @@ export function BackroomEntitlementsTab() {
         )}
       </PlatformCardContent>
     </PlatformCard>
+  );
+}
+
+// ── Sub-panel: per-location entitlements inside expanded org row ──
+
+interface LocationPanelProps {
+  orgId: string;
+  orgEnabled: boolean;
+  locations: OrgLocation[];
+  entitlementMap: Map<string, BackroomLocationEntitlement>;
+  isLoading: boolean;
+  onToggle: (orgId: string, locationId: string) => void;
+  onUpdateEntitlement: (
+    locationId: string,
+    updates: { plan_tier?: string; scale_count?: number; status?: string }
+  ) => void;
+}
+
+function LocationEntitlementPanel({
+  orgId,
+  orgEnabled,
+  locations,
+  entitlementMap,
+  isLoading,
+  onToggle,
+  onUpdateEntitlement,
+}: LocationPanelProps) {
+  if (!orgEnabled) {
+    return (
+      <div className="px-6 py-8 text-center">
+        <p className="font-sans text-sm text-slate-500">
+          Enable the organization master switch to manage per-location entitlements.
+        </p>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-24">
+        <Loader2 className="w-5 h-5 animate-spin text-slate-500" />
+      </div>
+    );
+  }
+
+  if (locations.length === 0) {
+    return (
+      <div className="px-6 py-8 text-center">
+        <p className="font-sans text-sm text-slate-500">
+          No locations found for this organization.
+        </p>
+      </div>
+    );
+  }
+
+  const activeLocCount = locations.filter(
+    (l) => {
+      const ent = entitlementMap.get(l.id);
+      return ent && (ent.status === 'active' || ent.status === 'trial');
+    }
+  ).length;
+
+  return (
+    <div className="px-4 py-3 space-y-3">
+      {/* Summary bar */}
+      <div className="flex items-center justify-between px-2">
+        <div className="flex items-center gap-2">
+          <MapPin className="w-4 h-4 text-violet-400" />
+          <span className="font-sans text-sm text-slate-300">
+            {activeLocCount} of {locations.length} locations active
+          </span>
+        </div>
+        <PlatformButton
+          size="sm"
+          variant="ghost"
+          onClick={() => {
+            // Enable all locations
+            locations.forEach((loc) => {
+              const ent = entitlementMap.get(loc.id);
+              if (!ent || ent.status === 'cancelled' || ent.status === 'suspended') {
+                onToggle(orgId, loc.id);
+              }
+            });
+          }}
+        >
+          Enable All
+        </PlatformButton>
+      </div>
+
+      {/* Location rows */}
+      <div className="rounded-lg border border-slate-700/40 overflow-hidden">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-slate-700/40 bg-slate-800/40">
+              <th className="font-sans text-xs text-slate-400 text-left px-4 py-2">Location</th>
+              <th className="font-sans text-xs text-slate-400 text-left px-4 py-2">Status</th>
+              <th className="font-sans text-xs text-slate-400 text-left px-4 py-2">Plan</th>
+              <th className="font-sans text-xs text-slate-400 text-left px-4 py-2">Scales</th>
+              <th className="font-sans text-xs text-slate-400 text-right px-4 py-2">Access</th>
+            </tr>
+          </thead>
+          <tbody>
+            {locations.map((loc) => {
+              const ent = entitlementMap.get(loc.id);
+              const isActive = ent && (ent.status === 'active' || ent.status === 'trial');
+
+              return (
+                <tr
+                  key={loc.id}
+                  className="border-b border-slate-700/20 last:border-b-0 hover:bg-slate-800/20"
+                >
+                  <td className="px-4 py-2.5">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                      <div>
+                        <span className="font-sans text-sm text-slate-200">{loc.name}</span>
+                        {loc.city && (
+                          <span className="font-sans text-xs text-slate-500 ml-2">
+                            {loc.city.split(',')[0]?.trim()}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-4 py-2.5">
+                    {ent ? statusBadge(ent.status) : (
+                      <PlatformBadge variant="default" size="sm">Inactive</PlatformBadge>
+                    )}
+                  </td>
+                  <td className="px-4 py-2.5">
+                    {isActive && ent ? (
+                      <Select
+                        value={ent.plan_tier}
+                        onValueChange={(val) =>
+                          onUpdateEntitlement(loc.id, { plan_tier: val, status: ent.status })
+                        }
+                      >
+                        <SelectTrigger className="h-7 w-[120px] text-xs bg-slate-800/60 border-slate-700/50">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="starter">Starter</SelectItem>
+                          <SelectItem value="professional">Professional</SelectItem>
+                          <SelectItem value="unlimited">Unlimited</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <span className="font-sans text-xs text-slate-500">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-2.5">
+                    {isActive && ent ? (
+                      <div className="flex items-center gap-1.5">
+                        <Scale className="w-3.5 h-3.5 text-slate-500" />
+                        <Select
+                          value={String(ent.scale_count)}
+                          onValueChange={(val) =>
+                            onUpdateEntitlement(loc.id, {
+                              scale_count: parseInt(val, 10),
+                              status: ent.status,
+                              plan_tier: ent.plan_tier,
+                            })
+                          }
+                        >
+                          <SelectTrigger className="h-7 w-[70px] text-xs bg-slate-800/60 border-slate-700/50">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {[0, 1, 2, 3, 4, 5].map((n) => (
+                              <SelectItem key={n} value={String(n)}>
+                                {n}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    ) : (
+                      <span className="font-sans text-xs text-slate-500">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-2.5 text-right">
+                    <Switch
+                      checked={!!isActive}
+                      onCheckedChange={() => onToggle(orgId, loc.id)}
+                    />
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 }
