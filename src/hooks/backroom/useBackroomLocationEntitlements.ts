@@ -47,7 +47,7 @@ export function useBackroomLocationEntitlements(organizationId: string | undefin
 
   const isLocationEntitled = (locationId: string): boolean => {
     const ent = entitlementMap.get(locationId);
-    return !!ent && (ent.status === 'active' || ent.status === 'trial');
+    return !!ent && ent.status === 'active';
   };
 
   const getLocationEntitlement = (locationId: string) =>
