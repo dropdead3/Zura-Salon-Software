@@ -22,12 +22,10 @@ import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { SupplyLibraryDialog } from './SupplyLibraryDialog';
 import { BackroomBulkPricingDialog } from './BackroomBulkPricingDialog';
 import {
-  SUPPLY_LIBRARY,
-  getSupplyBrands,
-  getProductsByBrand,
   SUPPLY_CATEGORY_LABELS,
   type SupplyLibraryItem,
 } from '@/data/professional-supply-library';
+import { useSupplyLibraryItems } from '@/hooks/platform/useSupplyLibrary';
 
 const DEPLETION_METHODS = [
   { value: 'weighed', label: 'Weighed' },
