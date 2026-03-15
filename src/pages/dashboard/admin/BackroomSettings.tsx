@@ -31,9 +31,11 @@ import { AlertsExceptionsSection } from '@/components/dashboard/backroom-setting
 import { FormulaAssistanceSection } from '@/components/dashboard/backroom-settings/FormulaAssistanceSection';
 import { MultiLocationSection } from '@/components/dashboard/backroom-settings/MultiLocationSection';
 import { BackroomComplianceSection } from '@/components/dashboard/backroom-settings/BackroomComplianceSection';
+import { BackroomInsightsSection } from '@/components/dashboard/backroom-settings/BackroomInsightsSection';
 
 type BackroomSection =
   | 'overview'
+  | 'insights'
   | 'products'
   | 'services'
   | 'recipes'
