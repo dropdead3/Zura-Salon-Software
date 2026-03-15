@@ -366,7 +366,6 @@ async function handleCheckoutCompleted(
   // 3. Create per-location entitlement rows
   if (locationIds.length > 0) {
     const stripeSubId = (session.subscription as string) || null;
-    const status = trialDays > 0 ? 'trial' : 'active';
     const scalesPerLocation = locationIds.length > 0
       ? Math.max(0, Math.floor(scaleCount / locationIds.length))
       : 0;
@@ -377,8 +376,8 @@ async function handleCheckoutCompleted(
       location_id: locId,
       plan_tier: backroomPlan,
       scale_count: scalesPerLocation + (idx === 0 ? remainder : 0),
-      status,
-      trial_end_date: trialEndDate,
+      status: 'active',
+      trial_end_date: null,
       billing_interval: billingInterval,
       stripe_subscription_id: stripeSubId,
       activated_at: new Date().toISOString(),
