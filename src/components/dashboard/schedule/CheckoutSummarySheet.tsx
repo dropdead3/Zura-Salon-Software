@@ -305,10 +305,30 @@ export function CheckoutSummarySheet({
     doc.setDrawColor(0);
     y += 6;
 
+    // Product charges
+    if (productChargeTotal > 0) {
+      doc.setFont('helvetica', 'bold');
+      doc.text(productChargeLabel, margin, y);
+      y += 4;
+      doc.setFont('helvetica', 'normal');
+      for (const pc of productCostCharges) {
+        doc.text(pc.service_name ?? 'Product', margin, y);
+        doc.text(`$${pc.charge_amount.toFixed(2)}`, pageWidth - margin, y, { align: 'right' });
+        y += 4;
+      }
+      y += 2;
+    }
+
     // Totals
     doc.text('Subtotal', margin, y);
     doc.text(`$${subtotal.toFixed(2)}`, pageWidth - margin, y, { align: 'right' });
     y += 4;
+
+    if (productChargeTotal > 0) {
+      doc.text(productChargeLabel, margin, y);
+      doc.text(`$${productChargeTotal.toFixed(2)}`, pageWidth - margin, y, { align: 'right' });
+      y += 4;
+    }
 
     doc.text(`Tax (${(taxRate * 100).toFixed(1)}%)`, margin, y);
     doc.text(`$${tax.toFixed(2)}`, pageWidth - margin, y, { align: 'right' });
