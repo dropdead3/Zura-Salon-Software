@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Building2, Search, Loader2, ChevronDown, ChevronRight, MapPin, Scale, Clock, Play, AlertTriangle } from 'lucide-react';
+import { Building2, Search, Loader2, ChevronDown, ChevronRight, MapPin, Scale, Clock, Play, AlertTriangle, ShieldCheck } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import {
