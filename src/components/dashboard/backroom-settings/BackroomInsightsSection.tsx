@@ -49,6 +49,8 @@ import { useBackroomAnalytics } from '@/hooks/backroom/useBackroomAnalytics';
 import { useBackroomStaffMetrics } from '@/hooks/backroom/useBackroomStaffMetrics';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
+import { BackroomBrandUsageCard } from './BackroomBrandUsageCard';
+import { BackroomHistoryChart } from './BackroomHistoryChart';
 import { toast } from 'sonner';
 
 // ── Date range presets ──────────────────────────────────────────────
