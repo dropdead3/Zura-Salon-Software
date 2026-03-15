@@ -56,17 +56,14 @@ function AlertItem({ alert }: { alert: ProductDemandForecast }) {
           On hand: {alert.current_on_hand} {alert.unit} · After 7d: {alert.remaining_after_7d} {alert.unit}
         </p>
       </div>
-      {alert.recommended_order_qty > 0 && (
-        <div className="flex items-center gap-1 text-xs shrink-0 ml-3">
-          <ShoppingCart className="w-3.5 h-3.5 text-muted-foreground" />
-          <span className={cn(
-            tokens.body.emphasis,
-            isCritical ? 'text-destructive' : 'text-orange-600 dark:text-orange-400',
-          )}>
-            Order {alert.recommended_order_qty} {alert.unit}
+      <div className="flex items-center gap-2 text-xs shrink-0 ml-3">
+        {alert.recommended_order_qty > 0 && (
+          <span className={cn(tokens.body.muted, 'text-xs')}>
+            Suggested: {alert.recommended_order_qty} {alert.unit}
           </span>
-        </div>
-      )}
+        )}
+        <QuickReorderButton productId={alert.product_id} />
+      </div>
     </div>
   );
 }
