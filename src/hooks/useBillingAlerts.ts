@@ -13,6 +13,7 @@ export interface BillingAlert {
   description: string;
   ctaLabel: string;
   ctaAction: 'open-portal' | 'scroll-plans';
+  dismissible: boolean;
 }
 
 function getCardExpiryAlerts(
@@ -32,6 +33,7 @@ function getCardExpiryAlerts(
       description: `Your card ending in •••• expired ${String(paymentMethod.exp_month).padStart(2, '0')}/${paymentMethod.exp_year}. Update it to avoid service interruption.`,
       ctaLabel: 'Update Card',
       ctaAction: 'open-portal',
+      dismissible: false,
     }];
   }
 
@@ -43,6 +45,7 @@ function getCardExpiryAlerts(
       description: `Your card expires ${String(paymentMethod.exp_month).padStart(2, '0')}/${paymentMethod.exp_year}. Update your payment method to prevent billing issues.`,
       ctaLabel: 'Update Card',
       ctaAction: 'open-portal',
+      dismissible: true,
     }];
   }
 
@@ -63,15 +66,17 @@ export function useBillingAlerts(): { alerts: BillingAlert[]; isLoading: boolean
     // 1. Trial ending alerts
     if (trialStatus.isInTrial && trialStatus.daysRemaining !== null) {
       if (trialStatus.daysRemaining <= 7) {
+        const isRedTrial = trialStatus.daysRemaining <= 2;
         result.push({
           id: 'trial-ending',
-          severity: trialStatus.daysRemaining <= 2 ? 'red' : 'amber',
+          severity: isRedTrial ? 'red' : 'amber',
           title: trialStatus.daysRemaining <= 1
             ? 'Trial ends today'
             : `Trial ends in ${trialStatus.daysRemaining} days`,
           description: 'Choose a plan to continue using all features without interruption.',
           ctaLabel: 'Choose a Plan',
           ctaAction: 'scroll-plans',
+          dismissible: !isRedTrial,
         });
       }
     }
@@ -85,6 +90,7 @@ export function useBillingAlerts(): { alerts: BillingAlert[]; isLoading: boolean
         description: 'Your trial period has ended. Select a plan to restore full access.',
         ctaLabel: 'Choose a Plan',
         ctaAction: 'scroll-plans',
+        dismissible: false,
       });
     }
 
@@ -103,6 +109,7 @@ export function useBillingAlerts(): { alerts: BillingAlert[]; isLoading: boolean
         description: `You have ${failedInvoices.length} unpaid invoice${failedInvoices.length > 1 ? 's' : ''}. Update your payment method to resolve.`,
         ctaLabel: 'Retry Payment',
         ctaAction: 'open-portal',
+        dismissible: false,
       });
     }
 
@@ -117,6 +124,7 @@ export function useBillingAlerts(): { alerts: BillingAlert[]; isLoading: boolean
         description: 'Add a payment method to prevent service interruption at your next billing cycle.',
         ctaLabel: 'Add Payment Method',
         ctaAction: 'open-portal',
+        dismissible: true,
       });
     }
 
