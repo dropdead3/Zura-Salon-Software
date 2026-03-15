@@ -1,3 +1,4 @@
+import React from 'react';
 import { Link } from 'react-router-dom';
 
 import { PLATFORM_NAME } from '@/lib/brand';
@@ -58,35 +59,37 @@ interface ManagementCardProps {
   statLabel?: string;
 }
 
-function ManagementCard({ href, icon: Icon, title, description, stat, statLabel }: ManagementCardProps) {
-  return (
-    <Link to={href}>
-      <Card className={cn(tokens.card.wrapper, "group hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer h-full border-border/50")}>
-        <CardContent className="p-5 min-h-[88px]">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex items-start gap-3 flex-1 min-w-0">
-              <div className={cn(tokens.card.iconBox, "shrink-0")}>
-                <Icon className={tokens.card.icon} />
+const ManagementCard = React.forwardRef<HTMLAnchorElement, ManagementCardProps>(
+  function ManagementCard({ href, icon: Icon, title, description, stat, statLabel }, ref) {
+    return (
+      <Link to={href} ref={ref}>
+        <Card className={cn(tokens.card.wrapper, "group hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer h-full border-border/50")}>
+          <CardContent className="p-5 min-h-[88px]">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start gap-3 flex-1 min-w-0">
+                <div className={cn(tokens.card.iconBox, "shrink-0")}>
+                  <Icon className={tokens.card.icon} />
+                </div>
+                <div className="flex-1">
+                  <h3 className={tokens.card.title}>{title}</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{description}</p>
+                </div>
               </div>
-              <div className="flex-1">
-                <h3 className={tokens.card.title}>{title}</h3>
-                <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{description}</p>
+              <div className="flex items-center gap-2 shrink-0">
+                {stat !== null && stat !== undefined && (
+                  <Badge variant="secondary" className="text-xs">
+                    {stat} {statLabel}
+                  </Badge>
+                )}
+                <ChevronRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
-              {stat !== null && stat !== undefined && (
-                <Badge variant="secondary" className="text-xs">
-                  {stat} {statLabel}
-                </Badge>
-              )}
-              <ChevronRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </Link>
-  );
-}
+          </CardContent>
+        </Card>
+      </Link>
+    );
+  }
+);
 
 interface HubGatewayCardProps {
   href: string;
