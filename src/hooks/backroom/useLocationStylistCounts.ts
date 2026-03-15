@@ -75,8 +75,48 @@ export function getRecommendedTier(stylistCount: number): 'starter' | 'professio
   return 'unlimited';
 }
 
+/** Tier progression info for a given stylist count. Returns null if already on Unlimited. */
+export interface TierProgressInfo {
+  currentTier: 'starter' | 'professional' | 'unlimited';
+  nextTier: 'professional' | 'unlimited';
+  currentCount: number;
+  thresholdMax: number;
+  remaining: number;
+  progressPct: number;
+  isAtBoundary: boolean;
+}
+
+export function getTierProgressInfo(stylistCount: number): TierProgressInfo | null {
+  if (stylistCount >= 11) return null; // Already unlimited
+  if (stylistCount <= 3) {
+    return {
+      currentTier: 'starter',
+      nextTier: 'professional',
+      currentCount: stylistCount,
+      thresholdMax: 3,
+      remaining: 4 - stylistCount, // need 4 to hit professional
+      progressPct: Math.round((stylistCount / 3) * 100),
+      isAtBoundary: stylistCount === 3,
+    };
+  }
+  // 4–10 → professional
+  return {
+    currentTier: 'professional',
+    nextTier: 'unlimited',
+    currentCount: stylistCount,
+    thresholdMax: 10,
+    remaining: 11 - stylistCount,
+    progressPct: Math.round(((stylistCount - 3) / 7) * 100),
+    isAtBoundary: stylistCount === 10,
+  };
+}
+
 /** Plan pricing lookup */
 export const PLAN_PRICING = {
+  starter: { name: 'Starter', price: 39, annualPrice: 33, range: '1–3 stylists' },
+  professional: { name: 'Professional', price: 79, annualPrice: 67, range: '4–10 stylists' },
+  unlimited: { name: 'Unlimited', price: 129, annualPrice: 110, range: '11+ stylists' },
+} as const;
   starter: { name: 'Starter', price: 39, annualPrice: 33, range: '1–3 stylists' },
   professional: { name: 'Professional', price: 79, annualPrice: 67, range: '4–10 stylists' },
   unlimited: { name: 'Unlimited', price: 129, annualPrice: 110, range: '11+ stylists' },

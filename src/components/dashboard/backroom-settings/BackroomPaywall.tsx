@@ -12,7 +12,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useLocations } from '@/hooks/useLocations';
 import { useBackroomLocationEntitlements } from '@/hooks/backroom/useBackroomLocationEntitlements';
-import { useLocationStylistCounts, getRecommendedTier, PLAN_PRICING } from '@/hooks/backroom/useLocationStylistCounts';
+import { useLocationStylistCounts, getRecommendedTier, getTierProgressInfo, PLAN_PRICING } from '@/hooks/backroom/useLocationStylistCounts';
+import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
 
 const features = [
