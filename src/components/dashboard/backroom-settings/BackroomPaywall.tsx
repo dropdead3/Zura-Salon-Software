@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { Package, Beaker, BarChart3, Shield, Zap, ArrowRight, Loader2, Check, Minus, Plus, Scale, Gift, CalendarDays, Clock, MapPin } from 'lucide-react';
+import { Package, Beaker, BarChart3, Shield, Zap, ArrowRight, Loader2, Check, Minus, Plus, Scale, Gift, CalendarDays, Clock, MapPin, AlertTriangle, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,7 +10,12 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useLocations } from '@/hooks/useLocations';
+import { useBackroomLocationEntitlements } from '@/hooks/backroom/useBackroomLocationEntitlements';
 import { toast } from 'sonner';
+
+interface BackroomPaywallProps {
+  isPendingActivation?: boolean;
+}
 
 const features = [
   {
