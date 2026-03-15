@@ -8,7 +8,8 @@ import { BackroomEntitlementsTab } from '@/components/platform/backroom/Backroom
 import { SupplyLibraryTab } from '@/components/platform/backroom/SupplyLibraryTab';
 import { BackroomAnalyticsTab } from '@/components/platform/backroom/BackroomAnalyticsTab';
 import { BackroomBillingTab } from '@/components/platform/backroom/BackroomBillingTab';
-import { ClipboardList, Database, Building2, Package, BarChart3, CreditCard } from 'lucide-react';
+import { CoachPerformanceTab } from '@/components/platform/backroom/CoachPerformanceTab';
+import { ClipboardList, Database, Building2, Package, BarChart3, CreditCard, Users2 } from 'lucide-react';
 
 const tabTriggerClass =
   'data-[state=active]:bg-violet-600 data-[state=active]:text-white text-slate-400 hover:text-white';
@@ -49,6 +50,10 @@ export default function BackroomAdmin() {
             <BarChart3 className="w-3.5 h-3.5" />
             Analytics
           </TabsTrigger>
+          <TabsTrigger value="coach-performance" className={`${tabTriggerClass} flex items-center gap-1.5`}>
+            <Users2 className="w-3.5 h-3.5" />
+            Coach Performance
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="queue" className="mt-6">
@@ -68,6 +73,9 @@ export default function BackroomAdmin() {
         </TabsContent>
         <TabsContent value="analytics" className="mt-6">
           <BackroomAnalyticsTab />
+        </TabsContent>
+        <TabsContent value="coach-performance" className="mt-6">
+          <CoachPerformanceTab />
         </TabsContent>
       </Tabs>
     </PlatformPageContainer>
