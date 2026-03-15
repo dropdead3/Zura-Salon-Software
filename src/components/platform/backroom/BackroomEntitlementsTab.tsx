@@ -483,7 +483,7 @@ export function BackroomEntitlementsTab() {
                       </CollapsibleTrigger>
                       <CollapsibleContent asChild>
                         <TableRow className="bg-slate-800/20 border-slate-700/20">
-                          <TableCell colSpan={7} className="p-0">
+                          <TableCell colSpan={8} className="p-0">
                             <LocationEntitlementPanel
                               orgId={org.id}
                               orgName={org.name}
