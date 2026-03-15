@@ -322,15 +322,9 @@ async function handleCheckoutCompleted(
   const backroomPlan = metadata.backroom_plan || 'starter';
   const scaleCount = parseInt(metadata.scale_count || '0', 10);
   const billingInterval = metadata.billing_interval || 'monthly';
-  const trialDays = parseInt(metadata.trial_days || '0', 10);
   const locationIds = metadata.location_ids ? JSON.parse(metadata.location_ids) as string[] : [];
   
-  console.log(`Enabling backroom for organization: ${orgId}, plan: ${backroomPlan}, scales: ${scaleCount}, interval: ${billingInterval}, trial: ${trialDays}d, locations: ${locationIds.length}`);
-
-  // Calculate trial end date if applicable
-  const trialEndDate = trialDays > 0
-    ? new Date(Date.now() + trialDays * 86400000).toISOString()
-    : null;
+  console.log(`Enabling backroom for organization: ${orgId}, plan: ${backroomPlan}, scales: ${scaleCount}, interval: ${billingInterval}, locations: ${locationIds.length}`);
 
   // 1. Upsert the org-level feature flag (master switch)
   const { error } = await supabase
@@ -339,7 +333,7 @@ async function handleCheckoutCompleted(
       organization_id: orgId,
       flag_key: 'backroom_enabled',
       is_enabled: true,
-      override_reason: `Stripe checkout completed — ${backroomPlan} plan, ${scaleCount} scale(s), ${locationIds.length} location(s)${trialDays > 0 ? `, ${trialDays}-day trial` : ''}`,
+      override_reason: `Stripe checkout completed — ${backroomPlan} plan, ${scaleCount} scale(s), ${locationIds.length} location(s)`,
       updated_at: new Date().toISOString(),
     }, {
       onConflict: 'organization_id,flag_key',
@@ -362,8 +356,6 @@ async function handleCheckoutCompleted(
         plan: backroomPlan,
         scale_count: scaleCount,
         billing_interval: billingInterval,
-        trial_days: trialDays,
-        trial_end: trialEndDate,
         location_ids: locationIds,
       }),
       updated_at: new Date().toISOString(),
@@ -374,7 +366,6 @@ async function handleCheckoutCompleted(
   // 3. Create per-location entitlement rows
   if (locationIds.length > 0) {
     const stripeSubId = (session.subscription as string) || null;
-    const status = trialDays > 0 ? 'trial' : 'active';
     const scalesPerLocation = locationIds.length > 0
       ? Math.max(0, Math.floor(scaleCount / locationIds.length))
       : 0;
@@ -385,8 +376,8 @@ async function handleCheckoutCompleted(
       location_id: locId,
       plan_tier: backroomPlan,
       scale_count: scalesPerLocation + (idx === 0 ? remainder : 0),
-      status,
-      trial_end_date: trialEndDate,
+      status: 'active',
+      trial_end_date: null,
       billing_interval: billingInterval,
       stripe_subscription_id: stripeSubId,
       activated_at: new Date().toISOString(),
@@ -517,19 +508,6 @@ async function handleSubscriptionUpdated(
     .update({ subscription_status: mappedStatus })
     .eq('id', org.id);
 
-  // If backroom subscription moves to active from trialing, update location entitlements
-  const subMetadata = subscription.metadata as Record<string, string> | null;
-  if (subMetadata?.addon_type === 'backroom' && status === 'active') {
-    const stripeSubId = subscription.id as string;
-    await supabase
-      .from('backroom_location_entitlements')
-      .update({ status: 'active', updated_at: new Date().toISOString() })
-      .eq('organization_id', org.id)
-      .eq('stripe_subscription_id', stripeSubId)
-      .eq('status', 'trial');
-    
-    console.log(`Backroom location entitlements activated for org ${org.id}`);
-  }
 
   console.log(`Subscription status updated to ${mappedStatus} for ${org.name}`);
 }

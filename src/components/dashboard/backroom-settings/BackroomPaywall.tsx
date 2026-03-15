@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { Package, Beaker, BarChart3, Shield, Zap, ArrowRight, Loader2, Check, Minus, Plus, Scale, Gift, CalendarDays, Clock, MapPin } from 'lucide-react';
+import { Package, Beaker, BarChart3, Shield, Zap, ArrowRight, Loader2, Check, Minus, Plus, Scale, Gift, CalendarDays, ShieldCheck, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -96,17 +96,13 @@ const plans: PlanConfig[] = [
 const SCALE_LICENSE_MONTHLY = 10;
 const SCALE_HARDWARE_PRICE = 199;
 
-const TRIAL_OPTIONS = [
-  { days: 7, label: '7-day free trial' },
-  { days: 14, label: '14-day free trial' },
-] as const;
 
 export function BackroomPaywall() {
   const [loading, setLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string>('professional');
   const [scaleCount, setScaleCount] = useState(1);
   const [isAnnual, setIsAnnual] = useState(false);
-  const [trialDays, setTrialDays] = useState<7 | 14>(7);
+  
   const [selectedLocationIds, setSelectedLocationIds] = useState<Set<string>>(new Set());
   const { effectiveOrganization } = useOrganizationContext();
   const { data: locations = [] } = useLocations(effectiveOrganization?.id);
@@ -164,7 +160,6 @@ export function BackroomPaywall() {
           plan: selectedPlan,
           scale_count: scaleCount,
           billing_interval: isAnnual ? 'annual' : 'monthly',
-          trial_days: trialDays,
           location_ids: Array.from(selectedLocationIds),
         },
       });
@@ -437,36 +432,17 @@ export function BackroomPaywall() {
           </CardContent>
         </Card>
 
-        {/* Trial Duration Selector */}
-        <Card className="bg-card/60 border-border/40 max-w-2xl mx-auto">
-          <CardContent className="p-5">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                <Clock className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <p className={cn(tokens.label.default, 'text-foreground')}>Start with a Free Trial</p>
-                <p className="text-xs text-muted-foreground font-sans mt-0.5">
-                  No charge until your trial ends. Cancel anytime.
-                </p>
-              </div>
+        {/* Money-Back Guarantee */}
+        <Card className="bg-emerald-500/5 border-emerald-500/20 max-w-2xl mx-auto">
+          <CardContent className="p-5 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center shrink-0">
+              <ShieldCheck className="w-6 h-6 text-emerald-400" />
             </div>
-            <div className="flex gap-3">
-              {TRIAL_OPTIONS.map((opt) => (
-                <button
-                  key={opt.days}
-                  type="button"
-                  onClick={() => setTrialDays(opt.days)}
-                  className={cn(
-                    'flex-1 py-2.5 px-4 rounded-lg border-2 text-sm font-sans font-medium transition-all duration-200',
-                    trialDays === opt.days
-                      ? 'border-primary bg-primary/5 text-primary'
-                      : 'border-border/50 bg-card/40 text-muted-foreground hover:border-primary/30',
-                  )}
-                >
-                  {opt.label}
-                </button>
-              ))}
+            <div>
+              <p className={cn(tokens.label.default, 'text-emerald-300 text-sm')}>30-Day Money-Back Guarantee</p>
+              <p className="text-xs text-muted-foreground font-sans mt-0.5">
+                If Backroom doesn't work for your salon, get a full refund within 30 days. No questions asked.
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -542,8 +518,7 @@ export function BackroomPaywall() {
                 </>
               ) : (
                 <>
-                  <Clock className="w-4 h-4" />
-                  Start {trialDays}-day free trial
+                  Subscribe &amp; Activate
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
@@ -554,7 +529,7 @@ export function BackroomPaywall() {
               </p>
             )}
             <p className="text-xs text-muted-foreground font-sans">
-              No charge for {trialDays} days. Then ${monthlyTotal}/mo
+              30-day money-back guarantee. ${monthlyTotal}/mo
               {hardwareTotal > 0 ? ` + $${hardwareTotal} hardware` : ''}.{' '}
               {isAnnual
                 ? 'Billed annually. Includes 1 free Acaia Pearl scale.'

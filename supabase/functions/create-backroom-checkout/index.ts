@@ -68,8 +68,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { organization_id, plan, scale_count = 0, billing_interval = 'monthly', trial_days = 0, success_url, cancel_url, location_ids = [] } = await req.json();
-    const validTrialDays = [7, 14].includes(trial_days) ? trial_days : 0;
+    const { organization_id, plan, scale_count = 0, billing_interval = 'monthly', success_url, cancel_url, location_ids = [] } = await req.json();
 
     if (!organization_id) {
       throw new Error("organization_id is required");
@@ -142,11 +141,9 @@ Deno.serve(async (req) => {
         backroom_plan: plan,
         scale_count: String(scaleQty),
         billing_interval: billing_interval,
-        trial_days: String(validTrialDays),
         location_ids: JSON.stringify(location_ids || []),
       },
       subscription_data: {
-        ...(validTrialDays > 0 ? { trial_period_days: validTrialDays } : {}),
         metadata: {
           organization_id: org.id,
           addon_type: "backroom",
