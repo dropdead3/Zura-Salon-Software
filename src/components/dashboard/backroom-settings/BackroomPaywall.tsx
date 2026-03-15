@@ -102,7 +102,7 @@ export function BackroomPaywall() {
   const [selectedPlan, setSelectedPlan] = useState<string>('professional');
   const [scaleCount, setScaleCount] = useState(1);
   const [isAnnual, setIsAnnual] = useState(false);
-  const [trialDays, setTrialDays] = useState<7 | 14>(7);
+  
   const [selectedLocationIds, setSelectedLocationIds] = useState<Set<string>>(new Set());
   const { effectiveOrganization } = useOrganizationContext();
   const { data: locations = [] } = useLocations(effectiveOrganization?.id);
