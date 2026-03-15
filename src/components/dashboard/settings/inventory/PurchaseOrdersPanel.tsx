@@ -13,6 +13,7 @@ import { useProducts } from '@/hooks/useProducts';
 import { format } from 'date-fns';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { PurchaseOrderDetailDialog } from './PurchaseOrderDetailDialog';
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   draft: { label: 'Draft', className: 'text-muted-foreground border-border' },
