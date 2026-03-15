@@ -12,7 +12,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useLocations } from '@/hooks/useLocations';
 import { useBackroomLocationEntitlements } from '@/hooks/backroom/useBackroomLocationEntitlements';
-import { useLocationStylistCounts, getRecommendedTier, PLAN_PRICING } from '@/hooks/backroom/useLocationStylistCounts';
+import { useLocationStylistCounts, getRecommendedTier, getTierProgressInfo, PLAN_PRICING } from '@/hooks/backroom/useLocationStylistCounts';
+import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
 
 const features = [
@@ -411,7 +412,28 @@ export function BackroomPaywall() {
                               Upgraded
                             </Badge>
                           )}
-                        </div>
+                        {/* Tier progression indicator */}
+                        {(() => {
+                          const progress = getTierProgressInfo(stylistCount);
+                          if (!progress) return null;
+                          return (
+                            <div className="mt-1.5 ml-5.5 space-y-1">
+                              <Progress
+                                value={progress.progressPct}
+                                className="h-1 bg-muted/60"
+                                indicatorClassName={progress.isAtBoundary ? 'bg-amber-500' : 'bg-muted-foreground/30'}
+                              />
+                              <p className="font-sans text-[11px] text-muted-foreground">
+                                {progress.isAtBoundary ? (
+                                  <>Add 1 more stylist → {PLAN_PRICING[progress.nextTier].name} (${isAnnual ? PLAN_PRICING[progress.nextTier].annualPrice : PLAN_PRICING[progress.nextTier].price}/mo)</>
+                                ) : (
+                                  <>{progress.remaining} more stylist{progress.remaining !== 1 ? 's' : ''} to {PLAN_PRICING[progress.nextTier].name}</>
+                                )}
+                              </p>
+                            </div>
+                          );
+                        })()}
+                      </div>
                       </div>
                       {isChecked && (
                         <span className="font-sans text-xs text-primary shrink-0">
