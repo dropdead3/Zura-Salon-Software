@@ -178,7 +178,7 @@ async function handlePartsAndLabor({
 
   // 2. Aggregate bowl line costs (actual dispensed)
   const { data: bowlLines, error: lineErr } = await supabase
-    .from('mix_bowl_lines')
+    .from('mix_bowl_lines' as any)
     .select('dispensed_weight, product_id, dispensed_cost_snapshot')
     .eq('mix_session_id', sessionId);
 
