@@ -94,7 +94,10 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [isAdding, setIsAdding] = useState(false);
 
-  const brands = useMemo(() => getSupplyBrands(), []);
+  // Fetch supply library from DB (falls back to static data)
+  const { data: libraryItems = [] } = useSupplyLibraryItems();
+  const brands = useMemo(() => [...new Set(libraryItems.map((i) => i.brand))].sort(), [libraryItems]);
+  const getProductsByBrand = useCallback((brand: string) => libraryItems.filter((i) => i.brand === brand), [libraryItems]);
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
   const brandsByLetter = useMemo(() => {
     const map = new Map<string, string[]>();
