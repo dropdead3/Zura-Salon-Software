@@ -199,56 +199,6 @@ export function BackroomPaywall() {
           </p>
         </div>
 
-        {/* Pending Activation Banner */}
-        {isPendingActivation && (
-          <Card className="bg-amber-500/10 border-amber-500/30 max-w-2xl mx-auto">
-            <CardContent className="p-5 flex items-start gap-4">
-              <div className="w-10 h-10 rounded-lg bg-amber-500/15 flex items-center justify-center shrink-0">
-                <AlertTriangle className="w-5 h-5 text-amber-500" />
-              </div>
-              <div className="flex-1 space-y-2">
-                <p className={cn(tokens.label.default, 'text-foreground text-sm')}>
-                  Backroom is enabled — locations pending activation
-                </p>
-                <p className="text-xs text-muted-foreground font-sans">
-                  Your organization has Zura Backroom enabled, but no locations have been activated yet.
-                  Contact your Zura representative to activate locations and begin using Backroom.
-                </p>
-                <div className="flex flex-wrap gap-2 pt-1">
-                  {activeLocations.map((loc) => {
-                    const entitled = isLocationEntitled(loc.id);
-                    return (
-                      <Badge
-                        key={loc.id}
-                        variant="outline"
-                        className={cn(
-                          'font-sans text-xs gap-1.5',
-                          entitled
-                            ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30'
-                            : 'bg-muted text-muted-foreground border-border/60',
-                        )}
-                      >
-                        <MapPin className="w-3 h-3" />
-                        {loc.name}
-                        <span className="text-[10px]">{entitled ? 'Active' : 'Inactive'}</span>
-                      </Badge>
-                    );
-                  })}
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="font-sans font-medium gap-2 mt-2 border-amber-500/30 text-amber-600 hover:bg-amber-500/10"
-                  onClick={() => window.location.href = 'mailto:support@getzura.com?subject=Activate%20Backroom%20Locations'}
-                >
-                  <Mail className="w-3.5 h-3.5" />
-                  Contact Zura to Activate
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
         {/* Feature Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left max-w-2xl mx-auto">
           {features.map((f) => (

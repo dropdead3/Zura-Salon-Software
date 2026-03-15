@@ -125,7 +125,7 @@ export default function BackroomSettings() {
   if (!isEntitled) {
     return (
       <DashboardLayout>
-        <BackroomPaywall isPendingActivation={isPendingActivation} />
+        <BackroomPaywall />
       </DashboardLayout>
     );
   }
