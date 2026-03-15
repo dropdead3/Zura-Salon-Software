@@ -453,6 +453,21 @@ export function BackroomEntitlementsTab() {
                           <TableCell className="font-sans text-xs text-slate-500 capitalize">
                             {org.subscription_tier || '—'}
                           </TableCell>
+                          <TableCell className="font-sans text-xs">
+                            {(() => {
+                              if (!org.stripe_customer_id) return <span className="text-slate-600">—</span>;
+                              const pm = paymentMethods.get(org.id);
+                              if (pmLoading) return <Loader2 className="w-3 h-3 animate-spin text-slate-500" />;
+                              if (!pm) return <span className="text-slate-500">No card</span>;
+                              return (
+                                <span className="text-slate-300 flex items-center gap-1">
+                                  <CreditCard className="w-3.5 h-3.5 text-slate-400" />
+                                  <span className="capitalize">{pm.brand}</span>
+                                  <span className="text-slate-500">····{pm.last4}</span>
+                                </span>
+                              );
+                            })()}
+                          </TableCell>
                           <TableCell className="font-sans text-xs text-slate-500">
                             {org.flag_created_at
                               ? new Date(org.flag_created_at).toLocaleDateString()
