@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { Package, Beaker, BarChart3, Shield, Zap, ArrowRight, Loader2, Check, Minus, Plus, Scale } from 'lucide-react';
+import { Package, Beaker, BarChart3, Shield, Zap, ArrowRight, Loader2, Check, Minus, Plus, Scale, Gift, CalendarDays } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
@@ -94,11 +95,16 @@ export function BackroomPaywall() {
   const [loading, setLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string>('professional');
   const [scaleCount, setScaleCount] = useState(1);
+  const [isAnnual, setIsAnnual] = useState(false);
   const { effectiveOrganization } = useOrganizationContext();
 
   const currentPlan = plans.find((p) => p.key === selectedPlan)!;
-  const monthlyTotal = currentPlan.price + scaleCount * SCALE_LICENSE_MONTHLY;
-  const hardwareTotal = scaleCount * SCALE_HARDWARE_PRICE;
+  const displayPrice = isAnnual ? currentPlan.annualPrice : currentPlan.price;
+  const monthlyTotal = displayPrice + scaleCount * SCALE_LICENSE_MONTHLY;
+
+  // Annual: 1 free scale, so hardware charges are (scaleCount - 1) minimum 0
+  const hardwareQty = isAnnual ? Math.max(0, scaleCount - 1) : scaleCount;
+  const hardwareTotal = hardwareQty * SCALE_HARDWARE_PRICE;
 
   const handleCheckout = async () => {
     if (!effectiveOrganization?.id) {
@@ -113,6 +119,7 @@ export function BackroomPaywall() {
           organization_id: effectiveOrganization.id,
           plan: selectedPlan,
           scale_count: scaleCount,
+          billing_interval: isAnnual ? 'annual' : 'monthly',
         },
       });
 
@@ -163,12 +170,46 @@ export function BackroomPaywall() {
           ))}
         </div>
 
+        {/* Billing Toggle */}
+        <div className="flex items-center justify-center gap-3">
+          <span className={cn('text-sm font-sans', !isAnnual ? 'text-foreground font-medium' : 'text-muted-foreground')}>
+            Monthly
+          </span>
+          <Switch checked={isAnnual} onCheckedChange={setIsAnnual} />
+          <span className={cn('text-sm font-sans', isAnnual ? 'text-foreground font-medium' : 'text-muted-foreground')}>
+            Annual
+          </span>
+          {isAnnual && (
+            <Badge className="bg-primary/10 text-primary border-primary/20 font-sans text-[10px] px-2 py-0.5">
+              Save 15%
+            </Badge>
+          )}
+        </div>
+
+        {/* Annual Incentive Callout */}
+        {isAnnual && (
+          <Card className="bg-primary/5 border-primary/20 max-w-2xl mx-auto">
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                <Gift className="w-4 h-4 text-primary" />
+              </div>
+              <div>
+                <p className={cn(tokens.label.default, 'text-sm text-primary')}>Annual plans include 1 free Acaia Pearl scale</p>
+                <p className="text-xs text-muted-foreground font-sans mt-0.5">
+                  A $199 value — your first scale hardware is on us when you commit annually.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Plan Selector */}
         <div className="space-y-2">
           <h2 className={cn(tokens.heading.section, 'text-center')}>Choose Your Plan</h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {plans.map((plan) => {
               const isSelected = selectedPlan === plan.key;
+              const shownPrice = isAnnual ? plan.annualPrice : plan.price;
               return (
                 <button
                   key={plan.key}
@@ -201,11 +242,22 @@ export function BackroomPaywall() {
                       <p className="text-xs text-muted-foreground font-sans">{plan.stylists}</p>
                     </div>
                     <div className="flex items-baseline gap-1">
+                      {isAnnual && (
+                        <span className="text-sm text-muted-foreground font-sans line-through mr-1">
+                          ${plan.price}
+                        </span>
+                      )}
                       <span className={cn(tokens.stat.large, 'text-foreground')}>
-                        ${plan.price}
+                        ${shownPrice}
                       </span>
                       <span className="text-sm text-muted-foreground font-sans">/mo</span>
                     </div>
+                    {isAnnual && (
+                      <p className="text-[10px] text-primary font-sans flex items-center gap-1">
+                        <CalendarDays className="w-3 h-3" />
+                        ${(shownPrice * 12).toLocaleString()}/yr billed annually
+                      </p>
+                    )}
                     <ul className="space-y-1.5 pt-2 border-t border-border/40">
                       {plan.features.map((feat) => (
                         <li key={feat} className="flex items-start gap-2 text-xs text-muted-foreground font-sans">
@@ -269,9 +321,16 @@ export function BackroomPaywall() {
             <CardContent className="p-5 space-y-3">
               <div className="flex justify-between items-center font-sans text-sm">
                 <span className="text-muted-foreground">
-                  {currentPlan.name} plan
+                  {currentPlan.name} plan {isAnnual ? '(annual)' : ''}
                 </span>
-                <span className="text-foreground font-medium">${currentPlan.price}/mo</span>
+                <span className="text-foreground font-medium">
+                  ${displayPrice}/mo
+                  {isAnnual && (
+                    <span className="text-xs text-muted-foreground ml-1">
+                      (${(displayPrice * 12).toLocaleString()}/yr)
+                    </span>
+                  )}
+                </span>
               </div>
               {scaleCount > 0 && (
                 <>
@@ -284,13 +343,25 @@ export function BackroomPaywall() {
                   <div className="flex justify-between items-center font-sans text-sm">
                     <span className="text-muted-foreground">
                       Acaia Pearl × {scaleCount} (one-time)
+                      {isAnnual && scaleCount > 0 && (
+                        <span className="text-primary ml-1">— 1 free</span>
+                      )}
                     </span>
-                    <span className="text-foreground font-medium">${hardwareTotal}</span>
+                    <span className="text-foreground font-medium">
+                      ${hardwareTotal}
+                      {isAnnual && scaleCount > 0 && hardwareQty < scaleCount && (
+                        <span className="text-xs text-muted-foreground line-through ml-1">
+                          ${scaleCount * SCALE_HARDWARE_PRICE}
+                        </span>
+                      )}
+                    </span>
                   </div>
                 </>
               )}
               <div className="border-t border-border/40 pt-3 flex justify-between items-center">
-                <span className={cn(tokens.label.default, 'text-foreground')}>Monthly total</span>
+                <span className={cn(tokens.label.default, 'text-foreground')}>
+                  {isAnnual ? 'Monthly equivalent' : 'Monthly total'}
+                </span>
                 <span className={cn(tokens.stat.large, 'text-foreground')}>${monthlyTotal}/mo</span>
               </div>
               {hardwareTotal > 0 && (
@@ -322,7 +393,9 @@ export function BackroomPaywall() {
               )}
             </Button>
             <p className="text-xs text-muted-foreground font-sans">
-              Billed monthly. Cancel anytime from your subscription settings.
+              {isAnnual
+                ? 'Billed annually. Includes 1 free Acaia Pearl scale.'
+                : 'Billed monthly. Cancel anytime from your subscription settings.'}
             </p>
           </div>
         </div>

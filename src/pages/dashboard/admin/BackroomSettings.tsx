@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { tokens } from '@/lib/design-tokens';
@@ -20,6 +21,7 @@ import {
   ShieldCheck,
   Lock,
   Brain,
+  CreditCard,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useBackroomSetupHealth } from '@/hooks/backroom/useBackroomSetupHealth';
@@ -104,6 +106,7 @@ export default function BackroomSettings() {
   const [activeSection, setActiveSection] = useState<BackroomSection>('overview');
   const { data: health } = useBackroomSetupHealth();
   const { isEntitled, isLoading: entitlementLoading } = useBackroomEntitlement();
+  const navigate = useNavigate();
 
   const handleNavigate = useCallback((section: string) => {
     setActiveSection(section as BackroomSection);
@@ -181,6 +184,17 @@ export default function BackroomSettings() {
                     </Tooltip>
                   );
                 })}
+
+                {/* Subscription link */}
+                <div className="mt-4 pt-4 border-t border-border/40">
+                  <button
+                    onClick={() => navigate('/dashboard/admin/backroom-subscription')}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-sans text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors text-left"
+                  >
+                    <CreditCard className="w-4 h-4 shrink-0" />
+                    <span className="flex-1 truncate">Subscription</span>
+                  </button>
+                </div>
               </div>
             </TooltipProvider>
           </nav>
