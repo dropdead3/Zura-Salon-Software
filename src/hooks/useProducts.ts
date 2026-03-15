@@ -24,6 +24,7 @@ export interface Product {
   supplier_id: string | null;
   expires_at: string | null;
   expiry_alert_days: number | null;
+  container_size: string | null;
   created_at: string | null;
   updated_at: string | null;
 }
