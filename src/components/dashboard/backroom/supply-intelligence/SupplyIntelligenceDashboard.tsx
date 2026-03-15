@@ -19,6 +19,7 @@ import {
 } from '@/hooks/backroom/useSupplyIntelligence';
 import { SupplyKPICards } from './SupplyKPICards';
 import { SupplyInsightCard } from './SupplyInsightCard';
+import { ProductCostTrendSection } from './ProductCostTrendSection';
 
 interface SupplyIntelligenceDashboardProps {
   locationId?: string | null;
