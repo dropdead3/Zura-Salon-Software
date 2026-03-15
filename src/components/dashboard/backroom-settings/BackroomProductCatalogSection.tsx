@@ -376,7 +376,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                 </CardDescription>
               </div>
             </div>
-            <div className="flex items-center gap-2 self-start sm:self-auto flex-shrink-0">
+            <div className="flex items-center gap-2 self-start sm:self-auto flex-shrink-0 flex-wrap">
               <Badge variant="outline" className="text-xs whitespace-nowrap">
                 {trackedCount} tracked
               </Badge>
@@ -405,7 +405,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
           </div>
 
           {/* Alphabet selector bar */}
-          <div className="flex flex-wrap items-center gap-1 sm:gap-1.5">
+          <div className="flex flex-wrap items-center gap-0.5 sm:gap-1.5">
             {/* My Catalog chip */}
             <button
               type="button"
@@ -608,9 +608,9 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
           ) : (
             /* ====== BRAND BROWSING VIEW ====== */
             <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="font-sans text-sm font-medium text-foreground">{activeBrand}</h3>
-                <div className="flex items-center gap-1.5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <h3 className="font-sans text-sm font-medium text-foreground truncate min-w-0">{activeBrand}</h3>
+                <div className="flex items-center gap-1.5 flex-shrink-0">
                   {activeBrand && !brandFullyAdded(activeBrand) && (
                     <Button
                       variant="outline"
@@ -844,14 +844,14 @@ function ProductRow({ product, onUpdate }: { product: BackroomProduct; onUpdate:
 
       {/* Depletion method */}
       {product.is_backroom_tracked && (
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3 bg-muted/30 rounded-lg px-3 py-2 sm:shrink-0">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 bg-muted/30 rounded-lg px-3 py-2 sm:shrink-0 w-full sm:w-auto">
           <div className="flex items-center gap-1">
             <MetricInfoTooltip description="How this product is measured when used. 'Weighed' uses a scale; 'Per Pump' counts pumps dispensed." />
             <Select
               value={product.depletion_method}
               onValueChange={(v) => onUpdate({ depletion_method: v })}
             >
-              <SelectTrigger className="w-[110px] sm:w-[120px] h-8 text-xs font-sans">
+              <SelectTrigger className="w-full sm:w-[120px] h-8 text-xs font-sans">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -864,24 +864,26 @@ function ProductRow({ product, onUpdate }: { product: BackroomProduct; onUpdate:
 
           <div className="w-px h-5 bg-border/40 hidden sm:block" />
 
-          <div className="flex items-center gap-1">
-            <label className="text-[10px] text-muted-foreground">Billable</label>
-            <MetricInfoTooltip description="When on, overage usage of this product can be charged to the client." />
-            <Switch
-              checked={product.is_billable_to_client}
-              onCheckedChange={(v) => onUpdate({ is_billable_to_client: v })}
-              className="scale-75"
-            />
-          </div>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1">
+              <label className="text-[10px] text-muted-foreground">Billable</label>
+              <MetricInfoTooltip description="When on, overage usage of this product can be charged to the client." />
+              <Switch
+                checked={product.is_billable_to_client}
+                onCheckedChange={(v) => onUpdate({ is_billable_to_client: v })}
+                className="scale-75"
+              />
+            </div>
 
-          <div className="flex items-center gap-1">
-            <label className="text-[10px] text-muted-foreground">Overage</label>
-            <MetricInfoTooltip description="When on, usage beyond the service allowance triggers an overage charge." />
-            <Switch
-              checked={product.is_overage_eligible}
-              onCheckedChange={(v) => onUpdate({ is_overage_eligible: v })}
-              className="scale-75"
-            />
+            <div className="flex items-center gap-1">
+              <label className="text-[10px] text-muted-foreground">Overage</label>
+              <MetricInfoTooltip description="When on, usage beyond the service allowance triggers an overage charge." />
+              <Switch
+                checked={product.is_overage_eligible}
+                onCheckedChange={(v) => onUpdate({ is_overage_eligible: v })}
+                className="scale-75"
+              />
+            </div>
           </div>
         </div>
       )}
