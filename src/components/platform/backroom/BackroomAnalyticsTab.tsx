@@ -55,6 +55,22 @@ export function BackroomAnalyticsTab() {
   const [coachedMap, setCoachedMap] = useState<Record<string, string>>({});
   const [historyOrg, setHistoryOrg] = useState<{ id: string; name: string } | null>(null);
   const { data: metrics, isLoading } = useBackroomPlatformAnalytics();
+  const { data: assignments } = useCoachAssignments();
+  const { data: teamMembers } = usePlatformTeam();
+  const assignCoach = useAssignCoach();
+  const unassignCoach = useUnassignCoach();
+
+  // Build a map of orgId -> coach assignment
+  const coachByOrg = useMemo(() => {
+    const map = new Map<string, { coachUserId: string; coachName: string }>();
+    (assignments || []).forEach(a => {
+      map.set(a.organization_id, {
+        coachUserId: a.coach_user_id,
+        coachName: a.coach_name || a.coach_email || 'Unknown',
+      });
+    });
+    return map;
+  }, [assignments]);
 
   // Fetch last_backroom_coached_at for coaching signal orgs
   useEffect(() => {
