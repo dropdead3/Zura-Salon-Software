@@ -239,6 +239,7 @@ export function BackroomAnalyticsTab() {
                   <TableHead className="font-sans text-xs text-slate-400">Sessions</TableHead>
                   <TableHead className="font-sans text-xs text-slate-400">Last Active</TableHead>
                   <TableHead className="font-sans text-xs text-slate-400">Signal</TableHead>
+                  <TableHead className="font-sans text-xs text-slate-400">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
