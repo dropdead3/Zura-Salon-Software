@@ -4,7 +4,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PriceQueueTab } from '@/components/platform/backroom/PriceQueueTab';
 import { PriceSourcesTab } from '@/components/platform/backroom/PriceSourcesTab';
 import { BackroomEntitlementsTab } from '@/components/platform/backroom/BackroomEntitlementsTab';
-import { ClipboardList, Database, Building2 } from 'lucide-react';
+import { SupplyLibraryTab } from '@/components/platform/backroom/SupplyLibraryTab';
+import { ClipboardList, Database, Building2, Package } from 'lucide-react';
 
 export default function BackroomAdmin() {
   const [tab, setTab] = useState('queue');
