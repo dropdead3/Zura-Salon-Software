@@ -33,6 +33,7 @@ function getCardExpiryAlerts(
       description: `Your card ending in •••• expired ${String(paymentMethod.exp_month).padStart(2, '0')}/${paymentMethod.exp_year}. Update it to avoid service interruption.`,
       ctaLabel: 'Update Card',
       ctaAction: 'open-portal',
+      dismissible: false,
     }];
   }
 
