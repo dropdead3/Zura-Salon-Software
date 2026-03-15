@@ -60,6 +60,7 @@ interface SectionMeta {
 
 const sections: SectionMeta[] = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard, tooltip: 'Dashboard showing overall Backroom configuration progress.' },
+  { id: 'insights', label: 'Insights', icon: BarChart3, tooltip: 'KPI cards & employee performance analytics for your backroom.' },
   { id: 'products', label: 'Products & Supplies', icon: Package, tooltip: 'Choose which products are tracked at the mixing station.' },
   { id: 'services', label: 'Service Tracking', icon: Wrench, tooltip: 'Link services to the products they consume.', requires: ['products'], requiresLabel: 'Products' },
   { id: 'recipes', label: 'Recipe Baselines', icon: BarChart3, tooltip: 'Expected product quantities per service.', requires: ['products', 'services'], requiresLabel: 'Services' },
