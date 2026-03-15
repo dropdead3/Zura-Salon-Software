@@ -16,14 +16,16 @@ export function useBackroomEntitlement(locationId?: string) {
   const { isEnabled: orgEnabled, isLoading: orgLoading } =
     useOrganizationFeature('backroom_enabled');
 
-  const { isLocationEntitled, isLoading: locLoading } =
+  const { isLocationEntitled, isLoading: locLoading, activeCount } =
     useBackroomLocationEntitlements(orgId);
 
-  // If no locationId provided, fall back to org-level only (backward compat)
+  // If no locationId provided, require org flag AND at least one active location
   if (!locationId) {
     return {
-      isEntitled: orgEnabled,
-      isLoading: orgLoading,
+      isEntitled: orgEnabled && activeCount > 0,
+      isLoading: orgLoading || locLoading,
+      /** Org master switch is on but no locations have been activated */
+      isPendingActivation: orgEnabled && !locLoading && activeCount === 0,
     };
   }
 
@@ -31,5 +33,6 @@ export function useBackroomEntitlement(locationId?: string) {
   return {
     isEntitled: orgEnabled && isLocationEntitled(locationId),
     isLoading: orgLoading || locLoading,
+    isPendingActivation: false,
   };
 }
