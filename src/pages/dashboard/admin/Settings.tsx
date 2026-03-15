@@ -917,6 +917,12 @@ export default function Settings() {
       description: 'Brands, categories, inventory & pricing',
       icon: ShoppingBag,
     },
+    'account-billing': {
+      id: 'account-billing',
+      label: 'Account & Billing',
+      description: 'Subscription, payments & invoices',
+      icon: Wallet,
+    },
   };
 
   const orderedCategories = useMemo(() => {
