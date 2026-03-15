@@ -1453,6 +1453,8 @@ export default function Settings() {
           {activeCategory === 'kiosk' && <KioskSettingsContent />}
 
           {activeCategory === 'retail-products' && <RetailProductsSettingsContent />}
+
+          {activeCategory === 'account-billing' && <AccountBillingContent />}
         </div>
       </DashboardLayout>
     );
