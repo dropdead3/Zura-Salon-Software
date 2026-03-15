@@ -813,7 +813,7 @@ function ProductRow({ product, onUpdate }: { product: BackroomProduct; onUpdate:
       'flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-5 rounded-lg border p-3 sm:p-4 transition-colors',
       product.is_backroom_tracked ? 'border-border bg-card' : 'border-border/40 bg-muted/20'
     )}>
-      <div className="flex items-center gap-3 sm:gap-5">
+      <div className="flex items-center gap-3 sm:gap-5 flex-1 min-w-0">
         {/* Toggle */}
         <div className="flex items-center gap-1 shrink-0">
           <Switch
@@ -844,7 +844,7 @@ function ProductRow({ product, onUpdate }: { product: BackroomProduct; onUpdate:
 
       {/* Depletion method */}
       {product.is_backroom_tracked && (
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 bg-muted/30 rounded-lg px-3 py-2 sm:shrink-0 w-full sm:w-auto">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 bg-muted/30 rounded-lg px-3 py-2 shrink-0 sm:ml-auto">
           <div className="flex items-center gap-1">
             <MetricInfoTooltip description="How this product is measured when used. 'Weighed' uses a scale; 'Per Pump' counts pumps dispensed." />
             <Select
@@ -887,6 +887,5 @@ function ProductRow({ product, onUpdate }: { product: BackroomProduct; onUpdate:
           </div>
         </div>
       )}
-    </div>
   );
 }
