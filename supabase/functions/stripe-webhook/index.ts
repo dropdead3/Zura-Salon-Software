@@ -358,7 +358,13 @@ async function handleCheckoutCompleted(
   const backroomPlan = metadata.backroom_plan || 'starter';
   const scaleCount = parseInt(metadata.scale_count || '0', 10);
   const billingInterval = metadata.billing_interval || 'monthly';
-  console.log(`Enabling backroom for organization: ${orgId}, plan: ${backroomPlan}, scales: ${scaleCount}, interval: ${billingInterval}`);
+  const trialDays = parseInt(metadata.trial_days || '0', 10);
+  console.log(`Enabling backroom for organization: ${orgId}, plan: ${backroomPlan}, scales: ${scaleCount}, interval: ${billingInterval}, trial: ${trialDays}d`);
+
+  // Calculate trial end date if applicable
+  const trialEndDate = trialDays > 0
+    ? new Date(Date.now() + trialDays * 86400000).toISOString()
+    : null;
 
   // Upsert the feature flag with plan metadata
   const { error } = await supabase
@@ -367,7 +373,7 @@ async function handleCheckoutCompleted(
       organization_id: orgId,
       flag_key: 'backroom_enabled',
       is_enabled: true,
-      override_reason: `Stripe checkout completed — ${backroomPlan} plan, ${scaleCount} scale(s)`,
+      override_reason: `Stripe checkout completed — ${backroomPlan} plan, ${scaleCount} scale(s)${trialDays > 0 ? `, ${trialDays}-day trial` : ''}`,
       updated_at: new Date().toISOString(),
     }, {
       onConflict: 'organization_id,flag_key',
@@ -386,7 +392,13 @@ async function handleCheckoutCompleted(
       organization_id: orgId,
       flag_key: 'backroom_plan',
       is_enabled: true,
-      override_reason: JSON.stringify({ plan: backroomPlan, scale_count: scaleCount, billing_interval: billingInterval }),
+      override_reason: JSON.stringify({
+        plan: backroomPlan,
+        scale_count: scaleCount,
+        billing_interval: billingInterval,
+        trial_days: trialDays,
+        trial_end: trialEndDate,
+      }),
       updated_at: new Date().toISOString(),
     }, {
       onConflict: 'organization_id,flag_key',
