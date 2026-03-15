@@ -26,13 +26,13 @@ import {
   RotateCcw,
 } from 'lucide-react';
 
-const STATUS_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'destructive'> = {
+const STATUS_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'error'> = {
   approved: 'success',
   processed: 'success',
   completed: 'success',
   pending: 'warning',
-  rejected: 'destructive',
-  denied: 'destructive',
+  rejected: 'error',
+  denied: 'error',
 };
 
 export function RefundHistoryTab() {
