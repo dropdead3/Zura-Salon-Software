@@ -7,7 +7,8 @@ import { PriceSourcesTab } from '@/components/platform/backroom/PriceSourcesTab'
 import { BackroomEntitlementsTab } from '@/components/platform/backroom/BackroomEntitlementsTab';
 import { SupplyLibraryTab } from '@/components/platform/backroom/SupplyLibraryTab';
 import { BackroomAnalyticsTab } from '@/components/platform/backroom/BackroomAnalyticsTab';
-import { ClipboardList, Database, Building2, Package, BarChart3 } from 'lucide-react';
+import { BackroomBillingTab } from '@/components/platform/backroom/BackroomBillingTab';
+import { ClipboardList, Database, Building2, Package, BarChart3, CreditCard } from 'lucide-react';
 
 const tabTriggerClass =
   'data-[state=active]:bg-violet-600 data-[state=active]:text-white text-slate-400 hover:text-white';
@@ -19,7 +20,7 @@ export default function BackroomAdmin() {
     <PlatformPageContainer className="space-y-6">
       <PlatformPageHeader
         title="Zura Backroom"
-        description="Wholesale price intelligence, source configuration, organization entitlements, and platform analytics."
+        description="Wholesale price intelligence, source configuration, organization entitlements, billing health, and platform analytics."
       />
 
       <Tabs value={tab} onValueChange={setTab}>
@@ -40,6 +41,10 @@ export default function BackroomAdmin() {
             <Package className="w-3.5 h-3.5" />
             Supply Library
           </TabsTrigger>
+          <TabsTrigger value="billing" className={`${tabTriggerClass} flex items-center gap-1.5`}>
+            <CreditCard className="w-3.5 h-3.5" />
+            Billing
+          </TabsTrigger>
           <TabsTrigger value="analytics" className={`${tabTriggerClass} flex items-center gap-1.5`}>
             <BarChart3 className="w-3.5 h-3.5" />
             Analytics
@@ -57,6 +62,9 @@ export default function BackroomAdmin() {
         </TabsContent>
         <TabsContent value="library" className="mt-6">
           <SupplyLibraryTab />
+        </TabsContent>
+        <TabsContent value="billing" className="mt-6">
+          <BackroomBillingTab />
         </TabsContent>
         <TabsContent value="analytics" className="mt-6">
           <BackroomAnalyticsTab />

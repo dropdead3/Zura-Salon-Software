@@ -22,7 +22,18 @@ import {
 } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Building2, Search, Loader2, ChevronDown, ChevronRight, MapPin, Scale } from 'lucide-react';
+import { Building2, Search, Loader2, ChevronDown, ChevronRight, MapPin, Scale, Clock, Play, AlertTriangle } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useUpdateOrgFeatureFlag, useDeleteOrgFeatureFlag } from '@/hooks/useOrganizationFeatureFlags';
@@ -83,6 +94,8 @@ export function BackroomEntitlementsTab() {
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [expandedOrg, setExpandedOrg] = useState<string | null>(null);
+  const [showBackfillDialog, setShowBackfillDialog] = useState(false);
+  const [backfilling, setBackfilling] = useState(false);
   const queryClient = useQueryClient();
 
   // Fetch all orgs with their backroom flag
@@ -234,6 +247,70 @@ export function BackroomEntitlementsTab() {
 
   const enabledCount = orgs.filter((o) => o.backroom_enabled).length;
 
+  // Detect orphaned orgs (backroom enabled but no location entitlements)
+  const orphanedOrgs = orgs.filter((o) => {
+    if (!o.backroom_enabled) return false;
+    // We only know entitlements for the expanded org — check all in a simpler way
+    return true; // Will be refined when we have all entitlements
+  });
+
+  // For backfill: fetch all location entitlements counts
+  const { data: allEntitlementCounts = [] } = useQuery({
+    queryKey: ['platform-backroom-all-entitlement-counts'],
+    queryFn: async () => {
+      const enabledOrgIds = orgs.filter((o) => o.backroom_enabled).map((o) => o.id);
+      if (enabledOrgIds.length === 0) return [];
+      const { data } = await supabase
+        .from('backroom_location_entitlements')
+        .select('organization_id')
+        .in('organization_id', enabledOrgIds);
+      return data || [];
+    },
+    enabled: orgs.length > 0,
+  });
+
+  const orgsWithEntitlements = new Set(allEntitlementCounts.map((e: any) => e.organization_id));
+  const orphanCount = orgs.filter((o) => o.backroom_enabled && !orgsWithEntitlements.has(o.id)).length;
+
+  const handleBackfillAll = async () => {
+    setBackfilling(true);
+    try {
+      const orphans = orgs.filter((o) => o.backroom_enabled && !orgsWithEntitlements.has(o.id));
+      for (const org of orphans) {
+        // Get all active locations for this org
+        const { data: locs } = await supabase
+          .from('locations')
+          .select('id')
+          .eq('organization_id', org.id)
+          .eq('is_active', true);
+
+        for (const loc of locs || []) {
+          await supabase
+            .from('backroom_location_entitlements')
+            .upsert(
+              {
+                organization_id: org.id,
+                location_id: loc.id,
+                plan_tier: 'starter',
+                scale_count: 0,
+                status: 'active',
+                activated_at: new Date().toISOString(),
+              } as any,
+              { onConflict: 'organization_id,location_id' }
+            );
+        }
+      }
+      toast.success(`Backfilled entitlements for ${orphans.length} organizations`);
+      queryClient.invalidateQueries({ queryKey: ['platform-backroom-all-entitlement-counts'] });
+      queryClient.invalidateQueries({ queryKey: ['platform-backroom-entitlements'] });
+    } catch (err: any) {
+      toast.error('Backfill failed: ' + err.message);
+    } finally {
+      setBackfilling(false);
+      setShowBackfillDialog(false);
+    }
+  };
+
   return (
     <PlatformCard variant="glass">
       <PlatformCardHeader className="flex flex-row items-center justify-between gap-4 flex-wrap">
@@ -249,6 +326,33 @@ export function BackroomEntitlementsTab() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {orphanCount > 0 && (
+            <Dialog open={showBackfillDialog} onOpenChange={setShowBackfillDialog}>
+              <DialogTrigger asChild>
+                <PlatformButton size="sm" variant="outline">
+                  <AlertTriangle className="w-3.5 h-3.5" />
+                  Backfill ({orphanCount})
+                </PlatformButton>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Backfill Location Entitlements</DialogTitle>
+                  <DialogDescription>
+                    {orphanCount} organization{orphanCount > 1 ? 's have' : ' has'} Backroom enabled but no per-location
+                    entitlements. This will create a Starter entitlement for every active location in these orgs.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <PlatformButton variant="outline" onClick={() => setShowBackfillDialog(false)}>
+                    Cancel
+                  </PlatformButton>
+                  <PlatformButton onClick={handleBackfillAll} loading={backfilling}>
+                    Backfill All
+                  </PlatformButton>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
           {selected.size > 0 && (
             <>
               <PlatformButton size="sm" onClick={handleBatchEnable}>
@@ -478,6 +582,8 @@ function LocationEntitlementPanel({
               <th className="font-sans text-xs text-slate-400 text-left px-4 py-2">Status</th>
               <th className="font-sans text-xs text-slate-400 text-left px-4 py-2">Plan</th>
               <th className="font-sans text-xs text-slate-400 text-left px-4 py-2">Scales</th>
+              <th className="font-sans text-xs text-slate-400 text-left px-4 py-2">Trial End</th>
+              <th className="font-sans text-xs text-slate-400 text-left px-4 py-2">Actions</th>
               <th className="font-sans text-xs text-slate-400 text-right px-4 py-2">Access</th>
             </tr>
           </thead>
@@ -558,6 +664,69 @@ function LocationEntitlementPanel({
                       </div>
                     ) : (
                       <span className="font-sans text-xs text-slate-500">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-2.5">
+                    {ent?.status === 'trial' && ent.trial_end_date ? (
+                      <div className="flex items-center gap-1.5">
+                        <Clock className="w-3 h-3 text-slate-500" />
+                        <span className={cn(
+                          'font-sans text-xs tabular-nums',
+                          new Date(ent.trial_end_date) < new Date() ? 'text-red-400' : 'text-amber-400'
+                        )}>
+                          {(() => {
+                            const diff = Math.ceil((new Date(ent.trial_end_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                            if (diff < 0) return `${Math.abs(diff)}d overdue`;
+                            if (diff === 0) return 'Today';
+                            return `${diff}d left`;
+                          })()}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="font-sans text-xs text-slate-500">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-2.5">
+                    {!isActive && (
+                      <PlatformButton
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 text-xs"
+                        onClick={() => {
+                          const trialEnd = new Date();
+                          trialEnd.setDate(trialEnd.getDate() + 14);
+                          onUpdateEntitlement(loc.id, {
+                            status: 'trial',
+                            plan_tier: 'starter',
+                          });
+                          // Also set trial_end_date via direct upsert
+                          supabase
+                            .from('backroom_location_entitlements')
+                            .upsert(
+                              {
+                                organization_id: orgId,
+                                location_id: loc.id,
+                                plan_tier: 'starter',
+                                scale_count: 0,
+                                status: 'trial',
+                                trial_end_date: trialEnd.toISOString(),
+                                activated_at: new Date().toISOString(),
+                              } as any,
+                              { onConflict: 'organization_id,location_id' }
+                            )
+                            .then(() => {
+                              toast.success('14-day trial started');
+                            });
+                        }}
+                      >
+                        <Play className="w-3 h-3" />
+                        Start Trial
+                      </PlatformButton>
+                    )}
+                    {ent?.stripe_subscription_id && (
+                      <span className="font-sans text-[10px] text-slate-500 font-mono truncate max-w-[100px] block">
+                        {ent.stripe_subscription_id.slice(0, 16)}…
+                      </span>
                     )}
                   </td>
                   <td className="px-4 py-2.5 text-right">

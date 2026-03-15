@@ -8,6 +8,19 @@ export interface BackroomPlatformMetrics {
   avgWasteReduction: number | null;
   orgUsageStats: OrgUsageStat[];
   adoptionTimeline: { month: string; count: number }[];
+  coachingSignals: CoachingSignal[];
+}
+
+export interface CoachingSignal {
+  orgId: string;
+  orgName: string;
+  healthScore: 'green' | 'amber' | 'red';
+  avgReweighPct: number | null;
+  avgWastePct: number | null;
+  sessionCount: number;
+  lastActiveDate: string | null;
+  daysSinceActive: number | null;
+  reason: string;
 }
 
 export interface OrgUsageStat {
@@ -116,6 +129,74 @@ export function useBackroomPlatformAnalytics() {
         .sort(([a], [b]) => a.localeCompare(b))
         .map(([month, count]) => ({ month, count }));
 
+      // Coaching signals — fetch staff performance for reweigh rates
+      const { data: perfData } = await supabase
+        .from('staff_backroom_performance')
+        .select('organization_id, reweigh_compliance_rate, waste_rate, mix_session_count')
+        .in('organization_id', enabledOrgIds.length > 0 ? enabledOrgIds : ['00000000-0000-0000-0000-000000000000']);
+
+      // Aggregate reweigh compliance per org
+      const perfByOrg = new Map<string, { reweighSum: number; reweighCount: number; wasteSum: number; wasteCount: number; sessions: number }>();
+      (perfData || []).forEach((p: any) => {
+        const existing = perfByOrg.get(p.organization_id) || { reweighSum: 0, reweighCount: 0, wasteSum: 0, wasteCount: 0, sessions: 0 };
+        if (p.reweigh_compliance_rate != null) {
+          existing.reweighSum += Number(p.reweigh_compliance_rate);
+          existing.reweighCount++;
+        }
+        if (p.waste_rate != null) {
+          existing.wasteSum += Number(p.waste_rate);
+          existing.wasteCount++;
+        }
+        existing.sessions += p.mix_session_count || 0;
+        perfByOrg.set(p.organization_id, existing);
+      });
+
+      const now = new Date();
+      const coachingSignals: CoachingSignal[] = enabledOrgIds.map((oid: string) => {
+        const stats = orgStats.get(oid);
+        const perf = perfByOrg.get(oid);
+        const lastDate = stats?.lastDate || null;
+        const daysSinceActive = lastDate
+          ? Math.floor((now.getTime() - new Date(lastDate).getTime()) / (1000 * 60 * 60 * 24))
+          : null;
+
+        const avgReweighPct = perf && perf.reweighCount > 0
+          ? perf.reweighSum / perf.reweighCount * 100
+          : null;
+        const avgWastePct2 = perf && perf.wasteCount > 0
+          ? perf.wasteSum / perf.wasteCount * 100
+          : null;
+
+        let healthScore: 'green' | 'amber' | 'red' = 'green';
+        let reason = 'Active and healthy';
+
+        if (!stats || stats.count === 0) {
+          healthScore = 'red';
+          reason = 'No snapshots — setup may be incomplete';
+        } else if (daysSinceActive != null && daysSinceActive > 30) {
+          healthScore = 'red';
+          reason = `Inactive for ${daysSinceActive} days`;
+        } else if (avgReweighPct != null && avgReweighPct < 50) {
+          healthScore = 'amber';
+          reason = `Low reweigh compliance (${avgReweighPct.toFixed(0)}%)`;
+        }
+
+        return {
+          orgId: oid,
+          orgName: orgMap.get(oid) || 'Unknown',
+          healthScore,
+          avgReweighPct,
+          avgWastePct: avgWastePct2,
+          sessionCount: perf?.sessions || stats?.sessions || 0,
+          lastActiveDate: lastDate,
+          daysSinceActive,
+          reason,
+        };
+      }).sort((a, b) => {
+        const order = { red: 0, amber: 1, green: 2 };
+        return order[a.healthScore] - order[b.healthScore];
+      });
+
       return {
         totalEnabledOrgs,
         totalTrialOrgs,
@@ -123,6 +204,7 @@ export function useBackroomPlatformAnalytics() {
         avgWasteReduction,
         orgUsageStats,
         adoptionTimeline,
+        coachingSignals,
       };
     },
     staleTime: 60_000,
