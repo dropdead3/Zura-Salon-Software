@@ -11268,6 +11268,7 @@ export type Database = {
           id: string
           is_internal: boolean
           is_multi_location: boolean | null
+          last_backroom_coached_at: string | null
           legal_name: string | null
           logo_url: string | null
           name: string
@@ -11321,6 +11322,7 @@ export type Database = {
           id?: string
           is_internal?: boolean
           is_multi_location?: boolean | null
+          last_backroom_coached_at?: string | null
           legal_name?: string | null
           logo_url?: string | null
           name: string
@@ -11374,6 +11376,7 @@ export type Database = {
           id?: string
           is_internal?: boolean
           is_multi_location?: boolean | null
+          last_backroom_coached_at?: string | null
           legal_name?: string | null
           logo_url?: string | null
           name?: string
