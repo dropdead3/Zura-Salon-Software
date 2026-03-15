@@ -50,6 +50,7 @@ function formatCooldownLabel(coachedAt: string): string {
 export function BackroomAnalyticsTab() {
   const [sendingOrgId, setSendingOrgId] = useState<string | null>(null);
   const [coachedMap, setCoachedMap] = useState<Record<string, string>>({});
+  const [historyOrg, setHistoryOrg] = useState<{ id: string; name: string } | null>(null);
   const { data: metrics, isLoading } = useBackroomPlatformAnalytics();
 
   // Fetch last_backroom_coached_at for coaching signal orgs
