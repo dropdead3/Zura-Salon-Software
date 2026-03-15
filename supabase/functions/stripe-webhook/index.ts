@@ -508,19 +508,6 @@ async function handleSubscriptionUpdated(
     .update({ subscription_status: mappedStatus })
     .eq('id', org.id);
 
-  // If backroom subscription moves to active from trialing, update location entitlements
-  const subMetadata = subscription.metadata as Record<string, string> | null;
-  if (subMetadata?.addon_type === 'backroom' && status === 'active') {
-    const stripeSubId = subscription.id as string;
-    await supabase
-      .from('backroom_location_entitlements')
-      .update({ status: 'active', updated_at: new Date().toISOString() })
-      .eq('organization_id', org.id)
-      .eq('stripe_subscription_id', stripeSubId)
-      .eq('status', 'trial');
-    
-    console.log(`Backroom location entitlements activated for org ${org.id}`);
-  }
 
   console.log(`Subscription status updated to ${mappedStatus} for ${org.name}`);
 }

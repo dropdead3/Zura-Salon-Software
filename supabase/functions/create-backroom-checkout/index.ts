@@ -141,11 +141,9 @@ Deno.serve(async (req) => {
         backroom_plan: plan,
         scale_count: String(scaleQty),
         billing_interval: billing_interval,
-        trial_days: String(validTrialDays),
         location_ids: JSON.stringify(location_ids || []),
       },
       subscription_data: {
-        ...(validTrialDays > 0 ? { trial_period_days: validTrialDays } : {}),
         metadata: {
           organization_id: org.id,
           addon_type: "backroom",

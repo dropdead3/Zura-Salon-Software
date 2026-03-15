@@ -518,8 +518,7 @@ export function BackroomPaywall() {
                 </>
               ) : (
                 <>
-                  <Clock className="w-4 h-4" />
-                  Start {trialDays}-day free trial
+                  Subscribe &amp; Activate
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
@@ -530,7 +529,7 @@ export function BackroomPaywall() {
               </p>
             )}
             <p className="text-xs text-muted-foreground font-sans">
-              No charge for {trialDays} days. Then ${monthlyTotal}/mo
+              30-day money-back guarantee. ${monthlyTotal}/mo
               {hardwareTotal > 0 ? ` + $${hardwareTotal} hardware` : ''}.{' '}
               {isAnnual
                 ? 'Billed annually. Includes 1 free Acaia Pearl scale.'
