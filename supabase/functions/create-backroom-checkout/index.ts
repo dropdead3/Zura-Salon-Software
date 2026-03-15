@@ -10,17 +10,20 @@ const corsHeaders = {
 const BACKROOM_PLANS = {
   starter: {
     name: "Starter",
-    price_id: "price_1TBK3IEUkhnzWpRkDJSYe1vj",
+    monthly_price_id: "price_1TBK3IEUkhnzWpRkDJSYe1vj",
+    annual_price_id: "price_1TBKCpEUkhnzWpRkqMPguboA",
     product_id: "prod_U9dJkcp3KNBItL",
   },
   professional: {
     name: "Professional",
-    price_id: "price_1TBK49EUkhnzWpRkg0yFOwnZ",
+    monthly_price_id: "price_1TBK49EUkhnzWpRkg0yFOwnZ",
+    annual_price_id: "price_1TBKDNEUkhnzWpRk2FdXKWk9",
     product_id: "prod_U9dKsEb2qj6AOo",
   },
   unlimited: {
     name: "Unlimited",
-    price_id: "price_1TBK5AEUkhnzWpRkoj0Nggwd",
+    monthly_price_id: "price_1TBK5AEUkhnzWpRkoj0Nggwd",
+    annual_price_id: "price_1TBKFzEUkhnzWpRkJY02bnW1",
     product_id: "prod_U9dL7r3Uck9Qqs",
   },
 } as const;
@@ -65,7 +68,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { organization_id, plan, scale_count = 0, success_url, cancel_url } = await req.json();
+    const { organization_id, plan, scale_count = 0, billing_interval = 'monthly', success_url, cancel_url } = await req.json();
 
     if (!organization_id) {
       throw new Error("organization_id is required");
@@ -75,8 +78,13 @@ Deno.serve(async (req) => {
       throw new Error("Invalid plan. Must be one of: starter, professional, unlimited");
     }
 
+    const isAnnual = billing_interval === 'annual';
     const selectedPlan = BACKROOM_PLANS[plan as PlanKey];
+    const planPriceId = isAnnual ? selectedPlan.annual_price_id : selectedPlan.monthly_price_id;
     const scaleQty = Math.max(0, Math.min(10, parseInt(scale_count) || 0));
+
+    // Annual plans get 1 free scale (hardware only, license still charged)
+    const hardwareQty = isAnnual ? Math.max(0, scaleQty - 1) : scaleQty;
 
     // Get organization details
     const { data: org, error: orgError } = await supabase
@@ -107,20 +115,17 @@ Deno.serve(async (req) => {
 
     // Build line items
     const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [
-      // 1. Plan subscription
-      { price: selectedPlan.price_id, quantity: 1 },
+      { price: planPriceId, quantity: 1 },
     ];
 
-    // 2. Scale licenses (recurring)
+    // Scale licenses (recurring)
     if (scaleQty > 0) {
       lineItems.push({ price: SCALE_LICENSE_PRICE_ID, quantity: scaleQty });
     }
 
-    // 3. Scale hardware (one-time) — added via subscription checkout with `adjustable_quantity`
-    // For mixed mode (recurring + one-time), we use a separate payment link or add as invoice item
-    // Stripe subscription mode supports one-time prices natively
-    if (scaleQty > 0) {
-      lineItems.push({ price: SCALE_HARDWARE_PRICE_ID, quantity: scaleQty });
+    // Scale hardware (one-time) — reduced by 1 for annual plans
+    if (hardwareQty > 0) {
+      lineItems.push({ price: SCALE_HARDWARE_PRICE_ID, quantity: hardwareQty });
     }
 
     // Create Checkout Session
@@ -135,6 +140,7 @@ Deno.serve(async (req) => {
         addon_type: "backroom",
         backroom_plan: plan,
         scale_count: String(scaleQty),
+        billing_interval: billing_interval,
       },
       subscription_data: {
         metadata: {
@@ -142,6 +148,7 @@ Deno.serve(async (req) => {
           addon_type: "backroom",
           backroom_plan: plan,
           scale_count: String(scaleQty),
+          billing_interval: billing_interval,
         },
       },
     });
