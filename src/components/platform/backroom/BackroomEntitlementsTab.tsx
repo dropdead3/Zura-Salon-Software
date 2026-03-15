@@ -63,15 +63,16 @@ interface OrgLocation {
 }
 
 function statusBadge(status: string) {
-  const map: Record<string, { label: string; variant: 'default' | 'success' | 'warning' | 'error' }> = {
+  const map: Record<string, { label: string; variant: 'default' | 'success' | 'warning' | 'error' | 'info' }> = {
     active: { label: 'Active', variant: 'success' },
     trial: { label: 'Trial', variant: 'warning' },
     cancelled: { label: 'Cancelled', variant: 'error' },
     suspended: { label: 'Suspended', variant: 'error' },
+    refunded: { label: 'Refunded', variant: 'info' },
   };
   const cfg = map[status] ?? { label: status, variant: 'default' as const };
   return (
-    <PlatformBadge variant={cfg.variant} size="sm">
+    <PlatformBadge variant={cfg.variant as any} size="sm">
       {cfg.label}
     </PlatformBadge>
   );
