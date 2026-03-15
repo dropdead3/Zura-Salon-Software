@@ -66,15 +66,17 @@ export function useBillingAlerts(): { alerts: BillingAlert[]; isLoading: boolean
     // 1. Trial ending alerts
     if (trialStatus.isInTrial && trialStatus.daysRemaining !== null) {
       if (trialStatus.daysRemaining <= 7) {
+        const isRedTrial = trialStatus.daysRemaining <= 2;
         result.push({
           id: 'trial-ending',
-          severity: trialStatus.daysRemaining <= 2 ? 'red' : 'amber',
+          severity: isRedTrial ? 'red' : 'amber',
           title: trialStatus.daysRemaining <= 1
             ? 'Trial ends today'
             : `Trial ends in ${trialStatus.daysRemaining} days`,
           description: 'Choose a plan to continue using all features without interruption.',
           ctaLabel: 'Choose a Plan',
           ctaAction: 'scroll-plans',
+          dismissible: !isRedTrial,
         });
       }
     }
