@@ -681,6 +681,16 @@ export function QuickBookingPopover({
     return servicePrice + addonPrice;
   }, [selectedServiceDetails, selectedAddonDetails]);
 
+  // Estimated product cost charges for parts_and_labor services
+  const selectedServiceIds = useMemo(() => {
+    return selectedServiceDetails.map(s => s.id);
+  }, [selectedServiceDetails]);
+
+  const { data: estimatedProductCharge } = useEstimatedProductCharge(
+    effectiveOrganization?.id,
+    selectedServiceIds
+  );
+
   const selectedStylistData = useMemo(() => {
     return stylists.find(s => s.user_id === selectedStylist);
   }, [stylists, selectedStylist]);
