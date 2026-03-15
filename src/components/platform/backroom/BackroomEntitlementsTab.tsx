@@ -326,6 +326,33 @@ export function BackroomEntitlementsTab() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {orphanCount > 0 && (
+            <Dialog open={showBackfillDialog} onOpenChange={setShowBackfillDialog}>
+              <DialogTrigger asChild>
+                <PlatformButton size="sm" variant="outline">
+                  <AlertTriangle className="w-3.5 h-3.5" />
+                  Backfill ({orphanCount})
+                </PlatformButton>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Backfill Location Entitlements</DialogTitle>
+                  <DialogDescription>
+                    {orphanCount} organization{orphanCount > 1 ? 's have' : ' has'} Backroom enabled but no per-location
+                    entitlements. This will create a Starter entitlement for every active location in these orgs.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <PlatformButton variant="outline" onClick={() => setShowBackfillDialog(false)}>
+                    Cancel
+                  </PlatformButton>
+                  <PlatformButton onClick={handleBackfillAll} loading={backfilling}>
+                    Backfill All
+                  </PlatformButton>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
           {selected.size > 0 && (
             <>
               <PlatformButton size="sm" onClick={handleBatchEnable}>
