@@ -19,6 +19,7 @@ import {
   Bell,
   CreditCard,
   Flag,
+  Package,
 } from 'lucide-react';
 
 export type PlatformNavRole = 'platform_owner' | 'platform_admin' | 'platform_support' | 'platform_developer';
@@ -68,6 +69,12 @@ export const platformNavGroups: PlatformNavGroup[] = [
       { href: '/dashboard/platform/analytics', label: 'Analytics', icon: BarChart3, platformRoles: ['platform_owner'] },
       { href: '/dashboard/platform/knowledge-base', label: 'Knowledge Base', icon: BookOpen, platformRoles: ['platform_owner', 'platform_admin'] },
       { href: '/dashboard/platform/revenue', label: 'Revenue', icon: DollarSign, platformRoles: ['platform_owner', 'platform_admin'] },
+    ],
+  },
+  {
+    label: 'Products',
+    items: [
+      { href: '/dashboard/platform/backroom', label: 'Backroom', icon: Package, platformRoles: ['platform_owner', 'platform_admin'] },
     ],
   },
   {

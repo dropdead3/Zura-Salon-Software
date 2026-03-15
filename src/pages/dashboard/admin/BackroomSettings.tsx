@@ -2,6 +2,9 @@ import { useState, useCallback } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { tokens } from '@/lib/design-tokens';
+import { useBackroomEntitlement } from '@/hooks/backroom/useBackroomEntitlement';
+import { BackroomPaywall } from '@/components/dashboard/backroom-settings/BackroomPaywall';
+import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   LayoutDashboard,
@@ -100,10 +103,29 @@ function isPrereqMet(section: SectionMeta, health: ReturnType<typeof useBackroom
 export default function BackroomSettings() {
   const [activeSection, setActiveSection] = useState<BackroomSection>('overview');
   const { data: health } = useBackroomSetupHealth();
+  const { isEntitled, isLoading: entitlementLoading } = useBackroomEntitlement();
 
   const handleNavigate = useCallback((section: string) => {
     setActiveSection(section as BackroomSection);
   }, []);
+
+  if (entitlementLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!isEntitled) {
+    return (
+      <DashboardLayout>
+        <BackroomPaywall />
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>

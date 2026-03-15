@@ -196,6 +196,7 @@ import NotificationsPage from "./pages/dashboard/platform/Notifications";
 import DemoFeatures from "./pages/dashboard/platform/DemoFeatures";
 import HealthScoresPage from "./pages/dashboard/platform/HealthScores";
 import BenchmarksPage from "./pages/dashboard/platform/Benchmarks";
+import BackroomAdmin from "./pages/dashboard/platform/BackroomAdmin";
 import { PlatformLayout } from "./components/platform/layout/PlatformLayout";
 
 const queryClient = new QueryClient();
@@ -413,6 +414,7 @@ const App = () => (
                         <Route path="settings/integrations/:integrationId" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformIntegrationDetail /></ProtectedRoute>} />
                         <Route path="permissions" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformPermissions /></ProtectedRoute>} />
                         <Route path="feature-flags" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformFeatureFlags /></ProtectedRoute>} />
+                        <Route path="backroom" element={<ProtectedRoute requirePlatformRole="platform_admin"><BackroomAdmin /></ProtectedRoute>} />
                         <Route path="demo-features" element={<ProtectedRoute requirePlatformRole="platform_admin"><DemoFeatures /></ProtectedRoute>} />
                       </Route>
 
