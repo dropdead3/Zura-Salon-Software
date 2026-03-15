@@ -1,85 +1,153 @@
 
 
-# Vish Screenshot Analysis — Feature Ideas for Zura Backroom
+## Timezone-Safe Scheduling (Implemented)
 
-## What Vish Shows (across all 7 screenshots)
+### Problem
+`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
 
-### 1. Insights Dashboard (Screenshot 1)
-Top-level KPI cards: **Product Charges**, **Product Dispensed**, **Formulas Reweighed %**, **Percent Waste**, **Estimated Waste $**. These are salon-wide summary metrics for a date range.
+### Solution
+- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
+- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
+- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
 
-### 2. Employee Performance Table (Screenshot 1)
-Tabular report per stylist: Name, Services count, Product Dispensed ($ + grams), Product Per Service ($ + grams), % Reweighed, Waste Per Service, Product Charges. Exportable (cloud icon). Hidden fields toggle.
+### Files Updated
+- `ScheduleHeader.tsx` — today button, quick days, isToday checks
+- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
+- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
+- `MonthView.tsx` — today highlight
+- `AgendaView.tsx` — today/tomorrow labels, today border
+- `ScheduleActionBar.tsx` — payment queue timing
+- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
+- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
+- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
+- `useHuddles.ts` — today's huddle query
 
-### 3. Service Report (Screenshot 2)
-Same column structure but grouped by **service type** (Natural Root Retouch, Single Process Color, etc.) instead of employee. Shows which services consume the most product and waste.
+## Auto-Reorder with Supplier Communication (Implemented)
 
-### 4. Vish History Chart (Screenshot 2)
-Time-series chart with Daily/Monthly/Yearly toggle showing Waste, Services Performed, Percent Waste, Product Dispensed, etc. overlaid.
+### What It Does
+Organizations can opt into automatic reorder — when stock dips below threshold, POs are calculated (using MOQ and par levels) and sent directly to the supplier via email.
 
-### 5. Product Usage Report (Screenshot 3)
-**Brand/manufacturer-level** breakdown: % of total usage, wholesale cost, retail price, waste, dispensed weight, number of services. Donut chart for brand share. Manufacturer comparison table.
+### Database Changes
+- `products.par_level` (INT, nullable) — desired stock level to reorder up to
+- `product_suppliers.moq` (INT, default 1) — minimum order quantity
+- `inventory_alert_settings.auto_reorder_enabled` (BOOL, default false)
+- `inventory_alert_settings.auto_reorder_mode` (TEXT, default 'to_par') — 'to_par' or 'moq_only'
+- `inventory_alert_settings.max_auto_reorder_value` (NUMERIC, nullable) — daily spend cap
+- `purchase_orders.supplier_confirmed_at` (TIMESTAMPTZ, nullable) — for tracking confirmations
 
-### 6. Sales Log (Screenshot 6)
-Transaction-level view with Client, Employee, Date, Status (color-coded badges), and Total. Shows product charges per appointment.
+### Quantity Calculation
+```
+deficit = par_level - quantity_on_hand
+order_qty = max(moq, deficit)
+if moq > 1: round up to nearest MOQ multiple
+```
+Fallback: if par_level is null, uses `reorder_level * 2`.
 
-### 7. Configuration (Screenshot 7)
-Container Weight Tolerance, Default Product Markup %, Automatic Logout, Syncing Mode — operational settings.
+### Files Updated
+- Migration: Added columns to products, product_suppliers, inventory_alert_settings, purchase_orders
+- `check-reorder-levels/index.ts` — auto-send logic with MOQ/par calculation, spend cap, email invocation
+- `AlertSettingsCard.tsx` — auto-reorder toggle, mode selector, spend cap input
+- `useInventoryAlertSettings.ts` — updated interface
+- `useProducts.ts` — added par_level to Product interface
+- `useProductSuppliers.ts` — added moq to ProductSupplier interface
+- `ProductEditDialog.tsx` — added par level field
+- `RetailProductsSettingsContent.tsx` — added par level to product form
+- `SupplierDialog.tsx` — added MOQ field
 
----
+### Safety Features
+- Spend cap: daily auto-reorder pauses when cumulative PO value exceeds cap
+- Audit trail: auto_reorder logged as stock_movement reason
+- Supplier confirmation tracking via supplier_confirmed_at timestamp
 
-## What Zura Already Has
-- Staff backroom performance metrics (useStaffBackroomPerformance)
-- Service Intelligence with ServiceProfileTable (per-service usage, variance, cost)
-- Stylist Mixing Dashboard with product trends and session history
-- Compliance tracking (reweigh rates, manual overrides)
-- Control Tower with exception inbox
-- Backroom settings hub with product catalog, recipes, allowances
-- True Profit model, predictive backroom, coaching signals
+## Product Movement Rating Badges (Implemented)
 
-## Gap Analysis — High-Value Features to Add
+### What It Does
+Every product gets a dynamic movement rating badge (Best Seller, Popular, Steady, Slow Mover, Stagnant, Dead Weight) computed from 90-day sales velocity data.
 
-### A. **Backroom Insights Dashboard** (HIGH — Vish's main screen)
-Zura lacks a dedicated top-level "Backroom Insights" summary page with hero KPI cards. The data exists in hooks (`useStaffBackroomPerformance`, `useBackroomAnalytics`) but there's no consolidated view with:
-- Total Product Charges (sum of all product costs billed)
-- Total Product Dispensed (weight + cost)
-- Formulas Reweighed % (salon-wide)
-- Waste Rate % and Estimated Waste $
-- Date range picker
+### Rating Tiers
+- **Best Seller**: Top 10% velocity AND >0.5 units/day (emerald)
+- **Popular**: Top 25% velocity AND >0.2 units/day (blue)
+- **Steady**: Velocity >0.05/day (muted)
+- **Slow Mover**: Velocity >0 but ≤0.05/day (amber)
+- **Stagnant**: Zero velocity, sold within 180 days (orange)
+- **Dead Weight**: Zero velocity, 180+ days or never sold (red)
+- Products with zero stock excluded from negative ratings
 
-**Implementation**: New page or tab within Backroom Settings using existing hooks. 5 summary cards + the employee performance table below.
+### Files Created
+- `src/lib/productMovementRating.ts` — pure rating logic + badge config
+- `src/hooks/useProductVelocity.ts` — lightweight 90-day POS velocity query
+- `src/components/ui/MovementBadge.tsx` — shared badge component with tooltip
 
-### B. **Employee Performance Report Table** (HIGH)
-A clean, sortable, exportable table showing per-stylist: Services, Product Dispensed ($+g), Product Per Service ($+g), % Reweighed, Waste Per Service, Product Charges. Zura has the raw data via `useBackroomStaffMetrics` and `useStaffBackroomPerformance` but no dedicated tabular report view matching this format.
+### Files Updated
+- `RetailProductsSettingsContent.tsx` — Movement column + filter dropdown in products table
+- `RetailAnalyticsContent.tsx` — Movement badges on product performance table + Movement Distribution card (donut chart with actionable callouts)
+- `ProductCard.tsx` — Best Seller/Popular badges on public shop cards (positive only)
+- `ProductDetailModal.tsx` — Movement badge with velocity context
 
-**Implementation**: New component using existing hooks, add CSV/PDF export.
+## Inventory Intelligence Suite v2 (Implemented)
 
-### C. **Product Usage by Brand/Manufacturer** (MEDIUM)
-Vish shows brand-level aggregation with donut chart. Zura tracks products by brand in the catalog but doesn't aggregate usage metrics by brand. Would require joining `mix_bowl_lines` with `products` to group dispensed weight, cost, and waste by brand.
+### 1. Dead Stock Auto-Clearance Pipeline
+- `DeadStockAlertCard.tsx` — Surfaces Dead Weight/Stagnant products not yet in clearance with suggested discount tiers (10%/25%/50% based on idle days)
+- One-click "Mark for Clearance" applies discount and sets clearance_status
 
-**Implementation**: New report component + query hook that groups mix_bowl_lines by product brand.
+### 2. Supplier Lead Time Tracker
+- `usePurchaseOrders.ts` — `useMarkPurchaseOrderReceived` already computes actual delivery days and updates `product_suppliers.avg_delivery_days` via running average
+- `parLevelSuggestion.ts` — Updated to accept supplier-provided lead time instead of hardcoded 7-day default, with bounds clamping
 
-### D. **Backroom History Trend Chart** (MEDIUM)
-Daily/Monthly time-series of waste, dispensed product, services — Vish's "History" chart. Zura has `ChemicalCostTrendCard` but it's limited. A richer multi-metric time-series with period toggle would be valuable.
+### 3. Inventory Valuation Dashboard Card
+- `InventoryValuationCard.tsx` — Shows total inventory at cost/retail, potential margin %, capital-at-risk (slow/stagnant/dead weight), with donut chart breakdown
 
-**Implementation**: Extend existing trend data or create a new hook that buckets mix_session data by day/week/month.
+### 4. Reorder Approval Queue
+- `ReorderApprovalCard.tsx` — Surfaces draft POs from auto-reorder with one-click approve (→ sent) or reject (→ cancelled)
 
-### E. **Container Weight Tolerance Setting** (LOW)
-Vish lets salons configure a tolerance threshold for container weights. Zura could add this to backroom_settings to filter out noise in reweigh data.
+### 5. Stock Transfer Between Locations
+- Migration: Created `stock_transfers` table with RLS (org member read, org admin manage)
+- `useStockTransfers.ts` — CRUD hooks for stock transfers with stock movement logging
+- `StockTransferDialog.tsx` — Dialog for creating transfers between locations
+- `RetailProductsSettingsContent.tsx` — "Transfer Stock" button added to Inventory tab (visible for multi-location orgs)
 
-### F. **Default Product Markup %** (LOW)
-Vish has a global markup setting. Zura could use this to auto-calculate retail pricing from wholesale cost in the product catalog.
+## Enhancement 1: Expiry Tracking (Implemented)
 
----
+### What It Does
+Products can have an optional expiration date (`expires_at`) and per-product alert threshold (`expiry_alert_days`, default 30). The system surfaces expiring inventory with color-coded badges in the product table and an analytics card with auto-clearance suggestions.
 
-## Recommended Priority
+### Database Changes
+- `products.expires_at` (DATE, nullable) — expiration date for perishable products
+- `products.expiry_alert_days` (INTEGER, default 30) — days before expiry to trigger alerts
 
-| Priority | Feature | Effort | Value |
-|----------|---------|--------|-------|
-| 1 | Backroom Insights Dashboard (KPI cards) | Medium | High — gives owners the at-a-glance view they expect |
-| 2 | Employee Performance Report Table | Medium | High — direct Vish parity, exportable |
-| 3 | Product Usage by Brand | Medium | Medium — unique operational insight |
-| 4 | History Trend Chart | Low-Med | Medium — visual storytelling |
-| 5 | Config: Weight Tolerance + Markup | Low | Low — nice-to-have settings |
+### Expiry Alert Buckets
+- **Expired** (red): past expiration → suggests 50% markdown
+- **Critical** (orange): within alert threshold → suggests 25% markdown
+- **Warning** (amber): within 2× alert threshold → suggests 10% markdown
 
-These build on existing data infrastructure. No new database tables needed for items 1-2 (data already in `staff_backroom_performance`, `mix_sessions`, `mix_bowls`). Item 3 needs a new aggregation query. Items 4-5 are incremental.
+### Files Created
+- `src/components/dashboard/analytics/ExpiryAlertCard.tsx` — PinnableCard showing expiring products with one-click clearance actions
 
+### Files Updated
+- `src/hooks/useProducts.ts` — Added `expires_at`, `expiry_alert_days` to Product interface; added `expiringOnly` filter
+- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Expiry date + alert days in product form; color-coded Expiry column in product table
+- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ExpiryAlertCard into analytics hub
+
+## Enhancement 2: Shrinkage Detection (Implemented)
+
+### What It Does
+Physical stocktake workflow with variance reporting. Staff record actual counts via a Stocktake dialog, and the system compares against expected quantities (system records). A Shrinkage Report card in analytics surfaces products with negative variance (loss) ranked by estimated cost impact.
+
+### Database Changes
+- Created `stock_counts` table with computed `variance` column (counted - expected), RLS policies (org member read/insert, org admin update/delete), and indexes
+
+### Shrinkage Calculation
+```
+variance = counted_quantity - expected_quantity
+shrinkage_units = |variance| when variance < 0
+shrinkage_cost = shrinkage_units × cost_price
+```
+
+### Files Created
+- `src/hooks/useStockCounts.ts` — CRUD hooks for stock counts + `useShrinkageSummary` for aggregated shrinkage data
+- `src/components/dashboard/settings/inventory/StocktakeDialog.tsx` — Full stocktake UI with search, inline count entry, real-time variance display
+- `src/components/dashboard/analytics/ShrinkageReportCard.tsx` — PinnableCard showing products with shrinkage, severity badges, estimated loss
+
+### Files Updated
+- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Added "Stocktake" button to Inventory tab toolbar
+- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ShrinkageReportCard into analytics hub

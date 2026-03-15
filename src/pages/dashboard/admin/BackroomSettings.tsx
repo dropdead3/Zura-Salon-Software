@@ -31,9 +31,11 @@ import { AlertsExceptionsSection } from '@/components/dashboard/backroom-setting
 import { FormulaAssistanceSection } from '@/components/dashboard/backroom-settings/FormulaAssistanceSection';
 import { MultiLocationSection } from '@/components/dashboard/backroom-settings/MultiLocationSection';
 import { BackroomComplianceSection } from '@/components/dashboard/backroom-settings/BackroomComplianceSection';
+import { BackroomInsightsSection } from '@/components/dashboard/backroom-settings/BackroomInsightsSection';
 
 type BackroomSection =
   | 'overview'
+  | 'insights'
   | 'products'
   | 'services'
   | 'recipes'
@@ -58,6 +60,7 @@ interface SectionMeta {
 
 const sections: SectionMeta[] = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard, tooltip: 'Dashboard showing overall Backroom configuration progress.' },
+  { id: 'insights', label: 'Insights', icon: BarChart3, tooltip: 'KPI cards & employee performance analytics for your backroom.' },
   { id: 'products', label: 'Products & Supplies', icon: Package, tooltip: 'Choose which products are tracked at the mixing station.' },
   { id: 'services', label: 'Service Tracking', icon: Wrench, tooltip: 'Link services to the products they consume.', requires: ['products'], requiresLabel: 'Products' },
   { id: 'recipes', label: 'Recipe Baselines', icon: BarChart3, tooltip: 'Expected product quantities per service.', requires: ['products', 'services'], requiresLabel: 'Services' },
@@ -172,6 +175,7 @@ export default function BackroomSettings() {
           {/* Content area */}
           <div className="flex-1 min-w-0">
             {activeSection === 'overview' && <BackroomSetupOverview onNavigate={handleNavigate} />}
+            {activeSection === 'insights' && <BackroomInsightsSection />}
             {activeSection === 'products' && <BackroomProductCatalogSection onNavigate={handleNavigate} />}
             {activeSection === 'services' && <ServiceTrackingSection onNavigate={handleNavigate} />}
             {activeSection === 'recipes' && <RecipeBaselineSection onNavigate={handleNavigate} />}
