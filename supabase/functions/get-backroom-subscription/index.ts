@@ -88,6 +88,11 @@ Deno.serve(async (req) => {
       }
     }
 
+    const isTrialing = backroomSub.status === 'trialing';
+    const trialEnd = isTrialing && backroomSub.trial_end
+      ? new Date(backroomSub.trial_end * 1000).toISOString()
+      : null;
+
     return new Response(
       JSON.stringify({
         subscribed: true,
@@ -99,6 +104,7 @@ Deno.serve(async (req) => {
         current_period_end: new Date(backroomSub.current_period_end * 1000).toISOString(),
         monthly_cost: Math.round(monthlyCost * 100) / 100,
         subscription_id: backroomSub.id,
+        trial_end: trialEnd,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

@@ -10,8 +10,10 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
-import { Loader2, CreditCard, Scale, ArrowUpRight, Settings, Plus } from 'lucide-react';
+import { Loader2, CreditCard, Scale, ArrowUpRight, ArrowDownRight, Settings, Plus, Clock } from 'lucide-react';
 import { AddScalesDialog } from '@/components/dashboard/backroom-settings/AddScalesDialog';
+import { BackroomROICard } from '@/components/dashboard/backroom-settings/BackroomROICard';
+import { DowngradeConfirmDialog } from '@/components/dashboard/backroom-settings/DowngradeConfirmDialog';
 
 interface SubscriptionData {
   subscribed: boolean;
@@ -23,6 +25,7 @@ interface SubscriptionData {
   current_period_end?: string;
   monthly_cost?: number;
   subscription_id?: string;
+  trial_end?: string | null;
 }
 
 const PLAN_DISPLAY: Record<string, { name: string; price: number; annualPrice: number }> = {
@@ -37,6 +40,7 @@ export default function BackroomSubscription() {
   const { effectiveOrganization } = useOrganizationContext();
   const [portalLoading, setPortalLoading] = useState(false);
   const [addScalesOpen, setAddScalesOpen] = useState(false);
+  const [downgradeTarget, setDowngradeTarget] = useState<string | null>(null);
 
   const { data: sub, isLoading } = useQuery<SubscriptionData>({
     queryKey: ['backroom-subscription', effectiveOrganization?.id],
@@ -67,6 +71,19 @@ export default function BackroomSubscription() {
       toast.error(msg);
     } finally {
       setPortalLoading(false);
+    }
+  };
+
+  const handlePlanClick = (targetPlanKey: string) => {
+    const currentIdx = UPGRADE_ORDER.indexOf(sub?.plan || 'starter');
+    const targetIdx = UPGRADE_ORDER.indexOf(targetPlanKey);
+
+    if (targetIdx < currentIdx) {
+      // Downgrade — show confirmation dialog
+      setDowngradeTarget(targetPlanKey);
+    } else {
+      // Upgrade — go straight to portal
+      openPortal();
     }
   };
 
@@ -109,14 +126,23 @@ export default function BackroomSubscription() {
 
   const planInfo = PLAN_DISPLAY[sub.plan || 'starter'];
   const isAnnual = sub.billing_interval === 'annual';
+  const isTrialing = sub.status === 'trialing';
   const renewalDate = sub.current_period_end
     ? new Date(sub.current_period_end).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
     : '—';
+  const trialEndDate = sub.trial_end
+    ? new Date(sub.trial_end).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+    : null;
+  const trialDaysLeft = sub.trial_end
+    ? Math.max(0, Math.ceil((new Date(sub.trial_end).getTime() - Date.now()) / 86400000))
+    : 0;
 
   const currentIdx = UPGRADE_ORDER.indexOf(sub.plan || 'starter');
-  const upgradePlans = UPGRADE_ORDER.slice(currentIdx + 1).map((key) => ({
+  // Show all other plans (upgrades AND downgrades)
+  const otherPlans = UPGRADE_ORDER.filter((key) => key !== (sub.plan || 'starter')).map((key) => ({
     key,
     ...PLAN_DISPLAY[key],
+    isUpgrade: UPGRADE_ORDER.indexOf(key) > currentIdx,
   }));
 
   return (
@@ -139,6 +165,25 @@ export default function BackroomSubscription() {
           }
         />
 
+        {/* Trial Banner */}
+        {isTrialing && (
+          <Card className="bg-primary/5 border-primary/20 max-w-4xl">
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                <Clock className="w-4 h-4 text-primary" />
+              </div>
+              <div>
+                <p className={cn(tokens.label.default, 'text-sm text-primary')}>
+                  Free trial — {trialDaysLeft} day{trialDaysLeft !== 1 ? 's' : ''} remaining
+                </p>
+                <p className="text-xs text-muted-foreground font-sans mt-0.5">
+                  Your trial ends {trialEndDate}. No charge until then. Cancel anytime.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl">
           {/* Current Plan */}
           <Card className="bg-card/60 border-border/40">
@@ -159,6 +204,11 @@ export default function BackroomSubscription() {
                   <Badge variant="outline" className="font-sans text-[10px]">
                     {isAnnual ? 'Annual' : 'Monthly'}
                   </Badge>
+                  {isTrialing && (
+                    <Badge className="bg-primary/10 text-primary border-primary/20 font-sans text-[10px]">
+                      Trial
+                    </Badge>
+                  )}
                 </div>
                 <div className="flex items-baseline gap-1">
                   <span className="text-2xl font-display tracking-wide text-foreground">
@@ -171,13 +221,18 @@ export default function BackroomSubscription() {
               <div className="border-t border-border/40 pt-3 text-sm font-sans text-muted-foreground space-y-1">
                 <div className="flex justify-between">
                   <span>Status</span>
-                  <Badge className="bg-primary/10 text-primary border-primary/20 font-sans text-[10px]">
-                    {sub.status === 'active' ? 'Active' : sub.status}
+                  <Badge className={cn(
+                    'font-sans text-[10px]',
+                    isTrialing
+                      ? 'bg-primary/10 text-primary border-primary/20'
+                      : 'bg-primary/10 text-primary border-primary/20',
+                  )}>
+                    {isTrialing ? 'Trialing' : sub.status === 'active' ? 'Active' : sub.status}
                   </Badge>
                 </div>
                 <div className="flex justify-between">
-                  <span>Renewal</span>
-                  <span className="text-foreground">{renewalDate}</span>
+                  <span>{isTrialing ? 'Trial ends' : 'Renewal'}</span>
+                  <span className="text-foreground">{isTrialing ? trialEndDate : renewalDate}</span>
                 </div>
               </div>
             </CardContent>
@@ -220,31 +275,38 @@ export default function BackroomSubscription() {
             </CardContent>
           </Card>
 
-          {/* Upgrade Path */}
-          {upgradePlans.length > 0 && (
+          {/* ROI Card */}
+          <BackroomROICard subscriptionMonthlyCost={sub.monthly_cost} />
+
+          {/* Plan Change Options */}
+          {otherPlans.length > 0 && (
             <Card className="bg-card/60 border-border/40 md:col-span-2">
               <CardContent className="p-6 space-y-4">
-                <p className={cn(tokens.label.default, 'text-foreground')}>Upgrade Path</p>
+                <p className={cn(tokens.label.default, 'text-foreground')}>Change Plan</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {upgradePlans.map((up) => {
-                    const diff = (isAnnual ? up.annualPrice : up.price) - (isAnnual ? planInfo.annualPrice : planInfo.price);
+                  {otherPlans.map((p) => {
+                    const diff = (isAnnual ? p.annualPrice : p.price) - (isAnnual ? planInfo.annualPrice : planInfo.price);
                     return (
                       <button
-                        key={up.key}
-                        onClick={openPortal}
+                        key={p.key}
+                        onClick={() => handlePlanClick(p.key)}
                         className="p-4 rounded-xl border border-border/50 bg-card/40 text-left hover:border-primary/50 hover:bg-accent/30 transition-colors"
                       >
                         <div className="flex justify-between items-start">
                           <div>
-                            <p className={cn(tokens.label.default, 'text-foreground')}>{up.name}</p>
+                            <p className={cn(tokens.label.default, 'text-foreground')}>{p.name}</p>
                             <p className="text-xs text-muted-foreground font-sans mt-0.5">
-                              +${diff}/mo from your current plan
+                              {diff > 0 ? '+' : ''}${diff}/mo from your current plan
                             </p>
                           </div>
-                          <ArrowUpRight className="w-4 h-4 text-primary shrink-0" />
+                          {p.isUpgrade ? (
+                            <ArrowUpRight className="w-4 h-4 text-primary shrink-0" />
+                          ) : (
+                            <ArrowDownRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                          )}
                         </div>
                         <p className="text-lg font-display tracking-wide text-foreground mt-2">
-                          ${isAnnual ? up.annualPrice : up.price}/mo
+                          ${isAnnual ? p.annualPrice : p.price}/mo
                         </p>
                       </button>
                     );
@@ -257,6 +319,17 @@ export default function BackroomSubscription() {
       </div>
 
       <AddScalesDialog open={addScalesOpen} onOpenChange={setAddScalesOpen} />
+
+      <DowngradeConfirmDialog
+        open={!!downgradeTarget}
+        onOpenChange={(open) => { if (!open) setDowngradeTarget(null); }}
+        currentPlan={sub.plan || 'starter'}
+        targetPlan={downgradeTarget || 'starter'}
+        onConfirm={() => {
+          setDowngradeTarget(null);
+          openPortal();
+        }}
+      />
     </DashboardLayout>
   );
 }
