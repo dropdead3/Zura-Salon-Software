@@ -64,7 +64,8 @@ export function ProductCostTrendSection() {
             {risingCosts.map((item) => (
               <div
                 key={item.productId}
-                className="flex items-center justify-between gap-4 py-2 px-3 rounded-lg bg-muted/40"
+                className="flex items-center justify-between gap-4 py-2 px-3 rounded-lg bg-muted/40 cursor-pointer hover:bg-muted/60 transition-colors"
+                onClick={() => setSelectedProduct(item)}
               >
                 {/* Product info */}
                 <div className="flex-1 min-w-0">
