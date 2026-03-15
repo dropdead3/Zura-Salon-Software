@@ -26,6 +26,10 @@ export default function BackroomAdmin() {
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="bg-slate-800/50 border border-slate-700/50 p-1">
+          <TabsTrigger value="analytics" className={`${tabTriggerClass} flex items-center gap-1.5`}>
+            <BarChart3 className="w-3.5 h-3.5" />
+            Analytics
+          </TabsTrigger>
           <TabsTrigger value="queue" className={`${tabTriggerClass} flex items-center gap-1.5`}>
             <ClipboardList className="w-3.5 h-3.5" />
             Price Queue
@@ -45,10 +49,6 @@ export default function BackroomAdmin() {
           <TabsTrigger value="billing" className={`${tabTriggerClass} flex items-center gap-1.5`}>
             <CreditCard className="w-3.5 h-3.5" />
             Billing
-          </TabsTrigger>
-          <TabsTrigger value="analytics" className={`${tabTriggerClass} flex items-center gap-1.5`}>
-            <BarChart3 className="w-3.5 h-3.5" />
-            Analytics
           </TabsTrigger>
           <TabsTrigger value="coach-performance" className={`${tabTriggerClass} flex items-center gap-1.5`}>
             <Users2 className="w-3.5 h-3.5" />
