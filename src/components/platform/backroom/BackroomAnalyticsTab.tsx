@@ -297,6 +297,15 @@ export function BackroomAnalyticsTab() {
                     <TableCell className="font-sans text-sm font-medium text-slate-200">
                       {signal.orgName}
                     </TableCell>
+                    <TableCell>
+                      <CoachAssignCell
+                        orgId={signal.orgId}
+                        coachByOrg={coachByOrg}
+                        teamMembers={teamMembers || []}
+                        onAssign={(coachUserId) => assignCoach.mutate({ coachUserId, organizationId: signal.orgId })}
+                        onUnassign={(coachUserId) => unassignCoach.mutate({ coachUserId, organizationId: signal.orgId })}
+                      />
+                    </TableCell>
                     <TableCell className="font-sans text-sm tabular-nums">
                       {signal.avgReweighPct != null ? (
                         <PlatformBadge
