@@ -1,0 +1,1 @@
+ALTER TABLE public.service_allowance_policies ADD COLUMN IF NOT EXISTS billing_mode TEXT NOT NULL DEFAULT 'allowance';

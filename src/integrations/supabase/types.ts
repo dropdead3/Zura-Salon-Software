@@ -17175,6 +17175,7 @@ export type Database = {
       service_allowance_policies: {
         Row: {
           allowance_unit: string
+          billing_mode: string
           created_at: string
           created_by: string | null
           id: string
@@ -17190,6 +17191,7 @@ export type Database = {
         }
         Insert: {
           allowance_unit?: string
+          billing_mode?: string
           created_at?: string
           created_by?: string | null
           id?: string
@@ -17205,6 +17207,7 @@ export type Database = {
         }
         Update: {
           allowance_unit?: string
+          billing_mode?: string
           created_at?: string
           created_by?: string | null
           id?: string
