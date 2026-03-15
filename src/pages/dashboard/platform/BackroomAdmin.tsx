@@ -55,6 +55,10 @@ export default function BackroomAdmin() {
             <Users2 className="w-3.5 h-3.5" />
             Coach Performance
           </TabsTrigger>
+          <TabsTrigger value="refund-history" className={`${tabTriggerClass} flex items-center gap-1.5`}>
+            <ReceiptText className="w-3.5 h-3.5" />
+            Refund History
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="analytics" className="mt-6">
