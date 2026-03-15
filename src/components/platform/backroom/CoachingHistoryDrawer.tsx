@@ -36,7 +36,6 @@ export function CoachingHistoryDrawer({ orgId, orgName, open, onOpenChange }: Co
 
       if (error) throw error;
 
-      // Resolve sender names
       const userIds = [...new Set((data || []).map((e) => e.user_id).filter(Boolean))] as string[];
       let userMap: Record<string, string> = {};
 
@@ -65,16 +64,16 @@ export function CoachingHistoryDrawer({ orgId, orgName, open, onOpenChange }: Co
   });
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="bg-[hsl(var(--platform-bg))] border-l border-slate-700/50 w-[400px] sm:max-w-[400px]">
-        <SheetHeader className="mb-6">
-          <SheetTitle className="font-display text-base tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[420px] max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="font-display text-base tracking-wide uppercase">
             Coaching History
-          </SheetTitle>
-          <SheetDescription className="font-sans text-sm text-slate-400">
+          </DialogTitle>
+          <DialogDescription className="font-sans text-sm text-muted-foreground">
             {orgName}
-          </SheetDescription>
-        </SheetHeader>
+          </DialogDescription>
+        </DialogHeader>
 
         {isLoading ? (
           <div className="flex items-center justify-center h-40">
@@ -88,8 +87,7 @@ export function CoachingHistoryDrawer({ orgId, orgName, open, onOpenChange }: Co
           </div>
         ) : (
           <div className="relative space-y-0">
-            {/* Timeline line */}
-            <div className="absolute left-[15px] top-2 bottom-2 w-px bg-slate-700/50" />
+            <div className="absolute left-[15px] top-2 bottom-2 w-px bg-border" />
 
             {entries.map((entry) => {
               const reason = (entry.details?.reason as string) || 'Coaching outreach';
@@ -98,27 +96,25 @@ export function CoachingHistoryDrawer({ orgId, orgName, open, onOpenChange }: Co
 
               return (
                 <div key={entry.id} className="relative flex gap-3 py-3 pl-0">
-                  {/* Dot */}
                   <div className="relative z-10 flex-shrink-0 w-[30px] flex items-start justify-center pt-0.5">
-                    <div className="w-2.5 h-2.5 rounded-full bg-violet-400 ring-2 ring-[hsl(var(--platform-bg))]" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-primary ring-2 ring-background" />
                   </div>
 
-                  {/* Content */}
                   <div className="flex-1 min-w-0 space-y-1">
                     <div className="flex items-center gap-2">
-                      <User className="w-3 h-3 text-slate-500 flex-shrink-0" />
-                      <span className="font-sans text-sm text-slate-200 truncate">
+                      <User className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                      <span className="font-sans text-sm text-foreground truncate">
                         {entry.senderName || 'Platform Admin'}
                       </span>
                     </div>
-                    <p className="font-sans text-xs text-slate-400">{reason}</p>
+                    <p className="font-sans text-xs text-muted-foreground">{reason}</p>
                     {(reweighPct != null || wastePct != null) && (
-                      <div className="flex gap-3 font-sans text-[11px] text-slate-500">
+                      <div className="flex gap-3 font-sans text-[11px] text-muted-foreground/70">
                         {reweighPct != null && <span>Reweigh: {reweighPct.toFixed(0)}%</span>}
                         {wastePct != null && <span>Waste: {wastePct.toFixed(1)}%</span>}
                       </div>
                     )}
-                    <p className="font-sans text-[11px] text-slate-600">
+                    <p className="font-sans text-[11px] text-muted-foreground/50">
                       {formatRelativeTime(entry.created_at)}
                     </p>
                   </div>
@@ -127,7 +123,7 @@ export function CoachingHistoryDrawer({ orgId, orgName, open, onOpenChange }: Co
             })}
           </div>
         )}
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 }
