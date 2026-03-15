@@ -140,7 +140,7 @@ interface UserWithRole {
 }
 
 
-type SettingsCategory = 'my-profile' | 'business' | 'email' | 'sms' | 'service-flows' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'access-hub' | 'locations' | 'dayrate' | 'forms' | 'loyalty' | 'feedback' | 'leaderboard' | 'team-rewards' | 'kiosk' | 'services' | 'retail-products' | null;
+type SettingsCategory = 'my-profile' | 'business' | 'email' | 'sms' | 'service-flows' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'access-hub' | 'locations' | 'dayrate' | 'forms' | 'loyalty' | 'feedback' | 'leaderboard' | 'team-rewards' | 'kiosk' | 'services' | 'retail-products' | 'account-billing' | null;
 
 // Preset colors for icon customization
 const PRESET_COLORS = [
