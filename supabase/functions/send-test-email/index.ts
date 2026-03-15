@@ -34,6 +34,11 @@ const sampleVariables: Record<string, string> = {
   strike_severity: "Warning",
   strike_title: "Arrived 30 minutes late",
   incident_date: "January 19, 2026",
+  org_name: "Sample Salon Group",
+  reweigh_pct: "42",
+  waste_pct: "8.3",
+  session_count: "156",
+  reason: "Low reweigh compliance (<50%)",
 };
 
 function replaceTemplateVariables(template: string): string {

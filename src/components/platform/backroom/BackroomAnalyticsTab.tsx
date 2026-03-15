@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import {
@@ -15,6 +15,7 @@ import { BarChart3, Building2, DollarSign, TrendingDown, Loader2, Activity, Aler
 import { useBackroomPlatformAnalytics, type CoachingSignal } from '@/hooks/platform/useBackroomPlatformAnalytics';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 function KPICard({ icon: Icon, label, value, subtitle }: { icon: any; label: string; value: string; subtitle?: string }) {
   return (
@@ -35,13 +36,49 @@ function KPICard({ icon: Icon, label, value, subtitle }: { icon: any; label: str
   );
 }
 
+const COOLDOWN_MS = 48 * 60 * 60 * 1000; // 48 hours
+
+function formatCooldownLabel(coachedAt: string): string {
+  const diff = Date.now() - new Date(coachedAt).getTime();
+  const hours = Math.floor(diff / (60 * 60 * 1000));
+  if (hours < 1) return 'Coached just now';
+  if (hours < 24) return `Coached ${hours}h ago`;
+  return `Coached ${Math.floor(hours / 24)}d ago`;
+}
+
 export function BackroomAnalyticsTab() {
   const [sendingOrgId, setSendingOrgId] = useState<string | null>(null);
+  const [coachedMap, setCoachedMap] = useState<Record<string, string>>({});
   const { data: metrics, isLoading } = useBackroomPlatformAnalytics();
+
+  // Fetch last_backroom_coached_at for coaching signal orgs
+  useEffect(() => {
+    if (!metrics?.coachingSignals.length) return;
+    const orgIds = metrics.coachingSignals.map((s) => s.orgId);
+    supabase
+      .from('organizations')
+      .select('id, last_backroom_coached_at')
+      .in('id', orgIds)
+      .then(({ data }) => {
+        if (!data) return;
+        const map: Record<string, string> = {};
+        data.forEach((org: any) => {
+          if (org.last_backroom_coached_at) map[org.id] = org.last_backroom_coached_at;
+        });
+        setCoachedMap(map);
+      });
+  }, [metrics?.coachingSignals]);
+
+  const isOnCooldown = (orgId: string) => {
+    const coachedAt = coachedMap[orgId];
+    if (!coachedAt) return false;
+    return Date.now() - new Date(coachedAt).getTime() < COOLDOWN_MS;
+  };
 
   const handleSendCoachingEmail = async (signal: CoachingSignal) => {
     setSendingOrgId(signal.orgId);
     try {
+      // 1. Get org billing email
       const { data: org } = await supabase
         .from('organizations')
         .select('billing_email, name')
@@ -53,21 +90,36 @@ export function BackroomAnalyticsTab() {
         return;
       }
 
+      // 2. Look up template ID by key
+      const { data: template } = await supabase
+        .from('email_templates')
+        .select('id')
+        .eq('template_key', 'backroom_coaching')
+        .eq('is_active', true)
+        .single();
+
+      if (!template?.id) {
+        toast({ title: 'Template not found', description: 'The backroom_coaching email template is missing.', variant: 'destructive' });
+        return;
+      }
+
+      // 3. Invoke send-test-email with correct params
       const { error } = await supabase.functions.invoke('send-test-email', {
         body: {
-          to: org.billing_email,
-          template_key: 'backroom_coaching',
-          variables: {
-            org_name: signal.orgName,
-            reweigh_pct: signal.avgReweighPct?.toFixed(0) ?? 'N/A',
-            waste_pct: signal.avgWastePct?.toFixed(1) ?? 'N/A',
-            session_count: signal.sessionCount,
-            reason: signal.reason,
-          },
+          template_id: template.id,
+          recipient_email: org.billing_email,
         },
       });
 
       if (error) throw error;
+
+      // 4. Update cooldown timestamp
+      await supabase
+        .from('organizations')
+        .update({ last_backroom_coached_at: new Date().toISOString() } as any)
+        .eq('id', signal.orgId);
+
+      setCoachedMap((prev) => ({ ...prev, [signal.orgId]: new Date().toISOString() }));
       toast({ title: 'Coaching email sent', description: `Email sent to ${org.billing_email}` });
     } catch (err: any) {
       toast({ title: 'Failed to send email', description: err.message || 'Unknown error', variant: 'destructive' });
@@ -282,17 +334,30 @@ export function BackroomAnalyticsTab() {
                       {signal.reason}
                     </TableCell>
                     <TableCell>
-                      <PlatformButton
-                        variant="ghost"
-                        size="sm"
-                        loading={sendingOrgId === signal.orgId}
-                        disabled={sendingOrgId !== null}
-                        onClick={() => handleSendCoachingEmail(signal)}
-                        className="gap-1.5"
-                      >
-                        <Mail className="w-3.5 h-3.5" />
-                        <span className="font-sans text-xs">Coach</span>
-                      </PlatformButton>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="inline-block">
+                              <PlatformButton
+                                variant="ghost"
+                                size="sm"
+                                loading={sendingOrgId === signal.orgId}
+                                disabled={sendingOrgId !== null || isOnCooldown(signal.orgId)}
+                                onClick={() => handleSendCoachingEmail(signal)}
+                                className="gap-1.5"
+                              >
+                                <Mail className="w-3.5 h-3.5" />
+                                <span className="font-sans text-xs">Coach</span>
+                              </PlatformButton>
+                            </span>
+                          </TooltipTrigger>
+                          {isOnCooldown(signal.orgId) && (
+                            <TooltipContent>
+                              <span className="font-sans text-xs">{formatCooldownLabel(coachedMap[signal.orgId])}</span>
+                            </TooltipContent>
+                          )}
+                        </Tooltip>
+                      </TooltipProvider>
                     </TableCell>
                   </TableRow>
                 ))}
