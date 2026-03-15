@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import {
@@ -8,9 +9,12 @@ import {
   PlatformCardDescription,
 } from '@/components/platform/ui/PlatformCard';
 import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
+import { PlatformButton } from '@/components/platform/ui/PlatformButton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { BarChart3, Building2, DollarSign, TrendingDown, Loader2, Activity, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { BarChart3, Building2, DollarSign, TrendingDown, Loader2, Activity, AlertCircle, CheckCircle2, Mail } from 'lucide-react';
 import { useBackroomPlatformAnalytics, type CoachingSignal } from '@/hooks/platform/useBackroomPlatformAnalytics';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 
 function KPICard({ icon: Icon, label, value, subtitle }: { icon: any; label: string; value: string; subtitle?: string }) {
   return (
@@ -32,7 +36,45 @@ function KPICard({ icon: Icon, label, value, subtitle }: { icon: any; label: str
 }
 
 export function BackroomAnalyticsTab() {
+  const [sendingOrgId, setSendingOrgId] = useState<string | null>(null);
   const { data: metrics, isLoading } = useBackroomPlatformAnalytics();
+
+  const handleSendCoachingEmail = async (signal: CoachingSignal) => {
+    setSendingOrgId(signal.orgId);
+    try {
+      const { data: org } = await supabase
+        .from('organizations')
+        .select('billing_email, name')
+        .eq('id', signal.orgId)
+        .single();
+
+      if (!org?.billing_email) {
+        toast({ title: 'No billing email', description: `${signal.orgName} has no billing email configured.`, variant: 'destructive' });
+        return;
+      }
+
+      const { error } = await supabase.functions.invoke('send-test-email', {
+        body: {
+          to: org.billing_email,
+          template_key: 'backroom_coaching',
+          variables: {
+            org_name: signal.orgName,
+            reweigh_pct: signal.avgReweighPct?.toFixed(0) ?? 'N/A',
+            waste_pct: signal.avgWastePct?.toFixed(1) ?? 'N/A',
+            session_count: signal.sessionCount,
+            reason: signal.reason,
+          },
+        },
+      });
+
+      if (error) throw error;
+      toast({ title: 'Coaching email sent', description: `Email sent to ${org.billing_email}` });
+    } catch (err: any) {
+      toast({ title: 'Failed to send email', description: err.message || 'Unknown error', variant: 'destructive' });
+    } finally {
+      setSendingOrgId(null);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -197,6 +239,7 @@ export function BackroomAnalyticsTab() {
                   <TableHead className="font-sans text-xs text-slate-400">Sessions</TableHead>
                   <TableHead className="font-sans text-xs text-slate-400">Last Active</TableHead>
                   <TableHead className="font-sans text-xs text-slate-400">Signal</TableHead>
+                  <TableHead className="font-sans text-xs text-slate-400">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -237,6 +280,19 @@ export function BackroomAnalyticsTab() {
                     </TableCell>
                     <TableCell className="font-sans text-xs text-slate-400 max-w-[200px] truncate">
                       {signal.reason}
+                    </TableCell>
+                    <TableCell>
+                      <PlatformButton
+                        variant="ghost"
+                        size="sm"
+                        loading={sendingOrgId === signal.orgId}
+                        disabled={sendingOrgId !== null}
+                        onClick={() => handleSendCoachingEmail(signal)}
+                        className="gap-1.5"
+                      >
+                        <Mail className="w-3.5 h-3.5" />
+                        <span className="font-sans text-xs">Coach</span>
+                      </PlatformButton>
                     </TableCell>
                   </TableRow>
                 ))}
