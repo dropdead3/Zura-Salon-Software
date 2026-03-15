@@ -432,36 +432,17 @@ export function BackroomPaywall() {
           </CardContent>
         </Card>
 
-        {/* Trial Duration Selector */}
-        <Card className="bg-card/60 border-border/40 max-w-2xl mx-auto">
-          <CardContent className="p-5">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                <Clock className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <p className={cn(tokens.label.default, 'text-foreground')}>Start with a Free Trial</p>
-                <p className="text-xs text-muted-foreground font-sans mt-0.5">
-                  No charge until your trial ends. Cancel anytime.
-                </p>
-              </div>
+        {/* Money-Back Guarantee */}
+        <Card className="bg-emerald-500/5 border-emerald-500/20 max-w-2xl mx-auto">
+          <CardContent className="p-5 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center shrink-0">
+              <ShieldCheck className="w-6 h-6 text-emerald-400" />
             </div>
-            <div className="flex gap-3">
-              {TRIAL_OPTIONS.map((opt) => (
-                <button
-                  key={opt.days}
-                  type="button"
-                  onClick={() => setTrialDays(opt.days)}
-                  className={cn(
-                    'flex-1 py-2.5 px-4 rounded-lg border-2 text-sm font-sans font-medium transition-all duration-200',
-                    trialDays === opt.days
-                      ? 'border-primary bg-primary/5 text-primary'
-                      : 'border-border/50 bg-card/40 text-muted-foreground hover:border-primary/30',
-                  )}
-                >
-                  {opt.label}
-                </button>
-              ))}
+            <div>
+              <p className={cn(tokens.label.default, 'text-emerald-300 text-sm')}>30-Day Money-Back Guarantee</p>
+              <p className="text-xs text-muted-foreground font-sans mt-0.5">
+                If Backroom doesn't work for your salon, get a full refund within 30 days. No questions asked.
+              </p>
             </div>
           </CardContent>
         </Card>
