@@ -810,6 +810,16 @@ function LocationEntitlementPanel({
         </table>
       </div>
 
+      {/* Admin Activate Dialog */}
+      <AdminActivateDialog
+        open={showActivateDialog}
+        onOpenChange={setShowActivateDialog}
+        orgId={orgId}
+        orgName={orgName}
+        hasStripeCustomer={hasStripeCustomer}
+        locations={locations.map((l) => ({ id: l.id, name: l.name, city: l.city }))}
+      />
+
       {/* Refund Confirmation Dialog */}
       <Dialog open={!!refundTarget} onOpenChange={(open) => !open && setRefundTarget(null)}>
         <DialogContent>
