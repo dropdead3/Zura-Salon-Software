@@ -1,153 +1,96 @@
 
 
-## Timezone-Safe Scheduling (Implemented)
+# Backroom Platform Admin — Comprehensive Enhancements
 
-### Problem
-`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
+## What's Missing Today
 
-### Solution
-- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
-- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
-- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
+The current Backroom admin hub has price management, entitlements, supply library, and basic analytics. But it lacks the operational tools platform admins need to actually *run* the Backroom business: billing health visibility, coaching signals, trial lifecycle automation, and self-service diagnostics.
 
-### Files Updated
-- `ScheduleHeader.tsx` — today button, quick days, isToday checks
-- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
-- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
-- `MonthView.tsx` — today highlight
-- `AgendaView.tsx` — today/tomorrow labels, today border
-- `ScheduleActionBar.tsx` — payment queue timing
-- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
-- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
-- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
-- `useHuddles.ts` — today's huddle query
+---
 
-## Auto-Reorder with Supplier Communication (Implemented)
+## 1. Billing & Payment Health Panel (New Tab: "Billing")
 
-### What It Does
-Organizations can opt into automatic reorder — when stock dips below threshold, POs are calculated (using MOQ and par levels) and sent directly to the supplier via email.
+Add a 6th tab to `BackroomAdmin.tsx` showing Backroom-specific billing health:
 
-### Database Changes
-- `products.par_level` (INT, nullable) — desired stock level to reorder up to
-- `product_suppliers.moq` (INT, default 1) — minimum order quantity
-- `inventory_alert_settings.auto_reorder_enabled` (BOOL, default false)
-- `inventory_alert_settings.auto_reorder_mode` (TEXT, default 'to_par') — 'to_par' or 'moq_only'
-- `inventory_alert_settings.max_auto_reorder_value` (NUMERIC, nullable) — daily spend cap
-- `purchase_orders.supplier_confirmed_at` (TIMESTAMPTZ, nullable) — for tracking confirmations
+**KPI cards**: Active subscriptions, past-due count, MRR at risk, avg days overdue.
 
-### Quantity Calculation
-```
-deficit = par_level - quantity_on_hand
-order_qty = max(moq, deficit)
-if moq > 1: round up to nearest MOQ multiple
-```
-Fallback: if par_level is null, uses `reorder_level * 2`.
+**Per-org billing table** (queried from `organizations` + `backroom_location_entitlements`):
+- Org name, subscription status badge (active/past_due/cancelled/trialing)
+- Payment method status (valid/expiring/missing) — derived from Stripe via `stripe_customer_id`
+- Last payment date + amount
+- Next billing date
+- Days overdue (if past_due)
+- Plan end / trial end date
+- Action buttons: "View in Accounts", "Send Payment Reminder"
 
-### Files Updated
-- Migration: Added columns to products, product_suppliers, inventory_alert_settings, purchase_orders
-- `check-reorder-levels/index.ts` — auto-send logic with MOQ/par calculation, spend cap, email invocation
-- `AlertSettingsCard.tsx` — auto-reorder toggle, mode selector, spend cap input
-- `useInventoryAlertSettings.ts` — updated interface
-- `useProducts.ts` — added par_level to Product interface
-- `useProductSuppliers.ts` — added moq to ProductSupplier interface
-- `ProductEditDialog.tsx` — added par level field
-- `RetailProductsSettingsContent.tsx` — added par level to product form
-- `SupplierDialog.tsx` — added MOQ field
+**At-risk filter**: Quick toggle to show only past_due/cancelled/expiring orgs.
 
-### Safety Features
-- Spend cap: daily auto-reorder pauses when cumulative PO value exceeds cap
-- Audit trail: auto_reorder logged as stock_movement reason
-- Supplier confirmation tracking via supplier_confirmed_at timestamp
+Data sources: `organizations` (subscription_status, stripe_customer_id, billing_email), `backroom_location_entitlements` (trial_end_date, stripe_subscription_id), existing `useStripePaymentsHealth` pattern.
 
-## Product Movement Rating Badges (Implemented)
+---
 
-### What It Does
-Every product gets a dynamic movement rating badge (Best Seller, Popular, Steady, Slow Mover, Stagnant, Dead Weight) computed from 90-day sales velocity data.
+## 2. Coaching & Adoption Signals (Enhance Analytics Tab)
 
-### Rating Tiers
-- **Best Seller**: Top 10% velocity AND >0.5 units/day (emerald)
-- **Popular**: Top 25% velocity AND >0.2 units/day (blue)
-- **Steady**: Velocity >0.05/day (muted)
-- **Slow Mover**: Velocity >0 but ≤0.05/day (amber)
-- **Stagnant**: Zero velocity, sold within 180 days (orange)
-- **Dead Weight**: Zero velocity, 180+ days or never sold (red)
-- Products with zero stock excluded from negative ratings
+Add a "Needs Coaching" section to the existing Analytics tab:
 
-### Files Created
-- `src/lib/productMovementRating.ts` — pure rating logic + badge config
-- `src/hooks/useProductVelocity.ts` — lightweight 90-day POS velocity query
-- `src/components/ui/MovementBadge.tsx` — shared badge component with tooltip
+**Low reweigh compliance table**: Orgs where avg `reweigh_compliance_rate` < 50% from `staff_backroom_performance` — sorted worst-first. Columns: org name, avg reweigh %, avg waste %, session count, last active date.
 
-### Files Updated
-- `RetailProductsSettingsContent.tsx` — Movement column + filter dropdown in products table
-- `RetailAnalyticsContent.tsx` — Movement badges on product performance table + Movement Distribution card (donut chart with actionable callouts)
-- `ProductCard.tsx` — Best Seller/Popular badges on public shop cards (positive only)
-- `ProductDetailModal.tsx` — Movement badge with velocity context
+**Inactive orgs**: Orgs with `backroom_enabled` but zero snapshots or no activity in 30+ days — "Setup incomplete" or "Gone dormant".
 
-## Inventory Intelligence Suite v2 (Implemented)
+**Usage health score**: Simple red/amber/green dot per org based on: has snapshots (green), has snapshots but low reweigh (amber), no snapshots (red).
 
-### 1. Dead Stock Auto-Clearance Pipeline
-- `DeadStockAlertCard.tsx` — Surfaces Dead Weight/Stagnant products not yet in clearance with suggested discount tiers (10%/25%/50% based on idle days)
-- One-click "Mark for Clearance" applies discount and sets clearance_status
+**Coaching action**: "Send Coaching Email" button per org that triggers a pre-built email template via the existing `sendEmail` pattern.
 
-### 2. Supplier Lead Time Tracker
-- `usePurchaseOrders.ts` — `useMarkPurchaseOrderReceived` already computes actual delivery days and updates `product_suppliers.avg_delivery_days` via running average
-- `parLevelSuggestion.ts` — Updated to accept supplier-provided lead time instead of hardcoded 7-day default, with bounds clamping
+---
 
-### 3. Inventory Valuation Dashboard Card
-- `InventoryValuationCard.tsx` — Shows total inventory at cost/retail, potential margin %, capital-at-risk (slow/stagnant/dead weight), with donut chart breakdown
+## 3. Backroom Trial Expiration Cron (New Edge Function)
 
-### 4. Reorder Approval Queue
-- `ReorderApprovalCard.tsx` — Surfaces draft POs from auto-reorder with one-click approve (→ sent) or reject (→ cancelled)
+The existing `trial-expiration` function only handles org-level trials. Create `backroom-trial-expiration` to handle per-location Backroom trials:
 
-### 5. Stock Transfer Between Locations
-- Migration: Created `stock_transfers` table with RLS (org member read, org admin manage)
-- `useStockTransfers.ts` — CRUD hooks for stock transfers with stock movement logging
-- `StockTransferDialog.tsx` — Dialog for creating transfers between locations
-- `RetailProductsSettingsContent.tsx` — "Transfer Stock" button added to Inventory tab (visible for multi-location orgs)
+- Query `backroom_location_entitlements` where `status = 'trial'` and `trial_end_date` is past
+- If org has a `stripe_subscription_id` on the entitlement → set status to `active` (converted)
+- If no payment method → set status to `suspended`
+- Send warning emails at 7/3/1 days before expiry
+- Insert `platform_notifications` for each transition
+- Log results to `edge_function_logs`
 
-## Enhancement 1: Expiry Tracking (Implemented)
+Register as a daily cron job.
 
-### What It Does
-Products can have an optional expiration date (`expires_at`) and per-product alert threshold (`expiry_alert_days`, default 30). The system surfaces expiring inventory with color-coded badges in the product table and an analytics card with auto-clearance suggestions.
+---
 
-### Database Changes
-- `products.expires_at` (DATE, nullable) — expiration date for perishable products
-- `products.expiry_alert_days` (INTEGER, default 30) — days before expiry to trigger alerts
+## 4. Legacy Org Backfill Utility (Entitlements Tab)
 
-### Expiry Alert Buckets
-- **Expired** (red): past expiration → suggests 50% markdown
-- **Critical** (orange): within alert threshold → suggests 25% markdown
-- **Warning** (amber): within 2× alert threshold → suggests 10% markdown
+Add a "Backfill" button in the Entitlements tab header for orgs that have `backroom_enabled = true` but zero rows in `backroom_location_entitlements`:
 
-### Files Created
-- `src/components/dashboard/analytics/ExpiryAlertCard.tsx` — PinnableCard showing expiring products with one-click clearance actions
+- Detect orphaned orgs (flag enabled, no location entitlements)
+- Show count: "3 orgs have Backroom enabled without location entitlements"
+- "Backfill All" button: for each orphaned org, create an entitlement row for every active location with `status: 'active'`, `plan_tier: 'starter'`
+- Confirmation dialog before executing
 
-### Files Updated
-- `src/hooks/useProducts.ts` — Added `expires_at`, `expiry_alert_days` to Product interface; added `expiringOnly` filter
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Expiry date + alert days in product form; color-coded Expiry column in product table
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ExpiryAlertCard into analytics hub
+---
 
-## Enhancement 2: Shrinkage Detection (Implemented)
+## 5. Entitlements Tab — Trial & Billing Columns
 
-### What It Does
-Physical stocktake workflow with variance reporting. Staff record actual counts via a Stocktake dialog, and the system compares against expected quantities (system records). A Shrinkage Report card in analytics surfaces products with negative variance (loss) ranked by estimated cost impact.
+Enhance the existing location entitlement panel to show:
 
-### Database Changes
-- Created `stock_counts` table with computed `variance` column (counted - expected), RLS policies (org member read/insert, org admin update/delete), and indexes
+- **Trial end date** column (already in DB, not shown in UI)
+- **Stripe subscription ID** link (truncated, clickable)
+- **Days remaining** for trials (calculated from `trial_end_date`)
+- **Start trial** action: set status to `trial` with a date picker for `trial_end_date`
 
-### Shrinkage Calculation
-```
-variance = counted_quantity - expected_quantity
-shrinkage_units = |variance| when variance < 0
-shrinkage_cost = shrinkage_units × cost_price
-```
+---
 
-### Files Created
-- `src/hooks/useStockCounts.ts` — CRUD hooks for stock counts + `useShrinkageSummary` for aggregated shrinkage data
-- `src/components/dashboard/settings/inventory/StocktakeDialog.tsx` — Full stocktake UI with search, inline count entry, real-time variance display
-- `src/components/dashboard/analytics/ShrinkageReportCard.tsx` — PinnableCard showing products with shrinkage, severity badges, estimated loss
+## Files to Create/Modify
 
-### Files Updated
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Added "Stocktake" button to Inventory tab toolbar
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ShrinkageReportCard into analytics hub
+| File | Action |
+|------|--------|
+| `src/pages/dashboard/platform/BackroomAdmin.tsx` | Add "Billing" tab |
+| `src/components/platform/backroom/BackroomBillingTab.tsx` | **New** — billing health panel |
+| `src/hooks/platform/useBackroomBillingHealth.ts` | **New** — query billing data |
+| `src/components/platform/backroom/BackroomAnalyticsTab.tsx` | Add coaching/adoption signals section |
+| `src/hooks/platform/useBackroomPlatformAnalytics.ts` | Add coaching metrics (low reweigh, inactive orgs) |
+| `src/components/platform/backroom/BackroomEntitlementsTab.tsx` | Add trial columns, backfill utility, start-trial action |
+| `supabase/functions/backroom-trial-expiration/index.ts` | **New** — per-location trial expiration cron |
+
+No database migrations required — all columns already exist in `backroom_location_entitlements`.
+
