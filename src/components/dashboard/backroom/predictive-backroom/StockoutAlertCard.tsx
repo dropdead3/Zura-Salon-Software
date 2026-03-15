@@ -2,8 +2,9 @@
  * StockoutAlertCard — Compact alert for high/critical risk products.
  */
 
-import { AlertTriangle, ShoppingCart } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
+import { QuickReorderButton } from '@/components/dashboard/backroom/supply-intelligence/QuickReorderButton';
 import { cn } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
