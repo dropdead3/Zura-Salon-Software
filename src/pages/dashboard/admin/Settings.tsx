@@ -631,7 +631,7 @@ export default function Settings() {
     const param = searchParams.get('category');
     if (param === 'schedule') return 'services' as SettingsCategory;
     if (param === 'website') return null; // Redirected to Website Hub
-    if (param && param in { business: 1, email: 1, sms: 1, 'service-flows': 1, users: 1, onboarding: 1, integrations: 1, system: 1, program: 1, levels: 1, 'access-hub': 1, locations: 1, dayrate: 1, forms: 1, loyalty: 1, feedback: 1, leaderboard: 1, 'team-rewards': 1, kiosk: 1, services: 1, 'retail-products': 1 }) {
+    if (param && param in { business: 1, email: 1, sms: 1, 'service-flows': 1, users: 1, onboarding: 1, integrations: 1, system: 1, program: 1, levels: 1, 'access-hub': 1, locations: 1, dayrate: 1, forms: 1, loyalty: 1, feedback: 1, leaderboard: 1, 'team-rewards': 1, kiosk: 1, services: 1, 'retail-products': 1, 'account-billing': 1 }) {
       return param as SettingsCategory;
     }
     return null;
