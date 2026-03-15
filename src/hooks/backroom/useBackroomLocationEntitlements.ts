@@ -21,6 +21,9 @@ export interface BackroomLocationEntitlement {
   activated_by: string | null;
   notes: string | null;
   refund_eligible_until: string | null;
+  refunded_at: string | null;
+  refunded_by: string | null;
+  prior_refund_count: number;
   created_at: string;
   updated_at: string;
 }
