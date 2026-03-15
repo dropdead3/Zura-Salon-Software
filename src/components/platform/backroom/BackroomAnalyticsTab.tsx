@@ -308,30 +308,40 @@ export function BackroomAnalyticsTab() {
                       {signal.reason}
                     </TableCell>
                     <TableCell>
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span className="inline-block">
-                              <PlatformButton
-                                variant="ghost"
-                                size="sm"
-                                loading={sendingOrgId === signal.orgId}
-                                disabled={sendingOrgId !== null || isOnCooldown(signal.orgId)}
-                                onClick={() => handleSendCoachingEmail(signal)}
-                                className="gap-1.5"
-                              >
-                                <Mail className="w-3.5 h-3.5" />
-                                <span className="font-sans text-xs">Coach</span>
-                              </PlatformButton>
-                            </span>
-                          </TooltipTrigger>
-                          {isOnCooldown(signal.orgId) && (
-                            <TooltipContent>
-                              <span className="font-sans text-xs">{formatCooldownLabel(coachedMap[signal.orgId])}</span>
-                            </TooltipContent>
-                          )}
-                        </Tooltip>
-                      </TooltipProvider>
+                      <div className="flex items-center gap-1">
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="inline-block">
+                                <PlatformButton
+                                  variant="ghost"
+                                  size="sm"
+                                  loading={sendingOrgId === signal.orgId}
+                                  disabled={sendingOrgId !== null || isOnCooldown(signal.orgId)}
+                                  onClick={() => handleSendCoachingEmail(signal)}
+                                  className="gap-1.5"
+                                >
+                                  <Mail className="w-3.5 h-3.5" />
+                                  <span className="font-sans text-xs">Coach</span>
+                                </PlatformButton>
+                              </span>
+                            </TooltipTrigger>
+                            {isOnCooldown(signal.orgId) && (
+                              <TooltipContent>
+                                <span className="font-sans text-xs">{formatCooldownLabel(coachedMap[signal.orgId])}</span>
+                              </TooltipContent>
+                            )}
+                          </Tooltip>
+                        </TooltipProvider>
+                        <PlatformButton
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setHistoryOrg({ id: signal.orgId, name: signal.orgName })}
+                          className="gap-1.5"
+                        >
+                          <History className="w-3.5 h-3.5" />
+                        </PlatformButton>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
