@@ -76,3 +76,80 @@ export function calculateOverageCharge(input: AllowanceBillingInput): AllowanceB
     unusedAllowance: roundCost(unusedAllowance),
   };
 }
+
+// ─── Product Cost Pass-Through ─────────────────────────────────
+
+export interface ProductCostInput {
+  /** Total wholesale cost of all products used */
+  wholesaleCost: number;
+  /** Markup percentage to apply (e.g. 40 = 40%) */
+  markupPct: number;
+}
+
+export interface ProductCostResult {
+  wholesaleCost: number;
+  markupPct: number;
+  chargeAmount: number;
+  profitMargin: number;
+}
+
+/**
+ * Calculate the client-facing product cost charge with markup.
+ *
+ * chargeAmount = wholesaleCost × (1 + markupPct / 100)
+ * profitMargin = chargeAmount − wholesaleCost
+ */
+export function calculateProductCostCharge(input: ProductCostInput): ProductCostResult {
+  const { wholesaleCost, markupPct } = input;
+  const chargeAmount = roundCost(wholesaleCost * (1 + markupPct / 100));
+  const profitMargin = roundCost(chargeAmount - wholesaleCost);
+
+  return {
+    wholesaleCost: roundCost(wholesaleCost),
+    markupPct,
+    chargeAmount,
+    profitMargin,
+  };
+}
+  const {
+    includedAllowanceQty,
+    actualUsageQty,
+    overageRate,
+    overageRateType,
+    overageCap,
+  } = input;
+
+  const overageQty = Math.max(0, actualUsageQty - includedAllowanceQty);
+  const unusedAllowance = Math.max(0, includedAllowanceQty - actualUsageQty);
+
+  let charge = 0;
+
+  if (overageQty > 0) {
+    switch (overageRateType) {
+      case 'per_unit':
+        charge = overageQty * overageRate;
+        break;
+      case 'flat':
+        charge = overageRate;
+        break;
+      case 'tiered':
+        // BUG-6 fix: Guard against unimplemented tiered pricing
+        // Tiered pricing requires bracket configuration not yet available.
+        // Fall back to per_unit with a console warning so salons don't get silent miscalculation.
+        console.warn('[AllowanceBilling] Tiered pricing not yet implemented — falling back to per_unit rate');
+        charge = overageQty * overageRate;
+        break;
+    }
+  }
+
+  if (overageCap !== null && overageCap >= 0) {
+    charge = Math.min(charge, overageCap);
+  }
+
+  return {
+    overageQty: roundCost(overageQty),
+    chargeAmount: roundCost(charge),
+    isOverage: overageQty > 0,
+    unusedAllowance: roundCost(unusedAllowance),
+  };
+}
