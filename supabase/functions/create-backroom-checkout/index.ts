@@ -68,7 +68,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { organization_id, plan, scale_count = 0, billing_interval = 'monthly', success_url, cancel_url } = await req.json();
+    const { organization_id, plan, scale_count = 0, billing_interval = 'monthly', trial_days = 0, success_url, cancel_url } = await req.json();
+    const validTrialDays = [7, 14].includes(trial_days) ? trial_days : 0;
 
     if (!organization_id) {
       throw new Error("organization_id is required");
