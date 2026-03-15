@@ -22123,6 +22123,129 @@ export type Database = {
           },
         ]
       }
+      wholesale_price_queue: {
+        Row: {
+          brand: string
+          confidence_score: number | null
+          created_at: string
+          currency: string
+          fetched_at: string
+          id: string
+          notes: string | null
+          previous_price: number | null
+          price_delta_pct: number | null
+          product_id: string | null
+          product_name: string
+          recommended_retail: number | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          sku: string | null
+          source_id: string | null
+          status: Database["public"]["Enums"]["price_queue_status"]
+          wholesale_price: number
+        }
+        Insert: {
+          brand: string
+          confidence_score?: number | null
+          created_at?: string
+          currency?: string
+          fetched_at?: string
+          id?: string
+          notes?: string | null
+          previous_price?: number | null
+          price_delta_pct?: number | null
+          product_id?: string | null
+          product_name: string
+          recommended_retail?: number | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          sku?: string | null
+          source_id?: string | null
+          status?: Database["public"]["Enums"]["price_queue_status"]
+          wholesale_price: number
+        }
+        Update: {
+          brand?: string
+          confidence_score?: number | null
+          created_at?: string
+          currency?: string
+          fetched_at?: string
+          id?: string
+          notes?: string | null
+          previous_price?: number | null
+          price_delta_pct?: number | null
+          product_id?: string | null
+          product_name?: string
+          recommended_retail?: number | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          sku?: string | null
+          source_id?: string | null
+          status?: Database["public"]["Enums"]["price_queue_status"]
+          wholesale_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wholesale_price_queue_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wholesale_price_queue_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "wholesale_price_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wholesale_price_sources: {
+        Row: {
+          api_endpoint: string | null
+          api_key_secret_name: string | null
+          auto_apply_threshold: number | null
+          brand: string
+          created_at: string
+          id: string
+          is_active: boolean
+          last_polled_at: string | null
+          max_auto_delta_pct: number | null
+          scrape_frequency: string
+          source_type: string
+          updated_at: string
+        }
+        Insert: {
+          api_endpoint?: string | null
+          api_key_secret_name?: string | null
+          auto_apply_threshold?: number | null
+          brand: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_polled_at?: string | null
+          max_auto_delta_pct?: number | null
+          scrape_frequency?: string
+          source_type?: string
+          updated_at?: string
+        }
+        Update: {
+          api_endpoint?: string | null
+          api_key_secret_name?: string | null
+          auto_apply_threshold?: number | null
+          brand?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_polled_at?: string | null
+          max_auto_delta_pct?: number | null
+          scrape_frequency?: string
+          source_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       zura_guardrails: {
         Row: {
           created_at: string
@@ -22754,6 +22877,7 @@ export type Database = {
         | "homebase"
         | "rippling"
         | "wave"
+      price_queue_status: "pending" | "approved" | "rejected" | "auto_applied"
       program_status: "active" | "paused" | "completed" | "restarted"
       rsvp_status: "pending" | "accepted" | "declined"
       shift_role_context:
@@ -23016,6 +23140,7 @@ export const Constants = {
         "rippling",
         "wave",
       ],
+      price_queue_status: ["pending", "approved", "rejected", "auto_applied"],
       program_status: ["active", "paused", "completed", "restarted"],
       rsvp_status: ["pending", "accepted", "declined"],
       shift_role_context: [
