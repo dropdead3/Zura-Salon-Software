@@ -58,10 +58,10 @@ export function useEvaluateComplianceLog() {
       const manualOverrideSet = new Set<string>();
 
       if (sessionIds.length > 0) {
-        const { data: bowls } = await supabase
+        const { data: bowls } = await (supabase
           .from('mix_bowls')
           .select('session_id, post_service_weight_g, is_manual_override')
-          .in('session_id', sessionIds);
+          .in('session_id', sessionIds) as any);
 
         (bowls ?? []).forEach((b: any) => {
           if (b.post_service_weight_g != null && b.post_service_weight_g > 0) {
