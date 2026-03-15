@@ -319,21 +319,43 @@ async function handleCheckoutCompleted(
   }
 
   const orgId = metadata.organization_id;
-  const backroomPlan = metadata.backroom_plan || 'starter';
   const scaleCount = parseInt(metadata.scale_count || '0', 10);
   const billingInterval = metadata.billing_interval || 'monthly';
-  const locationIds = metadata.location_ids ? JSON.parse(metadata.location_ids) as string[] : [];
-  
-  console.log(`Enabling backroom for organization: ${orgId}, plan: ${backroomPlan}, scales: ${scaleCount}, interval: ${billingInterval}, locations: ${locationIds.length}`);
+  const stripeSubId = (session.subscription as string) || null;
+
+  // Parse per-location plans (new format) or fall back to legacy single plan
+  let locationPlans: { location_id: string; plan_tier: string; stylist_count: number }[] = [];
+
+  if (metadata.location_plans) {
+    try {
+      locationPlans = JSON.parse(metadata.location_plans);
+    } catch (e) {
+      console.error("Failed to parse location_plans metadata:", e);
+    }
+  }
+
+  // Legacy fallback: single plan for all locations
+  if (locationPlans.length === 0) {
+    const backroomPlan = metadata.backroom_plan || 'starter';
+    const locationIds = metadata.location_ids ? JSON.parse(metadata.location_ids) as string[] : [];
+    locationPlans = locationIds.map((locId: string) => ({
+      location_id: locId,
+      plan_tier: backroomPlan,
+      stylist_count: 0,
+    }));
+  }
+
+  console.log(`Enabling backroom for organization: ${orgId}, locations: ${locationPlans.length}, scales: ${scaleCount}, interval: ${billingInterval}`);
 
   // 1. Upsert the org-level feature flag (master switch)
+  const planSummary = locationPlans.map((lp) => `${lp.location_id}:${lp.plan_tier}`).join(', ');
   const { error } = await supabase
     .from('organization_feature_flags')
     .upsert({
       organization_id: orgId,
       flag_key: 'backroom_enabled',
       is_enabled: true,
-      override_reason: `Stripe checkout completed — ${backroomPlan} plan, ${scaleCount} scale(s), ${locationIds.length} location(s)`,
+      override_reason: `Stripe checkout completed — ${locationPlans.length} location(s), ${scaleCount} scale(s)`,
       updated_at: new Date().toISOString(),
     }, {
       onConflict: 'organization_id,flag_key',
@@ -353,35 +375,33 @@ async function handleCheckoutCompleted(
       flag_key: 'backroom_plan',
       is_enabled: true,
       override_reason: JSON.stringify({
-        plan: backroomPlan,
+        location_plans: locationPlans,
         scale_count: scaleCount,
         billing_interval: billingInterval,
-        location_ids: locationIds,
       }),
       updated_at: new Date().toISOString(),
     }, {
       onConflict: 'organization_id,flag_key',
     });
 
-  // 3. Create per-location entitlement rows
-  if (locationIds.length > 0) {
-    const stripeSubId = (session.subscription as string) || null;
-    const scalesPerLocation = locationIds.length > 0
-      ? Math.max(0, Math.floor(scaleCount / locationIds.length))
+  // 3. Create per-location entitlement rows with correct plan_tier per location
+  if (locationPlans.length > 0) {
+    const scalesPerLocation = locationPlans.length > 0
+      ? Math.max(0, Math.floor(scaleCount / locationPlans.length))
       : 0;
-    const remainder = scaleCount - (scalesPerLocation * locationIds.length);
+    const remainder = scaleCount - (scalesPerLocation * locationPlans.length);
 
-    const entitlementRows = locationIds.map((locId: string, idx: number) => ({
+    const entitlementRows = locationPlans.map((lp, idx) => ({
       organization_id: orgId,
-      location_id: locId,
-      plan_tier: backroomPlan,
+      location_id: lp.location_id,
+      plan_tier: lp.plan_tier,
       scale_count: scalesPerLocation + (idx === 0 ? remainder : 0),
       status: 'active',
       trial_end_date: null,
       billing_interval: billingInterval,
       stripe_subscription_id: stripeSubId,
       activated_at: new Date().toISOString(),
-      notes: `Created via Stripe checkout`,
+      notes: `Created via Stripe checkout — ${lp.plan_tier} (${lp.stylist_count} stylists)`,
     }));
 
     const { error: entError } = await supabase
@@ -393,7 +413,7 @@ async function handleCheckoutCompleted(
     if (entError) {
       console.error("Failed to create location entitlements:", entError);
     } else {
-      console.log(`Created ${locationIds.length} location entitlement(s) for org ${orgId}`);
+      console.log(`Created ${locationPlans.length} location entitlement(s) for org ${orgId}`);
     }
   }
 }
@@ -507,7 +527,6 @@ async function handleSubscriptionUpdated(
     .from('organizations')
     .update({ subscription_status: mappedStatus })
     .eq('id', org.id);
-
 
   console.log(`Subscription status updated to ${mappedStatus} for ${org.name}`);
 }
