@@ -1,7 +1,9 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useBackroomOrgId } from '@/hooks/backroom/useBackroomOrgId';
+import { useBackroomInventoryTable, STOCK_STATUS_CONFIG, computeChargePerGram, type BackroomInventoryRow, type StockStatus } from '@/hooks/backroom/useBackroomInventoryTable';
+import { postLedgerEntry } from '@/lib/backroom/services/inventory-ledger-service';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -12,11 +14,13 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Search, Package, ArrowRight, Library, Check, ChevronLeft, PackagePlus } from 'lucide-react';
+import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
+import { Loader2, Search, Package, ArrowRight, Library, Check, ChevronLeft, PackagePlus, LayoutGrid, TableIcon, DollarSign, AlertTriangle, Archive } from 'lucide-react';
 import { toast } from 'sonner';
 import { Infotainer } from '@/components/ui/Infotainer';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { SupplyLibraryDialog } from './SupplyLibraryDialog';
+import { BackroomBulkPricingDialog } from './BackroomBulkPricingDialog';
 import {
   SUPPLY_LIBRARY,
   getSupplyBrands,
@@ -54,7 +58,12 @@ interface BackroomProduct {
   is_forecast_eligible: boolean;
   cost_per_gram: number | null;
   unit_of_measure: string;
+  markup_pct: number | null;
+  container_size: string | null;
 }
+
+type CatalogView = 'cards' | 'table';
+type StockFilter = 'all' | 'reorder' | 'in_stock';
 
 interface Props {
   onNavigate?: (section: string) => void;
@@ -77,10 +86,13 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [showTrackedOnly, setShowTrackedOnly] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
+  const [catalogView, setCatalogView] = useState<CatalogView>('cards');
+  const [stockFilter, setStockFilter] = useState<StockFilter>('all');
+  const [bulkPricingOpen, setBulkPricingOpen] = useState(false);
 
   // Brand browsing state
   const [activeLetter, setActiveLetter] = useState<string | null>(null);
-  const [activeBrand, setActiveBrand] = useState<string | null>(null); // null = "My Catalog"
+  const [activeBrand, setActiveBrand] = useState<string | null>(null);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [isAdding, setIsAdding] = useState(false);
 
@@ -102,7 +114,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('id, name, brand, sku, category, cost_price, is_backroom_tracked, depletion_method, is_billable_to_client, is_overage_eligible, is_forecast_eligible, cost_per_gram, unit_of_measure')
+        .select('id, name, brand, sku, category, cost_price, is_backroom_tracked, depletion_method, is_billable_to_client, is_overage_eligible, is_forecast_eligible, cost_per_gram, unit_of_measure, markup_pct, container_size')
         .eq('organization_id', orgId!)
         .eq('is_active', true)
         .eq('product_type', 'Supplies')
@@ -114,6 +126,9 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
     enabled: !!orgId,
   });
 
+  // Inventory table data (only fetched when in table view)
+  const { data: inventoryRows } = useBackroomInventoryTable();
+
   const updateMutation = useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<BackroomProduct> }) => {
       const { error } = await supabase
@@ -124,13 +139,8 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['backroom-product-catalog'] });
+      queryClient.invalidateQueries({ queryKey: ['backroom-inventory-table'] });
       queryClient.invalidateQueries({ queryKey: ['backroom-setup-health'] });
-      toast.success('Product updated', {
-        action: onNavigate ? {
-          label: 'Next: Services →',
-          onClick: () => onNavigate('services'),
-        } : undefined,
-      });
     },
     onError: (error) => {
       toast.error('Failed to update: ' + error.message);
@@ -173,6 +183,37 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
 
   const trackedCount = (products || []).filter((p) => p.is_backroom_tracked).length;
   const hasProducts = (products || []).length > 0;
+
+  // KPI computations from inventory data
+  const kpis = useMemo(() => {
+    const rows = inventoryRows || [];
+    const inStock = rows.filter((r) => r.quantity_on_hand > 0).length;
+    const toReorder = rows.filter((r) => r.status === 'out_of_stock' || r.status === 'urgent_reorder' || r.status === 'replenish').length;
+    return { inStock, toReorder, totalTracked: rows.length };
+  }, [inventoryRows]);
+
+  // Filtered inventory rows for table view
+  const filteredInventory = useMemo(() => {
+    let rows = inventoryRows || [];
+    if (search) {
+      const q = search.toLowerCase();
+      rows = rows.filter((r) => r.name.toLowerCase().includes(q) || r.brand?.toLowerCase().includes(q) || r.sku?.toLowerCase().includes(q));
+    }
+    if (filterCategory !== 'all') {
+      rows = rows.filter((r) => r.category === filterCategory);
+    }
+    if (stockFilter === 'reorder') {
+      rows = rows.filter((r) => r.status === 'out_of_stock' || r.status === 'urgent_reorder' || r.status === 'replenish');
+    } else if (stockFilter === 'in_stock') {
+      rows = rows.filter((r) => r.status === 'in_stock');
+    }
+    return rows;
+  }, [inventoryRows, search, filterCategory, stockFilter]);
+
+  // Bulk pricing product IDs
+  const bulkProductIds = useMemo(() => {
+    return filtered.filter((p) => p.is_backroom_tracked).map((p) => p.id);
+  }, [filtered]);
 
   /** Get all selectable keys for an item */
   const getItemKeys = (item: SupplyLibraryItem): { key: string; size?: string }[] => {
@@ -377,6 +418,33 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
               </div>
             </div>
             <div className="flex items-center gap-2 self-start sm:self-auto flex-shrink-0 flex-wrap">
+              {/* View toggle */}
+              {hasProducts && activeBrand === null && (
+                <div className="flex items-center rounded-lg border border-border/60 overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => setCatalogView('cards')}
+                    className={cn(
+                      'flex items-center justify-center w-8 h-8 transition-colors',
+                      catalogView === 'cards' ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'
+                    )}
+                    title="Card view"
+                  >
+                    <LayoutGrid className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCatalogView('table')}
+                    className={cn(
+                      'flex items-center justify-center w-8 h-8 transition-colors',
+                      catalogView === 'table' ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'
+                    )}
+                    title="Table view"
+                  >
+                    <TableIcon className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
               <Badge variant="outline" className="text-xs whitespace-nowrap">
                 {trackedCount} tracked
               </Badge>
@@ -404,295 +472,414 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
             />
           </div>
 
-          {/* Alphabet selector bar */}
-          <div className="flex flex-wrap items-center gap-0.5 sm:gap-1.5">
-            {/* My Catalog chip */}
-            <button
-              type="button"
-              onClick={() => { setActiveLetter(null); setActiveBrand(null); setSelectedItems(new Set()); }}
-              className={cn(
-                'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] sm:text-xs font-sans font-medium transition-all whitespace-nowrap',
-                activeLetter === null && activeBrand === null
-                  ? 'bg-foreground text-background'
-                  : 'bg-muted/60 text-foreground/70 hover:bg-muted hover:text-foreground'
-              )}
-            >
-              <Package className="w-3 h-3" />
-              My Catalog
-              {hasProducts && (
-                <span className={cn(
-                  'ml-0.5 text-[10px]',
-                  activeLetter === null && activeBrand === null ? 'text-background/70' : 'text-muted-foreground'
-                )}>
-                  {(products || []).length}
-                </span>
-              )}
-            </button>
-
-            <div className="w-px h-5 bg-border/40" />
-
-            {/* A–Z letters */}
-            {alphabet.map((letter) => {
-              const hasBrands = brandsByLetter.has(letter);
-              const isActive = activeLetter === letter;
-
-              return (
+          {/* Show table view or card view */}
+          {catalogView === 'table' && activeBrand === null ? (
+            /* ====== INVENTORY TABLE VIEW ====== */
+            <>
+              {/* KPI Summary Cards */}
+              <div className="grid grid-cols-3 gap-3">
                 <button
-                  key={letter}
                   type="button"
-                  disabled={!hasBrands}
-                  onClick={() => {
-                    setActiveLetter(letter);
-                    setActiveBrand(null);
-                    setSelectedItems(new Set());
-                    setSearch('');
-                  }}
+                  onClick={() => setStockFilter(stockFilter === 'in_stock' ? 'all' : 'in_stock')}
                   className={cn(
-                    'w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center rounded-md text-[10px] sm:text-xs font-sans font-medium transition-all',
-                    isActive
-                      ? 'bg-foreground text-background'
-                      : hasBrands
-                      ? 'text-foreground/70 hover:bg-muted hover:text-foreground'
-                      : 'text-muted-foreground/30 cursor-default'
+                    tokens.kpi.tile,
+                    'text-left transition-all cursor-pointer',
+                    stockFilter === 'in_stock' ? 'border-primary/40 bg-primary/5' : 'hover:border-border/80 hover:shadow-sm'
                   )}
                 >
-                  {letter}
+                  <span className={tokens.kpi.label}>Current Stock</span>
+                  <span className={tokens.kpi.value}>{kpis.inStock}</span>
                 </button>
-              );
-            })}
-          </div>
+                <button
+                  type="button"
+                  onClick={() => setStockFilter(stockFilter === 'reorder' ? 'all' : 'reorder')}
+                  className={cn(
+                    tokens.kpi.tile,
+                    'text-left transition-all cursor-pointer',
+                    stockFilter === 'reorder' ? 'border-warning/40 bg-warning/5' : 'hover:border-border/80 hover:shadow-sm'
+                  )}
+                >
+                  <span className={tokens.kpi.label}>To Reorder</span>
+                  <span className={cn(tokens.kpi.value, kpis.toReorder > 0 && 'text-warning')}>{kpis.toReorder}</span>
+                </button>
+                <div className={tokens.kpi.tile}>
+                  <span className={tokens.kpi.label}>Total Tracked</span>
+                  <span className={tokens.kpi.value}>{kpis.totalTracked}</span>
+                </div>
+              </div>
 
-          {/* Brand sub-row for selected letter */}
-          {activeLetter && !activeBrand && (
-            <div className="flex flex-wrap items-center gap-2">
-              {(brandsByLetter.get(activeLetter) || []).map((brand) => {
-                const allAdded = brandFullyAdded(brand);
-                const inCatalog = brandCatalogCount(brand);
-                const isBrandAdding = addingBrand === brand;
+              {/* Category filter + Bulk Pricing button */}
+              <div className="flex flex-wrap items-center gap-3">
+                <Select value={filterCategory} onValueChange={setFilterCategory}>
+                  <SelectTrigger className="w-full sm:w-[180px] font-sans">
+                    <SelectValue placeholder="Category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Categories</SelectItem>
+                    {CATEGORIES.map((c) => (
+                      <SelectItem key={c} value={c} className="capitalize">{c}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {bulkProductIds.length > 0 && orgId && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setBulkPricingOpen(true)}
+                    className="font-sans gap-1.5"
+                  >
+                    <DollarSign className="w-3.5 h-3.5" />
+                    Set Pricing
+                  </Button>
+                )}
+              </div>
 
-                return (
-                  <div key={brand} className="inline-flex items-center gap-0 shrink-0">
+              {/* Inventory Table */}
+              <div className="rounded-lg border border-border/60 overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className={tokens.table.columnHeader}>Product</TableHead>
+                      <TableHead className={cn(tokens.table.columnHeader, 'hidden sm:table-cell')}>Category</TableHead>
+                      <TableHead className={cn(tokens.table.columnHeader, 'hidden md:table-cell')}>Container</TableHead>
+                      <TableHead className={tokens.table.columnHeader}>Stock</TableHead>
+                      <TableHead className={cn(tokens.table.columnHeader, 'hidden md:table-cell')}>Min</TableHead>
+                      <TableHead className={cn(tokens.table.columnHeader, 'hidden md:table-cell')}>Max</TableHead>
+                      <TableHead className={cn(tokens.table.columnHeader, 'hidden lg:table-cell')}>Order Qty</TableHead>
+                      <TableHead className={tokens.table.columnHeader}>Status</TableHead>
+                      <TableHead className={cn(tokens.table.columnHeader, 'hidden lg:table-cell')}>Cost/g</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredInventory.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={9} className="text-center py-8">
+                          <div className={tokens.empty.container}>
+                            <Package className={tokens.empty.icon} />
+                            <h3 className={tokens.empty.heading}>No products found</h3>
+                            <p className={tokens.empty.description}>Adjust filters or track products in card view first.</p>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      filteredInventory.map((row) => (
+                        <InventoryTableRow
+                          key={row.id}
+                          row={row}
+                          orgId={orgId!}
+                          onUpdate={(updates) => updateMutation.mutate({ id: row.id, updates })}
+                        />
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
+          ) : (
+            /* ====== CARD / BRAND VIEW ====== */
+            <>
+              {/* Alphabet selector bar */}
+              <div className="flex flex-wrap items-center gap-0.5 sm:gap-1.5">
+                {/* My Catalog chip */}
+                <button
+                  type="button"
+                  onClick={() => { setActiveLetter(null); setActiveBrand(null); setSelectedItems(new Set()); }}
+                  className={cn(
+                    'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] sm:text-xs font-sans font-medium transition-all whitespace-nowrap',
+                    activeLetter === null && activeBrand === null
+                      ? 'bg-foreground text-background'
+                      : 'bg-muted/60 text-foreground/70 hover:bg-muted hover:text-foreground'
+                  )}
+                >
+                  <Package className="w-3 h-3" />
+                  My Catalog
+                  {hasProducts && (
+                    <span className={cn(
+                      'ml-0.5 text-[10px]',
+                      activeLetter === null && activeBrand === null ? 'text-background/70' : 'text-muted-foreground'
+                    )}>
+                      {(products || []).length}
+                    </span>
+                  )}
+                </button>
+
+                <div className="w-px h-5 bg-border/40" />
+
+                {/* A–Z letters */}
+                {alphabet.map((letter) => {
+                  const hasBrands = brandsByLetter.has(letter);
+                  const isActive = activeLetter === letter;
+
+                  return (
                     <button
+                      key={letter}
                       type="button"
+                      disabled={!hasBrands}
                       onClick={() => {
-                        setActiveBrand(brand);
+                        setActiveLetter(letter);
+                        setActiveBrand(null);
                         setSelectedItems(new Set());
                         setSearch('');
                       }}
                       className={cn(
-                        'inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-sans font-medium transition-all whitespace-nowrap',
-                        allAdded ? 'rounded-full' : 'rounded-l-full',
-                        allAdded
-                          ? 'bg-muted/40 text-muted-foreground'
-                          : 'bg-muted/60 text-foreground/70 hover:bg-muted hover:text-foreground'
+                        'w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center rounded-md text-[10px] sm:text-xs font-sans font-medium transition-all',
+                        isActive
+                          ? 'bg-foreground text-background'
+                          : hasBrands
+                          ? 'text-foreground/70 hover:bg-muted hover:text-foreground'
+                          : 'text-muted-foreground/30 cursor-default'
                       )}
                     >
-                      {brand}
-                      {allAdded && <Check className="w-3 h-3" />}
-                      {!allAdded && inCatalog > 0 && (
-                        <span className="text-[10px] text-muted-foreground">{inCatalog}</span>
-                      )}
+                      {letter}
                     </button>
-                    {!allAdded && (
-                      <button
-                        type="button"
-                        disabled={isBrandAdding}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleAddEntireBrand(brand);
-                        }}
-                        title={`Add all ${brand} products`}
-                        className="inline-flex items-center justify-center w-7 h-7 rounded-r-full bg-muted/60 text-muted-foreground hover:bg-primary/10 hover:text-primary transition-all border-l border-border/30"
-                      >
-                        {isBrandAdding ? (
-                          <Loader2 className="w-3 h-3 animate-spin" />
-                        ) : (
-                          <PackagePlus className="w-3 h-3" />
+                  );
+                })}
+              </div>
+
+              {/* Brand sub-row for selected letter */}
+              {activeLetter && !activeBrand && (
+                <div className="flex flex-wrap items-center gap-2">
+                  {(brandsByLetter.get(activeLetter) || []).map((brand) => {
+                    const allAdded = brandFullyAdded(brand);
+                    const inCatalog = brandCatalogCount(brand);
+                    const isBrandAdding = addingBrand === brand;
+
+                    return (
+                      <div key={brand} className="inline-flex items-center gap-0 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setActiveBrand(brand);
+                            setSelectedItems(new Set());
+                            setSearch('');
+                          }}
+                          className={cn(
+                            'inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-sans font-medium transition-all whitespace-nowrap',
+                            allAdded ? 'rounded-full' : 'rounded-l-full',
+                            allAdded
+                              ? 'bg-muted/40 text-muted-foreground'
+                              : 'bg-muted/60 text-foreground/70 hover:bg-muted hover:text-foreground'
+                          )}
+                        >
+                          {brand}
+                          {allAdded && <Check className="w-3 h-3" />}
+                          {!allAdded && inCatalog > 0 && (
+                            <span className="text-[10px] text-muted-foreground">{inCatalog}</span>
+                          )}
+                        </button>
+                        {!allAdded && (
+                          <button
+                            type="button"
+                            disabled={isBrandAdding}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAddEntireBrand(brand);
+                            }}
+                            title={`Add all ${brand} products`}
+                            className="inline-flex items-center justify-center w-7 h-7 rounded-r-full bg-muted/60 text-muted-foreground hover:bg-primary/10 hover:text-primary transition-all border-l border-border/30"
+                          >
+                            {isBrandAdding ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <PackagePlus className="w-3 h-3" />
+                            )}
+                          </button>
                         )}
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Breadcrumb when brand is active */}
-          {activeBrand && (
-            <div className="flex items-center gap-1.5 text-xs font-sans text-muted-foreground">
-              <button
-                type="button"
-                onClick={() => { setActiveBrand(null); setSelectedItems(new Set()); }}
-                className="hover:text-foreground transition-colors"
-              >
-                {activeLetter || '←'}
-              </button>
-              <span>/</span>
-              <span className="text-foreground font-medium">{activeBrand}</span>
-            </div>
-          )}
-
-          {/* Dual view */}
-          {activeBrand === null ? (
-            /* ====== MY CATALOG VIEW ====== */
-            <>
-              {!hasProducts ? (
-                <div className={cn(tokens.empty.container, 'py-14')}>
-                  <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl border border-border/60 bg-muted/40">
-                    <Library className="h-7 w-7 text-muted-foreground" />
-                  </div>
-                  <h3 className={tokens.empty.heading}>Build Your Supply Catalog</h3>
-                  <p className={cn(tokens.empty.description, 'max-w-sm mx-auto mt-2')}>
-                    Select a brand above to browse professional products, or open the full Supply Library.
-                  </p>
+                      </div>
+                    );
+                  })}
                 </div>
-              ) : (
+              )}
+
+              {/* Breadcrumb when brand is active */}
+              {activeBrand && (
+                <div className="flex items-center gap-1.5 text-xs font-sans text-muted-foreground">
+                  <button
+                    type="button"
+                    onClick={() => { setActiveBrand(null); setSelectedItems(new Set()); }}
+                    className="hover:text-foreground transition-colors"
+                  >
+                    {activeLetter || '←'}
+                  </button>
+                  <span>/</span>
+                  <span className="text-foreground font-medium">{activeBrand}</span>
+                </div>
+              )}
+
+              {/* Dual view */}
+              {activeBrand === null ? (
+                /* ====== MY CATALOG VIEW ====== */
                 <>
-                  {/* Category & tracked filters */}
-                   <div className="flex flex-wrap items-center gap-3">
-                    <Select value={filterCategory} onValueChange={setFilterCategory}>
-                      <SelectTrigger className="w-full sm:w-[180px] font-sans">
-                        <SelectValue placeholder="Category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Categories</SelectItem>
-                        {CATEGORIES.map((c) => (
-                          <SelectItem key={c} value={c} className="capitalize">{c}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Button
-                      variant={showTrackedOnly ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setShowTrackedOnly(!showTrackedOnly)}
-                      className="font-sans"
-                    >
-                      Tracked Only
-                    </Button>
+                  {!hasProducts ? (
+                    <div className={cn(tokens.empty.container, 'py-14')}>
+                      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl border border-border/60 bg-muted/40">
+                        <Library className="h-7 w-7 text-muted-foreground" />
+                      </div>
+                      <h3 className={tokens.empty.heading}>Build Your Supply Catalog</h3>
+                      <p className={cn(tokens.empty.description, 'max-w-sm mx-auto mt-2')}>
+                        Select a brand above to browse professional products, or open the full Supply Library.
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Category & tracked filters + bulk pricing */}
+                      <div className="flex flex-wrap items-center gap-3">
+                        <Select value={filterCategory} onValueChange={setFilterCategory}>
+                          <SelectTrigger className="w-full sm:w-[180px] font-sans">
+                            <SelectValue placeholder="Category" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Categories</SelectItem>
+                            {CATEGORIES.map((c) => (
+                              <SelectItem key={c} value={c} className="capitalize">{c}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Button
+                          variant={showTrackedOnly ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => setShowTrackedOnly(!showTrackedOnly)}
+                          className="font-sans"
+                        >
+                          Tracked Only
+                        </Button>
+                        {bulkProductIds.length > 0 && orgId && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setBulkPricingOpen(true)}
+                            className="font-sans gap-1.5"
+                          >
+                            <DollarSign className="w-3.5 h-3.5" />
+                            Set Pricing
+                          </Button>
+                        )}
+                      </div>
+
+                      {/* Product rows */}
+                      <div className="space-y-2">
+                        {filtered.length === 0 ? (
+                          <div className={tokens.empty.container}>
+                            <Package className={tokens.empty.icon} />
+                            <h3 className={tokens.empty.heading}>No products found</h3>
+                            <p className={tokens.empty.description}>
+                              {showTrackedOnly
+                                ? 'No tracked products yet. Start by toggling on your most-used color products below.'
+                                : 'No products match your filters.'}
+                            </p>
+                          </div>
+                        ) : (
+                          filtered.map((product) => (
+                            <ProductRow
+                              key={product.id}
+                              product={product}
+                              onUpdate={(updates) => updateMutation.mutate({ id: product.id, updates })}
+                            />
+                          ))
+                        )}
+                      </div>
+
+                      {/* Next step hint */}
+                      {onNavigate && trackedCount > 0 && (
+                        <div className="flex justify-end pt-2 border-t border-border/40">
+                          <Button variant="ghost" size="sm" className="text-xs font-sans text-muted-foreground" onClick={() => onNavigate('services')}>
+                            Next: Service Tracking <ArrowRight className="w-3 h-3 ml-1" />
+                          </Button>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </>
+              ) : (
+                /* ====== BRAND BROWSING VIEW ====== */
+                <div className="space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <h3 className="font-sans text-sm font-medium text-foreground truncate min-w-0">{activeBrand}</h3>
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      {activeBrand && !brandFullyAdded(activeBrand) && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleAddEntireBrand(activeBrand)}
+                          disabled={addingBrand === activeBrand}
+                          className="text-xs font-sans h-7 gap-1"
+                        >
+                          {addingBrand === activeBrand ? (
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                          ) : (
+                            <PackagePlus className="w-3 h-3" />
+                          )}
+                          Add Entire Brand
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={toggleAllBrand}
+                        className="text-xs font-sans h-7"
+                      >
+                        {(() => {
+                          const allKeys: string[] = [];
+                          brandProducts.forEach((p) => {
+                            getItemKeys(p).forEach(({ key, size }) => {
+                              if (!isExisting(p.brand, p.name, size)) allKeys.push(key);
+                            });
+                          });
+                          return allKeys.length > 0 && allKeys.every((k) => selectedItems.has(k))
+                            ? 'Deselect All'
+                            : 'Select All';
+                        })()}
+                      </Button>
+                    </div>
                   </div>
 
-                  {/* Product rows */}
                   <div className="space-y-2">
-                    {filtered.length === 0 ? (
+                    {brandProducts.length === 0 ? (
                       <div className={tokens.empty.container}>
                         <Package className={tokens.empty.icon} />
                         <h3 className={tokens.empty.heading}>No products found</h3>
-                        <p className={tokens.empty.description}>
-                          {showTrackedOnly
-                            ? 'No tracked products yet. Start by toggling on your most-used color products below.'
-                            : 'No products match your filters.'}
-                        </p>
+                        <p className={tokens.empty.description}>Try a different search term.</p>
                       </div>
                     ) : (
-                      filtered.map((product) => (
-                        <ProductRow
-                          key={product.id}
-                          product={product}
-                          onUpdate={(updates) => updateMutation.mutate({ id: product.id, updates })}
+                      brandProducts.map((item) => (
+                        <BrandProductRow
+                          key={`${item.brand}::${item.name}`}
+                          item={item}
+                          isExisting={isExisting}
+                          selectedItems={selectedItems}
+                          getItemKeys={getItemKeys}
+                          toggleSize={toggleSize}
                         />
                       ))
                     )}
                   </div>
 
-                  {/* Next step hint */}
-                  {onNavigate && trackedCount > 0 && (
-                    <div className="flex justify-end pt-2 border-t border-border/40">
-                      <Button variant="ghost" size="sm" className="text-xs font-sans text-muted-foreground" onClick={() => onNavigate('services')}>
-                        Next: Service Tracking <ArrowRight className="w-3 h-3 ml-1" />
+                  {/* Sticky add footer */}
+                  {selectedItems.size > 0 && (
+                    <div className="sticky bottom-0 flex flex-col sm:flex-row items-stretch sm:items-center sm:justify-between gap-2 bg-card/95 backdrop-blur-sm rounded-lg border border-border/60 px-4 py-3 shadow-[0_-4px_12px_-4px_hsl(var(--foreground)/0.06)]">
+                      <span className="text-sm font-sans text-muted-foreground text-center sm:text-left">
+                        {selectedItems.size} product{selectedItems.size === 1 ? '' : 's'} selected
+                      </span>
+                      <Button
+                        onClick={handleAddFromBrand}
+                        disabled={isAdding}
+                        className="font-sans w-full sm:w-auto"
+                        size="sm"
+                      >
+                        {isAdding ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin mr-1" />
+                            Adding...
+                          </>
+                        ) : (
+                          `Add ${selectedItems.size} Product${selectedItems.size === 1 ? '' : 's'}`
+                        )}
                       </Button>
                     </div>
                   )}
-                </>
+                </div>
               )}
             </>
-          ) : (
-            /* ====== BRAND BROWSING VIEW ====== */
-            <div className="space-y-3">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <h3 className="font-sans text-sm font-medium text-foreground truncate min-w-0">{activeBrand}</h3>
-                <div className="flex items-center gap-1.5 flex-shrink-0">
-                  {activeBrand && !brandFullyAdded(activeBrand) && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleAddEntireBrand(activeBrand)}
-                      disabled={addingBrand === activeBrand}
-                      className="text-xs font-sans h-7 gap-1"
-                    >
-                      {addingBrand === activeBrand ? (
-                        <Loader2 className="w-3 h-3 animate-spin" />
-                      ) : (
-                        <PackagePlus className="w-3 h-3" />
-                      )}
-                      Add Entire Brand
-                    </Button>
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={toggleAllBrand}
-                    className="text-xs font-sans h-7"
-                  >
-                    {(() => {
-                      const allKeys: string[] = [];
-                      brandProducts.forEach((p) => {
-                        getItemKeys(p).forEach(({ key, size }) => {
-                          if (!isExisting(p.brand, p.name, size)) allKeys.push(key);
-                        });
-                      });
-                      return allKeys.length > 0 && allKeys.every((k) => selectedItems.has(k))
-                        ? 'Deselect All'
-                        : 'Select All';
-                    })()}
-                  </Button>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                {brandProducts.length === 0 ? (
-                  <div className={tokens.empty.container}>
-                    <Package className={tokens.empty.icon} />
-                    <h3 className={tokens.empty.heading}>No products found</h3>
-                    <p className={tokens.empty.description}>Try a different search term.</p>
-                  </div>
-                ) : (
-                  brandProducts.map((item) => (
-                    <BrandProductRow
-                      key={`${item.brand}::${item.name}`}
-                      item={item}
-                      isExisting={isExisting}
-                      selectedItems={selectedItems}
-                      getItemKeys={getItemKeys}
-                      toggleSize={toggleSize}
-                    />
-                  ))
-                )}
-              </div>
-
-              {/* Sticky add footer */}
-              {selectedItems.size > 0 && (
-                <div className="sticky bottom-0 flex flex-col sm:flex-row items-stretch sm:items-center sm:justify-between gap-2 bg-card/95 backdrop-blur-sm rounded-lg border border-border/60 px-4 py-3 shadow-[0_-4px_12px_-4px_hsl(var(--foreground)/0.06)]">
-                  <span className="text-sm font-sans text-muted-foreground text-center sm:text-left">
-                    {selectedItems.size} product{selectedItems.size === 1 ? '' : 's'} selected
-                  </span>
-                  <Button
-                    onClick={handleAddFromBrand}
-                    disabled={isAdding}
-                    className="font-sans w-full sm:w-auto"
-                    size="sm"
-                  >
-                    {isAdding ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin mr-1" />
-                        Adding...
-                      </>
-                    ) : (
-                      `Add ${selectedItems.size} Product${selectedItems.size === 1 ? '' : 's'}`
-                    )}
-                  </Button>
-                </div>
-              )}
-            </div>
           )}
         </CardContent>
       </Card>
@@ -704,6 +891,17 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
           onOpenChange={setLibraryOpen}
           orgId={orgId}
           existingProducts={(products || []).map((p) => ({ name: p.name, brand: p.brand }))}
+        />
+      )}
+
+      {/* Bulk Pricing Dialog */}
+      {orgId && (
+        <BackroomBulkPricingDialog
+          open={bulkPricingOpen}
+          onOpenChange={setBulkPricingOpen}
+          orgId={orgId}
+          productIds={catalogView === 'table' ? filteredInventory.map((r) => r.id) : bulkProductIds}
+          scopeLabel={filterCategory !== 'all' ? filterCategory : 'all tracked products'}
         />
       )}
     </div>
@@ -806,89 +1004,324 @@ function BrandProductRow({
   );
 }
 
-/* ====== Tracked Product Row (My Catalog) ====== */
+/* ====== Tracked Product Row (My Catalog — Card View) ====== */
 function ProductRow({ product, onUpdate }: { product: BackroomProduct; onUpdate: (u: Partial<BackroomProduct>) => void }) {
+  const [localCostPerGram, setLocalCostPerGram] = useState(product.cost_per_gram?.toString() || '');
+  const [localMarkup, setLocalMarkup] = useState(product.markup_pct?.toString() || '');
+  const [localContainer, setLocalContainer] = useState(product.container_size || '');
+
+  const chargePerGram = computeChargePerGram(
+    localCostPerGram ? parseFloat(localCostPerGram) : null,
+    localMarkup ? parseFloat(localMarkup) : null
+  );
+
+  const handleBlurCost = () => {
+    const val = localCostPerGram ? parseFloat(localCostPerGram) : null;
+    if (val !== product.cost_per_gram) onUpdate({ cost_per_gram: val } as any);
+  };
+
+  const handleBlurMarkup = () => {
+    const val = localMarkup ? parseFloat(localMarkup) : null;
+    if (val !== product.markup_pct) onUpdate({ markup_pct: val } as any);
+  };
+
+  const handleBlurContainer = () => {
+    if (localContainer !== (product.container_size || '')) onUpdate({ container_size: localContainer || null } as any);
+  };
+
   return (
     <div className={cn(
-      'flex flex-col sm:flex-row sm:items-center gap-4 rounded-lg border p-4 transition-all duration-200 ease-out',
+      'flex flex-col rounded-lg border p-4 transition-all duration-200 ease-out',
       product.is_backroom_tracked
         ? 'border-border bg-card hover:border-border/80 hover:shadow-sm'
         : 'border-border/40 bg-muted/20'
     )}>
-      {/* Zone 1: Toggle + Product Info */}
-      <div className="flex items-center gap-3 flex-1 min-w-0">
-        <div className="flex items-center gap-1 shrink-0">
-          <Switch
-            checked={product.is_backroom_tracked}
-            onCheckedChange={(checked) => onUpdate({ is_backroom_tracked: checked })}
-          />
-          <MetricInfoTooltip description="When on, this product appears in the mixing dashboard and its usage is recorded per appointment." />
+      {/* Row 1: Toggle + Info + Controls */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+        {/* Zone 1: Toggle + Product Info */}
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <div className="flex items-center gap-1 shrink-0">
+            <Switch
+              checked={product.is_backroom_tracked}
+              onCheckedChange={(checked) => onUpdate({ is_backroom_tracked: checked })}
+            />
+            <MetricInfoTooltip description="When on, this product appears in the mixing dashboard and its usage is recorded per appointment." />
+          </div>
+
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-sm font-sans font-medium text-foreground truncate">{product.name}</span>
+              {product.brand && <span className="text-xs text-muted-foreground shrink-0 hidden sm:inline">{product.brand}</span>}
+            </div>
+            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+              {product.brand && <span className="text-xs text-muted-foreground sm:hidden">{product.brand}</span>}
+              {product.category && <Badge variant="outline" className="text-[10px] capitalize">{product.category}</Badge>}
+              {product.sku && <span className="text-[10px] text-muted-foreground">{product.sku}</span>}
+              {!product.cost_price && !product.cost_per_gram && product.is_backroom_tracked && (
+                <span className="flex items-center gap-0.5">
+                  <Badge variant="destructive" className="text-[10px]">No cost</Badge>
+                  <MetricInfoTooltip description="This product has no unit cost set. Add a cost so Zura can calculate margins and overage charges." />
+                </span>
+              )}
+            </div>
+          </div>
         </div>
 
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="text-sm font-sans font-medium text-foreground truncate">{product.name}</span>
-            {product.brand && <span className="text-xs text-muted-foreground shrink-0 hidden sm:inline">{product.brand}</span>}
+        {/* Zone 2: Controls */}
+        {product.is_backroom_tracked && (
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 bg-muted/30 backdrop-blur-sm rounded-lg px-3 py-2.5 shrink-0 sm:ml-auto w-full sm:w-auto">
+            <div className="flex items-center gap-1">
+              <MetricInfoTooltip description="How this product is measured when used. 'Weighed' uses a scale; 'Per Pump' counts pumps dispensed." />
+              <Select
+                value={product.depletion_method}
+                onValueChange={(v) => onUpdate({ depletion_method: v })}
+              >
+                <SelectTrigger className="w-full sm:w-[130px] h-8 text-xs font-sans">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {DEPLETION_METHODS.map((m) => (
+                    <SelectItem key={m.value} value={m.value} className="text-xs">{m.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="w-px h-4 bg-border/40 hidden sm:block" />
+
+            <div className="flex items-center gap-3 flex-wrap">
+              <div className="flex items-center gap-1">
+                <label className="text-[11px] text-muted-foreground">Billable</label>
+                <MetricInfoTooltip description="When on, overage usage of this product can be charged to the client." />
+                <Switch
+                  checked={product.is_billable_to_client}
+                  onCheckedChange={(v) => onUpdate({ is_billable_to_client: v })}
+                  className="scale-75"
+                />
+              </div>
+
+              <div className="flex items-center gap-1">
+                <label className="text-[11px] text-muted-foreground">Overage</label>
+                <MetricInfoTooltip description="When on, usage beyond the service allowance triggers an overage charge." />
+                <Switch
+                  checked={product.is_overage_eligible}
+                  onCheckedChange={(v) => onUpdate({ is_overage_eligible: v })}
+                  className="scale-75"
+                />
+              </div>
+            </div>
           </div>
-          <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-            {product.brand && <span className="text-xs text-muted-foreground sm:hidden">{product.brand}</span>}
-            {product.category && <Badge variant="outline" className="text-[10px] capitalize">{product.category}</Badge>}
-            {product.sku && <span className="text-[10px] text-muted-foreground">{product.sku}</span>}
-            {!product.cost_price && product.is_backroom_tracked && (
-              <span className="flex items-center gap-0.5">
-                <Badge variant="destructive" className="text-[10px]">No cost</Badge>
-                <MetricInfoTooltip description="This product has no unit cost set. Add a cost so Zura can calculate margins and overage charges." />
-              </span>
-            )}
-          </div>
-        </div>
+        )}
       </div>
 
-      {/* Zone 2: Controls */}
+      {/* Row 2: Pricing Zone (only when tracked) */}
       {product.is_backroom_tracked && (
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 bg-muted/30 backdrop-blur-sm rounded-lg px-3 py-2.5 shrink-0 sm:ml-auto w-full sm:w-auto">
-          <div className="flex items-center gap-1">
-            <MetricInfoTooltip description="How this product is measured when used. 'Weighed' uses a scale; 'Per Pump' counts pumps dispensed." />
-            <Select
-              value={product.depletion_method}
-              onValueChange={(v) => onUpdate({ depletion_method: v })}
-            >
-              <SelectTrigger className="w-full sm:w-[130px] h-8 text-xs font-sans">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {DEPLETION_METHODS.map((m) => (
-                  <SelectItem key={m.value} value={m.value} className="text-xs">{m.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="w-px h-4 bg-border/40 hidden sm:block" />
-
-          <div className="flex items-center gap-3 flex-wrap">
-            <div className="flex items-center gap-1">
-              <label className="text-[11px] text-muted-foreground">Billable</label>
-              <MetricInfoTooltip description="When on, overage usage of this product can be charged to the client." />
-              <Switch
-                checked={product.is_billable_to_client}
-                onCheckedChange={(v) => onUpdate({ is_billable_to_client: v })}
-                className="scale-75"
-              />
-            </div>
-
-            <div className="flex items-center gap-1">
-              <label className="text-[11px] text-muted-foreground">Overage</label>
-              <MetricInfoTooltip description="When on, usage beyond the service allowance triggers an overage charge." />
-              <Switch
-                checked={product.is_overage_eligible}
-                onCheckedChange={(v) => onUpdate({ is_overage_eligible: v })}
-                className="scale-75"
+        <div className="flex flex-wrap items-center gap-3 mt-3 pt-3 border-t border-border/30">
+          <div className="flex items-center gap-1.5">
+            <label className="text-[11px] text-muted-foreground whitespace-nowrap">Cost/g</label>
+            <div className="relative">
+              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">$</span>
+              <input
+                type="number"
+                step="0.0001"
+                value={localCostPerGram}
+                onChange={(e) => setLocalCostPerGram(e.target.value)}
+                onBlur={handleBlurCost}
+                placeholder="0.00"
+                className="h-7 w-20 rounded-md border border-input bg-background pl-5 pr-2 text-xs font-sans focus:outline-none focus:border-foreground/30 transition-colors"
               />
             </div>
           </div>
+
+          <div className="flex items-center gap-1.5">
+            <label className="text-[11px] text-muted-foreground whitespace-nowrap">Container</label>
+            <input
+              type="text"
+              value={localContainer}
+              onChange={(e) => setLocalContainer(e.target.value)}
+              onBlur={handleBlurContainer}
+              placeholder="60ml"
+              className="h-7 w-16 rounded-md border border-input bg-background px-2 text-xs font-sans focus:outline-none focus:border-foreground/30 transition-colors"
+            />
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <label className="text-[11px] text-muted-foreground whitespace-nowrap">Markup</label>
+            <div className="relative">
+              <input
+                type="number"
+                step="1"
+                value={localMarkup}
+                onChange={(e) => setLocalMarkup(e.target.value)}
+                onBlur={handleBlurMarkup}
+                placeholder="0"
+                className="h-7 w-14 rounded-md border border-input bg-background pl-2 pr-5 text-xs font-sans focus:outline-none focus:border-foreground/30 transition-colors"
+              />
+              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">%</span>
+            </div>
+          </div>
+
+          {chargePerGram != null && (
+            <Badge variant="secondary" className="text-[10px] font-sans">
+              Charge/g ${chargePerGram.toFixed(4)}
+            </Badge>
+          )}
         </div>
       )}
     </div>
+  );
+}
+
+/* ====== Inventory Table Row ====== */
+function InventoryTableRow({
+  row,
+  orgId,
+  onUpdate,
+}: {
+  row: BackroomInventoryRow;
+  orgId: string;
+  onUpdate: (u: Record<string, any>) => void;
+}) {
+  const queryClient = useQueryClient();
+  const [editingStock, setEditingStock] = useState(false);
+  const [stockValue, setStockValue] = useState(row.quantity_on_hand.toString());
+  const [editingMin, setEditingMin] = useState(false);
+  const [minValue, setMinValue] = useState(row.reorder_level?.toString() || '');
+  const [editingMax, setEditingMax] = useState(false);
+  const [maxValue, setMaxValue] = useState(row.par_level?.toString() || '');
+
+  const statusConfig = STOCK_STATUS_CONFIG[row.status];
+
+  const handleStockSave = async () => {
+    setEditingStock(false);
+    const newQty = parseInt(stockValue, 10);
+    if (isNaN(newQty) || newQty === row.quantity_on_hand) return;
+
+    const diff = newQty - row.quantity_on_hand;
+    try {
+      await postLedgerEntry({
+        organization_id: orgId,
+        product_id: row.id,
+        quantity_change: diff,
+        quantity_after: newQty,
+        event_type: 'count',
+        reason: 'Manual stock count from inventory table',
+      });
+      queryClient.invalidateQueries({ queryKey: ['backroom-inventory-table'] });
+      queryClient.invalidateQueries({ queryKey: ['backroom-product-catalog'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast.success(`Stock updated for ${row.name}`);
+    } catch (err: any) {
+      toast.error('Failed to update stock: ' + err.message);
+    }
+  };
+
+  const handleMinSave = () => {
+    setEditingMin(false);
+    const val = minValue ? parseInt(minValue, 10) : null;
+    if (val !== row.reorder_level) onUpdate({ reorder_level: val });
+  };
+
+  const handleMaxSave = () => {
+    setEditingMax(false);
+    const val = maxValue ? parseInt(maxValue, 10) : null;
+    if (val !== row.par_level) onUpdate({ par_level: val });
+  };
+
+  return (
+    <TableRow>
+      <TableCell>
+        <div className="min-w-0">
+          <span className="text-sm font-sans font-medium text-foreground truncate block">{row.name}</span>
+          {row.brand && <span className="text-[11px] text-muted-foreground">{row.brand}</span>}
+        </div>
+      </TableCell>
+      <TableCell className="hidden sm:table-cell">
+        {row.category && <Badge variant="outline" className="text-[10px] capitalize">{row.category}</Badge>}
+      </TableCell>
+      <TableCell className="hidden md:table-cell">
+        <span className="text-xs font-sans text-muted-foreground">{row.container_size || '—'}</span>
+      </TableCell>
+      <TableCell>
+        {editingStock ? (
+          <input
+            type="number"
+            value={stockValue}
+            onChange={(e) => setStockValue(e.target.value)}
+            onBlur={handleStockSave}
+            onKeyDown={(e) => e.key === 'Enter' && handleStockSave()}
+            autoFocus
+            className="h-6 w-14 rounded border border-input bg-background px-1.5 text-xs font-sans focus:outline-none focus:border-foreground/30"
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={() => { setEditingStock(true); setStockValue(row.quantity_on_hand.toString()); }}
+            className="text-xs font-sans text-foreground hover:text-primary transition-colors cursor-pointer tabular-nums"
+          >
+            {row.quantity_on_hand}
+          </button>
+        )}
+      </TableCell>
+      <TableCell className="hidden md:table-cell">
+        {editingMin ? (
+          <input
+            type="number"
+            value={minValue}
+            onChange={(e) => setMinValue(e.target.value)}
+            onBlur={handleMinSave}
+            onKeyDown={(e) => e.key === 'Enter' && handleMinSave()}
+            autoFocus
+            className="h-6 w-14 rounded border border-input bg-background px-1.5 text-xs font-sans focus:outline-none focus:border-foreground/30"
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={() => { setEditingMin(true); setMinValue(row.reorder_level?.toString() || ''); }}
+            className="text-xs font-sans text-muted-foreground hover:text-foreground transition-colors cursor-pointer tabular-nums"
+          >
+            {row.reorder_level ?? '—'}
+          </button>
+        )}
+      </TableCell>
+      <TableCell className="hidden md:table-cell">
+        {editingMax ? (
+          <input
+            type="number"
+            value={maxValue}
+            onChange={(e) => setMaxValue(e.target.value)}
+            onBlur={handleMaxSave}
+            onKeyDown={(e) => e.key === 'Enter' && handleMaxSave()}
+            autoFocus
+            className="h-6 w-14 rounded border border-input bg-background px-1.5 text-xs font-sans focus:outline-none focus:border-foreground/30"
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={() => { setEditingMax(true); setMaxValue(row.par_level?.toString() || ''); }}
+            className="text-xs font-sans text-muted-foreground hover:text-foreground transition-colors cursor-pointer tabular-nums"
+          >
+            {row.par_level ?? '—'}
+          </button>
+        )}
+      </TableCell>
+      <TableCell className="hidden lg:table-cell">
+        {row.order_qty > 0 ? (
+          <span className="text-xs font-sans font-medium text-warning tabular-nums">{row.order_qty}</span>
+        ) : (
+          <span className="text-xs text-muted-foreground">—</span>
+        )}
+      </TableCell>
+      <TableCell>
+        <Badge variant="outline" className={cn('text-[10px] border', statusConfig.className)}>
+          {statusConfig.label}
+        </Badge>
+      </TableCell>
+      <TableCell className="hidden lg:table-cell">
+        <span className="text-xs font-sans text-muted-foreground tabular-nums">
+          {row.cost_per_gram != null ? `$${row.cost_per_gram.toFixed(4)}` : '—'}
+        </span>
+      </TableCell>
+    </TableRow>
   );
 }
