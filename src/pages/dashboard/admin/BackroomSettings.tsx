@@ -33,6 +33,7 @@ import { FormulaAssistanceSection } from '@/components/dashboard/backroom-settin
 import { MultiLocationSection } from '@/components/dashboard/backroom-settings/MultiLocationSection';
 import { BackroomComplianceSection } from '@/components/dashboard/backroom-settings/BackroomComplianceSection';
 import { BackroomInsightsSection } from '@/components/dashboard/backroom-settings/BackroomInsightsSection';
+import { SupplyIntelligenceDashboard } from '@/components/dashboard/backroom/supply-intelligence/SupplyIntelligenceDashboard';
 
 type BackroomSection =
   | 'overview'
