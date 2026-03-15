@@ -1,153 +1,96 @@
 
 
-## Timezone-Safe Scheduling (Implemented)
+# Zura Backroom Platform Manager — Fix & Enhance
 
-### Problem
-`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
+## Current State
 
-### Solution
-- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
-- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
-- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
+The platform Backroom admin at `/dashboard/platform/backroom` has 4 tabs: Price Queue, Price Sources, Entitlements, and Supply Library. All are functional but basic. The screenshot confirms the current UI renders correctly. Here's the enhancement plan across all four areas plus a new Analytics/Metrics tab.
 
-### Files Updated
-- `ScheduleHeader.tsx` — today button, quick days, isToday checks
-- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
-- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
-- `MonthView.tsx` — today highlight
-- `AgendaView.tsx` — today/tomorrow labels, today border
-- `ScheduleActionBar.tsx` — payment queue timing
-- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
-- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
-- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
-- `useHuddles.ts` — today's huddle query
+---
 
-## Auto-Reorder with Supplier Communication (Implemented)
+## 1. Supply Library Improvements
 
-### What It Does
-Organizations can opt into automatic reorder — when stock dips below threshold, POs are calculated (using MOQ and par levels) and sent directly to the supplier via email.
+**Pagination**: Replace the hard `slice(0, 100)` with proper cursor-based pagination using "Load More" or page controls — querying with `.range()` for efficient DB access.
 
-### Database Changes
-- `products.par_level` (INT, nullable) — desired stock level to reorder up to
-- `product_suppliers.moq` (INT, default 1) — minimum order quantity
-- `inventory_alert_settings.auto_reorder_enabled` (BOOL, default false)
-- `inventory_alert_settings.auto_reorder_mode` (TEXT, default 'to_par') — 'to_par' or 'moq_only'
-- `inventory_alert_settings.max_auto_reorder_value` (NUMERIC, nullable) — daily spend cap
-- `purchase_orders.supplier_confirmed_at` (TIMESTAMPTZ, nullable) — for tracking confirmations
+**Bulk CSV Import**: Add a "Import CSV" button next to "Add Product" that accepts a CSV file (brand, name, category, unit, sizes), parses it client-side, previews the rows in a confirmation dialog, then batch-inserts.
 
-### Quantity Calculation
-```
-deficit = par_level - quantity_on_hand
-order_qty = max(moq, deficit)
-if moq > 1: round up to nearest MOQ multiple
-```
-Fallback: if par_level is null, uses `reorder_level * 2`.
+**Category management**: Add a category filter dropdown alongside the brand filter. Add a "Manage Categories" section allowing admins to view product counts per category.
 
-### Files Updated
-- Migration: Added columns to products, product_suppliers, inventory_alert_settings, purchase_orders
-- `check-reorder-levels/index.ts` — auto-send logic with MOQ/par calculation, spend cap, email invocation
-- `AlertSettingsCard.tsx` — auto-reorder toggle, mode selector, spend cap input
-- `useInventoryAlertSettings.ts` — updated interface
-- `useProducts.ts` — added par_level to Product interface
-- `useProductSuppliers.ts` — added moq to ProductSupplier interface
-- `ProductEditDialog.tsx` — added par level field
-- `RetailProductsSettingsContent.tsx` — added par level to product form
-- `SupplierDialog.tsx` — added MOQ field
+**Inline editing**: Make brand, category, depletion, and unit cells editable inline (click-to-edit pattern matching the existing retail product table) to avoid opening the dialog for single-field changes.
 
-### Safety Features
-- Spend cap: daily auto-reorder pauses when cumulative PO value exceeds cap
-- Audit trail: auto_reorder logged as stock_movement reason
-- Supplier confirmation tracking via supplier_confirmed_at timestamp
+**Export**: Add a "Export CSV" button that downloads current filtered results.
 
-## Product Movement Rating Badges (Implemented)
+---
 
-### What It Does
-Every product gets a dynamic movement rating badge (Best Seller, Popular, Steady, Slow Mover, Stagnant, Dead Weight) computed from 90-day sales velocity data.
+## 2. Price Queue Enhancements
 
-### Rating Tiers
-- **Best Seller**: Top 10% velocity AND >0.5 units/day (emerald)
-- **Popular**: Top 25% velocity AND >0.2 units/day (blue)
-- **Steady**: Velocity >0.05/day (muted)
-- **Slow Mover**: Velocity >0 but ≤0.05/day (amber)
-- **Stagnant**: Zero velocity, sold within 180 days (orange)
-- **Dead Weight**: Zero velocity, 180+ days or never sold (red)
-- Products with zero stock excluded from negative ratings
+**Inline price editing**: Allow admins to adjust the `wholesale_price` before approving — useful when the fetched price needs minor correction. Add an inline input that pre-fills with the fetched value.
 
-### Files Created
-- `src/lib/productMovementRating.ts` — pure rating logic + badge config
-- `src/hooks/useProductVelocity.ts` — lightweight 90-day POS velocity query
-- `src/components/ui/MovementBadge.tsx` — shared badge component with tooltip
+**Rejection notes**: When rejecting, show a small textarea dialog for entering a reason (stored in `notes` column).
 
-### Files Updated
-- `RetailProductsSettingsContent.tsx` — Movement column + filter dropdown in products table
-- `RetailAnalyticsContent.tsx` — Movement badges on product performance table + Movement Distribution card (donut chart with actionable callouts)
-- `ProductCard.tsx` — Best Seller/Popular badges on public shop cards (positive only)
-- `ProductDetailModal.tsx` — Movement badge with velocity context
+**Price history**: Add a "View History" action per product that opens a sheet/dialog showing all past queue entries for that product (approved, rejected, auto-applied) sorted by date.
 
-## Inventory Intelligence Suite v2 (Implemented)
+**Bulk reject**: Add a "Reject Selected" button alongside the existing "Approve Selected".
 
-### 1. Dead Stock Auto-Clearance Pipeline
-- `DeadStockAlertCard.tsx` — Surfaces Dead Weight/Stagnant products not yet in clearance with suggested discount tiers (10%/25%/50% based on idle days)
-- One-click "Mark for Clearance" applies discount and sets clearance_status
+**Brand filter**: Add a brand dropdown filter next to the status filter.
 
-### 2. Supplier Lead Time Tracker
-- `usePurchaseOrders.ts` — `useMarkPurchaseOrderReceived` already computes actual delivery days and updates `product_suppliers.avg_delivery_days` via running average
-- `parLevelSuggestion.ts` — Updated to accept supplier-provided lead time instead of hardcoded 7-day default, with bounds clamping
+**Pagination**: Add pagination controls (the queue could grow large).
 
-### 3. Inventory Valuation Dashboard Card
-- `InventoryValuationCard.tsx` — Shows total inventory at cost/retail, potential margin %, capital-at-risk (slow/stagnant/dead weight), with donut chart breakdown
+---
 
-### 4. Reorder Approval Queue
-- `ReorderApprovalCard.tsx` — Surfaces draft POs from auto-reorder with one-click approve (→ sent) or reject (→ cancelled)
+## 3. Entitlements & Billing Visibility
 
-### 5. Stock Transfer Between Locations
-- Migration: Created `stock_transfers` table with RLS (org member read, org admin manage)
-- `useStockTransfers.ts` — CRUD hooks for stock transfers with stock movement logging
-- `StockTransferDialog.tsx` — Dialog for creating transfers between locations
-- `RetailProductsSettingsContent.tsx` — "Transfer Stock" button added to Inventory tab (visible for multi-location orgs)
+Enhance the Entitlements tab to show richer data per organization:
 
-## Enhancement 1: Expiry Tracking (Implemented)
+**Additional columns**: Plan tier (`subscription_tier`), subscription status, Backroom plan (from `override_reason` metadata which stores plan tier), scale count, trial status — all sourced from the `organizations` table joined with `organization_feature_flags`.
 
-### What It Does
-Products can have an optional expiration date (`expires_at`) and per-product alert threshold (`expiry_alert_days`, default 30). The system surfaces expiring inventory with color-coded badges in the product table and an analytics card with auto-clearance suggestions.
+**Status badges**: Show "Trial", "Active", "Cancelled", "Inactive" with color-coded badges.
 
-### Database Changes
-- `products.expires_at` (DATE, nullable) — expiration date for perishable products
-- `products.expiry_alert_days` (INTEGER, default 30) — days before expiry to trigger alerts
+**Bulk enable/disable**: Checkbox selection with batch toggle.
 
-### Expiry Alert Buckets
-- **Expired** (red): past expiration → suggests 50% markdown
-- **Critical** (orange): within alert threshold → suggests 25% markdown
-- **Warning** (amber): within 2× alert threshold → suggests 10% markdown
+**Expand row detail**: Click an org row to show a detail panel with: activation date, plan tier, billing email, subscription period, scale licenses.
 
-### Files Created
-- `src/components/dashboard/analytics/ExpiryAlertCard.tsx` — PinnableCard showing expiring products with one-click clearance actions
+---
 
-### Files Updated
-- `src/hooks/useProducts.ts` — Added `expires_at`, `expiry_alert_days` to Product interface; added `expiringOnly` filter
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Expiry date + alert days in product form; color-coded Expiry column in product table
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ExpiryAlertCard into analytics hub
+## 4. New: Backroom Analytics Tab
 
-## Enhancement 2: Shrinkage Detection (Implemented)
+Add a 5th tab — "Analytics" — providing platform-level Backroom metrics:
 
-### What It Does
-Physical stocktake workflow with variance reporting. Staff record actual counts via a Stocktake dialog, and the system compares against expected quantities (system records). A Shrinkage Report card in analytics surfaces products with negative variance (loss) ranked by estimated cost impact.
+**Summary KPIs (top cards)**:
+- Total Backroom-enabled orgs
+- Total active trial orgs
+- Backroom MRR (count of enabled orgs × avg plan price, or from Stripe data if available)
+- Avg waste reduction across all orgs
 
-### Database Changes
-- Created `stock_counts` table with computed `variance` column (counted - expected), RLS policies (org member read/insert, org admin update/delete), and indexes
+**Adoption chart**: Organization adoption over time (count of `backroom_enabled` flags by `created_at`).
 
-### Shrinkage Calculation
-```
-variance = counted_quantity - expected_quantity
-shrinkage_units = |variance| when variance < 0
-shrinkage_cost = shrinkage_units × cost_price
-```
+**Usage table**: Per-org usage stats sourced from `backroom_analytics_snapshots` — showing snapshot count, avg waste %, last snapshot date, product count.
 
-### Files Created
-- `src/hooks/useStockCounts.ts` — CRUD hooks for stock counts + `useShrinkageSummary` for aggregated shrinkage data
-- `src/components/dashboard/settings/inventory/StocktakeDialog.tsx` — Full stocktake UI with search, inline count entry, real-time variance display
-- `src/components/dashboard/analytics/ShrinkageReportCard.tsx` — PinnableCard showing products with shrinkage, severity badges, estimated loss
+**Data source**: Query `organization_feature_flags` (for entitlement data) + `backroom_analytics_snapshots` (for usage) + `organizations` (for billing info).
 
-### Files Updated
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Added "Stocktake" button to Inventory tab toolbar
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ShrinkageReportCard into analytics hub
+---
+
+## 5. Audit Log Integration
+
+Add audit logging calls to all admin actions (approve, reject, toggle entitlement, add/edit/delete supply products) using the existing `log_platform_action` database function — following the pattern already used elsewhere in the platform.
+
+---
+
+## Files to Create/Edit
+
+| File | Action |
+|------|--------|
+| `BackroomAdmin.tsx` | Add Analytics tab |
+| `PriceQueueTab.tsx` | Inline edit, reject dialog, bulk reject, brand filter, pagination, history dialog |
+| `PriceSourcesTab.tsx` | Minor: add audit logging on create/delete |
+| `BackroomEntitlementsTab.tsx` | Join org data, show plan/billing columns, expand row, bulk toggle |
+| `SupplyLibraryTab.tsx` | Pagination, inline edit, CSV import/export, category filter |
+| `src/components/platform/backroom/BackroomAnalyticsTab.tsx` | New — KPIs + adoption + usage table |
+| `src/components/platform/backroom/PriceHistoryDialog.tsx` | New — historical queue entries per product |
+| `src/components/platform/backroom/RejectNoteDialog.tsx` | New — rejection reason textarea dialog |
+| `src/components/platform/backroom/CSVImportDialog.tsx` | New — CSV upload + preview + batch insert |
+| `src/hooks/platform/useWholesalePriceQueue.ts` | Add brand filter, pagination params |
+| `src/hooks/platform/useBackroomPlatformAnalytics.ts` | New — aggregate queries for analytics tab |
+
+No database migrations required — all data sources already exist.
+
