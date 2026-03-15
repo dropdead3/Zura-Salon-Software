@@ -351,6 +351,12 @@ export function BackroomInsightsSection() {
           )}
         </CardContent>
       </Card>
+
+      {/* History Chart */}
+      <BackroomHistoryChart startDate={start} endDate={end} rangeLabel={rangeLabel} />
+
+      {/* Brand Usage */}
+      <BackroomBrandUsageCard startDate={start} endDate={end} rangeLabel={rangeLabel} />
     </div>
   );
 }
