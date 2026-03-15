@@ -16,6 +16,7 @@ import {
   Building2,
   ShieldCheck,
   Lock,
+  Brain,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useBackroomSetupHealth } from '@/hooks/backroom/useBackroomSetupHealth';
@@ -32,9 +33,11 @@ import { FormulaAssistanceSection } from '@/components/dashboard/backroom-settin
 import { MultiLocationSection } from '@/components/dashboard/backroom-settings/MultiLocationSection';
 import { BackroomComplianceSection } from '@/components/dashboard/backroom-settings/BackroomComplianceSection';
 import { BackroomInsightsSection } from '@/components/dashboard/backroom-settings/BackroomInsightsSection';
+import { SupplyIntelligenceDashboard } from '@/components/dashboard/backroom/supply-intelligence/SupplyIntelligenceDashboard';
 
 type BackroomSection =
   | 'overview'
+  | 'supply-intelligence'
   | 'insights'
   | 'products'
   | 'services'
@@ -60,6 +63,7 @@ interface SectionMeta {
 
 const sections: SectionMeta[] = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard, tooltip: 'Dashboard showing overall Backroom configuration progress.' },
+  { id: 'supply-intelligence', label: 'Supply Intelligence', icon: Brain, tooltip: 'AI-powered supply chain analysis: waste, reorder risk, margin, and usage insights.' },
   { id: 'insights', label: 'Insights', icon: BarChart3, tooltip: 'KPI cards & employee performance analytics for your backroom.' },
   { id: 'products', label: 'Products & Supplies', icon: Package, tooltip: 'Choose which products are tracked at the mixing station.' },
   { id: 'services', label: 'Service Tracking', icon: Wrench, tooltip: 'Link services to the products they consume.', requires: ['products'], requiresLabel: 'Products' },
@@ -175,6 +179,7 @@ export default function BackroomSettings() {
           {/* Content area */}
           <div className="flex-1 min-w-0">
             {activeSection === 'overview' && <BackroomSetupOverview onNavigate={handleNavigate} />}
+            {activeSection === 'supply-intelligence' && <SupplyIntelligenceDashboard />}
             {activeSection === 'insights' && <BackroomInsightsSection />}
             {activeSection === 'products' && <BackroomProductCatalogSection onNavigate={handleNavigate} />}
             {activeSection === 'services' && <ServiceTrackingSection onNavigate={handleNavigate} />}

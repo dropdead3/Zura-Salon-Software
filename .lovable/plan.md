@@ -1,105 +1,153 @@
 
 
-# Zura Supply AI Layer — Intelligence Dashboard
+## Timezone-Safe Scheduling (Implemented)
 
-## Current State
+### Problem
+`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
 
-Zura already has strong foundational pieces, but they're scattered across isolated modules:
+### Solution
+- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
+- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
+- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
 
-| Capability | What Exists | What's Missing |
-|---|---|---|
-| **Reorder prediction** | `stockoutForecast.ts`, `replenishment-engine.ts`, `predictive-backroom-service.ts`, `check-reorder-levels` edge fn, `suggest-reorder-quantity` edge fn | No unified "Supply Intelligence" dashboard; stockout alerts are buried in Control Tower |
-| **Waste tracking** | `WasteRecordDialog`, `service-intelligence-engine.ts` (detects high_waste, high_variance), waste rate in staff scorecard | No annualized waste cost rollup visible to owners |
-| **Margin intelligence** | `appointment-profit-engine.ts`, `AppointmentProfitCard` (per-appointment), `OptimizationInsightCard` (low_margin, rising_cost) | No aggregate "profit optimization" view with actionable supply-mix recommendations |
-| **Price intelligence** | `product_cost_history` table, `log_cost_price_change` trigger | No cross-salon benchmarking or supplier price comparison |
-| **Usage intelligence** | `staff_usage_variance_pct` in service profiles, `top_performer_avg_usage_g` | Exists in Service Intelligence but not surfaced as a headline insight |
-| **Proactive alerts** | `check-reorder-levels` creates POs + notifications, `ai-business-insights` generates cached AI insights | No "tap to reorder" from an alert card; no unified Supply AI feed |
+### Files Updated
+- `ScheduleHeader.tsx` — today button, quick days, isToday checks
+- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
+- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
+- `MonthView.tsx` — today highlight
+- `AgendaView.tsx` — today/tomorrow labels, today border
+- `ScheduleActionBar.tsx` — payment queue timing
+- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
+- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
+- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
+- `useHuddles.ts` — today's huddle query
 
-## What to Build
+## Auto-Reorder with Supplier Communication (Implemented)
 
-### 1. Supply Intelligence Dashboard (New Page Section)
+### What It Does
+Organizations can opt into automatic reorder — when stock dips below threshold, POs are calculated (using MOQ and par levels) and sent directly to the supplier via email.
 
-A new top-level tab or card group within Backroom Settings (or a dedicated `/dashboard/supply-intelligence` route) that consolidates all four intelligence pillars into a single owner-facing view.
+### Database Changes
+- `products.par_level` (INT, nullable) — desired stock level to reorder up to
+- `product_suppliers.moq` (INT, default 1) — minimum order quantity
+- `inventory_alert_settings.auto_reorder_enabled` (BOOL, default false)
+- `inventory_alert_settings.auto_reorder_mode` (TEXT, default 'to_par') — 'to_par' or 'moq_only'
+- `inventory_alert_settings.max_auto_reorder_value` (NUMERIC, nullable) — daily spend cap
+- `purchase_orders.supplier_confirmed_at` (TIMESTAMPTZ, nullable) — for tracking confirmations
 
-**Layout**: 4 hero metric cards + a scrollable insight feed below.
+### Quantity Calculation
+```
+deficit = par_level - quantity_on_hand
+order_qty = max(moq, deficit)
+if moq > 1: round up to nearest MOQ multiple
+```
+Fallback: if par_level is null, uses `reorder_level * 2`.
 
-```text
-┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
-│ Annual Waste │ │  Reorder     │ │  Margin      │ │  Usage       │
-│  $1,842/yr   │ │  6 products  │ │  Opportunity │ │  Variance    │
-│  unused color │ │  at risk     │ │  +$22/service│ │  40% excess  │
-└──────────────┘ └──────────────┘ └──────────────┘ └──────────────┘
+### Files Updated
+- Migration: Added columns to products, product_suppliers, inventory_alert_settings, purchase_orders
+- `check-reorder-levels/index.ts` — auto-send logic with MOQ/par calculation, spend cap, email invocation
+- `AlertSettingsCard.tsx` — auto-reorder toggle, mode selector, spend cap input
+- `useInventoryAlertSettings.ts` — updated interface
+- `useProducts.ts` — added par_level to Product interface
+- `useProductSuppliers.ts` — added moq to ProductSupplier interface
+- `ProductEditDialog.tsx` — added par level field
+- `RetailProductsSettingsContent.tsx` — added par level to product form
+- `SupplierDialog.tsx` — added MOQ field
 
-┌─────────────────────────────────────────────────────────────────┐
-│ Supply Intelligence Feed                         [Refresh AI]  │
-│                                                                 │
-│ 🔴 INVENTORY: Projected to run out of 20vol developer in 6d    │
-│    [Reorder Now →]                                              │
-│                                                                 │
-│ 🟡 WASTE: $1,842/yr in unused color tubes across 3 brands      │
-│    Top offenders: Schwarzkopf Igora (32%), Wella Koleston (28%)│
-│                                                                 │
-│ 🟡 USAGE: Stylists mixing 40% more lightener than top performer│
-│    Potential savings: $3,200/yr if standardized                 │
-│                                                                 │
-│ 🔵 MARGIN: Balayage profit could increase $22/service          │
-│    by switching to [brand] developer at same quality level      │
-└─────────────────────────────────────────────────────────────────┘
+### Safety Features
+- Spend cap: daily auto-reorder pauses when cumulative PO value exceeds cap
+- Audit trail: auto_reorder logged as stock_movement reason
+- Supplier confirmation tracking via supplier_confirmed_at timestamp
+
+## Product Movement Rating Badges (Implemented)
+
+### What It Does
+Every product gets a dynamic movement rating badge (Best Seller, Popular, Steady, Slow Mover, Stagnant, Dead Weight) computed from 90-day sales velocity data.
+
+### Rating Tiers
+- **Best Seller**: Top 10% velocity AND >0.5 units/day (emerald)
+- **Popular**: Top 25% velocity AND >0.2 units/day (blue)
+- **Steady**: Velocity >0.05/day (muted)
+- **Slow Mover**: Velocity >0 but ≤0.05/day (amber)
+- **Stagnant**: Zero velocity, sold within 180 days (orange)
+- **Dead Weight**: Zero velocity, 180+ days or never sold (red)
+- Products with zero stock excluded from negative ratings
+
+### Files Created
+- `src/lib/productMovementRating.ts` — pure rating logic + badge config
+- `src/hooks/useProductVelocity.ts` — lightweight 90-day POS velocity query
+- `src/components/ui/MovementBadge.tsx` — shared badge component with tooltip
+
+### Files Updated
+- `RetailProductsSettingsContent.tsx` — Movement column + filter dropdown in products table
+- `RetailAnalyticsContent.tsx` — Movement badges on product performance table + Movement Distribution card (donut chart with actionable callouts)
+- `ProductCard.tsx` — Best Seller/Popular badges on public shop cards (positive only)
+- `ProductDetailModal.tsx` — Movement badge with velocity context
+
+## Inventory Intelligence Suite v2 (Implemented)
+
+### 1. Dead Stock Auto-Clearance Pipeline
+- `DeadStockAlertCard.tsx` — Surfaces Dead Weight/Stagnant products not yet in clearance with suggested discount tiers (10%/25%/50% based on idle days)
+- One-click "Mark for Clearance" applies discount and sets clearance_status
+
+### 2. Supplier Lead Time Tracker
+- `usePurchaseOrders.ts` — `useMarkPurchaseOrderReceived` already computes actual delivery days and updates `product_suppliers.avg_delivery_days` via running average
+- `parLevelSuggestion.ts` — Updated to accept supplier-provided lead time instead of hardcoded 7-day default, with bounds clamping
+
+### 3. Inventory Valuation Dashboard Card
+- `InventoryValuationCard.tsx` — Shows total inventory at cost/retail, potential margin %, capital-at-risk (slow/stagnant/dead weight), with donut chart breakdown
+
+### 4. Reorder Approval Queue
+- `ReorderApprovalCard.tsx` — Surfaces draft POs from auto-reorder with one-click approve (→ sent) or reject (→ cancelled)
+
+### 5. Stock Transfer Between Locations
+- Migration: Created `stock_transfers` table with RLS (org member read, org admin manage)
+- `useStockTransfers.ts` — CRUD hooks for stock transfers with stock movement logging
+- `StockTransferDialog.tsx` — Dialog for creating transfers between locations
+- `RetailProductsSettingsContent.tsx` — "Transfer Stock" button added to Inventory tab (visible for multi-location orgs)
+
+## Enhancement 1: Expiry Tracking (Implemented)
+
+### What It Does
+Products can have an optional expiration date (`expires_at`) and per-product alert threshold (`expiry_alert_days`, default 30). The system surfaces expiring inventory with color-coded badges in the product table and an analytics card with auto-clearance suggestions.
+
+### Database Changes
+- `products.expires_at` (DATE, nullable) — expiration date for perishable products
+- `products.expiry_alert_days` (INTEGER, default 30) — days before expiry to trigger alerts
+
+### Expiry Alert Buckets
+- **Expired** (red): past expiration → suggests 50% markdown
+- **Critical** (orange): within alert threshold → suggests 25% markdown
+- **Warning** (amber): within 2× alert threshold → suggests 10% markdown
+
+### Files Created
+- `src/components/dashboard/analytics/ExpiryAlertCard.tsx` — PinnableCard showing expiring products with one-click clearance actions
+
+### Files Updated
+- `src/hooks/useProducts.ts` — Added `expires_at`, `expiry_alert_days` to Product interface; added `expiringOnly` filter
+- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Expiry date + alert days in product form; color-coded Expiry column in product table
+- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ExpiryAlertCard into analytics hub
+
+## Enhancement 2: Shrinkage Detection (Implemented)
+
+### What It Does
+Physical stocktake workflow with variance reporting. Staff record actual counts via a Stocktake dialog, and the system compares against expected quantities (system records). A Shrinkage Report card in analytics surfaces products with negative variance (loss) ranked by estimated cost impact.
+
+### Database Changes
+- Created `stock_counts` table with computed `variance` column (counted - expected), RLS policies (org member read/insert, org admin update/delete), and indexes
+
+### Shrinkage Calculation
+```
+variance = counted_quantity - expected_quantity
+shrinkage_units = |variance| when variance < 0
+shrinkage_cost = shrinkage_units × cost_price
 ```
 
-**Data sources** (all already in DB):
-- **Waste**: Aggregate from `service-intelligence-engine` profiles (`avg_waste_rate_pct` * `avg_chemical_cost` * annual volume)
-- **Reorder**: From `predictive-backroom-service` forecasts (products with `stockout_risk` high/critical)
-- **Margin**: From `appointment-profit-engine` + optimization insights (`low_margin`, `rising_cost` types)
-- **Usage**: From service profiles (`staff_usage_variance_pct`, `top_performer_avg_usage_g` vs `avg_chemical_usage_g`)
+### Files Created
+- `src/hooks/useStockCounts.ts` — CRUD hooks for stock counts + `useShrinkageSummary` for aggregated shrinkage data
+- `src/components/dashboard/settings/inventory/StocktakeDialog.tsx` — Full stocktake UI with search, inline count entry, real-time variance display
+- `src/components/dashboard/analytics/ShrinkageReportCard.tsx` — PinnableCard showing products with shrinkage, severity badges, estimated loss
 
-### 2. Supply AI Edge Function (`supply-intelligence`)
-
-A new edge function that aggregates backroom data and generates the four intelligence categories via Lovable AI. Unlike the existing `ai-business-insights` (which covers revenue, staffing, capacity), this is specifically tuned for supply chain intelligence.
-
-**Inputs gathered server-side**:
-- `service_profiles` data (waste rates, margins, usage variance)
-- `inventory_risk_projections` (stockout forecasts)
-- `product_cost_history` (price trends)
-- `stock_movements` aggregated waste events
-- `products` with `cost_price` and `quantity_on_hand`
-
-**AI prompt** asks for structured tool-call output across the 4 categories with `estimated_annual_impact` for each insight.
-
-**Caching**: Same pattern as `ai-business-insights` — store in `ai_business_insights` table with a `location_id` prefix like `supply:all` or `supply:<locationId>`.
-
-### 3. "Tap to Reorder" from Insight Cards
-
-When a stockout alert appears, add a one-tap action button that:
-1. Checks if a draft PO already exists for that product
-2. If not, creates one via `usePurchaseOrders.createDraftPO`
-3. Shows confirmation toast with PO link
-
-This connects the existing `suggest-reorder-quantity` AI function to an actionable UI flow.
-
-### 4. Price Intelligence Foundation (DB + Display)
-
-- Add `product_cost_history` aggregation query to show cost trend per product over time
-- Display in the Supply Intelligence feed when a product's cost has risen significantly vs. historical average
-- Future: cross-org benchmarking (requires anonymized aggregate data — flag as roadmap)
-
-## Implementation Plan
-
-| Step | What | Files |
-|---|---|---|
-| 1 | Create `supply-intelligence` edge function | `supabase/functions/supply-intelligence/index.ts` |
-| 2 | Create `useSupplyIntelligence` hook | `src/hooks/backroom/useSupplyIntelligence.ts` |
-| 3 | Create `SupplyIntelligenceDashboard` component | `src/components/dashboard/backroom/supply-intelligence/SupplyIntelligenceDashboard.tsx` |
-| 4 | Create `SupplyInsightCard` component | `src/components/dashboard/backroom/supply-intelligence/SupplyInsightCard.tsx` |
-| 5 | Create `SupplyKPICards` component | `src/components/dashboard/backroom/supply-intelligence/SupplyKPICards.tsx` |
-| 6 | Create `QuickReorderButton` component | `src/components/dashboard/backroom/supply-intelligence/QuickReorderButton.tsx` |
-| 7 | Wire into Backroom Settings as a new tab/section | `src/components/dashboard/backroom-settings/` |
-| 8 | Update `supabase/config.toml` for new edge function | `supabase/config.toml` |
-
-## Key Technical Decisions
-
-- **No new DB tables needed** — reuses `ai_business_insights` for caching with a `supply:` location prefix, and reads from existing tables
-- **AI model**: `google/gemini-3-flash-preview` (fast, structured output via tool calling)
-- **Price benchmarking**: Displayed as cost trend over time from `product_cost_history` — cross-salon comparison is flagged as future/roadmap since it requires anonymized multi-tenant aggregation
-- **Reorder action**: Leverages existing `usePurchaseOrders` hook for PO creation, no new mutations needed
-
+### Files Updated
+- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Added "Stocktake" button to Inventory tab toolbar
+- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ShrinkageReportCard into analytics hub
