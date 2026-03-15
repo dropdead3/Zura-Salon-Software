@@ -168,6 +168,14 @@ export function PurchaseOrdersPanel() {
           </TableBody>
         </Table>
       </div>
+
+      {selectedOrder && (
+        <PurchaseOrderDetailDialog
+          open={!!selectedOrder}
+          onOpenChange={(open) => !open && setSelectedOrder(null)}
+          order={selectedOrder}
+        />
+      )}
     </div>
   );
 }
