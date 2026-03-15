@@ -124,14 +124,29 @@ export function CheckoutSummarySheet({
     enabled: !!appointment?.id && open,
   });
 
+  // Product cost charges (parts_and_labor)
+  const { data: usageCharges = [] } = useCheckoutUsageCharges(appointment?.id ?? null);
+  const { data: billingSettings } = useBackroomBillingSettings(organizationId);
+
+  const productChargeLabel = billingSettings?.product_charge_label || 'Product Usage';
+  const productChargeTaxable = billingSettings?.product_charge_taxable ?? true;
+
+  // Filter to approved/pending product cost charges
+  const productCostCharges = usageCharges.filter(
+    (c: any) => c.charge_type === 'product_cost' && c.status !== 'waived'
+  );
+  const productChargeTotal = productCostCharges.reduce((s, c) => s + c.charge_amount, 0);
+
   if (!appointment) return null;
 
   const addonTotal = addonEvents.reduce((sum, e) => sum + (e.addon_price || 0), 0);
   const subtotal = (appointment.total_price || 0);
   const discount = appliedPromo?.calculated_discount || 0;
+  // Product charges are NOT discountable — kept separate from promo subtotal
   const discountedSubtotal = subtotal - discount;
-  const tax = discountedSubtotal * taxRate;
-  const checkoutTotal = discountedSubtotal + tax;
+  const taxableBase = discountedSubtotal + (productChargeTaxable ? productChargeTotal : 0);
+  const tax = taxableBase * taxRate;
+  const checkoutTotal = discountedSubtotal + productChargeTotal + tax;
   const grandTotal = checkoutTotal + tipAmount;
 
   const getDuration = () => {
