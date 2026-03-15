@@ -333,7 +333,7 @@ async function handleCheckoutCompleted(
       organization_id: orgId,
       flag_key: 'backroom_enabled',
       is_enabled: true,
-      override_reason: `Stripe checkout completed — ${backroomPlan} plan, ${scaleCount} scale(s), ${locationIds.length} location(s)${trialDays > 0 ? `, ${trialDays}-day trial` : ''}`,
+      override_reason: `Stripe checkout completed — ${backroomPlan} plan, ${scaleCount} scale(s), ${locationIds.length} location(s)`,
       updated_at: new Date().toISOString(),
     }, {
       onConflict: 'organization_id,flag_key',
