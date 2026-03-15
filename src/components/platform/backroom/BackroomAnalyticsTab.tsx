@@ -390,6 +390,70 @@ export function BackroomAnalyticsTab() {
   );
 }
 
+interface CoachAssignCellProps {
+  orgId: string;
+  coachByOrg: Map<string, { coachUserId: string; coachName: string }>;
+  teamMembers: { user_id: string; full_name?: string; email?: string }[];
+  onAssign: (coachUserId: string) => void;
+  onUnassign: (coachUserId: string) => void;
+}
+
+function CoachAssignCell({ orgId, coachByOrg, teamMembers, onAssign, onUnassign }: CoachAssignCellProps) {
+  const assigned = coachByOrg.get(orgId);
+
+  if (assigned) {
+    return (
+      <Popover>
+        <PopoverTrigger asChild>
+          <button className="font-sans text-xs text-violet-400 hover:underline cursor-pointer">
+            {assigned.coachName}
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="w-48 p-2" align="start">
+          <p className="font-sans text-xs text-slate-400 mb-2">Assigned coach</p>
+          <p className="font-sans text-sm text-slate-200 mb-2">{assigned.coachName}</p>
+          <PlatformButton
+            variant="ghost"
+            size="sm"
+            className="w-full text-red-400 hover:text-red-300"
+            onClick={() => onUnassign(assigned.coachUserId)}
+          >
+            Unassign
+          </PlatformButton>
+        </PopoverContent>
+      </Popover>
+    );
+  }
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <PlatformButton variant="ghost" size="sm" className="gap-1">
+          <UserPlus className="w-3.5 h-3.5" />
+          <span className="font-sans text-xs">Assign</span>
+        </PlatformButton>
+      </PopoverTrigger>
+      <PopoverContent className="w-56 p-2" align="start">
+        <p className="font-sans text-xs text-slate-400 mb-2">Select coach</p>
+        <div className="space-y-1 max-h-48 overflow-y-auto">
+          {teamMembers.map(member => (
+            <button
+              key={member.user_id}
+              onClick={() => onAssign(member.user_id)}
+              className="w-full text-left px-2 py-1.5 rounded font-sans text-sm text-slate-300 hover:bg-[hsl(var(--platform-bg-hover))] transition-colors"
+            >
+              {member.full_name || member.email || member.user_id}
+            </button>
+          ))}
+          {teamMembers.length === 0 && (
+            <p className="font-sans text-xs text-slate-500 px-2 py-1">No team members</p>
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 function HealthDot({ score }: { score: 'green' | 'amber' | 'red' }) {
   const colors = {
     green: 'bg-emerald-400',
