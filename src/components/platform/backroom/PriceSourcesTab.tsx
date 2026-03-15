@@ -1,11 +1,17 @@
 import { useState } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import {
+  PlatformCard,
+  PlatformCardContent,
+  PlatformCardHeader,
+  PlatformCardTitle,
+  PlatformCardDescription,
+} from '@/components/platform/ui/PlatformCard';
+import { PlatformButton } from '@/components/platform/ui/PlatformButton';
+import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
+import { PlatformInput } from '@/components/platform/ui/PlatformInput';
+import { PlatformLabel } from '@/components/platform/ui/PlatformLabel';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -77,7 +83,6 @@ export function PriceSourcesTab() {
     });
   };
 
-  // Last auto-sync timestamp
   const lastSyncTime = sources.reduce<string | null>((latest, s) => {
     if (!s.last_polled_at) return latest;
     if (!latest || s.last_polled_at > latest) return s.last_polled_at;
@@ -85,49 +90,48 @@ export function PriceSourcesTab() {
   }, null);
 
   return (
-    <Card className="rounded-xl border-border/60 bg-card/80 backdrop-blur-xl">
-      <CardHeader className="flex flex-row items-center justify-between gap-4">
+    <PlatformCard variant="glass">
+      <PlatformCardHeader className="flex flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className={tokens.card.iconBox}>
-            <Database className="w-5 h-5 text-primary" />
+          <div className="w-10 h-10 rounded-lg bg-[hsl(var(--platform-bg-hover))] flex items-center justify-center">
+            <Database className="w-5 h-5 text-violet-400" />
           </div>
           <div>
-            <CardTitle className={tokens.card.title}>Price Sources</CardTitle>
-            <CardDescription className="font-sans text-sm">
+            <PlatformCardTitle>Price Sources</PlatformCardTitle>
+            <PlatformCardDescription>
               Configure distributor API integrations for wholesale pricing
               {lastSyncTime && (
-                <span className="block text-xs text-muted-foreground mt-0.5">
+                <span className="block text-xs text-slate-500 mt-0.5">
                   Last auto-sync: {new Date(lastSyncTime).toLocaleString()}
                 </span>
               )}
-            </CardDescription>
+            </PlatformCardDescription>
           </div>
         </div>
         <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
           <DialogTrigger asChild>
-            <Button size="sm" className="font-sans font-medium">
+            <PlatformButton size="sm">
               <Plus className="w-3.5 h-3.5 mr-1" />
               Add Source
-            </Button>
+            </PlatformButton>
           </DialogTrigger>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle className={tokens.card.title}>Add Price Source</DialogTitle>
+              <DialogTitle className="font-sans text-base text-[hsl(var(--platform-foreground))]">Add Price Source</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-2">
               <div className="space-y-1.5">
-                <Label className="font-sans text-sm">Brand / Distributor</Label>
-                <Input
+                <PlatformLabel>Brand / Distributor</PlatformLabel>
+                <PlatformInput
                   value={newSource.brand}
                   onChange={(e) => setNewSource((p) => ({ ...p, brand: e.target.value }))}
                   placeholder="e.g. SalonCentric, Wella"
-                  className="font-sans"
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="font-sans text-sm">Source Type</Label>
+                <PlatformLabel>Source Type</PlatformLabel>
                 <Select value={newSource.source_type} onValueChange={(v) => setNewSource((p) => ({ ...p, source_type: v }))}>
-                  <SelectTrigger className="font-sans"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="font-sans bg-slate-800/50 border-slate-700/50 text-slate-300"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="api">API Integration</SelectItem>
                     <SelectItem value="manual_csv">Manual CSV Upload</SelectItem>
@@ -136,19 +140,18 @@ export function PriceSourcesTab() {
               </div>
               {newSource.source_type === 'api' && (
                 <div className="space-y-1.5">
-                  <Label className="font-sans text-sm">API Endpoint</Label>
-                  <Input
+                  <PlatformLabel>API Endpoint</PlatformLabel>
+                  <PlatformInput
                     value={newSource.api_endpoint}
                     onChange={(e) => setNewSource((p) => ({ ...p, api_endpoint: e.target.value }))}
                     placeholder="https://api.distributor.com/v1/prices"
-                    className="font-sans text-sm"
                   />
                 </div>
               )}
               <div className="space-y-1.5">
-                <Label className="font-sans text-sm">Poll Frequency</Label>
+                <PlatformLabel>Poll Frequency</PlatformLabel>
                 <Select value={newSource.scrape_frequency} onValueChange={(v) => setNewSource((p) => ({ ...p, scrape_frequency: v }))}>
-                  <SelectTrigger className="font-sans"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="font-sans bg-slate-800/50 border-slate-700/50 text-slate-300"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="daily">Daily</SelectItem>
                     <SelectItem value="weekly">Weekly</SelectItem>
@@ -157,16 +160,15 @@ export function PriceSourcesTab() {
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setShowAddDialog(false)} className="font-sans font-medium">Cancel</Button>
-              <Button onClick={handleCreate} disabled={createMutation.isPending} className="font-sans font-medium">
-                {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
+              <PlatformButton variant="outline" onClick={() => setShowAddDialog(false)}>Cancel</PlatformButton>
+              <PlatformButton onClick={handleCreate} loading={createMutation.isPending}>
                 Add Source
-              </Button>
+              </PlatformButton>
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </CardHeader>
-      <CardContent className="p-0">
+      </PlatformCardHeader>
+      <PlatformCardContent className="p-0">
         {isLoading ? (
           <div className="flex items-center justify-center h-40">
             <Loader2 className={tokens.loading.spinner} />
@@ -180,26 +182,26 @@ export function PriceSourcesTab() {
         ) : (
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead className={tokens.table.columnHeader}>Brand</TableHead>
-                <TableHead className={tokens.table.columnHeader}>Type</TableHead>
-                <TableHead className={tokens.table.columnHeader}>Frequency</TableHead>
-                <TableHead className={tokens.table.columnHeader}>Last Polled</TableHead>
-                <TableHead className={tokens.table.columnHeader}>Active</TableHead>
-                <TableHead className={cn(tokens.table.columnHeader, 'text-right pr-4')}>Actions</TableHead>
+              <TableRow className="border-slate-700/50">
+                <TableHead className="font-sans text-xs text-slate-400">Brand</TableHead>
+                <TableHead className="font-sans text-xs text-slate-400">Type</TableHead>
+                <TableHead className="font-sans text-xs text-slate-400">Frequency</TableHead>
+                <TableHead className="font-sans text-xs text-slate-400">Last Polled</TableHead>
+                <TableHead className="font-sans text-xs text-slate-400">Active</TableHead>
+                <TableHead className="font-sans text-xs text-slate-400 text-right pr-4">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {sources.map((source) => (
-                <TableRow key={source.id}>
-                  <TableCell className="font-sans text-sm font-medium">{source.brand}</TableCell>
+                <TableRow key={source.id} className="border-slate-700/30">
+                  <TableCell className="font-sans text-sm font-medium text-slate-200">{source.brand}</TableCell>
                   <TableCell>
-                    <Badge variant="outline" className="font-sans text-xs capitalize">
+                    <PlatformBadge variant="outline" size="sm">
                       {source.source_type === 'api' ? 'API' : 'CSV'}
-                    </Badge>
+                    </PlatformBadge>
                   </TableCell>
-                  <TableCell className="font-sans text-sm capitalize">{source.scrape_frequency}</TableCell>
-                  <TableCell className="font-sans text-sm text-muted-foreground">
+                  <TableCell className="font-sans text-sm capitalize text-slate-300">{source.scrape_frequency}</TableCell>
+                  <TableCell className="font-sans text-sm text-slate-500">
                     {source.last_polled_at
                       ? new Date(source.last_polled_at).toLocaleDateString()
                       : 'Never'}
@@ -212,24 +214,23 @@ export function PriceSourcesTab() {
                   </TableCell>
                   <TableCell className="text-right pr-4">
                     <div className="flex items-center justify-end gap-1">
-                      <Button
+                      <PlatformButton
                         variant="ghost"
-                        size="sm"
-                        className="h-7 w-7 p-0"
+                        size="icon-sm"
                         onClick={() => handleSync(source.id)}
                         disabled={syncMutation.isPending}
                       >
                         <RefreshCw className={cn('w-3.5 h-3.5', syncMutation.isPending && 'animate-spin')} />
-                      </Button>
-                      <Button
+                      </PlatformButton>
+                      <PlatformButton
                         variant="ghost"
-                        size="sm"
-                        className="h-7 w-7 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                        size="icon-sm"
+                        className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
                         onClick={() => handleDelete(source)}
                         disabled={deleteMutation.isPending}
                       >
                         <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
+                      </PlatformButton>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -237,7 +238,7 @@ export function PriceSourcesTab() {
             </TableBody>
           </Table>
         )}
-      </CardContent>
-    </Card>
+      </PlatformCardContent>
+    </PlatformCard>
   );
 }

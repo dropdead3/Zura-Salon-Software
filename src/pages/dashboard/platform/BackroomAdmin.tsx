@@ -9,6 +9,9 @@ import { SupplyLibraryTab } from '@/components/platform/backroom/SupplyLibraryTa
 import { BackroomAnalyticsTab } from '@/components/platform/backroom/BackroomAnalyticsTab';
 import { ClipboardList, Database, Building2, Package, BarChart3 } from 'lucide-react';
 
+const tabTriggerClass =
+  'data-[state=active]:bg-violet-600 data-[state=active]:text-white text-slate-400 hover:text-white';
+
 export default function BackroomAdmin() {
   const [tab, setTab] = useState('queue');
 
@@ -20,24 +23,24 @@ export default function BackroomAdmin() {
       />
 
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="bg-muted/50">
-          <TabsTrigger value="queue" className="font-sans text-sm gap-1.5">
+        <TabsList className="bg-slate-800/50 border border-slate-700/50 p-1">
+          <TabsTrigger value="queue" className={`${tabTriggerClass} flex items-center gap-1.5`}>
             <ClipboardList className="w-3.5 h-3.5" />
             Price Queue
           </TabsTrigger>
-          <TabsTrigger value="sources" className="font-sans text-sm gap-1.5">
+          <TabsTrigger value="sources" className={`${tabTriggerClass} flex items-center gap-1.5`}>
             <Database className="w-3.5 h-3.5" />
             Price Sources
           </TabsTrigger>
-          <TabsTrigger value="entitlements" className="font-sans text-sm gap-1.5">
+          <TabsTrigger value="entitlements" className={`${tabTriggerClass} flex items-center gap-1.5`}>
             <Building2 className="w-3.5 h-3.5" />
             Entitlements
           </TabsTrigger>
-          <TabsTrigger value="library" className="font-sans text-sm gap-1.5">
+          <TabsTrigger value="library" className={`${tabTriggerClass} flex items-center gap-1.5`}>
             <Package className="w-3.5 h-3.5" />
             Supply Library
           </TabsTrigger>
-          <TabsTrigger value="analytics" className="font-sans text-sm gap-1.5">
+          <TabsTrigger value="analytics" className={`${tabTriggerClass} flex items-center gap-1.5`}>
             <BarChart3 className="w-3.5 h-3.5" />
             Analytics
           </TabsTrigger>

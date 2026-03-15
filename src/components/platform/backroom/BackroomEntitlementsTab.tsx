@@ -1,11 +1,17 @@
 import { useState } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import {
+  PlatformCard,
+  PlatformCardContent,
+  PlatformCardHeader,
+  PlatformCardTitle,
+  PlatformCardDescription,
+} from '@/components/platform/ui/PlatformCard';
+import { PlatformButton } from '@/components/platform/ui/PlatformButton';
+import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
+import { PlatformInput } from '@/components/platform/ui/PlatformInput';
 import { Switch } from '@/components/ui/switch';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -36,25 +42,25 @@ function getPlanTier(reason: string | null): string {
   return 'unknown';
 }
 
-function getStatusFromReason(reason: string | null, enabled: boolean): { label: string; className: string } {
-  if (!enabled) return { label: 'Inactive', className: 'text-muted-foreground' };
+function getStatusFromReason(reason: string | null, enabled: boolean): { label: string; variant: 'default' | 'warning' | 'error' | 'success' } {
+  if (!enabled) return { label: 'Inactive', variant: 'default' };
   const r = (reason || '').toLowerCase();
-  if (r.includes('trial')) return { label: 'Trial', className: 'bg-amber-500/10 text-amber-600 border-amber-500/20' };
-  if (r.includes('cancel')) return { label: 'Cancelled', className: 'bg-destructive/10 text-destructive border-destructive/20' };
-  return { label: 'Active', className: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' };
+  if (r.includes('trial')) return { label: 'Trial', variant: 'warning' };
+  if (r.includes('cancel')) return { label: 'Cancelled', variant: 'error' };
+  return { label: 'Active', variant: 'success' };
 }
 
 function planBadge(tier: string) {
-  const map: Record<string, string> = {
-    starter: 'bg-muted text-muted-foreground',
-    professional: 'bg-primary/10 text-primary border-primary/20',
-    unlimited: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
-    trial: 'bg-sky-500/10 text-sky-600 border-sky-500/20',
+  const map: Record<string, 'default' | 'primary' | 'warning' | 'info'> = {
+    starter: 'default',
+    professional: 'primary',
+    unlimited: 'warning',
+    trial: 'info',
   };
   return (
-    <Badge variant="outline" className={cn('font-sans text-xs capitalize', map[tier] || '')}>
+    <PlatformBadge variant={map[tier] || 'default'} size="sm">
       {tier === 'unknown' ? '—' : tier}
-    </Badge>
+    </PlatformBadge>
   );
 }
 
@@ -154,42 +160,40 @@ export function BackroomEntitlementsTab() {
   const trialCount = orgs.filter((o) => getPlanTier(o.override_reason) === 'trial').length;
 
   return (
-    <Card className="rounded-xl border-border/60 bg-card/80 backdrop-blur-xl">
-      <CardHeader className="flex flex-row items-center justify-between gap-4 flex-wrap">
+    <PlatformCard variant="glass">
+      <PlatformCardHeader className="flex flex-row items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3">
-          <div className={tokens.card.iconBox}>
-            <Building2 className="w-5 h-5 text-primary" />
+          <div className="w-10 h-10 rounded-lg bg-[hsl(var(--platform-bg-hover))] flex items-center justify-center">
+            <Building2 className="w-5 h-5 text-violet-400" />
           </div>
           <div>
-            <CardTitle className={tokens.card.title}>Backroom Entitlements</CardTitle>
-            <CardDescription className="font-sans text-sm">
+            <PlatformCardTitle>Backroom Entitlements</PlatformCardTitle>
+            <PlatformCardDescription>
               {enabledCount} active · {trialCount} trial · {orgs.length} total organizations
-            </CardDescription>
+            </PlatformCardDescription>
           </div>
         </div>
         <div className="flex items-center gap-2">
           {selected.size > 0 && (
             <>
-              <Button size="sm" onClick={handleBatchEnable} className="font-sans font-medium">
+              <PlatformButton size="sm" onClick={handleBatchEnable}>
                 Enable ({selected.size})
-              </Button>
-              <Button size="sm" variant="destructive" onClick={handleBatchDisable} className="font-sans font-medium">
+              </PlatformButton>
+              <PlatformButton size="sm" variant="destructive" onClick={handleBatchDisable}>
                 Disable ({selected.size})
-              </Button>
+              </PlatformButton>
             </>
           )}
-          <div className="relative w-56">
-            <Search className="absolute left-2.5 top-2.5 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Search organizations..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-8 h-9 font-sans text-sm"
-            />
-          </div>
+          <PlatformInput
+            icon={<Search className="w-4 h-4" />}
+            placeholder="Search organizations..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-56"
+          />
         </div>
-      </CardHeader>
-      <CardContent className="p-0">
+      </PlatformCardHeader>
+      <PlatformCardContent className="p-0">
         {isLoading ? (
           <div className="flex items-center justify-center h-40">
             <Loader2 className={tokens.loading.spinner} />
@@ -202,7 +206,7 @@ export function BackroomEntitlementsTab() {
         ) : (
           <Table>
             <TableHeader>
-              <TableRow>
+              <TableRow className="border-slate-700/50">
                 <TableHead className="w-10 pl-4">
                   <Checkbox
                     checked={selected.size === filtered.length && filtered.length > 0}
@@ -211,12 +215,12 @@ export function BackroomEntitlementsTab() {
                     }}
                   />
                 </TableHead>
-                <TableHead className={tokens.table.columnHeader}>Organization</TableHead>
-                <TableHead className={tokens.table.columnHeader}>Status</TableHead>
-                <TableHead className={tokens.table.columnHeader}>Plan</TableHead>
-                <TableHead className={tokens.table.columnHeader}>Org Tier</TableHead>
-                <TableHead className={tokens.table.columnHeader}>Activated</TableHead>
-                <TableHead className={cn(tokens.table.columnHeader, 'text-right pr-4')}>Access</TableHead>
+                <TableHead className="font-sans text-xs text-slate-400">Organization</TableHead>
+                <TableHead className="font-sans text-xs text-slate-400">Status</TableHead>
+                <TableHead className="font-sans text-xs text-slate-400">Plan</TableHead>
+                <TableHead className="font-sans text-xs text-slate-400">Org Tier</TableHead>
+                <TableHead className="font-sans text-xs text-slate-400">Activated</TableHead>
+                <TableHead className="font-sans text-xs text-slate-400 text-right pr-4">Access</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -229,29 +233,29 @@ export function BackroomEntitlementsTab() {
                   <Collapsible key={org.id} asChild open={isExpanded} onOpenChange={() => setExpandedOrg(isExpanded ? null : org.id)}>
                     <>
                       <CollapsibleTrigger asChild>
-                        <TableRow className="cursor-pointer hover:bg-muted/30">
+                        <TableRow className="cursor-pointer border-slate-700/30 hover:bg-slate-800/30">
                           <TableCell className="pl-4" onClick={(e) => e.stopPropagation()}>
                             <Checkbox
                               checked={selected.has(org.id)}
                               onCheckedChange={() => toggleSelect(org.id)}
                             />
                           </TableCell>
-                          <TableCell className="font-sans text-sm font-medium">
+                          <TableCell className="font-sans text-sm font-medium text-slate-200">
                             <div className="flex items-center gap-1.5">
-                              {isExpanded ? <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" /> : <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />}
+                              {isExpanded ? <ChevronDown className="w-3.5 h-3.5 text-slate-500" /> : <ChevronRight className="w-3.5 h-3.5 text-slate-500" />}
                               {org.name}
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Badge variant="outline" className={cn('font-sans text-xs', status.className)}>
+                            <PlatformBadge variant={status.variant} size="sm">
                               {status.label}
-                            </Badge>
+                            </PlatformBadge>
                           </TableCell>
                           <TableCell>{planBadge(tier)}</TableCell>
-                          <TableCell className="font-sans text-xs text-muted-foreground capitalize">
+                          <TableCell className="font-sans text-xs text-slate-500 capitalize">
                             {org.subscription_tier || '—'}
                           </TableCell>
-                          <TableCell className="font-sans text-xs text-muted-foreground">
+                          <TableCell className="font-sans text-xs text-slate-500">
                             {org.flag_created_at ? new Date(org.flag_created_at).toLocaleDateString() : '—'}
                           </TableCell>
                           <TableCell className="text-right pr-4" onClick={(e) => e.stopPropagation()}>
@@ -263,24 +267,24 @@ export function BackroomEntitlementsTab() {
                         </TableRow>
                       </CollapsibleTrigger>
                       <CollapsibleContent asChild>
-                        <TableRow className="bg-muted/20">
+                        <TableRow className="bg-slate-800/20 border-slate-700/20">
                           <TableCell colSpan={7} className="p-4">
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                               <div>
-                                <span className="font-sans text-xs text-muted-foreground block">Org Created</span>
-                                <span className="font-sans text-sm">{org.created_at ? new Date(org.created_at).toLocaleDateString() : '—'}</span>
+                                <span className="font-sans text-xs text-slate-500 block">Org Created</span>
+                                <span className="font-sans text-sm text-slate-300">{org.created_at ? new Date(org.created_at).toLocaleDateString() : '—'}</span>
                               </div>
                               <div>
-                                <span className="font-sans text-xs text-muted-foreground block">Backroom Plan</span>
-                                <span className="font-sans text-sm capitalize">{tier === 'unknown' ? 'Not set' : tier}</span>
+                                <span className="font-sans text-xs text-slate-500 block">Backroom Plan</span>
+                                <span className="font-sans text-sm capitalize text-slate-300">{tier === 'unknown' ? 'Not set' : tier}</span>
                               </div>
                               <div>
-                                <span className="font-sans text-xs text-muted-foreground block">Override Reason</span>
-                                <span className="font-sans text-xs">{org.override_reason || '—'}</span>
+                                <span className="font-sans text-xs text-slate-500 block">Override Reason</span>
+                                <span className="font-sans text-xs text-slate-400">{org.override_reason || '—'}</span>
                               </div>
                               <div>
-                                <span className="font-sans text-xs text-muted-foreground block">Org Subscription</span>
-                                <span className="font-sans text-sm capitalize">{org.subscription_tier || 'Free'}</span>
+                                <span className="font-sans text-xs text-slate-500 block">Org Subscription</span>
+                                <span className="font-sans text-sm capitalize text-slate-300">{org.subscription_tier || 'Free'}</span>
                               </div>
                             </div>
                           </TableCell>
@@ -293,7 +297,7 @@ export function BackroomEntitlementsTab() {
             </TableBody>
           </Table>
         )}
-      </CardContent>
-    </Card>
+      </PlatformCardContent>
+    </PlatformCard>
   );
 }
