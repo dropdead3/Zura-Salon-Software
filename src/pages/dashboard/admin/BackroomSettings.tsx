@@ -37,6 +37,7 @@ import { SupplyIntelligenceDashboard } from '@/components/dashboard/backroom/sup
 
 type BackroomSection =
   | 'overview'
+  | 'supply-intelligence'
   | 'insights'
   | 'products'
   | 'services'
