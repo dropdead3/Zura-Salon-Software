@@ -412,7 +412,28 @@ export function BackroomPaywall() {
                               Upgraded
                             </Badge>
                           )}
-                        </div>
+                        {/* Tier progression indicator */}
+                        {(() => {
+                          const progress = getTierProgressInfo(stylistCount);
+                          if (!progress) return null;
+                          return (
+                            <div className="mt-1.5 ml-5.5 space-y-1">
+                              <Progress
+                                value={progress.progressPct}
+                                className="h-1 bg-muted/60"
+                                indicatorClassName={progress.isAtBoundary ? 'bg-amber-500' : 'bg-muted-foreground/30'}
+                              />
+                              <p className="font-sans text-[11px] text-muted-foreground">
+                                {progress.isAtBoundary ? (
+                                  <>Add 1 more stylist → {PLAN_PRICING[progress.nextTier].name} (${isAnnual ? PLAN_PRICING[progress.nextTier].annualPrice : PLAN_PRICING[progress.nextTier].price}/mo)</>
+                                ) : (
+                                  <>{progress.remaining} more stylist{progress.remaining !== 1 ? 's' : ''} to {PLAN_PRICING[progress.nextTier].name}</>
+                                )}
+                              </p>
+                            </div>
+                          );
+                        })()}
+                      </div>
                       </div>
                       {isChecked && (
                         <span className="font-sans text-xs text-primary shrink-0">
