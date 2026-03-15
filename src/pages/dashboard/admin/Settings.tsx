@@ -109,6 +109,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useServicesWithFlowsCount } from '@/hooks/useServiceCommunicationFlows';
 import { useColorTheme, colorThemes } from '@/hooks/useColorTheme';
 import { useRoleUtils } from '@/hooks/useRoleUtils';
+import { useBillingAccess } from '@/hooks/useBillingAccess';
 import { useSettingsLayout, useUpdateSettingsLayout, DEFAULT_ICON_COLORS, DEFAULT_ORDER, SECTION_GROUPS } from '@/hooks/useSettingsLayout';
 import { useStaffingAlertSettings, useUpdateStaffingAlertSettings } from '@/hooks/useStaffingAlertSettings';
 import { cn } from '@/lib/utils';
