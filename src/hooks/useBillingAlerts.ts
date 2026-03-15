@@ -13,6 +13,7 @@ export interface BillingAlert {
   description: string;
   ctaLabel: string;
   ctaAction: 'open-portal' | 'scroll-plans';
+  dismissible: boolean;
 }
 
 function getCardExpiryAlerts(
