@@ -267,7 +267,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
         is_active: boolean;
       }> = [];
 
-      SUPPLY_LIBRARY.forEach((item) => {
+      libraryItems.forEach((item) => {
         getItemKeys(item).forEach(({ key, size }) => {
           if (!selectedItems.has(key)) return;
           itemsToInsert.push({
