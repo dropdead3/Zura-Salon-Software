@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Building2, Search, Loader2, ChevronDown, ChevronRight, MapPin, Scale, Clock, Play, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { Building2, Search, Loader2, ChevronDown, ChevronRight, MapPin, Scale, Clock, Play, AlertTriangle, ShieldCheck, Undo2 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import {
@@ -63,15 +63,16 @@ interface OrgLocation {
 }
 
 function statusBadge(status: string) {
-  const map: Record<string, { label: string; variant: 'default' | 'success' | 'warning' | 'error' }> = {
+  const map: Record<string, { label: string; variant: 'default' | 'success' | 'warning' | 'error' | 'info' }> = {
     active: { label: 'Active', variant: 'success' },
     trial: { label: 'Trial', variant: 'warning' },
     cancelled: { label: 'Cancelled', variant: 'error' },
     suspended: { label: 'Suspended', variant: 'error' },
+    refunded: { label: 'Refunded', variant: 'info' },
   };
   const cfg = map[status] ?? { label: status, variant: 'default' as const };
   return (
-    <PlatformBadge variant={cfg.variant} size="sm">
+    <PlatformBadge variant={cfg.variant as any} size="sm">
       {cfg.label}
     </PlatformBadge>
   );
@@ -511,6 +512,9 @@ function LocationEntitlementPanel({
   onToggle,
   onUpdateEntitlement,
 }: LocationPanelProps) {
+  const [refundTarget, setRefundTarget] = useState<{ locId: string; locName: string } | null>(null);
+  const [refunding, setRefunding] = useState(false);
+  const refundQueryClient = useQueryClient();
   if (!orgEnabled) {
     return (
       <div className="px-6 py-8 text-center">
@@ -638,18 +642,43 @@ function LocationEntitlementPanel({
                     )}
                   </td>
                   <td className="px-4 py-2.5">
-                    {isActive && ent?.refund_eligible_until ? (
-                      new Date(ent.refund_eligible_until) > new Date() ? (
-                        <PlatformBadge variant="success" size="sm">
-                          <ShieldCheck className="w-3 h-3 mr-1" />
-                          {(() => {
-                            const days = Math.ceil((new Date(ent.refund_eligible_until).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-                            return `${days}d left`;
-                          })()}
+                    {ent?.status === 'refunded' && ent.refunded_at ? (
+                      <div className="flex flex-col gap-0.5">
+                        <PlatformBadge variant="info" size="sm">
+                          <Undo2 className="w-3 h-3 mr-1" />
+                          Refunded
                         </PlatformBadge>
+                        <span className="font-sans text-[10px] text-slate-500">
+                          {new Date(ent.refunded_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                    ) : isActive && ent?.refund_eligible_until ? (
+                      new Date(ent.refund_eligible_until) > new Date() ? (
+                        <div className="flex items-center gap-1.5">
+                          <PlatformBadge variant="success" size="sm">
+                            <ShieldCheck className="w-3 h-3 mr-1" />
+                            {(() => {
+                              const days = Math.ceil((new Date(ent.refund_eligible_until!).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                              return `${days}d left`;
+                            })()}
+                          </PlatformBadge>
+                          <PlatformButton
+                            size="sm"
+                            variant="destructive"
+                            className="h-6 text-[10px] px-2"
+                            onClick={() => setRefundTarget({ locId: loc.id, locName: loc.name })}
+                          >
+                            <Undo2 className="w-3 h-3" />
+                            Refund
+                          </PlatformButton>
+                        </div>
                       ) : (
                         <PlatformBadge variant="default" size="sm">Closed</PlatformBadge>
                       )
+                    ) : ent?.prior_refund_count && ent.prior_refund_count > 0 ? (
+                      <PlatformBadge variant="default" size="sm">
+                        Previously refunded
+                      </PlatformBadge>
                     ) : (
                       <span className="font-sans text-xs text-slate-500">—</span>
                     )}
@@ -759,6 +788,58 @@ function LocationEntitlementPanel({
           </tbody>
         </table>
       </div>
+
+      {/* Refund Confirmation Dialog */}
+      <Dialog open={!!refundTarget} onOpenChange={(open) => !open && setRefundTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Process Refund</DialogTitle>
+            <DialogDescription className="space-y-2">
+              <p>
+                This will <strong>immediately revoke</strong> Backroom access for{' '}
+                <strong>{refundTarget?.locName}</strong>, cancel the Stripe subscription, and issue a
+                full refund for the most recent payment.
+              </p>
+              <p className="text-amber-400 font-medium">
+                ⚠ If this location re-subscribes in the future, it will <em>not</em> be eligible for
+                another refund.
+              </p>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <PlatformButton variant="outline" onClick={() => setRefundTarget(null)} disabled={refunding}>
+              Cancel
+            </PlatformButton>
+            <PlatformButton
+              variant="destructive"
+              loading={refunding}
+              onClick={async () => {
+                if (!refundTarget) return;
+                setRefunding(true);
+                try {
+                  const { data, error } = await supabase.functions.invoke('process-backroom-refund', {
+                    body: { organization_id: orgId, location_id: refundTarget.locId },
+                  });
+                  if (error) throw error;
+                  if (data?.error) throw new Error(data.error);
+                  toast.success(data.message || 'Refund processed successfully');
+                  refundQueryClient.invalidateQueries({ queryKey: ['backroom-location-entitlements', orgId] });
+                  refundQueryClient.invalidateQueries({ queryKey: ['platform-backroom-entitlements'] });
+                  refundQueryClient.invalidateQueries({ queryKey: ['platform-backroom-all-entitlement-counts'] });
+                } catch (err: any) {
+                  toast.error('Refund failed: ' + (err.message || 'Unknown error'));
+                } finally {
+                  setRefunding(false);
+                  setRefundTarget(null);
+                }
+              }}
+            >
+              <Undo2 className="w-4 h-4" />
+              Confirm Refund
+            </PlatformButton>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
