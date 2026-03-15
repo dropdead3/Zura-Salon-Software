@@ -54,7 +54,7 @@ export function useBackroomLocationEntitlements(organizationId: string | undefin
     entitlementMap.get(locationId) ?? null;
 
   const activeCount = (query.data ?? []).filter(
-    (e) => e.status === 'active' || e.status === 'trial'
+    (e) => e.status === 'active'
   ).length;
 
   return {
