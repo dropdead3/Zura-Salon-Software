@@ -925,6 +925,16 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
           scopeLabel={filterCategory !== 'all' ? filterCategory : 'all tracked products'}
         />
       )}
+
+      {/* Bulk Reorder Dialog */}
+      {orgId && (
+        <BackroomBulkReorderDialog
+          open={bulkReorderOpen}
+          onOpenChange={setBulkReorderOpen}
+          orgId={orgId}
+          reorderItems={reorderItems}
+        />
+      )}
     </div>
   );
 }
