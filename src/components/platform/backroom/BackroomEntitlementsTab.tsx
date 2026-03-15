@@ -788,6 +788,59 @@ function LocationEntitlementPanel({
           </tbody>
         </table>
       </div>
+
+      {/* Refund Confirmation Dialog */}
+      <Dialog open={!!refundTarget} onOpenChange={(open) => !open && setRefundTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Process Refund</DialogTitle>
+            <DialogDescription className="space-y-2">
+              <p>
+                This will <strong>immediately revoke</strong> Backroom access for{' '}
+                <strong>{refundTarget?.locName}</strong>, cancel the Stripe subscription, and issue a
+                full refund for the most recent payment.
+              </p>
+              <p className="text-amber-400 font-medium">
+                ⚠ If this location re-subscribes in the future, it will <em>not</em> be eligible for
+                another refund.
+              </p>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <PlatformButton variant="outline" onClick={() => setRefundTarget(null)} disabled={refunding}>
+              Cancel
+            </PlatformButton>
+            <PlatformButton
+              variant="destructive"
+              loading={refunding}
+              onClick={async () => {
+                if (!refundTarget) return;
+                setRefunding(true);
+                try {
+                  const { data, error } = await supabase.functions.invoke('process-backroom-refund', {
+                    body: { organization_id: orgId, location_id: refundTarget.locId },
+                  });
+                  if (error) throw error;
+                  if (data?.error) throw new Error(data.error);
+                  toast.success(data.message || 'Refund processed successfully');
+                  // Invalidate entitlements queries
+                  const qc = (window as any).__queryClient;
+                  // fallback: just reload
+                  window.location.reload();
+                } catch (err: any) {
+                  toast.error('Refund failed: ' + (err.message || 'Unknown error'));
+                } finally {
+                  setRefunding(false);
+                  setRefundTarget(null);
+                }
+              }}
+            >
+              <Undo2 className="w-4 h-4" />
+              Confirm Refund
+            </PlatformButton>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
