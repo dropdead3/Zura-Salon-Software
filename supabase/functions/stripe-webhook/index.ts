@@ -343,6 +343,40 @@ async function handleChargeFailed(
   console.log(`Charge failure notification created for ${org.name}`);
 }
 
+// Handler for checkout.session.completed (backroom addon)
+async function handleCheckoutCompleted(
+  supabase: SupabaseClientAny,
+  session: Record<string, unknown>
+) {
+  const metadata = session.metadata as Record<string, string> | null;
+  if (!metadata || metadata.addon_type !== 'backroom') {
+    console.log("Checkout session not a backroom addon - skipping");
+    return;
+  }
+
+  const orgId = metadata.organization_id;
+  console.log(`Enabling backroom for organization: ${orgId}`);
+
+  // Upsert the feature flag
+  const { error } = await supabase
+    .from('organization_feature_flags')
+    .upsert({
+      organization_id: orgId,
+      flag_key: 'backroom_enabled',
+      is_enabled: true,
+      override_reason: 'Stripe checkout completed',
+      updated_at: new Date().toISOString(),
+    }, {
+      onConflict: 'organization_id,flag_key',
+    });
+
+  if (error) {
+    console.error("Failed to enable backroom flag:", error);
+  } else {
+    console.log(`Backroom enabled for org ${orgId}`);
+  }
+}
+
 // Handler for customer.subscription.deleted
 async function handleSubscriptionDeleted(
   supabase: SupabaseClientAny,
@@ -361,6 +395,24 @@ async function handleSubscriptionDeleted(
   if (!org) {
     console.warn(`Organization not found for Stripe customer: ${customerId}`);
     return;
+  }
+
+  // Check if this was a backroom subscription
+  const subMetadata = subscription.metadata as Record<string, string> | null;
+  if (subMetadata?.addon_type === 'backroom') {
+    // Disable backroom feature flag
+    await supabase
+      .from('organization_feature_flags')
+      .upsert({
+        organization_id: org.id,
+        flag_key: 'backroom_enabled',
+        is_enabled: false,
+        override_reason: 'Stripe subscription cancelled',
+        updated_at: new Date().toISOString(),
+      }, {
+        onConflict: 'organization_id,flag_key',
+      });
+    console.log(`Backroom disabled for org ${org.id} after subscription cancellation`);
   }
 
   await supabase
