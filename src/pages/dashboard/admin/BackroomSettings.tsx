@@ -63,6 +63,7 @@ interface SectionMeta {
 
 const sections: SectionMeta[] = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard, tooltip: 'Dashboard showing overall Backroom configuration progress.' },
+  { id: 'supply-intelligence', label: 'Supply Intelligence', icon: Brain, tooltip: 'AI-powered supply chain analysis: waste, reorder risk, margin, and usage insights.' },
   { id: 'insights', label: 'Insights', icon: BarChart3, tooltip: 'KPI cards & employee performance analytics for your backroom.' },
   { id: 'products', label: 'Products & Supplies', icon: Package, tooltip: 'Choose which products are tracked at the mixing station.' },
   { id: 'services', label: 'Service Tracking', icon: Wrench, tooltip: 'Link services to the products they consume.', requires: ['products'], requiresLabel: 'Products' },
