@@ -1,153 +1,69 @@
 
 
-## Timezone-Safe Scheduling (Implemented)
+# Gaps and Enhancements to Consider Before Executing
 
-### Problem
-`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
+## 1. No org-level default markup fallback
 
-### Solution
-- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
-- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
-- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
+The plan relies on per-product `markup_pct`, but many salons won't have set markup on every product. If a product has `markup_pct = NULL`, the charge falls to wholesale cost (0% markup), which is likely not what the owner intended.
 
-### Files Updated
-- `ScheduleHeader.tsx` — today button, quick days, isToday checks
-- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
-- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
-- `MonthView.tsx` — today highlight
-- `AgendaView.tsx` — today/tomorrow labels, today border
-- `ScheduleActionBar.tsx` — payment queue timing
-- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
-- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
-- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
-- `useHuddles.ts` — today's huddle query
+**Suggestion:** Add a `backroom_billing_settings` table with `default_product_markup_pct` so orgs can set a fallback (e.g., 40%). The charge calculation cascades: per-product markup → org default → 0%.
 
-## Auto-Reorder with Supplier Communication (Implemented)
+## 2. Tax handling for product charges
 
-### What It Does
-Organizations can opt into automatic reorder — when stock dips below threshold, POs are calculated (using MOQ and par levels) and sent directly to the supplier via email.
+The `CheckoutSummarySheet` already calculates tax on the service subtotal. Product cost charges are a separate line item — should they be taxed? In most US jurisdictions, product used during a service is part of the service and is taxable. But some states treat it as a separate retail sale with different tax rules.
 
-### Database Changes
-- `products.par_level` (INT, nullable) — desired stock level to reorder up to
-- `product_suppliers.moq` (INT, default 1) — minimum order quantity
-- `inventory_alert_settings.auto_reorder_enabled` (BOOL, default false)
-- `inventory_alert_settings.auto_reorder_mode` (TEXT, default 'to_par') — 'to_par' or 'moq_only'
-- `inventory_alert_settings.max_auto_reorder_value` (NUMERIC, nullable) — daily spend cap
-- `purchase_orders.supplier_confirmed_at` (TIMESTAMPTZ, nullable) — for tracking confirmations
+**Suggestion:** Add a `product_charge_taxable` boolean to `backroom_billing_settings` (default `true`). Wire it into the checkout total calculation so product charges are included in the tax base when applicable.
 
-### Quantity Calculation
-```
-deficit = par_level - quantity_on_hand
-order_qty = max(moq, deficit)
-if moq > 1: round up to nearest MOQ multiple
-```
-Fallback: if par_level is null, uses `reorder_level * 2`.
+## 3. Receipt PDF doesn't include product charges
 
-### Files Updated
-- Migration: Added columns to products, product_suppliers, inventory_alert_settings, purchase_orders
-- `check-reorder-levels/index.ts` — auto-send logic with MOQ/par calculation, spend cap, email invocation
-- `AlertSettingsCard.tsx` — auto-reorder toggle, mode selector, spend cap input
-- `useInventoryAlertSettings.ts` — updated interface
-- `useProducts.ts` — added par_level to Product interface
-- `useProductSuppliers.ts` — added moq to ProductSupplier interface
-- `ProductEditDialog.tsx` — added par level field
-- `RetailProductsSettingsContent.tsx` — added par level to product form
-- `SupplierDialog.tsx` — added MOQ field
+The `generateReceiptPdf()` function in `CheckoutSummarySheet` hardcodes service + add-ons + tip. Product cost charges won't appear on the printed receipt unless we explicitly add them.
 
-### Safety Features
-- Spend cap: daily auto-reorder pauses when cumulative PO value exceeds cap
-- Audit trail: auto_reorder logged as stock_movement reason
-- Supplier confirmation tracking via supplier_confirmed_at timestamp
+**Suggestion:** Include product charges as a line item in the PDF between Add-Ons and Payment Summary sections.
 
-## Product Movement Rating Badges (Implemented)
+## 4. Promo codes could discount product charges unintentionally
 
-### What It Does
-Every product gets a dynamic movement rating badge (Best Seller, Popular, Steady, Slow Mover, Stagnant, Dead Weight) computed from 90-day sales velocity data.
+The existing `PromoCodeInput` applies discounts to the subtotal. If product charges are folded into the subtotal, a "20% off" promo would also discount the product cost — eating into the salon's cost recovery.
 
-### Rating Tiers
-- **Best Seller**: Top 10% velocity AND >0.5 units/day (emerald)
-- **Popular**: Top 25% velocity AND >0.2 units/day (blue)
-- **Steady**: Velocity >0.05/day (muted)
-- **Slow Mover**: Velocity >0 but ≤0.05/day (amber)
-- **Stagnant**: Zero velocity, sold within 180 days (orange)
-- **Dead Weight**: Zero velocity, 180+ days or never sold (red)
-- Products with zero stock excluded from negative ratings
+**Suggestion:** Keep product charges separate from the promo-discountable subtotal. Show them as a distinct "Product Usage" section after the discount line but before tax. This preserves full cost recovery.
 
-### Files Created
-- `src/lib/productMovementRating.ts` — pure rating logic + badge config
-- `src/hooks/useProductVelocity.ts` — lightweight 90-day POS velocity query
-- `src/components/ui/MovementBadge.tsx` — shared badge component with tooltip
+## 5. No client-facing transparency on what "Product Cost" means
 
-### Files Updated
-- `RetailProductsSettingsContent.tsx` — Movement column + filter dropdown in products table
-- `RetailAnalyticsContent.tsx` — Movement badges on product performance table + Movement Distribution card (donut chart with actionable callouts)
-- `ProductCard.tsx` — Best Seller/Popular badges on public shop cards (positive only)
-- `ProductDetailModal.tsx` — Movement badge with velocity context
+The plan shows a line item in the booking wizard, but clients seeing "Product Cost (est.)" for the first time may be confused or frustrated. Front desk staff need a script.
 
-## Inventory Intelligence Suite v2 (Implemented)
+**Suggestion:** Add a configurable `product_charge_label` to `backroom_billing_settings` (e.g., "Color Materials", "Professional Products Used", "Product Fee"). Default to "Product Usage". This lets each salon brand it appropriately.
 
-### 1. Dead Stock Auto-Clearance Pipeline
-- `DeadStockAlertCard.tsx` — Surfaces Dead Weight/Stagnant products not yet in clearance with suggested discount tiers (10%/25%/50% based on idle days)
-- One-click "Mark for Clearance" applies discount and sets clearance_status
+## 6. Multi-service appointments aren't addressed
 
-### 2. Supplier Lead Time Tracker
-- `usePurchaseOrders.ts` — `useMarkPurchaseOrderReceived` already computes actual delivery days and updates `product_suppliers.avg_delivery_days` via running average
-- `parLevelSuggestion.ts` — Updated to accept supplier-provided lead time instead of hardcoded 7-day default, with bounds clamping
+An appointment can have multiple services (via `appointment_service_assignments`). The plan's estimate hook takes service IDs but the checkout flow currently treats `appointment.service_name` as a single service. Product charges need to aggregate across all services in the appointment.
 
-### 3. Inventory Valuation Dashboard Card
-- `InventoryValuationCard.tsx` — Shows total inventory at cost/retail, potential margin %, capital-at-risk (slow/stagnant/dead weight), with donut chart breakdown
+**Suggestion:** Ensure `useEstimatedProductCharge` and the checkout charge calculation iterate over all assigned services, not just the primary `service_id`.
 
-### 4. Reorder Approval Queue
-- `ReorderApprovalCard.tsx` — Surfaces draft POs from auto-reorder with one-click approve (→ sent) or reject (→ cancelled)
+## 7. No "Parts & Labor" visibility indicator for clients during online booking
 
-### 5. Stock Transfer Between Locations
-- Migration: Created `stock_transfers` table with RLS (org member read, org admin manage)
-- `useStockTransfers.ts` — CRUD hooks for stock transfers with stock movement logging
-- `StockTransferDialog.tsx` — Dialog for creating transfers between locations
-- `RetailProductsSettingsContent.tsx` — "Transfer Stock" button added to Inventory tab (visible for multi-location orgs)
+If the salon has a client-facing booking flow, there's no indication that product costs will be added. Clients could be surprised at checkout.
 
-## Enhancement 1: Expiry Tracking (Implemented)
+**Suggestion:** When a service uses `parts_and_labor` billing, add a small note on the service card: "Product usage fee applies" — configurable via the billing settings.
 
-### What It Does
-Products can have an optional expiration date (`expires_at`) and per-product alert threshold (`expiry_alert_days`, default 30). The system surfaces expiring inventory with color-coded badges in the product table and an analytics card with auto-clearance suggestions.
+## 8. Missing guardrail: What if recipe baselines don't exist?
 
-### Database Changes
-- `products.expires_at` (DATE, nullable) — expiration date for perishable products
-- `products.expiry_alert_days` (INTEGER, default 30) — days before expiry to trigger alerts
+If a service is set to `parts_and_labor` but has no `service_recipe_baselines`, the estimated charge will be $0.00 — misleading. At checkout, the actual charge from mix bowls could be significant.
 
-### Expiry Alert Buckets
-- **Expired** (red): past expiration → suggests 50% markdown
-- **Critical** (orange): within alert threshold → suggests 25% markdown
-- **Warning** (amber): within 2× alert threshold → suggests 10% markdown
+**Suggestion:** When `parts_and_labor` is active but no baselines exist, show "Product fee applies (estimate unavailable)" instead of "$0.00". Log a warning in the Backroom setup checklist.
 
-### Files Created
-- `src/components/dashboard/analytics/ExpiryAlertCard.tsx` — PinnableCard showing expiring products with one-click clearance actions
+---
 
-### Files Updated
-- `src/hooks/useProducts.ts` — Added `expires_at`, `expiry_alert_days` to Product interface; added `expiringOnly` filter
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Expiry date + alert days in product form; color-coded Expiry column in product table
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ExpiryAlertCard into analytics hub
+## Recommended additions to the plan
 
-## Enhancement 2: Shrinkage Detection (Implemented)
+| Enhancement | Priority | Effort |
+|---|---|---|
+| Org-level default markup fallback | High | Small — one new table + cascade logic |
+| Exclude product charges from promo discounts | High | Small — separate subtotal line |
+| Receipt PDF includes product charges | High | Small — add section to `generateReceiptPdf` |
+| Tax configurability for product charges | Medium | Small — boolean setting + conditional |
+| Configurable client-facing label | Medium | Tiny — one column |
+| Multi-service aggregation | High | Medium — loop over assignments |
+| Baseline-missing guardrail | Medium | Tiny — conditional display |
+| Online booking transparency note | Low | Small — conditional badge |
 
-### What It Does
-Physical stocktake workflow with variance reporting. Staff record actual counts via a Stocktake dialog, and the system compares against expected quantities (system records). A Shrinkage Report card in analytics surfaces products with negative variance (loss) ranked by estimated cost impact.
+I'd recommend folding enhancements 1-6 into the plan before executing, as they prevent real billing errors. Items 7-8 can be follow-ups. Want me to update the plan with these included?
 
-### Database Changes
-- Created `stock_counts` table with computed `variance` column (counted - expected), RLS policies (org member read/insert, org admin update/delete), and indexes
-
-### Shrinkage Calculation
-```
-variance = counted_quantity - expected_quantity
-shrinkage_units = |variance| when variance < 0
-shrinkage_cost = shrinkage_units × cost_price
-```
-
-### Files Created
-- `src/hooks/useStockCounts.ts` — CRUD hooks for stock counts + `useShrinkageSummary` for aggregated shrinkage data
-- `src/components/dashboard/settings/inventory/StocktakeDialog.tsx` — Full stocktake UI with search, inline count entry, real-time variance display
-- `src/components/dashboard/analytics/ShrinkageReportCard.tsx` — PinnableCard showing products with shrinkage, severity badges, estimated loss
-
-### Files Updated
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Added "Stocktake" button to Inventory tab toolbar
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ShrinkageReportCard into analytics hub
