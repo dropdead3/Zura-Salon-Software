@@ -641,18 +641,43 @@ function LocationEntitlementPanel({
                     )}
                   </td>
                   <td className="px-4 py-2.5">
-                    {isActive && ent?.refund_eligible_until ? (
-                      new Date(ent.refund_eligible_until) > new Date() ? (
-                        <PlatformBadge variant="success" size="sm">
-                          <ShieldCheck className="w-3 h-3 mr-1" />
-                          {(() => {
-                            const days = Math.ceil((new Date(ent.refund_eligible_until).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-                            return `${days}d left`;
-                          })()}
+                    {ent?.status === 'refunded' && ent.refunded_at ? (
+                      <div className="flex flex-col gap-0.5">
+                        <PlatformBadge variant="info" size="sm">
+                          <Undo2 className="w-3 h-3 mr-1" />
+                          Refunded
                         </PlatformBadge>
+                        <span className="font-sans text-[10px] text-slate-500">
+                          {new Date(ent.refunded_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                    ) : isActive && ent?.refund_eligible_until ? (
+                      new Date(ent.refund_eligible_until) > new Date() ? (
+                        <div className="flex items-center gap-1.5">
+                          <PlatformBadge variant="success" size="sm">
+                            <ShieldCheck className="w-3 h-3 mr-1" />
+                            {(() => {
+                              const days = Math.ceil((new Date(ent.refund_eligible_until!).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                              return `${days}d left`;
+                            })()}
+                          </PlatformBadge>
+                          <PlatformButton
+                            size="sm"
+                            variant="destructive"
+                            className="h-6 text-[10px] px-2"
+                            onClick={() => setRefundTarget({ locId: loc.id, locName: loc.name })}
+                          >
+                            <Undo2 className="w-3 h-3" />
+                            Refund
+                          </PlatformButton>
+                        </div>
                       ) : (
                         <PlatformBadge variant="default" size="sm">Closed</PlatformBadge>
                       )
+                    ) : ent?.prior_refund_count && ent.prior_refund_count > 0 ? (
+                      <PlatformBadge variant="default" size="sm">
+                        Previously refunded
+                      </PlatformBadge>
                     ) : (
                       <span className="font-sans text-xs text-slate-500">—</span>
                     )}
