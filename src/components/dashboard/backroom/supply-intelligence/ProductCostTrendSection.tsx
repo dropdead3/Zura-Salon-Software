@@ -24,6 +24,7 @@ export function ProductCostTrendSection() {
   if (!isLoading && risingCosts.length === 0) return null;
 
   return (
+    <>
     <Card className={tokens.card.wrapper}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
