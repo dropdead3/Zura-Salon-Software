@@ -124,6 +124,7 @@ export function useBillingAlerts(): { alerts: BillingAlert[]; isLoading: boolean
         description: 'Add a payment method to prevent service interruption at your next billing cycle.',
         ctaLabel: 'Add Payment Method',
         ctaAction: 'open-portal',
+        dismissible: true,
       });
     }
 

@@ -1,11 +1,35 @@
-import { AlertTriangle } from 'lucide-react';
+import { useState, useCallback } from 'react';
+import { AlertTriangle, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useBillingAlerts, type BillingAlert } from '@/hooks/useBillingAlerts';
 import { useOpenBillingPortal } from '@/hooks/useOrgPaymentInfo';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { cn } from '@/lib/utils';
 
-function AlertRow({ alert, onPortal }: { alert: BillingAlert; onPortal: () => void }) {
+const STORAGE_KEY = 'zura_dismissed_billing_alerts';
+
+function readDismissed(): Set<string> {
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    return raw ? new Set(JSON.parse(raw) as string[]) : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
+function persistDismissed(ids: Set<string>) {
+  sessionStorage.setItem(STORAGE_KEY, JSON.stringify([...ids]));
+}
+
+function AlertRow({
+  alert,
+  onPortal,
+  onDismiss,
+}: {
+  alert: BillingAlert;
+  onPortal: () => void;
+  onDismiss?: (id: string) => void;
+}) {
   const isRed = alert.severity === 'red';
 
   const handleCta = () => {
@@ -44,6 +68,20 @@ function AlertRow({ alert, onPortal }: { alert: BillingAlert; onPortal: () => vo
       >
         {alert.ctaLabel}
       </Button>
+      {alert.dismissible && onDismiss && (
+        <button
+          onClick={() => onDismiss(alert.id)}
+          className={cn(
+            'shrink-0 p-1 rounded-md transition-colors',
+            isRed
+              ? 'hover:bg-destructive/10 text-destructive'
+              : 'hover:bg-amber-500/10 text-amber-700 dark:text-amber-400',
+          )}
+          aria-label={`Dismiss ${alert.title}`}
+        >
+          <X className="h-4 w-4" />
+        </button>
+      )}
     </div>
   );
 }
@@ -53,8 +91,22 @@ export function BillingAlertsBanner() {
   const orgId = effectiveOrganization?.id;
   const { alerts, isLoading } = useBillingAlerts();
   const openPortal = useOpenBillingPortal();
+  const [dismissedIds, setDismissedIds] = useState<Set<string>>(readDismissed);
 
-  if (isLoading || alerts.length === 0) return null;
+  const handleDismiss = useCallback((id: string) => {
+    setDismissedIds((prev) => {
+      const next = new Set(prev);
+      next.add(id);
+      persistDismissed(next);
+      return next;
+    });
+  }, []);
+
+  const visibleAlerts = alerts.filter(
+    (a) => !a.dismissible || !dismissedIds.has(a.id),
+  );
+
+  if (isLoading || visibleAlerts.length === 0) return null;
 
   const handlePortal = () => {
     if (orgId) openPortal.mutate(orgId);
@@ -62,8 +114,13 @@ export function BillingAlertsBanner() {
 
   return (
     <div className="space-y-2">
-      {alerts.map((alert) => (
-        <AlertRow key={alert.id} alert={alert} onPortal={handlePortal} />
+      {visibleAlerts.map((alert) => (
+        <AlertRow
+          key={alert.id}
+          alert={alert}
+          onPortal={handlePortal}
+          onDismiss={handleDismiss}
+        />
       ))}
     </div>
   );
