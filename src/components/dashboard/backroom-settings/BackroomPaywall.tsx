@@ -103,7 +103,7 @@ const TRIAL_OPTIONS = [
   { days: 14, label: '14-day free trial' },
 ] as const;
 
-export function BackroomPaywall() {
+export function BackroomPaywall({ isPendingActivation = false }: BackroomPaywallProps) {
   const [loading, setLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string>('professional');
   const [scaleCount, setScaleCount] = useState(1);
@@ -112,6 +112,7 @@ export function BackroomPaywall() {
   const [selectedLocationIds, setSelectedLocationIds] = useState<Set<string>>(new Set());
   const { effectiveOrganization } = useOrganizationContext();
   const { data: locations = [] } = useLocations(effectiveOrganization?.id);
+  const { isLocationEntitled } = useBackroomLocationEntitlements(effectiveOrganization?.id);
 
   const activeLocations = locations.filter((l) => l.is_active);
   const locationCount = selectedLocationIds.size || 1; // minimum 1
