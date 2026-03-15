@@ -4,7 +4,7 @@
  */
 
 import { useState } from 'react';
-import { RefreshCw, Loader2, Brain, Zap } from 'lucide-react';
+import { RefreshCw, Loader2, Brain, Zap, BarChart3, Lock } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
