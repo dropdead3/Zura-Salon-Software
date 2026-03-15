@@ -85,7 +85,7 @@ type SortField = 'name' | 'brand' | 'category' | 'retail_price' | 'quantity_on_h
 type SortDir = 'asc' | 'desc';
 
 function exportProductsCsv(products: Product[]) {
-  const headers = ['Name', 'Brand', 'Category', 'Type', 'SKU', 'Barcode', 'Retail Price', 'Cost Price', 'Stock', 'Reorder Level', 'Available Online'];
+  const headers = ['Name', 'Brand', 'Category', 'Type', 'SKU', 'Barcode', 'Container Size', 'Retail Price', 'Cost Price', 'Stock', 'Reorder Level', 'Available Online'];
   const rows = products.map(p => [
     `"${(p.name || '').replace(/"/g, '""')}"`,
     `"${(p.brand || '').replace(/"/g, '""')}"`,
@@ -93,6 +93,7 @@ function exportProductsCsv(products: Product[]) {
     `"${(p.product_type || getProductType(p)).replace(/"/g, '""')}"`,
     `"${(p.sku || '').replace(/"/g, '""')}"`,
     `"${(p.barcode || '').replace(/"/g, '""')}"`,
+    `"${(p.container_size || '').replace(/"/g, '""')}"`,
     p.retail_price ?? '',
     p.cost_price ?? '',
     p.quantity_on_hand ?? '',
