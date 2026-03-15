@@ -196,6 +196,7 @@ import NotificationsPage from "./pages/dashboard/platform/Notifications";
 import DemoFeatures from "./pages/dashboard/platform/DemoFeatures";
 import HealthScoresPage from "./pages/dashboard/platform/HealthScores";
 import BenchmarksPage from "./pages/dashboard/platform/Benchmarks";
+import BackroomAdmin from "./pages/dashboard/platform/BackroomAdmin";
 import { PlatformLayout } from "./components/platform/layout/PlatformLayout";
 
 const queryClient = new QueryClient();
