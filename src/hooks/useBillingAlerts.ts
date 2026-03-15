@@ -45,6 +45,7 @@ function getCardExpiryAlerts(
       description: `Your card expires ${String(paymentMethod.exp_month).padStart(2, '0')}/${paymentMethod.exp_year}. Update your payment method to prevent billing issues.`,
       ctaLabel: 'Update Card',
       ctaAction: 'open-portal',
+      dismissible: true,
     }];
   }
 
