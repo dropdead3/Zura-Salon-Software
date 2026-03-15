@@ -608,9 +608,9 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
           ) : (
             /* ====== BRAND BROWSING VIEW ====== */
             <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="font-sans text-sm font-medium text-foreground">{activeBrand}</h3>
-                <div className="flex items-center gap-1.5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <h3 className="font-sans text-sm font-medium text-foreground truncate min-w-0">{activeBrand}</h3>
+                <div className="flex items-center gap-1.5 flex-shrink-0">
                   {activeBrand && !brandFullyAdded(activeBrand) && (
                     <Button
                       variant="outline"
