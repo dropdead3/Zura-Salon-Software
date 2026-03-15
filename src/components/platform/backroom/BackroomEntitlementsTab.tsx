@@ -461,7 +461,33 @@ export function BackroomEntitlementsTab() {
                               if (!org.stripe_customer_id) return <span className="text-slate-600">—</span>;
                               const pm = paymentMethods.get(org.id);
                               if (pmLoading) return <Loader2 className="w-3 h-3 animate-spin text-slate-500" />;
-                              if (!pm) return <span className="text-slate-500">No card</span>;
+                              if (!pm) return (
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <span className="text-slate-500 border-b border-dashed border-slate-600 cursor-help">No card</span>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="bottom" className="w-56 p-3">
+                                      <p className="text-xs text-muted-foreground mb-2">No payment method on file</p>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          sendSetupLink.mutate(org.id);
+                                        }}
+                                        disabled={sendSetupLink.isPending}
+                                        className="inline-flex items-center gap-1.5 text-xs font-sans font-medium text-violet-400 hover:text-violet-300 transition-colors disabled:opacity-50"
+                                      >
+                                        {sendSetupLink.isPending ? (
+                                          <Loader2 className="w-3 h-3 animate-spin" />
+                                        ) : (
+                                          <Send className="w-3 h-3" />
+                                        )}
+                                        Send Setup Link
+                                      </button>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              );
                               return (
                                 <span className="text-slate-300 flex items-center gap-1">
                                   <CreditCard className="w-3.5 h-3.5 text-slate-400" />
