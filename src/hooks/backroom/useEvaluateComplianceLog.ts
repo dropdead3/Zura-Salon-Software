@@ -59,9 +59,9 @@ export function useEvaluateComplianceLog() {
 
       if (sessionIds.length > 0) {
         const { data: bowls } = await (supabase
-          .from('mix_bowls')
+          .from('mix_bowls' as any)
           .select('session_id, post_service_weight_g, is_manual_override')
-          .in('session_id', sessionIds) as any);
+          .in('session_id', sessionIds));
 
         (bowls ?? []).forEach((b: any) => {
           if (b.post_service_weight_g != null && b.post_service_weight_g > 0) {
