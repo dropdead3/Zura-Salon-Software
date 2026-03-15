@@ -107,7 +107,8 @@ export function useBillingAlerts(): { alerts: BillingAlert[]; isLoading: boolean
     }
 
     // 5. No payment method on a paid plan
-    const isPaidPlan = billing?.plan_id && billing.subscription_status !== 'trialing';
+    const isTrialing = billing?.trial_ends_at && new Date(billing.trial_ends_at) > new Date();
+    const isPaidPlan = billing?.plan_id && !isTrialing;
     if (isPaidPlan && !paymentInfo?.payment_method) {
       result.push({
         id: 'no-payment-method',
