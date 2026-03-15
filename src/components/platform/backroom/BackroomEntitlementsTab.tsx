@@ -666,6 +666,69 @@ function LocationEntitlementPanel({
                       <span className="font-sans text-xs text-slate-500">—</span>
                     )}
                   </td>
+                  <td className="px-4 py-2.5">
+                    {ent?.status === 'trial' && ent.trial_end_date ? (
+                      <div className="flex items-center gap-1.5">
+                        <Clock className="w-3 h-3 text-slate-500" />
+                        <span className={cn(
+                          'font-sans text-xs tabular-nums',
+                          new Date(ent.trial_end_date) < new Date() ? 'text-red-400' : 'text-amber-400'
+                        )}>
+                          {(() => {
+                            const diff = Math.ceil((new Date(ent.trial_end_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                            if (diff < 0) return `${Math.abs(diff)}d overdue`;
+                            if (diff === 0) return 'Today';
+                            return `${diff}d left`;
+                          })()}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="font-sans text-xs text-slate-500">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-2.5">
+                    {!isActive && (
+                      <PlatformButton
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 text-xs"
+                        onClick={() => {
+                          const trialEnd = new Date();
+                          trialEnd.setDate(trialEnd.getDate() + 14);
+                          onUpdateEntitlement(loc.id, {
+                            status: 'trial',
+                            plan_tier: 'starter',
+                          });
+                          // Also set trial_end_date via direct upsert
+                          supabase
+                            .from('backroom_location_entitlements')
+                            .upsert(
+                              {
+                                organization_id: orgId,
+                                location_id: loc.id,
+                                plan_tier: 'starter',
+                                scale_count: 0,
+                                status: 'trial',
+                                trial_end_date: trialEnd.toISOString(),
+                                activated_at: new Date().toISOString(),
+                              } as any,
+                              { onConflict: 'organization_id,location_id' }
+                            )
+                            .then(() => {
+                              toast.success('14-day trial started');
+                            });
+                        }}
+                      >
+                        <Play className="w-3 h-3" />
+                        Start Trial
+                      </PlatformButton>
+                    )}
+                    {ent?.stripe_subscription_id && (
+                      <span className="font-sans text-[10px] text-slate-500 font-mono truncate max-w-[100px] block">
+                        {ent.stripe_subscription_id.slice(0, 16)}…
+                      </span>
+                    )}
+                  </td>
                   <td className="px-4 py-2.5 text-right">
                     <Switch
                       checked={!!isActive}
