@@ -227,3 +227,6 @@ verify_jwt = false
 
 [functions.batch-payment-methods]
 verify_jwt = false
+
+[functions.send-payment-setup-link]
+verify_jwt = false
