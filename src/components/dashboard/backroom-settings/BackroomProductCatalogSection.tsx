@@ -87,6 +87,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
   const [catalogView, setCatalogView] = useState<CatalogView>('cards');
   const [stockFilter, setStockFilter] = useState<StockFilter>('all');
   const [bulkPricingOpen, setBulkPricingOpen] = useState(false);
+  const [bulkReorderOpen, setBulkReorderOpen] = useState(false);
 
   // Brand browsing state
   const [activeLetter, setActiveLetter] = useState<string | null>(null);
