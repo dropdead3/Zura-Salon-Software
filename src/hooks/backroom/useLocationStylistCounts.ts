@@ -117,7 +117,3 @@ export const PLAN_PRICING = {
   professional: { name: 'Professional', price: 79, annualPrice: 67, range: '4–10 stylists' },
   unlimited: { name: 'Unlimited', price: 129, annualPrice: 110, range: '11+ stylists' },
 } as const;
-  starter: { name: 'Starter', price: 39, annualPrice: 33, range: '1–3 stylists' },
-  professional: { name: 'Professional', price: 79, annualPrice: 67, range: '4–10 stylists' },
-  unlimited: { name: 'Unlimited', price: 129, annualPrice: 110, range: '11+ stylists' },
-} as const;
