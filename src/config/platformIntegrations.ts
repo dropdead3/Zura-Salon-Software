@@ -6,7 +6,7 @@ export interface PlatformIntegration {
   description: string;
   icon: LucideIcon;
   status: 'connected' | 'not_configured' | 'coming_soon';
-  category: 'documents' | 'payments' | 'communication' | 'analytics' | 'payroll';
+  category: 'documents' | 'payments' | 'communication' | 'analytics' | 'payroll' | 'supply_ordering';
   features: string[];
   configPath: string;
 }
