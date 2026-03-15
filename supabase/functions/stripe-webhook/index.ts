@@ -355,16 +355,18 @@ async function handleCheckoutCompleted(
   }
 
   const orgId = metadata.organization_id;
-  console.log(`Enabling backroom for organization: ${orgId}`);
+  const backroomPlan = metadata.backroom_plan || 'starter';
+  const scaleCount = parseInt(metadata.scale_count || '0', 10);
+  console.log(`Enabling backroom for organization: ${orgId}, plan: ${backroomPlan}, scales: ${scaleCount}`);
 
-  // Upsert the feature flag
+  // Upsert the feature flag with plan metadata
   const { error } = await supabase
     .from('organization_feature_flags')
     .upsert({
       organization_id: orgId,
       flag_key: 'backroom_enabled',
       is_enabled: true,
-      override_reason: 'Stripe checkout completed',
+      override_reason: `Stripe checkout completed — ${backroomPlan} plan, ${scaleCount} scale(s)`,
       updated_at: new Date().toISOString(),
     }, {
       onConflict: 'organization_id,flag_key',
@@ -373,8 +375,21 @@ async function handleCheckoutCompleted(
   if (error) {
     console.error("Failed to enable backroom flag:", error);
   } else {
-    console.log(`Backroom enabled for org ${orgId}`);
+    console.log(`Backroom enabled for org ${orgId} (${backroomPlan}, ${scaleCount} scales)`);
   }
+
+  // Store plan details in a separate flag for reference
+  await supabase
+    .from('organization_feature_flags')
+    .upsert({
+      organization_id: orgId,
+      flag_key: 'backroom_plan',
+      is_enabled: true,
+      override_reason: JSON.stringify({ plan: backroomPlan, scale_count: scaleCount }),
+      updated_at: new Date().toISOString(),
+    }, {
+      onConflict: 'organization_id,flag_key',
+    });
 }
 
 // Handler for customer.subscription.deleted
