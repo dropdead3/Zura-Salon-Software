@@ -53,14 +53,14 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Search active AND trialing subscriptions
     const subscriptions = await stripe.subscriptions.list({
       customer: org.stripe_customer_id,
-      status: "active",
       limit: 10,
     });
 
     const backroomSub = subscriptions.data.find(
-      (s) => (s.metadata as Record<string, string>)?.addon_type === "backroom"
+      (s) => ['active', 'trialing'].includes(s.status) && (s.metadata as Record<string, string>)?.addon_type === "backroom"
     );
 
     if (!backroomSub) {
