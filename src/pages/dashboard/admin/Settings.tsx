@@ -109,6 +109,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useServicesWithFlowsCount } from '@/hooks/useServiceCommunicationFlows';
 import { useColorTheme, colorThemes } from '@/hooks/useColorTheme';
 import { useRoleUtils } from '@/hooks/useRoleUtils';
+import { useBillingAccess } from '@/hooks/useBillingAccess';
 import { useSettingsLayout, useUpdateSettingsLayout, DEFAULT_ICON_COLORS, DEFAULT_ORDER, SECTION_GROUPS } from '@/hooks/useSettingsLayout';
 import { useStaffingAlertSettings, useUpdateStaffingAlertSettings } from '@/hooks/useStaffingAlertSettings';
 import { cn } from '@/lib/utils';
@@ -644,6 +645,7 @@ export default function Settings() {
   
   const capacity = useBusinessCapacity();
   const isSuperAdmin = roles?.includes('super_admin') || roles?.includes('admin');
+  const { canViewBilling } = useBillingAccess();
 
   // Reset to main view when nav link is clicked (same route navigation)
   useEffect(() => {
@@ -1539,7 +1541,7 @@ export default function Settings() {
               // Get categories for this section, respecting user's order within section
               // Filter out 'feedback' category for non-super admins
               const sectionCategoryIds = section.categories.filter(id => 
-                localOrder.includes(id) && categoriesMap[id] && (id !== 'feedback' || isSuperAdmin)
+                localOrder.includes(id) && categoriesMap[id] && (id !== 'feedback' || isSuperAdmin) && (id !== 'account-billing' || canViewBilling)
               );
               
               // Sort by user's localOrder
