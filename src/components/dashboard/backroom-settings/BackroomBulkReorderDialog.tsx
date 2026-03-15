@@ -44,9 +44,9 @@ export function BackroomBulkReorderDialog({ open, onOpenChange, orgId, reorderIt
       currentStock: item.quantity_on_hand,
       parLevel: item.par_level,
       orderQty: item.order_qty > 0 ? item.order_qty : 1,
-      unitCost: item.wholesale_cost,
-      supplierName: item.supplier_name ?? null,
-      supplierEmail: item.supplier_email ?? null,
+      unitCost: item.cost_per_gram,
+      supplierName: null,
+      supplierEmail: null,
       included: true,
     }))
   );
