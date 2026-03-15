@@ -213,7 +213,21 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                 />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-sans font-medium truncate">{service.name}</p>
-                  {service.category && <span className="text-xs text-muted-foreground">{service.category}</span>}
+                  <div className="flex items-center gap-2 mt-0.5">
+                    {service.category && <span className="text-xs text-muted-foreground">{service.category}</span>}
+                    {(() => {
+                      const policy = allowancePolicies?.find(p => p.service_id === service.id);
+                      if (!policy) return <span className="text-[10px] text-muted-foreground/60 italic">No allowance set</span>;
+                      if ((policy as any).billing_mode === 'parts_and_labor') {
+                        return <Badge variant="outline" className="text-[10px] border-primary/30 text-primary">Parts & Labor</Badge>;
+                      }
+                      return (
+                        <Badge variant="secondary" className="text-[10px]">
+                          {policy.included_allowance_qty}{policy.allowance_unit} included · ${policy.overage_rate}/{policy.overage_rate_type === 'flat' ? 'flat' : policy.allowance_unit}
+                        </Badge>
+                      );
+                    })()}
+                  </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <div className="flex items-center gap-1">
