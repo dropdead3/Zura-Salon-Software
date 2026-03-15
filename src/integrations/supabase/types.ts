@@ -1903,6 +1903,47 @@ export type Database = {
           },
         ]
       }
+      backroom_billing_settings: {
+        Row: {
+          created_at: string
+          default_product_markup_pct: number
+          id: string
+          organization_id: string
+          product_charge_label: string
+          product_charge_taxable: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          default_product_markup_pct?: number
+          id?: string
+          organization_id: string
+          product_charge_label?: string
+          product_charge_taxable?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          default_product_markup_pct?: number
+          id?: string
+          organization_id?: string
+          product_charge_label?: string
+          product_charge_taxable?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "backroom_billing_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       backroom_coach_assignments: {
         Row: {
           assigned_at: string
@@ -3896,6 +3937,7 @@ export type Database = {
           appointment_id: string
           approved_by: string | null
           charge_amount: number
+          charge_type: string
           created_at: string
           id: string
           included_allowance_qty: number
@@ -3904,6 +3946,8 @@ export type Database = {
           overage_qty: number
           overage_rate: number
           policy_id: string | null
+          product_charge_markup_pct: number | null
+          product_wholesale_cost: number | null
           service_name: string | null
           status: string
           updated_at: string
@@ -3916,6 +3960,7 @@ export type Database = {
           appointment_id: string
           approved_by?: string | null
           charge_amount: number
+          charge_type?: string
           created_at?: string
           id?: string
           included_allowance_qty: number
@@ -3924,6 +3969,8 @@ export type Database = {
           overage_qty: number
           overage_rate: number
           policy_id?: string | null
+          product_charge_markup_pct?: number | null
+          product_wholesale_cost?: number | null
           service_name?: string | null
           status?: string
           updated_at?: string
@@ -3936,6 +3983,7 @@ export type Database = {
           appointment_id?: string
           approved_by?: string | null
           charge_amount?: number
+          charge_type?: string
           created_at?: string
           id?: string
           included_allowance_qty?: number
@@ -3944,6 +3992,8 @@ export type Database = {
           overage_qty?: number
           overage_rate?: number
           policy_id?: string | null
+          product_charge_markup_pct?: number | null
+          product_wholesale_cost?: number | null
           service_name?: string | null
           status?: string
           updated_at?: string

@@ -76,3 +76,38 @@ export function calculateOverageCharge(input: AllowanceBillingInput): AllowanceB
     unusedAllowance: roundCost(unusedAllowance),
   };
 }
+
+// ─── Product Cost Pass-Through ─────────────────────────────────
+
+export interface ProductCostInput {
+  /** Total wholesale cost of all products used */
+  wholesaleCost: number;
+  /** Markup percentage to apply (e.g. 40 = 40%) */
+  markupPct: number;
+}
+
+export interface ProductCostResult {
+  wholesaleCost: number;
+  markupPct: number;
+  chargeAmount: number;
+  profitMargin: number;
+}
+
+/**
+ * Calculate the client-facing product cost charge with markup.
+ *
+ * chargeAmount = wholesaleCost × (1 + markupPct / 100)
+ * profitMargin = chargeAmount − wholesaleCost
+ */
+export function calculateProductCostCharge(input: ProductCostInput): ProductCostResult {
+  const { wholesaleCost, markupPct } = input;
+  const chargeAmount = roundCost(wholesaleCost * (1 + markupPct / 100));
+  const profitMargin = roundCost(chargeAmount - wholesaleCost);
+
+  return {
+    wholesaleCost: roundCost(wholesaleCost),
+    markupPct,
+    chargeAmount,
+    profitMargin,
+  };
+}

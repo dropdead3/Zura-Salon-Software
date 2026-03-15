@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { format, differenceInMinutes, parseISO } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
-import { Copy, CreditCard, Info, Receipt, Download, Eye, DollarSign, CalendarCheck, Sparkles, CalendarPlus, XCircle, ChevronDown, MessageSquare, CheckCircle2 } from 'lucide-react';
+import { Copy, CreditCard, Info, Receipt, Download, Eye, DollarSign, CalendarCheck, Sparkles, CalendarPlus, XCircle, ChevronDown, MessageSquare, CheckCircle2, FlaskConical } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
@@ -23,6 +23,8 @@ import type { PromoValidationResult } from '@/hooks/usePromoCodeValidation';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { NextVisitRecommendation } from '@/components/dashboard/schedule/NextVisitRecommendation';
 import type { RebookInterval } from '@/lib/scheduling/rebook-recommender';
+import { useCheckoutUsageCharges } from '@/hooks/billing/useCheckoutUsageCharges';
+import { useBackroomBillingSettings } from '@/hooks/billing/useBackroomBillingSettings';
 
 // Constants
 const RECEIPT_WIDTH = 80; // mm
@@ -122,14 +124,29 @@ export function CheckoutSummarySheet({
     enabled: !!appointment?.id && open,
   });
 
+  // Product cost charges (parts_and_labor)
+  const { data: usageCharges = [] } = useCheckoutUsageCharges(appointment?.id ?? null);
+  const { data: billingSettings } = useBackroomBillingSettings(organizationId);
+
+  const productChargeLabel = billingSettings?.product_charge_label || 'Product Usage';
+  const productChargeTaxable = billingSettings?.product_charge_taxable ?? true;
+
+  // Filter to approved/pending product cost charges
+  const productCostCharges = usageCharges.filter(
+    (c: any) => c.charge_type === 'product_cost' && c.status !== 'waived'
+  );
+  const productChargeTotal = productCostCharges.reduce((s, c) => s + c.charge_amount, 0);
+
   if (!appointment) return null;
 
   const addonTotal = addonEvents.reduce((sum, e) => sum + (e.addon_price || 0), 0);
   const subtotal = (appointment.total_price || 0);
   const discount = appliedPromo?.calculated_discount || 0;
+  // Product charges are NOT discountable — kept separate from promo subtotal
   const discountedSubtotal = subtotal - discount;
-  const tax = discountedSubtotal * taxRate;
-  const checkoutTotal = discountedSubtotal + tax;
+  const taxableBase = discountedSubtotal + (productChargeTaxable ? productChargeTotal : 0);
+  const tax = taxableBase * taxRate;
+  const checkoutTotal = discountedSubtotal + productChargeTotal + tax;
   const grandTotal = checkoutTotal + tipAmount;
 
   const getDuration = () => {
@@ -288,10 +305,30 @@ export function CheckoutSummarySheet({
     doc.setDrawColor(0);
     y += 6;
 
+    // Product charges
+    if (productChargeTotal > 0) {
+      doc.setFont('helvetica', 'bold');
+      doc.text(productChargeLabel, margin, y);
+      y += 4;
+      doc.setFont('helvetica', 'normal');
+      for (const pc of productCostCharges) {
+        doc.text(pc.service_name ?? 'Product', margin, y);
+        doc.text(`$${pc.charge_amount.toFixed(2)}`, pageWidth - margin, y, { align: 'right' });
+        y += 4;
+      }
+      y += 2;
+    }
+
     // Totals
     doc.text('Subtotal', margin, y);
     doc.text(`$${subtotal.toFixed(2)}`, pageWidth - margin, y, { align: 'right' });
     y += 4;
+
+    if (productChargeTotal > 0) {
+      doc.text(productChargeLabel, margin, y);
+      doc.text(`$${productChargeTotal.toFixed(2)}`, pageWidth - margin, y, { align: 'right' });
+      y += 4;
+    }
 
     doc.text(`Tax (${(taxRate * 100).toFixed(1)}%)`, margin, y);
     doc.text(`$${tax.toFixed(2)}`, pageWidth - margin, y, { align: 'right' });
@@ -479,6 +516,31 @@ export function CheckoutSummarySheet({
             </>
           )}
 
+          {/* Product Usage Charges (parts_and_labor) */}
+          {productCostCharges.length > 0 && (
+            <>
+              <Separator />
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
+                  <FlaskConical className="h-3.5 w-3.5" />
+                  {productChargeLabel}
+                </h3>
+                <div className="space-y-1.5">
+                  {productCostCharges.map((charge, idx) => (
+                    <div key={idx} className="flex items-center justify-between text-sm">
+                      <span>{charge.service_name ?? 'Product'}</span>
+                      <span className="font-medium tabular-nums">{formatCurrency(charge.charge_amount)}</span>
+                    </div>
+                  ))}
+                  <div className="flex justify-between text-sm pt-1 border-t border-border/50">
+                    <span className="text-muted-foreground">{productChargeLabel} Total</span>
+                    <span className="font-medium">{formatCurrency(productChargeTotal)}</span>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
           <Separator />
 
           {/* Pricing Summary */}
@@ -513,6 +575,14 @@ export function CheckoutSummarySheet({
                     </span>
                   </span>
                   <span>-{formatCurrency(discount)}</span>
+                </div>
+              )}
+
+              {/* Product charges (non-discountable, shown after promo) */}
+              {productChargeTotal > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">{productChargeLabel}</span>
+                  <span className="font-medium">{formatCurrency(productChargeTotal)}</span>
                 </div>
               )}
 
