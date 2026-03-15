@@ -533,6 +533,18 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                     Set Pricing
                   </Button>
                 )}
+                {reorderItems.length > 0 && orgId && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setBulkReorderOpen(true)}
+                    className="font-sans gap-1.5"
+                  >
+                    <ShoppingCart className="w-3.5 h-3.5" />
+                    Reorder All
+                    <Badge variant="secondary" className="ml-1 text-[10px] px-1.5 py-0">{reorderItems.length}</Badge>
+                  </Button>
+                )}
               </div>
 
               {/* Inventory Table */}
