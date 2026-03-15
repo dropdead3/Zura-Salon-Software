@@ -16,6 +16,7 @@ import {
   Building2,
   ShieldCheck,
   Lock,
+  Brain,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useBackroomSetupHealth } from '@/hooks/backroom/useBackroomSetupHealth';
