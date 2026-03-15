@@ -1,6 +1,7 @@
 /**
  * ProductCostTrendSection — Top products with rising costs, each with a sparkline.
  */
+import { useState } from 'react';
 import { TrendingUp, Loader2 } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
@@ -10,10 +11,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { TrendSparkline } from '@/components/dashboard/TrendSparkline';
-import { useProductCostTrend } from '@/hooks/backroom/useProductCostTrend';
+import { useProductCostTrend, type ProductCostTrendItem } from '@/hooks/backroom/useProductCostTrend';
+import { ProductCostDrilldownDialog } from './ProductCostDrilldownDialog';
 
 export function ProductCostTrendSection() {
   const { data: trends, isLoading } = useProductCostTrend();
+  const [selectedProduct, setSelectedProduct] = useState<ProductCostTrendItem | null>(null);
 
   // Only show products with cost increases
   const risingCosts = (trends ?? []).filter((t) => t.changePercent > 0).slice(0, 8);
