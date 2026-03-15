@@ -57,16 +57,22 @@ export function useProductCostTrend(productIds?: string[]) {
       );
 
       // Group by product
-      const grouped = new Map<string, { costs: number[]; supplier: string | null }>();
+      const grouped = new Map<string, { costs: number[]; detailed: CostHistoryEntry[]; supplier: string | null }>();
       for (const row of costHistory) {
         if (!grouped.has(row.product_id)) {
-          grouped.set(row.product_id, { costs: [], supplier: row.supplier_name });
+          grouped.set(row.product_id, { costs: [], detailed: [], supplier: row.supplier_name });
         }
-        grouped.get(row.product_id)!.costs.push(Number(row.cost_price));
+        const g = grouped.get(row.product_id)!;
+        g.costs.push(Number(row.cost_price));
+        g.detailed.push({
+          cost: Number(row.cost_price),
+          date: row.recorded_at,
+          supplier: row.supplier_name,
+        });
       }
 
       const items: ProductCostTrendItem[] = [];
-      for (const [productId, { costs, supplier }] of grouped) {
+      for (const [productId, { costs, detailed, supplier }] of grouped) {
         const product = productMap.get(productId);
         if (!product || costs.length < 2) continue;
 
@@ -79,6 +85,7 @@ export function useProductCostTrend(productIds?: string[]) {
           productName: product.name,
           currentCost: Number(product.cost_price ?? last),
           costHistory: costs,
+          costHistoryDetailed: detailed,
           changePercent: Math.round(changePercent * 10) / 10,
           supplierName: supplier,
         });

@@ -110,5 +110,12 @@ export function ProductCostTrendSection() {
         )}
       </CardContent>
     </Card>
+
+      <ProductCostDrilldownDialog
+        open={!!selectedProduct}
+        onOpenChange={(open) => !open && setSelectedProduct(null)}
+        product={selectedProduct}
+      />
+    </>
   );
 }
