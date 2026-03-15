@@ -823,10 +823,9 @@ function LocationEntitlementPanel({
                   if (error) throw error;
                   if (data?.error) throw new Error(data.error);
                   toast.success(data.message || 'Refund processed successfully');
-                  // Invalidate entitlements queries
-                  const qc = (window as any).__queryClient;
-                  // fallback: just reload
-                  window.location.reload();
+                  refundQueryClient.invalidateQueries({ queryKey: ['backroom-location-entitlements', orgId] });
+                  refundQueryClient.invalidateQueries({ queryKey: ['platform-backroom-entitlements'] });
+                  refundQueryClient.invalidateQueries({ queryKey: ['platform-backroom-all-entitlement-counts'] });
                 } catch (err: any) {
                   toast.error('Refund failed: ' + (err.message || 'Unknown error'));
                 } finally {
