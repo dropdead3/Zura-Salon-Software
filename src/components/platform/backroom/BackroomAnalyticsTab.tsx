@@ -279,6 +279,7 @@ export function BackroomAnalyticsTab() {
                 <TableRow className="border-slate-700/50">
                   <TableHead className="font-sans text-xs text-slate-400">Health</TableHead>
                   <TableHead className="font-sans text-xs text-slate-400">Organization</TableHead>
+                  <TableHead className="font-sans text-xs text-slate-400">Coach</TableHead>
                   <TableHead className="font-sans text-xs text-slate-400">Reweigh %</TableHead>
                   <TableHead className="font-sans text-xs text-slate-400">Waste %</TableHead>
                   <TableHead className="font-sans text-xs text-slate-400">Sessions</TableHead>
