@@ -49,6 +49,10 @@ export default function BackroomAdmin() {
             <BarChart3 className="w-3.5 h-3.5" />
             Analytics
           </TabsTrigger>
+          <TabsTrigger value="coach-performance" className={`${tabTriggerClass} flex items-center gap-1.5`}>
+            <Users2 className="w-3.5 h-3.5" />
+            Coach Performance
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="queue" className="mt-6">
