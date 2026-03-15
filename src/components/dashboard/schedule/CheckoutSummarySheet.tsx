@@ -23,6 +23,8 @@ import type { PromoValidationResult } from '@/hooks/usePromoCodeValidation';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { NextVisitRecommendation } from '@/components/dashboard/schedule/NextVisitRecommendation';
 import type { RebookInterval } from '@/lib/scheduling/rebook-recommender';
+import { useCheckoutUsageCharges } from '@/hooks/billing/useCheckoutUsageCharges';
+import { useBackroomBillingSettings } from '@/hooks/billing/useBackroomBillingSettings';
 
 // Constants
 const RECEIPT_WIDTH = 80; // mm
