@@ -160,7 +160,6 @@ export function BackroomPaywall() {
           plan: selectedPlan,
           scale_count: scaleCount,
           billing_interval: isAnnual ? 'annual' : 'monthly',
-          trial_days: trialDays,
           location_ids: Array.from(selectedLocationIds),
         },
       });
