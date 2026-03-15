@@ -59,7 +59,7 @@ export function PurchaseOrdersPanel() {
     const prod = productMap.get(po.product_id);
     const cfg = statusConfig[po.status] || statusConfig.draft;
     return (
-      <TableRow key={po.id}>
+      <TableRow key={po.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setSelectedOrder(po)}>
         <TableCell className="font-medium text-sm">{prod?.name || 'Unknown'}</TableCell>
         {!groupBySupplier && (
           <TableCell className="text-sm text-muted-foreground">{po.supplier_name || '—'}</TableCell>
