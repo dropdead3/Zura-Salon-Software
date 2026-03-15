@@ -1541,7 +1541,7 @@ export default function Settings() {
               // Get categories for this section, respecting user's order within section
               // Filter out 'feedback' category for non-super admins
               const sectionCategoryIds = section.categories.filter(id => 
-                localOrder.includes(id) && categoriesMap[id] && (id !== 'feedback' || isSuperAdmin)
+                localOrder.includes(id) && categoriesMap[id] && (id !== 'feedback' || isSuperAdmin) && (id !== 'account-billing' || canViewBilling)
               );
               
               // Sort by user's localOrder
