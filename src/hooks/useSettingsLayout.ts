@@ -35,6 +35,11 @@ export const DEFAULT_ICON_COLORS: Record<string, string> = {
 // Section groups for organized layout
 export const SECTION_GROUPS = [
   {
+    id: 'account',
+    label: 'Account',
+    categories: ['account-billing'],
+  },
+  {
     id: 'operations',
     label: 'Business Operations',
     categories: ['my-profile', 'business', 'locations', 'services', 'retail-products', 'schedule', 'kiosk', 'dayrate', 'forms', 'levels', 'leaderboard', 'onboarding', 'loyalty', 'team-rewards', 'feedback'],
