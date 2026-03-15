@@ -1,19 +1,19 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { Package, Beaker, BarChart3, Shield, Zap, ArrowRight, Loader2, Check, Minus, Plus, Scale, Gift, CalendarDays, ShieldCheck, MapPin } from 'lucide-react';
+import { Package, Beaker, BarChart3, Shield, Zap, ArrowRight, Loader2, Check, Minus, Plus, Scale, Gift, CalendarDays, ShieldCheck, MapPin, Users, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useLocations } from '@/hooks/useLocations';
 import { useBackroomLocationEntitlements } from '@/hooks/backroom/useBackroomLocationEntitlements';
+import { useLocationStylistCounts, getRecommendedTier, PLAN_PRICING } from '@/hooks/backroom/useLocationStylistCounts';
 import { toast } from 'sonner';
-
-
 
 const features = [
   {
@@ -38,88 +38,105 @@ const features = [
   },
 ];
 
-interface PlanConfig {
-  key: string;
-  name: string;
-  price: number;
-  annualPrice: number;
-  stylists: string;
-  popular?: boolean;
-  features: string[];
-}
+const PLAN_KEYS = ['starter', 'professional', 'unlimited'] as const;
+type PlanKey = typeof PLAN_KEYS[number];
 
-const plans: PlanConfig[] = [
-  {
-    key: 'starter',
-    name: 'Starter',
-    price: 39,
-    annualPrice: 33,
-    stylists: '1–3 stylists',
-    features: [
-      'Product catalog & inventory',
-      'Recipe management',
-      'Cost tracking',
-      'Waste monitoring',
-    ],
-  },
-  {
-    key: 'professional',
-    name: 'Professional',
-    price: 79,
-    annualPrice: 67,
-    stylists: '4–10 stylists',
-    popular: true,
-    features: [
-      'Everything in Starter',
-      'Supply AI insights',
-      'Ghost loss detection',
-      'Cost spike alerts',
-      'Weekly intelligence digest',
-    ],
-  },
-  {
-    key: 'unlimited',
-    name: 'Unlimited',
-    price: 129,
-    annualPrice: 110,
-    stylists: 'Unlimited stylists',
-    features: [
-      'Everything in Professional',
-      'Predictive demand forecasting',
-      'Multi-location benchmarking',
-      'Priority support',
-      'Advanced analytics',
-    ],
-  },
-];
+const PLAN_FEATURES: Record<PlanKey, string[]> = {
+  starter: [
+    'Product catalog & inventory',
+    'Recipe management',
+    'Cost tracking',
+    'Waste monitoring',
+  ],
+  professional: [
+    'Everything in Starter',
+    'Supply AI insights',
+    'Ghost loss detection',
+    'Cost spike alerts',
+    'Weekly intelligence digest',
+  ],
+  unlimited: [
+    'Everything in Professional',
+    'Predictive demand forecasting',
+    'Multi-location benchmarking',
+    'Priority support',
+    'Advanced analytics',
+  ],
+};
 
 const SCALE_LICENSE_MONTHLY = 10;
 const SCALE_HARDWARE_PRICE = 199;
 
-
 export function BackroomPaywall() {
   const [loading, setLoading] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<string>('professional');
   const [scaleCount, setScaleCount] = useState(1);
   const [isAnnual, setIsAnnual] = useState(false);
-  
   const [selectedLocationIds, setSelectedLocationIds] = useState<Set<string>>(new Set());
+  const [tierOverrides, setTierOverrides] = useState<Record<string, PlanKey>>({});
+
   const { effectiveOrganization } = useOrganizationContext();
   const { data: locations = [] } = useLocations(effectiveOrganization?.id);
   const { isLocationEntitled } = useBackroomLocationEntitlements(effectiveOrganization?.id);
+  const { data: stylistCounts = [] } = useLocationStylistCounts(effectiveOrganization?.id);
 
   const activeLocations = locations.filter((l) => l.is_active);
-  const locationCount = selectedLocationIds.size || 1; // minimum 1
 
-  const currentPlan = plans.find((p) => p.key === selectedPlan)!;
-  const perLocationPrice = isAnnual ? currentPlan.annualPrice : currentPlan.price;
-  const planTotal = perLocationPrice * locationCount;
+  // Build a map of location_id -> stylist count
+  const stylistCountMap = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const sc of stylistCounts) {
+      map.set(sc.location_id, sc.count);
+    }
+    return map;
+  }, [stylistCounts]);
+
+  // Get the effective tier for a location (override or auto-recommended)
+  const getLocationTier = (locId: string): PlanKey => {
+    if (tierOverrides[locId]) return tierOverrides[locId];
+    const count = stylistCountMap.get(locId) ?? 0;
+    return getRecommendedTier(count);
+  };
+
+  // Get allowed tiers for override (can only upgrade, not downgrade)
+  const getAllowedTiers = (locId: string): PlanKey[] => {
+    const count = stylistCountMap.get(locId) ?? 0;
+    const minTier = getRecommendedTier(count);
+    const minIdx = PLAN_KEYS.indexOf(minTier);
+    return PLAN_KEYS.filter((_, i) => i >= minIdx);
+  };
+
+  const handleTierOverride = (locId: string, tier: PlanKey) => {
+    const recommended = getRecommendedTier(stylistCountMap.get(locId) ?? 0);
+    if (tier === recommended) {
+      // Remove override if setting back to recommended
+      setTierOverrides((prev) => {
+        const next = { ...prev };
+        delete next[locId];
+        return next;
+      });
+    } else {
+      setTierOverrides((prev) => ({ ...prev, [locId]: tier }));
+    }
+  };
+
+  // Calculate per-location prices and totals
+  const locationPricing = useMemo(() => {
+    const items: { locId: string; tier: PlanKey; price: number }[] = [];
+    for (const locId of selectedLocationIds) {
+      const tier = getLocationTier(locId);
+      const pricing = PLAN_PRICING[tier];
+      const price = isAnnual ? pricing.annualPrice : pricing.price;
+      items.push({ locId, tier, price });
+    }
+    return items;
+  }, [selectedLocationIds, tierOverrides, stylistCountMap, isAnnual]);
+
+  const planTotal = locationPricing.reduce((sum, item) => sum + item.price, 0);
   const scaleTotal = scaleCount * SCALE_LICENSE_MONTHLY;
   const monthlyTotal = planTotal + scaleTotal;
-
-  // Annual: 1 free scale, so hardware charges are (scaleCount - 1) minimum 0
   const hardwareQty = isAnnual ? Math.max(0, scaleCount - 1) : scaleCount;
   const hardwareTotal = hardwareQty * SCALE_HARDWARE_PRICE;
+  const locationCount = selectedLocationIds.size || 0;
 
   const toggleLocation = (locId: string) => {
     setSelectedLocationIds((prev) => {
@@ -154,13 +171,19 @@ export function BackroomPaywall() {
 
     setLoading(true);
     try {
+      // Build location_plans array for the checkout
+      const location_plans = locationPricing.map((item) => ({
+        location_id: item.locId,
+        plan_tier: item.tier,
+        stylist_count: stylistCountMap.get(item.locId) ?? 0,
+      }));
+
       const { data, error } = await supabase.functions.invoke('create-backroom-checkout', {
         body: {
           organization_id: effectiveOrganization.id,
-          plan: selectedPlan,
+          location_plans,
           scale_count: scaleCount,
           billing_interval: isAnnual ? 'annual' : 'monthly',
-          location_ids: Array.from(selectedLocationIds),
         },
       });
 
@@ -244,80 +267,56 @@ export function BackroomPaywall() {
           </Card>
         )}
 
-        {/* Plan Selector */}
+        {/* Plan Tier Legend */}
         <div className="space-y-2">
-          <h2 className={cn(tokens.heading.section, 'text-center')}>Choose Your Plan</h2>
+          <h2 className={cn(tokens.heading.section, 'text-center')}>Plan Tiers</h2>
           <p className="text-center text-xs text-muted-foreground font-sans">
-            Pricing is per location, per month
+            Your plan is auto-assigned per location based on active stylists. Upgrade anytime.
           </p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {plans.map((plan) => {
-              const isSelected = selectedPlan === plan.key;
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-2xl mx-auto">
+            {PLAN_KEYS.map((key) => {
+              const plan = PLAN_PRICING[key];
               const shownPrice = isAnnual ? plan.annualPrice : plan.price;
               return (
-                <button
-                  key={plan.key}
-                  type="button"
-                  onClick={() => setSelectedPlan(plan.key)}
-                  className={cn(
-                    'relative p-5 rounded-xl border-2 text-left transition-all duration-200',
-                    'hover:border-primary/50 hover:bg-accent/30',
-                    'focus:outline-none focus:ring-2 focus:ring-primary/30',
-                    isSelected
-                      ? 'border-primary bg-primary/5'
-                      : 'border-border/50 bg-card/40',
-                  )}
+                <div
+                  key={key}
+                  className="p-4 rounded-xl border border-border/50 bg-card/40 space-y-2"
                 >
-                  {plan.popular && (
-                    <Badge className="absolute -top-2.5 left-4 bg-primary text-primary-foreground font-sans text-[10px] px-2 py-0.5">
-                      Most Popular
-                    </Badge>
-                  )}
-                  {isSelected && (
-                    <div className="absolute top-3 right-3">
-                      <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
-                        <Check className="h-3 w-3 text-primary-foreground" />
-                      </div>
-                    </div>
-                  )}
-                  <div className="space-y-3">
-                    <div>
-                      <h3 className={cn(tokens.label.default, 'text-foreground')}>{plan.name}</h3>
-                      <p className="text-xs text-muted-foreground font-sans">{plan.stylists}</p>
-                    </div>
-                    <div className="flex items-baseline gap-1">
-                      {isAnnual && (
-                        <span className="text-sm text-muted-foreground font-sans line-through mr-1">
-                          ${plan.price}
-                        </span>
-                      )}
-                      <span className={cn(tokens.stat.large, 'text-foreground')}>
-                        ${shownPrice}
-                      </span>
-                      <span className="text-sm text-muted-foreground font-sans">/mo/location</span>
-                    </div>
-                    {isAnnual && (
-                      <p className="text-[10px] text-primary font-sans flex items-center gap-1">
-                        <CalendarDays className="w-3 h-3" />
-                        ${(shownPrice * 12).toLocaleString()}/yr per location billed annually
-                      </p>
+                  <div className="flex items-center justify-between">
+                    <h3 className={cn(tokens.label.default, 'text-foreground')}>{plan.name}</h3>
+                    {key === 'professional' && (
+                      <Badge className="bg-primary text-primary-foreground font-sans text-[10px] px-2 py-0.5">
+                        Popular
+                      </Badge>
                     )}
-                    <ul className="space-y-1.5 pt-2 border-t border-border/40">
-                      {plan.features.map((feat) => (
-                        <li key={feat} className="flex items-start gap-2 text-xs text-muted-foreground font-sans">
-                          <Check className="w-3 h-3 text-primary mt-0.5 shrink-0" />
-                          {feat}
-                        </li>
-                      ))}
-                    </ul>
                   </div>
-                </button>
+                  <p className="text-xs text-muted-foreground font-sans">{plan.range}</p>
+                  <div className="flex items-baseline gap-1">
+                    {isAnnual && (
+                      <span className="text-sm text-muted-foreground font-sans line-through mr-1">
+                        ${PLAN_PRICING[key].price}
+                      </span>
+                    )}
+                    <span className={cn(tokens.stat.large, 'text-foreground')}>
+                      ${shownPrice}
+                    </span>
+                    <span className="text-sm text-muted-foreground font-sans">/mo</span>
+                  </div>
+                  <ul className="space-y-1 pt-2 border-t border-border/40">
+                    {PLAN_FEATURES[key].map((feat) => (
+                      <li key={feat} className="flex items-start gap-2 text-xs text-muted-foreground font-sans">
+                        <Check className="w-3 h-3 text-primary mt-0.5 shrink-0" />
+                        {feat}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               );
             })}
           </div>
         </div>
 
-        {/* Location Selector */}
+        {/* Location Selector with Per-Location Tier Assignment */}
         {activeLocations.length > 0 && (
           <Card className="bg-card/60 border-border/40 max-w-2xl mx-auto">
             <CardContent className="p-5">
@@ -329,7 +328,7 @@ export function BackroomPaywall() {
                   <div>
                     <p className={cn(tokens.label.default, 'text-foreground')}>Select Locations</p>
                     <p className="text-xs text-muted-foreground font-sans mt-0.5">
-                      Choose which locations need Backroom · ${perLocationPrice}/mo each
+                      Plan auto-assigned by active stylist count per location
                     </p>
                   </div>
                 </div>
@@ -346,11 +345,18 @@ export function BackroomPaywall() {
                 {activeLocations.map((loc) => {
                   const isChecked = selectedLocationIds.has(loc.id);
                   const cityLabel = loc.city ? loc.city.split(',')[0]?.trim() : '';
+                  const stylistCount = stylistCountMap.get(loc.id) ?? 0;
+                  const tier = getLocationTier(loc.id);
+                  const pricing = PLAN_PRICING[tier];
+                  const price = isAnnual ? pricing.annualPrice : pricing.price;
+                  const allowedTiers = getAllowedTiers(loc.id);
+                  const isOverridden = !!tierOverrides[loc.id];
+
                   return (
-                    <label
+                    <div
                       key={loc.id}
                       className={cn(
-                        'flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all',
+                        'flex items-center gap-3 px-3 py-3 rounded-lg transition-all',
                         isChecked
                           ? 'bg-primary/5 border border-primary/30'
                           : 'border border-transparent hover:bg-accent/30',
@@ -360,19 +366,59 @@ export function BackroomPaywall() {
                         checked={isChecked}
                         onCheckedChange={() => toggleLocation(loc.id)}
                       />
-                      <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <MapPin className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                        <span className="font-sans text-sm text-foreground truncate">{loc.name}</span>
-                        {cityLabel && (
-                          <span className="font-sans text-xs text-muted-foreground">{cityLabel}</span>
-                        )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <MapPin className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                          <span className="font-sans text-sm text-foreground truncate">{loc.name}</span>
+                          {cityLabel && (
+                            <span className="font-sans text-xs text-muted-foreground">{cityLabel}</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 mt-1 ml-5.5">
+                          <div className="flex items-center gap-1">
+                            <Users className="w-3 h-3 text-muted-foreground" />
+                            <span className="font-sans text-xs text-muted-foreground">
+                              {stylistCount} stylist{stylistCount !== 1 ? 's' : ''}
+                            </span>
+                          </div>
+                          <span className="text-muted-foreground/40">·</span>
+                          {isChecked && allowedTiers.length > 1 ? (
+                            <Select
+                              value={tier}
+                              onValueChange={(val) => handleTierOverride(loc.id, val as PlanKey)}
+                            >
+                              <SelectTrigger className="h-6 w-auto min-w-[140px] text-xs font-sans border-border/40 bg-transparent px-2 py-0">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {allowedTiers.map((t) => (
+                                  <SelectItem key={t} value={t} className="text-xs font-sans">
+                                    {PLAN_PRICING[t].name} · ${isAnnual ? PLAN_PRICING[t].annualPrice : PLAN_PRICING[t].price}/mo
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <Badge
+                              variant="outline"
+                              className="font-sans text-[10px] px-1.5 py-0 border-border/40 text-muted-foreground"
+                            >
+                              {pricing.name} · ${price}/mo
+                            </Badge>
+                          )}
+                          {isOverridden && (
+                            <Badge className="bg-primary/10 text-primary border-primary/20 font-sans text-[10px] px-1.5 py-0">
+                              Upgraded
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                       {isChecked && (
                         <span className="font-sans text-xs text-primary shrink-0">
-                          +${perLocationPrice}/mo
+                          +${price}/mo
                         </span>
                       )}
-                    </label>
+                    </div>
                   );
                 })}
               </div>
@@ -451,19 +497,35 @@ export function BackroomPaywall() {
         <div className="max-w-2xl mx-auto space-y-4">
           <Card className="bg-card/60 border-border/40">
             <CardContent className="p-5 space-y-3">
-              <div className="flex justify-between items-center font-sans text-sm">
-                <span className="text-muted-foreground">
-                  {currentPlan.name} plan × {locationCount} location{locationCount > 1 ? 's' : ''} {isAnnual ? '(annual)' : ''}
-                </span>
-                <span className="text-foreground font-medium">
-                  ${planTotal}/mo
+              {/* Per-location line items */}
+              {locationPricing.length > 0 ? (
+                <>
+                  {locationPricing.map((item) => {
+                    const loc = activeLocations.find((l) => l.id === item.locId);
+                    return (
+                      <div key={item.locId} className="flex justify-between items-center font-sans text-sm">
+                        <span className="text-muted-foreground truncate mr-2">
+                          {loc?.name ?? 'Location'} ({PLAN_PRICING[item.tier].name})
+                        </span>
+                        <span className="text-foreground font-medium shrink-0">
+                          ${item.price}/mo
+                        </span>
+                      </div>
+                    );
+                  })}
                   {isAnnual && (
-                    <span className="text-xs text-muted-foreground ml-1">
-                      (${(planTotal * 12).toLocaleString()}/yr)
-                    </span>
+                    <p className="text-[10px] text-primary font-sans flex items-center gap-1">
+                      <CalendarDays className="w-3 h-3" />
+                      Billed annually at ${(planTotal * 12).toLocaleString()}/yr
+                    </p>
                   )}
-                </span>
-              </div>
+                </>
+              ) : (
+                <div className="flex justify-between items-center font-sans text-sm">
+                  <span className="text-muted-foreground">No locations selected</span>
+                  <span className="text-foreground font-medium">$0/mo</span>
+                </div>
+              )}
               {scaleCount > 0 && (
                 <>
                   <div className="flex justify-between items-center font-sans text-sm">

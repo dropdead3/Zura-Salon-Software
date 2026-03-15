@@ -33,6 +33,12 @@ const SCALE_HARDWARE_PRICE_ID = "price_1TBK6aEUkhnzWpRkjBYdCww0";
 
 type PlanKey = keyof typeof BACKROOM_PLANS;
 
+interface LocationPlan {
+  location_id: string;
+  plan_tier: PlanKey;
+  stylist_count: number;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -68,22 +74,43 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { organization_id, plan, scale_count = 0, billing_interval = 'monthly', success_url, cancel_url, location_ids = [] } = await req.json();
+    const body = await req.json();
+    const { organization_id, location_plans, scale_count = 0, billing_interval = 'monthly', success_url, cancel_url } = body;
+
+    // Support both new location_plans[] and legacy plan+location_ids
+    let resolvedLocationPlans: LocationPlan[] = [];
+
+    if (Array.isArray(location_plans) && location_plans.length > 0) {
+      // New per-location plan format
+      for (const lp of location_plans) {
+        if (!lp.location_id || !lp.plan_tier || !BACKROOM_PLANS[lp.plan_tier as PlanKey]) {
+          throw new Error(`Invalid location plan: ${JSON.stringify(lp)}`);
+        }
+        resolvedLocationPlans.push({
+          location_id: lp.location_id,
+          plan_tier: lp.plan_tier as PlanKey,
+          stylist_count: lp.stylist_count ?? 0,
+        });
+      }
+    } else if (body.plan && body.location_ids) {
+      // Legacy: single plan for all locations
+      const plan = body.plan as PlanKey;
+      if (!BACKROOM_PLANS[plan]) {
+        throw new Error("Invalid plan. Must be one of: starter, professional, unlimited");
+      }
+      for (const locId of body.location_ids) {
+        resolvedLocationPlans.push({ location_id: locId, plan_tier: plan, stylist_count: 0 });
+      }
+    } else {
+      throw new Error("Either location_plans[] or plan+location_ids is required");
+    }
 
     if (!organization_id) {
       throw new Error("organization_id is required");
     }
 
-    if (!plan || !BACKROOM_PLANS[plan as PlanKey]) {
-      throw new Error("Invalid plan. Must be one of: starter, professional, unlimited");
-    }
-
     const isAnnual = billing_interval === 'annual';
-    const selectedPlan = BACKROOM_PLANS[plan as PlanKey];
-    const planPriceId = isAnnual ? selectedPlan.annual_price_id : selectedPlan.monthly_price_id;
     const scaleQty = Math.max(0, Math.min(10, parseInt(scale_count) || 0));
-
-    // Annual plans get 1 free scale (hardware only, license still charged)
     const hardwareQty = isAnnual ? Math.max(0, scaleQty - 1) : scaleQty;
 
     // Get organization details
@@ -113,10 +140,19 @@ Deno.serve(async (req) => {
         .eq("id", org.id);
     }
 
-    // Build line items
-    const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [
-      { price: planPriceId, quantity: 1 },
-    ];
+    // Group locations by tier to create line items with quantities
+    const tierCounts = new Map<PlanKey, number>();
+    for (const lp of resolvedLocationPlans) {
+      tierCounts.set(lp.plan_tier, (tierCounts.get(lp.plan_tier) ?? 0) + 1);
+    }
+
+    // Build line items - one per tier with quantity = number of locations on that tier
+    const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [];
+    for (const [tier, qty] of tierCounts) {
+      const plan = BACKROOM_PLANS[tier];
+      const priceId = isAnnual ? plan.annual_price_id : plan.monthly_price_id;
+      lineItems.push({ price: priceId, quantity: qty });
+    }
 
     // Scale licenses (recurring)
     if (scaleQty > 0) {
@@ -128,6 +164,10 @@ Deno.serve(async (req) => {
       lineItems.push({ price: SCALE_HARDWARE_PRICE_ID, quantity: hardwareQty });
     }
 
+    // Derive a single "primary" plan for backward compat in metadata
+    const primaryPlan = resolvedLocationPlans.length > 0 ? resolvedLocationPlans[0].plan_tier : 'starter';
+    const locationIds = resolvedLocationPlans.map((lp) => lp.location_id);
+
     // Create Checkout Session
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
@@ -138,19 +178,21 @@ Deno.serve(async (req) => {
       metadata: {
         organization_id: org.id,
         addon_type: "backroom",
-        backroom_plan: plan,
+        backroom_plan: primaryPlan,
         scale_count: String(scaleQty),
         billing_interval: billing_interval,
-        location_ids: JSON.stringify(location_ids || []),
+        location_ids: JSON.stringify(locationIds),
+        location_plans: JSON.stringify(resolvedLocationPlans),
       },
       subscription_data: {
         metadata: {
           organization_id: org.id,
           addon_type: "backroom",
-          backroom_plan: plan,
+          backroom_plan: primaryPlan,
           scale_count: String(scaleQty),
           billing_interval: billing_interval,
-          location_ids: JSON.stringify(location_ids || []),
+          location_ids: JSON.stringify(locationIds),
+          location_plans: JSON.stringify(resolvedLocationPlans),
         },
       },
     });
