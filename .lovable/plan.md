@@ -1,153 +1,101 @@
 
 
-## Timezone-Safe Scheduling (Implemented)
+# Wholesale Price Intelligence + Backroom Platform Admin + Paywall
 
-### Problem
-`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
+Three interconnected systems to build:
 
-### Solution
-- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
-- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
-- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
+---
 
-### Files Updated
-- `ScheduleHeader.tsx` — today button, quick days, isToday checks
-- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
-- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
-- `MonthView.tsx` — today highlight
-- `AgendaView.tsx` — today/tomorrow labels, today border
-- `ScheduleActionBar.tsx` — payment queue timing
-- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
-- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
-- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
-- `useHuddles.ts` — today's huddle query
+## 1. Wholesale Price Intelligence Pipeline
 
-## Auto-Reorder with Supplier Communication (Implemented)
+**Architecture**: Edge function runs on a schedule, calls distributor APIs (SalonCentric, CosmoProf, direct brand APIs where available) to fetch wholesale prices. Results go into a **staging table** for admin review before pushing to products.
 
-### What It Does
-Organizations can opt into automatic reorder — when stock dips below threshold, POs are calculated (using MOQ and par levels) and sent directly to the supplier via email.
+### Database
 
-### Database Changes
-- `products.par_level` (INT, nullable) — desired stock level to reorder up to
-- `product_suppliers.moq` (INT, default 1) — minimum order quantity
-- `inventory_alert_settings.auto_reorder_enabled` (BOOL, default false)
-- `inventory_alert_settings.auto_reorder_mode` (TEXT, default 'to_par') — 'to_par' or 'moq_only'
-- `inventory_alert_settings.max_auto_reorder_value` (NUMERIC, nullable) — daily spend cap
-- `purchase_orders.supplier_confirmed_at` (TIMESTAMPTZ, nullable) — for tracking confirmations
+**`wholesale_price_sources`** — Configures which APIs/sources to poll per brand:
+- `id`, `brand`, `source_type` (api | manual_csv), `api_endpoint`, `api_key_secret_name`, `scrape_frequency` (daily | weekly), `is_active`, `last_polled_at`, `created_at`
 
-### Quantity Calculation
+**`wholesale_price_queue`** — Staging table for admin review:
+- `id`, `product_id` (nullable, matched), `product_name`, `brand`, `sku`, `source_id` (FK to sources), `wholesale_price`, `recommended_retail`, `currency`, `fetched_at`, `status` (pending | approved | rejected | auto_applied), `reviewed_by`, `reviewed_at`, `confidence_score` (0-1, based on match quality), `previous_price`, `price_delta_pct`, `notes`, `created_at`
+
+**RLS**: Platform admin only (via `is_platform_user`).
+
+### Edge Function: `wholesale-price-sync`
+- Called on schedule (cron) or manually by platform admin
+- For each active source, calls the distributor API
+- Fuzzy-matches results to existing products in the Supply Library by brand + SKU + name
+- Inserts into `wholesale_price_queue` with a confidence score
+- High-confidence matches (exact SKU match, delta < 5%) can be flagged for auto-apply
+- Low-confidence or large price swings (> 15%) require manual review
+
+### Review Flow
+- Platform admin sees a queue of pending price updates
+- Can approve (pushes `cost_per_gram` / `cost_price` to products table), reject, or edit before applying
+- Batch approve/reject for trusted sources
+
+---
+
+## 2. Zura Backroom Platform Configurator
+
+A new section in the Platform Admin area (`/dashboard/platform/backroom`) accessible only to platform admins.
+
+### Platform Nav Addition
+Add to `platformNav.ts` under a new **"Products"** group:
 ```
-deficit = par_level - quantity_on_hand
-order_qty = max(moq, deficit)
-if moq > 1: round up to nearest MOQ multiple
-```
-Fallback: if par_level is null, uses `reorder_level * 2`.
-
-### Files Updated
-- Migration: Added columns to products, product_suppliers, inventory_alert_settings, purchase_orders
-- `check-reorder-levels/index.ts` — auto-send logic with MOQ/par calculation, spend cap, email invocation
-- `AlertSettingsCard.tsx` — auto-reorder toggle, mode selector, spend cap input
-- `useInventoryAlertSettings.ts` — updated interface
-- `useProducts.ts` — added par_level to Product interface
-- `useProductSuppliers.ts` — added moq to ProductSupplier interface
-- `ProductEditDialog.tsx` — added par level field
-- `RetailProductsSettingsContent.tsx` — added par level to product form
-- `SupplierDialog.tsx` — added MOQ field
-
-### Safety Features
-- Spend cap: daily auto-reorder pauses when cumulative PO value exceeds cap
-- Audit trail: auto_reorder logged as stock_movement reason
-- Supplier confirmation tracking via supplier_confirmed_at timestamp
-
-## Product Movement Rating Badges (Implemented)
-
-### What It Does
-Every product gets a dynamic movement rating badge (Best Seller, Popular, Steady, Slow Mover, Stagnant, Dead Weight) computed from 90-day sales velocity data.
-
-### Rating Tiers
-- **Best Seller**: Top 10% velocity AND >0.5 units/day (emerald)
-- **Popular**: Top 25% velocity AND >0.2 units/day (blue)
-- **Steady**: Velocity >0.05/day (muted)
-- **Slow Mover**: Velocity >0 but ≤0.05/day (amber)
-- **Stagnant**: Zero velocity, sold within 180 days (orange)
-- **Dead Weight**: Zero velocity, 180+ days or never sold (red)
-- Products with zero stock excluded from negative ratings
-
-### Files Created
-- `src/lib/productMovementRating.ts` — pure rating logic + badge config
-- `src/hooks/useProductVelocity.ts` — lightweight 90-day POS velocity query
-- `src/components/ui/MovementBadge.tsx` — shared badge component with tooltip
-
-### Files Updated
-- `RetailProductsSettingsContent.tsx` — Movement column + filter dropdown in products table
-- `RetailAnalyticsContent.tsx` — Movement badges on product performance table + Movement Distribution card (donut chart with actionable callouts)
-- `ProductCard.tsx` — Best Seller/Popular badges on public shop cards (positive only)
-- `ProductDetailModal.tsx` — Movement badge with velocity context
-
-## Inventory Intelligence Suite v2 (Implemented)
-
-### 1. Dead Stock Auto-Clearance Pipeline
-- `DeadStockAlertCard.tsx` — Surfaces Dead Weight/Stagnant products not yet in clearance with suggested discount tiers (10%/25%/50% based on idle days)
-- One-click "Mark for Clearance" applies discount and sets clearance_status
-
-### 2. Supplier Lead Time Tracker
-- `usePurchaseOrders.ts` — `useMarkPurchaseOrderReceived` already computes actual delivery days and updates `product_suppliers.avg_delivery_days` via running average
-- `parLevelSuggestion.ts` — Updated to accept supplier-provided lead time instead of hardcoded 7-day default, with bounds clamping
-
-### 3. Inventory Valuation Dashboard Card
-- `InventoryValuationCard.tsx` — Shows total inventory at cost/retail, potential margin %, capital-at-risk (slow/stagnant/dead weight), with donut chart breakdown
-
-### 4. Reorder Approval Queue
-- `ReorderApprovalCard.tsx` — Surfaces draft POs from auto-reorder with one-click approve (→ sent) or reject (→ cancelled)
-
-### 5. Stock Transfer Between Locations
-- Migration: Created `stock_transfers` table with RLS (org member read, org admin manage)
-- `useStockTransfers.ts` — CRUD hooks for stock transfers with stock movement logging
-- `StockTransferDialog.tsx` — Dialog for creating transfers between locations
-- `RetailProductsSettingsContent.tsx` — "Transfer Stock" button added to Inventory tab (visible for multi-location orgs)
-
-## Enhancement 1: Expiry Tracking (Implemented)
-
-### What It Does
-Products can have an optional expiration date (`expires_at`) and per-product alert threshold (`expiry_alert_days`, default 30). The system surfaces expiring inventory with color-coded badges in the product table and an analytics card with auto-clearance suggestions.
-
-### Database Changes
-- `products.expires_at` (DATE, nullable) — expiration date for perishable products
-- `products.expiry_alert_days` (INTEGER, default 30) — days before expiry to trigger alerts
-
-### Expiry Alert Buckets
-- **Expired** (red): past expiration → suggests 50% markdown
-- **Critical** (orange): within alert threshold → suggests 25% markdown
-- **Warning** (amber): within 2× alert threshold → suggests 10% markdown
-
-### Files Created
-- `src/components/dashboard/analytics/ExpiryAlertCard.tsx` — PinnableCard showing expiring products with one-click clearance actions
-
-### Files Updated
-- `src/hooks/useProducts.ts` — Added `expires_at`, `expiry_alert_days` to Product interface; added `expiringOnly` filter
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Expiry date + alert days in product form; color-coded Expiry column in product table
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ExpiryAlertCard into analytics hub
-
-## Enhancement 2: Shrinkage Detection (Implemented)
-
-### What It Does
-Physical stocktake workflow with variance reporting. Staff record actual counts via a Stocktake dialog, and the system compares against expected quantities (system records). A Shrinkage Report card in analytics surfaces products with negative variance (loss) ranked by estimated cost impact.
-
-### Database Changes
-- Created `stock_counts` table with computed `variance` column (counted - expected), RLS policies (org member read/insert, org admin update/delete), and indexes
-
-### Shrinkage Calculation
-```
-variance = counted_quantity - expected_quantity
-shrinkage_units = |variance| when variance < 0
-shrinkage_cost = shrinkage_units × cost_price
+{ href: '/dashboard/platform/backroom', label: 'Backroom', icon: Package }
 ```
 
-### Files Created
-- `src/hooks/useStockCounts.ts` — CRUD hooks for stock counts + `useShrinkageSummary` for aggregated shrinkage data
-- `src/components/dashboard/settings/inventory/StocktakeDialog.tsx` — Full stocktake UI with search, inline count entry, real-time variance display
-- `src/components/dashboard/analytics/ShrinkageReportCard.tsx` — PinnableCard showing products with shrinkage, severity badges, estimated loss
+### Page: `/dashboard/platform/backroom`
+Tabs:
+1. **Price Queue** — Review/approve/reject pending wholesale price updates from the pipeline. Table with filters (brand, source, status, confidence). Batch actions.
+2. **Price Sources** — CRUD for `wholesale_price_sources`. Configure API endpoints, polling frequency, toggle active/inactive.
+3. **Entitlements** — List all orgs, toggle Backroom access on/off per org. Shows usage stats (tracked products, active sessions). Uses `organization_feature_flags` with flag key `backroom_enabled`.
+4. **Supply Library** *(future, not v1)* — Manage the curated product library from the platform.
 
-### Files Updated
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Added "Stocktake" button to Inventory tab toolbar
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ShrinkageReportCard into analytics hub
+### Files
+- `src/pages/dashboard/platform/BackroomAdmin.tsx` — page with tabs
+- `src/components/platform/backroom/PriceQueueTab.tsx` — review queue
+- `src/components/platform/backroom/PriceSourcesTab.tsx` — source config
+- `src/components/platform/backroom/BackroomEntitlementsTab.tsx` — org toggle
+- `src/hooks/platform/useWholesalePriceQueue.ts` — query + mutations for queue
+- `src/hooks/platform/useWholesalePriceSources.ts` — query + mutations for sources
+
+---
+
+## 3. Backroom Paywall (Add-on to Zura Subscription)
+
+### Gating Logic
+- Use existing `organization_feature_flags` system with flag key `backroom_enabled`
+- When an org navigates to `/dashboard/admin/backroom-settings`, check the flag
+- If disabled: show a paywall card ("Unlock Zura Backroom — $X/mo add-on") with a CTA that triggers Stripe checkout for the Backroom add-on product
+- If enabled: render the full Backroom catalog as today
+
+### Implementation
+- `src/hooks/backroom/useBackroomEntitlement.ts` — checks `organization_feature_flags` for `backroom_enabled`
+- `src/components/dashboard/backroom-settings/BackroomPaywall.tsx` — paywall UI with feature list, pricing, and Stripe checkout CTA
+- Wrap `BackroomProductCatalogSection` and all backroom routes with the entitlement check
+- Stripe product/price creation handled via the existing Stripe integration (will need to enable Stripe connector)
+
+### Protective Layer (Automation Compliance)
+Per the platform's "Recommend → Simulate → Request Approval → Execute" pattern:
+- Price updates from the pipeline are **never auto-applied** to org products without platform admin approval
+- High-confidence matches get a "Recommended" badge but still sit in the queue
+- Platform admin can configure auto-apply thresholds per source (e.g. "auto-apply if confidence > 0.95 AND delta < 3%")
+
+---
+
+## Build Order
+
+1. Database migration (2 new tables: `wholesale_price_sources`, `wholesale_price_queue`)
+2. Edge function `wholesale-price-sync` (API integration skeleton + queue insertion)
+3. Platform hooks (`useWholesalePriceQueue`, `useWholesalePriceSources`)
+4. Platform Backroom Admin page + tabs
+5. Backroom entitlement hook + paywall component
+6. Wire paywall gate into existing backroom routes
+
+## Technical Notes
+
+- Distributor API integrations will start as configurable skeletons — actual API keys/endpoints will be added per-source as distributor partnerships are established
+- The confidence scoring uses exact SKU match (1.0), brand+name fuzzy match (0.7-0.9), name-only match (0.3-0.6)
+- All price queue operations are audited via `platform_audit_log`
+
