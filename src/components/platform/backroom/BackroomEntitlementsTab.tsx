@@ -497,7 +497,9 @@ export function BackroomEntitlementsTab() {
 
 interface LocationPanelProps {
   orgId: string;
+  orgName: string;
   orgEnabled: boolean;
+  hasStripeCustomer: boolean;
   locations: OrgLocation[];
   entitlementMap: Map<string, BackroomLocationEntitlement>;
   isLoading: boolean;
