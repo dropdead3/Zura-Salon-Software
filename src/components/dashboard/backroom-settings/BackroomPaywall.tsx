@@ -13,9 +13,7 @@ import { useLocations } from '@/hooks/useLocations';
 import { useBackroomLocationEntitlements } from '@/hooks/backroom/useBackroomLocationEntitlements';
 import { toast } from 'sonner';
 
-interface BackroomPaywallProps {
-  isPendingActivation?: boolean;
-}
+
 
 const features = [
   {
