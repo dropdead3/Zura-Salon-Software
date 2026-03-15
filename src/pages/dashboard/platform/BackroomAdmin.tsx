@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
+import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageContainer';
+import { PlatformPageHeader } from '@/components/platform/ui/PlatformPageHeader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PriceQueueTab } from '@/components/platform/backroom/PriceQueueTab';
 import { PriceSourcesTab } from '@/components/platform/backroom/PriceSourcesTab';
@@ -12,8 +13,8 @@ export default function BackroomAdmin() {
   const [tab, setTab] = useState('queue');
 
   return (
-    <div className="space-y-6">
-      <DashboardPageHeader
+    <PlatformPageContainer className="space-y-6">
+      <PlatformPageHeader
         title="Zura Backroom"
         description="Wholesale price intelligence, source configuration, organization entitlements, and platform analytics."
       />
@@ -58,6 +59,6 @@ export default function BackroomAdmin() {
           <BackroomAnalyticsTab />
         </TabsContent>
       </Tabs>
-    </div>
+    </PlatformPageContainer>
   );
 }
