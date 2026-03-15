@@ -15,7 +15,7 @@ const tabTriggerClass =
   'data-[state=active]:bg-violet-600 data-[state=active]:text-white text-slate-400 hover:text-white';
 
 export default function BackroomAdmin() {
-  const [tab, setTab] = useState('queue');
+  const [tab, setTab] = useState('analytics');
 
   return (
     <PlatformPageContainer className="space-y-6">
