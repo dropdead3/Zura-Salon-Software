@@ -810,11 +810,13 @@ function BrandProductRow({
 function ProductRow({ product, onUpdate }: { product: BackroomProduct; onUpdate: (u: Partial<BackroomProduct>) => void }) {
   return (
     <div className={cn(
-      'flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-5 rounded-lg border p-3 sm:p-4 transition-colors',
-      product.is_backroom_tracked ? 'border-border bg-card' : 'border-border/40 bg-muted/20'
+      'flex flex-col sm:flex-row sm:items-center gap-4 rounded-lg border p-4 transition-all duration-200 ease-out',
+      product.is_backroom_tracked
+        ? 'border-border bg-card hover:border-border/80 hover:shadow-sm'
+        : 'border-border/40 bg-muted/20'
     )}>
-      <div className="flex items-center gap-3 sm:gap-5 flex-1 min-w-0">
-        {/* Toggle */}
+      {/* Zone 1: Toggle + Product Info */}
+      <div className="flex items-center gap-3 flex-1 min-w-0">
         <div className="flex items-center gap-1 shrink-0">
           <Switch
             checked={product.is_backroom_tracked}
@@ -823,13 +825,13 @@ function ProductRow({ product, onUpdate }: { product: BackroomProduct; onUpdate:
           <MetricInfoTooltip description="When on, this product appears in the mixing dashboard and its usage is recorded per appointment." />
         </div>
 
-        {/* Info */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0">
             <span className="text-sm font-sans font-medium text-foreground truncate">{product.name}</span>
-            {product.brand && <span className="text-xs text-muted-foreground">{product.brand}</span>}
+            {product.brand && <span className="text-xs text-muted-foreground shrink-0 hidden sm:inline">{product.brand}</span>}
           </div>
-          <div className="flex items-center gap-2 mt-0.5">
+          <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+            {product.brand && <span className="text-xs text-muted-foreground sm:hidden">{product.brand}</span>}
             {product.category && <Badge variant="outline" className="text-[10px] capitalize">{product.category}</Badge>}
             {product.sku && <span className="text-[10px] text-muted-foreground">{product.sku}</span>}
             {!product.cost_price && product.is_backroom_tracked && (
@@ -842,16 +844,16 @@ function ProductRow({ product, onUpdate }: { product: BackroomProduct; onUpdate:
         </div>
       </div>
 
-      {/* Depletion method */}
+      {/* Zone 2: Controls */}
       {product.is_backroom_tracked && (
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 bg-muted/30 rounded-lg px-3 py-2 shrink-0 sm:ml-auto">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 bg-muted/30 backdrop-blur-sm rounded-lg px-3 py-2.5 shrink-0 sm:ml-auto w-full sm:w-auto">
           <div className="flex items-center gap-1">
             <MetricInfoTooltip description="How this product is measured when used. 'Weighed' uses a scale; 'Per Pump' counts pumps dispensed." />
             <Select
               value={product.depletion_method}
               onValueChange={(v) => onUpdate({ depletion_method: v })}
             >
-              <SelectTrigger className="w-full sm:w-[120px] h-8 text-xs font-sans">
+              <SelectTrigger className="w-full sm:w-[130px] h-8 text-xs font-sans">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -862,11 +864,11 @@ function ProductRow({ product, onUpdate }: { product: BackroomProduct; onUpdate:
             </Select>
           </div>
 
-          <div className="w-px h-5 bg-border/40 hidden sm:block" />
+          <div className="w-px h-4 bg-border/40 hidden sm:block" />
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-1">
-              <label className="text-[10px] text-muted-foreground">Billable</label>
+              <label className="text-[11px] text-muted-foreground">Billable</label>
               <MetricInfoTooltip description="When on, overage usage of this product can be charged to the client." />
               <Switch
                 checked={product.is_billable_to_client}
@@ -876,7 +878,7 @@ function ProductRow({ product, onUpdate }: { product: BackroomProduct; onUpdate:
             </div>
 
             <div className="flex items-center gap-1">
-              <label className="text-[10px] text-muted-foreground">Overage</label>
+              <label className="text-[11px] text-muted-foreground">Overage</label>
               <MetricInfoTooltip description="When on, usage beyond the service allowance triggers an overage charge." />
               <Switch
                 checked={product.is_overage_eligible}
