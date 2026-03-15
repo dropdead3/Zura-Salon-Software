@@ -13,6 +13,7 @@ import { useProducts } from '@/hooks/useProducts';
 import { format } from 'date-fns';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { PurchaseOrderDetailDialog } from './PurchaseOrderDetailDialog';
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   draft: { label: 'Draft', className: 'text-muted-foreground border-border' },
@@ -26,6 +27,7 @@ export function PurchaseOrdersPanel() {
   const { formatCurrency } = useFormatCurrency();
   const [statusFilter, setStatusFilter] = useState('all');
   const [groupBySupplier, setGroupBySupplier] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | null>(null);
   const { data: orders, isLoading } = usePurchaseOrders({ status: statusFilter });
   const { data: products } = useProducts({});
   const markReceived = useMarkPurchaseOrderReceived();
@@ -57,7 +59,7 @@ export function PurchaseOrdersPanel() {
     const prod = productMap.get(po.product_id);
     const cfg = statusConfig[po.status] || statusConfig.draft;
     return (
-      <TableRow key={po.id}>
+      <TableRow key={po.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setSelectedOrder(po)}>
         <TableCell className="font-medium text-sm">{prod?.name || 'Unknown'}</TableCell>
         {!groupBySupplier && (
           <TableCell className="text-sm text-muted-foreground">{po.supplier_name || '—'}</TableCell>
@@ -166,6 +168,14 @@ export function PurchaseOrdersPanel() {
           </TableBody>
         </Table>
       </div>
+
+      {selectedOrder && (
+        <PurchaseOrderDetailDialog
+          open={!!selectedOrder}
+          onOpenChange={(open) => !open && setSelectedOrder(null)}
+          order={selectedOrder}
+        />
+      )}
     </div>
   );
 }

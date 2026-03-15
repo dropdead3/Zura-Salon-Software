@@ -1,4 +1,4 @@
-import { FileText, CreditCard, MessageSquare, DollarSign, Calculator, LucideIcon } from 'lucide-react';
+import { FileText, CreditCard, MessageSquare, DollarSign, Calculator, ShoppingCart, LucideIcon } from 'lucide-react';
 
 export interface PlatformIntegration {
   id: string;
@@ -6,7 +6,7 @@ export interface PlatformIntegration {
   description: string;
   icon: LucideIcon;
   status: 'connected' | 'not_configured' | 'coming_soon';
-  category: 'documents' | 'payments' | 'communication' | 'analytics' | 'payroll';
+  category: 'documents' | 'payments' | 'communication' | 'analytics' | 'payroll' | 'supply_ordering';
   features: string[];
   configPath: string;
 }
@@ -61,5 +61,15 @@ export const PLATFORM_INTEGRATIONS: PlatformIntegration[] = [
     category: 'communication',
     features: ['SMS Alerts', 'Two-Factor Auth', 'Appointment Reminders'],
     configPath: '/dashboard/platform/settings/integrations/twilio',
+  },
+  {
+    id: 'salon-interactive',
+    name: 'SalonInteractive',
+    description: 'Professional supply ordering via SalonCentric',
+    icon: ShoppingCart,
+    status: 'coming_soon',
+    category: 'supply_ordering',
+    features: ['Supply Ordering', 'Inventory Sync', 'Auto-Reorder', 'Order Tracking'],
+    configPath: '/dashboard/platform/settings/integrations/salon-interactive',
   },
 ];

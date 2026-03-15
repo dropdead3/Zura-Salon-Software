@@ -13519,6 +13519,7 @@ export type Database = {
           clearance_discount_pct: number | null
           clearance_marked_at: string | null
           clearance_status: string | null
+          container_size: string | null
           cost_per_gram: number | null
           cost_price: number | null
           created_at: string | null
@@ -13562,6 +13563,7 @@ export type Database = {
           clearance_discount_pct?: number | null
           clearance_marked_at?: string | null
           clearance_status?: string | null
+          container_size?: string | null
           cost_per_gram?: number | null
           cost_price?: number | null
           created_at?: string | null
@@ -13605,6 +13607,7 @@ export type Database = {
           clearance_discount_pct?: number | null
           clearance_marked_at?: string | null
           clearance_status?: string | null
+          container_size?: string | null
           cost_per_gram?: number | null
           cost_price?: number | null
           created_at?: string | null

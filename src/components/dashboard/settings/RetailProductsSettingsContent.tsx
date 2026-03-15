@@ -1574,11 +1574,13 @@ function InventoryByLocationTab() {
                         )}
                       </TableCell>
                       <TableCell className="text-right">
-                        {isLow ? (
-                          <Badge variant="outline" className="text-amber-600 border-amber-300 dark:text-amber-400 text-[10px]">Low</Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-emerald-600 border-emerald-300 dark:text-emerald-400 text-[10px]">OK</Badge>
-                        )}
+                      {(() => {
+                          const qty = p.quantity_on_hand ?? 0;
+                          const reorder = p.reorder_level ?? 0;
+                          if (qty === 0) return <Badge variant="outline" className="text-red-600 border-red-300 dark:text-red-400 text-[10px]">Out of Stock</Badge>;
+                          if (reorder > 0 && qty <= reorder) return <Badge variant="outline" className="text-amber-600 border-amber-300 dark:text-amber-400 text-[10px]">Urgent Reorder</Badge>;
+                          return <Badge variant="outline" className="text-emerald-600 border-emerald-300 dark:text-emerald-400 text-[10px]">In Stock</Badge>;
+                        })()}
                       </TableCell>
                       <TableCell className="text-center">
                         <div className="flex items-center justify-center gap-1">

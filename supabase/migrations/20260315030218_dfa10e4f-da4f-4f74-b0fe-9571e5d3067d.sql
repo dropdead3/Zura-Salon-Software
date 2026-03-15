@@ -1,0 +1,1 @@
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS container_size TEXT;
