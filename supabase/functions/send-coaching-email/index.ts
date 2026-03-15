@@ -210,6 +210,21 @@ serve(async (req: Request): Promise<Response> => {
         .eq("key", "backroom_coaching_emails_sent");
     }
 
+    // Audit trail
+    await supabase.from("platform_audit_log").insert({
+      organization_id: org_id,
+      user_id: user.id,
+      action: "coaching_email_sent",
+      entity_type: "organization",
+      entity_id: org_id,
+      details: {
+        recipient: org.billing_email,
+        reason,
+        reweigh_pct: avgReweighPct,
+        waste_pct: avgWastePct,
+      },
+    });
+
     return new Response(
       JSON.stringify({
         success: true,

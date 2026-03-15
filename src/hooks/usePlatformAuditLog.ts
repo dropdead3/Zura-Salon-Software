@@ -139,6 +139,7 @@ export const AUDIT_ACTION_CONFIG: Record<string, {
   user_impersonated: { label: 'Impersonation', color: 'amber', verb: 'impersonated user in' },
   settings_updated: { label: 'Settings Updated', color: 'violet', verb: 'updated settings' },
   permission_changed: { label: 'Permission Changed', color: 'amber', verb: 'changed permissions for' },
+  coaching_email_sent: { label: 'Coaching Email', color: 'violet', verb: 'sent coaching email to' },
 };
 
 export function getAuditActionConfig(action: string) {
