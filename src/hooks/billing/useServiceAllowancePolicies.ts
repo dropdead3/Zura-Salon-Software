@@ -60,6 +60,7 @@ export function useUpsertAllowancePolicy() {
       overage_rate: number;
       overage_rate_type?: string;
       overage_cap?: number | null;
+      billing_mode?: 'allowance' | 'parts_and_labor';
       is_active?: boolean;
       notes?: string | null;
     }) => {
