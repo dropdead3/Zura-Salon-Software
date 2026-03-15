@@ -512,6 +512,8 @@ function LocationEntitlementPanel({
   onToggle,
   onUpdateEntitlement,
 }: LocationPanelProps) {
+  const [refundTarget, setRefundTarget] = useState<{ locId: string; locName: string } | null>(null);
+  const [refunding, setRefunding] = useState(false);
   if (!orgEnabled) {
     return (
       <div className="px-6 py-8 text-center">
