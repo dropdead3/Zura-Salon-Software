@@ -36,7 +36,45 @@ function KPICard({ icon: Icon, label, value, subtitle }: { icon: any; label: str
 }
 
 export function BackroomAnalyticsTab() {
+  const [sendingOrgId, setSendingOrgId] = useState<string | null>(null);
   const { data: metrics, isLoading } = useBackroomPlatformAnalytics();
+
+  const handleSendCoachingEmail = async (signal: CoachingSignal) => {
+    setSendingOrgId(signal.orgId);
+    try {
+      const { data: org } = await supabase
+        .from('organizations')
+        .select('billing_email, name')
+        .eq('id', signal.orgId)
+        .single();
+
+      if (!org?.billing_email) {
+        toast({ title: 'No billing email', description: `${signal.orgName} has no billing email configured.`, variant: 'destructive' });
+        return;
+      }
+
+      const { error } = await supabase.functions.invoke('send-test-email', {
+        body: {
+          to: org.billing_email,
+          template_key: 'backroom_coaching',
+          variables: {
+            org_name: signal.orgName,
+            reweigh_pct: signal.avgReweighPct?.toFixed(0) ?? 'N/A',
+            waste_pct: signal.avgWastePct?.toFixed(1) ?? 'N/A',
+            session_count: signal.sessionCount,
+            reason: signal.reason,
+          },
+        },
+      });
+
+      if (error) throw error;
+      toast({ title: 'Coaching email sent', description: `Email sent to ${org.billing_email}` });
+    } catch (err: any) {
+      toast({ title: 'Failed to send email', description: err.message || 'Unknown error', variant: 'destructive' });
+    } finally {
+      setSendingOrgId(null);
+    }
+  };
 
   if (isLoading) {
     return (
