@@ -1,7 +1,7 @@
 /**
  * CheckoutClarityPanel — Clear client-facing explanation of product usage charges.
- * Appears in AppointmentDetailSheet when overage charges exist.
- * Makes billing conversations effortless for front desk staff.
+ * Appears in AppointmentDetailSheet when overage or product cost charges exist.
+ * Supports both 'overage' and 'product_cost' charge types.
  */
 
 import { useState } from 'react';
@@ -26,12 +26,13 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { tokens } from '@/lib/design-tokens';
-import { Beaker, CheckCircle, XCircle, ShieldAlert } from 'lucide-react';
+import { Beaker, CheckCircle, XCircle, ShieldAlert, FlaskConical, TrendingUp } from 'lucide-react';
 
 interface CheckoutClarityPanelProps {
   appointmentId: string;
   organizationId: string;
   isManagerOrAdmin?: boolean;
+  productChargeLabel?: string;
 }
 
 const STATUS_BADGE: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }> = {
@@ -44,6 +45,7 @@ export function CheckoutClarityPanel({
   appointmentId,
   organizationId,
   isManagerOrAdmin = false,
+  productChargeLabel = 'Product Usage',
 }: CheckoutClarityPanelProps) {
   const { data: charges, isLoading } = useCheckoutUsageCharges(appointmentId);
   const approveCharge = useApproveOverageCharge();
@@ -83,6 +85,8 @@ export function CheckoutClarityPanel({
         </div>
 
         {charges.map((charge) => {
+          const chargeType = (charge as any).charge_type || 'overage';
+          const isProductCost = chargeType === 'product_cost';
           const statusInfo = STATUS_BADGE[charge.status] ?? STATUS_BADGE.pending;
           const isWaived = charge.status === 'waived';
 
@@ -91,42 +95,57 @@ export function CheckoutClarityPanel({
               key={charge.id}
               className={`rounded-lg border border-border/50 bg-muted/20 p-3 space-y-2.5 ${isWaived ? 'opacity-60' : ''}`}
             >
-              {/* Service name + status */}
+              {/* Service name + status + charge type */}
               <div className="flex items-center justify-between">
-                <p className="font-sans text-sm font-medium">
-                  {charge.service_name ?? 'Service'}
-                </p>
-                <Badge variant={statusInfo.variant} className="text-[10px]">
-                  {statusInfo.label}
-                </Badge>
+                <div className="flex items-center gap-2">
+                  {isProductCost ? (
+                    <FlaskConical className="w-3.5 h-3.5 text-primary" />
+                  ) : (
+                    <Beaker className="w-3.5 h-3.5 text-muted-foreground" />
+                  )}
+                  <p className="font-sans text-sm font-medium">
+                    {charge.service_name ?? 'Service'}
+                  </p>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Badge variant="outline" className="text-[10px]">
+                    {isProductCost ? productChargeLabel : 'Overage'}
+                  </Badge>
+                  <Badge variant={statusInfo.variant} className="text-[10px]">
+                    {statusInfo.label}
+                  </Badge>
+                </div>
               </div>
 
-              {/* Usage breakdown */}
-              <div className="space-y-1 font-sans text-sm">
-                <div className="flex justify-between text-muted-foreground">
-                  <span>Included allowance</span>
-                  <span className="tabular-nums">{charge.included_allowance_qty.toFixed(0)} g</span>
-                </div>
-                <div className="flex justify-between text-muted-foreground">
-                  <span>Actual usage</span>
-                  <span className="tabular-nums">{charge.actual_usage_qty.toFixed(0)} g</span>
-                </div>
-                <Separator className="my-1" />
-                <div className="flex justify-between font-medium text-foreground">
-                  <span>Additional usage</span>
-                  <span className="tabular-nums">{charge.overage_qty.toFixed(0)} g</span>
-                </div>
-              </div>
+              {/* Usage breakdown — different for each charge type */}
+              {isProductCost ? (
+                <ProductCostBreakdown charge={charge} />
+              ) : (
+                <OverageBreakdown charge={charge} />
+              )}
 
               {/* Charge amount */}
               <div className="flex justify-between items-center pt-1">
                 <span className="font-sans text-sm text-muted-foreground">
-                  Additional Product Usage
+                  {isProductCost ? 'Client Charge' : 'Additional Product Usage'}
                 </span>
                 <span className={`font-display text-base tabular-nums ${isWaived ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
                   <BlurredAmount>${charge.charge_amount.toFixed(2)}</BlurredAmount>
                 </span>
               </div>
+
+              {/* Salon profit (product cost only, manager view) */}
+              {isProductCost && isManagerOrAdmin && !isWaived && (charge as any).product_wholesale_cost != null && (
+                <div className="flex items-center justify-between text-xs text-muted-foreground bg-muted/30 rounded-md px-2 py-1.5">
+                  <div className="flex items-center gap-1">
+                    <TrendingUp className="w-3 h-3 text-emerald-600" />
+                    <span>Salon profit</span>
+                  </div>
+                  <span className="font-medium text-emerald-600 tabular-nums">
+                    ${(charge.charge_amount - ((charge as any).product_wholesale_cost ?? 0)).toFixed(2)}
+                  </span>
+                </div>
+              )}
 
               {/* Manager actions */}
               {isManagerOrAdmin && charge.status === 'pending' && (
@@ -202,5 +221,49 @@ export function CheckoutClarityPanel({
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+// ─── Subcomponents ───────────────────────────────────────────────
+
+function OverageBreakdown({ charge }: { charge: CheckoutUsageCharge }) {
+  return (
+    <div className="space-y-1 font-sans text-sm">
+      <div className="flex justify-between text-muted-foreground">
+        <span>Included allowance</span>
+        <span className="tabular-nums">{charge.included_allowance_qty.toFixed(0)} g</span>
+      </div>
+      <div className="flex justify-between text-muted-foreground">
+        <span>Actual usage</span>
+        <span className="tabular-nums">{charge.actual_usage_qty.toFixed(0)} g</span>
+      </div>
+      <Separator className="my-1" />
+      <div className="flex justify-between font-medium text-foreground">
+        <span>Additional usage</span>
+        <span className="tabular-nums">{charge.overage_qty.toFixed(0)} g</span>
+      </div>
+    </div>
+  );
+}
+
+function ProductCostBreakdown({ charge }: { charge: CheckoutUsageCharge }) {
+  const wholesaleCost = (charge as any).product_wholesale_cost ?? 0;
+  const markupPct = (charge as any).product_charge_markup_pct ?? 0;
+
+  return (
+    <div className="space-y-1 font-sans text-sm">
+      <div className="flex justify-between text-muted-foreground">
+        <span>Product used</span>
+        <span className="tabular-nums">{charge.actual_usage_qty.toFixed(0)} g</span>
+      </div>
+      <div className="flex justify-between text-muted-foreground">
+        <span>Wholesale cost</span>
+        <span className="tabular-nums">${wholesaleCost.toFixed(2)}</span>
+      </div>
+      <div className="flex justify-between text-muted-foreground">
+        <span>Markup</span>
+        <span className="tabular-nums">{markupPct.toFixed(0)}%</span>
+      </div>
+    </div>
   );
 }
