@@ -357,7 +357,8 @@ async function handleCheckoutCompleted(
   const orgId = metadata.organization_id;
   const backroomPlan = metadata.backroom_plan || 'starter';
   const scaleCount = parseInt(metadata.scale_count || '0', 10);
-  console.log(`Enabling backroom for organization: ${orgId}, plan: ${backroomPlan}, scales: ${scaleCount}`);
+  const billingInterval = metadata.billing_interval || 'monthly';
+  console.log(`Enabling backroom for organization: ${orgId}, plan: ${backroomPlan}, scales: ${scaleCount}, interval: ${billingInterval}`);
 
   // Upsert the feature flag with plan metadata
   const { error } = await supabase
