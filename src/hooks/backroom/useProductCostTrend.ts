@@ -5,11 +5,18 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useBackroomOrgId } from './useBackroomOrgId';
 
+export interface CostHistoryEntry {
+  cost: number;
+  date: string;
+  supplier: string | null;
+}
+
 export interface ProductCostTrendItem {
   productId: string;
   productName: string;
   currentCost: number;
   costHistory: number[]; // chronological cost values
+  costHistoryDetailed: CostHistoryEntry[]; // enriched timeline
   changePercent: number;
   supplierName: string | null;
 }
