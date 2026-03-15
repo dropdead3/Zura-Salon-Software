@@ -2046,7 +2046,7 @@ export function QuickBookingPopover({
                       <div key={est.serviceId} className="flex items-center justify-between p-2.5">
                         <div className="flex items-center gap-2">
                           <div className="w-6 h-6 rounded-md bg-muted flex items-center justify-center">
-                            <Beaker className="h-3 w-3 text-muted-foreground" />
+                            <DollarSign className="h-3 w-3 text-muted-foreground" />
                           </div>
                           <div>
                             <div className="font-medium text-xs">{est.serviceName}</div>
