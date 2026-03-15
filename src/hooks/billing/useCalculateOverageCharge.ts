@@ -249,7 +249,7 @@ async function handlePartsAndLabor({
       product_wholesale_cost: costResult.wholesaleCost,
       product_charge_markup_pct: costResult.markupPct,
       status: 'pending',
-    })
+    } as any)
     .select()
     .single();
 
