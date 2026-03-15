@@ -48,6 +48,11 @@ export function SupplyInsightCard({ insight }: SupplyInsightCardProps) {
   const CategoryIcon = config.icon;
   const SeverityIcon = severityIcons[insight.severity] ?? Info;
 
+  // Fetch sparkline data for price-category insights with a product_id
+  const productIds = insight.category === 'price' && insight.product_id ? [insight.product_id] : undefined;
+  const { data: costTrends } = useProductCostTrend(productIds);
+  const sparklineData = costTrends?.[0]?.costHistory;
+
   return (
     <div
       className={cn(
