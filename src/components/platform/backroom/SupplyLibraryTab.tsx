@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Loader2, Search, Package, Plus, Database, Pencil, Trash2, AlertTriangle } from 'lucide-react';
+import { Loader2, Search, Package, Plus, Database, Pencil, Trash2, AlertTriangle, Upload, Download, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
@@ -21,28 +21,47 @@ import {
   type SupplyLibraryProduct,
 } from '@/hooks/platform/useSupplyLibrary';
 import { SUPPLY_CATEGORY_LABELS } from '@/data/professional-supply-library';
+import { CSVImportDialog } from './CSVImportDialog';
 
 const CATEGORIES = ['color', 'lightener', 'developer', 'toner', 'bond builder', 'treatment', 'additive'];
 const DEPLETION_METHODS = ['weighed', 'per_service', 'manual', 'per_pump'];
 const UNITS = ['g', 'ml', 'oz'];
+const PAGE_SIZE = 50;
 
 export function SupplyLibraryTab() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [brandFilter, setBrandFilter] = useState<string>('all');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [addOpen, setAddOpen] = useState(false);
   const [editProduct, setEditProduct] = useState<SupplyLibraryProduct | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<SupplyLibraryProduct | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [csvOpen, setCsvOpen] = useState(false);
+  const [page, setPage] = useState(0);
+
+  // Inline editing state
+  const [inlineEditing, setInlineEditing] = useState<{ id: string; field: string; value: string } | null>(null);
 
   const { data: initStatus, isLoading: initLoading } = useSupplyLibraryInitStatus();
   const seedMutation = useSeedSupplyLibrary();
 
-  const { data: products = [], isLoading } = useSupplyLibraryProducts({
+  const { data: allProducts = [], isLoading } = useSupplyLibraryProducts({
     brand: brandFilter !== 'all' ? brandFilter : undefined,
     search: search || undefined,
   });
   const { data: brands = [] } = useSupplyLibraryBrands();
+
+  // Client-side category filter
+  const products = categoryFilter === 'all' ? allProducts : allProducts.filter((p) => p.category === categoryFilter);
+  const totalPages = Math.ceil(products.length / PAGE_SIZE);
+  const pagedProducts = products.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+
+  // Category counts
+  const categoryCounts = allProducts.reduce<Record<string, number>>((acc, p) => {
+    acc[p.category] = (acc[p.category] || 0) + 1;
+    return acc;
+  }, {});
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -65,6 +84,39 @@ export function SupplyLibraryTab() {
     }
   };
 
+  const handleInlineSave = async () => {
+    if (!inlineEditing) return;
+    try {
+      const { error } = await supabase
+        .from('supply_library_products')
+        .update({ [inlineEditing.field]: inlineEditing.value })
+        .eq('id', inlineEditing.id);
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ['supply-library-products'] });
+      toast.success('Updated');
+    } catch (err: any) {
+      toast.error('Update failed: ' + err.message);
+    }
+    setInlineEditing(null);
+  };
+
+  const handleExportCSV = () => {
+    const headers = ['brand', 'name', 'category', 'default_depletion', 'default_unit', 'size_options'];
+    const rows = products.map((p) => [
+      p.brand, p.name, p.category, p.default_depletion, p.default_unit,
+      (p.size_options || []).join(';'),
+    ]);
+    const csv = [headers.join(','), ...rows.map((r) => r.map((c) => `"${c}"`).join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `supply-library-${brandFilter !== 'all' ? brandFilter : 'all'}-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`Exported ${products.length} products`);
+  };
+
   // Show initialization panel if DB is empty
   if (!initLoading && initStatus && !initStatus.isInitialized) {
     return (
@@ -77,11 +129,7 @@ export function SupplyLibraryTab() {
           <p className="text-muted-foreground font-sans text-sm max-w-md mx-auto">
             The supply library database is empty. Import the built-in library of 2,000+ professional products to get started.
           </p>
-          <Button
-            onClick={() => seedMutation.mutate()}
-            disabled={seedMutation.isPending}
-            className="font-sans"
-          >
+          <Button onClick={() => seedMutation.mutate()} disabled={seedMutation.isPending} className="font-sans">
             {seedMutation.isPending ? (
               <><Loader2 className="w-4 h-4 animate-spin" /> Importing...</>
             ) : (
@@ -95,12 +143,12 @@ export function SupplyLibraryTab() {
 
   return (
     <div className="space-y-4">
-      <Card>
+      <Card className="rounded-xl border-border/60 bg-card/80 backdrop-blur-xl">
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-3">
               <div className={tokens.card.iconBox}>
-                <Package className={tokens.card.icon} />
+                <Package className="w-5 h-5 text-primary" />
               </div>
               <div>
                 <CardTitle className={tokens.card.title}>Supply Library</CardTitle>
@@ -109,31 +157,52 @@ export function SupplyLibraryTab() {
                 </CardDescription>
               </div>
             </div>
-            <Button size="sm" onClick={() => { setEditProduct(null); setAddOpen(true); }} className="font-sans gap-1.5">
-              <Plus className="w-3.5 h-3.5" /> Add Product
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={handleExportCSV} className="font-sans gap-1.5">
+                <Download className="w-3.5 h-3.5" /> Export
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setCsvOpen(true)} className="font-sans gap-1.5">
+                <Upload className="w-3.5 h-3.5" /> Import CSV
+              </Button>
+              <Button size="sm" onClick={() => { setEditProduct(null); setAddOpen(true); }} className="font-sans gap-1.5">
+                <Plus className="w-3.5 h-3.5" /> Add Product
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Filters */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 placeholder="Search products..."
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => { setSearch(e.target.value); setPage(0); }}
                 className="pl-9 font-sans"
               />
             </div>
-            <Select value={brandFilter} onValueChange={setBrandFilter}>
-              <SelectTrigger className="w-[200px] font-sans">
+            <Select value={brandFilter} onValueChange={(v) => { setBrandFilter(v); setPage(0); }}>
+              <SelectTrigger className="w-[180px] font-sans">
                 <SelectValue placeholder="All Brands" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Brands</SelectItem>
                 {brands.map((b) => (
                   <SelectItem key={b} value={b}>{b}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={categoryFilter} onValueChange={(v) => { setCategoryFilter(v); setPage(0); }}>
+              <SelectTrigger className="w-[160px] font-sans">
+                <SelectValue placeholder="All Categories" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                {CATEGORIES.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {SUPPLY_CATEGORY_LABELS[c] || c} ({categoryCounts[c] || 0})
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -165,17 +234,106 @@ export function SupplyLibraryTab() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {products.slice(0, 100).map((p) => (
+                  {pagedProducts.map((p) => (
                     <TableRow key={p.id}>
-                      <TableCell className="font-sans text-sm">{p.brand}</TableCell>
+                      <TableCell className="font-sans text-sm">
+                        {inlineEditing?.id === p.id && inlineEditing.field === 'brand' ? (
+                          <Input
+                            autoFocus
+                            value={inlineEditing.value}
+                            onChange={(e) => setInlineEditing({ ...inlineEditing, value: e.target.value })}
+                            onBlur={handleInlineSave}
+                            onKeyDown={(e) => e.key === 'Enter' && handleInlineSave()}
+                            className="h-7 w-28 font-sans text-sm"
+                          />
+                        ) : (
+                          <span
+                            className="cursor-pointer hover:text-primary transition-colors"
+                            onDoubleClick={() => setInlineEditing({ id: p.id, field: 'brand', value: p.brand })}
+                          >
+                            {p.brand}
+                          </span>
+                        )}
+                      </TableCell>
                       <TableCell className="font-sans text-sm font-medium">{p.name}</TableCell>
                       <TableCell>
-                        <Badge variant="secondary" className="font-sans text-xs">
-                          {SUPPLY_CATEGORY_LABELS[p.category] || p.category}
-                        </Badge>
+                        {inlineEditing?.id === p.id && inlineEditing.field === 'category' ? (
+                          <Select
+                            value={inlineEditing.value}
+                            onValueChange={(v) => {
+                              setInlineEditing({ ...inlineEditing, value: v });
+                              // Auto-save on select
+                              supabase.from('supply_library_products').update({ category: v }).eq('id', p.id).then(() => {
+                                queryClient.invalidateQueries({ queryKey: ['supply-library-products'] });
+                              });
+                              setInlineEditing(null);
+                            }}
+                          >
+                            <SelectTrigger className="h-7 w-28 font-sans text-xs"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              {CATEGORIES.map((c) => <SelectItem key={c} value={c}>{SUPPLY_CATEGORY_LABELS[c] || c}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <Badge
+                            variant="secondary"
+                            className="font-sans text-xs cursor-pointer"
+                            onDoubleClick={() => setInlineEditing({ id: p.id, field: 'category', value: p.category })}
+                          >
+                            {SUPPLY_CATEGORY_LABELS[p.category] || p.category}
+                          </Badge>
+                        )}
                       </TableCell>
-                      <TableCell className="font-sans text-xs text-muted-foreground">{p.default_depletion}</TableCell>
-                      <TableCell className="font-sans text-xs text-muted-foreground">{p.default_unit}</TableCell>
+                      <TableCell className="font-sans text-xs text-muted-foreground">
+                        {inlineEditing?.id === p.id && inlineEditing.field === 'default_depletion' ? (
+                          <Select
+                            value={inlineEditing.value}
+                            onValueChange={(v) => {
+                              supabase.from('supply_library_products').update({ default_depletion: v }).eq('id', p.id).then(() => {
+                                queryClient.invalidateQueries({ queryKey: ['supply-library-products'] });
+                              });
+                              setInlineEditing(null);
+                            }}
+                          >
+                            <SelectTrigger className="h-7 w-24 font-sans text-xs"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              {DEPLETION_METHODS.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <span
+                            className="cursor-pointer hover:text-primary transition-colors"
+                            onDoubleClick={() => setInlineEditing({ id: p.id, field: 'default_depletion', value: p.default_depletion })}
+                          >
+                            {p.default_depletion}
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell className="font-sans text-xs text-muted-foreground">
+                        {inlineEditing?.id === p.id && inlineEditing.field === 'default_unit' ? (
+                          <Select
+                            value={inlineEditing.value}
+                            onValueChange={(v) => {
+                              supabase.from('supply_library_products').update({ default_unit: v }).eq('id', p.id).then(() => {
+                                queryClient.invalidateQueries({ queryKey: ['supply-library-products'] });
+                              });
+                              setInlineEditing(null);
+                            }}
+                          >
+                            <SelectTrigger className="h-7 w-16 font-sans text-xs"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              {UNITS.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <span
+                            className="cursor-pointer hover:text-primary transition-colors"
+                            onDoubleClick={() => setInlineEditing({ id: p.id, field: 'default_unit', value: p.default_unit })}
+                          >
+                            {p.default_unit}
+                          </span>
+                        )}
+                      </TableCell>
                       <TableCell className="font-sans text-xs text-muted-foreground">
                         {p.size_options?.join(', ') || '—'}
                       </TableCell>
@@ -203,15 +361,29 @@ export function SupplyLibraryTab() {
                   ))}
                 </TableBody>
               </Table>
-              {products.length > 100 && (
-                <div className="px-4 py-2 text-xs text-muted-foreground font-sans border-t border-border/40">
-                  Showing 100 of {products.length} results. Use filters to narrow down.
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between px-4 py-3 border-t border-border/40">
+                  <span className="font-sans text-xs text-muted-foreground">
+                    Page {page + 1} of {totalPages} · {products.length} products
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)} className="h-7 w-7 p-0">
+                      <ChevronLeft className="w-4 h-4" />
+                    </Button>
+                    <Button variant="ghost" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage((p) => p + 1)} className="h-7 w-7 p-0">
+                      <ChevronRight className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>
           )}
         </CardContent>
       </Card>
+
+      {/* CSV Import Dialog */}
+      <CSVImportDialog open={csvOpen} onOpenChange={setCsvOpen} />
 
       {/* Add/Edit Dialog */}
       <AddEditDialog
@@ -266,7 +438,6 @@ function AddEditDialog({
   const [unit, setUnit] = useState(product?.default_unit || 'g');
   const [sizes, setSizes] = useState(product?.size_options?.join(', ') || '');
 
-  // Reset form when product changes
   const resetForm = () => {
     setBrand(product?.brand || '');
     setName(product?.name || '');
@@ -291,16 +462,11 @@ function AddEditDialog({
       };
 
       if (isEdit && product) {
-        const { error } = await supabase
-          .from('supply_library_products')
-          .update(payload)
-          .eq('id', product.id);
+        const { error } = await supabase.from('supply_library_products').update(payload).eq('id', product.id);
         if (error) throw error;
         toast.success('Product updated');
       } else {
-        const { error } = await supabase
-          .from('supply_library_products')
-          .insert({ ...payload, is_active: true });
+        const { error } = await supabase.from('supply_library_products').insert({ ...payload, is_active: true });
         if (error) throw error;
         toast.success('Product added to supply library');
       }
@@ -327,13 +493,7 @@ function AddEditDialog({
         <div className="space-y-4">
           <div className="space-y-1.5">
             <Label className="font-sans text-xs">Brand</Label>
-            <Input
-              value={brand}
-              onChange={(e) => setBrand(e.target.value)}
-              placeholder="e.g. Schwarzkopf"
-              className="font-sans"
-              list="brand-suggestions"
-            />
+            <Input value={brand} onChange={(e) => setBrand(e.target.value)} placeholder="e.g. Schwarzkopf" className="font-sans" list="brand-suggestions" />
             <datalist id="brand-suggestions">
               {brands.map((b) => <option key={b} value={b} />)}
             </datalist>
