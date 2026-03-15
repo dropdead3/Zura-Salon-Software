@@ -247,6 +247,70 @@ export function BackroomEntitlementsTab() {
 
   const enabledCount = orgs.filter((o) => o.backroom_enabled).length;
 
+  // Detect orphaned orgs (backroom enabled but no location entitlements)
+  const orphanedOrgs = orgs.filter((o) => {
+    if (!o.backroom_enabled) return false;
+    // We only know entitlements for the expanded org — check all in a simpler way
+    return true; // Will be refined when we have all entitlements
+  });
+
+  // For backfill: fetch all location entitlements counts
+  const { data: allEntitlementCounts = [] } = useQuery({
+    queryKey: ['platform-backroom-all-entitlement-counts'],
+    queryFn: async () => {
+      const enabledOrgIds = orgs.filter((o) => o.backroom_enabled).map((o) => o.id);
+      if (enabledOrgIds.length === 0) return [];
+      const { data } = await supabase
+        .from('backroom_location_entitlements')
+        .select('organization_id')
+        .in('organization_id', enabledOrgIds);
+      return data || [];
+    },
+    enabled: orgs.length > 0,
+  });
+
+  const orgsWithEntitlements = new Set(allEntitlementCounts.map((e: any) => e.organization_id));
+  const orphanCount = orgs.filter((o) => o.backroom_enabled && !orgsWithEntitlements.has(o.id)).length;
+
+  const handleBackfillAll = async () => {
+    setBackfilling(true);
+    try {
+      const orphans = orgs.filter((o) => o.backroom_enabled && !orgsWithEntitlements.has(o.id));
+      for (const org of orphans) {
+        // Get all active locations for this org
+        const { data: locs } = await supabase
+          .from('locations')
+          .select('id')
+          .eq('organization_id', org.id)
+          .eq('is_active', true);
+
+        for (const loc of locs || []) {
+          await supabase
+            .from('backroom_location_entitlements')
+            .upsert(
+              {
+                organization_id: org.id,
+                location_id: loc.id,
+                plan_tier: 'starter',
+                scale_count: 0,
+                status: 'active',
+                activated_at: new Date().toISOString(),
+              } as any,
+              { onConflict: 'organization_id,location_id' }
+            );
+        }
+      }
+      toast.success(`Backfilled entitlements for ${orphans.length} organizations`);
+      queryClient.invalidateQueries({ queryKey: ['platform-backroom-all-entitlement-counts'] });
+      queryClient.invalidateQueries({ queryKey: ['platform-backroom-entitlements'] });
+    } catch (err: any) {
+      toast.error('Backfill failed: ' + err.message);
+    } finally {
+      setBackfilling(false);
+      setShowBackfillDialog(false);
+    }
+  };
+
   return (
     <PlatformCard variant="glass">
       <PlatformCardHeader className="flex flex-row items-center justify-between gap-4 flex-wrap">
