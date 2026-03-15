@@ -512,7 +512,9 @@ interface LocationPanelProps {
 
 function LocationEntitlementPanel({
   orgId,
+  orgName,
   orgEnabled,
+  hasStripeCustomer,
   locations,
   entitlementMap,
   isLoading,
@@ -521,6 +523,7 @@ function LocationEntitlementPanel({
 }: LocationPanelProps) {
   const [refundTarget, setRefundTarget] = useState<{ locId: string; locName: string } | null>(null);
   const [refunding, setRefunding] = useState(false);
+  const [showActivateDialog, setShowActivateDialog] = useState(false);
   const refundQueryClient = useQueryClient();
   if (!orgEnabled) {
     return (
