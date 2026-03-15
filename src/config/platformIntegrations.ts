@@ -1,4 +1,4 @@
-import { FileText, CreditCard, MessageSquare, DollarSign, Calculator, LucideIcon } from 'lucide-react';
+import { FileText, CreditCard, MessageSquare, DollarSign, Calculator, ShoppingCart, LucideIcon } from 'lucide-react';
 
 export interface PlatformIntegration {
   id: string;
