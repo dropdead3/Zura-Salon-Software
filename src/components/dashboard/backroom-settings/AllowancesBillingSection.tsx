@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, DollarSign, Plus, Trash2, ChevronDown, ChevronRight, ArrowRight } from 'lucide-react';
+import { Loader2, DollarSign, Plus, Trash2, ChevronDown, ChevronRight, ArrowRight, X } from 'lucide-react';
 import { Infotainer } from '@/components/ui/Infotainer';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 
@@ -67,6 +67,49 @@ export function AllowancesBillingSection({ onNavigate }: Props) {
   });
 
   const [expandedPolicy, setExpandedPolicy] = useState<string | null>(null);
+  const [showNewPolicySelect, setShowNewPolicySelect] = useState(false);
+
+  // Fetch tracked services to power "New Policy" selector
+  const { data: trackedServices } = useQuery({
+    queryKey: ['tracked-services-for-allowances', orgId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('services')
+        .select('id, name')
+        .eq('organization_id', orgId!)
+        .eq('is_active', true)
+        .eq('is_backroom_tracked', true)
+        .order('name');
+      if (error) throw error;
+      return data as { id: string; name: string }[];
+    },
+    enabled: !!orgId,
+    staleTime: 120_000,
+  });
+
+  // Services that don't already have a policy
+  const eligibleServices = (trackedServices || []).filter(
+    s => !(policies || []).some(p => p.service_id === s.id)
+  );
+
+  const handleCreatePolicy = (serviceId: string) => {
+    if (!orgId) return;
+    upsertPolicy.mutate({
+      organization_id: orgId,
+      service_id: serviceId,
+      included_allowance_qty: 30,
+      allowance_unit: 'g',
+      overage_rate: 0.50,
+      overage_rate_type: 'per_unit',
+      billing_mode: 'allowance',
+      is_active: true,
+    } as any, {
+      onSuccess: (data: any) => {
+        setShowNewPolicySelect(false);
+        if (data?.id) setExpandedPolicy(data.id);
+      },
+    });
+  };
   const [showBucketForm, setShowBucketForm] = useState<string | null>(null);
   const [selectedDevRatio, setSelectedDevRatio] = useState<number | null>(null);
   const [bucketForm, setBucketForm] = useState({
@@ -149,6 +192,25 @@ export function AllowancesBillingSection({ onNavigate }: Props) {
               <CardDescription className={tokens.body.muted}>Configure service allowance policies and overage billing rules.</CardDescription>
             </div>
           </div>
+          {eligibleServices.length > 0 && (
+            showNewPolicySelect ? (
+              <div className="flex items-center gap-2">
+                <Select onValueChange={handleCreatePolicy}>
+                  <SelectTrigger className="w-[200px] h-9"><SelectValue placeholder="Select service…" /></SelectTrigger>
+                  <SelectContent>
+                    {eligibleServices.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setShowNewPolicySelect(false)}>
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            ) : (
+              <Button variant="outline" size={tokens.button.card} className="gap-1.5 font-sans" onClick={() => setShowNewPolicySelect(true)}>
+                <Plus className="w-3.5 h-3.5" /> New Policy
+              </Button>
+            )
+          )}
         </CardHeader>
         <CardContent className="space-y-3">
           {(!policies || policies.length === 0) ? (

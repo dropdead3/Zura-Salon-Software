@@ -85,7 +85,7 @@ type SortField = 'name' | 'brand' | 'category' | 'retail_price' | 'quantity_on_h
 type SortDir = 'asc' | 'desc';
 
 function exportProductsCsv(products: Product[]) {
-  const headers = ['Name', 'Brand', 'Category', 'Type', 'SKU', 'Barcode', 'Retail Price', 'Cost Price', 'Stock', 'Reorder Level', 'Available Online'];
+  const headers = ['Name', 'Brand', 'Category', 'Type', 'SKU', 'Barcode', 'Container Size', 'Retail Price', 'Cost Price', 'Stock', 'Reorder Level', 'Available Online'];
   const rows = products.map(p => [
     `"${(p.name || '').replace(/"/g, '""')}"`,
     `"${(p.brand || '').replace(/"/g, '""')}"`,
@@ -93,6 +93,7 @@ function exportProductsCsv(products: Product[]) {
     `"${(p.product_type || getProductType(p)).replace(/"/g, '""')}"`,
     `"${(p.sku || '').replace(/"/g, '""')}"`,
     `"${(p.barcode || '').replace(/"/g, '""')}"`,
+    `"${(p.container_size || '').replace(/"/g, '""')}"`,
     p.retail_price ?? '',
     p.cost_price ?? '',
     p.quantity_on_hand ?? '',
@@ -733,6 +734,7 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
     image_url: product?.image_url || '',
     expires_at: product?.expires_at || '',
     expiry_alert_days: product?.expiry_alert_days?.toString() || '30',
+    container_size: product?.container_size || '',
   });
 
   const clearCropPreview = () => {
@@ -807,6 +809,7 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
       image_url: form.image_url || null,
       expires_at: form.expires_at || null,
       expiry_alert_days: form.expiry_alert_days ? parseInt(form.expiry_alert_days) : 30,
+      container_size: form.container_size || null,
     });
   };
 
@@ -949,6 +952,11 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
           <div className="grid grid-cols-2 gap-3">
             <div><Label className="text-xs">SKU</Label><Input value={form.sku} onChange={e => setForm(f => ({ ...f, sku: e.target.value }))} /></div>
             <div><Label className="text-xs">Barcode</Label><Input value={form.barcode} onChange={e => setForm(f => ({ ...f, barcode: e.target.value }))} /></div>
+          </div>
+          <div>
+            <Label className="text-xs">Container Size</Label>
+            <Input value={form.container_size} onChange={e => setForm(f => ({ ...f, container_size: e.target.value }))} placeholder="e.g. 57g, 1000ml" autoCapitalize="off" />
+            <p className="text-[11px] text-muted-foreground mt-1">Net weight or volume for backroom supplies</p>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div><Label className="text-xs">Retail Price</Label><Input type="number" step="0.01" value={form.retail_price} onChange={e => setForm(f => ({ ...f, retail_price: e.target.value }))} /></div>

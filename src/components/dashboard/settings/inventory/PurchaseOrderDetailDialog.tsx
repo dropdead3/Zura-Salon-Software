@@ -79,7 +79,7 @@ export function PurchaseOrderDetailDialog({ open, onOpenChange, order }: Purchas
         `"${(prod?.name || 'Unknown').replace(/"/g, '""')}"`,
         `"${(prod?.brand || '').replace(/"/g, '""')}"`,
         `"${(prod?.category || '').replace(/"/g, '""')}"`,
-        `"${((prod as any)?.container_size || '').replace(/"/g, '""')}"`,
+        `"${(prod?.container_size || '').replace(/"/g, '""')}"`,
         line.quantity_ordered,
         line.quantity_received,
         line.unit_cost ?? '',
@@ -176,7 +176,7 @@ export function PurchaseOrderDetailDialog({ open, onOpenChange, order }: Purchas
                     <TableRow key={line.id}>
                       <TableCell className="text-sm font-medium">{prod?.name || 'Unknown'}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{prod?.brand || '—'}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{(prod as any)?.container_size || '—'}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{prod?.container_size || '—'}</TableCell>
                       <TableCell className="text-right tabular-nums text-sm">{line.quantity_ordered}</TableCell>
                       <TableCell className="text-right tabular-nums text-sm">
                         {line.quantity_received}

@@ -24,6 +24,7 @@ export interface Product {
   supplier_id: string | null;
   expires_at: string | null;
   expiry_alert_days: number | null;
+  container_size: string | null;
   created_at: string | null;
   updated_at: string | null;
 }
@@ -205,6 +206,7 @@ export function useCreateProduct() {
         available_online: product.available_online,
         expires_at: product.expires_at,
         expiry_alert_days: product.expiry_alert_days ?? 30,
+        container_size: product.container_size,
       };
       
       const { data, error } = await supabase
