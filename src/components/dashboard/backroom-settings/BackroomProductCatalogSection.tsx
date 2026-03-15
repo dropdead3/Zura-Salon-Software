@@ -21,6 +21,7 @@ import { Infotainer } from '@/components/ui/Infotainer';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { SupplyLibraryDialog } from './SupplyLibraryDialog';
 import { BackroomBulkPricingDialog } from './BackroomBulkPricingDialog';
+import { BackroomBulkReorderDialog } from './BackroomBulkReorderDialog';
 import {
   SUPPLY_CATEGORY_LABELS,
   type SupplyLibraryItem,
