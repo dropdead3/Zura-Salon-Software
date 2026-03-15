@@ -19604,6 +19604,45 @@ export type Database = {
         }
         Relationships: []
       }
+      supply_library_products: {
+        Row: {
+          brand: string
+          category: string
+          created_at: string
+          default_depletion: string
+          default_unit: string
+          id: string
+          is_active: boolean
+          name: string
+          size_options: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          brand: string
+          category?: string
+          created_at?: string
+          default_depletion?: string
+          default_unit?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          size_options?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          brand?: string
+          category?: string
+          created_at?: string
+          default_depletion?: string
+          default_unit?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          size_options?: string[] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       support_tickets: {
         Row: {
           assigned_to: string | null
