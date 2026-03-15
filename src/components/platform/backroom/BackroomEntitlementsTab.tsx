@@ -514,6 +514,7 @@ function LocationEntitlementPanel({
 }: LocationPanelProps) {
   const [refundTarget, setRefundTarget] = useState<{ locId: string; locName: string } | null>(null);
   const [refunding, setRefunding] = useState(false);
+  const refundQueryClient = useQueryClient();
   if (!orgEnabled) {
     return (
       <div className="px-6 py-8 text-center">
