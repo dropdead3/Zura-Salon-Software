@@ -281,6 +281,19 @@ export function BackroomAnalyticsTab() {
                     <TableCell className="font-sans text-xs text-slate-400 max-w-[200px] truncate">
                       {signal.reason}
                     </TableCell>
+                    <TableCell>
+                      <PlatformButton
+                        variant="ghost"
+                        size="sm"
+                        loading={sendingOrgId === signal.orgId}
+                        disabled={sendingOrgId !== null}
+                        onClick={() => handleSendCoachingEmail(signal)}
+                        className="gap-1.5"
+                      >
+                        <Mail className="w-3.5 h-3.5" />
+                        <span className="font-sans text-xs">Coach</span>
+                      </PlatformButton>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
