@@ -1,109 +1,153 @@
 
 
-# Vish-Inspired Product Manager for Zura Backroom
+## Timezone-Safe Scheduling (Implemented)
 
-This plan adds two major capabilities to the Backroom Product Catalog: **inline pricing & markup** on every product row, and a **full inventory table view** with stock levels, status badges, min/max calculations, and ordering shortcuts.
+### Problem
+`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
 
----
+### Solution
+- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
+- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
+- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
 
-## What changes
+### Files Updated
+- `ScheduleHeader.tsx` — today button, quick days, isToday checks
+- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
+- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
+- `MonthView.tsx` — today highlight
+- `AgendaView.tsx` — today/tomorrow labels, today border
+- `ScheduleActionBar.tsx` — payment queue timing
+- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
+- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
+- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
+- `useHuddles.ts` — today's huddle query
 
-### 1. Database migration — Add `markup_pct` and `min_stock_level` columns
+## Auto-Reorder with Supplier Communication (Implemented)
 
-The `products` table already has `cost_price`, `retail_price`, `container_size`, `quantity_on_hand`, `par_level`, `reorder_level`, and `cost_per_gram`. We need one new column:
+### What It Does
+Organizations can opt into automatic reorder — when stock dips below threshold, POs are calculated (using MOQ and par levels) and sent directly to the supplier via email.
 
-- **`markup_pct`** (`numeric`, default `null`) — Markup percentage applied on top of wholesale cost. Used to auto-derive the charge-per-gram for billable products.
+### Database Changes
+- `products.par_level` (INT, nullable) — desired stock level to reorder up to
+- `product_suppliers.moq` (INT, default 1) — minimum order quantity
+- `inventory_alert_settings.auto_reorder_enabled` (BOOL, default false)
+- `inventory_alert_settings.auto_reorder_mode` (TEXT, default 'to_par') — 'to_par' or 'moq_only'
+- `inventory_alert_settings.max_auto_reorder_value` (NUMERIC, nullable) — daily spend cap
+- `purchase_orders.supplier_confirmed_at` (TIMESTAMPTZ, nullable) — for tracking confirmations
 
-The existing `par_level` will serve as `max_stock_level` and `reorder_level` as `min_stock_level` (already present).
+### Quantity Calculation
+```
+deficit = par_level - quantity_on_hand
+order_qty = max(moq, deficit)
+if moq > 1: round up to nearest MOQ multiple
+```
+Fallback: if par_level is null, uses `reorder_level * 2`.
 
-### 2. Inline pricing controls on `ProductRow`
+### Files Updated
+- Migration: Added columns to products, product_suppliers, inventory_alert_settings, purchase_orders
+- `check-reorder-levels/index.ts` — auto-send logic with MOQ/par calculation, spend cap, email invocation
+- `AlertSettingsCard.tsx` — auto-reorder toggle, mode selector, spend cap input
+- `useInventoryAlertSettings.ts` — updated interface
+- `useProducts.ts` — added par_level to Product interface
+- `useProductSuppliers.ts` — added moq to ProductSupplier interface
+- `ProductEditDialog.tsx` — added par level field
+- `RetailProductsSettingsContent.tsx` — added par level to product form
+- `SupplierDialog.tsx` — added MOQ field
 
-**File: `BackroomProductCatalogSection.tsx`** — Expand the `ProductRow` component and the `BackroomProduct` interface.
+### Safety Features
+- Spend cap: daily auto-reorder pauses when cumulative PO value exceeds cap
+- Audit trail: auto_reorder logged as stock_movement reason
+- Supplier confirmation tracking via supplier_confirmed_at timestamp
 
-Add a new **Zone 3** (pricing) that appears below the controls zone when the product is tracked:
+## Product Movement Rating Badges (Implemented)
 
-```text
-Desktop:
-┌──────────────────────────────────────────────────────────────────────┐
-│  [Toggle] Product Name · Brand     [Depletion] │ Billable │ Overage │
-│           Category · SKU                                            │
-│  ┌────────────────────────────────────────────────────────────────┐  │
-│  │ Cost/g $__  │  Container __g  │  Markup __%  │  Charge/g $0.12│  │
-│  └────────────────────────────────────────────────────────────────┘  │
-└──────────────────────────────────────────────────────────────────────┘
+### What It Does
+Every product gets a dynamic movement rating badge (Best Seller, Popular, Steady, Slow Mover, Stagnant, Dead Weight) computed from 90-day sales velocity data.
+
+### Rating Tiers
+- **Best Seller**: Top 10% velocity AND >0.5 units/day (emerald)
+- **Popular**: Top 25% velocity AND >0.2 units/day (blue)
+- **Steady**: Velocity >0.05/day (muted)
+- **Slow Mover**: Velocity >0 but ≤0.05/day (amber)
+- **Stagnant**: Zero velocity, sold within 180 days (orange)
+- **Dead Weight**: Zero velocity, 180+ days or never sold (red)
+- Products with zero stock excluded from negative ratings
+
+### Files Created
+- `src/lib/productMovementRating.ts` — pure rating logic + badge config
+- `src/hooks/useProductVelocity.ts` — lightweight 90-day POS velocity query
+- `src/components/ui/MovementBadge.tsx` — shared badge component with tooltip
+
+### Files Updated
+- `RetailProductsSettingsContent.tsx` — Movement column + filter dropdown in products table
+- `RetailAnalyticsContent.tsx` — Movement badges on product performance table + Movement Distribution card (donut chart with actionable callouts)
+- `ProductCard.tsx` — Best Seller/Popular badges on public shop cards (positive only)
+- `ProductDetailModal.tsx` — Movement badge with velocity context
+
+## Inventory Intelligence Suite v2 (Implemented)
+
+### 1. Dead Stock Auto-Clearance Pipeline
+- `DeadStockAlertCard.tsx` — Surfaces Dead Weight/Stagnant products not yet in clearance with suggested discount tiers (10%/25%/50% based on idle days)
+- One-click "Mark for Clearance" applies discount and sets clearance_status
+
+### 2. Supplier Lead Time Tracker
+- `usePurchaseOrders.ts` — `useMarkPurchaseOrderReceived` already computes actual delivery days and updates `product_suppliers.avg_delivery_days` via running average
+- `parLevelSuggestion.ts` — Updated to accept supplier-provided lead time instead of hardcoded 7-day default, with bounds clamping
+
+### 3. Inventory Valuation Dashboard Card
+- `InventoryValuationCard.tsx` — Shows total inventory at cost/retail, potential margin %, capital-at-risk (slow/stagnant/dead weight), with donut chart breakdown
+
+### 4. Reorder Approval Queue
+- `ReorderApprovalCard.tsx` — Surfaces draft POs from auto-reorder with one-click approve (→ sent) or reject (→ cancelled)
+
+### 5. Stock Transfer Between Locations
+- Migration: Created `stock_transfers` table with RLS (org member read, org admin manage)
+- `useStockTransfers.ts` — CRUD hooks for stock transfers with stock movement logging
+- `StockTransferDialog.tsx` — Dialog for creating transfers between locations
+- `RetailProductsSettingsContent.tsx` — "Transfer Stock" button added to Inventory tab (visible for multi-location orgs)
+
+## Enhancement 1: Expiry Tracking (Implemented)
+
+### What It Does
+Products can have an optional expiration date (`expires_at`) and per-product alert threshold (`expiry_alert_days`, default 30). The system surfaces expiring inventory with color-coded badges in the product table and an analytics card with auto-clearance suggestions.
+
+### Database Changes
+- `products.expires_at` (DATE, nullable) — expiration date for perishable products
+- `products.expiry_alert_days` (INTEGER, default 30) — days before expiry to trigger alerts
+
+### Expiry Alert Buckets
+- **Expired** (red): past expiration → suggests 50% markdown
+- **Critical** (orange): within alert threshold → suggests 25% markdown
+- **Warning** (amber): within 2× alert threshold → suggests 10% markdown
+
+### Files Created
+- `src/components/dashboard/analytics/ExpiryAlertCard.tsx` — PinnableCard showing expiring products with one-click clearance actions
+
+### Files Updated
+- `src/hooks/useProducts.ts` — Added `expires_at`, `expiry_alert_days` to Product interface; added `expiringOnly` filter
+- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Expiry date + alert days in product form; color-coded Expiry column in product table
+- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ExpiryAlertCard into analytics hub
+
+## Enhancement 2: Shrinkage Detection (Implemented)
+
+### What It Does
+Physical stocktake workflow with variance reporting. Staff record actual counts via a Stocktake dialog, and the system compares against expected quantities (system records). A Shrinkage Report card in analytics surfaces products with negative variance (loss) ranked by estimated cost impact.
+
+### Database Changes
+- Created `stock_counts` table with computed `variance` column (counted - expected), RLS policies (org member read/insert, org admin update/delete), and indexes
+
+### Shrinkage Calculation
+```
+variance = counted_quantity - expected_quantity
+shrinkage_units = |variance| when variance < 0
+shrinkage_cost = shrinkage_units × cost_price
 ```
 
-- **Cost per gram** — Inline editable input, saves `cost_per_gram`
-- **Container size** — Inline editable, saves `container_size`
-- **Markup %** — Inline editable, saves `markup_pct`
-- **Charge per gram** — Read-only computed value: `cost_per_gram * (1 + markup_pct/100)`. Shown as a muted badge.
-- Each input uses a compact `h-7 w-20` field that auto-saves on blur (debounced mutation), matching the existing update pattern.
+### Files Created
+- `src/hooks/useStockCounts.ts` — CRUD hooks for stock counts + `useShrinkageSummary` for aggregated shrinkage data
+- `src/components/dashboard/settings/inventory/StocktakeDialog.tsx` — Full stocktake UI with search, inline count entry, real-time variance display
+- `src/components/dashboard/analytics/ShrinkageReportCard.tsx` — PinnableCard showing products with shrinkage, severity badges, estimated loss
 
-Also add **bulk pricing**: a "Set Pricing" button in the category filter area. Opens a small dialog where the user enters cost/g + markup % and applies to all visible products in that category/brand.
-
-### 3. Inventory table view toggle
-
-Add a **view switcher** (two icons: "Card view" and "Table view") in the catalog header next to the "tracked" badge.
-
-**Table view** renders a sortable data table with columns:
-
-| Column | Source | Notes |
-|--------|--------|-------|
-| Product | `name`, `brand` | Sticky left column |
-| Category | `category` | Badge |
-| Container | `container_size` | Editable inline |
-| Stock | `quantity_on_hand` from `inventory_projections` join | Click-to-edit for manual stock count |
-| Min | `reorder_level` | Editable |
-| Max | `par_level` | Editable |
-| Order Qty | `max(0, par_level - quantity_on_hand)` | Computed, shown when stock < par |
-| Status | Derived | Badge: "In Stock" (green), "Replenish" (amber), "Urgent Reorder" (red), "Out of Stock" (red), "Not Stocked" (gray) |
-| Cost/g | `cost_per_gram` | Editable |
-
-**Status logic** (matching Vish):
-- `quantity_on_hand <= 0` → Out of Stock
-- `quantity_on_hand < reorder_level` → Urgent Reorder
-- `quantity_on_hand < par_level` → Replenish
-- `quantity_on_hand >= par_level` → In Stock
-- No usage data & no stock → Not Stocked
-
-### 4. KPI summary cards above the table
-
-Three hero cards at the top of the inventory table view:
-
-- **Current Stock** — Count of products with `quantity_on_hand > 0`
-- **Products to Reorder** — Count with Out of Stock + Urgent Reorder + Replenish status
-- **Total Active Products** — Count of all tracked products
-
-These double as quick-filter buttons (clicking "Products to Reorder" filters the table).
-
-### 5. Manual stock count (click-to-edit)
-
-In table view, the Stock column cell is a compact inline input. Click to edit, Enter/Blur to save. Saving posts a `stock_movement` via the existing `postStockAdjustment` from `inventory-ledger-service.ts` with movement type `manual_count` to maintain ledger integrity.
-
-### 6. Bulk "Set Pricing" dialog
-
-A simple dialog triggered from a "Set Pricing" button that appears in the brand/category header. Fields:
-- Wholesale Cost (per gram)
-- Markup %
-- Container Size (optional)
-
-Applies to all products in the currently filtered category or brand. Uses the existing batch update pattern.
-
----
-
-## Files impacted
-
-| File | Action |
-|------|--------|
-| `BackroomProductCatalogSection.tsx` | Major — add pricing zone, view toggle, table view, KPI cards, bulk pricing |
-| `src/hooks/backroom/useBackroomInventoryTable.ts` | New — hook joining products + inventory_projections for table data |
-| `src/components/dashboard/backroom-settings/BackroomBulkPricingDialog.tsx` | New — bulk set pricing dialog |
-| Database migration | Add `markup_pct` column to `products` |
-
-## Technical notes
-
-- The `inventory_projections` table + ledger trigger already exist. Stock count edits will use the existing `postStockAdjustment` service.
-- Inline edits use the existing `updateMutation` pattern with optimistic updates for snappy UX.
-- Table sorting will be client-side (dataset is typically < 500 products per org).
-- All new fields are on the existing `products` table — no new tables needed.
-
+### Files Updated
+- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Added "Stocktake" button to Inventory tab toolbar
+- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ShrinkageReportCard into analytics hub
