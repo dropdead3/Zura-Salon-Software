@@ -15,6 +15,8 @@ import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { QuickReorderButton } from './QuickReorderButton';
+import { TrendSparkline } from '@/components/dashboard/TrendSparkline';
+import { useProductCostTrend } from '@/hooks/backroom/useProductCostTrend';
 import type { SupplyInsight } from '@/hooks/backroom/useSupplyIntelligence';
 
 interface SupplyInsightCardProps {
