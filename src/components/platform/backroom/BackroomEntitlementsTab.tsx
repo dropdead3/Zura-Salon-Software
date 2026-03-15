@@ -24,6 +24,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Building2, Search, Loader2, ChevronDown, ChevronRight, MapPin, Scale, Clock, Play, AlertTriangle, ShieldCheck, Undo2, CreditCard } from 'lucide-react';
+import { useBatchPaymentMethods, type PaymentMethodInfo } from '@/hooks/platform/useBatchPaymentMethods';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import {
@@ -172,6 +173,12 @@ export function BackroomEntitlementsTab() {
   });
 
   const entitlementMap = new Map(locEntitlements.map((e) => [e.location_id, e]));
+
+  // Batch-fetch payment methods for orgs with stripe_customer_id
+  const stripeMappings = orgs
+    .filter((o) => !!o.stripe_customer_id)
+    .map((o) => ({ orgId: o.id, stripeCustomerId: o.stripe_customer_id! }));
+  const { paymentMethods, isLoading: pmLoading } = useBatchPaymentMethods(stripeMappings);
 
   const updateFlag = useUpdateOrgFeatureFlag();
   const deleteFlag = useDeleteOrgFeatureFlag();
@@ -401,6 +408,7 @@ export function BackroomEntitlementsTab() {
                 <TableHead className="font-sans text-xs text-slate-400">Organization</TableHead>
                 <TableHead className="font-sans text-xs text-slate-400">Locations</TableHead>
                 <TableHead className="font-sans text-xs text-slate-400">Org Tier</TableHead>
+                <TableHead className="font-sans text-xs text-slate-400">Payment</TableHead>
                 <TableHead className="font-sans text-xs text-slate-400">Activated</TableHead>
                 <TableHead className="font-sans text-xs text-slate-400 text-right pr-4">Master Switch</TableHead>
               </TableRow>
@@ -445,6 +453,21 @@ export function BackroomEntitlementsTab() {
                           <TableCell className="font-sans text-xs text-slate-500 capitalize">
                             {org.subscription_tier || '—'}
                           </TableCell>
+                          <TableCell className="font-sans text-xs">
+                            {(() => {
+                              if (!org.stripe_customer_id) return <span className="text-slate-600">—</span>;
+                              const pm = paymentMethods.get(org.id);
+                              if (pmLoading) return <Loader2 className="w-3 h-3 animate-spin text-slate-500" />;
+                              if (!pm) return <span className="text-slate-500">No card</span>;
+                              return (
+                                <span className="text-slate-300 flex items-center gap-1">
+                                  <CreditCard className="w-3.5 h-3.5 text-slate-400" />
+                                  <span className="capitalize">{pm.brand}</span>
+                                  <span className="text-slate-500">····{pm.last4}</span>
+                                </span>
+                              );
+                            })()}
+                          </TableCell>
                           <TableCell className="font-sans text-xs text-slate-500">
                             {org.flag_created_at
                               ? new Date(org.flag_created_at).toLocaleDateString()
@@ -460,7 +483,7 @@ export function BackroomEntitlementsTab() {
                       </CollapsibleTrigger>
                       <CollapsibleContent asChild>
                         <TableRow className="bg-slate-800/20 border-slate-700/20">
-                          <TableCell colSpan={7} className="p-0">
+                          <TableCell colSpan={8} className="p-0">
                             <LocationEntitlementPanel
                               orgId={org.id}
                               orgName={org.name}
