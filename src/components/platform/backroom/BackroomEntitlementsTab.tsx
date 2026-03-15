@@ -638,6 +638,23 @@ function LocationEntitlementPanel({
                     )}
                   </td>
                   <td className="px-4 py-2.5">
+                    {isActive && ent?.refund_eligible_until ? (
+                      new Date(ent.refund_eligible_until) > new Date() ? (
+                        <PlatformBadge variant="success" size="sm">
+                          <ShieldCheck className="w-3 h-3 mr-1" />
+                          {(() => {
+                            const days = Math.ceil((new Date(ent.refund_eligible_until).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                            return `${days}d left`;
+                          })()}
+                        </PlatformBadge>
+                      ) : (
+                        <PlatformBadge variant="default" size="sm">Closed</PlatformBadge>
+                      )
+                    ) : (
+                      <span className="font-sans text-xs text-slate-500">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-2.5">
                     {isActive && ent ? (
                       <div className="flex items-center gap-1.5">
                         <Scale className="w-3.5 h-3.5 text-slate-500" />
