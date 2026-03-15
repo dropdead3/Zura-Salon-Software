@@ -22384,6 +22384,16 @@ export type Database = {
           has_conflict: boolean
         }[]
       }
+      check_cost_alert_threshold: {
+        Args: {
+          _new_cost: number
+          _old_cost: number
+          _org_id: string
+          _product_id: string
+          _product_name: string
+        }
+        Returns: undefined
+      }
       create_booking: {
         Args: {
           p_appointment_date: string

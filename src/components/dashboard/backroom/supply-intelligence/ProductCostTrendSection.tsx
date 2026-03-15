@@ -1,6 +1,7 @@
 /**
  * ProductCostTrendSection — Top products with rising costs, each with a sparkline.
  */
+import { useState } from 'react';
 import { TrendingUp, Loader2 } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
@@ -10,10 +11,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { TrendSparkline } from '@/components/dashboard/TrendSparkline';
-import { useProductCostTrend } from '@/hooks/backroom/useProductCostTrend';
+import { useProductCostTrend, type ProductCostTrendItem } from '@/hooks/backroom/useProductCostTrend';
+import { ProductCostDrilldownDialog } from './ProductCostDrilldownDialog';
 
 export function ProductCostTrendSection() {
   const { data: trends, isLoading } = useProductCostTrend();
+  const [selectedProduct, setSelectedProduct] = useState<ProductCostTrendItem | null>(null);
 
   // Only show products with cost increases
   const risingCosts = (trends ?? []).filter((t) => t.changePercent > 0).slice(0, 8);
@@ -21,6 +24,7 @@ export function ProductCostTrendSection() {
   if (!isLoading && risingCosts.length === 0) return null;
 
   return (
+    <>
     <Card className={tokens.card.wrapper}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
@@ -61,7 +65,8 @@ export function ProductCostTrendSection() {
             {risingCosts.map((item) => (
               <div
                 key={item.productId}
-                className="flex items-center justify-between gap-4 py-2 px-3 rounded-lg bg-muted/40"
+                className="flex items-center justify-between gap-4 py-2 px-3 rounded-lg bg-muted/40 cursor-pointer hover:bg-muted/60 transition-colors"
+                onClick={() => setSelectedProduct(item)}
               >
                 {/* Product info */}
                 <div className="flex-1 min-w-0">
@@ -106,5 +111,12 @@ export function ProductCostTrendSection() {
         )}
       </CardContent>
     </Card>
+
+      <ProductCostDrilldownDialog
+        open={!!selectedProduct}
+        onOpenChange={(open) => !open && setSelectedProduct(null)}
+        product={selectedProduct}
+      />
+    </>
   );
 }

@@ -34,6 +34,27 @@ Deno.serve(async (req) => {
 
     for (const org of orgs ?? []) {
       try {
+        // Check digest frequency setting
+        const { data: freqSetting } = await supabase
+          .from("backroom_settings")
+          .select("setting_value")
+          .eq("organization_id", org.id)
+          .is("location_id", null)
+          .eq("setting_key", "supply_digest_frequency")
+          .maybeSingle();
+
+        const frequency = (freqSetting?.setting_value as any)?.frequency ?? "weekly";
+        if (frequency === "off") {
+          skippedCount++;
+          continue;
+        }
+
+        // For daily: send every day. For weekly: only on Sundays (day 0).
+        const today = new Date().getUTCDay();
+        if (frequency === "weekly" && today !== 0) {
+          skippedCount++;
+          continue;
+        }
         // Fetch latest cached supply intelligence
         const { data: cached } = await supabase
           .from("ai_business_insights")

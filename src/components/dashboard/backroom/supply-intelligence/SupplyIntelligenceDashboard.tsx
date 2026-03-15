@@ -4,7 +4,7 @@
  */
 
 import { useState } from 'react';
-import { RefreshCw, Loader2, Brain, Zap, BarChart3, Lock } from 'lucide-react';
+import { RefreshCw, Loader2, Brain, Zap, BarChart3, Lock, Bell, Mail } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
@@ -12,11 +12,15 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Switch } from '@/components/ui/switch';
+import { Input } from '@/components/ui/input';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import {
   useSupplyIntelligence,
   useRefreshSupplyIntelligence,
 } from '@/hooks/backroom/useSupplyIntelligence';
+import { useBackroomSetting, useUpsertBackroomSetting } from '@/hooks/backroom/useBackroomSettings';
+import { useBackroomOrgId } from '@/hooks/backroom/useBackroomOrgId';
 import { SupplyKPICards } from './SupplyKPICards';
 import { SupplyInsightCard } from './SupplyInsightCard';
 import { ProductCostTrendSection } from './ProductCostTrendSection';
@@ -31,10 +35,55 @@ const healthLabels: Record<string, { label: string; variant: 'default' | 'second
   critical: { label: 'Critical', variant: 'destructive' },
 };
 
+const FREQUENCY_OPTIONS = [
+  { value: 'off', label: 'Off' },
+  { value: 'daily', label: 'Daily' },
+  { value: 'weekly', label: 'Weekly' },
+] as const;
+
 export function SupplyIntelligenceDashboard({ locationId }: SupplyIntelligenceDashboardProps) {
   const { data, isLoading } = useSupplyIntelligence(locationId);
   const refresh = useRefreshSupplyIntelligence();
   const [filter, setFilter] = useState<string>('all');
+  const orgId = useBackroomOrgId();
+
+  // Digest frequency setting
+  const { data: digestSetting } = useBackroomSetting('supply_digest_frequency');
+  const digestFrequency = (digestSetting?.value?.frequency as string) ?? 'weekly';
+
+  // Cost alert threshold setting
+  const { data: alertSetting } = useBackroomSetting('cost_alert_threshold');
+  const alertEnabled = (alertSetting?.value?.enabled as boolean) ?? false;
+  const alertThreshold = (alertSetting?.value?.threshold_pct as number) ?? 10;
+
+  const upsertSetting = useUpsertBackroomSetting();
+
+  const handleDigestFrequencyChange = (frequency: string) => {
+    if (!orgId) return;
+    upsertSetting.mutate({
+      organization_id: orgId,
+      setting_key: 'supply_digest_frequency',
+      setting_value: { frequency },
+    });
+  };
+
+  const handleAlertToggle = (enabled: boolean) => {
+    if (!orgId) return;
+    upsertSetting.mutate({
+      organization_id: orgId,
+      setting_key: 'cost_alert_threshold',
+      setting_value: { enabled, threshold_pct: alertThreshold },
+    });
+  };
+
+  const handleAlertThresholdChange = (pct: number) => {
+    if (!orgId) return;
+    upsertSetting.mutate({
+      organization_id: orgId,
+      setting_key: 'cost_alert_threshold',
+      setting_value: { enabled: alertEnabled, threshold_pct: pct },
+    });
+  };
 
   const insights = data?.insights ?? [];
   const filteredInsights =
@@ -96,6 +145,72 @@ export function SupplyIntelligenceDashboard({ locationId }: SupplyIntelligenceDa
 
       {/* Product Cost Trends */}
       <ProductCostTrendSection />
+
+      {/* Digest & Alert Settings */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Digest Frequency */}
+        <Card className={tokens.card.wrapper}>
+          <CardContent className="flex items-center gap-4 py-4 px-5">
+            <div className={tokens.card.iconBox}>
+              <Mail className={tokens.card.icon} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className={tokens.body.emphasis}>Digest Emails</p>
+              <p className={cn(tokens.body.muted, 'text-xs')}>Intelligence summary to admins</p>
+            </div>
+            <div className="flex gap-1">
+              {FREQUENCY_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => handleDigestFrequencyChange(opt.value)}
+                  className={cn(
+                    'px-3 py-1 rounded-full text-xs font-sans font-medium transition-colors',
+                    digestFrequency === opt.value
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-muted text-muted-foreground hover:text-foreground',
+                  )}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Cost Alert Threshold */}
+        <Card className={tokens.card.wrapper}>
+          <CardContent className="flex items-center gap-4 py-4 px-5">
+            <div className={tokens.card.iconBox}>
+              <Bell className={tokens.card.icon} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className={tokens.body.emphasis}>Cost Spike Alerts</p>
+              <p className={cn(tokens.body.muted, 'text-xs')}>
+                Notify when cost rises &gt;{alertThreshold}%
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                min={1}
+                max={100}
+                value={alertThreshold}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value, 10);
+                  if (!isNaN(val) && val > 0 && val <= 100) handleAlertThresholdChange(val);
+                }}
+                className="w-16 h-8 text-xs text-center rounded-lg"
+                disabled={!alertEnabled}
+              />
+              <span className={cn(tokens.body.muted, 'text-xs')}>%</span>
+              <Switch
+                checked={alertEnabled}
+                onCheckedChange={handleAlertToggle}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Insight Feed */}
       <Card className={tokens.card.wrapper}>
