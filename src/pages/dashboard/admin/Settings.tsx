@@ -66,6 +66,9 @@ import {
   Lightbulb,
   ShoppingBag,
   ArrowLeft,
+  Wallet,
+} from 'lucide-react';
+import { AccountBillingContent } from '@/components/dashboard/settings/AccountBillingContent';
 } from 'lucide-react';
 import { useBusinessCapacity } from '@/hooks/useBusinessCapacity';
 import { UserCapacityBar } from '@/components/dashboard/settings/UserCapacityBar';
