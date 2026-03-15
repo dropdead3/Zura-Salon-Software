@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,12 +10,10 @@ import { cn } from '@/lib/utils';
 import { Search, Package, Check, Library, Loader2, MessageSquarePlus, Send, PackagePlus } from 'lucide-react';
 import { PLATFORM_NAME } from '@/lib/brand';
 import {
-  SUPPLY_LIBRARY,
-  getSupplyBrands,
-  getProductsByBrand,
   SUPPLY_CATEGORY_LABELS,
   type SupplyLibraryItem,
 } from '@/data/professional-supply-library';
+import { useSupplyLibraryItems } from '@/hooks/platform/useSupplyLibrary';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -49,7 +47,12 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
   const [suggestDetails, setSuggestDetails] = useState('');
   const [isSuggesting, setIsSuggesting] = useState(false);
 
-  const brands = useMemo(() => getSupplyBrands(), []);
+  // Fetch supply library from DB (falls back to static data if empty)
+  const { data: libraryItems = [] } = useSupplyLibraryItems();
+
+  // Derived helpers from DB data
+  const brands = useMemo(() => [...new Set(libraryItems.map((i) => i.brand))].sort(), [libraryItems]);
+  const getProductsByBrand = useCallback((brand: string) => libraryItems.filter((i) => i.brand === brand), [libraryItems]);
 
   // Build set of existing keys — match both "Product Name" and "Product Name — 60ml"
   const existingKeys = useMemo(() => {
@@ -75,7 +78,7 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
       if (brand.toLowerCase().includes(q)) return true;
       return getProductsByBrand(brand).some((p) => p.name.toLowerCase().includes(q));
     });
-  }, [brands, search]);
+  }, [brands, search, getProductsByBrand]);
 
   // Products for selected brand, optionally filtered
   const brandProducts = useMemo(() => {
@@ -85,7 +88,7 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
     const q = search.toLowerCase();
     if (selectedBrand.toLowerCase().includes(q)) return products;
     return products.filter((p) => p.name.toLowerCase().includes(q));
-  }, [selectedBrand, search]);
+  }, [selectedBrand, search, getProductsByBrand]);
 
   /** Get all selectable keys for an item (one per size, or one if no sizes) */
   const getItemKeys = (item: SupplyLibraryItem): { key: string; size?: string }[] => {
@@ -138,7 +141,7 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
         is_active: boolean;
       }> = [];
 
-      SUPPLY_LIBRARY.forEach((item) => {
+      libraryItems.forEach((item) => {
         getItemKeys(item).forEach(({ key, size }) => {
           if (!selected.has(key)) return;
           itemsToInsert.push({

@@ -22,12 +22,10 @@ import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { SupplyLibraryDialog } from './SupplyLibraryDialog';
 import { BackroomBulkPricingDialog } from './BackroomBulkPricingDialog';
 import {
-  SUPPLY_LIBRARY,
-  getSupplyBrands,
-  getProductsByBrand,
   SUPPLY_CATEGORY_LABELS,
   type SupplyLibraryItem,
 } from '@/data/professional-supply-library';
+import { useSupplyLibraryItems } from '@/hooks/platform/useSupplyLibrary';
 
 const DEPLETION_METHODS = [
   { value: 'weighed', label: 'Weighed' },
@@ -96,7 +94,10 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [isAdding, setIsAdding] = useState(false);
 
-  const brands = useMemo(() => getSupplyBrands(), []);
+  // Fetch supply library from DB (falls back to static data)
+  const { data: libraryItems = [] } = useSupplyLibraryItems();
+  const brands = useMemo(() => [...new Set(libraryItems.map((i) => i.brand))].sort(), [libraryItems]);
+  const getProductsByBrand = useCallback((brand: string) => libraryItems.filter((i) => i.brand === brand), [libraryItems]);
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
   const brandsByLetter = useMemo(() => {
     const map = new Map<string, string[]>();
@@ -266,7 +267,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
         is_active: boolean;
       }> = [];
 
-      SUPPLY_LIBRARY.forEach((item) => {
+      libraryItems.forEach((item) => {
         getItemKeys(item).forEach(({ key, size }) => {
           if (!selectedItems.has(key)) return;
           itemsToInsert.push({
