@@ -105,7 +105,7 @@ function isPrereqMet(section: SectionMeta, health: ReturnType<typeof useBackroom
 export default function BackroomSettings() {
   const [activeSection, setActiveSection] = useState<BackroomSection>('overview');
   const { data: health } = useBackroomSetupHealth();
-  const { isEntitled, isLoading: entitlementLoading, isPendingActivation } = useBackroomEntitlement();
+  const { isEntitled, isLoading: entitlementLoading } = useBackroomEntitlement();
   const navigate = useNavigate();
 
   const handleNavigate = useCallback((section: string) => {
@@ -125,7 +125,7 @@ export default function BackroomSettings() {
   if (!isEntitled) {
     return (
       <DashboardLayout>
-        <BackroomPaywall isPendingActivation={isPendingActivation} />
+        <BackroomPaywall />
       </DashboardLayout>
     );
   }

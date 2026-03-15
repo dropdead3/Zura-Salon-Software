@@ -68,7 +68,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { organization_id, plan, scale_count = 0, billing_interval = 'monthly', trial_days = 0, success_url, cancel_url } = await req.json();
+    const { organization_id, plan, scale_count = 0, billing_interval = 'monthly', trial_days = 0, success_url, cancel_url, location_ids = [] } = await req.json();
     const validTrialDays = [7, 14].includes(trial_days) ? trial_days : 0;
 
     if (!organization_id) {
@@ -143,6 +143,7 @@ Deno.serve(async (req) => {
         scale_count: String(scaleQty),
         billing_interval: billing_interval,
         trial_days: String(validTrialDays),
+        location_ids: JSON.stringify(location_ids || []),
       },
       subscription_data: {
         ...(validTrialDays > 0 ? { trial_period_days: validTrialDays } : {}),
@@ -152,6 +153,7 @@ Deno.serve(async (req) => {
           backroom_plan: plan,
           scale_count: String(scaleQty),
           billing_interval: billing_interval,
+          location_ids: JSON.stringify(location_ids || []),
         },
       },
     });
