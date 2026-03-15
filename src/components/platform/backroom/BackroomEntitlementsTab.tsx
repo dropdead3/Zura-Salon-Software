@@ -23,8 +23,10 @@ import {
 } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Building2, Search, Loader2, ChevronDown, ChevronRight, MapPin, Scale, Clock, Play, AlertTriangle, ShieldCheck, Undo2, CreditCard } from 'lucide-react';
+import { Building2, Search, Loader2, ChevronDown, ChevronRight, MapPin, Scale, Clock, Play, AlertTriangle, ShieldCheck, Undo2, CreditCard, Send } from 'lucide-react';
 import { useBatchPaymentMethods, type PaymentMethodInfo } from '@/hooks/platform/useBatchPaymentMethods';
+import { useSendPaymentSetupLink } from '@/hooks/platform/useSendPaymentSetupLink';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import {
@@ -184,6 +186,7 @@ export function BackroomEntitlementsTab() {
   const deleteFlag = useDeleteOrgFeatureFlag();
   const upsertLocEnt = useUpsertLocationEntitlement();
   const deleteLocEnt = useDeleteLocationEntitlement();
+  const sendSetupLink = useSendPaymentSetupLink();
 
   const toggleBackroom = (org: OrgWithBackroom) => {
     if (org.backroom_enabled && org.override_id) {
@@ -458,7 +461,33 @@ export function BackroomEntitlementsTab() {
                               if (!org.stripe_customer_id) return <span className="text-slate-600">—</span>;
                               const pm = paymentMethods.get(org.id);
                               if (pmLoading) return <Loader2 className="w-3 h-3 animate-spin text-slate-500" />;
-                              if (!pm) return <span className="text-slate-500">No card</span>;
+                              if (!pm) return (
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <span className="text-slate-500 border-b border-dashed border-slate-600 cursor-help">No card</span>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="bottom" className="w-56 p-3">
+                                      <p className="text-xs text-muted-foreground mb-2">No payment method on file</p>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          sendSetupLink.mutate(org.id);
+                                        }}
+                                        disabled={sendSetupLink.isPending}
+                                        className="inline-flex items-center gap-1.5 text-xs font-sans font-medium text-violet-400 hover:text-violet-300 transition-colors disabled:opacity-50"
+                                      >
+                                        {sendSetupLink.isPending ? (
+                                          <Loader2 className="w-3 h-3 animate-spin" />
+                                        ) : (
+                                          <Send className="w-3 h-3" />
+                                        )}
+                                        Send Setup Link
+                                      </button>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              );
                               return (
                                 <span className="text-slate-300 flex items-center gap-1">
                                   <CreditCard className="w-3.5 h-3.5 text-slate-400" />
