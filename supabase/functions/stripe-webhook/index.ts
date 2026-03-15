@@ -386,7 +386,7 @@ async function handleCheckoutCompleted(
       organization_id: orgId,
       flag_key: 'backroom_plan',
       is_enabled: true,
-      override_reason: JSON.stringify({ plan: backroomPlan, scale_count: scaleCount }),
+      override_reason: JSON.stringify({ plan: backroomPlan, scale_count: scaleCount, billing_interval: billingInterval }),
       updated_at: new Date().toISOString(),
     }, {
       onConflict: 'organization_id,flag_key',
