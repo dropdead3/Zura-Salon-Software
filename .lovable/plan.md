@@ -1,153 +1,116 @@
 
 
-## Timezone-Safe Scheduling (Implemented)
+# Backroom Pricing — Competitive Analysis & Recommendation
 
-### Problem
-`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
+## Competitor Pricing Breakdown
 
-### Solution
-- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
-- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
-- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
+### Vish (prices in GBP, ~1.27 USD)
 
-### Files Updated
-- `ScheduleHeader.tsx` — today button, quick days, isToday checks
-- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
-- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
-- `MonthView.tsx` — today highlight
-- `AgendaView.tsx` — today/tomorrow labels, today border
-- `ScheduleActionBar.tsx` — payment queue timing
-- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
-- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
-- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
-- `useHuddles.ts` — today's huddle query
+| Plan | Monthly | Stylists | Scales Included | Scale Hardware |
+|------|---------|----------|-----------------|----------------|
+| Solo | £30 (~$38) | 1 | 1 | £165 (~$210) each, sold separately |
+| Starter | £80 (~$102) | 2 | 1 | Same |
+| Vish 5 | £130 (~$165) | 2-5 | 1 | Same |
+| Vish 10 | £185 (~$235) | 6-10 | 2 | Same |
+| Vish 20 | £240 (~$305) | 11+ | 3+ | Same |
+| Enterprise | Custom | Multi-location | 3+ | Same |
 
-## Auto-Reorder with Supplier Communication (Implemented)
+Also requires a tablet (iPad/Android) per scale. Separate onsite training fee.
 
-### What It Does
-Organizations can opt into automatic reorder — when stock dips below threshold, POs are calculated (using MOQ and par levels) and sent directly to the supplier via email.
+### SalonScale (USD)
 
-### Database Changes
-- `products.par_level` (INT, nullable) — desired stock level to reorder up to
-- `product_suppliers.moq` (INT, default 1) — minimum order quantity
-- `inventory_alert_settings.auto_reorder_enabled` (BOOL, default false)
-- `inventory_alert_settings.auto_reorder_mode` (TEXT, default 'to_par') — 'to_par' or 'moq_only'
-- `inventory_alert_settings.max_auto_reorder_value` (NUMERIC, nullable) — daily spend cap
-- `purchase_orders.supplier_confirmed_at` (TIMESTAMPTZ, nullable) — for tracking confirmations
+| Plan | Monthly | Annual | Stylists | Scale |
+|------|---------|--------|----------|-------|
+| Solo | $49/mo | $499/yr ($42/mo) | 1 | Free with annual; not included monthly |
+| Essentials | $99/mo | $1,009/yr ($84/mo) | Up to 3 | Free with annual |
+| Signature | $149/mo | $1,520/yr ($127/mo) | Up to 7 | Free with annual |
+| Luxe | $199/mo | $2,030/yr ($169/mo) | Unlimited | Free with annual |
 
-### Quantity Calculation
-```
-deficit = par_level - quantity_on_hand
-order_qty = max(moq, deficit)
-if moq > 1: round up to nearest MOQ multiple
-```
-Fallback: if par_level is null, uses `reorder_level * 2`.
+Monthly plans do NOT include a scale. Annual plans include 1 free precision scale per plan.
 
-### Files Updated
-- Migration: Added columns to products, product_suppliers, inventory_alert_settings, purchase_orders
-- `check-reorder-levels/index.ts` — auto-send logic with MOQ/par calculation, spend cap, email invocation
-- `AlertSettingsCard.tsx` — auto-reorder toggle, mode selector, spend cap input
-- `useInventoryAlertSettings.ts` — updated interface
-- `useProducts.ts` — added par_level to Product interface
-- `useProductSuppliers.ts` — added moq to ProductSupplier interface
-- `ProductEditDialog.tsx` — added par level field
-- `RetailProductsSettingsContent.tsx` — added par level to product form
-- `SupplierDialog.tsx` — added MOQ field
+---
 
-### Safety Features
-- Spend cap: daily auto-reorder pauses when cumulative PO value exceeds cap
-- Audit trail: auto_reorder logged as stock_movement reason
-- Supplier confirmation tracking via supplier_confirmed_at timestamp
+## What Zura Backroom Offers That Competitors Don't
 
-## Product Movement Rating Badges (Implemented)
+Both Vish and SalonScale are **standalone** products — they only do color weighing and cost tracking. Zura Backroom is embedded inside a full salon management platform, which means:
 
-### What It Does
-Every product gets a dynamic movement rating badge (Best Seller, Popular, Steady, Slow Mover, Stagnant, Dead Weight) computed from 90-day sales velocity data.
+- **Supply AI** — Gemini-powered waste insights, reorder risk, margin opportunities (neither competitor has AI)
+- **Ghost loss detection** — automated shrinkage analysis vs. just tracking what was dispensed
+- **Predictive demand forecasting** — 1d/7d projections with tap-to-reorder
+- **Cost spike alerts & weekly digest emails** — proactive, not reactive
+- **Recipe management with leftover tracking** — not just what was mixed, but what was wasted
+- **Full integration with appointments, staff, and services** — margin-per-appointment analytics that neither competitor can do because they don't own the booking data
 
-### Rating Tiers
-- **Best Seller**: Top 10% velocity AND >0.5 units/day (emerald)
-- **Popular**: Top 25% velocity AND >0.2 units/day (blue)
-- **Steady**: Velocity >0.05/day (muted)
-- **Slow Mover**: Velocity >0 but ≤0.05/day (amber)
-- **Stagnant**: Zero velocity, sold within 180 days (orange)
-- **Dead Weight**: Zero velocity, 180+ days or never sold (red)
-- Products with zero stock excluded from negative ratings
+## Waste Savings Math (for ROI messaging)
 
-### Files Created
-- `src/lib/productMovementRating.ts` — pure rating logic + badge config
-- `src/hooks/useProductVelocity.ts` — lightweight 90-day POS velocity query
-- `src/components/ui/MovementBadge.tsx` — shared badge component with tooltip
+Industry data: salons waste 20-40% of color product. A typical salon spends $2,000-$5,000/mo on color products.
 
-### Files Updated
-- `RetailProductsSettingsContent.tsx` — Movement column + filter dropdown in products table
-- `RetailAnalyticsContent.tsx` — Movement badges on product performance table + Movement Distribution card (donut chart with actionable callouts)
-- `ProductCard.tsx` — Best Seller/Popular badges on public shop cards (positive only)
-- `ProductDetailModal.tsx` — Movement badge with velocity context
-
-## Inventory Intelligence Suite v2 (Implemented)
-
-### 1. Dead Stock Auto-Clearance Pipeline
-- `DeadStockAlertCard.tsx` — Surfaces Dead Weight/Stagnant products not yet in clearance with suggested discount tiers (10%/25%/50% based on idle days)
-- One-click "Mark for Clearance" applies discount and sets clearance_status
-
-### 2. Supplier Lead Time Tracker
-- `usePurchaseOrders.ts` — `useMarkPurchaseOrderReceived` already computes actual delivery days and updates `product_suppliers.avg_delivery_days` via running average
-- `parLevelSuggestion.ts` — Updated to accept supplier-provided lead time instead of hardcoded 7-day default, with bounds clamping
-
-### 3. Inventory Valuation Dashboard Card
-- `InventoryValuationCard.tsx` — Shows total inventory at cost/retail, potential margin %, capital-at-risk (slow/stagnant/dead weight), with donut chart breakdown
-
-### 4. Reorder Approval Queue
-- `ReorderApprovalCard.tsx` — Surfaces draft POs from auto-reorder with one-click approve (→ sent) or reject (→ cancelled)
-
-### 5. Stock Transfer Between Locations
-- Migration: Created `stock_transfers` table with RLS (org member read, org admin manage)
-- `useStockTransfers.ts` — CRUD hooks for stock transfers with stock movement logging
-- `StockTransferDialog.tsx` — Dialog for creating transfers between locations
-- `RetailProductsSettingsContent.tsx` — "Transfer Stock" button added to Inventory tab (visible for multi-location orgs)
-
-## Enhancement 1: Expiry Tracking (Implemented)
-
-### What It Does
-Products can have an optional expiration date (`expires_at`) and per-product alert threshold (`expiry_alert_days`, default 30). The system surfaces expiring inventory with color-coded badges in the product table and an analytics card with auto-clearance suggestions.
-
-### Database Changes
-- `products.expires_at` (DATE, nullable) — expiration date for perishable products
-- `products.expiry_alert_days` (INTEGER, default 30) — days before expiry to trigger alerts
-
-### Expiry Alert Buckets
-- **Expired** (red): past expiration → suggests 50% markdown
-- **Critical** (orange): within alert threshold → suggests 25% markdown
-- **Warning** (amber): within 2× alert threshold → suggests 10% markdown
-
-### Files Created
-- `src/components/dashboard/analytics/ExpiryAlertCard.tsx` — PinnableCard showing expiring products with one-click clearance actions
-
-### Files Updated
-- `src/hooks/useProducts.ts` — Added `expires_at`, `expiry_alert_days` to Product interface; added `expiringOnly` filter
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Expiry date + alert days in product form; color-coded Expiry column in product table
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ExpiryAlertCard into analytics hub
-
-## Enhancement 2: Shrinkage Detection (Implemented)
-
-### What It Does
-Physical stocktake workflow with variance reporting. Staff record actual counts via a Stocktake dialog, and the system compares against expected quantities (system records). A Shrinkage Report card in analytics surfaces products with negative variance (loss) ranked by estimated cost impact.
-
-### Database Changes
-- Created `stock_counts` table with computed `variance` column (counted - expected), RLS policies (org member read/insert, org admin update/delete), and indexes
-
-### Shrinkage Calculation
-```
-variance = counted_quantity - expected_quantity
-shrinkage_units = |variance| when variance < 0
-shrinkage_cost = shrinkage_units × cost_price
+```text
+Conservative estimate (mid-size salon):
+  Monthly color spend:         $3,000
+  Typical waste rate:          25% = $750/mo wasted
+  Backroom reduction target:   50% waste reduction
+  Monthly savings:             $375/mo
+  Annual savings:              $4,500/yr
 ```
 
-### Files Created
-- `src/hooks/useStockCounts.ts` — CRUD hooks for stock counts + `useShrinkageSummary` for aggregated shrinkage data
-- `src/components/dashboard/settings/inventory/StocktakeDialog.tsx` — Full stocktake UI with search, inline count entry, real-time variance display
-- `src/components/dashboard/analytics/ShrinkageReportCard.tsx` — PinnableCard showing products with shrinkage, severity badges, estimated loss
+Even at $99/mo, the salon saves $276/mo net. The product pays for itself 3-4x over.
 
-### Files Updated
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Added "Stocktake" button to Inventory tab toolbar
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ShrinkageReportCard into analytics hub
+---
+
+## Recommended Zura Backroom Pricing
+
+**Strategy: Undercut SalonScale on the low end, match on the mid-tier, and win on value at the top — while keeping the base+scale model.**
+
+| Plan | Monthly | Stylists | Scales Included | Key Differentiator |
+|------|---------|----------|-----------------|--------------------|
+| **Starter** | $39/mo | 1-3 | Software only | Cheapest entry; ~20% under SalonScale Solo |
+| **Professional** | $79/mo | 4-10 | Software only | ~20% under SalonScale Essentials/Signature |
+| **Unlimited** | $129/mo | Unlimited | Software only | ~35% under SalonScale Luxe |
+
+**Add-ons:**
+| Item | Price | Notes |
+|------|-------|-------|
+| Acaia Pearl Scale | $199 one-time | $150 cost + $49 margin (~33% markup) |
+| Additional scale license | $10/mo per scale | Software license for each connected scale |
+
+**Annual discount:** 15% off monthly (matches SalonScale's annual discount), which also includes 1 free scale per plan.
+
+### Why This Works
+
+1. **Competitive entry point.** $39 vs SalonScale's $49 and Vish's ~$38. Undercuts or matches both at the solo level, but Zura includes AI insights neither has.
+
+2. **Mid-tier sweet spot.** $79 for up to 10 stylists vs SalonScale's $99 (3 stylists) or $149 (7 stylists). Massive value advantage.
+
+3. **Unlimited is genuinely cheaper.** $129 vs $199 (SalonScale Luxe) and ~$305 (Vish 20). A 20-stylist salon saves $70-$176/mo vs competitors.
+
+4. **Scale margin.** $49 margin per Acaia Pearl sold. If an average salon buys 2 scales, that's $98 hardware profit per onboarding.
+
+5. **Annual lock-in incentive.** Free scale with annual plan means the salon gets $199 in hardware value, Zura's cost is $150, offset by guaranteed 12-month retention.
+
+6. **The real moat is integration.** Competitors can't show margin-per-appointment because they don't own the booking stack. This justifies pricing parity even though Backroom is an add-on, not a standalone product.
+
+### Revenue Projections
+
+```text
+100 salons on Professional ($79/mo):
+  Software MRR:          $7,900
+  Avg 2 scales each:     $2,000/mo scale licenses ($10 x 2 x 100)
+  Total MRR:             $9,900
+  Hardware revenue:       $39,800 one-time (200 scales x $199)
+  Hardware profit:        $9,800 one-time (200 x $49 margin)
+```
+
+---
+
+## Implementation Changes
+
+The current checkout function creates a single $49 flat product. To implement this:
+
+1. **Create 3 Stripe products** (Starter, Professional, Unlimited) with monthly + annual prices
+2. **Create scale add-on product** ($10/mo recurring, quantity-based)
+3. **Create scale hardware product** ($199 one-time)
+4. **Update checkout edge function** to accept plan selection + scale quantity, build multi-line-item session
+5. **Redesign paywall UI** with plan comparison cards, scale quantity picker, and live price calculator
+6. **Update webhook** to store plan tier + scale count in feature flags metadata
+
