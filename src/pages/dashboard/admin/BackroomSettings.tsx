@@ -103,10 +103,29 @@ function isPrereqMet(section: SectionMeta, health: ReturnType<typeof useBackroom
 export default function BackroomSettings() {
   const [activeSection, setActiveSection] = useState<BackroomSection>('overview');
   const { data: health } = useBackroomSetupHealth();
+  const { isEntitled, isLoading: entitlementLoading } = useBackroomEntitlement();
 
   const handleNavigate = useCallback((section: string) => {
     setActiveSection(section as BackroomSection);
   }, []);
+
+  if (entitlementLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!isEntitled) {
+    return (
+      <DashboardLayout>
+        <BackroomPaywall />
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
