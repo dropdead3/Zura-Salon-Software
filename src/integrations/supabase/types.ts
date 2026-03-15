@@ -12995,6 +12995,24 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_kpi_counters: {
+        Row: {
+          key: string
+          updated_at: string
+          value: number
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          value?: number
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          value?: number
+        }
+        Relationships: []
+      }
       platform_notification_preferences: {
         Row: {
           email_enabled: boolean | null
