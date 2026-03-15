@@ -13539,6 +13539,7 @@ export type Database = {
           is_forecast_eligible: boolean
           is_overage_eligible: boolean
           location_id: string | null
+          markup_pct: number | null
           name: string
           organization_id: string | null
           original_retail_price: number | null
@@ -13583,6 +13584,7 @@ export type Database = {
           is_forecast_eligible?: boolean
           is_overage_eligible?: boolean
           location_id?: string | null
+          markup_pct?: number | null
           name: string
           organization_id?: string | null
           original_retail_price?: number | null
@@ -13627,6 +13629,7 @@ export type Database = {
           is_forecast_eligible?: boolean
           is_overage_eligible?: boolean
           location_id?: string | null
+          markup_pct?: number | null
           name?: string
           organization_id?: string | null
           original_retail_price?: number | null
