@@ -55,6 +55,7 @@ import { BannedClientWarningDialog } from '@/components/dashboard/clients/Banned
 import { ServiceAddonToast } from './ServiceAddonToast';
 import { useAddonAssignmentMaps } from '@/hooks/useServiceAddonAssignments';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { useEstimatedProductCharge } from '@/hooks/backroom/useEstimatedProductCharge';
 import { useAssistantsAtLocation } from '@/hooks/useAssistantAvailability';
 import { AssistantAvailabilityNote } from './AssistantAvailabilityNote';
 import { useSaveDraft, useDeleteDraft } from '@/hooks/useDraftBookings';
