@@ -20,6 +20,7 @@ import {
   CreditCard,
   Flag,
   Package,
+  Users,
 } from 'lucide-react';
 
 export type PlatformNavRole = 'platform_owner' | 'platform_admin' | 'platform_support' | 'platform_developer';
@@ -75,6 +76,7 @@ export const platformNavGroups: PlatformNavGroup[] = [
     label: 'Products',
     items: [
       { href: '/dashboard/platform/backroom', label: 'Backroom', icon: Package, platformRoles: ['platform_owner', 'platform_admin'] },
+      { href: '/dashboard/platform/coach', label: 'Coach Dashboard', icon: Users },
     ],
   },
   {

@@ -1903,6 +1903,41 @@ export type Database = {
           },
         ]
       }
+      backroom_coach_assignments: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          coach_user_id: string
+          id: string
+          is_primary: boolean
+          organization_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          coach_user_id: string
+          id?: string
+          is_primary?: boolean
+          organization_id: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          coach_user_id?: string
+          id?: string
+          is_primary?: boolean
+          organization_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "backroom_coach_assignments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       backroom_compliance_log: {
         Row: {
           appointment_date: string

@@ -11,12 +11,15 @@ import {
 import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
 import { PlatformButton } from '@/components/platform/ui/PlatformButton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { BarChart3, Building2, DollarSign, TrendingDown, Loader2, Activity, AlertCircle, CheckCircle2, Mail, History } from 'lucide-react';
+import { BarChart3, Building2, DollarSign, TrendingDown, Loader2, Activity, AlertCircle, CheckCircle2, Mail, History, UserPlus } from 'lucide-react';
 import { useBackroomPlatformAnalytics, type CoachingSignal } from '@/hooks/platform/useBackroomPlatformAnalytics';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CoachingHistoryDrawer } from './CoachingHistoryDrawer';
+import { useCoachAssignments, useAssignCoach, useUnassignCoach } from '@/hooks/platform/useCoachAssignments';
+import { usePlatformTeam } from '@/hooks/usePlatformRoles';
 
 function KPICard({ icon: Icon, label, value, subtitle }: { icon: any; label: string; value: string; subtitle?: string }) {
   return (
@@ -52,6 +55,22 @@ export function BackroomAnalyticsTab() {
   const [coachedMap, setCoachedMap] = useState<Record<string, string>>({});
   const [historyOrg, setHistoryOrg] = useState<{ id: string; name: string } | null>(null);
   const { data: metrics, isLoading } = useBackroomPlatformAnalytics();
+  const { data: assignments } = useCoachAssignments();
+  const { data: teamMembers } = usePlatformTeam();
+  const assignCoach = useAssignCoach();
+  const unassignCoach = useUnassignCoach();
+
+  // Build a map of orgId -> coach assignment
+  const coachByOrg = useMemo(() => {
+    const map = new Map<string, { coachUserId: string; coachName: string }>();
+    (assignments || []).forEach(a => {
+      map.set(a.organization_id, {
+        coachUserId: a.coach_user_id,
+        coachName: a.coach_name || a.coach_email || 'Unknown',
+      });
+    });
+    return map;
+  }, [assignments]);
 
   // Fetch last_backroom_coached_at for coaching signal orgs
   useEffect(() => {
@@ -260,6 +279,7 @@ export function BackroomAnalyticsTab() {
                 <TableRow className="border-slate-700/50">
                   <TableHead className="font-sans text-xs text-slate-400">Health</TableHead>
                   <TableHead className="font-sans text-xs text-slate-400">Organization</TableHead>
+                  <TableHead className="font-sans text-xs text-slate-400">Coach</TableHead>
                   <TableHead className="font-sans text-xs text-slate-400">Reweigh %</TableHead>
                   <TableHead className="font-sans text-xs text-slate-400">Waste %</TableHead>
                   <TableHead className="font-sans text-xs text-slate-400">Sessions</TableHead>
@@ -276,6 +296,15 @@ export function BackroomAnalyticsTab() {
                     </TableCell>
                     <TableCell className="font-sans text-sm font-medium text-slate-200">
                       {signal.orgName}
+                    </TableCell>
+                    <TableCell>
+                      <CoachAssignCell
+                        orgId={signal.orgId}
+                        coachByOrg={coachByOrg}
+                        teamMembers={teamMembers || []}
+                        onAssign={(coachUserId) => assignCoach.mutate({ coachUserId, organizationId: signal.orgId })}
+                        onUnassign={(coachUserId) => unassignCoach.mutate({ coachUserId, organizationId: signal.orgId })}
+                      />
                     </TableCell>
                     <TableCell className="font-sans text-sm tabular-nums">
                       {signal.avgReweighPct != null ? (
@@ -358,6 +387,70 @@ export function BackroomAnalyticsTab() {
         onOpenChange={(open) => { if (!open) setHistoryOrg(null); }}
       />
     </div>
+  );
+}
+
+interface CoachAssignCellProps {
+  orgId: string;
+  coachByOrg: Map<string, { coachUserId: string; coachName: string }>;
+  teamMembers: { user_id: string; full_name?: string; email?: string }[];
+  onAssign: (coachUserId: string) => void;
+  onUnassign: (coachUserId: string) => void;
+}
+
+function CoachAssignCell({ orgId, coachByOrg, teamMembers, onAssign, onUnassign }: CoachAssignCellProps) {
+  const assigned = coachByOrg.get(orgId);
+
+  if (assigned) {
+    return (
+      <Popover>
+        <PopoverTrigger asChild>
+          <button className="font-sans text-xs text-violet-400 hover:underline cursor-pointer">
+            {assigned.coachName}
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="w-48 p-2" align="start">
+          <p className="font-sans text-xs text-slate-400 mb-2">Assigned coach</p>
+          <p className="font-sans text-sm text-slate-200 mb-2">{assigned.coachName}</p>
+          <PlatformButton
+            variant="ghost"
+            size="sm"
+            className="w-full text-red-400 hover:text-red-300"
+            onClick={() => onUnassign(assigned.coachUserId)}
+          >
+            Unassign
+          </PlatformButton>
+        </PopoverContent>
+      </Popover>
+    );
+  }
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <PlatformButton variant="ghost" size="sm" className="gap-1">
+          <UserPlus className="w-3.5 h-3.5" />
+          <span className="font-sans text-xs">Assign</span>
+        </PlatformButton>
+      </PopoverTrigger>
+      <PopoverContent className="w-56 p-2" align="start">
+        <p className="font-sans text-xs text-slate-400 mb-2">Select coach</p>
+        <div className="space-y-1 max-h-48 overflow-y-auto">
+          {teamMembers.map(member => (
+            <button
+              key={member.user_id}
+              onClick={() => onAssign(member.user_id)}
+              className="w-full text-left px-2 py-1.5 rounded font-sans text-sm text-slate-300 hover:bg-[hsl(var(--platform-bg-hover))] transition-colors"
+            >
+              {member.full_name || member.email || member.user_id}
+            </button>
+          ))}
+          {teamMembers.length === 0 && (
+            <p className="font-sans text-xs text-slate-500 px-2 py-1">No team members</p>
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
 
