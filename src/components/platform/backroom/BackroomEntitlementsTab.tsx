@@ -94,6 +94,8 @@ export function BackroomEntitlementsTab() {
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [expandedOrg, setExpandedOrg] = useState<string | null>(null);
+  const [showBackfillDialog, setShowBackfillDialog] = useState(false);
+  const [backfilling, setBackfilling] = useState(false);
   const queryClient = useQueryClient();
 
   // Fetch all orgs with their backroom flag
