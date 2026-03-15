@@ -170,6 +170,95 @@ export function BackroomAnalyticsTab() {
           )}
         </PlatformCardContent>
       </PlatformCard>
+
+      {/* Coaching & Adoption Signals */}
+      {metrics.coachingSignals.length > 0 && (
+        <PlatformCard variant="glass">
+          <PlatformCardHeader>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-[hsl(var(--platform-bg-hover))] flex items-center justify-center">
+                <AlertCircle className="w-5 h-5 text-amber-400" />
+              </div>
+              <div>
+                <PlatformCardTitle>Coaching & Adoption Signals</PlatformCardTitle>
+                <PlatformCardDescription>
+                  {metrics.coachingSignals.filter((s) => s.healthScore !== 'green').length} orgs need attention
+                </PlatformCardDescription>
+              </div>
+            </div>
+          </PlatformCardHeader>
+          <PlatformCardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-slate-700/50">
+                  <TableHead className="font-sans text-xs text-slate-400">Health</TableHead>
+                  <TableHead className="font-sans text-xs text-slate-400">Organization</TableHead>
+                  <TableHead className="font-sans text-xs text-slate-400">Reweigh %</TableHead>
+                  <TableHead className="font-sans text-xs text-slate-400">Waste %</TableHead>
+                  <TableHead className="font-sans text-xs text-slate-400">Sessions</TableHead>
+                  <TableHead className="font-sans text-xs text-slate-400">Last Active</TableHead>
+                  <TableHead className="font-sans text-xs text-slate-400">Signal</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {metrics.coachingSignals.map((signal) => (
+                  <TableRow key={signal.orgId} className="border-slate-700/30">
+                    <TableCell>
+                      <HealthDot score={signal.healthScore} />
+                    </TableCell>
+                    <TableCell className="font-sans text-sm font-medium text-slate-200">
+                      {signal.orgName}
+                    </TableCell>
+                    <TableCell className="font-sans text-sm tabular-nums">
+                      {signal.avgReweighPct != null ? (
+                        <PlatformBadge
+                          variant={signal.avgReweighPct < 50 ? 'error' : signal.avgReweighPct < 75 ? 'warning' : 'success'}
+                          size="sm"
+                        >
+                          {signal.avgReweighPct.toFixed(0)}%
+                        </PlatformBadge>
+                      ) : (
+                        <span className="text-slate-500">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="font-sans text-sm tabular-nums">
+                      {signal.avgWastePct != null ? (
+                        <span className="text-slate-300">{signal.avgWastePct.toFixed(1)}%</span>
+                      ) : (
+                        <span className="text-slate-500">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="font-sans text-sm tabular-nums text-slate-300">
+                      {signal.sessionCount.toLocaleString()}
+                    </TableCell>
+                    <TableCell className="font-sans text-xs text-slate-500">
+                      {signal.lastActiveDate
+                        ? new Date(signal.lastActiveDate).toLocaleDateString()
+                        : 'Never'}
+                    </TableCell>
+                    <TableCell className="font-sans text-xs text-slate-400 max-w-[200px] truncate">
+                      {signal.reason}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </PlatformCardContent>
+        </PlatformCard>
+      )}
+    </div>
+  );
+}
+
+function HealthDot({ score }: { score: 'green' | 'amber' | 'red' }) {
+  const colors = {
+    green: 'bg-emerald-400',
+    amber: 'bg-amber-400',
+    red: 'bg-red-400',
+  };
+  return (
+    <div className="flex items-center justify-center">
+      <div className={cn('w-2.5 h-2.5 rounded-full', colors[score])} />
     </div>
   );
 }
