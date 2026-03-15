@@ -54,6 +54,12 @@ export function useBackroomLocationEntitlements(organizationId: string | undefin
   const getLocationEntitlement = (locationId: string) =>
     entitlementMap.get(locationId) ?? null;
 
+  const isRefundEligible = (locationId: string): boolean => {
+    const ent = entitlementMap.get(locationId);
+    if (!ent?.refund_eligible_until) return false;
+    return new Date(ent.refund_eligible_until) > new Date();
+  };
+
   const activeCount = (query.data ?? []).filter(
     (e) => e.status === 'active'
   ).length;
@@ -64,6 +70,7 @@ export function useBackroomLocationEntitlements(organizationId: string | undefin
     entitlementMap,
     isLocationEntitled,
     getLocationEntitlement,
+    isRefundEligible,
     activeCount,
   };
 }

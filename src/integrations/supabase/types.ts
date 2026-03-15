@@ -2143,6 +2143,7 @@ export type Database = {
           notes: string | null
           organization_id: string
           plan_tier: string
+          refund_eligible_until: string | null
           scale_count: number
           status: string
           stripe_subscription_id: string | null
@@ -2159,6 +2160,7 @@ export type Database = {
           notes?: string | null
           organization_id: string
           plan_tier?: string
+          refund_eligible_until?: string | null
           scale_count?: number
           status?: string
           stripe_subscription_id?: string | null
@@ -2175,6 +2177,7 @@ export type Database = {
           notes?: string | null
           organization_id?: string
           plan_tier?: string
+          refund_eligible_until?: string | null
           scale_count?: number
           status?: string
           stripe_subscription_id?: string | null
