@@ -463,7 +463,9 @@ export function BackroomEntitlementsTab() {
                           <TableCell colSpan={7} className="p-0">
                             <LocationEntitlementPanel
                               orgId={org.id}
+                              orgName={org.name}
                               orgEnabled={org.backroom_enabled}
+                              hasStripeCustomer={!!org.stripe_customer_id}
                               locations={orgLocations}
                               entitlementMap={entitlementMap}
                               isLoading={locsLoading || entsLoading}
