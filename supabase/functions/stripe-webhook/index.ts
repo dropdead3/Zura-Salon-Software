@@ -322,15 +322,9 @@ async function handleCheckoutCompleted(
   const backroomPlan = metadata.backroom_plan || 'starter';
   const scaleCount = parseInt(metadata.scale_count || '0', 10);
   const billingInterval = metadata.billing_interval || 'monthly';
-  const trialDays = parseInt(metadata.trial_days || '0', 10);
   const locationIds = metadata.location_ids ? JSON.parse(metadata.location_ids) as string[] : [];
   
-  console.log(`Enabling backroom for organization: ${orgId}, plan: ${backroomPlan}, scales: ${scaleCount}, interval: ${billingInterval}, trial: ${trialDays}d, locations: ${locationIds.length}`);
-
-  // Calculate trial end date if applicable
-  const trialEndDate = trialDays > 0
-    ? new Date(Date.now() + trialDays * 86400000).toISOString()
-    : null;
+  console.log(`Enabling backroom for organization: ${orgId}, plan: ${backroomPlan}, scales: ${scaleCount}, interval: ${billingInterval}, locations: ${locationIds.length}`);
 
   // 1. Upsert the org-level feature flag (master switch)
   const { error } = await supabase
