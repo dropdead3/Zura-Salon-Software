@@ -107,7 +107,7 @@ export function BackroomAnalyticsTab() {
   return (
     <div className="space-y-6">
       {/* KPI Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <KPICard
           icon={Building2}
           label="Enabled Orgs"
@@ -131,6 +131,12 @@ export function BackroomAnalyticsTab() {
           label="Total Sessions"
           value={metrics.orgUsageStats.reduce((s, o) => s + o.totalSessions, 0).toLocaleString()}
           subtitle="All-time backroom sessions"
+        />
+        <KPICard
+          icon={Mail}
+          label="Coaching Emails"
+          value={String(metrics.coachingEmailsSent ?? 0)}
+          subtitle="Total outreach sent"
         />
       </div>
 
