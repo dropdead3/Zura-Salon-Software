@@ -1,153 +1,99 @@
 
 
-## Timezone-Safe Scheduling (Implemented)
+# Backroom: Annual Toggle, Add Scales Flow, and Subscription Management
 
-### Problem
-`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
+## Overview
 
-### Solution
-- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
-- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
-- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
+Three additions to the Backroom billing system:
 
-### Files Updated
-- `ScheduleHeader.tsx` — today button, quick days, isToday checks
-- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
-- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
-- `MonthView.tsx` — today highlight
-- `AgendaView.tsx` — today/tomorrow labels, today border
-- `ScheduleActionBar.tsx` — payment queue timing
-- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
-- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
-- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
-- `useHuddles.ts` — today's huddle query
+1. **Annual pricing toggle** on the paywall with 15% discount and free scale incentive
+2. **Post-purchase "Add More Scales" flow** for existing subscribers
+3. **Subscription management page** showing current plan, scale count, and upgrade path
 
-## Auto-Reorder with Supplier Communication (Implemented)
+---
 
-### What It Does
-Organizations can opt into automatic reorder — when stock dips below threshold, POs are calculated (using MOQ and par levels) and sent directly to the supplier via email.
+## 1. Annual Pricing Toggle + Free Scale
 
-### Database Changes
-- `products.par_level` (INT, nullable) — desired stock level to reorder up to
-- `product_suppliers.moq` (INT, default 1) — minimum order quantity
-- `inventory_alert_settings.auto_reorder_enabled` (BOOL, default false)
-- `inventory_alert_settings.auto_reorder_mode` (TEXT, default 'to_par') — 'to_par' or 'moq_only'
-- `inventory_alert_settings.max_auto_reorder_value` (NUMERIC, nullable) — daily spend cap
-- `purchase_orders.supplier_confirmed_at` (TIMESTAMPTZ, nullable) — for tracking confirmations
+**Stripe products needed:** 3 new annual prices for existing products (Starter, Professional, Unlimited).
 
-### Quantity Calculation
-```
-deficit = par_level - quantity_on_hand
-order_qty = max(moq, deficit)
-if moq > 1: round up to nearest MOQ multiple
-```
-Fallback: if par_level is null, uses `reorder_level * 2`.
+| Plan | Monthly | Annual (15% off) | Annual $/mo |
+|------|---------|-------------------|-------------|
+| Starter | $39 | $397.80/yr | $33.15 |
+| Professional | $79 | $805.80/yr | $67.15 |
+| Unlimited | $129 | $1,315.80/yr | $109.65 |
 
-### Files Updated
-- Migration: Added columns to products, product_suppliers, inventory_alert_settings, purchase_orders
-- `check-reorder-levels/index.ts` — auto-send logic with MOQ/par calculation, spend cap, email invocation
-- `AlertSettingsCard.tsx` — auto-reorder toggle, mode selector, spend cap input
-- `useInventoryAlertSettings.ts` — updated interface
-- `useProducts.ts` — added par_level to Product interface
-- `useProductSuppliers.ts` — added moq to ProductSupplier interface
-- `ProductEditDialog.tsx` — added par level field
-- `RetailProductsSettingsContent.tsx` — added par level to product form
-- `SupplierDialog.tsx` — added MOQ field
+**UI changes (BackroomPaywall.tsx):**
+- Add a monthly/annual toggle switch above the plan cards
+- When annual is selected: show crossed-out monthly price, annual per-month price, "Save 15%" badge, and "Includes 1 free Acaia Pearl scale" callout
+- Update the price summary card to show annual billing breakdown
+- CTA text changes to reflect annual billing
 
-### Safety Features
-- Spend cap: daily auto-reorder pauses when cumulative PO value exceeds cap
-- Audit trail: auto_reorder logged as stock_movement reason
-- Supplier confirmation tracking via supplier_confirmed_at timestamp
+**Edge function changes (create-backroom-checkout):**
+- Accept `billing_interval: 'monthly' | 'annual'` parameter
+- Use annual price IDs when interval is annual
+- When annual: subtract 1 from hardware quantity (free scale), ensure min 0 hardware charge
+- Pass `billing_interval` in session/subscription metadata
 
-## Product Movement Rating Badges (Implemented)
+**Webhook changes (stripe-webhook):**
+- Store billing interval in `backroom_plan` flag metadata
 
-### What It Does
-Every product gets a dynamic movement rating badge (Best Seller, Popular, Steady, Slow Mover, Stagnant, Dead Weight) computed from 90-day sales velocity data.
+---
 
-### Rating Tiers
-- **Best Seller**: Top 10% velocity AND >0.5 units/day (emerald)
-- **Popular**: Top 25% velocity AND >0.2 units/day (blue)
-- **Steady**: Velocity >0.05/day (muted)
-- **Slow Mover**: Velocity >0 but ≤0.05/day (amber)
-- **Stagnant**: Zero velocity, sold within 180 days (orange)
-- **Dead Weight**: Zero velocity, 180+ days or never sold (red)
-- Products with zero stock excluded from negative ratings
+## 2. Post-Purchase "Add More Scales" Flow
 
-### Files Created
-- `src/lib/productMovementRating.ts` — pure rating logic + badge config
-- `src/hooks/useProductVelocity.ts` — lightweight 90-day POS velocity query
-- `src/components/ui/MovementBadge.tsx` — shared badge component with tooltip
+**New edge function: `add-backroom-scales`**
+- Accepts `organization_id` and `additional_scales` count
+- Looks up the org's existing Stripe subscription (via `stripe_customer_id`)
+- Adds scale license line items to the existing subscription via `stripe.subscriptionItems.create`
+- Creates a separate one-time invoice for hardware purchases
+- Returns confirmation
 
-### Files Updated
-- `RetailProductsSettingsContent.tsx` — Movement column + filter dropdown in products table
-- `RetailAnalyticsContent.tsx` — Movement badges on product performance table + Movement Distribution card (donut chart with actionable callouts)
-- `ProductCard.tsx` — Best Seller/Popular badges on public shop cards (positive only)
-- `ProductDetailModal.tsx` — Movement badge with velocity context
+**New UI component: `AddScalesDialog.tsx`**
+- Triggered from the Stations & Hardware section of BackroomSettings
+- Scale quantity stepper (1-10)
+- Shows cost breakdown: $10/mo per license + $199 one-time per scale
+- Calls the edge function, then redirects to Stripe checkout for the hardware payment
 
-## Inventory Intelligence Suite v2 (Implemented)
+---
 
-### 1. Dead Stock Auto-Clearance Pipeline
-- `DeadStockAlertCard.tsx` — Surfaces Dead Weight/Stagnant products not yet in clearance with suggested discount tiers (10%/25%/50% based on idle days)
-- One-click "Mark for Clearance" applies discount and sets clearance_status
+## 3. Subscription Management Page
 
-### 2. Supplier Lead Time Tracker
-- `usePurchaseOrders.ts` — `useMarkPurchaseOrderReceived` already computes actual delivery days and updates `product_suppliers.avg_delivery_days` via running average
-- `parLevelSuggestion.ts` — Updated to accept supplier-provided lead time instead of hardcoded 7-day default, with bounds clamping
+**New page: `BackroomSubscription.tsx`** at `/dashboard/admin/backroom-subscription`
 
-### 3. Inventory Valuation Dashboard Card
-- `InventoryValuationCard.tsx` — Shows total inventory at cost/retail, potential margin %, capital-at-risk (slow/stagnant/dead weight), with donut chart breakdown
+**Data source:** Query Stripe via a new edge function `get-backroom-subscription` that returns:
+- Current plan tier (starter/professional/unlimited)
+- Billing interval (monthly/annual)
+- Scale count and license count
+- Current period end date
+- Subscription status
+- Monthly/annual cost
 
-### 4. Reorder Approval Queue
-- `ReorderApprovalCard.tsx` — Surfaces draft POs from auto-reorder with one-click approve (→ sent) or reject (→ cancelled)
+**UI sections:**
+1. **Current Plan card** — plan name, price, billing cycle, renewal date
+2. **Scale Overview** — number of active scale licenses, hardware purchased
+3. **Upgrade Path** — cards showing available upgrades with price difference
+4. **Actions** — "Change Plan", "Add Scales", "Cancel Subscription" buttons
+5. "Change Plan" and "Cancel" route to Stripe Customer Portal via a new `customer-portal` edge function
 
-### 5. Stock Transfer Between Locations
-- Migration: Created `stock_transfers` table with RLS (org member read, org admin manage)
-- `useStockTransfers.ts` — CRUD hooks for stock transfers with stock movement logging
-- `StockTransferDialog.tsx` — Dialog for creating transfers between locations
-- `RetailProductsSettingsContent.tsx` — "Transfer Stock" button added to Inventory tab (visible for multi-location orgs)
+**Navigation:** Add a "Subscription" link in the BackroomSettings sidebar (new section entry) or as a banner at the top of the settings page when subscribed.
 
-## Enhancement 1: Expiry Tracking (Implemented)
+**Route:** Add to `App.tsx` as a protected route.
 
-### What It Does
-Products can have an optional expiration date (`expires_at`) and per-product alert threshold (`expiry_alert_days`, default 30). The system surfaces expiring inventory with color-coded badges in the product table and an analytics card with auto-clearance suggestions.
+---
 
-### Database Changes
-- `products.expires_at` (DATE, nullable) — expiration date for perishable products
-- `products.expiry_alert_days` (INTEGER, default 30) — days before expiry to trigger alerts
+## Technical Summary
 
-### Expiry Alert Buckets
-- **Expired** (red): past expiration → suggests 50% markdown
-- **Critical** (orange): within alert threshold → suggests 25% markdown
-- **Warning** (amber): within 2× alert threshold → suggests 10% markdown
+| Artifact | Type | Notes |
+|----------|------|-------|
+| 3 Stripe annual prices | Stripe products | Created via tool |
+| `BackroomPaywall.tsx` | Component edit | Annual toggle, free scale logic |
+| `create-backroom-checkout/index.ts` | Edge function edit | Annual price IDs, free scale deduction |
+| `stripe-webhook/index.ts` | Edge function edit | Store billing interval |
+| `add-backroom-scales/index.ts` | New edge function | Modify existing subscription |
+| `get-backroom-subscription/index.ts` | New edge function | Read subscription details from Stripe |
+| `customer-portal/index.ts` | New edge function | Stripe billing portal session |
+| `AddScalesDialog.tsx` | New component | Post-purchase scale ordering |
+| `BackroomSubscription.tsx` | New page | Subscription management |
+| `App.tsx` | Route addition | New subscription page route |
+| `BackroomSettings.tsx` | Nav link | Link to subscription management |
 
-### Files Created
-- `src/components/dashboard/analytics/ExpiryAlertCard.tsx` — PinnableCard showing expiring products with one-click clearance actions
-
-### Files Updated
-- `src/hooks/useProducts.ts` — Added `expires_at`, `expiry_alert_days` to Product interface; added `expiringOnly` filter
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Expiry date + alert days in product form; color-coded Expiry column in product table
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ExpiryAlertCard into analytics hub
-
-## Enhancement 2: Shrinkage Detection (Implemented)
-
-### What It Does
-Physical stocktake workflow with variance reporting. Staff record actual counts via a Stocktake dialog, and the system compares against expected quantities (system records). A Shrinkage Report card in analytics surfaces products with negative variance (loss) ranked by estimated cost impact.
-
-### Database Changes
-- Created `stock_counts` table with computed `variance` column (counted - expected), RLS policies (org member read/insert, org admin update/delete), and indexes
-
-### Shrinkage Calculation
-```
-variance = counted_quantity - expected_quantity
-shrinkage_units = |variance| when variance < 0
-shrinkage_cost = shrinkage_units × cost_price
-```
-
-### Files Created
-- `src/hooks/useStockCounts.ts` — CRUD hooks for stock counts + `useShrinkageSummary` for aggregated shrinkage data
-- `src/components/dashboard/settings/inventory/StocktakeDialog.tsx` — Full stocktake UI with search, inline count entry, real-time variance display
-- `src/components/dashboard/analytics/ShrinkageReportCard.tsx` — PinnableCard showing products with shrinkage, severity badges, estimated loss
-
-### Files Updated
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Added "Stocktake" button to Inventory tab toolbar
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ShrinkageReportCard into analytics hub
