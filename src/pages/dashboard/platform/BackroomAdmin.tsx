@@ -56,6 +56,9 @@ export default function BackroomAdmin() {
           </TabsTrigger>
         </TabsList>
 
+        <TabsContent value="analytics" className="mt-6">
+          <BackroomAnalyticsTab />
+        </TabsContent>
         <TabsContent value="queue" className="mt-6">
           <PriceQueueTab />
         </TabsContent>
@@ -70,9 +73,6 @@ export default function BackroomAdmin() {
         </TabsContent>
         <TabsContent value="billing" className="mt-6">
           <BackroomBillingTab />
-        </TabsContent>
-        <TabsContent value="analytics" className="mt-6">
-          <BackroomAnalyticsTab />
         </TabsContent>
         <TabsContent value="coach-performance" className="mt-6">
           <CoachPerformanceTab />
