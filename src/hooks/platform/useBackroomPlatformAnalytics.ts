@@ -9,6 +9,7 @@ export interface BackroomPlatformMetrics {
   orgUsageStats: OrgUsageStat[];
   adoptionTimeline: { month: string; count: number }[];
   coachingSignals: CoachingSignal[];
+  coachingEmailsSent: number;
 }
 
 export interface CoachingSignal {
@@ -197,6 +198,15 @@ export function useBackroomPlatformAnalytics() {
         return order[a.healthScore] - order[b.healthScore];
       });
 
+      // Fetch coaching email counter
+      const { data: counterRow } = await supabase
+        .from('platform_kpi_counters')
+        .select('value')
+        .eq('key', 'backroom_coaching_emails_sent')
+        .maybeSingle();
+
+      const coachingEmailsSent = counterRow?.value ? Number(counterRow.value) : 0;
+
       return {
         totalEnabledOrgs,
         totalTrialOrgs,
@@ -205,6 +215,7 @@ export function useBackroomPlatformAnalytics() {
         orgUsageStats,
         adoptionTimeline,
         coachingSignals,
+        coachingEmailsSent,
       };
     },
     staleTime: 60_000,

@@ -78,49 +78,15 @@ export function BackroomAnalyticsTab() {
   const handleSendCoachingEmail = async (signal: CoachingSignal) => {
     setSendingOrgId(signal.orgId);
     try {
-      // 1. Get org billing email
-      const { data: org } = await supabase
-        .from('organizations')
-        .select('billing_email, name')
-        .eq('id', signal.orgId)
-        .single();
-
-      if (!org?.billing_email) {
-        toast({ title: 'No billing email', description: `${signal.orgName} has no billing email configured.`, variant: 'destructive' });
-        return;
-      }
-
-      // 2. Look up template ID by key
-      const { data: template } = await supabase
-        .from('email_templates')
-        .select('id')
-        .eq('template_key', 'backroom_coaching')
-        .eq('is_active', true)
-        .single();
-
-      if (!template?.id) {
-        toast({ title: 'Template not found', description: 'The backroom_coaching email template is missing.', variant: 'destructive' });
-        return;
-      }
-
-      // 3. Invoke send-test-email with correct params
-      const { error } = await supabase.functions.invoke('send-test-email', {
-        body: {
-          template_id: template.id,
-          recipient_email: org.billing_email,
-        },
+      const { data, error } = await supabase.functions.invoke('send-coaching-email', {
+        body: { org_id: signal.orgId },
       });
 
       if (error) throw error;
-
-      // 4. Update cooldown timestamp
-      await supabase
-        .from('organizations')
-        .update({ last_backroom_coached_at: new Date().toISOString() } as any)
-        .eq('id', signal.orgId);
+      if (data?.error) throw new Error(data.error);
 
       setCoachedMap((prev) => ({ ...prev, [signal.orgId]: new Date().toISOString() }));
-      toast({ title: 'Coaching email sent', description: `Email sent to ${org.billing_email}` });
+      toast({ title: 'Coaching email sent', description: data?.message || `Email sent to ${signal.orgName}` });
     } catch (err: any) {
       toast({ title: 'Failed to send email', description: err.message || 'Unknown error', variant: 'destructive' });
     } finally {
@@ -141,7 +107,7 @@ export function BackroomAnalyticsTab() {
   return (
     <div className="space-y-6">
       {/* KPI Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <KPICard
           icon={Building2}
           label="Enabled Orgs"
@@ -165,6 +131,12 @@ export function BackroomAnalyticsTab() {
           label="Total Sessions"
           value={metrics.orgUsageStats.reduce((s, o) => s + o.totalSessions, 0).toLocaleString()}
           subtitle="All-time backroom sessions"
+        />
+        <KPICard
+          icon={Mail}
+          label="Coaching Emails"
+          value={String(metrics.coachingEmailsSent ?? 0)}
+          subtitle="Total outreach sent"
         />
       </div>
 
