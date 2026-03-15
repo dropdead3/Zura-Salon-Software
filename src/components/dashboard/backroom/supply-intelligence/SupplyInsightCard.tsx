@@ -15,6 +15,8 @@ import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { QuickReorderButton } from './QuickReorderButton';
+import { TrendSparkline } from '@/components/dashboard/TrendSparkline';
+import { useProductCostTrend } from '@/hooks/backroom/useProductCostTrend';
 import type { SupplyInsight } from '@/hooks/backroom/useSupplyIntelligence';
 
 interface SupplyInsightCardProps {
@@ -45,6 +47,11 @@ export function SupplyInsightCard({ insight }: SupplyInsightCardProps) {
   const config = categoryConfig[insight.category] ?? categoryConfig.inventory;
   const CategoryIcon = config.icon;
   const SeverityIcon = severityIcons[insight.severity] ?? Info;
+
+  // Fetch sparkline data for price-category insights with a product_id
+  const productIds = insight.category === 'price' && insight.product_id ? [insight.product_id] : undefined;
+  const { data: costTrends } = useProductCostTrend(productIds);
+  const sparklineData = costTrends?.[0]?.costHistory;
 
   return (
     <div
@@ -82,8 +89,12 @@ export function SupplyInsightCard({ insight }: SupplyInsightCardProps) {
           )}
         </div>
 
-        {/* Impact + action */}
+        {/* Impact + sparkline + action */}
         <div className="flex flex-col items-end gap-2 shrink-0">
+          {/* Cost trend sparkline for price insights */}
+          {insight.category === 'price' && sparklineData && sparklineData.length >= 2 && (
+            <TrendSparkline data={sparklineData} width={72} height={24} />
+          )}
           {insight.estimated_annual_impact > 0 && (
             <div className="text-right">
               <span className={tokens.label.tiny}>Annual Impact</span>
