@@ -174,6 +174,12 @@ export function BackroomEntitlementsTab() {
 
   const entitlementMap = new Map(locEntitlements.map((e) => [e.location_id, e]));
 
+  // Batch-fetch payment methods for orgs with stripe_customer_id
+  const stripeMappings = orgs
+    .filter((o) => !!o.stripe_customer_id)
+    .map((o) => ({ orgId: o.id, stripeCustomerId: o.stripe_customer_id! }));
+  const { paymentMethods, isLoading: pmLoading } = useBatchPaymentMethods(stripeMappings);
+
   const updateFlag = useUpdateOrgFeatureFlag();
   const deleteFlag = useDeleteOrgFeatureFlag();
   const upsertLocEnt = useUpsertLocationEntitlement();
