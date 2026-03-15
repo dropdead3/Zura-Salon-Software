@@ -887,5 +887,6 @@ function ProductRow({ product, onUpdate }: { product: BackroomProduct; onUpdate:
           </div>
         </div>
       )}
+    </div>
   );
 }
