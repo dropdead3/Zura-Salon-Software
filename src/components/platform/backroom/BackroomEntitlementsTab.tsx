@@ -54,6 +54,7 @@ interface OrgWithBackroom {
   subscription_tier: string | null;
   created_at: string | null;
   flag_created_at: string | null;
+  stripe_customer_id: string | null;
 }
 
 interface OrgLocation {
