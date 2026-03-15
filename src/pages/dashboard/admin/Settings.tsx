@@ -645,6 +645,7 @@ export default function Settings() {
   
   const capacity = useBusinessCapacity();
   const isSuperAdmin = roles?.includes('super_admin') || roles?.includes('admin');
+  const { canViewBilling } = useBillingAccess();
 
   // Reset to main view when nav link is clicked (same route navigation)
   useEffect(() => {
