@@ -206,6 +206,7 @@ export function useCreateProduct() {
         available_online: product.available_online,
         expires_at: product.expires_at,
         expiry_alert_days: product.expiry_alert_days ?? 30,
+        container_size: product.container_size,
       };
       
       const { data, error } = await supabase

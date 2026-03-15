@@ -176,7 +176,7 @@ export function PurchaseOrderDetailDialog({ open, onOpenChange, order }: Purchas
                     <TableRow key={line.id}>
                       <TableCell className="text-sm font-medium">{prod?.name || 'Unknown'}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{prod?.brand || '—'}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{(prod as any)?.container_size || '—'}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{prod?.container_size || '—'}</TableCell>
                       <TableCell className="text-right tabular-nums text-sm">{line.quantity_ordered}</TableCell>
                       <TableCell className="text-right tabular-nums text-sm">
                         {line.quantity_received}

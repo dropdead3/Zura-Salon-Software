@@ -953,6 +953,11 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
             <div><Label className="text-xs">SKU</Label><Input value={form.sku} onChange={e => setForm(f => ({ ...f, sku: e.target.value }))} /></div>
             <div><Label className="text-xs">Barcode</Label><Input value={form.barcode} onChange={e => setForm(f => ({ ...f, barcode: e.target.value }))} /></div>
           </div>
+          <div>
+            <Label className="text-xs">Container Size</Label>
+            <Input value={form.container_size} onChange={e => setForm(f => ({ ...f, container_size: e.target.value }))} placeholder="e.g. 57g, 1000ml" autoCapitalize="off" />
+            <p className="text-[11px] text-muted-foreground mt-1">Net weight or volume for backroom supplies</p>
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <div><Label className="text-xs">Retail Price</Label><Input type="number" step="0.01" value={form.retail_price} onChange={e => setForm(f => ({ ...f, retail_price: e.target.value }))} /></div>
             <div><Label className="text-xs">Cost Price</Label><Input type="number" step="0.01" value={form.cost_price} onChange={e => setForm(f => ({ ...f, cost_price: e.target.value }))} /></div>

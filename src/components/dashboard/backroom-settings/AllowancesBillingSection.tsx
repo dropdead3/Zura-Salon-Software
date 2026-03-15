@@ -192,6 +192,25 @@ export function AllowancesBillingSection({ onNavigate }: Props) {
               <CardDescription className={tokens.body.muted}>Configure service allowance policies and overage billing rules.</CardDescription>
             </div>
           </div>
+          {eligibleServices.length > 0 && (
+            showNewPolicySelect ? (
+              <div className="flex items-center gap-2">
+                <Select onValueChange={handleCreatePolicy}>
+                  <SelectTrigger className="w-[200px] h-9"><SelectValue placeholder="Select service…" /></SelectTrigger>
+                  <SelectContent>
+                    {eligibleServices.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setShowNewPolicySelect(false)}>
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            ) : (
+              <Button variant="outline" size={tokens.button.card} className="gap-1.5 font-sans" onClick={() => setShowNewPolicySelect(true)}>
+                <Plus className="w-3.5 h-3.5" /> New Policy
+              </Button>
+            )
+          )}
         </CardHeader>
         <CardContent className="space-y-3">
           {(!policies || policies.length === 0) ? (
