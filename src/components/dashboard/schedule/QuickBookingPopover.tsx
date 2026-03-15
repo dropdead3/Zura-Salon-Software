@@ -2035,6 +2035,50 @@ export function QuickBookingPopover({
                   </div>
                 </div>
               </div>
+              {/* Estimated Product Cost (parts_and_labor services) */}
+              {estimatedProductCharge?.isEnabled && (
+                <div>
+                  <h4 className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">
+                    Estimated Product Cost
+                  </h4>
+                  <div className="bg-card border border-border rounded-lg divide-y divide-border">
+                    {estimatedProductCharge.serviceBreakdown.map((est) => (
+                      <div key={est.serviceId} className="flex items-center justify-between p-2.5">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-md bg-muted flex items-center justify-center">
+                            <Beaker className="h-3 w-3 text-muted-foreground" />
+                          </div>
+                          <div>
+                            <div className="font-medium text-xs">{est.serviceName}</div>
+                            <div className="text-[10px] text-muted-foreground">
+                              {est.hasBaselines
+                                ? `${est.markupPct.toFixed(0)}% markup`
+                                : 'Estimate unavailable'}
+                            </div>
+                          </div>
+                        </div>
+                        {est.hasBaselines ? (
+                          <span className="font-medium text-xs tabular-nums">
+                            {formatCurrencyWhole(est.chargeAmount)}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-muted-foreground italic">
+                            Fee applies
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                    {estimatedProductCharge.totalEstimatedCharge > 0 && (
+                      <div className="flex items-center justify-between p-2.5 text-xs">
+                        <span className="text-muted-foreground">Est. Product Total</span>
+                        <span className="font-medium tabular-nums">
+                          {formatCurrencyWhole(estimatedProductCharge.totalEstimatedCharge)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
               {/* Redo / Adjustment Section */}
               <div className="bg-card border border-border rounded-lg p-3 space-y-3">
                 <div className="flex items-center justify-between">
