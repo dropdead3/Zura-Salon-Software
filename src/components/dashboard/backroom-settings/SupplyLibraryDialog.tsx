@@ -47,7 +47,12 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
   const [suggestDetails, setSuggestDetails] = useState('');
   const [isSuggesting, setIsSuggesting] = useState(false);
 
-  const brands = useMemo(() => getSupplyBrands(), []);
+  // Fetch supply library from DB (falls back to static data if empty)
+  const { data: libraryItems = [] } = useSupplyLibraryItems();
+
+  // Derived helpers from DB data
+  const brands = useMemo(() => [...new Set(libraryItems.map((i) => i.brand))].sort(), [libraryItems]);
+  const getProductsByBrand = useCallback((brand: string) => libraryItems.filter((i) => i.brand === brand), [libraryItems]);
 
   // Build set of existing keys — match both "Product Name" and "Product Name — 60ml"
   const existingKeys = useMemo(() => {
@@ -73,7 +78,7 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
       if (brand.toLowerCase().includes(q)) return true;
       return getProductsByBrand(brand).some((p) => p.name.toLowerCase().includes(q));
     });
-  }, [brands, search]);
+  }, [brands, search, getProductsByBrand]);
 
   // Products for selected brand, optionally filtered
   const brandProducts = useMemo(() => {
@@ -83,7 +88,7 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
     const q = search.toLowerCase();
     if (selectedBrand.toLowerCase().includes(q)) return products;
     return products.filter((p) => p.name.toLowerCase().includes(q));
-  }, [selectedBrand, search]);
+  }, [selectedBrand, search, getProductsByBrand]);
 
   /** Get all selectable keys for an item (one per size, or one if no sizes) */
   const getItemKeys = (item: SupplyLibraryItem): { key: string; size?: string }[] => {
