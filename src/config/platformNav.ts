@@ -53,6 +53,7 @@ export const platformNavGroups: PlatformNavGroup[] = [
       { href: '/dashboard/platform/onboarding', label: 'Onboarding', icon: Rocket, platformRoles: ['platform_owner', 'platform_admin', 'platform_support'] },
       { href: '/dashboard/platform/import', label: 'Migrations', icon: Upload },
       { href: '/dashboard/platform/jobs', label: 'Scheduled Jobs', icon: Clock, platformRoles: ['platform_owner', 'platform_admin', 'platform_support'] },
+      { href: '/dashboard/platform/coach', label: 'Coach Dashboard', icon: Users },
     ],
   },
   {
