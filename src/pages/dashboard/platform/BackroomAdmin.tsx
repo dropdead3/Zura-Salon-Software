@@ -73,6 +73,9 @@ export default function BackroomAdmin() {
         <TabsContent value="analytics" className="mt-6">
           <BackroomAnalyticsTab />
         </TabsContent>
+        <TabsContent value="coach-performance" className="mt-6">
+          <CoachPerformanceTab />
+        </TabsContent>
       </Tabs>
     </PlatformPageContainer>
   );
