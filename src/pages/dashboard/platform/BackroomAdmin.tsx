@@ -5,7 +5,8 @@ import { PriceQueueTab } from '@/components/platform/backroom/PriceQueueTab';
 import { PriceSourcesTab } from '@/components/platform/backroom/PriceSourcesTab';
 import { BackroomEntitlementsTab } from '@/components/platform/backroom/BackroomEntitlementsTab';
 import { SupplyLibraryTab } from '@/components/platform/backroom/SupplyLibraryTab';
-import { ClipboardList, Database, Building2, Package } from 'lucide-react';
+import { BackroomAnalyticsTab } from '@/components/platform/backroom/BackroomAnalyticsTab';
+import { ClipboardList, Database, Building2, Package, BarChart3 } from 'lucide-react';
 
 export default function BackroomAdmin() {
   const [tab, setTab] = useState('queue');
@@ -14,7 +15,7 @@ export default function BackroomAdmin() {
     <div className="space-y-6">
       <DashboardPageHeader
         title="Zura Backroom"
-        description="Wholesale price intelligence, source configuration, and organization entitlements."
+        description="Wholesale price intelligence, source configuration, organization entitlements, and platform analytics."
       />
 
       <Tabs value={tab} onValueChange={setTab}>
@@ -35,6 +36,10 @@ export default function BackroomAdmin() {
             <Package className="w-3.5 h-3.5" />
             Supply Library
           </TabsTrigger>
+          <TabsTrigger value="analytics" className="font-sans text-sm gap-1.5">
+            <BarChart3 className="w-3.5 h-3.5" />
+            Analytics
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="queue" className="mt-6">
@@ -48,6 +53,9 @@ export default function BackroomAdmin() {
         </TabsContent>
         <TabsContent value="library" className="mt-6">
           <SupplyLibraryTab />
+        </TabsContent>
+        <TabsContent value="analytics" className="mt-6">
+          <BackroomAnalyticsTab />
         </TabsContent>
       </Tabs>
     </div>
