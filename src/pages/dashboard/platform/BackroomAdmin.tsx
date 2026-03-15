@@ -15,7 +15,7 @@ const tabTriggerClass =
   'data-[state=active]:bg-violet-600 data-[state=active]:text-white text-slate-400 hover:text-white';
 
 export default function BackroomAdmin() {
-  const [tab, setTab] = useState('queue');
+  const [tab, setTab] = useState('analytics');
 
   return (
     <PlatformPageContainer className="space-y-6">
@@ -26,6 +26,10 @@ export default function BackroomAdmin() {
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="bg-slate-800/50 border border-slate-700/50 p-1">
+          <TabsTrigger value="analytics" className={`${tabTriggerClass} flex items-center gap-1.5`}>
+            <BarChart3 className="w-3.5 h-3.5" />
+            Analytics
+          </TabsTrigger>
           <TabsTrigger value="queue" className={`${tabTriggerClass} flex items-center gap-1.5`}>
             <ClipboardList className="w-3.5 h-3.5" />
             Price Queue
@@ -46,16 +50,15 @@ export default function BackroomAdmin() {
             <CreditCard className="w-3.5 h-3.5" />
             Billing
           </TabsTrigger>
-          <TabsTrigger value="analytics" className={`${tabTriggerClass} flex items-center gap-1.5`}>
-            <BarChart3 className="w-3.5 h-3.5" />
-            Analytics
-          </TabsTrigger>
           <TabsTrigger value="coach-performance" className={`${tabTriggerClass} flex items-center gap-1.5`}>
             <Users2 className="w-3.5 h-3.5" />
             Coach Performance
           </TabsTrigger>
         </TabsList>
 
+        <TabsContent value="analytics" className="mt-6">
+          <BackroomAnalyticsTab />
+        </TabsContent>
         <TabsContent value="queue" className="mt-6">
           <PriceQueueTab />
         </TabsContent>
@@ -70,9 +73,6 @@ export default function BackroomAdmin() {
         </TabsContent>
         <TabsContent value="billing" className="mt-6">
           <BackroomBillingTab />
-        </TabsContent>
-        <TabsContent value="analytics" className="mt-6">
-          <BackroomAnalyticsTab />
         </TabsContent>
         <TabsContent value="coach-performance" className="mt-6">
           <CoachPerformanceTab />
