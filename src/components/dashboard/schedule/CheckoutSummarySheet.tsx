@@ -496,6 +496,31 @@ export function CheckoutSummarySheet({
             </>
           )}
 
+          {/* Product Usage Charges (parts_and_labor) */}
+          {productCostCharges.length > 0 && (
+            <>
+              <Separator />
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
+                  <FlaskConical className="h-3.5 w-3.5" />
+                  {productChargeLabel}
+                </h3>
+                <div className="space-y-1.5">
+                  {productCostCharges.map((charge, idx) => (
+                    <div key={idx} className="flex items-center justify-between text-sm">
+                      <span>{charge.service_name ?? 'Product'}</span>
+                      <span className="font-medium tabular-nums">{formatCurrency(charge.charge_amount)}</span>
+                    </div>
+                  ))}
+                  <div className="flex justify-between text-sm pt-1 border-t border-border/50">
+                    <span className="text-muted-foreground">{productChargeLabel} Total</span>
+                    <span className="font-medium">{formatCurrency(productChargeTotal)}</span>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
           <Separator />
 
           {/* Pricing Summary */}
@@ -530,6 +555,14 @@ export function CheckoutSummarySheet({
                     </span>
                   </span>
                   <span>-{formatCurrency(discount)}</span>
+                </div>
+              )}
+
+              {/* Product charges (non-discountable, shown after promo) */}
+              {productChargeTotal > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">{productChargeLabel}</span>
+                  <span className="font-medium">{formatCurrency(productChargeTotal)}</span>
                 </div>
               )}
 
