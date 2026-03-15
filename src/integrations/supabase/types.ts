@@ -2097,6 +2097,72 @@ export type Database = {
           },
         ]
       }
+      backroom_location_entitlements: {
+        Row: {
+          activated_at: string
+          activated_by: string | null
+          billing_interval: string | null
+          created_at: string
+          id: string
+          location_id: string
+          notes: string | null
+          organization_id: string
+          plan_tier: string
+          scale_count: number
+          status: string
+          stripe_subscription_id: string | null
+          trial_end_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          activated_at?: string
+          activated_by?: string | null
+          billing_interval?: string | null
+          created_at?: string
+          id?: string
+          location_id: string
+          notes?: string | null
+          organization_id: string
+          plan_tier?: string
+          scale_count?: number
+          status?: string
+          stripe_subscription_id?: string | null
+          trial_end_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          activated_at?: string
+          activated_by?: string | null
+          billing_interval?: string | null
+          created_at?: string
+          id?: string
+          location_id?: string
+          notes?: string | null
+          organization_id?: string
+          plan_tier?: string
+          scale_count?: number
+          status?: string
+          stripe_subscription_id?: string | null
+          trial_end_date?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "backroom_location_entitlements_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "backroom_location_entitlements_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       backroom_pricing_display_rules: {
         Row: {
           allow_edit: boolean
