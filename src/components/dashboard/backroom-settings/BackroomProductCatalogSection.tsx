@@ -405,7 +405,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
           </div>
 
           {/* Alphabet selector bar */}
-          <div className="flex flex-wrap items-center gap-1 sm:gap-1.5">
+          <div className="flex flex-wrap items-center gap-0.5 sm:gap-1.5">
             {/* My Catalog chip */}
             <button
               type="button"
