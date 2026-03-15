@@ -20,6 +20,7 @@ import {
   CreditCard,
   Flag,
   Package,
+  Users,
 } from 'lucide-react';
 
 export type PlatformNavRole = 'platform_owner' | 'platform_admin' | 'platform_support' | 'platform_developer';
