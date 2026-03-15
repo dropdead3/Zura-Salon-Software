@@ -19,6 +19,7 @@ import {
   Bell,
   CreditCard,
   Flag,
+  Package,
 } from 'lucide-react';
 
 export type PlatformNavRole = 'platform_owner' | 'platform_admin' | 'platform_support' | 'platform_developer';
