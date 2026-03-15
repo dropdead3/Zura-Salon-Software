@@ -1,0 +1,130 @@
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+
+export interface BackroomPlatformMetrics {
+  totalEnabledOrgs: number;
+  totalTrialOrgs: number;
+  estimatedMRR: number;
+  avgWasteReduction: number | null;
+  orgUsageStats: OrgUsageStat[];
+  adoptionTimeline: { month: string; count: number }[];
+}
+
+export interface OrgUsageStat {
+  orgId: string;
+  orgName: string;
+  snapshotCount: number;
+  avgWastePct: number | null;
+  lastSnapshotDate: string | null;
+  totalSessions: number;
+}
+
+const PLAN_PRICES: Record<string, number> = {
+  starter: 49,
+  professional: 129,
+  unlimited: 299,
+};
+
+export function useBackroomPlatformAnalytics() {
+  return useQuery({
+    queryKey: ['backroom-platform-analytics'],
+    queryFn: async (): Promise<BackroomPlatformMetrics> => {
+      // Fetch enabled orgs
+      const { data: flags, error: fErr } = await supabase
+        .from('organization_feature_flags')
+        .select('organization_id, is_enabled, override_reason, created_at')
+        .eq('flag_key', 'backroom_enabled')
+        .eq('is_enabled', true);
+      if (fErr) throw fErr;
+
+      const enabledOrgIds = (flags || []).map((f: any) => f.organization_id);
+      const totalEnabledOrgs = enabledOrgIds.length;
+
+      // Estimate MRR from override_reason (which contains plan tier)
+      let estimatedMRR = 0;
+      let totalTrialOrgs = 0;
+      (flags || []).forEach((f: any) => {
+        const reason = (f.override_reason || '').toLowerCase();
+        if (reason.includes('trial')) {
+          totalTrialOrgs++;
+        }
+        for (const [tier, price] of Object.entries(PLAN_PRICES)) {
+          if (reason.includes(tier)) {
+            estimatedMRR += price;
+            break;
+          }
+        }
+        // Default to starter if no tier found and not trial
+        if (!Object.keys(PLAN_PRICES).some((t) => reason.includes(t)) && !reason.includes('trial')) {
+          estimatedMRR += PLAN_PRICES.starter;
+        }
+      });
+
+      // Fetch org names
+      const { data: orgs } = await supabase
+        .from('organizations')
+        .select('id, name')
+        .in('id', enabledOrgIds.length > 0 ? enabledOrgIds : ['00000000-0000-0000-0000-000000000000']);
+
+      const orgMap = new Map((orgs || []).map((o: any) => [o.id, o.name]));
+
+      // Fetch analytics snapshots for usage stats
+      const { data: snapshots } = await supabase
+        .from('backroom_analytics_snapshots')
+        .select('organization_id, snapshot_date, waste_pct, total_sessions')
+        .order('snapshot_date', { ascending: false });
+
+      // Aggregate per org
+      const orgStats = new Map<string, { count: number; wasteSum: number; wasteCount: number; lastDate: string | null; sessions: number }>();
+      (snapshots || []).forEach((s: any) => {
+        const existing = orgStats.get(s.organization_id) || { count: 0, wasteSum: 0, wasteCount: 0, lastDate: null, sessions: 0 };
+        existing.count++;
+        if (s.waste_pct != null) {
+          existing.wasteSum += Number(s.waste_pct);
+          existing.wasteCount++;
+        }
+        existing.sessions += s.total_sessions || 0;
+        if (!existing.lastDate || s.snapshot_date > existing.lastDate) existing.lastDate = s.snapshot_date;
+        orgStats.set(s.organization_id, existing);
+      });
+
+      const orgUsageStats: OrgUsageStat[] = enabledOrgIds.map((oid: string) => {
+        const stats = orgStats.get(oid);
+        return {
+          orgId: oid,
+          orgName: orgMap.get(oid) || 'Unknown',
+          snapshotCount: stats?.count || 0,
+          avgWastePct: stats && stats.wasteCount > 0 ? stats.wasteSum / stats.wasteCount : null,
+          lastSnapshotDate: stats?.lastDate || null,
+          totalSessions: stats?.sessions || 0,
+        };
+      });
+
+      // Avg waste reduction across all orgs with data
+      const orgsWithWaste = orgUsageStats.filter((o) => o.avgWastePct != null);
+      const avgWasteReduction = orgsWithWaste.length > 0
+        ? orgsWithWaste.reduce((sum, o) => sum + (o.avgWastePct || 0), 0) / orgsWithWaste.length
+        : null;
+
+      // Adoption timeline — group enabled flags by month
+      const monthMap = new Map<string, number>();
+      (flags || []).forEach((f: any) => {
+        const month = f.created_at?.substring(0, 7) || 'unknown';
+        monthMap.set(month, (monthMap.get(month) || 0) + 1);
+      });
+      const adoptionTimeline = [...monthMap.entries()]
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([month, count]) => ({ month, count }));
+
+      return {
+        totalEnabledOrgs,
+        totalTrialOrgs,
+        estimatedMRR,
+        avgWasteReduction,
+        orgUsageStats,
+        adoptionTimeline,
+      };
+    },
+    staleTime: 60_000,
+  });
+}
