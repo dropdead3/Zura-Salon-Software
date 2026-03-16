@@ -44,7 +44,7 @@ export function BackroomCheckoutConfirmDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[440px]">
+      <DialogContent className="max-w-[95vw] sm:max-w-[440px]">
         <DialogHeader>
           <DialogTitle className={tokens.card.title}>Confirm Subscription</DialogTitle>
           <DialogDescription>
