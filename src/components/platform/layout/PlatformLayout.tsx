@@ -32,11 +32,8 @@ function PlatformLayoutInner() {
   return (
     <div 
       className={cn(
-        'platform-theme min-h-screen',
+        'platform-theme min-h-screen bg-[hsl(var(--platform-bg))]',
         resolvedTheme === 'dark' ? 'platform-dark' : 'platform-light',
-        resolvedTheme === 'dark' 
-          ? 'bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950' 
-          : 'platform-gradient-radial'
       )}
     >
       <PlatformSidebar />

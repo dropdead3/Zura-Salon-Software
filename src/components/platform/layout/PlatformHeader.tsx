@@ -37,7 +37,6 @@ export function PlatformHeader() {
   const { data: profile } = useEmployeeProfile();
   const { resolvedTheme } = usePlatformTheme();
   const { isConnected, onlineUsers, onlineCount } = usePlatformPresenceContext();
-  const isDark = resolvedTheme === 'dark';
 
   const primaryRole = platformRoles[0] as PlatformRole | undefined;
   const roleInfo = primaryRole ? roleConfig[primaryRole] : null;
@@ -63,12 +62,7 @@ export function PlatformHeader() {
   };
   return (
     <header
-      className={cn(
-        'sticky top-0 z-30 h-14 border-b backdrop-blur-xl',
-        isDark
-          ? 'border-slate-700/50 bg-slate-900/80'
-          : 'border-violet-200/50 bg-white/80'
-      )}
+      className="sticky top-0 z-30 h-14 border-b backdrop-blur-xl border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg)/0.8)]"
     >
       <div className="flex h-full items-center justify-between px-6">
         {/* Left: Online Users */}
@@ -77,20 +71,14 @@ export function PlatformHeader() {
           {onlineCount > 0 && (
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2">
-                <Users className={cn('h-4 w-4', isDark ? 'text-slate-400' : 'text-slate-500')} />
-                <span className={cn(
-                  'text-sm font-medium',
-                  isDark ? 'text-slate-300' : 'text-slate-600'
-                )}>
+                <Users className="h-4 w-4 text-[hsl(var(--platform-foreground-muted))]" />
+                <span className="text-sm font-medium text-[hsl(var(--platform-foreground)/0.85)]">
                   {onlineCount} online
                 </span>
               </div>
               
               {otherOnlineUsers.length > 0 && (
-                <div className={cn(
-                  'h-6 w-px mx-1',
-                  isDark ? 'bg-slate-700' : 'bg-violet-200'
-                )} />
+                <div className="h-6 w-px mx-1 bg-[hsl(var(--platform-border))]" />
               )}
               
               {/* Other Online Users Avatars */}
@@ -100,31 +88,20 @@ export function PlatformHeader() {
                     <Tooltip key={onlineUser.id}>
                       <TooltipTrigger asChild>
                         <div className="relative">
-                          <Avatar className={cn(
-                            'h-8 w-8 border-2 ring-2',
-                            isDark 
-                              ? 'border-slate-900 ring-emerald-500/30' 
-                              : 'border-white ring-emerald-500/30'
-                          )}>
+                          <Avatar className="h-8 w-8 border-2 ring-2 border-[hsl(var(--platform-bg))] ring-emerald-500/30">
                             <AvatarImage src={onlineUser.photo_url || undefined} alt={onlineUser.full_name} />
-                            <AvatarFallback className={cn(
-                              'text-xs font-medium',
-                              isDark ? 'bg-slate-700 text-slate-300' : 'bg-violet-100 text-violet-700'
-                            )}>
+                            <AvatarFallback className="text-xs font-medium bg-[hsl(var(--platform-bg-hover))] text-[hsl(var(--platform-foreground-muted))]">
                               {getInitials(onlineUser.full_name)}
                             </AvatarFallback>
                           </Avatar>
                           <OnlineIndicator 
                             isOnline={true} 
                             size="sm" 
-                            className="absolute -bottom-0.5 -right-0.5 ring-2 ring-slate-900"
+                            className="absolute -bottom-0.5 -right-0.5 ring-2 ring-[hsl(var(--platform-bg))]"
                           />
                         </div>
                       </TooltipTrigger>
-                      <TooltipContent 
-                        side="bottom"
-                        className={isDark ? 'bg-slate-800 border-slate-700 text-white' : ''}
-                      >
+                      <TooltipContent side="bottom">
                         <p className="font-medium">{onlineUser.full_name || 'Team Member'}</p>
                         <p className="text-xs text-emerald-400">Online</p>
                       </TooltipContent>
@@ -132,12 +109,7 @@ export function PlatformHeader() {
                   ))}
                   
                   {otherOnlineUsers.length > 5 && (
-                    <div className={cn(
-                      'h-8 w-8 rounded-full border-2 flex items-center justify-center text-xs font-medium',
-                      isDark 
-                        ? 'border-slate-900 bg-slate-700 text-slate-300' 
-                        : 'border-white bg-violet-100 text-violet-700'
-                    )}>
+                    <div className="h-8 w-8 rounded-full border-2 flex items-center justify-center text-xs font-medium border-[hsl(var(--platform-bg))] bg-[hsl(var(--platform-bg-hover))] text-[hsl(var(--platform-foreground-muted))]">
                       +{otherOnlineUsers.length - 5}
                     </div>
                   )}
@@ -151,24 +123,13 @@ export function PlatformHeader() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
-              className={cn(
-                'flex items-center gap-3 rounded-lg px-3 py-2 transition-colors',
-                isDark
-                  ? 'hover:bg-slate-800/60'
-                  : 'hover:bg-violet-50'
-              )}
+              className="flex items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-[hsl(var(--platform-bg-hover))]"
             >
               <div className="flex items-center gap-2">
                 <div className="relative">
-                  <Avatar className={cn(
-                    'h-8 w-8 border',
-                    isDark ? 'border-slate-600' : 'border-violet-200'
-                  )}>
+                  <Avatar className="h-8 w-8 border border-[hsl(var(--platform-border))]">
                     <AvatarImage src={profile?.photo_url || undefined} alt="Profile" className="object-cover" style={getAvatarStyle(profile)} />
-                    <AvatarFallback className={cn(
-                      'text-xs font-medium',
-                      isDark ? 'bg-slate-700 text-slate-300' : 'bg-violet-100 text-violet-700'
-                    )}>
+                    <AvatarFallback className="text-xs font-medium bg-[hsl(var(--platform-bg-hover))] text-[hsl(var(--platform-foreground-muted))]">
                       {getInitials(profile?.full_name || profile?.display_name, user?.email)}
                     </AvatarFallback>
                   </Avatar>
@@ -182,10 +143,7 @@ export function PlatformHeader() {
                 </div>
                 
                 <div className="hidden sm:block text-left">
-                  <span className={cn(
-                    'text-sm font-medium block',
-                    isDark ? 'text-white' : 'text-slate-900'
-                  )}>
+                  <span className="text-sm font-medium block text-[hsl(var(--platform-foreground))]">
                     {profile?.display_name || profile?.full_name?.split(' ')[0] || 'Account'}
                   </span>
                   {roleInfo && (
@@ -201,35 +159,20 @@ export function PlatformHeader() {
           
           <DropdownMenuContent
             align="end"
-            className={cn(
-              'w-56',
-              isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-violet-200'
-            )}
+            className="w-56 bg-[hsl(var(--platform-bg-elevated))] border-[hsl(var(--platform-border))]"
           >
-            <div className={cn(
-              'px-3 py-2 border-b',
-              isDark ? 'border-slate-700' : 'border-violet-100'
-            )}>
-              <p className={cn(
-                'text-sm font-medium',
-                isDark ? 'text-white' : 'text-slate-900'
-              )}>
+            <div className="px-3 py-2 border-b border-[hsl(var(--platform-border))]">
+              <p className="text-sm font-medium text-[hsl(var(--platform-foreground))]">
                 {profile?.full_name || 'Platform User'}
               </p>
-              <p className={cn(
-                'text-xs truncate',
-                isDark ? 'text-slate-400' : 'text-slate-500'
-              )}>
+              <p className="text-xs truncate text-[hsl(var(--platform-foreground-muted))]">
                 {user?.email}
               </p>
             </div>
             
             <DropdownMenuItem
               onClick={handleViewProfile}
-              className={cn(
-                'cursor-pointer',
-                isDark ? 'text-slate-300 focus:bg-slate-700 focus:text-white' : ''
-              )}
+              className="cursor-pointer text-[hsl(var(--platform-foreground)/0.85)] focus:bg-[hsl(var(--platform-bg-hover))] focus:text-[hsl(var(--platform-foreground))]"
             >
               <User className="mr-2 h-4 w-4" />
               View Profile
@@ -237,23 +180,17 @@ export function PlatformHeader() {
             
             <DropdownMenuItem
               onClick={handleViewProfile}
-              className={cn(
-                'cursor-pointer',
-                isDark ? 'text-slate-300 focus:bg-slate-700 focus:text-white' : ''
-              )}
+              className="cursor-pointer text-[hsl(var(--platform-foreground)/0.85)] focus:bg-[hsl(var(--platform-bg-hover))] focus:text-[hsl(var(--platform-foreground))]"
             >
               <Settings className="mr-2 h-4 w-4" />
               Settings
             </DropdownMenuItem>
             
-            <DropdownMenuSeparator className={isDark ? 'bg-slate-700' : ''} />
+            <DropdownMenuSeparator className="bg-[hsl(var(--platform-border))]" />
             
             <DropdownMenuItem
               onClick={handleSignOut}
-              className={cn(
-                'cursor-pointer text-red-500',
-                isDark ? 'focus:bg-red-500/10 focus:text-red-400' : 'focus:bg-red-50 focus:text-red-600'
-              )}
+              className="cursor-pointer text-red-500 focus:bg-red-500/10 focus:text-red-400"
             >
               <LogOut className="mr-2 h-4 w-4" />
               Sign Out

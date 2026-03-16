@@ -61,8 +61,6 @@ export function PlatformSidebar() {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
-  const isDark = resolvedTheme === 'dark';
-
   // Filter groups to only show items the user has access to
   const visibleGroups = platformNavGroups
     .map(group => ({
@@ -88,9 +86,7 @@ export function PlatformSidebar() {
       className={cn(
         'fixed left-0 top-0 z-40 h-screen flex flex-col transition-all duration-300',
         collapsed ? 'w-16' : 'w-56',
-        isDark 
-          ? 'bg-slate-900/95 backdrop-blur-xl'
-          : 'bg-white/95 backdrop-blur-xl shadow-lg shadow-violet-500/5'
+        'bg-[hsl(var(--platform-sidebar-bg)/0.95)] backdrop-blur-xl border-r border-[hsl(var(--platform-sidebar-border)/0.5)]'
       )}
     >
       {/* Logo / Header with collapse toggle */}
@@ -113,10 +109,7 @@ export function PlatformSidebar() {
                 )}>
                   <Sparkles className="h-4 w-4 text-white" />
                 </div>
-                <span className={cn(
-                  'font-display',
-                  isDark ? 'text-white' : 'text-slate-900'
-                )}>Platform</span>
+                <span className="font-display text-[hsl(var(--platform-foreground))]">Platform</span>
               </>
             )}
           </div>
@@ -142,12 +135,7 @@ export function PlatformSidebar() {
         {!collapsed && (
           <button
             onClick={() => setCollapsed(true)}
-            className={cn(
-              'p-1 rounded-md active:scale-90 transition-all duration-150',
-              isDark 
-                ? 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/60' 
-                : 'text-slate-400 hover:text-violet-600 hover:bg-violet-50'
-            )}
+            className="p-1 rounded-md active:scale-90 transition-all duration-150 text-[hsl(var(--platform-foreground-subtle))] hover:text-[hsl(var(--platform-foreground))] hover:bg-[hsl(var(--platform-bg-hover))]"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
@@ -157,13 +145,7 @@ export function PlatformSidebar() {
             <TooltipTrigger asChild>
               <button
                 onClick={() => setCollapsed(false)}
-                className={cn(
-                  'absolute -right-3 top-[18px] z-50 p-1 rounded-full border shadow-sm',
-                  'active:scale-90 transition-all duration-150 hover:shadow-md hover:scale-105',
-                  isDark 
-                    ? 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white hover:bg-slate-700' 
-                    : 'bg-white border-violet-200 text-slate-400 hover:text-violet-600 hover:bg-violet-50'
-                )}
+                className="absolute -right-3 top-[18px] z-50 p-1 rounded-full border shadow-sm active:scale-90 transition-all duration-150 hover:shadow-md hover:scale-105 bg-[hsl(var(--platform-bg-card))] border-[hsl(var(--platform-border))] text-[hsl(var(--platform-foreground-muted))] hover:text-[hsl(var(--platform-foreground))] hover:bg-[hsl(var(--platform-bg-hover))]"
               >
                 <ChevronRight className="h-3 w-3" />
               </button>
@@ -174,12 +156,7 @@ export function PlatformSidebar() {
       </div>
 
       {/* Header fade divider */}
-      <div className={cn(
-        'h-px mx-3 shrink-0',
-        isDark 
-          ? 'bg-gradient-to-r from-transparent via-slate-700/60 to-transparent'
-          : 'bg-gradient-to-r from-transparent via-violet-200/60 to-transparent'
-      )} />
+      <div className="h-px mx-3 shrink-0 bg-gradient-to-r from-transparent via-[hsl(var(--platform-border)/0.6)] to-transparent" />
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto relative">
@@ -188,20 +165,14 @@ export function PlatformSidebar() {
             <div key={group.label}>
               {/* Section label */}
               {!collapsed && (
-                <div className={cn(
-                  'px-3 pb-1.5 text-[10px] font-medium uppercase tracking-[0.15em] transition-colors duration-200',
-                  isDark ? 'text-slate-500' : 'text-slate-400'
-                )}>
+                <div className="px-3 pb-1.5 text-[10px] font-medium uppercase tracking-[0.15em] transition-colors duration-200 text-[hsl(var(--platform-foreground-subtle))]">
                   {group.label}
                 </div>
               )}
 
               {/* Collapsed: thin separator between groups */}
               {collapsed && groupIndex > 0 && (
-                <div className={cn(
-                  'h-px mx-2 mb-2',
-                  isDark ? 'bg-slate-700/40' : 'bg-violet-100/60'
-                )} />
+                <div className="h-px mx-2 mb-2 bg-[hsl(var(--platform-border)/0.4)]" />
               )}
 
               <ul className="space-y-0.5">
@@ -217,14 +188,9 @@ export function PlatformSidebar() {
                         'transition-all duration-200 ease-[cubic-bezier(0.25,0.1,0.25,1)] will-change-transform',
                         collapsed && 'justify-center px-2',
                         !collapsed && !isActive && 'hover:translate-x-[2px]',
-                        !collapsed && !isActive && !isDark && 'hover:shadow-sm',
                         isActive
-                          ? isDark
-                            ? 'bg-violet-500/10 text-violet-300 ring-1 ring-violet-500/20'
-                            : 'bg-gradient-to-r from-violet-50 to-violet-100/60 text-violet-700'
-                          : isDark
-                            ? 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
-                            : 'text-slate-500 hover:bg-violet-50/80 hover:text-violet-700'
+                          ? 'bg-[hsl(var(--platform-primary)/0.1)] text-[hsl(var(--platform-primary))] ring-1 ring-[hsl(var(--platform-primary)/0.2)]'
+                          : 'text-[hsl(var(--platform-foreground-muted))] hover:bg-[hsl(var(--platform-bg-hover))] hover:text-[hsl(var(--platform-foreground)/0.9)]'
                       )}
                       title={collapsed ? item.label : undefined}
                     >
@@ -232,26 +198,18 @@ export function PlatformSidebar() {
                       {isActive && (
                         <motion.div
                           layoutId="platform-nav-active"
-                          className={cn(
-                            'absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-5 rounded-full',
-                            isDark
-                              ? 'bg-violet-400 shadow-[0_0_6px_rgba(139,92,246,0.4)]'
-                              : 'bg-violet-500 shadow-[0_0_4px_rgba(124,58,237,0.3)]'
-                          )}
+                          className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-5 rounded-full bg-[hsl(var(--platform-primary))] shadow-[0_0_6px_hsl(var(--platform-primary)/0.4)]"
                           transition={{ type: "spring", stiffness: 300, damping: 30 }}
                         />
                       )}
                       {/* Hover accent preview for non-active items */}
                       {!isActive && !collapsed && (
-                        <div className={cn(
-                          'absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200',
-                          isDark ? 'bg-violet-500/40' : 'bg-violet-400/40'
-                        )} />
+                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-[hsl(var(--platform-primary)/0.4)]" />
                       )}
                       <Icon className={cn(
                         'h-[18px] w-[18px] shrink-0 transition-transform duration-200',
                         isActive 
-                          ? cn('scale-110', isDark ? 'text-violet-400' : 'text-violet-600')
+                          ? 'scale-110 text-[hsl(var(--platform-primary))]'
                           : 'group-hover:scale-105'
                       )} />
                       {!collapsed && <span>{item.label}</span>}
@@ -279,55 +237,32 @@ export function PlatformSidebar() {
         </div>
 
         {/* Scroll fade hint */}
-        <div className={cn(
-          'sticky bottom-0 left-0 right-0 h-6 pointer-events-none',
-          isDark
-            ? 'bg-gradient-to-t from-slate-900/95 to-transparent'
-            : 'bg-gradient-to-t from-white/95 to-transparent'
-        )} />
+        <div className="sticky bottom-0 left-0 right-0 h-6 pointer-events-none bg-gradient-to-t from-[hsl(var(--platform-sidebar-bg)/0.95)] to-transparent" />
       </nav>
 
       {/* User Profile Section */}
-      <div className={cn(
-        'shrink-0 p-3',
-      )}>
+      <div className="shrink-0 p-3">
         {/* Profile divider */}
-        <div className={cn(
-          'h-px mx-1 mb-3',
-          isDark 
-            ? 'bg-gradient-to-r from-transparent via-slate-700/60 to-transparent'
-            : 'bg-gradient-to-r from-transparent via-violet-200/60 to-transparent'
-        )} />
+        <div className="h-px mx-1 mb-3 bg-gradient-to-r from-transparent via-[hsl(var(--platform-border)/0.6)] to-transparent" />
         <button
           onClick={() => navigate('/dashboard/platform/settings')}
           className={cn(
             'w-full flex items-center gap-3 rounded-xl px-2 py-2 transition-all duration-200 active:scale-[0.98]',
             collapsed && 'justify-center',
-            isDark 
-              ? 'hover:bg-slate-800/60 hover:ring-1 hover:ring-violet-500/20' 
-              : 'hover:bg-violet-50 hover:ring-1 hover:ring-violet-300/30'
+            'hover:bg-[hsl(var(--platform-bg-hover))] hover:ring-1 hover:ring-[hsl(var(--platform-primary)/0.2)]'
           )}
           title={collapsed ? (profile?.display_name || profile?.full_name || 'Account') : undefined}
         >
-          <Avatar className={cn(
-              'h-8 w-8 border',
-              isDark ? 'border-slate-600' : 'border-violet-200'
-            )}>
-              <AvatarImage src={profile?.photo_url || undefined} alt="Profile" className="object-cover" style={getAvatarStyle(profile)} />
-              <AvatarFallback className={cn(
-                'text-xs font-medium',
-                isDark ? 'bg-slate-700 text-slate-300' : 'bg-violet-100 text-violet-700'
-              )}>
-                {getInitials()}
-              </AvatarFallback>
-            </Avatar>
+          <Avatar className="h-8 w-8 border border-[hsl(var(--platform-border))]">
+            <AvatarImage src={profile?.photo_url || undefined} alt="Profile" className="object-cover" style={getAvatarStyle(profile)} />
+            <AvatarFallback className="text-xs font-medium bg-[hsl(var(--platform-bg-hover))] text-[hsl(var(--platform-foreground-muted))]">
+              {getInitials()}
+            </AvatarFallback>
+          </Avatar>
           {!collapsed && (
             <div className="flex-1 text-left min-w-0">
               <div className="flex items-center gap-1.5">
-                <p className={cn(
-                  'text-sm font-medium truncate',
-                  isDark ? 'text-white' : 'text-slate-900'
-                )}>
+                <p className="text-sm font-medium truncate text-[hsl(var(--platform-foreground))]">
                   {profile?.display_name || profile?.full_name?.split(' ')[0] || 'Account'}
                 </p>
                 {isConnected && (
@@ -347,4 +282,3 @@ export function PlatformSidebar() {
     </aside>
   );
 }
-
