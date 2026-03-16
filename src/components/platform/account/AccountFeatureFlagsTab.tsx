@@ -238,11 +238,11 @@ export function AccountFeatureFlagsTab({ organizationId, organizationName }: Acc
           <div className="space-y-4 py-4">
             <div>
               <label className="text-sm font-medium text-slate-300">Reason (optional)</label>
-              <Textarea
+              <PlatformTextarea
                 placeholder="Why is this organization different?"
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                className="mt-1.5 bg-slate-800 border-slate-600"
+                className="mt-1.5"
               />
             </div>
           </div>
