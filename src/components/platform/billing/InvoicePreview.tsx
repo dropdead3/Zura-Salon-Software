@@ -127,23 +127,23 @@ export function InvoicePreview({
         </div>
 
         {/* Ongoing */}
-        <div className="space-y-3 pt-4 border-t border-border/50">
-          <p className="text-xs text-muted-foreground uppercase tracking-wider">Ongoing</p>
+        <div className="space-y-3 pt-4 border-t border-[hsl(var(--platform-border)/0.3)]">
+          <p className="text-xs text-[hsl(var(--platform-foreground-muted))] uppercase tracking-wider">Ongoing</p>
           
           <div className="flex items-center gap-3 text-sm">
-            <div className="flex-1 p-3 rounded-lg bg-card/50 text-center">
-              <p className="text-muted-foreground text-xs mb-1">Per Cycle</p>
-              <p className="font-medium text-foreground">{formatCurrency(calculation.cycleAmount)}</p>
+            <div className="flex-1 p-3 rounded-lg bg-[hsl(var(--platform-bg-card)/0.5)] text-center">
+              <p className="text-[hsl(var(--platform-foreground-muted))] text-xs mb-1">Per Cycle</p>
+              <p className="font-medium text-[hsl(var(--platform-foreground))]">{formatCurrency(calculation.cycleAmount)}</p>
             </div>
-            <ArrowRight className="h-4 w-4 text-muted-foreground" />
-            <div className="flex-1 p-3 rounded-lg bg-card/50 text-center">
-              <p className="text-muted-foreground text-xs mb-1">Annual Total</p>
-              <p className="font-medium text-foreground">{formatCurrency(calculation.annualAmount)}</p>
+            <ArrowRight className="h-4 w-4 text-[hsl(var(--platform-foreground-muted))]" />
+            <div className="flex-1 p-3 rounded-lg bg-[hsl(var(--platform-bg-card)/0.5)] text-center">
+              <p className="text-[hsl(var(--platform-foreground-muted))] text-xs mb-1">Annual Total</p>
+              <p className="font-medium text-[hsl(var(--platform-foreground))]">{formatCurrency(calculation.annualAmount)}</p>
             </div>
           </div>
 
           {calculation.isInPromo && (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-[hsl(var(--platform-foreground-muted))]">
               * After promotional period, rate increases to {formatCurrency(calculation.monthlyAmount)}/mo
             </p>
           )}
