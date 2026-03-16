@@ -6,6 +6,7 @@ import {
   Scale, Droplets, ShieldCheck, MapPin, TrendingUp, DollarSign, Star,
   Info, Clock, AlertTriangle, CheckCircle2, XCircle,
   Brain, Users, PackageSearch, ChevronRight,
+  Calendar,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
