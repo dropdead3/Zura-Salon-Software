@@ -253,12 +253,12 @@ export function PlatformDefaultsTab() {
                 value={localSettings.timezone} 
                 onValueChange={(v) => updateField('timezone', v)}
               >
-                <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-900 border-slate-700">
+                <SelectContent>
                   {TIMEZONES.map(tz => (
-                    <SelectItem key={tz.value} value={tz.value} className="text-slate-300">
+                    <SelectItem key={tz.value} value={tz.value}>
                       {tz.label}
                     </SelectItem>
                   ))}
