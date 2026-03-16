@@ -96,12 +96,12 @@ function ProductPreview() {
         </p>
       </div>
 
-      <div className="relative mx-auto max-w-[720px]">
+      <div className="relative mx-auto max-w-[720px] overflow-visible isolate">
         {/* Top-edge fade */}
         <div className="absolute -top-16 left-0 right-0 h-16 bg-gradient-to-b from-background to-transparent z-10 pointer-events-none" />
 
         {/* Browser frame */}
-        <div className="relative rounded-xl border border-border/60 bg-card shadow-[0_24px_80px_hsl(var(--background)/0.55)] overflow-hidden">
+        <div className="relative rounded-xl border border-border/60 bg-card shadow-[0_32px_120px_-48px_hsl(var(--background)/0.9)] overflow-hidden">
           {/* Title bar */}
           <div className="flex items-center gap-2 px-4 py-3 border-b border-border/40 bg-muted/30">
             <div className="flex gap-2">
@@ -179,7 +179,7 @@ function ProductPreview() {
           </div>
         </div>
         {/* Soft glow behind — strengthened */}
-        <div className="absolute -inset-10 -z-10 rounded-[32px] pointer-events-none bg-[radial-gradient(circle_at_center,hsl(var(--primary)/0.18)_0%,hsl(var(--primary)/0.08)_32%,transparent_72%)] blur-[72px] opacity-70" />
+        <div className="absolute -inset-x-24 -inset-y-20 -z-10 rounded-[56px] pointer-events-none bg-[radial-gradient(ellipse_at_center,hsl(var(--primary)/0.16)_0%,hsl(var(--primary)/0.08)_38%,transparent_78%)] blur-[110px] opacity-90" />
       </div>
     </div>
   );
