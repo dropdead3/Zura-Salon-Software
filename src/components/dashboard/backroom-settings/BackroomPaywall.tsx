@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import {
   Package, Beaker, BarChart3, Shield, Zap, ArrowRight, Loader2,
   Minus, Plus, Scale, ShieldCheck, MapPin, TrendingDown, DollarSign, Activity,
-  ChevronUp, Info, Clock, Eye,
+  ChevronUp, Info, Clock, Eye, AlertTriangle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -181,9 +181,28 @@ export function BackroomPaywall() {
             </div>
           </div>
         ) : (
-          <p className="text-xs text-muted-foreground font-sans">
-            Select locations to see your cost
-          </p>
+          /* ─ ENHANCED EMPTY STATE: show estimated losses ─ */
+          <div className="space-y-2">
+            {totalSavings > 0 ? (
+              <>
+                <div className="p-3 rounded-lg bg-destructive/5 border border-destructive/20 text-center">
+                  <p className="font-display text-lg tracking-wide text-destructive">
+                    ~<AnimatedNumber value={totalSavings} prefix="$" duration={1000} />/mo
+                  </p>
+                  <p className="text-[10px] text-destructive/70 font-sans mt-0.5">
+                    estimated monthly losses
+                  </p>
+                </div>
+                <p className="text-xs text-muted-foreground font-sans text-center">
+                  Select locations below to see how Backroom pays for itself
+                </p>
+              </>
+            ) : (
+              <p className="text-xs text-muted-foreground font-sans">
+                Select locations to see your cost
+              </p>
+            )}
+          </div>
         )}
       </div>
 
@@ -341,36 +360,98 @@ export function BackroomPaywall() {
             <Zap className="w-8 h-8 text-primary" />
           </div>
           <h1 className={cn(tokens.heading.page, 'text-2xl')}>
-            Unlock Zura Backroom
+            Stop Losing Money in Your Backroom
           </h1>
           <p className="text-muted-foreground text-base max-w-lg mx-auto font-sans">
-            Take control of your backroom operations with inventory intelligence, chemical tracking, and cost optimization.
+            The average salon loses $375/mo to product waste, ghost losses, and manual audits. Here's what it's costing yours.
           </p>
         </div>
+
+        {/* ═══ MONEY YOU MAY BE LOSING — Loss Aversion Banner ═══ */}
+        {(estimate || estimateLoading) && (
+          <Card className="bg-destructive/[0.03] border-destructive/20 overflow-hidden">
+            <CardContent className="p-6 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center shrink-0">
+                  <AlertTriangle className="w-5 h-5 text-destructive" />
+                </div>
+                <div>
+                  <p className={cn(tokens.label.default, 'text-destructive text-sm')}>
+                    Money You May Be Losing Every Month
+                  </p>
+                  <p className="text-xs text-muted-foreground font-sans mt-0.5">
+                    Without Zura Backroom, these costs go undetected and unrecovered.
+                  </p>
+                </div>
+              </div>
+
+              {estimateLoading ? (
+                <div className="grid grid-cols-3 gap-4">
+                  <Skeleton className="h-20 rounded-lg" />
+                  <Skeleton className="h-20 rounded-lg" />
+                  <Skeleton className="h-20 rounded-lg" />
+                </div>
+              ) : estimate ? (
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="p-4 rounded-lg bg-destructive/5 border border-destructive/15 text-center">
+                      <p className="font-display text-2xl tracking-wide text-destructive">
+                        <AnimatedNumber value={wasteSavings} prefix="$" duration={1000} />
+                      </p>
+                      <p className="text-xs text-muted-foreground font-sans mt-1">
+                        product waste / mo
+                      </p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-destructive/5 border border-destructive/15 text-center">
+                      <p className="font-display text-2xl tracking-wide text-destructive">
+                        <AnimatedNumber value={monthlyAuditCost} prefix="$" duration={1000} />
+                      </p>
+                      <p className="text-xs text-muted-foreground font-sans mt-1">
+                        staff time wasted / mo
+                      </p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-destructive/5 border border-destructive/15 text-center">
+                      <p className="font-display text-2xl tracking-wide text-destructive">
+                        <AnimatedNumber value={supplyRecovery} prefix="$" duration={1000} />
+                      </p>
+                      <p className="text-xs text-muted-foreground font-sans mt-1">
+                        unrecovered supply costs / mo
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Total monthly loss */}
+                  <div className="flex items-center justify-center gap-3 pt-2">
+                    <div className="h-px flex-1 bg-destructive/20" />
+                    <div className="text-center">
+                      <p className="text-xs text-muted-foreground font-sans">Estimated total monthly loss</p>
+                      <p className="font-display text-3xl tracking-wide text-destructive mt-1">
+                        <AnimatedNumber value={totalSavings} prefix="$" duration={1200} />
+                        <span className="text-base text-destructive/60 ml-1">/mo</span>
+                      </p>
+                    </div>
+                    <div className="h-px flex-1 bg-destructive/20" />
+                  </div>
+
+                  {!estimate.hasRealData && (
+                    <p className="text-[10px] text-muted-foreground font-sans text-center italic">
+                      Based on industry averages for {manualStylistCount} stylist{manualStylistCount !== 1 ? 's' : ''}.
+                      Adjust below for a personalized estimate.
+                    </p>
+                  )}
+                </>
+              ) : null}
+            </CardContent>
+          </Card>
+        )}
 
         {/* ── TWO-COLUMN LAYOUT ── */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8">
 
-          {/* ════ LEFT COLUMN (scrollable) ════ */}
+          {/* ════ LEFT COLUMN (scrollable) — Reordered for conversion ════ */}
           <div className="space-y-6">
-            {/* Feature Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
-              {features.map((f) => (
-                <Card key={f.title} className="bg-card/60 border-border/40">
-                  <CardContent className="p-4 flex gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                      <f.icon className="w-4 h-4 text-primary" />
-                    </div>
-                    <div>
-                      <p className={cn(tokens.label.default, 'text-sm text-foreground')}>{f.title}</p>
-                      <p className="text-xs text-muted-foreground font-sans mt-0.5">{f.description}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
 
-            {/* Your Salon's Numbers (metrics only) */}
+            {/* 1. Your Salon's Numbers (personalized proof — moved up) */}
             <Card className="bg-card/60 border-border/40">
               <CardContent className="p-5 space-y-3">
                 <p className={cn(tokens.label.default, 'text-foreground text-xs flex items-center gap-2')}>
@@ -435,7 +516,7 @@ export function BackroomPaywall() {
               </CardContent>
             </Card>
 
-            {/* Time You're Losing Today */}
+            {/* 2. Time Your Team Loses (pain reinforcement) */}
             <Card className="bg-card/60 border-border/40">
               <CardContent className="p-5 space-y-4">
                 <div className="flex items-center gap-3">
@@ -494,6 +575,23 @@ export function BackroomPaywall() {
               </CardContent>
             </Card>
 
+            {/* 3. Feature Grid (the solution — moved down) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
+              {features.map((f) => (
+                <Card key={f.title} className="bg-card/60 border-border/40">
+                  <CardContent className="p-4 flex gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                      <f.icon className="w-4 h-4 text-primary" />
+                    </div>
+                    <div>
+                      <p className={cn(tokens.label.default, 'text-sm text-foreground')}>{f.title}</p>
+                      <p className="text-xs text-muted-foreground font-sans mt-0.5">{f.description}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
             {/* Estimates Disclaimer */}
             <div className="flex gap-2 items-start p-3 rounded-lg bg-muted/20 border border-border/30">
               <Info className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
@@ -502,7 +600,7 @@ export function BackroomPaywall() {
               </p>
             </div>
 
-            {/* Pricing Overview */}
+            {/* 4. Pricing Overview */}
             <Card className="bg-card/60 border-border/40">
               <CardContent className="p-5 space-y-3">
                 <div className="flex items-center gap-3">
@@ -538,7 +636,7 @@ export function BackroomPaywall() {
               </CardContent>
             </Card>
 
-            {/* Location Selector */}
+            {/* 5. Location Selector */}
             {activeLocations.length > 0 && (
               <Card className="bg-card/60 border-border/40">
                 <CardContent className="p-5">
@@ -615,7 +713,7 @@ export function BackroomPaywall() {
               </Card>
             )}
 
-            {/* Scale Configurator */}
+            {/* 6. Scale Configurator */}
             <Card className="bg-card/60 border-border/40">
               <CardContent className="p-5">
                 <div className="flex items-center justify-between gap-4">
@@ -657,7 +755,7 @@ export function BackroomPaywall() {
               </CardContent>
             </Card>
 
-            {/* Money-Back Guarantee */}
+            {/* 7. Money-Back Guarantee */}
             <Card className="bg-emerald-500/5 border-emerald-500/20">
               <CardContent className="p-5 flex items-center gap-4">
                 <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center shrink-0">
@@ -672,7 +770,7 @@ export function BackroomPaywall() {
               </CardContent>
             </Card>
 
-            {/* ROI callout */}
+            {/* 8. ROI callout */}
             <Card className="bg-primary/5 border-primary/20">
               <CardContent className="p-5 text-center">
                 {estimate && locationCount > 0 && netBenefit > 0 ? (
