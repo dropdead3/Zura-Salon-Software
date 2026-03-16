@@ -425,6 +425,28 @@ async function handleCheckoutCompleted(
       console.log(`Created ${locationPlans.length} location entitlement(s) for org ${orgId}`);
     }
   }
+
+  // 4. Create hardware order record for physical scale fulfillment
+  if (scaleCount > 0) {
+    const { error: hwError } = await supabase
+      .from('hardware_orders')
+      .insert({
+        organization_id: orgId,
+        stripe_checkout_session_id: session.id as string,
+        stripe_subscription_id: stripeSubId,
+        item_type: 'precision_scale',
+        quantity: scaleCount,
+        unit_price_cents: 19900,
+        fulfillment_status: 'pending',
+        notes: `Auto-created from checkout — ${scaleCount} scale(s), ${billingInterval} billing`,
+      });
+
+    if (hwError) {
+      console.error("Failed to create hardware order:", hwError);
+    } else {
+      console.log(`Hardware order created: ${scaleCount} scale(s) for org ${orgId}`);
+    }
+  }
 }
 
 // Handler for customer.subscription.deleted
