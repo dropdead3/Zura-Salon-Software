@@ -407,7 +407,7 @@ export function BackroomPaywall() {
         {/* ═══════════════════════════════════════════
             SECTION 1 — HERO
             ═══════════════════════════════════════════ */}
-        <section className="pt-4 pb-20 md:pb-24">
+        <section className="pt-4 pb-24 md:pb-32">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
             {/* Left — Text */}
             <div className="space-y-8 text-center lg:text-left">
