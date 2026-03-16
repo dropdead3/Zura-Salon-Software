@@ -176,12 +176,12 @@ export function PlatformImportTemplatesTab() {
             <div className="space-y-2">
               <Label className="text-slate-300">Source System</Label>
               <Select value={selectedSource} onValueChange={setSelectedSource}>
-                <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-900 border-slate-700">
+                <SelectContent>
                   {SOURCE_SYSTEMS.map(source => (
-                    <SelectItem key={source.value} value={source.value} className="text-slate-300">
+                    <SelectItem key={source.value} value={source.value}>
                       {source.label}
                     </SelectItem>
                   ))}
@@ -191,12 +191,12 @@ export function PlatformImportTemplatesTab() {
             <div className="space-y-2">
               <Label className="text-slate-300">Entity Type</Label>
               <Select value={selectedEntity} onValueChange={setSelectedEntity}>
-                <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-900 border-slate-700">
+                <SelectContent>
                   {ENTITY_TYPES.map(entity => (
-                    <SelectItem key={entity.value} value={entity.value} className="text-slate-300">
+                    <SelectItem key={entity.value} value={entity.value}>
                       {entity.label}
                     </SelectItem>
                   ))}
