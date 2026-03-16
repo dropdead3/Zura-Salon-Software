@@ -2,13 +2,12 @@ import { useState, useEffect, useRef } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import {
-  Beaker, BarChart3, Zap, ArrowRight, Loader2,
-  Scale, Droplets, ShieldCheck, MapPin, TrendingUp, DollarSign, Star,
+  Beaker, BarChart3, ArrowRight, Loader2,
+  Scale, ShieldCheck, MapPin, TrendingUp, DollarSign, Star,
   Info, Clock, AlertTriangle, CheckCircle2, XCircle,
-  Brain, Users, PackageSearch, ChevronRight,
-  Calendar, Timer,
+  Brain, PackageSearch, ChevronRight,
+  Timer,
 } from 'lucide-react';
-import { Eyebrow } from '@/components/ui/Eyebrow';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -320,13 +319,13 @@ export function BackroomPaywall() {
 
   /* ─── Section heading helper ─── */
   const SectionHeading = ({ children }: { children: React.ReactNode }) => (
-    <h2 className="font-display text-2xl md:text-3xl font-medium tracking-wide text-center text-foreground">
+    <h2 className="font-display text-2xl md:text-3xl font-medium tracking-wide text-center text-foreground uppercase">
       {children}
     </h2>
   );
 
   return (
-    <div className="flex flex-col items-center justify-center px-6 sm:px-8 py-10 md:py-14">
+    <div className="flex flex-col items-center justify-center px-6 sm:px-8 py-12 md:py-16">
       <div className="max-w-[1100px] w-full">
 
         {/* ═══════════════════════════════════════════
@@ -340,7 +339,7 @@ export function BackroomPaywall() {
                 <h1 className="font-display text-3xl md:text-4xl lg:text-5xl font-medium tracking-wide leading-[1.08]">
                   Stop Losing Money in Your Color Room
                 </h1>
-                <p className="text-muted-foreground text-lg md:text-xl max-w-xl mx-auto lg:mx-0 font-sans leading-relaxed mt-1">
+                <p className="text-muted-foreground text-lg md:text-xl max-w-xl mx-auto lg:mx-0 font-sans leading-relaxed">
                   Track every gram. Recover supply costs. Reorder before you run out.
                 </p>
               </div>
@@ -366,7 +365,7 @@ export function BackroomPaywall() {
             <SectionHeading>
               How Zura Backroom Transforms Your Color Room
             </SectionHeading>
-            <p className="mt-4 text-base md:text-lg text-muted-foreground font-sans font-light max-w-xl mx-auto">
+            <p className="mt-4 text-base text-muted-foreground font-sans font-light max-w-xl mx-auto">
               From guesswork to a controlled, measurable system.
             </p>
           </div>
@@ -380,11 +379,11 @@ export function BackroomPaywall() {
             </div>
 
             {/* WITHOUT — deliberately muted */}
-            <Card className="bg-card/50 border-destructive/15 shadow-sm">
+            <Card className="bg-card/50 border-destructive/20 shadow-sm">
               <CardContent className="p-6 md:p-8">
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-11 h-11 md:w-12 md:h-12 rounded-xl bg-destructive/10 ring-1 ring-destructive/10 flex items-center justify-center shrink-0">
-                    <XCircle className="w-5 h-5 md:w-6 md:h-6 text-destructive" />
+                  <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center shrink-0">
+                    <XCircle className="w-5 h-5 text-destructive" />
                   </div>
                   <h3 className="font-display text-base tracking-wide uppercase text-destructive">Without Backroom</h3>
                 </div>
@@ -400,7 +399,7 @@ export function BackroomPaywall() {
                   ].map((item) => (
                     <li key={item} className="flex items-start gap-3">
                       <XCircle className="w-4 h-4 text-destructive mt-0.5 shrink-0" />
-                      <span className="text-[15px] font-sans text-muted-foreground">{item}</span>
+                      <span className="text-sm font-sans text-muted-foreground">{item}</span>
                     </li>
                   ))}
                 </ul>
@@ -408,11 +407,11 @@ export function BackroomPaywall() {
             </Card>
 
             {/* WITH — elevated, the "winning" side */}
-            <Card className="bg-success/[0.05] border-success/20 shadow-md ring-1 ring-success/10">
+            <Card className="bg-success/[0.05] border-success/20 shadow-md">
               <CardContent className="p-6 md:p-8">
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-11 h-11 md:w-12 md:h-12 rounded-xl bg-success/10 ring-1 ring-success/10 flex items-center justify-center shrink-0">
-                    <CheckCircle2 className="w-5 h-5 md:w-6 md:h-6 text-success" />
+                  <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center shrink-0">
+                    <CheckCircle2 className="w-5 h-5 text-success" />
                   </div>
                   <h3 className="font-display text-base tracking-wide uppercase text-success">With Backroom</h3>
                 </div>
@@ -428,7 +427,7 @@ export function BackroomPaywall() {
                   ].map((item) => (
                     <li key={item} className="flex items-start gap-3">
                       <CheckCircle2 className="w-4 h-4 text-success mt-0.5 shrink-0" />
-                      <span className="text-[15px] font-sans text-foreground">{item}</span>
+                      <span className="text-sm font-sans text-foreground">{item}</span>
                     </li>
                   ))}
                 </ul>
@@ -441,12 +440,12 @@ export function BackroomPaywall() {
             SOCIAL PROOF (relocated after Before/After)
             ═══════════════════════════════════════════ */}
         <div className="pb-16 md:pb-20 flex flex-col items-center gap-4 max-w-2xl mx-auto text-center">
-          <div className="flex gap-1.5">
+          <div className="flex gap-2">
             {[...Array(5)].map((_, i) => (
               <Star key={i} className="h-5 w-5 fill-[hsl(var(--oat))] text-[hsl(var(--oat))]" />
             ))}
           </div>
-          <blockquote className="space-y-3 mt-2">
+          <blockquote className="space-y-3">
             <p className="text-muted-foreground text-lg md:text-xl font-sans leading-relaxed italic">
               "Zura Backroom saved us thousands per month and helps us recoup over $50,000 a year in color costs. 10/10 add-on feature."
             </p>
@@ -469,7 +468,7 @@ export function BackroomPaywall() {
                       <AlertTriangle className="w-5 h-5 text-destructive" />
                     </div>
                     <div>
-                      <p className="font-sans text-base md:text-lg font-medium text-destructive">
+                      <p className="font-sans text-base font-medium text-destructive">
                         What Your Color Room Is Costing You Right Now
                       </p>
                       <p className="text-sm text-muted-foreground font-sans mt-1">
@@ -492,8 +491,8 @@ export function BackroomPaywall() {
                           { value: monthlyAuditCost, label: 'staff time wasted / mo' },
                           { value: supplyRecovery, label: 'unrecovered supply costs / mo' },
                         ].map((tile) => (
-                          <div key={tile.label} className="p-5 rounded-xl bg-destructive/5 border border-destructive/15 text-center shadow-sm">
-                            <p className="font-display text-2xl md:text-3xl tracking-wide text-destructive tabular-nums">
+                          <div key={tile.label} className="p-5 rounded-lg bg-destructive/5 border border-destructive/20 text-center shadow-sm">
+                            <p className="font-display text-2xl md:text-3xl font-medium tracking-wide text-destructive tabular-nums">
                               <AnimatedNumber
                                 value={tile.value}
                                 duration={1200}
@@ -505,7 +504,7 @@ export function BackroomPaywall() {
                         ))}
                       </div>
 
-                      <div className="flex items-center gap-3 p-4 rounded-xl bg-muted/30 border border-border/40">
+                      <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/30 border border-border/40">
                         <Clock className="w-4 h-4 text-muted-foreground shrink-0" />
                         <div className="flex-1">
                           <p className="font-sans text-sm text-foreground">
@@ -789,9 +788,9 @@ export function BackroomPaywall() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 md:gap-6">
               {howItWorks.map((step) => (
                 <Card key={step.step} className="bg-card border-border/50 shadow-sm">
-                  <CardContent className="p-6 space-y-3">
-                    <span className="font-display text-2xl tracking-wider text-primary/20">{step.step}</span>
-                    <p className="font-sans text-lg font-medium text-foreground">{step.title}</p>
+                  <CardContent className="p-6 md:p-8 space-y-3">
+                    <span className="font-display text-2xl tracking-wide text-primary/20">{step.step}</span>
+                    <p className="font-sans text-base font-medium text-foreground">{step.title}</p>
                     <p className="text-sm text-muted-foreground font-sans leading-relaxed">{step.description}</p>
                   </CardContent>
                 </Card>
@@ -804,18 +803,18 @@ export function BackroomPaywall() {
             SECTION 7 — PRICING + ROI
             ═══════════════════════════════════════════ */}
         <section className="pb-16 md:pb-20">
-          <div className="space-y-8 md:space-y-10">
+          <div className="space-y-8 md:space-y-12">
             <SectionHeading>Pricing</SectionHeading>
 
             <Card className="bg-card border-border/50 shadow-md">
               <CardContent className="p-6 md:p-8 space-y-6">
                 <div className="grid grid-cols-2 gap-5">
-                  <div className="p-5 rounded-xl bg-muted/30 border border-border/40 text-center">
-                    <p className="font-display text-3xl tracking-wide text-foreground">${BACKROOM_BASE_PRICE}</p>
+                  <div className="p-5 rounded-lg bg-muted/30 border border-border/40 text-center">
+                    <p className="font-display text-3xl font-medium tracking-wide text-foreground">${BACKROOM_BASE_PRICE}</p>
                     <p className="text-sm text-muted-foreground font-sans mt-2">per location / month</p>
                   </div>
-                  <div className="p-5 rounded-xl bg-muted/30 border border-border/40 text-center">
-                    <p className="font-display text-3xl tracking-wide text-foreground">${BACKROOM_PER_SERVICE_FEE.toFixed(2)}</p>
+                  <div className="p-5 rounded-lg bg-muted/30 border border-border/40 text-center">
+                    <p className="font-display text-3xl font-medium tracking-wide text-foreground">${BACKROOM_PER_SERVICE_FEE.toFixed(2)}</p>
                     <p className="text-sm text-muted-foreground font-sans mt-2">per color service</p>
                   </div>
                 </div>
@@ -832,10 +831,10 @@ export function BackroomPaywall() {
 
                 {/* Annual impact summary */}
                 {hasPositiveBenefit && estimate && (
-                  <div className="rounded-xl bg-gradient-to-br from-success/5 to-primary/5 border border-success/20 p-6 space-y-4">
+                  <div className="rounded-lg bg-success/5 border border-success/20 p-6 space-y-4">
                     <div className="flex items-center justify-center gap-2">
                       <TrendingUp className="w-4 h-4 text-success" />
-                      <p className="font-display text-xs tracking-wider text-success">Projected Annual Impact</p>
+                      <p className="font-display text-xs tracking-wide text-success">Projected Annual Impact</p>
                     </div>
                     <div className="text-center">
                       <p className="font-display text-3xl md:text-4xl tracking-wide text-success">
@@ -895,7 +894,7 @@ export function BackroomPaywall() {
                       const loc = activeLocations[0];
                       const cityLabel = loc.city ? loc.city.split(',')[0]?.trim() : '';
                       return (
-                        <div className="flex items-center gap-3 px-4 py-4 rounded-xl bg-primary/5 border border-primary/30">
+                        <div className="flex items-center gap-3 px-4 py-4 rounded-lg bg-primary/5 border border-primary/30">
                           <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
@@ -918,7 +917,7 @@ export function BackroomPaywall() {
                             <div
                               key={loc.id}
                               className={cn(
-                                'flex items-center gap-3 px-4 py-4 rounded-xl transition-all duration-150 cursor-pointer',
+                                'flex items-center gap-3 px-4 py-4 rounded-lg transition-all duration-150 cursor-pointer',
                                 isChecked ? 'bg-primary/5 border border-primary/30' : 'border border-transparent hover:bg-accent/30',
                               )}
                               onClick={() => toggleLocation(loc.id)}
@@ -960,7 +959,7 @@ export function BackroomPaywall() {
                     <Scale className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <p className="font-sans text-base md:text-lg font-medium text-foreground">Precision Scales</p>
+                    <p className="font-sans text-base font-medium text-foreground">Precision Scales</p>
                     <p className="text-sm text-muted-foreground font-sans mt-1">
                       Connect to your mixing stations via Bluetooth.
                     </p>
@@ -968,18 +967,18 @@ export function BackroomPaywall() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-5">
-                  <div className="p-5 rounded-xl bg-muted/30 border border-border/40 text-center">
-                    <p className="font-display text-2xl tracking-wide text-foreground">${SCALE_HARDWARE_PRICE}</p>
+                  <div className="p-5 rounded-lg bg-muted/30 border border-border/40 text-center">
+                    <p className="font-display text-2xl font-medium tracking-wide text-foreground">${SCALE_HARDWARE_PRICE}</p>
                     <p className="text-sm text-muted-foreground font-sans mt-2">per scale (one-time)</p>
                   </div>
-                  <div className="p-5 rounded-xl bg-muted/30 border border-border/40 text-center">
-                    <p className="font-display text-2xl tracking-wide text-foreground">${SCALE_LICENSE_MONTHLY}</p>
+                  <div className="p-5 rounded-lg bg-muted/30 border border-border/40 text-center">
+                    <p className="font-display text-2xl font-medium tracking-wide text-foreground">${SCALE_LICENSE_MONTHLY}</p>
                     <p className="text-sm text-muted-foreground font-sans mt-2">per scale / month</p>
                   </div>
                 </div>
 
                 {/* Recommendation summary */}
-                <div className="flex items-center justify-between p-4 rounded-xl bg-primary/5 border border-primary/20">
+                <div className="flex items-center justify-between p-4 rounded-lg bg-primary/5 border border-primary/20">
                   <div className="space-y-1">
                     <p className="font-sans text-sm text-foreground font-medium">
                       {recommendedScales} scale{recommendedScales !== 1 ? 's' : ''} recommended
@@ -1021,7 +1020,7 @@ export function BackroomPaywall() {
                 )}
 
                 {/* iPad requirement */}
-                <div className="flex items-start gap-3 p-4 rounded-xl bg-muted/30 border border-border/40">
+                <div className="flex items-start gap-3 p-4 rounded-lg bg-muted/30 border border-border/40">
                   <Info className="w-4 h-4 text-muted-foreground/60 shrink-0 mt-0.5" />
                   <p className="text-sm text-muted-foreground font-sans">
                     Each station uses an iPad with Bluetooth for the mixing interface. A tablet stand is recommended.
@@ -1040,8 +1039,8 @@ export function BackroomPaywall() {
             {/* 30-Day Guarantee */}
             <Card className="bg-success/5 border-success/20 shadow-sm">
               <CardContent className="p-6 md:p-8 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-success/10 flex items-center justify-center shrink-0">
-                  <ShieldCheck className="w-6 h-6 text-success" />
+                <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center shrink-0">
+                  <ShieldCheck className="w-5 h-5 text-success" />
                 </div>
                 <div>
                   <p className="font-sans text-base font-medium text-success">30-Day Money-Back Guarantee</p>
@@ -1055,7 +1054,7 @@ export function BackroomPaywall() {
             {/* FAQ */}
             <Card className="bg-card border-border/50 shadow-sm">
               <CardContent className="p-6 md:p-8 space-y-4">
-                <p className="font-sans text-base font-medium text-foreground">Common Questions</p>
+                <p className="font-display text-base font-medium tracking-wide text-foreground">Common Questions</p>
                 <Accordion type="single" collapsible className="w-full">
                   {faqItems.map((item, i) => (
                     <AccordionItem key={i} value={`faq-${i}`} className="border-border/30">
@@ -1076,7 +1075,7 @@ export function BackroomPaywall() {
         {/* ═══════════════════════════════════════════
             SECTION 9 — FINAL CTA
             ═══════════════════════════════════════════ */}
-        <section className="border-t border-border/20 pt-16 pb-8 text-center space-y-6">
+        <section className="border-t border-border/20 pt-16 pb-12 text-center space-y-6">
           {hasPositiveBenefit && estimate ? (
             <p className="font-sans text-base text-muted-foreground">
               Projected to recover {formatCurrency(yearlySavings)} annually{roiMultiplier >= 2 ? ` — ${roiMultiplier}× your cost` : ''}.

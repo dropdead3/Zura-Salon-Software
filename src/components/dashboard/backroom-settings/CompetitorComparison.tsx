@@ -71,7 +71,7 @@ const columns = [
 export function CompetitorComparison() {
   return (
     <div className="space-y-8 md:space-y-10">
-      <h2 className="font-display text-2xl md:text-3xl font-medium tracking-wide text-center text-foreground uppercase">
+      <h2 className="font-display text-2xl md:text-3xl font-medium tracking-wide text-center text-foreground">
         How Zura Backroom Compares
       </h2>
 
@@ -83,12 +83,12 @@ export function CompetitorComparison() {
               {/* Column Headers */}
               <thead>
                 <tr className="border-b border-border/40">
-                  <th className="text-left px-5 py-4 w-[40%]">
+                  <th className="text-left px-6 py-4 w-[40%]">
                     <span className="font-sans text-sm text-muted-foreground">Feature</span>
                   </th>
                   {columns.map((col) => (
                     <th key={col.key} className={cn(
-                      'text-center px-5 py-4 w-[20%]',
+                      'text-center px-6 py-4 w-[20%]',
                       col.key === 'zura' && 'bg-primary/[0.03]',
                     )}>
                       <span className={cn(
@@ -107,7 +107,7 @@ export function CompetitorComparison() {
                   <React.Fragment key={`cat-${catIdx}`}>
                     {/* Category header */}
                     <tr className="bg-muted/20">
-                      <td colSpan={4} className="px-5 py-3">
+                      <td colSpan={4} className="px-6 py-3">
                         <span className="font-display text-[10px] tracking-wider text-muted-foreground">
                           {category.category}
                         </span>
@@ -120,12 +120,12 @@ export function CompetitorComparison() {
                         key={`row-${catIdx}-${rowIdx}`}
                         className="border-b border-border/20 last:border-0 transition-colors duration-150 hover:bg-muted/10"
                       >
-                        <td className="px-5 py-4">
+                        <td className="px-6 py-4">
                           <span className="font-sans text-sm text-foreground">{row.feature}</span>
                         </td>
                         {columns.map((col) => (
                           <td key={col.key} className={cn(
-                            'text-center px-5 py-4',
+                            'text-center px-6 py-4',
                             col.key === 'zura' && 'bg-primary/[0.03]',
                           )}>
                             <div className="flex justify-center">
@@ -140,19 +140,19 @@ export function CompetitorComparison() {
 
                 {/* Pricing row */}
                 <tr className="bg-muted/20">
-                      <td colSpan={4} className="px-5 py-3">
+                      <td colSpan={4} className="px-6 py-3">
                     <span className="font-display text-[10px] tracking-wider text-muted-foreground">
                       Pricing
                     </span>
                   </td>
                 </tr>
                 <tr className="border-b border-border/20 last:border-0">
-                  <td className="px-5 py-4">
+                  <td className="px-6 py-4">
                     <span className="font-sans text-sm text-foreground">Monthly cost</span>
                   </td>
                   {columns.map((col) => (
                     <td key={col.key} className={cn(
-                      'text-center px-5 py-4',
+                      'text-center px-6 py-4',
                       col.key === 'zura' && 'bg-primary/[0.03]',
                     )}>
                       <div className="space-y-1">
