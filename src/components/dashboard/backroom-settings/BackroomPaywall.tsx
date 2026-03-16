@@ -822,16 +822,18 @@ export function BackroomPaywall() {
             ═══════════════════════════════════════════ */}
         <section className="pb-16 md:pb-20">
           <div className="space-y-8 md:space-y-10">
-            <SectionHeading>How It Works</SectionHeading>
+            <RevealOnScroll><SectionHeading>How It Works</SectionHeading></RevealOnScroll>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 md:gap-6">
-              {howItWorks.map((step) => (
-                <Card key={step.step} className="bg-card border-border/50 shadow-sm hover-lift">
-                  <CardContent className="p-6 md:p-8 space-y-3">
-                    <span className="font-display text-2xl tracking-wider text-primary/20">{step.step}</span>
-                    <p className="font-sans text-lg font-medium text-foreground">{step.title}</p>
-                    <p className="text-sm text-muted-foreground font-sans leading-relaxed">{step.description}</p>
-                  </CardContent>
-                </Card>
+              {howItWorks.map((step, i) => (
+                <RevealOnScroll key={step.step} delay={i * 100}>
+                  <Card className="bg-card border-border/50 shadow-sm hover:shadow-md transition-shadow duration-200 hover-lift">
+                    <CardContent className="p-6 md:p-8 space-y-3">
+                      <span className="font-display text-2xl tracking-wider text-primary/20">{step.step}</span>
+                      <p className="font-sans text-lg font-medium text-foreground">{step.title}</p>
+                      <p className="text-sm text-muted-foreground font-sans leading-relaxed">{step.description}</p>
+                    </CardContent>
+                  </Card>
+                </RevealOnScroll>
               ))}
             </div>
           </div>
