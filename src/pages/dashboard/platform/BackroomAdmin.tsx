@@ -41,7 +41,7 @@ export default function BackroomAdmin() {
           </TabsTrigger>
           <TabsTrigger value="entitlements" className={`${tabTriggerClass} flex items-center gap-1.5`}>
             <Building2 className="w-3.5 h-3.5" />
-            Entitlements
+            App Access
           </TabsTrigger>
           <TabsTrigger value="library" className={`${tabTriggerClass} flex items-center gap-1.5`}>
             <Package className="w-3.5 h-3.5" />
