@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import {
   Beaker, BarChart3, Shield, Zap, ArrowRight, Loader2,
   Scale, Droplets, ShieldCheck, MapPin, TrendingUp, DollarSign, Star,
-  Info, Clock, AlertTriangle, CheckCircle2,
+  Info, Clock, AlertTriangle, CheckCircle2, XCircle,
   Brain, Users, PackageSearch, ChevronRight,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -416,6 +416,82 @@ export function BackroomPaywall() {
             ═══════════════════════════════════════════ */}
         <section className="pb-20 md:pb-24">
           <ProductPreview />
+        </section>
+
+        {/* ═══════════════════════════════════════════
+            SECTION 1.75 — BEFORE / AFTER TRANSFORMATION
+            ═══════════════════════════════════════════ */}
+        <section className="pb-20 md:pb-24">
+          <div className="text-center mb-10 md:mb-12">
+            <h2 className="font-display text-2xl md:text-3xl font-normal tracking-wide uppercase text-foreground">
+              How Zura Backroom Transforms Your Color Room
+            </h2>
+            <p className="mt-4 text-base md:text-lg text-muted-foreground font-sans font-light max-w-xl mx-auto">
+              From guesswork to a controlled, measurable system.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
+            {/* WITHOUT */}
+            <Card className="bg-destructive/[0.03] border-destructive/20 hover-lift">
+              <CardContent className="p-6 md:p-8">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center shrink-0">
+                    <XCircle className="w-5 h-5 text-destructive" />
+                  </div>
+                  <h3 className="font-display text-base tracking-wide uppercase text-destructive">Without Backroom</h3>
+                </div>
+                <ul className="space-y-3.5">
+                  {[
+                    "Stylists guess how much color to mix",
+                    "Formulas are scribbled in notebooks or forgotten",
+                    "Assistants mix bowls without standard measurements",
+                    "Inventory runs out mid-service without warning",
+                    "Product costs per service are unknown",
+                    "Chemical waste goes untracked",
+                    "Service profitability is a blind spot",
+                  ].map((item) => (
+                    <li key={item} className="flex items-start gap-3">
+                      <XCircle className="w-4 h-4 text-destructive/60 mt-0.5 shrink-0" />
+                      <span className="text-sm font-sans text-muted-foreground">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+
+            {/* WITH */}
+            <Card className="bg-success/[0.03] border-success/20 hover-lift">
+              <CardContent className="p-6 md:p-8">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center shrink-0">
+                    <CheckCircle2 className="w-5 h-5 text-success" />
+                  </div>
+                  <h3 className="font-display text-base tracking-wide uppercase text-success">With Backroom</h3>
+                </div>
+                <ul className="space-y-3.5">
+                  {[
+                    "Every formula is saved automatically per client",
+                    "Stylists see the last formula instantly at the chair",
+                    "Assistants prep bowls from guided mixing screens",
+                    "Product usage is tracked to the gram",
+                    "Inventory shortages are predicted before they happen",
+                    "Waste is visible, measurable, and reducible",
+                    "Service-level profitability becomes clear",
+                  ].map((item) => (
+                    <li key={item} className="flex items-start gap-3">
+                      <CheckCircle2 className="w-4 h-4 text-success/60 mt-0.5 shrink-0" />
+                      <span className="text-sm font-sans text-muted-foreground">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="flex justify-center pt-8">
+            <ActivateButton />
+          </div>
         </section>
 
         {/* ═══════════════════════════════════════════
