@@ -1097,13 +1097,12 @@ export function BackroomPaywall() {
         onOpenChange={setConfirmDialogOpen}
         onConfirm={handleCheckout}
         loading={loading}
+        organizationId={effectiveOrganization?.id}
         locationCount={locationCount}
         scaleCount={scaleCount}
-        baseCost={baseCost}
-        scaleCost={scaleCost}
-        usageFee={usageFee}
-        monthlyTotal={monthlyTotal}
-        hardwareTotal={hardwareTotal}
+        estimatedMonthlyServices={estimate ? Math.round(estimate.monthlyColorServices * locationFraction) : 0}
+        estimatedMonthlySavings={totalSavings}
+        netBenefit={netBenefit}
       />
     </div>
   );
