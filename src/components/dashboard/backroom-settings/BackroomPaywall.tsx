@@ -865,8 +865,8 @@ export function BackroomPaywall() {
                           })}
                         </div>
                         <div className="flex items-center gap-2 pt-1">
-                          <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                          <span className="font-sans text-sm text-emerald-600">Bowl complete — formula saved</span>
+                          <CheckCircle2 className="w-4 h-4 text-success" />
+                          <span className="font-sans text-sm text-success">Bowl complete — formula saved</span>
                         </div>
                       </div>
                     )}
