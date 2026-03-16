@@ -32,6 +32,7 @@ import { logPlatformAction } from '@/hooks/useOrganizations';
 import { useOrganizationWithStats, type OrganizationWithStats } from '@/hooks/useOrganizations';
 import { EditOrganizationDialog } from '@/components/platform/EditOrganizationDialog';
 import { AccountIntegrationsCard } from '@/components/platform/account/AccountIntegrationsCard';
+import { AccountAppsCard } from '@/components/platform/account/AccountAppsCard';
 import { MigrationCredentialsCard } from '@/components/platform/account/MigrationCredentialsCard';
 import { AccountUsersTab } from '@/components/platform/account/AccountUsersTab';
 import { AccountSettingsTab } from '@/components/platform/account/AccountSettingsTab';
