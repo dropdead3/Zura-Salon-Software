@@ -65,6 +65,22 @@ export const tokens = {
   },
 
   // ========================================
+  // PLATFORM KPI TILE TOKENS (Dark Theme)
+  // ========================================
+  platformKpi: {
+    /** Dark-themed KPI tile container */
+    tile: 'rounded-xl border border-slate-700/50 bg-slate-800/50 p-4 flex flex-col gap-1',
+    /** Dark-themed KPI tile label: Termina, 11px, uppercase, tracked */
+    label: 'font-display text-[11px] font-medium text-slate-400 uppercase tracking-wider',
+    /** Dark-themed KPI tile value: Termina, xl, medium */
+    value: 'font-display text-xl font-medium text-white',
+    /** KPI trend badge: 10px, medium */
+    change: 'text-[10px] font-medium',
+    /** Info icon pinned to top-right of KPI tile */
+    infoIcon: 'absolute top-4 right-4',
+  },
+
+  // ========================================
   // CARD TOKENS
   // ========================================
   card: {
