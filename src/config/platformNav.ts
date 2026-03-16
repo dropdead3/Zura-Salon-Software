@@ -6,6 +6,7 @@ import type { LucideIcon } from 'lucide-react';
 import {
   Terminal,
   Building2,
+  HelpCircle,
   Upload,
   DollarSign,
   Shield,
