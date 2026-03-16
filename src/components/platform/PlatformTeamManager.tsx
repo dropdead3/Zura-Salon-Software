@@ -11,7 +11,7 @@ import {
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel,
+  PlatformAlertDialogCancel as AlertDialogCancel,
   PlatformAlertDialogContent as AlertDialogContent,
   PlatformAlertDialogDescription as AlertDialogDescription,
   AlertDialogFooter,
