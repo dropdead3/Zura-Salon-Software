@@ -191,6 +191,8 @@ export function BackroomEntitlementsTab() {
   const deleteLocEnt = useDeleteLocationEntitlement();
   const sendSetupLink = useSendPaymentSetupLink();
 
+  const queryClient = useQueryClient();
+
   const toggleBackroom = (org: OrgWithBackroom) => {
     if (org.backroom_enabled && org.override_id) {
       deleteFlag.mutate(
@@ -205,7 +207,45 @@ export function BackroomEntitlementsTab() {
           isEnabled: true,
           reason: 'Enabled via Platform Backroom Admin',
         },
-        { onSuccess: () => toast.success(`Backroom enabled for ${org.name}`) }
+        {
+          onSuccess: async () => {
+            try {
+              // Fetch all active locations for this org
+              const { data: locs } = await supabase
+                .from('locations')
+                .select('id')
+                .eq('organization_id', org.id)
+                .eq('is_active', true);
+
+              if (locs && locs.length > 0) {
+                // Upsert active entitlements for all locations
+                await supabase
+                  .from('backroom_location_entitlements')
+                  .upsert(
+                    locs.map((l) => ({
+                      organization_id: org.id,
+                      location_id: l.id,
+                      plan_tier: 'starter',
+                      scale_count: 0,
+                      status: 'active',
+                      billing_interval: 'monthly',
+                      activated_at: new Date().toISOString(),
+                    })),
+                    { onConflict: 'organization_id,location_id' }
+                  );
+
+                queryClient.invalidateQueries({ queryKey: ['platform-backroom-entitlements'] });
+                toast.success(`Backroom enabled for ${org.name} — all locations activated`);
+              } else {
+                toast.success(`Backroom enabled for ${org.name}`);
+              }
+            } catch {
+              // Org flag was set successfully; location entitlements failed silently
+              queryClient.invalidateQueries({ queryKey: ['platform-backroom-entitlements'] });
+              toast.success(`Backroom enabled for ${org.name}`);
+            }
+          },
+        }
       );
     }
   };
