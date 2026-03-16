@@ -107,7 +107,7 @@ export function CompetitorComparison() {
                   <React.Fragment key={`cat-${catIdx}`}>
                     {/* Category header */}
                     <tr className="bg-muted/20">
-                      <td colSpan={4} className="px-5 py-2.5">
+                      <td colSpan={4} className="px-5 py-3">
                         <span className="font-display text-[10px] tracking-wider text-muted-foreground">
                           {category.category}
                         </span>
