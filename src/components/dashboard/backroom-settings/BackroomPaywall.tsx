@@ -842,12 +842,13 @@ export function BackroomPaywall() {
         {/* ═══════════════════════════════════════════
             SECTION 4 — WHAT YOU GET (6 feature cards)
             ═══════════════════════════════════════════ */}
-        <section className="pb-20 md:pb-24 bg-muted/20 -mx-6 sm:-mx-8 px-6 sm:px-8 rounded-2xl pt-10 md:pt-12">
+        <section className="pb-20 md:pb-24 bg-muted/20 -mx-6 sm:-mx-8 px-6 sm:px-8 rounded-2xl pt-10 md:pt-12 shadow-[inset_0_1px_0_0_hsl(var(--border)/0.3)]">
           <div className="space-y-8 md:space-y-10">
-            <SectionHeading>What You Get</SectionHeading>
+            <RevealOnScroll><SectionHeading>What You Get</SectionHeading></RevealOnScroll>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
-              {featureGroups.map((group) => (
-                <Card key={group.title} className="bg-card border-border/50 shadow-sm hover-lift">
+              {featureGroups.map((group, i) => (
+                <RevealOnScroll key={group.title} delay={i * 80}>
+                  <Card className="bg-card border-border/50 shadow-sm hover:shadow-md transition-shadow duration-200 hover-lift">
                   <CardContent className="p-6 md:p-8 space-y-4">
                     <div className="flex items-center gap-3">
                       <div className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center shrink-0">
