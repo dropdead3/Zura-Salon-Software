@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import {
   Package, Beaker, BarChart3, Shield, Zap, ArrowRight, Loader2,
   Minus, Plus, Scale, Droplets, ShieldCheck, MapPin, TrendingDown, DollarSign, Activity,
-  ChevronUp, Info, Clock, Eye, AlertTriangle, CheckCircle2, Lock,
+  ChevronUp, Info, Clock, Eye, AlertTriangle, CheckCircle2, Lock, ClipboardList, Brain,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -47,6 +47,16 @@ const features = [
     icon: Shield,
     title: 'Stop Invisible Losses',
     description: 'Ghost loss detection, reweigh compliance tracking, and variance alerts that catch problems early.',
+  },
+  {
+    icon: ClipboardList,
+    title: 'Blueprint Every Service',
+    description: 'Define step-by-step workflows for every color service — mix, prep, process, rinse — so your team delivers consistency every time.',
+  },
+  {
+    icon: Brain,
+    title: 'Instant Formula Recall',
+    description: 'Smart Mix Assist surfaces each client\'s last formula automatically. No more flipping through notes or guessing ratios.',
   },
 ];
 
@@ -659,6 +669,11 @@ export function BackroomPaywall() {
                     'Automated supply fee recovery',
                     'Predictive reorder alerts',
                     'Cost-per-service analytics',
+                    'Service blueprints for every color workflow',
+                    'Smart Mix Assist with formula memory',
+                    'Client history and formula recall',
+                    'AI-powered supply intelligence',
+                    'Operational task routing and alerts',
                   ].map((item) => (
                     <div key={item} className="flex items-start gap-2">
                       <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
