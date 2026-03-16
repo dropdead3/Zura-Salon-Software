@@ -29,23 +29,41 @@ import { toast } from 'sonner';
 const features = [
   {
     icon: Eye,
-    title: 'Predictive Stock Intelligence',
-    description: 'Knows if you have enough product for tomorrow\'s appointments. No more counting.',
+    title: 'Know Before You Run Out',
+    description: 'See tomorrow\'s color needs based on your appointment book. No more end-of-night counting.',
   },
   {
     icon: Beaker,
-    title: 'Recipe & Mixing',
-    description: 'Define formulas, track dispensed vs leftover, and eliminate chemical waste.',
+    title: 'Track Every Formula',
+    description: 'Record what\'s mixed, measure what\'s used, and see what\'s wasted — per stylist, per service.',
   },
   {
     icon: BarChart3,
-    title: 'Cost Intelligence',
-    description: 'Wholesale price sync, markup calculations, and cost-per-service analytics.',
+    title: 'See Your True Product Costs',
+    description: 'Wholesale price tracking, markup calculations, and cost-per-service visibility across every brand.',
   },
   {
     icon: Shield,
-    title: 'Waste & Compliance',
-    description: 'Ghost loss detection, reweigh compliance, and variance tracking.',
+    title: 'Stop Invisible Losses',
+    description: 'Ghost loss detection, reweigh compliance tracking, and variance alerts that catch problems early.',
+  },
+];
+
+const howItWorks = [
+  {
+    step: '01',
+    title: 'Weigh & Track',
+    description: 'Every color service is measured on a precision scale. Dispensed grams, leftover product, and formulas are recorded automatically.',
+  },
+  {
+    step: '02',
+    title: 'Detect & Reduce',
+    description: 'Ghost losses, product waste, and variance are flagged automatically. You see exactly where product is going.',
+  },
+  {
+    step: '03',
+    title: 'Recover & Reorder',
+    description: 'Bill supply costs back to clients with automated fees. Predictive reorder alerts prevent stockouts.',
   },
 ];
 
