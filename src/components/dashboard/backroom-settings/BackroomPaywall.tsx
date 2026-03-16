@@ -319,7 +319,7 @@ export function BackroomPaywall() {
 
   /* ─── Section heading helper ─── */
   const SectionHeading = ({ children }: { children: React.ReactNode }) => (
-    <h2 className="font-display text-2xl md:text-3xl font-medium tracking-wide text-center text-foreground">
+    <h2 className="font-display text-2xl md:text-3xl font-medium tracking-wide text-center text-foreground uppercase">
       {children}
     </h2>
   );
