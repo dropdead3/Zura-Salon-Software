@@ -344,6 +344,9 @@ export function BackroomPaywall() {
     useEffect(() => {
       const el = ref.current;
       if (!el) return;
+      // Respect reduced motion — show immediately
+      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (prefersReduced) { setVisible(true); return; }
       const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setVisible(true); obs.disconnect(); } }, { threshold: 0.15 });
       obs.observe(el);
       return () => obs.disconnect();
@@ -352,8 +355,8 @@ export function BackroomPaywall() {
       <div
         ref={ref}
         className={cn(
-          'transition-all duration-700 ease-out',
-          visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6',
+          'transition-all duration-500 ease-out',
+          visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3',
           className
         )}
         style={{ transitionDelay: `${delay}ms` }}
