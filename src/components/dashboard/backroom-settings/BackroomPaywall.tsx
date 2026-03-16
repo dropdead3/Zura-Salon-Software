@@ -1346,7 +1346,7 @@ export function BackroomPaywall() {
               <Card className="bg-card border-border/50 shadow-md hover:shadow-lg transition-shadow duration-200 hover-lift">
                 <CardContent className="p-6 md:p-8 space-y-4">
                   <div className="flex items-start gap-3">
-                    <div className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
                       <Users className="w-5 h-5 text-primary" />
                     </div>
                     <div>
