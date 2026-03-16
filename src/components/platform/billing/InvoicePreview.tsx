@@ -94,8 +94,8 @@ export function InvoicePreview({
               {/* Setup Fee */}
               {setupFee > 0 && !setupFeePaid && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Setup Fee (one-time)</span>
-                  <span className="text-foreground">{formatCurrency(setupFee)}</span>
+                  <span className="text-[hsl(var(--platform-foreground-muted))]">Setup Fee (one-time)</span>
+                  <span className="text-[hsl(var(--platform-foreground))]">{formatCurrency(setupFee)}</span>
                 </div>
               )}
 
