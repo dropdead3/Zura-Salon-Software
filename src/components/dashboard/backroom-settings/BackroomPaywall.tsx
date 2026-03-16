@@ -623,16 +623,16 @@ export function BackroomPaywall() {
 
                       {/* Projected Annual Recovery banner */}
                       <div className="border-t border-border/40 pt-6">
-                        <div className="relative rounded-xl overflow-hidden">
+                        <div className="relative rounded-2xl overflow-hidden">
                           {/* Gradient border glow — top and left edges */}
-                          <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-success/40 via-success/20 to-transparent" />
+                          <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-[hsl(145,50%,55%)]/40 via-[hsl(145,50%,55%)]/20 to-transparent" />
                           {/* Inner card */}
-                          <div className="relative m-px rounded-[11px] bg-gradient-to-br from-success/[0.08] via-card/95 to-card p-8 space-y-6 backdrop-blur-xl">
+                          <div className="relative m-px rounded-[29px] bg-gradient-to-br from-[hsl(145,50%,55%)]/[0.08] via-card/95 to-card p-8 space-y-6 backdrop-blur-xl">
                             {/* Header */}
-                            <div className="space-y-1.5 pb-5 border-b border-success/15">
+                            <div className="space-y-1.5 pb-5 border-b border-[hsl(145,50%,55%)]/15">
                               <div className="flex items-center gap-2.5">
-                                <span className="w-2.5 h-2.5 rounded-full bg-success shadow-[0_0_8px_2px_hsl(var(--success)/0.4)]" />
-                                <p className="font-display text-lg text-success uppercase tracking-wide font-medium">When Backroom Is Implemented</p>
+                                <span className="w-2.5 h-2.5 rounded-full bg-[hsl(145,50%,55%)] shadow-[0_0_8px_2px_hsl(145_50%_55%/0.4)]" />
+                                <p className="font-display text-lg text-[hsl(145,50%,55%)] uppercase tracking-wide font-medium">When Backroom Is Implemented</p>
                               </div>
                               <p className="font-sans text-sm text-muted-foreground pl-5">Estimated annual savings based on your salon's current numbers</p>
                             </div>
@@ -640,14 +640,14 @@ export function BackroomPaywall() {
                             {/* Body */}
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-8">
                               <div className="space-y-1">
-                                <p className="font-sans text-xs text-success/80 uppercase tracking-widest">You could recover</p>
-                                <p className="font-display text-5xl md:text-6xl font-medium tracking-wide text-success tabular-nums leading-none">
+                                <p className="font-sans text-xs text-[hsl(145,50%,55%)]/80 uppercase tracking-widest">You could recover</p>
+                                <p className="font-display text-5xl md:text-6xl font-medium tracking-wide text-[hsl(145,50%,55%)] tabular-nums leading-none">
                                   <AnimatedNumber
                                     value={yearlySavings}
                                     duration={1200}
                                     formatOptions={{ style: 'currency', currency: 'USD', notation: 'compact', maximumFractionDigits: 1 }}
                                   />
-                                  <span className="text-xl text-success/50 font-sans font-normal ml-1.5">/yr</span>
+                                  <span className="text-xl text-[hsl(145,50%,55%)]/50 font-sans font-normal ml-1.5">/yr</span>
                                 </p>
                               </div>
                               <div className="space-y-2.5 text-sm font-sans min-w-[220px]">
@@ -656,7 +656,7 @@ export function BackroomPaywall() {
                                   { label: 'Time savings', value: formatCurrency(monthlyAuditCost * 12, { maximumFractionDigits: 0 }) },
                                   { label: 'Supply recovery', value: formatCurrency(supplyRecovery * 12, { maximumFractionDigits: 0 }) },
                                 ].map((item) => (
-                                  <div key={item.label} className="flex items-center justify-between gap-8 rounded-lg border border-success/15 bg-success/[0.04] px-4 py-3 transition-colors hover:bg-success/[0.08]">
+                                  <div key={item.label} className="flex items-center justify-between gap-8 rounded-lg border border-[hsl(145,50%,55%)]/15 bg-[hsl(145,50%,55%)]/[0.04] px-4 py-3 transition-colors hover:bg-[hsl(145,50%,55%)]/[0.08]">
                                     <span className="text-muted-foreground">{item.label}</span>
                                     <span className="tabular-nums text-foreground font-medium">{item.value}/yr</span>
                                   </div>
