@@ -940,7 +940,7 @@ export function BackroomPaywall() {
                 {estimate && locationCount > 0 && netBenefit > 0 ? (
                   <>
                     <p className={cn(tokens.label.default, 'text-primary text-sm')}>
-                      Backroom pays for itself {roiMultiplier}× over
+                      Your color room pays you back {roiMultiplier}× over
                     </p>
                     <p className="text-xs text-muted-foreground font-sans mt-1">
                       {formatCurrency(yearlyCost)}/yr cost → {formatCurrency(yearlySavings)}/yr in savings & revenue.
@@ -950,10 +950,10 @@ export function BackroomPaywall() {
                 ) : (
                   <>
                     <p className={cn(tokens.label.default, 'text-primary text-sm')}>
-                      Average salon saves $375/mo in reduced product waste
+                      Average salon recovers $375/mo in reduced product waste
                     </p>
                     <p className="text-xs text-muted-foreground font-sans mt-1">
-                      Based on 12% waste reduction on typical color spend. Backroom pays for itself many times over.
+                      Based on 12% waste reduction on typical color spend. The system pays for itself many times over.
                     </p>
                   </>
                 )}
