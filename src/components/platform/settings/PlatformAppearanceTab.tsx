@@ -178,7 +178,11 @@ export function PlatformAppearanceTab() {
   }, [localBranding, branding]);
 
   const handleLogoUpdate = (key: keyof PlatformBranding, value: string | null) => {
-    setLocalBranding(prev => ({ ...prev, [key]: value }));
+    setLocalBranding((prev) => {
+      const nextBranding = { ...prev, [key]: value };
+      saveBranding(nextBranding);
+      return nextBranding;
+    });
   };
 
   const handleThemeColorsChange = (colors: Record<string, string>) => {

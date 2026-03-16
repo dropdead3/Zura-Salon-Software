@@ -92,12 +92,14 @@ export function usePlatformBranding() {
       if (error) throw error;
 
       // Sync logo URLs to business_settings via SECURITY DEFINER function
-      await supabase.rpc('sync_platform_logos_to_business_settings', {
+      const { error: syncError } = await supabase.rpc('sync_platform_logos_to_business_settings', {
         _logo_dark_url: branding.primary_logo_url,
         _logo_light_url: branding.secondary_logo_url,
         _icon_dark_url: branding.icon_dark_url,
         _icon_light_url: branding.icon_light_url,
       });
+
+      if (syncError) throw syncError;
 
       return branding;
     },
