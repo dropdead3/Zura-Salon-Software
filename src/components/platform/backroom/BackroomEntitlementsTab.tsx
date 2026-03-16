@@ -658,7 +658,7 @@ function LocationEntitlementPanel({
   const activeLocCount = locations.filter(
     (l) => {
       const ent = entitlementMap.get(l.id);
-      return ent && (ent.status === 'active' || ent.status === 'trial');
+      return ent && ent.status === 'active';
     }
   ).length;
 
