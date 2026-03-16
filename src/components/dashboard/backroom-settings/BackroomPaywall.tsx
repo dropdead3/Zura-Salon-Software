@@ -560,7 +560,7 @@ export function BackroomPaywall() {
                             </div>
                           </div>
                           <p className="text-xs text-muted-foreground/60 font-sans">
-                            Based on your salon's current appointment volume
+                            Projections based on your actual appointment data and industry benchmarks for salons using automated color tracking
                           </p>
                         </div>
                       </div>
