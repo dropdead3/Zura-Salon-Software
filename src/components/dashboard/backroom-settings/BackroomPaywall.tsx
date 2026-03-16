@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import {
   Package, Beaker, BarChart3, Shield, Zap, ArrowRight, Loader2,
   Minus, Plus, Scale, Droplets, ShieldCheck, MapPin, TrendingDown, DollarSign, Activity,
-  ChevronUp, Info, Clock, Eye, AlertTriangle, CheckCircle2,
+  ChevronUp, Info, Clock, Eye, AlertTriangle, CheckCircle2, Lock,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -375,16 +375,19 @@ export function BackroomPaywall() {
           </>
         ) : yearlyNetBenefit > 1000 && locationCount > 0 ? (
           <>
+            <Lock className="w-4 h-4" />
             Unlock {formatCurrency(yearlyNetBenefit)}/yr in savings
             <ArrowRight className="w-4 h-4" />
           </>
         ) : netBenefit > 0 && locationCount > 0 ? (
           <>
+            <Lock className="w-4 h-4" />
             Start saving {formatCurrency(netBenefit)}/mo
             <ArrowRight className="w-4 h-4" />
           </>
         ) : (
           <>
+            <Lock className="w-4 h-4" />
             Subscribe &amp; Activate
             <ArrowRight className="w-4 h-4" />
           </>
