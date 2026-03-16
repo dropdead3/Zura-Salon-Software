@@ -83,7 +83,7 @@ export function CompetitorComparison() {
               {/* Column Headers */}
               <thead>
                 <tr className="border-b border-border/40">
-                  <th className="text-left px-5 py-3.5 w-[40%]">
+                  <th className="text-left px-5 py-4 w-[40%]">
                     <span className="font-sans text-sm text-muted-foreground">Feature</span>
                   </th>
                   {columns.map((col) => (
