@@ -11,7 +11,7 @@ import {
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel,
+  PlatformAlertDialogCancel as AlertDialogCancel,
   PlatformAlertDialogContent as AlertDialogContent,
   PlatformAlertDialogDescription as AlertDialogDescription,
   AlertDialogFooter,
@@ -316,9 +316,7 @@ export function PlatformTeamManager() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="bg-slate-700 border-slate-600 text-slate-300 hover:bg-slate-600 hover:text-white">
-              Cancel
-            </AlertDialogCancel>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleRemoveMember}
               className="bg-red-600 text-white hover:bg-red-500"

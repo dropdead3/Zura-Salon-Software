@@ -18,7 +18,7 @@ import {
   PlatformSelectTrigger as SelectTrigger,
 } from '@/components/platform/ui/PlatformSelect';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Textarea } from '@/components/ui/textarea';
+import { PlatformTextarea } from '@/components/platform/ui/PlatformTextarea';
 import {
   useAdminKBCategories,
   useCreateKBArticle,
@@ -162,17 +162,17 @@ export function KBArticleEditor({ open, onOpenChange, article, onClose }: KBArti
 
           <div className="space-y-2">
             <PlatformLabel>Summary (shown in article cards)</PlatformLabel>
-            <Textarea
+            <PlatformTextarea
               value={formData.summary}
               onChange={(e) => setFormData({ ...formData, summary: e.target.value })}
               placeholder="Learn how to create and configure your first location in minutes."
-              className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 min-h-[60px]"
+              className="min-h-[60px]"
             />
           </div>
 
           <div className="space-y-2">
             <PlatformLabel>Content (Markdown supported)</PlatformLabel>
-            <Textarea
+            <PlatformTextarea
               value={formData.content}
               onChange={(e) => setFormData({ ...formData, content: e.target.value })}
               placeholder="## Getting Started
@@ -182,7 +182,7 @@ To add your first location, follow these steps:
 1. Navigate to **Settings > Locations**
 2. Click the **Add Location** button
 ..."
-              className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 min-h-[300px] font-mono text-sm"
+              className="min-h-[300px] font-mono text-sm"
             />
           </div>
 

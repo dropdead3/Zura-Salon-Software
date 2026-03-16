@@ -9,7 +9,7 @@ import {
   PlatformCardTitle,
 } from '@/components/platform/ui/PlatformCard';
 import { PlatformButton } from '@/components/platform/ui/PlatformButton';
-import { Textarea } from '@/components/ui/textarea';
+import { PlatformTextarea } from '@/components/platform/ui/PlatformTextarea';
 import { PlatformLabel } from '@/components/platform/ui/PlatformLabel';
 import { BillingStatusCard } from './BillingStatusCard';
 import { PlanSelector } from './PlanSelector';
@@ -428,12 +428,12 @@ export function BillingConfigurationPanel({
             <PlatformCardContent>
               <div className="space-y-2">
                 <PlatformLabel htmlFor="billingNotes">Billing Notes</PlatformLabel>
-                <Textarea
+                <PlatformTextarea
                   id="billingNotes"
                   placeholder="Internal notes about billing arrangements, negotiations, etc."
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  className="bg-card/50 border-border/50 text-foreground min-h-[100px]"
+                  className="min-h-[100px]"
                 />
               </div>
             </PlatformCardContent>

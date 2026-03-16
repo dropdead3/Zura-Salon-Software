@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Crown, Shield, Headphones, Code, User } from 'lucide-react';
-import { Textarea } from '@/components/ui/textarea';
+import { PlatformTextarea } from '@/components/platform/ui/PlatformTextarea';
 import { useMentionSuggestions } from '@/hooks/useAccountNotes';
 import { cn } from '@/lib/utils';
 
@@ -140,7 +140,7 @@ export function MentionInput({ value, onChange, placeholder, className, disabled
   
   return (
     <div className="relative">
-      <Textarea
+      <PlatformTextarea
         ref={textareaRef}
         value={value}
         onChange={handleInputChange}
@@ -148,7 +148,7 @@ export function MentionInput({ value, onChange, placeholder, className, disabled
         placeholder={placeholder}
         disabled={disabled}
         className={cn(
-          "bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 resize-none min-h-[100px]",
+          "resize-none min-h-[100px]",
           className
         )}
       />

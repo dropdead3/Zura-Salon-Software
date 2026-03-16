@@ -98,6 +98,23 @@ const PlatformAlertDialogDescription = React.forwardRef<
 ));
 PlatformAlertDialogDescription.displayName = 'PlatformAlertDialogDescription';
 
+/* ─── Platform AlertDialogCancel wrapper (dark theme) ──────────── */
+
+const PlatformAlertDialogCancel = React.forwardRef<
+  React.ComponentRef<typeof AlertDialogCancel>,
+  React.ComponentPropsWithoutRef<typeof AlertDialogCancel>
+>(({ className, ...props }, ref) => (
+  <AlertDialogCancel
+    ref={ref}
+    className={cn(
+      'bg-slate-700 border-slate-600 text-slate-300 hover:bg-slate-600 hover:text-white',
+      className,
+    )}
+    {...props}
+  />
+));
+PlatformAlertDialogCancel.displayName = 'PlatformAlertDialogCancel';
+
 /* ─── Re-exports (unchanged primitives) ────────────────────────── */
 
 export {
@@ -115,6 +132,7 @@ export {
   PlatformAlertDialogContent,
   PlatformAlertDialogTitle,
   PlatformAlertDialogDescription,
+  PlatformAlertDialogCancel,
   AlertDialogAction,
   AlertDialogCancel,
   AlertDialogFooter,

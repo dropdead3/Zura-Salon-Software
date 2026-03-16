@@ -12,7 +12,7 @@ import {
 import { PlatformButton as Button } from '@/components/platform/ui/PlatformButton';
 import { PlatformInput as Input } from '@/components/platform/ui/PlatformInput';
 import { PlatformLabel as Label } from '@/components/platform/ui/PlatformLabel';
-import { Textarea } from '@/components/ui/textarea';
+import { PlatformTextarea } from '@/components/platform/ui/PlatformTextarea';
 import { useCompMonths } from '@/hooks/useContractAdjustments';
 
 interface CompMonthsDialogProps {
@@ -94,12 +94,12 @@ export function CompMonthsDialog({
 
           <div className="space-y-2">
             <Label htmlFor="reason" className="text-slate-300">Reason</Label>
-            <Textarea
+            <PlatformTextarea
               id="reason"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               placeholder="e.g., Service outage compensation - Ticket #4521"
-              className="bg-slate-800 border-slate-700 text-white min-h-[80px]"
+              className="min-h-[80px]"
             />
           </div>
 

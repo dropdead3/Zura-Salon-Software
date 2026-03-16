@@ -8,3 +8,4 @@ export * from './PlatformPageHeader';
 export * from './PlatformSelect';
 export * from './PlatformTable';
 export * from './PlatformDialog';
+export * from './PlatformTextarea';

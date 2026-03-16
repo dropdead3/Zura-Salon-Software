@@ -20,6 +20,8 @@ Files inside `src/components/platform/` MUST use platform-specific UI primitives
 | `Table`, `TableHead`, `TableRow`, `TableCell`  | `PlatformTable`, `PlatformTableHead`, `PlatformTableRow`, `PlatformTableCell` |
 | `DialogContent`, `DialogTitle`, `DialogDescription` | `PlatformDialogContent`, `PlatformDialogTitle`, `PlatformDialogDescription` |
 | `AlertDialogContent`, `AlertDialogTitle`, `AlertDialogDescription` | `PlatformAlertDialogContent`, `PlatformAlertDialogTitle`, `PlatformAlertDialogDescription` |
+| `AlertDialogCancel`                                | `PlatformAlertDialogCancel`                                                 |
+| `Textarea`                                         | `PlatformTextarea`                                                          |
 
 ## Prohibited Imports
 
@@ -35,6 +37,8 @@ import { Label } from '@/components/ui/label';
 import { Table } from '@/components/ui/table';
 import { DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { AlertDialogContent, AlertDialogTitle, AlertDialogDescription } from '@/components/ui/alert-dialog';
+import { AlertDialogCancel } from '@/components/ui/alert-dialog';
+import { Textarea } from '@/components/ui/textarea';
 ```
 
 ## Correct Imports
@@ -49,7 +53,8 @@ import { PlatformLabel } from '@/components/platform/ui/PlatformLabel';
 import { Select, SelectValue, PlatformSelectTrigger, PlatformSelectContent, PlatformSelectItem } from '@/components/platform/ui/PlatformSelect';
 import { PlatformTable, PlatformTableHeader, PlatformTableBody, PlatformTableHead, PlatformTableRow, PlatformTableCell } from '@/components/platform/ui/PlatformTable';
 import { Dialog, DialogHeader, DialogFooter, PlatformDialogContent, PlatformDialogTitle, PlatformDialogDescription } from '@/components/platform/ui/PlatformDialog';
-import { AlertDialog, AlertDialogHeader, AlertDialogFooter, AlertDialogAction, AlertDialogCancel, PlatformAlertDialogContent, PlatformAlertDialogTitle, PlatformAlertDialogDescription } from '@/components/platform/ui/PlatformDialog';
+import { AlertDialog, AlertDialogHeader, AlertDialogFooter, AlertDialogAction, PlatformAlertDialogCancel, PlatformAlertDialogContent, PlatformAlertDialogTitle, PlatformAlertDialogDescription } from '@/components/platform/ui/PlatformDialog';
+import { PlatformTextarea } from '@/components/platform/ui/PlatformTextarea';
 ```
 
 ## Allowed Base Imports
@@ -57,7 +62,7 @@ import { AlertDialog, AlertDialogHeader, AlertDialogFooter, AlertDialogAction, A
 These base imports ARE permitted (no platform equivalent needed):
 
 - `@/components/ui/switch` — Switch
-- `@/components/ui/textarea` — Textarea
+
 - `@/components/ui/skeleton` — Skeleton
 - `@/components/ui/checkbox` — Checkbox
 - `@/components/ui/collapsible` — Collapsible

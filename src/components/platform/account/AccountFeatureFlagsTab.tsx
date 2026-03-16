@@ -13,7 +13,7 @@ import { PlatformBadge as Badge } from '@/components/platform/ui/PlatformBadge';
 import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PlatformInput as Input } from '@/components/platform/ui/PlatformInput';
-import { Textarea } from '@/components/ui/textarea';
+import { PlatformTextarea } from '@/components/platform/ui/PlatformTextarea';
 import { PlatformButton } from '@/components/platform/ui/PlatformButton';
 import {
   Dialog,
@@ -26,7 +26,7 @@ import {
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel,
+  PlatformAlertDialogCancel as AlertDialogCancel,
   PlatformAlertDialogContent as AlertDialogContent,
   PlatformAlertDialogDescription as AlertDialogDescription,
   AlertDialogFooter,
@@ -147,7 +147,7 @@ export function AccountFeatureFlagsTab({ organizationId, organizationName }: Acc
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel className="bg-slate-700 text-white border-slate-600">Cancel</AlertDialogCancel>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
                 <AlertDialogAction onClick={handleResetAll} className="bg-rose-600 hover:bg-rose-700">
                   Reset All
                 </AlertDialogAction>
@@ -238,11 +238,11 @@ export function AccountFeatureFlagsTab({ organizationId, organizationName }: Acc
           <div className="space-y-4 py-4">
             <div>
               <label className="text-sm font-medium text-slate-300">Reason (optional)</label>
-              <Textarea
+              <PlatformTextarea
                 placeholder="Why is this organization different?"
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                className="mt-1.5 bg-slate-800 border-slate-600"
+                className="mt-1.5"
               />
             </div>
           </div>
