@@ -72,7 +72,6 @@ interface OrgLocation {
 function statusBadge(status: string) {
   const map: Record<string, { label: string; variant: 'default' | 'success' | 'warning' | 'error' | 'info' }> = {
     active: { label: 'Active', variant: 'success' },
-    trial: { label: 'Trial', variant: 'warning' },
     cancelled: { label: 'Cancelled', variant: 'error' },
     suspended: { label: 'Suspended', variant: 'error' },
     refunded: { label: 'Refunded', variant: 'info' },
