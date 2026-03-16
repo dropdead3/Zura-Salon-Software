@@ -587,7 +587,7 @@ export function BackroomPaywall() {
                           { value: monthlyAuditCost, label: 'Staff Time Wasted', subtitle: 'Manual counting, reordering, and inventory audits' },
                           { value: supplyRecovery, label: 'Unrecovered Supply Costs', subtitle: 'Color used but never billed back to services' },
                         ].map((tile) => (
-                          <div key={tile.label} className="p-5 rounded-lg bg-destructive/[0.04] border border-destructive/15 text-center shadow-sm space-y-2">
+                          <div key={tile.label} className="p-5 rounded-xl bg-destructive/[0.04] border border-destructive/15 text-center shadow-sm space-y-2">
                             <p className="font-display text-2xl md:text-3xl font-medium tracking-wide text-destructive tabular-nums">
                               <AnimatedNumber
                                 value={tile.value}
@@ -602,7 +602,7 @@ export function BackroomPaywall() {
                       </div>
 
                       {/* Slider */}
-                      <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/30 border border-border/40">
+                      <div className="flex items-center gap-3 p-4 rounded-xl bg-muted/30 border border-border/40">
                         <Clock className="w-4 h-4 text-muted-foreground shrink-0" />
                         <div className="flex-1">
                           <p className="font-sans text-sm text-foreground">
@@ -623,11 +623,11 @@ export function BackroomPaywall() {
 
                       {/* Projected Annual Recovery banner */}
                       <div className="border-t border-border/40 pt-6">
-                        <div className="relative rounded-2xl overflow-hidden">
+                        <div className="relative rounded-xl overflow-hidden">
                           {/* Gradient border glow — top and left edges */}
-                          <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-[hsl(145,50%,55%)]/40 via-[hsl(145,50%,55%)]/20 to-transparent" />
+                          <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-[hsl(145,50%,55%)]/40 via-[hsl(145,50%,55%)]/20 to-transparent" />
                           {/* Inner card */}
-                          <div className="relative m-px rounded-[29px] bg-gradient-to-br from-[hsl(145,50%,55%)]/[0.08] via-card/95 to-card p-8 space-y-6 backdrop-blur-xl">
+                          <div className="relative m-px rounded-xl bg-gradient-to-br from-[hsl(145,50%,55%)]/[0.08] via-card/95 to-card p-8 space-y-6 backdrop-blur-xl">
                             {/* Header */}
                             <div className="space-y-1.5 pb-5 border-b border-[hsl(145,50%,55%)]/15">
                               <div className="flex items-center gap-2.5">
@@ -659,7 +659,7 @@ export function BackroomPaywall() {
                                   { label: 'Time savings', value: formatCurrency(monthlyAuditCost * 12, { maximumFractionDigits: 0 }) },
                                   { label: 'Supply recovery', value: formatCurrency(supplyRecovery * 12, { maximumFractionDigits: 0 }) },
                                 ].map((item) => (
-                                  <div key={item.label} className="flex items-center justify-between gap-8 rounded-lg border border-[hsl(145,50%,55%)]/15 bg-[hsl(145,50%,55%)]/[0.04] px-4 py-3 transition-colors hover:bg-[hsl(145,50%,55%)]/[0.08]">
+                                  <div key={item.label} className="flex items-center justify-between gap-8 rounded-xl border border-[hsl(145,50%,55%)]/15 bg-[hsl(145,50%,55%)]/[0.04] px-4 py-3 transition-colors hover:bg-[hsl(145,50%,55%)]/[0.08]">
                                     <span className="text-muted-foreground">{item.label}</span>
                                     <span className="tabular-nums text-foreground font-medium">{item.value}/yr</span>
                                   </div>
