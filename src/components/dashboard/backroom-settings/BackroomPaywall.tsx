@@ -623,11 +623,11 @@ export function BackroomPaywall() {
 
                       {/* Projected Annual Recovery banner */}
                       <div className="border-t border-border/40 pt-6">
-                        <div className="relative rounded-2xl overflow-hidden">
+                        <div className="relative rounded-xl overflow-hidden">
                           {/* Gradient border glow — top and left edges */}
-                          <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-[hsl(145,50%,55%)]/40 via-[hsl(145,50%,55%)]/20 to-transparent" />
+                          <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-[hsl(145,50%,55%)]/40 via-[hsl(145,50%,55%)]/20 to-transparent" />
                           {/* Inner card */}
-                          <div className="relative m-px rounded-[29px] bg-gradient-to-br from-[hsl(145,50%,55%)]/[0.08] via-card/95 to-card p-8 space-y-6 backdrop-blur-xl">
+                          <div className="relative m-px rounded-xl bg-gradient-to-br from-[hsl(145,50%,55%)]/[0.08] via-card/95 to-card p-8 space-y-6 backdrop-blur-xl">
                             {/* Header */}
                             <div className="space-y-1.5 pb-5 border-b border-[hsl(145,50%,55%)]/15">
                               <div className="flex items-center gap-2.5">
