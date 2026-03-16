@@ -247,7 +247,7 @@ export function LiveBowlCard({
               className="flex-1 h-12 font-sans text-sm"
             >
               <Lock className="w-4 h-4 mr-1.5" />
-              Seal Bowl
+              Finalize Mix
             </Button>
             <Button
               variant="ghost"
