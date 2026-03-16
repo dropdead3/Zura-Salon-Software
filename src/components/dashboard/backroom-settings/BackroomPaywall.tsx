@@ -352,7 +352,7 @@ export function BackroomPaywall() {
             {/* Hero annual number */}
             <div className="text-center pt-1">
               <p className="font-display text-3xl tracking-wide text-emerald-400">
-                +<AnimatedNumber value={yearlyNetBenefit} prefix="$" duration={1200} />
+                +<AnimatedNumber value={yearlyNetBenefit} duration={1200} formatOptions={{ style: 'currency', currency: 'USD', notation: 'compact', maximumFractionDigits: 1 }} />
                 <span className="text-sm text-emerald-400/70 ml-1">/yr</span>
               </p>
               {roiMultiplier >= 2 && (
