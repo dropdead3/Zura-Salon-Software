@@ -12,12 +12,12 @@ import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
+  PlatformAlertDialogContent as AlertDialogContent,
+  PlatformAlertDialogDescription as AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+  PlatformAlertDialogTitle as AlertDialogTitle,
+} from '@/components/platform/ui/PlatformDialog';
 import {
   Select,
   SelectValue,
