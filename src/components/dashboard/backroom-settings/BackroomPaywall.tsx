@@ -435,6 +435,65 @@ export function BackroomPaywall() {
               </CardContent>
             </Card>
 
+            {/* Time You're Losing Today */}
+            <Card className="bg-card/60 border-border/40">
+              <CardContent className="p-5 space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center shrink-0">
+                    <Clock className="w-5 h-5 text-destructive" />
+                  </div>
+                  <div>
+                    <p className={cn(tokens.label.default, 'text-foreground')}>Time Your Team Loses Every Day</p>
+                    <p className="text-xs text-muted-foreground font-sans mt-0.5">
+                      Nightly counts, guessing stock levels, manual audits — replaced by predictive intelligence.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-sans text-xs text-muted-foreground">
+                      Minutes spent daily on stock checks
+                    </span>
+                    <span className="font-display text-sm tracking-wide text-foreground">
+                      {auditMinutesPerDay} min
+                    </span>
+                  </div>
+                  <Slider
+                    variant="filled"
+                    min={10}
+                    max={90}
+                    step={5}
+                    value={[auditMinutesPerDay]}
+                    onValueChange={([v]) => setAuditMinutesPerDay(v)}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="p-3 rounded-lg bg-muted/30 border border-border/40 text-center">
+                    <p className="font-display text-2xl tracking-wide text-foreground">
+                      <AnimatedNumber value={monthlyAuditHours} duration={600} decimals={1} />
+                    </p>
+                    <p className="text-xs text-muted-foreground font-sans mt-0.5">
+                      hours recovered / mo
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/20 text-center">
+                    <p className="font-display text-2xl tracking-wide text-emerald-400">
+                      <AnimatedNumber value={monthlyAuditCost} prefix="$" duration={600} />
+                    </p>
+                    <p className="text-xs text-muted-foreground font-sans mt-0.5">
+                      cost recovered / mo
+                    </p>
+                  </div>
+                </div>
+
+                <p className="text-[10px] text-muted-foreground font-sans">
+                  Based on average staff cost of ${staffHourlyCost}/hr. This time is returned to revenue-generating work.
+                </p>
+              </CardContent>
+            </Card>
+
             {/* Estimates Disclaimer */}
             <div className="flex gap-2 items-start p-3 rounded-lg bg-muted/20 border border-border/30">
               <Info className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
