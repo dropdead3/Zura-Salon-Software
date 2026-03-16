@@ -831,10 +831,10 @@ export function BackroomPaywall() {
 
                 {/* Annual impact summary */}
                 {hasPositiveBenefit && estimate && (
-                  <div className="rounded-xl bg-gradient-to-br from-success/5 to-primary/5 border border-success/20 p-6 space-y-4">
+                  <div className="rounded-lg bg-success/5 border border-success/20 p-6 space-y-4">
                     <div className="flex items-center justify-center gap-2">
                       <TrendingUp className="w-4 h-4 text-success" />
-                      <p className="font-display text-xs tracking-wider text-success">Projected Annual Impact</p>
+                      <p className="font-display text-xs tracking-wide text-success">Projected Annual Impact</p>
                     </div>
                     <div className="text-center">
                       <p className="font-display text-3xl md:text-4xl tracking-wide text-success">
