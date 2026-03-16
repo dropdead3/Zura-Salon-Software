@@ -647,7 +647,7 @@ export function BackroomPaywall() {
                   ))}
                 </div>
               </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 text-left">
               {features.map((f) => (
                 <Card key={f.title} className="bg-card/60 border-border/40">
                   <CardContent className="p-4 flex gap-3">
