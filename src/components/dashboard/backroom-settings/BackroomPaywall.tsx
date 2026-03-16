@@ -586,17 +586,17 @@ export function BackroomPaywall() {
         {/* ═══════════════════════════════════════════
             SOCIAL PROOF STRIP
             ═══════════════════════════════════════════ */}
-        <div className="py-8 flex flex-col items-center gap-3 max-w-2xl mx-auto text-center">
-          <div className="flex gap-1">
+        <div className="py-16 md:py-20 flex flex-col items-center gap-4 max-w-2xl mx-auto text-center">
+          <div className="flex gap-1.5">
             {[...Array(5)].map((_, i) => (
               <Star key={i} className="h-5 w-5 fill-[hsl(var(--oat))] text-[hsl(var(--oat))]" />
             ))}
           </div>
-          <blockquote className="space-y-2">
-            <p className="text-muted-foreground text-base md:text-lg font-sans leading-relaxed italic">
+          <blockquote className="space-y-3 mt-2">
+            <p className="text-muted-foreground text-lg md:text-xl font-sans leading-relaxed italic">
               "Zura Backroom saved us thousands per month and helps us recoup over $50,000 a year in color costs. 10/10 add-on feature."
             </p>
-            <footer className="text-sm text-muted-foreground/70 font-sans tracking-wide">
+            <footer className="text-sm text-muted-foreground/60 font-sans tracking-wide">
               — Drop Dead Salon
             </footer>
           </blockquote>
