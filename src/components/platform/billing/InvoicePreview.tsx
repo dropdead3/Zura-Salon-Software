@@ -52,7 +52,7 @@ export function InvoicePreview({
       <PlatformCardContent className="space-y-4">
         {/* First Invoice */}
         <div className="space-y-3">
-          <p className="text-xs text-muted-foreground uppercase tracking-wider">First Invoice</p>
+          <p className="text-xs text-[hsl(var(--platform-foreground-muted))] uppercase tracking-wider">First Invoice</p>
           
           {calculation.isInTrial ? (
             <div className="p-4 rounded-lg bg-primary/10 border border-primary/30">
