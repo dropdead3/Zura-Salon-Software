@@ -378,9 +378,22 @@ export function BackroomPaywall() {
                 </p>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-3" ref={heroRef}>
                 <ActivateButton />
-                <p className="text-sm text-muted-foreground/60 font-sans">Setup takes minutes. Cancel anytime.</p>
+              </div>
+
+              {/* Trust strip */}
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-x-5 gap-y-2 pt-2">
+                {[
+                  { icon: Users, text: '200+ salons tracking' },
+                  { icon: ShieldCheck, text: '30-day guarantee' },
+                  { icon: Zap, text: 'Setup in minutes' },
+                ].map((item) => (
+                  <span key={item.text} className="inline-flex items-center gap-1.5 text-xs text-muted-foreground/50 font-sans">
+                    <item.icon className="w-3 h-3" />
+                    {item.text}
+                  </span>
+                ))}
               </div>
             </div>
 
