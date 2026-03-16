@@ -271,7 +271,7 @@ export function BackroomPaywall() {
   };
 
   /* ─── Shared CTA button ─── */
-  const UnlockButton = ({ className = '' }: { className?: string }) => (
+  const ActivateButton = ({ className = '' }: { className?: string }) => (
     <Button
       size="lg"
       className={cn('font-sans font-medium gap-2 rounded-full px-8', className)}
@@ -282,8 +282,7 @@ export function BackroomPaywall() {
         <Loader2 className="w-4 h-4 animate-spin" />
       ) : (
         <>
-          <Lock className="w-3.5 h-3.5" />
-          Unlock Zura Backroom
+          Activate Backroom
           <ArrowRight className="w-3.5 h-3.5" />
         </>
       )}
