@@ -1,11 +1,13 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { tokens } from '@/lib/design-tokens';
 import { useBackroomEntitlement } from '@/hooks/backroom/useBackroomEntitlement';
+import { useBackroomOrgId } from '@/hooks/backroom/useBackroomOrgId';
 import { BackroomPaywall } from '@/components/dashboard/backroom-settings/BackroomPaywall';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -111,22 +113,67 @@ export default function BackroomSettings() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
+  const pollingRef = useRef(false);
+  const orgId = useBackroomOrgId();
 
-  // Handle Stripe checkout redirect
+  // Handle Stripe checkout redirect with polling for webhook delay
   useEffect(() => {
     const checkoutStatus = searchParams.get('checkout');
-    if (checkoutStatus === 'success') {
-      toast.success('Backroom activated! Your subscription is now active.');
-      // Refresh entitlement data so the paywall clears
-      queryClient.invalidateQueries({ queryKey: ['backroom-entitlement'] });
-      queryClient.invalidateQueries({ queryKey: ['backroom-location-entitlements'] });
-      // Clean up the URL
-      setSearchParams({}, { replace: true });
-    } else if (checkoutStatus === 'cancelled') {
+    if (!checkoutStatus) return;
+
+    // Clean up URL immediately
+    setSearchParams({}, { replace: true });
+
+    if (checkoutStatus === 'cancelled') {
       toast.info('Checkout was cancelled. No charges were made.');
-      setSearchParams({}, { replace: true });
+      return;
     }
-  }, [searchParams, setSearchParams, queryClient]);
+
+    if (checkoutStatus === 'success') {
+      // Prevent duplicate polling from React strict-mode double-mount
+      if (pollingRef.current) return;
+      pollingRef.current = true;
+
+      const pollEntitlement = async () => {
+        const MAX_ATTEMPTS = 3;
+        const DELAY_MS = 2000;
+
+        for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+          // Direct DB check bypassing React Query cache
+          if (orgId) {
+            const { data } = await supabase
+              .from('organization_feature_flags')
+              .select('is_enabled')
+              .eq('organization_id', orgId)
+              .eq('flag_key', 'backroom_enabled')
+              .maybeSingle();
+
+            if (data?.is_enabled) {
+              queryClient.invalidateQueries({ queryKey: ['backroom-entitlement'] });
+              queryClient.invalidateQueries({ queryKey: ['backroom-location-entitlements'] });
+              queryClient.invalidateQueries({ queryKey: ['backroom-org-flag'] });
+              toast.success('Backroom activated! Your subscription is now active.');
+              pollingRef.current = false;
+              return;
+            }
+          }
+
+          if (attempt < MAX_ATTEMPTS) {
+            await new Promise(resolve => setTimeout(resolve, DELAY_MS));
+          }
+        }
+
+        // Webhook hasn't landed yet — still invalidate and show a soft message
+        queryClient.invalidateQueries({ queryKey: ['backroom-entitlement'] });
+        queryClient.invalidateQueries({ queryKey: ['backroom-location-entitlements'] });
+        queryClient.invalidateQueries({ queryKey: ['backroom-org-flag'] });
+        toast.success('Payment received! Your backroom access is being activated — please refresh in a moment.');
+        pollingRef.current = false;
+      };
+
+      pollEntitlement();
+    }
+  }, [searchParams, setSearchParams, queryClient, orgId]);
 
   const handleNavigate = useCallback((section: string) => {
     setActiveSection(section as BackroomSection);
