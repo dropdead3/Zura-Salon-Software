@@ -55,11 +55,11 @@ const comparisonData: FeatureCategory[] = [
   },
 ];
 
-const pricingComparison = [
-  { name: 'Zura Backroom', pricing: '$20/location + $0.50/service', note: 'Usage-based' },
-  { name: 'Vish', pricing: '£30–240/mo by stylist count', note: '+ £165/scale' },
-  { name: 'SalonScale', pricing: '$49–199/mo by stylist count', note: 'Scale extra on monthly' },
-];
+const pricingComparison: Record<'zura' | 'vish' | 'salonScale', { pricing: string; note: string }> = {
+  zura: { pricing: '$20/loc + $0.50/svc', note: 'Usage-based' },
+  vish: { pricing: '£30–240/mo', note: 'Per stylist + £165/scale' },
+  salonScale: { pricing: '$49–199/mo', note: 'Per stylist, scale extra' },
+};
 
 /* ─── Column headers ─── */
 const columns = [
