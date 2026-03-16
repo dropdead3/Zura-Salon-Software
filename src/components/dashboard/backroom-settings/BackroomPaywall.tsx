@@ -569,7 +569,7 @@ export function BackroomPaywall() {
         {/* ═══════════════════════════════════════════
             SECTION 1.5 — PRODUCT PREVIEW
             ═══════════════════════════════════════════ */}
-        <section className="pb-20 md:pb-24">
+        <section className="relative pb-16 md:pb-20">
           <ProductPreview />
         </section>
 
