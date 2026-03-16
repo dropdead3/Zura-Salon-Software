@@ -210,7 +210,7 @@ export function PlatformTeamManager() {
                     const isCurrentUser = member.user_id === user?.id;
 
                     return (
-                      <TableRow key={member.id} className="border-slate-700/50 hover:bg-slate-800/50">
+                      <TableRow key={member.id}>
                         <TableCell>
                           <div className="flex items-center gap-3">
                             <div className="relative">
