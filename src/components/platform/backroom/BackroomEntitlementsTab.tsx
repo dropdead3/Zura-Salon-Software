@@ -695,7 +695,6 @@ function LocationEntitlementPanel({
             <tr className="border-b border-slate-700/40 bg-slate-800/40">
               <th className="font-sans text-xs text-slate-400 text-left px-4 py-2">Location</th>
               <th className="font-sans text-xs text-slate-400 text-left px-4 py-2">Status</th>
-              <th className="font-sans text-xs text-slate-400 text-left px-4 py-2">Status</th>
               <th className="font-sans text-xs text-slate-400 text-left px-4 py-2">Refund</th>
               <th className="font-sans text-xs text-slate-400 text-left px-4 py-2">Scales</th>
               <th className="font-sans text-xs text-slate-400 text-left px-4 py-2">Subscription</th>
@@ -728,27 +727,6 @@ function LocationEntitlementPanel({
                   <td className="px-4 py-2.5">
                     {ent ? statusBadge(ent.status) : (
                       <PlatformBadge variant="default" size="sm">Inactive</PlatformBadge>
-                    )}
-                  </td>
-                  <td className="px-4 py-2.5">
-                    {isActive && ent ? (
-                      <Select
-                        value={ent.plan_tier}
-                        onValueChange={(val) =>
-                          onUpdateEntitlement(loc.id, { plan_tier: val, status: ent.status })
-                        }
-                      >
-                        <SelectTrigger className="h-7 w-[120px] text-xs bg-slate-800/60 border-slate-700/50">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="starter">Starter</SelectItem>
-                          <SelectItem value="professional">Professional</SelectItem>
-                          <SelectItem value="unlimited">Unlimited</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <span className="font-sans text-xs text-slate-500">—</span>
                     )}
                   </td>
                   <td className="px-4 py-2.5">
@@ -803,7 +781,6 @@ function LocationEntitlementPanel({
                             onUpdateEntitlement(loc.id, {
                               scale_count: parseInt(val, 10),
                               status: ent.status,
-                              plan_tier: ent.plan_tier,
                             })
                           }
                         >
