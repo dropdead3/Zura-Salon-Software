@@ -277,7 +277,7 @@ export function BackroomPaywall() {
         <div className="space-y-2">
           <div className="border-t border-border/20 pt-3" />
           <p className={cn(tokens.label.default, 'text-foreground text-xs flex items-center gap-2')}>
-            <TrendingDown className="w-3.5 h-3.5 text-emerald-400" />
+            <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
             Projected Savings
           </p>
           <div className="space-y-1.5 font-sans text-sm">
