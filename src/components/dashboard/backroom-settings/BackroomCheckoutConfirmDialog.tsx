@@ -44,7 +44,7 @@ export function BackroomCheckoutConfirmDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[440px]">
+      <DialogContent className="max-w-[95vw] sm:max-w-[440px]">
         <DialogHeader>
           <DialogTitle className={tokens.card.title}>Confirm Subscription</DialogTitle>
           <DialogDescription>
@@ -52,7 +52,7 @@ export function BackroomCheckoutConfirmDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 pt-2">
+        <div className="space-y-4 pt-2 max-h-[70vh] overflow-y-auto">
           {/* Monthly recurring */}
           <div className="space-y-2">
             <p className={cn(tokens.label.default, 'text-xs text-muted-foreground')}>Monthly Recurring</p>
@@ -123,7 +123,7 @@ export function BackroomCheckoutConfirmDialog({
             )}
             <div className="flex items-center justify-between">
               <span className="text-sm font-sans font-medium">Est. monthly total</span>
-              <span className="font-display text-lg tracking-wide">{formatCurrency(estimatedMonthlyGrandTotal)}/mo</span>
+              <span className="font-display text-base sm:text-lg tracking-wide">{formatCurrency(estimatedMonthlyGrandTotal)}/mo</span>
             </div>
             <p className="text-[10px] text-muted-foreground font-sans">
               Estimated total across {locationCount} location{locationCount !== 1 ? 's' : ''}. Usage fees may vary based on actual service volume.
@@ -167,11 +167,11 @@ export function BackroomCheckoutConfirmDialog({
           )}
 
           {/* Actions */}
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
+          <div className="flex flex-col sm:flex-row sm:justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading} className="w-full sm:w-auto">
               Cancel
             </Button>
-            <Button onClick={onConfirm} disabled={loading} className="gap-2">
+            <Button onClick={onConfirm} disabled={loading} className="gap-2 w-full sm:w-auto">
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
