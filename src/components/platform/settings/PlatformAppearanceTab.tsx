@@ -215,7 +215,7 @@ export function PlatformAppearanceTab() {
     <div className="space-y-6">
       {/* Save Actions Header */}
       {hasChanges && (
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between p-4 w-auto max-w-xl bg-card/80 backdrop-blur-xl rounded-full border border-border/40 shadow-[0_16px_40px_-18px_hsl(var(--foreground)/0.25)]">
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between p-4 w-auto max-w-xl bg-card/80 backdrop-blur-xl rounded-xl border border-border/40 shadow-[0_16px_40px_-18px_hsl(var(--foreground)/0.25)]">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
             <span className="text-sm font-medium text-foreground">
