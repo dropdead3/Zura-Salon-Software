@@ -71,13 +71,19 @@ Deno.serve(async (req) => {
     const scaleQty = Math.max(0, Math.min(10, parseInt(scale_count) || 0));
     logStep("Checkout params", { organization_id, locations: resolvedLocationIds.length, scaleQty });
 
-    // Get organization details
-    const { data: org, error: orgError } = await supabase
-      .from("organizations")
-      .select("id, name, slug, stripe_customer_id, billing_email")
-      .eq("id", organization_id)
-      .single();
+    // Get organization details + hardware price in parallel
+    const [orgResult, hardwarePriceResult] = await Promise.all([
+      supabase
+        .from("organizations")
+        .select("id, name, slug, stripe_customer_id, billing_email")
+        .eq("id", organization_id)
+        .single(),
+      scaleQty > 0
+        ? stripe.prices.retrieve(SCALE_HARDWARE_PRICE_ID)
+        : Promise.resolve(null),
+    ]);
 
+    const { data: org, error: orgError } = orgResult;
     if (orgError || !org) throw new Error("Organization not found");
 
     // Get or create Stripe customer
@@ -121,14 +127,9 @@ Deno.serve(async (req) => {
       location_ids: JSON.stringify(resolvedLocationIds),
     };
 
-    // If scale hardware is needed, add as an invoice item on the customer
-    // before creating the checkout session. Stripe will attach pending
-    // invoice items to the first subscription invoice automatically.
-    if (scaleQty > 0) {
-      // Retrieve the hardware price to get the unit_amount
-      const hardwarePrice = await stripe.prices.retrieve(SCALE_HARDWARE_PRICE_ID);
-      const unitAmount = hardwarePrice.unit_amount ?? 19900; // fallback $199.00
-      
+    // Add one-time hardware as pending invoice item (attaches to first subscription invoice)
+    if (scaleQty > 0 && hardwarePriceResult) {
+      const unitAmount = hardwarePriceResult.unit_amount ?? 19900;
       await stripe.invoiceItems.create({
         customer: customerId,
         pricing: { price: SCALE_HARDWARE_PRICE_ID },
