@@ -13,7 +13,7 @@ import { PlatformBadge as Badge } from '@/components/platform/ui/PlatformBadge';
 import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PlatformInput as Input } from '@/components/platform/ui/PlatformInput';
-import { Textarea } from '@/components/ui/textarea';
+import { PlatformTextarea } from '@/components/platform/ui/PlatformTextarea';
 import { PlatformButton } from '@/components/platform/ui/PlatformButton';
 import {
   Dialog,
