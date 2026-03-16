@@ -839,10 +839,6 @@ export function BackroomPaywall() {
               ))}
             </div>
 
-            {/* Mid-page CTA */}
-            <div className="flex justify-center pt-4">
-              <ActivateButton />
-            </div>
           </div>
         </section>
 
