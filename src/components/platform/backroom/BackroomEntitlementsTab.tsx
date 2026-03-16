@@ -336,7 +336,7 @@ export function BackroomEntitlementsTab() {
             <Building2 className="w-5 h-5 text-violet-400" />
           </div>
           <div>
-            <PlatformCardTitle>Backroom Entitlements</PlatformCardTitle>
+            <PlatformCardTitle>Backroom App Access</PlatformCardTitle>
             <PlatformCardDescription>
               {enabledCount} active orgs · {orgs.length} total · Per-location activation
             </PlatformCardDescription>
