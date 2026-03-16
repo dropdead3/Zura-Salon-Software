@@ -182,7 +182,7 @@ export function SupplyLibraryTab() {
               />
             </div>
             <Select value={brandFilter} onValueChange={(v) => { setBrandFilter(v); setPage(0); }}>
-              <SelectTrigger className="w-[180px] font-sans bg-slate-800/50 border-slate-700/50 text-slate-300">
+              <SelectTrigger className="w-[180px] font-sans">
                 <SelectValue placeholder="All Brands" />
               </SelectTrigger>
               <SelectContent>
