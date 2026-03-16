@@ -250,7 +250,7 @@ export function BackroomEntitlementsTab() {
 
   const toggleLocationEntitlement = (orgId: string, locationId: string) => {
     const existing = entitlementMap.get(locationId);
-    if (existing && (existing.status === 'active' || existing.status === 'trial')) {
+    if (existing && existing.status === 'active') {
       deleteLocEnt.mutate(
         { organization_id: orgId, location_id: locationId },
         { onSuccess: () => toast.success('Location entitlement removed') }
