@@ -16,11 +16,11 @@ import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+  PlatformSelectContent as SelectContent,
+  PlatformSelectItem as SelectItem,
+  PlatformSelectTrigger as SelectTrigger,
+} from '@/components/platform/ui/PlatformSelect';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Building2, Search, Loader2, ChevronDown, ChevronRight, MapPin, Scale, AlertTriangle, ShieldCheck, Undo2, CreditCard, Send } from 'lucide-react';

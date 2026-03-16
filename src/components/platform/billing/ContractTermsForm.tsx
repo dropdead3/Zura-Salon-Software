@@ -3,11 +3,11 @@ import { PlatformInput } from '@/components/platform/ui/PlatformInput';
 import { PlatformLabel } from '@/components/platform/ui/PlatformLabel';
 import {
   Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+  PlatformSelectContent as SelectContent,
+  PlatformSelectItem as SelectItem,
+  PlatformSelectTrigger as SelectTrigger,
+} from '@/components/platform/ui/PlatformSelect';
 import { Calendar, FileText, RefreshCw } from 'lucide-react';
 import type { BillingCycle } from '@/hooks/useOrganizationBilling';
 import { getBillingCycleLabel, getContractLengthLabel } from '@/hooks/useBillingCalculations';
@@ -104,12 +104,12 @@ export function ContractTermsForm({
             value={contractLengthMonths.toString()}
             onValueChange={(v) => onContractLengthChange(parseInt(v))}
           >
-            <SelectTrigger className="bg-slate-800/50 border-slate-700/50 text-slate-300">
+            <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="bg-slate-800 border-slate-700">
+            <SelectContent>
               {contractLengthOptions.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value.toString()} className="text-slate-300">
+                <SelectItem key={opt.value} value={opt.value.toString()}>
                   {opt.label}
                 </SelectItem>
               ))}
@@ -135,12 +135,12 @@ export function ContractTermsForm({
           value={trialDays.toString()}
           onValueChange={(v) => onTrialDaysChange(parseInt(v))}
         >
-          <SelectTrigger className="bg-slate-800/50 border-slate-700/50 text-slate-300">
+          <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
-          <SelectContent className="bg-slate-800 border-slate-700">
+          <SelectContent>
             {trialOptions.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value.toString()} className="text-slate-300">
+              <SelectItem key={opt.value} value={opt.value.toString()}>
                 {opt.label}
               </SelectItem>
             ))}

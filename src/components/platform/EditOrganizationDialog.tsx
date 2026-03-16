@@ -22,11 +22,11 @@ import {
 } from '@/components/ui/form';
 import {
   Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+  PlatformSelectContent as SelectContent,
+  PlatformSelectItem as SelectItem,
+  PlatformSelectTrigger as SelectTrigger,
+} from '@/components/platform/ui/PlatformSelect';
 import {
   Popover,
   PopoverContent,

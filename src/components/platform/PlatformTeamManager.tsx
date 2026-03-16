@@ -27,11 +27,11 @@ import {
 } from '@/components/ui/alert-dialog';
 import {
   Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+  PlatformSelectContent as SelectContent,
+  PlatformSelectItem as SelectItem,
+  PlatformSelectTrigger as SelectTrigger,
+} from '@/components/platform/ui/PlatformSelect';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/components/ui/use-toast';
 import { useFormatDate } from '@/hooks/useFormatDate';

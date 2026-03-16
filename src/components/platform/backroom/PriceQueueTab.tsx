@@ -12,7 +12,7 @@ import { PlatformButton } from '@/components/platform/ui/PlatformButton';
 import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
 import { PlatformInput } from '@/components/platform/ui/PlatformInput';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectValue, PlatformSelectContent as SelectContent, PlatformSelectItem as SelectItem, PlatformSelectTrigger as SelectTrigger } from '@/components/platform/ui/PlatformSelect';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Check, X, RefreshCw, AlertTriangle, Loader2, History, ChevronLeft, ChevronRight } from 'lucide-react';
 import {

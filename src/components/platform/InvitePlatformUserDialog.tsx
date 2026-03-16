@@ -12,11 +12,11 @@ import {
 } from '@/components/ui/dialog';
 import {
   Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+  PlatformSelectContent as SelectContent,
+  PlatformSelectItem as SelectItem,
+  PlatformSelectTrigger as SelectTrigger,
+} from '@/components/platform/ui/PlatformSelect';
 import { toast } from '@/components/ui/use-toast';
 import { Loader2, Shield, Headphones, Code, Mail, UserCheck } from 'lucide-react';
 import { PlatformButton } from './ui/PlatformButton';

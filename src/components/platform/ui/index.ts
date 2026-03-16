@@ -5,3 +5,4 @@ export * from './PlatformBadge';
 export * from './PlatformLabel';
 export * from './PlatformPageContainer';
 export * from './PlatformPageHeader';
+export * from './PlatformSelect';
