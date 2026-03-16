@@ -894,7 +894,7 @@ export function BackroomPaywall() {
                       const loc = activeLocations[0];
                       const cityLabel = loc.city ? loc.city.split(',')[0]?.trim() : '';
                       return (
-                        <div className="flex items-center gap-3 px-4 py-4 rounded-xl bg-primary/5 border border-primary/30">
+                        <div className="flex items-center gap-3 px-4 py-4 rounded-lg bg-primary/5 border border-primary/30">
                           <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
