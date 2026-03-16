@@ -22,8 +22,8 @@ const statusConfig = {
   sent: { icon: Clock, label: 'Sent', variant: 'secondary' as const, color: 'text-blue-400' },
   viewed: { icon: Eye, label: 'Viewed', variant: 'secondary' as const, color: 'text-yellow-400' },
   completed: { icon: CheckCircle2, label: 'Completed', variant: 'default' as const, color: 'text-green-400' },
-  voided: { icon: XCircle, label: 'Voided', variant: 'destructive' as const, color: 'text-red-400' },
-  declined: { icon: AlertTriangle, label: 'Declined', variant: 'destructive' as const, color: 'text-red-400' },
+  voided: { icon: XCircle, label: 'Voided', variant: 'error' as const, color: 'text-red-400' },
+  declined: { icon: AlertTriangle, label: 'Declined', variant: 'error' as const, color: 'text-red-400' },
 };
 
 export function PandaDocDocumentsCard({ organizationId }: PandaDocDocumentsCardProps) {
