@@ -85,7 +85,7 @@ export function BackroomPaywall() {
   const [manualStylistCount, setManualStylistCount] = useState(2);
   const [manualScaleOverride, setManualScaleOverride] = useState(false);
   const [auditMinutesPerDay, setAuditMinutesPerDay] = useState(30);
-  const [mobileCalcOpen, setMobileCalcOpen] = useState(false);
+  
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
 
   const { effectiveOrganization } = useOrganizationContext();
