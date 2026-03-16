@@ -727,9 +727,9 @@ export function BackroomPaywall() {
               { icon: AlertTriangle, title: 'Invisible Waste', desc: 'Chemical waste accumulates quietly until it shows up in the budget.' },
             ].map((point, i) => (
               <RevealOnScroll key={point.title} delay={i * 60}>
-                <Card className="p-5 hover:shadow-md transition-shadow duration-200 h-full">
+                <Card className="p-5 shadow-sm hover:shadow-md transition-shadow duration-200 h-full">
                   <div className="space-y-3">
-                    <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
                       <point.icon className="w-5 h-5 text-primary" />
                     </div>
                     <h4 className="font-display text-sm tracking-wide">{point.title}</h4>
