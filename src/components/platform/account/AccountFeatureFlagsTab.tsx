@@ -27,13 +27,13 @@ import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
+  PlatformAlertDialogContent as AlertDialogContent,
+  PlatformAlertDialogDescription as AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle,
+  PlatformAlertDialogTitle as AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
+} from '@/components/platform/ui/PlatformDialog';
 import { toast } from 'sonner';
 import { 
   useOrganizationFeatureFlags, 
