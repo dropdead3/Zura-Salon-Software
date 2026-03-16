@@ -178,8 +178,6 @@ function ProductPreview() {
             </div>
           </div>
         </div>
-        {/* Soft glow behind — strengthened */}
-        <div className="absolute -inset-x-24 -inset-y-20 -z-10 rounded-[56px] pointer-events-none bg-[radial-gradient(ellipse_at_center,hsl(var(--primary)/0.16)_0%,hsl(var(--primary)/0.08)_38%,transparent_78%)] blur-[110px] opacity-90" />
       </div>
     </div>
   );
