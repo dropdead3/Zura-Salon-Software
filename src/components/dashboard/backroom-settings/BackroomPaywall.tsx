@@ -1501,7 +1501,7 @@ export function BackroomPaywall() {
         {/* ═══════════════════════════════════════════
             SECTION 5 — PRICING + ROI
             ═══════════════════════════════════════════ */}
-        <section className="pb-20 md:pb-24">
+        <section className="pb-24 md:pb-32">
           <div className="space-y-8 md:space-y-10">
             <SectionHeading>Pricing</SectionHeading>
 
