@@ -1113,62 +1113,8 @@ export function BackroomPaywall() {
           <CompetitorComparison />
         </section>
 
-        {/* Divider — Comparison → ROI */}
-        <div className="flex justify-center py-4">
-          <div className="w-12 h-px bg-border/40" />
-        </div>
 
-        {/* ═══════════════════════════════════════════
-            SECTION 4.75 — ROI PROOF
-            ═══════════════════════════════════════════ */}
-        <section className="pb-20 md:pb-24 bg-muted/20 -mx-6 sm:-mx-8 px-6 sm:px-8 rounded-2xl pt-10 md:pt-12 shadow-[inset_0_1px_0_0_hsl(var(--border)/0.3)]">
-          <div className="space-y-8 md:space-y-10">
-            <RevealOnScroll>
-              <div className="text-center space-y-3">
-                <SectionHeading>Zura Backroom Pays for Itself</SectionHeading>
-                <p className="font-sans text-base text-muted-foreground max-w-xl mx-auto font-light leading-relaxed">
-                  Most salons don't know the real cost of their color services. Zura Backroom makes it visible.
-                </p>
-              </div>
-            </RevealOnScroll>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 md:gap-6">
-              {[
-                {
-                  icon: Droplets,
-                  title: 'Recover Product Waste',
-                  copy: 'If your salon performs 200 color services per month and reduces waste by just $2 per service, that\'s $400 recovered every month.',
-                },
-                {
-                  icon: DollarSign,
-                  title: 'Know Real Service Costs',
-                  copy: 'Knowing the true product cost of every service helps you price correctly and protect margins.',
-                },
-                {
-                  icon: TrendingUp,
-                  title: 'Protect Service Margins',
-                  copy: 'When you see exactly where product goes, you stop losing money on services you thought were profitable.',
-                },
-              ].map((card, i) => (
-                <RevealOnScroll key={card.title} delay={i * 80}>
-                  <Card className="bg-card border-border/50 shadow-sm hover:shadow-md transition-shadow duration-200" interactive>
-                    <CardContent className="p-6 md:p-8 space-y-4">
-                      <div className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center">
-                        <card.icon className="w-5 h-5 text-primary" />
-                      </div>
-                      <h3 className="font-display text-sm tracking-wide text-foreground">{card.title}</h3>
-                      <p className="font-sans text-sm text-muted-foreground font-light leading-relaxed">{card.copy}</p>
-                    </CardContent>
-                  </Card>
-                </RevealOnScroll>
-              ))}
-            </div>
-
-            <div className="flex justify-center pt-2">
-              <ActivateButton />
-            </div>
-          </div>
-        </section>
 
         {/* Section 4.85 removed — redundant with hero + Under The Hood */}
 
