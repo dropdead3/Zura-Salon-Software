@@ -978,7 +978,7 @@ export function BackroomPaywall() {
                 </div>
 
                 {/* Recommendation summary */}
-                <div className="flex items-center justify-between p-4 rounded-xl bg-primary/5 border border-primary/20">
+                <div className="flex items-center justify-between p-4 rounded-lg bg-primary/5 border border-primary/20">
                   <div className="space-y-1">
                     <p className="font-sans text-sm text-foreground font-medium">
                       {recommendedScales} scale{recommendedScales !== 1 ? 's' : ''} recommended
