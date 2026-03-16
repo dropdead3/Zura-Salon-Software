@@ -25,21 +25,36 @@ export function AnimatedNumber({
   const [hasAnimated, setHasAnimated] = useState(false);
   const previousValue = useRef(0);
   const animationRef = useRef<number>();
+  const spanRef = useRef<HTMLSpanElement>(null);
 
-  // Animate on mount
+  // Trigger animation on first intersection
   useEffect(() => {
     if (reduceMotion) {
       setDisplayValue(value);
       previousValue.current = value;
       return;
     }
-    setHasAnimated(true);
-    animateValue(0, value);
-    previousValue.current = value;
-    return () => { if (animationRef.current) cancelAnimationFrame(animationRef.current); };
-  }, []);
 
-  // Animate on value change
+    const el = spanRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasAnimated) {
+          setHasAnimated(true);
+          animateValue(0, value);
+          previousValue.current = value;
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [value, reduceMotion]);
+
+  // Animate on value change after initial animation
   useEffect(() => {
     if (reduceMotion) {
       setDisplayValue(value);
@@ -85,7 +100,7 @@ export function AnimatedNumber({
       : Math.round(displayValue).toLocaleString();
 
   return (
-    <span className={className}>
+    <span ref={spanRef} className={className}>
       {prefix}{formattedValue}{suffix}
     </span>
   );
