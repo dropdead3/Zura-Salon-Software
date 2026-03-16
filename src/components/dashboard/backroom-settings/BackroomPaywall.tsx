@@ -183,9 +183,9 @@ export function BackroomPaywall() {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [activeFeature, setActiveFeature] = useState('mixing');
 
-  const { effectiveOrganization } = useOrganizationContext();
-  const { data: locations = [] } = useLocations(effectiveOrganization?.id);
-  const { isLocationEntitled } = useBackroomLocationEntitlements(effectiveOrganization?.id);
+  const orgId = useBackroomOrgId();
+  const { data: locations = [] } = useLocations(orgId);
+  const { isLocationEntitled } = useBackroomLocationEntitlements(orgId);
   const { formatCurrency, formatCurrencyCompact } = useFormatCurrency();
   const isMobile = useIsMobile();
 
