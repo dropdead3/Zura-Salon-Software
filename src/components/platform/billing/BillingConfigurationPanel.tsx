@@ -9,7 +9,7 @@ import {
   PlatformCardTitle,
 } from '@/components/platform/ui/PlatformCard';
 import { PlatformButton } from '@/components/platform/ui/PlatformButton';
-import { Textarea } from '@/components/ui/textarea';
+import { PlatformTextarea } from '@/components/platform/ui/PlatformTextarea';
 import { PlatformLabel } from '@/components/platform/ui/PlatformLabel';
 import { BillingStatusCard } from './BillingStatusCard';
 import { PlanSelector } from './PlanSelector';
