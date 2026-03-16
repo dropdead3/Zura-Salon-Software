@@ -1477,90 +1477,85 @@ export function BackroomPaywall() {
               </Card>
             )}
           </div>
-        </section>
+            {/* Hardware sub-section */}
+            <RevealOnScroll>
+              <Card className="bg-card border-border/50 shadow-sm">
+                <CardContent className="p-6 md:p-8 space-y-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                      <Scale className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-sans text-base md:text-lg font-medium text-foreground">Precision Scales</p>
+                      <p className="text-sm text-muted-foreground font-sans mt-0.5">
+                        Connect to your mixing stations via Bluetooth.
+                      </p>
+                    </div>
+                  </div>
 
-        {/* ═══════════════════════════════════════════
-            SECTION 6 — HARDWARE
-            ═══════════════════════════════════════════ */}
-        <section className="pb-16 md:pb-20 bg-muted/20 -mx-6 sm:-mx-8 px-6 sm:px-8 rounded-2xl pt-10 md:pt-12 shadow-[inset_0_1px_0_0_hsl(var(--border)/0.3)]">
-          <div className="space-y-8 md:space-y-10">
-            <SectionHeading>Hardware</SectionHeading>
-            <Card className="bg-card border-border/50 shadow-sm">
-              <CardContent className="p-6 md:p-8 space-y-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                    <Scale className="w-5 h-5 text-primary" />
+                  <div className="grid grid-cols-2 gap-5">
+                    <div className="p-5 rounded-xl bg-muted/30 border border-border/40 text-center">
+                      <p className="font-display text-2xl tracking-wide text-foreground">${SCALE_HARDWARE_PRICE}</p>
+                      <p className="text-sm text-muted-foreground font-sans mt-2">per scale (one-time)</p>
+                    </div>
+                    <div className="p-5 rounded-xl bg-muted/30 border border-border/40 text-center">
+                      <p className="font-display text-2xl tracking-wide text-foreground">${SCALE_LICENSE_MONTHLY}</p>
+                      <p className="text-sm text-muted-foreground font-sans mt-2">per scale / month</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-sans text-base md:text-lg font-medium text-foreground">Precision Scales</p>
-                    <p className="text-sm text-muted-foreground font-sans mt-0.5">
-                      Connect to your mixing stations via Bluetooth.
-                    </p>
-                  </div>
-                </div>
 
-                <div className="grid grid-cols-2 gap-5">
-                  <div className="p-5 rounded-xl bg-muted/30 border border-border/40 text-center">
-                    <p className="font-display text-2xl tracking-wide text-foreground">${SCALE_HARDWARE_PRICE}</p>
-                    <p className="text-sm text-muted-foreground font-sans mt-2">per scale (one-time)</p>
+                  {/* Recommendation summary */}
+                  <div className="flex items-center justify-between p-4 rounded-xl bg-primary/5 border border-primary/20">
+                    <div className="space-y-1">
+                      <p className="font-sans text-sm text-foreground font-medium">
+                        {recommendedScales} scale{recommendedScales !== 1 ? 's' : ''} recommended
+                      </p>
+                      <p className="text-xs text-muted-foreground font-sans">
+                        Based on 1 scale per 10 daily color appointments
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-9 w-9 rounded-lg"
+                        onClick={() => { setManualScaleOverride(true); setScaleCount(Math.max(0, scaleCount - 1)); }}
+                        disabled={scaleCount <= 0}
+                      >
+                        <span className="text-sm">−</span>
+                      </Button>
+                      <span className={cn(tokens.stat.large, 'w-8 text-center text-foreground text-lg')}>{scaleCount}</span>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-9 w-9 rounded-lg"
+                        onClick={() => { setManualScaleOverride(true); setScaleCount(Math.min(20, scaleCount + 1)); }}
+                        disabled={scaleCount >= 20}
+                      >
+                        <span className="text-sm">+</span>
+                      </Button>
+                    </div>
                   </div>
-                  <div className="p-5 rounded-xl bg-muted/30 border border-border/40 text-center">
-                    <p className="font-display text-2xl tracking-wide text-foreground">${SCALE_LICENSE_MONTHLY}</p>
-                    <p className="text-sm text-muted-foreground font-sans mt-2">per scale / month</p>
-                  </div>
-                </div>
-
-                {/* Recommendation summary */}
-                <div className="flex items-center justify-between p-4 rounded-xl bg-primary/5 border border-primary/20">
-                  <div className="space-y-1">
-                    <p className="font-sans text-sm text-foreground font-medium">
-                      {recommendedScales} scale{recommendedScales !== 1 ? 's' : ''} recommended
-                    </p>
-                    <p className="text-xs text-muted-foreground font-sans">
-                      Based on 1 scale per 10 daily color appointments
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-9 w-9 rounded-lg"
-                      onClick={() => { setManualScaleOverride(true); setScaleCount(Math.max(0, scaleCount - 1)); }}
-                      disabled={scaleCount <= 0}
+                  {manualScaleOverride && scaleCount !== recommendedScales && (
+                    <button
+                      type="button"
+                      className="text-sm text-primary font-sans hover:underline transition-colors"
+                      onClick={() => { setManualScaleOverride(false); setScaleCount(recommendedScales); }}
                     >
-                      <span className="text-sm">−</span>
-                    </Button>
-                    <span className={cn(tokens.stat.large, 'w-8 text-center text-foreground text-lg')}>{scaleCount}</span>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-9 w-9 rounded-lg"
-                      onClick={() => { setManualScaleOverride(true); setScaleCount(Math.min(20, scaleCount + 1)); }}
-                      disabled={scaleCount >= 20}
-                    >
-                      <span className="text-sm">+</span>
-                    </Button>
-                  </div>
-                </div>
-                {manualScaleOverride && scaleCount !== recommendedScales && (
-                  <button
-                    type="button"
-                    className="text-sm text-primary font-sans hover:underline transition-colors"
-                    onClick={() => { setManualScaleOverride(false); setScaleCount(recommendedScales); }}
-                  >
-                    Reset to recommended
-                  </button>
-                )}
+                      Reset to recommended
+                    </button>
+                  )}
 
-                {/* iPad requirement */}
-                <div className="flex items-start gap-3 p-4 rounded-xl bg-muted/30 border border-border/40">
-                  <Info className="w-4 h-4 text-muted-foreground/60 shrink-0 mt-0.5" />
-                  <p className="text-sm text-muted-foreground font-sans">
-                    Each station uses an iPad with Bluetooth for the mixing interface. A tablet stand is recommended.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+                  {/* iPad requirement */}
+                  <div className="flex items-start gap-3 p-4 rounded-xl bg-muted/30 border border-border/40">
+                    <Info className="w-4 h-4 text-muted-foreground/60 shrink-0 mt-0.5" />
+                    <p className="text-sm text-muted-foreground font-sans">
+                      Each station uses an iPad with Bluetooth for the mixing interface. A tablet stand is recommended.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </RevealOnScroll>
           </div>
         </section>
 
