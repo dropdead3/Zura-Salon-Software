@@ -1720,11 +1720,13 @@ export function BackroomPaywall() {
         {/* ═══════════════════════════════════════════
             SECTION 5 — PRICING + ROI
             ═══════════════════════════════════════════ */}
-        <section className="pb-24 md:pb-32">
-          <div className="space-y-8 md:space-y-10">
-            <SectionHeading>Pricing</SectionHeading>
+        <section className="pb-24 md:pb-32 relative overflow-hidden">
+          <div className="absolute inset-0 pointer-events-none" style={{ background: 'linear-gradient(to bottom, hsl(var(--primary) / 0.02), transparent 60%)' }} />
+          <div className="space-y-8 md:space-y-10 relative">
+            <RevealOnScroll><SectionHeading>Pricing</SectionHeading></RevealOnScroll>
 
-            <Card className="bg-card border-border/50 shadow-sm">
+            <RevealOnScroll>
+              <Card className="bg-card border-border/50 shadow-md">
               <CardContent className="p-6 md:p-8 space-y-6">
                 <div className="grid grid-cols-2 gap-5">
                   <div className="p-5 rounded-xl bg-muted/30 border border-border/40 text-center">
