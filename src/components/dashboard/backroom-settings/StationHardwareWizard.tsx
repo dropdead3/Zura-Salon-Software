@@ -143,7 +143,7 @@ export function StationHardwareWizard({ onClose, initialStation }: Props) {
 
     setTimeout(() => {
       setDiscoveredDevices([
-        { name: 'Acaia Pearl S', id: 'acaia-001' },
+        { name: 'Precision Scale', id: 'scale-001' },
         { name: 'Ohaus Scout STX', id: 'ohaus-002' },
         { name: 'AWS LB-3000', id: 'aws-003' },
       ]);
@@ -604,7 +604,7 @@ function StepScalePairing({
               <Input
                 value={state.scaleModel}
                 onChange={(e) => setState((s) => ({ ...s, scaleModel: e.target.value }))}
-                placeholder="e.g. Acaia Pearl S"
+                placeholder="e.g. Precision Scale"
                 className="mt-1"
               />
             </div>

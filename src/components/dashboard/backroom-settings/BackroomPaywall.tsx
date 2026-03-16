@@ -746,7 +746,7 @@ export function BackroomPaywall() {
                       <Scale className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                      <p className={cn(tokens.label.default, 'text-foreground')}>Acaia Pearl Scale</p>
+                      <p className={cn(tokens.label.default, 'text-foreground')}><p className={cn(tokens.label.default, 'text-foreground')}>Precision Scale</p></p>
                       <p className="text-xs text-muted-foreground font-sans mt-0.5">
                         ${SCALE_HARDWARE_PRICE} one-time + ${SCALE_LICENSE_MONTHLY}/mo per scale
                       </p>

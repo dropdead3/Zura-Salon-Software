@@ -185,7 +185,7 @@ export default function BackroomSubscription() {
                 </div>
                 <div>
                   <p className={cn(tokens.label.default, 'text-foreground')}>Scale Hardware</p>
-                  <p className="text-xs text-muted-foreground font-sans">Acaia Pearl scales</p>
+                  <p className="text-xs text-muted-foreground font-sans"><p className="text-xs text-muted-foreground font-sans">Precision scales</p></p>
                 </div>
               </div>
 
