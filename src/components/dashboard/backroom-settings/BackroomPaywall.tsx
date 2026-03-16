@@ -96,6 +96,18 @@ export function BackroomPaywall() {
   const totalLocations = activeLocations.length || 1;
   const locationFraction = locationCount / totalLocations;
 
+  // Auto-calculate recommended scales: 1 per 10 daily color services
+  const dailyColorServices = estimate
+    ? Math.round((estimate.monthlyColorServices * locationFraction) / 30)
+    : 0;
+  const recommendedScales = Math.max(1, Math.ceil(dailyColorServices / 10));
+
+  useEffect(() => {
+    if (!manualScaleOverride && estimate) {
+      setScaleCount(recommendedScales);
+    }
+  }, [recommendedScales, manualScaleOverride, estimate]);
+
   // Cost calculations
   const baseCost = locationCount * BACKROOM_BASE_PRICE;
   const scaleCost = scaleCount * SCALE_LICENSE_MONTHLY;
