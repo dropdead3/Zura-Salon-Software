@@ -143,30 +143,26 @@ export function CompetitorComparison() {
                     </span>
                   </td>
                 </tr>
-                {pricingComparison.map((item, idx) => (
-                  <tr
-                    key={`price-${idx}`}
-                    className={cn(
-                      'border-b border-border/20 last:border-0',
-                      idx === 0 && 'bg-primary/5'
-                    )}
-                  >
-                    <td className="px-4 py-3">
-                      <span className={cn(
-                        'font-sans text-sm',
-                        idx === 0 ? 'text-primary font-medium' : 'text-foreground'
-                      )}>
-                        {item.name}
-                      </span>
-                    </td>
-                    <td colSpan={3} className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <span className="font-sans text-sm text-foreground">{item.pricing}</span>
-                        <span className="font-sans text-xs text-muted-foreground">{item.note}</span>
+                <tr className="border-b border-border/20 last:border-0">
+                  <td className="px-4 py-3">
+                    <span className="font-sans text-sm text-foreground">Monthly cost</span>
+                  </td>
+                  {columns.map((col) => (
+                    <td key={col.key} className="text-center px-4 py-3">
+                      <div className="space-y-0.5">
+                        <p className={cn(
+                          'font-sans text-xs',
+                          col.key === 'zura' ? 'text-primary font-medium' : 'text-foreground'
+                        )}>
+                          {pricingComparison[col.key].pricing}
+                        </p>
+                        <p className="font-sans text-[10px] text-muted-foreground">
+                          {pricingComparison[col.key].note}
+                        </p>
                       </div>
                     </td>
-                  </tr>
-                ))}
+                  ))}
+                </tr>
               </tbody>
             </table>
           </div>
