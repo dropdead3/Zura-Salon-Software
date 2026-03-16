@@ -468,7 +468,7 @@ export function BackroomPaywall() {
                       <AlertTriangle className="w-5 h-5 text-destructive" />
                     </div>
                     <div>
-                      <p className="font-sans text-base md:text-lg font-medium text-destructive">
+                      <p className="font-sans text-base font-medium text-destructive">
                         What Your Color Room Is Costing You Right Now
                       </p>
                       <p className="text-sm text-muted-foreground font-sans mt-1">
