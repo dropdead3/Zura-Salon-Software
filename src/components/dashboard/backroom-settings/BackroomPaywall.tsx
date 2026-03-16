@@ -364,7 +364,7 @@ export function BackroomPaywall() {
       {/* CTA */}
       <Button
         size="lg"
-        className="w-full font-sans font-medium gap-2"
+        className="w-full font-sans font-medium gap-2 text-sm"
         onClick={handleCheckout}
         disabled={loading || selectedLocationIds.size === 0}
       >
@@ -376,13 +376,13 @@ export function BackroomPaywall() {
         ) : yearlyNetBenefit > 1000 && locationCount > 0 ? (
           <>
             <Lock className="w-4 h-4" />
-            Unlock {formatCurrency(yearlyNetBenefit)}/yr in recovered value
+            Unlock {formatCurrency(yearlyNetBenefit)}/yr
             <ArrowRight className="w-4 h-4" />
           </>
         ) : netBenefit > 0 && locationCount > 0 ? (
           <>
             <Lock className="w-4 h-4" />
-            Start saving {formatCurrency(netBenefit)}/mo
+            Unlock {formatCurrency(netBenefit)}/mo
             <ArrowRight className="w-4 h-4" />
           </>
         ) : (
