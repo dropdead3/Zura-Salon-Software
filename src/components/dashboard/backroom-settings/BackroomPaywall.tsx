@@ -1314,10 +1314,6 @@ export function BackroomPaywall() {
             <p className="text-center font-sans text-sm text-muted-foreground font-light max-w-xl mx-auto">
               Zura Backroom works quietly during every service, turning everyday activity into structured salon intelligence.
             </p>
-
-            <div className="flex justify-center">
-              <ActivateButton />
-            </div>
           </div>
         </section>
 
