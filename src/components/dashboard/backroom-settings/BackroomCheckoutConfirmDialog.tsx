@@ -167,11 +167,11 @@ export function BackroomCheckoutConfirmDialog({
           )}
 
           {/* Actions */}
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
+          <div className="flex flex-col sm:flex-row sm:justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading} className="w-full sm:w-auto">
               Cancel
             </Button>
-            <Button onClick={onConfirm} disabled={loading} className="gap-2">
+            <Button onClick={onConfirm} disabled={loading} className="gap-2 w-full sm:w-auto">
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
