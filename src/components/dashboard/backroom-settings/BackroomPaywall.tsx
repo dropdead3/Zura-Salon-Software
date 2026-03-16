@@ -116,11 +116,11 @@ function ProductPreview() {
           </div>
           {/* Client + formula row */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-lg bg-muted/30 border border-border/30 p-3 space-y-1.5">
+            <div className="rounded-lg bg-muted/30 border border-border/30 p-3 space-y-2">
               <span className="text-[9px] text-muted-foreground font-sans">Client</span>
               <p className="text-xs text-foreground font-sans font-medium">Sarah Mitchell</p>
             </div>
-            <div className="rounded-lg bg-muted/30 border border-border/30 p-3 space-y-1.5">
+            <div className="rounded-lg bg-muted/30 border border-border/30 p-3 space-y-2">
               <span className="text-[9px] text-muted-foreground font-sans">Last Formula</span>
               <p className="text-xs text-foreground font-sans font-medium">7N + 8G (1:1.5)</p>
             </div>
