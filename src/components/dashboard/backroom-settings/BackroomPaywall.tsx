@@ -463,7 +463,7 @@ export function BackroomPaywall() {
                         <p className="text-sm text-muted-foreground font-sans">Bowl placed on scale</p>
                         <div className="bg-muted/50 rounded-xl p-6 w-full max-w-[300px]">
                           <p className="text-xs text-muted-foreground/70 font-sans mb-1">Current Weight</p>
-                          <p className="font-display text-4xl tracking-wide text-foreground">0.0g</p>
+                          <p className="font-display text-5xl tracking-wide text-foreground">0.0g</p>
                         </div>
                       </div>
                     )}
