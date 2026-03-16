@@ -376,7 +376,7 @@ export function BackroomPaywall() {
         ) : yearlyNetBenefit > 1000 && locationCount > 0 ? (
           <>
             <Lock className="w-4 h-4" />
-            Unlock {formatCurrency(yearlyNetBenefit)}/yr in savings
+            Unlock {formatCurrency(yearlyNetBenefit)}/yr in recovered value
             <ArrowRight className="w-4 h-4" />
           </>
         ) : netBenefit > 0 && locationCount > 0 ? (
@@ -946,7 +946,7 @@ export function BackroomPaywall() {
                       Your color room pays you back {roiMultiplier}× over
                     </p>
                     <p className="text-xs text-muted-foreground font-sans mt-1">
-                      {formatCurrency(yearlyCost)}/yr cost → {formatCurrency(yearlySavings)}/yr in savings & revenue.
+                      {formatCurrency(yearlyCost)}/yr cost → {formatCurrency(yearlySavings)}/yr in recovered value.
                       {!estimate.hasRealData && ' Estimates based on industry averages.'}
                     </p>
                   </>
