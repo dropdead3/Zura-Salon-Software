@@ -1277,7 +1277,7 @@ export function BackroomPaywall() {
         onOpenChange={setConfirmDialogOpen}
         onConfirm={handleCheckout}
         loading={loading}
-        organizationId={effectiveOrganization?.id}
+        organizationId={orgId}
         locationCount={locationCount}
         scaleCount={scaleCount}
         estimatedMonthlyServices={estimate ? Math.round(estimate.monthlyColorServices * locationFraction) : 0}
