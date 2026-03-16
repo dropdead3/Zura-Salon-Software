@@ -93,6 +93,13 @@ export function BackroomPaywall() {
   const netBenefit = totalSavings - monthlyTotal;
   const roiMultiplier = monthlyTotal > 0 ? Math.round(totalSavings / monthlyTotal) : 0;
 
+  // Yearly projections
+  const yearlySavings = totalSavings * 12;
+  const yearlyWasteSavings = wasteSavings * 12;
+  const yearlySupplyRecovery = supplyRecovery * 12;
+  const yearlyCost = monthlyTotal * 12;
+  const yearlyNetBenefit = netBenefit * 12;
+
   const handleCheckout = async () => {
     if (!effectiveOrganization?.id) {
       toast.error('No organization found');
