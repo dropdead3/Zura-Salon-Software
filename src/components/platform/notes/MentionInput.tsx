@@ -14,7 +14,7 @@ interface MentionInputProps {
 
 const roleIcons: Record<string, React.ReactNode> = {
   platform_owner: <Crown className="h-4 w-4 text-amber-400" />,
-  platform_admin: <Shield className="h-4 w-4 text-violet-400" />,
+  platform_admin: <Shield className="h-4 w-4 text-[hsl(var(--platform-primary))]" />,
   platform_support: <Headphones className="h-4 w-4 text-emerald-400" />,
   platform_developer: <Code className="h-4 w-4 text-blue-400" />,
 };
@@ -41,13 +41,11 @@ export function MentionInput({ value, onChange, placeholder, className, disabled
     onChange(newValue);
     setCursorPosition(position);
     
-    // Check if we're in a mention context
     const textBeforeCursor = newValue.slice(0, position);
     const lastAtIndex = textBeforeCursor.lastIndexOf('@');
     
     if (lastAtIndex !== -1) {
       const textAfterAt = textBeforeCursor.slice(lastAtIndex + 1);
-      // Only show dropdown if there's no space in the mention text (or it's a potential name)
       const hasValidMentionContext = !textAfterAt.includes('\n') && textAfterAt.length < 30;
       
       if (hasValidMentionContext) {
@@ -70,7 +68,6 @@ export function MentionInput({ value, onChange, placeholder, className, disabled
       const newValue = textBeforeCursor.slice(0, lastAtIndex) + suggestion.label + ' ' + textAfterCursor;
       onChange(newValue);
       
-      // Move cursor after the inserted mention
       const newPosition = lastAtIndex + suggestion.label.length + 1;
       setTimeout(() => {
         textareaRef.current?.setSelectionRange(newPosition, newPosition);
@@ -113,7 +110,6 @@ export function MentionInput({ value, onChange, placeholder, className, disabled
     }
   };
   
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (
@@ -130,7 +126,6 @@ export function MentionInput({ value, onChange, placeholder, className, disabled
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
   
-  // Scroll selected item into view
   useEffect(() => {
     if (showDropdown && dropdownRef.current) {
       const selectedEl = dropdownRef.current.querySelector(`[data-index="${selectedIndex}"]`);
@@ -156,12 +151,12 @@ export function MentionInput({ value, onChange, placeholder, className, disabled
       {showDropdown && filteredSuggestions.length > 0 && (
         <div
           ref={dropdownRef}
-          className="absolute z-50 mt-1 w-72 max-h-64 overflow-y-auto rounded-lg border border-slate-700 bg-slate-800 shadow-xl"
+          className="absolute z-50 mt-1 w-72 max-h-64 overflow-y-auto rounded-lg border border-[hsl(var(--platform-border))] bg-[hsl(var(--platform-bg-elevated))] shadow-xl"
         >
           {/* Role mentions section */}
           {filteredSuggestions.some(s => s.type === 'role') && (
             <>
-              <div className="px-3 py-2 text-xs font-medium text-slate-500 uppercase tracking-wider">
+              <div className="px-3 py-2 text-xs font-medium text-[hsl(var(--platform-foreground-subtle))] uppercase tracking-wider">
                 Roles
               </div>
               {filteredSuggestions
@@ -176,15 +171,15 @@ export function MentionInput({ value, onChange, placeholder, className, disabled
                       className={cn(
                         "w-full flex items-center gap-3 px-3 py-2 text-left transition-colors",
                         actualIndex === selectedIndex
-                          ? "bg-violet-500/20 text-white"
-                          : "text-slate-300 hover:bg-slate-700/50"
+                          ? "bg-violet-500/20 text-[hsl(var(--platform-foreground))]"
+                          : "text-[hsl(var(--platform-foreground)/0.85)] hover:bg-[hsl(var(--platform-bg-card)/0.5)]"
                       )}
                     >
                       {roleIcons[suggestion.id] || <User className="h-4 w-4" />}
                       <div className="flex-1 min-w-0">
                         <div className="font-medium text-sm">{suggestion.label}</div>
                         {suggestion.description && (
-                          <div className="text-xs text-slate-500 truncate">{suggestion.description}</div>
+                          <div className="text-xs text-[hsl(var(--platform-foreground-subtle))] truncate">{suggestion.description}</div>
                         )}
                       </div>
                     </button>
@@ -196,13 +191,13 @@ export function MentionInput({ value, onChange, placeholder, className, disabled
           {/* Divider */}
           {filteredSuggestions.some(s => s.type === 'role') && 
            filteredSuggestions.some(s => s.type === 'user') && (
-            <div className="border-t border-slate-700 my-1" />
+            <div className="border-t border-[hsl(var(--platform-border))] my-1" />
           )}
           
           {/* User mentions section */}
           {filteredSuggestions.some(s => s.type === 'user') && (
             <>
-              <div className="px-3 py-2 text-xs font-medium text-slate-500 uppercase tracking-wider">
+              <div className="px-3 py-2 text-xs font-medium text-[hsl(var(--platform-foreground-subtle))] uppercase tracking-wider">
                 Team Members
               </div>
               {filteredSuggestions
@@ -217,15 +212,15 @@ export function MentionInput({ value, onChange, placeholder, className, disabled
                       className={cn(
                         "w-full flex items-center gap-3 px-3 py-2 text-left transition-colors",
                         actualIndex === selectedIndex
-                          ? "bg-violet-500/20 text-white"
-                          : "text-slate-300 hover:bg-slate-700/50"
+                          ? "bg-violet-500/20 text-[hsl(var(--platform-foreground))]"
+                          : "text-[hsl(var(--platform-foreground)/0.85)] hover:bg-[hsl(var(--platform-bg-card)/0.5)]"
                       )}
                     >
-                      <User className="h-4 w-4 text-slate-400" />
+                      <User className="h-4 w-4 text-[hsl(var(--platform-muted))]" />
                       <div className="flex-1 min-w-0">
                         <div className="font-medium text-sm">{suggestion.label}</div>
                         {suggestion.description && (
-                          <div className="text-xs text-slate-500 truncate">{suggestion.description}</div>
+                          <div className="text-xs text-[hsl(var(--platform-foreground-subtle))] truncate">{suggestion.description}</div>
                         )}
                       </div>
                     </button>
@@ -236,7 +231,7 @@ export function MentionInput({ value, onChange, placeholder, className, disabled
         </div>
       )}
       
-      <p className="mt-1 text-xs text-slate-500">
+      <p className="mt-1 text-xs text-[hsl(var(--platform-foreground-subtle))]">
         Type @ to mention team members or roles
       </p>
     </div>

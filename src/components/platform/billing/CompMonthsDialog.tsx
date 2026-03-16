@@ -42,12 +42,7 @@ export function CompMonthsDialog({
     if (!reason.trim() || monthsToComp < 1) return;
 
     compMonths.mutate(
-      {
-        organizationId,
-        monthsToComp,
-        monthlyRate,
-        reason: reason.trim(),
-      },
+      { organizationId, monthsToComp, monthlyRate, reason: reason.trim() },
       {
         onSuccess: () => {
           setMonthsToComp(1);
@@ -70,7 +65,7 @@ export function CompMonthsDialog({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="months" className="text-slate-300">Months to Comp</Label>
+            <Label htmlFor="months">Months to Comp</Label>
             <Input
               id="months"
               type="number"
@@ -78,13 +73,12 @@ export function CompMonthsDialog({
               max={12}
               value={monthsToComp}
               onChange={(e) => setMonthsToComp(parseInt(e.target.value, 10) || 1)}
-              className="bg-slate-800 border-slate-700 text-white"
             />
           </div>
 
           <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/30">
             <p className="text-sm text-green-300">Credit Value</p>
-            <p className="text-white font-medium text-lg">
+            <p className="text-[hsl(var(--platform-foreground))] font-medium text-lg">
               {formatCurrency(compValue)}
             </p>
             <p className="text-xs text-green-400/70">
@@ -93,7 +87,7 @@ export function CompMonthsDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="reason" className="text-slate-300">Reason</Label>
+            <Label htmlFor="reason">Reason</Label>
             <PlatformTextarea
               id="reason"
               value={reason}
@@ -115,7 +109,6 @@ export function CompMonthsDialog({
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
-              className="border-slate-700 text-slate-300"
             >
               Cancel
             </Button>

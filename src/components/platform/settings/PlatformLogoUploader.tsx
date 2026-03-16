@@ -26,129 +26,59 @@ export function PlatformLogoUploader({
   const { toast } = useToast();
 
   const handleFileSelect = async (file: File) => {
-    // Validate file type
     const validTypes = ['image/png', 'image/svg+xml', 'image/jpeg', 'image/webp'];
     if (!validTypes.includes(file.type)) {
-      toast({
-        title: 'Invalid file type',
-        description: 'Please upload a PNG, SVG, JPEG, or WebP image.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Invalid file type', description: 'Please upload a PNG, SVG, JPEG, or WebP image.', variant: 'destructive' });
       return;
     }
-
-    // Validate file size (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
-      toast({
-        title: 'File too large',
-        description: 'Please upload an image smaller than 2MB.',
-        variant: 'destructive',
-      });
+      toast({ title: 'File too large', description: 'Please upload an image smaller than 2MB.', variant: 'destructive' });
       return;
     }
 
     setIsUploading(true);
-
     try {
-      // Generate unique filename with platform prefix
       const fileExt = file.name.split('.').pop();
       const fileName = `platform-${label.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}.${fileExt}`;
-
-      // Upload to business-logos bucket
-      const { error: uploadError } = await supabase.storage
-        .from('business-logos')
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: true,
-        });
-
+      const { error: uploadError } = await supabase.storage.from('business-logos').upload(fileName, file, { cacheControl: '3600', upsert: true });
       if (uploadError) throw uploadError;
-
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('business-logos')
-        .getPublicUrl(fileName);
-
+      const { data: { publicUrl } } = supabase.storage.from('business-logos').getPublicUrl(fileName);
       onChange(publicUrl);
-      toast({
-        title: 'Logo uploaded',
-        description: 'Your logo has been uploaded successfully.',
-      });
+      toast({ title: 'Logo uploaded', description: 'Your logo has been uploaded successfully.' });
     } catch (error) {
       console.error('Upload error:', error);
-      toast({
-        title: 'Upload failed',
-        description: error instanceof Error ? error.message : 'Failed to upload logo.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Upload failed', description: error instanceof Error ? error.message : 'Failed to upload logo.', variant: 'destructive' });
     } finally {
       setIsUploading(false);
     }
   };
 
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-
-    const file = e.dataTransfer.files[0];
-    if (file) {
-      handleFileSelect(file);
-    }
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = () => {
-    setIsDragging(false);
-  };
-
-  const handleRemove = () => {
-    onChange(null);
-  };
-
-  const handleClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      handleFileSelect(file);
-    }
-  };
+  const handleDrop = (e: React.DragEvent) => { e.preventDefault(); setIsDragging(false); const file = e.dataTransfer.files[0]; if (file) handleFileSelect(file); };
+  const handleDragOver = (e: React.DragEvent) => { e.preventDefault(); setIsDragging(true); };
+  const handleDragLeave = () => { setIsDragging(false); };
+  const handleRemove = () => { onChange(null); };
+  const handleClick = () => { fileInputRef.current?.click(); };
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => { const file = e.target.files?.[0]; if (file) handleFileSelect(file); };
 
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <div>
-          <h4 className="text-sm font-medium text-white">{label}</h4>
-          <p className="text-xs text-slate-400">{description}</p>
+          <h4 className="text-sm font-medium text-[hsl(var(--platform-foreground))]">{label}</h4>
+          <p className="text-xs text-[hsl(var(--platform-muted))]">{description}</p>
         </div>
       </div>
 
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/png,image/svg+xml,image/jpeg,image/webp"
-        onChange={handleInputChange}
-        className="hidden"
-      />
+      <input ref={fileInputRef} type="file" accept="image/png,image/svg+xml,image/jpeg,image/webp" onChange={handleInputChange} className="hidden" />
 
       {value ? (
         <div
           className={cn(
-            'relative rounded-lg border border-slate-700/50 bg-slate-800/50 p-4 flex items-center justify-center',
+            'relative rounded-lg border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.5)] p-4 flex items-center justify-center',
             aspectRatio === 'wide' ? 'aspect-[3/1]' : 'aspect-square w-24'
           )}
         >
-          <img
-            src={value}
-            alt={label}
-            className="max-h-full max-w-full object-contain"
-          />
+          <img src={value} alt={label} className="max-h-full max-w-full object-contain" />
           <button
             onClick={handleRemove}
             className="absolute -right-2 -top-2 rounded-full bg-red-500 p-1 text-white hover:bg-red-600 transition-colors"
@@ -167,15 +97,15 @@ export function PlatformLogoUploader({
             aspectRatio === 'wide' ? 'aspect-[3/1]' : 'aspect-square w-24',
             isDragging
               ? 'border-violet-500 bg-violet-500/10'
-              : 'border-slate-700 hover:border-slate-600 bg-slate-800/30 hover:bg-slate-800/50'
+              : 'border-[hsl(var(--platform-border))] hover:border-[hsl(var(--platform-border)/0.8)] bg-[hsl(var(--platform-bg-card)/0.3)] hover:bg-[hsl(var(--platform-bg-card)/0.5)]'
           )}
         >
           {isUploading ? (
-            <Loader2 className="h-6 w-6 text-violet-400 animate-spin" />
+            <Loader2 className="h-6 w-6 text-[hsl(var(--platform-primary))] animate-spin" />
           ) : (
             <>
-              <ImageIcon className="h-6 w-6 text-slate-500" />
-              <span className="text-xs text-slate-500 text-center">
+              <ImageIcon className="h-6 w-6 text-[hsl(var(--platform-foreground-subtle))]" />
+              <span className="text-xs text-[hsl(var(--platform-foreground-subtle))] text-center">
                 Drop or click to upload
               </span>
             </>

@@ -6,7 +6,6 @@ import { formatCurrency } from '@/hooks/useBillingCalculations';
 import type { CapacityMetrics } from '@/hooks/useOrganizationCapacity';
 
 interface AddOnsConfigFormProps {
-  // Per-location
   perLocationFee: number;
   onPerLocationFeeChange: (fee: number) => void;
   additionalLocationsPurchased: number;
@@ -15,8 +14,6 @@ interface AddOnsConfigFormProps {
   onIncludedLocationsChange: (count: number | null) => void;
   planMaxLocations: number;
   locationMetrics: CapacityMetrics;
-  
-  // Per-user
   perUserFee: number;
   onPerUserFeeChange: (fee: number) => void;
   additionalUsersPurchased: number;
@@ -52,8 +49,8 @@ function QuantityAdjuster({
         <Minus className="h-4 w-4" />
       </PlatformButton>
       <div className="w-16 text-center">
-        <span className="text-lg font-medium text-white">{value}</span>
-        <span className="text-xs text-slate-500 block">{label}</span>
+        <span className="text-lg font-medium text-[hsl(var(--platform-foreground))]">{value}</span>
+        <span className="text-xs text-[hsl(var(--platform-foreground-subtle))] block">{label}</span>
       </div>
       <PlatformButton
         variant="outline"
@@ -95,14 +92,13 @@ export function AddOnsConfigForm({
       {/* Locations Add-On */}
       <div className="space-y-4">
         <div className="flex items-center gap-2">
-          <MapPin className="h-4 w-4 text-violet-400" />
+          <MapPin className="h-4 w-4 text-[hsl(var(--platform-primary))]" />
           <PlatformLabel className="text-sm font-medium">Location Add-Ons</PlatformLabel>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          {/* Included locations override */}
           <div className="space-y-2">
-            <PlatformLabel className="text-xs text-slate-400">
+            <PlatformLabel className="text-xs text-[hsl(var(--platform-muted))]">
               Base Included (plan default: {planMaxLocations === -1 ? 'Unlimited' : planMaxLocations})
             </PlatformLabel>
             <PlatformInput
@@ -115,11 +111,10 @@ export function AddOnsConfigForm({
             />
           </div>
 
-          {/* Per-location fee */}
           <div className="space-y-2">
-            <PlatformLabel className="text-xs text-slate-400">Per-Location Fee</PlatformLabel>
+            <PlatformLabel className="text-xs text-[hsl(var(--platform-muted))]">Per-Location Fee</PlatformLabel>
             <div className="relative max-w-32">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--platform-muted))]">$</span>
               <PlatformInput
                 type="number"
                 min="0"
@@ -132,11 +127,10 @@ export function AddOnsConfigForm({
           </div>
         </div>
 
-        {/* Additional locations purchased */}
-        <div className="flex items-center justify-between p-3 rounded-lg bg-slate-800/50 border border-slate-700/50">
+        <div className="flex items-center justify-between p-3 rounded-lg bg-[hsl(var(--platform-bg-card)/0.5)] border border-[hsl(var(--platform-border)/0.5)]">
           <div>
-            <p className="text-sm text-white">Additional Locations</p>
-            <p className="text-xs text-slate-500">
+            <p className="text-sm text-[hsl(var(--platform-foreground))]">Additional Locations</p>
+            <p className="text-xs text-[hsl(var(--platform-foreground-subtle))]">
               Currently using {locationMetrics.used} of {locationMetrics.isUnlimited ? '∞' : locationMetrics.total}
             </p>
           </div>
@@ -158,14 +152,13 @@ export function AddOnsConfigForm({
       {/* Users Add-On */}
       <div className="space-y-4">
         <div className="flex items-center gap-2">
-          <Users className="h-4 w-4 text-violet-400" />
+          <Users className="h-4 w-4 text-[hsl(var(--platform-primary))]" />
           <PlatformLabel className="text-sm font-medium">User Seat Add-Ons</PlatformLabel>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          {/* Included users override */}
           <div className="space-y-2">
-            <PlatformLabel className="text-xs text-slate-400">
+            <PlatformLabel className="text-xs text-[hsl(var(--platform-muted))]">
               Base Included (plan default: {planMaxUsers === -1 ? 'Unlimited' : planMaxUsers})
             </PlatformLabel>
             <PlatformInput
@@ -178,11 +171,10 @@ export function AddOnsConfigForm({
             />
           </div>
 
-          {/* Per-user fee */}
           <div className="space-y-2">
-            <PlatformLabel className="text-xs text-slate-400">Per-User Fee</PlatformLabel>
+            <PlatformLabel className="text-xs text-[hsl(var(--platform-muted))]">Per-User Fee</PlatformLabel>
             <div className="relative max-w-32">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--platform-muted))]">$</span>
               <PlatformInput
                 type="number"
                 min="0"
@@ -195,11 +187,10 @@ export function AddOnsConfigForm({
           </div>
         </div>
 
-        {/* Additional users purchased */}
-        <div className="flex items-center justify-between p-3 rounded-lg bg-slate-800/50 border border-slate-700/50">
+        <div className="flex items-center justify-between p-3 rounded-lg bg-[hsl(var(--platform-bg-card)/0.5)] border border-[hsl(var(--platform-border)/0.5)]">
           <div>
-            <p className="text-sm text-white">Additional User Seats</p>
-            <p className="text-xs text-slate-500">
+            <p className="text-sm text-[hsl(var(--platform-foreground))]">Additional User Seats</p>
+            <p className="text-xs text-[hsl(var(--platform-foreground-subtle))]">
               Currently using {userMetrics.used} of {userMetrics.isUnlimited ? '∞' : userMetrics.total}
             </p>
           </div>
@@ -222,10 +213,10 @@ export function AddOnsConfigForm({
       {totalCost > 0 && (
         <div className="flex items-center justify-between p-4 rounded-lg bg-violet-500/10 border border-violet-500/30">
           <div className="flex items-center gap-2">
-            <DollarSign className="h-5 w-5 text-violet-400" />
-            <span className="text-sm font-medium text-white">Total Add-On Fees</span>
+            <DollarSign className="h-5 w-5 text-[hsl(var(--platform-primary))]" />
+            <span className="text-sm font-medium text-[hsl(var(--platform-foreground))]">Total Add-On Fees</span>
           </div>
-          <span className="text-lg font-medium text-white">
+          <span className="text-lg font-medium text-[hsl(var(--platform-foreground))]">
             {formatCurrency(totalCost)}/mo
           </span>
         </div>

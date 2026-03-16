@@ -21,24 +21,9 @@ import { PlatformLabel as Label } from '../ui/PlatformLabel';
 type ThemeOption = 'light' | 'dark' | 'system';
 
 const themeOptions: { value: ThemeOption; label: string; icon: typeof Sun; description: string }[] = [
-  { 
-    value: 'light', 
-    label: 'Light', 
-    icon: Sun, 
-    description: 'Soft lavender with purple accents' 
-  },
-  { 
-    value: 'dark', 
-    label: 'Dark', 
-    icon: Moon, 
-    description: 'Deep slate with violet glow' 
-  },
-  { 
-    value: 'system', 
-    label: 'System', 
-    icon: Monitor, 
-    description: 'Follow your device settings' 
-  },
+  { value: 'light', label: 'Light', icon: Sun, description: 'Soft lavender with purple accents' },
+  { value: 'dark', label: 'Dark', icon: Moon, description: 'Deep slate with violet glow' },
+  { value: 'system', label: 'System', icon: Monitor, description: 'Follow your device settings' },
 ];
 
 interface LogoUploadProps {
@@ -52,106 +37,73 @@ interface LogoUploadProps {
 
 function LogoUpload({ label, description, currentUrl, onUpload, onRemove, variant }: LogoUploadProps) {
   const { toast } = useToast();
-  const { resolvedTheme } = usePlatformTheme();
-  const isDark = resolvedTheme === 'dark';
   const [isUploading, setIsUploading] = useState(false);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     if (!file.type.startsWith('image/')) {
-      toast({
-        title: 'Invalid file type',
-        description: 'Please upload an image file (PNG, JPG, SVG, or WebP)',
-        variant: 'destructive',
-      });
+      toast({ title: 'Invalid file type', description: 'Please upload an image file (PNG, JPG, SVG, or WebP)', variant: 'destructive' });
       return;
     }
-
     setIsUploading(true);
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = `platform-logo-${variant}-${Date.now()}.${fileExt}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('business-logos')
-        .upload(fileName, file, { upsert: true });
-
+      const { error: uploadError } = await supabase.storage.from('business-logos').upload(fileName, file, { upsert: true });
       if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('business-logos')
-        .getPublicUrl(fileName);
-
+      const { data: { publicUrl } } = supabase.storage.from('business-logos').getPublicUrl(fileName);
       onUpload(publicUrl);
-      toast({
-        title: 'Logo uploaded',
-        description: 'Your logo has been uploaded successfully.',
-      });
+      toast({ title: 'Logo uploaded', description: 'Your logo has been uploaded successfully.' });
     } catch (error) {
       console.error('Upload error:', error);
-      toast({
-        title: 'Upload failed',
-        description: 'Failed to upload logo. Please try again.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Upload failed', description: 'Failed to upload logo. Please try again.', variant: 'destructive' });
     } finally {
       setIsUploading(false);
     }
   };
 
   const bgClass = variant === 'light' 
-    ? 'bg-white border-slate-200' 
-    : isDark ? 'bg-slate-900 border-slate-700' : 'bg-slate-800 border-slate-600';
+    ? 'bg-white border-[hsl(var(--platform-border)/0.3)]' 
+    : 'bg-[hsl(var(--platform-bg-elevated))] border-[hsl(var(--platform-border))]';
 
   return (
     <div className="space-y-3">
       <div>
-        <Label className={cn('text-sm font-medium', isDark ? 'text-slate-200' : 'text-slate-700')}>{label}</Label>
-        <p className={cn('text-xs mt-0.5', isDark ? 'text-slate-400' : 'text-slate-500')}>{description}</p>
+        <Label className="text-sm font-medium">{label}</Label>
+        <p className="text-xs mt-0.5 text-[hsl(var(--platform-muted))]">{description}</p>
       </div>
       
       <div className={cn(
         'relative flex items-center justify-center h-24 rounded-lg border-2 border-dashed transition-colors',
         bgClass,
-        !currentUrl && (isDark ? 'hover:border-violet-400/50' : 'hover:border-violet-500/50')
+        !currentUrl && 'hover:border-[hsl(var(--platform-primary)/0.5)]'
       )}>
         {currentUrl ? (
           <div className="flex items-center gap-4">
-            <img
-              src={currentUrl}
-              alt={label}
-              className="h-12 object-contain"
-            />
+            <img src={currentUrl} alt={label} className="h-12 object-contain" />
             <PlatformButton
               variant="ghost"
               size={tokens.button.inline}
               onClick={onRemove}
-              className={cn(isDark ? 'text-slate-400 hover:text-red-400' : 'text-slate-500 hover:text-red-500')}
+              className="text-[hsl(var(--platform-muted))] hover:text-red-400"
             >
               Remove
             </PlatformButton>
           </div>
         ) : (
           <label className="flex flex-col items-center gap-2 cursor-pointer p-4">
-            <div className={cn('p-2 rounded-lg', isDark ? 'bg-slate-800/50' : 'bg-slate-100')}>
+            <div className="p-2 rounded-lg bg-[hsl(var(--platform-bg-card)/0.5)]">
               {isUploading ? (
-                <Upload className="h-5 w-5 text-violet-400 animate-pulse" />
+                <Upload className="h-5 w-5 text-[hsl(var(--platform-primary))] animate-pulse" />
               ) : (
-                <ImageIcon className={cn('h-5 w-5', isDark ? 'text-slate-400' : 'text-slate-500')} />
+                <ImageIcon className="h-5 w-5 text-[hsl(var(--platform-muted))]" />
               )}
             </div>
-            <span className={cn('text-xs', isDark ? 'text-slate-400' : 'text-slate-500')}>
+            <span className="text-xs text-[hsl(var(--platform-muted))]">
               {isUploading ? 'Uploading...' : 'Click to upload'}
             </span>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleUpload}
-              className="hidden"
-              disabled={isUploading}
-            />
+            <input type="file" accept="image/*" onChange={handleUpload} className="hidden" disabled={isUploading} />
           </label>
         )}
       </div>
@@ -165,13 +117,9 @@ export function PlatformAppearanceTab() {
   const { hasPlatformRoleOrHigher } = useAuth();
   const [localBranding, setLocalBranding] = useState<PlatformBranding>(branding);
   const [hasChanges, setHasChanges] = useState(false);
-  const isDark = resolvedTheme === 'dark';
   const isPlatformOwner = hasPlatformRoleOrHigher('platform_owner');
 
-  useEffect(() => {
-    setLocalBranding(branding);
-  }, [branding]);
-
+  useEffect(() => { setLocalBranding(branding); }, [branding]);
   useEffect(() => {
     const isChanged = JSON.stringify(localBranding) !== JSON.stringify(branding);
     setHasChanges(isChanged);
@@ -186,27 +134,16 @@ export function PlatformAppearanceTab() {
   };
 
   const handleThemeColorsChange = (colors: Record<string, string>) => {
-    setLocalBranding((prev) => ({
-      ...prev,
-      theme_colors: colors,
-    }));
+    setLocalBranding((prev) => ({ ...prev, theme_colors: colors }));
   };
 
-  const handleSave = () => {
-    saveBranding(localBranding);
-  };
-
+  const handleSave = () => { saveBranding(localBranding); };
   const handleDiscard = () => {
     setLocalBranding(branding);
-    
-    // Reset CSS variables to original values
     if (branding.theme_colors) {
       Object.entries(branding.theme_colors).forEach(([key, value]) => {
-        if (value) {
-          document.documentElement.style.setProperty(`--${key}`, value);
-        } else {
-          document.documentElement.style.removeProperty(`--${key}`);
-        }
+        if (value) { document.documentElement.style.setProperty(`--${key}`, value); }
+        else { document.documentElement.style.removeProperty(`--${key}`); }
       });
     }
   };
@@ -218,26 +155,14 @@ export function PlatformAppearanceTab() {
         <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between p-4 w-auto max-w-xl bg-card/80 backdrop-blur-xl rounded-xl border border-border/40 shadow-[0_16px_40px_-18px_hsl(var(--foreground)/0.25)]">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-            <span className="text-sm font-medium text-foreground">
-              You have unsaved changes
-            </span>
+            <span className="text-sm font-medium text-foreground">You have unsaved changes</span>
           </div>
           <div className="flex items-center gap-2">
-            <PlatformButton
-              variant="ghost"
-              size={tokens.button.card}
-              onClick={handleDiscard}
-              disabled={isSaving}
-            >
+            <PlatformButton variant="ghost" size={tokens.button.card} onClick={handleDiscard} disabled={isSaving}>
               <RotateCcw className="h-4 w-4 mr-1" />
               Discard
             </PlatformButton>
-            <PlatformButton
-              variant="glow"
-              size={tokens.button.card}
-              onClick={handleSave}
-              disabled={isSaving}
-            >
+            <PlatformButton variant="glow" size={tokens.button.card} onClick={handleSave} disabled={isSaving}>
               <Save className="h-4 w-4 mr-1" />
               {isSaving ? 'Saving...' : 'Save Changes'}
             </PlatformButton>
@@ -249,7 +174,7 @@ export function PlatformAppearanceTab() {
       <PlatformCard variant="glass">
         <PlatformCardHeader>
           <PlatformCardTitle className="flex items-center gap-2">
-            <Palette className={cn('h-5 w-5', isDark ? 'text-violet-400' : 'text-violet-600')} />
+            <Palette className="h-5 w-5 text-[hsl(var(--platform-primary))]" />
             Theme Mode
           </PlatformCardTitle>
           <PlatformCardDescription>
@@ -269,12 +194,8 @@ export function PlatformAppearanceTab() {
                   className={cn(
                     'relative flex flex-col items-center gap-3 p-5 rounded-xl border-2 transition-all duration-200',
                     isSelected
-                      ? isDark 
-                        ? 'border-violet-500 bg-violet-500/10 shadow-lg shadow-violet-500/20'
-                        : 'border-violet-500 bg-violet-50 shadow-lg shadow-violet-500/20'
-                      : isDark
-                        ? 'border-slate-700/50 bg-slate-800/30 hover:border-slate-600 hover:bg-slate-800/50'
-                        : 'border-slate-200 bg-white hover:border-violet-300 hover:bg-violet-50/50'
+                      ? 'border-violet-500 bg-violet-500/10 shadow-lg shadow-violet-500/20'
+                      : 'border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.3)] hover:border-[hsl(var(--platform-border))] hover:bg-[hsl(var(--platform-bg-card)/0.5)]'
                   )}
                 >
                   {/* Preview Box */}
@@ -298,25 +219,20 @@ export function PlatformAppearanceTab() {
                   <div className="flex items-center gap-2">
                     <Icon className={cn(
                       'h-4 w-4',
-                      isSelected 
-                        ? isDark ? 'text-violet-400' : 'text-violet-600'
-                        : isDark ? 'text-slate-400' : 'text-slate-500'
+                      isSelected ? 'text-[hsl(var(--platform-primary))]' : 'text-[hsl(var(--platform-muted))]'
                     )} />
                     <span className={cn(
                       'font-medium',
-                      isSelected 
-                        ? isDark ? 'text-white' : 'text-slate-900'
-                        : isDark ? 'text-slate-300' : 'text-slate-600'
+                      isSelected ? 'text-[hsl(var(--platform-foreground))]' : 'text-[hsl(var(--platform-foreground)/0.85)]'
                     )}>
                       {option.label}
                     </span>
                   </div>
 
-                  <p className={cn('text-xs text-center', isDark ? 'text-slate-400' : 'text-slate-500')}>
+                  <p className="text-xs text-center text-[hsl(var(--platform-muted))]">
                     {option.description}
                   </p>
 
-                  {/* Selected indicator */}
                   {isSelected && (
                     <div className="absolute top-3 right-3 p-1 rounded-full bg-violet-500">
                       <Check className="h-3 w-3 text-white" />
@@ -333,7 +249,7 @@ export function PlatformAppearanceTab() {
       <PlatformCard variant="glass">
         <PlatformCardHeader>
           <PlatformCardTitle className="flex items-center gap-2">
-            <ImageIcon className={cn('h-5 w-5', isDark ? 'text-violet-400' : 'text-violet-600')} />
+            <ImageIcon className="h-5 w-5 text-[hsl(var(--platform-primary))]" />
             Full Logos
           </PlatformCardTitle>
           <PlatformCardDescription>
@@ -342,7 +258,6 @@ export function PlatformAppearanceTab() {
         </PlatformCardHeader>
         <PlatformCardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Dark Mode Logo (Light/White logo for dark backgrounds) */}
             <LogoUpload
               label="Dark Mode Logo"
               description="Light/white logo for dark backgrounds (recommended: 180x48px)"
@@ -351,8 +266,6 @@ export function PlatformAppearanceTab() {
               onRemove={() => handleLogoUpdate('primary_logo_url', null)}
               variant="dark"
             />
-
-            {/* Light Mode Logo (Dark logo for light backgrounds) */}
             <LogoUpload
               label="Light Mode Logo"
               description="Dark/colored logo for light backgrounds (recommended: 180x48px)"
@@ -369,7 +282,7 @@ export function PlatformAppearanceTab() {
       <PlatformCard variant="glass">
         <PlatformCardHeader>
           <PlatformCardTitle className="flex items-center gap-2">
-            <Sparkles className={cn('h-5 w-5', isDark ? 'text-violet-400' : 'text-violet-600')} />
+            <Sparkles className="h-5 w-5 text-[hsl(var(--platform-primary))]" />
             Sidebar Icons
           </PlatformCardTitle>
           <PlatformCardDescription>
@@ -378,7 +291,6 @@ export function PlatformAppearanceTab() {
         </PlatformCardHeader>
         <PlatformCardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Dark Mode Icon */}
             <LogoUpload
               label="Dark Mode Icon"
               description="Light/white icon for dark backgrounds (recommended: 32x32px)"
@@ -387,8 +299,6 @@ export function PlatformAppearanceTab() {
               onRemove={() => handleLogoUpdate('icon_dark_url', null)}
               variant="dark"
             />
-
-            {/* Light Mode Icon */}
             <LogoUpload
               label="Light Mode Icon"
               description="Dark/colored icon for light backgrounds (recommended: 32x32px)"
@@ -399,12 +309,9 @@ export function PlatformAppearanceTab() {
             />
           </div>
 
-          <div className={cn(
-            'mt-6 p-4 rounded-lg border',
-            isDark ? 'bg-slate-800/50 border-slate-700/50' : 'bg-slate-50 border-slate-200'
-          )}>
-            <h4 className={cn('text-sm font-medium mb-2', isDark ? 'text-slate-200' : 'text-slate-700')}>Logo & Icon Guidelines</h4>
-            <ul className={cn('text-xs space-y-1', isDark ? 'text-slate-400' : 'text-slate-500')}>
+          <div className="mt-6 p-4 rounded-lg border bg-[hsl(var(--platform-bg-card)/0.5)] border-[hsl(var(--platform-border)/0.5)]">
+            <h4 className="text-sm font-medium mb-2 text-[hsl(var(--platform-foreground)/0.9)]">Logo & Icon Guidelines</h4>
+            <ul className="text-xs space-y-1 text-[hsl(var(--platform-muted))]">
               <li>• <strong>Dark Mode:</strong> Use white or light-colored assets that contrast well against dark backgrounds</li>
               <li>• <strong>Light Mode:</strong> Use dark or colored assets that contrast well against light backgrounds</li>
               <li>• <strong>Full Logos:</strong> Horizontal format, recommended 180x48px</li>
@@ -420,7 +327,7 @@ export function PlatformAppearanceTab() {
         <>
           <div className="flex items-center gap-2">
             <Crown className="h-5 w-5 text-amber-400" />
-            <span className={cn('text-sm font-medium', isDark ? 'text-amber-400' : 'text-amber-600')}>Owner Only</span>
+            <span className="text-sm font-medium text-amber-400">Owner Only</span>
           </div>
           
           <PlatformThemeEditor
@@ -440,9 +347,9 @@ export function PlatformAppearanceTab() {
               <div className="flex gap-4">
                 {/* Expanded Sidebar Preview */}
                 <div className="flex-1">
-                  <p className={cn('text-xs mb-2', isDark ? 'text-slate-500' : 'text-slate-400')}>Expanded State</p>
+                  <p className="text-xs mb-2 text-[hsl(var(--platform-foreground-subtle))]">Expanded State</p>
                   <div
-                    className="rounded-lg border border-slate-700/50 p-4"
+                    className="rounded-lg border border-[hsl(var(--platform-border)/0.5)] p-4"
                     style={{ backgroundColor: 'hsl(var(--platform-bg-elevated, 222 47% 8%))' }}
                   >
                     <div className="flex items-center gap-2">
@@ -471,9 +378,9 @@ export function PlatformAppearanceTab() {
 
                 {/* Collapsed Sidebar Preview */}
                 <div className="w-24">
-                  <p className={cn('text-xs mb-2', isDark ? 'text-slate-500' : 'text-slate-400')}>Collapsed</p>
+                  <p className="text-xs mb-2 text-[hsl(var(--platform-foreground-subtle))]">Collapsed</p>
                   <div
-                    className="rounded-lg border border-slate-700/50 p-4 flex items-center justify-center"
+                    className="rounded-lg border border-[hsl(var(--platform-border)/0.5)] p-4 flex items-center justify-center"
                     style={{ backgroundColor: 'hsl(var(--platform-bg-elevated, 222 47% 8%))' }}
                   >
                     {localBranding.secondary_logo_url ? (

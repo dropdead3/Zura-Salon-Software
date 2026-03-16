@@ -57,14 +57,12 @@ export function PandaDocFieldMappingEditor() {
   const [rows, setRows] = useState<MappingRow[]>([]);
   const [hasChanges, setHasChanges] = useState(false);
 
-  // Initialize rows from saved mapping
   useEffect(() => {
     if (savedMapping && rows.length === 0) {
       setRows(mappingToRows(savedMapping));
     }
   }, [savedMapping]);
 
-  // Track changes
   useEffect(() => {
     if (savedMapping) {
       const currentMapping = rowsToMapping(rows);
@@ -111,9 +109,9 @@ export function PandaDocFieldMappingEditor() {
           <div className="space-y-3">
             {[...Array(4)].map((_, i) => (
               <div key={i} className="flex items-center gap-3 animate-pulse">
-                <div className="flex-1 h-10 bg-slate-800 rounded-lg" />
+                <div className="flex-1 h-10 bg-[hsl(var(--platform-bg-card))] rounded-lg" />
                 <div className="w-8 h-8" />
-                <div className="flex-1 h-10 bg-slate-800 rounded-lg" />
+                <div className="flex-1 h-10 bg-[hsl(var(--platform-bg-card))] rounded-lg" />
                 <div className="w-8 h-8" />
               </div>
             ))}
@@ -153,7 +151,7 @@ export function PandaDocFieldMappingEditor() {
       </PlatformCardHeader>
       <PlatformCardContent className="space-y-4">
         {/* Header row */}
-        <div className="flex items-center gap-3 text-sm text-slate-400 px-1">
+        <div className="flex items-center gap-3 text-sm text-[hsl(var(--platform-muted))] px-1">
           <div className="flex-1">
             <PlatformLabel>PandaDoc Field Name</PlatformLabel>
           </div>
@@ -172,10 +170,10 @@ export function PandaDocFieldMappingEditor() {
                 value={row.pandaDocField}
                 onChange={(e) => handleUpdateRow(row.id, 'pandaDocField', e.target.value)}
                 placeholder="e.g., term_start_date"
-                className="flex-1 bg-slate-900/50 border-slate-700 text-slate-200 rounded-lg"
+                className="flex-1 rounded-lg"
                 autoCapitalize="none"
               />
-              <ArrowRight className="h-4 w-4 text-slate-500 shrink-0" />
+              <ArrowRight className="h-4 w-4 text-[hsl(var(--platform-foreground-subtle))] shrink-0" />
               <Select
                 value={row.billingColumn}
                 onValueChange={(value) => handleUpdateRow(row.id, 'billingColumn', value)}
@@ -188,7 +186,7 @@ export function PandaDocFieldMappingEditor() {
                     <SelectItem key={col.value} value={col.value}>
                       <div className="flex items-center justify-between gap-4">
                         <span>{col.label}</span>
-                        <span className="text-xs text-slate-500">{col.type}</span>
+                        <span className="text-xs text-[hsl(var(--platform-foreground-subtle))]">{col.type}</span>
                       </div>
                     </SelectItem>
                   ))}
@@ -198,7 +196,7 @@ export function PandaDocFieldMappingEditor() {
                 variant="ghost"
                 size="icon"
                 onClick={() => handleRemoveRow(row.id)}
-                className="shrink-0 text-slate-400 hover:text-red-400"
+                className="shrink-0 text-[hsl(var(--platform-muted))] hover:text-red-400"
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
@@ -207,7 +205,7 @@ export function PandaDocFieldMappingEditor() {
         </div>
 
         {/* Actions */}
-        <div className="flex items-center justify-between pt-4 border-t border-slate-700/50">
+        <div className="flex items-center justify-between pt-4 border-t border-[hsl(var(--platform-border)/0.5)]">
           <Button
             variant="outline"
             size={tokens.button.card}
@@ -228,7 +226,7 @@ export function PandaDocFieldMappingEditor() {
         </div>
 
         {/* Help text */}
-        <p className="text-xs text-slate-500 pt-2">
+        <p className="text-xs text-[hsl(var(--platform-foreground-subtle))] pt-2">
           Field names should match exactly as they appear in your PandaDoc templates. 
           The "Plan (lookup by name)" column will search for a matching subscription plan.
         </p>
