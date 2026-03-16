@@ -187,16 +187,15 @@ export function CreateOrganizationDialog({ open, onOpenChange }: CreateOrganizat
                   <FormLabel className="text-slate-300">Business Type *</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
-                      <SelectTrigger className="bg-slate-800/50 border-slate-700/50 text-slate-300 hover:bg-slate-800/70 focus:ring-violet-500/30">
+                      <SelectTrigger>
                         <SelectValue placeholder="Select business type" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent className="bg-slate-800 border-slate-700">
+                    <SelectContent>
                       {businessTypeOptions.map((option) => (
                         <SelectItem 
                           key={option.value} 
                           value={option.value}
-                          className="text-slate-300 focus:bg-slate-700 focus:text-white"
                         >
                           {option.label}
                         </SelectItem>
