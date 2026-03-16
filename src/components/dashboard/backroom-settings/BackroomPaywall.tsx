@@ -407,7 +407,7 @@ export function BackroomPaywall() {
         {/* ═══════════════════════════════════════════
             SECTION 1 — HERO
             ═══════════════════════════════════════════ */}
-        <section className="pt-4 pb-20 md:pb-24">
+        <section className="pt-4 pb-24 md:pb-32">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
             {/* Left — Text */}
             <div className="space-y-8 text-center lg:text-left">
@@ -603,7 +603,7 @@ export function BackroomPaywall() {
         {/* ═══════════════════════════════════════════
             SECTION 1.75 — BEFORE / AFTER TRANSFORMATION
             ═══════════════════════════════════════════ */}
-        <section className="pb-20 md:pb-24">
+        <section className="pb-20 md:pb-24 bg-muted/20 -mx-6 sm:-mx-8 px-6 sm:px-8 rounded-2xl pt-10 md:pt-12">
           <div className="text-center mb-10 md:mb-12">
             <h2 className="font-display text-2xl md:text-3xl font-normal tracking-wide uppercase text-foreground">
               How Zura Backroom Transforms Your Color Room
@@ -671,10 +671,12 @@ export function BackroomPaywall() {
             </Card>
           </div>
 
-          <div className="flex justify-center pt-8">
-            <ActivateButton />
-          </div>
         </section>
+
+        {/* Divider — Problem → How It Works */}
+        <div className="flex justify-center py-4">
+          <div className="w-12 h-px bg-border/40" />
+        </div>
 
         {/* ═══════════════════════════════════════════
             SECTION 2 — THE PROBLEM (Loss Aversion)
@@ -788,7 +790,7 @@ export function BackroomPaywall() {
         {/* ═══════════════════════════════════════════
             SECTION 3 — HOW IT WORKS
             ═══════════════════════════════════════════ */}
-        <section className="pb-20 md:pb-24">
+        <section className="pb-16 md:pb-20">
           <div className="space-y-8 md:space-y-10">
             <SectionHeading>How It Works</SectionHeading>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 md:gap-6">
@@ -808,7 +810,7 @@ export function BackroomPaywall() {
         {/* ═══════════════════════════════════════════
             SECTION 4 — WHAT YOU GET (6 feature cards)
             ═══════════════════════════════════════════ */}
-        <section className="pb-20 md:pb-24">
+        <section className="pb-20 md:pb-24 bg-muted/20 -mx-6 sm:-mx-8 px-6 sm:px-8 rounded-2xl pt-10 md:pt-12">
           <div className="space-y-8 md:space-y-10">
             <SectionHeading>What You Get</SectionHeading>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
@@ -837,17 +839,13 @@ export function BackroomPaywall() {
               ))}
             </div>
 
-            {/* Mid-page CTA */}
-            <div className="flex justify-center pt-4">
-              <ActivateButton />
-            </div>
           </div>
         </section>
 
         {/* ═══════════════════════════════════════════
             SECTION 4.25 — INTERACTIVE FEATURE REVEAL
             ═══════════════════════════════════════════ */}
-        <section className="pb-20 md:pb-24">
+        <section className="pb-24 md:pb-32">
           <div className="space-y-8 md:space-y-10">
             <div className="text-center space-y-3">
               <h2 className="font-display text-2xl md:text-3xl font-medium tracking-wide text-foreground">
@@ -1081,10 +1079,15 @@ export function BackroomPaywall() {
           <CompetitorComparison />
         </section>
 
+        {/* Divider — Comparison → ROI */}
+        <div className="flex justify-center py-4">
+          <div className="w-12 h-px bg-border/40" />
+        </div>
+
         {/* ═══════════════════════════════════════════
             SECTION 4.75 — ROI PROOF
             ═══════════════════════════════════════════ */}
-        <section className="pb-20 md:pb-24">
+        <section className="pb-20 md:pb-24 bg-muted/20 -mx-6 sm:-mx-8 px-6 sm:px-8 rounded-2xl pt-10 md:pt-12">
           <div className="space-y-8 md:space-y-10">
             <div className="text-center space-y-3">
               <h2 className="font-display text-2xl md:text-3xl font-medium tracking-wide text-foreground">
@@ -1131,44 +1134,7 @@ export function BackroomPaywall() {
           </div>
         </section>
 
-        {/* ═══════════════════════════════════════════
-            SECTION 4.85 — SEE IT IN ACTION
-            ═══════════════════════════════════════════ */}
-        <section className="pb-20 md:pb-24">
-          <div className="space-y-8 md:space-y-10">
-            <div className="text-center space-y-3">
-              <h2 className="font-display text-2xl md:text-3xl font-medium tracking-wide text-foreground">
-                See Zura Backroom In Action
-              </h2>
-              <p className="font-sans text-base text-muted-foreground max-w-xl mx-auto font-light leading-relaxed">
-                From mixing the bowl to tracking inventory, every step is connected.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4 md:gap-3">
-              {[
-                { icon: Beaker, label: 'Start the service', step: 1 },
-                { icon: Scale, label: 'Mix the bowl on the scale', step: 2 },
-                { icon: Zap, label: 'Usage tracked automatically', step: 3 },
-                { icon: Brain, label: 'Formula saved for the client', step: 4 },
-                { icon: PackageSearch, label: 'Inventory updates instantly', step: 5 },
-                { icon: BarChart3, label: 'Service cost becomes visible', step: 6 },
-              ].map((item, idx) => (
-                <div key={item.step} className="relative flex flex-col items-center text-center gap-3">
-                  {/* Connecting chevron (desktop only, not on last item) */}
-                  {idx < 5 && (
-                    <ChevronRight className="hidden md:block absolute -right-3.5 top-6 w-4 h-4 text-border" />
-                  )}
-                  <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
-                    <item.icon className="w-5 h-5 text-primary" />
-                  </div>
-                  <span className="font-display text-[10px] tracking-wider text-primary/20">{String(item.step).padStart(2, '0')}</span>
-                  <p className="font-sans text-xs text-muted-foreground font-light leading-snug max-w-[120px]">{item.label}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+        {/* Section 4.85 removed — redundant with hero + Under The Hood */}
 
         {/* ═══════════════════════════════════════════
             SECTION 4.9 — OPERATIONAL INTELLIGENCE DASHBOARD
@@ -1184,7 +1150,7 @@ export function BackroomPaywall() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
               {/* Card 1 — Product Usage Trends */}
-              <Card className="bg-card border-border/50 shadow-sm hover-lift">
+              <Card className="bg-card border-border/50 shadow-md hover:shadow-lg transition-shadow duration-200 hover-lift">
                 <CardContent className="p-6 md:p-8 space-y-4">
                   <div className="flex items-start gap-3">
                     <div className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center shrink-0">
@@ -1210,7 +1176,7 @@ export function BackroomPaywall() {
               </Card>
 
               {/* Card 2 — Chemical Waste Visibility */}
-              <Card className="bg-card border-border/50 shadow-sm hover-lift">
+              <Card className="bg-card border-border/50 shadow-md hover:shadow-lg transition-shadow duration-200 hover-lift">
                 <CardContent className="p-6 md:p-8 space-y-4">
                   <div className="flex items-start gap-3">
                     <div className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center shrink-0">
@@ -1234,7 +1200,7 @@ export function BackroomPaywall() {
               </Card>
 
               {/* Card 3 — Service Profitability */}
-              <Card className="bg-card border-border/50 shadow-sm hover-lift">
+              <Card className="bg-card border-border/50 shadow-md hover:shadow-lg transition-shadow duration-200 hover-lift">
                 <CardContent className="p-6 md:p-8 space-y-4">
                   <div className="flex items-start gap-3">
                     <div className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center shrink-0">
@@ -1268,7 +1234,7 @@ export function BackroomPaywall() {
               </Card>
 
               {/* Card 4 — Inventory Risk Alerts */}
-              <Card className="bg-card border-border/50 shadow-sm hover-lift">
+              <Card className="bg-card border-border/50 shadow-md hover:shadow-lg transition-shadow duration-200 hover-lift">
                 <CardContent className="p-6 md:p-8 space-y-4">
                   <div className="flex items-start gap-3">
                     <div className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center shrink-0">
@@ -1296,7 +1262,7 @@ export function BackroomPaywall() {
               </Card>
 
               {/* Card 5 — Staff Usage Patterns */}
-              <Card className="bg-card border-border/50 shadow-sm hover-lift">
+              <Card className="bg-card border-border/50 shadow-md hover:shadow-lg transition-shadow duration-200 hover-lift">
                 <CardContent className="p-6 md:p-8 space-y-4">
                   <div className="flex items-start gap-3">
                     <div className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center shrink-0">
@@ -1325,7 +1291,7 @@ export function BackroomPaywall() {
               </Card>
 
               {/* Card 6 — Top Formulas */}
-              <Card className="bg-card border-border/50 shadow-sm hover-lift">
+              <Card className="bg-card border-border/50 shadow-md hover:shadow-lg transition-shadow duration-200 hover-lift">
                 <CardContent className="p-6 md:p-8 space-y-4">
                   <div className="flex items-start gap-3">
                     <div className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center shrink-0">
@@ -1363,7 +1329,7 @@ export function BackroomPaywall() {
         {/* ═══════════════════════════════════════════
             SECTION 4.95 — CONTROL LAYER HUB
             ═══════════════════════════════════════════ */}
-        <section className="pb-20 md:pb-24">
+        <section className="pb-20 md:pb-24 bg-muted/20 -mx-6 sm:-mx-8 px-6 sm:px-8 rounded-2xl pt-10 md:pt-12">
           <div className="space-y-8 md:space-y-10">
             <div className="text-center space-y-4">
               <SectionHeading>The System That Connects Your Backroom</SectionHeading>
@@ -1535,7 +1501,7 @@ export function BackroomPaywall() {
         {/* ═══════════════════════════════════════════
             SECTION 5 — PRICING + ROI
             ═══════════════════════════════════════════ */}
-        <section className="pb-20 md:pb-24">
+        <section className="pb-24 md:pb-32">
           <div className="space-y-8 md:space-y-10">
             <SectionHeading>Pricing</SectionHeading>
 
@@ -1689,7 +1655,7 @@ export function BackroomPaywall() {
         {/* ═══════════════════════════════════════════
             SECTION 6 — HARDWARE
             ═══════════════════════════════════════════ */}
-        <section className="pb-20 md:pb-24">
+        <section className="pb-16 md:pb-20 bg-muted/20 -mx-6 sm:-mx-8 px-6 sm:px-8 rounded-2xl pt-10 md:pt-12">
           <div className="space-y-8 md:space-y-10">
             <SectionHeading>Hardware</SectionHeading>
             <Card className="bg-card border-border/50 shadow-sm">
@@ -1771,6 +1737,11 @@ export function BackroomPaywall() {
           </div>
         </section>
 
+        {/* Divider — Pricing → Trust */}
+        <div className="flex justify-center py-4">
+          <div className="w-12 h-px bg-border/40" />
+        </div>
+
         {/* ═══════════════════════════════════════════
             SECTION 7 — TRUST + FAQ
             ═══════════════════════════════════════════ */}
@@ -1798,7 +1769,7 @@ export function BackroomPaywall() {
                 <Accordion type="single" collapsible className="w-full">
                   {faqItems.map((item, i) => (
                     <AccordionItem key={i} value={`faq-${i}`} className="border-border/30">
-                      <AccordionTrigger className="text-sm font-sans text-foreground hover:no-underline py-3.5">
+                      <AccordionTrigger className="text-sm font-sans text-foreground hover:no-underline py-3">
                         {item.question}
                       </AccordionTrigger>
                       <AccordionContent className="text-sm text-muted-foreground font-sans pb-4">
@@ -1815,7 +1786,7 @@ export function BackroomPaywall() {
         {/* ═══════════════════════════════════════════
             SECTION 7.5 — CONFIDENCE LAYER
             ═══════════════════════════════════════════ */}
-        <section className="border-t border-border/20 pt-16 space-y-10">
+        <section className="border-t border-border/20 pt-16 space-y-10 bg-muted/20 -mx-6 sm:-mx-8 px-6 sm:px-8 rounded-2xl pb-12">
           <div className="text-center space-y-3">
             <h2 className="font-display text-2xl md:text-3xl tracking-wide text-foreground">
               Powerful System. Simple Workflow.
@@ -1833,7 +1804,7 @@ export function BackroomPaywall() {
               { icon: BarChart3, title: "Clear Visibility", desc: "See the true cost of services and product usage." },
               { icon: Beaker, title: "Built for Real Salons", desc: "Designed specifically for salon operations." },
             ].map((item, i) => (
-              <Card key={i} className={cn("p-5 space-y-3 bg-card", i === 4 && "sm:col-start-1 lg:col-start-2")}>
+              <Card key={i} className={cn("p-5 space-y-3 bg-card shadow-md hover:shadow-lg transition-shadow duration-200", i === 4 && "sm:col-start-1 lg:col-start-2")}>
                 <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
                   <item.icon className="w-5 h-5 text-primary" />
                 </div>
