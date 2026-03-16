@@ -990,25 +990,25 @@ export function BackroomPaywall() {
         </div>
       </div>
 
-      {/* ════ UNIVERSAL STICKY BOTTOM BANNER ════ */}
-      <div
-        className={cn(
-          'fixed bottom-0 left-0 right-0 z-40 border-t bg-card/95 backdrop-blur-xl',
-          hasPositiveBenefit ? 'border-emerald-500/30' : 'border-border',
-        )}
-      >
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+      {/* ════ FLOATING STICKY BOTTOM BANNER ════ */}
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-auto max-w-[95vw]">
+        <div
+          className={cn(
+            'rounded-full bg-card/80 backdrop-blur-xl border shadow-2xl px-5 py-2.5 flex items-center gap-4 sm:gap-6',
+            hasPositiveBenefit ? 'border-success/30' : 'border-border',
+          )}
+        >
           <div className="flex items-center gap-4 sm:gap-6 min-w-0">
             {hasPositiveBenefit ? (
               <>
                 <div className="hidden sm:block">
-                  <p className="font-display text-sm tracking-wide text-emerald-400">
+                  <p className="font-display text-sm tracking-wide text-success">
                     +{formatCurrency(yearlySavings)}/yr
                   </p>
                   <p className="text-[10px] text-muted-foreground font-sans">Est. Savings</p>
                 </div>
                 <div>
-                  <p className="font-display text-lg sm:text-sm tracking-wide text-emerald-400">
+                  <p className="font-display text-sm tracking-wide text-success">
                     +{formatCurrency(yearlyNetBenefit)}/yr
                   </p>
                   <p className="text-[10px] text-muted-foreground font-sans">Net Benefit</p>
@@ -1024,10 +1024,10 @@ export function BackroomPaywall() {
             )}
           </div>
 
-          <div className="flex flex-col items-end gap-1 shrink-0">
+          <div className="flex items-center gap-3 shrink-0">
             <Button
-              size={isMobile ? 'sm' : 'default'}
-              className="font-sans font-medium gap-2"
+              size="default"
+              className="font-sans font-medium gap-2 rounded-full"
               onClick={() => setConfirmDialogOpen(true)}
               disabled={loading || selectedLocationIds.size === 0}
             >
@@ -1041,8 +1041,8 @@ export function BackroomPaywall() {
                 </>
               )}
             </Button>
-            <p className="text-[9px] text-muted-foreground font-sans">
-              30-day guarantee · Cancel anytime
+            <p className="text-[9px] text-muted-foreground font-sans hidden sm:block whitespace-nowrap">
+              30-day guarantee<br />Cancel anytime
             </p>
           </div>
         </div>
