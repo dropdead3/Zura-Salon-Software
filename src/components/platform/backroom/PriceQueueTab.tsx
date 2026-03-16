@@ -165,7 +165,7 @@ export function PriceQueueTab() {
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v as any); setPage(0); }}>
-              <SelectTrigger className="w-32 h-9 font-sans text-sm bg-slate-800/50 border-slate-700/50 text-slate-300">
+              <SelectTrigger className="w-32 h-9 font-sans text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
