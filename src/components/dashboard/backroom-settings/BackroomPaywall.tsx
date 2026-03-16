@@ -1088,7 +1088,7 @@ export function BackroomPaywall() {
                 <Accordion type="single" collapsible className="w-full">
                   {faqItems.map((item, i) => (
                     <AccordionItem key={i} value={`faq-${i}`} className="border-border/30">
-                      <AccordionTrigger className="text-sm font-sans text-foreground hover:no-underline py-3">
+                      <AccordionTrigger className="text-sm font-sans font-normal text-foreground hover:no-underline py-3">
                         {item.question}
                       </AccordionTrigger>
                       <AccordionContent className="text-sm text-muted-foreground font-sans pb-4">
