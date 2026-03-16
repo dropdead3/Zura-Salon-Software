@@ -101,7 +101,7 @@ function ProductPreview() {
         <div className="absolute -top-16 left-0 right-0 h-16 bg-gradient-to-b from-background to-transparent z-10 pointer-events-none" />
 
         {/* Browser frame */}
-        <div className="relative rounded-xl border border-border/60 bg-card shadow-[0_24px_80px_hsl(var(--background)/0.55)] overflow-hidden">
+        <div className="relative rounded-xl border border-border/60 bg-card shadow-[0_32px_120px_-48px_hsl(var(--background)/0.9)] overflow-hidden">
           {/* Title bar */}
           <div className="flex items-center gap-2 px-4 py-3 border-b border-border/40 bg-muted/30">
             <div className="flex gap-2">
