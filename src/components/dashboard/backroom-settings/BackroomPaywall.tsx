@@ -1079,6 +1079,11 @@ export function BackroomPaywall() {
           <CompetitorComparison />
         </section>
 
+        {/* Divider — Comparison → ROI */}
+        <div className="flex justify-center py-4">
+          <div className="w-12 h-px bg-border/40" />
+        </div>
+
         {/* ═══════════════════════════════════════════
             SECTION 4.75 — ROI PROOF
             ═══════════════════════════════════════════ */}
