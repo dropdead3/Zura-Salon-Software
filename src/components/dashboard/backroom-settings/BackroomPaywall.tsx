@@ -545,15 +545,15 @@ export function BackroomPaywall() {
                             <div className="space-y-1.5 text-sm font-sans text-muted-foreground">
                               <div className="flex justify-between gap-6">
                                 <span>Waste reduction</span>
-                                <span className="tabular-nums text-foreground">{formatCurrency(wasteSavings * 12, { noCents: true })}/yr</span>
+                                <span className="tabular-nums text-foreground">{formatCurrency(wasteSavings * 12, { maximumFractionDigits: 0 })}/yr</span>
                               </div>
                               <div className="flex justify-between gap-6">
                                 <span>Time savings</span>
-                                <span className="tabular-nums text-foreground">{formatCurrency(monthlyAuditCost * 12, { noCents: true })}/yr</span>
+                                <span className="tabular-nums text-foreground">{formatCurrency(monthlyAuditCost * 12, { maximumFractionDigits: 0 })}/yr</span>
                               </div>
                               <div className="flex justify-between gap-6">
                                 <span>Supply recovery</span>
-                                <span className="tabular-nums text-foreground">{formatCurrency(supplyRecovery * 12, { noCents: true })}/yr</span>
+                                <span className="tabular-nums text-foreground">{formatCurrency(supplyRecovery * 12, { maximumFractionDigits: 0 })}/yr</span>
                               </div>
                             </div>
                           </div>
