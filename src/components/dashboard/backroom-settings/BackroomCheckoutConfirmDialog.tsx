@@ -123,7 +123,7 @@ export function BackroomCheckoutConfirmDialog({
             )}
             <div className="flex items-center justify-between">
               <span className="text-sm font-sans font-medium">Est. monthly total</span>
-              <span className="font-display text-lg tracking-wide">{formatCurrency(estimatedMonthlyGrandTotal)}/mo</span>
+              <span className="font-display text-base sm:text-lg tracking-wide">{formatCurrency(estimatedMonthlyGrandTotal)}/mo</span>
             </div>
             <p className="text-[10px] text-muted-foreground font-sans">
               Estimated total across {locationCount} location{locationCount !== 1 ? 's' : ''}. Usage fees may vary based on actual service volume.
