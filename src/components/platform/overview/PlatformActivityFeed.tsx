@@ -36,7 +36,7 @@ const colorClasses = {
   amber: { bg: 'bg-amber-500/20', text: 'text-amber-400' },
   rose: { bg: 'bg-rose-500/20', text: 'text-rose-400' },
   blue: { bg: 'bg-blue-500/20', text: 'text-blue-400' },
-  slate: { bg: 'bg-slate-700/50', text: 'text-slate-400' },
+  slate: { bg: 'bg-[hsl(var(--platform-bg-hover)/0.5)]', text: 'text-[hsl(var(--platform-foreground-muted))]' },
 };
 
 interface PlatformActivityFeedProps {
@@ -55,20 +55,20 @@ export function PlatformActivityFeed({
   if (isLoading) {
     return (
       <div className={cn(
-        "rounded-2xl border border-slate-700/50 bg-slate-800/40 backdrop-blur-xl p-6 overflow-hidden",
+        "rounded-2xl border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.4)] backdrop-blur-xl p-6 overflow-hidden",
         className
       )}>
         {showHeader && (
           <div className="flex items-center gap-2 mb-5">
-            <div className="p-2 rounded-xl bg-violet-500/20">
-              <Activity className="h-4 w-4 text-violet-400" />
+            <div className="p-2 rounded-xl bg-[hsl(var(--platform-primary)/0.2)]">
+              <Activity className="h-4 w-4 text-[hsl(var(--platform-primary))]" />
             </div>
-            <h2 className="text-lg font-medium text-white">Activity Feed</h2>
+            <h2 className="text-lg font-medium text-[hsl(var(--platform-foreground))]">Activity Feed</h2>
           </div>
         )}
         <div className="space-y-3">
           {[...Array(4)].map((_, i) => (
-            <Skeleton key={i} className="h-16 w-full rounded-xl bg-slate-700/50" />
+            <Skeleton key={i} className="h-16 w-full rounded-xl bg-[hsl(var(--platform-bg-hover))]" />
           ))}
         </div>
       </div>
@@ -77,26 +77,26 @@ export function PlatformActivityFeed({
 
   return (
     <div className={cn(
-      "relative rounded-2xl border border-slate-700/50 bg-slate-800/40 backdrop-blur-xl p-6 overflow-hidden",
+      "relative rounded-2xl border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.4)] backdrop-blur-xl p-6 overflow-hidden",
       className
     )}>
       {/* Subtle top-edge highlight */}
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/[0.04] to-transparent" />
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[hsl(var(--platform-foreground)/0.04)] to-transparent" />
 
       {showHeader && (
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2">
-            <div className="p-2 rounded-xl bg-violet-500/20 ring-1 ring-violet-500/10">
-              <Activity className="h-4 w-4 text-violet-400" />
+            <div className="p-2 rounded-xl bg-[hsl(var(--platform-primary)/0.2)] ring-1 ring-[hsl(var(--platform-primary)/0.1)]">
+              <Activity className="h-4 w-4 text-[hsl(var(--platform-primary))]" />
             </div>
-            <h2 className="text-lg font-medium text-white tracking-tight">Activity Feed</h2>
+            <h2 className="text-lg font-medium text-[hsl(var(--platform-foreground))] tracking-tight">Activity Feed</h2>
           </div>
           <div className="flex items-center gap-2">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
             </span>
-            <span className="text-xs text-slate-500 font-medium tracking-wide">Live</span>
+            <span className="text-xs text-[hsl(var(--platform-foreground-subtle))] font-medium tracking-wide">Live</span>
           </div>
         </div>
       )}
@@ -109,11 +109,11 @@ export function PlatformActivityFeed({
         </div>
       ) : (
         <div className="text-center py-14">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-slate-700/30 mb-4">
-            <Activity className="h-8 w-8 text-slate-500 opacity-30" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[hsl(var(--platform-bg-hover)/0.3)] mb-4">
+            <Activity className="h-8 w-8 text-[hsl(var(--platform-foreground-subtle))] opacity-30" />
           </div>
-          <p className="text-slate-400 font-medium">No activity yet</p>
-          <p className="text-sm text-slate-500 mt-1">Actions will appear here as they happen</p>
+          <p className="text-[hsl(var(--platform-foreground-muted))] font-medium">No activity yet</p>
+          <p className="text-sm text-[hsl(var(--platform-foreground-subtle))] mt-1">Actions will appear here as they happen</p>
         </div>
       )}
     </div>
@@ -141,7 +141,7 @@ function ActivityLogItem({ log, isLatest = false }: ActivityLogItemProps) {
     amber: 'border-l-amber-500/60',
     rose: 'border-l-rose-500/60',
     blue: 'border-l-blue-500/60',
-    slate: 'border-l-slate-500/40',
+    slate: 'border-l-[hsl(var(--platform-foreground-subtle)/0.4)]',
   };
 
   const linkPath = log.organization_id 
@@ -152,16 +152,16 @@ function ActivityLogItem({ log, isLatest = false }: ActivityLogItemProps) {
     <Link 
       to={linkPath}
       className={cn(
-        "flex items-center gap-3 p-3 rounded-xl bg-slate-700/20 border border-slate-600/20 border-l-2 cursor-pointer group/feed",
-        "hover:bg-slate-700/40 hover:border-slate-600/40 hover:translate-x-0.5",
+        "flex items-center gap-3 p-3 rounded-xl bg-[hsl(var(--platform-bg-hover)/0.2)] border border-[hsl(var(--platform-border)/0.2)] border-l-2 cursor-pointer group/feed",
+        "hover:bg-[hsl(var(--platform-bg-hover)/0.4)] hover:border-[hsl(var(--platform-border)/0.4)] hover:translate-x-0.5",
         "transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)] will-change-transform",
-        borderColors[config.color] || 'border-l-slate-500/40'
+        borderColors[config.color] || 'border-l-[hsl(var(--platform-foreground-subtle)/0.4)]'
       )}
     >
       {/* User Avatar */}
-      <Avatar className="h-8 w-8 ring-2 ring-slate-600/30 ring-offset-1 ring-offset-slate-800">
+      <Avatar className="h-8 w-8 ring-2 ring-[hsl(var(--platform-border)/0.3)] ring-offset-1 ring-offset-[hsl(var(--platform-bg-card))]">
         <AvatarImage src={log.user_photo || undefined} alt={log.user_name} />
-        <AvatarFallback className="bg-slate-700 text-slate-300 text-xs">
+        <AvatarFallback className="bg-[hsl(var(--platform-bg-hover))] text-[hsl(var(--platform-foreground-muted))] text-xs">
           {getInitials(log.user_name)}
         </AvatarFallback>
       </Avatar>
@@ -176,13 +176,13 @@ function ActivityLogItem({ log, isLatest = false }: ActivityLogItemProps) {
 
       {/* Content */}
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-slate-300">
-          <span className="font-medium text-white">{log.user_name || 'System'}</span>
+        <p className="text-sm text-[hsl(var(--platform-foreground)/0.85)]">
+          <span className="font-medium text-[hsl(var(--platform-foreground))]">{log.user_name || 'System'}</span>
           {' '}
-          <span className="text-slate-400">{config.verb}</span>
+          <span className="text-[hsl(var(--platform-foreground-muted))]">{config.verb}</span>
           {' '}
           {log.organization_name && (
-            <span className="font-medium text-violet-400 group-hover/feed:text-violet-300 transition-colors duration-200">
+            <span className="font-medium text-[hsl(var(--platform-primary))] group-hover/feed:text-[hsl(var(--platform-primary-hover))] transition-colors duration-200">
               {log.organization_name}
             </span>
           )}
@@ -197,7 +197,7 @@ function ActivityLogItem({ log, isLatest = false }: ActivityLogItemProps) {
             <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
           </span>
         )}
-        <span className="text-xs text-slate-500 whitespace-nowrap">
+        <span className="text-xs text-[hsl(var(--platform-foreground-subtle))] whitespace-nowrap">
           {formatDistanceToNow(new Date(log.created_at), { addSuffix: true })}
         </span>
       </div>
