@@ -387,6 +387,8 @@ export function BackroomPaywall() {
         locationCount={locationCount}
         scaleCount={scaleCount}
         estimatedMonthlyServices={Math.round((estimate?.monthlyColorServices ?? 0) * locationFraction)}
+        estimatedMonthlySavings={totalSavings}
+        netBenefit={netBenefit}
       />
       {selectedLocationIds.size === 0 && activeLocations.length > 0 && (
         <p className="text-xs text-destructive font-sans text-center">

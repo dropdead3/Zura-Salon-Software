@@ -1,6 +1,6 @@
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { Loader2, ArrowRight, MapPin, Scale, Droplets, CreditCard } from 'lucide-react';
+import { Loader2, ArrowRight, MapPin, Scale, Droplets, CreditCard, TrendingUp, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
@@ -21,11 +21,14 @@ interface Props {
   locationCount: number;
   scaleCount: number;
   estimatedMonthlyServices: number;
+  estimatedMonthlySavings: number;
+  netBenefit: number;
 }
 
 export function BackroomCheckoutConfirmDialog({
   open, onOpenChange, onConfirm, loading,
   organizationId, locationCount, scaleCount, estimatedMonthlyServices,
+  estimatedMonthlySavings, netBenefit,
 }: Props) {
   const { formatCurrency } = useFormatCurrency();
   const { data: paymentInfo } = useOrgPaymentInfo(organizationId);
@@ -35,6 +38,7 @@ export function BackroomCheckoutConfirmDialog({
   const estimatedUsage = Math.round(estimatedMonthlyServices * BACKROOM_PER_SERVICE_FEE);
   const monthlyRecurring = baseCost + scaleLicenseCost;
   const hardwareOneTime = scaleCount * SCALE_HARDWARE_PRICE;
+  const estimatedMonthlyGrandTotal = monthlyRecurring + estimatedUsage;
 
   const card = paymentInfo?.payment_method;
 
@@ -106,6 +110,49 @@ export function BackroomCheckoutConfirmDialog({
                   <span className="text-sm font-sans font-medium">{formatCurrency(hardwareOneTime)}</span>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* ── Grand Total Summary ── */}
+          <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-2">
+            {hardwareOneTime > 0 && (
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-sans text-muted-foreground">Due today</span>
+                <span className="text-sm font-sans font-medium">{formatCurrency(hardwareOneTime)}</span>
+              </div>
+            )}
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-sans font-medium">Est. monthly total</span>
+              <span className="font-display text-lg tracking-wide">{formatCurrency(estimatedMonthlyGrandTotal)}/mo</span>
+            </div>
+            <p className="text-[10px] text-muted-foreground font-sans">
+              Estimated total across {locationCount} location{locationCount !== 1 ? 's' : ''}. Usage fees may vary based on actual service volume.
+            </p>
+          </div>
+
+          {/* ── Estimated Savings / ROI ── */}
+          {estimatedMonthlySavings > 0 && (
+            <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3 space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-2 text-sm font-sans text-muted-foreground">
+                  <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
+                  Est. monthly savings
+                </span>
+                <span className="text-sm font-sans font-medium text-emerald-500">
+                  +{formatCurrency(estimatedMonthlySavings)}/mo
+                </span>
+              </div>
+              {netBenefit > 0 && (
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-2 text-sm font-sans text-muted-foreground">
+                    <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
+                    Net benefit after costs
+                  </span>
+                  <span className="text-sm font-sans font-medium text-emerald-500">
+                    +{formatCurrency(netBenefit)}/mo
+                  </span>
+                </div>
+              )}
             </div>
           )}
 
