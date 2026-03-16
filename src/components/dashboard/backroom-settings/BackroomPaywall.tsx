@@ -659,7 +659,7 @@ export function BackroomPaywall() {
                                   { label: 'Time savings', value: formatCurrency(monthlyAuditCost * 12, { maximumFractionDigits: 0 }) },
                                   { label: 'Supply recovery', value: formatCurrency(supplyRecovery * 12, { maximumFractionDigits: 0 }) },
                                 ].map((item) => (
-                                  <div key={item.label} className="flex items-center justify-between gap-8 rounded-lg border border-[hsl(145,50%,55%)]/15 bg-[hsl(145,50%,55%)]/[0.04] px-4 py-3 transition-colors hover:bg-[hsl(145,50%,55%)]/[0.08]">
+                                  <div key={item.label} className="flex items-center justify-between gap-8 rounded-xl border border-[hsl(145,50%,55%)]/15 bg-[hsl(145,50%,55%)]/[0.04] px-4 py-3 transition-colors hover:bg-[hsl(145,50%,55%)]/[0.08]">
                                     <span className="text-muted-foreground">{item.label}</span>
                                     <span className="tabular-nums text-foreground font-medium">{item.value}/yr</span>
                                   </div>
