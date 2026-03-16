@@ -344,6 +344,9 @@ export function BackroomPaywall() {
     useEffect(() => {
       const el = ref.current;
       if (!el) return;
+      // Respect reduced motion — show immediately
+      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (prefersReduced) { setVisible(true); return; }
       const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setVisible(true); obs.disconnect(); } }, { threshold: 0.15 });
       obs.observe(el);
       return () => obs.disconnect();
@@ -352,8 +355,8 @@ export function BackroomPaywall() {
       <div
         ref={ref}
         className={cn(
-          'transition-all duration-700 ease-out',
-          visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6',
+          'transition-all duration-500 ease-out',
+          visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3',
           className
         )}
         style={{ transitionDelay: `${delay}ms` }}
@@ -415,7 +418,7 @@ export function BackroomPaywall() {
               <Card className="relative overflow-hidden min-h-[320px] bg-card/80 backdrop-blur-xl border-border/40 shadow-xl shadow-primary/5">
                 <CardContent className="p-6 flex flex-col justify-center min-h-[320px]">
                   {/* Step content */}
-                  <div key={heroStep} className="animate-fade-in space-y-4">
+                  <div key={heroStep} className="animate-fade-in-fast space-y-4">
                     {heroStep === 0 && (
                       <div className="flex flex-col items-center gap-4">
                         <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center">
@@ -583,7 +586,7 @@ export function BackroomPaywall() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
             {/* WITHOUT */}
-            <Card className="bg-destructive/[0.03] border-destructive/20 hover-lift shadow-sm">
+            <Card className="bg-destructive/[0.03] border-destructive/20 shadow-sm hover:shadow-md transition-shadow duration-150">
               <CardContent className="p-6 md:p-8">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center shrink-0">
@@ -611,7 +614,7 @@ export function BackroomPaywall() {
             </Card>
 
             {/* WITH */}
-            <Card className="bg-success/[0.03] border-success/20 hover-lift shadow-sm">
+            <Card className="bg-success/[0.03] border-success/20 shadow-sm hover:shadow-md transition-shadow duration-150">
               <CardContent className="p-6 md:p-8">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center shrink-0">
@@ -832,7 +835,7 @@ export function BackroomPaywall() {
               {/* Right — Visualization Panel */}
               <Card className="border-border/50 bg-card/80 backdrop-blur-sm overflow-hidden">
                 <CardContent className="p-6 min-h-[320px] flex flex-col justify-center">
-                  <div key={activeFeature} className="animate-fade-in">
+                  <div key={activeFeature} className="animate-fade-in-fast">
                     {activeFeature === 'mixing' && (
                       <div className="space-y-4">
                         <div className="flex items-center gap-2 mb-1">
@@ -1016,7 +1019,7 @@ export function BackroomPaywall() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 md:gap-6">
               {howItWorks.map((step, i) => (
                 <RevealOnScroll key={step.step} delay={i * 100}>
-                  <Card className="bg-card border-border/50 shadow-sm hover:shadow-md transition-shadow duration-200 hover-lift">
+                  <Card className="bg-card border-border/50 shadow-sm hover:shadow-md transition-shadow duration-150">
                     <CardContent className="p-6 space-y-3">
                       <span className="font-display text-2xl tracking-wider text-primary/20">{step.step}</span>
                       <p className="font-sans text-lg font-medium text-foreground">{step.title}</p>
