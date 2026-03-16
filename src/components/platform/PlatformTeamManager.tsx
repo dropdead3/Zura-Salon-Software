@@ -308,9 +308,9 @@ export function PlatformTeamManager() {
       />
 
       <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
-        <AlertDialogContent className="bg-slate-800 border-slate-700">
+        <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-white">Remove team member?</AlertDialogTitle>
+            <AlertDialogTitle>Remove team member?</AlertDialogTitle>
             <AlertDialogDescription className="text-slate-400">
               This will revoke platform access for {deleteConfirm?.name}. They will no longer be able to access the Platform Admin Hub.
             </AlertDialogDescription>

@@ -193,10 +193,10 @@ export function AccountUsersTab({ organizationId, organizationName }: AccountUse
 
       {/* Remove User Confirmation */}
       <AlertDialog open={!!userToRemove} onOpenChange={(open) => !open && setUserToRemove(null)}>
-        <AlertDialogContent className="bg-slate-900 border-slate-700">
+        <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-white">Remove User</AlertDialogTitle>
-            <AlertDialogDescription className="text-slate-400">
+            <AlertDialogTitle>Remove User</AlertDialogTitle>
+            <AlertDialogDescription>
               Are you sure you want to remove <span className="text-white font-medium">{userToRemove?.full_name}</span> from this organization? They will lose access to all organization resources.
             </AlertDialogDescription>
           </AlertDialogHeader>

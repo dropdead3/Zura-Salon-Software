@@ -13,7 +13,7 @@ import { PlatformInput } from '@/components/platform/ui/PlatformInput';
 import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
 import { Select, SelectValue, PlatformSelectContent as SelectContent, PlatformSelectItem as SelectItem, PlatformSelectTrigger as SelectTrigger } from '@/components/platform/ui/PlatformSelect';
 import { PlatformTable as Table, PlatformTableHeader as TableHeader, PlatformTableBody as TableBody, PlatformTableHead as TableHead, PlatformTableRow as TableRow, PlatformTableCell as TableCell } from '@/components/platform/ui/PlatformTable';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, PlatformDialogContent as DialogContent, DialogHeader, PlatformDialogTitle as DialogTitle, DialogFooter, PlatformDialogDescription as DialogDescription } from '@/components/platform/ui/PlatformDialog';
 import { PlatformLabel as Label } from '@/components/platform/ui/PlatformLabel';
 import { PlatformInput as Input } from '@/components/platform/ui/PlatformInput';
 import { Loader2, Search, Package, Plus, Database, Pencil, Trash2, AlertTriangle, Upload, Download, ChevronLeft, ChevronRight } from 'lucide-react';
