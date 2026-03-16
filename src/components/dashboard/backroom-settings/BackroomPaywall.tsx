@@ -490,11 +490,8 @@ export function BackroomPaywall() {
           </Card>
         )}
 
-        {/* ── TWO-COLUMN LAYOUT ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8">
-
-          {/* ════ LEFT COLUMN (scrollable) — Reordered for conversion ════ */}
-          <div className="space-y-6">
+        {/* ── FULL-WIDTH CONTENT ── */}
+        <div className="space-y-6">
 
             {/* 1. Your Salon's Numbers (personalized proof — moved up) */}
             <Card className="bg-card/60 border-border/40">
