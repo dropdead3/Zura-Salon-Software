@@ -99,13 +99,13 @@ export function CustomPricingForm({
                 value={discountType ?? 'none'}
                 onValueChange={(v) => onDiscountTypeChange(v === 'none' ? null : v as DiscountType)}
               >
-                <SelectTrigger className="bg-slate-800/50 border-slate-700/50 text-slate-300">
+                <SelectTrigger>
                   <SelectValue placeholder="No discount" />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700">
-                  <SelectItem value="none" className="text-slate-300">No discount</SelectItem>
-                  <SelectItem value="percentage" className="text-slate-300">Percentage (%)</SelectItem>
-                  <SelectItem value="fixed_amount" className="text-slate-300">Fixed Amount ($)</SelectItem>
+                <SelectContent>
+                  <SelectItem value="none">No discount</SelectItem>
+                  <SelectItem value="percentage">Percentage (%)</SelectItem>
+                  <SelectItem value="fixed_amount">Fixed Amount ($)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
