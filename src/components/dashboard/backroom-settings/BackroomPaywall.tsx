@@ -1054,7 +1054,7 @@ export function BackroomPaywall() {
             {/* FAQ */}
             <Card className="bg-card border-border/50 shadow-sm">
               <CardContent className="p-6 md:p-8 space-y-4">
-                <p className="font-sans text-base font-medium text-foreground">Common Questions</p>
+                <p className="font-display text-base font-medium tracking-wide text-foreground">Common Questions</p>
                 <Accordion type="single" collapsible className="w-full">
                   {faqItems.map((item, i) => (
                     <AccordionItem key={i} value={`faq-${i}`} className="border-border/30">
