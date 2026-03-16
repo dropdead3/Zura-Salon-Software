@@ -363,12 +363,12 @@ export function AccountSettingsTab({ organizationId }: AccountSettingsTabProps) 
               value={settings.defaults.currency} 
               onValueChange={(v) => updateSettings('defaults.currency', v)}
             >
-              <SelectTrigger className="w-48 bg-slate-800 border-slate-700 text-white">
+              <SelectTrigger className="w-48">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-slate-900 border-slate-700">
+              <SelectContent>
                 {currencies.map(c => (
-                  <SelectItem key={c.value} value={c.value} className="text-slate-300">
+                  <SelectItem key={c.value} value={c.value}>
                     {c.label}
                   </SelectItem>
                 ))}
