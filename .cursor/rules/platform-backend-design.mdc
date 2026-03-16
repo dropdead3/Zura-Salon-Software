@@ -62,7 +62,7 @@ import { PlatformTextarea } from '@/components/platform/ui/PlatformTextarea';
 These base imports ARE permitted (no platform equivalent needed):
 
 - `@/components/ui/switch` — Switch
-- `@/components/ui/textarea` — Textarea
+
 - `@/components/ui/skeleton` — Skeleton
 - `@/components/ui/checkbox` — Checkbox
 - `@/components/ui/collapsible` — Collapsible

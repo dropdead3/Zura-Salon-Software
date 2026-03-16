@@ -201,9 +201,7 @@ export function AccountUsersTab({ organizationId, organizationName }: AccountUse
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="bg-slate-800 border-slate-700 text-white hover:bg-slate-700">
-              Cancel
-            </AlertDialogCancel>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleRemoveUser}
               className="bg-red-600 hover:bg-red-700"

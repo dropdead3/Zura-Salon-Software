@@ -172,7 +172,7 @@ export function KBArticleEditor({ open, onOpenChange, article, onClose }: KBArti
 
           <div className="space-y-2">
             <PlatformLabel>Content (Markdown supported)</PlatformLabel>
-            <Textarea
+            <PlatformTextarea
               value={formData.content}
               onChange={(e) => setFormData({ ...formData, content: e.target.value })}
               placeholder="## Getting Started
@@ -182,7 +182,7 @@ To add your first location, follow these steps:
 1. Navigate to **Settings > Locations**
 2. Click the **Add Location** button
 ..."
-              className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 min-h-[300px] font-mono text-sm"
+              className="min-h-[300px] font-mono text-sm"
             />
           </div>
 

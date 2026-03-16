@@ -428,12 +428,12 @@ export function BillingConfigurationPanel({
             <PlatformCardContent>
               <div className="space-y-2">
                 <PlatformLabel htmlFor="billingNotes">Billing Notes</PlatformLabel>
-                <Textarea
+                <PlatformTextarea
                   id="billingNotes"
                   placeholder="Internal notes about billing arrangements, negotiations, etc."
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  className="bg-card/50 border-border/50 text-foreground min-h-[100px]"
+                  className="min-h-[100px]"
                 />
               </div>
             </PlatformCardContent>

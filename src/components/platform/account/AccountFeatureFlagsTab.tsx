@@ -147,7 +147,7 @@ export function AccountFeatureFlagsTab({ organizationId, organizationName }: Acc
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel className="bg-slate-700 text-white border-slate-600">Cancel</AlertDialogCancel>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
                 <AlertDialogAction onClick={handleResetAll} className="bg-rose-600 hover:bg-rose-700">
                   Reset All
                 </AlertDialogAction>
