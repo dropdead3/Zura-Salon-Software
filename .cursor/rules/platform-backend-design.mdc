@@ -18,6 +18,8 @@ Files inside `src/components/platform/` MUST use platform-specific UI primitives
 | `Select`, `SelectTrigger`, `SelectContent`     | `Select`, `PlatformSelectTrigger`, `PlatformSelectContent`   |
 | `Label`                                        | `PlatformLabel`                                              |
 | `Table`, `TableHead`, `TableRow`, `TableCell`  | `PlatformTable`, `PlatformTableHead`, `PlatformTableRow`, `PlatformTableCell` |
+| `DialogContent`, `DialogTitle`, `DialogDescription` | `PlatformDialogContent`, `PlatformDialogTitle`, `PlatformDialogDescription` |
+| `AlertDialogContent`, `AlertDialogTitle`, `AlertDialogDescription` | `PlatformAlertDialogContent`, `PlatformAlertDialogTitle`, `PlatformAlertDialogDescription` |
 
 ## Prohibited Imports
 
