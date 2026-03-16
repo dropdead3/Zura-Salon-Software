@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Crown, Shield, Headphones, Code, User } from 'lucide-react';
-import { Textarea } from '@/components/ui/textarea';
+import { PlatformTextarea } from '@/components/platform/ui/PlatformTextarea';
 import { useMentionSuggestions } from '@/hooks/useAccountNotes';
 import { cn } from '@/lib/utils';
 
