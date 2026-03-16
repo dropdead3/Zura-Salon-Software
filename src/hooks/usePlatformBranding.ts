@@ -90,10 +90,30 @@ export function usePlatformBranding() {
         .is('organization_id', null);
 
       if (error) throw error;
+
+      // Sync logo URLs to business_settings so sidebar/kiosk/etc. reflect changes
+      const { data: existing } = await supabase
+        .from('business_settings')
+        .select('id')
+        .single();
+
+      if (existing) {
+        await supabase
+          .from('business_settings')
+          .update({
+            logo_dark_url: branding.primary_logo_url,
+            logo_light_url: branding.secondary_logo_url,
+            icon_dark_url: branding.icon_dark_url,
+            icon_light_url: branding.icon_light_url,
+          })
+          .eq('id', existing.id);
+      }
+
       return branding;
     },
     onSuccess: (data) => {
       queryClient.setQueryData(['platform-branding'], data);
+      queryClient.invalidateQueries({ queryKey: ['business-settings'] });
       toast({
         title: 'Branding saved',
         description: 'Platform branding has been updated successfully.',
