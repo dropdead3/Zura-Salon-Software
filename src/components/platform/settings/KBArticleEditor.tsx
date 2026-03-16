@@ -162,11 +162,11 @@ export function KBArticleEditor({ open, onOpenChange, article, onClose }: KBArti
 
           <div className="space-y-2">
             <PlatformLabel>Summary (shown in article cards)</PlatformLabel>
-            <Textarea
+            <PlatformTextarea
               value={formData.summary}
               onChange={(e) => setFormData({ ...formData, summary: e.target.value })}
               placeholder="Learn how to create and configure your first location in minutes."
-              className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 min-h-[60px]"
+              className="min-h-[60px]"
             />
           </div>
 
