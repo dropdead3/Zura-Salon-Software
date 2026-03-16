@@ -1151,16 +1151,18 @@ export function BackroomPaywall() {
                   title: 'Protect Service Margins',
                   copy: 'When you see exactly where product goes, you stop losing money on services you thought were profitable.',
                 },
-              ].map((card) => (
-                <Card key={card.title} className="bg-card border-border/50 shadow-sm" interactive>
-                  <CardContent className="p-6 md:p-8 space-y-4">
-                    <div className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center">
-                      <card.icon className="w-5 h-5 text-primary" />
-                    </div>
-                    <h3 className="font-display text-sm tracking-wide text-foreground">{card.title}</h3>
-                    <p className="font-sans text-sm text-muted-foreground font-light leading-relaxed">{card.copy}</p>
-                  </CardContent>
-                </Card>
+              ].map((card, i) => (
+                <RevealOnScroll key={card.title} delay={i * 80}>
+                  <Card className="bg-card border-border/50 shadow-sm hover:shadow-md transition-shadow duration-200" interactive>
+                    <CardContent className="p-6 md:p-8 space-y-4">
+                      <div className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center">
+                        <card.icon className="w-5 h-5 text-primary" />
+                      </div>
+                      <h3 className="font-display text-sm tracking-wide text-foreground">{card.title}</h3>
+                      <p className="font-sans text-sm text-muted-foreground font-light leading-relaxed">{card.copy}</p>
+                    </CardContent>
+                  </Card>
+                </RevealOnScroll>
               ))}
             </div>
 
