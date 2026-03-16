@@ -279,7 +279,7 @@ export function BackroomPaywall() {
       const location_ids = Array.from(selectedLocationIds);
       const { data, error } = await supabase.functions.invoke('create-backroom-checkout', {
         body: {
-          organization_id: effectiveOrganization.id,
+          organization_id: orgId,
           location_ids,
           scale_count: scaleCount,
         },
