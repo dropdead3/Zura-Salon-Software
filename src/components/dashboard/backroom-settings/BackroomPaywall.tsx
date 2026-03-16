@@ -368,7 +368,7 @@ export function BackroomPaywall() {
               </p>
               {roiMultiplier >= 2 && (
                 <span className="inline-flex items-center gap-1 mt-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-sans font-medium">
-                  <TrendingDown className="w-3 h-3" />
+                  <TrendingUp className="w-3 h-3" />
                   {roiMultiplier}× ROI
                 </span>
               )}
