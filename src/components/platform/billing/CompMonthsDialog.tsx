@@ -12,7 +12,7 @@ import {
 import { PlatformButton as Button } from '@/components/platform/ui/PlatformButton';
 import { PlatformInput as Input } from '@/components/platform/ui/PlatformInput';
 import { PlatformLabel as Label } from '@/components/platform/ui/PlatformLabel';
-import { Textarea } from '@/components/ui/textarea';
+import { PlatformTextarea } from '@/components/platform/ui/PlatformTextarea';
 import { useCompMonths } from '@/hooks/useContractAdjustments';
 
 interface CompMonthsDialogProps {
