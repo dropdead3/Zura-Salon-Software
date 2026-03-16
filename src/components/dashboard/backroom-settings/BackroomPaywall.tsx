@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import {
@@ -376,7 +376,7 @@ export function BackroomPaywall() {
     <Button
       size="lg"
       className={cn(
-        'font-sans font-medium gap-2 rounded-full h-12 px-10 text-base shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all duration-200',
+        'font-sans font-medium gap-2 rounded-full h-12 px-10 text-base shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 active:scale-[0.98] transition-all duration-200',
         className,
       )}
       onClick={() => setConfirmDialogOpen(true)}
@@ -400,6 +400,32 @@ export function BackroomPaywall() {
     </h2>
   );
 
+  /* ─── Scroll reveal wrapper (IntersectionObserver, fires once) ─── */
+  const RevealOnScroll = ({ children, className, delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) => {
+    const ref = useRef<HTMLDivElement>(null);
+    const [visible, setVisible] = useState(false);
+    useEffect(() => {
+      const el = ref.current;
+      if (!el) return;
+      const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setVisible(true); obs.disconnect(); } }, { threshold: 0.15 });
+      obs.observe(el);
+      return () => obs.disconnect();
+    }, []);
+    return (
+      <div
+        ref={ref}
+        className={cn(
+          'transition-all duration-700 ease-out',
+          visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6',
+          className
+        )}
+        style={{ transitionDelay: `${delay}ms` }}
+      >
+        {children}
+      </div>
+    );
+  };
+
   return (
     <div className="flex flex-col items-center justify-center px-6 sm:px-8 py-12 md:py-16">
       <div className="max-w-[1100px] w-full">
@@ -407,8 +433,10 @@ export function BackroomPaywall() {
         {/* ═══════════════════════════════════════════
             SECTION 1 — HERO
             ═══════════════════════════════════════════ */}
-        <section className="pt-4 pb-24 md:pb-32">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+        <section className="pt-4 pb-24 md:pb-32 relative overflow-hidden">
+          {/* Gradient canvas */}
+          <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at 70% 50%, hsl(var(--primary) / 0.04) 0%, transparent 70%)' }} />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center relative">
             {/* Left — Text */}
             <div className="space-y-8 text-center lg:text-left">
               <div className="space-y-4">
@@ -445,8 +473,9 @@ export function BackroomPaywall() {
             </div>
 
             {/* Right — Live System Preview */}
-            <div className="flex flex-col gap-4">
-              <Card className="relative overflow-hidden min-h-[320px] bg-card/80 backdrop-blur-xl border-border/40">
+            <div className="flex flex-col gap-4 relative">
+              <div className="absolute top-1/2 right-0 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-primary/[0.03] blur-3xl pointer-events-none hidden lg:block" />
+              <Card className="relative overflow-hidden min-h-[320px] bg-card/80 backdrop-blur-xl border-border/40 shadow-xl shadow-primary/5">
                 <CardContent className="p-6 flex flex-col justify-center min-h-[320px]">
                   {/* Step content */}
                   <div key={heroStep} className="animate-fade-in space-y-4">
@@ -579,7 +608,7 @@ export function BackroomPaywall() {
                     key={label}
                     onClick={() => setHeroStep(i)}
                     className={cn(
-                      'h-1.5 rounded-full transition-all duration-300',
+                      'h-1.5 rounded-full transition-all duration-300 hover:scale-110',
                       heroStep === i ? 'w-8 bg-primary' : 'w-4 bg-muted hover:bg-muted-foreground/30'
                     )}
                     aria-label={label}
@@ -603,15 +632,17 @@ export function BackroomPaywall() {
         {/* ═══════════════════════════════════════════
             SECTION 1.75 — BEFORE / AFTER TRANSFORMATION
             ═══════════════════════════════════════════ */}
-        <section className="pb-20 md:pb-24 bg-muted/20 -mx-6 sm:-mx-8 px-6 sm:px-8 rounded-2xl pt-10 md:pt-12">
-          <div className="text-center mb-10 md:mb-12">
-            <h2 className="font-display text-2xl md:text-3xl font-normal tracking-wide uppercase text-foreground">
-              How Zura Backroom Transforms Your Color Room
-            </h2>
-            <p className="mt-4 text-base md:text-lg text-muted-foreground font-sans font-light max-w-xl mx-auto">
-              From guesswork to a controlled, measurable system.
-            </p>
-          </div>
+        <section className="pb-20 md:pb-24 bg-muted/20 -mx-6 sm:-mx-8 px-6 sm:px-8 rounded-2xl pt-10 md:pt-12 shadow-[inset_0_1px_0_0_hsl(var(--border)/0.3)]">
+          <RevealOnScroll>
+            <div className="text-center mb-10 md:mb-12">
+              <h2 className="font-display text-2xl md:text-3xl font-normal tracking-wide uppercase text-foreground">
+                How Zura Backroom Transforms Your Color Room
+              </h2>
+              <p className="mt-4 text-base md:text-lg text-muted-foreground font-sans font-light max-w-xl mx-auto">
+                From guesswork to a controlled, measurable system.
+              </p>
+            </div>
+          </RevealOnScroll>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
             {/* WITHOUT */}
@@ -792,16 +823,18 @@ export function BackroomPaywall() {
             ═══════════════════════════════════════════ */}
         <section className="pb-16 md:pb-20">
           <div className="space-y-8 md:space-y-10">
-            <SectionHeading>How It Works</SectionHeading>
+            <RevealOnScroll><SectionHeading>How It Works</SectionHeading></RevealOnScroll>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 md:gap-6">
-              {howItWorks.map((step) => (
-                <Card key={step.step} className="bg-card border-border/50 shadow-sm hover-lift">
-                  <CardContent className="p-6 md:p-8 space-y-3">
-                    <span className="font-display text-2xl tracking-wider text-primary/20">{step.step}</span>
-                    <p className="font-sans text-lg font-medium text-foreground">{step.title}</p>
-                    <p className="text-sm text-muted-foreground font-sans leading-relaxed">{step.description}</p>
-                  </CardContent>
-                </Card>
+              {howItWorks.map((step, i) => (
+                <RevealOnScroll key={step.step} delay={i * 100}>
+                  <Card className="bg-card border-border/50 shadow-sm hover:shadow-md transition-shadow duration-200 hover-lift">
+                    <CardContent className="p-6 md:p-8 space-y-3">
+                      <span className="font-display text-2xl tracking-wider text-primary/20">{step.step}</span>
+                      <p className="font-sans text-lg font-medium text-foreground">{step.title}</p>
+                      <p className="text-sm text-muted-foreground font-sans leading-relaxed">{step.description}</p>
+                    </CardContent>
+                  </Card>
+                </RevealOnScroll>
               ))}
             </div>
           </div>
@@ -810,12 +843,13 @@ export function BackroomPaywall() {
         {/* ═══════════════════════════════════════════
             SECTION 4 — WHAT YOU GET (6 feature cards)
             ═══════════════════════════════════════════ */}
-        <section className="pb-20 md:pb-24 bg-muted/20 -mx-6 sm:-mx-8 px-6 sm:px-8 rounded-2xl pt-10 md:pt-12">
+        <section className="pb-20 md:pb-24 bg-muted/20 -mx-6 sm:-mx-8 px-6 sm:px-8 rounded-2xl pt-10 md:pt-12 shadow-[inset_0_1px_0_0_hsl(var(--border)/0.3)]">
           <div className="space-y-8 md:space-y-10">
-            <SectionHeading>What You Get</SectionHeading>
+            <RevealOnScroll><SectionHeading>What You Get</SectionHeading></RevealOnScroll>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
-              {featureGroups.map((group) => (
-                <Card key={group.title} className="bg-card border-border/50 shadow-sm hover-lift">
+              {featureGroups.map((group, i) => (
+                <RevealOnScroll key={group.title} delay={i * 80}>
+                  <Card className="bg-card border-border/50 shadow-sm hover:shadow-md transition-shadow duration-200 hover-lift">
                   <CardContent className="p-6 md:p-8 space-y-4">
                     <div className="flex items-center gap-3">
                       <div className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center shrink-0">
@@ -836,6 +870,7 @@ export function BackroomPaywall() {
                     </div>
                   </CardContent>
                 </Card>
+                </RevealOnScroll>
               ))}
             </div>
 
@@ -1087,16 +1122,18 @@ export function BackroomPaywall() {
         {/* ═══════════════════════════════════════════
             SECTION 4.75 — ROI PROOF
             ═══════════════════════════════════════════ */}
-        <section className="pb-20 md:pb-24 bg-muted/20 -mx-6 sm:-mx-8 px-6 sm:px-8 rounded-2xl pt-10 md:pt-12">
+        <section className="pb-20 md:pb-24 bg-muted/20 -mx-6 sm:-mx-8 px-6 sm:px-8 rounded-2xl pt-10 md:pt-12 shadow-[inset_0_1px_0_0_hsl(var(--border)/0.3)]">
           <div className="space-y-8 md:space-y-10">
-            <div className="text-center space-y-3">
-              <h2 className="font-display text-2xl md:text-3xl font-medium tracking-wide text-foreground">
-                Zura Backroom Pays for Itself
-              </h2>
-              <p className="font-sans text-base text-muted-foreground max-w-xl mx-auto font-light leading-relaxed">
-                Most salons don't know the real cost of their color services. Zura Backroom makes it visible.
-              </p>
-            </div>
+            <RevealOnScroll>
+              <div className="text-center space-y-3">
+                <h2 className="font-display text-2xl md:text-3xl font-medium tracking-wide text-foreground">
+                  Zura Backroom Pays for Itself
+                </h2>
+                <p className="font-sans text-base text-muted-foreground max-w-xl mx-auto font-light leading-relaxed">
+                  Most salons don't know the real cost of their color services. Zura Backroom makes it visible.
+                </p>
+              </div>
+            </RevealOnScroll>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 md:gap-6">
               {[
@@ -1115,16 +1152,18 @@ export function BackroomPaywall() {
                   title: 'Protect Service Margins',
                   copy: 'When you see exactly where product goes, you stop losing money on services you thought were profitable.',
                 },
-              ].map((card) => (
-                <Card key={card.title} className="bg-card border-border/50 shadow-sm" interactive>
-                  <CardContent className="p-6 md:p-8 space-y-4">
-                    <div className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center">
-                      <card.icon className="w-5 h-5 text-primary" />
-                    </div>
-                    <h3 className="font-display text-sm tracking-wide text-foreground">{card.title}</h3>
-                    <p className="font-sans text-sm text-muted-foreground font-light leading-relaxed">{card.copy}</p>
-                  </CardContent>
-                </Card>
+              ].map((card, i) => (
+                <RevealOnScroll key={card.title} delay={i * 80}>
+                  <Card className="bg-card border-border/50 shadow-sm hover:shadow-md transition-shadow duration-200" interactive>
+                    <CardContent className="p-6 md:p-8 space-y-4">
+                      <div className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center">
+                        <card.icon className="w-5 h-5 text-primary" />
+                      </div>
+                      <h3 className="font-display text-sm tracking-wide text-foreground">{card.title}</h3>
+                      <p className="font-sans text-sm text-muted-foreground font-light leading-relaxed">{card.copy}</p>
+                    </CardContent>
+                  </Card>
+                </RevealOnScroll>
               ))}
             </div>
 
@@ -1329,7 +1368,7 @@ export function BackroomPaywall() {
         {/* ═══════════════════════════════════════════
             SECTION 4.95 — CONTROL LAYER HUB
             ═══════════════════════════════════════════ */}
-        <section className="pb-20 md:pb-24 bg-muted/20 -mx-6 sm:-mx-8 px-6 sm:px-8 rounded-2xl pt-10 md:pt-12">
+        <section className="pb-20 md:pb-24 bg-muted/20 -mx-6 sm:-mx-8 px-6 sm:px-8 rounded-2xl pt-10 md:pt-12 shadow-[inset_0_1px_0_0_hsl(var(--border)/0.3)]">
           <div className="space-y-8 md:space-y-10">
             <div className="text-center space-y-4">
               <SectionHeading>The System That Connects Your Backroom</SectionHeading>
@@ -1501,14 +1540,16 @@ export function BackroomPaywall() {
         {/* ═══════════════════════════════════════════
             SECTION 4.98 — REAL SALON SCENARIO
             ═══════════════════════════════════════════ */}
-        <section className="pb-20 md:pb-24 bg-muted/20 -mx-6 sm:-mx-8 px-6 sm:px-8 rounded-2xl pt-10 md:pt-12">
+        <section className="pb-20 md:pb-24 bg-muted/20 -mx-6 sm:-mx-8 px-6 sm:px-8 rounded-2xl pt-10 md:pt-12 shadow-[inset_0_1px_0_0_hsl(var(--border)/0.3)]">
           <div className="space-y-10 md:space-y-12">
-            <div className="text-center space-y-3">
-              <SectionHeading>A Color Service With Zura Backroom</SectionHeading>
-              <p className="font-sans text-base text-muted-foreground font-light max-w-2xl mx-auto">
-                From the first bowl to the final insight. Here is what happens behind the scenes.
-              </p>
-            </div>
+            <RevealOnScroll>
+              <div className="text-center space-y-3">
+                <SectionHeading>A Color Service With Zura Backroom</SectionHeading>
+                <p className="font-sans text-base text-muted-foreground font-light max-w-2xl mx-auto">
+                  From the first bowl to the final insight. Here is what happens behind the scenes.
+                </p>
+              </div>
+            </RevealOnScroll>
 
             {/* Desktop: horizontal timeline */}
             <div className="hidden md:grid grid-cols-7 gap-2 items-start">
@@ -1680,11 +1721,13 @@ export function BackroomPaywall() {
         {/* ═══════════════════════════════════════════
             SECTION 5 — PRICING + ROI
             ═══════════════════════════════════════════ */}
-        <section className="pb-24 md:pb-32">
-          <div className="space-y-8 md:space-y-10">
-            <SectionHeading>Pricing</SectionHeading>
+        <section className="pb-24 md:pb-32 relative overflow-hidden">
+          <div className="absolute inset-0 pointer-events-none" style={{ background: 'linear-gradient(to bottom, hsl(var(--primary) / 0.02), transparent 60%)' }} />
+          <div className="space-y-8 md:space-y-10 relative">
+            <RevealOnScroll><SectionHeading>Pricing</SectionHeading></RevealOnScroll>
 
-            <Card className="bg-card border-border/50 shadow-sm">
+            <RevealOnScroll>
+              <Card className="bg-card border-border/50 shadow-md">
               <CardContent className="p-6 md:p-8 space-y-6">
                 <div className="grid grid-cols-2 gap-5">
                   <div className="p-5 rounded-xl bg-muted/30 border border-border/40 text-center">
@@ -1741,6 +1784,7 @@ export function BackroomPaywall() {
                 )}
               </CardContent>
             </Card>
+            </RevealOnScroll>
 
             {/* Location Selector */}
             {activeLocations.length > 0 && (
@@ -1834,7 +1878,7 @@ export function BackroomPaywall() {
         {/* ═══════════════════════════════════════════
             SECTION 6 — HARDWARE
             ═══════════════════════════════════════════ */}
-        <section className="pb-16 md:pb-20 bg-muted/20 -mx-6 sm:-mx-8 px-6 sm:px-8 rounded-2xl pt-10 md:pt-12">
+        <section className="pb-16 md:pb-20 bg-muted/20 -mx-6 sm:-mx-8 px-6 sm:px-8 rounded-2xl pt-10 md:pt-12 shadow-[inset_0_1px_0_0_hsl(var(--border)/0.3)]">
           <div className="space-y-8 md:space-y-10">
             <SectionHeading>Hardware</SectionHeading>
             <Card className="bg-card border-border/50 shadow-sm">
@@ -1965,15 +2009,17 @@ export function BackroomPaywall() {
         {/* ═══════════════════════════════════════════
             SECTION 7.5 — CONFIDENCE LAYER
             ═══════════════════════════════════════════ */}
-        <section className="border-t border-border/20 pt-16 space-y-10 bg-muted/20 -mx-6 sm:-mx-8 px-6 sm:px-8 rounded-2xl pb-12">
-          <div className="text-center space-y-3">
-            <h2 className="font-display text-2xl md:text-3xl tracking-wide text-foreground">
-              Powerful System. Simple Workflow.
-            </h2>
-            <p className="font-sans text-base text-muted-foreground font-light max-w-xl mx-auto">
-              Zura Backroom works quietly in the background while your team continues working as normal.
-            </p>
-          </div>
+        <section className="border-t border-border/20 pt-16 space-y-10 bg-muted/20 -mx-6 sm:-mx-8 px-6 sm:px-8 rounded-2xl pb-12 shadow-[inset_0_1px_0_0_hsl(var(--border)/0.3)]">
+          <RevealOnScroll>
+            <div className="text-center space-y-3">
+              <h2 className="font-display text-2xl md:text-3xl tracking-wide text-foreground">
+                Powerful System. Simple Workflow.
+              </h2>
+              <p className="font-sans text-base text-muted-foreground font-light max-w-xl mx-auto">
+                Zura Backroom works quietly in the background while your team continues working as normal.
+              </p>
+            </div>
+          </RevealOnScroll>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto">
             {[
@@ -1983,13 +2029,15 @@ export function BackroomPaywall() {
               { icon: BarChart3, title: "Clear Visibility", desc: "See the true cost of services and product usage." },
               { icon: Beaker, title: "Built for Real Salons", desc: "Designed specifically for salon operations." },
             ].map((item, i) => (
-              <Card key={i} className={cn("p-5 space-y-3 bg-card shadow-md hover:shadow-lg transition-shadow duration-200", i === 4 && "sm:col-start-1 lg:col-start-2")}>
+              <RevealOnScroll key={i} delay={i * 60}>
+                <Card className={cn("p-5 space-y-3 bg-card shadow-md hover:shadow-lg transition-shadow duration-200", i === 4 && "sm:col-start-1 lg:col-start-2")}>
                 <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
                   <item.icon className="w-5 h-5 text-primary" />
                 </div>
                 <h3 className="font-display text-sm tracking-wide text-foreground">{item.title}</h3>
                 <p className="text-sm text-muted-foreground font-sans font-light">{item.desc}</p>
               </Card>
+              </RevealOnScroll>
             ))}
           </div>
 
@@ -2004,7 +2052,8 @@ export function BackroomPaywall() {
         {/* ═══════════════════════════════════════════
             SECTION 8 — FINAL CTA
             ═══════════════════════════════════════════ */}
-        <section className="border-t border-border/20 pt-16 pb-8 text-center space-y-6">
+        <section className="border-t border-border/20 pt-16 pb-8 text-center space-y-6 relative overflow-hidden">
+          <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at 50% 0%, hsl(var(--primary) / 0.06) 0%, transparent 60%)' }} />
           {hasPositiveBenefit && estimate ? (
             <p className="font-sans text-base text-muted-foreground">
               Projected to recover {formatCurrency(yearlySavings)} annually{roiMultiplier >= 2 ? ` — ${roiMultiplier}× your cost` : ''}.
