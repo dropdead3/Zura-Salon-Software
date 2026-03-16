@@ -1101,6 +1101,9 @@ export function BackroomPaywall() {
               </Card>
             </div>
           </div>
+          <div className="flex justify-center pt-4">
+            <ActivateButton />
+          </div>
         </section>
 
         {/* ═══════════════════════════════════════════
