@@ -104,7 +104,7 @@ export function ContractTermsForm({
             value={contractLengthMonths.toString()}
             onValueChange={(v) => onContractLengthChange(parseInt(v))}
           >
-            <SelectTrigger className="bg-slate-800/50 border-slate-700/50 text-slate-300">
+            <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="bg-slate-800 border-slate-700">
