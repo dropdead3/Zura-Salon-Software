@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import {
@@ -65,6 +65,13 @@ export function BackroomPaywall() {
   const { data: estimate, isLoading: estimateLoading } = useBackroomPricingEstimate(manualStylistCount);
 
   const activeLocations = locations.filter((l) => l.is_active);
+
+  useEffect(() => {
+    if (activeLocations.length > 0 && selectedLocationIds.size === 0) {
+      setSelectedLocationIds(new Set(activeLocations.map(l => l.id)));
+    }
+  }, [activeLocations]);
+
   const locationCount = selectedLocationIds.size;
 
   const toggleLocation = (locId: string) => {
