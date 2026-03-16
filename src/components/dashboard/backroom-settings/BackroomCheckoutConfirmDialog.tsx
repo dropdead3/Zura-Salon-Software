@@ -52,7 +52,7 @@ export function BackroomCheckoutConfirmDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 pt-2">
+        <div className="space-y-4 pt-2 max-h-[70vh] overflow-y-auto">
           {/* Monthly recurring */}
           <div className="space-y-2">
             <p className={cn(tokens.label.default, 'text-xs text-muted-foreground')}>Monthly Recurring</p>
