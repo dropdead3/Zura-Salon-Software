@@ -7717,6 +7717,71 @@ export type Database = {
         }
         Relationships: []
       }
+      hardware_orders: {
+        Row: {
+          created_at: string
+          delivered_at: string | null
+          fulfillment_status: Database["public"]["Enums"]["fulfillment_status"]
+          id: string
+          item_type: string
+          notes: string | null
+          organization_id: string
+          quantity: number
+          shipped_at: string | null
+          shipping_address: Json | null
+          shipping_carrier: string | null
+          stripe_checkout_session_id: string | null
+          stripe_subscription_id: string | null
+          tracking_number: string | null
+          unit_price_cents: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          delivered_at?: string | null
+          fulfillment_status?: Database["public"]["Enums"]["fulfillment_status"]
+          id?: string
+          item_type?: string
+          notes?: string | null
+          organization_id: string
+          quantity?: number
+          shipped_at?: string | null
+          shipping_address?: Json | null
+          shipping_carrier?: string | null
+          stripe_checkout_session_id?: string | null
+          stripe_subscription_id?: string | null
+          tracking_number?: string | null
+          unit_price_cents?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          delivered_at?: string | null
+          fulfillment_status?: Database["public"]["Enums"]["fulfillment_status"]
+          id?: string
+          item_type?: string
+          notes?: string | null
+          organization_id?: string
+          quantity?: number
+          shipped_at?: string | null
+          shipping_address?: Json | null
+          shipping_carrier?: string | null
+          stripe_checkout_session_id?: string | null
+          stripe_subscription_id?: string | null
+          tracking_number?: string | null
+          unit_price_cents?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hardware_orders_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       headshot_requests: {
         Row: {
           created_at: string
@@ -23054,6 +23119,12 @@ export type Database = {
         | "no_show"
       discount_type: "percentage" | "fixed_amount" | "promotional"
       formula_type: "actual" | "refined"
+      fulfillment_status:
+        | "pending"
+        | "processing"
+        | "shipped"
+        | "delivered"
+        | "cancelled"
       inquiry_source:
         | "website_form"
         | "google_business"
@@ -23311,6 +23382,13 @@ export const Constants = {
       ],
       discount_type: ["percentage", "fixed_amount", "promotional"],
       formula_type: ["actual", "refined"],
+      fulfillment_status: [
+        "pending",
+        "processing",
+        "shipped",
+        "delivered",
+        "cancelled",
+      ],
       inquiry_source: [
         "website_form",
         "google_business",
