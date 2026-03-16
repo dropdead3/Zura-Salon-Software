@@ -578,7 +578,7 @@ export function BackroomPaywall() {
 
                 {/* Integrated step indicators — inside card footer */}
                 <div className="border-t border-border/30 px-6 py-3 flex items-center justify-between bg-muted/20">
-                  <p className="text-xs text-muted-foreground/70 font-sans">
+                  <p className="text-xs text-muted-foreground/70 font-sans font-medium">
                     {['Bowl on Scale', 'Dispensing Product', 'Usage Captured', 'Formula Saved', 'Inventory Updated', 'Cost Insight'][heroStep]}
                   </p>
                   <div className="flex items-center gap-1.5">
