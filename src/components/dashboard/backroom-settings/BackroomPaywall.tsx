@@ -1019,75 +1019,7 @@ export function BackroomPaywall() {
               </CardContent>
             </Card>
 
-            {/* Bottom spacer so sticky banner doesn't overlap */}
-            <div className="h-24" />
         </div>
-      </div>
-
-      {/* ════ FLOATING STICKY BOTTOM BANNER ════ */}
-      <div className="fixed bottom-6 left-56 right-0 z-50 flex justify-center px-4">
-        <div
-          className={cn(
-            'rounded-full bg-card/80 backdrop-blur-xl border shadow-2xl px-5 py-2.5 flex items-center gap-4 sm:gap-6',
-            hasPositiveBenefit ? 'border-success/30' : 'border-border',
-          )}
-        >
-          <div className="flex items-center gap-4 sm:gap-6 min-w-0">
-            {hasPositiveBenefit ? (
-              <div>
-                <p className="font-display text-sm tracking-wide text-success">
-                  +{formatCurrency(yearlyNetBenefit)}/yr
-                </p>
-                <p className="text-[10px] text-muted-foreground font-sans">Net Benefit</p>
-              </div>
-            ) : locationCount > 0 ? (
-              <div>
-                <p className="font-sans text-sm text-foreground">{formatCurrency(monthlyTotal)}/mo</p>
-                <p className="text-[10px] text-muted-foreground font-sans">Est. Cost</p>
-              </div>
-            ) : (
-              <p className="font-sans text-sm text-muted-foreground">Select locations above</p>
-            )}
-          </div>
-
-          <div className="flex items-center gap-3 shrink-0">
-            <Button
-              size="default"
-              className="font-sans font-medium gap-2 rounded-full"
-              onClick={() => setConfirmDialogOpen(true)}
-              disabled={loading || selectedLocationIds.size === 0}
-            >
-              {loading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <>
-                  <Lock className="w-3.5 h-3.5" />
-                  Unlock Zura Backroom
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </>
-              )}
-            </Button>
-            <p className="text-[9px] text-muted-foreground font-sans hidden sm:block whitespace-nowrap">
-              30-day guarantee<br />Cancel anytime
-            </p>
-          </div>
-        </div>
-
-        <BackroomCheckoutConfirmDialog
-          open={confirmDialogOpen}
-          onOpenChange={setConfirmDialogOpen}
-          onConfirm={() => {
-            setConfirmDialogOpen(false);
-            handleCheckout();
-          }}
-          loading={loading}
-          organizationId={effectiveOrganization?.id}
-          locationCount={locationCount}
-          scaleCount={scaleCount}
-          estimatedMonthlyServices={Math.round((estimate?.monthlyColorServices ?? 0) * locationFraction)}
-          estimatedMonthlySavings={totalSavings}
-          netBenefit={netBenefit}
-        />
       </div>
     </div>
   );
