@@ -1,153 +1,125 @@
 
 
-## Timezone-Safe Scheduling (Implemented)
+# Design System Rebuild — Backroom Paywall Page
 
-### Problem
-`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
+## Current State Assessment
 
-### Solution
-- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
-- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
-- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
+The page has strong content but reads like a utility dashboard, not a premium SaaS product page. Key issues:
+- **No grid discipline** — `max-w-4xl` (~896px) is narrow; spacing uses arbitrary `space-y-12`, `space-y-4`, `space-y-6` with no rhythm
+- **Typography scale is flat** — hero headline is `text-3xl md:text-4xl`, section headers are `text-base`, feature titles are `text-sm` — too compressed, no breathing room between levels
+- **Cards lack polish** — `bg-card/60 border-border/40` throughout, no elevation variation, no hover states
+- **No product visualization** — 100% text-based, no UI previews or diagrams
+- **Section transitions are abrupt** — no visual separation between major page sections
+- **Hero feels weak** — small icon, cramped vertical spacing, CTA blends in
 
-### Files Updated
-- `ScheduleHeader.tsx` — today button, quick days, isToday checks
-- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
-- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
-- `MonthView.tsx` — today highlight
-- `AgendaView.tsx` — today/tomorrow labels, today border
-- `ScheduleActionBar.tsx` — payment queue timing
-- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
-- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
-- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
-- `useHuddles.ts` — today's huddle query
+## Plan
 
-## Auto-Reorder with Supplier Communication (Implemented)
+### Files to modify:
+- `src/components/dashboard/backroom-settings/BackroomPaywall.tsx` (major rebuild)
+- `src/components/dashboard/backroom-settings/CompetitorComparison.tsx` (refinement)
 
-### What It Does
-Organizations can opt into automatic reorder — when stock dips below threshold, POs are calculated (using MOQ and par levels) and sent directly to the supplier via email.
+### 1. Layout Grid — Strict Widths
 
-### Database Changes
-- `products.par_level` (INT, nullable) — desired stock level to reorder up to
-- `product_suppliers.moq` (INT, default 1) — minimum order quantity
-- `inventory_alert_settings.auto_reorder_enabled` (BOOL, default false)
-- `inventory_alert_settings.auto_reorder_mode` (TEXT, default 'to_par') — 'to_par' or 'moq_only'
-- `inventory_alert_settings.max_auto_reorder_value` (NUMERIC, nullable) — daily spend cap
-- `purchase_orders.supplier_confirmed_at` (TIMESTAMPTZ, nullable) — for tracking confirmations
+Change outer container from `max-w-4xl` (896px) to `max-w-[1100px]` for wider content area. Increase outer padding to `px-6 sm:px-8`. This gives feature card grids room to breathe in 2-col and 3-col layouts.
 
-### Quantity Calculation
-```
-deficit = par_level - quantity_on_hand
-order_qty = max(moq, deficit)
-if moq > 1: round up to nearest MOQ multiple
-```
-Fallback: if par_level is null, uses `reorder_level * 2`.
+### 2. Typography Scale — Clear Hierarchy
 
-### Files Updated
-- Migration: Added columns to products, product_suppliers, inventory_alert_settings, purchase_orders
-- `check-reorder-levels/index.ts` — auto-send logic with MOQ/par calculation, spend cap, email invocation
-- `AlertSettingsCard.tsx` — auto-reorder toggle, mode selector, spend cap input
-- `useInventoryAlertSettings.ts` — updated interface
-- `useProducts.ts` — added par_level to Product interface
-- `useProductSuppliers.ts` — added moq to ProductSupplier interface
-- `ProductEditDialog.tsx` — added par level field
-- `RetailProductsSettingsContent.tsx` — added par level to product form
-- `SupplierDialog.tsx` — added MOQ field
+Establish 5 distinct levels:
+- **Hero headline**: `text-4xl md:text-5xl lg:text-[56px]` (Termina) — commanding, unmissable
+- **Section headline**: `text-2xl md:text-3xl` (Termina) — clear section breaks
+- **Card/feature title**: `text-base md:text-lg` (Aeonik Pro, font-medium) — readable card headers
+- **Body text**: `text-base` (16px) — comfortable reading
+- **Support/meta text**: `text-sm` (14px) — captions, disclaimers
 
-### Safety Features
-- Spend cap: daily auto-reorder pauses when cumulative PO value exceeds cap
-- Audit trail: auto_reorder logged as stock_movement reason
-- Supplier confirmation tracking via supplier_confirmed_at timestamp
+### 3. Spacing System — 8px Grid
 
-## Product Movement Rating Badges (Implemented)
+Apply consistent vertical rhythm between sections:
+- **Between major sections**: `space-y-20 md:space-y-24` (80-96px) — creates clear page "chapters"
+- **Section header to content**: `mb-8 md:mb-10` (32-40px)
+- **Between cards in a grid**: `gap-5 md:gap-6` (20-24px)
+- **Inside cards**: `p-6 md:p-8` (24-32px)
 
-### What It Does
-Every product gets a dynamic movement rating badge (Best Seller, Popular, Steady, Slow Mover, Stagnant, Dead Weight) computed from 90-day sales velocity data.
+### 4. Hero Section Rebuild
 
-### Rating Tiers
-- **Best Seller**: Top 10% velocity AND >0.5 units/day (emerald)
-- **Popular**: Top 25% velocity AND >0.2 units/day (blue)
-- **Steady**: Velocity >0.05/day (muted)
-- **Slow Mover**: Velocity >0 but ≤0.05/day (amber)
-- **Stagnant**: Zero velocity, sold within 180 days (orange)
-- **Dead Weight**: Zero velocity, 180+ days or never sold (red)
-- Products with zero stock excluded from negative ratings
+- Remove the icon-in-box treatment (too small, too dashboard-y)
+- Enlarge headline to `text-4xl md:text-5xl lg:text-[56px]` with increased `leading-[1.1]`
+- Increase subtitle to `text-lg md:text-xl` with `max-w-xl`
+- Add a faint gradient or radial glow behind the hero for depth
+- Give CTA more vertical breathing room (`pt-8`)
+- Style the social proof testimonial with a subtle top border separator
 
-### Files Created
-- `src/lib/productMovementRating.ts` — pure rating logic + badge config
-- `src/hooks/useProductVelocity.ts` — lightweight 90-day POS velocity query
-- `src/components/ui/MovementBadge.tsx` — shared badge component with tooltip
+### 5. Feature Cards Rebuild
 
-### Files Updated
-- `RetailProductsSettingsContent.tsx` — Movement column + filter dropdown in products table
-- `RetailAnalyticsContent.tsx` — Movement badges on product performance table + Movement Distribution card (donut chart with actionable callouts)
-- `ProductCard.tsx` — Best Seller/Popular badges on public shop cards (positive only)
-- `ProductDetailModal.tsx` — Movement badge with velocity context
+Current: 2-col grid with icon+title+outcome+bullets in a flat card.
 
-## Inventory Intelligence Suite v2 (Implemented)
+Rebuild to:
+- Use `p-6 md:p-8` padding inside each card
+- Icon box: increase to `w-11 h-11` with `rounded-xl`
+- Title: bump to `text-base md:text-lg font-medium` (Aeonik Pro)
+- Outcome line: `text-sm text-muted-foreground` — one clear sentence
+- Bullets: keep CheckCircle2 indicators, increase text to `text-sm` for readability
+- Add `hover-lift` class for subtle hover elevation on each card
+- Cards get `bg-card border-border/50 shadow-sm` for subtle depth
 
-### 1. Dead Stock Auto-Clearance Pipeline
-- `DeadStockAlertCard.tsx` — Surfaces Dead Weight/Stagnant products not yet in clearance with suggested discount tiers (10%/25%/50% based on idle days)
-- One-click "Mark for Clearance" applies discount and sets clearance_status
+### 6. "How It Works" Section Polish
 
-### 2. Supplier Lead Time Tracker
-- `usePurchaseOrders.ts` — `useMarkPurchaseOrderReceived` already computes actual delivery days and updates `product_suppliers.avg_delivery_days` via running average
-- `parLevelSuggestion.ts` — Updated to accept supplier-provided lead time instead of hardcoded 7-day default, with bounds clamping
+- Increase step number prominence: `text-2xl text-primary/20` as a large background numeral
+- Title: `text-lg font-medium`
+- Description: `text-sm text-muted-foreground`
+- Add a connecting visual (faint dotted line or arrow between steps on desktop)
+- Cards: `p-6 md:p-8` with hover-lift
 
-### 3. Inventory Valuation Dashboard Card
-- `InventoryValuationCard.tsx` — Shows total inventory at cost/retail, potential margin %, capital-at-risk (slow/stagnant/dead weight), with donut chart breakdown
+### 7. Loss Aversion Card Polish
 
-### 4. Reorder Approval Queue
-- `ReorderApprovalCard.tsx` — Surfaces draft POs from auto-reorder with one-click approve (→ sent) or reject (→ cancelled)
+- Increase inner KPI tile padding to `p-5`
+- Bump loss values to `text-3xl` for more impact
+- Add `shadow-sm` to KPI tiles
+- Total monthly loss: increase to `text-4xl` for dramatic emphasis
 
-### 5. Stock Transfer Between Locations
-- Migration: Created `stock_transfers` table with RLS (org member read, org admin manage)
-- `useStockTransfers.ts` — CRUD hooks for stock transfers with stock movement logging
-- `StockTransferDialog.tsx` — Dialog for creating transfers between locations
-- `RetailProductsSettingsContent.tsx` — "Transfer Stock" button added to Inventory tab (visible for multi-location orgs)
+### 8. Competitor Comparison Refinement
 
-## Enhancement 1: Expiry Tracking (Implemented)
+- Increase table cell padding for scannability (`py-3.5 px-5`)
+- Add subtle row hover: `hover:bg-muted/10`
+- Highlight the Zura column with a faint `bg-primary/[0.03]` vertical stripe
+- Column headers: slightly larger `text-sm` instead of `text-xs`
+- Add `Fragment` keys to fix the React key warning on `<>` wrapping category groups
 
-### What It Does
-Products can have an optional expiration date (`expires_at`) and per-product alert threshold (`expiry_alert_days`, default 30). The system surfaces expiring inventory with color-coded badges in the product table and an analytics card with auto-clearance suggestions.
+### 9. Pricing Section Polish
 
-### Database Changes
-- `products.expires_at` (DATE, nullable) — expiration date for perishable products
-- `products.expiry_alert_days` (INTEGER, default 30) — days before expiry to trigger alerts
+- Increase pricing value size to `text-3xl` for the two main price points
+- Add more padding to the ROI impact card
+- Smooth the gradient on the ROI bar
 
-### Expiry Alert Buckets
-- **Expired** (red): past expiration → suggests 50% markdown
-- **Critical** (orange): within alert threshold → suggests 25% markdown
-- **Warning** (amber): within 2× alert threshold → suggests 10% markdown
+### 10. CTA Design Polish
 
-### Files Created
-- `src/components/dashboard/analytics/ExpiryAlertCard.tsx` — PinnableCard showing expiring products with one-click clearance actions
+- Primary CTA: increase to `h-12 px-10 text-base` for more presence
+- Add a subtle `shadow-lg shadow-primary/20` glow behind the primary button
+- Ensure consistent CTA spacing: `py-4` above and below each CTA placement
+- Final CTA section: add a faint top border separator and more vertical padding
 
-### Files Updated
-- `src/hooks/useProducts.ts` — Added `expires_at`, `expiry_alert_days` to Product interface; added `expiringOnly` filter
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Expiry date + alert days in product form; color-coded Expiry column in product table
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ExpiryAlertCard into analytics hub
+### 11. Microinteraction Polish
 
-## Enhancement 2: Shrinkage Detection (Implemented)
+- Feature cards: `hover-lift` (already exists in CSS — just add the class)
+- "How It Works" cards: `hover-lift`
+- Comparison table rows: `transition-colors duration-150` with `hover:bg-muted/10`
+- CTA button: already has `active:scale-[0.98]` — add `hover:shadow-xl` for glow growth
 
-### What It Does
-Physical stocktake workflow with variance reporting. Staff record actual counts via a Stocktake dialog, and the system compares against expected quantities (system records). A Shrinkage Report card in analytics surfaces products with negative variance (loss) ranked by estimated cost impact.
+### 12. Section Separators
 
-### Database Changes
-- Created `stock_counts` table with computed `variance` column (counted - expected), RLS policies (org member read/insert, org admin update/delete), and indexes
+Add faint horizontal dividers or increased spacing between major page sections to create clear "chapters." Use either:
+- `border-t border-border/20` with `pt-16` padding, or
+- Simply increase `space-y` to `space-y-20`
 
-### Shrinkage Calculation
-```
-variance = counted_quantity - expected_quantity
-shrinkage_units = |variance| when variance < 0
-shrinkage_cost = shrinkage_units × cost_price
-```
+### 13. Product Visualization (Lightweight)
 
-### Files Created
-- `src/hooks/useStockCounts.ts` — CRUD hooks for stock counts + `useShrinkageSummary` for aggregated shrinkage data
-- `src/components/dashboard/settings/inventory/StocktakeDialog.tsx` — Full stocktake UI with search, inline count entry, real-time variance display
-- `src/components/dashboard/analytics/ShrinkageReportCard.tsx` — PinnableCard showing products with shrinkage, severity badges, estimated loss
+Add a styled "product preview" placeholder between the Hero and the Loss Aversion section — a mock UI frame showing a simplified mixing session interface using a styled card with fake UI elements (progress bars, pill labels, gram readouts). This is built purely with Tailwind/HTML — no images needed. It communicates "this is a real product" visually.
 
-### Files Updated
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Added "Stocktake" button to Inventory tab toolbar
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ShrinkageReportCard into analytics hub
+### What stays the same
+- All content/copy (already optimized in previous passes)
+- All business logic (pricing calculations, location selector, scale counter)
+- Component structure (same sections in same order)
+- Social proof testimonial content
+- FAQ content and accordion
+
+This is purely a visual/spacing/typography polish pass.
+
