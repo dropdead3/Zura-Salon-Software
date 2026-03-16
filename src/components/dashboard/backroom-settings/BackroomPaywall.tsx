@@ -145,6 +145,74 @@ const faqItems = [
   },
 ];
 
+/* ─── Product Preview Mock ─── */
+function ProductPreview() {
+  return (
+    <div className="relative mx-auto max-w-[640px]">
+      {/* Browser frame */}
+      <div className="rounded-xl border border-border/60 bg-card shadow-2xl shadow-primary/[0.06] overflow-hidden">
+        {/* Title bar */}
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border/40 bg-muted/30">
+          <div className="flex gap-1.5">
+            <div className="w-2.5 h-2.5 rounded-full bg-destructive/40" />
+            <div className="w-2.5 h-2.5 rounded-full bg-warning/40" />
+            <div className="w-2.5 h-2.5 rounded-full bg-success/40" />
+          </div>
+          <div className="flex-1 flex justify-center">
+            <div className="px-4 py-1 rounded-md bg-muted/50 text-[10px] text-muted-foreground font-sans">
+              backroom.getzura.com
+            </div>
+          </div>
+        </div>
+        {/* Mock UI content */}
+        <div className="p-5 space-y-4">
+          {/* Header row */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Beaker className="w-3.5 h-3.5 text-primary" />
+              </div>
+              <span className="font-display text-[10px] tracking-wider text-foreground">MIXING SESSION</span>
+            </div>
+            <span className="text-[10px] text-muted-foreground font-sans">Station 1</span>
+          </div>
+          {/* Client + formula row */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-lg bg-muted/30 border border-border/30 p-3 space-y-1.5">
+              <span className="text-[9px] text-muted-foreground font-sans">Client</span>
+              <p className="text-xs text-foreground font-sans font-medium">Sarah Mitchell</p>
+            </div>
+            <div className="rounded-lg bg-muted/30 border border-border/30 p-3 space-y-1.5">
+              <span className="text-[9px] text-muted-foreground font-sans">Last Formula</span>
+              <p className="text-xs text-foreground font-sans font-medium">7N + 8G (1:1.5)</p>
+            </div>
+          </div>
+          {/* Dispensing bars */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-muted-foreground font-sans">Dispensed</span>
+              <span className="text-[10px] text-primary font-sans font-medium">42g / 45g target</span>
+            </div>
+            <div className="h-2 rounded-full bg-muted/40 overflow-hidden">
+              <div className="h-full rounded-full bg-primary/70 transition-all" style={{ width: '93%' }} />
+            </div>
+            <div className="flex gap-2">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-success/10 text-success text-[9px] font-sans">
+                <CheckCircle2 className="w-2.5 h-2.5 mr-1" /> Within target
+              </span>
+              <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-muted/40 text-muted-foreground text-[9px] font-sans">
+                3g under allowance
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* Soft glow behind */}
+      <div className="absolute inset-0 -z-10 blur-3xl opacity-20 bg-gradient-to-br from-primary/30 to-transparent rounded-3xl scale-110" />
+    </div>
+  );
+}
+
 export function BackroomPaywall() {
   const [loading, setLoading] = useState(false);
   const [scaleCount, setScaleCount] = useState(0);
@@ -274,7 +342,10 @@ export function BackroomPaywall() {
   const ActivateButton = ({ className = '' }: { className?: string }) => (
     <Button
       size="lg"
-      className={cn('font-sans font-medium gap-2 rounded-full px-8', className)}
+      className={cn(
+        'font-sans font-medium gap-2 rounded-full h-12 px-10 text-base shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all duration-200',
+        className,
+      )}
       onClick={() => setConfirmDialogOpen(true)}
       disabled={loading || selectedLocationIds.size === 0}
     >
@@ -283,518 +354,540 @@ export function BackroomPaywall() {
       ) : (
         <>
           Activate Backroom
-          <ArrowRight className="w-3.5 h-3.5" />
+          <ArrowRight className="w-4 h-4" />
         </>
       )}
     </Button>
   );
 
+  /* ─── Section heading helper ─── */
+  const SectionHeading = ({ children }: { children: React.ReactNode }) => (
+    <h2 className="font-display text-2xl md:text-3xl font-medium tracking-wide text-center text-foreground">
+      {children}
+    </h2>
+  );
+
   return (
-    <div className="flex flex-col items-center justify-center px-4 py-8">
-      <div className="max-w-4xl w-full space-y-12">
+    <div className="flex flex-col items-center justify-center px-6 sm:px-8 py-12 md:py-16">
+      <div className="max-w-[1100px] w-full">
 
         {/* ═══════════════════════════════════════════
             SECTION 1 — HERO
             ═══════════════════════════════════════════ */}
-        <div className="text-center space-y-6 pt-4">
-          <div className="mx-auto w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-            <Droplets className="w-8 h-8 text-primary" />
-          </div>
-          <div className="space-y-3">
-            <h1 className="font-display text-3xl md:text-4xl font-medium tracking-wide">
+        <section className="text-center space-y-8 pt-4 pb-20 md:pb-24">
+          {/* Headline */}
+          <div className="space-y-4 max-w-3xl mx-auto">
+            <h1 className="font-display text-4xl md:text-5xl lg:text-[56px] font-medium tracking-wide leading-[1.1]">
               Stop Losing Money in Your Color Room
             </h1>
-            <p className="text-muted-foreground text-base md:text-lg max-w-2xl mx-auto font-sans leading-relaxed">
+            <p className="text-muted-foreground text-lg md:text-xl max-w-xl mx-auto font-sans leading-relaxed">
               Track every gram. Recover supply costs. Reorder before you run out.
             </p>
           </div>
-          <div className="space-y-2">
+
+          {/* CTA */}
+          <div className="space-y-3 pt-2">
             <ActivateButton />
-            <p className="text-xs text-muted-foreground/60 font-sans">Setup takes minutes. Cancel anytime.</p>
+            <p className="text-sm text-muted-foreground/60 font-sans">Setup takes minutes. Cancel anytime.</p>
           </div>
-        </div>
 
-        {/* ═══════════════════════════════════════════
-            SOCIAL PROOF — Drop Dead Salon
-            ═══════════════════════════════════════════ */}
-        <div className="flex flex-col items-center gap-3 py-2">
-          <div className="flex gap-0.5">
-            {[...Array(5)].map((_, i) => (
-              <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
-            ))}
-          </div>
-          <blockquote className="text-center max-w-xl space-y-2">
-            <p className="text-muted-foreground text-sm md:text-base font-sans leading-relaxed italic">
-              "Zura Backroom saved us thousands per month and helps us recoup over $50,000 a year in color costs. 10/10 add-on feature."
-            </p>
-            <footer className="text-xs text-muted-foreground/70 font-sans tracking-wide">
-              — Drop Dead Salon
-            </footer>
-          </blockquote>
-        </div>
-
-        {/* ═══════════════════════════════════════════
-            SECTION 2 — THE PROBLEM (Loss Aversion + Numbers merged)
-            ═══════════════════════════════════════════ */}
-        {(estimate || estimateLoading) && (
-          <div className="space-y-4">
-            <Card className="bg-destructive/[0.03] border-destructive/20 overflow-hidden">
-              <CardContent className="p-6 space-y-5">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center shrink-0">
-                    <AlertTriangle className="w-5 h-5 text-destructive" />
-                  </div>
-                  <div>
-                    <p className={cn(tokens.label.default, 'text-destructive text-sm')}>
-                      What Your Color Room Is Costing You Right Now
-                    </p>
-                    <p className="text-xs text-muted-foreground font-sans mt-0.5">
-                      Most salons have no visibility into color room costs. Here is what the data shows.
-                    </p>
-                  </div>
-                </div>
-
-                {estimateLoading ? (
-                  <div className="grid grid-cols-3 gap-4">
-                    <Skeleton className="h-20 rounded-lg" />
-                    <Skeleton className="h-20 rounded-lg" />
-                    <Skeleton className="h-20 rounded-lg" />
-                  </div>
-                ) : estimate ? (
-                  <>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      <div className="p-4 rounded-lg bg-destructive/5 border border-destructive/15 text-center">
-                        <p className="font-display text-2xl tracking-wide text-destructive">
-                          <AnimatedNumber value={wasteSavings} prefix="$" duration={1000} />
-                        </p>
-                        <p className="text-xs text-muted-foreground font-sans mt-1">product waste / mo</p>
-                      </div>
-                      <div className="p-4 rounded-lg bg-destructive/5 border border-destructive/15 text-center">
-                        <p className="font-display text-2xl tracking-wide text-destructive">
-                          <AnimatedNumber value={monthlyAuditCost} prefix="$" duration={1000} />
-                        </p>
-                        <p className="text-xs text-muted-foreground font-sans mt-1">staff time wasted / mo</p>
-                      </div>
-                      <div className="p-4 rounded-lg bg-destructive/5 border border-destructive/15 text-center">
-                        <p className="font-display text-2xl tracking-wide text-destructive">
-                          <AnimatedNumber value={supplyRecovery} prefix="$" duration={1000} />
-                        </p>
-                        <p className="text-xs text-muted-foreground font-sans mt-1">unrecovered supply costs / mo</p>
-                      </div>
-                    </div>
-
-                    {/* Total monthly loss */}
-                    <div className="flex items-center justify-center gap-3 pt-2">
-                      <div className="h-px flex-1 bg-destructive/20" />
-                      <div className="text-center">
-                        <p className="text-xs text-muted-foreground font-sans">Estimated total monthly loss</p>
-                        <p className="font-display text-3xl tracking-wide text-destructive mt-1">
-                          <AnimatedNumber value={totalSavings} prefix="$" duration={1200} />
-                          <span className="text-base text-destructive/60 ml-1">/mo</span>
-                        </p>
-                      </div>
-                      <div className="h-px flex-1 bg-destructive/20" />
-                    </div>
-
-                    {/* Stylist slider for manual estimate adjustment */}
-                    {!estimate.hasRealData && (
-                      <div className="space-y-2 pt-2">
-                        <p className="text-xs text-muted-foreground font-sans italic text-center">
-                          Based on industry averages — adjust your stylist count for a personalized estimate:
-                        </p>
-                        <div className="flex items-center gap-3 max-w-xs mx-auto">
-                          <span className="font-sans text-xs text-muted-foreground w-16 shrink-0">
-                            {manualStylistCount} stylist{manualStylistCount !== 1 ? 's' : ''}
-                          </span>
-                          <Slider
-                            variant="filled"
-                            min={1}
-                            max={20}
-                            step={1}
-                            value={[manualStylistCount]}
-                            onValueChange={([v]) => setManualStylistCount(v)}
-                            className="flex-1"
-                          />
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Manual inventory time — compact inline */}
-                    <div className="border-t border-destructive/10 pt-3 flex items-center justify-center gap-2">
-                      <Clock className="w-3.5 h-3.5 text-muted-foreground/60 shrink-0" />
-                      <p className="text-xs text-muted-foreground font-sans">
-                        Plus ~<span className="text-foreground font-medium">{monthlyAuditHours.toFixed(0)} hours</span> of staff time recovered monthly
-                      </p>
-                    </div>
-
-                    {estimate.hasRealData && (
-                      <p className="text-[10px] text-muted-foreground font-sans italic text-center">
-                        Based on {estimate.totalColorAppointments.toLocaleString()} color appointments over {estimate.dataWindowDays} days
-                      </p>
-                    )}
-                  </>
-                ) : null}
-              </CardContent>
-            </Card>
-
-            <div className="flex gap-2 items-start px-1">
-              <Info className="w-3.5 h-3.5 text-muted-foreground/50 shrink-0 mt-0.5" />
-              <p className="text-[10px] text-muted-foreground/60 font-sans leading-relaxed">
-                Estimates based on scheduled color and chemical service appointments. Actual results may vary.
-              </p>
+          {/* Social Proof */}
+          <div className="border-t border-border/20 pt-8 mt-4 max-w-lg mx-auto">
+            <div className="flex flex-col items-center gap-3">
+              <div className="flex gap-0.5">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
+                ))}
+              </div>
+              <blockquote className="text-center space-y-2">
+                <p className="text-muted-foreground text-sm md:text-base font-sans leading-relaxed italic">
+                  "Zura Backroom saved us thousands per month and helps us recoup over $50,000 a year in color costs. 10/10 add-on feature."
+                </p>
+                <footer className="text-xs text-muted-foreground/70 font-sans tracking-wide">
+                  — Drop Dead Salon
+                </footer>
+              </blockquote>
             </div>
           </div>
+        </section>
+
+        {/* ═══════════════════════════════════════════
+            SECTION 1.5 — PRODUCT PREVIEW
+            ═══════════════════════════════════════════ */}
+        <section className="pb-20 md:pb-24">
+          <ProductPreview />
+        </section>
+
+        {/* ═══════════════════════════════════════════
+            SECTION 2 — THE PROBLEM (Loss Aversion)
+            ═══════════════════════════════════════════ */}
+        {(estimate || estimateLoading) && (
+          <section className="pb-20 md:pb-24">
+            <div className="space-y-6">
+              <Card className="bg-destructive/[0.03] border-destructive/20 overflow-hidden">
+                <CardContent className="p-6 md:p-8 space-y-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-11 h-11 rounded-xl bg-destructive/10 flex items-center justify-center shrink-0">
+                      <AlertTriangle className="w-5 h-5 text-destructive" />
+                    </div>
+                    <div>
+                      <p className="font-sans text-base md:text-lg font-medium text-destructive">
+                        What Your Color Room Is Costing You Right Now
+                      </p>
+                      <p className="text-sm text-muted-foreground font-sans mt-1">
+                        Most salons have no visibility into color room costs. Here is what the data shows.
+                      </p>
+                    </div>
+                  </div>
+
+                  {estimateLoading ? (
+                    <div className="grid grid-cols-3 gap-5">
+                      <Skeleton className="h-24 rounded-xl" />
+                      <Skeleton className="h-24 rounded-xl" />
+                      <Skeleton className="h-24 rounded-xl" />
+                    </div>
+                  ) : estimate ? (
+                    <>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                        {[
+                          { value: wasteSavings, label: 'product waste / mo' },
+                          { value: monthlyAuditCost, label: 'staff time wasted / mo' },
+                          { value: supplyRecovery, label: 'unrecovered supply costs / mo' },
+                        ].map((tile) => (
+                          <div key={tile.label} className="p-5 rounded-xl bg-destructive/5 border border-destructive/15 text-center shadow-sm">
+                            <p className="font-display text-3xl tracking-wide text-destructive">
+                              <AnimatedNumber value={tile.value} prefix="$" duration={1000} />
+                            </p>
+                            <p className="text-sm text-muted-foreground font-sans mt-2">{tile.label}</p>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Total monthly loss */}
+                      <div className="flex items-center justify-center gap-4 pt-4">
+                        <div className="h-px flex-1 bg-destructive/20" />
+                        <div className="text-center">
+                          <p className="text-sm text-muted-foreground font-sans">Estimated total monthly loss</p>
+                          <p className="font-display text-4xl md:text-[44px] tracking-wide text-destructive mt-2">
+                            <AnimatedNumber value={totalSavings} prefix="$" duration={1200} />
+                            <span className="text-lg text-destructive/60 ml-1">/mo</span>
+                          </p>
+                        </div>
+                        <div className="h-px flex-1 bg-destructive/20" />
+                      </div>
+
+                      {/* Stylist slider for manual estimate adjustment */}
+                      {!estimate.hasRealData && (
+                        <div className="space-y-3 pt-2">
+                          <p className="text-sm text-muted-foreground font-sans italic text-center">
+                            Based on industry averages — adjust your stylist count for a personalized estimate:
+                          </p>
+                          <div className="flex items-center gap-4 max-w-xs mx-auto">
+                            <span className="font-sans text-sm text-muted-foreground w-20 shrink-0">
+                              {manualStylistCount} stylist{manualStylistCount !== 1 ? 's' : ''}
+                            </span>
+                            <Slider
+                              variant="filled"
+                              min={1}
+                              max={20}
+                              step={1}
+                              value={[manualStylistCount]}
+                              onValueChange={([v]) => setManualStylistCount(v)}
+                              className="flex-1"
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Manual inventory time */}
+                      <div className="border-t border-destructive/10 pt-4 flex items-center justify-center gap-2">
+                        <Clock className="w-4 h-4 text-muted-foreground/60 shrink-0" />
+                        <p className="text-sm text-muted-foreground font-sans">
+                          Plus ~<span className="text-foreground font-medium">{monthlyAuditHours.toFixed(0)} hours</span> of staff time recovered monthly
+                        </p>
+                      </div>
+
+                      {estimate.hasRealData && (
+                        <p className="text-xs text-muted-foreground font-sans italic text-center">
+                          Based on {estimate.totalColorAppointments.toLocaleString()} color appointments over {estimate.dataWindowDays} days
+                        </p>
+                      )}
+                    </>
+                  ) : null}
+                </CardContent>
+              </Card>
+
+              <div className="flex gap-2 items-start px-1">
+                <Info className="w-3.5 h-3.5 text-muted-foreground/50 shrink-0 mt-0.5" />
+                <p className="text-xs text-muted-foreground/60 font-sans leading-relaxed">
+                  Estimates based on scheduled color and chemical service appointments. Actual results may vary.
+                </p>
+              </div>
+            </div>
+          </section>
         )}
 
         {/* ═══════════════════════════════════════════
             SECTION 3 — HOW IT WORKS
             ═══════════════════════════════════════════ */}
-        <div className="space-y-4">
-          <p className={cn(tokens.heading.section, 'text-center text-muted-foreground')}>How It Works</p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {howItWorks.map((step) => (
-              <div key={step.step} className="p-5 rounded-xl bg-card/60 border border-border/40 space-y-2">
-                <div className="flex items-center gap-2">
-                  <span className="font-display text-xs tracking-wider text-primary">{step.step}</span>
-                  <span className={cn(tokens.label.default, 'text-foreground text-sm')}>{step.title}</span>
-                </div>
-                <p className="text-xs text-muted-foreground font-sans leading-relaxed">{step.description}</p>
-              </div>
-            ))}
+        <section className="pb-20 md:pb-24">
+          <div className="space-y-8 md:space-y-10">
+            <SectionHeading>How It Works</SectionHeading>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 md:gap-6">
+              {howItWorks.map((step) => (
+                <Card key={step.step} className="bg-card border-border/50 shadow-sm hover-lift">
+                  <CardContent className="p-6 md:p-8 space-y-3">
+                    <span className="font-display text-2xl tracking-wider text-primary/20">{step.step}</span>
+                    <p className="font-sans text-lg font-medium text-foreground">{step.title}</p>
+                    <p className="text-sm text-muted-foreground font-sans leading-relaxed">{step.description}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </div>
-        </div>
+        </section>
 
         {/* ═══════════════════════════════════════════
-            SECTION 4 — WHAT YOU GET (6 outcome-grouped categories)
+            SECTION 4 — WHAT YOU GET (6 feature cards)
             ═══════════════════════════════════════════ */}
-        <div className="space-y-6">
-          <p className={cn(tokens.heading.section, 'text-center text-muted-foreground')}>What You Get</p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {featureGroups.map((group) => (
-              <Card key={group.title} className="bg-card/60 border-border/40">
-                <CardContent className="p-5 space-y-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                      <group.icon className="w-4 h-4 text-primary" />
-                    </div>
-                    <div>
-                      <p className={cn(tokens.label.default, 'text-sm text-foreground')}>{group.title}</p>
-                      <p className="text-xs text-muted-foreground font-sans mt-0.5">{group.outcome}</p>
-                    </div>
-                  </div>
-                  <div className="space-y-1.5 pl-12">
-                    {group.bullets.map((bullet) => (
-                      <div key={bullet} className="flex items-start gap-2">
-                        <CheckCircle2 className="w-3 h-3 text-primary/60 shrink-0 mt-0.5" />
-                        <span className="text-xs text-muted-foreground font-sans">{bullet}</span>
+        <section className="pb-20 md:pb-24">
+          <div className="space-y-8 md:space-y-10">
+            <SectionHeading>What You Get</SectionHeading>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
+              {featureGroups.map((group) => (
+                <Card key={group.title} className="bg-card border-border/50 shadow-sm hover-lift">
+                  <CardContent className="p-6 md:p-8 space-y-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center shrink-0">
+                        <group.icon className="w-5 h-5 text-primary" />
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                      <div>
+                        <p className="font-sans text-base md:text-lg font-medium text-foreground">{group.title}</p>
+                        <p className="text-sm text-muted-foreground font-sans mt-0.5">{group.outcome}</p>
+                      </div>
+                    </div>
+                    <div className="space-y-2 pl-14">
+                      {group.bullets.map((bullet) => (
+                        <div key={bullet} className="flex items-start gap-2">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-primary/60 shrink-0 mt-0.5" />
+                          <span className="text-sm text-muted-foreground font-sans">{bullet}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
 
-          {/* Mid-page CTA */}
-          <div className="flex justify-center pt-2">
-            <ActivateButton />
+            {/* Mid-page CTA */}
+            <div className="flex justify-center pt-4">
+              <ActivateButton />
+            </div>
           </div>
-        </div>
+        </section>
 
         {/* ═══════════════════════════════════════════
             SECTION 4.5 — COMPETITOR COMPARISON
             ═══════════════════════════════════════════ */}
-        <CompetitorComparison />
+        <section className="pb-20 md:pb-24">
+          <CompetitorComparison />
+        </section>
 
         {/* ═══════════════════════════════════════════
             SECTION 5 — PRICING + ROI
             ═══════════════════════════════════════════ */}
-        <div className="space-y-4">
-          <p className={cn(tokens.heading.section, 'text-center text-muted-foreground')}>Pricing</p>
+        <section className="pb-20 md:pb-24">
+          <div className="space-y-8 md:space-y-10">
+            <SectionHeading>Pricing</SectionHeading>
 
-          <Card className="bg-card/60 border-border/40">
-            <CardContent className="p-6 space-y-5">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 rounded-lg bg-muted/30 border border-border/40 text-center">
-                  <p className="font-display text-2xl tracking-wide text-foreground">${BACKROOM_BASE_PRICE}</p>
-                  <p className="text-xs text-muted-foreground font-sans mt-1">per location / month</p>
-                </div>
-                <div className="p-4 rounded-lg bg-muted/30 border border-border/40 text-center">
-                  <p className="font-display text-2xl tracking-wide text-foreground">${BACKROOM_PER_SERVICE_FEE.toFixed(2)}</p>
-                  <p className="text-xs text-muted-foreground font-sans mt-1">per color service</p>
-                </div>
-              </div>
-
-              {/* ROI anchor */}
-              <div className="text-center py-2">
-                <p className="font-sans text-sm text-muted-foreground">
-                  One highlight service covers your entire monthly cost.
-                </p>
-                <p className="font-sans text-xs text-muted-foreground/60 mt-1">
-                  You only pay when you're making money.
-                </p>
-              </div>
-
-              {/* Annual impact summary */}
-              {hasPositiveBenefit && estimate && (
-                <div className="rounded-lg bg-gradient-to-br from-emerald-500/5 to-primary/5 border border-emerald-500/20 p-4 space-y-3">
-                  <div className="flex items-center justify-center gap-2">
-                    <TrendingUp className="w-4 h-4 text-emerald-400" />
-                    <p className={cn(tokens.label.default, 'text-emerald-400 text-xs')}>Projected Annual Impact</p>
+            <Card className="bg-card border-border/50 shadow-sm">
+              <CardContent className="p-6 md:p-8 space-y-6">
+                <div className="grid grid-cols-2 gap-5">
+                  <div className="p-5 rounded-xl bg-muted/30 border border-border/40 text-center">
+                    <p className="font-display text-3xl tracking-wide text-foreground">${BACKROOM_BASE_PRICE}</p>
+                    <p className="text-sm text-muted-foreground font-sans mt-2">per location / month</p>
                   </div>
-                  <div className="text-center">
-                    <p className="font-display text-3xl tracking-wide text-emerald-400">
-                      +<AnimatedNumber value={yearlyNetBenefit} duration={1200} formatOptions={{ style: 'currency', currency: 'USD', notation: 'compact', maximumFractionDigits: 1 }} />
-                      <span className="text-sm text-emerald-400/70 ml-1">/yr</span>
-                    </p>
-                    {roiMultiplier >= 2 && (
-                      <span className="inline-flex items-center gap-1 mt-2 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-sans font-medium">
-                        <TrendingUp className="w-3 h-3" />
-                        {roiMultiplier}× ROI
-                      </span>
-                    )}
+                  <div className="p-5 rounded-xl bg-muted/30 border border-border/40 text-center">
+                    <p className="font-display text-3xl tracking-wide text-foreground">${BACKROOM_PER_SERVICE_FEE.toFixed(2)}</p>
+                    <p className="text-sm text-muted-foreground font-sans mt-2">per color service</p>
                   </div>
-                  <div className="space-y-1">
-                    <div className="h-1.5 rounded-full bg-muted/40 overflow-hidden">
-                      <div
-                        className="h-full rounded-full bg-emerald-500/60 transition-all duration-700"
-                        style={{ width: `${Math.min(100, yearlySavings > 0 ? (yearlyCost / yearlySavings) * 100 : 100)}%` }}
-                      />
+                </div>
+
+                {/* ROI anchor */}
+                <div className="text-center py-2">
+                  <p className="font-sans text-base text-muted-foreground">
+                    One highlight service covers your entire monthly cost.
+                  </p>
+                  <p className="font-sans text-sm text-muted-foreground/60 mt-1">
+                    You only pay when you're making money.
+                  </p>
+                </div>
+
+                {/* Annual impact summary */}
+                {hasPositiveBenefit && estimate && (
+                  <div className="rounded-xl bg-gradient-to-br from-emerald-500/5 to-primary/5 border border-emerald-500/20 p-6 space-y-4">
+                    <div className="flex items-center justify-center gap-2">
+                      <TrendingUp className="w-4 h-4 text-emerald-400" />
+                      <p className="font-display text-xs tracking-wider text-emerald-400">Projected Annual Impact</p>
                     </div>
-                    <p className="text-[10px] text-muted-foreground font-sans text-center">
-                      Cost is only {yearlySavings > 0 ? Math.round((yearlyCost / yearlySavings) * 100) : 0}% of annual benefit
-                    </p>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Location Selector */}
-          {activeLocations.length > 0 && (
-            <Card className="bg-card/60 border-border/40">
-              <CardContent className="p-5">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                      <MapPin className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                      <p className={cn(tokens.label.default, 'text-foreground')}>
-                        {isSingleLocation ? 'Your Location' : 'Select Locations'}
+                    <div className="text-center">
+                      <p className="font-display text-3xl md:text-4xl tracking-wide text-emerald-400">
+                        +<AnimatedNumber value={yearlyNetBenefit} duration={1200} formatOptions={{ style: 'currency', currency: 'USD', notation: 'compact', maximumFractionDigits: 1 }} />
+                        <span className="text-base text-emerald-400/70 ml-1">/yr</span>
                       </p>
-                      <p className="text-xs text-muted-foreground font-sans mt-0.5">
-                        ${BACKROOM_BASE_PRICE}/mo per location
-                      </p>
-                    </div>
-                  </div>
-                  {!isSingleLocation && (
-                    <Button variant="ghost" size="sm" className="font-sans text-xs" onClick={selectAllLocations}>
-                      {selectedLocationIds.size === activeLocations.length ? 'Deselect All' : 'Select All'}
-                    </Button>
-                  )}
-                </div>
-
-                {isSingleLocation ? (
-                  (() => {
-                    const loc = activeLocations[0];
-                    const cityLabel = loc.city ? loc.city.split(',')[0]?.trim() : '';
-                    return (
-                      <div className="flex items-center gap-3 px-3 py-3 rounded-lg bg-primary/5 border border-primary/30">
-                        <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <MapPin className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                            <span className="font-sans text-sm text-foreground truncate">{loc.name}</span>
-                            {cityLabel && <span className="font-sans text-xs text-muted-foreground">{cityLabel}</span>}
-                          </div>
-                        </div>
-                        <span className="font-sans text-xs text-primary shrink-0">${BACKROOM_BASE_PRICE}/mo</span>
-                      </div>
-                    );
-                  })()
-                ) : (
-                  <>
-                    <div className="space-y-1.5">
-                      {activeLocations.map((loc) => {
-                        const isChecked = selectedLocationIds.has(loc.id);
-                        const cityLabel = loc.city ? loc.city.split(',')[0]?.trim() : '';
-                        return (
-                          <div
-                            key={loc.id}
-                            className={cn(
-                              'flex items-center gap-3 px-3 py-3 rounded-lg transition-all cursor-pointer',
-                              isChecked ? 'bg-primary/5 border border-primary/30' : 'border border-transparent hover:bg-accent/30',
-                            )}
-                            onClick={() => toggleLocation(loc.id)}
-                          >
-                            <Checkbox checked={isChecked} className="pointer-events-none" />
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <MapPin className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                                <span className="font-sans text-sm text-foreground truncate">{loc.name}</span>
-                                {cityLabel && <span className="font-sans text-xs text-muted-foreground">{cityLabel}</span>}
-                              </div>
-                            </div>
-                            {isChecked && (
-                              <span className="font-sans text-xs text-primary shrink-0">+${BACKROOM_BASE_PRICE}/mo</span>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                    {selectedLocationIds.size > 0 && (
-                      <div className="mt-3 pt-3 border-t border-border/40 flex justify-between items-center">
-                        <span className="font-sans text-xs text-muted-foreground">
-                          {selectedLocationIds.size} location{selectedLocationIds.size > 1 ? 's' : ''} selected
+                      {roiMultiplier >= 2 && (
+                        <span className="inline-flex items-center gap-1 mt-3 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-sm font-sans font-medium">
+                          <TrendingUp className="w-3.5 h-3.5" />
+                          {roiMultiplier}× ROI
                         </span>
-                        <span className="font-sans text-sm text-foreground font-medium">${baseCost}/mo</span>
+                      )}
+                    </div>
+                    <div className="space-y-1.5">
+                      <div className="h-2 rounded-full bg-muted/40 overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-emerald-500/60 transition-all duration-700"
+                          style={{ width: `${Math.min(100, yearlySavings > 0 ? (yearlyCost / yearlySavings) * 100 : 100)}%` }}
+                        />
                       </div>
-                    )}
-                  </>
+                      <p className="text-xs text-muted-foreground font-sans text-center">
+                        Cost is only {yearlySavings > 0 ? Math.round((yearlyCost / yearlySavings) * 100) : 0}% of annual benefit
+                      </p>
+                    </div>
+                  </div>
                 )}
               </CardContent>
             </Card>
-          )}
-        </div>
+
+            {/* Location Selector */}
+            {activeLocations.length > 0 && (
+              <Card className="bg-card border-border/50 shadow-sm">
+                <CardContent className="p-6 md:p-8">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center shrink-0">
+                        <MapPin className="w-5 h-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-sans text-base font-medium text-foreground">
+                          {isSingleLocation ? 'Your Location' : 'Select Locations'}
+                        </p>
+                        <p className="text-sm text-muted-foreground font-sans mt-0.5">
+                          ${BACKROOM_BASE_PRICE}/mo per location
+                        </p>
+                      </div>
+                    </div>
+                    {!isSingleLocation && (
+                      <Button variant="ghost" size="sm" className="font-sans text-sm" onClick={selectAllLocations}>
+                        {selectedLocationIds.size === activeLocations.length ? 'Deselect All' : 'Select All'}
+                      </Button>
+                    )}
+                  </div>
+
+                  {isSingleLocation ? (
+                    (() => {
+                      const loc = activeLocations[0];
+                      const cityLabel = loc.city ? loc.city.split(',')[0]?.trim() : '';
+                      return (
+                        <div className="flex items-center gap-3 px-4 py-3.5 rounded-xl bg-primary/5 border border-primary/30">
+                          <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <MapPin className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                              <span className="font-sans text-sm text-foreground truncate">{loc.name}</span>
+                              {cityLabel && <span className="font-sans text-sm text-muted-foreground">{cityLabel}</span>}
+                            </div>
+                          </div>
+                          <span className="font-sans text-sm text-primary shrink-0">${BACKROOM_BASE_PRICE}/mo</span>
+                        </div>
+                      );
+                    })()
+                  ) : (
+                    <>
+                      <div className="space-y-2">
+                        {activeLocations.map((loc) => {
+                          const isChecked = selectedLocationIds.has(loc.id);
+                          const cityLabel = loc.city ? loc.city.split(',')[0]?.trim() : '';
+                          return (
+                            <div
+                              key={loc.id}
+                              className={cn(
+                                'flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-150 cursor-pointer',
+                                isChecked ? 'bg-primary/5 border border-primary/30' : 'border border-transparent hover:bg-accent/30',
+                              )}
+                              onClick={() => toggleLocation(loc.id)}
+                            >
+                              <Checkbox checked={isChecked} className="pointer-events-none" />
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <MapPin className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                                  <span className="font-sans text-sm text-foreground truncate">{loc.name}</span>
+                                  {cityLabel && <span className="font-sans text-sm text-muted-foreground">{cityLabel}</span>}
+                                </div>
+                              </div>
+                              {isChecked && (
+                                <span className="font-sans text-sm text-primary shrink-0">+${BACKROOM_BASE_PRICE}/mo</span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {selectedLocationIds.size > 0 && (
+                        <div className="mt-4 pt-4 border-t border-border/40 flex justify-between items-center">
+                          <span className="font-sans text-sm text-muted-foreground">
+                            {selectedLocationIds.size} location{selectedLocationIds.size > 1 ? 's' : ''} selected
+                          </span>
+                          <span className="font-sans text-base text-foreground font-medium">${baseCost}/mo</span>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </section>
 
         {/* ═══════════════════════════════════════════
-            SECTION 6 — HARDWARE (simplified)
+            SECTION 6 — HARDWARE
             ═══════════════════════════════════════════ */}
-        <div className="space-y-4">
-          <p className={cn(tokens.heading.section, 'text-center text-muted-foreground')}>Hardware</p>
-          <Card className="bg-card/60 border-border/40">
-            <CardContent className="p-5 space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                  <Scale className="w-5 h-5 text-primary" />
+        <section className="pb-20 md:pb-24">
+          <div className="space-y-8 md:space-y-10">
+            <SectionHeading>Hardware</SectionHeading>
+            <Card className="bg-card border-border/50 shadow-sm">
+              <CardContent className="p-6 md:p-8 space-y-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center shrink-0">
+                    <Scale className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-sans text-base md:text-lg font-medium text-foreground">Precision Scales</p>
+                    <p className="text-sm text-muted-foreground font-sans mt-0.5">
+                      Connect to your mixing stations via Bluetooth.
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className={cn(tokens.label.default, 'text-foreground')}>Precision Scales</p>
-                  <p className="text-xs text-muted-foreground font-sans mt-0.5">
-                    Connect to your mixing stations via Bluetooth.
-                  </p>
-                </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 rounded-lg bg-muted/30 border border-border/40 text-center">
-                  <p className="font-display text-xl tracking-wide text-foreground">${SCALE_HARDWARE_PRICE}</p>
-                  <p className="text-[10px] text-muted-foreground font-sans mt-0.5">per scale (one-time)</p>
+                <div className="grid grid-cols-2 gap-5">
+                  <div className="p-5 rounded-xl bg-muted/30 border border-border/40 text-center">
+                    <p className="font-display text-2xl tracking-wide text-foreground">${SCALE_HARDWARE_PRICE}</p>
+                    <p className="text-sm text-muted-foreground font-sans mt-1.5">per scale (one-time)</p>
+                  </div>
+                  <div className="p-5 rounded-xl bg-muted/30 border border-border/40 text-center">
+                    <p className="font-display text-2xl tracking-wide text-foreground">${SCALE_LICENSE_MONTHLY}</p>
+                    <p className="text-sm text-muted-foreground font-sans mt-1.5">per scale / month</p>
+                  </div>
                 </div>
-                <div className="p-3 rounded-lg bg-muted/30 border border-border/40 text-center">
-                  <p className="font-display text-xl tracking-wide text-foreground">${SCALE_LICENSE_MONTHLY}</p>
-                  <p className="text-[10px] text-muted-foreground font-sans mt-0.5">per scale / month</p>
-                </div>
-              </div>
 
-              {/* Recommendation summary */}
-              <div className="flex items-center justify-between p-3 rounded-lg bg-primary/5 border border-primary/20">
-                <div className="space-y-0.5">
-                  <p className="font-sans text-sm text-foreground font-medium">
-                    {recommendedScales} scale{recommendedScales !== 1 ? 's' : ''} recommended
-                  </p>
-                  <p className="text-[10px] text-muted-foreground font-sans">
-                    Based on 1 scale per 10 daily color appointments
-                  </p>
+                {/* Recommendation summary */}
+                <div className="flex items-center justify-between p-4 rounded-xl bg-primary/5 border border-primary/20">
+                  <div className="space-y-1">
+                    <p className="font-sans text-sm text-foreground font-medium">
+                      {recommendedScales} scale{recommendedScales !== 1 ? 's' : ''} recommended
+                    </p>
+                    <p className="text-xs text-muted-foreground font-sans">
+                      Based on 1 scale per 10 daily color appointments
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-9 w-9 rounded-lg"
+                      onClick={() => { setManualScaleOverride(true); setScaleCount(Math.max(0, scaleCount - 1)); }}
+                      disabled={scaleCount <= 0}
+                    >
+                      <span className="text-sm">−</span>
+                    </Button>
+                    <span className={cn(tokens.stat.large, 'w-8 text-center text-foreground text-lg')}>{scaleCount}</span>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-9 w-9 rounded-lg"
+                      onClick={() => { setManualScaleOverride(true); setScaleCount(Math.min(20, scaleCount + 1)); }}
+                      disabled={scaleCount >= 20}
+                    >
+                      <span className="text-sm">+</span>
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-8 w-8 rounded-lg"
-                    onClick={() => { setManualScaleOverride(true); setScaleCount(Math.max(0, scaleCount - 1)); }}
-                    disabled={scaleCount <= 0}
+                {manualScaleOverride && scaleCount !== recommendedScales && (
+                  <button
+                    type="button"
+                    className="text-sm text-primary font-sans hover:underline transition-colors"
+                    onClick={() => { setManualScaleOverride(false); setScaleCount(recommendedScales); }}
                   >
-                    <span className="text-sm">−</span>
-                  </Button>
-                  <span className={cn(tokens.stat.large, 'w-8 text-center text-foreground text-lg')}>{scaleCount}</span>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-8 w-8 rounded-lg"
-                    onClick={() => { setManualScaleOverride(true); setScaleCount(Math.min(20, scaleCount + 1)); }}
-                    disabled={scaleCount >= 20}
-                  >
-                    <span className="text-sm">+</span>
-                  </Button>
-                </div>
-              </div>
-              {manualScaleOverride && scaleCount !== recommendedScales && (
-                <button
-                  type="button"
-                  className="text-xs text-primary font-sans hover:underline"
-                  onClick={() => { setManualScaleOverride(false); setScaleCount(recommendedScales); }}
-                >
-                  Reset to recommended
-                </button>
-              )}
+                    Reset to recommended
+                  </button>
+                )}
 
-              {/* iPad requirement */}
-              <div className="flex items-start gap-2 p-3 rounded-lg bg-muted/30 border border-border/40">
-                <Info className="w-4 h-4 text-muted-foreground/60 shrink-0 mt-0.5" />
-                <p className="text-xs text-muted-foreground font-sans">
-                  Each station uses an iPad with Bluetooth for the mixing interface. A tablet stand is recommended.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+                {/* iPad requirement */}
+                <div className="flex items-start gap-3 p-4 rounded-xl bg-muted/30 border border-border/40">
+                  <Info className="w-4 h-4 text-muted-foreground/60 shrink-0 mt-0.5" />
+                  <p className="text-sm text-muted-foreground font-sans">
+                    Each station uses an iPad with Bluetooth for the mixing interface. A tablet stand is recommended.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </section>
 
         {/* ═══════════════════════════════════════════
             SECTION 7 — TRUST + FAQ
             ═══════════════════════════════════════════ */}
-        <div className="space-y-4">
-          {/* 30-Day Guarantee */}
-          <Card className="bg-emerald-500/5 border-emerald-500/20">
-            <CardContent className="p-5 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center shrink-0">
-                <ShieldCheck className="w-6 h-6 text-emerald-400" />
-              </div>
-              <div>
-                <p className={cn(tokens.label.default, 'text-emerald-300 text-sm')}>30-Day Money-Back Guarantee</p>
-                <p className="text-xs text-muted-foreground font-sans mt-0.5">
-                  If Backroom doesn't work for your salon, get a full refund within 30 days. No questions asked.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+        <section className="pb-20 md:pb-24">
+          <div className="space-y-6">
+            {/* 30-Day Guarantee */}
+            <Card className="bg-emerald-500/5 border-emerald-500/20 shadow-sm">
+              <CardContent className="p-6 md:p-8 flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center shrink-0">
+                  <ShieldCheck className="w-6 h-6 text-emerald-400" />
+                </div>
+                <div>
+                  <p className="font-sans text-base font-medium text-emerald-300">30-Day Money-Back Guarantee</p>
+                  <p className="text-sm text-muted-foreground font-sans mt-1">
+                    If Backroom doesn't work for your salon, get a full refund within 30 days. No questions asked.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
 
-          {/* FAQ */}
-          <Card className="bg-card/60 border-border/40">
-            <CardContent className="p-5 space-y-3">
-              <p className={cn(tokens.label.default, 'text-foreground text-sm')}>Common Questions</p>
-              <Accordion type="single" collapsible className="w-full">
-                {faqItems.map((item, i) => (
-                  <AccordionItem key={i} value={`faq-${i}`} className="border-border/30">
-                    <AccordionTrigger className="text-sm font-sans text-foreground hover:no-underline py-3">
-                      {item.question}
-                    </AccordionTrigger>
-                    <AccordionContent className="text-sm text-muted-foreground font-sans">
-                      {item.answer}
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
-            </CardContent>
-          </Card>
-        </div>
+            {/* FAQ */}
+            <Card className="bg-card border-border/50 shadow-sm">
+              <CardContent className="p-6 md:p-8 space-y-4">
+                <p className="font-sans text-base font-medium text-foreground">Common Questions</p>
+                <Accordion type="single" collapsible className="w-full">
+                  {faqItems.map((item, i) => (
+                    <AccordionItem key={i} value={`faq-${i}`} className="border-border/30">
+                      <AccordionTrigger className="text-sm font-sans text-foreground hover:no-underline py-3.5">
+                        {item.question}
+                      </AccordionTrigger>
+                      <AccordionContent className="text-sm text-muted-foreground font-sans pb-4">
+                        {item.answer}
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              </CardContent>
+            </Card>
+          </div>
+        </section>
 
         {/* ═══════════════════════════════════════════
             SECTION 8 — FINAL CTA
             ═══════════════════════════════════════════ */}
-        <div className="text-center space-y-4 pb-4">
+        <section className="border-t border-border/20 pt-16 pb-8 text-center space-y-6">
           {hasPositiveBenefit && estimate ? (
-            <p className="font-sans text-sm text-muted-foreground">
+            <p className="font-sans text-base text-muted-foreground">
               Projected to recover {formatCurrency(yearlySavings)} annually{roiMultiplier >= 2 ? ` — ${roiMultiplier}× your cost` : ''}.
             </p>
           ) : (
-            <p className="font-sans text-sm text-muted-foreground">
+            <p className="font-sans text-base text-muted-foreground">
               Most salons recover their Backroom cost within the first week.
             </p>
           )}
           <ActivateButton />
-        </div>
+        </section>
 
       </div>
 

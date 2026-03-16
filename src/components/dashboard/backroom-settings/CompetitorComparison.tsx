@@ -1,7 +1,7 @@
-import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { CheckCircle2, MinusCircle, XCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import React from 'react';
 
 /* ─── Status Indicators ─── */
 type Support = 'full' | 'partial' | 'none';
@@ -70,26 +70,29 @@ const columns = [
 
 export function CompetitorComparison() {
   return (
-    <div className="space-y-4">
-      <p className={cn(tokens.heading.section, 'text-center text-muted-foreground')}>
+    <div className="space-y-8 md:space-y-10">
+      <h2 className="font-display text-2xl md:text-3xl font-medium tracking-wide text-center text-foreground">
         How Zura Backroom Compares
-      </p>
+      </h2>
 
-      <Card className="bg-card/60 border-border/40 overflow-hidden">
+      <Card className="bg-card border-border/50 shadow-sm overflow-hidden">
         <CardContent className="p-0">
           {/* Scrollable wrapper for mobile */}
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[540px] text-sm">
+            <table className="w-full min-w-[560px] text-sm">
               {/* Column Headers */}
               <thead>
                 <tr className="border-b border-border/40">
-                  <th className="text-left p-4 pb-3 w-[40%]">
-                    <span className="font-sans text-xs text-muted-foreground">Feature</span>
+                  <th className="text-left px-5 py-3.5 w-[40%]">
+                    <span className="font-sans text-sm text-muted-foreground">Feature</span>
                   </th>
                   {columns.map((col) => (
-                    <th key={col.key} className="text-center p-4 pb-3 w-[20%]">
+                    <th key={col.key} className={cn(
+                      'text-center px-5 py-3.5 w-[20%]',
+                      col.key === 'zura' && 'bg-primary/[0.03]',
+                    )}>
                       <span className={cn(
-                        'font-sans text-xs',
+                        'font-sans text-sm',
                         col.key === 'zura' ? 'text-primary font-medium' : 'text-muted-foreground'
                       )}>
                         {col.label}
@@ -101,14 +104,11 @@ export function CompetitorComparison() {
 
               <tbody>
                 {comparisonData.map((category, catIdx) => (
-                  <>
+                  <React.Fragment key={`cat-${catIdx}`}>
                     {/* Category header */}
-                    <tr key={`cat-${catIdx}`} className="bg-muted/20">
-                      <td
-                        colSpan={4}
-                        className="px-4 py-2"
-                      >
-                        <span className={cn(tokens.heading.subsection, 'text-[10px]')}>
+                    <tr className="bg-muted/20">
+                      <td colSpan={4} className="px-5 py-2.5">
+                        <span className="font-display text-[10px] tracking-wider text-muted-foreground">
                           {category.category}
                         </span>
                       </td>
@@ -118,13 +118,16 @@ export function CompetitorComparison() {
                     {category.rows.map((row, rowIdx) => (
                       <tr
                         key={`row-${catIdx}-${rowIdx}`}
-                        className="border-b border-border/20 last:border-0"
+                        className="border-b border-border/20 last:border-0 transition-colors duration-150 hover:bg-muted/10"
                       >
-                        <td className="px-4 py-3">
+                        <td className="px-5 py-3.5">
                           <span className="font-sans text-sm text-foreground">{row.feature}</span>
                         </td>
                         {columns.map((col) => (
-                          <td key={col.key} className="text-center px-4 py-3">
+                          <td key={col.key} className={cn(
+                            'text-center px-5 py-3.5',
+                            col.key === 'zura' && 'bg-primary/[0.03]',
+                          )}>
                             <div className="flex justify-center">
                               <StatusIcon status={row[col.key]} />
                             </div>
@@ -132,31 +135,34 @@ export function CompetitorComparison() {
                         ))}
                       </tr>
                     ))}
-                  </>
+                  </React.Fragment>
                 ))}
 
                 {/* Pricing row */}
                 <tr className="bg-muted/20">
-                  <td colSpan={4} className="px-4 py-2">
-                    <span className={cn(tokens.heading.subsection, 'text-[10px]')}>
+                  <td colSpan={4} className="px-5 py-2.5">
+                    <span className="font-display text-[10px] tracking-wider text-muted-foreground">
                       Pricing
                     </span>
                   </td>
                 </tr>
                 <tr className="border-b border-border/20 last:border-0">
-                  <td className="px-4 py-3">
+                  <td className="px-5 py-3.5">
                     <span className="font-sans text-sm text-foreground">Monthly cost</span>
                   </td>
                   {columns.map((col) => (
-                    <td key={col.key} className="text-center px-4 py-3">
+                    <td key={col.key} className={cn(
+                      'text-center px-5 py-3.5',
+                      col.key === 'zura' && 'bg-primary/[0.03]',
+                    )}>
                       <div className="space-y-0.5">
                         <p className={cn(
-                          'font-sans text-xs',
+                          'font-sans text-sm',
                           col.key === 'zura' ? 'text-primary font-medium' : 'text-foreground'
                         )}>
                           {pricingComparison[col.key].pricing}
                         </p>
-                        <p className="font-sans text-[10px] text-muted-foreground">
+                        <p className="font-sans text-xs text-muted-foreground">
                           {pricingComparison[col.key].note}
                         </p>
                       </div>
@@ -168,8 +174,8 @@ export function CompetitorComparison() {
           </div>
 
           {/* Summary */}
-          <div className="px-4 py-4 border-t border-border/30">
-            <p className="font-sans text-xs text-muted-foreground text-center leading-relaxed max-w-lg mx-auto">
+          <div className="px-6 py-5 border-t border-border/30">
+            <p className="font-sans text-sm text-muted-foreground text-center leading-relaxed max-w-lg mx-auto">
               Zura Backroom is the only system that connects chemical tracking to scheduling,
               profitability analytics, and operational intelligence — inside one unified platform.
             </p>
