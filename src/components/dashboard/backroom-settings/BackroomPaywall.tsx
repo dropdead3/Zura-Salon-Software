@@ -541,6 +541,9 @@ export function BackroomPaywall() {
         <section className="pb-16 md:pb-20">
           <div className="space-y-8">
             <div className="text-center space-y-3">
+              <span className="font-display text-xs font-medium text-muted-foreground uppercase tracking-[0.15em]">
+                Platform Capabilities
+              </span>
               <SectionHeading>What You Get</SectionHeading>
               <p className="font-sans text-base text-muted-foreground font-light max-w-2xl mx-auto">
                 Five capabilities, one connected system.
@@ -560,9 +563,9 @@ export function BackroomPaywall() {
                   key={f.key}
                   onClick={() => setActiveFeature(f.key)}
                   className={cn(
-                    'flex items-center gap-2 px-3 py-2 rounded-full text-xs font-sans font-medium whitespace-nowrap border transition-all duration-200 shrink-0',
+                    'flex items-center gap-2 px-4 py-2 rounded-full text-xs font-sans font-medium whitespace-nowrap border transition-all duration-200 shrink-0',
                     activeFeature === f.key
-                      ? 'bg-primary/10 border-primary/30 text-foreground'
+                      ? 'bg-primary/10 border-primary/30 text-foreground ring-1 ring-primary/20'
                       : 'bg-muted/50 border-border/50 text-muted-foreground hover:bg-muted'
                   )}
                 >
@@ -586,21 +589,21 @@ export function BackroomPaywall() {
                     key={f.key}
                     onClick={() => setActiveFeature(f.key)}
                     className={cn(
-                      'flex items-center gap-4 p-4 rounded-xl border text-left transition-all duration-200',
+                      'flex items-center gap-4 p-4 rounded-lg border text-left transition-all duration-200',
                       activeFeature === f.key
-                        ? 'bg-primary/5 border-primary/20 shadow-sm'
+                        ? 'bg-primary/10 border-primary/30 shadow-sm'
                         : 'bg-transparent border-border/40 hover:bg-muted/40'
                     )}
                   >
                     <div className={cn(
                       'w-10 h-10 rounded-lg flex items-center justify-center shrink-0 transition-colors duration-200',
-                      activeFeature === f.key ? 'bg-primary/10' : 'bg-muted'
+                      activeFeature === f.key ? 'bg-primary/15' : 'bg-muted'
                     )}>
                       <f.icon className={cn('w-5 h-5', activeFeature === f.key ? 'text-primary' : 'text-muted-foreground')} />
                     </div>
                     <div className="min-w-0">
-                      <span className="font-display text-sm tracking-wide text-foreground">{f.title}</span>
-                      <p className="font-sans text-sm text-muted-foreground font-light mt-0.5">{f.desc}</p>
+                      <span className="font-display text-base tracking-wide text-foreground uppercase">{f.title}</span>
+                      <p className="font-sans text-sm text-muted-foreground font-light">{f.desc}</p>
                     </div>
                     <ChevronRight className={cn(
                       'w-4 h-4 shrink-0 transition-all duration-200',
@@ -612,14 +615,31 @@ export function BackroomPaywall() {
 
               {/* Right — Visualization Panel */}
               <Card className="border-border/50 bg-card/80 backdrop-blur-sm overflow-hidden">
+                {/* Persistent panel header */}
+                {(() => {
+                  const featureMeta: Record<string, { icon: typeof Scale; label: string }> = {
+                    mixing: { icon: Scale, label: 'Live Scale Readout' },
+                    formulas: { icon: Brain, label: 'Client Formula History' },
+                    inventory: { icon: PackageSearch, label: 'Inventory Status' },
+                    profitability: { icon: DollarSign, label: 'Service Cost Breakdown' },
+                    insights: { icon: BarChart3, label: 'Backroom Intelligence' },
+                  };
+                  const meta = featureMeta[activeFeature];
+                  if (!meta) return null;
+                  const Icon = meta.icon;
+                  return (
+                    <div className="flex items-center gap-3 px-6 py-4 border-b border-border/40">
+                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <Icon className="w-4 h-4 text-primary" />
+                      </div>
+                      <span className="font-display text-xs tracking-wide text-muted-foreground uppercase">{meta.label}</span>
+                    </div>
+                  );
+                })()}
                 <CardContent className="p-6 min-h-[320px] flex flex-col justify-center">
                   <div key={activeFeature}>
                     {activeFeature === 'mixing' && (
                       <div className="space-y-4">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Scale className="w-4 h-4 text-primary" />
-                          <span className="font-display text-xs tracking-wide text-muted-foreground">LIVE SCALE READOUT</span>
-                        </div>
                         <div className="rounded-lg bg-muted/40 p-4 space-y-3">
                           {[
                             { name: 'Koleston 7/0', target: 30, current: 28.4, unit: 'g' },
@@ -654,10 +674,6 @@ export function BackroomPaywall() {
 
                     {activeFeature === 'formulas' && (
                       <div className="space-y-4">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Brain className="w-4 h-4 text-primary" />
-                          <span className="font-display text-xs tracking-wide text-muted-foreground">CLIENT FORMULA HISTORY</span>
-                        </div>
                         <div className="rounded-lg bg-muted/40 p-4 space-y-3">
                           <div className="flex items-center justify-between pb-2 border-b border-border/40">
                             <div>
@@ -685,10 +701,6 @@ export function BackroomPaywall() {
 
                     {activeFeature === 'inventory' && (
                       <div className="space-y-4">
-                        <div className="flex items-center gap-2 mb-1">
-                          <PackageSearch className="w-4 h-4 text-primary" />
-                          <span className="font-display text-xs tracking-wide text-muted-foreground">INVENTORY STATUS</span>
-                        </div>
                         <div className="rounded-lg bg-muted/40 p-4">
                           <div className="space-y-0">
                             {[
@@ -711,10 +723,6 @@ export function BackroomPaywall() {
 
                     {activeFeature === 'profitability' && (
                       <div className="space-y-4">
-                        <div className="flex items-center gap-2 mb-1">
-                          <DollarSign className="w-4 h-4 text-primary" />
-                          <span className="font-display text-xs tracking-wide text-muted-foreground">SERVICE COST BREAKDOWN</span>
-                        </div>
                         <div className="rounded-lg bg-muted/40 p-4 space-y-3">
                           <div className="flex items-center justify-between pb-2 border-b border-border/40">
                             <p className="font-sans text-sm font-medium text-foreground">Full Colour & Blowdry</p>
@@ -737,10 +745,6 @@ export function BackroomPaywall() {
 
                     {activeFeature === 'insights' && (
                       <div className="space-y-4">
-                        <div className="flex items-center gap-2 mb-1">
-                          <BarChart3 className="w-4 h-4 text-primary" />
-                          <span className="font-display text-xs tracking-wide text-muted-foreground">BACKROOM INTELLIGENCE</span>
-                        </div>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                           {[
                             { label: 'Bowls Mixed', value: '847', sub: 'This month' },
@@ -760,9 +764,6 @@ export function BackroomPaywall() {
                 </CardContent>
               </Card>
             </div>
-          </div>
-          <div className="flex justify-center pt-4">
-            <ActivateButton />
           </div>
         </section>
 
