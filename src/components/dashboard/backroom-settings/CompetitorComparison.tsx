@@ -9,7 +9,7 @@ type Support = 'full' | 'partial' | 'none';
 function StatusIcon({ status }: { status: Support }) {
   if (status === 'full') return <CheckCircle2 className="w-4 h-4 text-success shrink-0" />;
   if (status === 'partial') return <MinusCircle className="w-4 h-4 text-muted-foreground/50 shrink-0" />;
-  return <XCircle className="w-4 h-4 text-muted-foreground/30 shrink-0" />;
+  return <XCircle className="w-4 h-4 text-destructive/70 shrink-0" />;
 }
 
 /* ─── Comparison Data (verified from public sources) ─── */
