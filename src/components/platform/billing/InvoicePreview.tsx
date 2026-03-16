@@ -74,10 +74,10 @@ export function InvoicePreview({
               {/* Location Add-Ons */}
               {hasLocationAddOns && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">
+                  <span className="text-[hsl(var(--platform-foreground-muted))]">
                     Location Add-Ons ({additionalLocationsPurchased} × {formatCurrency(perLocationFee)})
                   </span>
-                  <span className="text-foreground">{formatCurrency(locationAddOnCost)}</span>
+                  <span className="text-[hsl(var(--platform-foreground))]">{formatCurrency(locationAddOnCost)}</span>
                 </div>
               )}
 
