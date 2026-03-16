@@ -669,6 +669,11 @@ export function BackroomPaywall() {
                     'Automated supply fee recovery',
                     'Predictive reorder alerts',
                     'Cost-per-service analytics',
+                    'Service blueprints for every color workflow',
+                    'Smart Mix Assist with formula memory',
+                    'Client history and formula recall',
+                    'AI-powered supply intelligence',
+                    'Operational task routing and alerts',
                   ].map((item) => (
                     <div key={item} className="flex items-start gap-2">
                       <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
