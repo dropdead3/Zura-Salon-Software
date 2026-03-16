@@ -72,9 +72,9 @@ export function PlanUpgradeDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl bg-slate-900 border-slate-700">
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="text-white">Change Subscription Plan</DialogTitle>
+          <DialogTitle>Change Subscription Plan</DialogTitle>
           <DialogDescription>
             {currentPlan 
               ? `Currently on ${currentPlan.name} at ${formatCurrency(currentMonthlyAmount)}/mo`

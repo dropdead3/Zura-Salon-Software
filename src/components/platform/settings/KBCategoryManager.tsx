@@ -188,7 +188,7 @@ export function KBCategoryManager() {
       )}
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="bg-slate-900 border-slate-700 text-white">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>
               {editingCategory ? 'Edit Category' : 'New Category'}

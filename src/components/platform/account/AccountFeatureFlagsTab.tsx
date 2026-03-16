@@ -225,9 +225,9 @@ export function AccountFeatureFlagsTab({ organizationId, organizationName }: Acc
 
       {/* Override Dialog */}
       <Dialog open={!!overrideDialog} onOpenChange={(open) => !open && setOverrideDialog(null)}>
-        <DialogContent className="bg-slate-900 border-slate-700">
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle className="text-white">Add Feature Override</DialogTitle>
+            <DialogTitle>Add Feature Override</DialogTitle>
             <DialogDescription>
               You're changing <code className="text-violet-400">{overrideDialog?.flag.flag_key}</code> from 
               the global default ({overrideDialog?.flag.global_enabled ? 'enabled' : 'disabled'}) to 
