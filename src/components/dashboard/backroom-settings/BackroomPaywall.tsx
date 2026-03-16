@@ -355,11 +355,6 @@ export function BackroomPaywall() {
           </>
         )}
       </Button>
-      {!compact && (
-        <p className="text-xs text-muted-foreground/50 font-sans flex items-center gap-1.5">
-          <ShieldCheck className="w-3 h-3" /> 30-day money-back guarantee
-        </p>
-      )}
     </div>
   );
 
@@ -398,7 +393,7 @@ export function BackroomPaywall() {
                 </p>
               </div>
 
-              <div className="space-y-3" ref={heroRef}>
+              <div className="flex flex-col items-center lg:items-start space-y-3" ref={heroRef}>
                 <ActivateButton />
               </div>
 
