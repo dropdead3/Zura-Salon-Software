@@ -50,9 +50,10 @@ const features = [
 
 export function BackroomPaywall() {
   const [loading, setLoading] = useState(false);
-  const [scaleCount, setScaleCount] = useState(1);
+  const [scaleCount, setScaleCount] = useState(0);
   const [selectedLocationIds, setSelectedLocationIds] = useState<Set<string>>(new Set());
   const [manualStylistCount, setManualStylistCount] = useState(2);
+  const [manualScaleOverride, setManualScaleOverride] = useState(false);
   const [auditMinutesPerDay, setAuditMinutesPerDay] = useState(30);
   const [mobileCalcOpen, setMobileCalcOpen] = useState(false);
 
