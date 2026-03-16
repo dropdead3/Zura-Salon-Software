@@ -1039,7 +1039,7 @@ export function BackroomPaywall() {
             <Button
               size="sm"
               className="font-sans font-medium gap-1.5 shrink-0"
-              onClick={handleCheckout}
+              onClick={() => setConfirmDialogOpen(true)}
               disabled={loading || selectedLocationIds.size === 0}
             >
               {loading ? (
