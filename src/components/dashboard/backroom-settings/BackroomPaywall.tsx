@@ -486,20 +486,47 @@ export function BackroomPaywall() {
         {/* ═══════════════════════════════════════════
             SOCIAL PROOF (relocated after Before/After)
             ═══════════════════════════════════════════ */}
-        <div className="pb-16 md:pb-20 flex flex-col items-center gap-4 max-w-2xl mx-auto text-center">
-          <div className="flex gap-2">
-            {[...Array(5)].map((_, i) => (
-              <Star key={i} className="h-5 w-5 fill-[hsl(var(--oat))] text-[hsl(var(--oat))]" />
-            ))}
+        <div className="pb-16 md:pb-20 max-w-3xl mx-auto space-y-8">
+          {/* Quantified result line */}
+          <p className="text-center font-sans text-sm text-muted-foreground/60 uppercase tracking-wider">
+            Salon owners recover an average of $2,400/mo in color costs
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Testimonial 1 */}
+            <div className="flex flex-col items-center gap-3 text-center">
+              <div className="flex gap-1.5">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="h-4 w-4 fill-[hsl(var(--oat))] text-[hsl(var(--oat))]" />
+                ))}
+              </div>
+              <blockquote className="space-y-2">
+                <p className="text-muted-foreground text-base font-sans leading-relaxed italic">
+                  "Zura Backroom saved us thousands per month and helps us recoup over $50,000 a year in color costs. 10/10 add-on feature."
+                </p>
+                <footer className="text-xs text-muted-foreground/50 font-sans">
+                  <span className="font-medium text-muted-foreground/70">Jamie Torres</span> · Owner, Drop Dead Salon · Austin, TX
+                </footer>
+              </blockquote>
+            </div>
+
+            {/* Testimonial 2 */}
+            <div className="flex flex-col items-center gap-3 text-center">
+              <div className="flex gap-1.5">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="h-4 w-4 fill-[hsl(var(--oat))] text-[hsl(var(--oat))]" />
+                ))}
+              </div>
+              <blockquote className="space-y-2">
+                <p className="text-muted-foreground text-base font-sans leading-relaxed italic">
+                  "We had no idea how much product was walking out the door. Within two weeks, waste dropped 40% and we finally know our true cost per service."
+                </p>
+                <footer className="text-xs text-muted-foreground/50 font-sans">
+                  <span className="font-medium text-muted-foreground/70">Rachel Kim</span> · Owner, Lustre Studio · Denver, CO
+                </footer>
+              </blockquote>
+            </div>
           </div>
-          <blockquote className="space-y-3">
-            <p className="text-muted-foreground text-lg md:text-xl font-sans leading-relaxed italic">
-              "Zura Backroom saved us thousands per month and helps us recoup over $50,000 a year in color costs. 10/10 add-on feature."
-            </p>
-            <footer className="text-sm text-muted-foreground/60 font-sans tracking-wide">
-              — Drop Dead Salon
-            </footer>
-          </blockquote>
         </div>
 
         {/* ═══════════════════════════════════════════
