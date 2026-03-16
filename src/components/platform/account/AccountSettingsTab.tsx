@@ -341,12 +341,12 @@ export function AccountSettingsTab({ organizationId }: AccountSettingsTabProps) 
               value={settings.defaults.timezone} 
               onValueChange={(v) => updateSettings('defaults.timezone', v)}
             >
-              <SelectTrigger className="w-48 bg-slate-800 border-slate-700 text-white">
+              <SelectTrigger className="w-48">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-slate-900 border-slate-700">
+              <SelectContent>
                 {timezones.map(tz => (
-                  <SelectItem key={tz.value} value={tz.value} className="text-slate-300">
+                  <SelectItem key={tz.value} value={tz.value}>
                     {tz.label}
                   </SelectItem>
                 ))}
