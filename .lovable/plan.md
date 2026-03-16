@@ -1,153 +1,113 @@
 
 
-## Timezone-Safe Scheduling (Implemented)
+# Second-Pass Conversion Optimization — Backroom Paywall
 
-### Problem
-`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
+## Audit Summary
 
-### Solution
-- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
-- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
-- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
+The page is well-structured after the first pass (8 sections, outcome-driven copy, 3 CTAs). This second pass focuses on **micro-conversions, copy polish, visual rhythm, and scannability improvements**.
 
-### Files Updated
-- `ScheduleHeader.tsx` — today button, quick days, isToday checks
-- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
-- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
-- `MonthView.tsx` — today highlight
-- `AgendaView.tsx` — today/tomorrow labels, today border
-- `ScheduleActionBar.tsx` — payment queue timing
-- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
-- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
-- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
-- `useHuddles.ts` — today's huddle query
+---
 
-## Auto-Reorder with Supplier Communication (Implemented)
+## Issues Found
 
-### What It Does
-Organizations can opt into automatic reorder — when stock dips below threshold, POs are calculated (using MOQ and par levels) and sent directly to the supplier via email.
+### 1. Hero Copy — Good but Can Be Sharper
+- Current subtitle is 3 separate clauses. Could be tighter.
+- Hero CTA appears before any proof — consider adding a micro-reassurance line below the button.
 
-### Database Changes
-- `products.par_level` (INT, nullable) — desired stock level to reorder up to
-- `product_suppliers.moq` (INT, default 1) — minimum order quantity
-- `inventory_alert_settings.auto_reorder_enabled` (BOOL, default false)
-- `inventory_alert_settings.auto_reorder_mode` (TEXT, default 'to_par') — 'to_par' or 'moq_only'
-- `inventory_alert_settings.max_auto_reorder_value` (NUMERIC, nullable) — daily spend cap
-- `purchase_orders.supplier_confirmed_at` (TIMESTAMPTZ, nullable) — for tracking confirmations
+### 2. Loss Aversion Section — Too Dense
+- Contains: 3 KPI tiles + total loss + stylist slider + audit time slider + 2 audit recovery tiles + data footnote + disclaimer. That's 8 interactive/visual elements in one card.
+- The "manual inventory time" slider with its own sub-grid breaks the reading flow and adds cognitive load.
+- The estimates disclaimer outside the card feels disconnected.
 
-### Quantity Calculation
-```
-deficit = par_level - quantity_on_hand
-order_qty = max(moq, deficit)
-if moq > 1: round up to nearest MOQ multiple
-```
-Fallback: if par_level is null, uses `reorder_level * 2`.
+### 3. Feature Cards — Bullets Are Still Mechanical
+- Bullets like "Per-gram tracking on precision scales" and "Reweigh compliance tracking" are feature-speak, not outcomes.
+- Outcome lines (the subtitles) are strong but the bullets undercut them.
 
-### Files Updated
-- Migration: Added columns to products, product_suppliers, inventory_alert_settings, purchase_orders
-- `check-reorder-levels/index.ts` — auto-send logic with MOQ/par calculation, spend cap, email invocation
-- `AlertSettingsCard.tsx` — auto-reorder toggle, mode selector, spend cap input
-- `useInventoryAlertSettings.ts` — updated interface
-- `useProducts.ts` — added par_level to Product interface
-- `useProductSuppliers.ts` — added moq to ProductSupplier interface
-- `ProductEditDialog.tsx` — added par level field
-- `RetailProductsSettingsContent.tsx` — added par level to product form
-- `SupplierDialog.tsx` — added MOQ field
+### 4. Competitor Comparison — Pricing Row Layout Is Awkward
+- Pricing rows use `colSpan={3}` which breaks the column alignment pattern. Each competitor's pricing should be in its own column or the section should be visually separated.
 
-### Safety Features
-- Spend cap: daily auto-reorder pauses when cumulative PO value exceeds cap
-- Audit trail: auto_reorder logged as stock_movement reason
-- Supplier confirmation tracking via supplier_confirmed_at timestamp
+### 5. CTA Label — "Unlock Zura Backroom" Is Product-Centric
+- Could be more action/benefit-oriented. "Activate Backroom" or "Start Tracking" reduces friction.
 
-## Product Movement Rating Badges (Implemented)
+### 6. Final CTA Section — Weak Copy
+- The fallback line "Average salon recovers $375/mo in reduced product waste alone" is a generic claim with no source.
+- When data IS available, the cost→savings line is dense and hard to parse quickly.
 
-### What It Does
-Every product gets a dynamic movement rating badge (Best Seller, Popular, Steady, Slow Mover, Stagnant, Dead Weight) computed from 90-day sales velocity data.
+### 7. FAQ — Missing a Key Objection
+- No answer for "Can I try it first?" or "What happens after the 30-day guarantee?"
 
-### Rating Tiers
-- **Best Seller**: Top 10% velocity AND >0.5 units/day (emerald)
-- **Popular**: Top 25% velocity AND >0.2 units/day (blue)
-- **Steady**: Velocity >0.05/day (muted)
-- **Slow Mover**: Velocity >0 but ≤0.05/day (amber)
-- **Stagnant**: Zero velocity, sold within 180 days (orange)
-- **Dead Weight**: Zero velocity, 180+ days or never sold (red)
-- Products with zero stock excluded from negative ratings
+### 8. Hardware Section — iPad Warning Creates Friction
+- The amber warning box about iPad requirement feels like an obstacle. Should be softened.
 
-### Files Created
-- `src/lib/productMovementRating.ts` — pure rating logic + badge config
-- `src/hooks/useProductVelocity.ts` — lightweight 90-day POS velocity query
-- `src/components/ui/MovementBadge.tsx` — shared badge component with tooltip
+### 9. Section Headers — All Identical Weight
+- Every section uses `tokens.heading.section` centered and muted. No visual rhythm variation.
 
-### Files Updated
-- `RetailProductsSettingsContent.tsx` — Movement column + filter dropdown in products table
-- `RetailAnalyticsContent.tsx` — Movement badges on product performance table + Movement Distribution card (donut chart with actionable callouts)
-- `ProductCard.tsx` — Best Seller/Popular badges on public shop cards (positive only)
-- `ProductDetailModal.tsx` — Movement badge with velocity context
+### 10. "How It Works" Descriptions — Too Long
+- Each step has 2 sentences. Scanners will skip them.
 
-## Inventory Intelligence Suite v2 (Implemented)
+---
 
-### 1. Dead Stock Auto-Clearance Pipeline
-- `DeadStockAlertCard.tsx` — Surfaces Dead Weight/Stagnant products not yet in clearance with suggested discount tiers (10%/25%/50% based on idle days)
-- One-click "Mark for Clearance" applies discount and sets clearance_status
+## Proposed Changes
 
-### 2. Supplier Lead Time Tracker
-- `usePurchaseOrders.ts` — `useMarkPurchaseOrderReceived` already computes actual delivery days and updates `product_suppliers.avg_delivery_days` via running average
-- `parLevelSuggestion.ts` — Updated to accept supplier-provided lead time instead of hardcoded 7-day default, with bounds clamping
+### File: `BackroomPaywall.tsx`
 
-### 3. Inventory Valuation Dashboard Card
-- `InventoryValuationCard.tsx` — Shows total inventory at cost/retail, potential margin %, capital-at-risk (slow/stagnant/dead weight), with donut chart breakdown
+**A. Hero refinement (lines 296-309)**
+- Tighten subtitle to one sentence: "Track every gram. Recover supply costs. Reorder before you run out."
+- Add micro-reassurance below CTA: "Setup takes minutes. Cancel anytime."
 
-### 4. Reorder Approval Queue
-- `ReorderApprovalCard.tsx` — Surfaces draft POs from auto-reorder with one-click approve (→ sent) or reject (→ cancelled)
+**B. Loss aversion section simplification (lines 314-451)**
+- Move the "manual inventory time" slider and its 2 recovery tiles INTO the existing KPI grid (make it 4 tiles instead of 3+2 separate)
+- OR remove the audit slider entirely and just show a single computed line: "Plus ~X hours of staff time recovered monthly"
+- Move the disclaimer text into a tooltip on the section header instead of a standalone element below
 
-### 5. Stock Transfer Between Locations
-- Migration: Created `stock_transfers` table with RLS (org member read, org admin manage)
-- `useStockTransfers.ts` — CRUD hooks for stock transfers with stock movement logging
-- `StockTransferDialog.tsx` — Dialog for creating transfers between locations
-- `RetailProductsSettingsContent.tsx` — "Transfer Stock" button added to Inventory tab (visible for multi-location orgs)
+**C. Feature bullet rewrites (lines 36-97)**
+Rewrite mechanical bullets to outcome language:
+- "Per-gram tracking on precision scales" → "Every gram dispensed is measured automatically"
+- "Automatic formula recording" → "Formulas are saved as they're mixed"
+- "Waste flagging per service" → "Excess product is flagged instantly"
+- "Client formula recall" → "Pull up any client's last formula in seconds"
+- "Smart Mix Assist" → "Suggested ratios based on history"
+- "Last-used ratios surfaced instantly" → "No more guessing what was used last time"
+- "Service blueprints for every color workflow" → "Define each service's prep steps once"
+- "Step-by-step mixing instructions" → "Assistants follow guided mixing screens"
+- "Task routing and alerts" → "Notifications when bowls are ready"
+- "Predictive reorder alerts" → "Alerts before stock runs low"
+- "Demand forecasting from appointment book" → "Tomorrow's appointments drive today's orders"
+- "Automated low-stock warnings" → "No more surprise shortages"
+- "Cost-per-service analytics" → "True product cost for every appointment"
+- "Product markup calculations" → "See your real margins per service"
+- "Supply fee recovery automation" → "Bill product costs back to clients automatically"
+- "Ghost loss detection" → "Spot product that disappears between uses"
+- "Reweigh compliance tracking" → "Know if bowls are being reweighed"
+- "Variance alerts" → "Get notified when usage spikes"
 
-## Enhancement 1: Expiry Tracking (Implemented)
+**D. CTA label change (line 283)**
+- Change "Unlock Zura Backroom" → "Activate Backroom"
+- Remove Lock icon, use Zap or keep ArrowRight only
 
-### What It Does
-Products can have an optional expiration date (`expires_at`) and per-product alert threshold (`expiry_alert_days`, default 30). The system surfaces expiring inventory with color-coded badges in the product table and an analytics card with auto-clearance suggestions.
+**E. "How It Works" — shorten descriptions (lines 99-115)**
+- Step 01: "Every color service is weighed. Grams, formulas, and leftovers are recorded automatically."
+- Step 02: "Waste, ghost losses, and variances are flagged. You see exactly where product goes."
+- Step 03: "Supply costs are billed back automatically. Predictive alerts prevent stockouts."
 
-### Database Changes
-- `products.expires_at` (DATE, nullable) — expiration date for perishable products
-- `products.expiry_alert_days` (INTEGER, default 30) — days before expiry to trigger alerts
+**F. Final CTA copy improvement (lines 791-803)**
+- When data available: "Projected to recover {formatCurrency(yearlySavings)} annually — {roiMultiplier}× your cost."
+- Fallback: "Most salons recover their Backroom cost within the first week."
 
-### Expiry Alert Buckets
-- **Expired** (red): past expiration → suggests 50% markdown
-- **Critical** (orange): within alert threshold → suggests 25% markdown
-- **Warning** (amber): within 2× alert threshold → suggests 10% markdown
+**G. FAQ addition (lines 117-142)**
+- Add: "Can I cancel anytime?" → "Yes. There are no contracts. Cancel from your account settings at any time."
 
-### Files Created
-- `src/components/dashboard/analytics/ExpiryAlertCard.tsx` — PinnableCard showing expiring products with one-click clearance actions
+**H. iPad warning softening (lines 739-744)**
+- Change amber warning to neutral info style (bg-muted/30, Info icon in muted color)
+- Reframe: "Each station uses an iPad with Bluetooth for the mixing interface. A tablet stand is recommended."
 
-### Files Updated
-- `src/hooks/useProducts.ts` — Added `expires_at`, `expiry_alert_days` to Product interface; added `expiringOnly` filter
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Expiry date + alert days in product form; color-coded Expiry column in product table
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ExpiryAlertCard into analytics hub
+**I. Competitor comparison pricing fix**
+### File: `CompetitorComparison.tsx`
+- Restructure pricing rows to align pricing per-column instead of using colSpan={3}
 
-## Enhancement 2: Shrinkage Detection (Implemented)
+---
 
-### What It Does
-Physical stocktake workflow with variance reporting. Staff record actual counts via a Stocktake dialog, and the system compares against expected quantities (system records). A Shrinkage Report card in analytics surfaces products with negative variance (loss) ranked by estimated cost impact.
+### Files to modify:
+- `src/components/dashboard/backroom-settings/BackroomPaywall.tsx`
+- `src/components/dashboard/backroom-settings/CompetitorComparison.tsx`
 
-### Database Changes
-- Created `stock_counts` table with computed `variance` column (counted - expected), RLS policies (org member read/insert, org admin update/delete), and indexes
-
-### Shrinkage Calculation
-```
-variance = counted_quantity - expected_quantity
-shrinkage_units = |variance| when variance < 0
-shrinkage_cost = shrinkage_units × cost_price
-```
-
-### Files Created
-- `src/hooks/useStockCounts.ts` — CRUD hooks for stock counts + `useShrinkageSummary` for aggregated shrinkage data
-- `src/components/dashboard/settings/inventory/StocktakeDialog.tsx` — Full stocktake UI with search, inline count entry, real-time variance display
-- `src/components/dashboard/analytics/ShrinkageReportCard.tsx` — PinnableCard showing products with shrinkage, severity badges, estimated loss
-
-### Files Updated
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Added "Stocktake" button to Inventory tab toolbar
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ShrinkageReportCard into analytics hub
