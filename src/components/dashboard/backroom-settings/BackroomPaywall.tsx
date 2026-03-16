@@ -243,6 +243,35 @@ export function BackroomPaywall() {
     }
   }, [activeLocations]);
 
+  // Hero step cycling
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setHeroStep((prev) => (prev + 1) % 6);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Weight counting animation for step 1
+  useEffect(() => {
+    if (heroStep === 1) {
+      setHeroWeight(0);
+      const target = 28.4;
+      const duration = 2000;
+      const startTime = performance.now();
+      let raf: number;
+      const tick = (now: number) => {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        setHeroWeight(+(target * progress).toFixed(1));
+        if (progress < 1) raf = requestAnimationFrame(tick);
+      };
+      raf = requestAnimationFrame(tick);
+      return () => cancelAnimationFrame(raf);
+    } else if (heroStep !== 2) {
+      setHeroWeight(0);
+    }
+  }, [heroStep]);
+
   const isSingleLocation = activeLocations.length === 1;
   const locationCount = selectedLocationIds.size;
 
