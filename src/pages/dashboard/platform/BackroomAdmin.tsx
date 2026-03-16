@@ -6,11 +6,12 @@ import { PriceQueueTab } from '@/components/platform/backroom/PriceQueueTab';
 import { PriceSourcesTab } from '@/components/platform/backroom/PriceSourcesTab';
 import { BackroomEntitlementsTab } from '@/components/platform/backroom/BackroomEntitlementsTab';
 import { SupplyLibraryTab } from '@/components/platform/backroom/SupplyLibraryTab';
+import { HardwareOrdersTab } from '@/components/platform/backroom/HardwareOrdersTab';
 import { BackroomAnalyticsTab } from '@/components/platform/backroom/BackroomAnalyticsTab';
 import { BackroomBillingTab } from '@/components/platform/backroom/BackroomBillingTab';
 import { CoachPerformanceTab } from '@/components/platform/backroom/CoachPerformanceTab';
 import { RefundHistoryTab } from '@/components/platform/backroom/RefundHistoryTab';
-import { ClipboardList, Database, Building2, Package, BarChart3, CreditCard, Users2, ReceiptText } from 'lucide-react';
+import { ClipboardList, Database, Building2, Package, BarChart3, CreditCard, Users2, ReceiptText, BoxIcon } from 'lucide-react';
 
 const tabTriggerClass =
   'data-[state=active]:bg-violet-600 data-[state=active]:text-white text-slate-400 hover:text-white';
@@ -59,6 +60,10 @@ export default function BackroomAdmin() {
             <ReceiptText className="w-3.5 h-3.5" />
             Refund History
           </TabsTrigger>
+          <TabsTrigger value="hardware-orders" className={`${tabTriggerClass} flex items-center gap-1.5`}>
+            <BoxIcon className="w-3.5 h-3.5" />
+            Hardware Orders
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="analytics" className="mt-6">
@@ -84,6 +89,9 @@ export default function BackroomAdmin() {
         </TabsContent>
         <TabsContent value="refund-history" className="mt-6">
           <RefundHistoryTab />
+        </TabsContent>
+        <TabsContent value="hardware-orders" className="mt-6">
+          <HardwareOrdersTab />
         </TabsContent>
       </Tabs>
     </PlatformPageContainer>
