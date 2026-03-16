@@ -687,7 +687,7 @@ export function BackroomPaywall() {
             <div className="flex gap-2 items-start p-3 rounded-lg bg-muted/20 border border-border/30">
               <Info className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
               <p className="text-xs text-muted-foreground font-sans leading-relaxed">
-                These figures are estimates based on your current scheduled appointments and estimated booking capacity. Actual results may vary based on scheduling changes, client retention, and service mix.
+                These figures are estimates based on your current scheduled color and chemical service appointments and estimated booking capacity. Actual results may vary based on scheduling changes, client retention, and service mix.
               </p>
             </div>
 
