@@ -1019,7 +1019,7 @@ export function BackroomPaywall() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 md:gap-6">
               {howItWorks.map((step, i) => (
                 <RevealOnScroll key={step.step} delay={i * 100}>
-                  <Card className="bg-card border-border/50 shadow-sm hover:shadow-md transition-shadow duration-200 hover-lift">
+                  <Card className="bg-card border-border/50 shadow-sm hover:shadow-md transition-shadow duration-150">
                     <CardContent className="p-6 space-y-3">
                       <span className="font-display text-2xl tracking-wider text-primary/20">{step.step}</span>
                       <p className="font-sans text-lg font-medium text-foreground">{step.title}</p>
