@@ -10,7 +10,9 @@ import {
   Timer, X, Users, Zap,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Slider } from '@/components/ui/slider';
@@ -741,156 +743,190 @@ export function BackroomPaywall() {
                 ))}
               </div>
 
-              {/* Right — Visualization Panel */}
-              <Card className="border-border/50 bg-card/80 backdrop-blur-sm overflow-hidden">
-                {/* Persistent panel header */}
-                {(() => {
-                  const featureMeta: Record<string, { icon: typeof Scale; label: string }> = {
-                    mixing: { icon: Scale, label: 'Live Scale Readout' },
-                    formulas: { icon: Brain, label: 'Client Formula History' },
-                    inventory: { icon: PackageSearch, label: 'Inventory Status' },
-                    profitability: { icon: DollarSign, label: 'Service Cost Breakdown' },
-                    insights: { icon: BarChart3, label: 'Backroom Intelligence' },
-                  };
-                  const meta = featureMeta[activeFeature];
-                  if (!meta) return null;
-                  const Icon = meta.icon;
-                  return (
-                    <div className="flex items-center gap-3 px-6 py-4 border-b border-border/40">
-                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                        <Icon className="w-4 h-4 text-primary" />
-                      </div>
-                      <span className="font-display text-xs tracking-wide text-muted-foreground uppercase">{meta.label}</span>
-                    </div>
-                  );
-                })()}
-                <CardContent className="p-6 min-h-[320px] flex flex-col justify-center">
-                  <div key={activeFeature}>
-                    {activeFeature === 'mixing' && (
-                      <div className="space-y-4">
-                        <div className="rounded-lg bg-muted/40 p-4 space-y-3">
-                          {[
-                            { name: 'Koleston 7/0', target: 30, current: 28.4, unit: 'g' },
-                            { name: '6% Developer', target: 60, current: 60.2, unit: 'g' },
-                          ].map((item) => {
-                            const pct = Math.min((item.current / item.target) * 100, 100);
-                            const reached = item.current >= item.target;
-                            return (
-                              <div key={item.name} className="space-y-2">
-                                <div className="flex justify-between">
-                                  <span className="font-sans text-sm text-foreground">{item.name}</span>
-                                  <span className="font-sans text-xs text-muted-foreground tabular-nums">
-                                    {item.current}{item.unit} / {item.target}{item.unit}
-                                  </span>
-                                </div>
-                                <div className="h-2 w-full rounded-full bg-secondary overflow-hidden">
-                                  <div
-                                    className={cn('h-full rounded-full', reached ? 'bg-success' : 'bg-primary')}
-                                    style={{ width: `${pct}%` }}
-                                  />
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                        <div className="flex items-center gap-2 pt-1">
-                          <CheckCircle2 className="w-4 h-4 text-success" />
-                          <span className="font-sans text-sm text-success">Bowl complete — formula saved</span>
-                        </div>
-                      </div>
-                    )}
+              {/* Right — iPad Visualization Panel */}
+              <div className="relative mx-auto w-full">
+                <div className="rounded-[2rem] bg-zinc-900 p-3 shadow-2xl ring-1 ring-white/10">
+                  <div className="flex justify-center pb-2">
+                    <div className="w-2 h-2 rounded-full bg-zinc-700" />
+                  </div>
+                  <div className="rounded-[1.5rem] bg-background overflow-hidden min-h-[340px]">
+                    <div key={activeFeature}>
 
-                    {activeFeature === 'formulas' && (
-                      <div className="space-y-4">
-                        <div className="rounded-lg bg-muted/40 p-4 space-y-3">
-                          <div className="flex items-center justify-between pb-2 border-b border-border/40">
-                            <div>
-                              <p className="font-sans text-sm font-medium text-foreground">Sarah Mitchell</p>
-                              <p className="font-sans text-xs text-muted-foreground">Last visit: Feb 28, 2026</p>
+                      {activeFeature === 'mixing' && (
+                        <div className="p-4 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                                <Beaker className="w-4 h-4 text-primary" />
+                              </div>
+                              <div>
+                                <p className="font-display text-xs tracking-wide text-foreground uppercase">Bowl 1</p>
+                                <p className="font-sans text-[10px] text-muted-foreground">Sarah M. — Full Colour</p>
+                              </div>
                             </div>
-                            <span className="font-sans text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">3 formulas</span>
+                            <span className="font-sans text-[10px] bg-success/15 text-success px-2 py-0.5 rounded-full border border-success/20">Mixing</span>
                           </div>
-                          {[
-                            { product: 'Koleston 7/0', weight: '30g', date: 'Feb 28' },
-                            { product: 'Illumina 8/05', weight: '25g', date: 'Jan 15' },
-                            { product: 'Color Touch 9/16', weight: '20g', date: 'Dec 12' },
-                          ].map((f) => (
-                            <div key={f.product} className="flex items-center justify-between py-1">
-                              <span className="font-sans text-sm text-foreground">{f.product}</span>
-                              <div className="flex items-center gap-3">
-                                <span className="font-sans text-xs tabular-nums text-muted-foreground">{f.weight}</span>
-                                <span className="font-sans text-xs text-muted-foreground/60">{f.date}</span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
 
-                    {activeFeature === 'inventory' && (
-                      <div className="space-y-4">
-                        <div className="rounded-lg bg-muted/40 p-4">
-                          <div className="space-y-0">
+                          <div className="rounded-xl bg-muted/30 p-5 text-center space-y-1">
+                            <p className="font-display text-4xl tracking-tight text-foreground tabular-nums">88.6<span className="text-lg text-muted-foreground ml-1">g</span></p>
+                            <p className="font-sans text-xs text-muted-foreground">Product Cost: <span className="text-foreground font-medium">$12.40</span></p>
+                          </div>
+
+                          <div className="space-y-1">
+                            <div className="flex items-center justify-between">
+                              <span className="font-sans text-[10px] text-muted-foreground">Color Allowance</span>
+                              <span className="font-sans text-[10px] tabular-nums text-muted-foreground">88.6g / 120g</span>
+                            </div>
+                            <Progress value={74} className="h-1.5" indicatorClassName="bg-success" />
+                          </div>
+
+                          <div className="space-y-1.5">
                             {[
-                              { product: 'Koleston 7/0', stock: '340g', status: 'Good', color: 'text-success bg-success/10' },
-                              { product: 'Illumina 8/05', stock: '85g', status: 'Low', color: 'text-amber-500 bg-amber-500/10' },
-                              { product: 'Blondor Powder', stock: '12g', status: 'Critical', color: 'text-red-500 bg-red-500/10' },
-                            ].map((item, i, arr) => (
-                              <div key={item.product} className={cn('flex items-center justify-between py-2.5', i < arr.length - 1 && 'border-b border-border/30')}>
-                                <span className="font-sans text-sm text-foreground">{item.product}</span>
+                              { name: 'Koleston 7/0', brand: 'Wella', weight: '28.4g', cost: '$4.80' },
+                              { name: '6% Developer', brand: 'Wella', weight: '60.2g', cost: '$7.60' },
+                            ].map((line) => (
+                              <div key={line.name} className="flex items-center gap-3 py-2 px-3 rounded-lg bg-muted/30">
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-sans text-sm font-medium text-foreground truncate">{line.name}</p>
+                                  <p className="font-sans text-[10px] text-muted-foreground">{line.brand}</p>
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <span className="font-display text-xs tabular-nums text-foreground">{line.weight}</span>
+                                  <Badge variant="outline" className="text-[10px] px-1.5 py-0">Scale</Badge>
+                                  <span className="font-sans text-[10px] text-muted-foreground">{line.cost}</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+
+                          <div className="flex gap-2 pt-1">
+                            <Button size="sm" className="flex-1 font-sans text-xs">
+                              <CheckCircle2 className="w-3 h-3 mr-1" /> Seal Bowl
+                            </Button>
+                            <Button variant="outline" size="sm" className="font-sans text-xs text-muted-foreground">
+                              Discard
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+
+                      {activeFeature === 'formulas' && (
+                        <div className="p-4 space-y-4">
+                          <div className="flex items-center gap-3 pb-2 border-b border-border/40">
+                            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                              <Brain className="w-4 h-4 text-primary" />
+                            </div>
+                            <span className="font-display text-xs tracking-wide text-muted-foreground uppercase">Client Formula History</span>
+                          </div>
+                          <div className="rounded-lg bg-muted/40 p-4 space-y-3">
+                            <div className="flex items-center justify-between pb-2 border-b border-border/40">
+                              <div>
+                                <p className="font-sans text-sm font-medium text-foreground">Sarah Mitchell</p>
+                                <p className="font-sans text-xs text-muted-foreground">Last visit: Feb 28, 2026</p>
+                              </div>
+                              <span className="font-sans text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">3 formulas</span>
+                            </div>
+                            {[
+                              { product: 'Koleston 7/0', weight: '30g', date: 'Feb 28' },
+                              { product: 'Illumina 8/05', weight: '25g', date: 'Jan 15' },
+                              { product: 'Color Touch 9/16', weight: '20g', date: 'Dec 12' },
+                            ].map((f) => (
+                              <div key={f.product} className="flex items-center justify-between py-1">
+                                <span className="font-sans text-sm text-foreground">{f.product}</span>
                                 <div className="flex items-center gap-3">
-                                  <span className="font-sans text-xs tabular-nums text-muted-foreground">{item.stock}</span>
-                                  <span className={cn('font-sans text-xs px-2 py-0.5 rounded-full', item.color)}>{item.status}</span>
+                                  <span className="font-sans text-xs tabular-nums text-muted-foreground">{f.weight}</span>
+                                  <span className="font-sans text-xs text-muted-foreground/60">{f.date}</span>
                                 </div>
                               </div>
                             ))}
                           </div>
                         </div>
-                      </div>
-                    )}
+                      )}
 
-                    {activeFeature === 'profitability' && (
-                      <div className="space-y-4">
-                        <div className="rounded-lg bg-muted/40 p-4 space-y-3">
-                          <div className="flex items-center justify-between pb-2 border-b border-border/40">
-                            <p className="font-sans text-sm font-medium text-foreground">Full Colour & Blowdry</p>
-                            <span className="font-sans text-xs bg-success/10 text-success px-2 py-0.5 rounded-full">78% margin</span>
+                      {activeFeature === 'inventory' && (
+                        <div className="p-4 space-y-4">
+                          <div className="flex items-center gap-3 pb-2 border-b border-border/40">
+                            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                              <PackageSearch className="w-4 h-4 text-primary" />
+                            </div>
+                            <span className="font-display text-xs tracking-wide text-muted-foreground uppercase">Inventory Status</span>
                           </div>
-                          {[
-                            { label: 'Service Revenue', value: '$185.00' },
-                            { label: 'Product Cost', value: '$28.40' },
-                            { label: 'Labor Cost', value: '$12.50' },
-                            { label: 'Net Profit', value: '$144.10', highlight: true },
-                          ].map((row) => (
-                            <div key={row.label} className="flex items-center justify-between py-0.5">
-                              <span className="font-sans text-sm text-muted-foreground">{row.label}</span>
-                              <span className={cn('font-sans text-sm tabular-nums', row.highlight ? 'text-success font-medium' : 'text-foreground')}>{row.value}</span>
+                          <div className="rounded-lg bg-muted/40 p-4">
+                            <div className="space-y-0">
+                              {[
+                                { product: 'Koleston 7/0', stock: '340g', status: 'Good', color: 'text-success bg-success/10' },
+                                { product: 'Illumina 8/05', stock: '85g', status: 'Low', color: 'text-amber-500 bg-amber-500/10' },
+                                { product: 'Blondor Powder', stock: '12g', status: 'Critical', color: 'text-red-500 bg-red-500/10' },
+                              ].map((item, i, arr) => (
+                                <div key={item.product} className={cn('flex items-center justify-between py-2.5', i < arr.length - 1 && 'border-b border-border/30')}>
+                                  <span className="font-sans text-sm text-foreground">{item.product}</span>
+                                  <div className="flex items-center gap-3">
+                                    <span className="font-sans text-xs tabular-nums text-muted-foreground">{item.stock}</span>
+                                    <span className={cn('font-sans text-xs px-2 py-0.5 rounded-full', item.color)}>{item.status}</span>
+                                  </div>
+                                </div>
+                              ))}
                             </div>
-                          ))}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
 
-                    {activeFeature === 'insights' && (
-                      <div className="space-y-4">
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                          {[
-                            { label: 'Bowls Mixed', value: '847', sub: 'This month' },
-                            { label: 'Avg Waste', value: '3.2%', sub: '↓ from 5.1%' },
-                            { label: 'Top Product', value: 'Koleston 7/0', sub: '142 uses' },
-                          ].map((stat) => (
-                            <div key={stat.label} className="rounded-lg bg-muted/40 p-3 text-center space-y-1">
-                              <p className="font-display text-xs tracking-wide text-muted-foreground">{stat.label}</p>
-                              <p className="font-sans text-lg font-medium text-foreground tabular-nums">{stat.value}</p>
-                              <p className="font-sans text-xs text-muted-foreground/70">{stat.sub}</p>
+                      {activeFeature === 'profitability' && (
+                        <div className="p-4 space-y-4">
+                          <div className="flex items-center gap-3 pb-2 border-b border-border/40">
+                            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                              <DollarSign className="w-4 h-4 text-primary" />
                             </div>
-                          ))}
+                            <span className="font-display text-xs tracking-wide text-muted-foreground uppercase">Service Cost Breakdown</span>
+                          </div>
+                          <div className="rounded-lg bg-muted/40 p-4 space-y-3">
+                            <div className="flex items-center justify-between pb-2 border-b border-border/40">
+                              <p className="font-sans text-sm font-medium text-foreground">Full Colour & Blowdry</p>
+                              <span className="font-sans text-xs bg-success/10 text-success px-2 py-0.5 rounded-full">78% margin</span>
+                            </div>
+                            {[
+                              { label: 'Service Revenue', value: '$185.00' },
+                              { label: 'Product Cost', value: '$28.40' },
+                              { label: 'Labor Cost', value: '$12.50' },
+                              { label: 'Net Profit', value: '$144.10', highlight: true },
+                            ].map((row) => (
+                              <div key={row.label} className="flex items-center justify-between py-0.5">
+                                <span className="font-sans text-sm text-muted-foreground">{row.label}</span>
+                                <span className={cn('font-sans text-sm tabular-nums', row.highlight ? 'text-success font-medium' : 'text-foreground')}>{row.value}</span>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
+
+                      {activeFeature === 'insights' && (
+                        <div className="p-4 space-y-4">
+                          <div className="flex items-center gap-3 pb-2 border-b border-border/40">
+                            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                              <BarChart3 className="w-4 h-4 text-primary" />
+                            </div>
+                            <span className="font-display text-xs tracking-wide text-muted-foreground uppercase">Backroom Intelligence</span>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            {[
+                              { label: 'Bowls Mixed', value: '847', sub: 'This month' },
+                              { label: 'Avg Waste', value: '3.2%', sub: '↓ from 5.1%' },
+                              { label: 'Top Product', value: 'Koleston 7/0', sub: '142 uses' },
+                            ].map((stat) => (
+                              <div key={stat.label} className="rounded-lg bg-muted/40 p-3 text-center space-y-1">
+                                <p className="font-display text-xs tracking-wide text-muted-foreground">{stat.label}</p>
+                                <p className="font-sans text-lg font-medium text-foreground tabular-nums">{stat.value}</p>
+                                <p className="font-sans text-xs text-muted-foreground/70">{stat.sub}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                    </div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </div>
           </div>
         </section>
