@@ -335,6 +335,61 @@ export function BackroomPaywall() {
                     </p>
                   </div>
                 )}
+
+                {/* Annual Impact */}
+                {locationCount > 0 && estimate && yearlyNetBenefit > 0 && (
+                  <div className="space-y-3">
+                    <p className={cn(tokens.label.default, 'text-foreground text-xs flex items-center gap-2')}>
+                      <BarChart3 className="w-3.5 h-3.5 text-primary" />
+                      Estimated Annual Impact
+                    </p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/20 text-center">
+                        <p className="font-display text-2xl tracking-wide text-emerald-400">
+                          <AnimatedNumber value={yearlySupplyRecovery} prefix="$" duration={1000} />
+                        </p>
+                        <p className="text-xs text-muted-foreground font-sans mt-0.5">
+                          additional revenue / yr
+                        </p>
+                      </div>
+                      <div className="p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/20 text-center">
+                        <p className="font-display text-2xl tracking-wide text-emerald-400">
+                          <AnimatedNumber value={yearlyWasteSavings} prefix="$" duration={1000} />
+                        </p>
+                        <p className="text-xs text-muted-foreground font-sans mt-0.5">
+                          waste savings / yr
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Annual cost vs savings bar */}
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between text-xs font-sans text-muted-foreground">
+                        <span>Annual cost: {formatCurrency(yearlyCost)}</span>
+                        <span className="text-emerald-400">Annual benefit: {formatCurrency(yearlySavings)}</span>
+                      </div>
+                      <div className="h-2 rounded-full bg-muted/40 overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-emerald-500/60 transition-all duration-700"
+                          style={{
+                            width: `${Math.min(100, yearlySavings > 0 ? (yearlyCost / yearlySavings) * 100 : 100)}%`,
+                          }}
+                        />
+                      </div>
+                      <p className="text-[10px] text-muted-foreground font-sans text-center">
+                        Your cost represents only {yearlySavings > 0 ? Math.round((yearlyCost / yearlySavings) * 100) : 0}% of your projected annual benefit
+                      </p>
+                    </div>
+
+                    <div className="border-t border-border/40 pt-2 text-center">
+                      <p className="text-xs text-muted-foreground font-sans">Total annual net benefit</p>
+                      <p className="font-display text-3xl tracking-wide text-emerald-400 mt-0.5">
+                        +<AnimatedNumber value={yearlyNetBenefit} prefix="$" duration={1200} />
+                        <span className="text-sm text-emerald-400/70 ml-1">/yr</span>
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
