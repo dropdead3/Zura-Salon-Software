@@ -670,6 +670,95 @@ export function BackroomPaywall() {
         </section>
 
         {/* ═══════════════════════════════════════════
+            SECTION 4.75 — ROI PROOF
+            ═══════════════════════════════════════════ */}
+        <section className="pb-20 md:pb-24">
+          <div className="space-y-8 md:space-y-10">
+            <div className="text-center space-y-3">
+              <h2 className="font-display text-2xl md:text-3xl font-medium tracking-wide text-foreground">
+                Zura Backroom Pays for Itself
+              </h2>
+              <p className="font-sans text-base text-muted-foreground max-w-xl mx-auto font-light leading-relaxed">
+                Most salons don't know the real cost of their color services. Zura Backroom makes it visible.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 md:gap-6">
+              {[
+                {
+                  icon: Droplets,
+                  title: 'Recover Product Waste',
+                  copy: 'If your salon performs 200 color services per month and reduces waste by just $2 per service, that\'s $400 recovered every month.',
+                },
+                {
+                  icon: DollarSign,
+                  title: 'Know Real Service Costs',
+                  copy: 'Knowing the true product cost of every service helps you price correctly and protect margins.',
+                },
+                {
+                  icon: TrendingUp,
+                  title: 'Protect Service Margins',
+                  copy: 'When you see exactly where product goes, you stop losing money on services you thought were profitable.',
+                },
+              ].map((card) => (
+                <Card key={card.title} className="bg-card border-border/50 shadow-sm" interactive>
+                  <CardContent className="p-6 md:p-8 space-y-4">
+                    <div className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center">
+                      <card.icon className="w-5 h-5 text-primary" />
+                    </div>
+                    <h3 className="font-display text-sm tracking-wide text-foreground">{card.title}</h3>
+                    <p className="font-sans text-sm text-muted-foreground font-light leading-relaxed">{card.copy}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            <div className="flex justify-center pt-2">
+              <ActivateButton />
+            </div>
+          </div>
+        </section>
+
+        {/* ═══════════════════════════════════════════
+            SECTION 4.85 — SEE IT IN ACTION
+            ═══════════════════════════════════════════ */}
+        <section className="pb-20 md:pb-24">
+          <div className="space-y-8 md:space-y-10">
+            <div className="text-center space-y-3">
+              <h2 className="font-display text-2xl md:text-3xl font-medium tracking-wide text-foreground">
+                See Zura Backroom In Action
+              </h2>
+              <p className="font-sans text-base text-muted-foreground max-w-xl mx-auto font-light leading-relaxed">
+                From mixing the bowl to tracking inventory, every step is connected.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4 md:gap-3">
+              {[
+                { icon: Beaker, label: 'Start the service', step: 1 },
+                { icon: Scale, label: 'Mix the bowl on the scale', step: 2 },
+                { icon: Zap, label: 'Usage tracked automatically', step: 3 },
+                { icon: Brain, label: 'Formula saved for the client', step: 4 },
+                { icon: PackageSearch, label: 'Inventory updates instantly', step: 5 },
+                { icon: BarChart3, label: 'Service cost becomes visible', step: 6 },
+              ].map((item, idx) => (
+                <div key={item.step} className="relative flex flex-col items-center text-center gap-3">
+                  {/* Connecting chevron (desktop only, not on last item) */}
+                  {idx < 5 && (
+                    <ChevronRight className="hidden md:block absolute -right-3.5 top-6 w-4 h-4 text-border" />
+                  )}
+                  <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                    <item.icon className="w-5 h-5 text-primary" />
+                  </div>
+                  <span className="font-display text-[10px] tracking-wider text-primary/20">{String(item.step).padStart(2, '0')}</span>
+                  <p className="font-sans text-xs text-muted-foreground font-light leading-snug max-w-[120px]">{item.label}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ═══════════════════════════════════════════
             SECTION 5 — PRICING + ROI
             ═══════════════════════════════════════════ */}
         <section className="pb-20 md:pb-24">
