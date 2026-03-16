@@ -1,86 +1,153 @@
 
 
-# Design System Governor Audit — BackroomPaywall.tsx
+## Timezone-Safe Scheduling (Implemented)
 
-## Canon Map (Extracted from `design-tokens.ts`)
+### Problem
+`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
 
-| Layer | Token | Value |
-|-------|-------|-------|
-| Icon Box | `tokens.card.iconBox` | `w-10 h-10 bg-muted rounded-lg` |
-| Icon | `tokens.card.icon` | `w-5 h-5 text-primary` |
-| Section Heading | `SectionHeading` helper | `font-display text-2xl md:text-3xl font-medium tracking-wide text-center` |
-| Spacing (section bottom) | — | `pb-20 md:pb-24` or `pb-24 md:pb-32` |
-| Card padding (major) | — | `p-6 md:p-8` |
-| Card padding (compact) | — | `p-5` |
-| Shadow tiers | — | `shadow-sm` (subtle), `shadow-md` (standard), `shadow-lg`/`shadow-xl` (elevated) |
-| Radius | Level 0 | `rounded-xl` (cards), Level 1 `rounded-lg` (inner), Level 2 `rounded-md` (small) |
-| Half-step spacing | **Prohibited** | `space-y-3.5`, `mt-1.5`, `py-3.5` — must snap to 4px grid |
+### Solution
+- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
+- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
+- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
 
----
+### Files Updated
+- `ScheduleHeader.tsx` — today button, quick days, isToday checks
+- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
+- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
+- `MonthView.tsx` — today highlight
+- `AgendaView.tsx` — today/tomorrow labels, today border
+- `ScheduleActionBar.tsx` — payment queue timing
+- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
+- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
+- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
+- `useHuddles.ts` — today's huddle query
 
-## Violations (23 total)
+## Auto-Reorder with Supplier Communication (Implemented)
 
-### 1. Icon Box Sizing Drift — **7 instances**
-`w-11 h-11 rounded-xl` (44px, L0 radius) used where token specifies `w-10 h-10 rounded-lg` (40px, L1 radius).
-- Lines: 767, 901, 1325, 1353, 1382, 1841, 1933
+### What It Does
+Organizations can opt into automatic reorder — when stock dips below threshold, POs are calculated (using MOQ and par levels) and sent directly to the supplier via email.
 
-### 2. Section Heading Weight Drift — **2 instances**
-- Line 638: `font-normal` instead of `font-medium` (Before/After heading)
-- Line 2061: missing `font-medium` entirely (Confidence Layer heading)
+### Database Changes
+- `products.par_level` (INT, nullable) — desired stock level to reorder up to
+- `product_suppliers.moq` (INT, default 1) — minimum order quantity
+- `inventory_alert_settings.auto_reorder_enabled` (BOOL, default false)
+- `inventory_alert_settings.auto_reorder_mode` (TEXT, default 'to_par') — 'to_par' or 'moq_only'
+- `inventory_alert_settings.max_auto_reorder_value` (NUMERIC, nullable) — daily spend cap
+- `purchase_orders.supplier_confirmed_at` (TIMESTAMPTZ, nullable) — for tracking confirmations
 
-### 3. Section Heading Casing Inconsistency — **1 instance**
-- Line 638: has `uppercase` — no other `SectionHeading` uses uppercase. Remove.
+### Quantity Calculation
+```
+deficit = par_level - quantity_on_hand
+order_qty = max(moq, deficit)
+if moq > 1: round up to nearest MOQ multiple
+```
+Fallback: if par_level is null, uses `reorder_level * 2`.
 
-### 4. Raw `<h2>` Instead of `<SectionHeading>` — **4 instances**
-- Lines 638, 932, 1175, 2061 use inline `<h2>` with varying classes instead of the `SectionHeading` helper
+### Files Updated
+- Migration: Added columns to products, product_suppliers, inventory_alert_settings, purchase_orders
+- `check-reorder-levels/index.ts` — auto-send logic with MOQ/par calculation, spend cap, email invocation
+- `AlertSettingsCard.tsx` — auto-reorder toggle, mode selector, spend cap input
+- `useInventoryAlertSettings.ts` — updated interface
+- `useProducts.ts` — added par_level to Product interface
+- `useProductSuppliers.ts` — added moq to ProductSupplier interface
+- `ProductEditDialog.tsx` — added par level field
+- `RetailProductsSettingsContent.tsx` — added par level to product form
+- `SupplierDialog.tsx` — added MOQ field
 
-### 5. Half-Step Spacing (non-4px grid) — **3 instances**
-- `space-y-3.5` at lines 657, 685 → `space-y-4`
-- `mt-1.5` at line 1947 → `mt-2`
+### Safety Features
+- Spend cap: daily auto-reorder pauses when cumulative PO value exceeds cap
+- Audit trail: auto_reorder logged as stock_movement reason
+- Supplier confirmation tracking via supplier_confirmed_at timestamp
 
-### 6. Shadow Tier Mismatch — **6 instances**
-- Section 1.85 (Reality Check) cards have no base shadow + `hover:shadow-md` while equivalent cards in Sections 4.9 and 7.5 use `shadow-sm hover:shadow-md`
+## Product Movement Rating Badges (Implemented)
 
-### 7. Trust Card Color Hardcoding — **1 instance**  
-- Line 2026: `text-emerald-300` for guarantee title — should use `text-success` semantic token for multi-theme compliance
+### What It Does
+Every product gets a dynamic movement rating badge (Best Seller, Popular, Steady, Slow Mover, Stagnant, Dead Weight) computed from 90-day sales velocity data.
 
----
+### Rating Tiers
+- **Best Seller**: Top 10% velocity AND >0.5 units/day (emerald)
+- **Popular**: Top 25% velocity AND >0.2 units/day (blue)
+- **Steady**: Velocity >0.05/day (muted)
+- **Slow Mover**: Velocity >0 but ≤0.05/day (amber)
+- **Stagnant**: Zero velocity, sold within 180 days (orange)
+- **Dead Weight**: Zero velocity, 180+ days or never sold (red)
+- Products with zero stock excluded from negative ratings
 
-## Corrections Plan
+### Files Created
+- `src/lib/productMovementRating.ts` — pure rating logic + badge config
+- `src/hooks/useProductVelocity.ts` — lightweight 90-day POS velocity query
+- `src/components/ui/MovementBadge.tsx` — shared badge component with tooltip
 
-### A. Normalize icon boxes (7 edits)
-Replace all `w-11 h-11 rounded-xl` with `w-10 h-10 rounded-lg` at lines 767, 901, 1325, 1353, 1382, 1841, 1933.
+### Files Updated
+- `RetailProductsSettingsContent.tsx` — Movement column + filter dropdown in products table
+- `RetailAnalyticsContent.tsx` — Movement badges on product performance table + Movement Distribution card (donut chart with actionable callouts)
+- `ProductCard.tsx` — Best Seller/Popular badges on public shop cards (positive only)
+- `ProductDetailModal.tsx` — Movement badge with velocity context
 
-### B. Normalize section headings (4 edits)
-Replace raw `<h2>` tags at lines 638, 932, 1175, 2061 with the `<SectionHeading>` helper. Remove `uppercase` and `font-normal` overrides from line 638.
+## Inventory Intelligence Suite v2 (Implemented)
 
-### C. Fix half-step spacing (3 edits)
-- Lines 657, 685: `space-y-3.5` → `space-y-4`
-- Line 1947: `mt-1.5` → `mt-2`
+### 1. Dead Stock Auto-Clearance Pipeline
+- `DeadStockAlertCard.tsx` — Surfaces Dead Weight/Stagnant products not yet in clearance with suggested discount tiers (10%/25%/50% based on idle days)
+- One-click "Mark for Clearance" applies discount and sets clearance_status
 
-### D. Normalize shadow tier on Reality Check cards (1 edit)
-Line 730: Add `shadow-sm` to base card class: `"p-5 shadow-sm hover:shadow-md transition-shadow duration-200 h-full"`
+### 2. Supplier Lead Time Tracker
+- `usePurchaseOrders.ts` — `useMarkPurchaseOrderReceived` already computes actual delivery days and updates `product_suppliers.avg_delivery_days` via running average
+- `parLevelSuggestion.ts` — Updated to accept supplier-provided lead time instead of hardcoded 7-day default, with bounds clamping
 
-### E. Fix trust card semantic color (1 edit)
-Line 2026: `text-emerald-300` → `text-success`
+### 3. Inventory Valuation Dashboard Card
+- `InventoryValuationCard.tsx` — Shows total inventory at cost/retail, potential margin %, capital-at-risk (slow/stagnant/dead weight), with donut chart breakdown
 
-### F. No changes to
-- Hero section (intentionally elevated, larger icon boxes are hero-tier)
-- Product Preview mock (decorative, not token-governed)
-- FAQ accordion, location selector, checkout dialog
+### 4. Reorder Approval Queue
+- `ReorderApprovalCard.tsx` — Surfaces draft POs from auto-reorder with one-click approve (→ sent) or reject (→ cancelled)
 
----
+### 5. Stock Transfer Between Locations
+- Migration: Created `stock_transfers` table with RLS (org member read, org admin manage)
+- `useStockTransfers.ts` — CRUD hooks for stock transfers with stock movement logging
+- `StockTransferDialog.tsx` — Dialog for creating transfers between locations
+- `RetailProductsSettingsContent.tsx` — "Transfer Stock" button added to Inventory tab (visible for multi-location orgs)
 
-## Integrity Score
+## Enhancement 1: Expiry Tracking (Implemented)
 
-| Dimension | Score |
-|-----------|-------|
-| Typography | 91/100 (2 weight drifts, 1 casing, 4 raw headings) |
-| Spacing | 96/100 (3 half-step violations) |
-| Radius | 93/100 (7 icon box radius drifts) |
-| Elevation | 94/100 (6 shadow-tier mismatches) |
-| Color | 98/100 (1 hardcoded color) |
-| **Overall** | **94/100** |
+### What It Does
+Products can have an optional expiration date (`expires_at`) and per-product alert threshold (`expiry_alert_days`, default 30). The system surfaces expiring inventory with color-coded badges in the product table and an analytics card with auto-clearance suggestions.
 
-Post-correction target: **99/100**
+### Database Changes
+- `products.expires_at` (DATE, nullable) — expiration date for perishable products
+- `products.expiry_alert_days` (INTEGER, default 30) — days before expiry to trigger alerts
 
+### Expiry Alert Buckets
+- **Expired** (red): past expiration → suggests 50% markdown
+- **Critical** (orange): within alert threshold → suggests 25% markdown
+- **Warning** (amber): within 2× alert threshold → suggests 10% markdown
+
+### Files Created
+- `src/components/dashboard/analytics/ExpiryAlertCard.tsx` — PinnableCard showing expiring products with one-click clearance actions
+
+### Files Updated
+- `src/hooks/useProducts.ts` — Added `expires_at`, `expiry_alert_days` to Product interface; added `expiringOnly` filter
+- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Expiry date + alert days in product form; color-coded Expiry column in product table
+- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ExpiryAlertCard into analytics hub
+
+## Enhancement 2: Shrinkage Detection (Implemented)
+
+### What It Does
+Physical stocktake workflow with variance reporting. Staff record actual counts via a Stocktake dialog, and the system compares against expected quantities (system records). A Shrinkage Report card in analytics surfaces products with negative variance (loss) ranked by estimated cost impact.
+
+### Database Changes
+- Created `stock_counts` table with computed `variance` column (counted - expected), RLS policies (org member read/insert, org admin update/delete), and indexes
+
+### Shrinkage Calculation
+```
+variance = counted_quantity - expected_quantity
+shrinkage_units = |variance| when variance < 0
+shrinkage_cost = shrinkage_units × cost_price
+```
+
+### Files Created
+- `src/hooks/useStockCounts.ts` — CRUD hooks for stock counts + `useShrinkageSummary` for aggregated shrinkage data
+- `src/components/dashboard/settings/inventory/StocktakeDialog.tsx` — Full stocktake UI with search, inline count entry, real-time variance display
+- `src/components/dashboard/analytics/ShrinkageReportCard.tsx` — PinnableCard showing products with shrinkage, severity badges, estimated loss
+
+### Files Updated
+- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Added "Stocktake" button to Inventory tab toolbar
+- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ShrinkageReportCard into analytics hub

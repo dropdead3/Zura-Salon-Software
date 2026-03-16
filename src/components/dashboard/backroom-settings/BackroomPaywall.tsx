@@ -635,9 +635,9 @@ export function BackroomPaywall() {
         <section className="pb-20 md:pb-24 bg-muted/20 -mx-6 sm:-mx-8 px-6 sm:px-8 rounded-2xl pt-10 md:pt-12 shadow-[inset_0_1px_0_0_hsl(var(--border)/0.3)]">
           <RevealOnScroll>
             <div className="text-center mb-10 md:mb-12">
-              <h2 className="font-display text-2xl md:text-3xl font-normal tracking-wide uppercase text-foreground">
+              <SectionHeading>
                 How Zura Backroom Transforms Your Color Room
-              </h2>
+              </SectionHeading>
               <p className="mt-4 text-base md:text-lg text-muted-foreground font-sans font-light max-w-xl mx-auto">
                 From guesswork to a controlled, measurable system.
               </p>
@@ -654,7 +654,7 @@ export function BackroomPaywall() {
                   </div>
                   <h3 className="font-display text-base tracking-wide uppercase text-destructive">Without Backroom</h3>
                 </div>
-                <ul className="space-y-3.5">
+                <ul className="space-y-4">
                   {[
                     "Stylists guess how much color to mix",
                     "Formulas are scribbled in notebooks or forgotten",
@@ -682,7 +682,7 @@ export function BackroomPaywall() {
                   </div>
                   <h3 className="font-display text-base tracking-wide uppercase text-success">With Backroom</h3>
                 </div>
-                <ul className="space-y-3.5">
+                <ul className="space-y-4">
                   {[
                     "Every formula is saved automatically per client",
                     "Stylists see the last formula instantly at the chair",
@@ -727,9 +727,9 @@ export function BackroomPaywall() {
               { icon: AlertTriangle, title: 'Invisible Waste', desc: 'Chemical waste accumulates quietly until it shows up in the budget.' },
             ].map((point, i) => (
               <RevealOnScroll key={point.title} delay={i * 60}>
-                <Card className="p-5 hover:shadow-md transition-shadow duration-200 h-full">
+                <Card className="p-5 shadow-sm hover:shadow-md transition-shadow duration-200 h-full">
                   <div className="space-y-3">
-                    <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
                       <point.icon className="w-5 h-5 text-primary" />
                     </div>
                     <h4 className="font-display text-sm tracking-wide">{point.title}</h4>
@@ -764,7 +764,7 @@ export function BackroomPaywall() {
               <Card className="bg-destructive/[0.03] border-destructive/20 overflow-hidden">
                 <CardContent className="p-6 md:p-8 space-y-6">
                   <div className="flex items-center gap-4">
-                    <div className="w-11 h-11 rounded-xl bg-destructive/10 flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center shrink-0">
                       <AlertTriangle className="w-5 h-5 text-destructive" />
                     </div>
                     <div>
@@ -898,7 +898,7 @@ export function BackroomPaywall() {
                   <Card className="bg-card border-border/50 shadow-sm hover:shadow-md transition-shadow duration-200 hover-lift">
                   <CardContent className="p-6 md:p-8 space-y-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center shrink-0">
+                      <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
                         <group.icon className="w-5 h-5 text-primary" />
                       </div>
                       <div>
@@ -929,9 +929,7 @@ export function BackroomPaywall() {
         <section className="pb-24 md:pb-32">
           <div className="space-y-8 md:space-y-10">
             <div className="text-center space-y-3">
-              <h2 className="font-display text-2xl md:text-3xl font-medium tracking-wide text-foreground">
-                Explore Zura Backroom
-              </h2>
+              <SectionHeading>Explore Zura Backroom</SectionHeading>
               <p className="font-sans text-base text-muted-foreground max-w-xl mx-auto font-light leading-relaxed">
                 Click each feature to see how it works inside your salon.
               </p>
@@ -1172,9 +1170,7 @@ export function BackroomPaywall() {
           <div className="space-y-8 md:space-y-10">
             <RevealOnScroll>
               <div className="text-center space-y-3">
-                <h2 className="font-display text-2xl md:text-3xl font-medium tracking-wide text-foreground">
-                  Zura Backroom Pays for Itself
-                </h2>
+                <SectionHeading>Zura Backroom Pays for Itself</SectionHeading>
                 <p className="font-sans text-base text-muted-foreground max-w-xl mx-auto font-light leading-relaxed">
                   Most salons don't know the real cost of their color services. Zura Backroom makes it visible.
                 </p>
@@ -1322,7 +1318,7 @@ export function BackroomPaywall() {
               <Card className="bg-card border-border/50 shadow-md hover:shadow-lg transition-shadow duration-200 hover-lift">
                 <CardContent className="p-6 md:p-8 space-y-4">
                   <div className="flex items-start gap-3">
-                    <div className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
                       <AlertTriangle className="w-5 h-5 text-primary" />
                     </div>
                     <div>
@@ -1350,7 +1346,7 @@ export function BackroomPaywall() {
               <Card className="bg-card border-border/50 shadow-md hover:shadow-lg transition-shadow duration-200 hover-lift">
                 <CardContent className="p-6 md:p-8 space-y-4">
                   <div className="flex items-start gap-3">
-                    <div className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
                       <Users className="w-5 h-5 text-primary" />
                     </div>
                     <div>
@@ -1379,7 +1375,7 @@ export function BackroomPaywall() {
               <Card className="bg-card border-border/50 shadow-md hover:shadow-lg transition-shadow duration-200 hover-lift">
                 <CardContent className="p-6 md:p-8 space-y-4">
                   <div className="flex items-start gap-3">
-                    <div className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
                       <Brain className="w-5 h-5 text-primary" />
                     </div>
                     <div>
@@ -1838,7 +1834,7 @@ export function BackroomPaywall() {
                 <CardContent className="p-6 md:p-8">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center shrink-0">
+                      <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
                         <MapPin className="w-5 h-5 text-primary" />
                       </div>
                       <div>
@@ -1930,7 +1926,7 @@ export function BackroomPaywall() {
             <Card className="bg-card border-border/50 shadow-sm">
               <CardContent className="p-6 md:p-8 space-y-6">
                 <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center shrink-0">
+                  <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
                     <Scale className="w-5 h-5 text-primary" />
                   </div>
                   <div>
@@ -1944,11 +1940,11 @@ export function BackroomPaywall() {
                 <div className="grid grid-cols-2 gap-5">
                   <div className="p-5 rounded-xl bg-muted/30 border border-border/40 text-center">
                     <p className="font-display text-2xl tracking-wide text-foreground">${SCALE_HARDWARE_PRICE}</p>
-                    <p className="text-sm text-muted-foreground font-sans mt-1.5">per scale (one-time)</p>
+                    <p className="text-sm text-muted-foreground font-sans mt-2">per scale (one-time)</p>
                   </div>
                   <div className="p-5 rounded-xl bg-muted/30 border border-border/40 text-center">
                     <p className="font-display text-2xl tracking-wide text-foreground">${SCALE_LICENSE_MONTHLY}</p>
-                    <p className="text-sm text-muted-foreground font-sans mt-1.5">per scale / month</p>
+                    <p className="text-sm text-muted-foreground font-sans mt-2">per scale / month</p>
                   </div>
                 </div>
 
@@ -2023,7 +2019,7 @@ export function BackroomPaywall() {
                   <ShieldCheck className="w-6 h-6 text-emerald-400" />
                 </div>
                 <div>
-                  <p className="font-sans text-base font-medium text-emerald-300">30-Day Money-Back Guarantee</p>
+                  <p className="font-sans text-base font-medium text-success">30-Day Money-Back Guarantee</p>
                   <p className="text-sm text-muted-foreground font-sans mt-1">
                     If Backroom doesn't work for your salon, get a full refund within 30 days. No questions asked.
                   </p>
@@ -2058,9 +2054,7 @@ export function BackroomPaywall() {
         <section className="border-t border-border/20 pt-16 space-y-10 bg-muted/20 -mx-6 sm:-mx-8 px-6 sm:px-8 rounded-2xl pb-12 shadow-[inset_0_1px_0_0_hsl(var(--border)/0.3)]">
           <RevealOnScroll>
             <div className="text-center space-y-3">
-              <h2 className="font-display text-2xl md:text-3xl tracking-wide text-foreground">
-                Powerful System. Simple Workflow.
-              </h2>
+              <SectionHeading>Powerful System. Simple Workflow.</SectionHeading>
               <p className="font-sans text-base text-muted-foreground font-light max-w-xl mx-auto">
                 Zura Backroom works quietly in the background while your team continues working as normal.
               </p>
@@ -2077,7 +2071,7 @@ export function BackroomPaywall() {
             ].map((item, i) => (
               <RevealOnScroll key={i} delay={i * 60}>
                 <Card className={cn("p-5 space-y-3 bg-card shadow-md hover:shadow-lg transition-shadow duration-200", i === 4 && "sm:col-start-1 lg:col-start-2")}>
-                <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
+                <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
                   <item.icon className="w-5 h-5 text-primary" />
                 </div>
                 <h3 className="font-display text-sm tracking-wide text-foreground">{item.title}</h3>
