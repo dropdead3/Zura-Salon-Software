@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { Eyebrow } from '@/components/ui/Eyebrow';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
