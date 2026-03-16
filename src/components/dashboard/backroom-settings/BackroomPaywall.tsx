@@ -631,15 +631,17 @@ export function BackroomPaywall() {
         {/* ═══════════════════════════════════════════
             SECTION 1.75 — BEFORE / AFTER TRANSFORMATION
             ═══════════════════════════════════════════ */}
-        <section className="pb-20 md:pb-24 bg-muted/20 -mx-6 sm:-mx-8 px-6 sm:px-8 rounded-2xl pt-10 md:pt-12">
-          <div className="text-center mb-10 md:mb-12">
-            <h2 className="font-display text-2xl md:text-3xl font-normal tracking-wide uppercase text-foreground">
-              How Zura Backroom Transforms Your Color Room
-            </h2>
-            <p className="mt-4 text-base md:text-lg text-muted-foreground font-sans font-light max-w-xl mx-auto">
-              From guesswork to a controlled, measurable system.
-            </p>
-          </div>
+        <section className="pb-20 md:pb-24 bg-muted/20 -mx-6 sm:-mx-8 px-6 sm:px-8 rounded-2xl pt-10 md:pt-12 shadow-[inset_0_1px_0_0_hsl(var(--border)/0.3)]">
+          <RevealOnScroll>
+            <div className="text-center mb-10 md:mb-12">
+              <h2 className="font-display text-2xl md:text-3xl font-normal tracking-wide uppercase text-foreground">
+                How Zura Backroom Transforms Your Color Room
+              </h2>
+              <p className="mt-4 text-base md:text-lg text-muted-foreground font-sans font-light max-w-xl mx-auto">
+                From guesswork to a controlled, measurable system.
+              </p>
+            </div>
+          </RevealOnScroll>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
             {/* WITHOUT */}
