@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   Beaker, BarChart3, ArrowRight, Loader2,
-  Scale, ShieldCheck, MapPin, TrendingUp, DollarSign, Star,
+  Weight, ShieldCheck, MapPin, TrendingUp, DollarSign, Star,
   Info, Clock, AlertTriangle, CheckCircle2, XCircle,
   Brain, PackageSearch, ChevronRight,
   Timer, X, Users, Zap,
@@ -703,7 +703,7 @@ export function BackroomPaywall() {
             {/* Mobile: pill selector */}
             <div className="flex lg:hidden gap-2 overflow-x-auto pb-2 scrollbar-hide">
               {[
-                { key: 'mixing', icon: Scale, title: 'Smart Mixing' },
+                { key: 'mixing', icon: Weight, title: 'Smart Mixing' },
                 { key: 'formulas', icon: Brain, title: 'Formula Memory' },
                 { key: 'inventory', icon: PackageSearch, title: 'Inventory' },
                 { key: 'profitability', icon: DollarSign, title: 'Profitability' },
@@ -729,7 +729,7 @@ export function BackroomPaywall() {
               {/* Left — Feature Selector (desktop) */}
               <div className="hidden lg:flex flex-col gap-2">
                 {[
-                  { key: 'mixing', icon: Scale, title: 'Smart Mixing', desc: 'The scale captures every gram while stylists mix normally.' },
+                  { key: 'mixing', icon: Weight, title: 'Smart Mixing', desc: 'The scale captures every gram while stylists mix normally.' },
                   { key: 'formulas', icon: Brain, title: 'Formula Memory', desc: 'Formulas are saved automatically to the client profile.' },
                   { key: 'inventory', icon: PackageSearch, title: 'Inventory Intelligence', desc: 'Every bowl updates product inventory in real time.' },
                   { key: 'profitability', icon: DollarSign, title: 'Service Profitability', desc: 'Product costs are connected directly to each service.' },
@@ -1080,7 +1080,7 @@ export function BackroomPaywall() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                        <Scale className="w-4 h-4 text-primary" />
+                        <Weight className="w-4 h-4 text-primary" />
                       </div>
                       <div>
                         <p className="font-display text-sm tracking-wide text-foreground uppercase">Precision Scales</p>

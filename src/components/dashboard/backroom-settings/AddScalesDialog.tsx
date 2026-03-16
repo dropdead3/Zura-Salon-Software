@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { Scale, Minus, Plus, Loader2, ArrowRight } from 'lucide-react';
+import { Weight, Minus, Plus, Loader2, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
@@ -66,7 +66,7 @@ export function AddScalesDialog({ open, onOpenChange }: AddScalesDialogProps) {
           <div className="flex items-center justify-between gap-4 p-4 rounded-xl bg-muted/50">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                <Scale className="w-5 h-5 text-primary" />
+                <Weight className="w-5 h-5 text-primary" />
               </div>
               <div>
                 <p className={cn(tokens.label.default, 'text-foreground text-sm')}><p className={cn(tokens.label.default, 'text-foreground text-sm')}>Precision Scale</p></p>

@@ -1,6 +1,6 @@
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { Loader2, ArrowRight, MapPin, Scale, Droplets, CreditCard, TrendingUp, Sparkles } from 'lucide-react';
+import { Loader2, ArrowRight, MapPin, Weight, Droplets, CreditCard, TrendingUp, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
@@ -67,7 +67,7 @@ export function BackroomCheckoutConfirmDialog({
               {scaleCount > 0 && (
                 <div className="flex items-center justify-between px-3 py-2.5">
                   <span className="flex items-center gap-2 text-sm font-sans">
-                    <Scale className="w-3.5 h-3.5 text-primary" />
+                    <Weight className="w-3.5 h-3.5 text-primary" />
                     {scaleCount} scale{scaleCount !== 1 ? 's' : ''} × {formatCurrency(SCALE_LICENSE_MONTHLY)}/mo
                   </span>
                   <span className="text-sm font-sans font-medium">{formatCurrency(scaleLicenseCost)}</span>
@@ -104,7 +104,7 @@ export function BackroomCheckoutConfirmDialog({
               <div className="rounded-lg border border-border/60 px-3 py-2.5">
                 <div className="flex items-center justify-between">
                   <span className="flex items-center gap-2 text-sm font-sans">
-                    <Scale className="w-3.5 h-3.5 text-muted-foreground" />
+                    <Weight className="w-3.5 h-3.5 text-muted-foreground" />
                     {scaleCount} scale{scaleCount !== 1 ? 's' : ''} × {formatCurrency(SCALE_HARDWARE_PRICE)}
                   </span>
                   <span className="text-sm font-sans font-medium">{formatCurrency(hardwareOneTime)}</span>
