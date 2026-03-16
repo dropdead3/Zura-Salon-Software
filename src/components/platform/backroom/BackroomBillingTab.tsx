@@ -20,7 +20,6 @@ import {
   Building2,
   Search,
   Loader2,
-  Clock,
   CheckCircle2,
   XCircle,
 } from 'lucide-react';
@@ -68,7 +67,6 @@ function BillingKPICard({
 function subscriptionBadge(status: string | null) {
   const map: Record<string, { label: string; variant: 'default' | 'success' | 'warning' | 'error' }> = {
     active: { label: 'Active', variant: 'success' },
-    trialing: { label: 'Trialing', variant: 'warning' },
     past_due: { label: 'Past Due', variant: 'error' },
     cancelled: { label: 'Cancelled', variant: 'error' },
     suspended: { label: 'Suspended', variant: 'error' },
@@ -107,8 +105,7 @@ export function BackroomBillingTab() {
       return (
         o.subscriptionStatus === 'past_due' ||
         o.subscriptionStatus === 'cancelled' ||
-        o.suspendedLocationCount > 0 ||
-        (o.earliestTrialEnd && new Date(o.earliestTrialEnd) < new Date())
+        o.suspendedLocationCount > 0
       );
     })
     .sort((a, b) => {
@@ -127,7 +124,6 @@ export function BackroomBillingTab() {
           icon={CheckCircle2}
           label="Active Subscriptions"
           value={String(metrics.totalActiveSubscriptions)}
-          subtitle={`${metrics.totalTrialOrgs} in trial`}
         />
         <BillingKPICard
           icon={DollarSign}
@@ -199,7 +195,7 @@ export function BackroomBillingTab() {
                   <TableHead className="font-sans text-xs text-slate-400">Locations</TableHead>
                   <TableHead className="font-sans text-xs text-slate-400">Plans</TableHead>
                   <TableHead className="font-sans text-xs text-slate-400">Scales</TableHead>
-                  <TableHead className="font-sans text-xs text-slate-400">Trial End</TableHead>
+                  
                   <TableHead className="font-sans text-xs text-slate-400 text-right pr-4">Est. MRR</TableHead>
                 </TableRow>
               </TableHeader>
@@ -218,9 +214,6 @@ export function BackroomBillingTab() {
                     <TableCell>
                       <div className="font-sans text-xs space-y-0.5">
                         <div className="text-slate-300">{org.activeLocationCount} active</div>
-                        {org.trialLocationCount > 0 && (
-                          <div className="text-amber-400">{org.trialLocationCount} trial</div>
-                        )}
                         {org.suspendedLocationCount > 0 && (
                           <div className="text-red-400">{org.suspendedLocationCount} suspended</div>
                         )}
@@ -237,21 +230,6 @@ export function BackroomBillingTab() {
                     </TableCell>
                     <TableCell className="font-sans text-sm tabular-nums text-slate-300">
                       {org.totalScales}
-                    </TableCell>
-                    <TableCell>
-                      {org.earliestTrialEnd ? (
-                        <div className="flex items-center gap-1.5">
-                          <Clock className="w-3 h-3 text-slate-500" />
-                          <span className={cn(
-                            'font-sans text-xs tabular-nums',
-                            new Date(org.earliestTrialEnd) < new Date() ? 'text-red-400' : 'text-slate-400'
-                          )}>
-                            {daysUntil(org.earliestTrialEnd)}
-                          </span>
-                        </div>
-                      ) : (
-                        <span className="font-sans text-xs text-slate-500">—</span>
-                      )}
                     </TableCell>
                     <TableCell className="font-sans text-sm tabular-nums text-slate-200 text-right pr-4">
                       ${org.estimatedMRR.toLocaleString()}

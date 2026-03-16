@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
-import { Loader2, CreditCard, Scale, ArrowUpRight, ArrowDownRight, Settings, Plus, Clock } from 'lucide-react';
+import { Loader2, CreditCard, Scale, ArrowUpRight, ArrowDownRight, Settings, Plus } from 'lucide-react';
 import { AddScalesDialog } from '@/components/dashboard/backroom-settings/AddScalesDialog';
 import { BackroomROICard } from '@/components/dashboard/backroom-settings/BackroomROICard';
 import { DowngradeConfirmDialog } from '@/components/dashboard/backroom-settings/DowngradeConfirmDialog';
@@ -25,7 +25,6 @@ interface SubscriptionData {
   current_period_end?: string;
   monthly_cost?: number;
   subscription_id?: string;
-  trial_end?: string | null;
 }
 
 const PLAN_DISPLAY: Record<string, { name: string; price: number; annualPrice: number }> = {
@@ -126,16 +125,9 @@ export default function BackroomSubscription() {
 
   const planInfo = PLAN_DISPLAY[sub.plan || 'starter'];
   const isAnnual = sub.billing_interval === 'annual';
-  const isTrialing = sub.status === 'trialing';
   const renewalDate = sub.current_period_end
     ? new Date(sub.current_period_end).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
     : '—';
-  const trialEndDate = sub.trial_end
-    ? new Date(sub.trial_end).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
-    : null;
-  const trialDaysLeft = sub.trial_end
-    ? Math.max(0, Math.ceil((new Date(sub.trial_end).getTime() - Date.now()) / 86400000))
-    : 0;
 
   const currentIdx = UPGRADE_ORDER.indexOf(sub.plan || 'starter');
   // Show all other plans (upgrades AND downgrades)
@@ -165,24 +157,6 @@ export default function BackroomSubscription() {
           }
         />
 
-        {/* Trial Banner */}
-        {isTrialing && (
-          <Card className="bg-primary/5 border-primary/20 max-w-4xl">
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                <Clock className="w-4 h-4 text-primary" />
-              </div>
-              <div>
-                <p className={cn(tokens.label.default, 'text-sm text-primary')}>
-                  Free trial — {trialDaysLeft} day{trialDaysLeft !== 1 ? 's' : ''} remaining
-                </p>
-                <p className="text-xs text-muted-foreground font-sans mt-0.5">
-                  Your trial ends {trialEndDate}. No charge until then. Cancel anytime.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl">
           {/* Current Plan */}
@@ -204,11 +178,6 @@ export default function BackroomSubscription() {
                   <Badge variant="outline" className="font-sans text-[10px]">
                     {isAnnual ? 'Annual' : 'Monthly'}
                   </Badge>
-                  {isTrialing && (
-                    <Badge className="bg-primary/10 text-primary border-primary/20 font-sans text-[10px]">
-                      Trial
-                    </Badge>
-                  )}
                 </div>
                 <div className="flex items-baseline gap-1">
                   <span className="text-2xl font-display tracking-wide text-foreground">
@@ -221,18 +190,13 @@ export default function BackroomSubscription() {
               <div className="border-t border-border/40 pt-3 text-sm font-sans text-muted-foreground space-y-1">
                 <div className="flex justify-between">
                   <span>Status</span>
-                  <Badge className={cn(
-                    'font-sans text-[10px]',
-                    isTrialing
-                      ? 'bg-primary/10 text-primary border-primary/20'
-                      : 'bg-primary/10 text-primary border-primary/20',
-                  )}>
-                    {isTrialing ? 'Trialing' : sub.status === 'active' ? 'Active' : sub.status}
+                  <Badge className="bg-primary/10 text-primary border-primary/20 font-sans text-[10px]">
+                    {sub.status === 'active' ? 'Active' : sub.status}
                   </Badge>
                 </div>
                 <div className="flex justify-between">
-                  <span>{isTrialing ? 'Trial ends' : 'Renewal'}</span>
-                  <span className="text-foreground">{isTrialing ? trialEndDate : renewalDate}</span>
+                  <span>Renewal</span>
+                  <span className="text-foreground">{renewalDate}</span>
                 </div>
               </div>
             </CardContent>

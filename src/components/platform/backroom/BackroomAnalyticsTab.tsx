@@ -133,7 +133,6 @@ export function BackroomAnalyticsTab() {
           icon={Building2}
           label="Enabled Orgs"
           value={String(metrics.totalEnabledOrgs)}
-          subtitle={`${metrics.totalTrialOrgs} in trial`}
         />
         <KPICard
           icon={DollarSign}

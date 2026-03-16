@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Building2, Search, Loader2, ChevronDown, ChevronRight, MapPin, Scale, Clock, Play, AlertTriangle, ShieldCheck, Undo2, CreditCard, Send } from 'lucide-react';
+import { Building2, Search, Loader2, ChevronDown, ChevronRight, MapPin, Scale, AlertTriangle, ShieldCheck, Undo2, CreditCard, Send } from 'lucide-react';
 import { useBatchPaymentMethods, type PaymentMethodInfo } from '@/hooks/platform/useBatchPaymentMethods';
 import { useSendPaymentSetupLink } from '@/hooks/platform/useSendPaymentSetupLink';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
@@ -72,7 +72,6 @@ interface OrgLocation {
 function statusBadge(status: string) {
   const map: Record<string, { label: string; variant: 'default' | 'success' | 'warning' | 'error' | 'info' }> = {
     active: { label: 'Active', variant: 'success' },
-    trial: { label: 'Trial', variant: 'warning' },
     cancelled: { label: 'Cancelled', variant: 'error' },
     suspended: { label: 'Suspended', variant: 'error' },
     refunded: { label: 'Refunded', variant: 'info' },
@@ -251,7 +250,7 @@ export function BackroomEntitlementsTab() {
 
   const toggleLocationEntitlement = (orgId: string, locationId: string) => {
     const existing = entitlementMap.get(locationId);
-    if (existing && (existing.status === 'active' || existing.status === 'trial')) {
+    if (existing && existing.status === 'active') {
       deleteLocEnt.mutate(
         { organization_id: orgId, location_id: locationId },
         { onSuccess: () => toast.success('Location entitlement removed') }
@@ -659,7 +658,7 @@ function LocationEntitlementPanel({
   const activeLocCount = locations.filter(
     (l) => {
       const ent = entitlementMap.get(l.id);
-      return ent && (ent.status === 'active' || ent.status === 'trial');
+      return ent && ent.status === 'active';
     }
   ).length;
 
@@ -711,15 +710,14 @@ function LocationEntitlementPanel({
               <th className="font-sans text-xs text-slate-400 text-left px-4 py-2">Plan</th>
               <th className="font-sans text-xs text-slate-400 text-left px-4 py-2">Refund</th>
               <th className="font-sans text-xs text-slate-400 text-left px-4 py-2">Scales</th>
-              <th className="font-sans text-xs text-slate-400 text-left px-4 py-2">Trial End</th>
-              <th className="font-sans text-xs text-slate-400 text-left px-4 py-2">Actions</th>
+              <th className="font-sans text-xs text-slate-400 text-left px-4 py-2">Subscription</th>
               <th className="font-sans text-xs text-slate-400 text-right px-4 py-2">Access</th>
             </tr>
           </thead>
           <tbody>
             {locations.map((loc) => {
               const ent = entitlementMap.get(loc.id);
-              const isActive = ent && (ent.status === 'active' || ent.status === 'trial');
+              const isActive = ent && ent.status === 'active';
 
               return (
                 <tr
@@ -838,66 +836,13 @@ function LocationEntitlementPanel({
                     )}
                   </td>
                   <td className="px-4 py-2.5">
-                    {ent?.status === 'trial' && ent.trial_end_date ? (
-                      <div className="flex items-center gap-1.5">
-                        <Clock className="w-3 h-3 text-slate-500" />
-                        <span className={cn(
-                          'font-sans text-xs tabular-nums',
-                          new Date(ent.trial_end_date) < new Date() ? 'text-red-400' : 'text-amber-400'
-                        )}>
-                          {(() => {
-                            const diff = Math.ceil((new Date(ent.trial_end_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-                            if (diff < 0) return `${Math.abs(diff)}d overdue`;
-                            if (diff === 0) return 'Today';
-                            return `${diff}d left`;
-                          })()}
-                        </span>
-                      </div>
-                    ) : (
-                      <span className="font-sans text-xs text-slate-500">—</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-2.5">
-                    {!isActive && (
-                      <PlatformButton
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 text-xs"
-                        onClick={() => {
-                          const trialEnd = new Date();
-                          trialEnd.setDate(trialEnd.getDate() + 14);
-                          onUpdateEntitlement(loc.id, {
-                            status: 'trial',
-                            plan_tier: 'starter',
-                          });
-                          // Also set trial_end_date via direct upsert
-                          supabase
-                            .from('backroom_location_entitlements')
-                            .upsert(
-                              {
-                                organization_id: orgId,
-                                location_id: loc.id,
-                                plan_tier: 'starter',
-                                scale_count: 0,
-                                status: 'trial',
-                                trial_end_date: trialEnd.toISOString(),
-                                activated_at: new Date().toISOString(),
-                              } as any,
-                              { onConflict: 'organization_id,location_id' }
-                            )
-                            .then(() => {
-                              toast.success('14-day trial started');
-                            });
-                        }}
-                      >
-                        <Play className="w-3 h-3" />
-                        Start Trial
-                      </PlatformButton>
-                    )}
                     {ent?.stripe_subscription_id && (
                       <span className="font-sans text-[10px] text-slate-500 font-mono truncate max-w-[100px] block">
                         {ent.stripe_subscription_id.slice(0, 16)}…
                       </span>
+                    )}
+                    {!isActive && !ent?.stripe_subscription_id && (
+                      <span className="font-sans text-xs text-slate-500">—</span>
                     )}
                   </td>
                   <td className="px-4 py-2.5 text-right">
