@@ -3,7 +3,7 @@ import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import {
   Package, Beaker, BarChart3, Shield, Zap, ArrowRight, Loader2,
-  Minus, Plus, Scale, ShieldCheck, MapPin, TrendingDown, DollarSign, Activity,
+  Minus, Plus, Scale, Droplets, ShieldCheck, MapPin, TrendingDown, DollarSign, Activity,
   ChevronUp, Info, Clock, Eye, AlertTriangle, CheckCircle2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -407,7 +407,7 @@ export function BackroomPaywall() {
       <div className="max-w-5xl w-full space-y-8">
         <div className="text-center space-y-4">
           <div className="mx-auto w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-            <Scale className="w-8 h-8 text-primary" />
+            <Droplets className="w-8 h-8 text-primary" />
           </div>
           <h1 className={cn(tokens.heading.page, 'text-2xl')}>
             Zura Backroom
@@ -807,7 +807,7 @@ export function BackroomPaywall() {
                 {/* Header */}
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                    <Scale className="w-5 h-5 text-primary" />
+                    <Droplets className="w-5 h-5 text-primary" />
                   </div>
                   <div>
                     <p className={cn(tokens.label.default, 'text-foreground')}>Precision Scales</p>
