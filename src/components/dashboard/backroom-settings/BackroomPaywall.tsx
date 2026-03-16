@@ -223,6 +223,8 @@ export function BackroomPaywall() {
   const [auditMinutesPerDay, setAuditMinutesPerDay] = useState(30);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [activeFeature, setActiveFeature] = useState('mixing');
+  const [heroStep, setHeroStep] = useState(0);
+  const [heroWeight, setHeroWeight] = useState(0);
 
   const { effectiveOrganization } = useOrganizationContext();
   const { data: locations = [] } = useLocations(effectiveOrganization?.id);
