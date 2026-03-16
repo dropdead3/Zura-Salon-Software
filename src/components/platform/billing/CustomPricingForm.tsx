@@ -52,10 +52,10 @@ export function CustomPricingForm({
   return (
     <div className="space-y-4">
       {/* Custom Price Toggle */}
-      <div className="flex items-center justify-between p-3 rounded-lg bg-slate-800/50 border border-slate-700/50">
+      <div className="flex items-center justify-between p-3 rounded-lg bg-[hsl(var(--platform-bg-card)/0.5)] border border-[hsl(var(--platform-border)/0.5)]">
         <div>
           <PlatformLabel className="text-sm font-medium">Custom Pricing</PlatformLabel>
-          <p className="text-xs text-slate-500 mt-0.5">Override the standard plan price</p>
+          <p className="text-xs text-[hsl(var(--platform-foreground-subtle))] mt-0.5">Override the standard plan price</p>
         </div>
         <Switch
           checked={customPriceEnabled}
@@ -64,12 +64,12 @@ export function CustomPricingForm({
       </div>
 
       {customPriceEnabled && (
-        <div className="space-y-4 pl-4 border-l-2 border-violet-500/30">
+        <div className="space-y-4 pl-4 border-l-2 border-[hsl(var(--platform-primary)/0.3)]">
           {/* Custom Price Input */}
           <div className="space-y-2">
             <PlatformLabel htmlFor="customPrice">Custom Monthly Price</PlatformLabel>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--platform-foreground-muted))]">$</span>
               <PlatformInput
                 id="customPrice"
                 type="number"
@@ -81,14 +81,14 @@ export function CustomPricingForm({
                 className="pl-7"
               />
             </div>
-            <p className="text-xs text-slate-500">Base price: {formatCurrencyWhole(basePrice)}/mo</p>
+            <p className="text-xs text-[hsl(var(--platform-foreground-subtle))]">Base price: {formatCurrencyWhole(basePrice)}/mo</p>
           </div>
 
           {/* OR use discount */}
-          <div className="flex items-center gap-3 text-xs text-slate-500">
-            <div className="flex-1 border-t border-slate-700" />
+          <div className="flex items-center gap-3 text-xs text-[hsl(var(--platform-foreground-subtle))]">
+            <div className="flex-1 border-t border-[hsl(var(--platform-border))]" />
             <span>OR apply a discount</span>
-            <div className="flex-1 border-t border-slate-700" />
+            <div className="flex-1 border-t border-[hsl(var(--platform-border))]" />
           </div>
 
           {/* Discount Type */}
@@ -114,7 +114,7 @@ export function CustomPricingForm({
               <div className="space-y-2">
                 <PlatformLabel>Discount Value</PlatformLabel>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--platform-foreground-muted))]">
                     {discountType === 'percentage' ? '%' : '$'}
                   </span>
                   <PlatformInput

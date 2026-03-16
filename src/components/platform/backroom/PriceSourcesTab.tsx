@@ -94,14 +94,14 @@ export function PriceSourcesTab() {
       <PlatformCardHeader className="flex flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-[hsl(var(--platform-bg-hover))] flex items-center justify-center">
-            <Database className="w-5 h-5 text-violet-400" />
+            <Database className="w-5 h-5 text-[hsl(var(--platform-primary))]" />
           </div>
           <div>
             <PlatformCardTitle>Price Sources</PlatformCardTitle>
             <PlatformCardDescription>
               Configure distributor API integrations for wholesale pricing
               {lastSyncTime && (
-                <span className="block text-xs text-slate-500 mt-0.5">
+                <span className="block text-xs text-[hsl(var(--platform-foreground-subtle))] mt-0.5">
                   Last auto-sync: {new Date(lastSyncTime).toLocaleString()}
                 </span>
               )}
@@ -182,26 +182,26 @@ export function PriceSourcesTab() {
         ) : (
           <Table>
             <TableHeader>
-              <TableRow className="border-slate-700/50">
-                <TableHead className="font-sans text-xs text-slate-400">Brand</TableHead>
-                <TableHead className="font-sans text-xs text-slate-400">Type</TableHead>
-                <TableHead className="font-sans text-xs text-slate-400">Frequency</TableHead>
-                <TableHead className="font-sans text-xs text-slate-400">Last Polled</TableHead>
-                <TableHead className="font-sans text-xs text-slate-400">Active</TableHead>
-                <TableHead className="font-sans text-xs text-slate-400 text-right pr-4">Actions</TableHead>
+              <TableRow className="border-[hsl(var(--platform-border)/0.5)]">
+                <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Brand</TableHead>
+                <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Type</TableHead>
+                <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Frequency</TableHead>
+                <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Last Polled</TableHead>
+                <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Active</TableHead>
+                <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))] text-right pr-4">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {sources.map((source) => (
-                <TableRow key={source.id} className="border-slate-700/30">
-                  <TableCell className="font-sans text-sm font-medium text-slate-200">{source.brand}</TableCell>
+                <TableRow key={source.id} className="border-[hsl(var(--platform-border)/0.3)]">
+                  <TableCell className="font-sans text-sm font-medium text-[hsl(var(--platform-foreground))]">{source.brand}</TableCell>
                   <TableCell>
                     <PlatformBadge variant="outline" size="sm">
                       {source.source_type === 'api' ? 'API' : 'CSV'}
                     </PlatformBadge>
                   </TableCell>
-                  <TableCell className="font-sans text-sm capitalize text-slate-300">{source.scrape_frequency}</TableCell>
-                  <TableCell className="font-sans text-sm text-slate-500">
+                  <TableCell className="font-sans text-sm capitalize text-[hsl(var(--platform-foreground)/0.85)]">{source.scrape_frequency}</TableCell>
+                  <TableCell className="font-sans text-sm text-[hsl(var(--platform-foreground-subtle))]">
                     {source.last_polled_at
                       ? new Date(source.last_polled_at).toLocaleDateString()
                       : 'Never'}

@@ -56,28 +56,26 @@ export function LinkPandaDocDialog({ open, onOpenChange, organizationId }: LinkP
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="documentId" className="text-slate-300">Document ID</Label>
+            <Label htmlFor="documentId" className="text-[hsl(var(--platform-foreground)/0.85)]">Document ID</Label>
             <Input
               id="documentId"
               value={documentId}
               onChange={(e) => setDocumentId(e.target.value)}
               placeholder="e.g., msfYWeHLfFJ3Yy3zyEQWpN"
-              className="bg-slate-800 border-slate-700 text-white"
               autoCapitalize="none"
             />
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-[hsl(var(--platform-foreground-subtle))]">
               Found in the URL: app.pandadoc.com/a/#/documents/<strong>[document_id]</strong>
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="documentName" className="text-slate-300">Document Name</Label>
+            <Label htmlFor="documentName" className="text-[hsl(var(--platform-foreground)/0.85)]">Document Name</Label>
             <Input
               id="documentName"
               value={documentName}
               onChange={(e) => setDocumentName(e.target.value)}
               placeholder="e.g., Service Agreement - 2026"
-              className="bg-slate-800 border-slate-700 text-white"
             />
           </div>
 
@@ -86,14 +84,12 @@ export function LinkPandaDocDialog({ open, onOpenChange, organizationId }: LinkP
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
-              className="border-slate-700 text-slate-300"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={!documentId.trim() || !documentName.trim() || linkDocument.isPending}
-              className="bg-violet-600 hover:bg-violet-700"
             >
               {linkDocument.isPending ? 'Linking...' : 'Link Document'}
             </Button>

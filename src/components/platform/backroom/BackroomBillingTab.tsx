@@ -43,20 +43,20 @@ function BillingKPICard({
       <PlatformCardContent className="p-5 pt-5">
         <div className="flex items-start justify-between">
           <div className="space-y-1">
-            <p className="font-display text-xs tracking-wide uppercase text-slate-400">{label}</p>
+            <p className="font-display text-xs tracking-wide uppercase text-[hsl(var(--platform-foreground-muted))]">{label}</p>
             <p className={cn(
               'font-display text-2xl tracking-tight',
               variant === 'danger' ? 'text-red-400' : 'text-[hsl(var(--platform-foreground))]'
             )}>
               {value}
             </p>
-            {subtitle && <p className="font-sans text-xs text-slate-500">{subtitle}</p>}
+            {subtitle && <p className="font-sans text-xs text-[hsl(var(--platform-foreground-subtle))]">{subtitle}</p>}
           </div>
           <div className={cn(
             'w-10 h-10 rounded-lg flex items-center justify-center',
             variant === 'danger' ? 'bg-red-500/10' : 'bg-[hsl(var(--platform-bg-hover))]'
           )}>
-            <Icon className={cn('w-5 h-5', variant === 'danger' ? 'text-red-400' : 'text-violet-400')} />
+            <Icon className={cn('w-5 h-5', variant === 'danger' ? 'text-red-400' : 'text-[hsl(var(--platform-primary))]')} />
           </div>
         </div>
       </PlatformCardContent>
@@ -143,7 +143,7 @@ export function BackroomBillingTab() {
         <PlatformCardHeader className="flex flex-row items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-[hsl(var(--platform-bg-hover))] flex items-center justify-center">
-              <CreditCard className="w-5 h-5 text-violet-400" />
+              <CreditCard className="w-5 h-5 text-[hsl(var(--platform-primary))]" />
             </div>
             <div>
               <PlatformCardTitle>Billing Health</PlatformCardTitle>
@@ -155,7 +155,7 @@ export function BackroomBillingTab() {
           <div className="flex items-center gap-3">
             <label className="flex items-center gap-2 cursor-pointer">
               <Switch checked={showAtRiskOnly} onCheckedChange={setShowAtRiskOnly} />
-              <span className="font-sans text-xs text-slate-400">At-risk only</span>
+              <span className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">At-risk only</span>
             </label>
             <PlatformInput
               icon={<Search className="w-4 h-4" />}
@@ -180,38 +180,38 @@ export function BackroomBillingTab() {
           ) : (
             <Table>
               <TableHeader>
-                <TableRow className="border-slate-700/50">
-                  <TableHead className="font-sans text-xs text-slate-400">Organization</TableHead>
-                  <TableHead className="font-sans text-xs text-slate-400">Status</TableHead>
-                  <TableHead className="font-sans text-xs text-slate-400">Locations</TableHead>
-                  <TableHead className="font-sans text-xs text-slate-400">Scales</TableHead>
-                  <TableHead className="font-sans text-xs text-slate-400 text-right pr-4">Est. MRR</TableHead>
+                <TableRow className="border-[hsl(var(--platform-border)/0.5)]">
+                  <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Organization</TableHead>
+                  <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Status</TableHead>
+                  <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Locations</TableHead>
+                  <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Scales</TableHead>
+                  <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))] text-right pr-4">Est. MRR</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filtered.map((org) => (
-                  <TableRow key={org.orgId} className="border-slate-700/30">
+                  <TableRow key={org.orgId} className="border-[hsl(var(--platform-border)/0.3)]">
                     <TableCell>
                       <div>
-                        <span className="font-sans text-sm font-medium text-slate-200">{org.orgName}</span>
+                        <span className="font-sans text-sm font-medium text-[hsl(var(--platform-foreground))]">{org.orgName}</span>
                         {org.billingEmail && (
-                          <p className="font-sans text-xs text-slate-500 truncate max-w-[200px]">{org.billingEmail}</p>
+                          <p className="font-sans text-xs text-[hsl(var(--platform-foreground-subtle))] truncate max-w-[200px]">{org.billingEmail}</p>
                         )}
                       </div>
                     </TableCell>
                     <TableCell>{subscriptionBadge(org.subscriptionStatus)}</TableCell>
                     <TableCell>
                       <div className="font-sans text-xs space-y-0.5">
-                        <div className="text-slate-300">{org.activeLocationCount} active</div>
+                        <div className="text-[hsl(var(--platform-foreground)/0.85)]">{org.activeLocationCount} active</div>
                         {org.suspendedLocationCount > 0 && (
                           <div className="text-red-400">{org.suspendedLocationCount} suspended</div>
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="font-sans text-sm tabular-nums text-slate-300">
+                    <TableCell className="font-sans text-sm tabular-nums text-[hsl(var(--platform-foreground)/0.85)]">
                       {org.totalScales}
                     </TableCell>
-                    <TableCell className="font-sans text-sm tabular-nums text-slate-200 text-right pr-4">
+                    <TableCell className="font-sans text-sm tabular-nums text-[hsl(var(--platform-foreground))] text-right pr-4">
                       ${org.estimatedMRR.toLocaleString()}
                     </TableCell>
                   </TableRow>

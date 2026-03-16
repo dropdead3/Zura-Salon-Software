@@ -38,13 +38,8 @@ export function KBArticlesList({ onEditArticle }: KBArticlesListProps) {
     if (!articles) return [];
     
     return articles.filter((article) => {
-      // Status filter
       if (statusFilter !== 'all' && article.status !== statusFilter) return false;
-      
-      // Category filter
       if (categoryFilter !== 'all' && article.category_id !== categoryFilter) return false;
-      
-      // Search filter
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
         return (
@@ -53,7 +48,6 @@ export function KBArticlesList({ onEditArticle }: KBArticlesListProps) {
           article.content.toLowerCase().includes(query)
         );
       }
-      
       return true;
     });
   }, [articles, statusFilter, categoryFilter, searchQuery]);
@@ -81,10 +75,10 @@ export function KBArticlesList({ onEditArticle }: KBArticlesListProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium text-slate-300">Articles</h3>
+        <h3 className="text-sm font-medium text-[hsl(var(--platform-foreground)/0.85)]">Articles</h3>
         <div className="flex items-center gap-2">
           <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[hsl(var(--platform-foreground-subtle))]" />
             <PlatformInput
               placeholder="Search articles..."
               value={searchQuery}
@@ -120,48 +114,48 @@ export function KBArticlesList({ onEditArticle }: KBArticlesListProps) {
       </div>
 
       {isLoading ? (
-        <div className="text-slate-500 text-sm">Loading articles...</div>
+        <div className="text-[hsl(var(--platform-foreground-subtle))] text-sm">Loading articles...</div>
       ) : filteredArticles.length === 0 ? (
-        <div className="text-center py-8 text-slate-500">
+        <div className="text-center py-8 text-[hsl(var(--platform-foreground-subtle))]">
           {articles?.length === 0 ? 'No articles yet. Create your first article!' : 'No articles match your filters.'}
         </div>
       ) : (
-        <div className="rounded-lg border border-slate-700/50 overflow-hidden">
+        <div className="rounded-lg border border-[hsl(var(--platform-border)/0.5)] overflow-hidden">
           <table className="w-full">
-            <thead className="bg-slate-800/50">
+            <thead className="bg-[hsl(var(--platform-bg-card)/0.5)]">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-[hsl(var(--platform-foreground-muted))] uppercase tracking-wider">
                   Article
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-[hsl(var(--platform-foreground-muted))] uppercase tracking-wider">
                   Category
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-[hsl(var(--platform-foreground-muted))] uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-[hsl(var(--platform-foreground-muted))] uppercase tracking-wider">
                   Views
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">
+                <th className="px-4 py-3 text-right text-xs font-medium text-[hsl(var(--platform-foreground-muted))] uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-700/50">
+            <tbody className="divide-y divide-[hsl(var(--platform-border)/0.5)]">
               {filteredArticles.map((article) => (
-                <tr key={article.id} className="hover:bg-slate-800/30 transition-colors">
+                <tr key={article.id} className="hover:bg-[hsl(var(--platform-bg-card)/0.3)] transition-colors">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       {article.is_featured && (
                         <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
                       )}
                       {article.is_pinned && (
-                        <Pin className="h-4 w-4 text-violet-400" />
+                        <Pin className="h-4 w-4 text-[hsl(var(--platform-primary))]" />
                       )}
                       <div>
-                        <div className="font-medium text-white">{article.title}</div>
+                        <div className="font-medium text-[hsl(var(--platform-foreground))]">{article.title}</div>
                         {article.summary && (
-                          <div className="text-xs text-slate-500 truncate max-w-xs">
+                          <div className="text-xs text-[hsl(var(--platform-foreground-subtle))] truncate max-w-xs">
                             {article.summary}
                           </div>
                         )}
@@ -169,7 +163,7 @@ export function KBArticlesList({ onEditArticle }: KBArticlesListProps) {
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <span className="text-sm text-slate-400">
+                    <span className="text-sm text-[hsl(var(--platform-foreground-muted))]">
                       {article.category?.name || 'Uncategorized'}
                     </span>
                   </td>
@@ -180,19 +174,19 @@ export function KBArticlesList({ onEditArticle }: KBArticlesListProps) {
                         'text-xs',
                         article.status === 'published'
                           ? 'border-emerald-500/50 text-emerald-400 bg-emerald-500/10'
-                          : 'border-slate-600 text-slate-400'
+                          : 'border-[hsl(var(--platform-border))] text-[hsl(var(--platform-foreground-muted))]'
                       )}
                     >
                       {article.status === 'published' ? '● Published' : '○ Draft'}
                     </Badge>
                     {article.published_at && (
-                      <div className="text-xs text-slate-500 mt-0.5">
+                      <div className="text-xs text-[hsl(var(--platform-foreground-subtle))] mt-0.5">
                         {formatDistanceToNow(new Date(article.published_at), { addSuffix: true })}
                       </div>
                     )}
                   </td>
                   <td className="px-4 py-3">
-                    <span className="text-sm text-slate-400">
+                    <span className="text-sm text-[hsl(var(--platform-foreground-muted))]">
                       {article.view_count.toLocaleString()}
                     </span>
                   </td>
@@ -225,7 +219,7 @@ export function KBArticlesList({ onEditArticle }: KBArticlesListProps) {
                         className="h-8 w-8 p-0"
                         title={article.status === 'published' ? 'Unpublish' : 'Publish'}
                       >
-                        <Eye className={cn('h-4 w-4', article.status === 'draft' && 'text-slate-600')} />
+                        <Eye className={cn('h-4 w-4', article.status === 'draft' && 'text-[hsl(var(--platform-foreground-subtle)/0.7)]')} />
                       </PlatformButton>
                       <PlatformButton
                         variant="ghost"
