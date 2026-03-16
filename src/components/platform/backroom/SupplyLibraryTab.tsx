@@ -319,7 +319,7 @@ export function SupplyLibraryTab() {
                               setInlineEditing(null);
                             }}
                           >
-                            <SelectTrigger className="h-7 w-16 font-sans text-xs bg-slate-800/50 border-slate-700/50 text-slate-300"><SelectValue /></SelectTrigger>
+                            <SelectTrigger className="h-7 w-16 font-sans text-xs"><SelectValue /></SelectTrigger>
                             <SelectContent>
                               {UNITS.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}
                             </SelectContent>

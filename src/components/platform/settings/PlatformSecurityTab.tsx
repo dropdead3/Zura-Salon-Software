@@ -181,15 +181,15 @@ export function PlatformSecurityTab() {
               value={String(localSettings.session_timeout_minutes ?? 30)} 
               onValueChange={(v) => updateField('session_timeout_minutes', parseInt(v))}
             >
-              <SelectTrigger className="w-40 bg-slate-800 border-slate-700 text-white">
+              <SelectTrigger className="w-40">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-slate-900 border-slate-700">
-                <SelectItem value="15" className="text-slate-300">15 minutes</SelectItem>
-                <SelectItem value="30" className="text-slate-300">30 minutes</SelectItem>
-                <SelectItem value="60" className="text-slate-300">1 hour</SelectItem>
-                <SelectItem value="120" className="text-slate-300">2 hours</SelectItem>
-                <SelectItem value="480" className="text-slate-300">8 hours</SelectItem>
+              <SelectContent>
+                <SelectItem value="15">15 minutes</SelectItem>
+                <SelectItem value="30">30 minutes</SelectItem>
+                <SelectItem value="60">1 hour</SelectItem>
+                <SelectItem value="120">2 hours</SelectItem>
+                <SelectItem value="480">8 hours</SelectItem>
               </SelectContent>
             </Select>
           </div>

@@ -176,7 +176,7 @@ export function PriceQueueTab() {
               </SelectContent>
             </Select>
             <Select value={brandFilter} onValueChange={(v) => { setBrandFilter(v); setPage(0); }}>
-              <SelectTrigger className="w-36 h-9 font-sans text-sm bg-slate-800/50 border-slate-700/50 text-slate-300">
+              <SelectTrigger className="w-36 h-9 font-sans text-sm">
                 <SelectValue placeholder="All Brands" />
               </SelectTrigger>
               <SelectContent>

@@ -229,7 +229,7 @@ export function KBCategoryManager() {
                 value={formData.icon}
                 onValueChange={(value) => setFormData({ ...formData, icon: value })}
               >
-                <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
+                <SelectTrigger>
                   <SelectValue>
                     <div className="flex items-center gap-2">
                       <Icon className="h-4 w-4" />
@@ -237,11 +237,11 @@ export function KBCategoryManager() {
                     </div>
                   </SelectValue>
                 </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700">
+                <SelectContent>
                   {ICON_OPTIONS.map((iconName) => {
                     const OptionIcon = getIcon(iconName);
                     return (
-                      <SelectItem key={iconName} value={iconName} className="text-white">
+                      <SelectItem key={iconName} value={iconName}>
                         <div className="flex items-center gap-2">
                           <OptionIcon className="h-4 w-4" />
                           {iconName}

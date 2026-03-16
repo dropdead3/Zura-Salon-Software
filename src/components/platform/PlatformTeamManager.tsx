@@ -179,7 +179,7 @@ export function PlatformTeamManager() {
                   const config = roleConfig[role];
                   const Icon = config.icon;
                   return (
-                    <SelectItem key={role} value={role} className="text-slate-300">
+                    <SelectItem key={role} value={role}>
                       <div className="flex items-center gap-2">
                         <Icon className="w-3 h-3" />
                         {config.label}
