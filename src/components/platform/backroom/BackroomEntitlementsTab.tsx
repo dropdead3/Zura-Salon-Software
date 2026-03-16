@@ -47,6 +47,7 @@ import {
   type BackroomLocationEntitlement,
 } from '@/hooks/backroom/useBackroomLocationEntitlements';
 import { toast } from 'sonner';
+import { formatRelativeTime } from '@/lib/format';
 
 interface OrgWithBackroom {
   id: string;
