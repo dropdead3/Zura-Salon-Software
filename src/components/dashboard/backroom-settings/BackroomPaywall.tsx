@@ -894,7 +894,8 @@ export function BackroomPaywall() {
           </div>
         </section>
 
-
+        {/* ═══════════════════════════════════════════
+            SECTION 4.5 — COMPETITOR COMPARISON
             ═══════════════════════════════════════════ */}
         <section className="pb-20 md:pb-24">
           <CompetitorComparison />
