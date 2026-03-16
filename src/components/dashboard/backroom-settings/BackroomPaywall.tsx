@@ -33,69 +33,6 @@ import { toast } from 'sonner';
 import { BackroomCheckoutConfirmDialog } from './BackroomCheckoutConfirmDialog';
 import { CompetitorComparison } from './CompetitorComparison';
 
-/* ─── Feature Groups (outcome-driven, 6 categories) ─── */
-const featureGroups = [
-  {
-    icon: Scale,
-    title: 'Smart Dispensing',
-    outcome: 'Know exactly what goes into every bowl.',
-    bullets: [
-      'Every gram dispensed is measured automatically',
-      'Formulas are saved as they\'re mixed',
-      'Excess product is flagged instantly',
-    ],
-  },
-  {
-    icon: Brain,
-    title: 'Formula Memory',
-    outcome: 'Your formulas are remembered automatically.',
-    bullets: [
-      'Pull up any client\'s last formula in seconds',
-      'Suggested ratios based on history',
-      'No more guessing what was used last time',
-    ],
-  },
-  {
-    icon: Users,
-    title: 'Assistant Workflows',
-    outcome: 'Assistants can prep bowls before services start.',
-    bullets: [
-      'Define each service\'s prep steps once',
-      'Assistants follow guided mixing screens',
-      'Notifications when bowls are ready',
-    ],
-  },
-  {
-    icon: PackageSearch,
-    title: 'Supply Intelligence',
-    outcome: 'Never run out of color during a service.',
-    bullets: [
-      'Alerts before stock runs low',
-      'Tomorrow\'s appointments drive today\'s orders',
-      'No more surprise shortages',
-    ],
-  },
-  {
-    icon: BarChart3,
-    title: 'Profit Visibility',
-    outcome: 'See which services make money and which don\'t.',
-    bullets: [
-      'True product cost for every appointment',
-      'See your real margins per service',
-      'Bill product costs back to clients automatically',
-    ],
-  },
-  {
-    icon: Shield,
-    title: 'Waste Control',
-    outcome: 'Find out where product disappears.',
-    bullets: [
-      'Spot product that disappears between uses',
-      'Know if bowls are being reweighed',
-      'Get notified when usage spikes',
-    ],
-  },
-];
 
 const howItWorks = [
   {
