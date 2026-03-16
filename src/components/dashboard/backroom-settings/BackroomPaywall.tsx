@@ -1222,9 +1222,12 @@ export function BackroomPaywall() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 60 }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className="fixed bottom-0 inset-x-0 z-40 border-t border-border/60 bg-card/80 backdrop-blur-xl shadow-[0_-4px_20px_rgba(0,0,0,0.08)]"
+            className={cn(
+              "fixed bottom-0 right-0 left-0 z-40 border-t border-border/60 bg-card/80 backdrop-blur-xl shadow-[0_-4px_20px_rgba(0,0,0,0.08)]",
+              sidebarCollapsed ? 'lg:left-20' : 'lg:left-72'
+            )}
           >
-            <div className="max-w-[1100px] mx-auto px-6 py-3 flex items-center justify-between gap-4">
+            <div className="max-w-[1100px] mx-auto px-6 lg:pr-20 py-3 flex items-center justify-between gap-4">
               <div className="flex items-center gap-3 min-w-0">
                 {hasPositiveBenefit && yearlySavings > 0 && (
                   <p className="font-sans text-sm text-muted-foreground hidden sm:block">
