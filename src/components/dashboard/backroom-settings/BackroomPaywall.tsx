@@ -641,7 +641,28 @@ export function BackroomPaywall() {
               </CardContent>
             </Card>
 
-            {/* 3. Feature Grid (the solution — moved down) */}
+            {/* 3. What You Get + Feature Grid */}
+            <div className="space-y-4">
+              <div className="space-y-3">
+                <p className={cn(tokens.label.default, 'text-foreground text-sm flex items-center gap-2')}>
+                  <Package className="w-4 h-4 text-primary" />
+                  What You Get
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 pl-1">
+                  {[
+                    'Precision scale integration at every station',
+                    'Per-gram dispensing and waste tracking',
+                    'Automated supply fee recovery',
+                    'Predictive reorder alerts',
+                    'Cost-per-service analytics',
+                  ].map((item) => (
+                    <div key={item} className="flex items-start gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
+                      <span className="text-xs text-muted-foreground font-sans">{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
               {features.map((f) => (
                 <Card key={f.title} className="bg-card/60 border-border/40">
