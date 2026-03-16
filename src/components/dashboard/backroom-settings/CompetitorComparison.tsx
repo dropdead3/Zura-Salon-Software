@@ -209,5 +209,6 @@ export function CompetitorComparison() {
         </CardContent>
       </Card>
     </div>
+    </TooltipProvider>
   );
 }
