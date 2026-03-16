@@ -17,13 +17,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { PlatformButton } from '@/components/platform/ui/PlatformButton';
 import {
   Dialog,
-  DialogContent,
-  DialogDescription,
+  PlatformDialogContent as DialogContent,
+  PlatformDialogDescription as DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+  PlatformDialogTitle as DialogTitle,
+} from '@/components/platform/ui/PlatformDialog';
 import {
   AlertDialog,
   AlertDialogAction,
