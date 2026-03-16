@@ -238,7 +238,7 @@ export function PlatformTeamManager() {
                                   <span className="text-xs text-emerald-400">Online</span>
                                 )}
                               </div>
-                              <p className="text-xs text-slate-500">
+                              <p className="text-xs text-[hsl(var(--platform-foreground-subtle))]">
                                 {member.email}
                               </p>
                             </div>
