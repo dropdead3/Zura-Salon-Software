@@ -604,7 +604,7 @@ function StepScalePairing({
               <Input
                 value={state.scaleModel}
                 onChange={(e) => setState((s) => ({ ...s, scaleModel: e.target.value }))}
-                placeholder="e.g. Acaia Pearl S"
+                placeholder="e.g. Precision Scale"
                 className="mt-1"
               />
             </div>

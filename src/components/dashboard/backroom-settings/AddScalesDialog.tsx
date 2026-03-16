@@ -69,7 +69,7 @@ export function AddScalesDialog({ open, onOpenChange }: AddScalesDialogProps) {
                 <Scale className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <p className={cn(tokens.label.default, 'text-foreground text-sm')}>Acaia Pearl Scale</p>
+                <p className={cn(tokens.label.default, 'text-foreground text-sm')}><p className={cn(tokens.label.default, 'text-foreground text-sm')}>Precision Scale</p></p>
                 <p className="text-xs text-muted-foreground font-sans">
                   ${SCALE_HARDWARE_PRICE} one-time + ${SCALE_LICENSE_MONTHLY}/mo each
                 </p>
