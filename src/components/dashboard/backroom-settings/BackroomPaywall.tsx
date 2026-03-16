@@ -25,6 +25,7 @@ import {
 } from '@/hooks/backroom/useLocationStylistCounts';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from 'sonner';
+import { BackroomCheckoutConfirmDialog } from './BackroomCheckoutConfirmDialog';
 
 const features = [
   {
