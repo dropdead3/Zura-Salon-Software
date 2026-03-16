@@ -17,6 +17,7 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useLocations } from '@/hooks/useLocations';
 import { useBackroomLocationEntitlements } from '@/hooks/backroom/useBackroomLocationEntitlements';
 import { useBackroomPricingEstimate } from '@/hooks/backroom/useBackroomPricingEstimate';
+import { usePerLocationColorServices } from '@/hooks/backroom/usePerLocationColorServices';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import {
   BACKROOM_BASE_PRICE, BACKROOM_PER_SERVICE_FEE,
@@ -64,6 +65,7 @@ export function BackroomPaywall() {
   const isMobile = useIsMobile();
 
   const { data: estimate, isLoading: estimateLoading } = useBackroomPricingEstimate(manualStylistCount);
+  const { data: perLocationData } = usePerLocationColorServices();
 
   const activeLocations = locations.filter((l) => l.is_active);
 
@@ -96,11 +98,17 @@ export function BackroomPaywall() {
   const totalLocations = activeLocations.length || 1;
   const locationFraction = locationCount / totalLocations;
 
-  // Auto-calculate recommended scales: 1 per 10 daily color services
-  const dailyColorServices = estimate
-    ? Math.round((estimate.monthlyColorServices * locationFraction) / 30)
-    : 0;
-  const recommendedScales = Math.max(1, Math.ceil(dailyColorServices / 10));
+  // Per-location scale recommendations
+  const perLocationScaleData = activeLocations
+    .filter((loc) => selectedLocationIds.has(loc.id))
+    .map((loc) => {
+      const metrics = perLocationData?.get(loc.id);
+      const avgDaily = metrics?.avgDailyColorServices ?? 0;
+      const scales = metrics ? metrics.recommendedScales : 1;
+      return { id: loc.id, name: loc.name, avgDaily, scales };
+    });
+
+  const recommendedScales = perLocationScaleData.reduce((sum, loc) => sum + loc.scales, 0) || 1;
 
   useEffect(() => {
     if (!manualScaleOverride && estimate) {
@@ -737,61 +745,102 @@ export function BackroomPaywall() {
               </Card>
             )}
 
-            {/* 6. Scale Configurator */}
+            {/* 6. Scale Configurator — Per-Location Breakdown */}
             <Card className="bg-card/60 border-border/40">
               <CardContent className="p-5">
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                      <Scale className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                      <p className={cn(tokens.label.default, 'text-foreground')}><p className={cn(tokens.label.default, 'text-foreground')}>Precision Scale</p></p>
-                      <p className="text-xs text-muted-foreground font-sans mt-0.5">
-                        ${SCALE_HARDWARE_PRICE} one-time + ${SCALE_LICENSE_MONTHLY}/mo per scale
-                      </p>
-                    </div>
+                {/* Header */}
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                    <Scale className="w-5 h-5 text-primary" />
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-8 w-8 rounded-lg"
-                      onClick={() => { setManualScaleOverride(true); setScaleCount(Math.max(0, scaleCount - 1)); }}
-                      disabled={scaleCount <= 0}
-                    >
-                      <Minus className="w-3.5 h-3.5" />
-                    </Button>
-                    <span className={cn(tokens.stat.large, 'w-8 text-center text-foreground')}>
-                      {scaleCount}
-                    </span>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-8 w-8 rounded-lg"
-                      onClick={() => { setManualScaleOverride(true); setScaleCount(Math.min(10, scaleCount + 1)); }}
-                      disabled={scaleCount >= 10}
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                    </Button>
+                  <div>
+                    <p className={cn(tokens.label.default, 'text-foreground')}>Precision Scales</p>
+                    <p className="text-xs text-muted-foreground font-sans mt-0.5">
+                      ${SCALE_HARDWARE_PRICE} one-time + ${SCALE_LICENSE_MONTHLY}/mo per scale
+                    </p>
                   </div>
                 </div>
-                {estimate && (
-                  <div className="mt-3 flex items-center justify-between">
-                    <p className="text-xs text-muted-foreground font-sans">
-                      Recommended: {recommendedScales} scale{recommendedScales !== 1 ? 's' : ''} (~{dailyColorServices} daily color services)
-                    </p>
-                    {manualScaleOverride && scaleCount !== recommendedScales && (
-                      <button
-                        type="button"
-                        className="text-xs text-primary font-sans hover:underline"
-                        onClick={() => { setManualScaleOverride(false); setScaleCount(recommendedScales); }}
-                      >
-                        Reset
-                      </button>
-                    )}
+
+                {/* Per-location breakdown */}
+                {perLocationScaleData.length > 0 && (
+                  <div className="mt-4 space-y-2">
+                    {perLocationScaleData.map((loc) => (
+                      <div key={loc.id} className="flex items-center justify-between text-xs font-sans">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <MapPin className="w-3 h-3 text-muted-foreground shrink-0" />
+                          <span className="text-foreground truncate">{loc.name}</span>
+                          <span className="text-muted-foreground shrink-0">~{loc.avgDaily}/day</span>
+                        </div>
+                        <span className="text-foreground shrink-0">
+                          {loc.scales} scale{loc.scales !== 1 ? 's' : ''}
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 )}
+
+                {/* Total + override controls */}
+                <div className="mt-3 pt-3 border-t border-border/40">
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-xs text-muted-foreground font-sans">
+                      Total: {recommendedScales} recommended
+                    </span>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8 rounded-lg"
+                        onClick={() => { setManualScaleOverride(true); setScaleCount(Math.max(0, scaleCount - 1)); }}
+                        disabled={scaleCount <= 0}
+                      >
+                        <Minus className="w-3.5 h-3.5" />
+                      </Button>
+                      <span className={cn(tokens.stat.large, 'w-8 text-center text-foreground')}>
+                        {scaleCount}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8 rounded-lg"
+                        onClick={() => { setManualScaleOverride(true); setScaleCount(Math.min(20, scaleCount + 1)); }}
+                        disabled={scaleCount >= 20}
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                  {manualScaleOverride && scaleCount !== recommendedScales && (
+                    <button
+                      type="button"
+                      className="text-xs text-primary font-sans hover:underline mt-1"
+                      onClick={() => { setManualScaleOverride(false); setScaleCount(recommendedScales); }}
+                    >
+                      Reset to recommended
+                    </button>
+                  )}
+                </div>
+
+                {/* Hardware + license cost summary */}
+                {scaleCount > 0 && (
+                  <div className="mt-3 pt-3 border-t border-border/40 space-y-1">
+                    <div className="flex justify-between text-xs font-sans">
+                      <span className="text-muted-foreground">Hardware</span>
+                      <span className="text-foreground">${hardwareTotal} one-time</span>
+                    </div>
+                    <div className="flex justify-between text-xs font-sans">
+                      <span className="text-muted-foreground">License</span>
+                      <span className="text-foreground">${scaleCost}/mo</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* iPad requirement notice */}
+                <div className="flex items-start gap-2 mt-3 p-3 rounded-lg bg-amber-500/5 border border-amber-500/20">
+                  <Info className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                  <p className="text-xs text-muted-foreground font-sans">
+                    Each scale station requires an <span className="text-foreground font-medium">iPad with Bluetooth</span> and a <span className="text-foreground font-medium">tablet stand</span> (not included).
+                  </p>
+                </div>
               </CardContent>
             </Card>
 
