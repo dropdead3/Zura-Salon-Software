@@ -415,7 +415,7 @@ export function BackroomPaywall() {
               <Card className="relative overflow-hidden min-h-[320px] bg-card/80 backdrop-blur-xl border-border/40 shadow-xl shadow-primary/5">
                 <CardContent className="p-6 flex flex-col justify-center min-h-[320px]">
                   {/* Step content */}
-                  <div key={heroStep} className="animate-fade-in space-y-4">
+                  <div key={heroStep} className="animate-fade-in-fast space-y-4">
                     {heroStep === 0 && (
                       <div className="flex flex-col items-center gap-4">
                         <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center">
