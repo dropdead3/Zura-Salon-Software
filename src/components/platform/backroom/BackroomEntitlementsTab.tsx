@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { AdminActivateDialog } from '@/components/platform/backroom/AdminActivateDialog';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
@@ -47,6 +47,7 @@ import {
   type BackroomLocationEntitlement,
 } from '@/hooks/backroom/useBackroomLocationEntitlements';
 import { toast } from 'sonner';
+import { formatRelativeTime } from '@/lib/format';
 
 interface OrgWithBackroom {
   id: string;
@@ -58,6 +59,7 @@ interface OrgWithBackroom {
   created_at: string | null;
   flag_created_at: string | null;
   stripe_customer_id: string | null;
+  last_setup_link_sent_at: string | null;
 }
 
 interface OrgLocation {
@@ -110,7 +112,7 @@ export function BackroomEntitlementsTab() {
     queryFn: async (): Promise<OrgWithBackroom[]> => {
       const { data: organizations, error: orgErr } = await supabase
         .from('organizations')
-        .select('id, name, subscription_tier, created_at, stripe_customer_id')
+        .select('id, name, subscription_tier, created_at, stripe_customer_id, last_setup_link_sent_at')
         .order('name');
 
       if (orgErr) throw orgErr;
@@ -138,6 +140,7 @@ export function BackroomEntitlementsTab() {
           created_at: org.created_at || null,
           flag_created_at: flag?.created_at || null,
           stripe_customer_id: org.stripe_customer_id || null,
+          last_setup_link_sent_at: org.last_setup_link_sent_at || null,
         };
       });
     },
@@ -461,33 +464,42 @@ export function BackroomEntitlementsTab() {
                               if (!org.stripe_customer_id) return <span className="text-slate-600">—</span>;
                               const pm = paymentMethods.get(org.id);
                               if (pmLoading) return <Loader2 className="w-3 h-3 animate-spin text-slate-500" />;
-                              if (!pm) return (
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <span className="text-slate-500 border-b border-dashed border-slate-600 cursor-help">No card</span>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="bottom" className="w-56 p-3">
-                                      <p className="text-xs text-muted-foreground mb-2">No payment method on file</p>
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          sendSetupLink.mutate(org.id);
-                                        }}
-                                        disabled={sendSetupLink.isPending}
-                                        className="inline-flex items-center gap-1.5 text-xs font-sans font-medium text-violet-400 hover:text-violet-300 transition-colors disabled:opacity-50"
-                                      >
-                                        {sendSetupLink.isPending ? (
-                                          <Loader2 className="w-3 h-3 animate-spin" />
-                                        ) : (
-                                          <Send className="w-3 h-3" />
+                              if (!pm) {
+                                const lastSent = org.last_setup_link_sent_at ? new Date(org.last_setup_link_sent_at) : null;
+                                const cooldownActive = lastSent ? (Date.now() - lastSent.getTime()) < 60 * 60 * 1000 : false;
+                                const timeAgo = lastSent ? formatRelativeTime(lastSent) : null;
+
+                                return (
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <span className="text-slate-500 border-b border-dashed border-slate-600 cursor-help">No card</span>
+                                      </TooltipTrigger>
+                                      <TooltipContent side="bottom" className="w-56 p-3">
+                                        <p className="text-xs text-muted-foreground mb-2">No payment method on file</p>
+                                        {timeAgo && (
+                                          <p className="text-xs text-muted-foreground/70 mb-2">Link sent {timeAgo}</p>
                                         )}
-                                        Send Setup Link
-                                      </button>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                              );
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            sendSetupLink.mutate(org.id);
+                                          }}
+                                          disabled={sendSetupLink.isPending || cooldownActive}
+                                          className="inline-flex items-center gap-1.5 text-xs font-sans font-medium text-violet-400 hover:text-violet-300 transition-colors disabled:opacity-50"
+                                        >
+                                          {sendSetupLink.isPending ? (
+                                            <Loader2 className="w-3 h-3 animate-spin" />
+                                          ) : (
+                                            <Send className="w-3 h-3" />
+                                          )}
+                                          {cooldownActive ? 'Cooldown active' : 'Send Setup Link'}
+                                        </button>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                );
+                              }
                               return (
                                 <span className="text-slate-300 flex items-center gap-1">
                                   <CreditCard className="w-3.5 h-3.5 text-slate-400" />
