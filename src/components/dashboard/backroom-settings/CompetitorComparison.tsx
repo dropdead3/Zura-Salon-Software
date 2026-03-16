@@ -1,6 +1,7 @@
 import { cn } from '@/lib/utils';
-import { CheckCircle2, MinusCircle, XCircle } from 'lucide-react';
+import { CheckCircle2, MinusCircle, XCircle, Info } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import React from 'react';
 
 /* ─── Status Indicators ─── */
@@ -23,6 +24,18 @@ type FeatureRow = {
 type FeatureCategory = {
   category: string;
   rows: FeatureRow[];
+};
+
+/* ─── Feature Tooltips ─── */
+const featureTooltips: Record<string, string> = {
+  'Ghost loss detection': 'Identifies product that disappears between inventory counts — shrinkage that isn\'t tied to any logged service or known waste.',
+  'Service blueprints': 'Predefined step-by-step workflows for each service type (mix, prep, process, rinse) so every stylist follows the same process.',
+  'Assistant prep workflows': 'Structured task queues that let assistants see what needs to be mixed and prepped before each appointment.',
+  'Predictive reorder alerts': 'Automatically flags products approaching reorder levels based on usage velocity, so you never run out mid-week.',
+  'Demand forecasting': 'Projects future product needs based on upcoming appointments and historical consumption patterns.',
+  'Cost-per-service profitability': 'Calculates the true product cost for each service performed, revealing which services actually make money.',
+  'Supply fee recovery': 'Automatically calculates a per-service supply charge you can pass to clients, recovering product costs transparently.',
+  'Full platform integration': 'Backroom data flows into scheduling, payroll, and analytics — no exports or third-party syncing required.',
 };
 
 const comparisonData: FeatureCategory[] = [
@@ -70,6 +83,7 @@ const columns = [
 
 export function CompetitorComparison() {
   return (
+    <TooltipProvider delayDuration={200}>
     <div className="space-y-8 md:space-y-10">
       <h2 className="font-display text-2xl md:text-3xl font-medium tracking-wide text-center text-foreground">
         How Zura Backroom Compares
@@ -121,7 +135,19 @@ export function CompetitorComparison() {
                         className="border-b border-border/20 last:border-0 transition-colors duration-150 hover:bg-muted/10"
                       >
                         <td className="px-6 py-4">
-                          <span className="font-sans text-sm text-foreground">{row.feature}</span>
+                          <span className="font-sans text-sm text-foreground inline-flex items-center gap-1.5">
+                            {row.feature}
+                            {featureTooltips[row.feature] && (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Info className="w-3.5 h-3.5 text-muted-foreground/40 hover:text-muted-foreground cursor-help shrink-0" />
+                                </TooltipTrigger>
+                                <TooltipContent side="right" className="max-w-[240px] text-xs font-sans">
+                                  {featureTooltips[row.feature]}
+                                </TooltipContent>
+                              </Tooltip>
+                            )}
+                          </span>
                         </td>
                         {columns.map((col) => (
                           <td key={col.key} className={cn(
@@ -183,5 +209,6 @@ export function CompetitorComparison() {
         </CardContent>
       </Card>
     </div>
+    </TooltipProvider>
   );
 }
