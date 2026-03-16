@@ -84,18 +84,6 @@ function statusBadge(status: string) {
   );
 }
 
-function planBadge(tier: string) {
-  const map: Record<string, 'default' | 'primary' | 'warning' | 'info'> = {
-    starter: 'default',
-    professional: 'primary',
-    unlimited: 'warning',
-  };
-  return (
-    <PlatformBadge variant={map[tier] || 'default'} size="sm">
-      {tier}
-    </PlatformBadge>
-  );
-}
 
 export function BackroomEntitlementsTab() {
   const [search, setSearch] = useState('');
@@ -217,20 +205,20 @@ export function BackroomEntitlementsTab() {
 
               if (locs && locs.length > 0) {
                 // Upsert active entitlements for all locations
-                await supabase
-                  .from('backroom_location_entitlements')
-                  .upsert(
-                    locs.map((l) => ({
-                      organization_id: org.id,
-                      location_id: l.id,
-                      plan_tier: 'starter',
-                      scale_count: 0,
-                      status: 'active',
-                      billing_interval: 'monthly',
-                      activated_at: new Date().toISOString(),
-                    })),
-                    { onConflict: 'organization_id,location_id' }
-                  );
+                    await supabase
+                      .from('backroom_location_entitlements')
+                      .upsert(
+                        locs.map((l) => ({
+                          organization_id: org.id,
+                          location_id: l.id,
+                          plan_tier: 'standard',
+                          scale_count: 0,
+                          status: 'active',
+                          billing_interval: 'monthly',
+                          activated_at: new Date().toISOString(),
+                        })),
+                        { onConflict: 'organization_id,location_id' }
+                      );
 
                 queryClient.invalidateQueries({ queryKey: ['platform-backroom-entitlements'] });
                 toast.success(`Backroom enabled for ${org.name} — all locations activated`);
@@ -346,7 +334,7 @@ export function BackroomEntitlementsTab() {
               {
                 organization_id: org.id,
                 location_id: loc.id,
-                plan_tier: 'starter',
+                plan_tier: 'standard',
                 scale_count: 0,
                 status: 'active',
                 activated_at: new Date().toISOString(),
@@ -707,7 +695,7 @@ function LocationEntitlementPanel({
             <tr className="border-b border-slate-700/40 bg-slate-800/40">
               <th className="font-sans text-xs text-slate-400 text-left px-4 py-2">Location</th>
               <th className="font-sans text-xs text-slate-400 text-left px-4 py-2">Status</th>
-              <th className="font-sans text-xs text-slate-400 text-left px-4 py-2">Plan</th>
+              <th className="font-sans text-xs text-slate-400 text-left px-4 py-2">Status</th>
               <th className="font-sans text-xs text-slate-400 text-left px-4 py-2">Refund</th>
               <th className="font-sans text-xs text-slate-400 text-left px-4 py-2">Scales</th>
               <th className="font-sans text-xs text-slate-400 text-left px-4 py-2">Subscription</th>

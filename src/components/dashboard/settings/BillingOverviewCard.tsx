@@ -9,15 +9,7 @@ import { useOrganizationBilling, useSubscriptionPlans } from '@/hooks/useOrganiz
 import { useBillingCalculations, formatCurrency, getBillingCycleLabel, getContractLengthLabel } from '@/hooks/useBillingCalculations';
 import { useTrialStatus } from '@/hooks/useTrialStatus';
 import { useBackroomLocationEntitlements } from '@/hooks/backroom/useBackroomLocationEntitlements';
-
-// Backroom tier pricing
-const BACKROOM_TIER_PRICES: Record<string, number> = {
-  starter: 39,
-  professional: 79,
-  unlimited: 129,
-};
-
-const SCALE_LICENSE_MONTHLY = 10;
+import { BACKROOM_BASE_PRICE, SCALE_LICENSE_MONTHLY } from '@/hooks/backroom/useLocationStylistCounts';
 
 export function BillingOverviewCard() {
   const { effectiveOrganization } = useOrganizationContext();
@@ -34,15 +26,12 @@ export function BillingOverviewCard() {
 
   const calculations = useBillingCalculations(billing, currentPlan);
 
-  // Calculate backroom costs
+  // Calculate backroom costs: $20/location + $10/scale
   const backroomTotal = useMemo(() => {
-    return entitlements
-      .filter(e => e.status === 'active')
-      .reduce((sum, e) => {
-        const tierCost = BACKROOM_TIER_PRICES[e.plan_tier] || 0;
-        const scaleCost = (e.scale_count || 0) * SCALE_LICENSE_MONTHLY;
-        return sum + tierCost + scaleCost;
-      }, 0);
+    const active = entitlements.filter(e => e.status === 'active');
+    const baseCost = active.length * BACKROOM_BASE_PRICE;
+    const scaleCost = active.reduce((sum, e) => sum + (e.scale_count || 0), 0) * SCALE_LICENSE_MONTHLY;
+    return baseCost + scaleCost;
   }, [entitlements]);
 
   const isLoading = billingLoading || plansLoading;

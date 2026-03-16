@@ -1,6 +1,6 @@
 /**
  * useLocationStylistCounts — Fetches the count of active stylists per location
- * for an organization. Used by the Backroom paywall to auto-assign plan tiers.
+ * for an organization. Used by the Backroom billing display.
  */
 
 import { useQuery } from '@tanstack/react-query';
@@ -10,6 +10,12 @@ export interface LocationStylistCount {
   location_id: string;
   count: number;
 }
+
+/** Flat pricing constants for Backroom */
+export const BACKROOM_BASE_PRICE = 20;
+export const BACKROOM_PER_SERVICE_FEE = 0.50;
+export const SCALE_LICENSE_MONTHLY = 10;
+export const SCALE_HARDWARE_PRICE = 199;
 
 export function useLocationStylistCounts(organizationId: string | undefined) {
   return useQuery({
@@ -67,53 +73,3 @@ export function useLocationStylistCounts(organizationId: string | undefined) {
     staleTime: 2 * 60_000,
   });
 }
-
-/** Determine the recommended plan tier based on stylist count. */
-export function getRecommendedTier(stylistCount: number): 'starter' | 'professional' | 'unlimited' {
-  if (stylistCount <= 3) return 'starter';
-  if (stylistCount <= 10) return 'professional';
-  return 'unlimited';
-}
-
-/** Tier progression info for a given stylist count. Returns null if already on Unlimited. */
-export interface TierProgressInfo {
-  currentTier: 'starter' | 'professional' | 'unlimited';
-  nextTier: 'professional' | 'unlimited';
-  currentCount: number;
-  thresholdMax: number;
-  remaining: number;
-  progressPct: number;
-  isAtBoundary: boolean;
-}
-
-export function getTierProgressInfo(stylistCount: number): TierProgressInfo | null {
-  if (stylistCount >= 11) return null; // Already unlimited
-  if (stylistCount <= 3) {
-    return {
-      currentTier: 'starter',
-      nextTier: 'professional',
-      currentCount: stylistCount,
-      thresholdMax: 3,
-      remaining: 4 - stylistCount, // need 4 to hit professional
-      progressPct: Math.round((stylistCount / 3) * 100),
-      isAtBoundary: stylistCount === 3,
-    };
-  }
-  // 4–10 → professional
-  return {
-    currentTier: 'professional',
-    nextTier: 'unlimited',
-    currentCount: stylistCount,
-    thresholdMax: 10,
-    remaining: 11 - stylistCount,
-    progressPct: Math.round(((stylistCount - 3) / 7) * 100),
-    isAtBoundary: stylistCount === 10,
-  };
-}
-
-/** Plan pricing lookup */
-export const PLAN_PRICING = {
-  starter: { name: 'Starter', price: 39, annualPrice: 33, range: '1–3 stylists' },
-  professional: { name: 'Professional', price: 79, annualPrice: 67, range: '4–10 stylists' },
-  unlimited: { name: 'Unlimited', price: 129, annualPrice: 110, range: '11+ stylists' },
-} as const;

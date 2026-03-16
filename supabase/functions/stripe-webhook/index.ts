@@ -323,24 +323,29 @@ async function handleCheckoutCompleted(
   const billingInterval = metadata.billing_interval || 'monthly';
   const stripeSubId = (session.subscription as string) || null;
 
-  // Parse per-location plans (new format) or fall back to legacy single plan
+  // Parse location IDs
   let locationPlans: { location_id: string; plan_tier: string; stylist_count: number }[] = [];
 
   if (metadata.location_plans) {
     try {
-      locationPlans = JSON.parse(metadata.location_plans);
+      const parsed = JSON.parse(metadata.location_plans);
+      // Normalize: ensure all have plan_tier = 'standard'
+      locationPlans = parsed.map((lp: any) => ({
+        location_id: lp.location_id,
+        plan_tier: 'standard',
+        stylist_count: lp.stylist_count || 0,
+      }));
     } catch (e) {
       console.error("Failed to parse location_plans metadata:", e);
     }
   }
 
-  // Legacy fallback: single plan for all locations
+  // Fallback: use location_ids array
   if (locationPlans.length === 0) {
-    const backroomPlan = metadata.backroom_plan || 'starter';
     const locationIds = metadata.location_ids ? JSON.parse(metadata.location_ids) as string[] : [];
     locationPlans = locationIds.map((locId: string) => ({
       location_id: locId,
-      plan_tier: backroomPlan,
+      plan_tier: 'standard',
       stylist_count: 0,
     }));
   }

@@ -7,35 +7,12 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// Same price IDs as create-backroom-checkout
-const BACKROOM_PLANS = {
-  starter: {
-    name: "Starter",
-    monthly_price_id: "price_1TBK3IEUkhnzWpRkDJSYe1vj",
-    annual_price_id: "price_1TBKCpEUkhnzWpRkqMPguboA",
-    product_id: "prod_U9dJkcp3KNBItL",
-  },
-  professional: {
-    name: "Professional",
-    monthly_price_id: "price_1TBK49EUkhnzWpRkg0yFOwnZ",
-    annual_price_id: "price_1TBKDNEUkhnzWpRk2FdXKWk9",
-    product_id: "prod_U9dKsEb2qj6AOo",
-  },
-  unlimited: {
-    name: "Unlimited",
-    monthly_price_id: "price_1TBK5AEUkhnzWpRkoj0Nggwd",
-    annual_price_id: "price_1TBKFzEUkhnzWpRkJY02bnW1",
-    product_id: "prod_U9dL7r3Uck9Qqs",
-  },
-} as const;
-
+// Flat pricing: $20/mo per location
+const BACKROOM_LOCATION_PRICE_ID = "price_1TBPh6EUkhnzWpRkFzJ7LeL7";
 const SCALE_LICENSE_PRICE_ID = "price_1TBK5pEUkhnzWpRkPMCKIAst";
-
-type PlanKey = keyof typeof BACKROOM_PLANS;
 
 interface LocationPlan {
   location_id: string;
-  plan_tier: PlanKey;
   scale_count: number;
 }
 
@@ -63,8 +40,7 @@ Deno.serve(async (req) => {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -72,8 +48,7 @@ Deno.serve(async (req) => {
     const { data: userData, error: authError } = await supabase.auth.getUser(token);
     if (authError || !userData?.user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -89,21 +64,15 @@ Deno.serve(async (req) => {
 
     if (!platformRole) {
       return new Response(JSON.stringify({ error: "Platform admin access required" }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
     logStep("Platform admin verified", { role: platformRole.role });
 
     const body = await req.json();
-    const {
-      organization_id,
-      location_plans,
-      billing_interval = "monthly",
-    } = body as {
+    const { organization_id, location_plans } = body as {
       organization_id: string;
       location_plans: LocationPlan[];
-      billing_interval: string;
     };
 
     if (!organization_id) throw new Error("organization_id is required");
@@ -111,15 +80,7 @@ Deno.serve(async (req) => {
       throw new Error("location_plans[] is required and must not be empty");
     }
 
-    // Validate plan tiers
-    for (const lp of location_plans) {
-      if (!lp.location_id || !BACKROOM_PLANS[lp.plan_tier]) {
-        throw new Error(`Invalid location plan: ${JSON.stringify(lp)}`);
-      }
-    }
-
-    const isAnnual = billing_interval === "annual";
-    logStep("Request parsed", { organization_id, locationCount: location_plans.length, billing_interval });
+    logStep("Request parsed", { organization_id, locationCount: location_plans.length });
 
     // Get organization + stripe customer
     const { data: org, error: orgError } = await supabase
@@ -131,7 +92,7 @@ Deno.serve(async (req) => {
     if (orgError || !org) throw new Error("Organization not found");
     if (!org.stripe_customer_id) {
       return new Response(
-        JSON.stringify({ error: "No payment method on file. The organization must have a Stripe customer with a card before admin activation." }),
+        JSON.stringify({ error: "No payment method on file." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -148,34 +109,27 @@ Deno.serve(async (req) => {
 
     if (!defaultPm) {
       return new Response(
-        JSON.stringify({ error: "Organization has no default payment method on file. They need to add a card first." }),
+        JSON.stringify({ error: "Organization has no default payment method on file." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
     logStep("Payment method verified");
 
-    // Build subscription items
-    const tierCounts = new Map<PlanKey, number>();
+    // Build subscription items — flat $20/location
     let totalScales = 0;
     for (const lp of location_plans) {
-      tierCounts.set(lp.plan_tier, (tierCounts.get(lp.plan_tier) ?? 0) + 1);
       totalScales += lp.scale_count || 0;
     }
 
-    const items: Stripe.SubscriptionCreateParams.Item[] = [];
-    for (const [tier, qty] of tierCounts) {
-      const plan = BACKROOM_PLANS[tier];
-      const priceId = isAnnual ? plan.annual_price_id : plan.monthly_price_id;
-      items.push({ price: priceId, quantity: qty });
-    }
+    const items: Stripe.SubscriptionCreateParams.Item[] = [
+      { price: BACKROOM_LOCATION_PRICE_ID, quantity: location_plans.length },
+    ];
 
     if (totalScales > 0) {
       items.push({ price: SCALE_LICENSE_PRICE_ID, quantity: totalScales });
     }
 
-    const primaryPlan = location_plans[0].plan_tier;
     const locationIds = location_plans.map((lp) => lp.location_id);
-
     logStep("Creating subscription", { items: items.length, totalScales });
 
     // Create subscription — charge immediately
@@ -186,11 +140,10 @@ Deno.serve(async (req) => {
       metadata: {
         organization_id: org.id,
         addon_type: "backroom",
-        backroom_plan: primaryPlan,
+        backroom_plan: "standard",
         scale_count: String(totalScales),
-        billing_interval,
+        billing_interval: "monthly",
         location_ids: JSON.stringify(locationIds),
-        location_plans: JSON.stringify(location_plans),
         activated_by_admin: userId,
       },
     });
@@ -218,10 +171,10 @@ Deno.serve(async (req) => {
         {
           organization_id: org.id,
           location_id: lp.location_id,
-          plan_tier: lp.plan_tier,
+          plan_tier: "standard",
           scale_count: lp.scale_count || 0,
           status: "active",
-          billing_interval,
+          billing_interval: "monthly",
           stripe_subscription_id: subscription.id,
           activated_at: new Date().toISOString(),
           activated_by: userId,
@@ -240,7 +193,6 @@ Deno.serve(async (req) => {
       entity_type: "backroom_subscription",
       entity_id: subscription.id as any,
       details: {
-        billing_interval,
         location_plans,
         stripe_subscription_id: subscription.id,
         total_scales: totalScales,
