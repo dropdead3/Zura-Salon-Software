@@ -1737,6 +1737,11 @@ export function BackroomPaywall() {
           </div>
         </section>
 
+        {/* Divider — Pricing → Trust */}
+        <div className="flex justify-center py-4">
+          <div className="w-12 h-px bg-border/40" />
+        </div>
+
         {/* ═══════════════════════════════════════════
             SECTION 7 — TRUST + FAQ
             ═══════════════════════════════════════════ */}
