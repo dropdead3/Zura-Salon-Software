@@ -96,7 +96,7 @@ function ProductPreview() {
         </p>
       </div>
 
-      <div className="relative mx-auto max-w-[720px]">
+      <div className="relative mx-auto max-w-[720px] overflow-visible isolate">
         {/* Top-edge fade */}
         <div className="absolute -top-16 left-0 right-0 h-16 bg-gradient-to-b from-background to-transparent z-10 pointer-events-none" />
 
