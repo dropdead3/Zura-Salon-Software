@@ -582,7 +582,7 @@ export function BackroomPaywall() {
               </CardContent>
             </Card>
 
-            {/* 2. Time Your Team Loses (pain reinforcement) */}
+            {/* 2. Time Your Team Spends on Manual Inventory */}
             <Card className="bg-card/60 border-border/40">
               <CardContent className="p-5 space-y-4">
                 <div className="flex items-center gap-3">
@@ -590,9 +590,9 @@ export function BackroomPaywall() {
                     <Clock className="w-5 h-5 text-destructive" />
                   </div>
                   <div>
-                    <p className={cn(tokens.label.default, 'text-foreground')}>Time Your Team Loses Every Day</p>
+                    <p className={cn(tokens.label.default, 'text-foreground')}>Time Your Team Spends on Manual Inventory</p>
                     <p className="text-xs text-muted-foreground font-sans mt-0.5">
-                      Nightly counts, guessing stock levels, manual audits — replaced by predictive intelligence.
+                      Nightly tube counts, manual stock checks, and guessing what to reorder — all replaced by automated tracking.
                     </p>
                   </div>
                 </div>
