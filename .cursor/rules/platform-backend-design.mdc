@@ -37,6 +37,8 @@ import { Label } from '@/components/ui/label';
 import { Table } from '@/components/ui/table';
 import { DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { AlertDialogContent, AlertDialogTitle, AlertDialogDescription } from '@/components/ui/alert-dialog';
+import { AlertDialogCancel } from '@/components/ui/alert-dialog';
+import { Textarea } from '@/components/ui/textarea';
 ```
 
 ## Correct Imports
