@@ -337,7 +337,7 @@ export function BackroomPaywall() {
       <Button
         size={compact ? 'default' : 'lg'}
         className={cn(
-          'font-sans font-medium gap-2 rounded-full shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 active:scale-[0.98] transition-all duration-200',
+          'group font-sans font-medium gap-2 rounded-full active:scale-[0.98] transition-all duration-200',
           compact ? 'h-10 px-6 text-sm' : 'h-12 px-10 text-base',
           className,
         )}
@@ -349,7 +349,9 @@ export function BackroomPaywall() {
         ) : (
           <>
             {ctaLabel}
-            <ArrowRight className="w-4 h-4" />
+            <span className="overflow-hidden w-0 group-hover:w-5 transition-all duration-200">
+              <ArrowRight className="w-4 h-4 -translate-x-1 group-hover:translate-x-0 opacity-0 group-hover:opacity-100 transition-all duration-200" />
+            </span>
           </>
         )}
       </Button>
