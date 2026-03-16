@@ -193,7 +193,7 @@ export function SupplyLibraryTab() {
               </SelectContent>
             </Select>
             <Select value={categoryFilter} onValueChange={(v) => { setCategoryFilter(v); setPage(0); }}>
-              <SelectTrigger className="w-[160px] font-sans bg-slate-800/50 border-slate-700/50 text-slate-300">
+              <SelectTrigger className="w-[160px] font-sans">
                 <SelectValue placeholder="All Categories" />
               </SelectTrigger>
               <SelectContent>
