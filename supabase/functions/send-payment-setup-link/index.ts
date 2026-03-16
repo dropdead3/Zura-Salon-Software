@@ -9,6 +9,8 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const COOLDOWN_MS = 60 * 60 * 1000; // 1 hour
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -62,14 +64,30 @@ Deno.serve(async (req) => {
       throw new Error("organization_id is required");
     }
 
-    // Get org details
+    // Get org details (including cooldown timestamp)
     const { data: org, error: orgErr } = await supabase
       .from("organizations")
-      .select("id, name, stripe_customer_id")
+      .select("id, name, stripe_customer_id, last_setup_link_sent_at")
       .eq("id", organization_id)
       .single();
 
     if (orgErr || !org) throw new Error("Organization not found");
+
+    // Cooldown check
+    if (org.last_setup_link_sent_at) {
+      const lastSent = new Date(org.last_setup_link_sent_at).getTime();
+      const now = Date.now();
+      if (now - lastSent < COOLDOWN_MS) {
+        return new Response(
+          JSON.stringify({
+            error: "Setup link was sent recently. Please wait before sending again.",
+            cooldown: true,
+            last_sent_at: org.last_setup_link_sent_at,
+          }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
 
     // Find org's primary owner email
     const { data: ownerAdmin } = await supabase
@@ -100,7 +118,6 @@ Deno.serve(async (req) => {
       });
       customerId = customer.id;
 
-      // Save customer ID back to org
       await supabase
         .from("organizations")
         .update({ stripe_customer_id: customerId })
@@ -137,6 +154,12 @@ Deno.serve(async (req) => {
         </div>
       `,
     });
+
+    // Update cooldown timestamp
+    await supabase
+      .from("organizations")
+      .update({ last_setup_link_sent_at: new Date().toISOString() })
+      .eq("id", organization_id);
 
     console.log(`[send-payment-setup-link] Sent setup link to ${ownerEmail} for org ${org.name}`);
 
