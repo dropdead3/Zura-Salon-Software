@@ -387,6 +387,7 @@ export function BackroomPaywall() {
             {/* Left — Text */}
             <div className="space-y-6 text-center lg:text-left">
               <div className="space-y-4">
+                <Eyebrow className="text-muted-foreground mb-2">Zura Backroom</Eyebrow>
                 <h1 className="font-display text-3xl md:text-4xl lg:text-5xl font-medium tracking-wide leading-[1.08]">
                   Stop Losing Money in Your Color Room
                 </h1>
