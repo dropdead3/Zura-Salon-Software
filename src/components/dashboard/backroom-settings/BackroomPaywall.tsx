@@ -222,6 +222,7 @@ export function BackroomPaywall() {
   const [manualScaleOverride, setManualScaleOverride] = useState(false);
   const [auditMinutesPerDay, setAuditMinutesPerDay] = useState(30);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [activeFeature, setActiveFeature] = useState('mixing');
 
   const { effectiveOrganization } = useOrganizationContext();
   const { data: locations = [] } = useLocations(effectiveOrganization?.id);
