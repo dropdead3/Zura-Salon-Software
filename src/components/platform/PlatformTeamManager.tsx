@@ -286,7 +286,7 @@ export function PlatformTeamManager() {
               </Table>
             </div>
           ) : (
-            <div className="text-center py-12 text-slate-500">
+            <div className="text-center py-12 text-[hsl(var(--platform-foreground-subtle))]">
               <p>No platform team members yet.</p>
               {canManageTeam && (
                 <PlatformButton
