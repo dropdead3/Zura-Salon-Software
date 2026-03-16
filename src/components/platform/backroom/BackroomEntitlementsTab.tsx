@@ -111,7 +111,7 @@ export function BackroomEntitlementsTab() {
     queryFn: async (): Promise<OrgWithBackroom[]> => {
       const { data: organizations, error: orgErr } = await supabase
         .from('organizations')
-        .select('id, name, subscription_tier, created_at, stripe_customer_id')
+        .select('id, name, subscription_tier, created_at, stripe_customer_id, last_setup_link_sent_at')
         .order('name');
 
       if (orgErr) throw orgErr;
