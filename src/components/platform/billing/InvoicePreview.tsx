@@ -45,7 +45,7 @@ export function InvoicePreview({
     <PlatformCard variant="glass">
       <PlatformCardHeader className="pb-3">
         <PlatformCardTitle className="text-lg flex items-center gap-2">
-          <Receipt className="h-5 w-5 text-primary" />
+          <Receipt className="h-5 w-5 text-violet-400" />
           Invoice Preview
         </PlatformCardTitle>
       </PlatformCardHeader>
