@@ -109,10 +109,10 @@ export default function PlatformOverview() {
         {/* Header */}
         <motion.div variants={fadeUp} className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-display bg-gradient-to-r from-white via-white to-violet-300 bg-clip-text text-transparent tracking-tight">
+            <h1 className="text-3xl font-display bg-gradient-to-r from-[hsl(var(--platform-foreground))] via-[hsl(var(--platform-foreground))] to-[hsl(var(--platform-primary))] bg-clip-text text-transparent tracking-tight">
               {greeting}{firstName ? `, ${firstName}` : ''}
             </h1>
-            <p className="text-slate-400/80 mt-1.5 text-sm">
+            <p className="text-[hsl(var(--platform-foreground-muted)/0.8)] mt-1.5 text-sm">
               {contextualMessage}
             </p>
           </div>
@@ -170,7 +170,7 @@ export default function PlatformOverview() {
         {/* Gradient divider */}
         <motion.div 
           variants={fadeUp}
-          className="h-px bg-gradient-to-r from-transparent via-violet-500/20 to-transparent" 
+          className="h-px bg-gradient-to-r from-transparent via-[hsl(var(--platform-primary)/0.2)] to-transparent" 
         />
 
         {/* Incident Banner + Analytics Row */}
@@ -186,19 +186,19 @@ export default function PlatformOverview() {
         {/* Gradient divider */}
         <motion.div 
           variants={fadeUp}
-          className="h-px bg-gradient-to-r from-transparent via-violet-500/20 to-transparent" 
+          className="h-px bg-gradient-to-r from-transparent via-[hsl(var(--platform-primary)/0.2)] to-transparent" 
         />
 
         {/* Quick Actions */}
-        <motion.div variants={fadeUp} className="group/actions relative rounded-2xl border border-slate-700/50 bg-slate-800/40 backdrop-blur-xl p-6 overflow-hidden">
+        <motion.div variants={fadeUp} className="group/actions relative rounded-2xl border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.4)] backdrop-blur-xl p-6 overflow-hidden">
           {/* Subtle shimmer overlay */}
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-violet-500/[0.03] to-transparent -translate-x-full group-hover/actions:translate-x-full transition-transform duration-[1.5s] ease-in-out" />
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[hsl(var(--platform-primary)/0.03)] to-transparent -translate-x-full group-hover/actions:translate-x-full transition-transform duration-[1.5s] ease-in-out" />
           
           <div className="relative flex items-center gap-2 mb-5">
-            <div className="p-2 rounded-xl bg-violet-500/20 ring-1 ring-violet-500/10">
-              <Sparkles className="h-4 w-4 text-violet-400" />
+            <div className="p-2 rounded-xl bg-[hsl(var(--platform-primary)/0.2)] ring-1 ring-[hsl(var(--platform-primary)/0.1)]">
+              <Sparkles className="h-4 w-4 text-[hsl(var(--platform-primary))]" />
             </div>
-            <h2 className="text-lg font-medium text-white tracking-tight">Quick Actions</h2>
+            <h2 className="text-lg font-medium text-[hsl(var(--platform-foreground))] tracking-tight">Quick Actions</h2>
           </div>
           <div className="relative grid gap-3 sm:grid-cols-3">
             <QuickActionButton 
@@ -244,31 +244,31 @@ interface StatCardProps {
 
 function StatCard({ title, value, icon: Icon, description, variant = 'default', href, sparkData, index = 0 }: StatCardProps) {
   const iconStyles = {
-    default: 'bg-violet-500/20 text-violet-400 ring-1 ring-violet-500/10',
+    default: 'bg-[hsl(var(--platform-primary)/0.2)] text-[hsl(var(--platform-primary))] ring-1 ring-[hsl(var(--platform-primary)/0.1)]',
     warning: 'bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/10',
     success: 'bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/10',
   };
 
   const valueStyles = {
-    default: 'text-white',
-    warning: 'text-amber-300',
-    success: 'text-emerald-300',
+    default: 'text-[hsl(var(--platform-foreground))]',
+    warning: 'text-amber-400',
+    success: 'text-emerald-400',
   };
 
   const glowStyles = {
-    default: 'hover:shadow-[0_0_40px_-12px_rgba(139,92,246,0.2)]',
+    default: 'hover:shadow-[0_0_40px_-12px_hsl(var(--platform-primary)/0.2)]',
     warning: 'hover:shadow-[0_0_40px_-12px_rgba(245,158,11,0.15)]',
     success: 'hover:shadow-[0_0_40px_-12px_rgba(16,185,129,0.15)]',
   };
 
   const borderHoverStyles = {
-    default: 'hover:border-violet-500/40',
+    default: 'hover:border-[hsl(var(--platform-primary)/0.4)]',
     warning: 'hover:border-amber-500/30',
     success: 'hover:border-emerald-500/30',
   };
 
   const cardClasses = cn(
-    "group/card relative rounded-2xl border border-slate-700/50 bg-slate-800/40 backdrop-blur-xl p-6",
+    "group/card relative rounded-2xl border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.4)] backdrop-blur-xl p-6",
     "transition-all duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)] will-change-transform",
     "hover:-translate-y-0.5",
     glowStyles[variant],
@@ -279,14 +279,14 @@ function StatCard({ title, value, icon: Icon, description, variant = 'default', 
   const content = (
     <>
       {/* Gradient shimmer on hover */}
-      <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-violet-500/[0.07] via-purple-500/[0.04] to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity duration-700" />
+      <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-[hsl(var(--platform-primary)/0.07)] via-[hsl(var(--platform-secondary)/0.04)] to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity duration-700" />
       
       {/* Top edge highlight */}
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[hsl(var(--platform-foreground)/0.06)] to-transparent" />
       
       <div className="relative">
         <div className="flex items-center justify-between mb-4">
-          <span className="text-xs font-medium text-slate-400 tracking-wide uppercase">{title}</span>
+          <span className="text-xs font-medium text-[hsl(var(--platform-foreground-muted))] tracking-wide uppercase">{title}</span>
           <div className={cn(
             'p-2.5 rounded-xl transition-all duration-500 group-hover/card:scale-110 group-hover/card:rotate-3',
             iconStyles[variant]
@@ -307,8 +307,8 @@ function StatCard({ title, value, icon: Icon, description, variant = 'default', 
             />
           )}
         </div>
-        <div className="h-px bg-gradient-to-r from-slate-600/40 via-slate-600/20 to-transparent my-3" />
-        <p className="text-sm text-slate-500 group-hover/card:text-slate-400 transition-colors duration-300">{description}</p>
+        <div className="h-px bg-gradient-to-r from-[hsl(var(--platform-border)/0.4)] via-[hsl(var(--platform-border)/0.2)] to-transparent my-3" />
+        <p className="text-sm text-[hsl(var(--platform-foreground-subtle))] group-hover/card:text-[hsl(var(--platform-foreground-muted))] transition-colors duration-300">{description}</p>
       </div>
     </>
   );
@@ -353,21 +353,21 @@ function QuickActionButton({ icon: Icon, label, onClick, hoverAnimation }: Quick
       onClick={onClick}
       className={cn(
         "group/action w-full flex items-center gap-3 px-4 py-3.5 rounded-xl",
-        "bg-slate-700/30 border border-slate-600/20",
-        "text-slate-200 hover:text-white",
-        "hover:bg-slate-700/50 hover:border-violet-500/30",
+        "bg-[hsl(var(--platform-bg-hover)/0.3)] border border-[hsl(var(--platform-border)/0.2)]",
+        "text-[hsl(var(--platform-foreground)/0.9)] hover:text-[hsl(var(--platform-foreground))]",
+        "hover:bg-[hsl(var(--platform-bg-hover)/0.5)] hover:border-[hsl(var(--platform-primary)/0.3)]",
         "active:scale-[0.98]",
         "transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)]"
       )}
     >
-      <div className="p-1.5 rounded-lg bg-slate-600/30 group-hover/action:bg-violet-500/20 transition-colors duration-300">
+      <div className="p-1.5 rounded-lg bg-[hsl(var(--platform-border)/0.3)] group-hover/action:bg-[hsl(var(--platform-primary)/0.2)] transition-colors duration-300">
         <Icon className={cn(
-          "h-4 w-4 text-slate-400 group-hover/action:text-violet-400 transition-all duration-300",
+          "h-4 w-4 text-[hsl(var(--platform-foreground-muted))] group-hover/action:text-[hsl(var(--platform-primary))] transition-all duration-300",
           hoverAnimation
         )} />
       </div>
       <span className="flex-1 text-left text-sm font-medium">{label}</span>
-      <ArrowRight className="h-4 w-4 text-slate-500 group-hover/action:text-violet-400 group-hover/action:translate-x-1 transition-all duration-300" />
+      <ArrowRight className="h-4 w-4 text-[hsl(var(--platform-foreground-subtle))] group-hover/action:text-[hsl(var(--platform-primary))] group-hover/action:translate-x-1 transition-all duration-300" />
     </button>
   );
 }
@@ -377,33 +377,33 @@ function PlatformOverviewSkeleton() {
     <div className="space-y-10">
       <div className="flex items-center justify-between">
         <div>
-          <Skeleton className="h-9 w-48 mb-2 bg-slate-700/50" />
-          <Skeleton className="h-5 w-72 bg-slate-700/50" />
+          <Skeleton className="h-9 w-48 mb-2 bg-[hsl(var(--platform-bg-hover))]" />
+          <Skeleton className="h-5 w-72 bg-[hsl(var(--platform-bg-hover))]" />
         </div>
-        <Skeleton className="h-10 w-40 bg-slate-700/50" />
+        <Skeleton className="h-10 w-40 bg-[hsl(var(--platform-bg-hover))]" />
       </div>
       <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="rounded-2xl border border-slate-700/50 bg-slate-800/40 p-6">
+          <div key={i} className="rounded-2xl border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.4)] p-6">
             <div className="flex items-center justify-between mb-4">
-              <Skeleton className="h-4 w-24 bg-slate-700/50" />
-              <Skeleton className="h-10 w-10 rounded-xl bg-slate-700/50" />
+              <Skeleton className="h-4 w-24 bg-[hsl(var(--platform-bg-hover))]" />
+              <Skeleton className="h-10 w-10 rounded-xl bg-[hsl(var(--platform-bg-hover))]" />
             </div>
-            <Skeleton className="h-10 w-16 mb-2 bg-slate-700/50" />
-            <Skeleton className="h-4 w-32 bg-slate-700/50" />
+            <Skeleton className="h-10 w-16 mb-2 bg-[hsl(var(--platform-bg-hover))]" />
+            <Skeleton className="h-4 w-32 bg-[hsl(var(--platform-bg-hover))]" />
           </div>
         ))}
       </div>
       <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2 rounded-2xl border border-slate-700/50 bg-slate-800/40 p-6">
-          <Skeleton className="h-6 w-32 mb-5 bg-slate-700/50" />
-          <Skeleton className="h-[220px] w-full rounded-xl bg-slate-700/50" />
+        <div className="lg:col-span-2 rounded-2xl border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.4)] p-6">
+          <Skeleton className="h-6 w-32 mb-5 bg-[hsl(var(--platform-bg-hover))]" />
+          <Skeleton className="h-[220px] w-full rounded-xl bg-[hsl(var(--platform-bg-hover))]" />
         </div>
-        <div className="rounded-2xl border border-slate-700/50 bg-slate-800/40 p-6">
-          <Skeleton className="h-6 w-32 mb-5 bg-slate-700/50" />
+        <div className="rounded-2xl border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.4)] p-6">
+          <Skeleton className="h-6 w-32 mb-5 bg-[hsl(var(--platform-bg-hover))]" />
           <div className="space-y-3">
             {[...Array(3)].map((_, i) => (
-              <Skeleton key={i} className="h-12 w-full rounded-xl bg-slate-700/50" />
+              <Skeleton key={i} className="h-12 w-full rounded-xl bg-[hsl(var(--platform-bg-hover))]" />
             ))}
           </div>
         </div>

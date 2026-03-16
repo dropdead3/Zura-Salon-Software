@@ -193,15 +193,15 @@ export function PlatformTeamManager() {
         </PlatformCardHeader>
         <PlatformCardContent>
           {filteredAndSortedTeam.length > 0 ? (
-            <div className="rounded-xl overflow-hidden border border-slate-700/50">
+            <div className="rounded-xl overflow-hidden border border-[hsl(var(--platform-border)/0.5)]">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-slate-700/50 hover:bg-transparent">
-                    <TableHead className="text-slate-400">Member</TableHead>
-                    <TableHead className="text-slate-400">Role</TableHead>
-                    <TableHead className="text-slate-400">Added</TableHead>
-                    {canManageTeam && <TableHead className="w-12"></TableHead>}
-                  </TableRow>
+                  <TableRow>
+                     <TableHead>Member</TableHead>
+                     <TableHead>Role</TableHead>
+                     <TableHead>Added</TableHead>
+                     {canManageTeam && <TableHead className="w-12"></TableHead>}
+                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredAndSortedTeam.map((member) => {
@@ -210,13 +210,13 @@ export function PlatformTeamManager() {
                     const isCurrentUser = member.user_id === user?.id;
 
                     return (
-                      <TableRow key={member.id} className="border-slate-700/50 hover:bg-slate-800/50">
+                      <TableRow key={member.id}>
                         <TableCell>
                           <div className="flex items-center gap-3">
                             <div className="relative">
-                              <Avatar className="h-8 w-8 bg-slate-700 border border-slate-600">
+                              <Avatar className="h-8 w-8 bg-[hsl(var(--platform-bg-hover))] border border-[hsl(var(--platform-border))]">
                                 <AvatarImage src={member.photo_url || undefined} alt={member.full_name || 'Team member'} />
-                                <AvatarFallback className="bg-slate-700 text-slate-300 text-xs">
+                                <AvatarFallback className="bg-[hsl(var(--platform-bg-hover))] text-[hsl(var(--platform-foreground-muted))] text-xs">
                                   {getInitials(member.full_name, member.email)}
                                 </AvatarFallback>
                               </Avatar>
@@ -228,17 +228,17 @@ export function PlatformTeamManager() {
                             </div>
                             <div>
                               <div className="flex items-center gap-2">
-                                <p className="font-medium text-sm text-white">
+                                <p className="font-medium text-sm text-[hsl(var(--platform-foreground))]">
                                   {member.full_name || 'Unknown'}
                                   {isCurrentUser && (
-                                    <span className="text-slate-500 ml-1">(you)</span>
+                                    <span className="text-[hsl(var(--platform-foreground-subtle))] ml-1">(you)</span>
                                   )}
                                 </p>
                                 {isOnline(member.user_id) && (
                                   <span className="text-xs text-emerald-400">Online</span>
                                 )}
                               </div>
-                              <p className="text-xs text-slate-500">
+                              <p className="text-xs text-[hsl(var(--platform-foreground-subtle))]">
                                 {member.email}
                               </p>
                             </div>
@@ -250,7 +250,7 @@ export function PlatformTeamManager() {
                             {config.label}
                           </PlatformBadge>
                         </TableCell>
-                        <TableCell className="text-slate-500 text-sm">
+                        <TableCell className="text-[hsl(var(--platform-foreground-subtle))] text-sm">
                           {formatDate(new Date(member.created_at), 'MMM d, yyyy')}
                         </TableCell>
                         {canManageTeam && (
@@ -262,7 +262,7 @@ export function PlatformTeamManager() {
                                     <MoreHorizontal className="w-4 h-4" />
                                   </PlatformButton>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="bg-slate-800 border-slate-700">
+                                <DropdownMenuContent align="end" className="bg-[hsl(var(--platform-bg-elevated))] border-[hsl(var(--platform-border))]">
                                   <DropdownMenuItem
                                     className="text-red-400 focus:text-red-400 focus:bg-red-500/10"
                                     onClick={() => setDeleteConfirm({
@@ -286,7 +286,7 @@ export function PlatformTeamManager() {
               </Table>
             </div>
           ) : (
-            <div className="text-center py-12 text-slate-500">
+            <div className="text-center py-12 text-[hsl(var(--platform-foreground-subtle))]">
               <p>No platform team members yet.</p>
               {canManageTeam && (
                 <PlatformButton
