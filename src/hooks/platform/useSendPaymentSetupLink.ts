@@ -1,8 +1,9 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 export function useSendPaymentSetupLink() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (organizationId: string) => {
       const { data, error } = await supabase.functions.invoke('send-payment-setup-link', {
