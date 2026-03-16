@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import {
   Package, Beaker, BarChart3, Shield, Zap, ArrowRight, Loader2,
   Minus, Plus, Scale, ShieldCheck, MapPin, TrendingDown, DollarSign, Activity,
-  ChevronUp, Info,
+  ChevronUp, Info, Clock, Eye,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -27,9 +27,9 @@ import { toast } from 'sonner';
 
 const features = [
   {
-    icon: Package,
-    title: 'Product Catalog',
-    description: 'Track every product with real-time inventory projections and par-level alerts.',
+    icon: Eye,
+    title: 'Predictive Stock Intelligence',
+    description: 'Knows if you have enough product for tomorrow\'s appointments. No more counting.',
   },
   {
     icon: Beaker,
@@ -53,6 +53,7 @@ export function BackroomPaywall() {
   const [scaleCount, setScaleCount] = useState(1);
   const [selectedLocationIds, setSelectedLocationIds] = useState<Set<string>>(new Set());
   const [manualStylistCount, setManualStylistCount] = useState(2);
+  const [auditMinutesPerDay, setAuditMinutesPerDay] = useState(30);
   const [mobileCalcOpen, setMobileCalcOpen] = useState(false);
 
   const { effectiveOrganization } = useOrganizationContext();
@@ -90,10 +91,15 @@ export function BackroomPaywall() {
   const monthlyTotal = baseCost + scaleCost + usageFee;
   const hardwareTotal = scaleCount * SCALE_HARDWARE_PRICE;
 
+  // Staff hours saved calculations
+  const staffHourlyCost = 18;
+  const monthlyAuditHours = (auditMinutesPerDay * 30) / 60;
+  const monthlyAuditCost = Math.round(monthlyAuditHours * staffHourlyCost);
+
   // Savings calculations
   const wasteSavings = estimate?.estimatedWasteSavings ?? 0;
   const supplyRecovery = estimate?.estimatedSupplyRecovery ?? 0;
-  const totalSavings = wasteSavings + supplyRecovery;
+  const totalSavings = wasteSavings + supplyRecovery + monthlyAuditCost;
   const netBenefit = totalSavings - monthlyTotal;
   const roiMultiplier = monthlyTotal > 0 ? Math.round(totalSavings / monthlyTotal) : 0;
 
@@ -101,6 +107,7 @@ export function BackroomPaywall() {
   const yearlySavings = totalSavings * 12;
   const yearlyWasteSavings = wasteSavings * 12;
   const yearlySupplyRecovery = supplyRecovery * 12;
+  const yearlyAuditCost = monthlyAuditCost * 12;
   const yearlyCost = monthlyTotal * 12;
   const yearlyNetBenefit = netBenefit * 12;
 
@@ -194,6 +201,10 @@ export function BackroomPaywall() {
               <span className="text-emerald-400">−{formatCurrency(wasteSavings)}</span>
             </div>
             <div className="flex justify-between text-muted-foreground">
+              <span>Staff hours recovered</span>
+              <span className="text-emerald-400">−{formatCurrency(monthlyAuditCost)}</span>
+            </div>
+            <div className="flex justify-between text-muted-foreground">
               <span>Supply fee recovery*</span>
               <span className="text-emerald-400">−{formatCurrency(supplyRecovery)}</span>
             </div>
@@ -228,7 +239,7 @@ export function BackroomPaywall() {
               <BarChart3 className="w-3.5 h-3.5" />
               Yearly Impact
             </p>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               <div className="text-center">
                 <p className="font-display text-xl tracking-wide text-emerald-400">
                   <AnimatedNumber value={yearlySupplyRecovery} prefix="$" duration={1000} />
@@ -240,6 +251,12 @@ export function BackroomPaywall() {
                   <AnimatedNumber value={yearlyWasteSavings} prefix="$" duration={1000} />
                 </p>
                 <p className="text-[10px] text-muted-foreground font-sans">waste saved / yr</p>
+              </div>
+              <div className="text-center">
+                <p className="font-display text-xl tracking-wide text-emerald-400">
+                  <AnimatedNumber value={yearlyAuditCost} prefix="$" duration={1000} />
+                </p>
+                <p className="text-[10px] text-muted-foreground font-sans">hours recovered / yr</p>
               </div>
             </div>
 
@@ -415,6 +432,65 @@ export function BackroomPaywall() {
                     )}
                   </>
                 ) : null}
+              </CardContent>
+            </Card>
+
+            {/* Time You're Losing Today */}
+            <Card className="bg-card/60 border-border/40">
+              <CardContent className="p-5 space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center shrink-0">
+                    <Clock className="w-5 h-5 text-destructive" />
+                  </div>
+                  <div>
+                    <p className={cn(tokens.label.default, 'text-foreground')}>Time Your Team Loses Every Day</p>
+                    <p className="text-xs text-muted-foreground font-sans mt-0.5">
+                      Nightly counts, guessing stock levels, manual audits — replaced by predictive intelligence.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-sans text-xs text-muted-foreground">
+                      Minutes spent daily on stock checks
+                    </span>
+                    <span className="font-display text-sm tracking-wide text-foreground">
+                      {auditMinutesPerDay} min
+                    </span>
+                  </div>
+                  <Slider
+                    variant="filled"
+                    min={10}
+                    max={90}
+                    step={5}
+                    value={[auditMinutesPerDay]}
+                    onValueChange={([v]) => setAuditMinutesPerDay(v)}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="p-3 rounded-lg bg-muted/30 border border-border/40 text-center">
+                    <p className="font-display text-2xl tracking-wide text-foreground">
+                      <AnimatedNumber value={monthlyAuditHours} duration={600} decimals={1} />
+                    </p>
+                    <p className="text-xs text-muted-foreground font-sans mt-0.5">
+                      hours recovered / mo
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/20 text-center">
+                    <p className="font-display text-2xl tracking-wide text-emerald-400">
+                      <AnimatedNumber value={monthlyAuditCost} prefix="$" duration={600} />
+                    </p>
+                    <p className="text-xs text-muted-foreground font-sans mt-0.5">
+                      cost recovered / mo
+                    </p>
+                  </div>
+                </div>
+
+                <p className="text-[10px] text-muted-foreground font-sans">
+                  Based on average staff cost of ${staffHourlyCost}/hr. This time is returned to revenue-generating work.
+                </p>
               </CardContent>
             </Card>
 
