@@ -187,6 +187,11 @@ export function BackroomPaywall() {
                       </span>
                       <span className="font-display text-sm tracking-wide text-primary/70">/mo</span>
                     </div>
+                    {yearlyNetBenefit > 0 && (
+                      <p className="text-xs text-muted-foreground font-sans mt-0.5">
+                        That's <span className="text-emerald-400 font-medium">{formatCurrency(yearlyNetBenefit)}/year</span> in additional revenue & savings
+                      </p>
+                    )}
                     {roiMultiplier >= 2 && (
                       <span className="inline-flex items-center gap-1 mt-1 px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-sans font-medium">
                         <TrendingDown className="w-3 h-3" />
