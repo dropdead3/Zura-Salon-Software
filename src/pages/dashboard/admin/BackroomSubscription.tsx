@@ -178,11 +178,6 @@ export default function BackroomSubscription() {
                   <Badge variant="outline" className="font-sans text-[10px]">
                     {isAnnual ? 'Annual' : 'Monthly'}
                   </Badge>
-                  {isTrialing && (
-                    <Badge className="bg-primary/10 text-primary border-primary/20 font-sans text-[10px]">
-                      Trial
-                    </Badge>
-                  )}
                 </div>
                 <div className="flex items-baseline gap-1">
                   <span className="text-2xl font-display tracking-wide text-foreground">
