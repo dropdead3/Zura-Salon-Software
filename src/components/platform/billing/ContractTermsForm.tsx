@@ -3,11 +3,11 @@ import { PlatformInput } from '@/components/platform/ui/PlatformInput';
 import { PlatformLabel } from '@/components/platform/ui/PlatformLabel';
 import {
   Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+  PlatformSelectContent as SelectContent,
+  PlatformSelectItem as SelectItem,
+  PlatformSelectTrigger as SelectTrigger,
+} from '@/components/platform/ui/PlatformSelect';
 import { Calendar, FileText, RefreshCw } from 'lucide-react';
 import type { BillingCycle } from '@/hooks/useOrganizationBilling';
 import { getBillingCycleLabel, getContractLengthLabel } from '@/hooks/useBillingCalculations';

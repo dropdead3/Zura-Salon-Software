@@ -11,11 +11,11 @@ import {
 import { PlatformButton } from '@/components/platform/ui/PlatformButton';
 import {
   Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+  PlatformSelectContent as SelectContent,
+  PlatformSelectItem as SelectItem,
+  PlatformSelectTrigger as SelectTrigger,
+} from '@/components/platform/ui/PlatformSelect';
 import { Switch } from '@/components/ui/switch';
 import { MapPin, CreditCard, Scale, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
