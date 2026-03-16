@@ -461,11 +461,11 @@ export function EditOrganizationDialog({ organization, open, onOpenChange }: Edi
                         <FormLabel className="text-slate-300">Timezone</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
-                            <SelectTrigger className="bg-slate-800/50 border-slate-700/50 text-slate-300 hover:bg-slate-800/70 focus:ring-violet-500/30">
+                            <SelectTrigger>
                               <SelectValue placeholder="Select timezone" />
                             </SelectTrigger>
                           </FormControl>
-                          <SelectContent className="bg-slate-800 border-slate-700">
+                          <SelectContent>
                             {timezoneOptions.map((option) => (
                               <SelectItem
                                 key={option.value}
