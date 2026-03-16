@@ -447,7 +447,7 @@ export function BackroomPaywall() {
             </div>
 
             {/* Right — Live System Preview (rebalanced) */}
-            <div className="flex flex-col relative lg:mt-4">
+            <div className="flex flex-col relative">
               <div className="absolute top-1/2 right-0 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-primary/[0.03] blur-3xl pointer-events-none hidden lg:block" />
               <Card className="relative overflow-hidden min-h-[360px] bg-card/80 backdrop-blur-xl border-border/60 shadow-xl shadow-primary/5">
                 {/* Subtle top glow */}
