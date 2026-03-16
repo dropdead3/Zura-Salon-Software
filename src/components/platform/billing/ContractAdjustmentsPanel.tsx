@@ -9,7 +9,7 @@ import {
   PlatformCardTitle,
   PlatformCardDescription,
 } from '@/components/platform/ui/PlatformCard';
-import { Button } from '@/components/ui/button';
+import { PlatformButton as Button } from '@/components/platform/ui/PlatformButton';
 import { useContractAdjustments } from '@/hooks/useContractAdjustments';
 import { ExtendTermDialog } from './ExtendTermDialog';
 import { CompMonthsDialog } from './CompMonthsDialog';

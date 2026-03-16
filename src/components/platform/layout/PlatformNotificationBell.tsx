@@ -15,8 +15,8 @@ import {
   X
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { PlatformBadge as Badge } from '@/components/platform/ui/PlatformBadge';
+import { PlatformButton as Button } from '@/components/platform/ui/PlatformButton';
 import {
   Popover,
   PopoverContent,

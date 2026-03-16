@@ -1,14 +1,7 @@
 import { useState, useMemo } from 'react';
 import { usePlatformTeam, useRemovePlatformRole, type PlatformRole } from '@/hooks/usePlatformRoles';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table';
+import { PlatformTable as Table, PlatformTableBody as TableBody, PlatformTableCell as TableCell, PlatformTableHead as TableHead, PlatformTableHeader as TableHeader, PlatformTableRow as TableRow } from '@/components/platform/ui/PlatformTable';
 import {
   DropdownMenu,
   DropdownMenuContent,

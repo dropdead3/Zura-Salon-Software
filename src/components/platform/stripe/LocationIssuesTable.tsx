@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { tokens } from '@/lib/design-tokens';
 import { AlertTriangle, ChevronRight, MapPin, CheckCircle } from 'lucide-react';
 import { PlatformButton } from '@/components/platform/ui/PlatformButton';
-import { Badge } from '@/components/ui/badge';
+import { PlatformBadge as Badge } from '@/components/platform/ui/PlatformBadge';
 import { cn } from '@/lib/utils';
 import type { StripePaymentsHealth } from '@/hooks/useStripePaymentsHealth';
 

@@ -4,7 +4,7 @@ import { ArrowUpDown, ArrowUp, ArrowDown, ExternalLink, AlertTriangle, CheckCirc
 import { cn } from '@/lib/utils';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { usePlatformTheme } from '@/contexts/PlatformThemeContext';
-import { Input } from '@/components/ui/input';
+import { PlatformInput as Input } from '@/components/platform/ui/PlatformInput';
 import type { PlatformAnalyticsSummary, OrganizationMetrics } from '@/hooks/useOrganizationAnalytics';
 
 interface OperationalMetricsProps {

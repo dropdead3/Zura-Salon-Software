@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, Trash2, RotateCcw, Save, ArrowRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { PlatformButton as Button } from '@/components/platform/ui/PlatformButton';
+import { PlatformInput as Input } from '@/components/platform/ui/PlatformInput';
 import {
   Select,
   SelectValue,

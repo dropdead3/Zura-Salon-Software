@@ -5,14 +5,7 @@ import {
   useResendPlatformInvitation 
 } from '@/hooks/usePlatformInvitations';
 import { type PlatformRole } from '@/hooks/usePlatformRoles';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table';
+import { PlatformTable as Table, PlatformTableBody as TableBody, PlatformTableCell as TableCell, PlatformTableHead as TableHead, PlatformTableHeader as TableHeader, PlatformTableRow as TableRow } from '@/components/platform/ui/PlatformTable';
 import { toast } from '@/components/ui/use-toast';
 import { Mail, RefreshCw, X, Loader2, Shield, Headphones, Code, Clock } from 'lucide-react';
 import { PlatformButton } from './ui/PlatformButton';

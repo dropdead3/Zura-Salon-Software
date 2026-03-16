@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
+import { PlatformBadge as Badge } from '@/components/platform/ui/PlatformBadge';
 import {
   Select,
   SelectValue,

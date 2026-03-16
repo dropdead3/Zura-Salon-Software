@@ -1,0 +1,103 @@
+---
+description: Enforces dark-theme platform design system for all platform backend components
+globs: src/components/platform/**/*.tsx
+---
+
+# Platform Backend Design System
+
+## Component Mapping (MANDATORY)
+
+Files inside `src/components/platform/` MUST use platform-specific UI primitives:
+
+| Base (PROHIBITED)                              | Platform (USE INSTEAD)                                      |
+|------------------------------------------------|-------------------------------------------------------------|
+| `Card`, `CardHeader`, `CardTitle`, etc.        | `PlatformCard`, `PlatformCardHeader`, `PlatformCardTitle`   |
+| `Badge`                                        | `PlatformBadge`                                              |
+| `Button`                                       | `PlatformButton`                                             |
+| `Input`                                        | `PlatformInput`                                              |
+| `Select`, `SelectTrigger`, `SelectContent`     | `Select`, `PlatformSelectTrigger`, `PlatformSelectContent`   |
+| `Label`                                        | `PlatformLabel`                                              |
+| `Table`, `TableHead`, `TableRow`, `TableCell`  | `PlatformTable`, `PlatformTableHead`, `PlatformTableRow`, `PlatformTableCell` |
+
+## Prohibited Imports
+
+These imports are BANNED in `src/components/platform/**/*.tsx`:
+
+```typescript
+// ❌ NEVER use these in platform files
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Table } from '@/components/ui/table';
+```
+
+## Correct Imports
+
+```typescript
+// ✅ Always use platform equivalents
+import { PlatformCard, PlatformCardHeader, PlatformCardTitle, PlatformCardContent } from '@/components/platform/ui/PlatformCard';
+import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
+import { PlatformButton } from '@/components/platform/ui/PlatformButton';
+import { PlatformInput } from '@/components/platform/ui/PlatformInput';
+import { PlatformLabel } from '@/components/platform/ui/PlatformLabel';
+import { Select, SelectValue, PlatformSelectTrigger, PlatformSelectContent, PlatformSelectItem } from '@/components/platform/ui/PlatformSelect';
+import { PlatformTable, PlatformTableHeader, PlatformTableBody, PlatformTableHead, PlatformTableRow, PlatformTableCell } from '@/components/platform/ui/PlatformTable';
+```
+
+## Allowed Base Imports
+
+These base imports ARE permitted (no platform equivalent needed):
+
+- `@/components/ui/dialog` — Dialog, DialogContent, DialogHeader, etc.
+- `@/components/ui/switch` — Switch
+- `@/components/ui/textarea` — Textarea
+- `@/components/ui/skeleton` — Skeleton
+- `@/components/ui/checkbox` — Checkbox
+- `@/components/ui/collapsible` — Collapsible
+- `@/components/ui/avatar` — Avatar
+- `@/components/ui/popover` — Popover
+- `@/components/ui/dropdown-menu` — DropdownMenu
+- `@/components/ui/tabs` — Tabs
+
+## Dialog Overrides
+
+When using base `DialogContent`, always apply dark overrides:
+
+```tsx
+<DialogContent className="bg-slate-900 border-slate-700 text-white">
+```
+
+## KPI Tiles
+
+Use `tokens.platformKpi.*` for dark-themed KPI tiles:
+
+```tsx
+import { tokens } from '@/lib/design-tokens';
+
+<div className={tokens.platformKpi.tile}>
+  <span className={tokens.platformKpi.label}>{label}</span>
+  <span className={cn(tokens.platformKpi.value, colorClass)}>{value}</span>
+</div>
+```
+
+## Color Palette
+
+- Backgrounds: `bg-slate-800/50`, `bg-slate-900`
+- Borders: `border-slate-700/50`, `border-slate-700`
+- Text primary: `text-white`
+- Text secondary: `text-slate-300`
+- Text muted: `text-slate-400`
+- Accent: `violet-500`, `violet-600`
+- Focus: `focus:border-violet-500/50`
+
+## Prohibited Semantic Classes
+
+These resolve to light theme colors and must NOT be used:
+
+- `bg-card`, `bg-background`, `bg-muted`
+- `text-foreground`, `text-muted-foreground`
+- `border-border`
+
+Use explicit slate classes instead.

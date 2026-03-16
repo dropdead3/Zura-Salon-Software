@@ -6,7 +6,7 @@ import {
   XCircle,
   ArrowRight
 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { PlatformBadge as Badge } from '@/components/platform/ui/PlatformBadge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useSystemHealth } from '@/hooks/useSystemHealth';
 import { useJobStats } from '@/hooks/useEdgeFunctionLogs';

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { tokens } from '@/lib/design-tokens';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { PlatformInput as Input } from '@/components/platform/ui/PlatformInput';
+import { PlatformLabel as Label } from '@/components/platform/ui/PlatformLabel';
 import { Save, Loader2, Upload, Mail, Paintbrush, Eye } from 'lucide-react';
 import {
   PlatformCard,

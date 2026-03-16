@@ -7,7 +7,7 @@ import {
   PlatformCardTitle,
   PlatformCardDescription,
 } from '@/components/platform/ui/PlatformCard';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { PlatformTable as Table, PlatformTableBody as TableBody, PlatformTableCell as TableCell, PlatformTableHead as TableHead, PlatformTableHeader as TableHeader, PlatformTableRow as TableRow } from '@/components/platform/ui/PlatformTable';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Loader2, TrendingUp, TrendingDown, Minus, Mail, Users2 } from 'lucide-react';
 import { TrendSparkline } from '@/components/dashboard/TrendSparkline';
