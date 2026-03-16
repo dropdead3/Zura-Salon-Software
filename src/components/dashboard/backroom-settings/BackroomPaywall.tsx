@@ -1448,10 +1448,10 @@ export function BackroomPaywall() {
         <section className="pb-20 md:pb-24">
           <div className="space-y-6">
             {/* 30-Day Guarantee */}
-            <Card className="bg-emerald-500/5 border-emerald-500/20 shadow-sm">
+            <Card className="bg-success/5 border-success/20 shadow-sm">
               <CardContent className="p-6 md:p-8 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center shrink-0">
-                  <ShieldCheck className="w-6 h-6 text-emerald-400" />
+                <div className="w-12 h-12 rounded-xl bg-success/10 flex items-center justify-center shrink-0">
+                  <ShieldCheck className="w-6 h-6 text-success" />
                 </div>
                 <div>
                   <p className="font-sans text-base font-medium text-success">30-Day Money-Back Guarantee</p>
