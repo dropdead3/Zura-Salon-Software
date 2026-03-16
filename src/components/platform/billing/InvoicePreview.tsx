@@ -67,8 +67,8 @@ export function InvoicePreview({
             <div className="space-y-2">
               {/* Base Plan */}
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">{planName} ({getBillingCycleLabel(billingCycle)})</span>
-                <span className="text-foreground">{formatCurrency(calculation.cycleAmount)}</span>
+                <span className="text-[hsl(var(--platform-foreground-muted))]">{planName} ({getBillingCycleLabel(billingCycle)})</span>
+                <span className="text-[hsl(var(--platform-foreground))]">{formatCurrency(calculation.cycleAmount)}</span>
               </div>
 
               {/* Location Add-Ons */}
