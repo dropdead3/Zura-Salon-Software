@@ -70,7 +70,7 @@ const comparisonData: FeatureCategory[] = [
 
 const pricingComparison: Record<'zura' | 'vish' | 'salonScale', { pricing: string; note: string }> = {
   zura: { pricing: '$20/location + $0.50/appt', note: 'Per appointment with color service' },
-  vish: { pricing: '£30–240/mo', note: 'Per stylist + £165/scale' },
+  vish: { pricing: '$40–320/mo', note: 'Per stylist + $220/scale' },
   salonScale: { pricing: '$49–199/mo', note: 'Per stylist, scale extra' },
 };
 
