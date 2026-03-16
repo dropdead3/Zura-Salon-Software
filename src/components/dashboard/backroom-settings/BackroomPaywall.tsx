@@ -376,7 +376,7 @@ export function BackroomPaywall() {
         ) : yearlyNetBenefit > 1000 && locationCount > 0 ? (
           <>
             <Lock className="w-4 h-4" />
-            Unlock {formatCurrency(yearlyNetBenefit)}/yr in savings
+            Unlock {formatCurrency(yearlyNetBenefit)}/yr in recovered value
             <ArrowRight className="w-4 h-4" />
           </>
         ) : netBenefit > 0 && locationCount > 0 ? (
