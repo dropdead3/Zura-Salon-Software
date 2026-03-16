@@ -2,12 +2,12 @@ import { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import {
   Dialog,
-  DialogContent,
-  DialogDescription,
+  PlatformDialogContent as DialogContent,
+  PlatformDialogDescription as DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  PlatformDialogTitle as DialogTitle,
+} from '@/components/platform/ui/PlatformDialog';
 import { PlatformButton } from '@/components/platform/ui/PlatformButton';
 import {
   Select,
