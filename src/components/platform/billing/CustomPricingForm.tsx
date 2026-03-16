@@ -139,13 +139,13 @@ export function CustomPricingForm({
                 value={discountReason ?? 'none'}
                 onValueChange={(v) => onDiscountReasonChange(v === 'none' ? null : v)}
               >
-                <SelectTrigger className="bg-slate-800/50 border-slate-700/50 text-slate-300">
+                <SelectTrigger>
                   <SelectValue placeholder="Select reason" />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700">
-                  <SelectItem value="none" className="text-slate-300">Select reason</SelectItem>
+                <SelectContent>
+                  <SelectItem value="none">Select reason</SelectItem>
                   {discountReasonOptions.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value} className="text-slate-300">
+                    <SelectItem key={opt.value} value={opt.value}>
                       {opt.label}
                     </SelectItem>
                   ))}

@@ -784,7 +784,7 @@ function LocationEntitlementPanel({
                             })
                           }
                         >
-                          <SelectTrigger className="h-7 w-[70px] text-xs bg-slate-800/60 border-slate-700/50">
+                          <SelectTrigger className="h-7 w-[70px] text-xs">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>

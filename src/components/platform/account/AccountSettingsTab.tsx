@@ -385,12 +385,12 @@ export function AccountSettingsTab({ organizationId }: AccountSettingsTabProps) 
               value={settings.defaults.locale ?? 'en'} 
               onValueChange={(v) => updateSettings('defaults.locale', v)}
             >
-              <SelectTrigger className="w-48 bg-slate-800 border-slate-700 text-white">
+              <SelectTrigger className="w-48">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-slate-900 border-slate-700">
+              <SelectContent>
                 {locales.map(l => (
-                  <SelectItem key={l.value} value={l.value} className="text-slate-300">
+                  <SelectItem key={l.value} value={l.value}>
                     {l.label}
                   </SelectItem>
                 ))}

@@ -83,13 +83,13 @@ export function AccountImportHistoryTab({ organizationId }: AccountImportHistory
         <PlatformCardTitle>Import History</PlatformCardTitle>
         <div className="flex items-center gap-3">
           <Select value={entityFilter} onValueChange={setEntityFilter}>
-            <SelectTrigger className="w-40 bg-slate-800 border-slate-700 text-white">
+            <SelectTrigger className="w-40">
               <SelectValue placeholder="All Types" />
             </SelectTrigger>
-            <SelectContent className="bg-slate-900 border-slate-700">
-              <SelectItem value="all" className="text-slate-300">All Types</SelectItem>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
               {entityTypes.map(type => (
-                <SelectItem key={type} value={type} className="text-slate-300 capitalize">
+                <SelectItem key={type} value={type} className="capitalize">
                   {type}
                 </SelectItem>
               ))}
