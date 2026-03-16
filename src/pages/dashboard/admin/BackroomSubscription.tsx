@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
-import { Loader2, CreditCard, Scale, ArrowUpRight, ArrowDownRight, Settings, Plus, Clock } from 'lucide-react';
+import { Loader2, CreditCard, Scale, ArrowUpRight, ArrowDownRight, Settings, Plus } from 'lucide-react';
 import { AddScalesDialog } from '@/components/dashboard/backroom-settings/AddScalesDialog';
 import { BackroomROICard } from '@/components/dashboard/backroom-settings/BackroomROICard';
 import { DowngradeConfirmDialog } from '@/components/dashboard/backroom-settings/DowngradeConfirmDialog';
