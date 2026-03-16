@@ -106,8 +106,7 @@ export function BackroomBillingTab() {
       return (
         o.subscriptionStatus === 'past_due' ||
         o.subscriptionStatus === 'cancelled' ||
-        o.suspendedLocationCount > 0 ||
-        (o.earliestTrialEnd && new Date(o.earliestTrialEnd) < new Date())
+        o.suspendedLocationCount > 0
       );
     })
     .sort((a, b) => {
