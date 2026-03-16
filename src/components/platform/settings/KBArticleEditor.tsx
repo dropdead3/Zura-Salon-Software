@@ -5,11 +5,11 @@ import { PlatformInput } from '../ui/PlatformInput';
 import { PlatformLabel } from '../ui/PlatformLabel';
 import {
   Dialog,
-  DialogContent,
+  PlatformDialogContent as DialogContent,
   DialogHeader,
-  DialogTitle,
+  PlatformDialogTitle as DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
+} from '@/components/platform/ui/PlatformDialog';
 import {
   Select,
   SelectValue,
