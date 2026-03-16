@@ -788,9 +788,9 @@ export function BackroomPaywall() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 md:gap-6">
               {howItWorks.map((step) => (
                 <Card key={step.step} className="bg-card border-border/50 shadow-sm">
-                  <CardContent className="p-6 space-y-3">
-                    <span className="font-display text-2xl tracking-wider text-primary/20">{step.step}</span>
-                    <p className="font-sans text-lg font-medium text-foreground">{step.title}</p>
+                  <CardContent className="p-6 md:p-8 space-y-3">
+                    <span className="font-display text-2xl tracking-wide text-primary/20">{step.step}</span>
+                    <p className="font-sans text-base font-medium text-foreground">{step.title}</p>
                     <p className="text-sm text-muted-foreground font-sans leading-relaxed">{step.description}</p>
                   </CardContent>
                 </Card>
