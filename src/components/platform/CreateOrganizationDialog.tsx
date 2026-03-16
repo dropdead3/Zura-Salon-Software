@@ -296,15 +296,15 @@ export function CreateOrganizationDialog({ open, onOpenChange }: CreateOrganizat
                   <FormLabel className="text-slate-300">Subscription Tier</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
-                      <SelectTrigger className="bg-slate-800/50 border-slate-700/50 text-slate-300 hover:bg-slate-800/70 focus:ring-violet-500/30">
+                      <SelectTrigger>
                         <SelectValue placeholder="Select tier" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent className="bg-slate-800 border-slate-700">
-                      <SelectItem value="starter" className="text-slate-300 focus:bg-slate-700 focus:text-white">Starter</SelectItem>
-                      <SelectItem value="standard" className="text-slate-300 focus:bg-slate-700 focus:text-white">Standard</SelectItem>
-                      <SelectItem value="professional" className="text-slate-300 focus:bg-slate-700 focus:text-white">Professional</SelectItem>
-                      <SelectItem value="enterprise" className="text-slate-300 focus:bg-slate-700 focus:text-white">Enterprise</SelectItem>
+                    <SelectContent>
+                      <SelectItem value="starter">Starter</SelectItem>
+                      <SelectItem value="standard">Standard</SelectItem>
+                      <SelectItem value="professional">Professional</SelectItem>
+                      <SelectItem value="enterprise">Enterprise</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage className="text-red-400" />

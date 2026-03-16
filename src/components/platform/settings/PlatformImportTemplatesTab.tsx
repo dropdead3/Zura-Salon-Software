@@ -304,12 +304,12 @@ export function PlatformImportTemplatesTab() {
                 value={localTransformations.phoneFormat || 'E.164'} 
                 onValueChange={(v) => updateTransformation('phoneFormat', v)}
               >
-                <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-900 border-slate-700">
+                <SelectContent>
                   {PHONE_FORMATS.map(format => (
-                    <SelectItem key={format.value} value={format.value} className="text-slate-300">
+                    <SelectItem key={format.value} value={format.value}>
                       {format.label}
                     </SelectItem>
                   ))}
