@@ -199,6 +199,7 @@ import HealthScoresPage from "./pages/dashboard/platform/HealthScores";
 import BenchmarksPage from "./pages/dashboard/platform/Benchmarks";
 import BackroomAdmin from "./pages/dashboard/platform/BackroomAdmin";
 import CoachDashboard from "./pages/dashboard/platform/CoachDashboard";
+import BillingGuide from "./pages/dashboard/platform/BillingGuide";
 import { PlatformLayout } from "./components/platform/layout/PlatformLayout";
 
 const queryClient = new QueryClient();
