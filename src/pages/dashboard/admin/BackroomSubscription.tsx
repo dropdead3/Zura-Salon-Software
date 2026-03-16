@@ -157,24 +157,6 @@ export default function BackroomSubscription() {
           }
         />
 
-        {/* Trial Banner */}
-        {isTrialing && (
-          <Card className="bg-primary/5 border-primary/20 max-w-4xl">
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                <Clock className="w-4 h-4 text-primary" />
-              </div>
-              <div>
-                <p className={cn(tokens.label.default, 'text-sm text-primary')}>
-                  Free trial — {trialDaysLeft} day{trialDaysLeft !== 1 ? 's' : ''} remaining
-                </p>
-                <p className="text-xs text-muted-foreground font-sans mt-0.5">
-                  Your trial ends {trialEndDate}. No charge until then. Cancel anytime.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl">
           {/* Current Plan */}
