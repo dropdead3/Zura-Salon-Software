@@ -803,7 +803,7 @@ export function BackroomPaywall() {
             SECTION 7 — PRICING + ROI
             ═══════════════════════════════════════════ */}
         <section className="pb-16 md:pb-20">
-          <div className="space-y-8 md:space-y-10">
+          <div className="space-y-8 md:space-y-12">
             <SectionHeading>Pricing</SectionHeading>
 
             <Card className="bg-card border-border/50 shadow-md">
