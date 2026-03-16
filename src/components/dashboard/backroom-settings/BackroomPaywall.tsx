@@ -665,7 +665,236 @@ export function BackroomPaywall() {
         </section>
 
         {/* ═══════════════════════════════════════════
-            SECTION 4.5 — COMPETITOR COMPARISON
+            SECTION 4.25 — INTERACTIVE FEATURE REVEAL
+            ═══════════════════════════════════════════ */}
+        <section className="pb-20 md:pb-24">
+          <div className="space-y-8 md:space-y-10">
+            <div className="text-center space-y-3">
+              <h2 className="font-display text-2xl md:text-3xl font-medium tracking-wide text-foreground">
+                Explore Zura Backroom
+              </h2>
+              <p className="font-sans text-base text-muted-foreground max-w-xl mx-auto font-light leading-relaxed">
+                Click each feature to see how it works inside your salon.
+              </p>
+            </div>
+
+            {/* Mobile: horizontal scrollable pills */}
+            <div className="flex gap-2 overflow-x-auto pb-2 lg:hidden scrollbar-none">
+              {[
+                { key: 'mixing', icon: Scale, title: 'Smart Mixing' },
+                { key: 'formulas', icon: Brain, title: 'Formula Memory' },
+                { key: 'inventory', icon: PackageSearch, title: 'Inventory' },
+                { key: 'profitability', icon: DollarSign, title: 'Profitability' },
+                { key: 'insights', icon: BarChart3, title: 'Insights' },
+              ].map((f) => (
+                <button
+                  key={f.key}
+                  onClick={() => setActiveFeature(f.key)}
+                  className={cn(
+                    'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-sans font-medium whitespace-nowrap border transition-all duration-200 shrink-0',
+                    activeFeature === f.key
+                      ? 'bg-primary/10 border-primary/30 text-foreground'
+                      : 'bg-muted/50 border-border/50 text-muted-foreground hover:bg-muted'
+                  )}
+                >
+                  <f.icon className="w-3.5 h-3.5" />
+                  {f.title}
+                </button>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+              {/* Left — Feature Selector (desktop) */}
+              <div className="hidden lg:flex flex-col gap-2">
+                {[
+                  { key: 'mixing', icon: Scale, title: 'Smart Mixing', desc: 'The scale captures every gram while stylists mix normally.' },
+                  { key: 'formulas', icon: Brain, title: 'Formula Memory', desc: 'Formulas are saved automatically to the client profile.' },
+                  { key: 'inventory', icon: PackageSearch, title: 'Inventory Intelligence', desc: 'Every bowl updates product inventory in real time.' },
+                  { key: 'profitability', icon: DollarSign, title: 'Service Profitability', desc: 'Product costs are connected directly to each service.' },
+                  { key: 'insights', icon: BarChart3, title: 'Operational Insights', desc: 'Backroom activity becomes measurable salon intelligence.' },
+                ].map((f) => (
+                  <button
+                    key={f.key}
+                    onClick={() => setActiveFeature(f.key)}
+                    className={cn(
+                      'flex items-center gap-4 p-4 rounded-xl border text-left transition-all duration-200',
+                      activeFeature === f.key
+                        ? 'bg-primary/5 border-primary/20 shadow-sm'
+                        : 'bg-transparent border-border/40 hover:bg-muted/40'
+                    )}
+                  >
+                    <div className={cn(
+                      'w-10 h-10 rounded-lg flex items-center justify-center shrink-0 transition-colors duration-200',
+                      activeFeature === f.key ? 'bg-primary/10' : 'bg-muted'
+                    )}>
+                      <f.icon className={cn('w-5 h-5', activeFeature === f.key ? 'text-primary' : 'text-muted-foreground')} />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="font-display text-sm tracking-wide text-foreground">{f.title}</span>
+                      <p className="font-sans text-sm text-muted-foreground font-light mt-0.5">{f.desc}</p>
+                    </div>
+                    <ChevronRight className={cn(
+                      'w-4 h-4 shrink-0 transition-all duration-200',
+                      activeFeature === f.key ? 'text-primary opacity-100' : 'text-muted-foreground/40 opacity-0'
+                    )} />
+                  </button>
+                ))}
+              </div>
+
+              {/* Right — Visualization Panel */}
+              <Card className="border-border/50 bg-card/80 backdrop-blur-sm overflow-hidden">
+                <CardContent className="p-6 min-h-[320px] flex flex-col justify-center">
+                  <div key={activeFeature} className="animate-fade-in">
+                    {activeFeature === 'mixing' && (
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Scale className="w-4 h-4 text-primary" />
+                          <span className="font-display text-xs tracking-wide text-muted-foreground">LIVE SCALE READOUT</span>
+                        </div>
+                        <div className="rounded-lg bg-muted/40 p-4 space-y-3">
+                          {[
+                            { name: 'Koleston 7/0', target: 30, current: 28.4, unit: 'g' },
+                            { name: '6% Developer', target: 60, current: 60.2, unit: 'g' },
+                          ].map((item) => {
+                            const pct = Math.min((item.current / item.target) * 100, 100);
+                            const reached = item.current >= item.target;
+                            return (
+                              <div key={item.name} className="space-y-1.5">
+                                <div className="flex justify-between">
+                                  <span className="font-sans text-sm text-foreground">{item.name}</span>
+                                  <span className="font-sans text-xs text-muted-foreground tabular-nums">
+                                    {item.current}{item.unit} / {item.target}{item.unit}
+                                  </span>
+                                </div>
+                                <div className="h-2 w-full rounded-full bg-secondary overflow-hidden">
+                                  <div
+                                    className={cn('h-full rounded-full transition-all', reached ? 'bg-emerald-500' : 'bg-primary')}
+                                    style={{ width: `${pct}%` }}
+                                  />
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        <div className="flex items-center gap-2 pt-1">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                          <span className="font-sans text-sm text-emerald-600">Bowl complete — formula saved</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {activeFeature === 'formulas' && (
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Brain className="w-4 h-4 text-primary" />
+                          <span className="font-display text-xs tracking-wide text-muted-foreground">CLIENT FORMULA HISTORY</span>
+                        </div>
+                        <div className="rounded-lg bg-muted/40 p-4 space-y-3">
+                          <div className="flex items-center justify-between pb-2 border-b border-border/40">
+                            <div>
+                              <p className="font-sans text-sm font-medium text-foreground">Sarah Mitchell</p>
+                              <p className="font-sans text-xs text-muted-foreground">Last visit: Feb 28, 2026</p>
+                            </div>
+                            <span className="font-sans text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">3 formulas</span>
+                          </div>
+                          {[
+                            { product: 'Koleston 7/0', weight: '30g', date: 'Feb 28' },
+                            { product: 'Illumina 8/05', weight: '25g', date: 'Jan 15' },
+                            { product: 'Color Touch 9/16', weight: '20g', date: 'Dec 12' },
+                          ].map((f) => (
+                            <div key={f.product} className="flex items-center justify-between py-1">
+                              <span className="font-sans text-sm text-foreground">{f.product}</span>
+                              <div className="flex items-center gap-3">
+                                <span className="font-sans text-xs tabular-nums text-muted-foreground">{f.weight}</span>
+                                <span className="font-sans text-xs text-muted-foreground/60">{f.date}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {activeFeature === 'inventory' && (
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2 mb-1">
+                          <PackageSearch className="w-4 h-4 text-primary" />
+                          <span className="font-display text-xs tracking-wide text-muted-foreground">INVENTORY STATUS</span>
+                        </div>
+                        <div className="rounded-lg bg-muted/40 p-4">
+                          <div className="space-y-0">
+                            {[
+                              { product: 'Koleston 7/0', stock: '340g', status: 'Good', color: 'text-emerald-500 bg-emerald-500/10' },
+                              { product: 'Illumina 8/05', stock: '85g', status: 'Low', color: 'text-amber-500 bg-amber-500/10' },
+                              { product: 'Blondor Powder', stock: '12g', status: 'Critical', color: 'text-red-500 bg-red-500/10' },
+                            ].map((item, i, arr) => (
+                              <div key={item.product} className={cn('flex items-center justify-between py-2.5', i < arr.length - 1 && 'border-b border-border/30')}>
+                                <span className="font-sans text-sm text-foreground">{item.product}</span>
+                                <div className="flex items-center gap-3">
+                                  <span className="font-sans text-xs tabular-nums text-muted-foreground">{item.stock}</span>
+                                  <span className={cn('font-sans text-xs px-2 py-0.5 rounded-full', item.color)}>{item.status}</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {activeFeature === 'profitability' && (
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2 mb-1">
+                          <DollarSign className="w-4 h-4 text-primary" />
+                          <span className="font-display text-xs tracking-wide text-muted-foreground">SERVICE COST BREAKDOWN</span>
+                        </div>
+                        <div className="rounded-lg bg-muted/40 p-4 space-y-3">
+                          <div className="flex items-center justify-between pb-2 border-b border-border/40">
+                            <p className="font-sans text-sm font-medium text-foreground">Full Colour & Blowdry</p>
+                            <span className="font-sans text-xs bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded-full">78% margin</span>
+                          </div>
+                          {[
+                            { label: 'Service Revenue', value: '$185.00' },
+                            { label: 'Product Cost', value: '$28.40' },
+                            { label: 'Labor Cost', value: '$12.50' },
+                            { label: 'Net Profit', value: '$144.10', highlight: true },
+                          ].map((row) => (
+                            <div key={row.label} className="flex items-center justify-between py-0.5">
+                              <span className="font-sans text-sm text-muted-foreground">{row.label}</span>
+                              <span className={cn('font-sans text-sm tabular-nums', row.highlight ? 'text-emerald-500 font-medium' : 'text-foreground')}>{row.value}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {activeFeature === 'insights' && (
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2 mb-1">
+                          <BarChart3 className="w-4 h-4 text-primary" />
+                          <span className="font-display text-xs tracking-wide text-muted-foreground">BACKROOM INTELLIGENCE</span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          {[
+                            { label: 'Bowls Mixed', value: '847', sub: 'This month' },
+                            { label: 'Avg Waste', value: '3.2%', sub: '↓ from 5.1%' },
+                            { label: 'Top Product', value: 'Koleston 7/0', sub: '142 uses' },
+                          ].map((stat) => (
+                            <div key={stat.label} className="rounded-lg bg-muted/40 p-3 text-center space-y-1">
+                              <p className="font-display text-xs tracking-wide text-muted-foreground">{stat.label}</p>
+                              <p className="font-sans text-lg font-medium text-foreground tabular-nums">{stat.value}</p>
+                              <p className="font-sans text-xs text-muted-foreground/70">{stat.sub}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </section>
+
+
             ═══════════════════════════════════════════ */}
         <section className="pb-20 md:pb-24">
           <CompetitorComparison />
