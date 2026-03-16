@@ -761,21 +761,40 @@ export function BackroomPaywall() {
                   </div>
                 </div>
 
+                {/* Sizing rule explanation */}
+                <div className="mt-4 p-2.5 rounded-lg bg-muted/40 border border-border/30">
+                  <p className="text-xs text-muted-foreground font-sans">
+                    <span className="text-foreground font-medium">Sizing rule:</span> 1 scale for every 10 color/chemical service appointments per day. We calculate this from your last 90 days of booking data.
+                  </p>
+                </div>
+
                 {/* Per-location breakdown */}
                 {perLocationScaleData.length > 0 && (
-                  <div className="mt-4 space-y-2">
-                    {perLocationScaleData.map((loc) => (
-                      <div key={loc.id} className="flex items-center justify-between text-xs font-sans">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <MapPin className="w-3 h-3 text-muted-foreground shrink-0" />
-                          <span className="text-foreground truncate">{loc.name}</span>
-                          <span className="text-muted-foreground shrink-0">~{loc.avgDaily}/day</span>
-                        </div>
-                        <span className="text-foreground shrink-0">
-                          {loc.scales} scale{loc.scales !== 1 ? 's' : ''}
-                        </span>
+                  <div className="mt-4">
+                    {/* Column headers */}
+                    <div className="flex items-center justify-between text-[10px] font-sans text-muted-foreground uppercase tracking-wider mb-2 px-1">
+                      <span>Location</span>
+                      <div className="flex items-center gap-8">
+                        <span>Color Appts / Day</span>
+                        <span className="w-16 text-right">Scales</span>
                       </div>
-                    ))}
+                    </div>
+                    <div className="space-y-1.5">
+                      {perLocationScaleData.map((loc) => (
+                        <div key={loc.id} className="flex items-center justify-between text-xs font-sans p-2 rounded-lg bg-muted/20">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <MapPin className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                            <span className="text-foreground truncate">{loc.name}</span>
+                          </div>
+                          <div className="flex items-center gap-8 shrink-0">
+                            <span className="text-muted-foreground tabular-nums">~{loc.avgDaily}</span>
+                            <span className="text-foreground w-16 text-right">
+                              {loc.scales} scale{loc.scales !== 1 ? 's' : ''}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
 
