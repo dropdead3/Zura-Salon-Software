@@ -1150,7 +1150,7 @@ export function BackroomPaywall() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
               {/* Card 1 — Product Usage Trends */}
-              <Card className="bg-card border-border/50 shadow-sm hover-lift">
+              <Card className="bg-card border-border/50 shadow-md hover:shadow-lg transition-shadow duration-200 hover-lift">
                 <CardContent className="p-6 md:p-8 space-y-4">
                   <div className="flex items-start gap-3">
                     <div className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center shrink-0">
