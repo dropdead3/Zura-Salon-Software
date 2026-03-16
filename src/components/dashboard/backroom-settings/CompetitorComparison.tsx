@@ -140,7 +140,7 @@ export function CompetitorComparison() {
 
                 {/* Pricing row */}
                 <tr className="bg-muted/20">
-                      <td colSpan={4} className="px-5 py-3">
+                      <td colSpan={4} className="px-6 py-3">
                     <span className="font-display text-[10px] tracking-wider text-muted-foreground">
                       Pricing
                     </span>
