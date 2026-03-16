@@ -1,6 +1,7 @@
 import { cn } from '@/lib/utils';
-import { CheckCircle2, MinusCircle, XCircle } from 'lucide-react';
+import { CheckCircle2, MinusCircle, XCircle, Info } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import React from 'react';
 
 /* ─── Status Indicators ─── */
