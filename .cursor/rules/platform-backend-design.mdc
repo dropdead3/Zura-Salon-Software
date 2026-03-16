@@ -53,7 +53,8 @@ import { PlatformLabel } from '@/components/platform/ui/PlatformLabel';
 import { Select, SelectValue, PlatformSelectTrigger, PlatformSelectContent, PlatformSelectItem } from '@/components/platform/ui/PlatformSelect';
 import { PlatformTable, PlatformTableHeader, PlatformTableBody, PlatformTableHead, PlatformTableRow, PlatformTableCell } from '@/components/platform/ui/PlatformTable';
 import { Dialog, DialogHeader, DialogFooter, PlatformDialogContent, PlatformDialogTitle, PlatformDialogDescription } from '@/components/platform/ui/PlatformDialog';
-import { AlertDialog, AlertDialogHeader, AlertDialogFooter, AlertDialogAction, AlertDialogCancel, PlatformAlertDialogContent, PlatformAlertDialogTitle, PlatformAlertDialogDescription } from '@/components/platform/ui/PlatformDialog';
+import { AlertDialog, AlertDialogHeader, AlertDialogFooter, AlertDialogAction, PlatformAlertDialogCancel, PlatformAlertDialogContent, PlatformAlertDialogTitle, PlatformAlertDialogDescription } from '@/components/platform/ui/PlatformDialog';
+import { PlatformTextarea } from '@/components/platform/ui/PlatformTextarea';
 ```
 
 ## Allowed Base Imports
