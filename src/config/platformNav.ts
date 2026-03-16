@@ -6,6 +6,7 @@ import type { LucideIcon } from 'lucide-react';
 import {
   Terminal,
   Building2,
+  HelpCircle,
   Upload,
   DollarSign,
   Shield,
@@ -71,6 +72,7 @@ export const platformNavGroups: PlatformNavGroup[] = [
       { href: '/dashboard/platform/analytics', label: 'Analytics', icon: BarChart3, platformRoles: ['platform_owner'] },
       { href: '/dashboard/platform/knowledge-base', label: 'Knowledge Base', icon: BookOpen, platformRoles: ['platform_owner', 'platform_admin'] },
       { href: '/dashboard/platform/revenue', label: 'Revenue', icon: DollarSign, platformRoles: ['platform_owner', 'platform_admin'] },
+      { href: '/dashboard/platform/billing-guide', label: 'Billing Guide', icon: HelpCircle, platformRoles: ['platform_owner', 'platform_admin', 'platform_support'] },
     ],
   },
   {
