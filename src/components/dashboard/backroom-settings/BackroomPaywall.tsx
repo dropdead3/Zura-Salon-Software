@@ -140,13 +140,13 @@ function ProductPreview() {
               </div>
               <div className="rounded-lg bg-muted/30 border border-border/30 p-3 space-y-2">
                 <span className="text-[9px] text-muted-foreground font-sans">Last Formula</span>
-                <p className="text-xs text-foreground font-sans font-medium">7N + 8G (1:1.5)</p>
+                <p className="text-xs text-foreground font-sans font-medium">Liberator 7 + Activator (1:1.5)</p>
               </div>
             </div>
             {/* Dispensing bars — Color */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] text-muted-foreground font-sans">Color — 7N + 8G</span>
+                <span className="text-[10px] text-muted-foreground font-sans">Color — Liberator 7</span>
                 <span className="text-[10px] text-primary font-sans font-medium">42g / 45g target</span>
               </div>
               <div className="h-2 rounded-full bg-muted/40 overflow-hidden">
@@ -414,10 +414,10 @@ export function BackroomPaywall() {
             {/* Left — Text (tightened spacing) */}
             <div className="space-y-6 text-center lg:text-left">
               <div className="space-y-4">
-                <h1 className="font-display text-4xl md:text-5xl lg:text-[56px] font-medium tracking-wide leading-[1.1]">
+                <h1 className="font-display text-4xl md:text-5xl lg:text-[60px] font-medium tracking-wide leading-[1.05]">
                   Stop Losing Money in Your Color Room
                 </h1>
-                <p className="text-muted-foreground text-lg md:text-xl max-w-xl mx-auto lg:mx-0 font-sans leading-relaxed">
+                <p className="text-muted-foreground text-lg md:text-xl max-w-xl mx-auto lg:mx-0 font-sans leading-relaxed mt-1">
                   Track every gram. Recover supply costs. Reorder before you run out.
                 </p>
               </div>
@@ -447,7 +447,7 @@ export function BackroomPaywall() {
             </div>
 
             {/* Right — Live System Preview (rebalanced) */}
-            <div className="flex flex-col relative">
+            <div className="flex flex-col relative lg:mt-4">
               <div className="absolute top-1/2 right-0 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-primary/[0.03] blur-3xl pointer-events-none hidden lg:block" />
               <Card className="relative overflow-hidden min-h-[360px] bg-card/80 backdrop-blur-xl border-border/60 shadow-xl shadow-primary/5">
                 {/* Subtle top glow */}
@@ -463,7 +463,7 @@ export function BackroomPaywall() {
                         <p className="text-sm text-muted-foreground font-sans">Bowl placed on scale</p>
                         <div className="bg-muted/50 rounded-xl p-6 w-full max-w-[300px]">
                           <p className="text-xs text-muted-foreground/70 font-sans mb-1">Current Weight</p>
-                          <p className="font-display text-4xl tracking-wide text-foreground">0.0g</p>
+                          <p className="font-display text-5xl tracking-wide text-foreground">0.0g</p>
                         </div>
                       </div>
                     )}
@@ -474,7 +474,7 @@ export function BackroomPaywall() {
                         </div>
                         <p className="text-sm text-muted-foreground font-sans">Dispensing product…</p>
                         <div className="bg-muted/50 rounded-xl p-6 w-full max-w-[300px]">
-                          <p className="text-xs text-muted-foreground/70 font-sans mb-1">Koleston 7/0</p>
+                          <p className="text-xs text-muted-foreground/70 font-sans mb-1">Danger Jones Liberator 7</p>
                           <p className="font-display text-4xl tracking-wide text-foreground">{heroWeight}g</p>
                           <div className="mt-3 h-2 bg-muted rounded-full overflow-hidden">
                             <div
@@ -494,11 +494,11 @@ export function BackroomPaywall() {
                         <p className="text-sm text-muted-foreground font-sans">Usage captured</p>
                         <div className="bg-muted/50 rounded-xl p-4 w-full max-w-[300px] space-y-2">
                           <div className="flex items-center justify-between">
-                            <span className="text-sm font-sans text-foreground">Koleston 7/0</span>
+                            <span className="text-sm font-sans text-foreground">Liberator 7</span>
                             <span className="text-sm font-display tracking-wide text-foreground">28.4g</span>
                           </div>
                           <div className="flex items-center justify-between">
-                            <span className="text-sm font-sans text-foreground">Welloxon 6%</span>
+                            <span className="text-sm font-sans text-foreground">Activator 20 Vol</span>
                             <span className="text-sm font-display tracking-wide text-foreground">42.6g</span>
                           </div>
                         </div>
@@ -522,8 +522,8 @@ export function BackroomPaywall() {
                           </div>
                           <div className="border-t border-border/30 pt-2 space-y-1">
                             <p className="text-xs text-muted-foreground/70 font-sans">Formula #4</p>
-                            <p className="text-xs font-sans text-foreground">Koleston 7/0 — 28.4g</p>
-                            <p className="text-xs font-sans text-foreground">Welloxon 6% — 42.6g</p>
+                            <p className="text-xs font-sans text-foreground">Liberator 7 — 28.4g</p>
+                            <p className="text-xs font-sans text-foreground">Activator 20 Vol — 42.6g</p>
                           </div>
                         </div>
                       </div>
@@ -536,9 +536,9 @@ export function BackroomPaywall() {
                         <p className="text-sm text-muted-foreground font-sans">Inventory updated</p>
                         <div className="bg-muted/50 rounded-xl p-4 w-full max-w-[300px] space-y-2">
                           {[
-                            { name: 'Koleston 7/0', stock: '340g', status: 'Good', color: 'text-primary' },
-                            { name: 'Welloxon 6%', stock: '180g', status: 'Low', color: 'text-amber-500' },
-                            { name: 'Blondor', stock: '45g', status: 'Critical', color: 'text-destructive' },
+                            { name: 'Liberator 7', stock: '340g', status: 'Good', color: 'text-primary' },
+                            { name: 'Activator 20 Vol', stock: '180g', status: 'Low', color: 'text-amber-500' },
+                            { name: 'Cosmic Crystal Lightener', stock: '45g', status: 'Critical', color: 'text-destructive' },
                           ].map((item) => (
                             <div key={item.name} className="flex items-center justify-between text-sm">
                               <span className="font-sans text-foreground">{item.name}</span>
@@ -578,7 +578,7 @@ export function BackroomPaywall() {
 
                 {/* Integrated step indicators — inside card footer */}
                 <div className="border-t border-border/30 px-6 py-3 flex items-center justify-between bg-muted/20">
-                  <p className="text-xs text-muted-foreground/70 font-sans">
+                  <p className="text-xs text-muted-foreground/70 font-sans font-medium">
                     {['Bowl on Scale', 'Dispensing Product', 'Usage Captured', 'Formula Saved', 'Inventory Updated', 'Cost Insight'][heroStep]}
                   </p>
                   <div className="flex items-center gap-1.5">
