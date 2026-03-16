@@ -131,7 +131,7 @@ export function PriceSourcesTab() {
               <div className="space-y-1.5">
                 <PlatformLabel>Source Type</PlatformLabel>
                 <Select value={newSource.source_type} onValueChange={(v) => setNewSource((p) => ({ ...p, source_type: v }))}>
-                  <SelectTrigger className="font-sans bg-slate-800/50 border-slate-700/50 text-slate-300"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="font-sans"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="api">API Integration</SelectItem>
                     <SelectItem value="manual_csv">Manual CSV Upload</SelectItem>
