@@ -22,8 +22,8 @@ import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger,
 } from '@/components/ui/accordion';
 import { supabase } from '@/integrations/supabase/client';
-import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useLocations } from '@/hooks/useLocations';
+import { useBackroomOrgId } from '@/hooks/backroom/useBackroomOrgId';
 import { useBackroomLocationEntitlements } from '@/hooks/backroom/useBackroomLocationEntitlements';
 import { useBackroomPricingEstimate } from '@/hooks/backroom/useBackroomPricingEstimate';
 import { usePerLocationColorServices } from '@/hooks/backroom/usePerLocationColorServices';
@@ -183,9 +183,9 @@ export function BackroomPaywall() {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [activeFeature, setActiveFeature] = useState('mixing');
 
-  const { effectiveOrganization } = useOrganizationContext();
-  const { data: locations = [] } = useLocations(effectiveOrganization?.id);
-  const { isLocationEntitled } = useBackroomLocationEntitlements(effectiveOrganization?.id);
+  const orgId = useBackroomOrgId();
+  const { data: locations = [] } = useLocations(orgId);
+  const { isLocationEntitled } = useBackroomLocationEntitlements(orgId);
   const { formatCurrency, formatCurrencyCompact } = useFormatCurrency();
   const isMobile = useIsMobile();
 
@@ -265,7 +265,7 @@ export function BackroomPaywall() {
   const hasPositiveBenefit = netBenefit > 0 && locationCount > 0;
 
   const handleCheckout = async () => {
-    if (!effectiveOrganization?.id) {
+    if (!orgId) {
       toast.error('No organization found');
       return;
     }
@@ -279,7 +279,7 @@ export function BackroomPaywall() {
       const location_ids = Array.from(selectedLocationIds);
       const { data, error } = await supabase.functions.invoke('create-backroom-checkout', {
         body: {
-          organization_id: effectiveOrganization.id,
+          organization_id: orgId,
           location_ids,
           scale_count: scaleCount,
         },
@@ -1277,7 +1277,7 @@ export function BackroomPaywall() {
         onOpenChange={setConfirmDialogOpen}
         onConfirm={handleCheckout}
         loading={loading}
-        organizationId={effectiveOrganization?.id}
+        organizationId={orgId}
         locationCount={locationCount}
         scaleCount={scaleCount}
         estimatedMonthlyServices={estimate ? Math.round(estimate.monthlyColorServices * locationFraction) : 0}
