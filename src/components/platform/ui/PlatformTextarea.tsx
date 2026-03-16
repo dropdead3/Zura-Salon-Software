@@ -7,7 +7,7 @@ const PlatformTextarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
     <Textarea
       ref={ref}
       className={cn(
-        'bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 focus-visible:border-violet-500/50',
+        'bg-[hsl(var(--platform-input))] border-[hsl(var(--platform-border))] text-[hsl(var(--platform-foreground))] placeholder:text-[hsl(var(--platform-foreground-subtle))] focus-visible:border-[hsl(var(--platform-primary)/0.5)]',
         className,
       )}
       {...props}

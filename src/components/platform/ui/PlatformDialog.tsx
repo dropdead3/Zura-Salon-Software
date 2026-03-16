@@ -22,7 +22,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 
-/* ─── Platform Dialog wrappers (dark theme) ────────────────────── */
+/* ─── Platform Dialog wrappers (theme-adaptive) ────────────────────── */
 
 const PlatformDialogContent = React.forwardRef<
   React.ComponentRef<typeof DialogContent>,
@@ -30,7 +30,7 @@ const PlatformDialogContent = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogContent
     ref={ref}
-    className={cn('bg-slate-900 border-slate-700 text-white', className)}
+    className={cn('bg-[hsl(var(--platform-bg-elevated))] border-[hsl(var(--platform-border))] text-[hsl(var(--platform-foreground))]', className)}
     {...props}
   />
 ));
@@ -42,7 +42,7 @@ const PlatformDialogTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogTitle
     ref={ref}
-    className={cn('text-white', className)}
+    className={cn('text-[hsl(var(--platform-foreground))]', className)}
     {...props}
   />
 ));
@@ -54,13 +54,13 @@ const PlatformDialogDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogDescription
     ref={ref}
-    className={cn('text-slate-400', className)}
+    className={cn('text-[hsl(var(--platform-foreground-muted))]', className)}
     {...props}
   />
 ));
 PlatformDialogDescription.displayName = 'PlatformDialogDescription';
 
-/* ─── Platform AlertDialog wrappers (dark theme) ───────────────── */
+/* ─── Platform AlertDialog wrappers (theme-adaptive) ───────────────── */
 
 const PlatformAlertDialogContent = React.forwardRef<
   React.ComponentRef<typeof AlertDialogContent>,
@@ -68,7 +68,7 @@ const PlatformAlertDialogContent = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <AlertDialogContent
     ref={ref}
-    className={cn('bg-slate-900 border-slate-700 text-white', className)}
+    className={cn('bg-[hsl(var(--platform-bg-elevated))] border-[hsl(var(--platform-border))] text-[hsl(var(--platform-foreground))]', className)}
     {...props}
   />
 ));
@@ -80,7 +80,7 @@ const PlatformAlertDialogTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <AlertDialogTitle
     ref={ref}
-    className={cn('text-white', className)}
+    className={cn('text-[hsl(var(--platform-foreground))]', className)}
     {...props}
   />
 ));
@@ -92,13 +92,13 @@ const PlatformAlertDialogDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <AlertDialogDescription
     ref={ref}
-    className={cn('text-slate-400', className)}
+    className={cn('text-[hsl(var(--platform-foreground-muted))]', className)}
     {...props}
   />
 ));
 PlatformAlertDialogDescription.displayName = 'PlatformAlertDialogDescription';
 
-/* ─── Platform AlertDialogCancel wrapper (dark theme) ──────────── */
+/* ─── Platform AlertDialogCancel wrapper (theme-adaptive) ──────────── */
 
 const PlatformAlertDialogCancel = React.forwardRef<
   React.ComponentRef<typeof AlertDialogCancel>,
@@ -107,7 +107,7 @@ const PlatformAlertDialogCancel = React.forwardRef<
   <AlertDialogCancel
     ref={ref}
     className={cn(
-      'bg-slate-700 border-slate-600 text-slate-300 hover:bg-slate-600 hover:text-white',
+      'bg-[hsl(var(--platform-bg-hover))] border-[hsl(var(--platform-border))] text-[hsl(var(--platform-foreground-muted))] hover:bg-[hsl(var(--platform-bg-card))] hover:text-[hsl(var(--platform-foreground))]',
       className,
     )}
     {...props}

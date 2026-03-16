@@ -18,11 +18,11 @@ const PlatformSelectTrigger = React.forwardRef<
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
-      'flex h-11 w-full items-center justify-between rounded-xl border border-slate-700/50 bg-slate-800/50 px-4 py-2 text-sm text-white',
-      'placeholder:text-slate-500',
+      'flex h-11 w-full items-center justify-between rounded-xl border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-input))] px-4 py-2 text-sm text-[hsl(var(--platform-foreground))]',
+      'placeholder:text-[hsl(var(--platform-foreground-subtle))]',
       'transition-all duration-200',
-      'focus:outline-none focus:border-violet-500/50',
-      'hover:border-slate-600/50 hover:bg-slate-800/70',
+      'focus:outline-none focus:border-[hsl(var(--platform-primary)/0.5)]',
+      'hover:border-[hsl(var(--platform-border))] hover:bg-[hsl(var(--platform-input-focus)/0.5)]',
       'disabled:cursor-not-allowed disabled:opacity-50',
       '[&>span]:line-clamp-1',
       className,
@@ -45,7 +45,7 @@ const PlatformSelectContent = React.forwardRef<
     <SelectPrimitive.Content
       ref={ref}
       className={cn(
-        'relative z-[100] max-h-96 min-w-[8rem] overflow-hidden rounded-xl border border-slate-700 bg-slate-800 text-white shadow-xl',
+        'relative z-[100] max-h-96 min-w-[8rem] overflow-hidden rounded-xl border border-[hsl(var(--platform-border))] bg-[hsl(var(--platform-bg-elevated))] text-[hsl(var(--platform-foreground))] shadow-xl',
         'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
         'data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2',
         position === 'popper' &&
@@ -55,7 +55,7 @@ const PlatformSelectContent = React.forwardRef<
       position={position}
       {...props}
     >
-      <SelectPrimitive.ScrollUpButton className="flex cursor-default items-center justify-center py-1 text-slate-400">
+      <SelectPrimitive.ScrollUpButton className="flex cursor-default items-center justify-center py-1 text-[hsl(var(--platform-foreground-muted))]">
         <ChevronUp className="h-4 w-4" />
       </SelectPrimitive.ScrollUpButton>
       <SelectPrimitive.Viewport
@@ -67,7 +67,7 @@ const PlatformSelectContent = React.forwardRef<
       >
         {children}
       </SelectPrimitive.Viewport>
-      <SelectPrimitive.ScrollDownButton className="flex cursor-default items-center justify-center py-1 text-slate-400">
+      <SelectPrimitive.ScrollDownButton className="flex cursor-default items-center justify-center py-1 text-[hsl(var(--platform-foreground-muted))]">
         <ChevronDown className="h-4 w-4" />
       </SelectPrimitive.ScrollDownButton>
     </SelectPrimitive.Content>
@@ -82,10 +82,10 @@ const PlatformSelectItem = React.forwardRef<
   <SelectPrimitive.Item
     ref={ref}
     className={cn(
-      'relative flex w-full cursor-pointer select-none items-center rounded-lg py-2.5 pl-9 pr-3 text-sm text-slate-300 outline-none',
+      'relative flex w-full cursor-pointer select-none items-center rounded-lg py-2.5 pl-9 pr-3 text-sm text-[hsl(var(--platform-foreground)/0.85)] outline-none',
       'transition-colors',
-      'focus:bg-violet-500/20 focus:text-white',
-      'hover:bg-slate-700/50 hover:text-white',
+      'focus:bg-[hsl(var(--platform-primary)/0.2)] focus:text-[hsl(var(--platform-foreground))]',
+      'hover:bg-[hsl(var(--platform-bg-hover))] hover:text-[hsl(var(--platform-foreground))]',
       'data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
       className,
     )}
@@ -93,7 +93,7 @@ const PlatformSelectItem = React.forwardRef<
   >
     <span className="absolute left-3 flex h-4 w-4 items-center justify-center">
       <SelectPrimitive.ItemIndicator>
-        <Check className="h-4 w-4 text-violet-400" />
+        <Check className="h-4 w-4 text-[hsl(var(--platform-primary))]" />
       </SelectPrimitive.ItemIndicator>
     </span>
     <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
@@ -107,7 +107,7 @@ const PlatformSelectLabel = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <SelectPrimitive.Label
     ref={ref}
-    className={cn('py-1.5 pl-8 pr-2 text-sm font-medium text-slate-400', className)}
+    className={cn('py-1.5 pl-8 pr-2 text-sm font-medium text-[hsl(var(--platform-foreground-muted))]', className)}
     {...props}
   />
 ));
