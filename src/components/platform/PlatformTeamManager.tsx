@@ -196,12 +196,12 @@ export function PlatformTeamManager() {
             <div className="rounded-xl overflow-hidden border border-[hsl(var(--platform-border)/0.5)]">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-slate-700/50 hover:bg-transparent">
-                    <TableHead className="text-slate-400">Member</TableHead>
-                    <TableHead className="text-slate-400">Role</TableHead>
-                    <TableHead className="text-slate-400">Added</TableHead>
-                    {canManageTeam && <TableHead className="w-12"></TableHead>}
-                  </TableRow>
+                  <TableRow>
+                     <TableHead>Member</TableHead>
+                     <TableHead>Role</TableHead>
+                     <TableHead>Added</TableHead>
+                     {canManageTeam && <TableHead className="w-12"></TableHead>}
+                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredAndSortedTeam.map((member) => {
