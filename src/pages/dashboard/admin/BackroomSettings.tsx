@@ -7,6 +7,7 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { tokens } from '@/lib/design-tokens';
 import { useBackroomEntitlement } from '@/hooks/backroom/useBackroomEntitlement';
+import { useBackroomOrgId } from '@/hooks/backroom/useBackroomOrgId';
 import { BackroomPaywall } from '@/components/dashboard/backroom-settings/BackroomPaywall';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
