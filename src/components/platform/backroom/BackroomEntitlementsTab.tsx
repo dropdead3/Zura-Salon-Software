@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Building2, Search, Loader2, ChevronDown, ChevronRight, MapPin, Scale, Clock, Play, AlertTriangle, ShieldCheck, Undo2, CreditCard, Send } from 'lucide-react';
+import { Building2, Search, Loader2, ChevronDown, ChevronRight, MapPin, Scale, AlertTriangle, ShieldCheck, Undo2, CreditCard, Send } from 'lucide-react';
 import { useBatchPaymentMethods, type PaymentMethodInfo } from '@/hooks/platform/useBatchPaymentMethods';
 import { useSendPaymentSetupLink } from '@/hooks/platform/useSendPaymentSetupLink';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';

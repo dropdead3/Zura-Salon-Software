@@ -232,21 +232,6 @@ export function BackroomBillingTab() {
                     <TableCell className="font-sans text-sm tabular-nums text-slate-300">
                       {org.totalScales}
                     </TableCell>
-                    <TableCell>
-                      {org.earliestTrialEnd ? (
-                        <div className="flex items-center gap-1.5">
-                          <Clock className="w-3 h-3 text-slate-500" />
-                          <span className={cn(
-                            'font-sans text-xs tabular-nums',
-                            new Date(org.earliestTrialEnd) < new Date() ? 'text-red-400' : 'text-slate-400'
-                          )}>
-                            {daysUntil(org.earliestTrialEnd)}
-                          </span>
-                        </div>
-                      ) : (
-                        <span className="font-sans text-xs text-slate-500">—</span>
-                      )}
-                    </TableCell>
                     <TableCell className="font-sans text-sm tabular-nums text-slate-200 text-right pr-4">
                       ${org.estimatedMRR.toLocaleString()}
                     </TableCell>
