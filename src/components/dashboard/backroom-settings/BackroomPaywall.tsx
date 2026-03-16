@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import {
   Package, Beaker, BarChart3, Shield, Zap, ArrowRight, Loader2,
   Minus, Plus, Scale, Droplets, ShieldCheck, MapPin, TrendingUp, DollarSign, Activity,
-  ChevronUp, Info, Clock, Eye, AlertTriangle, CheckCircle2, Lock, ClipboardList, Brain,
+  Info, Clock, Eye, AlertTriangle, CheckCircle2, Lock, ClipboardList, Brain,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -85,7 +85,7 @@ export function BackroomPaywall() {
   const [manualStylistCount, setManualStylistCount] = useState(2);
   const [manualScaleOverride, setManualScaleOverride] = useState(false);
   const [auditMinutesPerDay, setAuditMinutesPerDay] = useState(30);
-  const [mobileCalcOpen, setMobileCalcOpen] = useState(false);
+  
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
 
   const { effectiveOrganization } = useOrganizationContext();
@@ -490,11 +490,8 @@ export function BackroomPaywall() {
           </Card>
         )}
 
-        {/* ── TWO-COLUMN LAYOUT ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8">
-
-          {/* ════ LEFT COLUMN (scrollable) — Reordered for conversion ════ */}
-          <div className="space-y-6">
+        {/* ── FULL-WIDTH CONTENT ── */}
+        <div className="space-y-6">
 
             {/* 1. Your Salon's Numbers (personalized proof — moved up) */}
             <Card className="bg-card/60 border-border/40">
@@ -977,175 +974,94 @@ export function BackroomPaywall() {
               </CardContent>
             </Card>
 
-            {/* Bottom spacer on mobile so content isn't hidden behind sticky bar */}
-            <div className="h-24 lg:hidden" />
-          </div>
-
-          {/* ════ RIGHT COLUMN — Sticky Calculator (desktop only) ════ */}
-          <div className="hidden lg:block">
-            <div
-              className={cn(
-                'sticky top-24 rounded-xl border bg-card/80 backdrop-blur-xl shadow-2xl p-5 transition-colors duration-500 flex flex-col',
-                'max-h-[calc(100vh-8rem)]',
-                hasPositiveBenefit
-                  ? 'border-emerald-500/30 shadow-emerald-500/5'
-                  : 'border-border/40',
-              )}
-            >
-              <p className={cn(tokens.label.default, 'text-foreground text-sm mb-4 text-center')}>
-                ROI Calculator
-              </p>
-              <div className="flex-1 overflow-y-auto">
-                {calculatorContent}
-              </div>
-              <div className="mt-4 pt-4 border-t border-border/30 space-y-2">
-                <Button
-                  size="lg"
-                  className="w-full font-sans font-medium gap-2 text-sm"
-                  onClick={() => setConfirmDialogOpen(true)}
-                  disabled={loading || selectedLocationIds.size === 0}
-                >
-                  <Lock className="w-4 h-4" />
-                  Unlock Zura Backroom
-                  <ArrowRight className="w-4 h-4" />
-                </Button>
-                <BackroomCheckoutConfirmDialog
-                  open={confirmDialogOpen}
-                  onOpenChange={setConfirmDialogOpen}
-                  onConfirm={() => {
-                    setConfirmDialogOpen(false);
-                    handleCheckout();
-                  }}
-                  loading={loading}
-                  organizationId={effectiveOrganization?.id}
-                  locationCount={locationCount}
-                  scaleCount={scaleCount}
-                  estimatedMonthlyServices={Math.round((estimate?.monthlyColorServices ?? 0) * locationFraction)}
-                  estimatedMonthlySavings={totalSavings}
-                  netBenefit={netBenefit}
-                />
-                {selectedLocationIds.size === 0 && activeLocations.length > 0 && (
-                  <p className="text-xs text-destructive font-sans text-center">
-                    Select at least one location to continue
-                  </p>
-                )}
-                <p className="text-[10px] text-muted-foreground font-sans text-center">
-                  30-day money-back guarantee · Cancel anytime
+            {/* Inline ROI Calculator */}
+            <Card className="bg-card/60 border-border/40">
+              <CardContent className="p-5 space-y-4">
+                <p className={cn(tokens.label.default, 'text-foreground text-xs flex items-center gap-2')}>
+                  <Scale className="w-3.5 h-3.5 text-primary" />
+                  ROI Calculator
                 </p>
-              </div>
-            </div>
-          </div>
+                {calculatorContent}
+              </CardContent>
+            </Card>
+
+            {/* Bottom spacer so sticky banner doesn't overlap */}
+            <div className="h-24" />
         </div>
       </div>
 
-      {/* ════ MOBILE STICKY BOTTOM BAR ════ */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40">
-        {/* Expanded calculator sheet */}
-        {mobileCalcOpen && (
-          <div
-            className="fixed inset-0 bg-black/30 backdrop-blur-sm z-30"
-            onClick={() => setMobileCalcOpen(false)}
-          />
+      {/* ════ UNIVERSAL STICKY BOTTOM BANNER ════ */}
+      <div
+        className={cn(
+          'fixed bottom-0 left-0 right-0 z-40 border-t bg-card/95 backdrop-blur-xl',
+          hasPositiveBenefit ? 'border-emerald-500/30' : 'border-border',
         )}
-        {mobileCalcOpen && (
-          <div className="fixed bottom-0 left-0 right-0 z-40 max-h-[80vh] flex flex-col rounded-t-xl border-t border-border bg-card/95 backdrop-blur-xl shadow-2xl p-5">
-            <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-muted" />
-            <button
-              onClick={() => setMobileCalcOpen(false)}
-              className="absolute right-4 top-4 p-1 rounded-full bg-muted/60 hover:bg-muted"
-            >
-              <ChevronUp className="w-4 h-4 text-muted-foreground rotate-180" />
-            </button>
-            <div className="flex-1 overflow-y-auto">
-              {calculatorContent}
-            </div>
-            <div className="mt-4 pt-4 border-t border-border/30 space-y-2">
-              <Button
-                size="lg"
-                className="w-full font-sans font-medium gap-2 text-sm"
-                onClick={() => setConfirmDialogOpen(true)}
-                disabled={loading || selectedLocationIds.size === 0}
-              >
-                <Lock className="w-4 h-4" />
-                Unlock Zura Backroom
-                <ArrowRight className="w-4 h-4" />
-              </Button>
-              <BackroomCheckoutConfirmDialog
-                open={confirmDialogOpen}
-                onOpenChange={setConfirmDialogOpen}
-                onConfirm={() => {
-                  setConfirmDialogOpen(false);
-                  handleCheckout();
-                }}
-                loading={loading}
-                organizationId={effectiveOrganization?.id}
-                locationCount={locationCount}
-                scaleCount={scaleCount}
-                estimatedMonthlyServices={Math.round((estimate?.monthlyColorServices ?? 0) * locationFraction)}
-                estimatedMonthlySavings={totalSavings}
-                netBenefit={netBenefit}
-              />
-              {selectedLocationIds.size === 0 && activeLocations.length > 0 && (
-                <p className="text-xs text-destructive font-sans text-center">
-                  Select at least one location to continue
-                </p>
-              )}
-              <p className="text-[10px] text-muted-foreground font-sans text-center">
-                30-day money-back guarantee · Cancel anytime
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Compact bar */}
-        {!mobileCalcOpen && (
-          <div
-            className={cn(
-              'border-t bg-card/95 backdrop-blur-xl px-4 py-3 flex items-center justify-between gap-3',
-              hasPositiveBenefit ? 'border-emerald-500/30' : 'border-border',
+      >
+        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4 sm:gap-6 min-w-0">
+            {hasPositiveBenefit ? (
+              <>
+                <div className="hidden sm:block">
+                  <p className="font-display text-sm tracking-wide text-emerald-400">
+                    +{formatCurrency(yearlySavings)}/yr
+                  </p>
+                  <p className="text-[10px] text-muted-foreground font-sans">Est. Savings</p>
+                </div>
+                <div>
+                  <p className="font-display text-lg sm:text-sm tracking-wide text-emerald-400">
+                    +{formatCurrency(yearlyNetBenefit)}/yr
+                  </p>
+                  <p className="text-[10px] text-muted-foreground font-sans">Net Benefit</p>
+                </div>
+              </>
+            ) : locationCount > 0 ? (
+              <div>
+                <p className="font-sans text-sm text-foreground">{formatCurrency(monthlyTotal)}/mo</p>
+                <p className="text-[10px] text-muted-foreground font-sans">Est. Cost</p>
+              </div>
+            ) : (
+              <p className="font-sans text-sm text-muted-foreground">Select locations above</p>
             )}
-          >
-            <button
-              className="flex-1 min-w-0 text-left"
-              onClick={() => setMobileCalcOpen(true)}
-            >
-              {hasPositiveBenefit ? (
-                <div>
-                  <p className="font-display text-lg tracking-wide text-emerald-400">
-                    +{formatCurrency(netBenefit)}/mo
-                  </p>
-                  <p className="text-[10px] text-muted-foreground font-sans flex items-center gap-1">
-                    <ChevronUp className="w-3 h-3" /> Tap for breakdown
-                  </p>
-                </div>
-              ) : locationCount > 0 ? (
-                <div>
-                  <p className="font-sans text-sm text-foreground">{formatCurrency(monthlyTotal)}/mo</p>
-                  <p className="text-[10px] text-muted-foreground font-sans flex items-center gap-1">
-                    <ChevronUp className="w-3 h-3" /> Tap for breakdown
-                  </p>
-                </div>
-              ) : (
-                <p className="font-sans text-sm text-muted-foreground">Select locations above</p>
-              )}
-            </button>
+          </div>
+
+          <div className="flex flex-col items-end gap-1 shrink-0">
             <Button
-              size="sm"
-              className="font-sans font-medium gap-1.5 shrink-0"
+              size={isMobile ? 'sm' : 'default'}
+              className="font-sans font-medium gap-2"
               onClick={() => setConfirmDialogOpen(true)}
               disabled={loading || selectedLocationIds.size === 0}
             >
               {loading ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
                 <>
-                  Activate
+                  <Lock className="w-3.5 h-3.5" />
+                  Unlock Zura Backroom
                   <ArrowRight className="w-3.5 h-3.5" />
                 </>
               )}
             </Button>
+            <p className="text-[9px] text-muted-foreground font-sans">
+              30-day guarantee · Cancel anytime
+            </p>
           </div>
-        )}
+        </div>
+
+        <BackroomCheckoutConfirmDialog
+          open={confirmDialogOpen}
+          onOpenChange={setConfirmDialogOpen}
+          onConfirm={() => {
+            setConfirmDialogOpen(false);
+            handleCheckout();
+          }}
+          loading={loading}
+          organizationId={effectiveOrganization?.id}
+          locationCount={locationCount}
+          scaleCount={scaleCount}
+          estimatedMonthlyServices={Math.round((estimate?.monthlyColorServices ?? 0) * locationFraction)}
+          estimatedMonthlySavings={totalSavings}
+          netBenefit={netBenefit}
+        />
       </div>
     </div>
   );
