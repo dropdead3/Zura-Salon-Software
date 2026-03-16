@@ -241,7 +241,7 @@ export function BackroomPaywall() {
             </p>
             <div className="grid grid-cols-3 gap-3">
               <div className="text-center">
-                <p className="font-display text-xl tracking-wide text-emerald-400">
+                <p className="font-display text-base tracking-wide text-emerald-400">
                   <AnimatedNumber value={yearlySupplyRecovery} prefix="$" duration={1000} />
                 </p>
                 <p className="text-[10px] text-muted-foreground font-sans">revenue / yr</p>
