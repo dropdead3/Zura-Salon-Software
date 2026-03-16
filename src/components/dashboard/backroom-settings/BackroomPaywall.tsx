@@ -369,33 +369,9 @@ export function BackroomPaywall() {
     </h2>
   );
 
-  /* ─── Scroll reveal wrapper (IntersectionObserver, fires once) ─── */
-  const RevealOnScroll = ({ children, className, delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) => {
-    const ref = useRef<HTMLDivElement>(null);
-    const [visible, setVisible] = useState(false);
-    useEffect(() => {
-      const el = ref.current;
-      if (!el) return;
-      // Respect reduced motion — show immediately
-      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (prefersReduced) { setVisible(true); return; }
-      const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setVisible(true); obs.disconnect(); } }, { threshold: 0.15 });
-      obs.observe(el);
-      return () => obs.disconnect();
-    }, []);
-    return (
-      <div
-        ref={ref}
-        className={cn(
-          'transition-all duration-500 ease-out',
-          visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3',
-          className
-        )}
-        style={{ transitionDelay: `${delay}ms` }}
-      >
-        {children}
-      </div>
-    );
+  /* ─── Scroll reveal wrapper (disabled — animations removed) ─── */
+  const RevealOnScroll = ({ children, className }: { children: React.ReactNode; className?: string; delay?: number }) => {
+    return <div className={className}>{children}</div>;
   };
 
   return (
@@ -430,7 +406,7 @@ export function BackroomPaywall() {
               <Card className="relative overflow-hidden min-h-[360px] bg-card/80 backdrop-blur-xl border-border/60 shadow-xl">
                 <CardContent className="p-6 flex flex-col justify-center min-h-[360px] relative">
                   {/* Step content */}
-                  <div key={heroStep} className="animate-fade-in-fast space-y-4">
+                  <div key={heroStep} className="space-y-4">
                     {heroStep === 0 && (
                       <div className="flex flex-col items-center gap-4">
                         <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center">
@@ -875,7 +851,7 @@ export function BackroomPaywall() {
               {/* Right — Visualization Panel */}
               <Card className="border-border/50 bg-card/80 backdrop-blur-sm overflow-hidden">
                 <CardContent className="p-6 min-h-[320px] flex flex-col justify-center">
-                  <div key={activeFeature} className="animate-fade-in-fast">
+                  <div key={activeFeature}>
                     {activeFeature === 'mixing' && (
                       <div className="space-y-4">
                         <div className="flex items-center gap-2 mb-1">
