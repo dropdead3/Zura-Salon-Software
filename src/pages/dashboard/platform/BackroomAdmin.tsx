@@ -11,7 +11,7 @@ import { BackroomAnalyticsTab } from '@/components/platform/backroom/BackroomAna
 import { BackroomBillingTab } from '@/components/platform/backroom/BackroomBillingTab';
 import { CoachPerformanceTab } from '@/components/platform/backroom/CoachPerformanceTab';
 import { RefundHistoryTab } from '@/components/platform/backroom/RefundHistoryTab';
-import { ClipboardList, Database, Building2, Package, BarChart3, CreditCard, Users2, ReceiptText } from 'lucide-react';
+import { ClipboardList, Database, Building2, Package, BarChart3, CreditCard, Users2, ReceiptText, BoxIcon } from 'lucide-react';
 
 const tabTriggerClass =
   'data-[state=active]:bg-violet-600 data-[state=active]:text-white text-slate-400 hover:text-white';
