@@ -801,116 +801,65 @@ export function BackroomPaywall() {
         </section>
 
         {/* ═══════════════════════════════════════════
-            SECTION 7 — PRICING + ROI
+            SECTION 7 — PRICING CONFIGURATOR
             ═══════════════════════════════════════════ */}
         <section className="pb-16 md:pb-20">
           <div className="space-y-8 md:space-y-12">
             <SectionHeading>Pricing</SectionHeading>
 
-            <Card className="bg-card border-border/50 shadow-md">
-              <CardContent className="p-6 md:p-8 space-y-6">
-                <div className="grid grid-cols-2 gap-5">
-                  <div className="p-5 rounded-lg bg-muted/30 border border-border/40 text-center">
-                    <p className="font-display text-3xl font-medium tracking-wide text-foreground">${BACKROOM_BASE_PRICE}</p>
-                    <p className="text-sm text-muted-foreground font-sans mt-2">per location / month</p>
-                  </div>
-                  <div className="p-5 rounded-lg bg-muted/30 border border-border/40 text-center">
-                    <p className="font-display text-3xl font-medium tracking-wide text-foreground">${BACKROOM_PER_SERVICE_FEE.toFixed(2)}</p>
-                    <p className="text-sm text-muted-foreground font-sans mt-2">per color service</p>
-                  </div>
-                </div>
+            <Card className="bg-card border-border/50 shadow-md overflow-hidden">
+              <CardContent className="p-0">
 
-                {/* ROI anchor */}
-                <div className="text-center py-2">
-                  <p className="font-sans text-base text-muted-foreground">
+                {/* ── Price headline ── */}
+                <div className="p-6 md:p-8 text-center space-y-2">
+                  <p className="font-sans text-base text-foreground">
+                    <span className="font-display text-xl tracking-wide">${BACKROOM_BASE_PRICE}</span>
+                    <span className="text-muted-foreground">/mo per location</span>
+                    <span className="text-muted-foreground/40 mx-3">·</span>
+                    <span className="font-display text-xl tracking-wide">${BACKROOM_PER_SERVICE_FEE.toFixed(2)}</span>
+                    <span className="text-muted-foreground">/color service</span>
+                  </p>
+                  <p className="font-sans text-sm text-muted-foreground/60">
                     One highlight service covers your entire monthly cost.
                   </p>
-                  <p className="font-sans text-sm text-muted-foreground/60 mt-1">
-                    You only pay when you're making money.
-                  </p>
                 </div>
 
-                {/* Annual impact summary */}
-                {hasPositiveBenefit && estimate && (
-                  <div className="rounded-lg bg-success/5 border border-success/20 p-6 space-y-4">
-                    <div className="flex items-center justify-center gap-2">
-                      <TrendingUp className="w-4 h-4 text-success" />
-                      <p className="font-display text-xs tracking-wide text-success">Projected Annual Impact</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="font-display text-3xl md:text-4xl tracking-wide text-success">
-                        +<AnimatedNumber value={yearlyNetBenefit} duration={1200} formatOptions={{ style: 'currency', currency: 'USD', notation: 'compact', maximumFractionDigits: 1 }} />
-                        <span className="text-base text-success/70 ml-1">/yr</span>
-                      </p>
-                      {roiMultiplier >= 2 && (
-                        <span className="inline-flex items-center gap-1 mt-3 px-3 py-1 rounded-full bg-success/10 text-success text-sm font-sans font-medium">
-                          <TrendingUp className="w-3.5 h-3.5" />
-                          {roiMultiplier}× ROI
-                        </span>
+                {/* ── Locations config ── */}
+                {activeLocations.length > 0 && (
+                  <div className="border-t border-border/40 p-6 md:px-8">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                          <MapPin className="w-4 h-4 text-primary" />
+                        </div>
+                        <p className="font-display text-sm tracking-wide text-foreground uppercase">
+                          {isSingleLocation ? 'Your Location' : 'Locations'}
+                        </p>
+                      </div>
+                      {!isSingleLocation && (
+                        <Button variant="ghost" size="sm" className="font-sans text-sm" onClick={selectAllLocations}>
+                          {selectedLocationIds.size === activeLocations.length ? 'Deselect All' : 'Select All'}
+                        </Button>
                       )}
                     </div>
-                    <div className="space-y-2">
-                      <div className="h-2 rounded-full bg-muted/40 overflow-hidden">
-                        <div
-                          className="h-full rounded-full bg-success/60"
-                          style={{ width: `${Math.min(100, yearlySavings > 0 ? (yearlyCost / yearlySavings) * 100 : 100)}%` }}
-                        />
-                      </div>
-                      <p className="text-xs text-muted-foreground font-sans text-center">
-                        Cost is only {yearlySavings > 0 ? Math.round((yearlyCost / yearlySavings) * 100) : 0}% of annual benefit
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
 
-            {/* Location Selector */}
-            {activeLocations.length > 0 && (
-              <Card className="bg-card border-border/50 shadow-sm">
-                <CardContent className="p-6 md:p-8">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                        <MapPin className="w-5 h-5 text-primary" />
-                      </div>
-                      <div>
-                        <p className="font-sans text-base font-medium text-foreground">
-                          {isSingleLocation ? 'Your Location' : 'Select Locations'}
-                        </p>
-                        <p className="text-sm text-muted-foreground font-sans mt-0.5">
-                          ${BACKROOM_BASE_PRICE}/mo per location
-                        </p>
-                      </div>
-                    </div>
-                    {!isSingleLocation && (
-                      <Button variant="ghost" size="sm" className="font-sans text-sm" onClick={selectAllLocations}>
-                        {selectedLocationIds.size === activeLocations.length ? 'Deselect All' : 'Select All'}
-                      </Button>
-                    )}
-                  </div>
-
-                  {isSingleLocation ? (
-                    (() => {
-                      const loc = activeLocations[0];
-                      const cityLabel = loc.city ? loc.city.split(',')[0]?.trim() : '';
-                      return (
-                        <div className="flex items-center gap-3 px-4 py-4 rounded-lg bg-primary/5 border border-primary/30">
-                          <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <MapPin className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                    {isSingleLocation ? (
+                      (() => {
+                        const loc = activeLocations[0];
+                        const cityLabel = loc.city ? loc.city.split(',')[0]?.trim() : '';
+                        return (
+                          <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-primary/5 border border-primary/30">
+                            <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
+                            <div className="flex-1 min-w-0 flex items-center gap-2">
                               <span className="font-sans text-sm text-foreground truncate">{loc.name}</span>
                               {cityLabel && <span className="font-sans text-sm text-muted-foreground">{cityLabel}</span>}
                             </div>
+                            <span className="font-sans text-sm text-primary shrink-0">+${BACKROOM_BASE_PRICE}/mo</span>
                           </div>
-                          <span className="font-sans text-sm text-primary shrink-0">${BACKROOM_BASE_PRICE}/mo</span>
-                        </div>
-                      );
-                    })()
-                  ) : (
-                    <>
-                      <div className="space-y-2">
+                        );
+                      })()
+                    ) : (
+                      <div className="space-y-1.5">
                         {activeLocations.map((loc) => {
                           const isChecked = selectedLocationIds.has(loc.id);
                           const cityLabel = loc.city ? loc.city.split(',')[0]?.trim() : '';
@@ -918,18 +867,15 @@ export function BackroomPaywall() {
                             <div
                               key={loc.id}
                               className={cn(
-                                'flex items-center gap-3 px-4 py-4 rounded-lg transition-all duration-150 cursor-pointer',
+                                'flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-150 cursor-pointer',
                                 isChecked ? 'bg-primary/5 border border-primary/30' : 'border border-transparent hover:bg-accent/30',
                               )}
                               onClick={() => toggleLocation(loc.id)}
                             >
                               <Checkbox checked={isChecked} className="pointer-events-none" />
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2">
-                                  <MapPin className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                                  <span className="font-sans text-sm text-foreground truncate">{loc.name}</span>
-                                  {cityLabel && <span className="font-sans text-sm text-muted-foreground">{cityLabel}</span>}
-                                </div>
+                              <div className="flex-1 min-w-0 flex items-center gap-2">
+                                <span className="font-sans text-sm text-foreground truncate">{loc.name}</span>
+                                {cityLabel && <span className="font-sans text-sm text-muted-foreground">{cityLabel}</span>}
                               </div>
                               {isChecked && (
                                 <span className="font-sans text-sm text-primary shrink-0">+${BACKROOM_BASE_PRICE}/mo</span>
@@ -938,95 +884,141 @@ export function BackroomPaywall() {
                           );
                         })}
                       </div>
-                      {selectedLocationIds.size > 0 && (
-                        <div className="mt-4 pt-4 border-t border-border/40 flex justify-between items-center">
-                          <span className="font-sans text-sm text-muted-foreground">
-                            {selectedLocationIds.size} location{selectedLocationIds.size > 1 ? 's' : ''} selected
-                          </span>
-                          <span className="font-sans text-base text-foreground font-medium">${baseCost}/mo</span>
-                        </div>
-                      )}
-                    </>
-                  )}
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Hardware sub-section */}
-            <Card className="bg-card border-border/50 shadow-sm">
-              <CardContent className="p-6 md:p-8 space-y-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                    <Scale className="w-5 h-5 text-primary" />
+                    )}
                   </div>
-                  <div>
-                    <p className="font-sans text-base font-medium text-foreground">Precision Scales</p>
-                    <p className="text-sm text-muted-foreground font-sans mt-1">
-                      Connect to your mixing stations via Bluetooth.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-5">
-                  <div className="p-5 rounded-lg bg-muted/30 border border-border/40 text-center">
-                    <p className="font-display text-2xl font-medium tracking-wide text-foreground">${SCALE_HARDWARE_PRICE}</p>
-                    <p className="text-sm text-muted-foreground font-sans mt-2">per scale (one-time)</p>
-                  </div>
-                  <div className="p-5 rounded-lg bg-muted/30 border border-border/40 text-center">
-                    <p className="font-display text-2xl font-medium tracking-wide text-foreground">${SCALE_LICENSE_MONTHLY}</p>
-                    <p className="text-sm text-muted-foreground font-sans mt-2">per scale / month</p>
-                  </div>
-                </div>
-
-                {/* Recommendation summary */}
-                <div className="flex items-center justify-between p-4 rounded-lg bg-primary/5 border border-primary/20">
-                  <div className="space-y-1">
-                    <p className="font-sans text-sm text-foreground font-medium">
-                      {recommendedScales} scale{recommendedScales !== 1 ? 's' : ''} recommended
-                    </p>
-                    <p className="text-xs text-muted-foreground font-sans">
-                      Based on 1 scale per 10 daily color appointments
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-9 w-9 rounded-lg"
-                      onClick={() => { setManualScaleOverride(true); setScaleCount(Math.max(0, scaleCount - 1)); }}
-                      disabled={scaleCount <= 0}
-                    >
-                      <span className="text-sm">−</span>
-                    </Button>
-                    <span className={cn(tokens.stat.large, 'w-8 text-center text-foreground text-lg')}>{scaleCount}</span>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-9 w-9 rounded-lg"
-                      onClick={() => { setManualScaleOverride(true); setScaleCount(Math.min(20, scaleCount + 1)); }}
-                      disabled={scaleCount >= 20}
-                    >
-                      <span className="text-sm">+</span>
-                    </Button>
-                  </div>
-                </div>
-                {manualScaleOverride && scaleCount !== recommendedScales && (
-                  <button
-                    type="button"
-                    className="text-sm text-primary font-sans hover:underline transition-colors"
-                    onClick={() => { setManualScaleOverride(false); setScaleCount(recommendedScales); }}
-                  >
-                    Reset to recommended
-                  </button>
                 )}
 
-                {/* iPad requirement */}
-                <div className="flex items-start gap-3 p-4 rounded-lg bg-muted/30 border border-border/40">
-                  <Info className="w-4 h-4 text-muted-foreground/60 shrink-0 mt-0.5" />
-                  <p className="text-sm text-muted-foreground font-sans">
-                    Each station uses an iPad with Bluetooth for the mixing interface. A tablet stand is recommended.
-                  </p>
+                {/* ── Scales config ── */}
+                <div className="border-t border-border/40 p-6 md:px-8">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                        <Scale className="w-4 h-4 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-display text-sm tracking-wide text-foreground uppercase">Precision Scales</p>
+                        <p className="text-xs text-muted-foreground font-sans mt-0.5">
+                          ${SCALE_HARDWARE_PRICE} one-time · ${SCALE_LICENSE_MONTHLY}/mo each
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8 rounded-lg"
+                        onClick={() => { setManualScaleOverride(true); setScaleCount(Math.max(0, scaleCount - 1)); }}
+                        disabled={scaleCount <= 0}
+                      >
+                        <span className="text-sm">−</span>
+                      </Button>
+                      <span className="font-display text-lg tracking-wide w-8 text-center text-foreground">{scaleCount}</span>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8 rounded-lg"
+                        onClick={() => { setManualScaleOverride(true); setScaleCount(Math.min(20, scaleCount + 1)); }}
+                        disabled={scaleCount >= 20}
+                      >
+                        <span className="text-sm">+</span>
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground font-sans">
+                    <span>{recommendedScales} recommended (1 per 10 daily color appts)</span>
+                    {manualScaleOverride && scaleCount !== recommendedScales && (
+                      <button
+                        type="button"
+                        className="text-primary hover:underline transition-colors"
+                        onClick={() => { setManualScaleOverride(false); setScaleCount(recommendedScales); }}
+                      >
+                        Reset
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="mt-3 flex items-start gap-2 text-xs text-muted-foreground/60 font-sans">
+                    <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                    <span>Each station requires an iPad with Bluetooth. Tablet stand recommended.</span>
+                  </div>
                 </div>
+
+                {/* ── Monthly Summary (receipt) ── */}
+                <div className="border-t-2 border-border/60 bg-muted/20 p-6 md:px-8 space-y-3">
+                  <p className="font-display text-xs tracking-wide text-muted-foreground uppercase">Monthly Summary</p>
+
+                  <div className="space-y-2 text-sm font-sans">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">{locationCount} location{locationCount !== 1 ? 's' : ''}</span>
+                      <span className="text-foreground">${baseCost}</span>
+                    </div>
+                    {scaleCount > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">{scaleCount} scale{scaleCount !== 1 ? 's' : ''} license</span>
+                        <span className="text-foreground">${scaleCost}</span>
+                      </div>
+                    )}
+                    {estimate && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">
+                          Est. usage (~{Math.round(estimate.monthlyColorServices * locationFraction)} services)
+                        </span>
+                        <span className="text-foreground">${usageFee}</span>
+                      </div>
+                    )}
+
+                    <div className="border-t border-border/40 pt-2 mt-2 flex justify-between items-baseline">
+                      <span className="text-foreground font-medium">Est. Monthly Total</span>
+                      <span className="font-display text-xl tracking-wide text-foreground">${monthlyTotal}<span className="text-sm text-muted-foreground font-sans">/mo</span></span>
+                    </div>
+
+                    {hardwareTotal > 0 && (
+                      <div className="flex justify-between text-xs text-muted-foreground/60">
+                        <span>One-time hardware</span>
+                        <span>${hardwareTotal}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* ── ROI projection (bottom) ── */}
+                {hasPositiveBenefit && estimate && (
+                  <div className="border-t border-success/20 bg-success/5 p-6 md:px-8 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <TrendingUp className="w-4 h-4 text-success" />
+                        <p className="font-display text-xs tracking-wide text-success uppercase">Projected Annual Impact</p>
+                      </div>
+                      {roiMultiplier >= 2 && (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-success/10 text-success text-xs font-sans font-medium">
+                          {roiMultiplier}× ROI
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex items-baseline gap-2">
+                      <p className="font-display text-2xl md:text-3xl tracking-wide text-success">
+                        +<AnimatedNumber value={yearlyNetBenefit} duration={1200} formatOptions={{ style: 'currency', currency: 'USD', notation: 'compact', maximumFractionDigits: 1 }} />
+                        <span className="text-sm text-success/70 ml-1">/yr</span>
+                      </p>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <div className="h-1.5 rounded-full bg-muted/40 overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-success/60"
+                          style={{ width: `${Math.min(100, yearlySavings > 0 ? (yearlyCost / yearlySavings) * 100 : 100)}%` }}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground font-sans">
+                        Cost is only {yearlySavings > 0 ? Math.round((yearlyCost / yearlySavings) * 100) : 0}% of annual benefit
+                      </p>
+                    </div>
+                  </div>
+                )}
+
               </CardContent>
             </Card>
           </div>
