@@ -334,7 +334,7 @@ export function BackroomEntitlementsTab() {
               {
                 organization_id: org.id,
                 location_id: loc.id,
-                plan_tier: 'starter',
+                plan_tier: 'standard',
                 scale_count: 0,
                 status: 'active',
                 activated_at: new Date().toISOString(),
