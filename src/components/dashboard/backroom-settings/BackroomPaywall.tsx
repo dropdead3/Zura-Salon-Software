@@ -869,6 +869,7 @@ export function BackroomPaywall() {
                     </div>
                   </CardContent>
                 </Card>
+                </RevealOnScroll>
               ))}
             </div>
 
