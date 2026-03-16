@@ -379,11 +379,11 @@ export function BackroomPaywall() {
             </div>
 
             {/* WITHOUT — deliberately muted */}
-            <Card className="bg-card/50 border-destructive/15 shadow-sm">
+            <Card className="bg-card/50 border-destructive/20 shadow-sm">
               <CardContent className="p-6 md:p-8">
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-11 h-11 md:w-12 md:h-12 rounded-xl bg-destructive/10 ring-1 ring-destructive/10 flex items-center justify-center shrink-0">
-                    <XCircle className="w-5 h-5 md:w-6 md:h-6 text-destructive" />
+                  <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center shrink-0">
+                    <XCircle className="w-5 h-5 text-destructive" />
                   </div>
                   <h3 className="font-display text-base tracking-wide uppercase text-destructive">Without Backroom</h3>
                 </div>
