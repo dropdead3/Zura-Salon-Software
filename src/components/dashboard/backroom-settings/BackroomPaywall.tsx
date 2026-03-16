@@ -583,7 +583,7 @@ export function BackroomPaywall() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
             {/* WITHOUT */}
-            <Card className="bg-destructive/[0.03] border-destructive/20 hover-lift">
+            <Card className="bg-destructive/[0.03] border-destructive/20 hover-lift shadow-sm">
               <CardContent className="p-6 md:p-8">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center shrink-0">
