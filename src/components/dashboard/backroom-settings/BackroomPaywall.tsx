@@ -704,7 +704,53 @@ export function BackroomPaywall() {
 
         </section>
 
-        {/* Divider — Problem → How It Works */}
+        {/* ═══════════════════════════════════════════
+            SECTION 1.85 — SALON REALITY CHECK
+            ═══════════════════════════════════════════ */}
+        <section className="pb-20 md:pb-24">
+          <RevealOnScroll>
+            <div className="text-center space-y-3 mb-12">
+              <SectionHeading>What Most Salon Backrooms Don't Track</SectionHeading>
+              <p className="text-base text-muted-foreground font-sans font-light max-w-2xl mx-auto">
+                Most salons operate the backroom on instinct. Zura Backroom makes it measurable.
+              </p>
+            </div>
+          </RevealOnScroll>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[
+              { icon: Droplets, title: 'Unmeasured Usage', desc: 'Product is dispensed without tracking how much goes into each bowl.' },
+              { icon: Brain, title: 'Unrecorded Formulas', desc: 'Client formulas live in notebooks, memory, or not at all.' },
+              { icon: Scale, title: 'Unstandardized Mixing', desc: 'Assistants mix bowls without consistent measurements across services.' },
+              { icon: PackageSearch, title: 'Surprise Shortages', desc: 'Inventory gaps surface mid-service with no advance warning.' },
+              { icon: DollarSign, title: 'Unknown Service Costs', desc: 'The true product cost behind each color service is rarely calculated.' },
+              { icon: AlertTriangle, title: 'Invisible Waste', desc: 'Chemical waste accumulates quietly until it shows up in the budget.' },
+            ].map((point, i) => (
+              <RevealOnScroll key={point.title} delay={i * 60}>
+                <Card className="p-5 hover:shadow-md transition-shadow duration-200 h-full">
+                  <div className="space-y-3">
+                    <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
+                      <point.icon className="w-5 h-5 text-primary" />
+                    </div>
+                    <h4 className="font-display text-sm tracking-wide">{point.title}</h4>
+                    <p className="text-sm text-muted-foreground font-sans">{point.desc}</p>
+                  </div>
+                </Card>
+              </RevealOnScroll>
+            ))}
+          </div>
+
+          <RevealOnScroll>
+            <div className="text-center mt-12 space-y-6">
+              <p className="text-base text-muted-foreground font-sans font-light">
+                Zura Backroom turns these unknowns into structured, measurable data.
+              </p>
+              <ActivateButton />
+            </div>
+          </RevealOnScroll>
+        </section>
+
+        {/* Divider — Reality Check → Problem */}
         <div className="flex justify-center py-4">
           <div className="w-12 h-px bg-border/40" />
         </div>
