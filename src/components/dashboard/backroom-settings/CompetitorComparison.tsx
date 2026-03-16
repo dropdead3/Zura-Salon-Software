@@ -155,7 +155,7 @@ export function CompetitorComparison() {
                       'text-center px-5 py-4',
                       col.key === 'zura' && 'bg-primary/[0.03]',
                     )}>
-                      <div className="space-y-0.5">
+                      <div className="space-y-1">
                         <p className={cn(
                           'font-sans text-sm',
                           col.key === 'zura' ? 'text-primary font-medium' : 'text-foreground'
