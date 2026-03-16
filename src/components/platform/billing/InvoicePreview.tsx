@@ -116,9 +116,9 @@ export function InvoicePreview({
               )}
 
               {/* Total */}
-              <div className="flex justify-between pt-2 border-t border-border">
-                <span className="font-medium text-foreground">Total Due</span>
-                <span className="font-medium text-lg text-foreground">
+              <div className="flex justify-between pt-2 border-t border-[hsl(var(--platform-border)/0.5)]">
+                <span className="font-medium text-[hsl(var(--platform-foreground))]">Total Due</span>
+                <span className="font-medium text-lg text-[hsl(var(--platform-foreground))]">
                   {formatCurrency(calculation.firstInvoiceAmount)}
                 </span>
               </div>
