@@ -300,6 +300,20 @@ export function BackroomPaywall() {
   const heroRef = useRef<HTMLDivElement>(null);
   const [showStickyBar, setShowStickyBar] = useState(false);
   const [stickyDismissed, setStickyDismissed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('dashboard-sidebar-collapsed') === 'true';
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const val = localStorage.getItem('dashboard-sidebar-collapsed') === 'true';
+      setSidebarCollapsed(prev => prev !== val ? val : prev);
+    }, 500);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (!heroRef.current) return;
