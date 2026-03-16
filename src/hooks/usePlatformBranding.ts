@@ -105,6 +105,17 @@ export function usePlatformBranding() {
     },
     onSuccess: (data) => {
       queryClient.setQueryData(['platform-branding'], data);
+      queryClient.setQueryData(['business-settings'], (existing: unknown) => {
+        if (!existing || typeof existing !== 'object') return existing;
+
+        return {
+          ...(existing as Record<string, unknown>),
+          logo_dark_url: data.primary_logo_url,
+          logo_light_url: data.secondary_logo_url,
+          icon_dark_url: data.icon_dark_url,
+          icon_light_url: data.icon_light_url,
+        };
+      });
       queryClient.invalidateQueries({ queryKey: ['business-settings'] });
       toast({
         title: 'Branding saved',
