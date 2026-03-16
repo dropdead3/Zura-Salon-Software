@@ -250,7 +250,7 @@ export function PlatformTeamManager() {
                             {config.label}
                           </PlatformBadge>
                         </TableCell>
-                        <TableCell className="text-slate-500 text-sm">
+                        <TableCell className="text-[hsl(var(--platform-foreground-subtle))] text-sm">
                           {formatDate(new Date(member.created_at), 'MMM d, yyyy')}
                         </TableCell>
                         {canManageTeam && (
