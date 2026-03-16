@@ -22,8 +22,8 @@ import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger,
 } from '@/components/ui/accordion';
 import { supabase } from '@/integrations/supabase/client';
-import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useLocations } from '@/hooks/useLocations';
+import { useBackroomOrgId } from '@/hooks/backroom/useBackroomOrgId';
 import { useBackroomLocationEntitlements } from '@/hooks/backroom/useBackroomLocationEntitlements';
 import { useBackroomPricingEstimate } from '@/hooks/backroom/useBackroomPricingEstimate';
 import { usePerLocationColorServices } from '@/hooks/backroom/usePerLocationColorServices';
