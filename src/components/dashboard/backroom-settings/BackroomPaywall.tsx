@@ -888,6 +888,9 @@ export function BackroomPaywall() {
           <CompetitorComparison />
         </section>
 
+        {/* Mid-page CTA after competitor comparison */}
+        <MidPageCta />
+
         {/* ═══════════════════════════════════════════
             SECTION 6 — HOW IT WORKS (3-step)
             ═══════════════════════════════════════════ */}
