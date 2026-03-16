@@ -95,6 +95,9 @@ Deno.serve(async (req) => {
       { price: BACKROOM_LOCATION_PRICE_ID, quantity: resolvedLocationIds.length },
     ];
 
+    // Usage-based: $0.50/color service (metered)
+    lineItems.push({ price: BACKROOM_USAGE_PRICE_ID });
+
     // Scale licenses (recurring)
     if (scaleQty > 0) {
       lineItems.push({ price: SCALE_LICENSE_PRICE_ID, quantity: scaleQty });
