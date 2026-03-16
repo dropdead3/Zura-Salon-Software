@@ -38,7 +38,7 @@ export function AddScalesDialog({ open, onOpenChange }: AddScalesDialogProps) {
 
       if (error) throw error;
       if (data?.url) {
-        window.location.href = data.url;
+        window.open(data.url, '_blank');
       } else {
         toast.success(`${qty} scale license(s) added to your subscription`);
         onOpenChange(false);
