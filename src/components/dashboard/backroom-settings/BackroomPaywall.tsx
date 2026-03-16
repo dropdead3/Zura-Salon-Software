@@ -3,7 +3,7 @@ import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import {
   Beaker, BarChart3, Shield, Zap, ArrowRight, Loader2,
-  Scale, Droplets, ShieldCheck, MapPin, TrendingUp, DollarSign,
+  Scale, Droplets, ShieldCheck, MapPin, TrendingUp, DollarSign, Star,
   Info, Clock, AlertTriangle, CheckCircle2,
   Brain, Users, PackageSearch, ChevronRight,
 } from 'lucide-react';
@@ -312,6 +312,25 @@ export function BackroomPaywall() {
             <ActivateButton />
             <p className="text-xs text-muted-foreground/60 font-sans">Setup takes minutes. Cancel anytime.</p>
           </div>
+        </div>
+
+        {/* ═══════════════════════════════════════════
+            SOCIAL PROOF — Drop Dead Salon
+            ═══════════════════════════════════════════ */}
+        <div className="flex flex-col items-center gap-3 py-2">
+          <div className="flex gap-0.5">
+            {[...Array(5)].map((_, i) => (
+              <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
+            ))}
+          </div>
+          <blockquote className="text-center max-w-xl space-y-2">
+            <p className="text-muted-foreground text-sm md:text-base font-sans leading-relaxed italic">
+              "Zura Backroom saved us thousands per month and helps us recoup over $50,000 a year in color costs. 10/10 add-on feature."
+            </p>
+            <footer className="text-xs text-muted-foreground/70 font-sans tracking-wide">
+              — Drop Dead Salon
+            </footer>
+          </blockquote>
         </div>
 
         {/* ═══════════════════════════════════════════
