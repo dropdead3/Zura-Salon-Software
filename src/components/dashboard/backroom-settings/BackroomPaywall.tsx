@@ -1499,6 +1499,185 @@ export function BackroomPaywall() {
         </section>
 
         {/* ═══════════════════════════════════════════
+            SECTION 4.98 — REAL SALON SCENARIO
+            ═══════════════════════════════════════════ */}
+        <section className="pb-20 md:pb-24 bg-muted/20 -mx-6 sm:-mx-8 px-6 sm:px-8 rounded-2xl pt-10 md:pt-12">
+          <div className="space-y-10 md:space-y-12">
+            <div className="text-center space-y-3">
+              <SectionHeading>A Color Service With Zura Backroom</SectionHeading>
+              <p className="font-sans text-base text-muted-foreground font-light max-w-2xl mx-auto">
+                From the first bowl to the final insight. Here is what happens behind the scenes.
+              </p>
+            </div>
+
+            {/* Desktop: horizontal timeline */}
+            <div className="hidden md:grid grid-cols-7 gap-2 items-start">
+              {[
+                { icon: Calendar, step: '01', title: 'Client Arrives', desc: 'Sarah arrives for a full highlight service.', preview: null },
+                { icon: Users, step: '02', title: 'Bowl Prepared', desc: 'The assistant stages the mixing bowl on the scale.', preview: null },
+                {
+                  icon: Scale, step: '03', title: 'Product Measured', desc: '32g of Koleston 7/0 is dispensed and recorded.',
+                  preview: (
+                    <Card className="mt-3 bg-card border-border/40 shadow-sm">
+                      <CardContent className="p-3 space-y-2">
+                        <p className="font-sans text-xs text-muted-foreground">Koleston 7/0</p>
+                        <p className="font-display text-xl tracking-wide text-foreground">32.0<span className="text-xs text-muted-foreground ml-0.5">g</span></p>
+                        <div className="h-1.5 rounded-full bg-muted/40 overflow-hidden">
+                          <div className="h-full rounded-full bg-primary/60 w-[80%]" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ),
+                },
+                { icon: Zap, step: '04', title: 'Usage Captured', desc: 'The system logs every product used in the session.', preview: null },
+                {
+                  icon: Brain, step: '05', title: 'Formula Saved', desc: "Sarah's formula is stored for her next visit.",
+                  preview: (
+                    <Card className="mt-3 bg-card border-border/40 shadow-sm">
+                      <CardContent className="p-3 space-y-2">
+                        <p className="font-sans text-sm text-foreground">Sarah M.</p>
+                        <p className="font-sans text-xs text-muted-foreground">Koleston 7/0 — 32g</p>
+                        <span className="inline-block px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-sans">
+                          Saved automatically
+                        </span>
+                      </CardContent>
+                    </Card>
+                  ),
+                },
+                { icon: PackageSearch, step: '06', title: 'Inventory Updates', desc: 'Koleston 7/0 stock adjusts automatically.', preview: null },
+                {
+                  icon: DollarSign, step: '07', title: 'Cost Visible', desc: "The service's true product cost is $18.40.",
+                  preview: (
+                    <Card className="mt-3 bg-card border-border/40 shadow-sm">
+                      <CardContent className="p-3 space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="font-sans text-xs text-muted-foreground">Revenue</span>
+                          <span className="font-display text-sm tracking-wide text-foreground">$185</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="font-sans text-xs text-muted-foreground">Product Cost</span>
+                          <span className="font-display text-sm tracking-wide text-foreground">$18.40</span>
+                        </div>
+                        <span className="inline-block px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 text-[10px] font-sans">
+                          90% margin
+                        </span>
+                      </CardContent>
+                    </Card>
+                  ),
+                },
+              ].map((item, idx, arr) => (
+                <div key={idx} className="relative flex flex-col items-center text-center">
+                  {idx < arr.length - 1 && (
+                    <div className="absolute top-6 -right-2 z-10 text-muted-foreground/30">
+                      <ChevronRight className="w-4 h-4" />
+                    </div>
+                  )}
+                  <span className="font-display text-3xl tracking-wide text-primary/20 mb-2">{item.step}</span>
+                  <div className="w-12 h-12 rounded-xl bg-background border border-border/40 flex items-center justify-center mb-3">
+                    <item.icon className="w-5 h-5 text-primary" />
+                  </div>
+                  <h4 className="font-display text-xs tracking-wide text-foreground mb-1">{item.title}</h4>
+                  <p className="font-sans text-xs text-muted-foreground font-light leading-relaxed max-w-[130px]">{item.desc}</p>
+                  {item.preview}
+                </div>
+              ))}
+            </div>
+
+            {/* Mobile: vertical timeline */}
+            <div className="md:hidden space-y-0">
+              {[
+                { icon: Calendar, step: '01', title: 'Client Arrives', desc: 'Sarah arrives for a full highlight service.', preview: null },
+                { icon: Users, step: '02', title: 'Bowl Prepared', desc: 'The assistant stages the mixing bowl on the scale.', preview: null },
+                {
+                  icon: Scale, step: '03', title: 'Product Measured', desc: '32g of Koleston 7/0 is dispensed and recorded.',
+                  preview: (
+                    <Card className="mt-2 bg-card border-border/40 shadow-sm">
+                      <CardContent className="p-3 space-y-2">
+                        <p className="font-sans text-xs text-muted-foreground">Koleston 7/0</p>
+                        <p className="font-display text-xl tracking-wide text-foreground">32.0<span className="text-xs text-muted-foreground ml-0.5">g</span></p>
+                        <div className="h-1.5 rounded-full bg-muted/40 overflow-hidden">
+                          <div className="h-full rounded-full bg-primary/60 w-[80%]" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ),
+                },
+                { icon: Zap, step: '04', title: 'Usage Captured', desc: 'The system logs every product used in the session.', preview: null },
+                {
+                  icon: Brain, step: '05', title: 'Formula Saved', desc: "Sarah's formula is stored for her next visit.",
+                  preview: (
+                    <Card className="mt-2 bg-card border-border/40 shadow-sm">
+                      <CardContent className="p-3 space-y-2">
+                        <p className="font-sans text-sm text-foreground">Sarah M.</p>
+                        <p className="font-sans text-xs text-muted-foreground">Koleston 7/0 — 32g</p>
+                        <span className="inline-block px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-sans">
+                          Saved automatically
+                        </span>
+                      </CardContent>
+                    </Card>
+                  ),
+                },
+                { icon: PackageSearch, step: '06', title: 'Inventory Updates', desc: 'Koleston 7/0 stock adjusts automatically.', preview: null },
+                {
+                  icon: DollarSign, step: '07', title: 'Cost Visible', desc: "The service's true product cost is $18.40.",
+                  preview: (
+                    <Card className="mt-2 bg-card border-border/40 shadow-sm">
+                      <CardContent className="p-3 space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="font-sans text-xs text-muted-foreground">Revenue</span>
+                          <span className="font-display text-sm tracking-wide text-foreground">$185</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="font-sans text-xs text-muted-foreground">Product Cost</span>
+                          <span className="font-display text-sm tracking-wide text-foreground">$18.40</span>
+                        </div>
+                        <span className="inline-block px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 text-[10px] font-sans">
+                          90% margin
+                        </span>
+                      </CardContent>
+                    </Card>
+                  ),
+                },
+              ].map((item, idx, arr) => (
+                <div key={idx} className="relative flex items-start gap-4 pb-6 last:pb-0">
+                  {/* Timeline line */}
+                  {idx < arr.length - 1 && (
+                    <div className="absolute left-[23px] top-12 bottom-0 w-px bg-border/40" />
+                  )}
+                  {/* Icon */}
+                  <div className="relative z-10 shrink-0 w-12 h-12 rounded-xl bg-background border border-border/40 flex items-center justify-center">
+                    <item.icon className="w-5 h-5 text-primary" />
+                  </div>
+                  {/* Content */}
+                  <div className="min-w-0 pt-1">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className="font-display text-xs tracking-wider text-primary/40">{item.step}</span>
+                      <h4 className="font-display text-xs tracking-wide text-foreground">{item.title}</h4>
+                    </div>
+                    <p className="font-sans text-xs text-muted-foreground font-light leading-relaxed">{item.desc}</p>
+                    {item.preview}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Supporting message */}
+            <p className="text-center font-sans text-sm text-muted-foreground font-light max-w-xl mx-auto">
+              Zura Backroom works quietly during every service, turning everyday activity into structured salon intelligence.
+            </p>
+
+            <div className="flex justify-center">
+              <ActivateButton />
+            </div>
+          </div>
+        </section>
+
+        {/* Divider */}
+        <div className="flex justify-center py-4">
+          <div className="w-12 h-px bg-border/40" />
+        </div>
+
+        {/* ═══════════════════════════════════════════
             SECTION 5 — PRICING + ROI
             ═══════════════════════════════════════════ */}
         <section className="pb-24 md:pb-32">
