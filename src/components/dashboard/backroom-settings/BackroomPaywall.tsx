@@ -474,7 +474,7 @@ export function BackroomPaywall() {
                         </div>
                         <p className="text-sm text-muted-foreground font-sans">Dispensing product…</p>
                         <div className="bg-muted/50 rounded-xl p-6 w-full max-w-[300px]">
-                          <p className="text-xs text-muted-foreground/70 font-sans mb-1">Koleston 7/0</p>
+                          <p className="text-xs text-muted-foreground/70 font-sans mb-1">Danger Jones Liberator 7</p>
                           <p className="font-display text-4xl tracking-wide text-foreground">{heroWeight}g</p>
                           <div className="mt-3 h-2 bg-muted rounded-full overflow-hidden">
                             <div
