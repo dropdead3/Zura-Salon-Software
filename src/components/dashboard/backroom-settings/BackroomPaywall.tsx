@@ -682,7 +682,7 @@ export function BackroomPaywall() {
                   </div>
                   <h3 className="font-display text-base tracking-wide uppercase text-success">With Backroom</h3>
                 </div>
-                <ul className="space-y-3.5">
+                <ul className="space-y-4">
                   {[
                     "Every formula is saved automatically per client",
                     "Stylists see the last formula instantly at the chair",
