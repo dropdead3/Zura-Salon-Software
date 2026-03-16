@@ -461,37 +461,39 @@ export function BackroomPaywall() {
         {(estimate || estimateLoading) && (
           <section className="pb-16 md:pb-20">
             <div className="space-y-6">
-              <Card className="bg-destructive/[0.03] border-destructive/20 overflow-hidden">
+              <Card className="overflow-hidden border-border/60">
                 <CardContent className="p-6 md:p-8 space-y-6">
+                  {/* Header */}
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center shrink-0">
                       <AlertTriangle className="w-5 h-5 text-destructive" />
                     </div>
                     <div>
-                      <p className="font-sans text-base font-medium text-destructive">
-                        What Your Color Room Is Costing You Right Now
+                      <p className="font-sans text-base font-medium text-foreground">
+                        Your Estimated Color Room Losses
                       </p>
                       <p className="text-sm text-muted-foreground font-sans mt-1">
-                        Most salons have no visibility into color room costs. Here is what the data shows.
+                        These projections are based on your salon's actual appointment data and industry benchmarks.
                       </p>
                     </div>
                   </div>
 
                   {estimateLoading ? (
                     <div className="grid grid-cols-3 gap-5">
-                      <Skeleton className="h-24 rounded-xl" />
-                      <Skeleton className="h-24 rounded-xl" />
-                      <Skeleton className="h-24 rounded-xl" />
+                      <Skeleton className="h-32 rounded-xl" />
+                      <Skeleton className="h-32 rounded-xl" />
+                      <Skeleton className="h-32 rounded-xl" />
                     </div>
                   ) : estimate ? (
                     <>
+                      {/* Loss stat tiles with explanations */}
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
                         {[
-                          { value: wasteSavings, label: 'product waste / mo' },
-                          { value: monthlyAuditCost, label: 'staff time wasted / mo' },
-                          { value: supplyRecovery, label: 'unrecovered supply costs / mo' },
+                          { value: wasteSavings, label: 'Product Waste', subtitle: 'Unmeasured mixing leads to over-dispensing and leftover waste' },
+                          { value: monthlyAuditCost, label: 'Staff Time Wasted', subtitle: 'Manual counting, reordering, and inventory audits' },
+                          { value: supplyRecovery, label: 'Unrecovered Supply Costs', subtitle: 'Color used but never billed back to services' },
                         ].map((tile) => (
-                          <div key={tile.label} className="p-5 rounded-lg bg-destructive/5 border border-destructive/20 text-center shadow-sm">
+                          <div key={tile.label} className="p-5 rounded-lg bg-destructive/[0.04] border border-destructive/15 text-center shadow-sm space-y-2">
                             <p className="font-display text-2xl md:text-3xl font-medium tracking-wide text-destructive tabular-nums">
                               <AnimatedNumber
                                 value={tile.value}
@@ -499,18 +501,19 @@ export function BackroomPaywall() {
                                 formatOptions={{ style: 'currency', currency: 'USD', notation: 'compact', maximumFractionDigits: 1 }}
                               />
                             </p>
-                            <p className="text-sm text-muted-foreground font-sans mt-2">{tile.label}</p>
+                            <p className="text-sm text-foreground font-sans font-medium">{tile.label} / mo</p>
+                            <p className="text-xs text-muted-foreground font-sans leading-relaxed">{tile.subtitle}</p>
                           </div>
                         ))}
                       </div>
 
+                      {/* Slider */}
                       <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/30 border border-border/40">
                         <Clock className="w-4 h-4 text-muted-foreground shrink-0" />
                         <div className="flex-1">
                           <p className="font-sans text-sm text-foreground">
-                            Manual inventory time: <span className="font-medium">{auditMinutesPerDay} min/day</span>
+                            Time your team spends on manual inventory tasks daily: <span className="font-medium">{auditMinutesPerDay} min</span>
                           </p>
-                          <p className="font-sans text-xs text-muted-foreground mt-0.5">Drag to adjust</p>
                         </div>
                         <div className="w-32">
                           <Slider
@@ -524,9 +527,41 @@ export function BackroomPaywall() {
                         </div>
                       </div>
 
-                      <p className="text-xs text-muted-foreground/50 font-sans text-center">
-                        Projections based on your color and chemical service appointments
-                      </p>
+                      {/* Projected Annual Recovery banner */}
+                      <div className="border-t border-border/40 pt-6">
+                        <div className="rounded-lg bg-success/[0.05] border border-success/20 p-5 space-y-4">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                            <div>
+                              <p className="font-sans text-xs text-success uppercase tracking-wide font-medium">Projected Annual Recovery</p>
+                              <p className="font-display text-3xl md:text-4xl font-medium tracking-wide text-success tabular-nums mt-1">
+                                <AnimatedNumber
+                                  value={yearlySavings}
+                                  duration={1200}
+                                  formatOptions={{ style: 'currency', currency: 'USD', notation: 'compact', maximumFractionDigits: 1 }}
+                                />
+                                <span className="text-lg text-success/70 font-sans font-normal ml-1">/yr</span>
+                              </p>
+                            </div>
+                            <div className="space-y-1.5 text-sm font-sans text-muted-foreground">
+                              <div className="flex justify-between gap-6">
+                                <span>Waste reduction</span>
+                                <span className="tabular-nums text-foreground">{formatCurrency(wasteSavings * 12, { maximumFractionDigits: 0 })}/yr</span>
+                              </div>
+                              <div className="flex justify-between gap-6">
+                                <span>Time savings</span>
+                                <span className="tabular-nums text-foreground">{formatCurrency(monthlyAuditCost * 12, { maximumFractionDigits: 0 })}/yr</span>
+                              </div>
+                              <div className="flex justify-between gap-6">
+                                <span>Supply recovery</span>
+                                <span className="tabular-nums text-foreground">{formatCurrency(supplyRecovery * 12, { maximumFractionDigits: 0 })}/yr</span>
+                              </div>
+                            </div>
+                          </div>
+                          <p className="text-xs text-muted-foreground/60 font-sans">
+                            Based on your salon's current appointment volume
+                          </p>
+                        </div>
+                      </div>
                     </>
                   ) : null}
                 </CardContent>
