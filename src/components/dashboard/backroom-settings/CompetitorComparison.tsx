@@ -147,7 +147,7 @@ export function CompetitorComparison() {
                   </td>
                 </tr>
                 <tr className="border-b border-border/20 last:border-0">
-                  <td className="px-5 py-4">
+                  <td className="px-6 py-4">
                     <span className="font-sans text-sm text-foreground">Monthly cost</span>
                   </td>
                   {columns.map((col) => (
