@@ -68,7 +68,6 @@ function BillingKPICard({
 function subscriptionBadge(status: string | null) {
   const map: Record<string, { label: string; variant: 'default' | 'success' | 'warning' | 'error' }> = {
     active: { label: 'Active', variant: 'success' },
-    trialing: { label: 'Trialing', variant: 'warning' },
     past_due: { label: 'Past Due', variant: 'error' },
     cancelled: { label: 'Cancelled', variant: 'error' },
     suspended: { label: 'Suspended', variant: 'error' },
