@@ -26,6 +26,18 @@ type FeatureCategory = {
   rows: FeatureRow[];
 };
 
+/* ─── Feature Tooltips ─── */
+const featureTooltips: Record<string, string> = {
+  'Ghost loss detection': 'Identifies product that disappears between inventory counts — shrinkage that isn\'t tied to any logged service or known waste.',
+  'Service blueprints': 'Predefined step-by-step workflows for each service type (mix, prep, process, rinse) so every stylist follows the same process.',
+  'Assistant prep workflows': 'Structured task queues that let assistants see what needs to be mixed and prepped before each appointment.',
+  'Predictive reorder alerts': 'Automatically flags products approaching reorder levels based on usage velocity, so you never run out mid-week.',
+  'Demand forecasting': 'Projects future product needs based on upcoming appointments and historical consumption patterns.',
+  'Cost-per-service profitability': 'Calculates the true product cost for each service performed, revealing which services actually make money.',
+  'Supply fee recovery': 'Automatically calculates a per-service supply charge you can pass to clients, recovering product costs transparently.',
+  'Full platform integration': 'Backroom data flows into scheduling, payroll, and analytics — no exports or third-party syncing required.',
+};
+
 const comparisonData: FeatureCategory[] = [
   {
     category: 'Core Tracking',
