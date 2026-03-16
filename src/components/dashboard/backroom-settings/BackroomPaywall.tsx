@@ -607,7 +607,7 @@ export function BackroomPaywall() {
                     key={label}
                     onClick={() => setHeroStep(i)}
                     className={cn(
-                      'h-1.5 rounded-full transition-all duration-300',
+                      'h-1.5 rounded-full transition-all duration-300 hover:scale-110',
                       heroStep === i ? 'w-8 bg-primary' : 'w-4 bg-muted hover:bg-muted-foreground/30'
                     )}
                     aria-label={label}
