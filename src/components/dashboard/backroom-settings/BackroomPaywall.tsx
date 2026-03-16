@@ -201,6 +201,10 @@ export function BackroomPaywall() {
               <span className="text-emerald-400">−{formatCurrency(wasteSavings)}</span>
             </div>
             <div className="flex justify-between text-muted-foreground">
+              <span>Staff hours recovered</span>
+              <span className="text-emerald-400">−{formatCurrency(monthlyAuditCost)}</span>
+            </div>
+            <div className="flex justify-between text-muted-foreground">
               <span>Supply fee recovery*</span>
               <span className="text-emerald-400">−{formatCurrency(supplyRecovery)}</span>
             </div>
