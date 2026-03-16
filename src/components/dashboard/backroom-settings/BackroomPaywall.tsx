@@ -759,6 +759,196 @@ export function BackroomPaywall() {
         </section>
 
         {/* ═══════════════════════════════════════════
+            SECTION 4.9 — OPERATIONAL INTELLIGENCE DASHBOARD
+            ═══════════════════════════════════════════ */}
+        <section className="pb-20 md:pb-24">
+          <div className="space-y-8 md:space-y-10">
+            <div className="text-center space-y-4">
+              <SectionHeading>Turn Your Backroom Into Business Intelligence</SectionHeading>
+              <p className="font-sans text-base md:text-lg text-muted-foreground font-light leading-relaxed max-w-2xl mx-auto">
+                Zura Backroom transforms product usage into real operational insights for your salon.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
+              {/* Card 1 — Product Usage Trends */}
+              <Card className="bg-card border-border/50 shadow-sm hover-lift">
+                <CardContent className="p-6 md:p-8 space-y-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center shrink-0">
+                      <BarChart3 className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <h4 className="font-display text-sm tracking-wide">Product Usage Trends</h4>
+                      <p className="font-sans text-sm text-muted-foreground font-light mt-1">
+                        See exactly how much color your salon uses each week.
+                      </p>
+                    </div>
+                  </div>
+                  {/* Mini visual: ascending bars */}
+                  <div className="flex items-end gap-1.5 pt-2">
+                    <div className="w-6 h-4 rounded-sm bg-primary/15" />
+                    <div className="w-6 h-7 rounded-sm bg-primary/25" />
+                    <div className="w-6 h-10 rounded-sm bg-primary/40" />
+                    <div className="w-6 h-6 rounded-sm bg-primary/20" />
+                    <div className="w-6 h-9 rounded-sm bg-primary/35" />
+                    <div className="w-6 h-12 rounded-sm bg-primary/50" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Card 2 — Chemical Waste Visibility */}
+              <Card className="bg-card border-border/50 shadow-sm hover-lift">
+                <CardContent className="p-6 md:p-8 space-y-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center shrink-0">
+                      <Droplets className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <h4 className="font-display text-sm tracking-wide">Chemical Waste Visibility</h4>
+                      <p className="font-sans text-sm text-muted-foreground font-light mt-1">
+                        Identify where product is being wasted and reduce unnecessary cost.
+                      </p>
+                    </div>
+                  </div>
+                  {/* Mini visual: waste badge */}
+                  <div className="flex items-center gap-2 pt-2">
+                    <div className="px-3 py-1.5 rounded-full bg-destructive/10 border border-destructive/20">
+                      <span className="font-display text-xs tracking-wide text-destructive">12% waste</span>
+                    </div>
+                    <span className="font-sans text-[10px] text-muted-foreground">↓ from 18%</span>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Card 3 — Service Profitability */}
+              <Card className="bg-card border-border/50 shadow-sm hover-lift">
+                <CardContent className="p-6 md:p-8 space-y-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center shrink-0">
+                      <DollarSign className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <h4 className="font-display text-sm tracking-wide">Service Profitability</h4>
+                      <p className="font-sans text-sm text-muted-foreground font-light mt-1">
+                        Understand the true product cost behind every service.
+                      </p>
+                    </div>
+                  </div>
+                  {/* Mini visual: revenue vs cost */}
+                  <div className="space-y-2 pt-2">
+                    <div className="flex items-center justify-between font-sans text-xs">
+                      <span className="text-muted-foreground">Revenue</span>
+                      <span className="text-foreground">$185</span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                      <div className="h-full w-[85%] rounded-full bg-primary/40" />
+                    </div>
+                    <div className="flex items-center justify-between font-sans text-xs">
+                      <span className="text-muted-foreground">Product cost</span>
+                      <span className="text-foreground">$24</span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                      <div className="h-full w-[13%] rounded-full bg-accent-foreground/30" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Card 4 — Inventory Risk Alerts */}
+              <Card className="bg-card border-border/50 shadow-sm hover-lift">
+                <CardContent className="p-6 md:p-8 space-y-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center shrink-0">
+                      <AlertTriangle className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <h4 className="font-display text-sm tracking-wide">Inventory Risk Alerts</h4>
+                      <p className="font-sans text-sm text-muted-foreground font-light mt-1">
+                        Know before you run out of critical supplies.
+                      </p>
+                    </div>
+                  </div>
+                  {/* Mini visual: status alerts */}
+                  <div className="flex items-center gap-3 pt-2">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-2 h-2 rounded-full bg-destructive animate-pulse" />
+                      <span className="font-sans text-[11px] text-muted-foreground">3 items low</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-2 h-2 rounded-full bg-success" />
+                      <span className="font-sans text-[11px] text-muted-foreground">42 stocked</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Card 5 — Staff Usage Patterns */}
+              <Card className="bg-card border-border/50 shadow-sm hover-lift">
+                <CardContent className="p-6 md:p-8 space-y-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center shrink-0">
+                      <Users className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <h4 className="font-display text-sm tracking-wide">Staff Usage Patterns</h4>
+                      <p className="font-sans text-sm text-muted-foreground font-light mt-1">
+                        See which team members use product most efficiently.
+                      </p>
+                    </div>
+                  </div>
+                  {/* Mini visual: ranking pills */}
+                  <div className="flex items-center gap-2 pt-2">
+                    <div className="px-2.5 py-1 rounded-full bg-primary/10 border border-primary/20">
+                      <span className="font-sans text-[10px] text-primary">1st — Sarah</span>
+                    </div>
+                    <div className="px-2.5 py-1 rounded-full bg-muted border border-border/40">
+                      <span className="font-sans text-[10px] text-muted-foreground">2nd — Alex</span>
+                    </div>
+                    <div className="px-2.5 py-1 rounded-full bg-muted border border-border/40">
+                      <span className="font-sans text-[10px] text-muted-foreground">3rd — Kim</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Card 6 — Top Formulas */}
+              <Card className="bg-card border-border/50 shadow-sm hover-lift">
+                <CardContent className="p-6 md:p-8 space-y-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center shrink-0">
+                      <Brain className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <h4 className="font-display text-sm tracking-wide">Top Formulas</h4>
+                      <p className="font-sans text-sm text-muted-foreground font-light mt-1">
+                        Your salon's most-used formulas, ranked and ready.
+                      </p>
+                    </div>
+                  </div>
+                  {/* Mini visual: formula count badge */}
+                  <div className="flex items-center gap-2 pt-2">
+                    <div className="px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20">
+                      <span className="font-display text-xs tracking-wide text-primary">127 mixes</span>
+                    </div>
+                    <span className="font-sans text-[10px] text-muted-foreground">this month</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Supporting message */}
+            <p className="text-center font-sans text-sm text-muted-foreground font-light max-w-xl mx-auto">
+              Most salons operate the backroom on guesswork. Zura Backroom turns it into a measurable system.
+            </p>
+
+            <div className="flex justify-center">
+              <ActivateButton />
+            </div>
+          </div>
+        </section>
+
+        {/* ═══════════════════════════════════════════
             SECTION 5 — PRICING + ROI
             ═══════════════════════════════════════════ */}
         <section className="pb-20 md:pb-24">
