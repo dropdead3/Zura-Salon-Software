@@ -779,7 +779,7 @@ export function BackroomPaywall() {
                   key={f.key}
                   onClick={() => setActiveFeature(f.key)}
                   className={cn(
-                    'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-sans font-medium whitespace-nowrap border transition-all duration-200 shrink-0',
+                    'flex items-center gap-2 px-3 py-2 rounded-full text-xs font-sans font-medium whitespace-nowrap border transition-all duration-200 shrink-0',
                     activeFeature === f.key
                       ? 'bg-primary/10 border-primary/30 text-foreground'
                       : 'bg-muted/50 border-border/50 text-muted-foreground hover:bg-muted'
