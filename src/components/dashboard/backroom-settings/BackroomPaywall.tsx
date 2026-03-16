@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   Beaker, BarChart3, ArrowRight, Loader2,
-  Scale, ShieldCheck, MapPin, TrendingUp, DollarSign, Star,
+  Weight, ShieldCheck, MapPin, TrendingUp, DollarSign, Star,
   Info, Clock, AlertTriangle, CheckCircle2, XCircle,
   Brain, PackageSearch, ChevronRight,
   Timer, X, Users, Zap,
