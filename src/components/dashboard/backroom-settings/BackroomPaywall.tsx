@@ -803,7 +803,7 @@ export function BackroomPaywall() {
 
                           <div className="flex gap-2 pt-1">
                             <Button size="sm" className="flex-1 font-sans text-xs">
-                              <CheckCircle2 className="w-3 h-3 mr-1" /> Seal Bowl
+                              <CheckCircle2 className="w-3 h-3 mr-1" /> Finalize Mix
                             </Button>
                             <Button variant="outline" size="sm" className="font-sans text-xs text-muted-foreground">
                               Discard
