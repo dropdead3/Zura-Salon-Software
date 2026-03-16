@@ -205,20 +205,20 @@ export function BackroomEntitlementsTab() {
 
               if (locs && locs.length > 0) {
                 // Upsert active entitlements for all locations
-                await supabase
-                  .from('backroom_location_entitlements')
-                  .upsert(
-                    locs.map((l) => ({
-                      organization_id: org.id,
-                      location_id: l.id,
-                      plan_tier: 'starter',
-                      scale_count: 0,
-                      status: 'active',
-                      billing_interval: 'monthly',
-                      activated_at: new Date().toISOString(),
-                    })),
-                    { onConflict: 'organization_id,location_id' }
-                  );
+                    await supabase
+                      .from('backroom_location_entitlements')
+                      .upsert(
+                        locs.map((l) => ({
+                          organization_id: org.id,
+                          location_id: l.id,
+                          plan_tier: 'standard',
+                          scale_count: 0,
+                          status: 'active',
+                          billing_interval: 'monthly',
+                          activated_at: new Date().toISOString(),
+                        })),
+                        { onConflict: 'organization_id,location_id' }
+                      );
 
                 queryClient.invalidateQueries({ queryKey: ['platform-backroom-entitlements'] });
                 toast.success(`Backroom enabled for ${org.name} — all locations activated`);
