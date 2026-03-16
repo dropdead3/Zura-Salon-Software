@@ -62,8 +62,8 @@ export function AnimatedNumber({
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
       
-      // Damped spring: overshoot ~5%, oscillate, settle
-      const settle = 1 - Math.exp(-6 * progress) * Math.cos(4 * Math.PI * progress);
+      // Smooth ease-out cubic
+      const settle = 1 - Math.pow(1 - progress, 3);
       
       setDisplayValue(from + difference * settle);
 
