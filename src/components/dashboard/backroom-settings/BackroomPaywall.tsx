@@ -494,11 +494,11 @@ export function BackroomPaywall() {
                         <p className="text-sm text-muted-foreground font-sans">Usage captured</p>
                         <div className="bg-muted/50 rounded-xl p-4 w-full max-w-[300px] space-y-2">
                           <div className="flex items-center justify-between">
-                            <span className="text-sm font-sans text-foreground">Koleston 7/0</span>
+                            <span className="text-sm font-sans text-foreground">Liberator 7</span>
                             <span className="text-sm font-display tracking-wide text-foreground">28.4g</span>
                           </div>
                           <div className="flex items-center justify-between">
-                            <span className="text-sm font-sans text-foreground">Welloxon 6%</span>
+                            <span className="text-sm font-sans text-foreground">Activator 20 Vol</span>
                             <span className="text-sm font-display tracking-wide text-foreground">42.6g</span>
                           </div>
                         </div>
