@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { tokens } from '@/lib/design-tokens';
-import { Loader2, Save, ArrowUpRight } from 'lucide-react';
+import { Loader2, Save, ArrowUpRight, HelpCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { addMonths, format, differenceInDays } from 'date-fns';
 import {
   PlatformCard,
