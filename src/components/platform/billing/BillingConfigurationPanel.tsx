@@ -314,7 +314,69 @@ export function BillingConfigurationPanel({
             </PlatformCardContent>
           </PlatformCard>
 
-          {/* Add-Ons Configuration */}
+          {/* Contract & Billing Terms (merged) */}
+          <PlatformCard variant="glass">
+            <PlatformCardHeader>
+              <PlatformCardTitle>Contract & Billing Terms</PlatformCardTitle>
+            </PlatformCardHeader>
+            <PlatformCardContent className="space-y-6">
+              <ContractTermsForm
+                billingCycle={billingCycle}
+                onBillingCycleChange={setBillingCycle}
+                contractLengthMonths={contractLengthMonths}
+                onContractLengthChange={setContractLengthMonths}
+                contractStartDate={contractStartDate}
+                onContractStartDateChange={setContractStartDate}
+                autoRenewal={autoRenewal}
+                onAutoRenewalChange={setAutoRenewal}
+                trialDays={trialDays}
+                onTrialDaysChange={setTrialDays}
+              />
+              <div className="border-t border-[hsl(var(--platform-border)/0.3)] pt-6">
+                <SetupFeesForm
+                  setupFee={setupFee}
+                  onSetupFeeChange={setSetupFee}
+                  setupFeePaid={setupFeePaid}
+                  onSetupFeePaidChange={setSetupFeePaid}
+                />
+              </div>
+            </PlatformCardContent>
+          </PlatformCard>
+
+          {/* Pricing & Discounts (merged) */}
+          <PlatformCard variant="glass">
+            <PlatformCardHeader>
+              <PlatformCardTitle>Pricing & Discounts</PlatformCardTitle>
+            </PlatformCardHeader>
+            <PlatformCardContent className="space-y-6">
+              <CustomPricingForm
+                customPriceEnabled={customPriceEnabled}
+                onCustomPriceEnabledChange={setCustomPriceEnabled}
+                customPrice={customPrice}
+                onCustomPriceChange={setCustomPrice}
+                discountType={discountType}
+                onDiscountTypeChange={setDiscountType}
+                discountValue={discountValue}
+                onDiscountValueChange={setDiscountValue}
+                discountReason={discountReason}
+                onDiscountReasonChange={setDiscountReason}
+                basePrice={basePrice}
+              />
+              <div className="border-t border-[hsl(var(--platform-border)/0.3)] pt-6">
+                <PromoConfigForm
+                  promoEnabled={promoEnabled}
+                  onPromoEnabledChange={setPromoEnabled}
+                  promoMonths={promoMonths}
+                  onPromoMonthsChange={setPromoMonths}
+                  promoPrice={promoPrice}
+                  onPromoPriceChange={setPromoPrice}
+                  basePrice={customPriceEnabled && customPrice ? customPrice : basePrice}
+                />
+              </div>
+            </PlatformCardContent>
+          </PlatformCard>
+
+          {/* Capacity Add-Ons */}
           <PlatformCard variant="glass" id="add-ons-section">
             <PlatformCardHeader>
               <PlatformCardTitle>Capacity Add-Ons</PlatformCardTitle>
@@ -341,86 +403,7 @@ export function BillingConfigurationPanel({
             </PlatformCardContent>
           </PlatformCard>
 
-          {/* Custom Pricing */}
-          <PlatformCard variant="glass">
-            <PlatformCardHeader>
-              <PlatformCardTitle>Custom Pricing</PlatformCardTitle>
-            </PlatformCardHeader>
-            <PlatformCardContent>
-              <CustomPricingForm
-                customPriceEnabled={customPriceEnabled}
-                onCustomPriceEnabledChange={setCustomPriceEnabled}
-                customPrice={customPrice}
-                onCustomPriceChange={setCustomPrice}
-                discountType={discountType}
-                onDiscountTypeChange={setDiscountType}
-                discountValue={discountValue}
-                onDiscountValueChange={setDiscountValue}
-                discountReason={discountReason}
-                onDiscountReasonChange={setDiscountReason}
-                basePrice={basePrice}
-              />
-            </PlatformCardContent>
-          </PlatformCard>
-
-          {/* Promotional Pricing */}
-          <PlatformCard variant="glass">
-            <PlatformCardHeader>
-              <PlatformCardTitle>Promotional Pricing</PlatformCardTitle>
-            </PlatformCardHeader>
-            <PlatformCardContent>
-              <PromoConfigForm
-                promoEnabled={promoEnabled}
-                onPromoEnabledChange={setPromoEnabled}
-                promoMonths={promoMonths}
-                onPromoMonthsChange={setPromoMonths}
-                promoPrice={promoPrice}
-                onPromoPriceChange={setPromoPrice}
-                basePrice={customPriceEnabled && customPrice ? customPrice : basePrice}
-              />
-            </PlatformCardContent>
-          </PlatformCard>
-
-          {/* Contract Terms */}
-          <PlatformCard variant="glass">
-            <PlatformCardHeader>
-              <PlatformCardTitle>Contract Terms</PlatformCardTitle>
-            </PlatformCardHeader>
-            <PlatformCardContent>
-              <ContractTermsForm
-                billingCycle={billingCycle}
-                onBillingCycleChange={setBillingCycle}
-                contractLengthMonths={contractLengthMonths}
-                onContractLengthChange={setContractLengthMonths}
-                contractStartDate={contractStartDate}
-                onContractStartDateChange={setContractStartDate}
-                autoRenewal={autoRenewal}
-                onAutoRenewalChange={setAutoRenewal}
-                trialDays={trialDays}
-                onTrialDaysChange={setTrialDays}
-              />
-            </PlatformCardContent>
-          </PlatformCard>
-
-          {/* Setup Fees */}
-          <PlatformCard variant="glass">
-            <PlatformCardHeader>
-              <PlatformCardTitle>Setup & One-Time Fees</PlatformCardTitle>
-            </PlatformCardHeader>
-            <PlatformCardContent>
-              <SetupFeesForm
-                setupFee={setupFee}
-                onSetupFeeChange={setSetupFee}
-                setupFeePaid={setupFeePaid}
-                onSetupFeePaidChange={setSetupFeePaid}
-                perLocationFee={perLocationFee}
-                onPerLocationFeeChange={setPerLocationFee}
-                locationCount={actualLocationCount}
-              />
-            </PlatformCardContent>
-          </PlatformCard>
-
-          {/* Notes */}
+          {/* Internal Notes */}
           <PlatformCard variant="glass">
             <PlatformCardHeader>
               <PlatformCardTitle>Internal Notes</PlatformCardTitle>
@@ -440,34 +423,36 @@ export function BillingConfigurationPanel({
           </PlatformCard>
         </div>
 
-        {/* Sidebar */}
+        {/* Sidebar — sticky */}
         <div className="space-y-6">
-          <InvoicePreview
-            calculation={calculation}
-            billingCycle={billingCycle}
-            planName={selectedPlan?.name || 'No Plan Selected'}
-            setupFee={setupFee}
-            setupFeePaid={setupFeePaid}
-            locationCount={actualLocationCount}
-            perLocationFee={perLocationFee}
-            userCount={actualUserCount}
-            perUserFee={perUserFee}
-            additionalLocationsPurchased={additionalLocationsPurchased}
-            additionalUsersPurchased={additionalUsersPurchased}
-          />
+          <div className="sticky top-6 space-y-6">
+            <InvoicePreview
+              calculation={calculation}
+              billingCycle={billingCycle}
+              planName={selectedPlan?.name || 'No Plan Selected'}
+              setupFee={setupFee}
+              setupFeePaid={setupFeePaid}
+              locationCount={actualLocationCount}
+              perLocationFee={perLocationFee}
+              userCount={actualUserCount}
+              perUserFee={perUserFee}
+              additionalLocationsPurchased={additionalLocationsPurchased}
+              additionalUsersPurchased={additionalUsersPurchased}
+            />
 
-          <PlatformButton
-            className="w-full"
-            onClick={handleSave}
-            disabled={upsertBilling.isPending || !planId}
-          >
-            {upsertBilling.isPending ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <Save className="h-4 w-4 mr-2" />
-            )}
-            Save Billing Configuration
-          </PlatformButton>
+            <PlatformButton
+              className="w-full"
+              onClick={handleSave}
+              disabled={upsertBilling.isPending || !planId}
+            >
+              {upsertBilling.isPending ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4 mr-2" />
+              )}
+              Save Billing Configuration
+            </PlatformButton>
+          </div>
 
           {/* PandaDoc Documents */}
           <PandaDocDocumentsCard organizationId={organizationId} />
