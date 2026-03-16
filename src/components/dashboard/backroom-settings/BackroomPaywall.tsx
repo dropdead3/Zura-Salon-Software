@@ -491,8 +491,8 @@ export function BackroomPaywall() {
                           { value: monthlyAuditCost, label: 'staff time wasted / mo' },
                           { value: supplyRecovery, label: 'unrecovered supply costs / mo' },
                         ].map((tile) => (
-                          <div key={tile.label} className="p-5 rounded-xl bg-destructive/5 border border-destructive/15 text-center shadow-sm">
-                            <p className="font-display text-2xl md:text-3xl tracking-wide text-destructive tabular-nums">
+                          <div key={tile.label} className="p-5 rounded-lg bg-destructive/5 border border-destructive/20 text-center shadow-sm">
+                            <p className="font-display text-2xl md:text-3xl font-medium tracking-wide text-destructive tabular-nums">
                               <AnimatedNumber
                                 value={tile.value}
                                 duration={1200}
