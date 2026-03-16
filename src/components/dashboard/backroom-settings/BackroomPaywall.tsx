@@ -929,9 +929,7 @@ export function BackroomPaywall() {
         <section className="pb-24 md:pb-32">
           <div className="space-y-8 md:space-y-10">
             <div className="text-center space-y-3">
-              <h2 className="font-display text-2xl md:text-3xl font-medium tracking-wide text-foreground">
-                Explore Zura Backroom
-              </h2>
+              <SectionHeading>Explore Zura Backroom</SectionHeading>
               <p className="font-sans text-base text-muted-foreground max-w-xl mx-auto font-light leading-relaxed">
                 Click each feature to see how it works inside your salon.
               </p>
