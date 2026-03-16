@@ -637,7 +637,7 @@ export function BackroomPaywall() {
             <div className="text-center mb-10 md:mb-12">
               <SectionHeading>
                 How Zura Backroom Transforms Your Color Room
-              </h2>
+              </SectionHeading>
               <p className="mt-4 text-base md:text-lg text-muted-foreground font-sans font-light max-w-xl mx-auto">
                 From guesswork to a controlled, measurable system.
               </p>
