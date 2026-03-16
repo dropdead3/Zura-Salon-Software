@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { Scale, Minus, Plus, Loader2, ArrowRight } from 'lucide-react';
+import { Weight, Minus, Plus, Loader2, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
