@@ -312,7 +312,7 @@ export function BackroomPaywall() {
   }, []);
 
   const ctaLabel = hasPositiveBenefit && yearlySavings > 0
-    ? `Start Recovering ${formatCurrency(yearlySavings, { maximumFractionDigits: 0, notation: 'compact' })}/yr`
+    ? `Start Recovering ${formatCurrencyCompact(yearlySavings)}/yr`
     : 'Start Recovering Revenue';
 
   const ActivateButton = ({ className = '', compact = false }: { className?: string; compact?: boolean }) => (
