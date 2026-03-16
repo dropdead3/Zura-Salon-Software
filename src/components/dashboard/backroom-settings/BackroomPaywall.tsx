@@ -178,8 +178,6 @@ function ProductPreview() {
             </div>
           </div>
         </div>
-        {/* Soft glow behind — strengthened */}
-        <div className="absolute -inset-x-24 -inset-y-20 -z-10 rounded-[56px] pointer-events-none bg-[radial-gradient(ellipse_at_center,hsl(var(--primary)/0.16)_0%,hsl(var(--primary)/0.08)_38%,transparent_78%)] blur-[110px] opacity-90" />
       </div>
     </div>
   );
@@ -407,9 +405,7 @@ export function BackroomPaywall() {
         {/* ═══════════════════════════════════════════
             SECTION 1 — HERO
             ═══════════════════════════════════════════ */}
-        <section className="pt-4 pb-24 md:pb-32 relative overflow-visible">
-          {/* Gradient canvas — strengthened */}
-          <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at 70% 50%, hsl(var(--primary) / 0.07) 0%, transparent 65%)' }} />
+        <section className="pt-4 pb-24 md:pb-32 relative">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center relative">
             {/* Left — Text (tightened spacing) */}
             <div className="space-y-6 text-center lg:text-left">
@@ -431,10 +427,7 @@ export function BackroomPaywall() {
 
             {/* Right — Live System Preview (rebalanced) */}
             <div className="flex flex-col relative">
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-primary/[0.03] blur-3xl pointer-events-none hidden lg:block" />
-              <Card className="relative overflow-hidden min-h-[360px] bg-card/80 backdrop-blur-xl border-border/60 shadow-xl shadow-primary/5">
-                {/* Subtle top glow */}
-                <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-primary/[0.04] to-transparent pointer-events-none" />
+              <Card className="relative overflow-hidden min-h-[360px] bg-card/80 backdrop-blur-xl border-border/60 shadow-xl">
                 <CardContent className="p-6 flex flex-col justify-center min-h-[360px] relative">
                   {/* Step content */}
                   <div key={heroStep} className="animate-fade-in-fast space-y-4">
@@ -1539,8 +1532,7 @@ export function BackroomPaywall() {
         {/* ═══════════════════════════════════════════
             SECTION 8 — FINAL CTA
             ═══════════════════════════════════════════ */}
-        <section className="border-t border-border/20 pt-16 pb-8 text-center space-y-6 relative overflow-hidden">
-          <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at 50% 0%, hsl(var(--primary) / 0.06) 0%, transparent 60%)' }} />
+        <section className="border-t border-border/20 pt-16 pb-8 text-center space-y-6 relative">
           {hasPositiveBenefit && estimate ? (
             <p className="font-sans text-base text-muted-foreground">
               Projected to recover {formatCurrency(yearlySavings)} annually{roiMultiplier >= 2 ? ` — ${roiMultiplier}× your cost` : ''}.
