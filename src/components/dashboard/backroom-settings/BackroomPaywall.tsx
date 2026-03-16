@@ -1170,9 +1170,7 @@ export function BackroomPaywall() {
           <div className="space-y-8 md:space-y-10">
             <RevealOnScroll>
               <div className="text-center space-y-3">
-                <h2 className="font-display text-2xl md:text-3xl font-medium tracking-wide text-foreground">
-                  Zura Backroom Pays for Itself
-                </h2>
+                <SectionHeading>Zura Backroom Pays for Itself</SectionHeading>
                 <p className="font-sans text-base text-muted-foreground max-w-xl mx-auto font-light leading-relaxed">
                   Most salons don't know the real cost of their color services. Zura Backroom makes it visible.
                 </p>
