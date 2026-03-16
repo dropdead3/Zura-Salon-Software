@@ -10,6 +10,17 @@ const SIDEBAR_COLLAPSED_KEY = 'platform-sidebar-collapsed';
 
 function PlatformLayoutInner() {
   const { resolvedTheme } = usePlatformTheme();
+
+  // Mirror platform theme classes onto <body> so Radix portaled elements
+  // (Select, Dialog, Popover) inherit --platform-* CSS variables.
+  useEffect(() => {
+    document.body.classList.add('platform-theme');
+    document.body.classList.toggle('platform-dark', resolvedTheme === 'dark');
+    document.body.classList.toggle('platform-light', resolvedTheme !== 'dark');
+    return () => {
+      document.body.classList.remove('platform-theme', 'platform-dark', 'platform-light');
+    };
+  }, [resolvedTheme]);
   const [collapsed, setCollapsed] = useState(() => {
     const saved = localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
     return saved ? JSON.parse(saved) : false;
