@@ -265,7 +265,7 @@ export function BackroomPaywall() {
   const hasPositiveBenefit = netBenefit > 0 && locationCount > 0;
 
   const handleCheckout = async () => {
-    if (!effectiveOrganization?.id) {
+    if (!orgId) {
       toast.error('No organization found');
       return;
     }
