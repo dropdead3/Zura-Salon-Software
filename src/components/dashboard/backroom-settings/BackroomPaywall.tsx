@@ -305,10 +305,13 @@ export function BackroomPaywall() {
               Stop Losing Money in Your Color Room
             </h1>
             <p className="text-muted-foreground text-base md:text-lg max-w-2xl mx-auto font-sans leading-relaxed">
-              Track every gram dispensed. Recover supply costs automatically. Know what to reorder before you run out.
+              Track every gram. Recover supply costs. Reorder before you run out.
             </p>
           </div>
-          <UnlockButton />
+          <div className="space-y-2">
+            <ActivateButton />
+            <p className="text-xs text-muted-foreground/60 font-sans">Setup takes minutes. Cancel anytime.</p>
+          </div>
         </div>
 
         {/* ═══════════════════════════════════════════
