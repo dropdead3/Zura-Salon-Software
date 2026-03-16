@@ -183,7 +183,7 @@ export function BackroomPaywall() {
   const { effectiveOrganization } = useOrganizationContext();
   const { data: locations = [] } = useLocations(effectiveOrganization?.id);
   const { isLocationEntitled } = useBackroomLocationEntitlements(effectiveOrganization?.id);
-  const { formatCurrency } = useFormatCurrency();
+  const { formatCurrency, formatCurrencyCompact } = useFormatCurrency();
   const isMobile = useIsMobile();
 
   const { data: estimate, isLoading: estimateLoading } = useBackroomPricingEstimate(manualStylistCount);
