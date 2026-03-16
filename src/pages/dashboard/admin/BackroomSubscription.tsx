@@ -125,16 +125,9 @@ export default function BackroomSubscription() {
 
   const planInfo = PLAN_DISPLAY[sub.plan || 'starter'];
   const isAnnual = sub.billing_interval === 'annual';
-  const isTrialing = sub.status === 'trialing';
   const renewalDate = sub.current_period_end
     ? new Date(sub.current_period_end).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
     : '—';
-  const trialEndDate = sub.trial_end
-    ? new Date(sub.trial_end).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
-    : null;
-  const trialDaysLeft = sub.trial_end
-    ? Math.max(0, Math.ceil((new Date(sub.trial_end).getTime() - Date.now()) / 86400000))
-    : 0;
 
   const currentIdx = UPGRADE_ORDER.indexOf(sub.plan || 'starter');
   // Show all other plans (upgrades AND downgrades)
