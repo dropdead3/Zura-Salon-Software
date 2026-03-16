@@ -62,8 +62,8 @@ export function AnimatedNumber({
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
       
-      // Smooth ease-out cubic
-      const settle = 1 - Math.pow(1 - progress, 3);
+      // Quint ease-out — dramatic deceleration at the end
+      const settle = 1 - Math.pow(1 - progress, 5);
       
       setDisplayValue(from + difference * settle);
 

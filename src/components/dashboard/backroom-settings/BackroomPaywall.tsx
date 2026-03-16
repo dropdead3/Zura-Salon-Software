@@ -647,7 +647,7 @@ export function BackroomPaywall() {
                                 <p className="font-display text-5xl md:text-6xl font-medium tracking-wide text-[hsl(145,50%,55%)] tabular-nums leading-none">
                                   <AnimatedNumber
                                     value={yearlySavings}
-                                    duration={1200}
+                                    duration={2200}
                                     formatOptions={{ style: 'currency', currency: 'USD', notation: 'compact', maximumFractionDigits: 1 }}
                                   />
                                   <span className="text-xl text-[hsl(145,50%,55%)]/50 font-sans font-normal ml-1.5">/yr</span>
