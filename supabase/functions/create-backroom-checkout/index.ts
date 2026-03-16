@@ -102,7 +102,7 @@ Deno.serve(async (req) => {
     // Build line items — recurring subscription items
     const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [
       { price: BACKROOM_LOCATION_PRICE_ID, quantity: resolvedLocationIds.length },
-      { price: BACKROOM_USAGE_PRICE_ID },
+      { price: BACKROOM_USAGE_PRICE_ID, quantity: 1 },
     ];
 
     // Scale licenses (recurring)
