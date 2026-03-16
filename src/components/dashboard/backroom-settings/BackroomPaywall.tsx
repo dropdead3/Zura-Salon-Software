@@ -623,48 +623,49 @@ export function BackroomPaywall() {
 
                       {/* Projected Annual Recovery banner */}
                       <div className="border-t border-border/40 pt-6">
-                        <div className="bg-gradient-to-br from-success/30 via-success/10 to-transparent p-px rounded-xl">
-                          <div className="bg-card/90 backdrop-blur-xl rounded-[11px] p-6 space-y-5">
+                        <div className="relative rounded-xl overflow-hidden">
+                          {/* Gradient border glow — top and left edges */}
+                          <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-success/40 via-success/20 to-transparent" />
+                          {/* Inner card */}
+                          <div className="relative m-px rounded-[11px] bg-gradient-to-br from-success/[0.08] via-card/95 to-card p-8 space-y-6 backdrop-blur-xl">
                             {/* Header */}
-                            <div className="space-y-1 pb-4 border-b border-success/10">
-                              <div className="flex items-center gap-2">
-                                <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
-                                <p className="font-display text-base text-success uppercase tracking-wide font-medium">When Backroom Is Implemented</p>
+                            <div className="space-y-1.5 pb-5 border-b border-success/15">
+                              <div className="flex items-center gap-2.5">
+                                <span className="w-2.5 h-2.5 rounded-full bg-success shadow-[0_0_8px_2px_hsl(var(--success)/0.4)]" />
+                                <p className="font-display text-lg text-success uppercase tracking-wide font-medium">When Backroom Is Implemented</p>
                               </div>
-                              <p className="font-sans text-xs text-muted-foreground pl-4">Estimated annual savings based on your salon's current numbers</p>
+                              <p className="font-sans text-sm text-muted-foreground pl-5">Estimated annual savings based on your salon's current numbers</p>
                             </div>
 
                             {/* Body */}
-                            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-6">
-                              <div>
-                                <p className="font-sans text-xs text-success/70 uppercase tracking-wide">You could recover</p>
-                                <p className="font-display text-4xl md:text-5xl font-medium tracking-wide text-success tabular-nums mt-1">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-8">
+                              <div className="space-y-1">
+                                <p className="font-sans text-xs text-success/80 uppercase tracking-widest">You could recover</p>
+                                <p className="font-display text-5xl md:text-6xl font-medium tracking-wide text-success tabular-nums leading-none">
                                   <AnimatedNumber
                                     value={yearlySavings}
                                     duration={1200}
                                     formatOptions={{ style: 'currency', currency: 'USD', notation: 'compact', maximumFractionDigits: 1 }}
                                   />
-                                  <span className="text-lg text-success/70 font-sans font-normal ml-1">/yr</span>
+                                  <span className="text-xl text-success/50 font-sans font-normal ml-1.5">/yr</span>
                                 </p>
                               </div>
-                              <div className="space-y-2 text-sm font-sans min-w-[200px]">
-                                <div className="flex justify-between gap-6 bg-success/[0.06] rounded-lg px-4 py-3 border-l-2 border-success/40">
-                                  <span className="text-muted-foreground">Waste reduction</span>
-                                  <span className="tabular-nums text-foreground">{formatCurrency(wasteSavings * 12, { maximumFractionDigits: 0 })}/yr</span>
-                                </div>
-                                <div className="flex justify-between gap-6 bg-success/[0.06] rounded-lg px-4 py-3 border-l-2 border-success/40">
-                                  <span className="text-muted-foreground">Time savings</span>
-                                  <span className="tabular-nums text-foreground">{formatCurrency(monthlyAuditCost * 12, { maximumFractionDigits: 0 })}/yr</span>
-                                </div>
-                                <div className="flex justify-between gap-6 bg-success/[0.06] rounded-lg px-4 py-3 border-l-2 border-success/40">
-                                  <span className="text-muted-foreground">Supply recovery</span>
-                                  <span className="tabular-nums text-foreground">{formatCurrency(supplyRecovery * 12, { maximumFractionDigits: 0 })}/yr</span>
-                                </div>
+                              <div className="space-y-2.5 text-sm font-sans min-w-[220px]">
+                                {[
+                                  { label: 'Waste reduction', value: formatCurrency(wasteSavings * 12, { maximumFractionDigits: 0 }) },
+                                  { label: 'Time savings', value: formatCurrency(monthlyAuditCost * 12, { maximumFractionDigits: 0 }) },
+                                  { label: 'Supply recovery', value: formatCurrency(supplyRecovery * 12, { maximumFractionDigits: 0 }) },
+                                ].map((item) => (
+                                  <div key={item.label} className="flex items-center justify-between gap-8 rounded-lg border border-success/15 bg-success/[0.04] px-4 py-3 transition-colors hover:bg-success/[0.08]">
+                                    <span className="text-muted-foreground">{item.label}</span>
+                                    <span className="tabular-nums text-foreground font-medium">{item.value}/yr</span>
+                                  </div>
+                                ))}
                               </div>
                             </div>
 
                             {/* Disclaimer */}
-                            <p className="text-xs text-muted-foreground/60 font-sans">
+                            <p className="text-xs text-muted-foreground/50 font-sans pt-1">
                               Projections based on your actual appointment data and industry benchmarks for salons using automated color tracking
                             </p>
                           </div>
