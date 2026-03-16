@@ -239,7 +239,7 @@ export function BackroomPaywall() {
               <BarChart3 className="w-3.5 h-3.5" />
               Yearly Impact
             </p>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               <div className="text-center">
                 <p className="font-display text-xl tracking-wide text-emerald-400">
                   <AnimatedNumber value={yearlySupplyRecovery} prefix="$" duration={1000} />
@@ -251,6 +251,12 @@ export function BackroomPaywall() {
                   <AnimatedNumber value={yearlyWasteSavings} prefix="$" duration={1000} />
                 </p>
                 <p className="text-[10px] text-muted-foreground font-sans">waste saved / yr</p>
+              </div>
+              <div className="text-center">
+                <p className="font-display text-xl tracking-wide text-emerald-400">
+                  <AnimatedNumber value={yearlyAuditCost} prefix="$" duration={1000} />
+                </p>
+                <p className="text-[10px] text-muted-foreground font-sans">hours recovered / yr</p>
               </div>
             </div>
 
