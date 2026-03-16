@@ -135,7 +135,19 @@ export function CompetitorComparison() {
                         className="border-b border-border/20 last:border-0 transition-colors duration-150 hover:bg-muted/10"
                       >
                         <td className="px-6 py-4">
-                          <span className="font-sans text-sm text-foreground">{row.feature}</span>
+                          <span className="font-sans text-sm text-foreground inline-flex items-center gap-1.5">
+                            {row.feature}
+                            {featureTooltips[row.feature] && (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Info className="w-3.5 h-3.5 text-muted-foreground/40 hover:text-muted-foreground cursor-help shrink-0" />
+                                </TooltipTrigger>
+                                <TooltipContent side="right" className="max-w-[240px] text-xs font-sans">
+                                  {featureTooltips[row.feature]}
+                                </TooltipContent>
+                              </Tooltip>
+                            )}
+                          </span>
                         </td>
                         {columns.map((col) => (
                           <td key={col.key} className={cn(
