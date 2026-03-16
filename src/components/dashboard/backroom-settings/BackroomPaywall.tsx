@@ -355,11 +355,6 @@ export function BackroomPaywall() {
           </>
         )}
       </Button>
-      {!compact && (
-        <p className="text-xs text-muted-foreground/50 font-sans flex items-center gap-1.5">
-          <ShieldCheck className="w-3 h-3" /> 30-day money-back guarantee
-        </p>
-      )}
     </div>
   );
 
