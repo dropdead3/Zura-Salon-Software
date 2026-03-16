@@ -646,6 +646,9 @@ export function BackroomPaywall() {
           </section>
         )}
 
+        {/* Mid-page CTA after loss aversion stats */}
+        {estimate && <MidPageCta />}
+
         {/* ═══════════════════════════════════════════
             SECTION 4 — FEATURE REVEAL
             ═══════════════════════════════════════════ */}
