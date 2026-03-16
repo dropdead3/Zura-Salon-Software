@@ -20,6 +20,7 @@ export function useSendPaymentSetupLink() {
       return data as { success: boolean; email: string; emailSent: boolean };
     },
     onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['platform-backroom-entitlements'] });
       toast.success(`Payment setup link sent to ${data.email}`);
     },
     onError: (error: any) => {
