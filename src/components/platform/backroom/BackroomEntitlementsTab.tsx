@@ -717,7 +717,7 @@ function LocationEntitlementPanel({
           <tbody>
             {locations.map((loc) => {
               const ent = entitlementMap.get(loc.id);
-              const isActive = ent && (ent.status === 'active' || ent.status === 'trial');
+              const isActive = ent && ent.status === 'active';
 
               return (
                 <tr
