@@ -3,7 +3,7 @@ import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import {
   Package, Beaker, BarChart3, Shield, Zap, ArrowRight, Loader2,
-  Minus, Plus, Scale, Droplets, ShieldCheck, MapPin, TrendingDown, DollarSign, Activity,
+  Minus, Plus, Scale, Droplets, ShieldCheck, MapPin, TrendingUp, DollarSign, Activity,
   ChevronUp, Info, Clock, Eye, AlertTriangle, CheckCircle2, Lock, ClipboardList, Brain,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -277,7 +277,7 @@ export function BackroomPaywall() {
         <div className="space-y-2">
           <div className="border-t border-border/20 pt-3" />
           <p className={cn(tokens.label.default, 'text-foreground text-xs flex items-center gap-2')}>
-            <TrendingDown className="w-3.5 h-3.5 text-emerald-400" />
+            <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
             Projected Savings
           </p>
           <div className="space-y-1.5 font-sans text-sm">
@@ -368,7 +368,7 @@ export function BackroomPaywall() {
               </p>
               {roiMultiplier >= 2 && (
                 <span className="inline-flex items-center gap-1 mt-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-sans font-medium">
-                  <TrendingDown className="w-3 h-3" />
+                  <TrendingUp className="w-3 h-3" />
                   {roiMultiplier}× ROI
                 </span>
               )}
