@@ -529,7 +529,7 @@ export function BackroomPaywall() {
 
                       {/* Projected Annual Recovery banner */}
                       <div className="border-t border-border/40 pt-6">
-                        <div className="rounded-lg bg-success/[0.05] border border-success/20 p-5 space-y-4">
+                        <div className="rounded-lg bg-success/[0.12] border border-success/30 p-5 space-y-4 shadow-[0_0_20px_-4px_hsl(var(--success)/0.15)]">
                           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                             <div>
                               <p className="font-display text-sm text-success uppercase tracking-wide font-medium">When Backroom Is Implemented</p>
