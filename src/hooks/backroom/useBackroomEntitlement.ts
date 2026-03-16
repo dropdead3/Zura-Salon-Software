@@ -1,4 +1,5 @@
-import { useOrganizationFeature } from '@/hooks/useOrganizationFeature';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { useBackroomLocationEntitlements } from '@/hooks/backroom/useBackroomLocationEntitlements';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 
@@ -13,8 +14,21 @@ export function useBackroomEntitlement(locationId?: string) {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
 
-  const { isEnabled: orgEnabled, isLoading: orgLoading } =
-    useOrganizationFeature('backroom_enabled');
+  const { data: orgEnabled = false, isLoading: orgLoading } = useQuery({
+    queryKey: ['backroom-org-flag', orgId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('organization_feature_flags')
+        .select('is_enabled')
+        .eq('organization_id', orgId!)
+        .eq('flag_key', 'backroom_enabled')
+        .maybeSingle();
+      if (error) throw error;
+      return data?.is_enabled ?? false;
+    },
+    enabled: !!orgId,
+    staleTime: 60_000,
+  });
 
   const { isLocationEntitled, isLoading: locLoading, activeCount } =
     useBackroomLocationEntitlements(orgId);
