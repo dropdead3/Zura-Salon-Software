@@ -93,6 +93,13 @@ export function BackroomPaywall() {
   const netBenefit = totalSavings - monthlyTotal;
   const roiMultiplier = monthlyTotal > 0 ? Math.round(totalSavings / monthlyTotal) : 0;
 
+  // Yearly projections
+  const yearlySavings = totalSavings * 12;
+  const yearlyWasteSavings = wasteSavings * 12;
+  const yearlySupplyRecovery = supplyRecovery * 12;
+  const yearlyCost = monthlyTotal * 12;
+  const yearlyNetBenefit = netBenefit * 12;
+
   const handleCheckout = async () => {
     if (!effectiveOrganization?.id) {
       toast.error('No organization found');
@@ -180,6 +187,11 @@ export function BackroomPaywall() {
                       </span>
                       <span className="font-display text-sm tracking-wide text-primary/70">/mo</span>
                     </div>
+                    {yearlyNetBenefit > 0 && (
+                      <p className="text-xs text-muted-foreground font-sans mt-0.5">
+                        That's <span className="text-emerald-400 font-medium">{formatCurrency(yearlyNetBenefit)}/year</span> in additional revenue & savings
+                      </p>
+                    )}
                     {roiMultiplier >= 2 && (
                       <span className="inline-flex items-center gap-1 mt-1 px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-sans font-medium">
                         <TrendingDown className="w-3 h-3" />
@@ -321,6 +333,61 @@ export function BackroomPaywall() {
                     <p className="text-[10px] text-muted-foreground font-sans leading-tight">
                       * Supply fee recovery assumes you add an avg product cost fee to color services. This is optional and varies by salon.
                     </p>
+                  </div>
+                )}
+
+                {/* Annual Impact */}
+                {locationCount > 0 && estimate && yearlyNetBenefit > 0 && (
+                  <div className="space-y-3">
+                    <p className={cn(tokens.label.default, 'text-foreground text-xs flex items-center gap-2')}>
+                      <BarChart3 className="w-3.5 h-3.5 text-primary" />
+                      Estimated Annual Impact
+                    </p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/20 text-center">
+                        <p className="font-display text-2xl tracking-wide text-emerald-400">
+                          <AnimatedNumber value={yearlySupplyRecovery} prefix="$" duration={1000} />
+                        </p>
+                        <p className="text-xs text-muted-foreground font-sans mt-0.5">
+                          additional revenue / yr
+                        </p>
+                      </div>
+                      <div className="p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/20 text-center">
+                        <p className="font-display text-2xl tracking-wide text-emerald-400">
+                          <AnimatedNumber value={yearlyWasteSavings} prefix="$" duration={1000} />
+                        </p>
+                        <p className="text-xs text-muted-foreground font-sans mt-0.5">
+                          waste savings / yr
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Annual cost vs savings bar */}
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between text-xs font-sans text-muted-foreground">
+                        <span>Annual cost: {formatCurrency(yearlyCost)}</span>
+                        <span className="text-emerald-400">Annual benefit: {formatCurrency(yearlySavings)}</span>
+                      </div>
+                      <div className="h-2 rounded-full bg-muted/40 overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-emerald-500/60 transition-all duration-700"
+                          style={{
+                            width: `${Math.min(100, yearlySavings > 0 ? (yearlyCost / yearlySavings) * 100 : 100)}%`,
+                          }}
+                        />
+                      </div>
+                      <p className="text-[10px] text-muted-foreground font-sans text-center">
+                        Your cost represents only {yearlySavings > 0 ? Math.round((yearlyCost / yearlySavings) * 100) : 0}% of your projected annual benefit
+                      </p>
+                    </div>
+
+                    <div className="border-t border-border/40 pt-2 text-center">
+                      <p className="text-xs text-muted-foreground font-sans">Total annual net benefit</p>
+                      <p className="font-display text-3xl tracking-wide text-emerald-400 mt-0.5">
+                        +<AnimatedNumber value={yearlyNetBenefit} prefix="$" duration={1200} />
+                        <span className="text-sm text-emerald-400/70 ml-1">/yr</span>
+                      </p>
+                    </div>
                   </div>
                 )}
               </div>
@@ -514,6 +581,11 @@ export function BackroomPaywall() {
                   <Loader2 className="w-4 h-4 animate-spin" />
                   Redirecting…
                 </>
+              ) : yearlyNetBenefit > 1000 && locationCount > 0 ? (
+                <>
+                  Unlock {formatCurrency(yearlyNetBenefit)}/year in savings
+                  <ArrowRight className="w-4 h-4" />
+                </>
               ) : netBenefit > 0 && locationCount > 0 ? (
                 <>
                   Start saving {formatCurrency(netBenefit)}/mo
@@ -547,7 +619,7 @@ export function BackroomPaywall() {
                     Backroom pays for itself {roiMultiplier}× over
                   </p>
                   <p className="text-xs text-muted-foreground font-sans mt-1">
-                    {formatCurrency(monthlyTotal)}/mo cost → {formatCurrency(totalSavings)}/mo in savings & recovery.
+                    {formatCurrency(yearlyCost)}/yr cost → {formatCurrency(yearlySavings)}/yr in savings & revenue.
                     {!estimate.hasRealData && ' Estimates based on industry averages.'}
                   </p>
                 </>
