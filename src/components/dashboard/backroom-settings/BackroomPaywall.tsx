@@ -427,7 +427,7 @@ export function BackroomPaywall() {
                   ].map((item) => (
                     <li key={item} className="flex items-start gap-3">
                       <CheckCircle2 className="w-4 h-4 text-success mt-0.5 shrink-0" />
-                      <span className="text-[15px] font-sans text-foreground">{item}</span>
+                      <span className="text-sm font-sans text-foreground">{item}</span>
                     </li>
                   ))}
                 </ul>
