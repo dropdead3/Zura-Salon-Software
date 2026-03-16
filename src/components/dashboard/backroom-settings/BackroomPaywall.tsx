@@ -53,6 +53,7 @@ export function BackroomPaywall() {
   const [scaleCount, setScaleCount] = useState(1);
   const [selectedLocationIds, setSelectedLocationIds] = useState<Set<string>>(new Set());
   const [manualStylistCount, setManualStylistCount] = useState(2);
+  const [auditMinutesPerDay, setAuditMinutesPerDay] = useState(30);
   const [mobileCalcOpen, setMobileCalcOpen] = useState(false);
 
   const { effectiveOrganization } = useOrganizationContext();
