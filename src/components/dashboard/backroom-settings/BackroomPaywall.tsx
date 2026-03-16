@@ -1402,6 +1402,45 @@ export function BackroomPaywall() {
         </section>
 
         {/* ═══════════════════════════════════════════
+            SECTION 7.5 — CONFIDENCE LAYER
+            ═══════════════════════════════════════════ */}
+        <section className="border-t border-border/20 pt-16 space-y-10">
+          <div className="text-center space-y-3">
+            <h2 className="font-display text-2xl md:text-3xl tracking-wide text-foreground">
+              Powerful System. Simple Workflow.
+            </h2>
+            <p className="font-sans text-base text-muted-foreground font-light max-w-xl mx-auto">
+              Zura Backroom works quietly in the background while your team continues working as normal.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto">
+            {[
+              { icon: Zap, title: "Fast Setup", desc: "Configured quickly and integrated into your salon workflow." },
+              { icon: Users, title: "Designed for Stylists", desc: "Works with the natural flow of mixing and applying color." },
+              { icon: ShieldCheck, title: "No Disruption", desc: "Stylists mix bowls the same way they always have." },
+              { icon: BarChart3, title: "Clear Visibility", desc: "See the true cost of services and product usage." },
+              { icon: Beaker, title: "Built for Real Salons", desc: "Designed specifically for salon operations." },
+            ].map((item, i) => (
+              <Card key={i} className={cn("p-5 space-y-3 bg-card", i === 4 && "sm:col-start-1 lg:col-start-2")}>
+                <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
+                  <item.icon className="w-5 h-5 text-primary" />
+                </div>
+                <h3 className="font-display text-sm tracking-wide text-foreground">{item.title}</h3>
+                <p className="text-sm text-muted-foreground font-sans font-light">{item.desc}</p>
+              </Card>
+            ))}
+          </div>
+
+          <div className="text-center space-y-6 pt-4">
+            <p className="font-sans text-sm text-muted-foreground font-light italic max-w-lg mx-auto">
+              Zura Backroom adds intelligence to your workflow without adding complexity.
+            </p>
+            <ActivateButton />
+          </div>
+        </section>
+
+        {/* ═══════════════════════════════════════════
             SECTION 8 — FINAL CTA
             ═══════════════════════════════════════════ */}
         <section className="border-t border-border/20 pt-16 pb-8 text-center space-y-6">
