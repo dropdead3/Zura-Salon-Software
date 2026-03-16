@@ -76,6 +76,7 @@ export function BackroomPaywall() {
   const [manualScaleOverride, setManualScaleOverride] = useState(false);
   const [auditMinutesPerDay, setAuditMinutesPerDay] = useState(30);
   const [mobileCalcOpen, setMobileCalcOpen] = useState(false);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
 
   const { effectiveOrganization } = useOrganizationContext();
   const { data: locations = [] } = useLocations(effectiveOrganization?.id);
