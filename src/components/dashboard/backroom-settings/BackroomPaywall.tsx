@@ -845,7 +845,7 @@ export function BackroomPaywall() {
         {/* ═══════════════════════════════════════════
             SECTION 4.25 — INTERACTIVE FEATURE REVEAL
             ═══════════════════════════════════════════ */}
-        <section className="pb-20 md:pb-24">
+        <section className="pb-24 md:pb-32">
           <div className="space-y-8 md:space-y-10">
             <div className="text-center space-y-3">
               <h2 className="font-display text-2xl md:text-3xl font-medium tracking-wide text-foreground">
