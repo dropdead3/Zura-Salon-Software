@@ -271,7 +271,7 @@ export function BillingConfigurationPanel({
       {/* Quick-access billing guide link */}
       <div className="flex justify-end">
         <PlatformButton variant="outline" size="sm" asChild>
-          <Link to="/dashboard/platform/billing-guide" target="_blank">
+          <Link to="/dashboard/platform/billing-guide?section=how-it-works" target="_blank">
             <HelpCircle className="h-4 w-4" />
             Billing Guide
           </Link>
