@@ -536,9 +536,9 @@ export function BackroomPaywall() {
                         <p className="text-sm text-muted-foreground font-sans">Inventory updated</p>
                         <div className="bg-muted/50 rounded-xl p-4 w-full max-w-[300px] space-y-2">
                           {[
-                            { name: 'Koleston 7/0', stock: '340g', status: 'Good', color: 'text-primary' },
-                            { name: 'Welloxon 6%', stock: '180g', status: 'Low', color: 'text-amber-500' },
-                            { name: 'Blondor', stock: '45g', status: 'Critical', color: 'text-destructive' },
+                            { name: 'Liberator 7', stock: '340g', status: 'Good', color: 'text-primary' },
+                            { name: 'Activator 20 Vol', stock: '180g', status: 'Low', color: 'text-amber-500' },
+                            { name: 'Cosmic Crystal Lightener', stock: '45g', status: 'Critical', color: 'text-destructive' },
                           ].map((item) => (
                             <div key={item.name} className="flex items-center justify-between text-sm">
                               <span className="font-sans text-foreground">{item.name}</span>
