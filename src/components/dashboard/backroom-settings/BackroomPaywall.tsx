@@ -581,6 +581,11 @@ export function BackroomPaywall() {
                   <Loader2 className="w-4 h-4 animate-spin" />
                   Redirecting…
                 </>
+              ) : yearlyNetBenefit > 1000 && locationCount > 0 ? (
+                <>
+                  Unlock {formatCurrency(yearlyNetBenefit)}/year in savings
+                  <ArrowRight className="w-4 h-4" />
+                </>
               ) : netBenefit > 0 && locationCount > 0 ? (
                 <>
                   Start saving {formatCurrency(netBenefit)}/mo
