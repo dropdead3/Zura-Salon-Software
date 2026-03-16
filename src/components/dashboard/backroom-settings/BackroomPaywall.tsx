@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import {
   Package, Beaker, BarChart3, Shield, Zap, ArrowRight, Loader2,
   Minus, Plus, Scale, ShieldCheck, MapPin, TrendingDown, DollarSign, Activity,
-  ChevronUp, Info, Clock, Eye, AlertTriangle,
+  ChevronUp, Info, Clock, Eye, AlertTriangle, CheckCircle2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -29,23 +29,41 @@ import { toast } from 'sonner';
 const features = [
   {
     icon: Eye,
-    title: 'Predictive Stock Intelligence',
-    description: 'Knows if you have enough product for tomorrow\'s appointments. No more counting.',
+    title: 'Know Before You Run Out',
+    description: 'See tomorrow\'s color needs based on your appointment book. No more end-of-night counting.',
   },
   {
     icon: Beaker,
-    title: 'Recipe & Mixing',
-    description: 'Define formulas, track dispensed vs leftover, and eliminate chemical waste.',
+    title: 'Track Every Formula',
+    description: 'Record what\'s mixed, measure what\'s used, and see what\'s wasted — per stylist, per service.',
   },
   {
     icon: BarChart3,
-    title: 'Cost Intelligence',
-    description: 'Wholesale price sync, markup calculations, and cost-per-service analytics.',
+    title: 'See Your True Product Costs',
+    description: 'Wholesale price tracking, markup calculations, and cost-per-service visibility across every brand.',
   },
   {
     icon: Shield,
-    title: 'Waste & Compliance',
-    description: 'Ghost loss detection, reweigh compliance, and variance tracking.',
+    title: 'Stop Invisible Losses',
+    description: 'Ghost loss detection, reweigh compliance tracking, and variance alerts that catch problems early.',
+  },
+];
+
+const howItWorks = [
+  {
+    step: '01',
+    title: 'Weigh & Track',
+    description: 'Every color service is measured on a precision scale. Dispensed grams, leftover product, and formulas are recorded automatically.',
+  },
+  {
+    step: '02',
+    title: 'Detect & Reduce',
+    description: 'Ghost losses, product waste, and variance are flagged automatically. You see exactly where product is going.',
+  },
+  {
+    step: '03',
+    title: 'Recover & Reorder',
+    description: 'Bill supply costs back to clients with automated fees. Predictive reorder alerts prevent stockouts.',
   },
 ];
 
@@ -387,19 +405,35 @@ export function BackroomPaywall() {
     <div className="flex flex-col items-center justify-center px-4 py-8">
       {/* ── HERO (full width) ── */}
       <div className="max-w-5xl w-full space-y-8">
-        <div className="text-center space-y-3">
+        <div className="text-center space-y-4">
           <div className="mx-auto w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-            <Zap className="w-8 h-8 text-primary" />
+            <Scale className="w-8 h-8 text-primary" />
           </div>
           <h1 className={cn(tokens.heading.page, 'text-2xl')}>
-            Stop Losing Money in Your Backroom
+            Zura Backroom
           </h1>
-          <p className="text-muted-foreground text-base max-w-lg mx-auto font-sans">
-            The average salon loses $375/mo to product waste, ghost losses, and manual audits. Here's what it's costing yours.
+          <p className="text-muted-foreground text-base max-w-xl mx-auto font-sans">
+            Color room management and resupply intelligence that reduces waste and increases revenue.
+          </p>
+          <p className="text-muted-foreground/70 text-sm max-w-lg mx-auto font-sans leading-relaxed">
+            Track every gram dispensed, eliminate ghost losses, recover supply costs, and know what to reorder before you run out.
           </p>
         </div>
 
-        {/* ═══ MONEY YOU MAY BE LOSING — Loss Aversion Banner ═══ */}
+        {/* ═══ HOW IT WORKS ═══ */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {howItWorks.map((step) => (
+            <div key={step.step} className="p-4 rounded-xl bg-card/60 border border-border/40 space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="font-display text-xs tracking-wider text-primary">{step.step}</span>
+                <span className={cn(tokens.label.default, 'text-foreground text-sm')}>{step.title}</span>
+              </div>
+              <p className="text-xs text-muted-foreground font-sans leading-relaxed">{step.description}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* ═══ WHAT YOUR COLOR ROOM IS COSTING YOU — Loss Aversion Banner ═══ */}
         {(estimate || estimateLoading) && (
           <Card className="bg-destructive/[0.03] border-destructive/20 overflow-hidden">
             <CardContent className="p-6 space-y-4">
@@ -409,10 +443,10 @@ export function BackroomPaywall() {
                 </div>
                 <div>
                   <p className={cn(tokens.label.default, 'text-destructive text-sm')}>
-                    Money You May Be Losing Every Month
+                    What Your Color Room Is Costing You Right Now
                   </p>
                   <p className="text-xs text-muted-foreground font-sans mt-0.5">
-                    Without Zura Backroom, these costs go undetected and unrecovered.
+                    Most salons have no visibility into color room costs. Here is what the data shows for yours.
                   </p>
                 </div>
               </div>
@@ -548,7 +582,7 @@ export function BackroomPaywall() {
               </CardContent>
             </Card>
 
-            {/* 2. Time Your Team Loses (pain reinforcement) */}
+            {/* 2. Time Your Team Spends on Manual Inventory */}
             <Card className="bg-card/60 border-border/40">
               <CardContent className="p-5 space-y-4">
                 <div className="flex items-center gap-3">
@@ -556,9 +590,9 @@ export function BackroomPaywall() {
                     <Clock className="w-5 h-5 text-destructive" />
                   </div>
                   <div>
-                    <p className={cn(tokens.label.default, 'text-foreground')}>Time Your Team Loses Every Day</p>
+                    <p className={cn(tokens.label.default, 'text-foreground')}>Time Your Team Spends on Manual Inventory</p>
                     <p className="text-xs text-muted-foreground font-sans mt-0.5">
-                      Nightly counts, guessing stock levels, manual audits — replaced by predictive intelligence.
+                      Nightly tube counts, manual stock checks, and guessing what to reorder — all replaced by automated tracking.
                     </p>
                   </div>
                 </div>
@@ -607,7 +641,28 @@ export function BackroomPaywall() {
               </CardContent>
             </Card>
 
-            {/* 3. Feature Grid (the solution — moved down) */}
+            {/* 3. What You Get + Feature Grid */}
+            <div className="space-y-4">
+              <div className="space-y-3">
+                <p className={cn(tokens.label.default, 'text-foreground text-sm flex items-center gap-2')}>
+                  <Package className="w-4 h-4 text-primary" />
+                  What You Get
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 pl-1">
+                  {[
+                    'Precision scale integration at every station',
+                    'Per-gram dispensing and waste tracking',
+                    'Automated supply fee recovery',
+                    'Predictive reorder alerts',
+                    'Cost-per-service analytics',
+                  ].map((item) => (
+                    <div key={item} className="flex items-start gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
+                      <span className="text-xs text-muted-foreground font-sans">{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
               {features.map((f) => (
                 <Card key={f.title} className="bg-card/60 border-border/40">
@@ -622,6 +677,7 @@ export function BackroomPaywall() {
                   </CardContent>
                 </Card>
               ))}
+            </div>
             </div>
 
             {/* Estimates Disclaimer */}
@@ -884,7 +940,7 @@ export function BackroomPaywall() {
                 {estimate && locationCount > 0 && netBenefit > 0 ? (
                   <>
                     <p className={cn(tokens.label.default, 'text-primary text-sm')}>
-                      Backroom pays for itself {roiMultiplier}× over
+                      Your color room pays you back {roiMultiplier}× over
                     </p>
                     <p className="text-xs text-muted-foreground font-sans mt-1">
                       {formatCurrency(yearlyCost)}/yr cost → {formatCurrency(yearlySavings)}/yr in savings & revenue.
@@ -894,10 +950,10 @@ export function BackroomPaywall() {
                 ) : (
                   <>
                     <p className={cn(tokens.label.default, 'text-primary text-sm')}>
-                      Average salon saves $375/mo in reduced product waste
+                      Average salon recovers $375/mo in reduced product waste
                     </p>
                     <p className="text-xs text-muted-foreground font-sans mt-1">
-                      Based on 12% waste reduction on typical color spend. Backroom pays for itself many times over.
+                      Based on 12% waste reduction on typical color spend. The system pays for itself many times over.
                     </p>
                   </>
                 )}
