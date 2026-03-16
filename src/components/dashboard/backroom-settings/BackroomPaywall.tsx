@@ -364,7 +364,7 @@ export function BackroomPaywall() {
       {/* CTA */}
       <Button
         size="lg"
-        className="w-full font-sans font-medium gap-2"
+        className="w-full font-sans font-medium gap-2 text-sm"
         onClick={handleCheckout}
         disabled={loading || selectedLocationIds.size === 0}
       >
