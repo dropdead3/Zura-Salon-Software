@@ -603,7 +603,7 @@ export function BackroomPaywall() {
         {/* ═══════════════════════════════════════════
             SECTION 1.75 — BEFORE / AFTER TRANSFORMATION
             ═══════════════════════════════════════════ */}
-        <section className="pb-20 md:pb-24">
+        <section className="pb-20 md:pb-24 bg-muted/20 -mx-6 sm:-mx-8 px-6 sm:px-8 rounded-2xl pt-10 md:pt-12">
           <div className="text-center mb-10 md:mb-12">
             <h2 className="font-display text-2xl md:text-3xl font-normal tracking-wide uppercase text-foreground">
               How Zura Backroom Transforms Your Color Room
