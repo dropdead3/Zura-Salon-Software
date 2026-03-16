@@ -851,7 +851,7 @@ export function BackroomPaywall() {
               {/* Right — Visualization Panel */}
               <Card className="border-border/50 bg-card/80 backdrop-blur-sm overflow-hidden">
                 <CardContent className="p-6 min-h-[320px] flex flex-col justify-center">
-                  <div key={activeFeature} className="animate-fade-in-fast">
+                  <div key={activeFeature}>
                     {activeFeature === 'mixing' && (
                       <div className="space-y-4">
                         <div className="flex items-center gap-2 mb-1">
