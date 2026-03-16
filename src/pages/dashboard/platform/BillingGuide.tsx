@@ -256,11 +256,19 @@ export default function BillingGuide() {
               <div className="space-y-3 text-sm text-[hsl(var(--platform-foreground)/0.85)]">
                 <div className="flex justify-between py-2 border-b border-[hsl(var(--platform-border)/0.5)]">
                   <span>Per-location fee</span>
-                  <span className="font-medium text-[hsl(var(--platform-foreground))]">$20/mo per location</span>
+                  <span className="font-medium text-[hsl(var(--platform-foreground))]">${BR_LOCATION_FEE}/mo per location</span>
                 </div>
                 <div className="flex justify-between py-2 border-b border-[hsl(var(--platform-border)/0.5)]">
                   <span>Per color service fee</span>
-                  <span className="font-medium text-[hsl(var(--platform-foreground))]">$0.50 per service</span>
+                  <span className="font-medium text-[hsl(var(--platform-foreground))]">${BR_USAGE_FEE.toFixed(2)} per service</span>
+                </div>
+                <div className="flex justify-between py-2 border-b border-[hsl(var(--platform-border)/0.5)]">
+                  <span>Scale hardware (one-time)</span>
+                  <span className="font-medium text-[hsl(var(--platform-foreground))]">${BR_HARDWARE_COST} per scale</span>
+                </div>
+                <div className="flex justify-between py-2 border-b border-[hsl(var(--platform-border)/0.5)]">
+                  <span>Scale license</span>
+                  <span className="font-medium text-[hsl(var(--platform-foreground))]">${BR_LICENSE_FEE}/mo per scale</span>
                 </div>
                 <p className="text-xs text-[hsl(var(--platform-foreground-muted))] pt-2">
                   Backroom is enabled per-location. Charges are billed alongside the subscription invoice.
