@@ -84,10 +84,10 @@ export function InvoicePreview({
               {/* User Add-Ons */}
               {hasUserAddOns && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">
+                  <span className="text-[hsl(var(--platform-foreground-muted))]">
                     User Seat Add-Ons ({additionalUsersPurchased} × {formatCurrency(perUserFee)})
                   </span>
-                  <span className="text-foreground">{formatCurrency(userAddOnCost)}</span>
+                  <span className="text-[hsl(var(--platform-foreground))]">{formatCurrency(userAddOnCost)}</span>
                 </div>
               )}
 
