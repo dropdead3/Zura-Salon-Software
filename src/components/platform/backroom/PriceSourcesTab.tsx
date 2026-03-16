@@ -151,7 +151,7 @@ export function PriceSourcesTab() {
               <div className="space-y-1.5">
                 <PlatformLabel>Poll Frequency</PlatformLabel>
                 <Select value={newSource.scrape_frequency} onValueChange={(v) => setNewSource((p) => ({ ...p, scrape_frequency: v }))}>
-                  <SelectTrigger className="font-sans bg-slate-800/50 border-slate-700/50 text-slate-300"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="font-sans"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="daily">Daily</SelectItem>
                     <SelectItem value="weekly">Weekly</SelectItem>
