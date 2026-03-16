@@ -407,7 +407,7 @@ export function BackroomPaywall() {
       <div className="max-w-5xl w-full space-y-8">
         <div className="text-center space-y-4">
           <div className="mx-auto w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-            <Scale className="w-8 h-8 text-primary" />
+            <Droplets className="w-8 h-8 text-primary" />
           </div>
           <h1 className={cn(tokens.heading.page, 'text-2xl')}>
             Zura Backroom
