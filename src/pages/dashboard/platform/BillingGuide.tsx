@@ -44,9 +44,18 @@ const SECTIONS = [
   { id: 'how-it-works', label: 'How It Works' },
   { id: 'calculator', label: 'Calculator' },
   { id: 'backroom', label: 'Backroom' },
+  { id: 'backroom-calc', label: 'Backroom Calc' },
   { id: 'quick-ref', label: 'Quick Ref' },
   { id: 'changelog', label: 'Changelog' },
 ];
+
+// --- Backroom pricing constants (from pricing model) ---
+const BR_LOCATION_FEE = 20;
+const BR_USAGE_FEE = 0.50;
+const BR_HARDWARE_COST = 199;
+const BR_LICENSE_FEE = 10;
+const BR_BASELINE_WASTE_RATE = 0.12;
+const BR_AVG_PRODUCT_COST = 12; // industry avg per color service
 
 export default function BillingGuide() {
   const { data: plans, isLoading } = useSubscriptionPlans();
