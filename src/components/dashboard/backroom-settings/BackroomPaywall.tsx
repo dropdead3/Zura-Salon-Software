@@ -405,9 +405,7 @@ export function BackroomPaywall() {
         {/* ═══════════════════════════════════════════
             SECTION 1 — HERO
             ═══════════════════════════════════════════ */}
-        <section className="pt-4 pb-24 md:pb-32 relative overflow-visible">
-          {/* Gradient canvas — strengthened */}
-          <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at 70% 50%, hsl(var(--primary) / 0.07) 0%, transparent 65%)' }} />
+        <section className="pt-4 pb-24 md:pb-32 relative">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center relative">
             {/* Left — Text (tightened spacing) */}
             <div className="space-y-6 text-center lg:text-left">
