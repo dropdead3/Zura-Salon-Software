@@ -297,25 +297,58 @@ export function BackroomPaywall() {
   };
 
   /* ─── Shared CTA button ─── */
-  const ActivateButton = ({ className = '' }: { className?: string }) => (
-    <Button
-      size="lg"
-      className={cn(
-        'font-sans font-medium gap-2 rounded-full h-12 px-10 text-base shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 active:scale-[0.98] transition-all duration-200',
-        className,
+  const heroRef = useRef<HTMLDivElement>(null);
+  const [showStickyBar, setShowStickyBar] = useState(false);
+  const [stickyDismissed, setStickyDismissed] = useState(false);
+
+  useEffect(() => {
+    if (!heroRef.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setShowStickyBar(!entry.isIntersecting),
+      { threshold: 0 },
+    );
+    observer.observe(heroRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  const ctaLabel = hasPositiveBenefit && yearlySavings > 0
+    ? `Start Recovering ${formatCurrency(yearlySavings, { maximumFractionDigits: 0, notation: 'compact' })}/yr`
+    : 'Start Recovering Revenue';
+
+  const ActivateButton = ({ className = '', compact = false }: { className?: string; compact?: boolean }) => (
+    <div className={cn('flex flex-col items-center', compact ? 'gap-1' : 'gap-2')}>
+      <Button
+        size={compact ? 'default' : 'lg'}
+        className={cn(
+          'font-sans font-medium gap-2 rounded-full shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 active:scale-[0.98] transition-all duration-200',
+          compact ? 'h-10 px-6 text-sm' : 'h-12 px-10 text-base',
+          className,
+        )}
+        onClick={() => setConfirmDialogOpen(true)}
+        disabled={loading || selectedLocationIds.size === 0}
+      >
+        {loading ? (
+          <Loader2 className="w-4 h-4 animate-spin" />
+        ) : (
+          <>
+            {ctaLabel}
+            <ArrowRight className="w-4 h-4" />
+          </>
+        )}
+      </Button>
+      {!compact && (
+        <p className="text-xs text-muted-foreground/50 font-sans flex items-center gap-1.5">
+          <ShieldCheck className="w-3 h-3" /> 30-day money-back guarantee
+        </p>
       )}
-      onClick={() => setConfirmDialogOpen(true)}
-      disabled={loading || selectedLocationIds.size === 0}
-    >
-      {loading ? (
-        <Loader2 className="w-4 h-4 animate-spin" />
-      ) : (
-        <>
-          Activate Backroom
-          <ArrowRight className="w-4 h-4" />
-        </>
-      )}
-    </Button>
+    </div>
+  );
+
+  /* ─── Mid-page CTA helper ─── */
+  const MidPageCta = () => (
+    <div className="flex flex-col items-center gap-2 py-4">
+      <ActivateButton compact />
+    </div>
   );
 
   /* ─── Section heading helper ─── */
