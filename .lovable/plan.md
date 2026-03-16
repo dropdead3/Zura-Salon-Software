@@ -1,216 +1,153 @@
 
 
-# Section-by-Section Design Audit — BackroomPaywall.tsx
+## Timezone-Safe Scheduling (Implemented)
 
-Since the paywall only renders for non-entitled users and cannot be viewed in the browser, this audit is performed entirely from code analysis against the design token system and elite design standards.
+### Problem
+`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
 
-## Current Page Structure (10 sections, 1526 lines)
+### Solution
+- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
+- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
+- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
 
-1. Hero (373–560)
-2. Product Preview (562–567)
-3. Before / After (569–642)
-4. The Problem — Loss Aversion (647–754)
-5. Interactive Feature Reveal (757–986)
-6. Competitor Comparison (988–993)
-7. How It Works + Real Salon Scenario (1001–1197)
-8. Pricing + Hardware (1204–1438)
-9. Trust + FAQ (1445–1484)
-10. Final CTA (1489–1504)
+### Files Updated
+- `ScheduleHeader.tsx` — today button, quick days, isToday checks
+- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
+- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
+- `MonthView.tsx` — today highlight
+- `AgendaView.tsx` — today/tomorrow labels, today border
+- `ScheduleActionBar.tsx` — payment queue timing
+- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
+- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
+- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
+- `useHuddles.ts` — today's huddle query
 
----
+## Auto-Reorder with Supplier Communication (Implemented)
 
-## Section 1 — Hero
+### What It Does
+Organizations can opt into automatic reorder — when stock dips below threshold, POs are calculated (using MOQ and par levels) and sent directly to the supplier via email.
 
-**Issues:**
-- Hero icon boxes use `w-16 h-16 rounded-2xl` — intentionally hero-tier, acceptable
-- Step indicator dots use `h-1.5` (6px) — half-step; should be `h-2` (8px) for 4px grid
-- `space-y-8` inside left column is fine but `space-y-3` for sub-CTA text is a half-step
-- Step label below dots (`text-xs text-center text-muted-foreground/60`) has no `font-sans` — inconsistent
-- Testimonial `blockquote` italic text is fine for editorial accent
-- `gap-0.5` on stars (2px) is below 4px minimum
+### Database Changes
+- `products.par_level` (INT, nullable) — desired stock level to reorder up to
+- `product_suppliers.moq` (INT, default 1) — minimum order quantity
+- `inventory_alert_settings.auto_reorder_enabled` (BOOL, default false)
+- `inventory_alert_settings.auto_reorder_mode` (TEXT, default 'to_par') — 'to_par' or 'moq_only'
+- `inventory_alert_settings.max_auto_reorder_value` (NUMERIC, nullable) — daily spend cap
+- `purchase_orders.supplier_confirmed_at` (TIMESTAMPTZ, nullable) — for tracking confirmations
 
-**Fixes:**
-- Dot height `h-1.5` → `h-2`
-- Stars gap `gap-0.5` → `gap-1`
-- Add `font-sans` to step label at line 555
+### Quantity Calculation
+```
+deficit = par_level - quantity_on_hand
+order_qty = max(moq, deficit)
+if moq > 1: round up to nearest MOQ multiple
+```
+Fallback: if par_level is null, uses `reorder_level * 2`.
 
-## Section 2 — Product Preview
+### Files Updated
+- Migration: Added columns to products, product_suppliers, inventory_alert_settings, purchase_orders
+- `check-reorder-levels/index.ts` — auto-send logic with MOQ/par calculation, spend cap, email invocation
+- `AlertSettingsCard.tsx` — auto-reorder toggle, mode selector, spend cap input
+- `useInventoryAlertSettings.ts` — updated interface
+- `useProducts.ts` — added par_level to Product interface
+- `useProductSuppliers.ts` — added moq to ProductSupplier interface
+- `ProductEditDialog.tsx` — added par level field
+- `RetailProductsSettingsContent.tsx` — added par level to product form
+- `SupplierDialog.tsx` — added MOQ field
 
-**Issues:**
-- `space-y-1.5` inside mock cards (lines 119, 123) — half-step
-- `py-2.5` on title bar (line 93) — half-step; snap to `py-2` or `py-3`
-- `gap-1.5` on traffic light dots (line 94) — half-step
+### Safety Features
+- Spend cap: daily auto-reorder pauses when cumulative PO value exceeds cap
+- Audit trail: auto_reorder logged as stock_movement reason
+- Supplier confirmation tracking via supplier_confirmed_at timestamp
 
-**Fixes:**
-- `space-y-1.5` → `space-y-2`
-- `py-2.5` → `py-3`
-- `gap-1.5` → `gap-2`
+## Product Movement Rating Badges (Implemented)
 
-## Section 3 — Before / After
+### What It Does
+Every product gets a dynamic movement rating badge (Best Seller, Popular, Steady, Slow Mover, Stagnant, Dead Weight) computed from 90-day sales velocity data.
 
-**Issues:**
-- Generally strong — two cards with clear destructive/success color language
-- `space-y-4` in list items is well-spaced
-- No shadow on cards — adding `shadow-sm` would add subtle depth
-- `mb-6` gap between icon row and list — good
+### Rating Tiers
+- **Best Seller**: Top 10% velocity AND >0.5 units/day (emerald)
+- **Popular**: Top 25% velocity AND >0.2 units/day (blue)
+- **Steady**: Velocity >0.05/day (muted)
+- **Slow Mover**: Velocity >0 but ≤0.05/day (amber)
+- **Stagnant**: Zero velocity, sold within 180 days (orange)
+- **Dead Weight**: Zero velocity, 180+ days or never sold (red)
+- Products with zero stock excluded from negative ratings
 
-**Fixes:**
-- Add `shadow-sm` to both cards for subtle elevation
+### Files Created
+- `src/lib/productMovementRating.ts` — pure rating logic + badge config
+- `src/hooks/useProductVelocity.ts` — lightweight 90-day POS velocity query
+- `src/components/ui/MovementBadge.tsx` — shared badge component with tooltip
 
-## Section 4 — The Problem (Loss Aversion)
+### Files Updated
+- `RetailProductsSettingsContent.tsx` — Movement column + filter dropdown in products table
+- `RetailAnalyticsContent.tsx` — Movement badges on product performance table + Movement Distribution card (donut chart with actionable callouts)
+- `ProductCard.tsx` — Best Seller/Popular badges on public shop cards (positive only)
+- `ProductDetailModal.tsx` — Movement badge with velocity context
 
-**Issues:**
-- `space-y-1.5` on ROI progress bar area (line 1255) — half-step
-- Hardcoded `text-emerald-400` and `bg-emerald-500/10` throughout annual impact section (lines 1240-1253) — should use semantic `text-success` tokens
-- `from-emerald-500/5 to-primary/5` gradient on annual impact card (line 1238) — hardcoded colors
+## Inventory Intelligence Suite v2 (Implemented)
 
-**Fixes:**
-- `space-y-1.5` → `space-y-2`
-- Replace `text-emerald-400` → `text-success`, `bg-emerald-500/10` → `bg-success/10` throughout
+### 1. Dead Stock Auto-Clearance Pipeline
+- `DeadStockAlertCard.tsx` — Surfaces Dead Weight/Stagnant products not yet in clearance with suggested discount tiers (10%/25%/50% based on idle days)
+- One-click "Mark for Clearance" applies discount and sets clearance_status
 
-## Section 5 — Interactive Feature Reveal
+### 2. Supplier Lead Time Tracker
+- `usePurchaseOrders.ts` — `useMarkPurchaseOrderReceived` already computes actual delivery days and updates `product_suppliers.avg_delivery_days` via running average
+- `parLevelSuggestion.ts` — Updated to accept supplier-provided lead time instead of hardcoded 7-day default, with bounds clamping
 
-**Issues:**
-- Mobile pill buttons use `px-3 py-1.5` — half-step on py; snap to `py-2`
-- Hardcoded `text-emerald-500 bg-emerald-500/10` in inventory mock (line 914) and profitability mock (lines 940, 950) — should use semantic colors
-- Feature panel mock card uses `bg-muted/40` — fine for decorative mock
-- `gap-1.5` in mobile pills (line 770) — half-step; `gap-2`
+### 3. Inventory Valuation Dashboard Card
+- `InventoryValuationCard.tsx` — Shows total inventory at cost/retail, potential margin %, capital-at-risk (slow/stagnant/dead weight), with donut chart breakdown
 
-**Fixes:**
-- `py-1.5` → `py-2` on mobile pills
-- `gap-1.5` → `gap-2` on mobile pill container (line 770 has `gap-2` already — good)
-- Replace hardcoded emerald with `text-success bg-success/10`
+### 4. Reorder Approval Queue
+- `ReorderApprovalCard.tsx` — Surfaces draft POs from auto-reorder with one-click approve (→ sent) or reject (→ cancelled)
 
-## Section 6 — Competitor Comparison
+### 5. Stock Transfer Between Locations
+- Migration: Created `stock_transfers` table with RLS (org member read, org admin manage)
+- `useStockTransfers.ts` — CRUD hooks for stock transfers with stock movement logging
+- `StockTransferDialog.tsx` — Dialog for creating transfers between locations
+- `RetailProductsSettingsContent.tsx` — "Transfer Stock" button added to Inventory tab (visible for multi-location orgs)
 
-**Issues:**
-- `py-3.5` on table cells (lines 86, 123, 127, 150, 154) — half-step; snap to `py-4`
-- `py-2.5` on category headers (line 110) — half-step; snap to `py-3`
-- Heading at line 74 uses raw `<h2>` instead of `SectionHeading` helper
-- `space-y-0.5` on pricing cell (line 158) — half-step; `space-y-1`
+## Enhancement 1: Expiry Tracking (Implemented)
 
-**Fixes:**
-- All `py-3.5` → `py-4`
-- `py-2.5` → `py-3`
-- Replace raw h2 with matching SectionHeading classes
-- `space-y-0.5` → `space-y-1`
+### What It Does
+Products can have an optional expiration date (`expires_at`) and per-product alert threshold (`expiry_alert_days`, default 30). The system surfaces expiring inventory with color-coded badges in the product table and an analytics card with auto-clearance suggestions.
 
-## Section 7 — How It Works + Real Salon Scenario
+### Database Changes
+- `products.expires_at` (DATE, nullable) — expiration date for perishable products
+- `products.expiry_alert_days` (INTEGER, default 30) — days before expiry to trigger alerts
 
-**Issues:**
-- 7-column desktop timeline with `gap-2` (8px) is extremely tight for 7 columns — `max-w-[130px]` text is also very constrained
-- Step number `text-3xl` is large relative to the tight columns; `text-2xl` would be more proportional
-- `space-y-1.5` in cost preview card (line 1080) — half-step
-- `py-0.5` in timeline card rows — below 4px minimum
-- Hardcoded `bg-emerald-500/10 text-emerald-500` on margin badge (lines 1089, 1162) — use semantic
-- Mobile timeline `pb-6` per item — good
-- Timeline line position `left-[23px]` is a magic number — acceptable for pixel-precise alignment
+### Expiry Alert Buckets
+- **Expired** (red): past expiration → suggests 50% markdown
+- **Critical** (orange): within alert threshold → suggests 25% markdown
+- **Warning** (amber): within 2× alert threshold → suggests 10% markdown
 
-**Fixes:**
-- Desktop step number `text-3xl` → `text-2xl` for proportionality
-- `space-y-1.5` → `space-y-2` in preview cards
-- `py-0.5` → `py-1` in cost rows
-- Replace hardcoded emerald with `text-success bg-success/10`
+### Files Created
+- `src/components/dashboard/analytics/ExpiryAlertCard.tsx` — PinnableCard showing expiring products with one-click clearance actions
 
-## Section 8 — Pricing + Hardware
+### Files Updated
+- `src/hooks/useProducts.ts` — Added `expires_at`, `expiry_alert_days` to Product interface; added `expiringOnly` filter
+- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Expiry date + alert days in product form; color-coded Expiry column in product table
+- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ExpiryAlertCard into analytics hub
 
-**Issues:**
-- Well-structured with location selector and hardware sub-section
-- `py-3.5` on location rows (line 1325) — half-step; `py-4`
-- Hardware section uses proper tokens already
-- `space-y-1.5` inside scale recommendation (line 1255) — already flagged above
-- Annual impact card still uses hardcoded emerald (already covered in Section 4 analysis — same code)
-- `mt-0.5` on hardware description (line 1368) — half-step; `mt-1`
+## Enhancement 2: Shrinkage Detection (Implemented)
 
-**Fixes:**
-- Location row `py-3.5` → `py-4`
-- `mt-0.5` → `mt-1`
+### What It Does
+Physical stocktake workflow with variance reporting. Staff record actual counts via a Stocktake dialog, and the system compares against expected quantities (system records). A Shrinkage Report card in analytics surfaces products with negative variance (loss) ranked by estimated cost impact.
 
-## Section 9 — Trust + FAQ
+### Database Changes
+- Created `stock_counts` table with computed `variance` column (counted - expected), RLS policies (org member read/insert, org admin update/delete), and indexes
 
-**Issues:**
-- Guarantee card uses `w-12 h-12 rounded-xl` icon box — slightly larger than token (acceptable for emphasis)
-- Hardcoded `bg-emerald-500/5 border-emerald-500/20` and `bg-emerald-500/10` on guarantee card — use semantic `bg-success/5 border-success/20 bg-success/10`
-- `text-emerald-400` on shield icon — use `text-success`
-- FAQ section is clean
+### Shrinkage Calculation
+```
+variance = counted_quantity - expected_quantity
+shrinkage_units = |variance| when variance < 0
+shrinkage_cost = shrinkage_units × cost_price
+```
 
-**Fixes:**
-- Replace all hardcoded emerald with semantic success tokens
+### Files Created
+- `src/hooks/useStockCounts.ts` — CRUD hooks for stock counts + `useShrinkageSummary` for aggregated shrinkage data
+- `src/components/dashboard/settings/inventory/StocktakeDialog.tsx` — Full stocktake UI with search, inline count entry, real-time variance display
+- `src/components/dashboard/analytics/ShrinkageReportCard.tsx` — PinnableCard showing products with shrinkage, severity badges, estimated loss
 
-## Section 10 — Final CTA
-
-**Issues:**
-- Clean and minimal
-- `space-y-6` is appropriate
-- Radial gradient glow is subtle and well-executed
-- No issues
-
----
-
-## Page-Wide Issues
-
-### 1. Hardcoded Emerald Colors (HIGH — 12+ instances)
-`text-emerald-400`, `text-emerald-500`, `bg-emerald-500/10`, `bg-emerald-500/5` used throughout. These MUST be replaced with `text-success`, `bg-success/10`, `bg-success/5` for multi-theme compliance.
-
-### 2. Half-Step Spacing (MEDIUM — ~15 instances)
-`py-3.5`, `py-2.5`, `space-y-1.5`, `space-y-0.5`, `mt-0.5`, `gap-0.5`, `h-1.5` scattered throughout. All must snap to 4px grid.
-
-### 3. CompetitorComparison Raw Heading
-Line 74 uses raw `<h2>` with inline classes instead of importing and using the same pattern as `SectionHeading`.
-
-### 4. Duplicate Timeline Data
-The 7-step scenario data is duplicated between desktop (lines 1043-1111) and mobile (lines 1116-1189) — same content, different layout. This is a maintenance concern but not a visual issue.
-
----
-
-## Implementation Plan
-
-### File 1: `BackroomPaywall.tsx` (~30 edits)
-
-**A. Semantic color replacements** (all `emerald-*` → `success`)
-- Lines 914, 940, 950, 1089, 1162: Feature reveal mock hardcoded colors
-- Lines 1238, 1240, 1241, 1244, 1246, 1249, 1250, 1258: Annual impact card
-- Lines 1451, 1453, 1454: Guarantee card
-
-**B. Half-step spacing snaps** (4px grid enforcement)
-- Line 93: `py-2.5` → `py-3` (product preview title bar)
-- Line 94: `gap-1.5` → `gap-2` (traffic lights)
-- Lines 119, 123: `space-y-1.5` → `space-y-2` (mock cards)
-- Line 548: `h-1.5` → `h-2` (hero dots)
-- Line 395: `gap-0.5` → `gap-1` (stars)
-- Line 782: `py-1.5` → `py-2` (mobile pills)
-- Line 1080: `space-y-1.5` → `space-y-2` (cost preview)
-- Line 1255: `space-y-1.5` → `space-y-2` (annual impact)
-- Line 1325: `py-3.5` → `py-4` (location rows)
-- Line 1368: `mt-0.5` → `mt-1` (hardware desc)
-
-**C. Typography fixes**
-- Line 555: add `font-sans` to step label
-- Line 1103: `text-3xl` → `text-2xl` (desktop timeline step numbers)
-
-**D. Depth refinements**
-- Lines 586, 614: add `shadow-sm` to Before/After cards
-
-### File 2: `CompetitorComparison.tsx` (~6 edits)
-
-**A. Half-step spacing**
-- Lines 86, 123, 127, 150, 154: `py-3.5` → `py-4`
-- Line 110: `py-2.5` → `py-3`
-- Line 158: `space-y-0.5` → `space-y-1`
-
-**B. Heading consistency**
-- Line 74: Match `SectionHeading` pattern (already correct classes, just consistency)
-
----
-
-## Integrity Assessment
-
-| Dimension | Current | Post-Fix |
-|-----------|---------|----------|
-| Color Semantics | 82/100 | 99/100 |
-| Spacing Grid | 88/100 | 99/100 |
-| Typography | 95/100 | 99/100 |
-| Depth/Elevation | 94/100 | 98/100 |
-| Token Compliance | 85/100 | 98/100 |
-| **Overall** | **89/100** | **99/100** |
-
+### Files Updated
+- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Added "Stocktake" button to Inventory tab toolbar
+- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ShrinkageReportCard into analytics hub

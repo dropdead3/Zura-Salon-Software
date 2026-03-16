@@ -90,8 +90,8 @@ function ProductPreview() {
       {/* Browser frame */}
       <div className="rounded-xl border border-border/60 bg-card shadow-2xl shadow-primary/[0.06] overflow-hidden">
         {/* Title bar */}
-        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border/40 bg-muted/30">
-          <div className="flex gap-1.5">
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-border/40 bg-muted/30">
+          <div className="flex gap-2">
             <div className="w-2.5 h-2.5 rounded-full bg-destructive/40" />
             <div className="w-2.5 h-2.5 rounded-full bg-warning/40" />
             <div className="w-2.5 h-2.5 rounded-full bg-success/40" />
@@ -116,11 +116,11 @@ function ProductPreview() {
           </div>
           {/* Client + formula row */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-lg bg-muted/30 border border-border/30 p-3 space-y-1.5">
+            <div className="rounded-lg bg-muted/30 border border-border/30 p-3 space-y-2">
               <span className="text-[9px] text-muted-foreground font-sans">Client</span>
               <p className="text-xs text-foreground font-sans font-medium">Sarah Mitchell</p>
             </div>
-            <div className="rounded-lg bg-muted/30 border border-border/30 p-3 space-y-1.5">
+            <div className="rounded-lg bg-muted/30 border border-border/30 p-3 space-y-2">
               <span className="text-[9px] text-muted-foreground font-sans">Last Formula</span>
               <p className="text-xs text-foreground font-sans font-medium">7N + 8G (1:1.5)</p>
             </div>
@@ -392,7 +392,7 @@ export function BackroomPaywall() {
 
               <div className="border-t border-border/20 pt-6">
                 <div className="flex flex-col items-center lg:items-start gap-3">
-                  <div className="flex gap-0.5">
+                  <div className="flex gap-1">
                     {[...Array(5)].map((_, i) => (
                       <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
                     ))}
@@ -545,7 +545,7 @@ export function BackroomPaywall() {
                     key={label}
                     onClick={() => setHeroStep(i)}
                     className={cn(
-                      'h-1.5 rounded-full transition-all duration-300 hover:scale-110',
+                      'h-2 rounded-full transition-all duration-300 hover:scale-110',
                       heroStep === i ? 'w-8 bg-primary' : 'w-4 bg-muted hover:bg-muted-foreground/30'
                     )}
                     aria-label={label}
@@ -583,7 +583,7 @@ export function BackroomPaywall() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
             {/* WITHOUT */}
-            <Card className="bg-destructive/[0.03] border-destructive/20 hover-lift">
+            <Card className="bg-destructive/[0.03] border-destructive/20 hover-lift shadow-sm">
               <CardContent className="p-6 md:p-8">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center shrink-0">
@@ -611,7 +611,7 @@ export function BackroomPaywall() {
             </Card>
 
             {/* WITH */}
-            <Card className="bg-success/[0.03] border-success/20 hover-lift">
+            <Card className="bg-success/[0.03] border-success/20 hover-lift shadow-sm">
               <CardContent className="p-6 md:p-8">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center shrink-0">
@@ -779,7 +779,7 @@ export function BackroomPaywall() {
                   key={f.key}
                   onClick={() => setActiveFeature(f.key)}
                   className={cn(
-                    'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-sans font-medium whitespace-nowrap border transition-all duration-200 shrink-0',
+                    'flex items-center gap-2 px-3 py-2 rounded-full text-xs font-sans font-medium whitespace-nowrap border transition-all duration-200 shrink-0',
                     activeFeature === f.key
                       ? 'bg-primary/10 border-primary/30 text-foreground'
                       : 'bg-muted/50 border-border/50 text-muted-foreground hover:bg-muted'
@@ -847,7 +847,7 @@ export function BackroomPaywall() {
                             const pct = Math.min((item.current / item.target) * 100, 100);
                             const reached = item.current >= item.target;
                             return (
-                              <div key={item.name} className="space-y-1.5">
+                              <div key={item.name} className="space-y-2">
                                 <div className="flex justify-between">
                                   <span className="font-sans text-sm text-foreground">{item.name}</span>
                                   <span className="font-sans text-xs text-muted-foreground tabular-nums">
@@ -856,7 +856,7 @@ export function BackroomPaywall() {
                                 </div>
                                 <div className="h-2 w-full rounded-full bg-secondary overflow-hidden">
                                   <div
-                                    className={cn('h-full rounded-full transition-all', reached ? 'bg-emerald-500' : 'bg-primary')}
+                                    className={cn('h-full rounded-full transition-all', reached ? 'bg-success' : 'bg-primary')}
                                     style={{ width: `${pct}%` }}
                                   />
                                 </div>
@@ -865,8 +865,8 @@ export function BackroomPaywall() {
                           })}
                         </div>
                         <div className="flex items-center gap-2 pt-1">
-                          <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                          <span className="font-sans text-sm text-emerald-600">Bowl complete — formula saved</span>
+                          <CheckCircle2 className="w-4 h-4 text-success" />
+                          <span className="font-sans text-sm text-success">Bowl complete — formula saved</span>
                         </div>
                       </div>
                     )}
@@ -911,7 +911,7 @@ export function BackroomPaywall() {
                         <div className="rounded-lg bg-muted/40 p-4">
                           <div className="space-y-0">
                             {[
-                              { product: 'Koleston 7/0', stock: '340g', status: 'Good', color: 'text-emerald-500 bg-emerald-500/10' },
+                              { product: 'Koleston 7/0', stock: '340g', status: 'Good', color: 'text-success bg-success/10' },
                               { product: 'Illumina 8/05', stock: '85g', status: 'Low', color: 'text-amber-500 bg-amber-500/10' },
                               { product: 'Blondor Powder', stock: '12g', status: 'Critical', color: 'text-red-500 bg-red-500/10' },
                             ].map((item, i, arr) => (
@@ -937,7 +937,7 @@ export function BackroomPaywall() {
                         <div className="rounded-lg bg-muted/40 p-4 space-y-3">
                           <div className="flex items-center justify-between pb-2 border-b border-border/40">
                             <p className="font-sans text-sm font-medium text-foreground">Full Colour & Blowdry</p>
-                            <span className="font-sans text-xs bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded-full">78% margin</span>
+                            <span className="font-sans text-xs bg-success/10 text-success px-2 py-0.5 rounded-full">78% margin</span>
                           </div>
                           {[
                             { label: 'Service Revenue', value: '$185.00' },
@@ -947,7 +947,7 @@ export function BackroomPaywall() {
                           ].map((row) => (
                             <div key={row.label} className="flex items-center justify-between py-0.5">
                               <span className="font-sans text-sm text-muted-foreground">{row.label}</span>
-                              <span className={cn('font-sans text-sm tabular-nums', row.highlight ? 'text-emerald-500 font-medium' : 'text-foreground')}>{row.value}</span>
+                              <span className={cn('font-sans text-sm tabular-nums', row.highlight ? 'text-success font-medium' : 'text-foreground')}>{row.value}</span>
                             </div>
                           ))}
                         </div>
@@ -1077,7 +1077,7 @@ export function BackroomPaywall() {
                   icon: DollarSign, step: '07', title: 'Cost Visible', desc: "The service's true product cost is $18.40.",
                   preview: (
                     <Card className="mt-3 bg-card border-border/40 shadow-sm">
-                      <CardContent className="p-3 space-y-1.5">
+                       <CardContent className="p-3 space-y-2">
                         <div className="flex items-center justify-between">
                           <span className="font-sans text-xs text-muted-foreground">Revenue</span>
                           <span className="font-display text-sm tracking-wide text-foreground">$185</span>
@@ -1086,7 +1086,7 @@ export function BackroomPaywall() {
                           <span className="font-sans text-xs text-muted-foreground">Product Cost</span>
                           <span className="font-display text-sm tracking-wide text-foreground">$18.40</span>
                         </div>
-                        <span className="inline-block px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 text-[10px] font-sans">
+                        <span className="inline-block px-2 py-1 rounded-full bg-success/10 text-success text-[10px] font-sans">
                           90% margin
                         </span>
                       </CardContent>
@@ -1100,7 +1100,7 @@ export function BackroomPaywall() {
                       <ChevronRight className="w-4 h-4" />
                     </div>
                   )}
-                  <span className="font-display text-3xl tracking-wide text-primary/20 mb-2">{item.step}</span>
+                  <span className="font-display text-2xl tracking-wide text-primary/20 mb-2">{item.step}</span>
                   <div className="w-12 h-12 rounded-xl bg-background border border-border/40 flex items-center justify-center mb-3">
                     <item.icon className="w-5 h-5 text-primary" />
                   </div>
@@ -1150,7 +1150,7 @@ export function BackroomPaywall() {
                   icon: DollarSign, step: '07', title: 'Cost Visible', desc: "The service's true product cost is $18.40.",
                   preview: (
                     <Card className="mt-2 bg-card border-border/40 shadow-sm">
-                      <CardContent className="p-3 space-y-1.5">
+                      <CardContent className="p-3 space-y-2">
                         <div className="flex items-center justify-between">
                           <span className="font-sans text-xs text-muted-foreground">Revenue</span>
                           <span className="font-display text-sm tracking-wide text-foreground">$185</span>
@@ -1159,7 +1159,7 @@ export function BackroomPaywall() {
                           <span className="font-sans text-xs text-muted-foreground">Product Cost</span>
                           <span className="font-display text-sm tracking-wide text-foreground">$18.40</span>
                         </div>
-                        <span className="inline-block px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 text-[10px] font-sans">
+                        <span className="inline-block px-2 py-1 rounded-full bg-success/10 text-success text-[10px] font-sans">
                           90% margin
                         </span>
                       </CardContent>
@@ -1235,27 +1235,27 @@ export function BackroomPaywall() {
 
                 {/* Annual impact summary */}
                 {hasPositiveBenefit && estimate && (
-                  <div className="rounded-xl bg-gradient-to-br from-emerald-500/5 to-primary/5 border border-emerald-500/20 p-6 space-y-4">
+                  <div className="rounded-xl bg-gradient-to-br from-success/5 to-primary/5 border border-success/20 p-6 space-y-4">
                     <div className="flex items-center justify-center gap-2">
-                      <TrendingUp className="w-4 h-4 text-emerald-400" />
-                      <p className="font-display text-xs tracking-wider text-emerald-400">Projected Annual Impact</p>
+                      <TrendingUp className="w-4 h-4 text-success" />
+                      <p className="font-display text-xs tracking-wider text-success">Projected Annual Impact</p>
                     </div>
                     <div className="text-center">
-                      <p className="font-display text-3xl md:text-4xl tracking-wide text-emerald-400">
+                      <p className="font-display text-3xl md:text-4xl tracking-wide text-success">
                         +<AnimatedNumber value={yearlyNetBenefit} duration={1200} formatOptions={{ style: 'currency', currency: 'USD', notation: 'compact', maximumFractionDigits: 1 }} />
-                        <span className="text-base text-emerald-400/70 ml-1">/yr</span>
+                        <span className="text-base text-success/70 ml-1">/yr</span>
                       </p>
                       {roiMultiplier >= 2 && (
-                        <span className="inline-flex items-center gap-1 mt-3 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-sm font-sans font-medium">
+                        <span className="inline-flex items-center gap-1 mt-3 px-3 py-1 rounded-full bg-success/10 text-success text-sm font-sans font-medium">
                           <TrendingUp className="w-3.5 h-3.5" />
                           {roiMultiplier}× ROI
                         </span>
                       )}
                     </div>
-                    <div className="space-y-1.5">
+                    <div className="space-y-2">
                       <div className="h-2 rounded-full bg-muted/40 overflow-hidden">
                         <div
-                          className="h-full rounded-full bg-emerald-500/60 transition-all duration-700"
+                          className="h-full rounded-full bg-success/60 transition-all duration-700"
                           style={{ width: `${Math.min(100, yearlySavings > 0 ? (yearlyCost / yearlySavings) * 100 : 100)}%` }}
                         />
                       </div>
@@ -1299,7 +1299,7 @@ export function BackroomPaywall() {
                       const loc = activeLocations[0];
                       const cityLabel = loc.city ? loc.city.split(',')[0]?.trim() : '';
                       return (
-                        <div className="flex items-center gap-3 px-4 py-3.5 rounded-xl bg-primary/5 border border-primary/30">
+                        <div className="flex items-center gap-3 px-4 py-4 rounded-xl bg-primary/5 border border-primary/30">
                           <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
@@ -1322,7 +1322,7 @@ export function BackroomPaywall() {
                             <div
                               key={loc.id}
                               className={cn(
-                                'flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-150 cursor-pointer',
+                                'flex items-center gap-3 px-4 py-4 rounded-xl transition-all duration-150 cursor-pointer',
                                 isChecked ? 'bg-primary/5 border border-primary/30' : 'border border-transparent hover:bg-accent/30',
                               )}
                               onClick={() => toggleLocation(loc.id)}
@@ -1365,7 +1365,7 @@ export function BackroomPaywall() {
                     </div>
                     <div>
                       <p className="font-sans text-base md:text-lg font-medium text-foreground">Precision Scales</p>
-                      <p className="text-sm text-muted-foreground font-sans mt-0.5">
+                      <p className="text-sm text-muted-foreground font-sans mt-1">
                         Connect to your mixing stations via Bluetooth.
                       </p>
                     </div>
@@ -1448,10 +1448,10 @@ export function BackroomPaywall() {
         <section className="pb-20 md:pb-24">
           <div className="space-y-6">
             {/* 30-Day Guarantee */}
-            <Card className="bg-emerald-500/5 border-emerald-500/20 shadow-sm">
+            <Card className="bg-success/5 border-success/20 shadow-sm">
               <CardContent className="p-6 md:p-8 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center shrink-0">
-                  <ShieldCheck className="w-6 h-6 text-emerald-400" />
+                <div className="w-12 h-12 rounded-xl bg-success/10 flex items-center justify-center shrink-0">
+                  <ShieldCheck className="w-6 h-6 text-success" />
                 </div>
                 <div>
                   <p className="font-sans text-base font-medium text-success">30-Day Money-Back Guarantee</p>
