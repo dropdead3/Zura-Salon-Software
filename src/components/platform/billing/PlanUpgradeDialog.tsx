@@ -2,12 +2,12 @@ import { useState } from 'react';
 import { ArrowRight, Check, X, Calendar, Loader2 } from 'lucide-react';
 import {
   Dialog,
-  DialogContent,
-  DialogDescription,
+  PlatformDialogContent as DialogContent,
+  PlatformDialogDescription as DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  PlatformDialogTitle as DialogTitle,
+} from '@/components/platform/ui/PlatformDialog';
 import { PlatformButton } from '@/components/platform/ui/PlatformButton';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { PlatformLabel } from '@/components/platform/ui/PlatformLabel';
