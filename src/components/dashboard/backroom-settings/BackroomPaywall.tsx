@@ -619,7 +619,7 @@ export function BackroomPaywall() {
                     Backroom pays for itself {roiMultiplier}× over
                   </p>
                   <p className="text-xs text-muted-foreground font-sans mt-1">
-                    {formatCurrency(monthlyTotal)}/mo cost → {formatCurrency(totalSavings)}/mo in savings & recovery.
+                    {formatCurrency(yearlyCost)}/yr cost → {formatCurrency(yearlySavings)}/yr in savings & revenue.
                     {!estimate.hasRealData && ' Estimates based on industry averages.'}
                   </p>
                 </>
