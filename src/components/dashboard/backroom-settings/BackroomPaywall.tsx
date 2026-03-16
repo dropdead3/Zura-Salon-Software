@@ -3,7 +3,7 @@ import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import {
   Beaker, BarChart3, Shield, Zap, ArrowRight, Loader2,
-  Scale, Droplets, ShieldCheck, MapPin, TrendingUp, DollarSign,
+  Scale, Droplets, ShieldCheck, MapPin, TrendingUp, DollarSign, Star,
   Info, Clock, AlertTriangle, CheckCircle2,
   Brain, Users, PackageSearch, ChevronRight,
 } from 'lucide-react';
