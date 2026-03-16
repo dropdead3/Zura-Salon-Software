@@ -313,6 +313,9 @@ export default function BillingGuide() {
           </PlatformCard>
         </div>
 
+        {/* Backroom Add-On Calculator */}
+        <BackroomCalculatorWidget />
+
         {/* Changelog */}
         <PlatformCard variant="glass" id="changelog">
           <PlatformCardHeader>
