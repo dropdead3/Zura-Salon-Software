@@ -816,64 +816,6 @@ export function BackroomPaywall() {
           </section>
         )}
 
-        {/* ═══════════════════════════════════════════
-            SECTION 3 — HOW IT WORKS
-            ═══════════════════════════════════════════ */}
-        <section className="pb-16 md:pb-20">
-          <div className="space-y-8 md:space-y-10">
-            <RevealOnScroll><SectionHeading>How It Works</SectionHeading></RevealOnScroll>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 md:gap-6">
-              {howItWorks.map((step, i) => (
-                <RevealOnScroll key={step.step} delay={i * 100}>
-                  <Card className="bg-card border-border/50 shadow-sm hover:shadow-md transition-shadow duration-200 hover-lift">
-                    <CardContent className="p-6 md:p-8 space-y-3">
-                      <span className="font-display text-2xl tracking-wider text-primary/20">{step.step}</span>
-                      <p className="font-sans text-lg font-medium text-foreground">{step.title}</p>
-                      <p className="text-sm text-muted-foreground font-sans leading-relaxed">{step.description}</p>
-                    </CardContent>
-                  </Card>
-                </RevealOnScroll>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ═══════════════════════════════════════════
-            SECTION 4 — WHAT YOU GET (6 feature cards)
-            ═══════════════════════════════════════════ */}
-        <section className="pb-20 md:pb-24 bg-muted/20 -mx-6 sm:-mx-8 px-6 sm:px-8 rounded-2xl pt-10 md:pt-12 shadow-[inset_0_1px_0_0_hsl(var(--border)/0.3)]">
-          <div className="space-y-8 md:space-y-10">
-            <RevealOnScroll><SectionHeading>What You Get</SectionHeading></RevealOnScroll>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
-              {featureGroups.map((group, i) => (
-                <RevealOnScroll key={group.title} delay={i * 80}>
-                  <Card className="bg-card border-border/50 shadow-sm hover:shadow-md transition-shadow duration-200 hover-lift">
-                  <CardContent className="p-6 md:p-8 space-y-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                        <group.icon className="w-5 h-5 text-primary" />
-                      </div>
-                      <div>
-                        <p className="font-sans text-base md:text-lg font-medium text-foreground">{group.title}</p>
-                        <p className="text-sm text-muted-foreground font-sans mt-0.5">{group.outcome}</p>
-                      </div>
-                    </div>
-                    <div className="space-y-2 pl-14">
-                      {group.bullets.map((bullet) => (
-                        <div key={bullet} className="flex items-start gap-2">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-primary/60 shrink-0 mt-0.5" />
-                          <span className="text-sm text-muted-foreground font-sans">{bullet}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-                </RevealOnScroll>
-              ))}
-            </div>
-
-          </div>
-        </section>
 
         {/* ═══════════════════════════════════════════
             SECTION 4.25 — INTERACTIVE FEATURE REVEAL
