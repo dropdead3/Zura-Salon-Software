@@ -7,7 +7,7 @@ import {
   Scale, ShieldCheck, MapPin, TrendingUp, DollarSign, Star,
   Info, Clock, AlertTriangle, CheckCircle2, XCircle,
   Brain, PackageSearch, ChevronRight,
-  Timer,
+  Timer, X, Users, Zap,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
