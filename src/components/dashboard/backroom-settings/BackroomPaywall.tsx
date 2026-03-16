@@ -1322,7 +1322,7 @@ export function BackroomPaywall() {
                             <div
                               key={loc.id}
                               className={cn(
-                                'flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-150 cursor-pointer',
+                                'flex items-center gap-3 px-4 py-4 rounded-xl transition-all duration-150 cursor-pointer',
                                 isChecked ? 'bg-primary/5 border border-primary/30' : 'border border-transparent hover:bg-accent/30',
                               )}
                               onClick={() => toggleLocation(loc.id)}
