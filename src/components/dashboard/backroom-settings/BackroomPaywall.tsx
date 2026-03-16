@@ -210,6 +210,12 @@ export function BackroomPaywall() {
           <p className="text-[10px] text-muted-foreground font-sans leading-tight">
             * Supply fee recovery assumes you add an avg product cost fee to color services.
           </p>
+          <div className="flex gap-1.5 items-start mt-1 p-2 rounded-md bg-muted/20 border border-border/30">
+            <Info className="w-3 h-3 text-muted-foreground shrink-0 mt-0.5" />
+            <p className="text-[10px] text-muted-foreground font-sans leading-tight">
+              All savings and revenue projections are estimates and not guaranteed.
+            </p>
+          </div>
         </div>
       )}
 
