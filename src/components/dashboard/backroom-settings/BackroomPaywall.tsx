@@ -959,7 +959,7 @@ export function BackroomPaywall() {
                     <Scale className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <p className="font-sans text-base md:text-lg font-medium text-foreground">Precision Scales</p>
+                    <p className="font-sans text-base font-medium text-foreground">Precision Scales</p>
                     <p className="text-sm text-muted-foreground font-sans mt-1">
                       Connect to your mixing stations via Bluetooth.
                     </p>
