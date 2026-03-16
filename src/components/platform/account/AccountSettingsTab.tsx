@@ -277,14 +277,14 @@ export function AccountSettingsTab({ organizationId }: AccountSettingsTabProps) 
               value={settings.notifications.email_digest} 
               onValueChange={(v) => updateSettings('notifications.email_digest', v)}
             >
-              <SelectTrigger className="w-32 bg-slate-800 border-slate-700 text-white">
+              <SelectTrigger className="w-32">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-slate-900 border-slate-700">
-                <SelectItem value="daily" className="text-slate-300">Daily</SelectItem>
-                <SelectItem value="weekly" className="text-slate-300">Weekly</SelectItem>
-                <SelectItem value="monthly" className="text-slate-300">Monthly</SelectItem>
-                <SelectItem value="never" className="text-slate-300">Never</SelectItem>
+              <SelectContent>
+                <SelectItem value="daily">Daily</SelectItem>
+                <SelectItem value="weekly">Weekly</SelectItem>
+                <SelectItem value="monthly">Monthly</SelectItem>
+                <SelectItem value="never">Never</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -318,13 +318,13 @@ export function AccountSettingsTab({ organizationId }: AccountSettingsTabProps) 
               value={settings.defaults.default_location_id || 'none'} 
               onValueChange={(v) => updateSettings('defaults.default_location_id', v === 'none' ? null : v)}
             >
-              <SelectTrigger className="w-48 bg-slate-800 border-slate-700 text-white">
+              <SelectTrigger className="w-48">
                 <SelectValue placeholder="Select location" />
               </SelectTrigger>
-              <SelectContent className="bg-slate-900 border-slate-700">
-                <SelectItem value="none" className="text-slate-300">None</SelectItem>
+              <SelectContent>
+                <SelectItem value="none">None</SelectItem>
                 {locations.map(loc => (
-                  <SelectItem key={loc.id} value={loc.id} className="text-slate-300">
+                  <SelectItem key={loc.id} value={loc.id}>
                     {loc.name}
                   </SelectItem>
                 ))}
@@ -341,12 +341,12 @@ export function AccountSettingsTab({ organizationId }: AccountSettingsTabProps) 
               value={settings.defaults.timezone} 
               onValueChange={(v) => updateSettings('defaults.timezone', v)}
             >
-              <SelectTrigger className="w-48 bg-slate-800 border-slate-700 text-white">
+              <SelectTrigger className="w-48">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-slate-900 border-slate-700">
+              <SelectContent>
                 {timezones.map(tz => (
-                  <SelectItem key={tz.value} value={tz.value} className="text-slate-300">
+                  <SelectItem key={tz.value} value={tz.value}>
                     {tz.label}
                   </SelectItem>
                 ))}
@@ -363,12 +363,12 @@ export function AccountSettingsTab({ organizationId }: AccountSettingsTabProps) 
               value={settings.defaults.currency} 
               onValueChange={(v) => updateSettings('defaults.currency', v)}
             >
-              <SelectTrigger className="w-48 bg-slate-800 border-slate-700 text-white">
+              <SelectTrigger className="w-48">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-slate-900 border-slate-700">
+              <SelectContent>
                 {currencies.map(c => (
-                  <SelectItem key={c.value} value={c.value} className="text-slate-300">
+                  <SelectItem key={c.value} value={c.value}>
                     {c.label}
                   </SelectItem>
                 ))}
@@ -385,12 +385,12 @@ export function AccountSettingsTab({ organizationId }: AccountSettingsTabProps) 
               value={settings.defaults.locale ?? 'en'} 
               onValueChange={(v) => updateSettings('defaults.locale', v)}
             >
-              <SelectTrigger className="w-48 bg-slate-800 border-slate-700 text-white">
+              <SelectTrigger className="w-48">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-slate-900 border-slate-700">
+              <SelectContent>
                 {locales.map(l => (
-                  <SelectItem key={l.value} value={l.value} className="text-slate-300">
+                  <SelectItem key={l.value} value={l.value}>
                     {l.label}
                   </SelectItem>
                 ))}

@@ -149,12 +149,12 @@ export function PlatformDefaultsTab() {
                 value={localSettings.plan} 
                 onValueChange={(v) => updateField('plan', v)}
               >
-                <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-900 border-slate-700">
+                <SelectContent>
                   {PLANS.map(plan => (
-                    <SelectItem key={plan.value} value={plan.value} className="text-slate-300">
+                    <SelectItem key={plan.value} value={plan.value}>
                       {plan.label}
                     </SelectItem>
                   ))}
@@ -167,12 +167,12 @@ export function PlatformDefaultsTab() {
                 value={localSettings.billing_cycle} 
                 onValueChange={(v) => updateField('billing_cycle', v)}
               >
-                <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-900 border-slate-700">
+                <SelectContent>
                   {BILLING_CYCLES.map(cycle => (
-                    <SelectItem key={cycle.value} value={cycle.value} className="text-slate-300">
+                    <SelectItem key={cycle.value} value={cycle.value}>
                       {cycle.label}
                     </SelectItem>
                   ))}
@@ -253,12 +253,12 @@ export function PlatformDefaultsTab() {
                 value={localSettings.timezone} 
                 onValueChange={(v) => updateField('timezone', v)}
               >
-                <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-900 border-slate-700">
+                <SelectContent>
                   {TIMEZONES.map(tz => (
-                    <SelectItem key={tz.value} value={tz.value} className="text-slate-300">
+                    <SelectItem key={tz.value} value={tz.value}>
                       {tz.label}
                     </SelectItem>
                   ))}
@@ -271,12 +271,12 @@ export function PlatformDefaultsTab() {
                 value={localSettings.currency} 
                 onValueChange={(v) => updateField('currency', v)}
               >
-                <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-900 border-slate-700">
+                <SelectContent>
                   {CURRENCIES.map(curr => (
-                    <SelectItem key={curr.value} value={curr.value} className="text-slate-300">
+                    <SelectItem key={curr.value} value={curr.value}>
                       {curr.label}
                     </SelectItem>
                   ))}

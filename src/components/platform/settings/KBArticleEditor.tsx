@@ -137,12 +137,12 @@ export function KBArticleEditor({ open, onOpenChange, article, onClose }: KBArti
                 value={formData.category_id}
                 onValueChange={(value) => setFormData({ ...formData, category_id: value })}
               >
-                <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
+                <SelectTrigger>
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700">
+                <SelectContent>
                   {categories?.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.id} className="text-white">
+                    <SelectItem key={cat.id} value={cat.id}>
                       {cat.name}
                     </SelectItem>
                   ))}

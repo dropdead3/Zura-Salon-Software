@@ -93,24 +93,24 @@ export function KBArticlesList({ onEditArticle }: KBArticlesListProps) {
             />
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-32 bg-slate-800 border-slate-700 text-white">
+            <SelectTrigger className="w-32">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
-            <SelectContent className="bg-slate-800 border-slate-700">
-              <SelectItem value="all" className="text-white">All Status</SelectItem>
-              <SelectItem value="published" className="text-white">Published</SelectItem>
-              <SelectItem value="draft" className="text-white">Draft</SelectItem>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="published">Published</SelectItem>
+              <SelectItem value="draft">Draft</SelectItem>
             </SelectContent>
           </Select>
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-40 bg-slate-800 border-slate-700 text-white">
+            <SelectTrigger className="w-40">
               <Filter className="h-3.5 w-3.5 mr-2" />
               <SelectValue placeholder="Category" />
             </SelectTrigger>
-            <SelectContent className="bg-slate-800 border-slate-700">
-              <SelectItem value="all" className="text-white">All Categories</SelectItem>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
               {categories?.map((cat) => (
-                <SelectItem key={cat.id} value={cat.id} className="text-white">
+                <SelectItem key={cat.id} value={cat.id}>
                   {cat.name}
                 </SelectItem>
               ))}

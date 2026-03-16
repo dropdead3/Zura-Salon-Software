@@ -182,7 +182,7 @@ export function SupplyLibraryTab() {
               />
             </div>
             <Select value={brandFilter} onValueChange={(v) => { setBrandFilter(v); setPage(0); }}>
-              <SelectTrigger className="w-[180px] font-sans bg-slate-800/50 border-slate-700/50 text-slate-300">
+              <SelectTrigger className="w-[180px] font-sans">
                 <SelectValue placeholder="All Brands" />
               </SelectTrigger>
               <SelectContent>
@@ -193,7 +193,7 @@ export function SupplyLibraryTab() {
               </SelectContent>
             </Select>
             <Select value={categoryFilter} onValueChange={(v) => { setCategoryFilter(v); setPage(0); }}>
-              <SelectTrigger className="w-[160px] font-sans bg-slate-800/50 border-slate-700/50 text-slate-300">
+              <SelectTrigger className="w-[160px] font-sans">
                 <SelectValue placeholder="All Categories" />
               </SelectTrigger>
               <SelectContent>
@@ -267,7 +267,7 @@ export function SupplyLibraryTab() {
                               setInlineEditing(null);
                             }}
                           >
-                            <SelectTrigger className="h-7 w-28 font-sans text-xs bg-slate-800/50 border-slate-700/50 text-slate-300"><SelectValue /></SelectTrigger>
+                            <SelectTrigger className="h-7 w-28 font-sans text-xs"><SelectValue /></SelectTrigger>
                             <SelectContent>
                               {CATEGORIES.map((c) => <SelectItem key={c} value={c}>{SUPPLY_CATEGORY_LABELS[c] || c}</SelectItem>)}
                             </SelectContent>
@@ -294,7 +294,7 @@ export function SupplyLibraryTab() {
                               setInlineEditing(null);
                             }}
                           >
-                            <SelectTrigger className="h-7 w-24 font-sans text-xs bg-slate-800/50 border-slate-700/50 text-slate-300"><SelectValue /></SelectTrigger>
+                            <SelectTrigger className="h-7 w-24 font-sans text-xs"><SelectValue /></SelectTrigger>
                             <SelectContent>
                               {DEPLETION_METHODS.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
                             </SelectContent>
@@ -319,7 +319,7 @@ export function SupplyLibraryTab() {
                               setInlineEditing(null);
                             }}
                           >
-                            <SelectTrigger className="h-7 w-16 font-sans text-xs bg-slate-800/50 border-slate-700/50 text-slate-300"><SelectValue /></SelectTrigger>
+                            <SelectTrigger className="h-7 w-16 font-sans text-xs"><SelectValue /></SelectTrigger>
                             <SelectContent>
                               {UNITS.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}
                             </SelectContent>

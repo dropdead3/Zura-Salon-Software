@@ -169,17 +169,17 @@ export function PlatformTeamManager() {
           <div className="flex items-center gap-3">
             {/* Role Filter */}
             <Select value={roleFilter} onValueChange={(val) => setRoleFilter(val as PlatformRole | 'all')}>
-              <SelectTrigger className="w-[160px] bg-slate-800/50 border-slate-700 text-slate-300">
+              <SelectTrigger className="w-[160px]">
                 <Filter className="w-4 h-4 mr-2 text-slate-500" />
                 <SelectValue placeholder="Filter by role" />
               </SelectTrigger>
-              <SelectContent className="bg-slate-800 border-slate-700">
-                <SelectItem value="all" className="text-slate-300">All Roles</SelectItem>
+              <SelectContent>
+                <SelectItem value="all">All Roles</SelectItem>
                 {ROLE_HIERARCHY.map(role => {
                   const config = roleConfig[role];
                   const Icon = config.icon;
                   return (
-                    <SelectItem key={role} value={role} className="text-slate-300">
+                    <SelectItem key={role} value={role}>
                       <div className="flex items-center gap-2">
                         <Icon className="w-3 h-3" />
                         {config.label}

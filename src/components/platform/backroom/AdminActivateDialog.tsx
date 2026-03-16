@@ -185,7 +185,7 @@ export function AdminActivateDialog({
                             onValueChange={(val) => updateConfig(cfg.location_id, { scale_count: parseInt(val) })}
                             disabled={!cfg.enabled}
                           >
-                            <SelectTrigger className="h-7 w-[60px] text-xs bg-slate-800/60 border-slate-700/50">
+                            <SelectTrigger className="h-7 w-[60px] text-xs">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>

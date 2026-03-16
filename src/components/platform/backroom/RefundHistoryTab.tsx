@@ -141,7 +141,7 @@ export function RefundHistoryTab() {
               value={filters.status ?? 'all'}
               onValueChange={(v) => updateFilter('status', v === 'all' ? undefined : v)}
             >
-              <SelectTrigger className="h-11 rounded-xl border-slate-700/50 bg-slate-800/50 text-sm text-white">
+              <SelectTrigger>
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>

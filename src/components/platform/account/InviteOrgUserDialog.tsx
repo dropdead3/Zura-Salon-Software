@@ -151,10 +151,10 @@ export function InviteOrgUserDialog({
           <div className="space-y-2">
             <Label className="text-slate-300">Role</Label>
             <Select value={role} onValueChange={(v) => setRole(v as AppRole)}>
-              <SelectTrigger className="bg-slate-800/50 border-slate-700 text-white">
+              <SelectTrigger>
                 <SelectValue placeholder="Select a role" />
               </SelectTrigger>
-              <SelectContent className="bg-slate-900 border-slate-700">
+              <SelectContent>
                 {roleOptions.map((option) => (
                   <SelectItem 
                     key={option.value} 

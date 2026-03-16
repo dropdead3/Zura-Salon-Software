@@ -180,7 +180,7 @@ export function PandaDocFieldMappingEditor() {
                 value={row.billingColumn}
                 onValueChange={(value) => handleUpdateRow(row.id, 'billingColumn', value)}
               >
-                <SelectTrigger className="flex-1 bg-slate-900/50 border-slate-700 text-slate-200 rounded-lg">
+                <SelectTrigger className="flex-1 rounded-lg">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
