@@ -193,7 +193,7 @@ export function PlatformTeamManager() {
         </PlatformCardHeader>
         <PlatformCardContent>
           {filteredAndSortedTeam.length > 0 ? (
-            <div className="rounded-xl overflow-hidden border border-slate-700/50">
+            <div className="rounded-xl overflow-hidden border border-[hsl(var(--platform-border)/0.5)]">
               <Table>
                 <TableHeader>
                   <TableRow className="border-slate-700/50 hover:bg-transparent">
