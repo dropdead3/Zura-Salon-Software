@@ -190,18 +190,13 @@ export default function BackroomSubscription() {
               <div className="border-t border-border/40 pt-3 text-sm font-sans text-muted-foreground space-y-1">
                 <div className="flex justify-between">
                   <span>Status</span>
-                  <Badge className={cn(
-                    'font-sans text-[10px]',
-                    isTrialing
-                      ? 'bg-primary/10 text-primary border-primary/20'
-                      : 'bg-primary/10 text-primary border-primary/20',
-                  )}>
-                    {isTrialing ? 'Trialing' : sub.status === 'active' ? 'Active' : sub.status}
+                  <Badge className="bg-primary/10 text-primary border-primary/20 font-sans text-[10px]">
+                    {sub.status === 'active' ? 'Active' : sub.status}
                   </Badge>
                 </div>
                 <div className="flex justify-between">
-                  <span>{isTrialing ? 'Trial ends' : 'Renewal'}</span>
-                  <span className="text-foreground">{isTrialing ? trialEndDate : renewalDate}</span>
+                  <span>Renewal</span>
+                  <span className="text-foreground">{renewalDate}</span>
                 </div>
               </div>
             </CardContent>

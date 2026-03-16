@@ -14,7 +14,6 @@ export interface BackroomLocationEntitlement {
   plan_tier: string;
   scale_count: number;
   status: string;
-  trial_end_date: string | null;
   billing_interval: string | null;
   stripe_subscription_id: string | null;
   activated_at: string;
