@@ -1291,7 +1291,7 @@ export function BackroomPaywall() {
               </Card>
 
               {/* Card 6 — Top Formulas */}
-              <Card className="bg-card border-border/50 shadow-sm hover-lift">
+              <Card className="bg-card border-border/50 shadow-md hover:shadow-lg transition-shadow duration-200 hover-lift">
                 <CardContent className="p-6 md:p-8 space-y-4">
                   <div className="flex items-start gap-3">
                     <div className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center shrink-0">
