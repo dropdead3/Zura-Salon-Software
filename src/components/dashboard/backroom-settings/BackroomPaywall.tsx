@@ -757,7 +757,7 @@ export function BackroomPaywall() {
                       variant="outline"
                       size="icon"
                       className="h-8 w-8 rounded-lg"
-                      onClick={() => setScaleCount(Math.max(0, scaleCount - 1))}
+                      onClick={() => { setManualScaleOverride(true); setScaleCount(Math.max(0, scaleCount - 1)); }}
                       disabled={scaleCount <= 0}
                     >
                       <Minus className="w-3.5 h-3.5" />
