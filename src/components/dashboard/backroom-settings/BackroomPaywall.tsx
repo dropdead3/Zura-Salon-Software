@@ -84,21 +84,25 @@ export function BackroomPaywall() {
     }
   };
 
+  // Location fraction for proportional scaling
+  const totalLocations = activeLocations.length || 1;
+  const locationFraction = locationCount / totalLocations;
+
   // Cost calculations
   const baseCost = locationCount * BACKROOM_BASE_PRICE;
   const scaleCost = scaleCount * SCALE_LICENSE_MONTHLY;
-  const usageFee = estimate ? Math.round(estimate.monthlyColorServices * BACKROOM_PER_SERVICE_FEE) : 0;
+  const usageFee = estimate ? Math.round(estimate.monthlyColorServices * locationFraction * BACKROOM_PER_SERVICE_FEE) : 0;
   const monthlyTotal = baseCost + scaleCost + usageFee;
   const hardwareTotal = scaleCount * SCALE_HARDWARE_PRICE;
 
   // Staff hours saved calculations
   const staffHourlyCost = 18;
   const monthlyAuditHours = (auditMinutesPerDay * 30) / 60;
-  const monthlyAuditCost = Math.round(monthlyAuditHours * staffHourlyCost);
+  const monthlyAuditCost = Math.round(monthlyAuditHours * staffHourlyCost * locationFraction);
 
-  // Savings calculations
-  const wasteSavings = estimate?.estimatedWasteSavings ?? 0;
-  const supplyRecovery = estimate?.estimatedSupplyRecovery ?? 0;
+  // Savings calculations — scale by selected locations
+  const wasteSavings = Math.round((estimate?.estimatedWasteSavings ?? 0) * locationFraction);
+  const supplyRecovery = Math.round((estimate?.estimatedSupplyRecovery ?? 0) * locationFraction);
   const totalSavings = wasteSavings + supplyRecovery + monthlyAuditCost;
   const netBenefit = totalSavings - monthlyTotal;
   const roiMultiplier = monthlyTotal > 0 ? Math.round(totalSavings / monthlyTotal) : 0;
