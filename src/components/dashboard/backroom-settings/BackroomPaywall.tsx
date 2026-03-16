@@ -30,6 +30,7 @@ import {
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from 'sonner';
 import { BackroomCheckoutConfirmDialog } from './BackroomCheckoutConfirmDialog';
+import { CompetitorComparison } from './CompetitorComparison';
 
 /* ─── Feature Groups (outcome-driven, 6 categories) ─── */
 const featureGroups = [
