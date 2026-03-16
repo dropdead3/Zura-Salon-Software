@@ -39,6 +39,7 @@ export function BackroomCheckoutConfirmDialog({
   const monthlyRecurring = baseCost + scaleLicenseCost;
   const hardwareOneTime = scaleCount * SCALE_HARDWARE_PRICE;
   const estimatedMonthlyGrandTotal = monthlyRecurring + estimatedUsage;
+  const todayTotal = hardwareOneTime + estimatedMonthlyGrandTotal;
 
   const card = paymentInfo?.payment_method;
 
@@ -79,28 +80,55 @@ export function BackroomCheckoutConfirmDialog({
             </div>
           )}
 
-          {/* ── 2. Due Today (one-time hardware) ── */}
-          {hardwareOneTime > 0 && (
-            <div className="space-y-1.5">
-              <p className={cn(tokens.label.default, 'text-xs text-muted-foreground')}>Due Today</p>
-              <div className="rounded-lg border border-border/60 px-3 py-2.5">
-                <div className="flex items-center justify-between">
+          {/* ── 2. What You Pay Right Now ── */}
+          <div className="space-y-1.5">
+            <p className={cn(tokens.label.default, 'text-xs text-muted-foreground')}>What You Pay Right Now</p>
+            <div className="rounded-lg border border-border/60 divide-y divide-border/40">
+              {hardwareOneTime > 0 && (
+                <div className="flex items-center justify-between px-3 py-2.5">
                   <span className="flex items-center gap-2 text-sm font-sans">
                     <Weight className="w-3.5 h-3.5 text-muted-foreground" />
                     {scaleCount} scale{scaleCount !== 1 ? 's' : ''} × {formatCurrency(SCALE_HARDWARE_PRICE)}
                   </span>
                   <span className="text-sm font-sans font-medium">{formatCurrency(hardwareOneTime)}</span>
                 </div>
-                <p className="text-[10px] text-muted-foreground font-sans mt-1">
-                  One-time hardware purchase
-                </p>
+              )}
+              <div className="flex items-center justify-between px-3 py-2.5">
+                <span className="flex items-center gap-2 text-sm font-sans">
+                  <MapPin className="w-3.5 h-3.5 text-primary" />
+                  {locationCount} location{locationCount !== 1 ? 's' : ''} × {formatCurrency(BACKROOM_BASE_PRICE)}
+                </span>
+                <span className="text-sm font-sans font-medium">{formatCurrency(baseCost)}</span>
+              </div>
+              {scaleCount > 0 && (
+                <div className="flex items-center justify-between px-3 py-2.5">
+                  <span className="flex items-center gap-2 text-sm font-sans">
+                    <Weight className="w-3.5 h-3.5 text-primary" />
+                    {scaleCount} scale license{scaleCount !== 1 ? 's' : ''} × {formatCurrency(SCALE_LICENSE_MONTHLY)}
+                  </span>
+                  <span className="text-sm font-sans font-medium">{formatCurrency(scaleLicenseCost)}</span>
+                </div>
+              )}
+              <div className="flex items-center justify-between px-3 py-2.5">
+                <span className="flex items-center gap-2 text-sm font-sans">
+                  <Droplets className="w-3.5 h-3.5 text-primary" />
+                  ~{estimatedMonthlyServices} color services × {formatCurrency(BACKROOM_PER_SERVICE_FEE)}
+                </span>
+                <span className="text-sm font-sans font-medium">~{formatCurrency(estimatedUsage)}</span>
+              </div>
+              <div className="flex items-center justify-between px-3 py-2.5 bg-muted/30">
+                <span className="text-sm font-sans font-medium">Today's total</span>
+                <span className="font-display text-base tracking-wide">{formatCurrency(todayTotal)}</span>
               </div>
             </div>
-          )}
+            <p className="text-[10px] text-muted-foreground font-sans leading-relaxed px-1">
+              Your first payment is charged immediately.
+            </p>
+          </div>
 
-          {/* ── 3. Fixed Monthly Costs ── */}
+          {/* ── 3. Recurring Every 30 Days ── */}
           <div className="space-y-1.5">
-            <p className={cn(tokens.label.default, 'text-xs text-muted-foreground')}>Fixed Monthly</p>
+            <p className={cn(tokens.label.default, 'text-xs text-muted-foreground')}>Recurring Every 30 Days</p>
             <div className="rounded-lg border border-border/60 divide-y divide-border/40">
               <div className="flex items-center justify-between px-3 py-2.5">
                 <span className="flex items-center gap-2 text-sm font-sans">
@@ -113,43 +141,25 @@ export function BackroomCheckoutConfirmDialog({
                 <div className="flex items-center justify-between px-3 py-2.5">
                   <span className="flex items-center gap-2 text-sm font-sans">
                     <Weight className="w-3.5 h-3.5 text-primary" />
-                    {scaleCount} scale{scaleCount !== 1 ? 's' : ''} × {formatCurrency(SCALE_LICENSE_MONTHLY)}/mo
+                    {scaleCount} scale license{scaleCount !== 1 ? 's' : ''} × {formatCurrency(SCALE_LICENSE_MONTHLY)}/mo
                   </span>
                   <span className="text-sm font-sans font-medium">{formatCurrency(scaleLicenseCost)}</span>
                 </div>
               )}
-              <div className="flex items-center justify-between px-3 py-2.5 bg-muted/30">
-                <span className="text-sm font-sans font-medium">Fixed subtotal</span>
-                <span className="text-sm font-sans font-medium">{formatCurrency(monthlyRecurring)}/mo</span>
-              </div>
-            </div>
-          </div>
-
-          {/* ── 4. Variable Monthly Costs ── */}
-          <div className="space-y-1.5">
-            <p className={cn(tokens.label.default, 'text-xs text-muted-foreground')}>Variable Monthly</p>
-            <div className="rounded-lg border border-border/60 px-3 py-2.5 space-y-1.5">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between px-3 py-2.5">
                 <span className="flex items-center gap-2 text-sm font-sans">
                   <Droplets className="w-3.5 h-3.5 text-primary" />
-                  {formatCurrency(BACKROOM_PER_SERVICE_FEE)} × ~{estimatedMonthlyServices} color services
+                  {formatCurrency(BACKROOM_PER_SERVICE_FEE)} × color services
                 </span>
                 <span className="text-sm font-sans font-medium">~{formatCurrency(estimatedUsage)}/mo</span>
               </div>
-              <p className="text-[10px] text-muted-foreground font-sans leading-relaxed">
-                Varies each month based on the number of appointments with color services. Estimate reflects your current booking volume.
-              </p>
+              <div className="flex items-center justify-between px-3 py-2.5 bg-primary/5 border-t border-primary/20">
+                <span className="text-sm font-sans font-medium">Est. monthly total</span>
+                <span className="font-display text-base tracking-wide">{formatCurrency(estimatedMonthlyGrandTotal)}/mo</span>
+              </div>
             </div>
-          </div>
-
-          {/* ── 5. Estimated Monthly Total ── */}
-          <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-1.5">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-sans font-medium">Est. monthly total</span>
-              <span className="font-display text-base sm:text-lg tracking-wide">{formatCurrency(estimatedMonthlyGrandTotal)}/mo</span>
-            </div>
-            <p className="text-[10px] text-muted-foreground font-sans leading-relaxed">
-              Fixed costs + estimated usage across {locationCount} location{locationCount !== 1 ? 's' : ''}. Actual monthly bill depends on color service volume.
+            <p className="text-[10px] text-muted-foreground font-sans leading-relaxed px-1">
+              Billed every 30 days from today. Actual amount depends on color service volume that month.
             </p>
           </div>
 
