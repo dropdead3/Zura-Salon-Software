@@ -1072,6 +1072,56 @@ export function BackroomPaywall() {
         </section>
 
         {/* ═══════════════════════════════════════════
+            SECTION 4.97 — UNDER THE HOOD
+            ═══════════════════════════════════════════ */}
+        <section className="pb-20 md:pb-24">
+          <div className="space-y-10 md:space-y-12">
+            <div className="text-center space-y-3">
+              <SectionHeading>How Zura Backroom Works</SectionHeading>
+              <p className="font-sans text-base text-muted-foreground font-light max-w-2xl mx-auto">
+                Every bowl mixed becomes structured data that powers your salon's operations.
+              </p>
+            </div>
+
+            {/* System Flow */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4 md:gap-2 items-start">
+              {[
+                { icon: Scale, step: "01", title: "Mix Bowl on Scale", desc: "Stylists mix as normal while the scale measures product usage." },
+                { icon: Zap, step: "02", title: "Usage Captured", desc: "The system records exactly how much product is used." },
+                { icon: Brain, step: "03", title: "Formula Saved", desc: "The formula is automatically stored for the client's next visit." },
+                { icon: PackageSearch, step: "04", title: "Inventory Updated", desc: "Product usage instantly updates your backroom inventory." },
+                { icon: DollarSign, step: "05", title: "Cost Calculated", desc: "The true product cost of the service becomes visible." },
+                { icon: BarChart3, step: "06", title: "Insights Generated", desc: "Your backroom data powers analytics for the salon." },
+              ].map((item, idx, arr) => (
+                <div key={idx} className="relative flex flex-col items-center text-center">
+                  {/* Connector arrow (desktop only, not on last item) */}
+                  {idx < arr.length - 1 && (
+                    <div className="hidden md:flex absolute top-6 -right-2 z-10 text-muted-foreground/30">
+                      <ChevronRight className="w-4 h-4" />
+                    </div>
+                  )}
+                  <span className="font-display text-3xl tracking-wide text-primary/20 mb-2">{item.step}</span>
+                  <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center mb-3">
+                    <item.icon className="w-5 h-5 text-primary" />
+                  </div>
+                  <h4 className="font-display text-xs tracking-wide text-foreground mb-1">{item.title}</h4>
+                  <p className="font-sans text-xs text-muted-foreground font-light leading-relaxed max-w-[140px]">{item.desc}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Supporting message */}
+            <p className="text-center font-sans text-sm text-muted-foreground font-light max-w-xl mx-auto">
+              Zura Backroom quietly captures the data behind every service so your salon can operate with clarity.
+            </p>
+
+            <div className="flex justify-center">
+              <ActivateButton />
+            </div>
+          </div>
+        </section>
+
+        {/* ═══════════════════════════════════════════
             SECTION 5 — PRICING + ROI
             ═══════════════════════════════════════════ */}
         <section className="pb-20 md:pb-24">
