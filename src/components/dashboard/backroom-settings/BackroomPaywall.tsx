@@ -532,8 +532,10 @@ export function BackroomPaywall() {
                         <div className="rounded-lg bg-success/[0.05] border border-success/20 p-5 space-y-4">
                           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                             <div>
-                              <p className="font-sans text-xs text-success uppercase tracking-wide font-medium">Projected Annual Recovery</p>
-                              <p className="font-display text-3xl md:text-4xl font-medium tracking-wide text-success tabular-nums mt-1">
+                              <p className="font-display text-sm text-success uppercase tracking-wide font-medium">When Backroom Is Implemented</p>
+                              <p className="font-sans text-xs text-muted-foreground mt-0.5">Estimated annual savings based on your salon's current numbers</p>
+                              <p className="font-sans text-xs text-success/70 uppercase tracking-wide mt-3">You could recover</p>
+                              <p className="font-display text-3xl md:text-4xl font-medium tracking-wide text-success tabular-nums mt-0.5">
                                 <AnimatedNumber
                                   value={yearlySavings}
                                   duration={1200}
