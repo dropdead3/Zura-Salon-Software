@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import {
-  Beaker, BarChart3, Shield, Zap, ArrowRight, Loader2,
+  Beaker, BarChart3, Zap, ArrowRight, Loader2,
   Scale, Droplets, ShieldCheck, MapPin, TrendingUp, DollarSign, Star,
   Info, Clock, AlertTriangle, CheckCircle2, XCircle,
   Brain, Users, PackageSearch, ChevronRight,
@@ -33,69 +33,6 @@ import { toast } from 'sonner';
 import { BackroomCheckoutConfirmDialog } from './BackroomCheckoutConfirmDialog';
 import { CompetitorComparison } from './CompetitorComparison';
 
-/* ─── Feature Groups (outcome-driven, 6 categories) ─── */
-const featureGroups = [
-  {
-    icon: Scale,
-    title: 'Smart Dispensing',
-    outcome: 'Know exactly what goes into every bowl.',
-    bullets: [
-      'Every gram dispensed is measured automatically',
-      'Formulas are saved as they\'re mixed',
-      'Excess product is flagged instantly',
-    ],
-  },
-  {
-    icon: Brain,
-    title: 'Formula Memory',
-    outcome: 'Your formulas are remembered automatically.',
-    bullets: [
-      'Pull up any client\'s last formula in seconds',
-      'Suggested ratios based on history',
-      'No more guessing what was used last time',
-    ],
-  },
-  {
-    icon: Users,
-    title: 'Assistant Workflows',
-    outcome: 'Assistants can prep bowls before services start.',
-    bullets: [
-      'Define each service\'s prep steps once',
-      'Assistants follow guided mixing screens',
-      'Notifications when bowls are ready',
-    ],
-  },
-  {
-    icon: PackageSearch,
-    title: 'Supply Intelligence',
-    outcome: 'Never run out of color during a service.',
-    bullets: [
-      'Alerts before stock runs low',
-      'Tomorrow\'s appointments drive today\'s orders',
-      'No more surprise shortages',
-    ],
-  },
-  {
-    icon: BarChart3,
-    title: 'Profit Visibility',
-    outcome: 'See which services make money and which don\'t.',
-    bullets: [
-      'True product cost for every appointment',
-      'See your real margins per service',
-      'Bill product costs back to clients automatically',
-    ],
-  },
-  {
-    icon: Shield,
-    title: 'Waste Control',
-    outcome: 'Find out where product disappears.',
-    bullets: [
-      'Spot product that disappears between uses',
-      'Know if bowls are being reweighed',
-      'Get notified when usage spikes',
-    ],
-  },
-];
 
 const howItWorks = [
   {
@@ -704,56 +641,8 @@ export function BackroomPaywall() {
 
         </section>
 
-        {/* ═══════════════════════════════════════════
-            SECTION 1.85 — SALON REALITY CHECK
-            ═══════════════════════════════════════════ */}
-        <section className="pb-20 md:pb-24">
-          <RevealOnScroll>
-            <div className="text-center space-y-3 mb-12">
-              <SectionHeading>What Most Salon Backrooms Don't Track</SectionHeading>
-              <p className="text-base text-muted-foreground font-sans font-light max-w-2xl mx-auto">
-                Most salons operate the backroom on instinct. Zura Backroom makes it measurable.
-              </p>
-            </div>
-          </RevealOnScroll>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[
-              { icon: Droplets, title: 'Unmeasured Usage', desc: 'Product is dispensed without tracking how much goes into each bowl.' },
-              { icon: Brain, title: 'Unrecorded Formulas', desc: 'Client formulas live in notebooks, memory, or not at all.' },
-              { icon: Scale, title: 'Unstandardized Mixing', desc: 'Assistants mix bowls without consistent measurements across services.' },
-              { icon: PackageSearch, title: 'Surprise Shortages', desc: 'Inventory gaps surface mid-service with no advance warning.' },
-              { icon: DollarSign, title: 'Unknown Service Costs', desc: 'The true product cost behind each color service is rarely calculated.' },
-              { icon: AlertTriangle, title: 'Invisible Waste', desc: 'Chemical waste accumulates quietly until it shows up in the budget.' },
-            ].map((point, i) => (
-              <RevealOnScroll key={point.title} delay={i * 60}>
-                <Card className="p-5 shadow-sm hover:shadow-md transition-shadow duration-200 h-full">
-                  <div className="space-y-3">
-                    <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
-                      <point.icon className="w-5 h-5 text-primary" />
-                    </div>
-                    <h4 className="font-display text-sm tracking-wide">{point.title}</h4>
-                    <p className="text-sm text-muted-foreground font-sans">{point.desc}</p>
-                  </div>
-                </Card>
-              </RevealOnScroll>
-            ))}
-          </div>
 
-          <RevealOnScroll>
-            <div className="text-center mt-12 space-y-6">
-              <p className="text-base text-muted-foreground font-sans font-light">
-                Zura Backroom turns these unknowns into structured, measurable data.
-              </p>
-              <ActivateButton />
-            </div>
-          </RevealOnScroll>
-        </section>
-
-        {/* Divider — Reality Check → Problem */}
-        <div className="flex justify-center py-4">
-          <div className="w-12 h-px bg-border/40" />
-        </div>
 
         {/* ═══════════════════════════════════════════
             SECTION 2 — THE PROBLEM (Loss Aversion)
@@ -864,64 +753,6 @@ export function BackroomPaywall() {
           </section>
         )}
 
-        {/* ═══════════════════════════════════════════
-            SECTION 3 — HOW IT WORKS
-            ═══════════════════════════════════════════ */}
-        <section className="pb-16 md:pb-20">
-          <div className="space-y-8 md:space-y-10">
-            <RevealOnScroll><SectionHeading>How It Works</SectionHeading></RevealOnScroll>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 md:gap-6">
-              {howItWorks.map((step, i) => (
-                <RevealOnScroll key={step.step} delay={i * 100}>
-                  <Card className="bg-card border-border/50 shadow-sm hover:shadow-md transition-shadow duration-200 hover-lift">
-                    <CardContent className="p-6 md:p-8 space-y-3">
-                      <span className="font-display text-2xl tracking-wider text-primary/20">{step.step}</span>
-                      <p className="font-sans text-lg font-medium text-foreground">{step.title}</p>
-                      <p className="text-sm text-muted-foreground font-sans leading-relaxed">{step.description}</p>
-                    </CardContent>
-                  </Card>
-                </RevealOnScroll>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ═══════════════════════════════════════════
-            SECTION 4 — WHAT YOU GET (6 feature cards)
-            ═══════════════════════════════════════════ */}
-        <section className="pb-20 md:pb-24 bg-muted/20 -mx-6 sm:-mx-8 px-6 sm:px-8 rounded-2xl pt-10 md:pt-12 shadow-[inset_0_1px_0_0_hsl(var(--border)/0.3)]">
-          <div className="space-y-8 md:space-y-10">
-            <RevealOnScroll><SectionHeading>What You Get</SectionHeading></RevealOnScroll>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
-              {featureGroups.map((group, i) => (
-                <RevealOnScroll key={group.title} delay={i * 80}>
-                  <Card className="bg-card border-border/50 shadow-sm hover:shadow-md transition-shadow duration-200 hover-lift">
-                  <CardContent className="p-6 md:p-8 space-y-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                        <group.icon className="w-5 h-5 text-primary" />
-                      </div>
-                      <div>
-                        <p className="font-sans text-base md:text-lg font-medium text-foreground">{group.title}</p>
-                        <p className="text-sm text-muted-foreground font-sans mt-0.5">{group.outcome}</p>
-                      </div>
-                    </div>
-                    <div className="space-y-2 pl-14">
-                      {group.bullets.map((bullet) => (
-                        <div key={bullet} className="flex items-start gap-2">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-primary/60 shrink-0 mt-0.5" />
-                          <span className="text-sm text-muted-foreground font-sans">{bullet}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-                </RevealOnScroll>
-              ))}
-            </div>
-
-          </div>
-        </section>
 
         {/* ═══════════════════════════════════════════
             SECTION 4.25 — INTERACTIVE FEATURE REVEAL
@@ -1149,6 +980,9 @@ export function BackroomPaywall() {
               </Card>
             </div>
           </div>
+          <div className="flex justify-center pt-4">
+            <ActivateButton />
+          </div>
         </section>
 
         {/* ═══════════════════════════════════════════
@@ -1158,426 +992,11 @@ export function BackroomPaywall() {
           <CompetitorComparison />
         </section>
 
-        {/* Divider — Comparison → ROI */}
-        <div className="flex justify-center py-4">
-          <div className="w-12 h-px bg-border/40" />
-        </div>
 
-        {/* ═══════════════════════════════════════════
-            SECTION 4.75 — ROI PROOF
-            ═══════════════════════════════════════════ */}
-        <section className="pb-20 md:pb-24 bg-muted/20 -mx-6 sm:-mx-8 px-6 sm:px-8 rounded-2xl pt-10 md:pt-12 shadow-[inset_0_1px_0_0_hsl(var(--border)/0.3)]">
-          <div className="space-y-8 md:space-y-10">
-            <RevealOnScroll>
-              <div className="text-center space-y-3">
-                <SectionHeading>Zura Backroom Pays for Itself</SectionHeading>
-                <p className="font-sans text-base text-muted-foreground max-w-xl mx-auto font-light leading-relaxed">
-                  Most salons don't know the real cost of their color services. Zura Backroom makes it visible.
-                </p>
-              </div>
-            </RevealOnScroll>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 md:gap-6">
-              {[
-                {
-                  icon: Droplets,
-                  title: 'Recover Product Waste',
-                  copy: 'If your salon performs 200 color services per month and reduces waste by just $2 per service, that\'s $400 recovered every month.',
-                },
-                {
-                  icon: DollarSign,
-                  title: 'Know Real Service Costs',
-                  copy: 'Knowing the true product cost of every service helps you price correctly and protect margins.',
-                },
-                {
-                  icon: TrendingUp,
-                  title: 'Protect Service Margins',
-                  copy: 'When you see exactly where product goes, you stop losing money on services you thought were profitable.',
-                },
-              ].map((card, i) => (
-                <RevealOnScroll key={card.title} delay={i * 80}>
-                  <Card className="bg-card border-border/50 shadow-sm hover:shadow-md transition-shadow duration-200" interactive>
-                    <CardContent className="p-6 md:p-8 space-y-4">
-                      <div className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center">
-                        <card.icon className="w-5 h-5 text-primary" />
-                      </div>
-                      <h3 className="font-display text-sm tracking-wide text-foreground">{card.title}</h3>
-                      <p className="font-sans text-sm text-muted-foreground font-light leading-relaxed">{card.copy}</p>
-                    </CardContent>
-                  </Card>
-                </RevealOnScroll>
-              ))}
-            </div>
 
-            <div className="flex justify-center pt-2">
-              <ActivateButton />
-            </div>
-          </div>
-        </section>
 
-        {/* Section 4.85 removed — redundant with hero + Under The Hood */}
 
-        {/* ═══════════════════════════════════════════
-            SECTION 4.9 — OPERATIONAL INTELLIGENCE DASHBOARD
-            ═══════════════════════════════════════════ */}
-        <section className="pb-20 md:pb-24">
-          <div className="space-y-8 md:space-y-10">
-            <div className="text-center space-y-4">
-              <SectionHeading>Turn Your Backroom Into Business Intelligence</SectionHeading>
-              <p className="font-sans text-base md:text-lg text-muted-foreground font-light leading-relaxed max-w-2xl mx-auto">
-                Zura Backroom transforms product usage into real operational insights for your salon.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
-              {/* Card 1 — Product Usage Trends */}
-              <Card className="bg-card border-border/50 shadow-md hover:shadow-lg transition-shadow duration-200 hover-lift">
-                <CardContent className="p-6 md:p-8 space-y-4">
-                  <div className="flex items-start gap-3">
-                    <div className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center shrink-0">
-                      <BarChart3 className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                      <h4 className="font-display text-sm tracking-wide">Product Usage Trends</h4>
-                      <p className="font-sans text-sm text-muted-foreground font-light mt-1">
-                        See exactly how much color your salon uses each week.
-                      </p>
-                    </div>
-                  </div>
-                  {/* Mini visual: ascending bars */}
-                  <div className="flex items-end gap-1.5 pt-2">
-                    <div className="w-6 h-4 rounded-sm bg-primary/15" />
-                    <div className="w-6 h-7 rounded-sm bg-primary/25" />
-                    <div className="w-6 h-10 rounded-sm bg-primary/40" />
-                    <div className="w-6 h-6 rounded-sm bg-primary/20" />
-                    <div className="w-6 h-9 rounded-sm bg-primary/35" />
-                    <div className="w-6 h-12 rounded-sm bg-primary/50" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Card 2 — Chemical Waste Visibility */}
-              <Card className="bg-card border-border/50 shadow-md hover:shadow-lg transition-shadow duration-200 hover-lift">
-                <CardContent className="p-6 md:p-8 space-y-4">
-                  <div className="flex items-start gap-3">
-                    <div className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center shrink-0">
-                      <Droplets className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                      <h4 className="font-display text-sm tracking-wide">Chemical Waste Visibility</h4>
-                      <p className="font-sans text-sm text-muted-foreground font-light mt-1">
-                        Identify where product is being wasted and reduce unnecessary cost.
-                      </p>
-                    </div>
-                  </div>
-                  {/* Mini visual: waste badge */}
-                  <div className="flex items-center gap-2 pt-2">
-                    <div className="px-3 py-1.5 rounded-full bg-destructive/10 border border-destructive/20">
-                      <span className="font-display text-xs tracking-wide text-destructive">12% waste</span>
-                    </div>
-                    <span className="font-sans text-[10px] text-muted-foreground">↓ from 18%</span>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Card 3 — Service Profitability */}
-              <Card className="bg-card border-border/50 shadow-md hover:shadow-lg transition-shadow duration-200 hover-lift">
-                <CardContent className="p-6 md:p-8 space-y-4">
-                  <div className="flex items-start gap-3">
-                    <div className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center shrink-0">
-                      <DollarSign className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                      <h4 className="font-display text-sm tracking-wide">Service Profitability</h4>
-                      <p className="font-sans text-sm text-muted-foreground font-light mt-1">
-                        Understand the true product cost behind every service.
-                      </p>
-                    </div>
-                  </div>
-                  {/* Mini visual: revenue vs cost */}
-                  <div className="space-y-2 pt-2">
-                    <div className="flex items-center justify-between font-sans text-xs">
-                      <span className="text-muted-foreground">Revenue</span>
-                      <span className="text-foreground">$185</span>
-                    </div>
-                    <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                      <div className="h-full w-[85%] rounded-full bg-primary/40" />
-                    </div>
-                    <div className="flex items-center justify-between font-sans text-xs">
-                      <span className="text-muted-foreground">Product cost</span>
-                      <span className="text-foreground">$24</span>
-                    </div>
-                    <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                      <div className="h-full w-[13%] rounded-full bg-accent-foreground/30" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Card 4 — Inventory Risk Alerts */}
-              <Card className="bg-card border-border/50 shadow-md hover:shadow-lg transition-shadow duration-200 hover-lift">
-                <CardContent className="p-6 md:p-8 space-y-4">
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                      <AlertTriangle className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                      <h4 className="font-display text-sm tracking-wide">Inventory Risk Alerts</h4>
-                      <p className="font-sans text-sm text-muted-foreground font-light mt-1">
-                        Know before you run out of critical supplies.
-                      </p>
-                    </div>
-                  </div>
-                  {/* Mini visual: status alerts */}
-                  <div className="flex items-center gap-3 pt-2">
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-2 h-2 rounded-full bg-destructive animate-pulse" />
-                      <span className="font-sans text-[11px] text-muted-foreground">3 items low</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-2 h-2 rounded-full bg-success" />
-                      <span className="font-sans text-[11px] text-muted-foreground">42 stocked</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Card 5 — Staff Usage Patterns */}
-              <Card className="bg-card border-border/50 shadow-md hover:shadow-lg transition-shadow duration-200 hover-lift">
-                <CardContent className="p-6 md:p-8 space-y-4">
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                      <Users className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                      <h4 className="font-display text-sm tracking-wide">Staff Usage Patterns</h4>
-                      <p className="font-sans text-sm text-muted-foreground font-light mt-1">
-                        See which team members use product most efficiently.
-                      </p>
-                    </div>
-                  </div>
-                  {/* Mini visual: ranking pills */}
-                  <div className="flex items-center gap-2 pt-2">
-                    <div className="px-2.5 py-1 rounded-full bg-primary/10 border border-primary/20">
-                      <span className="font-sans text-[10px] text-primary">1st — Sarah</span>
-                    </div>
-                    <div className="px-2.5 py-1 rounded-full bg-muted border border-border/40">
-                      <span className="font-sans text-[10px] text-muted-foreground">2nd — Alex</span>
-                    </div>
-                    <div className="px-2.5 py-1 rounded-full bg-muted border border-border/40">
-                      <span className="font-sans text-[10px] text-muted-foreground">3rd — Kim</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Card 6 — Top Formulas */}
-              <Card className="bg-card border-border/50 shadow-md hover:shadow-lg transition-shadow duration-200 hover-lift">
-                <CardContent className="p-6 md:p-8 space-y-4">
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                      <Brain className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                      <h4 className="font-display text-sm tracking-wide">Top Formulas</h4>
-                      <p className="font-sans text-sm text-muted-foreground font-light mt-1">
-                        Your salon's most-used formulas, ranked and ready.
-                      </p>
-                    </div>
-                  </div>
-                  {/* Mini visual: formula count badge */}
-                  <div className="flex items-center gap-2 pt-2">
-                    <div className="px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20">
-                      <span className="font-display text-xs tracking-wide text-primary">127 mixes</span>
-                    </div>
-                    <span className="font-sans text-[10px] text-muted-foreground">this month</span>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Supporting message */}
-            <p className="text-center font-sans text-sm text-muted-foreground font-light max-w-xl mx-auto">
-              Most salons operate the backroom on guesswork. Zura Backroom turns it into a measurable system.
-            </p>
-
-            <div className="flex justify-center">
-              <ActivateButton />
-            </div>
-          </div>
-        </section>
-
-        {/* ═══════════════════════════════════════════
-            SECTION 4.95 — CONTROL LAYER HUB
-            ═══════════════════════════════════════════ */}
-        <section className="pb-20 md:pb-24 bg-muted/20 -mx-6 sm:-mx-8 px-6 sm:px-8 rounded-2xl pt-10 md:pt-12 shadow-[inset_0_1px_0_0_hsl(var(--border)/0.3)]">
-          <div className="space-y-8 md:space-y-10">
-            <div className="text-center space-y-4">
-              <SectionHeading>The System That Connects Your Backroom</SectionHeading>
-              <p className="font-sans text-base md:text-lg text-muted-foreground font-light leading-relaxed max-w-2xl mx-auto">
-                Zura Backroom links your services, formulas, inventory, and analytics into one connected system.
-              </p>
-            </div>
-
-            {/* Hub Diagram — Desktop: radial layout, Mobile: grid */}
-            {(() => {
-              const hubNodes = [
-                { icon: Calendar, title: 'Appointments', desc: 'Every service connects to tracked product usage.', angle: 0 },
-                { icon: Beaker, title: 'Mix Sessions', desc: 'Every bowl mixed becomes recorded data.', angle: 51.4 },
-                { icon: Brain, title: 'Client Formulas', desc: 'Formulas are automatically stored for future visits.', angle: 102.8 },
-                { icon: PackageSearch, title: 'Inventory Tracking', desc: 'Product usage updates inventory instantly.', angle: 154.3 },
-                { icon: Users, title: 'Assistant Workflows', desc: 'Assistants can prep bowls with clear guidance.', angle: 205.7 },
-                { icon: DollarSign, title: 'Service Profitability', desc: 'Real product costs are tied directly to services.', angle: 257.1 },
-                { icon: BarChart3, title: 'Operational Insights', desc: 'Backroom activity becomes measurable intelligence.', angle: 308.6 },
-              ];
-
-              const radius = 210;
-
-              return (
-                <>
-                  {/* Desktop radial hub */}
-                  <div className="hidden md:block">
-                    <div className="relative mx-auto" style={{ width: 540, height: 540 }}>
-                      {/* SVG connecting lines */}
-                      <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 540 540">
-                        {hubNodes.map((node, i) => {
-                          const rad = (node.angle - 90) * (Math.PI / 180);
-                          const x = 270 + radius * Math.cos(rad);
-                          const y = 270 + radius * Math.sin(rad);
-                          return (
-                            <line
-                              key={i}
-                              x1="270" y1="270"
-                              x2={x} y2={y}
-                              className="stroke-border/30"
-                              strokeWidth="1"
-                            />
-                          );
-                        })}
-                      </svg>
-
-                      {/* Center hub */}
-                      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
-                        <div className="w-28 h-28 rounded-full bg-primary/10 border-2 border-primary/30 flex flex-col items-center justify-center gap-1.5">
-                          <Beaker className="w-7 h-7 text-primary" />
-                          <span className="font-display text-[9px] tracking-wide text-primary">BACKROOM</span>
-                        </div>
-                      </div>
-
-                      {/* Nodes */}
-                      {hubNodes.map((node, i) => {
-                        const rad = (node.angle - 90) * (Math.PI / 180);
-                        const x = 270 + radius * Math.cos(rad);
-                        const y = 270 + radius * Math.sin(rad);
-                        const NodeIcon = node.icon;
-                        return (
-                          <div
-                            key={i}
-                            className="absolute -translate-x-1/2 -translate-y-1/2 z-10 w-[130px] text-center"
-                            style={{ left: x, top: y }}
-                          >
-                            <div className="flex flex-col items-center gap-2">
-                              <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                                <NodeIcon className="w-5 h-5 text-primary" />
-                              </div>
-                              <span className="font-display text-[10px] tracking-wide">{node.title.toUpperCase()}</span>
-                              <span className="font-sans text-[11px] text-muted-foreground font-light leading-tight">{node.desc}</span>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Mobile grid fallback */}
-                  <div className="md:hidden space-y-6">
-                    {/* Center hub */}
-                    <div className="flex justify-center">
-                      <div className="w-24 h-24 rounded-full bg-primary/10 border-2 border-primary/30 flex flex-col items-center justify-center gap-1.5">
-                        <Beaker className="w-6 h-6 text-primary" />
-                        <span className="font-display text-[8px] tracking-wide text-primary">BACKROOM</span>
-                      </div>
-                    </div>
-                    {/* Node grid */}
-                    <div className="grid grid-cols-2 gap-4">
-                      {hubNodes.map((node, i) => {
-                        const NodeIcon = node.icon;
-                        return (
-                          <div key={i} className="flex flex-col items-center text-center gap-2 p-4 rounded-xl bg-card border border-border/50">
-                            <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                              <NodeIcon className="w-5 h-5 text-primary" />
-                            </div>
-                            <span className="font-display text-[10px] tracking-wide">{node.title.toUpperCase()}</span>
-                            <span className="font-sans text-[11px] text-muted-foreground font-light leading-tight">{node.desc}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </>
-              );
-            })()}
-
-            {/* Supporting message */}
-            <p className="text-center font-sans text-sm text-muted-foreground font-light max-w-xl mx-auto">
-              Most tools track individual actions. Zura Backroom connects the entire workflow.
-            </p>
-
-            <div className="flex justify-center">
-              <ActivateButton />
-            </div>
-          </div>
-        </section>
-
-        {/* ═══════════════════════════════════════════
-            SECTION 4.97 — UNDER THE HOOD
-            ═══════════════════════════════════════════ */}
-        <section className="pb-20 md:pb-24">
-          <div className="space-y-10 md:space-y-12">
-            <div className="text-center space-y-3">
-              <SectionHeading>How Zura Backroom Works</SectionHeading>
-              <p className="font-sans text-base text-muted-foreground font-light max-w-2xl mx-auto">
-                Every bowl mixed becomes structured data that powers your salon's operations.
-              </p>
-            </div>
-
-            {/* System Flow */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4 md:gap-2 items-start">
-              {[
-                { icon: Scale, step: "01", title: "Mix Bowl on Scale", desc: "Stylists mix as normal while the scale measures product usage." },
-                { icon: Zap, step: "02", title: "Usage Captured", desc: "The system records exactly how much product is used." },
-                { icon: Brain, step: "03", title: "Formula Saved", desc: "The formula is automatically stored for the client's next visit." },
-                { icon: PackageSearch, step: "04", title: "Inventory Updated", desc: "Product usage instantly updates your backroom inventory." },
-                { icon: DollarSign, step: "05", title: "Cost Calculated", desc: "The true product cost of the service becomes visible." },
-                { icon: BarChart3, step: "06", title: "Insights Generated", desc: "Your backroom data powers analytics for the salon." },
-              ].map((item, idx, arr) => (
-                <div key={idx} className="relative flex flex-col items-center text-center">
-                  {/* Connector arrow (desktop only, not on last item) */}
-                  {idx < arr.length - 1 && (
-                    <div className="hidden md:flex absolute top-6 -right-2 z-10 text-muted-foreground/30">
-                      <ChevronRight className="w-4 h-4" />
-                    </div>
-                  )}
-                  <span className="font-display text-3xl tracking-wide text-primary/20 mb-2">{item.step}</span>
-                  <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center mb-3">
-                    <item.icon className="w-5 h-5 text-primary" />
-                  </div>
-                  <h4 className="font-display text-xs tracking-wide text-foreground mb-1">{item.title}</h4>
-                  <p className="font-sans text-xs text-muted-foreground font-light leading-relaxed max-w-[140px]">{item.desc}</p>
-                </div>
-              ))}
-            </div>
-
-            {/* Supporting message */}
-            <p className="text-center font-sans text-sm text-muted-foreground font-light max-w-xl mx-auto">
-              Zura Backroom quietly captures the data behind every service so your salon can operate with clarity.
-            </p>
-
-            <div className="flex justify-center">
-              <ActivateButton />
-            </div>
-          </div>
-        </section>
 
         {/* ═══════════════════════════════════════════
             SECTION 4.98 — REAL SALON SCENARIO
@@ -1586,11 +1005,37 @@ export function BackroomPaywall() {
           <div className="space-y-10 md:space-y-12">
             <RevealOnScroll>
               <div className="text-center space-y-3">
-                <SectionHeading>A Color Service With Zura Backroom</SectionHeading>
+                <SectionHeading>How It Works</SectionHeading>
                 <p className="font-sans text-base text-muted-foreground font-light max-w-2xl mx-auto">
-                  From the first bowl to the final insight. Here is what happens behind the scenes.
+                  From the first bowl to the final insight — three steps, one connected system.
                 </p>
               </div>
+            </RevealOnScroll>
+
+            {/* 3-step summary */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 md:gap-6">
+              {howItWorks.map((step, i) => (
+                <RevealOnScroll key={step.step} delay={i * 100}>
+                  <Card className="bg-card border-border/50 shadow-sm hover:shadow-md transition-shadow duration-200 hover-lift">
+                    <CardContent className="p-6 space-y-3">
+                      <span className="font-display text-2xl tracking-wider text-primary/20">{step.step}</span>
+                      <p className="font-sans text-lg font-medium text-foreground">{step.title}</p>
+                      <p className="text-sm text-muted-foreground font-sans leading-relaxed">{step.description}</p>
+                    </CardContent>
+                  </Card>
+                </RevealOnScroll>
+              ))}
+            </div>
+
+            {/* Divider */}
+            <div className="flex justify-center">
+              <div className="w-12 h-px bg-border/40" />
+            </div>
+
+            <RevealOnScroll>
+              <p className="text-center font-display text-lg tracking-wide text-foreground">
+                Here's what that looks like in practice
+              </p>
             </RevealOnScroll>
 
             {/* Desktop: horizontal timeline */}
@@ -1748,10 +1193,6 @@ export function BackroomPaywall() {
             <p className="text-center font-sans text-sm text-muted-foreground font-light max-w-xl mx-auto">
               Zura Backroom works quietly during every service, turning everyday activity into structured salon intelligence.
             </p>
-
-            <div className="flex justify-center">
-              <ActivateButton />
-            </div>
           </div>
         </section>
 
@@ -1914,91 +1355,85 @@ export function BackroomPaywall() {
                 </CardContent>
               </Card>
             )}
-          </div>
-        </section>
+            {/* Hardware sub-section */}
+            <RevealOnScroll>
+              <Card className="bg-card border-border/50 shadow-sm">
+                <CardContent className="p-6 md:p-8 space-y-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                      <Scale className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-sans text-base md:text-lg font-medium text-foreground">Precision Scales</p>
+                      <p className="text-sm text-muted-foreground font-sans mt-0.5">
+                        Connect to your mixing stations via Bluetooth.
+                      </p>
+                    </div>
+                  </div>
 
-        {/* ═══════════════════════════════════════════
-            SECTION 6 — HARDWARE
-            ═══════════════════════════════════════════ */}
-        <section className="pb-16 md:pb-20 bg-muted/20 -mx-6 sm:-mx-8 px-6 sm:px-8 rounded-2xl pt-10 md:pt-12 shadow-[inset_0_1px_0_0_hsl(var(--border)/0.3)]">
-          <div className="space-y-8 md:space-y-10">
-            <SectionHeading>Hardware</SectionHeading>
-            <Card className="bg-card border-border/50 shadow-sm">
-              <CardContent className="p-6 md:p-8 space-y-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                    <Scale className="w-5 h-5 text-primary" />
+                  <div className="grid grid-cols-2 gap-5">
+                    <div className="p-5 rounded-xl bg-muted/30 border border-border/40 text-center">
+                      <p className="font-display text-2xl tracking-wide text-foreground">${SCALE_HARDWARE_PRICE}</p>
+                      <p className="text-sm text-muted-foreground font-sans mt-2">per scale (one-time)</p>
+                    </div>
+                    <div className="p-5 rounded-xl bg-muted/30 border border-border/40 text-center">
+                      <p className="font-display text-2xl tracking-wide text-foreground">${SCALE_LICENSE_MONTHLY}</p>
+                      <p className="text-sm text-muted-foreground font-sans mt-2">per scale / month</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-sans text-base md:text-lg font-medium text-foreground">Precision Scales</p>
-                    <p className="text-sm text-muted-foreground font-sans mt-0.5">
-                      Connect to your mixing stations via Bluetooth.
-                    </p>
-                  </div>
-                </div>
 
-                <div className="grid grid-cols-2 gap-5">
-                  <div className="p-5 rounded-xl bg-muted/30 border border-border/40 text-center">
-                    <p className="font-display text-2xl tracking-wide text-foreground">${SCALE_HARDWARE_PRICE}</p>
-                    <p className="text-sm text-muted-foreground font-sans mt-2">per scale (one-time)</p>
+                  {/* Recommendation summary */}
+                  <div className="flex items-center justify-between p-4 rounded-xl bg-primary/5 border border-primary/20">
+                    <div className="space-y-1">
+                      <p className="font-sans text-sm text-foreground font-medium">
+                        {recommendedScales} scale{recommendedScales !== 1 ? 's' : ''} recommended
+                      </p>
+                      <p className="text-xs text-muted-foreground font-sans">
+                        Based on 1 scale per 10 daily color appointments
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-9 w-9 rounded-lg"
+                        onClick={() => { setManualScaleOverride(true); setScaleCount(Math.max(0, scaleCount - 1)); }}
+                        disabled={scaleCount <= 0}
+                      >
+                        <span className="text-sm">−</span>
+                      </Button>
+                      <span className={cn(tokens.stat.large, 'w-8 text-center text-foreground text-lg')}>{scaleCount}</span>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-9 w-9 rounded-lg"
+                        onClick={() => { setManualScaleOverride(true); setScaleCount(Math.min(20, scaleCount + 1)); }}
+                        disabled={scaleCount >= 20}
+                      >
+                        <span className="text-sm">+</span>
+                      </Button>
+                    </div>
                   </div>
-                  <div className="p-5 rounded-xl bg-muted/30 border border-border/40 text-center">
-                    <p className="font-display text-2xl tracking-wide text-foreground">${SCALE_LICENSE_MONTHLY}</p>
-                    <p className="text-sm text-muted-foreground font-sans mt-2">per scale / month</p>
-                  </div>
-                </div>
-
-                {/* Recommendation summary */}
-                <div className="flex items-center justify-between p-4 rounded-xl bg-primary/5 border border-primary/20">
-                  <div className="space-y-1">
-                    <p className="font-sans text-sm text-foreground font-medium">
-                      {recommendedScales} scale{recommendedScales !== 1 ? 's' : ''} recommended
-                    </p>
-                    <p className="text-xs text-muted-foreground font-sans">
-                      Based on 1 scale per 10 daily color appointments
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-9 w-9 rounded-lg"
-                      onClick={() => { setManualScaleOverride(true); setScaleCount(Math.max(0, scaleCount - 1)); }}
-                      disabled={scaleCount <= 0}
+                  {manualScaleOverride && scaleCount !== recommendedScales && (
+                    <button
+                      type="button"
+                      className="text-sm text-primary font-sans hover:underline transition-colors"
+                      onClick={() => { setManualScaleOverride(false); setScaleCount(recommendedScales); }}
                     >
-                      <span className="text-sm">−</span>
-                    </Button>
-                    <span className={cn(tokens.stat.large, 'w-8 text-center text-foreground text-lg')}>{scaleCount}</span>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-9 w-9 rounded-lg"
-                      onClick={() => { setManualScaleOverride(true); setScaleCount(Math.min(20, scaleCount + 1)); }}
-                      disabled={scaleCount >= 20}
-                    >
-                      <span className="text-sm">+</span>
-                    </Button>
-                  </div>
-                </div>
-                {manualScaleOverride && scaleCount !== recommendedScales && (
-                  <button
-                    type="button"
-                    className="text-sm text-primary font-sans hover:underline transition-colors"
-                    onClick={() => { setManualScaleOverride(false); setScaleCount(recommendedScales); }}
-                  >
-                    Reset to recommended
-                  </button>
-                )}
+                      Reset to recommended
+                    </button>
+                  )}
 
-                {/* iPad requirement */}
-                <div className="flex items-start gap-3 p-4 rounded-xl bg-muted/30 border border-border/40">
-                  <Info className="w-4 h-4 text-muted-foreground/60 shrink-0 mt-0.5" />
-                  <p className="text-sm text-muted-foreground font-sans">
-                    Each station uses an iPad with Bluetooth for the mixing interface. A tablet stand is recommended.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+                  {/* iPad requirement */}
+                  <div className="flex items-start gap-3 p-4 rounded-xl bg-muted/30 border border-border/40">
+                    <Info className="w-4 h-4 text-muted-foreground/60 shrink-0 mt-0.5" />
+                    <p className="text-sm text-muted-foreground font-sans">
+                      Each station uses an iPad with Bluetooth for the mixing interface. A tablet stand is recommended.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </RevealOnScroll>
           </div>
         </section>
 
@@ -2048,46 +1483,8 @@ export function BackroomPaywall() {
           </div>
         </section>
 
-        {/* ═══════════════════════════════════════════
-            SECTION 7.5 — CONFIDENCE LAYER
-            ═══════════════════════════════════════════ */}
-        <section className="border-t border-border/20 pt-16 space-y-10 bg-muted/20 -mx-6 sm:-mx-8 px-6 sm:px-8 rounded-2xl pb-12 shadow-[inset_0_1px_0_0_hsl(var(--border)/0.3)]">
-          <RevealOnScroll>
-            <div className="text-center space-y-3">
-              <SectionHeading>Powerful System. Simple Workflow.</SectionHeading>
-              <p className="font-sans text-base text-muted-foreground font-light max-w-xl mx-auto">
-                Zura Backroom works quietly in the background while your team continues working as normal.
-              </p>
-            </div>
-          </RevealOnScroll>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto">
-            {[
-              { icon: Zap, title: "Fast Setup", desc: "Configured quickly and integrated into your salon workflow." },
-              { icon: Users, title: "Designed for Stylists", desc: "Works with the natural flow of mixing and applying color." },
-              { icon: ShieldCheck, title: "No Disruption", desc: "Stylists mix bowls the same way they always have." },
-              { icon: BarChart3, title: "Clear Visibility", desc: "See the true cost of services and product usage." },
-              { icon: Beaker, title: "Built for Real Salons", desc: "Designed specifically for salon operations." },
-            ].map((item, i) => (
-              <RevealOnScroll key={i} delay={i * 60}>
-                <Card className={cn("p-5 space-y-3 bg-card shadow-md hover:shadow-lg transition-shadow duration-200", i === 4 && "sm:col-start-1 lg:col-start-2")}>
-                <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
-                  <item.icon className="w-5 h-5 text-primary" />
-                </div>
-                <h3 className="font-display text-sm tracking-wide text-foreground">{item.title}</h3>
-                <p className="text-sm text-muted-foreground font-sans font-light">{item.desc}</p>
-              </Card>
-              </RevealOnScroll>
-            ))}
-          </div>
 
-          <div className="text-center space-y-6 pt-4">
-            <p className="font-sans text-sm text-muted-foreground font-light italic max-w-lg mx-auto">
-              Zura Backroom adds intelligence to your workflow without adding complexity.
-            </p>
-            <ActivateButton />
-          </div>
-        </section>
 
         {/* ═══════════════════════════════════════════
             SECTION 8 — FINAL CTA
