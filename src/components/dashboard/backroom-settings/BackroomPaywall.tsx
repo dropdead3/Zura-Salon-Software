@@ -937,7 +937,7 @@ export function BackroomPaywall() {
                         <div className="rounded-lg bg-muted/40 p-4 space-y-3">
                           <div className="flex items-center justify-between pb-2 border-b border-border/40">
                             <p className="font-sans text-sm font-medium text-foreground">Full Colour & Blowdry</p>
-                            <span className="font-sans text-xs bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded-full">78% margin</span>
+                            <span className="font-sans text-xs bg-success/10 text-success px-2 py-0.5 rounded-full">78% margin</span>
                           </div>
                           {[
                             { label: 'Service Revenue', value: '$185.00' },
