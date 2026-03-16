@@ -139,9 +139,9 @@ export function AccountFeatureFlagsTab({ organizationId, organizationName }: Acc
                 Reset All ({overrideCount})
               </PlatformButton>
             </AlertDialogTrigger>
-            <AlertDialogContent className="bg-slate-900 border-slate-700">
+            <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle className="text-white">Reset All Overrides?</AlertDialogTitle>
+                <AlertDialogTitle>Reset All Overrides?</AlertDialogTitle>
                 <AlertDialogDescription>
                   This will remove all {overrideCount} custom overrides and revert to global defaults.
                 </AlertDialogDescription>
