@@ -139,6 +139,10 @@ const faqItems = [
     question: 'Do I need to change my workflow?',
     answer: 'No. Zura Backroom adapts to how your team already works. The scale sits at your existing station — no rearranging required.',
   },
+  {
+    question: 'Can I cancel anytime?',
+    answer: 'Yes. There are no contracts. Cancel from your account settings at any time.',
+  },
 ];
 
 export function BackroomPaywall() {
