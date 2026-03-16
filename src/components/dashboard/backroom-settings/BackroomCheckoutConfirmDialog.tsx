@@ -38,8 +38,8 @@ export function BackroomCheckoutConfirmDialog({
   const estimatedUsage = Math.round(estimatedMonthlyServices * BACKROOM_PER_SERVICE_FEE);
   const monthlyRecurring = baseCost + scaleLicenseCost;
   const hardwareOneTime = scaleCount * SCALE_HARDWARE_PRICE;
-  const todayTotal = hardwareOneTime + estimatedMonthlyGrandTotal;
   const estimatedMonthlyGrandTotal = monthlyRecurring + estimatedUsage;
+  const todayTotal = hardwareOneTime + estimatedMonthlyGrandTotal;
 
   const card = paymentInfo?.payment_method;
 
