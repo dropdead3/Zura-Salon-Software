@@ -703,7 +703,7 @@ export function BackroomPaywall() {
             {/* Mobile: pill selector */}
             <div className="flex lg:hidden gap-2 overflow-x-auto pb-2 scrollbar-hide">
               {[
-                { key: 'mixing', icon: Scale, title: 'Smart Mixing' },
+                { key: 'mixing', icon: Weight, title: 'Smart Mixing' },
                 { key: 'formulas', icon: Brain, title: 'Formula Memory' },
                 { key: 'inventory', icon: PackageSearch, title: 'Inventory' },
                 { key: 'profitability', icon: DollarSign, title: 'Profitability' },
