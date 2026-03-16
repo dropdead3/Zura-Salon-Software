@@ -569,3 +569,114 @@ function ResultRow({ label, value, highlight, accent }: { label: string; value: 
     </div>
   );
 }
+
+// --- Backroom Add-On Calculator Widget ---
+
+function BackroomCalculatorWidget() {
+  const [locations, setLocations] = useState<string>('1');
+  const [scales, setScales] = useState<string>('1');
+  const [colorServices, setColorServices] = useState<string>('80');
+  const [includeHardware, setIncludeHardware] = useState(true);
+
+  const loc = Math.max(0, parseInt(locations) || 0);
+  const sc = Math.max(0, parseInt(scales) || 0);
+  const svc = Math.max(0, parseInt(colorServices) || 0);
+
+  const locationFees = loc * BR_LOCATION_FEE;
+  const licenseFees = sc * BR_LICENSE_FEE;
+  const usageFees = svc * BR_USAGE_FEE;
+  const monthlyTotal = locationFees + licenseFees + usageFees;
+  const hardwareTotal = includeHardware ? sc * BR_HARDWARE_COST : 0;
+  const annualTotal = monthlyTotal * 12;
+
+  // Waste savings estimate: services × avg product cost per service × 12% waste rate
+  const monthlyWasteSavings = Math.round(svc * BR_AVG_PRODUCT_COST * BR_BASELINE_WASTE_RATE);
+  const annualWasteSavings = monthlyWasteSavings * 12;
+
+  const fmt = (n: number) => `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const fmtWhole = (n: number) => `$${n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+
+  return (
+    <PlatformCard variant="glass" id="backroom-calc">
+      <PlatformCardHeader>
+        <div className="flex items-center gap-3">
+          <div className={tokens.card.iconBox}>
+            <FlaskConical className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <PlatformCardTitle className={tokens.card.title}>Backroom Quote Calculator</PlatformCardTitle>
+            <PlatformCardDescription>Estimate monthly Backroom costs for an organization. Uses the flat metered pricing model.</PlatformCardDescription>
+          </div>
+        </div>
+      </PlatformCardHeader>
+      <PlatformCardContent>
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* Inputs */}
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-xs text-[hsl(var(--platform-foreground-muted))]">Number of Locations</Label>
+              <PlatformInput type="number" min="0" value={locations} onChange={e => setLocations(e.target.value)} />
+              <p className="text-xs text-[hsl(var(--platform-foreground-subtle))]">${BR_LOCATION_FEE}/mo each</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs text-[hsl(var(--platform-foreground-muted))]">Number of Scales</Label>
+              <PlatformInput type="number" min="0" value={scales} onChange={e => setScales(e.target.value)} />
+              <p className="text-xs text-[hsl(var(--platform-foreground-subtle))]">${BR_HARDWARE_COST} one-time + ${BR_LICENSE_FEE}/mo license each</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs text-[hsl(var(--platform-foreground-muted))]">Estimated Color Services / Month</Label>
+              <PlatformInput type="number" min="0" value={colorServices} onChange={e => setColorServices(e.target.value)} />
+              <p className="text-xs text-[hsl(var(--platform-foreground-subtle))]">${BR_USAGE_FEE.toFixed(2)} per service (usage-based)</p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <Switch checked={includeHardware} onCheckedChange={setIncludeHardware} />
+              <Label className="text-xs text-[hsl(var(--platform-foreground-muted))]">Include hardware cost (one-time)</Label>
+            </div>
+          </div>
+
+          {/* Results */}
+          <div className="rounded-xl border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.4)] p-5">
+            <p className="font-display text-sm tracking-wide uppercase text-[hsl(var(--platform-foreground-muted))] mb-4">Backroom Quote</p>
+
+            <div className="space-y-3 text-sm">
+              <p className="font-display text-xs tracking-wide uppercase text-[hsl(var(--platform-foreground-muted))]">Monthly Recurring</p>
+              <ResultRow label={`Location fees (${loc} × $${BR_LOCATION_FEE})`} value={fmt(locationFees)} />
+              <ResultRow label={`Scale licenses (${sc} × $${BR_LICENSE_FEE})`} value={fmt(licenseFees)} />
+              <ResultRow label={`Usage estimate (${svc} × $${BR_USAGE_FEE.toFixed(2)})`} value={fmt(usageFees)} />
+              <div className="border-t border-[hsl(var(--platform-border)/0.3)] my-2" />
+              <ResultRow label="Total Monthly Recurring" value={fmt(monthlyTotal)} highlight />
+
+              {includeHardware && hardwareTotal > 0 && (
+                <>
+                  <div className="border-t border-[hsl(var(--platform-border)/0.3)] my-2" />
+                  <p className="font-display text-xs tracking-wide uppercase text-[hsl(var(--platform-foreground-muted))]">One-Time</p>
+                  <ResultRow label={`Scale hardware (${sc} × $${BR_HARDWARE_COST})`} value={fmtWhole(hardwareTotal)} />
+                </>
+              )}
+
+              <div className="border-t border-[hsl(var(--platform-border)/0.3)] my-2" />
+              <p className="font-display text-xs tracking-wide uppercase text-[hsl(var(--platform-foreground-muted))]">Projections</p>
+              <ResultRow label="Annual Recurring" value={fmt(annualTotal)} highlight />
+              {includeHardware && hardwareTotal > 0 && (
+                <ResultRow label="First-Year Total (incl. hardware)" value={fmt(annualTotal + hardwareTotal)} />
+              )}
+
+              <div className="border-t border-[hsl(var(--platform-border)/0.3)] my-2" />
+              <p className="font-display text-xs tracking-wide uppercase text-[hsl(var(--platform-foreground-muted))]">Estimated Waste Savings</p>
+              <ResultRow label={`Monthly (${svc} svc × $${BR_AVG_PRODUCT_COST} avg × ${(BR_BASELINE_WASTE_RATE * 100).toFixed(0)}%)`} value={fmt(monthlyWasteSavings)} accent />
+              <ResultRow label="Annual Waste Savings" value={fmt(annualWasteSavings)} accent />
+              {annualWasteSavings > annualTotal && (
+                <div className="mt-2 rounded-lg bg-primary/10 px-3 py-2 text-xs text-primary">
+                  Net positive ROI — estimated savings exceed Backroom cost by {fmt(annualWasteSavings - annualTotal)}/yr
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </PlatformCardContent>
+    </PlatformCard>
+  );
+}
