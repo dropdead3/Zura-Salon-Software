@@ -399,14 +399,9 @@ export function BackroomAnalyticsTab() {
 
 /* ── Helper Components ── */
 
-function HealthDot({ score }: { score: 'green' | 'yellow' | 'red' }) {
-  const cls =
-    score === 'green'
-      ? 'bg-emerald-400'
-      : score === 'yellow'
-      ? 'bg-amber-400'
-      : 'bg-red-400';
-  return <span className={cn('block w-3 h-3 rounded-full', cls)} />;
+function HealthDot({ score }: { score: CoachingSignal['healthScore'] }) {
+  const cfg = HEALTH_MAP[score];
+  return <span className={cn('block w-3 h-3 rounded-full', `bg-${cfg.color}`)} />;
 }
 
 function CoachAssignCell({
@@ -418,7 +413,7 @@ function CoachAssignCell({
 }: {
   orgId: string;
   coachByOrg: Map<string, { coachUserId: string; coachName: string }>;
-  teamMembers: Array<{ user_id: string; full_name: string | null; email: string }>;
+  teamMembers: Array<{ user_id: string; full_name?: string | null; email: string }>;
   onAssign: (coachUserId: string) => void;
   onUnassign: (coachUserId: string) => void;
 }) {
