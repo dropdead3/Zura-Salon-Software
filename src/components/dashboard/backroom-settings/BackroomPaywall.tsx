@@ -399,7 +399,7 @@ export function BackroomPaywall() {
                   ].map((item) => (
                     <li key={item} className="flex items-start gap-3">
                       <XCircle className="w-4 h-4 text-destructive mt-0.5 shrink-0" />
-                      <span className="text-[15px] font-sans text-muted-foreground">{item}</span>
+                      <span className="text-sm font-sans text-muted-foreground">{item}</span>
                     </li>
                   ))}
                 </ul>
