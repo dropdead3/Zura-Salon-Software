@@ -339,7 +339,7 @@ export function BackroomPaywall() {
                 <h1 className="font-display text-3xl md:text-4xl lg:text-5xl font-medium tracking-wide leading-[1.08]">
                   Stop Losing Money in Your Color Room
                 </h1>
-                <p className="text-muted-foreground text-lg md:text-xl max-w-xl mx-auto lg:mx-0 font-sans leading-relaxed mt-1">
+                <p className="text-muted-foreground text-lg md:text-xl max-w-xl mx-auto lg:mx-0 font-sans leading-relaxed">
                   Track every gram. Recover supply costs. Reorder before you run out.
                 </p>
               </div>
