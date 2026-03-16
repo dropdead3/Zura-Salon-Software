@@ -221,8 +221,8 @@ export function BackroomPaywall() {
               <span className="text-foreground">{formatCurrency(baseCost)}/mo</span>
             </div>
             <div className="flex justify-between text-muted-foreground">
-              <span>Usage fee (~{estimate.monthlyColorServices} appts)</span>
-              <span className="text-foreground">{formatCurrency(usageFee)}/mo</span>
+              <span>Est. usage fee (~{estimate.monthlyColorServices} color appts)*</span>
+              <span className="text-foreground">~{formatCurrency(usageFee)}/mo</span>
             </div>
             {scaleCount > 0 && (
               <div className="flex justify-between text-muted-foreground">
