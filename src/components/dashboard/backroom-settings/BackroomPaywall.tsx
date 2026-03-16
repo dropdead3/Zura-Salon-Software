@@ -776,6 +776,22 @@ export function BackroomPaywall() {
                     </Button>
                   </div>
                 </div>
+                {estimate && (
+                  <div className="mt-3 flex items-center justify-between">
+                    <p className="text-xs text-muted-foreground font-sans">
+                      Recommended: {recommendedScales} scale{recommendedScales !== 1 ? 's' : ''} (~{dailyColorServices} daily color services)
+                    </p>
+                    {manualScaleOverride && scaleCount !== recommendedScales && (
+                      <button
+                        type="button"
+                        className="text-xs text-primary font-sans hover:underline"
+                        onClick={() => { setManualScaleOverride(false); setScaleCount(recommendedScales); }}
+                      >
+                        Reset
+                      </button>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
 
