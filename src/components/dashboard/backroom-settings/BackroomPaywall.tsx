@@ -807,7 +807,7 @@ export function BackroomPaywall() {
                 {/* Header */}
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                    <Scale className="w-5 h-5 text-primary" />
+                    <Droplets className="w-5 h-5 text-primary" />
                   </div>
                   <div>
                     <p className={cn(tokens.label.default, 'text-foreground')}>Precision Scales</p>
