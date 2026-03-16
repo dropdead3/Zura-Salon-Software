@@ -2054,9 +2054,7 @@ export function BackroomPaywall() {
         <section className="border-t border-border/20 pt-16 space-y-10 bg-muted/20 -mx-6 sm:-mx-8 px-6 sm:px-8 rounded-2xl pb-12 shadow-[inset_0_1px_0_0_hsl(var(--border)/0.3)]">
           <RevealOnScroll>
             <div className="text-center space-y-3">
-              <h2 className="font-display text-2xl md:text-3xl tracking-wide text-foreground">
-                Powerful System. Simple Workflow.
-              </h2>
+              <SectionHeading>Powerful System. Simple Workflow.</SectionHeading>
               <p className="font-sans text-base text-muted-foreground font-light max-w-xl mx-auto">
                 Zura Backroom works quietly in the background while your team continues working as normal.
               </p>
