@@ -88,7 +88,7 @@ export function CompetitorComparison() {
                   </th>
                   {columns.map((col) => (
                     <th key={col.key} className={cn(
-                      'text-center px-5 py-3.5 w-[20%]',
+                      'text-center px-5 py-4 w-[20%]',
                       col.key === 'zura' && 'bg-primary/[0.03]',
                     )}>
                       <span className={cn(
