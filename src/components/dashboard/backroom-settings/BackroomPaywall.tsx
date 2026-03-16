@@ -678,6 +678,7 @@ export function BackroomPaywall() {
                 </Card>
               ))}
             </div>
+            </div>
 
             {/* Estimates Disclaimer */}
             <div className="flex gap-2 items-start p-3 rounded-lg bg-muted/20 border border-border/30">
