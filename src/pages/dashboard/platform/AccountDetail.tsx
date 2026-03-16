@@ -413,6 +413,9 @@ export default function AccountDetail() {
 
           {/* Business Integrations Card */}
           <AccountIntegrationsCard organizationId={organization.id} />
+
+          {/* Apps in Use Card */}
+          <AccountAppsCard organizationId={organization.id} />
         </TabsContent>
 
         <TabsContent value="locations">
