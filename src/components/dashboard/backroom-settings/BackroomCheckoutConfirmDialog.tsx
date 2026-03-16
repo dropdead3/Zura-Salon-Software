@@ -1,6 +1,6 @@
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { Loader2, ArrowRight, MapPin, Scale, Droplets, CreditCard, TrendingUp, Sparkles } from 'lucide-react';
+import { Loader2, ArrowRight, MapPin, Weight, Droplets, CreditCard, TrendingUp, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
