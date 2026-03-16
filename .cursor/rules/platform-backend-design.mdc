@@ -20,6 +20,8 @@ Files inside `src/components/platform/` MUST use platform-specific UI primitives
 | `Table`, `TableHead`, `TableRow`, `TableCell`  | `PlatformTable`, `PlatformTableHead`, `PlatformTableRow`, `PlatformTableCell` |
 | `DialogContent`, `DialogTitle`, `DialogDescription` | `PlatformDialogContent`, `PlatformDialogTitle`, `PlatformDialogDescription` |
 | `AlertDialogContent`, `AlertDialogTitle`, `AlertDialogDescription` | `PlatformAlertDialogContent`, `PlatformAlertDialogTitle`, `PlatformAlertDialogDescription` |
+| `AlertDialogCancel`                                | `PlatformAlertDialogCancel`                                                 |
+| `Textarea`                                         | `PlatformTextarea`                                                          |
 
 ## Prohibited Imports
 
