@@ -1876,7 +1876,7 @@ export function BackroomPaywall() {
         {/* ═══════════════════════════════════════════
             SECTION 6 — HARDWARE
             ═══════════════════════════════════════════ */}
-        <section className="pb-16 md:pb-20 bg-muted/20 -mx-6 sm:-mx-8 px-6 sm:px-8 rounded-2xl pt-10 md:pt-12">
+        <section className="pb-16 md:pb-20 bg-muted/20 -mx-6 sm:-mx-8 px-6 sm:px-8 rounded-2xl pt-10 md:pt-12 shadow-[inset_0_1px_0_0_hsl(var(--border)/0.3)]">
           <div className="space-y-8 md:space-y-10">
             <SectionHeading>Hardware</SectionHeading>
             <Card className="bg-card border-border/50 shadow-sm">
