@@ -120,7 +120,7 @@ export function CompetitorComparison() {
                         key={`row-${catIdx}-${rowIdx}`}
                         className="border-b border-border/20 last:border-0 transition-colors duration-150 hover:bg-muted/10"
                       >
-                        <td className="px-5 py-3.5">
+                        <td className="px-5 py-4">
                           <span className="font-sans text-sm text-foreground">{row.feature}</span>
                         </td>
                         {columns.map((col) => (
