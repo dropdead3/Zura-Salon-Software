@@ -3,12 +3,17 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import {
+  PlatformCard,
+  PlatformCardContent,
+  PlatformCardHeader,
+  PlatformCardTitle,
+} from '@/components/platform/ui/PlatformCard';
+import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
+import { PlatformButton } from '@/components/platform/ui/PlatformButton';
+import { PlatformInput } from '@/components/platform/ui/PlatformInput';
 import { Select, SelectValue, PlatformSelectContent as SelectContent, PlatformSelectItem as SelectItem, PlatformSelectTrigger as SelectTrigger } from '@/components/platform/ui/PlatformSelect';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { PlatformTable, PlatformTableBody, PlatformTableCell, PlatformTableHead, PlatformTableHeader, PlatformTableRow } from '@/components/platform/ui/PlatformTable';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { Package, Truck, CheckCircle2, Clock, Loader2 } from 'lucide-react';
@@ -36,19 +41,18 @@ interface HardwareOrder {
   organization_name?: string;
 }
 
-const STATUS_CONFIG: Record<FulfillmentStatus, { label: string; color: string; icon: typeof Clock }> = {
-  pending: { label: 'Pending', color: 'bg-amber-500/20 text-amber-400 border-amber-500/30', icon: Clock },
-  processing: { label: 'Processing', color: 'bg-blue-500/20 text-blue-400 border-blue-500/30', icon: Package },
-  shipped: { label: 'Shipped', color: 'bg-violet-500/20 text-violet-400 border-violet-500/30', icon: Truck },
-  delivered: { label: 'Delivered', color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30', icon: CheckCircle2 },
-  cancelled: { label: 'Cancelled', color: 'bg-red-500/20 text-red-400 border-red-500/30', icon: Clock },
+const STATUS_CONFIG: Record<FulfillmentStatus, { label: string; variant: 'warning' | 'info' | 'primary' | 'success' | 'error'; icon: typeof Clock }> = {
+  pending: { label: 'Pending', variant: 'warning', icon: Clock },
+  processing: { label: 'Processing', variant: 'info', icon: Package },
+  shipped: { label: 'Shipped', variant: 'primary', icon: Truck },
+  delivered: { label: 'Delivered', variant: 'success', icon: CheckCircle2 },
+  cancelled: { label: 'Cancelled', variant: 'error', icon: Clock },
 };
 
 function useHardwareOrders() {
   return useQuery({
     queryKey: ['platform-hardware-orders'],
     queryFn: async (): Promise<HardwareOrder[]> => {
-      // Fetch orders with org names
       const { data: orders, error } = await supabase
         .from('hardware_orders')
         .select('*')
@@ -56,7 +60,6 @@ function useHardwareOrders() {
 
       if (error) throw error;
 
-      // Fetch org names for all unique org IDs
       const orgIds = [...new Set((orders ?? []).map((o: any) => o.organization_id))];
       const { data: orgs } = await supabase
         .from('organizations')
@@ -121,15 +124,15 @@ function KpiCards({ orders }: { orders: HardwareOrder[] }) {
     { label: 'Pending', value: pending, color: 'text-amber-400' },
     { label: 'Processing', value: processing, color: 'text-blue-400' },
     { label: 'Shipped (30d)', value: shippedRecent, color: 'text-violet-400' },
-    { label: 'Total Scales', value: totalScales, color: 'text-foreground' },
+    { label: 'Total Scales', value: totalScales, color: 'text-white' },
   ];
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       {kpis.map((k) => (
-        <div key={k.label} className={tokens.kpi.tile}>
-          <span className={tokens.kpi.label}>{k.label}</span>
-          <span className={cn(tokens.kpi.value, k.color)}>{k.value}</span>
+        <div key={k.label} className={tokens.platformKpi.tile}>
+          <span className={tokens.platformKpi.label}>{k.label}</span>
+          <span className={cn(tokens.platformKpi.value, k.color)}>{k.value}</span>
         </div>
       ))}
     </div>
@@ -152,44 +155,44 @@ function OrderRow({ order, onUpdate }: { order: HardwareOrder; onUpdate: ReturnT
   };
 
   return (
-    <TableRow>
-      <TableCell className="font-sans text-sm font-medium">{order.organization_name}</TableCell>
-      <TableCell className="font-sans text-sm">{order.quantity}</TableCell>
-      <TableCell>
-        <Badge className={cn('border', cfg.color)}>{cfg.label}</Badge>
-      </TableCell>
-      <TableCell className="font-sans text-sm text-muted-foreground">
+    <PlatformTableRow>
+      <PlatformTableCell className="font-sans text-sm font-medium text-white">{order.organization_name}</PlatformTableCell>
+      <PlatformTableCell className="font-sans text-sm">{order.quantity}</PlatformTableCell>
+      <PlatformTableCell>
+        <PlatformBadge variant={cfg.variant}>{cfg.label}</PlatformBadge>
+      </PlatformTableCell>
+      <PlatformTableCell className="font-sans text-sm">
         {format(new Date(order.created_at), 'MMM d, yyyy')}
-      </TableCell>
-      <TableCell>
+      </PlatformTableCell>
+      <PlatformTableCell>
         {editTracking ? (
           <div className="flex items-center gap-2">
-            <Input
+            <PlatformInput
               className="h-8 w-24 text-xs"
               placeholder="Carrier"
               value={carrier}
               onChange={(e) => setCarrier(e.target.value)}
             />
-            <Input
+            <PlatformInput
               className="h-8 w-32 text-xs"
               placeholder="Tracking #"
               value={tracking}
               onChange={(e) => setTracking(e.target.value)}
             />
-            <Button size="sm" variant="ghost" className="h-8 px-2 text-xs" onClick={handleSaveTracking}>
+            <PlatformButton size="sm" variant="ghost" className="h-8 px-2 text-xs" onClick={handleSaveTracking}>
               Save
-            </Button>
+            </PlatformButton>
           </div>
         ) : (
           <span
-            className="font-sans text-sm text-muted-foreground cursor-pointer hover:text-foreground"
+            className="font-sans text-sm text-slate-400 cursor-pointer hover:text-white"
             onClick={() => setEditTracking(true)}
           >
             {order.tracking_number ? `${order.shipping_carrier || ''} ${order.tracking_number}` : '—'}
           </span>
         )}
-      </TableCell>
-      <TableCell>
+      </PlatformTableCell>
+      <PlatformTableCell>
         <Select value={order.fulfillment_status} onValueChange={(v) => handleStatusChange(v as FulfillmentStatus)}>
           <SelectTrigger className="h-8 w-[130px] text-xs">
             <SelectValue />
@@ -202,8 +205,8 @@ function OrderRow({ order, onUpdate }: { order: HardwareOrder; onUpdate: ReturnT
             <SelectItem value="cancelled">Cancelled</SelectItem>
           </SelectContent>
         </Select>
-      </TableCell>
-    </TableRow>
+      </PlatformTableCell>
+    </PlatformTableRow>
   );
 }
 
@@ -215,13 +218,13 @@ export function HardwareOrdersTab() {
     return (
       <div className="space-y-6">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-20 rounded-xl" />)}
+          {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-20 rounded-xl bg-slate-800/50" />)}
         </div>
-        <Card>
-          <CardContent className="p-6">
-            {[1, 2, 3, 4, 5].map((i) => <Skeleton key={i} className={tokens.loading.skeleton} />)}
-          </CardContent>
-        </Card>
+        <PlatformCard>
+          <PlatformCardContent className="p-6">
+            {[1, 2, 3, 4, 5].map((i) => <Skeleton key={i} className="h-14 w-full bg-slate-800/50" />)}
+          </PlatformCardContent>
+        </PlatformCard>
       </div>
     );
   }
@@ -232,43 +235,43 @@ export function HardwareOrdersTab() {
     <div className="space-y-6">
       <KpiCards orders={allOrders} />
 
-      <Card>
-        <CardHeader>
+      <PlatformCard>
+        <PlatformCardHeader>
           <div className="flex items-center gap-3">
-            <div className={tokens.card.iconBox}>
-              <Package className={tokens.card.icon} />
+            <div className="w-10 h-10 bg-slate-700/50 flex items-center justify-center rounded-lg shrink-0">
+              <Package className="w-5 h-5 text-violet-400" />
             </div>
-            <CardTitle className={tokens.card.title}>Hardware Orders</CardTitle>
+            <PlatformCardTitle>Hardware Orders</PlatformCardTitle>
           </div>
-        </CardHeader>
-        <CardContent>
+        </PlatformCardHeader>
+        <PlatformCardContent>
           {allOrders.length === 0 ? (
-            <div className={tokens.empty.container}>
-              <Package className={tokens.empty.icon} />
-              <h3 className={tokens.empty.heading}>No hardware orders yet</h3>
-              <p className={tokens.empty.description}>Orders will appear here when customers purchase scales.</p>
+            <div className="text-center py-14">
+              <Package className="w-12 h-12 mx-auto mb-4 opacity-20 text-slate-400" />
+              <h3 className="font-medium text-lg mb-2 text-white">No hardware orders yet</h3>
+              <p className="text-sm text-slate-400">Orders will appear here when customers purchase scales.</p>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className={tokens.table.columnHeader}>Organization</TableHead>
-                  <TableHead className={tokens.table.columnHeader}>Qty</TableHead>
-                  <TableHead className={tokens.table.columnHeader}>Status</TableHead>
-                  <TableHead className={tokens.table.columnHeader}>Ordered</TableHead>
-                  <TableHead className={tokens.table.columnHeader}>Tracking</TableHead>
-                  <TableHead className={tokens.table.columnHeader}>Update</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            <PlatformTable>
+              <PlatformTableHeader>
+                <PlatformTableRow>
+                  <PlatformTableHead>Organization</PlatformTableHead>
+                  <PlatformTableHead>Qty</PlatformTableHead>
+                  <PlatformTableHead>Status</PlatformTableHead>
+                  <PlatformTableHead>Ordered</PlatformTableHead>
+                  <PlatformTableHead>Tracking</PlatformTableHead>
+                  <PlatformTableHead>Update</PlatformTableHead>
+                </PlatformTableRow>
+              </PlatformTableHeader>
+              <PlatformTableBody>
                 {allOrders.map((order) => (
                   <OrderRow key={order.id} order={order} onUpdate={updateOrder} />
                 ))}
-              </TableBody>
-            </Table>
+              </PlatformTableBody>
+            </PlatformTable>
           )}
-        </CardContent>
-      </Card>
+        </PlatformCardContent>
+      </PlatformCard>
     </div>
   );
 }
