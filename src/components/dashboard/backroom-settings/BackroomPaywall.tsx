@@ -1539,14 +1539,16 @@ export function BackroomPaywall() {
         {/* ═══════════════════════════════════════════
             SECTION 4.98 — REAL SALON SCENARIO
             ═══════════════════════════════════════════ */}
-        <section className="pb-20 md:pb-24 bg-muted/20 -mx-6 sm:-mx-8 px-6 sm:px-8 rounded-2xl pt-10 md:pt-12">
+        <section className="pb-20 md:pb-24 bg-muted/20 -mx-6 sm:-mx-8 px-6 sm:px-8 rounded-2xl pt-10 md:pt-12 shadow-[inset_0_1px_0_0_hsl(var(--border)/0.3)]">
           <div className="space-y-10 md:space-y-12">
-            <div className="text-center space-y-3">
-              <SectionHeading>A Color Service With Zura Backroom</SectionHeading>
-              <p className="font-sans text-base text-muted-foreground font-light max-w-2xl mx-auto">
-                From the first bowl to the final insight. Here is what happens behind the scenes.
-              </p>
-            </div>
+            <RevealOnScroll>
+              <div className="text-center space-y-3">
+                <SectionHeading>A Color Service With Zura Backroom</SectionHeading>
+                <p className="font-sans text-base text-muted-foreground font-light max-w-2xl mx-auto">
+                  From the first bowl to the final insight. Here is what happens behind the scenes.
+                </p>
+              </div>
+            </RevealOnScroll>
 
             {/* Desktop: horizontal timeline */}
             <div className="hidden md:grid grid-cols-7 gap-2 items-start">
