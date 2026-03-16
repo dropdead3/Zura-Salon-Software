@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import {
   Package, Beaker, BarChart3, Shield, Zap, ArrowRight, Loader2,
   Minus, Plus, Scale, ShieldCheck, MapPin, TrendingDown, DollarSign, Activity,
-  ChevronUp,
+  ChevronUp, Info,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -210,6 +210,12 @@ export function BackroomPaywall() {
           <p className="text-[10px] text-muted-foreground font-sans leading-tight">
             * Supply fee recovery assumes you add an avg product cost fee to color services.
           </p>
+          <div className="flex gap-1.5 items-start mt-1 p-2 rounded-md bg-muted/20 border border-border/30">
+            <Info className="w-3 h-3 text-muted-foreground shrink-0 mt-0.5" />
+            <p className="text-[10px] text-muted-foreground font-sans leading-tight">
+              All savings and revenue projections are estimates and not guaranteed.
+            </p>
+          </div>
         </div>
       )}
 
@@ -411,6 +417,14 @@ export function BackroomPaywall() {
                 ) : null}
               </CardContent>
             </Card>
+
+            {/* Estimates Disclaimer */}
+            <div className="flex gap-2 items-start p-3 rounded-lg bg-muted/20 border border-border/30">
+              <Info className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
+              <p className="text-xs text-muted-foreground font-sans leading-relaxed">
+                These figures are estimates based on your current scheduled appointments and estimated booking capacity. Actual results may vary based on scheduling changes, client retention, and service mix.
+              </p>
+            </div>
 
             {/* Pricing Overview */}
             <Card className="bg-card/60 border-border/40">
