@@ -318,13 +318,13 @@ export function AccountSettingsTab({ organizationId }: AccountSettingsTabProps) 
               value={settings.defaults.default_location_id || 'none'} 
               onValueChange={(v) => updateSettings('defaults.default_location_id', v === 'none' ? null : v)}
             >
-              <SelectTrigger className="w-48 bg-slate-800 border-slate-700 text-white">
+              <SelectTrigger className="w-48">
                 <SelectValue placeholder="Select location" />
               </SelectTrigger>
-              <SelectContent className="bg-slate-900 border-slate-700">
-                <SelectItem value="none" className="text-slate-300">None</SelectItem>
+              <SelectContent>
+                <SelectItem value="none">None</SelectItem>
                 {locations.map(loc => (
-                  <SelectItem key={loc.id} value={loc.id} className="text-slate-300">
+                  <SelectItem key={loc.id} value={loc.id}>
                     {loc.name}
                   </SelectItem>
                 ))}
