@@ -101,7 +101,7 @@ function ProductPreview() {
         <div className="absolute -top-16 left-0 right-0 h-16 bg-gradient-to-b from-background to-transparent z-10 pointer-events-none" />
 
         {/* Browser frame */}
-        <div className="rounded-xl border border-border/60 bg-card shadow-2xl shadow-primary/[0.08] overflow-hidden">
+        <div className="relative rounded-xl border border-border/60 bg-card shadow-[0_24px_80px_hsl(var(--background)/0.55)] overflow-hidden">
           {/* Title bar */}
           <div className="flex items-center gap-2 px-4 py-3 border-b border-border/40 bg-muted/30">
             <div className="flex gap-2">
@@ -179,7 +179,7 @@ function ProductPreview() {
           </div>
         </div>
         {/* Soft glow behind — strengthened */}
-        <div className="absolute inset-0 -z-10 blur-3xl opacity-30 bg-gradient-to-br from-primary/40 via-primary/20 to-transparent rounded-3xl scale-125" />
+        <div className="absolute -inset-10 -z-10 rounded-[32px] pointer-events-none bg-[radial-gradient(circle_at_center,hsl(var(--primary)/0.18)_0%,hsl(var(--primary)/0.08)_32%,transparent_72%)] blur-[72px] opacity-70" />
       </div>
     </div>
   );
