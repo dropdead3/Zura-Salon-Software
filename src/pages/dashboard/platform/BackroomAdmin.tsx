@@ -90,6 +90,9 @@ export default function BackroomAdmin() {
         <TabsContent value="refund-history" className="mt-6">
           <RefundHistoryTab />
         </TabsContent>
+        <TabsContent value="hardware-orders" className="mt-6">
+          <HardwareOrdersTab />
+        </TabsContent>
       </Tabs>
     </PlatformPageContainer>
   );
