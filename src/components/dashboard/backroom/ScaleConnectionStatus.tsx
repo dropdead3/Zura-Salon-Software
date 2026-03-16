@@ -12,7 +12,7 @@ interface ScaleConnectionStatusProps {
   className?: string;
 }
 
-const STATE_CONFIG: Record<ConnectionState, { label: string; icon: typeof Scale; variant: 'default' | 'secondary' | 'outline' | 'destructive' }> = {
+const STATE_CONFIG: Record<ConnectionState, { label: string; icon: typeof Weight; variant: 'default' | 'secondary' | 'outline' | 'destructive' }> = {
   disconnected: { label: 'Disconnected', icon: WifiOff, variant: 'destructive' },
   scanning: { label: 'Scanning...', icon: Wifi, variant: 'secondary' },
   pairing: { label: 'Pairing...', icon: Wifi, variant: 'secondary' },
