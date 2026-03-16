@@ -695,7 +695,7 @@ function LocationEntitlementPanel({
             <tr className="border-b border-slate-700/40 bg-slate-800/40">
               <th className="font-sans text-xs text-slate-400 text-left px-4 py-2">Location</th>
               <th className="font-sans text-xs text-slate-400 text-left px-4 py-2">Status</th>
-              <th className="font-sans text-xs text-slate-400 text-left px-4 py-2">Plan</th>
+              <th className="font-sans text-xs text-slate-400 text-left px-4 py-2">Status</th>
               <th className="font-sans text-xs text-slate-400 text-left px-4 py-2">Refund</th>
               <th className="font-sans text-xs text-slate-400 text-left px-4 py-2">Scales</th>
               <th className="font-sans text-xs text-slate-400 text-left px-4 py-2">Subscription</th>
