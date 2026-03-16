@@ -90,8 +90,8 @@ function ProductPreview() {
       {/* Browser frame */}
       <div className="rounded-xl border border-border/60 bg-card shadow-2xl shadow-primary/[0.06] overflow-hidden">
         {/* Title bar */}
-        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border/40 bg-muted/30">
-          <div className="flex gap-1.5">
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-border/40 bg-muted/30">
+          <div className="flex gap-2">
             <div className="w-2.5 h-2.5 rounded-full bg-destructive/40" />
             <div className="w-2.5 h-2.5 rounded-full bg-warning/40" />
             <div className="w-2.5 h-2.5 rounded-full bg-success/40" />
