@@ -405,19 +405,35 @@ export function BackroomPaywall() {
     <div className="flex flex-col items-center justify-center px-4 py-8">
       {/* ── HERO (full width) ── */}
       <div className="max-w-5xl w-full space-y-8">
-        <div className="text-center space-y-3">
+        <div className="text-center space-y-4">
           <div className="mx-auto w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-            <Zap className="w-8 h-8 text-primary" />
+            <Scale className="w-8 h-8 text-primary" />
           </div>
           <h1 className={cn(tokens.heading.page, 'text-2xl')}>
-            Stop Losing Money in Your Backroom
+            Zura Backroom
           </h1>
-          <p className="text-muted-foreground text-base max-w-lg mx-auto font-sans">
-            The average salon loses $375/mo to product waste, ghost losses, and manual audits. Here's what it's costing yours.
+          <p className="text-muted-foreground text-base max-w-xl mx-auto font-sans">
+            Color room management and resupply intelligence that reduces waste and increases revenue.
+          </p>
+          <p className="text-muted-foreground/70 text-sm max-w-lg mx-auto font-sans leading-relaxed">
+            Track every gram dispensed, eliminate ghost losses, recover supply costs, and know what to reorder before you run out.
           </p>
         </div>
 
-        {/* ═══ MONEY YOU MAY BE LOSING — Loss Aversion Banner ═══ */}
+        {/* ═══ HOW IT WORKS ═══ */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {howItWorks.map((step) => (
+            <div key={step.step} className="p-4 rounded-xl bg-card/60 border border-border/40 space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="font-display text-xs tracking-wider text-primary">{step.step}</span>
+                <span className={cn(tokens.label.default, 'text-foreground text-sm')}>{step.title}</span>
+              </div>
+              <p className="text-xs text-muted-foreground font-sans leading-relaxed">{step.description}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* ═══ WHAT YOUR COLOR ROOM IS COSTING YOU — Loss Aversion Banner ═══ */}
         {(estimate || estimateLoading) && (
           <Card className="bg-destructive/[0.03] border-destructive/20 overflow-hidden">
             <CardContent className="p-6 space-y-4">
@@ -427,10 +443,10 @@ export function BackroomPaywall() {
                 </div>
                 <div>
                   <p className={cn(tokens.label.default, 'text-destructive text-sm')}>
-                    Money You May Be Losing Every Month
+                    What Your Color Room Is Costing You Right Now
                   </p>
                   <p className="text-xs text-muted-foreground font-sans mt-0.5">
-                    Without Zura Backroom, these costs go undetected and unrecovered.
+                    Most salons have no visibility into color room costs. Here is what the data shows for yours.
                   </p>
                 </div>
               </div>
