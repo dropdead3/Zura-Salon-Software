@@ -12,7 +12,7 @@ import {
 import { PlatformButton } from '@/components/platform/ui/PlatformButton';
 import { PlatformInput } from '@/components/platform/ui/PlatformInput';
 import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import { PlatformTable as Table, PlatformTableHeader as TableHeader, PlatformTableBody as TableBody, PlatformTableRow as TableRow, PlatformTableHead as TableHead, PlatformTableCell as TableCell } from '@/components/platform/ui/PlatformTable';
 import { Select, SelectValue, PlatformSelectContent as SelectContent, PlatformSelectItem as SelectItem, PlatformSelectTrigger as SelectTrigger } from '@/components/platform/ui/PlatformSelect';
 import { Skeleton } from '@/components/ui/skeleton';
 import {

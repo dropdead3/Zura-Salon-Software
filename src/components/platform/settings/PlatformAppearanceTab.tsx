@@ -16,7 +16,7 @@ import {
 } from '../ui/PlatformCard';
 import { PlatformButton } from '../ui/PlatformButton';
 import { PlatformThemeEditor } from './PlatformThemeEditor';
-import { Label } from '@/components/ui/label';
+import { PlatformLabel as Label } from '../ui/PlatformLabel';
 
 type ThemeOption = 'light' | 'dark' | 'system';
 

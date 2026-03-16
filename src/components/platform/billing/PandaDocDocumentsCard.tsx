@@ -8,8 +8,8 @@ import {
   PlatformCardTitle,
   PlatformCardDescription,
 } from '@/components/platform/ui/PlatformCard';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { PlatformButton as Button } from '@/components/platform/ui/PlatformButton';
+import { PlatformBadge as Badge } from '@/components/platform/ui/PlatformBadge';
 import { usePandaDocDocuments, useReapplyPandaDocFields } from '@/hooks/usePandaDocDocuments';
 import { LinkPandaDocDialog } from './LinkPandaDocDialog';
 

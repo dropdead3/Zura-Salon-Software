@@ -9,9 +9,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { PlatformButton as Button } from '@/components/platform/ui/PlatformButton';
+import { PlatformInput as Input } from '@/components/platform/ui/PlatformInput';
+import { PlatformLabel as Label } from '@/components/platform/ui/PlatformLabel';
 import { Textarea } from '@/components/ui/textarea';
 import { useCompMonths } from '@/hooks/useContractAdjustments';
 

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Copy, Check, FileText, Clock, CheckCircle2, AlertCircle, ExternalLink } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { PlatformButton as Button } from '@/components/platform/ui/PlatformButton';
 import { tokens } from '@/lib/design-tokens';
 import {
   PlatformCard,

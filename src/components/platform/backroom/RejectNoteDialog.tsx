@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import { PlatformButton as Button } from '@/components/platform/ui/PlatformButton';
 import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
+import { PlatformLabel as Label } from '@/components/platform/ui/PlatformLabel';
 import { X, Loader2 } from 'lucide-react';
 
 interface RejectNoteDialogProps {

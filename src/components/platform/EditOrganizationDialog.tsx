@@ -37,7 +37,7 @@ import { Building2, Loader2, AlertTriangle, CalendarIcon } from 'lucide-react';
 import { useUpdateOrganization, type Organization, type BusinessType } from '@/hooks/useOrganizations';
 import { PlatformButton } from './ui/PlatformButton';
 import { PlatformInput } from './ui/PlatformInput';
-import { Button } from '@/components/ui/button';
+import { PlatformButton as Button } from './ui/PlatformButton';
 import { format, parseISO, isBefore, startOfDay } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { ScrollArea } from '@/components/ui/scroll-area';

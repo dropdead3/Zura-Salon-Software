@@ -3,7 +3,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { AlertTriangle, ChevronRight, Building2 } from 'lucide-react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { PlatformButton } from '@/components/platform/ui/PlatformButton';
-import { Badge } from '@/components/ui/badge';
+import { PlatformBadge as Badge } from '@/components/platform/ui/PlatformBadge';
 import { cn } from '@/lib/utils';
 import type { StripePaymentsHealth } from '@/hooks/useStripePaymentsHealth';
 

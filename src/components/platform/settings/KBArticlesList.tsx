@@ -17,7 +17,7 @@ import {
   PlatformSelectItem as SelectItem,
   PlatformSelectTrigger as SelectTrigger,
 } from '@/components/platform/ui/PlatformSelect';
-import { Badge } from '@/components/ui/badge';
+import { PlatformBadge as Badge } from '@/components/platform/ui/PlatformBadge';
 import { formatDistanceToNow } from 'date-fns';
 
 interface KBArticlesListProps {

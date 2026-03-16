@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { EmailBrandingSection } from './EmailBrandingSection';
 import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
+import { PlatformLabel as Label } from '@/components/platform/ui/PlatformLabel';
+import { PlatformInput as Input } from '@/components/platform/ui/PlatformInput';
 import {
   Select,
   SelectValue,

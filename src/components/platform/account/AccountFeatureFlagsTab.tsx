@@ -9,10 +9,10 @@ import {
   X,
   AlertCircle
 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { PlatformBadge as Badge } from '@/components/platform/ui/PlatformBadge';
 import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Input } from '@/components/ui/input';
+import { PlatformInput as Input } from '@/components/platform/ui/PlatformInput';
 import { Textarea } from '@/components/ui/textarea';
 import { PlatformButton } from '@/components/platform/ui/PlatformButton';
 import {
