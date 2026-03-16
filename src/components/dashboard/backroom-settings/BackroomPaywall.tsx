@@ -718,7 +718,7 @@ export function BackroomPaywall() {
                 </div>
                 {estimate?.hasRealData ? (
                   <p className="text-xs text-muted-foreground font-sans">
-                    Based on your ~{estimate.monthlyColorServices} monthly color services, estimated usage fee is ~{formatCurrency(usageFee)}/mo.
+                    Based on current booking volume, we estimate ~{formatCurrency(usageFee)}/mo in usage fees — this varies with actual color service appointments each month.
                   </p>
                 ) : (
                   <p className="text-xs text-muted-foreground font-sans">
