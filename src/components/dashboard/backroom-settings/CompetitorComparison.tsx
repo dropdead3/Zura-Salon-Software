@@ -83,6 +83,7 @@ const columns = [
 
 export function CompetitorComparison() {
   return (
+    <TooltipProvider delayDuration={200}>
     <div className="space-y-8 md:space-y-10">
       <h2 className="font-display text-2xl md:text-3xl font-medium tracking-wide text-center text-foreground">
         How Zura Backroom Compares
