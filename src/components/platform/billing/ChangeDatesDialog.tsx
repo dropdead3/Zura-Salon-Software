@@ -4,12 +4,12 @@ import { useFormatDate } from '@/hooks/useFormatDate';
 import { AlertTriangle } from 'lucide-react';
 import {
   Dialog,
-  DialogContent,
-  DialogDescription,
+  PlatformDialogContent as DialogContent,
+  PlatformDialogDescription as DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  PlatformDialogTitle as DialogTitle,
+} from '@/components/platform/ui/PlatformDialog';
 import { PlatformButton as Button } from '@/components/platform/ui/PlatformButton';
 import { PlatformInput as Input } from '@/components/platform/ui/PlatformInput';
 import { PlatformLabel as Label } from '@/components/platform/ui/PlatformLabel';
