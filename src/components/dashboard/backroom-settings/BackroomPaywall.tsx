@@ -87,67 +87,100 @@ const faqItems = [
 /* ─── Product Preview Mock ─── */
 function ProductPreview() {
   return (
-    <div className="relative mx-auto max-w-[640px]">
-      {/* Browser frame */}
-      <div className="rounded-xl border border-border/60 bg-card shadow-2xl shadow-primary/[0.06] overflow-hidden">
-        {/* Title bar */}
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-border/40 bg-muted/30">
-          <div className="flex gap-2">
-            <div className="w-2.5 h-2.5 rounded-full bg-destructive/40" />
-            <div className="w-2.5 h-2.5 rounded-full bg-warning/40" />
-            <div className="w-2.5 h-2.5 rounded-full bg-success/40" />
-          </div>
-          <div className="flex-1 flex justify-center">
-            <div className="px-4 py-1 rounded-md bg-muted/50 text-[10px] text-muted-foreground font-sans">
-              backroom.getzura.com
-            </div>
-          </div>
-        </div>
-        {/* Mock UI content */}
-        <div className="p-5 space-y-4">
-          {/* Header row */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Beaker className="w-3.5 h-3.5 text-primary" />
-              </div>
-              <span className="font-display text-[10px] tracking-wider text-foreground">MIXING SESSION</span>
-            </div>
-            <span className="text-[10px] text-muted-foreground font-sans">Station 1</span>
-          </div>
-          {/* Client + formula row */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-lg bg-muted/30 border border-border/30 p-3 space-y-2">
-              <span className="text-[9px] text-muted-foreground font-sans">Client</span>
-              <p className="text-xs text-foreground font-sans font-medium">Sarah Mitchell</p>
-            </div>
-            <div className="rounded-lg bg-muted/30 border border-border/30 p-3 space-y-2">
-              <span className="text-[9px] text-muted-foreground font-sans">Last Formula</span>
-              <p className="text-xs text-foreground font-sans font-medium">7N + 8G (1:1.5)</p>
-            </div>
-          </div>
-          {/* Dispensing bars */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] text-muted-foreground font-sans">Dispensed</span>
-              <span className="text-[10px] text-primary font-sans font-medium">42g / 45g target</span>
-            </div>
-            <div className="h-2 rounded-full bg-muted/40 overflow-hidden">
-              <div className="h-full rounded-full bg-primary/70 transition-all" style={{ width: '93%' }} />
-            </div>
-            <div className="flex gap-2">
-              <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-success/10 text-success text-[9px] font-sans">
-                <CheckCircle2 className="w-2.5 h-2.5 mr-1" /> Within target
-              </span>
-              <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-muted/40 text-muted-foreground text-[9px] font-sans">
-                3g under allowance
-              </span>
-            </div>
-          </div>
-        </div>
+    <div className="space-y-8">
+      {/* Section heading */}
+      <div className="text-center space-y-3">
+        <Eyebrow className="text-muted-foreground">See It In Action</Eyebrow>
+        <p className="text-sm md:text-base text-muted-foreground font-sans font-light max-w-md mx-auto leading-relaxed">
+          A real-time mixing session — every gram tracked, every formula remembered.
+        </p>
       </div>
-      {/* Soft glow behind */}
-      <div className="absolute inset-0 -z-10 blur-3xl opacity-20 bg-gradient-to-br from-primary/30 to-transparent rounded-3xl scale-110" />
+
+      <div className="relative mx-auto max-w-[720px]">
+        {/* Top-edge fade */}
+        <div className="absolute -top-16 left-0 right-0 h-16 bg-gradient-to-b from-background to-transparent z-10 pointer-events-none" />
+
+        {/* Browser frame */}
+        <div className="rounded-xl border border-border/60 bg-card shadow-2xl shadow-primary/[0.08] overflow-hidden">
+          {/* Title bar */}
+          <div className="flex items-center gap-2 px-4 py-3 border-b border-border/40 bg-muted/30">
+            <div className="flex gap-2">
+              <div className="w-2.5 h-2.5 rounded-full bg-destructive/40" />
+              <div className="w-2.5 h-2.5 rounded-full bg-warning/40" />
+              <div className="w-2.5 h-2.5 rounded-full bg-success/40" />
+            </div>
+            <div className="flex-1 flex justify-center">
+              <div className="px-4 py-1 rounded-md bg-muted/50 text-[10px] text-muted-foreground font-sans">
+                backroom.getzura.com
+              </div>
+            </div>
+          </div>
+          {/* Mock UI content */}
+          <div className="p-5 space-y-4">
+            {/* Header row */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Beaker className="w-3.5 h-3.5 text-primary" />
+                </div>
+                <span className="font-display text-[10px] tracking-wider text-foreground">MIXING SESSION</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground font-sans">
+                  <Timer className="w-3 h-3" /> 4:32
+                </span>
+                <span className="text-[10px] text-muted-foreground font-sans">Station 1</span>
+              </div>
+            </div>
+            {/* Client + formula row */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-lg bg-muted/30 border border-border/30 p-3 space-y-2">
+                <span className="text-[9px] text-muted-foreground font-sans">Client</span>
+                <p className="text-xs text-foreground font-sans font-medium">Sarah Mitchell</p>
+              </div>
+              <div className="rounded-lg bg-muted/30 border border-border/30 p-3 space-y-2">
+                <span className="text-[9px] text-muted-foreground font-sans">Last Formula</span>
+                <p className="text-xs text-foreground font-sans font-medium">7N + 8G (1:1.5)</p>
+              </div>
+            </div>
+            {/* Dispensing bars — Color */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] text-muted-foreground font-sans">Color — 7N + 8G</span>
+                <span className="text-[10px] text-primary font-sans font-medium">42g / 45g target</span>
+              </div>
+              <div className="h-2 rounded-full bg-muted/40 overflow-hidden">
+                <div className="h-full rounded-full bg-primary/70 transition-all" style={{ width: '93%' }} />
+              </div>
+              <div className="flex gap-2">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-success/10 text-success text-[9px] font-sans">
+                  <CheckCircle2 className="w-2.5 h-2.5 mr-1" /> Within target
+                </span>
+                <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-muted/40 text-muted-foreground text-[9px] font-sans">
+                  3g under allowance
+                </span>
+              </div>
+            </div>
+            {/* Dispensing bars — Developer */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] text-muted-foreground font-sans">Developer — 20 Vol</span>
+                <span className="text-[10px] text-muted-foreground font-sans font-medium">63g / 67.5g target</span>
+              </div>
+              <div className="h-2 rounded-full bg-muted/40 overflow-hidden">
+                <div className="h-full rounded-full bg-accent/50 transition-all" style={{ width: '93%' }} />
+              </div>
+              <div className="flex gap-2">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-success/10 text-success text-[9px] font-sans">
+                  <CheckCircle2 className="w-2.5 h-2.5 mr-1" /> Within target
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+        {/* Soft glow behind — strengthened */}
+        <div className="absolute inset-0 -z-10 blur-3xl opacity-30 bg-gradient-to-br from-primary/40 via-primary/20 to-transparent rounded-3xl scale-125" />
+      </div>
     </div>
   );
 }
