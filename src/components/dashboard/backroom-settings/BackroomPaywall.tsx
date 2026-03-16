@@ -2071,7 +2071,7 @@ export function BackroomPaywall() {
             ].map((item, i) => (
               <RevealOnScroll key={i} delay={i * 60}>
                 <Card className={cn("p-5 space-y-3 bg-card shadow-md hover:shadow-lg transition-shadow duration-200", i === 4 && "sm:col-start-1 lg:col-start-2")}>
-                <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
+                <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
                   <item.icon className="w-5 h-5 text-primary" />
                 </div>
                 <h3 className="font-display text-sm tracking-wide text-foreground">{item.title}</h3>
