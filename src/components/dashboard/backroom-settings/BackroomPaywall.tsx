@@ -2036,6 +2036,7 @@ export function BackroomPaywall() {
                 <h3 className="font-display text-sm tracking-wide text-foreground">{item.title}</h3>
                 <p className="text-sm text-muted-foreground font-sans font-light">{item.desc}</p>
               </Card>
+              </RevealOnScroll>
             ))}
           </div>
 
