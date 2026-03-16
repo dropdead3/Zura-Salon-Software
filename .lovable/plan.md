@@ -1,153 +1,71 @@
 
 
-## Timezone-Safe Scheduling (Implemented)
+# Animation Stability Audit — BackroomPaywall.tsx
 
-### Problem
-`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
+## Animation Inventory & Verdicts
 
-### Solution
-- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
-- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
-- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
+| # | Element | Mechanism | Duration | Travel | Verdict |
+|---|---------|-----------|----------|--------|---------|
+| 1 | Hero step content swap | `animate-fade-in` (CSS keyframe) | 600ms | 20px Y | **BROKEN** — auto-cycles every 3s with heavy movement; feels jarring |
+| 2 | Feature panel swap | `animate-fade-in` (CSS keyframe) | 600ms | 20px Y | **TOO SLOW** — tab switch should be 150-200ms with minimal travel |
+| 3 | Before/After cards | `hover-lift` class | 300ms | -4px Y + heavy shadow | **OVERDONE** — 300ms violates 120-160ms hover standard; shadow too aggressive |
+| 4 | How It Works cards | `hover-lift` + `hover:shadow-md` | 300ms | -4px Y + heavy shadow | **OVERDONE** — same issue |
+| 5 | RevealOnScroll | IntersectionObserver + CSS transition | 700ms | 24px Y | **BORDERLINE** — slightly long; reduce to 500ms and 16px |
+| 6 | RevealOnScroll stagger delays | `delay={i * 100}` | 100ms increments | — | OK but compounds with 700ms base |
+| 7 | Hero weight counter | requestAnimationFrame | 2000ms | — | **OK** — smooth, GPU-friendly |
+| 8 | Hero dot indicators | `transition-all duration-300` | 300ms | width change | **OK** |
+| 9 | Feature selector buttons | `transition-all duration-200` | 200ms | bg/border | **OK** |
+| 10 | ActivateButton | `active:scale-[0.98]` + shadow | 200ms | — | **OK** |
+| 11 | Product preview glow | Static CSS gradient | — | — | **OK** — no animation |
+| 12 | Accordion (FAQ) | Radix built-in | 200ms | height | **OK** |
+| 13 | Progress bars | `transition-all` on width | — | — | **OK** |
+| 14 | `transition-all` on location rows | CSS | 150ms | — | **OK** |
 
-### Files Updated
-- `ScheduleHeader.tsx` — today button, quick days, isToday checks
-- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
-- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
-- `MonthView.tsx` — today highlight
-- `AgendaView.tsx` — today/tomorrow labels, today border
-- `ScheduleActionBar.tsx` — payment queue timing
-- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
-- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
-- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
-- `useHuddles.ts` — today's huddle query
+## Critical Bugs
 
-## Auto-Reorder with Supplier Communication (Implemented)
+1. **Hero auto-cycle jank**: Every 3 seconds, the entire hero card content unmounts and remounts via React `key={heroStep}`, triggering a full 600ms fade-in animation with 20px vertical travel. This creates a constant bouncing motion that feels distracting, not premium. The content disappears abruptly (no exit animation) then slides up slowly.
 
-### What It Does
-Organizations can opt into automatic reorder — when stock dips below threshold, POs are calculated (using MOQ and par levels) and sent directly to the supplier via email.
+2. **Feature panel swap lag**: Clicking a feature tab triggers the same 600ms/20px fade. For a direct-manipulation interaction, this feels sluggish. Should be 150-200ms with opacity-only or minimal travel (4-8px max).
 
-### Database Changes
-- `products.par_level` (INT, nullable) — desired stock level to reorder up to
-- `product_suppliers.moq` (INT, default 1) — minimum order quantity
-- `inventory_alert_settings.auto_reorder_enabled` (BOOL, default false)
-- `inventory_alert_settings.auto_reorder_mode` (TEXT, default 'to_par') — 'to_par' or 'moq_only'
-- `inventory_alert_settings.max_auto_reorder_value` (NUMERIC, nullable) — daily spend cap
-- `purchase_orders.supplier_confirmed_at` (TIMESTAMPTZ, nullable) — for tracking confirmations
+3. **hover-lift violates motion standards**: The memory doc says hovers should be 120-160ms with opacity and shadow shifts only. `hover-lift` uses 300ms, translateY(-4px), and a heavy 12px/24px shadow — this is too much for a sales page card.
 
-### Quantity Calculation
-```
-deficit = par_level - quantity_on_hand
-order_qty = max(moq, deficit)
-if moq > 1: round up to nearest MOQ multiple
-```
-Fallback: if par_level is null, uses `reorder_level * 2`.
+4. **No reduced motion support**: Zero `prefers-reduced-motion` handling anywhere on this page.
 
-### Files Updated
-- Migration: Added columns to products, product_suppliers, inventory_alert_settings, purchase_orders
-- `check-reorder-levels/index.ts` — auto-send logic with MOQ/par calculation, spend cap, email invocation
-- `AlertSettingsCard.tsx` — auto-reorder toggle, mode selector, spend cap input
-- `useInventoryAlertSettings.ts` — updated interface
-- `useProducts.ts` — added par_level to Product interface
-- `useProductSuppliers.ts` — added moq to ProductSupplier interface
-- `ProductEditDialog.tsx` — added par level field
-- `RetailProductsSettingsContent.tsx` — added par level to product form
-- `SupplierDialog.tsx` — added MOQ field
+## Remediation Plan
 
-### Safety Features
-- Spend cap: daily auto-reorder pauses when cumulative PO value exceeds cap
-- Audit trail: auto_reorder logged as stock_movement reason
-- Supplier confirmation tracking via supplier_confirmed_at timestamp
+### A. Fix hero step transition (line 418)
+Replace `animate-fade-in` with a lighter class. Create a new `animate-fade-in-fast` that uses 250ms, opacity-only (no translateY). The hero content should crossfade, not bounce.
 
-## Product Movement Rating Badges (Implemented)
+### B. Fix feature panel transition (line 835)
+Same fix — use `animate-fade-in-fast` (250ms, opacity-only).
 
-### What It Does
-Every product gets a dynamic movement rating badge (Best Seller, Popular, Steady, Slow Mover, Stagnant, Dead Weight) computed from 90-day sales velocity data.
+### C. Fix hover-lift on this page (lines 586, 614, 1019)
+Replace `hover-lift` with a lighter pattern: `transition-shadow duration-150` + `hover:shadow-md`. No translateY. This matches the 120-160ms hover standard without layout shift.
 
-### Rating Tiers
-- **Best Seller**: Top 10% velocity AND >0.5 units/day (emerald)
-- **Popular**: Top 25% velocity AND >0.2 units/day (blue)
-- **Steady**: Velocity >0.05/day (muted)
-- **Slow Mover**: Velocity >0 but ≤0.05/day (amber)
-- **Stagnant**: Zero velocity, sold within 180 days (orange)
-- **Dead Weight**: Zero velocity, 180+ days or never sold (red)
-- Products with zero stock excluded from negative ratings
+### D. Tighten RevealOnScroll (lines 341-363)
+- Duration: 700ms → 500ms
+- Travel: `translate-y-6` (24px) → `translate-y-3` (12px)
+- This keeps the reveal subtle and fast
 
-### Files Created
-- `src/lib/productMovementRating.ts` — pure rating logic + badge config
-- `src/hooks/useProductVelocity.ts` — lightweight 90-day POS velocity query
-- `src/components/ui/MovementBadge.tsx` — shared badge component with tooltip
+### E. Add reduced motion support (lines 341-363)
+Add `motion-reduce:` variants so RevealOnScroll and fade-in respect `prefers-reduced-motion`.
 
-### Files Updated
-- `RetailProductsSettingsContent.tsx` — Movement column + filter dropdown in products table
-- `RetailAnalyticsContent.tsx` — Movement badges on product performance table + Movement Distribution card (donut chart with actionable callouts)
-- `ProductCard.tsx` — Best Seller/Popular badges on public shop cards (positive only)
-- `ProductDetailModal.tsx` — Movement badge with velocity context
+### F. Add `animate-fade-in-fast` to index.css
+New class: 250ms, opacity-only, no translateY.
 
-## Inventory Intelligence Suite v2 (Implemented)
+## Files Modified
 
-### 1. Dead Stock Auto-Clearance Pipeline
-- `DeadStockAlertCard.tsx` — Surfaces Dead Weight/Stagnant products not yet in clearance with suggested discount tiers (10%/25%/50% based on idle days)
-- One-click "Mark for Clearance" applies discount and sets clearance_status
+1. **`src/index.css`** — Add `animate-fade-in-fast` keyframe + class, add `@media (prefers-reduced-motion)` block
+2. **`src/components/dashboard/backroom-settings/BackroomPaywall.tsx`** — Fix hero fade, feature fade, hover-lift replacements, RevealOnScroll tuning
 
-### 2. Supplier Lead Time Tracker
-- `usePurchaseOrders.ts` — `useMarkPurchaseOrderReceived` already computes actual delivery days and updates `product_suppliers.avg_delivery_days` via running average
-- `parLevelSuggestion.ts` — Updated to accept supplier-provided lead time instead of hardcoded 7-day default, with bounds clamping
+## Motion System Rules (Post-Fix)
 
-### 3. Inventory Valuation Dashboard Card
-- `InventoryValuationCard.tsx` — Shows total inventory at cost/retail, potential margin %, capital-at-risk (slow/stagnant/dead weight), with donut chart breakdown
+| Context | Duration | Travel | Easing |
+|---------|----------|--------|--------|
+| Auto-cycling content | 250ms | 0 (opacity only) | ease-out |
+| Tab/panel switch | 250ms | 0 (opacity only) | ease-out |
+| Hover states | 150ms | 0 (shadow only) | ease-out |
+| Scroll reveal | 500ms | 12px Y | ease-out |
+| Button press | 200ms | scale(0.98) | ease-out |
+| Accordion | 200ms | height | ease-out |
 
-### 4. Reorder Approval Queue
-- `ReorderApprovalCard.tsx` — Surfaces draft POs from auto-reorder with one-click approve (→ sent) or reject (→ cancelled)
-
-### 5. Stock Transfer Between Locations
-- Migration: Created `stock_transfers` table with RLS (org member read, org admin manage)
-- `useStockTransfers.ts` — CRUD hooks for stock transfers with stock movement logging
-- `StockTransferDialog.tsx` — Dialog for creating transfers between locations
-- `RetailProductsSettingsContent.tsx` — "Transfer Stock" button added to Inventory tab (visible for multi-location orgs)
-
-## Enhancement 1: Expiry Tracking (Implemented)
-
-### What It Does
-Products can have an optional expiration date (`expires_at`) and per-product alert threshold (`expiry_alert_days`, default 30). The system surfaces expiring inventory with color-coded badges in the product table and an analytics card with auto-clearance suggestions.
-
-### Database Changes
-- `products.expires_at` (DATE, nullable) — expiration date for perishable products
-- `products.expiry_alert_days` (INTEGER, default 30) — days before expiry to trigger alerts
-
-### Expiry Alert Buckets
-- **Expired** (red): past expiration → suggests 50% markdown
-- **Critical** (orange): within alert threshold → suggests 25% markdown
-- **Warning** (amber): within 2× alert threshold → suggests 10% markdown
-
-### Files Created
-- `src/components/dashboard/analytics/ExpiryAlertCard.tsx` — PinnableCard showing expiring products with one-click clearance actions
-
-### Files Updated
-- `src/hooks/useProducts.ts` — Added `expires_at`, `expiry_alert_days` to Product interface; added `expiringOnly` filter
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Expiry date + alert days in product form; color-coded Expiry column in product table
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ExpiryAlertCard into analytics hub
-
-## Enhancement 2: Shrinkage Detection (Implemented)
-
-### What It Does
-Physical stocktake workflow with variance reporting. Staff record actual counts via a Stocktake dialog, and the system compares against expected quantities (system records). A Shrinkage Report card in analytics surfaces products with negative variance (loss) ranked by estimated cost impact.
-
-### Database Changes
-- Created `stock_counts` table with computed `variance` column (counted - expected), RLS policies (org member read/insert, org admin update/delete), and indexes
-
-### Shrinkage Calculation
-```
-variance = counted_quantity - expected_quantity
-shrinkage_units = |variance| when variance < 0
-shrinkage_cost = shrinkage_units × cost_price
-```
-
-### Files Created
-- `src/hooks/useStockCounts.ts` — CRUD hooks for stock counts + `useShrinkageSummary` for aggregated shrinkage data
-- `src/components/dashboard/settings/inventory/StocktakeDialog.tsx` — Full stocktake UI with search, inline count entry, real-time variance display
-- `src/components/dashboard/analytics/ShrinkageReportCard.tsx` — PinnableCard showing products with shrinkage, severity badges, estimated loss
-
-### Files Updated
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Added "Stocktake" button to Inventory tab toolbar
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ShrinkageReportCard into analytics hub
