@@ -1940,7 +1940,7 @@ export function BackroomPaywall() {
                 <div className="grid grid-cols-2 gap-5">
                   <div className="p-5 rounded-xl bg-muted/30 border border-border/40 text-center">
                     <p className="font-display text-2xl tracking-wide text-foreground">${SCALE_HARDWARE_PRICE}</p>
-                    <p className="text-sm text-muted-foreground font-sans mt-1.5">per scale (one-time)</p>
+                    <p className="text-sm text-muted-foreground font-sans mt-2">per scale (one-time)</p>
                   </div>
                   <div className="p-5 rounded-xl bg-muted/30 border border-border/40 text-center">
                     <p className="font-display text-2xl tracking-wide text-foreground">${SCALE_LICENSE_MONTHLY}</p>
