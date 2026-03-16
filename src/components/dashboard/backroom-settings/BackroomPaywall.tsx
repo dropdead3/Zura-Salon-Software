@@ -671,10 +671,12 @@ export function BackroomPaywall() {
             </Card>
           </div>
 
-          <div className="flex justify-center pt-8">
-            <ActivateButton />
-          </div>
         </section>
+
+        {/* Divider — Problem → How It Works */}
+        <div className="flex justify-center py-4">
+          <div className="w-12 h-px bg-border/40" />
+        </div>
 
         {/* ═══════════════════════════════════════════
             SECTION 2 — THE PROBLEM (Loss Aversion)
