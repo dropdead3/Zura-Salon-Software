@@ -847,7 +847,7 @@ export function BackroomPaywall() {
                             const pct = Math.min((item.current / item.target) * 100, 100);
                             const reached = item.current >= item.target;
                             return (
-                              <div key={item.name} className="space-y-1.5">
+                              <div key={item.name} className="space-y-2">
                                 <div className="flex justify-between">
                                   <span className="font-sans text-sm text-foreground">{item.name}</span>
                                   <span className="font-sans text-xs text-muted-foreground tabular-nums">
