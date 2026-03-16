@@ -5,11 +5,11 @@ import { PlatformInput } from '../ui/PlatformInput';
 import { PlatformLabel } from '../ui/PlatformLabel';
 import {
   Dialog,
-  DialogContent,
+  PlatformDialogContent as DialogContent,
   DialogHeader,
-  DialogTitle,
+  PlatformDialogTitle as DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
+} from '@/components/platform/ui/PlatformDialog';
 import {
   Select,
   SelectValue,
@@ -111,7 +111,7 @@ export function KBArticleEditor({ open, onOpenChange, article, onClose }: KBArti
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-slate-900 border-slate-700 text-white max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5 text-violet-400" />

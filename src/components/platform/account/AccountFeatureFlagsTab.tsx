@@ -17,24 +17,23 @@ import { Textarea } from '@/components/ui/textarea';
 import { PlatformButton } from '@/components/platform/ui/PlatformButton';
 import {
   Dialog,
-  DialogContent,
-  DialogDescription,
+  PlatformDialogContent as DialogContent,
+  PlatformDialogDescription as DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+  PlatformDialogTitle as DialogTitle,
+} from '@/components/platform/ui/PlatformDialog';
 import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
+  PlatformAlertDialogContent as AlertDialogContent,
+  PlatformAlertDialogDescription as AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle,
+  PlatformAlertDialogTitle as AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
+} from '@/components/platform/ui/PlatformDialog';
 import { toast } from 'sonner';
 import { 
   useOrganizationFeatureFlags, 
@@ -140,9 +139,9 @@ export function AccountFeatureFlagsTab({ organizationId, organizationName }: Acc
                 Reset All ({overrideCount})
               </PlatformButton>
             </AlertDialogTrigger>
-            <AlertDialogContent className="bg-slate-900 border-slate-700">
+            <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle className="text-white">Reset All Overrides?</AlertDialogTitle>
+                <AlertDialogTitle>Reset All Overrides?</AlertDialogTitle>
                 <AlertDialogDescription>
                   This will remove all {overrideCount} custom overrides and revert to global defaults.
                 </AlertDialogDescription>
@@ -226,9 +225,9 @@ export function AccountFeatureFlagsTab({ organizationId, organizationName }: Acc
 
       {/* Override Dialog */}
       <Dialog open={!!overrideDialog} onOpenChange={(open) => !open && setOverrideDialog(null)}>
-        <DialogContent className="bg-slate-900 border-slate-700">
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle className="text-white">Add Feature Override</DialogTitle>
+            <DialogTitle>Add Feature Override</DialogTitle>
             <DialogDescription>
               You're changing <code className="text-violet-400">{overrideDialog?.flag.flag_key}</code> from 
               the global default ({overrideDialog?.flag.global_enabled ? 'enabled' : 'disabled'}) to 

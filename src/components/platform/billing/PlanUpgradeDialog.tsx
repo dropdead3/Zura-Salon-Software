@@ -2,12 +2,12 @@ import { useState } from 'react';
 import { ArrowRight, Check, X, Calendar, Loader2 } from 'lucide-react';
 import {
   Dialog,
-  DialogContent,
-  DialogDescription,
+  PlatformDialogContent as DialogContent,
+  PlatformDialogDescription as DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  PlatformDialogTitle as DialogTitle,
+} from '@/components/platform/ui/PlatformDialog';
 import { PlatformButton } from '@/components/platform/ui/PlatformButton';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { PlatformLabel } from '@/components/platform/ui/PlatformLabel';
@@ -72,9 +72,9 @@ export function PlanUpgradeDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl bg-slate-900 border-slate-700">
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="text-white">Change Subscription Plan</DialogTitle>
+          <DialogTitle>Change Subscription Plan</DialogTitle>
           <DialogDescription>
             {currentPlan 
               ? `Currently on ${currentPlan.name} at ${formatCurrency(currentMonthlyAmount)}/mo`

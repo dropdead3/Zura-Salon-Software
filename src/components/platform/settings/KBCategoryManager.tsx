@@ -6,11 +6,11 @@ import { PlatformInput } from '../ui/PlatformInput';
 import { PlatformLabel } from '../ui/PlatformLabel';
 import {
   Dialog,
-  DialogContent,
+  PlatformDialogContent as DialogContent,
   DialogHeader,
-  DialogTitle,
+  PlatformDialogTitle as DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
+} from '@/components/platform/ui/PlatformDialog';
 import {
   useAdminKBCategories,
   useCreateKBCategory,
@@ -188,7 +188,7 @@ export function KBCategoryManager() {
       )}
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="bg-slate-900 border-slate-700 text-white">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>
               {editingCategory ? 'Edit Category' : 'New Category'}

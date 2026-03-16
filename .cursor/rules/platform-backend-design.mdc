@@ -18,6 +18,8 @@ Files inside `src/components/platform/` MUST use platform-specific UI primitives
 | `Select`, `SelectTrigger`, `SelectContent`     | `Select`, `PlatformSelectTrigger`, `PlatformSelectContent`   |
 | `Label`                                        | `PlatformLabel`                                              |
 | `Table`, `TableHead`, `TableRow`, `TableCell`  | `PlatformTable`, `PlatformTableHead`, `PlatformTableRow`, `PlatformTableCell` |
+| `DialogContent`, `DialogTitle`, `DialogDescription` | `PlatformDialogContent`, `PlatformDialogTitle`, `PlatformDialogDescription` |
+| `AlertDialogContent`, `AlertDialogTitle`, `AlertDialogDescription` | `PlatformAlertDialogContent`, `PlatformAlertDialogTitle`, `PlatformAlertDialogDescription` |
 
 ## Prohibited Imports
 
@@ -31,6 +33,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table } from '@/components/ui/table';
+import { DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { AlertDialogContent, AlertDialogTitle, AlertDialogDescription } from '@/components/ui/alert-dialog';
 ```
 
 ## Correct Imports
@@ -44,13 +48,14 @@ import { PlatformInput } from '@/components/platform/ui/PlatformInput';
 import { PlatformLabel } from '@/components/platform/ui/PlatformLabel';
 import { Select, SelectValue, PlatformSelectTrigger, PlatformSelectContent, PlatformSelectItem } from '@/components/platform/ui/PlatformSelect';
 import { PlatformTable, PlatformTableHeader, PlatformTableBody, PlatformTableHead, PlatformTableRow, PlatformTableCell } from '@/components/platform/ui/PlatformTable';
+import { Dialog, DialogHeader, DialogFooter, PlatformDialogContent, PlatformDialogTitle, PlatformDialogDescription } from '@/components/platform/ui/PlatformDialog';
+import { AlertDialog, AlertDialogHeader, AlertDialogFooter, AlertDialogAction, AlertDialogCancel, PlatformAlertDialogContent, PlatformAlertDialogTitle, PlatformAlertDialogDescription } from '@/components/platform/ui/PlatformDialog';
 ```
 
 ## Allowed Base Imports
 
 These base imports ARE permitted (no platform equivalent needed):
 
-- `@/components/ui/dialog` — Dialog, DialogContent, DialogHeader, etc.
 - `@/components/ui/switch` — Switch
 - `@/components/ui/textarea` — Textarea
 - `@/components/ui/skeleton` — Skeleton
@@ -61,12 +66,23 @@ These base imports ARE permitted (no platform equivalent needed):
 - `@/components/ui/dropdown-menu` — DropdownMenu
 - `@/components/ui/tabs` — Tabs
 
-## Dialog Overrides
+## Dialog Usage
 
-When using base `DialogContent`, always apply dark overrides:
+Always use `PlatformDialogContent`, `PlatformDialogTitle`, `PlatformDialogDescription` instead of base Dialog equivalents.
+For AlertDialogs use `PlatformAlertDialogContent`, `PlatformAlertDialogTitle`, `PlatformAlertDialogDescription`.
+Functional classNames like `max-w-2xl`, `max-h-[80vh]`, `overflow-hidden`, `flex flex-col`, `sm:max-w-md` are passed as-is — the wrapper merges them.
 
 ```tsx
-<DialogContent className="bg-slate-900 border-slate-700 text-white">
+// ✅ Correct — no manual dark overrides needed
+<Dialog open={open} onOpenChange={onOpenChange}>
+  <PlatformDialogContent className="max-w-2xl">
+    <DialogHeader>
+      <PlatformDialogTitle>Title</PlatformDialogTitle>
+      <PlatformDialogDescription>Description</PlatformDialogDescription>
+    </DialogHeader>
+    ...
+  </PlatformDialogContent>
+</Dialog>
 ```
 
 ## KPI Tiles

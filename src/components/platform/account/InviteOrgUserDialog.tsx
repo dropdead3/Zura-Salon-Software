@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import {
   Dialog,
-  DialogContent,
-  DialogDescription,
+  PlatformDialogContent as DialogContent,
+  PlatformDialogDescription as DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  PlatformDialogTitle as DialogTitle,
+} from '@/components/platform/ui/PlatformDialog';
 import { PlatformInput as Input } from '@/components/platform/ui/PlatformInput';
 import { PlatformLabel as Label } from '@/components/platform/ui/PlatformLabel';
 import {
@@ -114,13 +114,13 @@ export function InviteOrgUserDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-slate-900 border-slate-700 sm:max-w-md">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-white">
+          <DialogTitle className="flex items-center gap-2">
             <Mail className="h-5 w-5 text-violet-400" />
             Invite User to {organizationName}
           </DialogTitle>
-          <DialogDescription className="text-slate-400">
+          <DialogDescription>
             Send an invitation email to add a new team member to this organization.
           </DialogDescription>
         </DialogHeader>

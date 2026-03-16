@@ -4,12 +4,12 @@ import { useCreatePlatformInvitation } from '@/hooks/usePlatformInvitations';
 import { supabase } from '@/integrations/supabase/client';
 import {
   Dialog,
-  DialogContent,
-  DialogDescription,
+  PlatformDialogContent as DialogContent,
+  PlatformDialogDescription as DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  PlatformDialogTitle as DialogTitle,
+} from '@/components/platform/ui/PlatformDialog';
 import {
   Select,
   SelectValue,
@@ -198,9 +198,9 @@ export function InvitePlatformUserDialog({ open, onOpenChange }: InvitePlatformU
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md bg-slate-800 border-slate-700">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-white">
+          <DialogTitle>
             {flowState === 'input' && 'Add Platform Team Member'}
             {flowState === 'existing_user' && 'Assign Platform Role'}
             {flowState === 'new_user' && 'Send Invitation'}
