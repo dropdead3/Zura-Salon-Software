@@ -315,20 +315,20 @@ export function BackroomPaywall() {
             </p>
             <div className="grid grid-cols-3 gap-3">
               <div className="text-center">
-                <p className="font-display text-base tracking-wide text-emerald-400">
-                  <AnimatedNumber value={yearlySupplyRecovery} prefix="$" duration={1000} />
+                <p className="font-display text-sm tracking-wide text-emerald-400">
+                  <AnimatedNumber value={yearlySupplyRecovery} duration={1000} formatOptions={{ style: 'currency', currency: 'USD', notation: 'compact', maximumFractionDigits: 1 }} />
                 </p>
                 <p className="text-[10px] text-muted-foreground font-sans">revenue / yr</p>
               </div>
               <div className="text-center">
-                <p className="font-display text-base tracking-wide text-emerald-400">
-                  <AnimatedNumber value={yearlyWasteSavings} prefix="$" duration={1000} />
+                <p className="font-display text-sm tracking-wide text-emerald-400">
+                  <AnimatedNumber value={yearlyWasteSavings} duration={1000} formatOptions={{ style: 'currency', currency: 'USD', notation: 'compact', maximumFractionDigits: 1 }} />
                 </p>
                 <p className="text-[10px] text-muted-foreground font-sans">waste saved / yr</p>
               </div>
               <div className="text-center">
-                <p className="font-display text-base tracking-wide text-emerald-400">
-                  <AnimatedNumber value={yearlyAuditCost} prefix="$" duration={1000} />
+                <p className="font-display text-sm tracking-wide text-emerald-400">
+                  <AnimatedNumber value={yearlyAuditCost} duration={1000} formatOptions={{ style: 'currency', currency: 'USD', notation: 'compact', maximumFractionDigits: 1 }} />
                 </p>
                 <p className="text-[10px] text-muted-foreground font-sans">hours recovered / yr</p>
               </div>
