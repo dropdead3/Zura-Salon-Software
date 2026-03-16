@@ -392,7 +392,7 @@ export function BackroomPaywall() {
 
               <div className="border-t border-border/20 pt-6">
                 <div className="flex flex-col items-center lg:items-start gap-3">
-                  <div className="flex gap-0.5">
+                  <div className="flex gap-1">
                     {[...Array(5)].map((_, i) => (
                       <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
                     ))}
