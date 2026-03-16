@@ -810,7 +810,7 @@ export function BackroomPaywall() {
         {/* ═══════════════════════════════════════════
             SECTION 4 — WHAT YOU GET (6 feature cards)
             ═══════════════════════════════════════════ */}
-        <section className="pb-20 md:pb-24">
+        <section className="pb-20 md:pb-24 bg-muted/20 -mx-6 sm:-mx-8 px-6 sm:px-8 rounded-2xl pt-10 md:pt-12">
           <div className="space-y-8 md:space-y-10">
             <SectionHeading>What You Get</SectionHeading>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
