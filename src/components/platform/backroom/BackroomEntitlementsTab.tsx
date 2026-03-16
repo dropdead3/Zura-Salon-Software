@@ -730,27 +730,6 @@ function LocationEntitlementPanel({
                     )}
                   </td>
                   <td className="px-4 py-2.5">
-                    {isActive && ent ? (
-                      <Select
-                        value={ent.plan_tier}
-                        onValueChange={(val) =>
-                          onUpdateEntitlement(loc.id, { plan_tier: val, status: ent.status })
-                        }
-                      >
-                        <SelectTrigger className="h-7 w-[120px] text-xs bg-slate-800/60 border-slate-700/50">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="starter">Starter</SelectItem>
-                          <SelectItem value="professional">Professional</SelectItem>
-                          <SelectItem value="unlimited">Unlimited</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <span className="font-sans text-xs text-slate-500">—</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-2.5">
                     {ent?.status === 'refunded' && ent.refunded_at ? (
                       <div className="flex flex-col gap-0.5">
                         <PlatformBadge variant="info" size="sm">
