@@ -400,42 +400,12 @@ export function BackroomPaywall() {
                       </div>
                     )}
 
-                    {/* Manual inventory time */}
-                    <div className="border-t border-destructive/10 pt-4 space-y-3">
-                      <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-destructive/70" />
-                        <p className="text-xs text-muted-foreground font-sans">
-                          How many minutes does your team spend daily on manual stock checks?
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="font-display text-sm tracking-wide text-foreground w-14 shrink-0">
-                          {auditMinutesPerDay} min
-                        </span>
-                        <Slider
-                          variant="filled"
-                          min={10}
-                          max={90}
-                          step={5}
-                          value={[auditMinutesPerDay]}
-                          onValueChange={([v]) => setAuditMinutesPerDay(v)}
-                          className="flex-1"
-                        />
-                      </div>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="p-3 rounded-lg bg-muted/30 border border-border/40 text-center">
-                          <p className="font-display text-xl tracking-wide text-foreground">
-                            <AnimatedNumber value={monthlyAuditHours} duration={600} decimals={1} />
-                          </p>
-                          <p className="text-[10px] text-muted-foreground font-sans mt-0.5">hours recovered / mo</p>
-                        </div>
-                        <div className="p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/20 text-center">
-                          <p className="font-display text-xl tracking-wide text-emerald-400">
-                            <AnimatedNumber value={monthlyAuditCost} prefix="$" duration={600} />
-                          </p>
-                          <p className="text-[10px] text-muted-foreground font-sans mt-0.5">cost recovered / mo</p>
-                        </div>
-                      </div>
+                    {/* Manual inventory time — compact inline */}
+                    <div className="border-t border-destructive/10 pt-3 flex items-center justify-center gap-2">
+                      <Clock className="w-3.5 h-3.5 text-muted-foreground/60 shrink-0" />
+                      <p className="text-xs text-muted-foreground font-sans">
+                        Plus ~<span className="text-foreground font-medium">{monthlyAuditHours.toFixed(0)} hours</span> of staff time recovered monthly
+                      </p>
                     </div>
 
                     {estimate.hasRealData && (
