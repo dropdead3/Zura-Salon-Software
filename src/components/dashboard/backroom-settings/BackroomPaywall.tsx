@@ -377,41 +377,6 @@ export function BackroomPaywall() {
         </div>
       )}
 
-      {/* CTA */}
-      <Button
-        size="lg"
-        className="w-full font-sans font-medium gap-2 text-sm"
-        onClick={() => setConfirmDialogOpen(true)}
-        disabled={loading || selectedLocationIds.size === 0}
-      >
-        <Lock className="w-4 h-4" />
-        Subscribe — {formatCurrency(monthlyTotal)}/mo
-        <ArrowRight className="w-4 h-4" />
-      </Button>
-
-      <BackroomCheckoutConfirmDialog
-        open={confirmDialogOpen}
-        onOpenChange={setConfirmDialogOpen}
-        onConfirm={() => {
-          setConfirmDialogOpen(false);
-          handleCheckout();
-        }}
-        loading={loading}
-        organizationId={effectiveOrganization?.id}
-        locationCount={locationCount}
-        scaleCount={scaleCount}
-        estimatedMonthlyServices={Math.round((estimate?.monthlyColorServices ?? 0) * locationFraction)}
-        estimatedMonthlySavings={totalSavings}
-        netBenefit={netBenefit}
-      />
-      {selectedLocationIds.size === 0 && activeLocations.length > 0 && (
-        <p className="text-xs text-destructive font-sans text-center">
-          Select at least one location to continue
-        </p>
-      )}
-      <p className="text-[10px] text-muted-foreground font-sans text-center">
-        30-day money-back guarantee · Cancel anytime
-      </p>
     </div>
   );
 
