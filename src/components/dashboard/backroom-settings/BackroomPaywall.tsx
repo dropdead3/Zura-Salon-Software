@@ -1075,7 +1075,7 @@ export function BackroomPaywall() {
         {/* ═══════════════════════════════════════════
             SECTION 9 — FINAL CTA
             ═══════════════════════════════════════════ */}
-        <section className="border-t border-border/20 pt-16 pb-8 text-center space-y-6">
+        <section className="border-t border-border/20 pt-16 pb-12 text-center space-y-6">
           {hasPositiveBenefit && estimate ? (
             <p className="font-sans text-base text-muted-foreground">
               Projected to recover {formatCurrency(yearlySavings)} annually{roiMultiplier >= 2 ? ` — ${roiMultiplier}× your cost` : ''}.

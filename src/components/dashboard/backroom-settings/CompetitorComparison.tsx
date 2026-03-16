@@ -152,7 +152,7 @@ export function CompetitorComparison() {
                   </td>
                   {columns.map((col) => (
                     <td key={col.key} className={cn(
-                      'text-center px-5 py-4',
+                      'text-center px-6 py-4',
                       col.key === 'zura' && 'bg-primary/[0.03]',
                     )}>
                       <div className="space-y-1">
