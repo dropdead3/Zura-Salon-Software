@@ -125,7 +125,6 @@ export function BackroomBillingTab() {
           icon={CheckCircle2}
           label="Active Subscriptions"
           value={String(metrics.totalActiveSubscriptions)}
-          subtitle={`${metrics.totalTrialOrgs} in trial`}
         />
         <BillingKPICard
           icon={DollarSign}
