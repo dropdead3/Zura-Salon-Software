@@ -946,7 +946,7 @@ export function BackroomPaywall() {
                       Your color room pays you back {roiMultiplier}× over
                     </p>
                     <p className="text-xs text-muted-foreground font-sans mt-1">
-                      {formatCurrency(yearlyCost)}/yr cost → {formatCurrency(yearlySavings)}/yr in savings & revenue.
+                      {formatCurrency(yearlyCost)}/yr cost → {formatCurrency(yearlySavings)}/yr in recovered value.
                       {!estimate.hasRealData && ' Estimates based on industry averages.'}
                     </p>
                   </>
