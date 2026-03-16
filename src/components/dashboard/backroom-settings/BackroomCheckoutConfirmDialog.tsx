@@ -53,84 +53,7 @@ export function BackroomCheckoutConfirmDialog({
         </DialogHeader>
 
         <div className="space-y-4 pt-2 max-h-[70vh] overflow-y-auto">
-          {/* Monthly recurring */}
-          <div className="space-y-2">
-            <p className={cn(tokens.label.default, 'text-xs text-muted-foreground')}>Monthly Recurring</p>
-            <div className="rounded-lg border border-border/60 divide-y divide-border/40">
-              <div className="flex items-center justify-between px-3 py-2.5">
-                <span className="flex items-center gap-2 text-sm font-sans">
-                  <MapPin className="w-3.5 h-3.5 text-primary" />
-                  {locationCount} location{locationCount !== 1 ? 's' : ''} × {formatCurrency(BACKROOM_BASE_PRICE)}/mo
-                </span>
-                <span className="text-sm font-sans font-medium">{formatCurrency(baseCost)}</span>
-              </div>
-              {scaleCount > 0 && (
-                <div className="flex items-center justify-between px-3 py-2.5">
-                  <span className="flex items-center gap-2 text-sm font-sans">
-                    <Weight className="w-3.5 h-3.5 text-primary" />
-                    {scaleCount} scale{scaleCount !== 1 ? 's' : ''} × {formatCurrency(SCALE_LICENSE_MONTHLY)}/mo
-                  </span>
-                  <span className="text-sm font-sans font-medium">{formatCurrency(scaleLicenseCost)}</span>
-                </div>
-              )}
-              <div className="flex items-center justify-between px-3 py-2.5 bg-muted/30">
-                <span className="text-sm font-sans font-medium">Fixed monthly total</span>
-                <span className="text-sm font-sans font-medium">{formatCurrency(monthlyRecurring)}/mo</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Usage-based */}
-          <div className="space-y-2">
-            <p className={cn(tokens.label.default, 'text-xs text-muted-foreground')}>Usage-Based (Metered)</p>
-            <div className="rounded-lg border border-border/60 px-3 py-2.5">
-              <div className="flex items-center justify-between">
-                <span className="flex items-center gap-2 text-sm font-sans">
-                  <Droplets className="w-3.5 h-3.5 text-primary" />
-                  {formatCurrency(BACKROOM_PER_SERVICE_FEE)} per color service
-                </span>
-                <span className="text-sm font-sans text-muted-foreground">~{formatCurrency(estimatedUsage)}/mo</span>
-              </div>
-              <p className="text-[10px] text-muted-foreground font-sans mt-1">
-                Billed monthly based on actual usage. Estimate based on current booking volume.
-              </p>
-            </div>
-          </div>
-
-          {/* One-time */}
-          {hardwareOneTime > 0 && (
-            <div className="space-y-2">
-              <p className={cn(tokens.label.default, 'text-xs text-muted-foreground')}>One-Time</p>
-              <div className="rounded-lg border border-border/60 px-3 py-2.5">
-                <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-2 text-sm font-sans">
-                    <Weight className="w-3.5 h-3.5 text-muted-foreground" />
-                    {scaleCount} scale{scaleCount !== 1 ? 's' : ''} × {formatCurrency(SCALE_HARDWARE_PRICE)}
-                  </span>
-                  <span className="text-sm font-sans font-medium">{formatCurrency(hardwareOneTime)}</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ── Grand Total Summary ── */}
-          <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-2">
-            {hardwareOneTime > 0 && (
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-sans text-muted-foreground">Due today</span>
-                <span className="text-sm font-sans font-medium">{formatCurrency(hardwareOneTime)}</span>
-              </div>
-            )}
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-sans font-medium">Est. monthly total</span>
-              <span className="font-display text-base sm:text-lg tracking-wide">{formatCurrency(estimatedMonthlyGrandTotal)}/mo</span>
-            </div>
-            <p className="text-[10px] text-muted-foreground font-sans">
-              Estimated total across {locationCount} location{locationCount !== 1 ? 's' : ''}. Usage fees may vary based on actual service volume.
-            </p>
-          </div>
-
-          {/* ── Estimated Savings / ROI ── */}
+          {/* ── 1. Estimated Savings Banner (value-first) ── */}
           {estimatedMonthlySavings > 0 && (
             <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3 space-y-1.5">
               <div className="flex items-center justify-between">
@@ -156,7 +79,81 @@ export function BackroomCheckoutConfirmDialog({
             </div>
           )}
 
-          {/* Card on file */}
+          {/* ── 2. Due Today (one-time hardware) ── */}
+          {hardwareOneTime > 0 && (
+            <div className="space-y-1.5">
+              <p className={cn(tokens.label.default, 'text-xs text-muted-foreground')}>Due Today</p>
+              <div className="rounded-lg border border-border/60 px-3 py-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-2 text-sm font-sans">
+                    <Weight className="w-3.5 h-3.5 text-muted-foreground" />
+                    {scaleCount} scale{scaleCount !== 1 ? 's' : ''} × {formatCurrency(SCALE_HARDWARE_PRICE)}
+                  </span>
+                  <span className="text-sm font-sans font-medium">{formatCurrency(hardwareOneTime)}</span>
+                </div>
+                <p className="text-[10px] text-muted-foreground font-sans mt-1">
+                  One-time hardware purchase
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* ── 3. Fixed Monthly Costs ── */}
+          <div className="space-y-1.5">
+            <p className={cn(tokens.label.default, 'text-xs text-muted-foreground')}>Fixed Monthly</p>
+            <div className="rounded-lg border border-border/60 divide-y divide-border/40">
+              <div className="flex items-center justify-between px-3 py-2.5">
+                <span className="flex items-center gap-2 text-sm font-sans">
+                  <MapPin className="w-3.5 h-3.5 text-primary" />
+                  {locationCount} location{locationCount !== 1 ? 's' : ''} × {formatCurrency(BACKROOM_BASE_PRICE)}/mo
+                </span>
+                <span className="text-sm font-sans font-medium">{formatCurrency(baseCost)}</span>
+              </div>
+              {scaleCount > 0 && (
+                <div className="flex items-center justify-between px-3 py-2.5">
+                  <span className="flex items-center gap-2 text-sm font-sans">
+                    <Weight className="w-3.5 h-3.5 text-primary" />
+                    {scaleCount} scale{scaleCount !== 1 ? 's' : ''} × {formatCurrency(SCALE_LICENSE_MONTHLY)}/mo
+                  </span>
+                  <span className="text-sm font-sans font-medium">{formatCurrency(scaleLicenseCost)}</span>
+                </div>
+              )}
+              <div className="flex items-center justify-between px-3 py-2.5 bg-muted/30">
+                <span className="text-sm font-sans font-medium">Fixed subtotal</span>
+                <span className="text-sm font-sans font-medium">{formatCurrency(monthlyRecurring)}/mo</span>
+              </div>
+            </div>
+          </div>
+
+          {/* ── 4. Variable Monthly Costs ── */}
+          <div className="space-y-1.5">
+            <p className={cn(tokens.label.default, 'text-xs text-muted-foreground')}>Variable Monthly</p>
+            <div className="rounded-lg border border-border/60 px-3 py-2.5 space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-2 text-sm font-sans">
+                  <Droplets className="w-3.5 h-3.5 text-primary" />
+                  {formatCurrency(BACKROOM_PER_SERVICE_FEE)} × ~{estimatedMonthlyServices} color services
+                </span>
+                <span className="text-sm font-sans font-medium">~{formatCurrency(estimatedUsage)}/mo</span>
+              </div>
+              <p className="text-[10px] text-muted-foreground font-sans leading-relaxed">
+                Varies each month based on the number of appointments with color services. Estimate reflects your current booking volume.
+              </p>
+            </div>
+          </div>
+
+          {/* ── 5. Estimated Monthly Total ── */}
+          <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-sans font-medium">Est. monthly total</span>
+              <span className="font-display text-base sm:text-lg tracking-wide">{formatCurrency(estimatedMonthlyGrandTotal)}/mo</span>
+            </div>
+            <p className="text-[10px] text-muted-foreground font-sans leading-relaxed">
+              Fixed costs + estimated usage across {locationCount} location{locationCount !== 1 ? 's' : ''}. Actual monthly bill depends on color service volume.
+            </p>
+          </div>
+
+          {/* ── 6. Card on file ── */}
           {card && (
             <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/30 border border-border/40">
               <CreditCard className="w-4 h-4 text-muted-foreground" />
@@ -166,7 +163,7 @@ export function BackroomCheckoutConfirmDialog({
             </div>
           )}
 
-          {/* Actions */}
+          {/* ── 7. Actions ── */}
           <div className="flex flex-col sm:flex-row sm:justify-end gap-2 pt-2">
             <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading} className="w-full sm:w-auto">
               Cancel
