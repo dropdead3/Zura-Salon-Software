@@ -407,11 +407,11 @@ export function BackroomPaywall() {
             </Card>
 
             {/* WITH — elevated, the "winning" side */}
-            <Card className="bg-success/[0.05] border-success/20 shadow-md ring-1 ring-success/10">
+            <Card className="bg-success/[0.05] border-success/20 shadow-md">
               <CardContent className="p-6 md:p-8">
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-11 h-11 md:w-12 md:h-12 rounded-xl bg-success/10 ring-1 ring-success/10 flex items-center justify-center shrink-0">
-                    <CheckCircle2 className="w-5 h-5 md:w-6 md:h-6 text-success" />
+                  <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center shrink-0">
+                    <CheckCircle2 className="w-5 h-5 text-success" />
                   </div>
                   <h3 className="font-display text-base tracking-wide uppercase text-success">With Backroom</h3>
                 </div>
