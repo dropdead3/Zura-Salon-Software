@@ -947,7 +947,7 @@ export function BackroomPaywall() {
                           ].map((row) => (
                             <div key={row.label} className="flex items-center justify-between py-0.5">
                               <span className="font-sans text-sm text-muted-foreground">{row.label}</span>
-                              <span className={cn('font-sans text-sm tabular-nums', row.highlight ? 'text-emerald-500 font-medium' : 'text-foreground')}>{row.value}</span>
+                              <span className={cn('font-sans text-sm tabular-nums', row.highlight ? 'text-success font-medium' : 'text-foreground')}>{row.value}</span>
                             </div>
                           ))}
                         </div>
