@@ -167,12 +167,12 @@ export function PlatformDefaultsTab() {
                 value={localSettings.billing_cycle} 
                 onValueChange={(v) => updateField('billing_cycle', v)}
               >
-                <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-900 border-slate-700">
+                <SelectContent>
                   {BILLING_CYCLES.map(cycle => (
-                    <SelectItem key={cycle.value} value={cycle.value} className="text-slate-300">
+                    <SelectItem key={cycle.value} value={cycle.value}>
                       {cycle.label}
                     </SelectItem>
                   ))}
