@@ -1,153 +1,128 @@
 
 
-## Timezone-Safe Scheduling (Implemented)
+# Redundancy and Content Consolidation Audit — BackroomPaywall.tsx
 
-### Problem
-`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
+## Current Page Structure Map (17 sections, 2129 lines)
 
-### Solution
-- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
-- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
-- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
+| # | Section | Lines | Purpose |
+|---|---------|-------|---------|
+| 1 | Hero | 436–623 | Problem headline, CTA, testimonial, live preview |
+| 1.5 | Product Preview | 628–630 | Visual product component |
+| 1.75 | Before / After | 635–705 | Qualitative transformation comparison |
+| 1.85 | Salon Reality Check | 710–751 | 6 blind-spot cards |
+| 2 | The Problem (Loss Aversion) | 761–865 | Quantified cost leak calculator |
+| 3 | How It Works | 870–887 | 3-step overview |
+| 4 | What You Get | 892–924 | 6 feature cards with bullets |
+| 4.25 | Interactive Feature Reveal | 929–1152 | 5-tab explorer with mock UI panels |
+| 4.5 | Competitor Comparison | 1157–1159 | Feature/pricing table vs Vish/SalonScale |
+| 4.75 | ROI Proof | 1169–1216 | 3 value-prop cards + CTA |
+| 4.9 | Operational Intelligence | 1223–1408 | 6 analytics dashboard cards |
+| 4.95 | Control Layer Hub | 1413–1530 | Radial connection diagram |
+| 4.97 | Under the Hood | 1535–1580 | 6-step linear system flow |
+| 4.98 | Real Salon Scenario | 1585–1756 | 7-step walkthrough with mini previews |
+| 5 | Pricing + ROI | 1766–1918 | Pricing card, annual impact, location selector |
+| 6 | Hardware | 1923–2003 | Scale pricing and configuration |
+| 7 | Trust + FAQ | 2013–2048 | Guarantee + accordion |
+| 7.5 | Confidence Layer | 2054–2090 | 5 reassurance cards |
+| 8 | Final CTA | 2095–2107 | Closing activation |
 
-### Files Updated
-- `ScheduleHeader.tsx` — today button, quick days, isToday checks
-- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
-- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
-- `MonthView.tsx` — today highlight
-- `AgendaView.tsx` — today/tomorrow labels, today border
-- `ScheduleActionBar.tsx` — payment queue timing
-- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
-- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
-- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
-- `useHuddles.ts` — today's huddle query
+---
 
-## Auto-Reorder with Supplier Communication (Implemented)
+## Identified Redundancies
 
-### What It Does
-Organizations can opt into automatic reorder — when stock dips below threshold, POs are calculated (using MOQ and par levels) and sent directly to the supplier via email.
+### Overlap Group A — "How the system works" (told 4 times)
+- **Section 3** "How It Works" — 3-step abstract summary
+- **Section 4.97** "Under the Hood" — 6-step abstract flow (same idea, more steps)
+- **Section 4.98** "Real Salon Scenario" — 7-step concrete walkthrough with UI previews
+- **Section 4.95** "Control Layer Hub" — radial diagram showing the same connections
 
-### Database Changes
-- `products.par_level` (INT, nullable) — desired stock level to reorder up to
-- `product_suppliers.moq` (INT, default 1) — minimum order quantity
-- `inventory_alert_settings.auto_reorder_enabled` (BOOL, default false)
-- `inventory_alert_settings.auto_reorder_mode` (TEXT, default 'to_par') — 'to_par' or 'moq_only'
-- `inventory_alert_settings.max_auto_reorder_value` (NUMERIC, nullable) — daily spend cap
-- `purchase_orders.supplier_confirmed_at` (TIMESTAMPTZ, nullable) — for tracking confirmations
+All four explain: mix → capture → save → update → cost → insights. The Real Salon Scenario is the strongest because it's concrete and visual. The others repeat the same message.
 
-### Quantity Calculation
-```
-deficit = par_level - quantity_on_hand
-order_qty = max(moq, deficit)
-if moq > 1: round up to nearest MOQ multiple
-```
-Fallback: if par_level is null, uses `reorder_level * 2`.
+### Overlap Group B — "What the product does" (told 3 times)
+- **Section 4** "What You Get" — 6 static feature cards with bullet lists
+- **Section 4.25** "Interactive Feature Reveal" — 5 interactive tabs with mock UI
+- **Section 4.9** "Operational Intelligence" — 6 dashboard-style cards
 
-### Files Updated
-- Migration: Added columns to products, product_suppliers, inventory_alert_settings, purchase_orders
-- `check-reorder-levels/index.ts` — auto-send logic with MOQ/par calculation, spend cap, email invocation
-- `AlertSettingsCard.tsx` — auto-reorder toggle, mode selector, spend cap input
-- `useInventoryAlertSettings.ts` — updated interface
-- `useProducts.ts` — added par_level to Product interface
-- `useProductSuppliers.ts` — added moq to ProductSupplier interface
-- `ProductEditDialog.tsx` — added par level field
-- `RetailProductsSettingsContent.tsx` — added par level to product form
-- `SupplierDialog.tsx` — added MOQ field
+Same 6 concepts (dispensing, formulas, inventory, profitability, waste, staff patterns) appear across all three. The Interactive Feature Reveal is the strongest — it shows rather than tells.
 
-### Safety Features
-- Spend cap: daily auto-reorder pauses when cumulative PO value exceeds cap
-- Audit trail: auto_reorder logged as stock_movement reason
-- Supplier confirmation tracking via supplier_confirmed_at timestamp
+### Overlap Group C — "Problem recognition" (told 3 times)
+- **Section 1.75** "Before / After" — qualitative blind spots
+- **Section 1.85** "Salon Reality Check" — 6 blind-spot cards (nearly identical themes)
+- **Section 2** "The Problem" — quantified cost leaks
 
-## Product Movement Rating Badges (Implemented)
+Before/After and Salon Reality Check say the same thing: "you don't track usage, formulas are lost, waste is invisible." Keep the Before/After (more visual) and The Problem (quantified). Remove Salon Reality Check.
 
-### What It Does
-Every product gets a dynamic movement rating badge (Best Seller, Popular, Steady, Slow Mover, Stagnant, Dead Weight) computed from 90-day sales velocity data.
+### Overlap Group D — "ROI justification" (told 2 times)
+- **Section 4.75** "ROI Proof" — 3 cards about waste recovery, cost visibility, margin protection
+- **Section 5** "Pricing + ROI" — annual impact calculator with real numbers
 
-### Rating Tiers
-- **Best Seller**: Top 10% velocity AND >0.5 units/day (emerald)
-- **Popular**: Top 25% velocity AND >0.2 units/day (blue)
-- **Steady**: Velocity >0.05/day (muted)
-- **Slow Mover**: Velocity >0 but ≤0.05/day (amber)
-- **Stagnant**: Zero velocity, sold within 180 days (orange)
-- **Dead Weight**: Zero velocity, 180+ days or never sold (red)
-- Products with zero stock excluded from negative ratings
+The Pricing section's annual impact calculator is far more compelling than 3 generic value cards. Remove ROI Proof.
 
-### Files Created
-- `src/lib/productMovementRating.ts` — pure rating logic + badge config
-- `src/hooks/useProductVelocity.ts` — lightweight 90-day POS velocity query
-- `src/components/ui/MovementBadge.tsx` — shared badge component with tooltip
+---
 
-### Files Updated
-- `RetailProductsSettingsContent.tsx` — Movement column + filter dropdown in products table
-- `RetailAnalyticsContent.tsx` — Movement badges on product performance table + Movement Distribution card (donut chart with actionable callouts)
-- `ProductCard.tsx` — Best Seller/Popular badges on public shop cards (positive only)
-- `ProductDetailModal.tsx` — Movement badge with velocity context
+## Sections to Remove (5 sections, ~600 lines)
 
-## Inventory Intelligence Suite v2 (Implemented)
+| Section | Reason |
+|---------|--------|
+| **1.85 — Salon Reality Check** | Repeats Before/After themes. Just added; already redundant. |
+| **4 — What You Get** | Entirely subsumed by Interactive Feature Reveal (same features, better format) |
+| **4.75 — ROI Proof** | Generic value cards; Pricing section does this with real numbers |
+| **4.95 — Control Layer Hub** | Complex radial diagram restating "everything connects" |
+| **4.97 — Under the Hood** | Abstract 6-step flow; Real Salon Scenario covers the same flow concretely |
 
-### 1. Dead Stock Auto-Clearance Pipeline
-- `DeadStockAlertCard.tsx` — Surfaces Dead Weight/Stagnant products not yet in clearance with suggested discount tiers (10%/25%/50% based on idle days)
-- One-click "Mark for Clearance" applies discount and sets clearance_status
+## Section to Merge
 
-### 2. Supplier Lead Time Tracker
-- `usePurchaseOrders.ts` — `useMarkPurchaseOrderReceived` already computes actual delivery days and updates `product_suppliers.avg_delivery_days` via running average
-- `parLevelSuggestion.ts` — Updated to accept supplier-provided lead time instead of hardcoded 7-day default, with bounds clamping
+**Section 3 "How It Works"** (3 cards) merges into the top of **Section 4.98 "Real Salon Scenario"** as a compact 3-step summary row before the detailed walkthrough. This gives the reader a quick overview then the detailed proof.
 
-### 3. Inventory Valuation Dashboard Card
-- `InventoryValuationCard.tsx` — Shows total inventory at cost/retail, potential margin %, capital-at-risk (slow/stagnant/dead weight), with donut chart breakdown
+---
 
-### 4. Reorder Approval Queue
-- `ReorderApprovalCard.tsx` — Surfaces draft POs from auto-reorder with one-click approve (→ sent) or reject (→ cancelled)
+## Proposed Final Structure (10 sections)
 
-### 5. Stock Transfer Between Locations
-- Migration: Created `stock_transfers` table with RLS (org member read, org admin manage)
-- `useStockTransfers.ts` — CRUD hooks for stock transfers with stock movement logging
-- `StockTransferDialog.tsx` — Dialog for creating transfers between locations
-- `RetailProductsSettingsContent.tsx` — "Transfer Stock" button added to Inventory tab (visible for multi-location orgs)
-
-## Enhancement 1: Expiry Tracking (Implemented)
-
-### What It Does
-Products can have an optional expiration date (`expires_at`) and per-product alert threshold (`expiry_alert_days`, default 30). The system surfaces expiring inventory with color-coded badges in the product table and an analytics card with auto-clearance suggestions.
-
-### Database Changes
-- `products.expires_at` (DATE, nullable) — expiration date for perishable products
-- `products.expiry_alert_days` (INTEGER, default 30) — days before expiry to trigger alerts
-
-### Expiry Alert Buckets
-- **Expired** (red): past expiration → suggests 50% markdown
-- **Critical** (orange): within alert threshold → suggests 25% markdown
-- **Warning** (amber): within 2× alert threshold → suggests 10% markdown
-
-### Files Created
-- `src/components/dashboard/analytics/ExpiryAlertCard.tsx` — PinnableCard showing expiring products with one-click clearance actions
-
-### Files Updated
-- `src/hooks/useProducts.ts` — Added `expires_at`, `expiry_alert_days` to Product interface; added `expiringOnly` filter
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Expiry date + alert days in product form; color-coded Expiry column in product table
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ExpiryAlertCard into analytics hub
-
-## Enhancement 2: Shrinkage Detection (Implemented)
-
-### What It Does
-Physical stocktake workflow with variance reporting. Staff record actual counts via a Stocktake dialog, and the system compares against expected quantities (system records). A Shrinkage Report card in analytics surfaces products with negative variance (loss) ranked by estimated cost impact.
-
-### Database Changes
-- Created `stock_counts` table with computed `variance` column (counted - expected), RLS policies (org member read/insert, org admin update/delete), and indexes
-
-### Shrinkage Calculation
-```
-variance = counted_quantity - expected_quantity
-shrinkage_units = |variance| when variance < 0
-shrinkage_cost = shrinkage_units × cost_price
+```text
+1. Hero                          — Problem + CTA + testimonial + live preview
+2. Product Preview               — Visual product identity
+3. Before / After                — Qualitative transformation
+4. The Problem (Loss Aversion)   — Quantified cost leak calculator
+5. Real Salon Scenario           — 3-step summary + 7-step walkthrough (merged)
+6. Interactive Feature Reveal    — 5-tab interactive product explorer
+7. Competitor Comparison         — Feature/pricing table
+8. Pricing + Hardware            — Pricing, annual impact, locations, scales (merged)
+9. Trust + FAQ                   — Guarantee + accordion
+10. Final CTA                    — Closing activation
 ```
 
-### Files Created
-- `src/hooks/useStockCounts.ts` — CRUD hooks for stock counts + `useShrinkageSummary` for aggregated shrinkage data
-- `src/components/dashboard/settings/inventory/StocktakeDialog.tsx` — Full stocktake UI with search, inline count entry, real-time variance display
-- `src/components/dashboard/analytics/ShrinkageReportCard.tsx` — PinnableCard showing products with shrinkage, severity badges, estimated loss
+Changes vs current:
+- 17 sections → 10 sections
+- ~600 lines removed
+- Confidence Layer (7.5) removed — its reassurance messages are already covered by the guarantee card, FAQ, and the interactive demo
+- Hardware (6) merges into Pricing (5) as a sub-section, removing one page break
+- Every ActivateButton that existed between removed sections is cleaned up (currently 8 CTAs on page; reduce to 4: Hero, after Feature Reveal, after Pricing, Final)
 
-### Files Updated
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Added "Stocktake" button to Inventory tab toolbar
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ShrinkageReportCard into analytics hub
+## Copy Trimming
+
+- Section 4.9 supporting message "Most salons operate the backroom on guesswork..." — identical to Salon Reality Check subtitle. Both removed.
+- Section 4.95 supporting message "Most tools track individual actions..." — removed with section.
+- Section 4.97 supporting message "Zura Backroom quietly captures..." — removed with section.
+- Reduce ActivateButton instances from 8 to 4 (Hero, Feature Reveal, Pricing, Final CTA).
+
+## Visual Simplification
+
+- Remove the radial hub SVG diagram (Section 4.95) — most complex visual on the page
+- Remove 3 section dividers that no longer have adjacent sections
+- Remove 6 redundant `RevealOnScroll` wrappers from deleted sections
+
+## Implementation
+
+All changes in one file: `BackroomPaywall.tsx`
+1. Delete Section 1.85 block (lines 707–756)
+2. Delete Section 4 block (lines 889–924)
+3. Delete Section 4.75 block (lines 1166–1216)
+4. Delete Section 4.9 block (lines 1220–1408)
+5. Delete Section 4.95 block (lines 1410–1530)
+6. Delete Section 4.97 block (lines 1532–1580)
+7. Delete Section 7.5 block (lines 2051–2090)
+8. Merge Section 3 "How It Works" 3-step cards as a compact row above Real Salon Scenario
+9. Move Hardware section content into Pricing section as a sub-card
+10. Remove orphaned dividers and excess ActivateButton instances
+11. Clean up dead dividers between removed sections
+
