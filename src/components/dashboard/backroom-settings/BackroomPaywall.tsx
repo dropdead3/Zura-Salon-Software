@@ -729,7 +729,7 @@ export function BackroomPaywall() {
               {/* Left — Feature Selector (desktop) */}
               <div className="hidden lg:flex flex-col gap-2">
                 {[
-                  { key: 'mixing', icon: Scale, title: 'Smart Mixing', desc: 'The scale captures every gram while stylists mix normally.' },
+                  { key: 'mixing', icon: Weight, title: 'Smart Mixing', desc: 'The scale captures every gram while stylists mix normally.' },
                   { key: 'formulas', icon: Brain, title: 'Formula Memory', desc: 'Formulas are saved automatically to the client profile.' },
                   { key: 'inventory', icon: PackageSearch, title: 'Inventory Intelligence', desc: 'Every bowl updates product inventory in real time.' },
                   { key: 'profitability', icon: DollarSign, title: 'Service Profitability', desc: 'Product costs are connected directly to each service.' },
