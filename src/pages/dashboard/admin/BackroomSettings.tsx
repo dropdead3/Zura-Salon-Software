@@ -109,6 +109,24 @@ export default function BackroomSettings() {
   const { data: health } = useBackroomSetupHealth();
   const { isEntitled, isLoading: entitlementLoading } = useBackroomEntitlement();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const queryClient = useQueryClient();
+
+  // Handle Stripe checkout redirect
+  useEffect(() => {
+    const checkoutStatus = searchParams.get('checkout');
+    if (checkoutStatus === 'success') {
+      toast.success('Backroom activated! Your subscription is now active.');
+      // Refresh entitlement data so the paywall clears
+      queryClient.invalidateQueries({ queryKey: ['backroom-entitlement'] });
+      queryClient.invalidateQueries({ queryKey: ['backroom-location-entitlements'] });
+      // Clean up the URL
+      setSearchParams({}, { replace: true });
+    } else if (checkoutStatus === 'cancelled') {
+      toast.info('Checkout was cancelled. No charges were made.');
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, setSearchParams, queryClient]);
 
   const handleNavigate = useCallback((section: string) => {
     setActiveSection(section as BackroomSection);
