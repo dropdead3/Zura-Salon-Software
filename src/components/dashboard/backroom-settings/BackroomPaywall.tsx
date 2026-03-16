@@ -95,9 +95,12 @@ export function BackroomPaywall() {
     }
   }, [activeLocations]);
 
+  const isSingleLocation = activeLocations.length === 1;
   const locationCount = selectedLocationIds.size;
 
   const toggleLocation = (locId: string) => {
+    // Prevent deselecting the only location
+    if (isSingleLocation) return;
     setSelectedLocationIds((prev) => {
       const next = new Set(prev);
       if (next.has(locId)) next.delete(locId);
@@ -734,41 +737,34 @@ export function BackroomPaywall() {
                         <MapPin className="w-5 h-5 text-primary" />
                       </div>
                       <div>
-                        <p className={cn(tokens.label.default, 'text-foreground')}>Select Locations</p>
+                        <p className={cn(tokens.label.default, 'text-foreground')}>
+                          {isSingleLocation ? 'Your Location' : 'Select Locations'}
+                        </p>
                         <p className="text-xs text-muted-foreground font-sans mt-0.5">
                           ${BACKROOM_BASE_PRICE}/mo per location
                         </p>
                       </div>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="font-sans text-xs"
-                      onClick={selectAllLocations}
-                    >
-                      {selectedLocationIds.size === activeLocations.length ? 'Deselect All' : 'Select All'}
-                    </Button>
+                    {!isSingleLocation && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="font-sans text-xs"
+                        onClick={selectAllLocations}
+                      >
+                        {selectedLocationIds.size === activeLocations.length ? 'Deselect All' : 'Select All'}
+                      </Button>
+                    )}
                   </div>
-                  <div className="space-y-1.5">
-                    {activeLocations.map((loc) => {
-                      const isChecked = selectedLocationIds.has(loc.id);
-                      const cityLabel = loc.city ? loc.city.split(',')[0]?.trim() : '';
 
+                  {isSingleLocation ? (
+                    /* Single-location: read-only row, always selected */
+                    (() => {
+                      const loc = activeLocations[0];
+                      const cityLabel = loc.city ? loc.city.split(',')[0]?.trim() : '';
                       return (
-                        <div
-                          key={loc.id}
-                          className={cn(
-                            'flex items-center gap-3 px-3 py-3 rounded-lg transition-all cursor-pointer',
-                            isChecked
-                              ? 'bg-primary/5 border border-primary/30'
-                              : 'border border-transparent hover:bg-accent/30',
-                          )}
-                          onClick={() => toggleLocation(loc.id)}
-                        >
-                          <Checkbox
-                            checked={isChecked}
-                            className="pointer-events-none"
-                          />
+                        <div className="flex items-center gap-3 px-3 py-3 rounded-lg bg-primary/5 border border-primary/30">
+                          <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                               <MapPin className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
@@ -778,24 +774,64 @@ export function BackroomPaywall() {
                               )}
                             </div>
                           </div>
-                          {isChecked && (
-                            <span className="font-sans text-xs text-primary shrink-0">
-                              +${BACKROOM_BASE_PRICE}/mo
-                            </span>
-                          )}
+                          <span className="font-sans text-xs text-primary shrink-0">
+                            ${BACKROOM_BASE_PRICE}/mo
+                          </span>
                         </div>
                       );
-                    })}
-                  </div>
-                  {selectedLocationIds.size > 0 && (
-                    <div className="mt-3 pt-3 border-t border-border/40 flex justify-between items-center">
-                      <span className="font-sans text-xs text-muted-foreground">
-                        {selectedLocationIds.size} location{selectedLocationIds.size > 1 ? 's' : ''} selected
-                      </span>
-                      <span className="font-sans text-sm text-foreground font-medium">
-                        ${baseCost}/mo
-                      </span>
-                    </div>
+                    })()
+                  ) : (
+                    /* Multi-location: interactive checkbox list */
+                    <>
+                      <div className="space-y-1.5">
+                        {activeLocations.map((loc) => {
+                          const isChecked = selectedLocationIds.has(loc.id);
+                          const cityLabel = loc.city ? loc.city.split(',')[0]?.trim() : '';
+
+                          return (
+                            <div
+                              key={loc.id}
+                              className={cn(
+                                'flex items-center gap-3 px-3 py-3 rounded-lg transition-all cursor-pointer',
+                                isChecked
+                                  ? 'bg-primary/5 border border-primary/30'
+                                  : 'border border-transparent hover:bg-accent/30',
+                              )}
+                              onClick={() => toggleLocation(loc.id)}
+                            >
+                              <Checkbox
+                                checked={isChecked}
+                                className="pointer-events-none"
+                              />
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <MapPin className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                                  <span className="font-sans text-sm text-foreground truncate">{loc.name}</span>
+                                  {cityLabel && (
+                                    <span className="font-sans text-xs text-muted-foreground">{cityLabel}</span>
+                                  )}
+                                </div>
+                              </div>
+                              {isChecked && (
+                                <span className="font-sans text-xs text-primary shrink-0">
+                                  +${BACKROOM_BASE_PRICE}/mo
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {selectedLocationIds.size > 0 && (
+                        <div className="mt-3 pt-3 border-t border-border/40 flex justify-between items-center">
+                          <span className="font-sans text-xs text-muted-foreground">
+                            {selectedLocationIds.size} location{selectedLocationIds.size > 1 ? 's' : ''} selected
+                          </span>
+                          <span className="font-sans text-sm text-foreground font-medium">
+                            ${baseCost}/mo
+                          </span>
+                        </div>
+                      )}
+                    </>
                   )}
                 </CardContent>
               </Card>
