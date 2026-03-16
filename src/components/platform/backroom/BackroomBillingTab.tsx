@@ -196,7 +196,7 @@ export function BackroomBillingTab() {
                   <TableHead className="font-sans text-xs text-slate-400">Locations</TableHead>
                   <TableHead className="font-sans text-xs text-slate-400">Plans</TableHead>
                   <TableHead className="font-sans text-xs text-slate-400">Scales</TableHead>
-                  <TableHead className="font-sans text-xs text-slate-400">Trial End</TableHead>
+                  
                   <TableHead className="font-sans text-xs text-slate-400 text-right pr-4">Est. MRR</TableHead>
                 </TableRow>
               </TableHeader>
