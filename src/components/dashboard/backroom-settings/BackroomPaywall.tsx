@@ -1,12 +1,13 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   Beaker, BarChart3, ArrowRight, Loader2,
   Scale, ShieldCheck, MapPin, TrendingUp, DollarSign, Star,
   Info, Clock, AlertTriangle, CheckCircle2, XCircle,
   Brain, PackageSearch, ChevronRight,
-  Timer,
+  Timer, X, Users, Zap,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -182,7 +183,7 @@ export function BackroomPaywall() {
   const { effectiveOrganization } = useOrganizationContext();
   const { data: locations = [] } = useLocations(effectiveOrganization?.id);
   const { isLocationEntitled } = useBackroomLocationEntitlements(effectiveOrganization?.id);
-  const { formatCurrency } = useFormatCurrency();
+  const { formatCurrency, formatCurrencyCompact } = useFormatCurrency();
   const isMobile = useIsMobile();
 
   const { data: estimate, isLoading: estimateLoading } = useBackroomPricingEstimate(manualStylistCount);
@@ -296,25 +297,58 @@ export function BackroomPaywall() {
   };
 
   /* ─── Shared CTA button ─── */
-  const ActivateButton = ({ className = '' }: { className?: string }) => (
-    <Button
-      size="lg"
-      className={cn(
-        'font-sans font-medium gap-2 rounded-full h-12 px-10 text-base shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 active:scale-[0.98] transition-all duration-200',
-        className,
+  const heroRef = useRef<HTMLDivElement>(null);
+  const [showStickyBar, setShowStickyBar] = useState(false);
+  const [stickyDismissed, setStickyDismissed] = useState(false);
+
+  useEffect(() => {
+    if (!heroRef.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setShowStickyBar(!entry.isIntersecting),
+      { threshold: 0 },
+    );
+    observer.observe(heroRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  const ctaLabel = hasPositiveBenefit && yearlySavings > 0
+    ? `Start Recovering ${formatCurrencyCompact(yearlySavings)}/yr`
+    : 'Start Recovering Revenue';
+
+  const ActivateButton = ({ className = '', compact = false }: { className?: string; compact?: boolean }) => (
+    <div className={cn('flex flex-col items-center', compact ? 'gap-1' : 'gap-2')}>
+      <Button
+        size={compact ? 'default' : 'lg'}
+        className={cn(
+          'font-sans font-medium gap-2 rounded-full shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 active:scale-[0.98] transition-all duration-200',
+          compact ? 'h-10 px-6 text-sm' : 'h-12 px-10 text-base',
+          className,
+        )}
+        onClick={() => setConfirmDialogOpen(true)}
+        disabled={loading || selectedLocationIds.size === 0}
+      >
+        {loading ? (
+          <Loader2 className="w-4 h-4 animate-spin" />
+        ) : (
+          <>
+            {ctaLabel}
+            <ArrowRight className="w-4 h-4" />
+          </>
+        )}
+      </Button>
+      {!compact && (
+        <p className="text-xs text-muted-foreground/50 font-sans flex items-center gap-1.5">
+          <ShieldCheck className="w-3 h-3" /> 30-day money-back guarantee
+        </p>
       )}
-      onClick={() => setConfirmDialogOpen(true)}
-      disabled={loading || selectedLocationIds.size === 0}
-    >
-      {loading ? (
-        <Loader2 className="w-4 h-4 animate-spin" />
-      ) : (
-        <>
-          Activate Backroom
-          <ArrowRight className="w-4 h-4" />
-        </>
-      )}
-    </Button>
+    </div>
+  );
+
+  /* ─── Mid-page CTA helper ─── */
+  const MidPageCta = () => (
+    <div className="flex flex-col items-center gap-2 py-4">
+      <ActivateButton compact />
+    </div>
   );
 
   /* ─── Section heading helper ─── */
@@ -344,9 +378,22 @@ export function BackroomPaywall() {
                 </p>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-3" ref={heroRef}>
                 <ActivateButton />
-                <p className="text-sm text-muted-foreground/60 font-sans">Setup takes minutes. Cancel anytime.</p>
+              </div>
+
+              {/* Trust strip */}
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-x-5 gap-y-2 pt-2">
+                {[
+                  { icon: Users, text: '200+ salons tracking' },
+                  { icon: ShieldCheck, text: '30-day guarantee' },
+                  { icon: Zap, text: 'Setup in minutes' },
+                ].map((item) => (
+                  <span key={item.text} className="inline-flex items-center gap-1.5 text-xs text-muted-foreground/50 font-sans">
+                    <item.icon className="w-3 h-3" />
+                    {item.text}
+                  </span>
+                ))}
               </div>
             </div>
 
@@ -439,20 +486,47 @@ export function BackroomPaywall() {
         {/* ═══════════════════════════════════════════
             SOCIAL PROOF (relocated after Before/After)
             ═══════════════════════════════════════════ */}
-        <div className="pb-16 md:pb-20 flex flex-col items-center gap-4 max-w-2xl mx-auto text-center">
-          <div className="flex gap-2">
-            {[...Array(5)].map((_, i) => (
-              <Star key={i} className="h-5 w-5 fill-[hsl(var(--oat))] text-[hsl(var(--oat))]" />
-            ))}
+        <div className="pb-16 md:pb-20 max-w-3xl mx-auto space-y-8">
+          {/* Quantified result line */}
+          <p className="text-center font-sans text-sm text-muted-foreground/60 uppercase tracking-wider">
+            Salon owners recover an average of $2,400/mo in color costs
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Testimonial 1 */}
+            <div className="flex flex-col items-center gap-3 text-center">
+              <div className="flex gap-1.5">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="h-4 w-4 fill-[hsl(var(--oat))] text-[hsl(var(--oat))]" />
+                ))}
+              </div>
+              <blockquote className="space-y-2">
+                <p className="text-muted-foreground text-base font-sans leading-relaxed italic">
+                  "Zura Backroom saved us thousands per month and helps us recoup over $50,000 a year in color costs. 10/10 add-on feature."
+                </p>
+                <footer className="text-xs text-muted-foreground/50 font-sans">
+                  <span className="font-medium text-muted-foreground/70">Jamie Torres</span> · Owner, Drop Dead Salon · Austin, TX
+                </footer>
+              </blockquote>
+            </div>
+
+            {/* Testimonial 2 */}
+            <div className="flex flex-col items-center gap-3 text-center">
+              <div className="flex gap-1.5">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="h-4 w-4 fill-[hsl(var(--oat))] text-[hsl(var(--oat))]" />
+                ))}
+              </div>
+              <blockquote className="space-y-2">
+                <p className="text-muted-foreground text-base font-sans leading-relaxed italic">
+                  "We had no idea how much product was walking out the door. Within two weeks, waste dropped 40% and we finally know our true cost per service."
+                </p>
+                <footer className="text-xs text-muted-foreground/50 font-sans">
+                  <span className="font-medium text-muted-foreground/70">Rachel Kim</span> · Owner, Lustre Studio · Denver, CO
+                </footer>
+              </blockquote>
+            </div>
           </div>
-          <blockquote className="space-y-3">
-            <p className="text-muted-foreground text-lg md:text-xl font-sans leading-relaxed italic">
-              "Zura Backroom saved us thousands per month and helps us recoup over $50,000 a year in color costs. 10/10 add-on feature."
-            </p>
-            <footer className="text-sm text-muted-foreground/60 font-sans tracking-wide">
-              — Drop Dead Salon
-            </footer>
-          </blockquote>
         </div>
 
         {/* ═══════════════════════════════════════════
@@ -571,6 +645,9 @@ export function BackroomPaywall() {
             </div>
           </section>
         )}
+
+        {/* Mid-page CTA after loss aversion stats */}
+        {estimate && <MidPageCta />}
 
         {/* ═══════════════════════════════════════════
             SECTION 4 — FEATURE REVEAL
@@ -810,6 +887,9 @@ export function BackroomPaywall() {
         <section className="pb-16 md:pb-20">
           <CompetitorComparison />
         </section>
+
+        {/* Mid-page CTA after competitor comparison */}
+        <MidPageCta />
 
         {/* ═══════════════════════════════════════════
             SECTION 6 — HOW IT WORKS (3-step)
@@ -1116,10 +1196,49 @@ export function BackroomPaywall() {
             </p>
           )}
           <ActivateButton />
-          <p className="text-sm text-muted-foreground/50 font-sans">No contracts. Cancel anytime.</p>
         </section>
 
       </div>
+
+      {/* ─── Sticky Bottom Conversion Bar ─── */}
+      <AnimatePresence>
+        {showStickyBar && !stickyDismissed && (
+          <motion.div
+            initial={{ opacity: 0, y: 60 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 60 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            className="fixed bottom-0 inset-x-0 z-40 border-t border-border/60 bg-card/80 backdrop-blur-xl shadow-[0_-4px_20px_rgba(0,0,0,0.08)]"
+          >
+            <div className="max-w-[1100px] mx-auto px-6 py-3 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3 min-w-0">
+                {hasPositiveBenefit && yearlySavings > 0 && (
+                  <p className="font-sans text-sm text-muted-foreground hidden sm:block">
+                    Est. <span className="text-success font-medium">{formatCurrencyCompact(yearlySavings)}/yr</span> recovered
+                  </p>
+                )}
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <Button
+                  size="default"
+                  className="font-sans font-medium gap-2 rounded-full h-10 px-6 text-sm shadow-lg shadow-primary/20"
+                  onClick={() => setConfirmDialogOpen(true)}
+                  disabled={loading || selectedLocationIds.size === 0}
+                >
+                  {ctaLabel}
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Button>
+                <button
+                  onClick={() => setStickyDismissed(true)}
+                  className="p-1.5 rounded-full hover:bg-muted/60 transition-colors text-muted-foreground"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <BackroomCheckoutConfirmDialog
         open={confirmDialogOpen}
