@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import {
   Beaker, BarChart3, Shield, Zap, ArrowRight, Loader2,
   Scale, Droplets, ShieldCheck, MapPin, TrendingUp, DollarSign,
-  Info, Clock, AlertTriangle, CheckCircle2, Lock,
+  Info, Clock, AlertTriangle, CheckCircle2,
   Brain, Users, PackageSearch, ChevronRight,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -39,9 +39,9 @@ const featureGroups = [
     title: 'Smart Dispensing',
     outcome: 'Know exactly what goes into every bowl.',
     bullets: [
-      'Per-gram tracking on precision scales',
-      'Automatic formula recording',
-      'Waste flagging per service',
+      'Every gram dispensed is measured automatically',
+      'Formulas are saved as they\'re mixed',
+      'Excess product is flagged instantly',
     ],
   },
   {
@@ -49,9 +49,9 @@ const featureGroups = [
     title: 'Formula Memory',
     outcome: 'Your formulas are remembered automatically.',
     bullets: [
-      'Client formula recall',
-      'Smart Mix Assist',
-      'Last-used ratios surfaced instantly',
+      'Pull up any client\'s last formula in seconds',
+      'Suggested ratios based on history',
+      'No more guessing what was used last time',
     ],
   },
   {
@@ -59,9 +59,9 @@ const featureGroups = [
     title: 'Assistant Workflows',
     outcome: 'Assistants can prep bowls before services start.',
     bullets: [
-      'Service blueprints for every color workflow',
-      'Step-by-step mixing instructions',
-      'Task routing and alerts',
+      'Define each service\'s prep steps once',
+      'Assistants follow guided mixing screens',
+      'Notifications when bowls are ready',
     ],
   },
   {
@@ -69,9 +69,9 @@ const featureGroups = [
     title: 'Supply Intelligence',
     outcome: 'Never run out of color during a service.',
     bullets: [
-      'Predictive reorder alerts',
-      'Demand forecasting from appointment book',
-      'Automated low-stock warnings',
+      'Alerts before stock runs low',
+      'Tomorrow\'s appointments drive today\'s orders',
+      'No more surprise shortages',
     ],
   },
   {
@@ -79,9 +79,9 @@ const featureGroups = [
     title: 'Profit Visibility',
     outcome: 'See which services make money and which don\'t.',
     bullets: [
-      'Cost-per-service analytics',
-      'Product markup calculations',
-      'Supply fee recovery automation',
+      'True product cost for every appointment',
+      'See your real margins per service',
+      'Bill product costs back to clients automatically',
     ],
   },
   {
@@ -89,9 +89,9 @@ const featureGroups = [
     title: 'Waste Control',
     outcome: 'Find out where product disappears.',
     bullets: [
-      'Ghost loss detection',
-      'Reweigh compliance tracking',
-      'Variance alerts',
+      'Spot product that disappears between uses',
+      'Know if bowls are being reweighed',
+      'Get notified when usage spikes',
     ],
   },
 ];
@@ -100,17 +100,17 @@ const howItWorks = [
   {
     step: '01',
     title: 'Weigh & Track',
-    description: 'Every color service is measured on a precision scale. Dispensed grams, leftover product, and formulas are recorded automatically.',
+    description: 'Every color service is weighed. Grams, formulas, and leftovers are recorded automatically.',
   },
   {
     step: '02',
     title: 'Detect & Reduce',
-    description: 'Ghost losses, product waste, and variance are flagged automatically. You see exactly where product is going.',
+    description: 'Waste, ghost losses, and variances are flagged. You see exactly where product goes.',
   },
   {
     step: '03',
     title: 'Recover & Reorder',
-    description: 'Bill supply costs back to clients with automated fees. Predictive reorder alerts prevent stockouts.',
+    description: 'Supply costs are billed back automatically. Predictive alerts prevent stockouts.',
   },
 ];
 
@@ -138,6 +138,10 @@ const faqItems = [
   {
     question: 'Do I need to change my workflow?',
     answer: 'No. Zura Backroom adapts to how your team already works. The scale sits at your existing station — no rearranging required.',
+  },
+  {
+    question: 'Can I cancel anytime?',
+    answer: 'Yes. There are no contracts. Cancel from your account settings at any time.',
   },
 ];
 
@@ -267,7 +271,7 @@ export function BackroomPaywall() {
   };
 
   /* ─── Shared CTA button ─── */
-  const UnlockButton = ({ className = '' }: { className?: string }) => (
+  const ActivateButton = ({ className = '' }: { className?: string }) => (
     <Button
       size="lg"
       className={cn('font-sans font-medium gap-2 rounded-full px-8', className)}
@@ -278,8 +282,7 @@ export function BackroomPaywall() {
         <Loader2 className="w-4 h-4 animate-spin" />
       ) : (
         <>
-          <Lock className="w-3.5 h-3.5" />
-          Unlock Zura Backroom
+          Activate Backroom
           <ArrowRight className="w-3.5 h-3.5" />
         </>
       )}
@@ -302,10 +305,13 @@ export function BackroomPaywall() {
               Stop Losing Money in Your Color Room
             </h1>
             <p className="text-muted-foreground text-base md:text-lg max-w-2xl mx-auto font-sans leading-relaxed">
-              Track every gram dispensed. Recover supply costs automatically. Know what to reorder before you run out.
+              Track every gram. Recover supply costs. Reorder before you run out.
             </p>
           </div>
-          <UnlockButton />
+          <div className="space-y-2">
+            <ActivateButton />
+            <p className="text-xs text-muted-foreground/60 font-sans">Setup takes minutes. Cancel anytime.</p>
+          </div>
         </div>
 
         {/* ═══════════════════════════════════════════
@@ -394,42 +400,12 @@ export function BackroomPaywall() {
                       </div>
                     )}
 
-                    {/* Manual inventory time */}
-                    <div className="border-t border-destructive/10 pt-4 space-y-3">
-                      <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-destructive/70" />
-                        <p className="text-xs text-muted-foreground font-sans">
-                          How many minutes does your team spend daily on manual stock checks?
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="font-display text-sm tracking-wide text-foreground w-14 shrink-0">
-                          {auditMinutesPerDay} min
-                        </span>
-                        <Slider
-                          variant="filled"
-                          min={10}
-                          max={90}
-                          step={5}
-                          value={[auditMinutesPerDay]}
-                          onValueChange={([v]) => setAuditMinutesPerDay(v)}
-                          className="flex-1"
-                        />
-                      </div>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="p-3 rounded-lg bg-muted/30 border border-border/40 text-center">
-                          <p className="font-display text-xl tracking-wide text-foreground">
-                            <AnimatedNumber value={monthlyAuditHours} duration={600} decimals={1} />
-                          </p>
-                          <p className="text-[10px] text-muted-foreground font-sans mt-0.5">hours recovered / mo</p>
-                        </div>
-                        <div className="p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/20 text-center">
-                          <p className="font-display text-xl tracking-wide text-emerald-400">
-                            <AnimatedNumber value={monthlyAuditCost} prefix="$" duration={600} />
-                          </p>
-                          <p className="text-[10px] text-muted-foreground font-sans mt-0.5">cost recovered / mo</p>
-                        </div>
-                      </div>
+                    {/* Manual inventory time — compact inline */}
+                    <div className="border-t border-destructive/10 pt-3 flex items-center justify-center gap-2">
+                      <Clock className="w-3.5 h-3.5 text-muted-foreground/60 shrink-0" />
+                      <p className="text-xs text-muted-foreground font-sans">
+                        Plus ~<span className="text-foreground font-medium">{monthlyAuditHours.toFixed(0)} hours</span> of staff time recovered monthly
+                      </p>
                     </div>
 
                     {estimate.hasRealData && (
@@ -502,7 +478,7 @@ export function BackroomPaywall() {
 
           {/* Mid-page CTA */}
           <div className="flex justify-center pt-2">
-            <UnlockButton />
+            <ActivateButton />
           </div>
         </div>
 
@@ -736,10 +712,10 @@ export function BackroomPaywall() {
               )}
 
               {/* iPad requirement */}
-              <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/5 border border-amber-500/20">
-                <Info className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-muted/30 border border-border/40">
+                <Info className="w-4 h-4 text-muted-foreground/60 shrink-0 mt-0.5" />
                 <p className="text-xs text-muted-foreground font-sans">
-                  Each station requires an <span className="text-foreground font-medium">iPad with Bluetooth</span> and a <span className="text-foreground font-medium">tablet stand</span> (not included).
+                  Each station uses an iPad with Bluetooth for the mixing interface. A tablet stand is recommended.
                 </p>
               </div>
             </CardContent>
@@ -791,15 +767,14 @@ export function BackroomPaywall() {
         <div className="text-center space-y-4 pb-4">
           {hasPositiveBenefit && estimate ? (
             <p className="font-sans text-sm text-muted-foreground">
-              {formatCurrency(yearlyCost)}/yr cost → {formatCurrency(yearlySavings)}/yr in recovered value.
-              {roiMultiplier >= 2 && ` That's a ${roiMultiplier}× return.`}
+              Projected to recover {formatCurrency(yearlySavings)} annually{roiMultiplier >= 2 ? ` — ${roiMultiplier}× your cost` : ''}.
             </p>
           ) : (
             <p className="font-sans text-sm text-muted-foreground">
-              Average salon recovers $375/mo in reduced product waste alone.
+              Most salons recover their Backroom cost within the first week.
             </p>
           )}
-          <UnlockButton />
+          <ActivateButton />
         </div>
 
       </div>
