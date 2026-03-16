@@ -428,17 +428,17 @@ export function BackroomPaywall() {
               </div>
 
               <div className="border-t border-border/30 pt-5">
-                <div className="flex flex-col items-center lg:items-start gap-2.5">
+                <div className="flex flex-col items-center gap-3 max-w-lg mx-auto">
                   <div className="flex gap-1">
                     {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
+                      <Star key={i} className="h-5 w-5 fill-[hsl(var(--oat))] text-[hsl(var(--oat))]" />
                     ))}
                   </div>
-                  <blockquote className="text-center lg:text-left space-y-1.5">
-                    <p className="text-muted-foreground text-sm md:text-base font-sans leading-relaxed italic">
+                  <blockquote className="text-center space-y-2">
+                    <p className="text-muted-foreground text-base md:text-lg font-sans leading-relaxed italic">
                       "Zura Backroom saved us thousands per month and helps us recoup over $50,000 a year in color costs. 10/10 add-on feature."
                     </p>
-                    <footer className="text-xs text-muted-foreground/70 font-sans tracking-wide">
+                    <footer className="text-sm text-muted-foreground/70 font-sans tracking-wide">
                       — Drop Dead Salon
                     </footer>
                   </blockquote>
