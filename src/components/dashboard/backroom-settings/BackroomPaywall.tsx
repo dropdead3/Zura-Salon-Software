@@ -414,7 +414,7 @@ export function BackroomPaywall() {
             {/* Left — Text (tightened spacing) */}
             <div className="space-y-6 text-center lg:text-left">
               <div className="space-y-4">
-                <h1 className="font-display text-4xl md:text-5xl lg:text-[56px] font-medium tracking-wide leading-[1.1]">
+                <h1 className="font-display text-4xl md:text-5xl lg:text-[60px] font-medium tracking-wide leading-[1.05]">
                   Stop Losing Money in Your Color Room
                 </h1>
                 <p className="text-muted-foreground text-lg md:text-xl max-w-xl mx-auto lg:mx-0 font-sans leading-relaxed">
