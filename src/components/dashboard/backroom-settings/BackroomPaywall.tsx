@@ -911,7 +911,7 @@ export function BackroomPaywall() {
                         <div className="rounded-lg bg-muted/40 p-4">
                           <div className="space-y-0">
                             {[
-                              { product: 'Koleston 7/0', stock: '340g', status: 'Good', color: 'text-emerald-500 bg-emerald-500/10' },
+                              { product: 'Koleston 7/0', stock: '340g', status: 'Good', color: 'text-success bg-success/10' },
                               { product: 'Illumina 8/05', stock: '85g', status: 'Low', color: 'text-amber-500 bg-amber-500/10' },
                               { product: 'Blondor Powder', stock: '12g', status: 'Critical', color: 'text-red-500 bg-red-500/10' },
                             ].map((item, i, arr) => (
