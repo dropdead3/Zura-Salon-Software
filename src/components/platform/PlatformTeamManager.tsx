@@ -228,10 +228,10 @@ export function PlatformTeamManager() {
                             </div>
                             <div>
                               <div className="flex items-center gap-2">
-                                <p className="font-medium text-sm text-white">
+                                <p className="font-medium text-sm text-[hsl(var(--platform-foreground))]">
                                   {member.full_name || 'Unknown'}
                                   {isCurrentUser && (
-                                    <span className="text-slate-500 ml-1">(you)</span>
+                                    <span className="text-[hsl(var(--platform-foreground-subtle))] ml-1">(you)</span>
                                   )}
                                 </p>
                                 {isOnline(member.user_id) && (
