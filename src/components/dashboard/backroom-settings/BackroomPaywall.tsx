@@ -1418,7 +1418,7 @@ export function BackroomPaywall() {
                 </CardContent>
               </Card>
             )}
-          </div>
+            </div>
             {/* Hardware sub-section */}
             <RevealOnScroll>
               <Card className="bg-card border-border/50 shadow-sm">
