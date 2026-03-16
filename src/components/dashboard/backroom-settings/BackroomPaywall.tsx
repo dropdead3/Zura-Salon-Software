@@ -17,6 +17,7 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useLocations } from '@/hooks/useLocations';
 import { useBackroomLocationEntitlements } from '@/hooks/backroom/useBackroomLocationEntitlements';
 import { useBackroomPricingEstimate } from '@/hooks/backroom/useBackroomPricingEstimate';
+import { usePerLocationColorServices } from '@/hooks/backroom/usePerLocationColorServices';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import {
   BACKROOM_BASE_PRICE, BACKROOM_PER_SERVICE_FEE,
