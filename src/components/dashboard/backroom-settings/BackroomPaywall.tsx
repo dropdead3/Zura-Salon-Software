@@ -1150,7 +1150,7 @@ export function BackroomPaywall() {
                   icon: DollarSign, step: '07', title: 'Cost Visible', desc: "The service's true product cost is $18.40.",
                   preview: (
                     <Card className="mt-2 bg-card border-border/40 shadow-sm">
-                      <CardContent className="p-3 space-y-1.5">
+                      <CardContent className="p-3 space-y-2">
                         <div className="flex items-center justify-between">
                           <span className="font-sans text-xs text-muted-foreground">Revenue</span>
                           <span className="font-display text-sm tracking-wide text-foreground">$185</span>
@@ -1159,7 +1159,7 @@ export function BackroomPaywall() {
                           <span className="font-sans text-xs text-muted-foreground">Product Cost</span>
                           <span className="font-display text-sm tracking-wide text-foreground">$18.40</span>
                         </div>
-                        <span className="inline-block px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 text-[10px] font-sans">
+                        <span className="inline-block px-2 py-1 rounded-full bg-success/10 text-success text-[10px] font-sans">
                           90% margin
                         </span>
                       </CardContent>
