@@ -143,7 +143,7 @@ export function StationHardwareWizard({ onClose, initialStation }: Props) {
 
     setTimeout(() => {
       setDiscoveredDevices([
-        { name: 'Acaia Pearl S', id: 'acaia-001' },
+        { name: 'Precision Scale', id: 'scale-001' },
         { name: 'Ohaus Scout STX', id: 'ohaus-002' },
         { name: 'AWS LB-3000', id: 'aws-003' },
       ]);
