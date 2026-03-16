@@ -6,11 +6,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
   Dialog,
-  DialogContent,
-  DialogDescription,
+  PlatformDialogContent as DialogContent,
+  PlatformDialogDescription as DialogDescription,
   DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  PlatformDialogTitle as DialogTitle,
+} from '@/components/platform/ui/PlatformDialog';
 import {
   Form,
   FormControl,
