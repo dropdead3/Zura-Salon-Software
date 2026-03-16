@@ -611,7 +611,7 @@ export function BackroomPaywall() {
             </Card>
 
             {/* WITH */}
-            <Card className="bg-success/[0.03] border-success/20 hover-lift">
+            <Card className="bg-success/[0.03] border-success/20 hover-lift shadow-sm">
               <CardContent className="p-6 md:p-8">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center shrink-0">
