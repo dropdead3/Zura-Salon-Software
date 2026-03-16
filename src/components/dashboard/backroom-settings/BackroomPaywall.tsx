@@ -1020,7 +1020,7 @@ export function BackroomPaywall() {
                 )}
 
                 {/* iPad requirement */}
-                <div className="flex items-start gap-3 p-4 rounded-xl bg-muted/30 border border-border/40">
+                <div className="flex items-start gap-3 p-4 rounded-lg bg-muted/30 border border-border/40">
                   <Info className="w-4 h-4 text-muted-foreground/60 shrink-0 mt-0.5" />
                   <p className="text-sm text-muted-foreground font-sans">
                     Each station uses an iPad with Bluetooth for the mixing interface. A tablet stand is recommended.
