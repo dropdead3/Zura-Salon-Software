@@ -6,8 +6,9 @@ import {
   Scale, Droplets, ShieldCheck, MapPin, TrendingUp, DollarSign, Star,
   Info, Clock, AlertTriangle, CheckCircle2, XCircle,
   Brain, Users, PackageSearch, ChevronRight,
-  Calendar,
+  Calendar, Timer,
 } from 'lucide-react';
+import { Eyebrow } from '@/components/ui/Eyebrow';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
