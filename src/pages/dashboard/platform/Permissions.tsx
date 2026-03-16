@@ -10,12 +10,12 @@ export default function PlatformPermissions() {
       <div>
         
         <div className="flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-violet-500/20">
-            <Shield className="h-6 w-6 text-violet-400" />
+          <div className="p-3 rounded-xl bg-[hsl(var(--platform-primary)/0.2)]">
+            <Shield className="h-6 w-6 text-[hsl(var(--platform-primary))]" />
           </div>
           <div>
-            <h1 className="text-3xl font-display text-white">Permission Configurator</h1>
-            <p className="text-slate-400 mt-1">
+            <h1 className="text-3xl font-display text-[hsl(var(--platform-foreground))]">Permission Configurator</h1>
+            <p className="text-[hsl(var(--platform-foreground-muted))] mt-1">
               Manage what each platform role can access and modify
             </p>
           </div>

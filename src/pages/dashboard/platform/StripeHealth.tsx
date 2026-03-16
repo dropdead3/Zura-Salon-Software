@@ -34,12 +34,12 @@ export default function StripeHealthPage() {
         actions={
           <div className="flex items-center gap-3">
             {/* Real-time indicator */}
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/60 border border-slate-700/50">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[hsl(var(--platform-bg-card)/0.6)] border border-[hsl(var(--platform-border)/0.5)]">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
               </span>
-              <span className="text-xs text-slate-400">Live</span>
+              <span className="text-xs text-[hsl(var(--platform-foreground-muted))]">Live</span>
             </div>
             
             <PlatformButton 
@@ -73,10 +73,10 @@ export default function StripeHealthPage() {
             )} />
           </div>
           <div>
-            <h2 className="text-lg font-medium text-white">
+            <h2 className="text-lg font-medium text-[hsl(var(--platform-foreground))]">
               {hasIssues ? 'Payment Issues Detected' : 'All Payments Healthy'}
             </h2>
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">
               {hasIssues 
                 ? `${(data?.subscriptions.pastDue || 0) + (data?.locations.issues || 0) + (data?.locations.suspended || 0)} issues require attention`
                 : 'All organizations and locations are processing payments normally'
@@ -91,7 +91,7 @@ export default function StripeHealthPage() {
             <TrendingDown className="h-5 w-5 text-amber-400" />
             <div>
               <p className="text-xs text-amber-400 font-medium">Revenue at risk</p>
-              <p className="text-lg font-medium text-white">
+              <p className="text-lg font-medium text-[hsl(var(--platform-foreground))]">
                 ${((data?.revenueAtRisk || 0) / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </p>
             </div>

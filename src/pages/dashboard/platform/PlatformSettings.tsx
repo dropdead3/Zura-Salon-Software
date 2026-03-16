@@ -7,7 +7,6 @@ import { PlatformAccountTab } from '@/components/platform/settings/PlatformAccou
 import { PlatformSecurityTab } from '@/components/platform/settings/PlatformSecurityTab';
 import { PlatformImportTemplatesTab } from '@/components/platform/settings/PlatformImportTemplatesTab';
 import { PlatformDefaultsTab } from '@/components/platform/settings/PlatformDefaultsTab';
-import { usePlatformTheme } from '@/contexts/PlatformThemeContext';
 import { cn } from '@/lib/utils';
 import {
   PlatformCard,
@@ -20,15 +19,7 @@ import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageCont
 import { PlatformPageHeader } from '@/components/platform/ui/PlatformPageHeader';
 
 export default function PlatformSettings() {
-  const { resolvedTheme } = usePlatformTheme();
-  const isDark = resolvedTheme === 'dark';
-
-  const tabTriggerClass = cn(
-    'data-[state=active]:bg-violet-600 data-[state=active]:text-white',
-    isDark 
-      ? 'text-slate-400 hover:text-white'
-      : 'text-slate-500 hover:text-violet-700 data-[state=active]:shadow-md'
-  );
+  const tabTriggerClass = 'data-[state=active]:bg-violet-600 data-[state=active]:text-white text-[hsl(var(--platform-foreground-muted))] hover:text-[hsl(var(--platform-foreground))]';
 
   return (
     <PlatformPageContainer className="space-y-6">
@@ -38,12 +29,7 @@ export default function PlatformSettings() {
       />
 
       <Tabs defaultValue="account" className="space-y-6">
-        <TabsList className={cn(
-          'border p-1',
-          isDark 
-            ? 'bg-slate-800/50 border-slate-700/50'
-            : 'bg-white/80 border-violet-200/50 shadow-sm'
-        )}>
+        <TabsList className="border p-1 bg-[hsl(var(--platform-bg-card)/0.5)] border-[hsl(var(--platform-border)/0.5)]">
           <TabsTrigger value="account" className={cn(tabTriggerClass, 'flex items-center gap-1.5')}>
             <User className="h-3.5 w-3.5" />
             Account
