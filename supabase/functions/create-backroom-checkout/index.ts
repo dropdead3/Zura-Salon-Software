@@ -1,5 +1,5 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
+import { createClient } from "npm:@supabase/supabase-js@2.57.2";
+import Stripe from "https://esm.sh/stripe@18.5.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -8,13 +8,17 @@ const corsHeaders = {
 
 // Flat pricing: $20/mo per location
 const BACKROOM_LOCATION_PRICE_ID = "price_1TBPh6EUkhnzWpRkFzJ7LeL7";
-const BACKROOM_LOCATION_PRODUCT_ID = "prod_U9j99TiqJ4Jnlk";
 
 // Usage-based: $0.50/color service (metered)
 const BACKROOM_USAGE_PRICE_ID = "price_1TBPidEUkhnzWpRkh2zE6G25";
 
 const SCALE_LICENSE_PRICE_ID = "price_1TBK5pEUkhnzWpRkPMCKIAst";
 const SCALE_HARDWARE_PRICE_ID = "price_1TBK6aEUkhnzWpRkjBYdCww0";
+
+const logStep = (step: string, details?: unknown) => {
+  const d = details ? ` — ${JSON.stringify(details)}` : "";
+  console.log(`[create-backroom-checkout] ${step}${d}`);
+};
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -29,7 +33,7 @@ Deno.serve(async (req) => {
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY not configured");
 
     const supabase = createClient(supabaseUrl, supabaseKey);
-    const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
+    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
     // Verify auth
     const authHeader = req.headers.get("Authorization");
@@ -46,6 +50,7 @@ Deno.serve(async (req) => {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    logStep("Authenticated user", { userId: userData.user.id });
 
     const body = await req.json();
     const { organization_id, location_ids, scale_count = 0, success_url, cancel_url } = body;
@@ -64,6 +69,7 @@ Deno.serve(async (req) => {
     if (resolvedLocationIds.length === 0) throw new Error("At least one location is required");
 
     const scaleQty = Math.max(0, Math.min(10, parseInt(scale_count) || 0));
+    logStep("Checkout params", { organization_id, locations: resolvedLocationIds.length, scaleQty });
 
     // Get organization details
     const { data: org, error: orgError } = await supabase
@@ -83,64 +89,76 @@ Deno.serve(async (req) => {
         metadata: { organization_id: org.id, organization_slug: org.slug },
       });
       customerId = customer.id;
+      logStep("Created Stripe customer", { customerId });
 
       await supabase
         .from("organizations")
         .update({ stripe_customer_id: customerId })
         .eq("id", org.id);
+    } else {
+      logStep("Existing Stripe customer", { customerId });
     }
 
-    // Build line items — flat $20/mo per location
+    // Build line items — recurring subscription items
     const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [
       { price: BACKROOM_LOCATION_PRICE_ID, quantity: resolvedLocationIds.length },
+      { price: BACKROOM_USAGE_PRICE_ID },
     ];
-
-    // Usage-based: $0.50/color service (metered)
-    lineItems.push({ price: BACKROOM_USAGE_PRICE_ID });
 
     // Scale licenses (recurring)
     if (scaleQty > 0) {
       lineItems.push({ price: SCALE_LICENSE_PRICE_ID, quantity: scaleQty });
     }
 
-    // Scale hardware (one-time)
+    logStep("Line items built", { count: lineItems.length, scaleQty });
+
+    const sharedMetadata = {
+      organization_id: org.id,
+      addon_type: "backroom",
+      backroom_plan: "standard",
+      scale_count: String(scaleQty),
+      billing_interval: "monthly",
+      location_ids: JSON.stringify(resolvedLocationIds),
+    };
+
+    // If scale hardware is needed, add as an invoice item on the customer
+    // before creating the checkout session. Stripe will attach pending
+    // invoice items to the first subscription invoice automatically.
     if (scaleQty > 0) {
-      lineItems.push({ price: SCALE_HARDWARE_PRICE_ID, quantity: scaleQty });
+      // Retrieve the hardware price to get the unit_amount
+      const hardwarePrice = await stripe.prices.retrieve(SCALE_HARDWARE_PRICE_ID);
+      const unitAmount = hardwarePrice.unit_amount ?? 19900; // fallback $199.00
+      
+      await stripe.invoiceItems.create({
+        customer: customerId,
+        price: SCALE_HARDWARE_PRICE_ID,
+        quantity: scaleQty,
+        description: `Precision Scale hardware × ${scaleQty}`,
+      });
+      logStep("Added one-time hardware invoice item", { scaleQty, unitAmount });
     }
 
-    // Create Checkout Session
+    // Create Checkout Session (subscription mode — recurring items only)
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       mode: "subscription",
       line_items: lineItems,
       success_url: success_url || `${req.headers.get("origin")}/dashboard/admin/backroom-settings?checkout=success`,
       cancel_url: cancel_url || `${req.headers.get("origin")}/dashboard/admin/backroom-settings?checkout=cancelled`,
-      metadata: {
-        organization_id: org.id,
-        addon_type: "backroom",
-        backroom_plan: "standard",
-        scale_count: String(scaleQty),
-        billing_interval: "monthly",
-        location_ids: JSON.stringify(resolvedLocationIds),
-      },
+      metadata: sharedMetadata,
       subscription_data: {
-        metadata: {
-          organization_id: org.id,
-          addon_type: "backroom",
-          backroom_plan: "standard",
-          scale_count: String(scaleQty),
-          billing_interval: "monthly",
-          location_ids: JSON.stringify(resolvedLocationIds),
-        },
+        metadata: sharedMetadata,
       },
     });
+
+    logStep("Checkout session created", { sessionId: session.id, url: session.url });
 
     return new Response(
       JSON.stringify({ url: session.url }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: unknown) {
-    console.error("Error:", error);
+    console.error("[create-backroom-checkout] Error:", error);
     const message = error instanceof Error ? error.message : "Unknown error";
     return new Response(
       JSON.stringify({ error: message }),
