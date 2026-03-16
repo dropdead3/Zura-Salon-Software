@@ -943,7 +943,7 @@ export function BackroomPaywall() {
                 {estimate && locationCount > 0 && netBenefit > 0 ? (
                   <>
                     <p className={cn(tokens.label.default, 'text-primary text-sm')}>
-                      Your color room pays you back {roiMultiplier}× over
+                      Zura Backroom pays for itself {roiMultiplier}× over
                     </p>
                     <p className="text-xs text-muted-foreground font-sans mt-1">
                       {formatCurrency(yearlyCost)}/yr cost → {formatCurrency(yearlySavings)}/yr in recovered value.
