@@ -221,8 +221,8 @@ export function BackroomPaywall() {
               <span className="text-foreground">{formatCurrency(baseCost)}/mo</span>
             </div>
             <div className="flex justify-between text-muted-foreground">
-              <span>Usage fee (~{estimate.monthlyColorServices} appts)</span>
-              <span className="text-foreground">{formatCurrency(usageFee)}/mo</span>
+              <span>Est. usage fee (~{estimate.monthlyColorServices} color appts)*</span>
+              <span className="text-foreground">~{formatCurrency(usageFee)}/mo</span>
             </div>
             {scaleCount > 0 && (
               <div className="flex justify-between text-muted-foreground">
@@ -231,9 +231,10 @@ export function BackroomPaywall() {
               </div>
             )}
             <div className="border-t border-border/20 pt-1.5 flex justify-between">
-              <span className="text-foreground font-medium">Total</span>
-              <span className="text-foreground font-medium">{formatCurrency(monthlyTotal)}/mo</span>
+              <span className="text-foreground font-medium">Est. Total</span>
+              <span className="text-foreground font-medium">~{formatCurrency(monthlyTotal)}/mo</span>
             </div>
+            <p className="text-[10px] text-muted-foreground/70 font-sans mt-1">* Usage fee varies monthly based on actual color service appointments completed.</p>
           </div>
         ) : (
           /* ─ ENHANCED EMPTY STATE: show estimated losses ─ */
@@ -717,7 +718,7 @@ export function BackroomPaywall() {
                 </div>
                 {estimate?.hasRealData ? (
                   <p className="text-xs text-muted-foreground font-sans">
-                    Based on your ~{estimate.monthlyColorServices} monthly color services, estimated usage fee is ~{formatCurrency(usageFee)}/mo.
+                    Based on current booking volume, we estimate ~{formatCurrency(usageFee)}/mo in usage fees — this varies with actual color service appointments each month.
                   </p>
                 ) : (
                   <p className="text-xs text-muted-foreground font-sans">
