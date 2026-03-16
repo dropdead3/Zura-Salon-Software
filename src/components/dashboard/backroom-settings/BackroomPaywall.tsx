@@ -95,9 +95,12 @@ export function BackroomPaywall() {
     }
   }, [activeLocations]);
 
+  const isSingleLocation = activeLocations.length === 1;
   const locationCount = selectedLocationIds.size;
 
   const toggleLocation = (locId: string) => {
+    // Prevent deselecting the only location
+    if (isSingleLocation) return;
     setSelectedLocationIds((prev) => {
       const next = new Set(prev);
       if (next.has(locId)) next.delete(locId);
