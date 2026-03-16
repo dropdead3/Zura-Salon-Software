@@ -654,7 +654,7 @@ export function BackroomPaywall() {
                   </div>
                   <h3 className="font-display text-base tracking-wide uppercase text-destructive">Without Backroom</h3>
                 </div>
-                <ul className="space-y-3.5">
+                <ul className="space-y-4">
                   {[
                     "Stylists guess how much color to mix",
                     "Formulas are scribbled in notebooks or forgotten",
