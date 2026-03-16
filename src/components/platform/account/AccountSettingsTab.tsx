@@ -277,14 +277,14 @@ export function AccountSettingsTab({ organizationId }: AccountSettingsTabProps) 
               value={settings.notifications.email_digest} 
               onValueChange={(v) => updateSettings('notifications.email_digest', v)}
             >
-              <SelectTrigger className="w-32 bg-slate-800 border-slate-700 text-white">
+              <SelectTrigger className="w-32">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-slate-900 border-slate-700">
-                <SelectItem value="daily" className="text-slate-300">Daily</SelectItem>
-                <SelectItem value="weekly" className="text-slate-300">Weekly</SelectItem>
-                <SelectItem value="monthly" className="text-slate-300">Monthly</SelectItem>
-                <SelectItem value="never" className="text-slate-300">Never</SelectItem>
+              <SelectContent>
+                <SelectItem value="daily">Daily</SelectItem>
+                <SelectItem value="weekly">Weekly</SelectItem>
+                <SelectItem value="monthly">Monthly</SelectItem>
+                <SelectItem value="never">Never</SelectItem>
               </SelectContent>
             </Select>
           </div>
