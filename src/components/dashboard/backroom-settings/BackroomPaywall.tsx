@@ -1,15 +1,26 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { Package, Beaker, BarChart3, Shield, Zap, ArrowRight, Loader2, Check, Minus, Plus, Scale, ShieldCheck, MapPin } from 'lucide-react';
+import {
+  Package, Beaker, BarChart3, Shield, Zap, ArrowRight, Loader2,
+  Minus, Plus, Scale, ShieldCheck, MapPin, TrendingDown, DollarSign, Activity,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Slider } from '@/components/ui/slider';
+import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useLocations } from '@/hooks/useLocations';
 import { useBackroomLocationEntitlements } from '@/hooks/backroom/useBackroomLocationEntitlements';
-import { BACKROOM_BASE_PRICE, BACKROOM_PER_SERVICE_FEE, SCALE_LICENSE_MONTHLY, SCALE_HARDWARE_PRICE } from '@/hooks/backroom/useLocationStylistCounts';
+import { useBackroomPricingEstimate } from '@/hooks/backroom/useBackroomPricingEstimate';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import {
+  BACKROOM_BASE_PRICE, BACKROOM_PER_SERVICE_FEE,
+  SCALE_LICENSE_MONTHLY, SCALE_HARDWARE_PRICE,
+} from '@/hooks/backroom/useLocationStylistCounts';
 import { toast } from 'sonner';
 
 const features = [
@@ -39,10 +50,14 @@ export function BackroomPaywall() {
   const [loading, setLoading] = useState(false);
   const [scaleCount, setScaleCount] = useState(1);
   const [selectedLocationIds, setSelectedLocationIds] = useState<Set<string>>(new Set());
+  const [manualStylistCount, setManualStylistCount] = useState(2);
 
   const { effectiveOrganization } = useOrganizationContext();
   const { data: locations = [] } = useLocations(effectiveOrganization?.id);
   const { isLocationEntitled } = useBackroomLocationEntitlements(effectiveOrganization?.id);
+  const { formatCurrency } = useFormatCurrency();
+
+  const { data: estimate, isLoading: estimateLoading } = useBackroomPricingEstimate(manualStylistCount);
 
   const activeLocations = locations.filter((l) => l.is_active);
   const locationCount = selectedLocationIds.size;
@@ -64,10 +79,19 @@ export function BackroomPaywall() {
     }
   };
 
+  // Cost calculations
   const baseCost = locationCount * BACKROOM_BASE_PRICE;
   const scaleCost = scaleCount * SCALE_LICENSE_MONTHLY;
-  const monthlyTotal = baseCost + scaleCost;
+  const usageFee = estimate ? Math.round(estimate.monthlyColorServices * BACKROOM_PER_SERVICE_FEE) : 0;
+  const monthlyTotal = baseCost + scaleCost + usageFee;
   const hardwareTotal = scaleCount * SCALE_HARDWARE_PRICE;
+
+  // Savings calculations
+  const wasteSavings = estimate?.estimatedWasteSavings ?? 0;
+  const supplyRecovery = estimate?.estimatedSupplyRecovery ?? 0;
+  const totalSavings = wasteSavings + supplyRecovery;
+  const netBenefit = totalSavings - monthlyTotal;
+  const roiMultiplier = monthlyTotal > 0 ? Math.round(totalSavings / monthlyTotal) : 0;
 
   const handleCheckout = async () => {
     if (!effectiveOrganization?.id) {
@@ -137,6 +161,173 @@ export function BackroomPaywall() {
           ))}
         </div>
 
+        {/* ── YOUR SALON'S NUMBERS ── */}
+        <div className="max-w-2xl mx-auto">
+          <Card className="bg-card/60 border-border/40 overflow-hidden">
+            <CardContent className="p-0">
+              {/* Net benefit hero banner */}
+              <div className="bg-primary/5 border-b border-primary/10 p-5 text-center space-y-1">
+                {estimateLoading ? (
+                  <Skeleton className="h-10 w-48 mx-auto" />
+                ) : netBenefit > 0 && locationCount > 0 ? (
+                  <>
+                    <p className="text-xs text-muted-foreground font-sans tracking-wide">
+                      ESTIMATED MONTHLY NET BENEFIT
+                    </p>
+                    <div className="flex items-baseline justify-center gap-1">
+                      <span className="font-display text-3xl tracking-wide text-primary">
+                        +<AnimatedNumber value={netBenefit} prefix="$" duration={1000} />
+                      </span>
+                      <span className="font-display text-sm tracking-wide text-primary/70">/mo</span>
+                    </div>
+                    {roiMultiplier >= 2 && (
+                      <span className="inline-flex items-center gap-1 mt-1 px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-sans font-medium">
+                        <TrendingDown className="w-3 h-3" />
+                        {roiMultiplier}× return on investment
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground font-sans">
+                    Select locations below to see your projected savings
+                  </p>
+                )}
+              </div>
+
+              <div className="p-5 space-y-5">
+                {/* Activity metrics */}
+                <div>
+                  <p className={cn(tokens.label.default, 'text-foreground text-xs mb-3 flex items-center gap-2')}>
+                    <Activity className="w-3.5 h-3.5 text-primary" />
+                    Your Salon's Numbers
+                  </p>
+                  {estimateLoading ? (
+                    <div className="grid grid-cols-2 gap-3">
+                      <Skeleton className="h-20 rounded-lg" />
+                      <Skeleton className="h-20 rounded-lg" />
+                    </div>
+                  ) : estimate ? (
+                    <>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="p-3 rounded-lg bg-muted/30 border border-border/40 text-center">
+                          <p className="font-display text-2xl tracking-wide text-foreground">
+                            ~<AnimatedNumber value={estimate.monthlyColorServices} duration={800} />
+                          </p>
+                          <p className="text-xs text-muted-foreground font-sans mt-0.5">
+                            color services / mo
+                          </p>
+                        </div>
+                        <div className="p-3 rounded-lg bg-muted/30 border border-border/40 text-center">
+                          <p className="font-display text-2xl tracking-wide text-foreground">
+                            <AnimatedNumber
+                              value={estimate.monthlyProductSpend}
+                              prefix="$"
+                              duration={800}
+                            />
+                          </p>
+                          <p className="text-xs text-muted-foreground font-sans mt-0.5">
+                            product spend / mo
+                          </p>
+                        </div>
+                      </div>
+
+                      {!estimate.hasRealData && (
+                        <div className="mt-3 space-y-2">
+                          <p className="text-xs text-muted-foreground font-sans italic">
+                            Based on industry averages — adjust your stylist count for a better estimate:
+                          </p>
+                          <div className="flex items-center gap-3">
+                            <span className="font-sans text-xs text-muted-foreground w-16 shrink-0">
+                              {manualStylistCount} stylist{manualStylistCount !== 1 ? 's' : ''}
+                            </span>
+                            <Slider
+                              variant="filled"
+                              min={1}
+                              max={20}
+                              step={1}
+                              value={[manualStylistCount]}
+                              onValueChange={([v]) => setManualStylistCount(v)}
+                              className="flex-1"
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {estimate.hasRealData && (
+                        <p className="text-xs text-muted-foreground font-sans mt-2 italic">
+                          Based on {estimate.totalColorAppointments.toLocaleString()} color appointments over the last {estimate.dataWindowDays} days
+                        </p>
+                      )}
+                    </>
+                  ) : null}
+                </div>
+
+                {/* Cost breakdown */}
+                {locationCount > 0 && estimate && (
+                  <div className="space-y-2">
+                    <p className={cn(tokens.label.default, 'text-foreground text-xs flex items-center gap-2')}>
+                      <DollarSign className="w-3.5 h-3.5 text-primary" />
+                      Estimated Monthly Cost
+                    </p>
+                    <div className="space-y-1.5 font-sans text-sm">
+                      <div className="flex justify-between text-muted-foreground">
+                        <span>Location base × {locationCount}</span>
+                        <span className="text-foreground">{formatCurrency(baseCost)}/mo</span>
+                      </div>
+                      <div className="flex justify-between text-muted-foreground">
+                        <span>Usage fee (~{estimate.monthlyColorServices} appts)</span>
+                        <span className="text-foreground">{formatCurrency(usageFee)}/mo</span>
+                      </div>
+                      {scaleCount > 0 && (
+                        <div className="flex justify-between text-muted-foreground">
+                          <span>Scale license × {scaleCount}</span>
+                          <span className="text-foreground">{formatCurrency(scaleCost)}/mo</span>
+                        </div>
+                      )}
+                      <div className="border-t border-border/40 pt-1.5 flex justify-between">
+                        <span className="text-foreground font-medium">Total</span>
+                        <span className="text-foreground font-medium">{formatCurrency(monthlyTotal)}/mo</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Savings projection */}
+                {locationCount > 0 && estimate && (
+                  <div className="space-y-2">
+                    <p className={cn(tokens.label.default, 'text-foreground text-xs flex items-center gap-2')}>
+                      <TrendingDown className="w-3.5 h-3.5 text-primary" />
+                      Projected Monthly Savings
+                    </p>
+                    <div className="space-y-1.5 font-sans text-sm">
+                      <div className="flex justify-between text-muted-foreground">
+                        <span>Waste reduction (12%)</span>
+                        <span className="text-emerald-400">−{formatCurrency(wasteSavings)}</span>
+                      </div>
+                      <div className="flex justify-between text-muted-foreground">
+                        <span>Supply fee recovery*</span>
+                        <span className="text-emerald-400">−{formatCurrency(supplyRecovery)}</span>
+                      </div>
+                      <div className="border-t border-border/40 pt-1.5 flex justify-between">
+                        <span className="text-foreground font-medium">Net benefit</span>
+                        <span className={cn(
+                          'font-medium',
+                          netBenefit > 0 ? 'text-emerald-400' : 'text-foreground',
+                        )}>
+                          {netBenefit > 0 ? '+' : ''}{formatCurrency(netBenefit)}/mo
+                        </span>
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground font-sans leading-tight">
+                      * Supply fee recovery assumes you add an avg product cost fee to color services. This is optional and varies by salon.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Pricing Overview */}
         <div className="max-w-2xl mx-auto">
           <Card className="bg-card/60 border-border/40">
@@ -162,9 +353,16 @@ export function BackroomPaywall() {
                   <p className="text-xs text-muted-foreground font-sans mt-0.5">per color service appointment</p>
                 </div>
               </div>
-              <p className="text-xs text-muted-foreground font-sans">
-                Color service usage is tracked automatically and billed based on actual appointments that use the scale.
-              </p>
+              {estimate && estimate.hasRealData && (
+                <p className="text-xs text-muted-foreground font-sans">
+                  Based on your ~{estimate.monthlyColorServices} monthly color services, your estimated usage fee is ~{formatCurrency(usageFee)}/mo.
+                </p>
+              )}
+              {(!estimate || !estimate.hasRealData) && (
+                <p className="text-xs text-muted-foreground font-sans">
+                  Color service usage is tracked automatically and billed based on actual appointments that use the scale.
+                </p>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -302,63 +500,8 @@ export function BackroomPaywall() {
           </CardContent>
         </Card>
 
-        {/* Price Summary & CTA */}
+        {/* CTA */}
         <div className="max-w-2xl mx-auto space-y-4">
-          <Card className="bg-card/60 border-border/40">
-            <CardContent className="p-5 space-y-3">
-              {locationCount > 0 ? (
-                <div className="flex justify-between items-center font-sans text-sm">
-                  <span className="text-muted-foreground">
-                    Location base × {locationCount}
-                  </span>
-                  <span className="text-foreground font-medium">${baseCost}/mo</span>
-                </div>
-              ) : (
-                <div className="flex justify-between items-center font-sans text-sm">
-                  <span className="text-muted-foreground">No locations selected</span>
-                  <span className="text-foreground font-medium">$0/mo</span>
-                </div>
-              )}
-
-              <div className="flex justify-between items-center font-sans text-sm">
-                <span className="text-muted-foreground">
-                  Color service usage
-                </span>
-                <span className="text-foreground font-medium text-xs">
-                  ${BACKROOM_PER_SERVICE_FEE.toFixed(2)}/appointment
-                </span>
-              </div>
-
-              {scaleCount > 0 && (
-                <>
-                  <div className="flex justify-between items-center font-sans text-sm">
-                    <span className="text-muted-foreground">
-                      Scale license × {scaleCount}
-                    </span>
-                    <span className="text-foreground font-medium">${scaleCost}/mo</span>
-                  </div>
-                  <div className="flex justify-between items-center font-sans text-sm">
-                    <span className="text-muted-foreground">
-                      Acaia Pearl × {scaleCount} (one-time)
-                    </span>
-                    <span className="text-foreground font-medium">${hardwareTotal}</span>
-                  </div>
-                </>
-              )}
-
-              <div className="border-t border-border/40 pt-3 flex justify-between items-center">
-                <span className={cn(tokens.label.default, 'text-foreground')}>
-                  Monthly base
-                </span>
-                <span className={cn(tokens.stat.large, 'text-foreground')}>${monthlyTotal}/mo</span>
-              </div>
-              <p className="text-xs text-muted-foreground font-sans text-right">
-                + usage-based color service fees
-                {hardwareTotal > 0 ? ` + $${hardwareTotal} one-time hardware` : ''}
-              </p>
-            </CardContent>
-          </Card>
-
           <div className="text-center space-y-3">
             <Button
               size="lg"
@@ -370,6 +513,11 @@ export function BackroomPaywall() {
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
                   Redirecting…
+                </>
+              ) : netBenefit > 0 && locationCount > 0 ? (
+                <>
+                  Start saving {formatCurrency(netBenefit)}/mo
+                  <ArrowRight className="w-4 h-4" />
                 </>
               ) : (
                 <>
@@ -384,7 +532,7 @@ export function BackroomPaywall() {
               </p>
             )}
             <p className="text-xs text-muted-foreground font-sans">
-              30-day money-back guarantee. ${monthlyTotal}/mo base + usage fees. Cancel anytime.
+              30-day money-back guarantee. Cancel anytime.
             </p>
           </div>
         </div>
@@ -393,12 +541,26 @@ export function BackroomPaywall() {
         <div className="max-w-2xl mx-auto">
           <Card className="bg-primary/5 border-primary/20">
             <CardContent className="p-5 text-center">
-              <p className={cn(tokens.label.default, 'text-primary text-sm')}>
-                Average salon saves $375/mo in reduced product waste
-              </p>
-              <p className="text-xs text-muted-foreground font-sans mt-1">
-                Based on 50% waste reduction on $3,000/mo color spend. Backroom pays for itself 3–4× over.
-              </p>
+              {estimate && locationCount > 0 && netBenefit > 0 ? (
+                <>
+                  <p className={cn(tokens.label.default, 'text-primary text-sm')}>
+                    Backroom pays for itself {roiMultiplier}× over
+                  </p>
+                  <p className="text-xs text-muted-foreground font-sans mt-1">
+                    {formatCurrency(monthlyTotal)}/mo cost → {formatCurrency(totalSavings)}/mo in savings & recovery.
+                    {!estimate.hasRealData && ' Estimates based on industry averages.'}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className={cn(tokens.label.default, 'text-primary text-sm')}>
+                    Average salon saves $375/mo in reduced product waste
+                  </p>
+                  <p className="text-xs text-muted-foreground font-sans mt-1">
+                    Based on 12% waste reduction on typical color spend. Backroom pays for itself many times over.
+                  </p>
+                </>
+              )}
             </CardContent>
           </Card>
         </div>
