@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   Beaker, BarChart3, ArrowRight, Loader2,
   Scale, ShieldCheck, MapPin, TrendingUp, DollarSign, Star,
