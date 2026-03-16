@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import {
   Package, Beaker, BarChart3, Shield, Zap, ArrowRight, Loader2,
   Minus, Plus, Scale, Droplets, ShieldCheck, MapPin, TrendingUp, DollarSign, Activity,
-  ChevronUp, Info, Clock, Eye, AlertTriangle, CheckCircle2, Lock, ClipboardList, Brain,
+  Info, Clock, Eye, AlertTriangle, CheckCircle2, Lock, ClipboardList, Brain,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
