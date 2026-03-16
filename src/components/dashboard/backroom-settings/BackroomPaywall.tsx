@@ -100,17 +100,17 @@ const howItWorks = [
   {
     step: '01',
     title: 'Weigh & Track',
-    description: 'Every color service is measured on a precision scale. Dispensed grams, leftover product, and formulas are recorded automatically.',
+    description: 'Every color service is weighed. Grams, formulas, and leftovers are recorded automatically.',
   },
   {
     step: '02',
     title: 'Detect & Reduce',
-    description: 'Ghost losses, product waste, and variance are flagged automatically. You see exactly where product is going.',
+    description: 'Waste, ghost losses, and variances are flagged. You see exactly where product goes.',
   },
   {
     step: '03',
     title: 'Recover & Reorder',
-    description: 'Bill supply costs back to clients with automated fees. Predictive reorder alerts prevent stockouts.',
+    description: 'Supply costs are billed back automatically. Predictive alerts prevent stockouts.',
   },
 ];
 
