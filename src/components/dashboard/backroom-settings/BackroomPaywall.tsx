@@ -91,8 +91,8 @@ function ProductPreview() {
       {/* Section heading */}
       <div className="text-center space-y-3">
         <Eyebrow className="text-muted-foreground">See It In Action</Eyebrow>
-        <p className="text-sm md:text-base text-muted-foreground font-sans font-light max-w-lg mx-auto leading-relaxed">
-          A real-time mixing session — every gram tracked, every formula remembered.
+        <p className="text-sm md:text-base text-muted-foreground font-sans font-light max-w-2xl mx-auto leading-relaxed">
+          A real-time mixing session&nbsp;— every gram tracked, every formula remembered.
         </p>
       </div>
 
