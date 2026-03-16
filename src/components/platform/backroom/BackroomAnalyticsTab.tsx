@@ -44,7 +44,7 @@ function KPICard({ icon: Icon, label, value, subtitle }: { icon: any; label: str
 
 const HEALTH_MAP: Record<CoachingSignal['healthScore'], { label: string; color: string }> = {
   green: { label: 'Healthy', color: 'emerald-400' },
-  yellow: { label: 'Needs Attention', color: 'amber-400' },
+  amber: { label: 'Needs Attention', color: 'amber-400' },
   red: { label: 'Critical', color: 'red-400' },
 };
 
