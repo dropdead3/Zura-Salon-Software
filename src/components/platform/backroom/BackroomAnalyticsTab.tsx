@@ -413,7 +413,7 @@ function CoachAssignCell({
 }: {
   orgId: string;
   coachByOrg: Map<string, { coachUserId: string; coachName: string }>;
-  teamMembers: Array<{ user_id: string; full_name?: string | null; email: string }>;
+  teamMembers: Array<{ user_id: string; full_name?: string | null; email?: string | null }>;
   onAssign: (coachUserId: string) => void;
   onUnassign: (coachUserId: string) => void;
 }) {
