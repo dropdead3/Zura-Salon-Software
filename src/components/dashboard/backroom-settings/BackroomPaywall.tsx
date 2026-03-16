@@ -507,6 +507,11 @@ export function BackroomPaywall() {
         </div>
 
         {/* ═══════════════════════════════════════════
+            SECTION 4.5 — COMPETITOR COMPARISON
+            ═══════════════════════════════════════════ */}
+        <CompetitorComparison />
+
+        {/* ═══════════════════════════════════════════
             SECTION 5 — PRICING + ROI
             ═══════════════════════════════════════════ */}
         <div className="space-y-4">
