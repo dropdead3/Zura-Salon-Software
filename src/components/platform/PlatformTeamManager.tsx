@@ -262,7 +262,7 @@ export function PlatformTeamManager() {
                                     <MoreHorizontal className="w-4 h-4" />
                                   </PlatformButton>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="bg-slate-800 border-slate-700">
+                                <DropdownMenuContent align="end" className="bg-[hsl(var(--platform-bg-elevated))] border-[hsl(var(--platform-border))]">
                                   <DropdownMenuItem
                                     className="text-red-400 focus:text-red-400 focus:bg-red-500/10"
                                     onClick={() => setDeleteConfirm({
