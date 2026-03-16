@@ -2019,7 +2019,7 @@ export function BackroomPaywall() {
                   <ShieldCheck className="w-6 h-6 text-emerald-400" />
                 </div>
                 <div>
-                  <p className="font-sans text-base font-medium text-emerald-300">30-Day Money-Back Guarantee</p>
+                  <p className="font-sans text-base font-medium text-success">30-Day Money-Back Guarantee</p>
                   <p className="text-sm text-muted-foreground font-sans mt-1">
                     If Backroom doesn't work for your salon, get a full refund within 30 days. No questions asked.
                   </p>
