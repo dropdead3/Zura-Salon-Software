@@ -470,7 +470,6 @@ export function EditOrganizationDialog({ organization, open, onOpenChange }: Edi
                               <SelectItem
                                 key={option.value}
                                 value={option.value}
-                                className="text-slate-300 focus:bg-slate-700 focus:text-white"
                               >
                                 {option.label}
                               </SelectItem>
