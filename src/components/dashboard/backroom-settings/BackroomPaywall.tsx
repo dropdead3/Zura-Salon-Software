@@ -631,7 +631,10 @@ export function BackroomPaywall() {
                             {/* Header */}
                             <div className="space-y-1.5 pb-5 border-b border-[hsl(145,50%,55%)]/15">
                               <div className="flex items-center gap-2.5">
-                                <span className="w-2.5 h-2.5 rounded-full bg-[hsl(145,50%,55%)] shadow-[0_0_8px_2px_hsl(145_50%_55%/0.4)]" />
+                                <span className="relative flex h-2.5 w-2.5">
+                                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[hsl(145,50%,55%)] opacity-75" />
+                                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[hsl(145,50%,55%)] shadow-[0_0_8px_2px_hsl(145_50%_55%/0.4)]" />
+                                </span>
                                 <p className="font-display text-lg text-[hsl(145,50%,55%)] uppercase tracking-wide font-medium">When Backroom Is Implemented</p>
                               </div>
                               <p className="font-sans text-sm text-muted-foreground pl-5">Estimated annual savings based on your salon's current numbers</p>
