@@ -30,15 +30,15 @@ export function SetupFeesForm({
       {/* Setup Fee */}
       <div className="space-y-3">
         <div className="flex items-center gap-2">
-          <DollarSign className="h-4 w-4 text-violet-400" />
+          <DollarSign className="h-4 w-4 text-[hsl(var(--platform-primary))]" />
           <PlatformLabel className="text-sm font-medium">Setup / Migration Fee</PlatformLabel>
         </div>
         
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <PlatformLabel htmlFor="setupFee" className="text-xs text-slate-400">Amount</PlatformLabel>
+            <PlatformLabel htmlFor="setupFee" className="text-xs text-[hsl(var(--platform-foreground-muted))]">Amount</PlatformLabel>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--platform-foreground-muted))]">$</span>
               <PlatformInput
                 id="setupFee"
                 type="number"
@@ -52,18 +52,18 @@ export function SetupFeesForm({
           </div>
 
           <div className="flex items-end">
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-800/50 border border-slate-700/50 w-full">
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-[hsl(var(--platform-bg-card)/0.5)] border border-[hsl(var(--platform-border)/0.5)] w-full">
               <Switch
                 checked={setupFeePaid}
                 onCheckedChange={onSetupFeePaidChange}
               />
-              <span className="text-sm text-slate-300">
+              <span className="text-sm text-[hsl(var(--platform-foreground)/0.85)]">
                 {setupFeePaid ? 'Already Paid' : 'Not Paid'}
               </span>
             </div>
           </div>
         </div>
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-[hsl(var(--platform-foreground-subtle))]">
           One-time fee for onboarding, data migration, or setup services
         </p>
       </div>
@@ -71,16 +71,16 @@ export function SetupFeesForm({
       {/* Per Location Fee */}
       <div className="space-y-3">
         <div className="flex items-center gap-2">
-          <MapPin className="h-4 w-4 text-violet-400" />
+          <MapPin className="h-4 w-4 text-[hsl(var(--platform-primary))]" />
           <PlatformLabel className="text-sm font-medium">Per-Location Fee</PlatformLabel>
         </div>
         
         <div className="space-y-2">
-          <PlatformLabel htmlFor="perLocationFee" className="text-xs text-slate-400">
+          <PlatformLabel htmlFor="perLocationFee" className="text-xs text-[hsl(var(--platform-foreground-muted))]">
             Additional monthly fee per location (first location included)
           </PlatformLabel>
           <div className="relative max-w-xs">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--platform-foreground-muted))]">$</span>
             <PlatformInput
               id="perLocationFee"
               type="number"
@@ -94,11 +94,11 @@ export function SetupFeesForm({
         </div>
 
         {additionalLocations > 0 && perLocationFee > 0 && (
-          <div className="p-3 rounded-lg bg-slate-800/50 border border-slate-700/50">
-            <p className="text-sm text-slate-300">
+          <div className="p-3 rounded-lg bg-[hsl(var(--platform-bg-card)/0.5)] border border-[hsl(var(--platform-border)/0.5)]">
+            <p className="text-sm text-[hsl(var(--platform-foreground)/0.85)]">
               {locationCount} locations total → {formatCurrency(perLocationFee * additionalLocations)}/mo in location fees
             </p>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs text-[hsl(var(--platform-foreground-subtle))] mt-1">
               (1 included + {additionalLocations} additional × {formatCurrency(perLocationFee)})
             </p>
           </div>

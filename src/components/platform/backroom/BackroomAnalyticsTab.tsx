@@ -27,18 +27,26 @@ function KPICard({ icon: Icon, label, value, subtitle }: { icon: any; label: str
       <PlatformCardContent className="p-5 pt-5">
         <div className="flex items-start justify-between">
           <div className="space-y-1">
-            <p className="font-display text-xs tracking-wide uppercase text-slate-400">{label}</p>
+            <p className="font-display text-xs tracking-wide uppercase text-[hsl(var(--platform-foreground-muted))]">{label}</p>
             <p className="font-display text-2xl tracking-tight text-[hsl(var(--platform-foreground))]">{value}</p>
-            {subtitle && <p className="font-sans text-xs text-slate-500">{subtitle}</p>}
+            {subtitle && <p className="font-sans text-xs text-[hsl(var(--platform-foreground-subtle))]">{subtitle}</p>}
           </div>
           <div className="w-10 h-10 rounded-lg bg-[hsl(var(--platform-bg-hover))] flex items-center justify-center">
-            <Icon className="w-5 h-5 text-violet-400" />
+            <Icon className="w-5 h-5 text-[hsl(var(--platform-primary))]" />
           </div>
         </div>
       </PlatformCardContent>
     </PlatformCard>
   );
 }
+
+/* ── Table Cell Helpers ── */
+
+const HEALTH_MAP: Record<CoachingSignal['healthScore'], { label: string; color: string }> = {
+  green: { label: 'Healthy', color: 'emerald-400' },
+  yellow: { label: 'Needs Attention', color: 'amber-400' },
+  red: { label: 'Critical', color: 'red-400' },
+};
 
 const COOLDOWN_MS = 48 * 60 * 60 * 1000; // 48 hours
 
@@ -166,7 +174,7 @@ export function BackroomAnalyticsTab() {
           <PlatformCardHeader>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-[hsl(var(--platform-bg-hover))] flex items-center justify-center">
-                <BarChart3 className="w-5 h-5 text-violet-400" />
+                <BarChart3 className="w-5 h-5 text-[hsl(var(--platform-primary))]" />
               </div>
               <div>
                 <PlatformCardTitle>Adoption Timeline</PlatformCardTitle>
@@ -181,12 +189,12 @@ export function BackroomAnalyticsTab() {
                 const heightPct = (m.count / maxCount) * 100;
                 return (
                   <div key={m.month} className="flex-1 flex flex-col items-center gap-1">
-                    <span className="font-sans text-[10px] text-slate-500 tabular-nums">{m.count}</span>
+                    <span className="font-sans text-[10px] text-[hsl(var(--platform-foreground-subtle))] tabular-nums">{m.count}</span>
                     <div
-                      className="w-full rounded-t bg-violet-500/20 border border-violet-500/30 min-h-[4px] transition-all"
+                      className="w-full rounded-t bg-[hsl(var(--platform-primary)/0.2)] border border-[hsl(var(--platform-primary)/0.3)] min-h-[4px] transition-all"
                       style={{ height: `${Math.max(heightPct, 4)}%` }}
                     />
-                    <span className="font-sans text-[10px] text-slate-500">{m.month.slice(5)}</span>
+                    <span className="font-sans text-[10px] text-[hsl(var(--platform-foreground-subtle))]">{m.month.slice(5)}</span>
                   </div>
                 );
               })}
@@ -200,7 +208,7 @@ export function BackroomAnalyticsTab() {
         <PlatformCardHeader>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-[hsl(var(--platform-bg-hover))] flex items-center justify-center">
-              <Building2 className="w-5 h-5 text-violet-400" />
+              <Building2 className="w-5 h-5 text-[hsl(var(--platform-primary))]" />
             </div>
             <div>
               <PlatformCardTitle>Organization Usage</PlatformCardTitle>
@@ -219,19 +227,19 @@ export function BackroomAnalyticsTab() {
           ) : (
             <Table>
               <TableHeader>
-                <TableRow className="border-slate-700/50">
-                  <TableHead className="font-sans text-xs text-slate-400">Organization</TableHead>
-                  <TableHead className="font-sans text-xs text-slate-400">Snapshots</TableHead>
-                  <TableHead className="font-sans text-xs text-slate-400">Avg Waste %</TableHead>
-                  <TableHead className="font-sans text-xs text-slate-400">Sessions</TableHead>
-                  <TableHead className="font-sans text-xs text-slate-400">Last Activity</TableHead>
+                <TableRow className="border-[hsl(var(--platform-border)/0.5)]">
+                  <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Organization</TableHead>
+                  <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Snapshots</TableHead>
+                  <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Avg Waste %</TableHead>
+                  <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Sessions</TableHead>
+                  <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Last Activity</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {metrics.orgUsageStats.map((org) => (
-                  <TableRow key={org.orgId} className="border-slate-700/30">
-                    <TableCell className="font-sans text-sm font-medium text-slate-200">{org.orgName}</TableCell>
-                    <TableCell className="font-sans text-sm tabular-nums text-slate-300">{org.snapshotCount}</TableCell>
+                  <TableRow key={org.orgId} className="border-[hsl(var(--platform-border)/0.3)]">
+                    <TableCell className="font-sans text-sm font-medium text-[hsl(var(--platform-foreground))]">{org.orgName}</TableCell>
+                    <TableCell className="font-sans text-sm tabular-nums text-[hsl(var(--platform-foreground)/0.85)]">{org.snapshotCount}</TableCell>
                     <TableCell className="font-sans text-sm tabular-nums">
                       {org.avgWastePct != null ? (
                         <PlatformBadge
@@ -241,11 +249,11 @@ export function BackroomAnalyticsTab() {
                           {org.avgWastePct.toFixed(1)}%
                         </PlatformBadge>
                       ) : (
-                        <span className="text-slate-500">—</span>
+                        <span className="text-[hsl(var(--platform-foreground-subtle))]">—</span>
                       )}
                     </TableCell>
-                    <TableCell className="font-sans text-sm tabular-nums text-slate-300">{org.totalSessions.toLocaleString()}</TableCell>
-                    <TableCell className="font-sans text-xs text-slate-500">
+                    <TableCell className="font-sans text-sm tabular-nums text-[hsl(var(--platform-foreground)/0.85)]">{org.totalSessions.toLocaleString()}</TableCell>
+                    <TableCell className="font-sans text-xs text-[hsl(var(--platform-foreground-subtle))]">
                       {org.lastSnapshotDate ? new Date(org.lastSnapshotDate).toLocaleDateString() : 'Never'}
                     </TableCell>
                   </TableRow>
@@ -275,25 +283,25 @@ export function BackroomAnalyticsTab() {
           <PlatformCardContent className="p-0">
             <Table>
               <TableHeader>
-                <TableRow className="border-slate-700/50">
-                  <TableHead className="font-sans text-xs text-slate-400">Health</TableHead>
-                  <TableHead className="font-sans text-xs text-slate-400">Organization</TableHead>
-                  <TableHead className="font-sans text-xs text-slate-400">Coach</TableHead>
-                  <TableHead className="font-sans text-xs text-slate-400">Reweigh %</TableHead>
-                  <TableHead className="font-sans text-xs text-slate-400">Waste %</TableHead>
-                  <TableHead className="font-sans text-xs text-slate-400">Sessions</TableHead>
-                  <TableHead className="font-sans text-xs text-slate-400">Last Active</TableHead>
-                  <TableHead className="font-sans text-xs text-slate-400">Signal</TableHead>
-                  <TableHead className="font-sans text-xs text-slate-400">Actions</TableHead>
+                <TableRow className="border-[hsl(var(--platform-border)/0.5)]">
+                  <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Health</TableHead>
+                  <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Organization</TableHead>
+                  <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Coach</TableHead>
+                  <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Reweigh %</TableHead>
+                  <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Waste %</TableHead>
+                  <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Sessions</TableHead>
+                  <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Last Active</TableHead>
+                  <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Signal</TableHead>
+                  <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {metrics.coachingSignals.map((signal) => (
-                  <TableRow key={signal.orgId} className="border-slate-700/30">
+                  <TableRow key={signal.orgId} className="border-[hsl(var(--platform-border)/0.3)]">
                     <TableCell>
                       <HealthDot score={signal.healthScore} />
                     </TableCell>
-                    <TableCell className="font-sans text-sm font-medium text-slate-200">
+                    <TableCell className="font-sans text-sm font-medium text-[hsl(var(--platform-foreground))]">
                       {signal.orgName}
                     </TableCell>
                     <TableCell>
@@ -314,25 +322,25 @@ export function BackroomAnalyticsTab() {
                           {signal.avgReweighPct.toFixed(0)}%
                         </PlatformBadge>
                       ) : (
-                        <span className="text-slate-500">—</span>
+                        <span className="text-[hsl(var(--platform-foreground-subtle))]">—</span>
                       )}
                     </TableCell>
                     <TableCell className="font-sans text-sm tabular-nums">
                       {signal.avgWastePct != null ? (
-                        <span className="text-slate-300">{signal.avgWastePct.toFixed(1)}%</span>
+                        <span className="text-[hsl(var(--platform-foreground)/0.85)]">{signal.avgWastePct.toFixed(1)}%</span>
                       ) : (
-                        <span className="text-slate-500">—</span>
+                        <span className="text-[hsl(var(--platform-foreground-subtle))]">—</span>
                       )}
                     </TableCell>
-                    <TableCell className="font-sans text-sm tabular-nums text-slate-300">
+                    <TableCell className="font-sans text-sm tabular-nums text-[hsl(var(--platform-foreground)/0.85)]">
                       {signal.sessionCount.toLocaleString()}
                     </TableCell>
-                    <TableCell className="font-sans text-xs text-slate-500">
+                    <TableCell className="font-sans text-xs text-[hsl(var(--platform-foreground-subtle))]">
                       {signal.lastActiveDate
                         ? new Date(signal.lastActiveDate).toLocaleDateString()
                         : 'Never'}
                     </TableCell>
-                    <TableCell className="font-sans text-xs text-slate-400 max-w-[200px] truncate">
+                    <TableCell className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))] max-w-[200px] truncate">
                       {signal.reason}
                     </TableCell>
                     <TableCell>
@@ -383,85 +391,79 @@ export function BackroomAnalyticsTab() {
         orgId={historyOrg?.id ?? null}
         orgName={historyOrg?.name ?? ''}
         open={!!historyOrg}
-        onOpenChange={(open) => { if (!open) setHistoryOrg(null); }}
+        onOpenChange={(v) => { if (!v) setHistoryOrg(null); }}
       />
     </div>
   );
 }
 
-interface CoachAssignCellProps {
-  orgId: string;
-  coachByOrg: Map<string, { coachUserId: string; coachName: string }>;
-  teamMembers: { user_id: string; full_name?: string; email?: string }[];
-  onAssign: (coachUserId: string) => void;
-  onUnassign: (coachUserId: string) => void;
+/* ── Helper Components ── */
+
+function HealthDot({ score }: { score: 'green' | 'yellow' | 'red' }) {
+  const cls =
+    score === 'green'
+      ? 'bg-emerald-400'
+      : score === 'yellow'
+      ? 'bg-amber-400'
+      : 'bg-red-400';
+  return <span className={cn('block w-3 h-3 rounded-full', cls)} />;
 }
 
-function CoachAssignCell({ orgId, coachByOrg, teamMembers, onAssign, onUnassign }: CoachAssignCellProps) {
-  const assigned = coachByOrg.get(orgId);
+function CoachAssignCell({
+  orgId,
+  coachByOrg,
+  teamMembers,
+  onAssign,
+  onUnassign,
+}: {
+  orgId: string;
+  coachByOrg: Map<string, { coachUserId: string; coachName: string }>;
+  teamMembers: Array<{ user_id: string; full_name: string | null; email: string }>;
+  onAssign: (coachUserId: string) => void;
+  onUnassign: (coachUserId: string) => void;
+}) {
+  const assignment = coachByOrg.get(orgId);
 
-  if (assigned) {
+  if (assignment) {
     return (
-      <Popover>
-        <PopoverTrigger asChild>
-          <button className="font-sans text-xs text-violet-400 hover:underline cursor-pointer">
-            {assigned.coachName}
-          </button>
-        </PopoverTrigger>
-        <PopoverContent className="w-48 p-2" align="start">
-          <p className="font-sans text-xs text-slate-400 mb-2">Assigned coach</p>
-          <p className="font-sans text-sm text-slate-200 mb-2">{assigned.coachName}</p>
-          <PlatformButton
-            variant="ghost"
-            size="sm"
-            className="w-full text-red-400 hover:text-red-300"
-            onClick={() => onUnassign(assigned.coachUserId)}
-          >
-            Unassign
-          </PlatformButton>
-        </PopoverContent>
-      </Popover>
+      <div className="flex items-center gap-1.5">
+        <span className="font-sans text-xs text-[hsl(var(--platform-foreground)/0.85)] truncate max-w-[120px]">{assignment.coachName}</span>
+        <PlatformButton
+          variant="ghost"
+          size="icon-sm"
+          className="h-5 w-5 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+          onClick={() => onUnassign(assignment.coachUserId)}
+          title="Remove coach"
+        >
+          ×
+        </PlatformButton>
+      </div>
     );
   }
 
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <PlatformButton variant="ghost" size="sm" className="gap-1">
-          <UserPlus className="w-3.5 h-3.5" />
-          <span className="font-sans text-xs">Assign</span>
+        <PlatformButton variant="ghost" size="sm" className="gap-1 text-xs h-7">
+          <UserPlus className="w-3 h-3" />
+          Assign
         </PlatformButton>
       </PopoverTrigger>
-      <PopoverContent className="w-56 p-2" align="start">
-        <p className="font-sans text-xs text-slate-400 mb-2">Select coach</p>
-        <div className="space-y-1 max-h-48 overflow-y-auto">
-          {teamMembers.map(member => (
+      <PopoverContent className="w-48 p-1 bg-[hsl(var(--platform-bg-elevated))] border-[hsl(var(--platform-border))]" align="start">
+        {teamMembers.length === 0 ? (
+          <p className="p-2 font-sans text-xs text-[hsl(var(--platform-foreground-subtle))]">No team members</p>
+        ) : (
+          teamMembers.map((m) => (
             <button
-              key={member.user_id}
-              onClick={() => onAssign(member.user_id)}
-              className="w-full text-left px-2 py-1.5 rounded font-sans text-sm text-slate-300 hover:bg-[hsl(var(--platform-bg-hover))] transition-colors"
+              key={m.user_id}
+              onClick={() => onAssign(m.user_id)}
+              className="w-full text-left px-2 py-1.5 rounded font-sans text-xs text-[hsl(var(--platform-foreground)/0.85)] hover:bg-[hsl(var(--platform-bg-hover))] transition-colors"
             >
-              {member.full_name || member.email || member.user_id}
+              {m.full_name || m.email}
             </button>
-          ))}
-          {teamMembers.length === 0 && (
-            <p className="font-sans text-xs text-slate-500 px-2 py-1">No team members</p>
-          )}
-        </div>
+          ))
+        )}
       </PopoverContent>
     </Popover>
-  );
-}
-
-function HealthDot({ score }: { score: 'green' | 'amber' | 'red' }) {
-  const colors = {
-    green: 'bg-emerald-400',
-    amber: 'bg-amber-400',
-    red: 'bg-red-400',
-  };
-  return (
-    <div className="flex items-center justify-center">
-      <div className={cn('w-2.5 h-2.5 rounded-full', colors[score])} />
-    </div>
   );
 }

@@ -154,7 +154,7 @@ export function PriceQueueTab() {
         <PlatformCardHeader className="flex flex-row items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-[hsl(var(--platform-bg-hover))] flex items-center justify-center">
-              <AlertTriangle className="w-5 h-5 text-violet-400" />
+              <AlertTriangle className="w-5 h-5 text-[hsl(var(--platform-primary))]" />
             </div>
             <div>
               <PlatformCardTitle>Price Review Queue</PlatformCardTitle>
@@ -219,7 +219,7 @@ export function PriceQueueTab() {
             <>
               <Table>
                 <TableHeader>
-                  <TableRow className="border-slate-700/50">
+                  <TableRow className="border-[hsl(var(--platform-border)/0.5)]">
                     <TableHead className="w-10 pl-4">
                       <Checkbox
                         checked={selected.size === items.length && items.length > 0}
@@ -228,18 +228,18 @@ export function PriceQueueTab() {
                         }}
                       />
                     </TableHead>
-                    <TableHead className="font-sans text-xs text-slate-400">Product</TableHead>
-                    <TableHead className="font-sans text-xs text-slate-400">Brand</TableHead>
-                    <TableHead className="font-sans text-xs text-slate-400">New Price</TableHead>
-                    <TableHead className="font-sans text-xs text-slate-400">Δ%</TableHead>
-                    <TableHead className="font-sans text-xs text-slate-400">Confidence</TableHead>
-                    <TableHead className="font-sans text-xs text-slate-400">Status</TableHead>
-                    <TableHead className="font-sans text-xs text-slate-400 text-right pr-4">Actions</TableHead>
+                    <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Product</TableHead>
+                    <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Brand</TableHead>
+                    <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">New Price</TableHead>
+                    <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Δ%</TableHead>
+                    <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Confidence</TableHead>
+                    <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Status</TableHead>
+                    <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))] text-right pr-4">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {items.map((item) => (
-                    <TableRow key={item.id} className="border-slate-700/30">
+                    <TableRow key={item.id} className="border-[hsl(var(--platform-border)/0.3)]">
                       <TableCell className="pl-4">
                         <Checkbox
                           checked={selected.has(item.id)}
@@ -247,31 +247,31 @@ export function PriceQueueTab() {
                           disabled={item.status !== 'pending'}
                         />
                       </TableCell>
-                      <TableCell className="font-sans text-sm text-slate-200">
+                      <TableCell className="font-sans text-sm text-[hsl(var(--platform-foreground))]">
                         <div>{item.product_name}</div>
-                        {item.sku && <span className="text-xs text-slate-500">{item.sku}</span>}
+                        {item.sku && <span className="text-xs text-[hsl(var(--platform-foreground-subtle))]">{item.sku}</span>}
                         {item.notes && (
                           <p className="text-xs text-amber-400 mt-0.5">{item.notes}</p>
                         )}
                       </TableCell>
-                      <TableCell className="font-sans text-sm text-slate-300">{item.brand}</TableCell>
-                      <TableCell className="font-sans text-sm tabular-nums text-slate-200">
+                      <TableCell className="font-sans text-sm text-[hsl(var(--platform-foreground)/0.85)]">{item.brand}</TableCell>
+                      <TableCell className="font-sans text-sm tabular-nums text-[hsl(var(--platform-foreground))]">
                         {item.status === 'pending' ? (
                           <div className="flex items-center gap-1">
-                            <span className="text-slate-500">$</span>
+                            <span className="text-[hsl(var(--platform-foreground-subtle))]">$</span>
                             <input
                               type="number"
                               step="0.01"
                               value={editingPrices[item.id] ?? item.wholesale_price.toFixed(2)}
                               onChange={(e) => setEditingPrices((p) => ({ ...p, [item.id]: e.target.value }))}
-                              className="h-7 w-20 font-sans text-sm tabular-nums px-1.5 rounded-lg border border-slate-700/50 bg-slate-800/50 text-slate-200 focus:border-violet-500/50 focus:outline-none"
+                              className="h-7 w-20 font-sans text-sm tabular-nums px-1.5 rounded-lg border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.5)] text-[hsl(var(--platform-foreground))] focus:border-[hsl(var(--platform-primary)/0.5)] focus:outline-none"
                             />
                           </div>
                         ) : (
                           <>
                             ${item.wholesale_price.toFixed(2)}
                             {item.previous_price != null && (
-                              <span className="text-xs text-slate-500 ml-1">
+                              <span className="text-xs text-[hsl(var(--platform-foreground-subtle))] ml-1">
                                 (was ${item.previous_price.toFixed(2)})
                               </span>
                             )}
@@ -285,7 +285,7 @@ export function PriceQueueTab() {
                             {item.price_delta_pct.toFixed(1)}%
                           </span>
                         ) : (
-                          <span className="text-slate-500">—</span>
+                          <span className="text-[hsl(var(--platform-foreground-subtle))]">—</span>
                         )}
                       </TableCell>
                       <TableCell>{confidenceBadge(item.confidence_score)}</TableCell>
@@ -330,8 +330,8 @@ export function PriceQueueTab() {
               </Table>
 
               {totalPages > 1 && (
-                <div className="flex items-center justify-between px-4 py-3 border-t border-slate-700/30">
-                  <span className="font-sans text-xs text-slate-500">
+                <div className="flex items-center justify-between px-4 py-3 border-t border-[hsl(var(--platform-border)/0.3)]">
+                  <span className="font-sans text-xs text-[hsl(var(--platform-foreground-subtle))]">
                     Page {page + 1} of {totalPages} · {filteredItems.length} items
                   </span>
                   <div className="flex items-center gap-1">
