@@ -231,9 +231,10 @@ export function BackroomPaywall() {
               </div>
             )}
             <div className="border-t border-border/20 pt-1.5 flex justify-between">
-              <span className="text-foreground font-medium">Total</span>
-              <span className="text-foreground font-medium">{formatCurrency(monthlyTotal)}/mo</span>
+              <span className="text-foreground font-medium">Est. Total</span>
+              <span className="text-foreground font-medium">~{formatCurrency(monthlyTotal)}/mo</span>
             </div>
+            <p className="text-[10px] text-muted-foreground/70 font-sans mt-1">* Usage fee varies monthly based on actual color service appointments completed.</p>
           </div>
         ) : (
           /* ─ ENHANCED EMPTY STATE: show estimated losses ─ */
