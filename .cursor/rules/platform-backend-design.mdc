@@ -56,7 +56,6 @@ import { AlertDialog, AlertDialogHeader, AlertDialogFooter, AlertDialogAction, A
 
 These base imports ARE permitted (no platform equivalent needed):
 
-- `@/components/ui/dialog` — Dialog, DialogContent, DialogHeader, etc.
 - `@/components/ui/switch` — Switch
 - `@/components/ui/textarea` — Textarea
 - `@/components/ui/skeleton` — Skeleton
@@ -67,12 +66,23 @@ These base imports ARE permitted (no platform equivalent needed):
 - `@/components/ui/dropdown-menu` — DropdownMenu
 - `@/components/ui/tabs` — Tabs
 
-## Dialog Overrides
+## Dialog Usage
 
-When using base `DialogContent`, always apply dark overrides:
+Always use `PlatformDialogContent`, `PlatformDialogTitle`, `PlatformDialogDescription` instead of base Dialog equivalents.
+For AlertDialogs use `PlatformAlertDialogContent`, `PlatformAlertDialogTitle`, `PlatformAlertDialogDescription`.
+Functional classNames like `max-w-2xl`, `max-h-[80vh]`, `overflow-hidden`, `flex flex-col`, `sm:max-w-md` are passed as-is — the wrapper merges them.
 
 ```tsx
-<DialogContent className="bg-slate-900 border-slate-700 text-white">
+// ✅ Correct — no manual dark overrides needed
+<Dialog open={open} onOpenChange={onOpenChange}>
+  <PlatformDialogContent className="max-w-2xl">
+    <DialogHeader>
+      <PlatformDialogTitle>Title</PlatformDialogTitle>
+      <PlatformDialogDescription>Description</PlatformDialogDescription>
+    </DialogHeader>
+    ...
+  </PlatformDialogContent>
+</Dialog>
 ```
 
 ## KPI Tiles
