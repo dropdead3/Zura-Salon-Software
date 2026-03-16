@@ -991,7 +991,7 @@ export function BackroomPaywall() {
       </div>
 
       {/* ════ FLOATING STICKY BOTTOM BANNER ════ */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-auto max-w-[95vw]">
+      <div className="fixed bottom-6 left-56 right-0 z-50 flex justify-center px-4">
         <div
           className={cn(
             'rounded-full bg-card/80 backdrop-blur-xl border shadow-2xl px-5 py-2.5 flex items-center gap-4 sm:gap-6',
@@ -1000,20 +1000,12 @@ export function BackroomPaywall() {
         >
           <div className="flex items-center gap-4 sm:gap-6 min-w-0">
             {hasPositiveBenefit ? (
-              <>
-                <div className="hidden sm:block">
-                  <p className="font-display text-sm tracking-wide text-success">
-                    +{formatCurrency(yearlySavings)}/yr
-                  </p>
-                  <p className="text-[10px] text-muted-foreground font-sans">Est. Savings</p>
-                </div>
-                <div>
-                  <p className="font-display text-sm tracking-wide text-success">
-                    +{formatCurrency(yearlyNetBenefit)}/yr
-                  </p>
-                  <p className="text-[10px] text-muted-foreground font-sans">Net Benefit</p>
-                </div>
-              </>
+              <div>
+                <p className="font-display text-sm tracking-wide text-success">
+                  +{formatCurrency(yearlyNetBenefit)}/yr
+                </p>
+                <p className="text-[10px] text-muted-foreground font-sans">Net Benefit</p>
+              </div>
             ) : locationCount > 0 ? (
               <div>
                 <p className="font-sans text-sm text-foreground">{formatCurrency(monthlyTotal)}/mo</p>
