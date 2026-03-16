@@ -384,6 +384,40 @@ export function BackroomPaywall() {
     <div className="flex flex-col items-center justify-center px-4 py-8">
       {/* ── HERO (full width) ── */}
       <div className="max-w-5xl w-full space-y-8">
+        {/* Top-right Unlock button */}
+        <div className="flex justify-end">
+          <Button
+            size="default"
+            className="font-sans font-medium gap-2 rounded-full"
+            onClick={() => setConfirmDialogOpen(true)}
+            disabled={loading || selectedLocationIds.size === 0}
+          >
+            {loading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <>
+                <Lock className="w-3.5 h-3.5" />
+                Unlock Zura Backroom
+                <ArrowRight className="w-3.5 h-3.5" />
+              </>
+            )}
+          </Button>
+          <BackroomCheckoutConfirmDialog
+            open={confirmDialogOpen}
+            onOpenChange={setConfirmDialogOpen}
+            onConfirm={() => {
+              setConfirmDialogOpen(false);
+              handleCheckout();
+            }}
+            loading={loading}
+            organizationId={effectiveOrganization?.id}
+            locationCount={locationCount}
+            scaleCount={scaleCount}
+            estimatedMonthlyServices={Math.round((estimate?.monthlyColorServices ?? 0) * locationFraction)}
+            estimatedMonthlySavings={totalSavings}
+            netBenefit={netBenefit}
+          />
+        </div>
         <div className="text-center space-y-4">
           <div className="mx-auto w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
             <Droplets className="w-8 h-8 text-primary" />
