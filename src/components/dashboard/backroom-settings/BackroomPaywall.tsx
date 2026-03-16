@@ -374,11 +374,11 @@ export function BackroomPaywall() {
             SECTION 1 — HERO
             ═══════════════════════════════════════════ */}
         <section className="pt-4 pb-24 md:pb-32 relative overflow-hidden">
-          {/* Gradient canvas */}
-          <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at 70% 50%, hsl(var(--primary) / 0.04) 0%, transparent 70%)' }} />
+          {/* Gradient canvas — strengthened */}
+          <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at 70% 50%, hsl(var(--primary) / 0.07) 0%, transparent 65%)' }} />
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center relative">
-            {/* Left — Text */}
-            <div className="space-y-8 text-center lg:text-left">
+            {/* Left — Text (tightened spacing) */}
+            <div className="space-y-6 text-center lg:text-left">
               <div className="space-y-4">
                 <h1 className="font-display text-4xl md:text-5xl lg:text-[56px] font-medium tracking-wide leading-[1.1]">
                   Stop Losing Money in Your Color Room
@@ -393,14 +393,14 @@ export function BackroomPaywall() {
                 <p className="text-sm text-muted-foreground/60 font-sans">Setup takes minutes. Cancel anytime.</p>
               </div>
 
-              <div className="border-t border-border/20 pt-6">
-                <div className="flex flex-col items-center lg:items-start gap-3">
+              <div className="border-t border-border/30 pt-5">
+                <div className="flex flex-col items-center lg:items-start gap-2.5">
                   <div className="flex gap-1">
                     {[...Array(5)].map((_, i) => (
                       <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
                     ))}
                   </div>
-                  <blockquote className="text-center lg:text-left space-y-2">
+                  <blockquote className="text-center lg:text-left space-y-1.5">
                     <p className="text-muted-foreground text-sm md:text-base font-sans leading-relaxed italic">
                       "Zura Backroom saved us thousands per month and helps us recoup over $50,000 a year in color costs. 10/10 add-on feature."
                     </p>
@@ -412,11 +412,13 @@ export function BackroomPaywall() {
               </div>
             </div>
 
-            {/* Right — Live System Preview */}
-            <div className="flex flex-col gap-4 relative">
+            {/* Right — Live System Preview (rebalanced) */}
+            <div className="flex flex-col relative">
               <div className="absolute top-1/2 right-0 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-primary/[0.03] blur-3xl pointer-events-none hidden lg:block" />
-              <Card className="relative overflow-hidden min-h-[320px] bg-card/80 backdrop-blur-xl border-border/40 shadow-xl shadow-primary/5">
-                <CardContent className="p-6 flex flex-col justify-center min-h-[320px]">
+              <Card className="relative overflow-hidden min-h-[360px] bg-card/80 backdrop-blur-xl border-border/60 shadow-xl shadow-primary/5">
+                {/* Subtle top glow */}
+                <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-primary/[0.04] to-transparent pointer-events-none" />
+                <CardContent className="p-6 flex flex-col justify-center min-h-[360px] relative">
                   {/* Step content */}
                   <div key={heroStep} className="animate-fade-in-fast space-y-4">
                     {heroStep === 0 && (
@@ -425,7 +427,7 @@ export function BackroomPaywall() {
                           <Scale className="w-8 h-8 text-primary" />
                         </div>
                         <p className="text-sm text-muted-foreground font-sans">Bowl placed on scale</p>
-                        <div className="bg-muted/50 rounded-xl p-6 w-full max-w-[260px]">
+                        <div className="bg-muted/50 rounded-xl p-6 w-full max-w-[300px]">
                           <p className="text-xs text-muted-foreground/70 font-sans mb-1">Current Weight</p>
                           <p className="font-display text-4xl tracking-wide text-foreground">0.0g</p>
                         </div>
@@ -437,7 +439,7 @@ export function BackroomPaywall() {
                           <Droplets className="w-8 h-8 text-primary" />
                         </div>
                         <p className="text-sm text-muted-foreground font-sans">Dispensing product…</p>
-                        <div className="bg-muted/50 rounded-xl p-6 w-full max-w-[260px]">
+                        <div className="bg-muted/50 rounded-xl p-6 w-full max-w-[300px]">
                           <p className="text-xs text-muted-foreground/70 font-sans mb-1">Koleston 7/0</p>
                           <p className="font-display text-4xl tracking-wide text-foreground">{heroWeight}g</p>
                           <div className="mt-3 h-2 bg-muted rounded-full overflow-hidden">
@@ -456,7 +458,7 @@ export function BackroomPaywall() {
                           <CheckCircle2 className="w-8 h-8 text-primary" />
                         </div>
                         <p className="text-sm text-muted-foreground font-sans">Usage captured</p>
-                        <div className="bg-muted/50 rounded-xl p-4 w-full max-w-[280px] space-y-2">
+                        <div className="bg-muted/50 rounded-xl p-4 w-full max-w-[300px] space-y-2">
                           <div className="flex items-center justify-between">
                             <span className="text-sm font-sans text-foreground">Koleston 7/0</span>
                             <span className="text-sm font-display tracking-wide text-foreground">28.4g</span>
@@ -474,7 +476,7 @@ export function BackroomPaywall() {
                           <Brain className="w-8 h-8 text-primary" />
                         </div>
                         <p className="text-sm text-muted-foreground font-sans">Formula saved to client profile</p>
-                        <div className="bg-muted/50 rounded-xl p-4 w-full max-w-[280px] space-y-3">
+                        <div className="bg-muted/50 rounded-xl p-4 w-full max-w-[300px] space-y-3">
                           <div className="flex items-center gap-3">
                             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
                               <Users className="w-4 h-4 text-primary" />
@@ -521,7 +523,7 @@ export function BackroomPaywall() {
                           <DollarSign className="w-8 h-8 text-primary" />
                         </div>
                         <p className="text-sm text-muted-foreground font-sans">Service cost insight</p>
-                        <div className="bg-muted/50 rounded-xl p-4 w-full max-w-[280px] space-y-3">
+                        <div className="bg-muted/50 rounded-xl p-4 w-full max-w-[300px] space-y-3">
                           <div className="flex items-center justify-between">
                             <span className="text-sm font-sans text-foreground">Service Revenue</span>
                             <span className="text-sm font-display tracking-wide text-foreground">$185</span>
@@ -539,25 +541,27 @@ export function BackroomPaywall() {
                     )}
                   </div>
                 </CardContent>
-              </Card>
 
-              {/* Step indicator */}
-              <div className="flex items-center justify-center gap-2">
-                {['Bowl on Scale', 'Dispensing', 'Usage Captured', 'Formula Saved', 'Inventory Updated', 'Cost Insight'].map((label, i) => (
-                  <button
-                    key={label}
-                    onClick={() => setHeroStep(i)}
-                    className={cn(
-                      'h-2 rounded-full transition-all duration-300 hover:scale-110',
-                      heroStep === i ? 'w-8 bg-primary' : 'w-4 bg-muted hover:bg-muted-foreground/30'
-                    )}
-                    aria-label={label}
-                  />
-                ))}
-              </div>
-              <p className="text-xs text-center text-muted-foreground/60 font-sans">
-                {['Bowl on Scale', 'Dispensing Product', 'Usage Captured', 'Formula Saved', 'Inventory Updated', 'Cost Insight'][heroStep]}
-              </p>
+                {/* Integrated step indicators — inside card footer */}
+                <div className="border-t border-border/30 px-6 py-3 flex items-center justify-between bg-muted/20">
+                  <p className="text-xs text-muted-foreground/70 font-sans">
+                    {['Bowl on Scale', 'Dispensing Product', 'Usage Captured', 'Formula Saved', 'Inventory Updated', 'Cost Insight'][heroStep]}
+                  </p>
+                  <div className="flex items-center gap-1.5">
+                    {['Bowl on Scale', 'Dispensing', 'Usage Captured', 'Formula Saved', 'Inventory Updated', 'Cost Insight'].map((label, i) => (
+                      <button
+                        key={label}
+                        onClick={() => setHeroStep(i)}
+                        className={cn(
+                          'h-1.5 rounded-full transition-all duration-200',
+                          heroStep === i ? 'w-6 bg-primary' : 'w-3 bg-muted-foreground/20 hover:bg-muted-foreground/40'
+                        )}
+                        aria-label={label}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </Card>
             </div>
           </div>
         </section>
