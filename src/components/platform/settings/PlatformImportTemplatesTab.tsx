@@ -236,12 +236,12 @@ export function PlatformImportTemplatesTab() {
                 value={mapping.targetColumn} 
                 onValueChange={(v) => updateMapping(index, 'targetColumn', v)}
               >
-                <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
+                <SelectTrigger>
                   <SelectValue placeholder="Select column" />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-900 border-slate-700">
+                <SelectContent>
                   {TARGET_COLUMNS[selectedEntity]?.map(col => (
-                    <SelectItem key={col} value={col} className="text-slate-300">
+                    <SelectItem key={col} value={col}>
                       {col}
                     </SelectItem>
                   ))}
