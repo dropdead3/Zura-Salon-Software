@@ -104,7 +104,7 @@ export function BackroomCheckoutConfirmDialog({
               <div className="rounded-lg border border-border/60 px-3 py-2.5">
                 <div className="flex items-center justify-between">
                   <span className="flex items-center gap-2 text-sm font-sans">
-                    <Scale className="w-3.5 h-3.5 text-muted-foreground" />
+                    <Weight className="w-3.5 h-3.5 text-muted-foreground" />
                     {scaleCount} scale{scaleCount !== 1 ? 's' : ''} × {formatCurrency(SCALE_HARDWARE_PRICE)}
                   </span>
                   <span className="text-sm font-sans font-medium">{formatCurrency(hardwareOneTime)}</span>

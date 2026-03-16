@@ -66,7 +66,7 @@ export function AddScalesDialog({ open, onOpenChange }: AddScalesDialogProps) {
           <div className="flex items-center justify-between gap-4 p-4 rounded-xl bg-muted/50">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                <Scale className="w-5 h-5 text-primary" />
+                <Weight className="w-5 h-5 text-primary" />
               </div>
               <div>
                 <p className={cn(tokens.label.default, 'text-foreground text-sm')}><p className={cn(tokens.label.default, 'text-foreground text-sm')}>Precision Scale</p></p>

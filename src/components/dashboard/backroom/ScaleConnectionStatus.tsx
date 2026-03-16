@@ -17,10 +17,10 @@ const STATE_CONFIG: Record<ConnectionState, { label: string; icon: typeof Weight
   scanning: { label: 'Scanning...', icon: Wifi, variant: 'secondary' },
   pairing: { label: 'Pairing...', icon: Wifi, variant: 'secondary' },
   connected: { label: 'Connected', icon: Wifi, variant: 'default' },
-  unstable_reading: { label: 'Unstable', icon: Scale, variant: 'secondary' },
-  stable_reading: { label: 'Stable', icon: Scale, variant: 'default' },
+  unstable_reading: { label: 'Unstable', icon: Weight, variant: 'secondary' },
+  stable_reading: { label: 'Stable', icon: Weight, variant: 'default' },
   reconnecting: { label: 'Reconnecting...', icon: Wifi, variant: 'secondary' },
-  manual_override: { label: 'Manual Mode', icon: Scale, variant: 'outline' },
+  manual_override: { label: 'Manual Mode', icon: Weight, variant: 'outline' },
 };
 
 export function ScaleConnectionStatus({ state, className }: ScaleConnectionStatusProps) {

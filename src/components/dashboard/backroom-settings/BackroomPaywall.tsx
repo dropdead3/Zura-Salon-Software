@@ -1080,7 +1080,7 @@ export function BackroomPaywall() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                        <Scale className="w-4 h-4 text-primary" />
+                        <Weight className="w-4 h-4 text-primary" />
                       </div>
                       <div>
                         <p className="font-display text-sm tracking-wide text-foreground uppercase">Precision Scales</p>
