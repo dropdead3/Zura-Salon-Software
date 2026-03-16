@@ -25,7 +25,6 @@ interface SubscriptionData {
   current_period_end?: string;
   monthly_cost?: number;
   subscription_id?: string;
-  trial_end?: string | null;
 }
 
 const PLAN_DISPLAY: Record<string, { name: string; price: number; annualPrice: number }> = {
