@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { AdminActivateDialog } from '@/components/platform/backroom/AdminActivateDialog';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
