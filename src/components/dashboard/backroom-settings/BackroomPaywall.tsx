@@ -91,10 +91,15 @@ export function BackroomPaywall() {
   const monthlyTotal = baseCost + scaleCost + usageFee;
   const hardwareTotal = scaleCount * SCALE_HARDWARE_PRICE;
 
+  // Staff hours saved calculations
+  const staffHourlyCost = 18;
+  const monthlyAuditHours = (auditMinutesPerDay * 30) / 60;
+  const monthlyAuditCost = Math.round(monthlyAuditHours * staffHourlyCost);
+
   // Savings calculations
   const wasteSavings = estimate?.estimatedWasteSavings ?? 0;
   const supplyRecovery = estimate?.estimatedSupplyRecovery ?? 0;
-  const totalSavings = wasteSavings + supplyRecovery;
+  const totalSavings = wasteSavings + supplyRecovery + monthlyAuditCost;
   const netBenefit = totalSavings - monthlyTotal;
   const roiMultiplier = monthlyTotal > 0 ? Math.round(totalSavings / monthlyTotal) : 0;
 
@@ -102,6 +107,7 @@ export function BackroomPaywall() {
   const yearlySavings = totalSavings * 12;
   const yearlyWasteSavings = wasteSavings * 12;
   const yearlySupplyRecovery = supplyRecovery * 12;
+  const yearlyAuditCost = monthlyAuditCost * 12;
   const yearlyCost = monthlyTotal * 12;
   const yearlyNetBenefit = netBenefit * 12;
 
