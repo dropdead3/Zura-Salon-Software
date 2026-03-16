@@ -67,7 +67,7 @@ export function BackroomCheckoutConfirmDialog({
               {scaleCount > 0 && (
                 <div className="flex items-center justify-between px-3 py-2.5">
                   <span className="flex items-center gap-2 text-sm font-sans">
-                    <Scale className="w-3.5 h-3.5 text-primary" />
+                    <Weight className="w-3.5 h-3.5 text-primary" />
                     {scaleCount} scale{scaleCount !== 1 ? 's' : ''} × {formatCurrency(SCALE_LICENSE_MONTHLY)}/mo
                   </span>
                   <span className="text-sm font-sans font-medium">{formatCurrency(scaleLicenseCost)}</span>
