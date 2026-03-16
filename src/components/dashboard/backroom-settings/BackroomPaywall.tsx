@@ -2,13 +2,12 @@ import { useState, useEffect, useRef } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import {
-  Beaker, BarChart3, Zap, ArrowRight, Loader2,
-  Scale, Droplets, ShieldCheck, MapPin, TrendingUp, DollarSign, Star,
+  Beaker, BarChart3, ArrowRight, Loader2,
+  Scale, ShieldCheck, MapPin, TrendingUp, DollarSign, Star,
   Info, Clock, AlertTriangle, CheckCircle2, XCircle,
-  Brain, Users, PackageSearch, ChevronRight,
-  Calendar, Timer,
+  Brain, PackageSearch, ChevronRight,
+  Timer,
 } from 'lucide-react';
-import { Eyebrow } from '@/components/ui/Eyebrow';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
