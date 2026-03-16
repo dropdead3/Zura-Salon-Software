@@ -65,6 +65,7 @@ export function BackroomPaywall() {
   const isMobile = useIsMobile();
 
   const { data: estimate, isLoading: estimateLoading } = useBackroomPricingEstimate(manualStylistCount);
+  const { data: perLocationData } = usePerLocationColorServices();
 
   const activeLocations = locations.filter((l) => l.is_active);
 
@@ -97,11 +98,17 @@ export function BackroomPaywall() {
   const totalLocations = activeLocations.length || 1;
   const locationFraction = locationCount / totalLocations;
 
-  // Auto-calculate recommended scales: 1 per 10 daily color services
-  const dailyColorServices = estimate
-    ? Math.round((estimate.monthlyColorServices * locationFraction) / 30)
-    : 0;
-  const recommendedScales = Math.max(1, Math.ceil(dailyColorServices / 10));
+  // Per-location scale recommendations
+  const perLocationScaleData = activeLocations
+    .filter((loc) => selectedLocationIds.has(loc.id))
+    .map((loc) => {
+      const metrics = perLocationData?.get(loc.id);
+      const avgDaily = metrics?.avgDailyColorServices ?? 0;
+      const scales = metrics ? metrics.recommendedScales : 1;
+      return { id: loc.id, name: loc.name, avgDaily, scales };
+    });
+
+  const recommendedScales = perLocationScaleData.reduce((sum, loc) => sum + loc.scales, 0) || 1;
 
   useEffect(() => {
     if (!manualScaleOverride && estimate) {
