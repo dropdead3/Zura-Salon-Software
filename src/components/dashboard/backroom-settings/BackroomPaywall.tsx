@@ -1048,7 +1048,7 @@ export function BackroomPaywall() {
           />
         )}
         {mobileCalcOpen && (
-          <div className="fixed bottom-0 left-0 right-0 z-40 max-h-[80vh] overflow-y-auto rounded-t-xl border-t border-border bg-card/95 backdrop-blur-xl shadow-2xl p-5">
+          <div className="fixed bottom-0 left-0 right-0 z-40 max-h-[80vh] flex flex-col rounded-t-xl border-t border-border bg-card/95 backdrop-blur-xl shadow-2xl p-5">
             <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-muted" />
             <button
               onClick={() => setMobileCalcOpen(false)}
@@ -1056,7 +1056,44 @@ export function BackroomPaywall() {
             >
               <ChevronUp className="w-4 h-4 text-muted-foreground rotate-180" />
             </button>
-            {calculatorContent}
+            <div className="flex-1 overflow-y-auto">
+              {calculatorContent}
+            </div>
+            <div className="mt-4 pt-4 border-t border-border/30 space-y-2">
+              <Button
+                size="lg"
+                className="w-full font-sans font-medium gap-2 text-sm"
+                onClick={() => setConfirmDialogOpen(true)}
+                disabled={loading || selectedLocationIds.size === 0}
+              >
+                <Lock className="w-4 h-4" />
+                Subscribe
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+              <BackroomCheckoutConfirmDialog
+                open={confirmDialogOpen}
+                onOpenChange={setConfirmDialogOpen}
+                onConfirm={() => {
+                  setConfirmDialogOpen(false);
+                  handleCheckout();
+                }}
+                loading={loading}
+                organizationId={effectiveOrganization?.id}
+                locationCount={locationCount}
+                scaleCount={scaleCount}
+                estimatedMonthlyServices={Math.round((estimate?.monthlyColorServices ?? 0) * locationFraction)}
+                estimatedMonthlySavings={totalSavings}
+                netBenefit={netBenefit}
+              />
+              {selectedLocationIds.size === 0 && activeLocations.length > 0 && (
+                <p className="text-xs text-destructive font-sans text-center">
+                  Select at least one location to continue
+                </p>
+              )}
+              <p className="text-[10px] text-muted-foreground font-sans text-center">
+                30-day money-back guarantee · Cancel anytime
+              </p>
+            </div>
           </div>
         )}
 
