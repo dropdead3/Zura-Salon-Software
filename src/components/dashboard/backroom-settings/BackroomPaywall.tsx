@@ -48,6 +48,16 @@ const features = [
     title: 'Stop Invisible Losses',
     description: 'Ghost loss detection, reweigh compliance tracking, and variance alerts that catch problems early.',
   },
+  {
+    icon: ClipboardList,
+    title: 'Blueprint Every Service',
+    description: 'Define step-by-step workflows for every color service — mix, prep, process, rinse — so your team delivers consistency every time.',
+  },
+  {
+    icon: Brain,
+    title: 'Instant Formula Recall',
+    description: 'Smart Mix Assist surfaces each client\'s last formula automatically. No more flipping through notes or guessing ratios.',
+  },
 ];
 
 const howItWorks = [
