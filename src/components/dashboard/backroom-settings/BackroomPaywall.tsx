@@ -34,6 +34,8 @@ import { toast } from 'sonner';
 import { BackroomCheckoutConfirmDialog } from './BackroomCheckoutConfirmDialog';
 import { CompetitorComparison } from './CompetitorComparison';
 
+        {/* Mid-page CTA after loss aversion stats */}
+        {estimate && <MidPageCta />}
 
 const howItWorks = [
   {
