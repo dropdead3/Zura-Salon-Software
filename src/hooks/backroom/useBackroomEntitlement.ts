@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useBackroomLocationEntitlements } from '@/hooks/backroom/useBackroomLocationEntitlements';
-import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { useBackroomOrgId } from '@/hooks/backroom/useBackroomOrgId';
 
 /**
  * Checks whether the current organization has Backroom enabled.
@@ -11,8 +11,7 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
  * Both the org-level flag AND the location entitlement must be active.
  */
 export function useBackroomEntitlement(locationId?: string) {
-  const { effectiveOrganization } = useOrganizationContext();
-  const orgId = effectiveOrganization?.id;
+  const orgId = useBackroomOrgId();
 
   const { data: orgEnabled = false, isLoading: orgLoading } = useQuery({
     queryKey: ['backroom-org-flag', orgId],
