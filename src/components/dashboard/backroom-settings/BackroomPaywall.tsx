@@ -39,9 +39,9 @@ const featureGroups = [
     title: 'Smart Dispensing',
     outcome: 'Know exactly what goes into every bowl.',
     bullets: [
-      'Per-gram tracking on precision scales',
-      'Automatic formula recording',
-      'Waste flagging per service',
+      'Every gram dispensed is measured automatically',
+      'Formulas are saved as they\'re mixed',
+      'Excess product is flagged instantly',
     ],
   },
   {
@@ -49,9 +49,9 @@ const featureGroups = [
     title: 'Formula Memory',
     outcome: 'Your formulas are remembered automatically.',
     bullets: [
-      'Client formula recall',
-      'Smart Mix Assist',
-      'Last-used ratios surfaced instantly',
+      'Pull up any client\'s last formula in seconds',
+      'Suggested ratios based on history',
+      'No more guessing what was used last time',
     ],
   },
   {
@@ -59,9 +59,9 @@ const featureGroups = [
     title: 'Assistant Workflows',
     outcome: 'Assistants can prep bowls before services start.',
     bullets: [
-      'Service blueprints for every color workflow',
-      'Step-by-step mixing instructions',
-      'Task routing and alerts',
+      'Define each service\'s prep steps once',
+      'Assistants follow guided mixing screens',
+      'Notifications when bowls are ready',
     ],
   },
   {
@@ -69,9 +69,9 @@ const featureGroups = [
     title: 'Supply Intelligence',
     outcome: 'Never run out of color during a service.',
     bullets: [
-      'Predictive reorder alerts',
-      'Demand forecasting from appointment book',
-      'Automated low-stock warnings',
+      'Alerts before stock runs low',
+      'Tomorrow\'s appointments drive today\'s orders',
+      'No more surprise shortages',
     ],
   },
   {
@@ -79,9 +79,9 @@ const featureGroups = [
     title: 'Profit Visibility',
     outcome: 'See which services make money and which don\'t.',
     bullets: [
-      'Cost-per-service analytics',
-      'Product markup calculations',
-      'Supply fee recovery automation',
+      'True product cost for every appointment',
+      'See your real margins per service',
+      'Bill product costs back to clients automatically',
     ],
   },
   {
@@ -89,9 +89,9 @@ const featureGroups = [
     title: 'Waste Control',
     outcome: 'Find out where product disappears.',
     bullets: [
-      'Ghost loss detection',
-      'Reweigh compliance tracking',
-      'Variance alerts',
+      'Spot product that disappears between uses',
+      'Know if bowls are being reweighed',
+      'Get notified when usage spikes',
     ],
   },
 ];
