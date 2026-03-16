@@ -84,18 +84,6 @@ function statusBadge(status: string) {
   );
 }
 
-function planBadge(tier: string) {
-  const map: Record<string, 'default' | 'primary' | 'warning' | 'info'> = {
-    starter: 'default',
-    professional: 'primary',
-    unlimited: 'warning',
-  };
-  return (
-    <PlatformBadge variant={map[tier] || 'default'} size="sm">
-      {tier}
-    </PlatformBadge>
-  );
-}
 
 export function BackroomEntitlementsTab() {
   const [search, setSearch] = useState('');
