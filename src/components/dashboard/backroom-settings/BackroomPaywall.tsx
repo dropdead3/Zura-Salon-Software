@@ -50,9 +50,10 @@ const features = [
 
 export function BackroomPaywall() {
   const [loading, setLoading] = useState(false);
-  const [scaleCount, setScaleCount] = useState(1);
+  const [scaleCount, setScaleCount] = useState(0);
   const [selectedLocationIds, setSelectedLocationIds] = useState<Set<string>>(new Set());
   const [manualStylistCount, setManualStylistCount] = useState(2);
+  const [manualScaleOverride, setManualScaleOverride] = useState(false);
   const [auditMinutesPerDay, setAuditMinutesPerDay] = useState(30);
   const [mobileCalcOpen, setMobileCalcOpen] = useState(false);
 
@@ -94,6 +95,18 @@ export function BackroomPaywall() {
   // Location fraction for proportional scaling
   const totalLocations = activeLocations.length || 1;
   const locationFraction = locationCount / totalLocations;
+
+  // Auto-calculate recommended scales: 1 per 10 daily color services
+  const dailyColorServices = estimate
+    ? Math.round((estimate.monthlyColorServices * locationFraction) / 30)
+    : 0;
+  const recommendedScales = Math.max(1, Math.ceil(dailyColorServices / 10));
+
+  useEffect(() => {
+    if (!manualScaleOverride && estimate) {
+      setScaleCount(recommendedScales);
+    }
+  }, [recommendedScales, manualScaleOverride, estimate]);
 
   // Cost calculations
   const baseCost = locationCount * BACKROOM_BASE_PRICE;
@@ -744,7 +757,7 @@ export function BackroomPaywall() {
                       variant="outline"
                       size="icon"
                       className="h-8 w-8 rounded-lg"
-                      onClick={() => setScaleCount(Math.max(0, scaleCount - 1))}
+                      onClick={() => { setManualScaleOverride(true); setScaleCount(Math.max(0, scaleCount - 1)); }}
                       disabled={scaleCount <= 0}
                     >
                       <Minus className="w-3.5 h-3.5" />
@@ -756,13 +769,29 @@ export function BackroomPaywall() {
                       variant="outline"
                       size="icon"
                       className="h-8 w-8 rounded-lg"
-                      onClick={() => setScaleCount(Math.min(10, scaleCount + 1))}
+                      onClick={() => { setManualScaleOverride(true); setScaleCount(Math.min(10, scaleCount + 1)); }}
                       disabled={scaleCount >= 10}
                     >
                       <Plus className="w-3.5 h-3.5" />
                     </Button>
                   </div>
                 </div>
+                {estimate && (
+                  <div className="mt-3 flex items-center justify-between">
+                    <p className="text-xs text-muted-foreground font-sans">
+                      Recommended: {recommendedScales} scale{recommendedScales !== 1 ? 's' : ''} (~{dailyColorServices} daily color services)
+                    </p>
+                    {manualScaleOverride && scaleCount !== recommendedScales && (
+                      <button
+                        type="button"
+                        className="text-xs text-primary font-sans hover:underline"
+                        onClick={() => { setManualScaleOverride(false); setScaleCount(recommendedScales); }}
+                      >
+                        Reset
+                      </button>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
 
