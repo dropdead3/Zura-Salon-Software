@@ -1121,16 +1121,18 @@ export function BackroomPaywall() {
         {/* ═══════════════════════════════════════════
             SECTION 4.75 — ROI PROOF
             ═══════════════════════════════════════════ */}
-        <section className="pb-20 md:pb-24 bg-muted/20 -mx-6 sm:-mx-8 px-6 sm:px-8 rounded-2xl pt-10 md:pt-12">
+        <section className="pb-20 md:pb-24 bg-muted/20 -mx-6 sm:-mx-8 px-6 sm:px-8 rounded-2xl pt-10 md:pt-12 shadow-[inset_0_1px_0_0_hsl(var(--border)/0.3)]">
           <div className="space-y-8 md:space-y-10">
-            <div className="text-center space-y-3">
-              <h2 className="font-display text-2xl md:text-3xl font-medium tracking-wide text-foreground">
-                Zura Backroom Pays for Itself
-              </h2>
-              <p className="font-sans text-base text-muted-foreground max-w-xl mx-auto font-light leading-relaxed">
-                Most salons don't know the real cost of their color services. Zura Backroom makes it visible.
-              </p>
-            </div>
+            <RevealOnScroll>
+              <div className="text-center space-y-3">
+                <h2 className="font-display text-2xl md:text-3xl font-medium tracking-wide text-foreground">
+                  Zura Backroom Pays for Itself
+                </h2>
+                <p className="font-sans text-base text-muted-foreground max-w-xl mx-auto font-light leading-relaxed">
+                  Most salons don't know the real cost of their color services. Zura Backroom makes it visible.
+                </p>
+              </div>
+            </RevealOnScroll>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 md:gap-6">
               {[
