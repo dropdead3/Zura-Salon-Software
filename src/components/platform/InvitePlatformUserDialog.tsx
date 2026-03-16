@@ -231,10 +231,10 @@ export function InvitePlatformUserDialog({ open, onOpenChange }: InvitePlatformU
               <div className="space-y-2">
                 <PlatformLabel htmlFor="role">Platform Role</PlatformLabel>
                 <Select value={role} onValueChange={(v) => setRole(v as PlatformRole)}>
-                  <SelectTrigger className="bg-slate-800/50 border-slate-700/50 text-slate-300 hover:bg-slate-800/70 focus:ring-violet-500/30">
+                  <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-slate-700">
+                  <SelectContent>
                     {roleOptions.map((opt) => {
                       const Icon = opt.icon;
                       return (
