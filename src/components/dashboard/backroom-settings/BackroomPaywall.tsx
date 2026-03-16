@@ -809,12 +809,12 @@ export function BackroomPaywall() {
             <Card className="bg-card border-border/50 shadow-md">
               <CardContent className="p-6 md:p-8 space-y-6">
                 <div className="grid grid-cols-2 gap-5">
-                  <div className="p-5 rounded-xl bg-muted/30 border border-border/40 text-center">
-                    <p className="font-display text-3xl tracking-wide text-foreground">${BACKROOM_BASE_PRICE}</p>
+                  <div className="p-5 rounded-lg bg-muted/30 border border-border/40 text-center">
+                    <p className="font-display text-3xl font-medium tracking-wide text-foreground">${BACKROOM_BASE_PRICE}</p>
                     <p className="text-sm text-muted-foreground font-sans mt-2">per location / month</p>
                   </div>
-                  <div className="p-5 rounded-xl bg-muted/30 border border-border/40 text-center">
-                    <p className="font-display text-3xl tracking-wide text-foreground">${BACKROOM_PER_SERVICE_FEE.toFixed(2)}</p>
+                  <div className="p-5 rounded-lg bg-muted/30 border border-border/40 text-center">
+                    <p className="font-display text-3xl font-medium tracking-wide text-foreground">${BACKROOM_PER_SERVICE_FEE.toFixed(2)}</p>
                     <p className="text-sm text-muted-foreground font-sans mt-2">per color service</p>
                   </div>
                 </div>
