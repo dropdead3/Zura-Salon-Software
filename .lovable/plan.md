@@ -1,53 +1,153 @@
 
 
-## Paywall Page Overhaul
+## Timezone-Safe Scheduling (Implemented)
 
-### Problems Identified
+### Problem
+`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
 
-1. **Hero headline is overwhelming** — 60px Termina uppercase across 6 lines eats most of the viewport before users see any value proposition
-2. **Animated numbers are springy/jittery** — `AnimatedNumber` uses a damped spring oscillation (`cos(4π * progress)`) that causes values to bounce back and forth (visible in session replay: $61K → $46K → $49K etc.)
-3. **Redundant demo sections** — Hero card (6-step auto-cycling demo) + Product Preview (browser mock) + Feature Reveal (interactive panel) all show essentially the same mixing/formula/inventory content three times
-4. **Broken section rhythm** — Negative margins (`-mx-6 sm:-mx-8`) on Before/After and How It Works sections create jarring visual breaks with `rounded-2xl` corners that don't align with surrounding content
-5. **Before/After inset shadow** — `shadow-[inset_0_2px_4px_0_hsl(var(--border)/0.15)]` creates an unnatural depression effect
-6. **7-column timeline is cramped** — The "Here's what that looks like in practice" desktop grid of 7 columns leaves ~130px per step with tiny text and preview cards
-7. **Too many sections overall** — The page is extremely long (1544 lines) with 8+ distinct sections, making it feel like a template rather than a premium sales page
-8. **Subtle gradient background on Pricing** — Barely visible `primary/0.02` gradient adds visual noise without purpose
-9. **Thin divider lines between sections** — The `w-12 h-px bg-border/40` dividers feel like afterthoughts
+### Solution
+- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
+- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
+- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
 
-### Plan
+### Files Updated
+- `ScheduleHeader.tsx` — today button, quick days, isToday checks
+- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
+- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
+- `MonthView.tsx` — today highlight
+- `AgendaView.tsx` — today/tomorrow labels, today border
+- `ScheduleActionBar.tsx` — payment queue timing
+- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
+- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
+- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
+- `useHuddles.ts` — today's huddle query
 
-#### 1. Fix AnimatedNumber spring oscillation
-- Replace the damped spring easing (`cos(4π * progress)`) with a smooth ease-out curve (`1 - (1 - progress)^3`) in `src/components/ui/AnimatedNumber.tsx`
-- This eliminates the value bouncing visible in session replay
+## Auto-Reorder with Supplier Communication (Implemented)
 
-#### 2. Simplify the hero (BackroomPaywall.tsx)
-- Reduce headline size from `text-4xl md:text-5xl lg:text-[60px]` to `text-3xl md:text-4xl lg:text-5xl`
-- Remove the auto-cycling 6-step hero card — replace with a single static product screenshot/mockup showing the mixing interface (the current stepper cycles too fast at 3s and adds cognitive load)
-- Keep the left text + CTA, make the right side a clean static browser mockup (reuse the existing `ProductPreview` component which already does this well)
+### What It Does
+Organizations can opt into automatic reorder — when stock dips below threshold, POs are calculated (using MOQ and par levels) and sent directly to the supplier via email.
 
-#### 3. Remove redundant sections
-- **Remove the standalone Product Preview section** (lines 574–579) — the hero will now contain the browser mockup
-- **Remove "Here's what that looks like in practice" 7-column timeline** (lines 1054–1131 desktop, 1133–1209 mobile) — this duplicates the How It Works 3-step cards and the Feature Reveal
-- Keep the 3-step "How It Works" cards (Weigh & Track, Detect & Reduce, Recover & Reorder) as the single process explanation
+### Database Changes
+- `products.par_level` (INT, nullable) — desired stock level to reorder up to
+- `product_suppliers.moq` (INT, default 1) — minimum order quantity
+- `inventory_alert_settings.auto_reorder_enabled` (BOOL, default false)
+- `inventory_alert_settings.auto_reorder_mode` (TEXT, default 'to_par') — 'to_par' or 'moq_only'
+- `inventory_alert_settings.max_auto_reorder_value` (NUMERIC, nullable) — daily spend cap
+- `purchase_orders.supplier_confirmed_at` (TIMESTAMPTZ, nullable) — for tracking confirmations
 
-#### 4. Fix section rhythm and layout
-- Remove negative margins and `rounded-2xl` from Before/After and How It Works sections — use consistent spacing (`pb-20 md:pb-24`) with no background color shifts
-- Remove inset shadows from section backgrounds
-- Remove thin divider lines — use consistent vertical spacing instead
-- Remove the gradient overlay on the Pricing section
+### Quantity Calculation
+```
+deficit = par_level - quantity_on_hand
+order_qty = max(moq, deficit)
+if moq > 1: round up to nearest MOQ multiple
+```
+Fallback: if par_level is null, uses `reorder_level * 2`.
 
-#### 5. Clean up spacing
-- Tighten overall page padding from `py-12 md:py-16` to `py-10 md:py-14`
-- Standardize section spacing: `pb-16 md:pb-20` for all sections (currently varies between `pb-16`, `pb-20`, `pb-24`, `pb-32`)
-- Remove excessive empty lines between sections
+### Files Updated
+- Migration: Added columns to products, product_suppliers, inventory_alert_settings, purchase_orders
+- `check-reorder-levels/index.ts` — auto-send logic with MOQ/par calculation, spend cap, email invocation
+- `AlertSettingsCard.tsx` — auto-reorder toggle, mode selector, spend cap input
+- `useInventoryAlertSettings.ts` — updated interface
+- `useProducts.ts` — added par_level to Product interface
+- `useProductSuppliers.ts` — added moq to ProductSupplier interface
+- `ProductEditDialog.tsx` — added par level field
+- `RetailProductsSettingsContent.tsx` — added par level to product form
+- `SupplierDialog.tsx` — added MOQ field
 
-#### 6. Remove Social Proof strip relocation
-- Move the social proof quote (Drop Dead Salon testimonial) to sit below the Before/After comparison where it has more context, instead of floating between the hero and the product preview
+### Safety Features
+- Spend cap: daily auto-reorder pauses when cumulative PO value exceeds cap
+- Audit trail: auto_reorder logged as stock_movement reason
+- Supplier confirmation tracking via supplier_confirmed_at timestamp
 
-### Files to Edit
-- `src/components/ui/AnimatedNumber.tsx` — fix spring easing
-- `src/components/dashboard/backroom-settings/BackroomPaywall.tsx` — all layout/section changes
+## Product Movement Rating Badges (Implemented)
 
-### Result
-The page will go from ~10 scrollable sections with redundant demos to a tighter ~7-section flow: Hero (with static browser mock) → Before/After + testimonial → Loss Aversion stats → Feature Reveal → Competitor Comparison → Pricing/ROI → Trust/FAQ → Final CTA.
+### What It Does
+Every product gets a dynamic movement rating badge (Best Seller, Popular, Steady, Slow Mover, Stagnant, Dead Weight) computed from 90-day sales velocity data.
 
+### Rating Tiers
+- **Best Seller**: Top 10% velocity AND >0.5 units/day (emerald)
+- **Popular**: Top 25% velocity AND >0.2 units/day (blue)
+- **Steady**: Velocity >0.05/day (muted)
+- **Slow Mover**: Velocity >0 but ≤0.05/day (amber)
+- **Stagnant**: Zero velocity, sold within 180 days (orange)
+- **Dead Weight**: Zero velocity, 180+ days or never sold (red)
+- Products with zero stock excluded from negative ratings
+
+### Files Created
+- `src/lib/productMovementRating.ts` — pure rating logic + badge config
+- `src/hooks/useProductVelocity.ts` — lightweight 90-day POS velocity query
+- `src/components/ui/MovementBadge.tsx` — shared badge component with tooltip
+
+### Files Updated
+- `RetailProductsSettingsContent.tsx` — Movement column + filter dropdown in products table
+- `RetailAnalyticsContent.tsx` — Movement badges on product performance table + Movement Distribution card (donut chart with actionable callouts)
+- `ProductCard.tsx` — Best Seller/Popular badges on public shop cards (positive only)
+- `ProductDetailModal.tsx` — Movement badge with velocity context
+
+## Inventory Intelligence Suite v2 (Implemented)
+
+### 1. Dead Stock Auto-Clearance Pipeline
+- `DeadStockAlertCard.tsx` — Surfaces Dead Weight/Stagnant products not yet in clearance with suggested discount tiers (10%/25%/50% based on idle days)
+- One-click "Mark for Clearance" applies discount and sets clearance_status
+
+### 2. Supplier Lead Time Tracker
+- `usePurchaseOrders.ts` — `useMarkPurchaseOrderReceived` already computes actual delivery days and updates `product_suppliers.avg_delivery_days` via running average
+- `parLevelSuggestion.ts` — Updated to accept supplier-provided lead time instead of hardcoded 7-day default, with bounds clamping
+
+### 3. Inventory Valuation Dashboard Card
+- `InventoryValuationCard.tsx` — Shows total inventory at cost/retail, potential margin %, capital-at-risk (slow/stagnant/dead weight), with donut chart breakdown
+
+### 4. Reorder Approval Queue
+- `ReorderApprovalCard.tsx` — Surfaces draft POs from auto-reorder with one-click approve (→ sent) or reject (→ cancelled)
+
+### 5. Stock Transfer Between Locations
+- Migration: Created `stock_transfers` table with RLS (org member read, org admin manage)
+- `useStockTransfers.ts` — CRUD hooks for stock transfers with stock movement logging
+- `StockTransferDialog.tsx` — Dialog for creating transfers between locations
+- `RetailProductsSettingsContent.tsx` — "Transfer Stock" button added to Inventory tab (visible for multi-location orgs)
+
+## Enhancement 1: Expiry Tracking (Implemented)
+
+### What It Does
+Products can have an optional expiration date (`expires_at`) and per-product alert threshold (`expiry_alert_days`, default 30). The system surfaces expiring inventory with color-coded badges in the product table and an analytics card with auto-clearance suggestions.
+
+### Database Changes
+- `products.expires_at` (DATE, nullable) — expiration date for perishable products
+- `products.expiry_alert_days` (INTEGER, default 30) — days before expiry to trigger alerts
+
+### Expiry Alert Buckets
+- **Expired** (red): past expiration → suggests 50% markdown
+- **Critical** (orange): within alert threshold → suggests 25% markdown
+- **Warning** (amber): within 2× alert threshold → suggests 10% markdown
+
+### Files Created
+- `src/components/dashboard/analytics/ExpiryAlertCard.tsx` — PinnableCard showing expiring products with one-click clearance actions
+
+### Files Updated
+- `src/hooks/useProducts.ts` — Added `expires_at`, `expiry_alert_days` to Product interface; added `expiringOnly` filter
+- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Expiry date + alert days in product form; color-coded Expiry column in product table
+- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ExpiryAlertCard into analytics hub
+
+## Enhancement 2: Shrinkage Detection (Implemented)
+
+### What It Does
+Physical stocktake workflow with variance reporting. Staff record actual counts via a Stocktake dialog, and the system compares against expected quantities (system records). A Shrinkage Report card in analytics surfaces products with negative variance (loss) ranked by estimated cost impact.
+
+### Database Changes
+- Created `stock_counts` table with computed `variance` column (counted - expected), RLS policies (org member read/insert, org admin update/delete), and indexes
+
+### Shrinkage Calculation
+```
+variance = counted_quantity - expected_quantity
+shrinkage_units = |variance| when variance < 0
+shrinkage_cost = shrinkage_units × cost_price
+```
+
+### Files Created
+- `src/hooks/useStockCounts.ts` — CRUD hooks for stock counts + `useShrinkageSummary` for aggregated shrinkage data
+- `src/components/dashboard/settings/inventory/StocktakeDialog.tsx` — Full stocktake UI with search, inline count entry, real-time variance display
+- `src/components/dashboard/analytics/ShrinkageReportCard.tsx` — PinnableCard showing products with shrinkage, severity badges, estimated loss
+
+### Files Updated
+- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Added "Stocktake" button to Inventory tab toolbar
+- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ShrinkageReportCard into analytics hub

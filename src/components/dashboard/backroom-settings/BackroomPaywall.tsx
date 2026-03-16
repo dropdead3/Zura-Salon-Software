@@ -84,97 +84,84 @@ const faqItems = [
   },
 ];
 
-/* ─── Product Preview Mock ─── */
+/* ─── Product Preview Mock (used in hero) ─── */
 function ProductPreview() {
   return (
-    <div className="space-y-8">
-      {/* Section heading */}
-      <div className="text-center space-y-3">
-        <Eyebrow className="text-muted-foreground">See It In Action</Eyebrow>
-        <p className="text-sm md:text-base text-muted-foreground font-sans font-light max-w-2xl mx-auto leading-relaxed">
-          A real-time mixing session&nbsp;— every gram tracked, every formula remembered.
-        </p>
-      </div>
-
-      <div className="relative mx-auto max-w-[720px] overflow-visible isolate">
-        {/* Top-edge fade */}
-        <div className="absolute -top-16 left-0 right-0 h-16 bg-gradient-to-b from-background to-transparent z-10 pointer-events-none" />
-
-        {/* Browser frame */}
-        <div className="relative rounded-xl border border-border/60 bg-card shadow-[0_32px_120px_-48px_hsl(var(--background)/0.9)] overflow-hidden">
-          {/* Title bar */}
-          <div className="flex items-center gap-2 px-4 py-3 border-b border-border/40 bg-muted/30">
-            <div className="flex gap-2">
-              <div className="w-2.5 h-2.5 rounded-full bg-destructive/40" />
-              <div className="w-2.5 h-2.5 rounded-full bg-warning/40" />
-              <div className="w-2.5 h-2.5 rounded-full bg-success/40" />
-            </div>
-            <div className="flex-1 flex justify-center">
-              <div className="px-4 py-1 rounded-md bg-muted/50 text-[10px] text-muted-foreground font-sans">
-                backroom.getzura.com
-              </div>
+    <div className="relative mx-auto max-w-[720px] overflow-visible isolate">
+      {/* Browser frame */}
+      <div className="relative rounded-xl border border-border/60 bg-card shadow-xl overflow-hidden">
+        {/* Title bar */}
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-border/40 bg-muted/30">
+          <div className="flex gap-2">
+            <div className="w-2.5 h-2.5 rounded-full bg-destructive/40" />
+            <div className="w-2.5 h-2.5 rounded-full bg-warning/40" />
+            <div className="w-2.5 h-2.5 rounded-full bg-success/40" />
+          </div>
+          <div className="flex-1 flex justify-center">
+            <div className="px-4 py-1 rounded-md bg-muted/50 text-[10px] text-muted-foreground font-sans">
+              backroom.getzura.com
             </div>
           </div>
-          {/* Mock UI content */}
-          <div className="p-5 space-y-4">
-            {/* Header row */}
+        </div>
+        {/* Mock UI content */}
+        <div className="p-5 space-y-4">
+          {/* Header row */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Beaker className="w-3.5 h-3.5 text-primary" />
+              </div>
+              <span className="font-display text-[10px] tracking-wider text-foreground">MIXING SESSION</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground font-sans">
+                <Timer className="w-3 h-3" /> 4:32
+              </span>
+              <span className="text-[10px] text-muted-foreground font-sans">Station 1</span>
+            </div>
+          </div>
+          {/* Client + formula row */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-lg bg-muted/30 border border-border/30 p-3 space-y-2">
+              <span className="text-[9px] text-muted-foreground font-sans">Client</span>
+              <p className="text-xs text-foreground font-sans font-medium">Sarah Mitchell</p>
+            </div>
+            <div className="rounded-lg bg-muted/30 border border-border/30 p-3 space-y-2">
+              <span className="text-[9px] text-muted-foreground font-sans">Last Formula</span>
+              <p className="text-xs text-foreground font-sans font-medium">Liberator 7 + Activator (1:1.5)</p>
+            </div>
+          </div>
+          {/* Dispensing bars — Color */}
+          <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Beaker className="w-3.5 h-3.5 text-primary" />
-                </div>
-                <span className="font-display text-[10px] tracking-wider text-foreground">MIXING SESSION</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground font-sans">
-                  <Timer className="w-3 h-3" /> 4:32
-                </span>
-                <span className="text-[10px] text-muted-foreground font-sans">Station 1</span>
-              </div>
+              <span className="text-[10px] text-muted-foreground font-sans">Color — Liberator 7</span>
+              <span className="text-[10px] text-primary font-sans font-medium">42g / 45g target</span>
             </div>
-            {/* Client + formula row */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-lg bg-muted/30 border border-border/30 p-3 space-y-2">
-                <span className="text-[9px] text-muted-foreground font-sans">Client</span>
-                <p className="text-xs text-foreground font-sans font-medium">Sarah Mitchell</p>
-              </div>
-              <div className="rounded-lg bg-muted/30 border border-border/30 p-3 space-y-2">
-                <span className="text-[9px] text-muted-foreground font-sans">Last Formula</span>
-                <p className="text-xs text-foreground font-sans font-medium">Liberator 7 + Activator (1:1.5)</p>
-              </div>
+            <div className="h-2 rounded-full bg-muted/40 overflow-hidden">
+              <div className="h-full rounded-full bg-primary/70" style={{ width: '93%' }} />
             </div>
-            {/* Dispensing bars — Color */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] text-muted-foreground font-sans">Color — Liberator 7</span>
-                <span className="text-[10px] text-primary font-sans font-medium">42g / 45g target</span>
-              </div>
-              <div className="h-2 rounded-full bg-muted/40 overflow-hidden">
-                <div className="h-full rounded-full bg-primary/70 transition-all" style={{ width: '93%' }} />
-              </div>
-              <div className="flex gap-2">
-                <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-success/10 text-success text-[9px] font-sans">
-                  <CheckCircle2 className="w-2.5 h-2.5 mr-1" /> Within target
-                </span>
-                <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-muted/40 text-muted-foreground text-[9px] font-sans">
-                  3g under allowance
-                </span>
-              </div>
+            <div className="flex gap-2">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-success/10 text-success text-[9px] font-sans">
+                <CheckCircle2 className="w-2.5 h-2.5 mr-1" /> Within target
+              </span>
+              <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-muted/40 text-muted-foreground text-[9px] font-sans">
+                3g under allowance
+              </span>
             </div>
-            {/* Dispensing bars — Developer */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] text-muted-foreground font-sans">Developer — 20 Vol</span>
-                <span className="text-[10px] text-muted-foreground font-sans font-medium">63g / 67.5g target</span>
-              </div>
-              <div className="h-2 rounded-full bg-muted/40 overflow-hidden">
-                <div className="h-full rounded-full bg-accent/50 transition-all" style={{ width: '93%' }} />
-              </div>
-              <div className="flex gap-2">
-                <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-success/10 text-success text-[9px] font-sans">
-                  <CheckCircle2 className="w-2.5 h-2.5 mr-1" /> Within target
-                </span>
-              </div>
+          </div>
+          {/* Dispensing bars — Developer */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-muted-foreground font-sans">Developer — 20 Vol</span>
+              <span className="text-[10px] text-muted-foreground font-sans font-medium">63g / 67.5g target</span>
+            </div>
+            <div className="h-2 rounded-full bg-muted/40 overflow-hidden">
+              <div className="h-full rounded-full bg-accent/50" style={{ width: '93%' }} />
+            </div>
+            <div className="flex gap-2">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-success/10 text-success text-[9px] font-sans">
+                <CheckCircle2 className="w-2.5 h-2.5 mr-1" /> Within target
+              </span>
             </div>
           </div>
         </div>
@@ -192,8 +179,6 @@ export function BackroomPaywall() {
   const [auditMinutesPerDay, setAuditMinutesPerDay] = useState(30);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [activeFeature, setActiveFeature] = useState('mixing');
-  const [heroStep, setHeroStep] = useState(0);
-  const [heroWeight, setHeroWeight] = useState(0);
 
   const { effectiveOrganization } = useOrganizationContext();
   const { data: locations = [] } = useLocations(effectiveOrganization?.id);
@@ -211,35 +196,6 @@ export function BackroomPaywall() {
       setSelectedLocationIds(new Set(activeLocations.map(l => l.id)));
     }
   }, [activeLocations]);
-
-  // Hero step cycling
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setHeroStep((prev) => (prev + 1) % 6);
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Weight counting animation for step 1
-  useEffect(() => {
-    if (heroStep === 1) {
-      setHeroWeight(0);
-      const target = 28.4;
-      const duration = 2000;
-      const startTime = performance.now();
-      let raf: number;
-      const tick = (now: number) => {
-        const elapsed = now - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-        setHeroWeight(+(target * progress).toFixed(1));
-        if (progress < 1) raf = requestAnimationFrame(tick);
-      };
-      raf = requestAnimationFrame(tick);
-      return () => cancelAnimationFrame(raf);
-    } else if (heroStep !== 2) {
-      setHeroWeight(0);
-    }
-  }, [heroStep]);
 
   const isSingleLocation = activeLocations.length === 1;
   const locationCount = selectedLocationIds.size;
@@ -369,24 +325,19 @@ export function BackroomPaywall() {
     </h2>
   );
 
-  /* ─── Scroll reveal wrapper (disabled — animations removed) ─── */
-  const RevealOnScroll = ({ children, className }: { children: React.ReactNode; className?: string; delay?: number }) => {
-    return <div className={className}>{children}</div>;
-  };
-
   return (
-    <div className="flex flex-col items-center justify-center px-6 sm:px-8 py-12 md:py-16">
+    <div className="flex flex-col items-center justify-center px-6 sm:px-8 py-10 md:py-14">
       <div className="max-w-[1100px] w-full">
 
         {/* ═══════════════════════════════════════════
             SECTION 1 — HERO
             ═══════════════════════════════════════════ */}
-        <section className="pt-4 pb-24 md:pb-32 relative">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center relative">
-            {/* Left — Text (tightened spacing) */}
+        <section className="pt-4 pb-16 md:pb-20">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+            {/* Left — Text */}
             <div className="space-y-6 text-center lg:text-left">
               <div className="space-y-4">
-                <h1 className="font-display text-4xl md:text-5xl lg:text-[60px] font-medium tracking-wide leading-[1.05]">
+                <h1 className="font-display text-3xl md:text-4xl lg:text-5xl font-medium tracking-wide leading-[1.08]">
                   Stop Losing Money in Your Color Room
                 </h1>
                 <p className="text-muted-foreground text-lg md:text-xl max-w-xl mx-auto lg:mx-0 font-sans leading-relaxed mt-1">
@@ -398,200 +349,27 @@ export function BackroomPaywall() {
                 <ActivateButton />
                 <p className="text-sm text-muted-foreground/60 font-sans">Setup takes minutes. Cancel anytime.</p>
               </div>
-
             </div>
 
-            {/* Right — Live System Preview (rebalanced) */}
-            <div className="flex flex-col relative">
-              <Card className="relative overflow-hidden min-h-[360px] bg-card/80 backdrop-blur-xl border-border/60 shadow-xl">
-                <CardContent className="p-6 flex flex-col justify-center min-h-[360px] relative">
-                  {/* Step content */}
-                  <div key={heroStep} className="space-y-4">
-                    {heroStep === 0 && (
-                      <div className="flex flex-col items-center gap-4">
-                        <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center">
-                          <Scale className="w-8 h-8 text-primary" />
-                        </div>
-                        <p className="text-sm text-muted-foreground font-sans">Bowl placed on scale</p>
-                        <div className="bg-muted/50 rounded-xl p-6 w-full max-w-[300px]">
-                          <p className="text-xs text-muted-foreground/70 font-sans mb-1">Current Weight</p>
-                          <p className="font-display text-5xl tracking-wide text-foreground">0.0g</p>
-                        </div>
-                      </div>
-                    )}
-                    {heroStep === 1 && (
-                      <div className="flex flex-col items-center gap-4">
-                        <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-                          <Droplets className="w-8 h-8 text-primary" />
-                        </div>
-                        <p className="text-sm text-muted-foreground font-sans">Dispensing product…</p>
-                        <div className="bg-muted/50 rounded-xl p-6 w-full max-w-[300px]">
-                          <p className="text-xs text-muted-foreground/70 font-sans mb-1">Danger Jones Liberator 7</p>
-                          <p className="font-display text-4xl tracking-wide text-foreground">{heroWeight}g</p>
-                          <div className="mt-3 h-2 bg-muted rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-primary rounded-full transition-all duration-200"
-                              style={{ width: `${(heroWeight / 28.4) * 100}%` }}
-                            />
-                          </div>
-                          <p className="text-xs text-muted-foreground/60 font-sans mt-1">Target: 28.4g</p>
-                        </div>
-                      </div>
-                    )}
-                    {heroStep === 2 && (
-                      <div className="flex flex-col items-center gap-4">
-                        <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-                          <CheckCircle2 className="w-8 h-8 text-primary" />
-                        </div>
-                        <p className="text-sm text-muted-foreground font-sans">Usage captured</p>
-                        <div className="bg-muted/50 rounded-xl p-4 w-full max-w-[300px] space-y-2">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-sans text-foreground">Liberator 7</span>
-                            <span className="text-sm font-display tracking-wide text-foreground">28.4g</span>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-sans text-foreground">Activator 20 Vol</span>
-                            <span className="text-sm font-display tracking-wide text-foreground">42.6g</span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    {heroStep === 3 && (
-                      <div className="flex flex-col items-center gap-4">
-                        <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-                          <Brain className="w-8 h-8 text-primary" />
-                        </div>
-                        <p className="text-sm text-muted-foreground font-sans">Formula saved to client profile</p>
-                        <div className="bg-muted/50 rounded-xl p-4 w-full max-w-[300px] space-y-3">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                              <Users className="w-4 h-4 text-primary" />
-                            </div>
-                            <div>
-                              <p className="text-sm font-sans text-foreground">Sarah Mitchell</p>
-                              <p className="text-xs text-muted-foreground font-sans">Last visit: Mar 2</p>
-                            </div>
-                          </div>
-                          <div className="border-t border-border/30 pt-2 space-y-1">
-                            <p className="text-xs text-muted-foreground/70 font-sans">Formula #4</p>
-                            <p className="text-xs font-sans text-foreground">Liberator 7 — 28.4g</p>
-                            <p className="text-xs font-sans text-foreground">Activator 20 Vol — 42.6g</p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    {heroStep === 4 && (
-                      <div className="flex flex-col items-center gap-4">
-                        <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-                          <PackageSearch className="w-8 h-8 text-primary" />
-                        </div>
-                        <p className="text-sm text-muted-foreground font-sans">Inventory updated</p>
-                        <div className="bg-muted/50 rounded-xl p-4 w-full max-w-[300px] space-y-2">
-                          {[
-                            { name: 'Liberator 7', stock: '340g', status: 'Good', color: 'text-primary' },
-                            { name: 'Activator 20 Vol', stock: '180g', status: 'Low', color: 'text-amber-500' },
-                            { name: 'Cosmic Crystal Lightener', stock: '45g', status: 'Critical', color: 'text-destructive' },
-                          ].map((item) => (
-                            <div key={item.name} className="flex items-center justify-between text-sm">
-                              <span className="font-sans text-foreground">{item.name}</span>
-                              <div className="flex items-center gap-2">
-                                <span className="font-sans text-muted-foreground">{item.stock}</span>
-                                <span className={cn('text-xs font-sans', item.color)}>{item.status}</span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {heroStep === 5 && (
-                      <div className="flex flex-col items-center gap-4">
-                        <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-                          <DollarSign className="w-8 h-8 text-primary" />
-                        </div>
-                        <p className="text-sm text-muted-foreground font-sans">Service cost insight</p>
-                        <div className="bg-muted/50 rounded-xl p-4 w-full max-w-[300px] space-y-3">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-sans text-foreground">Service Revenue</span>
-                            <span className="text-sm font-display tracking-wide text-foreground">$185</span>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-sans text-foreground">Product Cost</span>
-                            <span className="text-sm font-display tracking-wide text-muted-foreground">$12.40</span>
-                          </div>
-                          <div className="border-t border-border/30 pt-2 flex items-center justify-between">
-                            <span className="text-sm font-sans text-foreground">Margin</span>
-                            <span className="text-sm font-display tracking-wide text-primary">93.3%</span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-
-                {/* Integrated step indicators — inside card footer */}
-                <div className="border-t border-border/30 px-6 py-3 flex items-center justify-between bg-muted/20">
-                  <p className="text-xs text-muted-foreground/70 font-sans font-medium">
-                    {['Bowl on Scale', 'Dispensing Product', 'Usage Captured', 'Formula Saved', 'Inventory Updated', 'Cost Insight'][heroStep]}
-                  </p>
-                  <div className="flex items-center gap-1.5">
-                    {['Bowl on Scale', 'Dispensing', 'Usage Captured', 'Formula Saved', 'Inventory Updated', 'Cost Insight'].map((label, i) => (
-                      <button
-                        key={label}
-                        onClick={() => setHeroStep(i)}
-                        className={cn(
-                          'h-1.5 rounded-full transition-all duration-200',
-                          heroStep === i ? 'w-6 bg-primary' : 'w-3 bg-muted-foreground/20 hover:bg-muted-foreground/40'
-                        )}
-                        aria-label={label}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </Card>
+            {/* Right — Static Browser Mockup */}
+            <div className="flex flex-col">
+              <ProductPreview />
             </div>
           </div>
         </section>
 
         {/* ═══════════════════════════════════════════
-            SOCIAL PROOF STRIP
+            SECTION 2 — BEFORE / AFTER
             ═══════════════════════════════════════════ */}
-        <div className="py-16 md:py-20 flex flex-col items-center gap-4 max-w-2xl mx-auto text-center">
-          <div className="flex gap-1.5">
-            {[...Array(5)].map((_, i) => (
-              <Star key={i} className="h-5 w-5 fill-[hsl(var(--oat))] text-[hsl(var(--oat))]" />
-            ))}
-          </div>
-          <blockquote className="space-y-3 mt-2">
-            <p className="text-muted-foreground text-lg md:text-xl font-sans leading-relaxed italic">
-              "Zura Backroom saved us thousands per month and helps us recoup over $50,000 a year in color costs. 10/10 add-on feature."
+        <section className="pb-16 md:pb-20">
+          <div className="text-center mb-10 md:mb-12">
+            <SectionHeading>
+              How Zura Backroom Transforms Your Color Room
+            </SectionHeading>
+            <p className="mt-4 text-base md:text-lg text-muted-foreground font-sans font-light max-w-xl mx-auto">
+              From guesswork to a controlled, measurable system.
             </p>
-            <footer className="text-sm text-muted-foreground/60 font-sans tracking-wide">
-              — Drop Dead Salon
-            </footer>
-          </blockquote>
-        </div>
-
-        {/* ═══════════════════════════════════════════
-            SECTION 1.5 — PRODUCT PREVIEW
-            ═══════════════════════════════════════════ */}
-        <section className="relative pb-16 md:pb-20">
-          <ProductPreview />
-        </section>
-
-        {/* ═══════════════════════════════════════════
-            SECTION 1.75 — BEFORE / AFTER TRANSFORMATION
-            ═══════════════════════════════════════════ */}
-        <section className="pb-16 md:pb-20 bg-muted/20 -mx-6 sm:-mx-8 px-6 sm:px-8 rounded-2xl pt-10 md:pt-12 border-t border-border/40 shadow-[inset_0_2px_4px_0_hsl(var(--border)/0.15)]">
-          <RevealOnScroll>
-            <div className="text-center mb-10 md:mb-12">
-              <SectionHeading>
-                How Zura Backroom Transforms Your Color Room
-              </SectionHeading>
-              <p className="mt-4 text-base md:text-lg text-muted-foreground font-sans font-light max-w-xl mx-auto">
-                From guesswork to a controlled, measurable system.
-              </p>
-            </div>
-          </RevealOnScroll>
+          </div>
 
           <div className="relative grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-8">
             {/* Center arrow divider — desktop only */}
@@ -657,17 +435,32 @@ export function BackroomPaywall() {
               </CardContent>
             </Card>
           </div>
-
         </section>
 
-
-
+        {/* ═══════════════════════════════════════════
+            SOCIAL PROOF (relocated after Before/After)
+            ═══════════════════════════════════════════ */}
+        <div className="pb-16 md:pb-20 flex flex-col items-center gap-4 max-w-2xl mx-auto text-center">
+          <div className="flex gap-1.5">
+            {[...Array(5)].map((_, i) => (
+              <Star key={i} className="h-5 w-5 fill-[hsl(var(--oat))] text-[hsl(var(--oat))]" />
+            ))}
+          </div>
+          <blockquote className="space-y-3 mt-2">
+            <p className="text-muted-foreground text-lg md:text-xl font-sans leading-relaxed italic">
+              "Zura Backroom saved us thousands per month and helps us recoup over $50,000 a year in color costs. 10/10 add-on feature."
+            </p>
+            <footer className="text-sm text-muted-foreground/60 font-sans tracking-wide">
+              — Drop Dead Salon
+            </footer>
+          </blockquote>
+        </div>
 
         {/* ═══════════════════════════════════════════
-            SECTION 2 — THE PROBLEM (Loss Aversion)
+            SECTION 3 — LOSS AVERSION STATS
             ═══════════════════════════════════════════ */}
         {(estimate || estimateLoading) && (
-          <section className="pb-20 md:pb-24">
+          <section className="pb-16 md:pb-20">
             <div className="space-y-6">
               <Card className="bg-destructive/[0.03] border-destructive/20 overflow-hidden">
                 <CardContent className="p-6 md:p-8 space-y-6">
@@ -700,93 +493,63 @@ export function BackroomPaywall() {
                           { value: supplyRecovery, label: 'unrecovered supply costs / mo' },
                         ].map((tile) => (
                           <div key={tile.label} className="p-5 rounded-xl bg-destructive/5 border border-destructive/15 text-center shadow-sm">
-                            <p className="font-display text-3xl tracking-wide text-destructive">
-                              <AnimatedNumber value={tile.value} prefix="$" duration={1000} />
+                            <p className="font-display text-2xl md:text-3xl tracking-wide text-destructive tabular-nums">
+                              <AnimatedNumber
+                                value={tile.value}
+                                duration={1200}
+                                formatOptions={{ style: 'currency', currency: 'USD', notation: 'compact', maximumFractionDigits: 1 }}
+                              />
                             </p>
                             <p className="text-sm text-muted-foreground font-sans mt-2">{tile.label}</p>
                           </div>
                         ))}
                       </div>
 
-                      {/* Total monthly loss */}
-                      <div className="flex items-center justify-center gap-4 pt-4">
-                        <div className="h-px flex-1 bg-destructive/20" />
-                        <div className="text-center">
-                          <p className="text-sm text-muted-foreground font-sans">Estimated total monthly loss</p>
-                          <p className="font-display text-4xl md:text-[44px] tracking-wide text-destructive mt-2">
-                            <AnimatedNumber value={totalSavings} prefix="$" duration={1200} />
-                            <span className="text-lg text-destructive/60 ml-1">/mo</span>
+                      <div className="flex items-center gap-3 p-4 rounded-xl bg-muted/30 border border-border/40">
+                        <Clock className="w-4 h-4 text-muted-foreground shrink-0" />
+                        <div className="flex-1">
+                          <p className="font-sans text-sm text-foreground">
+                            Manual inventory time: <span className="font-medium">{auditMinutesPerDay} min/day</span>
                           </p>
+                          <p className="font-sans text-xs text-muted-foreground mt-0.5">Drag to adjust</p>
                         </div>
-                        <div className="h-px flex-1 bg-destructive/20" />
+                        <div className="w-32">
+                          <Slider
+                            value={[auditMinutesPerDay]}
+                            onValueChange={(v) => setAuditMinutesPerDay(v[0])}
+                            min={5}
+                            max={90}
+                            step={5}
+                            className="w-full"
+                          />
+                        </div>
                       </div>
 
-                      {/* Stylist slider for manual estimate adjustment */}
-                      {!estimate.hasRealData && (
-                        <div className="space-y-3 pt-2">
-                          <p className="text-sm text-muted-foreground font-sans italic text-center">
-                            Based on industry averages — adjust your stylist count for a personalized estimate:
-                          </p>
-                          <div className="flex items-center gap-4 max-w-xs mx-auto">
-                            <span className="font-sans text-sm text-muted-foreground w-20 shrink-0">
-                              {manualStylistCount} stylist{manualStylistCount !== 1 ? 's' : ''}
-                            </span>
-                            <Slider
-                              variant="filled"
-                              min={1}
-                              max={20}
-                              step={1}
-                              value={[manualStylistCount]}
-                              onValueChange={([v]) => setManualStylistCount(v)}
-                              className="flex-1"
-                            />
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Manual inventory time */}
-                      <div className="border-t border-destructive/10 pt-4 flex items-center justify-center gap-2">
-                        <Clock className="w-4 h-4 text-muted-foreground/60 shrink-0" />
-                        <p className="text-sm text-muted-foreground font-sans">
-                          Plus ~<span className="text-foreground font-medium">{monthlyAuditHours.toFixed(0)} hours</span> of staff time recovered monthly
-                        </p>
-                      </div>
-
-                      {estimate.hasRealData && (
-                        <p className="text-xs text-muted-foreground font-sans italic text-center">
-                          Based on {estimate.totalColorAppointments.toLocaleString()} color appointments over {estimate.dataWindowDays} days
-                        </p>
-                      )}
+                      <p className="text-xs text-muted-foreground/50 font-sans text-center">
+                        Projections based on your color and chemical service appointments
+                      </p>
                     </>
                   ) : null}
                 </CardContent>
               </Card>
-
-              <div className="flex gap-2 items-start px-1">
-                <Info className="w-3.5 h-3.5 text-muted-foreground/50 shrink-0 mt-0.5" />
-                <p className="text-xs text-muted-foreground/60 font-sans leading-relaxed">
-                  Estimates based on scheduled color and chemical service appointments. Actual results may vary.
-                </p>
-              </div>
             </div>
           </section>
         )}
 
-
         {/* ═══════════════════════════════════════════
-            SECTION 4.25 — INTERACTIVE FEATURE REVEAL
+            SECTION 4 — FEATURE REVEAL
             ═══════════════════════════════════════════ */}
-        <section className="pb-24 md:pb-32">
-          <div className="space-y-8 md:space-y-10">
+        <section className="pb-16 md:pb-20">
+          <div className="space-y-8">
             <div className="text-center space-y-3">
-              <SectionHeading>Explore Zura Backroom</SectionHeading>
-              <p className="font-sans text-base text-muted-foreground max-w-xl mx-auto font-light leading-relaxed">
-                Click each feature to see how it works inside your salon.
+              <SectionHeading>What You Get</SectionHeading>
+              <p className="font-sans text-base text-muted-foreground font-light max-w-2xl mx-auto">
+                Five capabilities, one connected system.
               </p>
             </div>
 
-            {/* Mobile: horizontal scrollable pills */}
-            <div className="flex gap-2 overflow-x-auto pb-2 lg:hidden scrollbar-none">
+            {/* Mobile: pill selector */}
+            <div className="flex lg:hidden gap-2 overflow-x-auto pb-2 scrollbar-hide">
               {[
                 { key: 'mixing', icon: Scale, title: 'Smart Mixing' },
                 { key: 'formulas', icon: Brain, title: 'Formula Memory' },
@@ -875,7 +638,7 @@ export function BackroomPaywall() {
                                 </div>
                                 <div className="h-2 w-full rounded-full bg-secondary overflow-hidden">
                                   <div
-                                    className={cn('h-full rounded-full transition-all', reached ? 'bg-success' : 'bg-primary')}
+                                    className={cn('h-full rounded-full', reached ? 'bg-success' : 'bg-primary')}
                                     style={{ width: `${pct}%` }}
                                   />
                                 </div>
@@ -1005,231 +768,46 @@ export function BackroomPaywall() {
         </section>
 
         {/* ═══════════════════════════════════════════
-            SECTION 4.5 — COMPETITOR COMPARISON
+            SECTION 5 — COMPETITOR COMPARISON
             ═══════════════════════════════════════════ */}
-        <section className="pb-20 md:pb-24">
+        <section className="pb-16 md:pb-20">
           <CompetitorComparison />
         </section>
 
-
-
-
-
-
-
         {/* ═══════════════════════════════════════════
-            SECTION 4.98 — REAL SALON SCENARIO
+            SECTION 6 — HOW IT WORKS (3-step)
             ═══════════════════════════════════════════ */}
-        <section className="pb-20 md:pb-24 bg-muted/20 -mx-6 sm:-mx-8 px-6 sm:px-8 rounded-2xl pt-10 md:pt-12 shadow-[inset_0_1px_0_0_hsl(var(--border)/0.3)]">
+        <section className="pb-16 md:pb-20">
           <div className="space-y-10 md:space-y-12">
-            <RevealOnScroll>
-              <div className="text-center space-y-3">
-                <SectionHeading>How It Works</SectionHeading>
-                <p className="font-sans text-base text-muted-foreground font-light max-w-2xl mx-auto">
-                  From the first bowl to the final insight — three steps, one connected system.
-                </p>
-              </div>
-            </RevealOnScroll>
-
-            {/* 3-step summary */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 md:gap-6">
-              {howItWorks.map((step, i) => (
-                <RevealOnScroll key={step.step} delay={i * 100}>
-                  <Card className="bg-card border-border/50 shadow-sm hover:shadow-md transition-shadow duration-150">
-                    <CardContent className="p-6 space-y-3">
-                      <span className="font-display text-2xl tracking-wider text-primary/20">{step.step}</span>
-                      <p className="font-sans text-lg font-medium text-foreground">{step.title}</p>
-                      <p className="text-sm text-muted-foreground font-sans leading-relaxed">{step.description}</p>
-                    </CardContent>
-                  </Card>
-                </RevealOnScroll>
-              ))}
-            </div>
-
-            {/* Divider */}
-            <div className="flex justify-center">
-              <div className="w-12 h-px bg-border/40" />
-            </div>
-
-            <RevealOnScroll>
-              <p className="text-center font-display text-lg tracking-wide text-foreground">
-                Here's what that looks like in practice
+            <div className="text-center space-y-3">
+              <SectionHeading>How It Works</SectionHeading>
+              <p className="font-sans text-base text-muted-foreground font-light max-w-2xl mx-auto">
+                From the first bowl to the final insight — three steps, one connected system.
               </p>
-            </RevealOnScroll>
-
-            {/* Desktop: horizontal timeline */}
-            <div className="hidden md:grid grid-cols-7 gap-2 items-start">
-              {[
-                { icon: Calendar, step: '01', title: 'Client Arrives', desc: 'Sarah arrives for a full highlight service.', preview: null },
-                { icon: Users, step: '02', title: 'Bowl Prepared', desc: 'The assistant stages the mixing bowl on the scale.', preview: null },
-                {
-                  icon: Scale, step: '03', title: 'Product Measured', desc: '32g of Koleston 7/0 is dispensed and recorded.',
-                  preview: (
-                    <Card className="mt-3 bg-card border-border/40 shadow-sm">
-                      <CardContent className="p-3 space-y-2">
-                        <p className="font-sans text-xs text-muted-foreground">Koleston 7/0</p>
-                        <p className="font-display text-xl tracking-wide text-foreground">32.0<span className="text-xs text-muted-foreground ml-0.5">g</span></p>
-                        <div className="h-1.5 rounded-full bg-muted/40 overflow-hidden">
-                          <div className="h-full rounded-full bg-primary/60 w-[80%]" />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ),
-                },
-                { icon: Zap, step: '04', title: 'Usage Captured', desc: 'The system logs every product used in the session.', preview: null },
-                {
-                  icon: Brain, step: '05', title: 'Formula Saved', desc: "Sarah's formula is stored for her next visit.",
-                  preview: (
-                    <Card className="mt-3 bg-card border-border/40 shadow-sm">
-                      <CardContent className="p-3 space-y-2">
-                        <p className="font-sans text-sm text-foreground">Sarah M.</p>
-                        <p className="font-sans text-xs text-muted-foreground">Koleston 7/0 — 32g</p>
-                        <span className="inline-block px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-sans">
-                          Saved automatically
-                        </span>
-                      </CardContent>
-                    </Card>
-                  ),
-                },
-                { icon: PackageSearch, step: '06', title: 'Inventory Updates', desc: 'Koleston 7/0 stock adjusts automatically.', preview: null },
-                {
-                  icon: DollarSign, step: '07', title: 'Cost Visible', desc: "The service's true product cost is $18.40.",
-                  preview: (
-                    <Card className="mt-3 bg-card border-border/40 shadow-sm">
-                       <CardContent className="p-3 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="font-sans text-xs text-muted-foreground">Revenue</span>
-                          <span className="font-display text-sm tracking-wide text-foreground">$185</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="font-sans text-xs text-muted-foreground">Product Cost</span>
-                          <span className="font-display text-sm tracking-wide text-foreground">$18.40</span>
-                        </div>
-                        <span className="inline-block px-2 py-1 rounded-full bg-success/10 text-success text-[10px] font-sans">
-                          90% margin
-                        </span>
-                      </CardContent>
-                    </Card>
-                  ),
-                },
-              ].map((item, idx, arr) => (
-                <div key={idx} className="relative flex flex-col items-center text-center">
-                  {idx < arr.length - 1 && (
-                    <div className="absolute top-6 -right-2 z-10 text-muted-foreground/30">
-                      <ChevronRight className="w-4 h-4" />
-                    </div>
-                  )}
-                  <span className="font-display text-2xl tracking-wide text-primary/20 mb-2">{item.step}</span>
-                  <div className="w-12 h-12 rounded-xl bg-background border border-border/40 flex items-center justify-center mb-3">
-                    <item.icon className="w-5 h-5 text-primary" />
-                  </div>
-                  <h4 className="font-display text-xs tracking-wide text-foreground mb-1">{item.title}</h4>
-                  <p className="font-sans text-xs text-muted-foreground font-light leading-relaxed max-w-[130px]">{item.desc}</p>
-                  {item.preview}
-                </div>
-              ))}
             </div>
 
-            {/* Mobile: vertical timeline */}
-            <div className="md:hidden space-y-0">
-              {[
-                { icon: Calendar, step: '01', title: 'Client Arrives', desc: 'Sarah arrives for a full highlight service.', preview: null },
-                { icon: Users, step: '02', title: 'Bowl Prepared', desc: 'The assistant stages the mixing bowl on the scale.', preview: null },
-                {
-                  icon: Scale, step: '03', title: 'Product Measured', desc: '32g of Koleston 7/0 is dispensed and recorded.',
-                  preview: (
-                    <Card className="mt-2 bg-card border-border/40 shadow-sm">
-                      <CardContent className="p-3 space-y-2">
-                        <p className="font-sans text-xs text-muted-foreground">Koleston 7/0</p>
-                        <p className="font-display text-xl tracking-wide text-foreground">32.0<span className="text-xs text-muted-foreground ml-0.5">g</span></p>
-                        <div className="h-1.5 rounded-full bg-muted/40 overflow-hidden">
-                          <div className="h-full rounded-full bg-primary/60 w-[80%]" />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ),
-                },
-                { icon: Zap, step: '04', title: 'Usage Captured', desc: 'The system logs every product used in the session.', preview: null },
-                {
-                  icon: Brain, step: '05', title: 'Formula Saved', desc: "Sarah's formula is stored for her next visit.",
-                  preview: (
-                    <Card className="mt-2 bg-card border-border/40 shadow-sm">
-                      <CardContent className="p-3 space-y-2">
-                        <p className="font-sans text-sm text-foreground">Sarah M.</p>
-                        <p className="font-sans text-xs text-muted-foreground">Koleston 7/0 — 32g</p>
-                        <span className="inline-block px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-sans">
-                          Saved automatically
-                        </span>
-                      </CardContent>
-                    </Card>
-                  ),
-                },
-                { icon: PackageSearch, step: '06', title: 'Inventory Updates', desc: 'Koleston 7/0 stock adjusts automatically.', preview: null },
-                {
-                  icon: DollarSign, step: '07', title: 'Cost Visible', desc: "The service's true product cost is $18.40.",
-                  preview: (
-                    <Card className="mt-2 bg-card border-border/40 shadow-sm">
-                      <CardContent className="p-3 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="font-sans text-xs text-muted-foreground">Revenue</span>
-                          <span className="font-display text-sm tracking-wide text-foreground">$185</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="font-sans text-xs text-muted-foreground">Product Cost</span>
-                          <span className="font-display text-sm tracking-wide text-foreground">$18.40</span>
-                        </div>
-                        <span className="inline-block px-2 py-1 rounded-full bg-success/10 text-success text-[10px] font-sans">
-                          90% margin
-                        </span>
-                      </CardContent>
-                    </Card>
-                  ),
-                },
-              ].map((item, idx, arr) => (
-                <div key={idx} className="relative flex items-start gap-4 pb-6 last:pb-0">
-                  {/* Timeline line */}
-                  {idx < arr.length - 1 && (
-                    <div className="absolute left-[23px] top-12 bottom-0 w-px bg-border/40" />
-                  )}
-                  {/* Icon */}
-                  <div className="relative z-10 shrink-0 w-12 h-12 rounded-xl bg-background border border-border/40 flex items-center justify-center">
-                    <item.icon className="w-5 h-5 text-primary" />
-                  </div>
-                  {/* Content */}
-                  <div className="min-w-0 pt-1">
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <span className="font-display text-xs tracking-wider text-primary/40">{item.step}</span>
-                      <h4 className="font-display text-xs tracking-wide text-foreground">{item.title}</h4>
-                    </div>
-                    <p className="font-sans text-xs text-muted-foreground font-light leading-relaxed">{item.desc}</p>
-                    {item.preview}
-                  </div>
-                </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 md:gap-6">
+              {howItWorks.map((step) => (
+                <Card key={step.step} className="bg-card border-border/50 shadow-sm">
+                  <CardContent className="p-6 space-y-3">
+                    <span className="font-display text-2xl tracking-wider text-primary/20">{step.step}</span>
+                    <p className="font-sans text-lg font-medium text-foreground">{step.title}</p>
+                    <p className="text-sm text-muted-foreground font-sans leading-relaxed">{step.description}</p>
+                  </CardContent>
+                </Card>
               ))}
             </div>
-
-            {/* Supporting message */}
-            <p className="text-center font-sans text-sm text-muted-foreground font-light max-w-xl mx-auto">
-              Zura Backroom works quietly during every service, turning everyday activity into structured salon intelligence.
-            </p>
           </div>
         </section>
 
-        {/* Divider */}
-        <div className="flex justify-center py-4">
-          <div className="w-12 h-px bg-border/40" />
-        </div>
-
         {/* ═══════════════════════════════════════════
-            SECTION 5 — PRICING + ROI
+            SECTION 7 — PRICING + ROI
             ═══════════════════════════════════════════ */}
-        <section className="pb-24 md:pb-32 relative overflow-hidden">
-          <div className="absolute inset-0 pointer-events-none" style={{ background: 'linear-gradient(to bottom, hsl(var(--primary) / 0.02), transparent 60%)' }} />
-          <div className="space-y-8 md:space-y-10 relative">
-            <RevealOnScroll><SectionHeading>Pricing</SectionHeading></RevealOnScroll>
+        <section className="pb-16 md:pb-20">
+          <div className="space-y-8 md:space-y-10">
+            <SectionHeading>Pricing</SectionHeading>
 
-            <RevealOnScroll>
-              <Card className="bg-card border-border/50 shadow-md">
+            <Card className="bg-card border-border/50 shadow-md">
               <CardContent className="p-6 md:p-8 space-y-6">
                 <div className="grid grid-cols-2 gap-5">
                   <div className="p-5 rounded-xl bg-muted/30 border border-border/40 text-center">
@@ -1274,7 +852,7 @@ export function BackroomPaywall() {
                     <div className="space-y-2">
                       <div className="h-2 rounded-full bg-muted/40 overflow-hidden">
                         <div
-                          className="h-full rounded-full bg-success/60 transition-all duration-700"
+                          className="h-full rounded-full bg-success/60"
                           style={{ width: `${Math.min(100, yearlySavings > 0 ? (yearlyCost / yearlySavings) * 100 : 100)}%` }}
                         />
                       </div>
@@ -1286,7 +864,6 @@ export function BackroomPaywall() {
                 )}
               </CardContent>
             </Card>
-            </RevealOnScroll>
 
             {/* Location Selector */}
             {activeLocations.length > 0 && (
@@ -1374,97 +951,91 @@ export function BackroomPaywall() {
                 </CardContent>
               </Card>
             )}
+
             {/* Hardware sub-section */}
-            <RevealOnScroll>
-              <Card className="bg-card border-border/50 shadow-sm">
-                <CardContent className="p-6 md:p-8 space-y-6">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                      <Scale className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                      <p className="font-sans text-base md:text-lg font-medium text-foreground">Precision Scales</p>
-                      <p className="text-sm text-muted-foreground font-sans mt-1">
-                        Connect to your mixing stations via Bluetooth.
-                      </p>
-                    </div>
+            <Card className="bg-card border-border/50 shadow-sm">
+              <CardContent className="p-6 md:p-8 space-y-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                    <Scale className="w-5 h-5 text-primary" />
                   </div>
-
-                  <div className="grid grid-cols-2 gap-5">
-                    <div className="p-5 rounded-xl bg-muted/30 border border-border/40 text-center">
-                      <p className="font-display text-2xl tracking-wide text-foreground">${SCALE_HARDWARE_PRICE}</p>
-                      <p className="text-sm text-muted-foreground font-sans mt-2">per scale (one-time)</p>
-                    </div>
-                    <div className="p-5 rounded-xl bg-muted/30 border border-border/40 text-center">
-                      <p className="font-display text-2xl tracking-wide text-foreground">${SCALE_LICENSE_MONTHLY}</p>
-                      <p className="text-sm text-muted-foreground font-sans mt-2">per scale / month</p>
-                    </div>
-                  </div>
-
-                  {/* Recommendation summary */}
-                  <div className="flex items-center justify-between p-4 rounded-xl bg-primary/5 border border-primary/20">
-                    <div className="space-y-1">
-                      <p className="font-sans text-sm text-foreground font-medium">
-                        {recommendedScales} scale{recommendedScales !== 1 ? 's' : ''} recommended
-                      </p>
-                      <p className="text-xs text-muted-foreground font-sans">
-                        Based on 1 scale per 10 daily color appointments
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-9 w-9 rounded-lg"
-                        onClick={() => { setManualScaleOverride(true); setScaleCount(Math.max(0, scaleCount - 1)); }}
-                        disabled={scaleCount <= 0}
-                      >
-                        <span className="text-sm">−</span>
-                      </Button>
-                      <span className={cn(tokens.stat.large, 'w-8 text-center text-foreground text-lg')}>{scaleCount}</span>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-9 w-9 rounded-lg"
-                        onClick={() => { setManualScaleOverride(true); setScaleCount(Math.min(20, scaleCount + 1)); }}
-                        disabled={scaleCount >= 20}
-                      >
-                        <span className="text-sm">+</span>
-                      </Button>
-                    </div>
-                  </div>
-                  {manualScaleOverride && scaleCount !== recommendedScales && (
-                    <button
-                      type="button"
-                      className="text-sm text-primary font-sans hover:underline transition-colors"
-                      onClick={() => { setManualScaleOverride(false); setScaleCount(recommendedScales); }}
-                    >
-                      Reset to recommended
-                    </button>
-                  )}
-
-                  {/* iPad requirement */}
-                  <div className="flex items-start gap-3 p-4 rounded-xl bg-muted/30 border border-border/40">
-                    <Info className="w-4 h-4 text-muted-foreground/60 shrink-0 mt-0.5" />
-                    <p className="text-sm text-muted-foreground font-sans">
-                      Each station uses an iPad with Bluetooth for the mixing interface. A tablet stand is recommended.
+                  <div>
+                    <p className="font-sans text-base md:text-lg font-medium text-foreground">Precision Scales</p>
+                    <p className="text-sm text-muted-foreground font-sans mt-1">
+                      Connect to your mixing stations via Bluetooth.
                     </p>
                   </div>
-                </CardContent>
-              </Card>
-            </RevealOnScroll>
+                </div>
+
+                <div className="grid grid-cols-2 gap-5">
+                  <div className="p-5 rounded-xl bg-muted/30 border border-border/40 text-center">
+                    <p className="font-display text-2xl tracking-wide text-foreground">${SCALE_HARDWARE_PRICE}</p>
+                    <p className="text-sm text-muted-foreground font-sans mt-2">per scale (one-time)</p>
+                  </div>
+                  <div className="p-5 rounded-xl bg-muted/30 border border-border/40 text-center">
+                    <p className="font-display text-2xl tracking-wide text-foreground">${SCALE_LICENSE_MONTHLY}</p>
+                    <p className="text-sm text-muted-foreground font-sans mt-2">per scale / month</p>
+                  </div>
+                </div>
+
+                {/* Recommendation summary */}
+                <div className="flex items-center justify-between p-4 rounded-xl bg-primary/5 border border-primary/20">
+                  <div className="space-y-1">
+                    <p className="font-sans text-sm text-foreground font-medium">
+                      {recommendedScales} scale{recommendedScales !== 1 ? 's' : ''} recommended
+                    </p>
+                    <p className="text-xs text-muted-foreground font-sans">
+                      Based on 1 scale per 10 daily color appointments
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-9 w-9 rounded-lg"
+                      onClick={() => { setManualScaleOverride(true); setScaleCount(Math.max(0, scaleCount - 1)); }}
+                      disabled={scaleCount <= 0}
+                    >
+                      <span className="text-sm">−</span>
+                    </Button>
+                    <span className={cn(tokens.stat.large, 'w-8 text-center text-foreground text-lg')}>{scaleCount}</span>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-9 w-9 rounded-lg"
+                      onClick={() => { setManualScaleOverride(true); setScaleCount(Math.min(20, scaleCount + 1)); }}
+                      disabled={scaleCount >= 20}
+                    >
+                      <span className="text-sm">+</span>
+                    </Button>
+                  </div>
+                </div>
+                {manualScaleOverride && scaleCount !== recommendedScales && (
+                  <button
+                    type="button"
+                    className="text-sm text-primary font-sans hover:underline transition-colors"
+                    onClick={() => { setManualScaleOverride(false); setScaleCount(recommendedScales); }}
+                  >
+                    Reset to recommended
+                  </button>
+                )}
+
+                {/* iPad requirement */}
+                <div className="flex items-start gap-3 p-4 rounded-xl bg-muted/30 border border-border/40">
+                  <Info className="w-4 h-4 text-muted-foreground/60 shrink-0 mt-0.5" />
+                  <p className="text-sm text-muted-foreground font-sans">
+                    Each station uses an iPad with Bluetooth for the mixing interface. A tablet stand is recommended.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </section>
 
-        {/* Divider — Pricing → Trust */}
-        <div className="flex justify-center py-4">
-          <div className="w-12 h-px bg-border/40" />
-        </div>
-
         {/* ═══════════════════════════════════════════
-            SECTION 7 — TRUST + FAQ
+            SECTION 8 — TRUST + FAQ
             ═══════════════════════════════════════════ */}
-        <section className="pb-20 md:pb-24">
+        <section className="pb-16 md:pb-20">
           <div className="space-y-6">
             {/* 30-Day Guarantee */}
             <Card className="bg-success/5 border-success/20 shadow-sm">
@@ -1502,40 +1073,34 @@ export function BackroomPaywall() {
           </div>
         </section>
 
-
-
-
         {/* ═══════════════════════════════════════════
-            SECTION 8 — FINAL CTA
+            SECTION 9 — FINAL CTA
             ═══════════════════════════════════════════ */}
-        <section className="border-t border-border/20 pt-16 pb-8 text-center space-y-6 relative">
+        <section className="border-t border-border/20 pt-16 pb-8 text-center space-y-6">
           {hasPositiveBenefit && estimate ? (
             <p className="font-sans text-base text-muted-foreground">
               Projected to recover {formatCurrency(yearlySavings)} annually{roiMultiplier >= 2 ? ` — ${roiMultiplier}× your cost` : ''}.
             </p>
           ) : (
             <p className="font-sans text-base text-muted-foreground">
-              Most salons recover their Backroom cost within the first week.
+              Start tracking every gram. Recover what your color room is losing.
             </p>
           )}
           <ActivateButton />
+          <p className="text-sm text-muted-foreground/50 font-sans">No contracts. Cancel anytime.</p>
         </section>
 
       </div>
 
-      {/* Checkout Confirm Dialog */}
       <BackroomCheckoutConfirmDialog
         open={confirmDialogOpen}
         onOpenChange={setConfirmDialogOpen}
-        onConfirm={() => {
-          setConfirmDialogOpen(false);
-          handleCheckout();
-        }}
+        onConfirm={handleCheckout}
         loading={loading}
         organizationId={effectiveOrganization?.id}
         locationCount={locationCount}
         scaleCount={scaleCount}
-        estimatedMonthlyServices={Math.round((estimate?.monthlyColorServices ?? 0) * locationFraction)}
+        estimatedMonthlyServices={estimate ? Math.round(estimate.monthlyColorServices * locationFraction) : 0}
         estimatedMonthlySavings={totalSavings}
         netBenefit={netBenefit}
       />
