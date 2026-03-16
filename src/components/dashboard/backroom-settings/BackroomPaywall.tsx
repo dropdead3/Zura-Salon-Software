@@ -382,7 +382,7 @@ export function BackroomPaywall() {
         ) : netBenefit > 0 && locationCount > 0 ? (
           <>
             <Lock className="w-4 h-4" />
-            Start saving {formatCurrency(netBenefit)}/mo
+            Unlock {formatCurrency(netBenefit)}/mo
             <ArrowRight className="w-4 h-4" />
           </>
         ) : (
