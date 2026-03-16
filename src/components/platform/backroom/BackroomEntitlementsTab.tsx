@@ -781,7 +781,6 @@ function LocationEntitlementPanel({
                             onUpdateEntitlement(loc.id, {
                               scale_count: parseInt(val, 10),
                               status: ent.status,
-                              plan_tier: ent.plan_tier,
                             })
                           }
                         >
