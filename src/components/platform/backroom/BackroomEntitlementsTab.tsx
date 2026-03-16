@@ -58,6 +58,7 @@ interface OrgWithBackroom {
   created_at: string | null;
   flag_created_at: string | null;
   stripe_customer_id: string | null;
+  last_setup_link_sent_at: string | null;
 }
 
 interface OrgLocation {
