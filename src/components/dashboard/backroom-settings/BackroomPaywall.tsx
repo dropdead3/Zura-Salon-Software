@@ -522,8 +522,8 @@ export function BackroomPaywall() {
                           </div>
                           <div className="border-t border-border/30 pt-2 space-y-1">
                             <p className="text-xs text-muted-foreground/70 font-sans">Formula #4</p>
-                            <p className="text-xs font-sans text-foreground">Koleston 7/0 — 28.4g</p>
-                            <p className="text-xs font-sans text-foreground">Welloxon 6% — 42.6g</p>
+                            <p className="text-xs font-sans text-foreground">Liberator 7 — 28.4g</p>
+                            <p className="text-xs font-sans text-foreground">Activator 20 Vol — 42.6g</p>
                           </div>
                         </div>
                       </div>
