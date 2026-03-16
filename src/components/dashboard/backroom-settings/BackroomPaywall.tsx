@@ -856,7 +856,7 @@ export function BackroomPaywall() {
                                 </div>
                                 <div className="h-2 w-full rounded-full bg-secondary overflow-hidden">
                                   <div
-                                    className={cn('h-full rounded-full transition-all', reached ? 'bg-emerald-500' : 'bg-primary')}
+                                    className={cn('h-full rounded-full transition-all', reached ? 'bg-success' : 'bg-primary')}
                                     style={{ width: `${pct}%` }}
                                   />
                                 </div>
