@@ -60,10 +60,10 @@ export function CompMonthsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-slate-900 border-slate-700">
+      <DialogContent>
         <DialogHeader>
-          <DialogTitle className="text-white">Comp Free Months</DialogTitle>
-          <DialogDescription className="text-slate-400">
+          <DialogTitle>Comp Free Months</DialogTitle>
+          <DialogDescription>
             Add complimentary months to extend the contract at no charge.
           </DialogDescription>
         </DialogHeader>

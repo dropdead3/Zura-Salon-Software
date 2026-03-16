@@ -59,10 +59,10 @@ export function ExtendTermDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-slate-900 border-slate-700">
+      <DialogContent>
         <DialogHeader>
-          <DialogTitle className="text-white">Extend Contract Term</DialogTitle>
-          <DialogDescription className="text-slate-400">
+          <DialogTitle>Extend Contract Term</DialogTitle>
+          <DialogDescription>
             Add months to the end of the current contract.
           </DialogDescription>
         </DialogHeader>

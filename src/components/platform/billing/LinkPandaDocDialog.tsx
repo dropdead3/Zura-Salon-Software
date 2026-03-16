@@ -45,10 +45,10 @@ export function LinkPandaDocDialog({ open, onOpenChange, organizationId }: LinkP
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-slate-900 border-slate-700">
+      <DialogContent>
         <DialogHeader>
-          <DialogTitle className="text-white">Link PandaDoc Document</DialogTitle>
-          <DialogDescription className="text-slate-400">
+          <DialogTitle>Link PandaDoc Document</DialogTitle>
+          <DialogDescription>
             Manually link an existing PandaDoc document to this account.
             The document ID can be found in the PandaDoc URL.
           </DialogDescription>

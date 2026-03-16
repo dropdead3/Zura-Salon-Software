@@ -71,10 +71,10 @@ export function ChangeDatesDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="bg-slate-900 border-slate-700">
+      <DialogContent>
         <DialogHeader>
-          <DialogTitle className="text-white">Change Contract Dates</DialogTitle>
-          <DialogDescription className="text-slate-400">
+          <DialogTitle>Change Contract Dates</DialogTitle>
+          <DialogDescription>
             Manually adjust the contract start and/or end dates.
           </DialogDescription>
         </DialogHeader>
