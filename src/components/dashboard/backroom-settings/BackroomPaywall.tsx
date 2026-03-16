@@ -767,15 +767,14 @@ export function BackroomPaywall() {
         <div className="text-center space-y-4 pb-4">
           {hasPositiveBenefit && estimate ? (
             <p className="font-sans text-sm text-muted-foreground">
-              {formatCurrency(yearlyCost)}/yr cost → {formatCurrency(yearlySavings)}/yr in recovered value.
-              {roiMultiplier >= 2 && ` That's a ${roiMultiplier}× return.`}
+              Projected to recover {formatCurrency(yearlySavings)} annually{roiMultiplier >= 2 ? ` — ${roiMultiplier}× your cost` : ''}.
             </p>
           ) : (
             <p className="font-sans text-sm text-muted-foreground">
-              Average salon recovers $375/mo in reduced product waste alone.
+              Most salons recover their Backroom cost within the first week.
             </p>
           )}
-          <UnlockButton />
+          <ActivateButton />
         </div>
 
       </div>
