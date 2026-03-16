@@ -623,39 +623,51 @@ export function BackroomPaywall() {
 
                       {/* Projected Annual Recovery banner */}
                       <div className="border-t border-border/40 pt-6">
-                        <div className="rounded-lg bg-success/[0.12] border border-success/30 p-5 space-y-4 shadow-[0_0_20px_-4px_hsl(var(--success)/0.15)]">
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                            <div>
-                              <p className="font-display text-sm text-success uppercase tracking-wide font-medium">When Backroom Is Implemented</p>
-                              <p className="font-sans text-xs text-muted-foreground mt-0.5">Estimated annual savings based on your salon's current numbers</p>
-                              <p className="font-sans text-xs text-success/70 uppercase tracking-wide mt-3">You could recover</p>
-                              <p className="font-display text-3xl md:text-4xl font-medium tracking-wide text-success tabular-nums mt-0.5">
-                                <AnimatedNumber
-                                  value={yearlySavings}
-                                  duration={1200}
-                                  formatOptions={{ style: 'currency', currency: 'USD', notation: 'compact', maximumFractionDigits: 1 }}
-                                />
-                                <span className="text-lg text-success/70 font-sans font-normal ml-1">/yr</span>
-                              </p>
+                        <div className="bg-gradient-to-br from-success/30 via-success/10 to-transparent p-px rounded-xl">
+                          <div className="bg-card/90 backdrop-blur-xl rounded-[11px] p-6 space-y-5">
+                            {/* Header */}
+                            <div className="space-y-1 pb-4 border-b border-success/10">
+                              <div className="flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
+                                <p className="font-display text-base text-success uppercase tracking-wide font-medium">When Backroom Is Implemented</p>
+                              </div>
+                              <p className="font-sans text-xs text-muted-foreground pl-4">Estimated annual savings based on your salon's current numbers</p>
                             </div>
-                            <div className="space-y-1.5 text-sm font-sans text-muted-foreground">
-                              <div className="flex justify-between gap-6">
-                                <span>Waste reduction</span>
-                                <span className="tabular-nums text-foreground">{formatCurrency(wasteSavings * 12, { maximumFractionDigits: 0 })}/yr</span>
+
+                            {/* Body */}
+                            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-6">
+                              <div>
+                                <p className="font-sans text-xs text-success/70 uppercase tracking-wide">You could recover</p>
+                                <p className="font-display text-4xl md:text-5xl font-medium tracking-wide text-success tabular-nums mt-1">
+                                  <AnimatedNumber
+                                    value={yearlySavings}
+                                    duration={1200}
+                                    formatOptions={{ style: 'currency', currency: 'USD', notation: 'compact', maximumFractionDigits: 1 }}
+                                  />
+                                  <span className="text-lg text-success/70 font-sans font-normal ml-1">/yr</span>
+                                </p>
                               </div>
-                              <div className="flex justify-between gap-6">
-                                <span>Time savings</span>
-                                <span className="tabular-nums text-foreground">{formatCurrency(monthlyAuditCost * 12, { maximumFractionDigits: 0 })}/yr</span>
-                              </div>
-                              <div className="flex justify-between gap-6">
-                                <span>Supply recovery</span>
-                                <span className="tabular-nums text-foreground">{formatCurrency(supplyRecovery * 12, { maximumFractionDigits: 0 })}/yr</span>
+                              <div className="space-y-2 text-sm font-sans min-w-[200px]">
+                                <div className="flex justify-between gap-6 bg-success/[0.06] rounded-lg px-4 py-3 border-l-2 border-success/40">
+                                  <span className="text-muted-foreground">Waste reduction</span>
+                                  <span className="tabular-nums text-foreground">{formatCurrency(wasteSavings * 12, { maximumFractionDigits: 0 })}/yr</span>
+                                </div>
+                                <div className="flex justify-between gap-6 bg-success/[0.06] rounded-lg px-4 py-3 border-l-2 border-success/40">
+                                  <span className="text-muted-foreground">Time savings</span>
+                                  <span className="tabular-nums text-foreground">{formatCurrency(monthlyAuditCost * 12, { maximumFractionDigits: 0 })}/yr</span>
+                                </div>
+                                <div className="flex justify-between gap-6 bg-success/[0.06] rounded-lg px-4 py-3 border-l-2 border-success/40">
+                                  <span className="text-muted-foreground">Supply recovery</span>
+                                  <span className="tabular-nums text-foreground">{formatCurrency(supplyRecovery * 12, { maximumFractionDigits: 0 })}/yr</span>
+                                </div>
                               </div>
                             </div>
+
+                            {/* Disclaimer */}
+                            <p className="text-xs text-muted-foreground/60 font-sans">
+                              Projections based on your actual appointment data and industry benchmarks for salons using automated color tracking
+                            </p>
                           </div>
-                          <p className="text-xs text-muted-foreground/60 font-sans">
-                            Projections based on your actual appointment data and industry benchmarks for salons using automated color tracking
-                          </p>
                         </div>
                       </div>
                     </>
