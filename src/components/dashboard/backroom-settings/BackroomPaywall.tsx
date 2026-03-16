@@ -407,7 +407,7 @@ export function BackroomPaywall() {
         {/* ═══════════════════════════════════════════
             SECTION 1 — HERO
             ═══════════════════════════════════════════ */}
-        <section className="pt-4 pb-24 md:pb-32 relative overflow-hidden">
+        <section className="pt-4 pb-24 md:pb-32 relative overflow-visible">
           {/* Gradient canvas — strengthened */}
           <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at 70% 50%, hsl(var(--primary) / 0.07) 0%, transparent 65%)' }} />
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center relative">
@@ -431,7 +431,7 @@ export function BackroomPaywall() {
 
             {/* Right — Live System Preview (rebalanced) */}
             <div className="flex flex-col relative">
-              <div className="absolute top-1/2 right-0 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-primary/[0.03] blur-3xl pointer-events-none hidden lg:block" />
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-primary/[0.03] blur-3xl pointer-events-none hidden lg:block" />
               <Card className="relative overflow-hidden min-h-[360px] bg-card/80 backdrop-blur-xl border-border/60 shadow-xl shadow-primary/5">
                 {/* Subtle top glow */}
                 <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-primary/[0.04] to-transparent pointer-events-none" />
