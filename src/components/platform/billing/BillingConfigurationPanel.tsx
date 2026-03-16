@@ -268,6 +268,15 @@ export function BillingConfigurationPanel({
 
   return (
     <div className="space-y-6">
+      {/* Quick-access billing guide link */}
+      <div className="flex justify-end">
+        <PlatformButton variant="outline" size="sm" asChild>
+          <Link to="/dashboard/platform/billing-guide" target="_blank">
+            <HelpCircle className="h-4 w-4" />
+            Billing Guide
+          </Link>
+        </PlatformButton>
+      </div>
       {/* Status Card */}
       <BillingStatusCard
         billingStatus={billingStatus}

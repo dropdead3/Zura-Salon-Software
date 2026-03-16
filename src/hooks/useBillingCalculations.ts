@@ -16,14 +16,14 @@ export interface BillingCalculation {
   isInTrial: boolean;
 }
 
-const CYCLE_MULTIPLIERS: Record<BillingCycle, number> = {
+export const CYCLE_MULTIPLIERS: Record<BillingCycle, number> = {
   monthly: 1,
   quarterly: 3,
   semi_annual: 6,
   annual: 12,
 };
 
-const CYCLE_DISCOUNTS: Record<BillingCycle, number> = {
+export const CYCLE_DISCOUNTS: Record<BillingCycle, number> = {
   monthly: 0,
   quarterly: 0.05,     // 5% discount
   semi_annual: 0.10,   // 10% discount
