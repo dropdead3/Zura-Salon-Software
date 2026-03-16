@@ -149,7 +149,7 @@ export function InvoicePreview({
           )}
 
           {/* Summary of current capacity */}
-          <div className="text-xs text-muted-foreground space-y-1 pt-2">
+          <div className="text-xs text-[hsl(var(--platform-foreground-muted))] space-y-1 pt-2">
             <p>• {locationCount} location{locationCount !== 1 ? 's' : ''} active</p>
             {userCount > 0 && <p>• {userCount} user seat{userCount !== 1 ? 's' : ''} active</p>}
           </div>
