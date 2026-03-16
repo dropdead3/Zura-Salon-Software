@@ -398,7 +398,7 @@ export function BackroomPaywall() {
                 </p>
               </div>
 
-              <div className="space-y-3" ref={heroRef}>
+              <div className="flex flex-col items-center lg:items-start space-y-3" ref={heroRef}>
                 <ActivateButton />
               </div>
 
