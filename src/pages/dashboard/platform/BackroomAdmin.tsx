@@ -60,6 +60,10 @@ export default function BackroomAdmin() {
             <ReceiptText className="w-3.5 h-3.5" />
             Refund History
           </TabsTrigger>
+          <TabsTrigger value="hardware-orders" className={`${tabTriggerClass} flex items-center gap-1.5`}>
+            <BoxIcon className="w-3.5 h-3.5" />
+            Hardware Orders
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="analytics" className="mt-6">
