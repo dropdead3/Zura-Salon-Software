@@ -27,9 +27,9 @@ import { toast } from 'sonner';
 
 const features = [
   {
-    icon: Package,
-    title: 'Product Catalog',
-    description: 'Track every product with real-time inventory projections and par-level alerts.',
+    icon: Eye,
+    title: 'Predictive Stock Intelligence',
+    description: 'Knows if you have enough product for tomorrow\'s appointments. No more counting.',
   },
   {
     icon: Beaker,
