@@ -610,7 +610,7 @@ export function BackroomPaywall() {
         {/* ═══════════════════════════════════════════
             SECTION 1.75 — BEFORE / AFTER TRANSFORMATION
             ═══════════════════════════════════════════ */}
-        <section className="pb-20 md:pb-24 bg-muted/20 -mx-6 sm:-mx-8 px-6 sm:px-8 rounded-2xl pt-10 md:pt-12 shadow-[inset_0_1px_0_0_hsl(var(--border)/0.3)]">
+        <section className="pb-16 md:pb-20 bg-muted/20 -mx-6 sm:-mx-8 px-6 sm:px-8 rounded-2xl pt-10 md:pt-12 border-t border-border/40 shadow-[inset_0_2px_4px_0_hsl(var(--border)/0.15)]">
           <RevealOnScroll>
             <div className="text-center mb-10 md:mb-12">
               <SectionHeading>
@@ -622,17 +622,24 @@ export function BackroomPaywall() {
             </div>
           </RevealOnScroll>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
-            {/* WITHOUT */}
-            <Card className="bg-destructive/[0.03] border-destructive/20 shadow-sm hover:shadow-md transition-shadow duration-150">
+          <div className="relative grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-8">
+            {/* Center arrow divider — desktop only */}
+            <div className="hidden md:flex absolute inset-y-0 left-1/2 -translate-x-1/2 z-10 items-center justify-center pointer-events-none">
+              <div className="w-10 h-10 rounded-full bg-background border border-border/60 shadow-sm flex items-center justify-center">
+                <ArrowRight className="w-4 h-4 text-muted-foreground" />
+              </div>
+            </div>
+
+            {/* WITHOUT — deliberately muted */}
+            <Card className="bg-card/50 border-destructive/15 shadow-sm">
               <CardContent className="p-6 md:p-8">
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center shrink-0">
-                    <XCircle className="w-5 h-5 text-destructive" />
+                  <div className="w-11 h-11 md:w-12 md:h-12 rounded-xl bg-destructive/10 ring-1 ring-destructive/10 flex items-center justify-center shrink-0">
+                    <XCircle className="w-5 h-5 md:w-6 md:h-6 text-destructive" />
                   </div>
                   <h3 className="font-display text-base tracking-wide uppercase text-destructive">Without Backroom</h3>
                 </div>
-                <ul className="space-y-4">
+                <ul className="space-y-5">
                   {[
                     "Stylists guess how much color to mix",
                     "Formulas are scribbled in notebooks or forgotten",
@@ -643,24 +650,24 @@ export function BackroomPaywall() {
                     "Service profitability is a blind spot",
                   ].map((item) => (
                     <li key={item} className="flex items-start gap-3">
-                      <XCircle className="w-4 h-4 text-destructive/60 mt-0.5 shrink-0" />
-                      <span className="text-sm font-sans text-muted-foreground">{item}</span>
+                      <XCircle className="w-4 h-4 text-destructive mt-0.5 shrink-0" />
+                      <span className="text-[15px] font-sans text-muted-foreground">{item}</span>
                     </li>
                   ))}
                 </ul>
               </CardContent>
             </Card>
 
-            {/* WITH */}
-            <Card className="bg-success/[0.03] border-success/20 shadow-sm hover:shadow-md transition-shadow duration-150">
+            {/* WITH — elevated, the "winning" side */}
+            <Card className="bg-success/[0.05] border-success/20 shadow-md ring-1 ring-success/10">
               <CardContent className="p-6 md:p-8">
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center shrink-0">
-                    <CheckCircle2 className="w-5 h-5 text-success" />
+                  <div className="w-11 h-11 md:w-12 md:h-12 rounded-xl bg-success/10 ring-1 ring-success/10 flex items-center justify-center shrink-0">
+                    <CheckCircle2 className="w-5 h-5 md:w-6 md:h-6 text-success" />
                   </div>
                   <h3 className="font-display text-base tracking-wide uppercase text-success">With Backroom</h3>
                 </div>
-                <ul className="space-y-4">
+                <ul className="space-y-5">
                   {[
                     "Every formula is saved automatically per client",
                     "Stylists see the last formula instantly at the chair",
@@ -671,8 +678,8 @@ export function BackroomPaywall() {
                     "Service-level profitability becomes clear",
                   ].map((item) => (
                     <li key={item} className="flex items-start gap-3">
-                      <CheckCircle2 className="w-4 h-4 text-success/60 mt-0.5 shrink-0" />
-                      <span className="text-sm font-sans text-muted-foreground">{item}</span>
+                      <CheckCircle2 className="w-4 h-4 text-success mt-0.5 shrink-0" />
+                      <span className="text-[15px] font-sans text-foreground">{item}</span>
                     </li>
                   ))}
                 </ul>
