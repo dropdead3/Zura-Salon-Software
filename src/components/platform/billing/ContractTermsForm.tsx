@@ -140,7 +140,7 @@ export function ContractTermsForm({
           </SelectTrigger>
           <SelectContent>
             {trialOptions.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value.toString()} className="text-slate-300">
+              <SelectItem key={opt.value} value={opt.value.toString()}>
                 {opt.label}
               </SelectItem>
             ))}
