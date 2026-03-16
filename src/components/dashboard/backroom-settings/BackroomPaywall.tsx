@@ -325,7 +325,7 @@ export function BackroomPaywall() {
   );
 
   return (
-    <div className="flex flex-col items-center justify-center px-6 sm:px-8 py-10 md:py-14">
+    <div className="flex flex-col items-center justify-center px-6 sm:px-8 py-12 md:py-16">
       <div className="max-w-[1100px] w-full">
 
         {/* ═══════════════════════════════════════════
