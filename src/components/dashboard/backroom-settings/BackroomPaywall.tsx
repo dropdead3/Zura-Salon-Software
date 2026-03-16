@@ -504,7 +504,7 @@ export function BackroomPaywall() {
                         ))}
                       </div>
 
-                      <div className="flex items-center gap-3 p-4 rounded-xl bg-muted/30 border border-border/40">
+                      <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/30 border border-border/40">
                         <Clock className="w-4 h-4 text-muted-foreground shrink-0" />
                         <div className="flex-1">
                           <p className="font-sans text-sm text-foreground">
