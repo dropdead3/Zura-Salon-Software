@@ -1067,7 +1067,7 @@ export function BackroomPaywall() {
                 disabled={loading || selectedLocationIds.size === 0}
               >
                 <Lock className="w-4 h-4" />
-                Subscribe
+                Unlock Zura Backroom
                 <ArrowRight className="w-4 h-4" />
               </Button>
               <BackroomCheckoutConfirmDialog
