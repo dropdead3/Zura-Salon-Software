@@ -214,9 +214,9 @@ export function PlatformTeamManager() {
                         <TableCell>
                           <div className="flex items-center gap-3">
                             <div className="relative">
-                              <Avatar className="h-8 w-8 bg-slate-700 border border-slate-600">
+                              <Avatar className="h-8 w-8 bg-[hsl(var(--platform-bg-hover))] border border-[hsl(var(--platform-border))]">
                                 <AvatarImage src={member.photo_url || undefined} alt={member.full_name || 'Team member'} />
-                                <AvatarFallback className="bg-slate-700 text-slate-300 text-xs">
+                                <AvatarFallback className="bg-[hsl(var(--platform-bg-hover))] text-[hsl(var(--platform-foreground-muted))] text-xs">
                                   {getInitials(member.full_name, member.email)}
                                 </AvatarFallback>
                               </Avatar>
