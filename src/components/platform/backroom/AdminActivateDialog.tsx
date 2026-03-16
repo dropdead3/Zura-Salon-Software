@@ -9,7 +9,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { PlatformButton } from '@/components/platform/ui/PlatformButton';
-import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
 import {
   Select,
   SelectContent,
@@ -22,21 +21,11 @@ import { MapPin, CreditCard, Scale, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-
-// Same pricing constants used across the platform
-const BACKROOM_TIER_PRICES: Record<string, { monthly: number; annual: number; label: string }> = {
-  starter: { monthly: 39, annual: Math.round(39 * 12 * 0.85), label: 'Starter' },
-  professional: { monthly: 79, annual: Math.round(79 * 12 * 0.85), label: 'Professional' },
-  unlimited: { monthly: 129, annual: Math.round(129 * 12 * 0.85), label: 'Unlimited' },
-};
-
-const SCALE_LICENSE_MONTHLY = 10;
-const SCALE_LICENSE_ANNUAL = Math.round(10 * 12 * 0.85);
+import { BACKROOM_BASE_PRICE, SCALE_LICENSE_MONTHLY } from '@/hooks/backroom/useLocationStylistCounts';
 
 interface LocationConfig {
   location_id: string;
   location_name: string;
-  plan_tier: string;
   scale_count: number;
   enabled: boolean;
 }
@@ -59,19 +48,16 @@ export function AdminActivateDialog({
   locations,
 }: AdminActivateDialogProps) {
   const queryClient = useQueryClient();
-  const [billingInterval, setBillingInterval] = useState<'monthly' | 'annual'>('monthly');
   const [activating, setActivating] = useState(false);
   const [locationConfigs, setLocationConfigs] = useState<LocationConfig[]>(() =>
     locations.map((loc) => ({
       location_id: loc.id,
       location_name: loc.name,
-      plan_tier: 'starter',
       scale_count: 0,
       enabled: true,
     }))
   );
 
-  // Sync locations when they change
   useMemo(() => {
     setLocationConfigs(
       locations.map((loc) => {
@@ -79,7 +65,6 @@ export function AdminActivateDialog({
         return existing ?? {
           location_id: loc.id,
           location_name: loc.name,
-          plan_tier: 'starter',
           scale_count: 0,
           enabled: true,
         };
@@ -95,21 +80,18 @@ export function AdminActivateDialog({
     const lines: Array<{ label: string; amount: number }> = [];
 
     for (const cfg of enabledConfigs) {
-      const tier = BACKROOM_TIER_PRICES[cfg.plan_tier];
-      if (!tier) continue;
-      const tierCost = billingInterval === 'annual' ? tier.annual / 12 : tier.monthly;
-      lines.push({ label: `${cfg.location_name} — ${tier.label}`, amount: tierCost });
-      total += tierCost;
+      lines.push({ label: cfg.location_name, amount: BACKROOM_BASE_PRICE });
+      total += BACKROOM_BASE_PRICE;
 
       if (cfg.scale_count > 0) {
-        const scaleCost = cfg.scale_count * (billingInterval === 'annual' ? SCALE_LICENSE_ANNUAL / 12 : SCALE_LICENSE_MONTHLY);
+        const scaleCost = cfg.scale_count * SCALE_LICENSE_MONTHLY;
         lines.push({ label: `  └ ${cfg.scale_count} scale license(s)`, amount: scaleCost });
         total += scaleCost;
       }
     }
 
     return { lines, total };
-  }, [enabledConfigs, billingInterval]);
+  }, [enabledConfigs]);
 
   const updateConfig = (locationId: string, updates: Partial<LocationConfig>) => {
     setLocationConfigs((prev) =>
@@ -128,10 +110,8 @@ export function AdminActivateDialog({
       const { data, error } = await supabase.functions.invoke('admin-activate-backroom', {
         body: {
           organization_id: orgId,
-          billing_interval: billingInterval,
           location_plans: enabledConfigs.map((c) => ({
             location_id: c.location_id,
-            plan_tier: c.plan_tier,
             scale_count: c.scale_count,
           })),
         },
@@ -158,7 +138,7 @@ export function AdminActivateDialog({
         <DialogHeader>
           <DialogTitle>Activate Backroom & Charge Card</DialogTitle>
           <DialogDescription>
-            Activate Zura Backroom for <strong>{orgName}</strong> and charge their card on file immediately.
+            Activate Zura Backroom for <strong>{orgName}</strong> at ${BACKROOM_BASE_PRICE}/mo per location.
           </DialogDescription>
         </DialogHeader>
 
@@ -171,36 +151,13 @@ export function AdminActivateDialog({
           </div>
         ) : (
           <div className="space-y-4">
-            {/* Billing interval toggle */}
-            <div className="flex items-center justify-between p-3 rounded-lg bg-[hsl(var(--platform-bg-hover))]">
-              <div className="flex items-center gap-2">
-                <CreditCard className="w-4 h-4 text-violet-400" />
-                <span className="font-sans text-sm text-slate-200">Billing Interval</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className={cn('font-sans text-xs', billingInterval === 'monthly' ? 'text-slate-200' : 'text-slate-500')}>
-                  Monthly
-                </span>
-                <Switch
-                  checked={billingInterval === 'annual'}
-                  onCheckedChange={(checked) => setBillingInterval(checked ? 'annual' : 'monthly')}
-                />
-                <span className={cn('font-sans text-xs', billingInterval === 'annual' ? 'text-slate-200' : 'text-slate-500')}>
-                  Annual
-                </span>
-                {billingInterval === 'annual' && (
-                  <PlatformBadge variant="success" size="sm">15% off</PlatformBadge>
-                )}
-              </div>
-            </div>
-
             {/* Location configs */}
             <div className="rounded-lg border border-slate-700/40 overflow-hidden max-h-[280px] overflow-y-auto">
               <table className="w-full">
                 <thead className="sticky top-0 bg-slate-800/80 backdrop-blur">
                   <tr className="border-b border-slate-700/40">
                     <th className="font-sans text-xs text-slate-400 text-left px-3 py-2">Location</th>
-                    <th className="font-sans text-xs text-slate-400 text-left px-3 py-2">Plan</th>
+                    <th className="font-sans text-xs text-slate-400 text-left px-3 py-2">Price</th>
                     <th className="font-sans text-xs text-slate-400 text-left px-3 py-2">Scales</th>
                     <th className="font-sans text-xs text-slate-400 text-right px-3 py-2">Include</th>
                   </tr>
@@ -218,20 +175,7 @@ export function AdminActivateDialog({
                         </div>
                       </td>
                       <td className="px-3 py-2">
-                        <Select
-                          value={cfg.plan_tier}
-                          onValueChange={(val) => updateConfig(cfg.location_id, { plan_tier: val })}
-                          disabled={!cfg.enabled}
-                        >
-                          <SelectTrigger className="h-7 w-[120px] text-xs bg-slate-800/60 border-slate-700/50">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="starter">Starter ($39)</SelectItem>
-                            <SelectItem value="professional">Professional ($79)</SelectItem>
-                            <SelectItem value="unlimited">Unlimited ($129)</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <span className="font-sans text-xs text-slate-300">${BACKROOM_BASE_PRICE}/mo</span>
                       </td>
                       <td className="px-3 py-2">
                         <div className="flex items-center gap-1">
@@ -276,16 +220,14 @@ export function AdminActivateDialog({
                 </div>
               ))}
               <div className="border-t border-violet-500/20 pt-1.5 mt-1.5 flex justify-between">
-                <span className="font-sans text-sm text-slate-200 font-medium">Total</span>
+                <span className="font-sans text-sm text-slate-200 font-medium">Base Total</span>
                 <span className="font-sans text-sm text-violet-300 font-medium tabular-nums">
                   ${costBreakdown.total.toFixed(2)}/mo
                 </span>
               </div>
-              {billingInterval === 'annual' && (
-                <p className="font-sans text-[10px] text-slate-500">
-                  Billed annually at ${(costBreakdown.total * 12).toFixed(2)}/year
-                </p>
-              )}
+              <p className="font-sans text-[10px] text-slate-500">
+                + $0.50 per color service appointment (usage-based)
+              </p>
             </div>
           </div>
         )}

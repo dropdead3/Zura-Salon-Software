@@ -10,10 +10,10 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
-import { Loader2, CreditCard, Scale, ArrowUpRight, ArrowDownRight, Settings, Plus } from 'lucide-react';
+import { Loader2, CreditCard, Scale, Settings, Plus, Beaker } from 'lucide-react';
 import { AddScalesDialog } from '@/components/dashboard/backroom-settings/AddScalesDialog';
 import { BackroomROICard } from '@/components/dashboard/backroom-settings/BackroomROICard';
-import { DowngradeConfirmDialog } from '@/components/dashboard/backroom-settings/DowngradeConfirmDialog';
+import { BACKROOM_BASE_PRICE, BACKROOM_PER_SERVICE_FEE, SCALE_LICENSE_MONTHLY } from '@/hooks/backroom/useLocationStylistCounts';
 
 interface SubscriptionData {
   subscribed: boolean;
@@ -25,21 +25,13 @@ interface SubscriptionData {
   current_period_end?: string;
   monthly_cost?: number;
   subscription_id?: string;
+  active_location_count?: number;
 }
-
-const PLAN_DISPLAY: Record<string, { name: string; price: number; annualPrice: number }> = {
-  starter: { name: 'Starter', price: 39, annualPrice: 33 },
-  professional: { name: 'Professional', price: 79, annualPrice: 67 },
-  unlimited: { name: 'Unlimited', price: 129, annualPrice: 110 },
-};
-
-const UPGRADE_ORDER = ['starter', 'professional', 'unlimited'];
 
 export default function BackroomSubscription() {
   const { effectiveOrganization } = useOrganizationContext();
   const [portalLoading, setPortalLoading] = useState(false);
   const [addScalesOpen, setAddScalesOpen] = useState(false);
-  const [downgradeTarget, setDowngradeTarget] = useState<string | null>(null);
 
   const { data: sub, isLoading } = useQuery<SubscriptionData>({
     queryKey: ['backroom-subscription', effectiveOrganization?.id],
@@ -70,19 +62,6 @@ export default function BackroomSubscription() {
       toast.error(msg);
     } finally {
       setPortalLoading(false);
-    }
-  };
-
-  const handlePlanClick = (targetPlanKey: string) => {
-    const currentIdx = UPGRADE_ORDER.indexOf(sub?.plan || 'starter');
-    const targetIdx = UPGRADE_ORDER.indexOf(targetPlanKey);
-
-    if (targetIdx < currentIdx) {
-      // Downgrade — show confirmation dialog
-      setDowngradeTarget(targetPlanKey);
-    } else {
-      // Upgrade — go straight to portal
-      openPortal();
     }
   };
 
@@ -123,26 +102,20 @@ export default function BackroomSubscription() {
     );
   }
 
-  const planInfo = PLAN_DISPLAY[sub.plan || 'starter'];
-  const isAnnual = sub.billing_interval === 'annual';
+  const locationCount = sub.active_location_count || 1;
+  const scaleCount = sub.scale_licenses || sub.scale_count || 0;
+  const baseCost = locationCount * BACKROOM_BASE_PRICE;
+  const scaleLicenseCost = scaleCount * SCALE_LICENSE_MONTHLY;
   const renewalDate = sub.current_period_end
     ? new Date(sub.current_period_end).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
     : '—';
-
-  const currentIdx = UPGRADE_ORDER.indexOf(sub.plan || 'starter');
-  // Show all other plans (upgrades AND downgrades)
-  const otherPlans = UPGRADE_ORDER.filter((key) => key !== (sub.plan || 'starter')).map((key) => ({
-    key,
-    ...PLAN_DISPLAY[key],
-    isUpgrade: UPGRADE_ORDER.indexOf(key) > currentIdx,
-  }));
 
   return (
     <DashboardLayout>
       <div className={tokens.layout.pageContainer}>
         <DashboardPageHeader
           title="Backroom Subscription"
-          description="Manage your Backroom plan, scale licenses, and billing."
+          description="Manage your Backroom subscription, scale licenses, and billing."
           backTo="/dashboard/admin/backroom-settings"
           actions={
             <Button
@@ -157,7 +130,6 @@ export default function BackroomSubscription() {
           }
         />
 
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl">
           {/* Current Plan */}
           <Card className="bg-card/60 border-border/40">
@@ -167,23 +139,25 @@ export default function BackroomSubscription() {
                   <CreditCard className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <p className={cn(tokens.label.default, 'text-foreground')}>Current Plan</p>
-                  <p className="text-xs text-muted-foreground font-sans">Active subscription</p>
+                  <p className={cn(tokens.label.default, 'text-foreground')}>Subscription</p>
+                  <p className="text-xs text-muted-foreground font-sans">Active backroom plan</p>
                 </div>
               </div>
 
               <div className="space-y-2">
                 <div className="flex items-baseline gap-2">
-                  <span className={cn(tokens.stat.large, 'text-foreground')}>{planInfo.name}</span>
+                  <span className={cn(tokens.stat.large, 'text-foreground')}>
+                    {locationCount} Location{locationCount !== 1 ? 's' : ''}
+                  </span>
                   <Badge variant="outline" className="font-sans text-[10px]">
-                    {isAnnual ? 'Annual' : 'Monthly'}
+                    ${BACKROOM_BASE_PRICE}/mo each
                   </Badge>
                 </div>
                 <div className="flex items-baseline gap-1">
                   <span className="text-2xl font-display tracking-wide text-foreground">
-                    ${sub.monthly_cost?.toFixed(2) || planInfo.price}
+                    ${sub.monthly_cost?.toFixed(2) || baseCost}
                   </span>
-                  <span className="text-sm text-muted-foreground font-sans">/mo</span>
+                  <span className="text-sm text-muted-foreground font-sans">/mo base</span>
                 </div>
               </div>
 
@@ -218,12 +192,12 @@ export default function BackroomSubscription() {
               <div className="space-y-2">
                 <div className="flex items-baseline gap-2">
                   <span className={cn(tokens.stat.large, 'text-foreground')}>
-                    {sub.scale_licenses || sub.scale_count || 0}
+                    {scaleCount}
                   </span>
                   <span className="text-sm text-muted-foreground font-sans">active license(s)</span>
                 </div>
                 <p className="text-xs text-muted-foreground font-sans">
-                  ${(sub.scale_licenses || sub.scale_count || 0) * 10}/mo in scale licenses
+                  ${scaleLicenseCost}/mo in scale licenses
                 </p>
               </div>
 
@@ -239,61 +213,36 @@ export default function BackroomSubscription() {
             </CardContent>
           </Card>
 
+          {/* Usage Pricing Info */}
+          <Card className="bg-card/60 border-border/40">
+            <CardContent className="p-6 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
+                  <Beaker className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <p className={cn(tokens.label.default, 'text-foreground')}>Color Service Usage</p>
+                  <p className="text-xs text-muted-foreground font-sans">Billed based on actual appointments</p>
+                </div>
+              </div>
+              <div className="flex items-baseline gap-1">
+                <span className="text-2xl font-display tracking-wide text-foreground">
+                  ${BACKROOM_PER_SERVICE_FEE.toFixed(2)}
+                </span>
+                <span className="text-sm text-muted-foreground font-sans">/color appointment</span>
+              </div>
+              <p className="text-xs text-muted-foreground font-sans">
+                Usage is tracked automatically from completed mix sessions and billed at the end of each billing cycle.
+              </p>
+            </CardContent>
+          </Card>
+
           {/* ROI Card */}
           <BackroomROICard subscriptionMonthlyCost={sub.monthly_cost} />
-
-          {/* Plan Change Options */}
-          {otherPlans.length > 0 && (
-            <Card className="bg-card/60 border-border/40 md:col-span-2">
-              <CardContent className="p-6 space-y-4">
-                <p className={cn(tokens.label.default, 'text-foreground')}>Change Plan</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {otherPlans.map((p) => {
-                    const diff = (isAnnual ? p.annualPrice : p.price) - (isAnnual ? planInfo.annualPrice : planInfo.price);
-                    return (
-                      <button
-                        key={p.key}
-                        onClick={() => handlePlanClick(p.key)}
-                        className="p-4 rounded-xl border border-border/50 bg-card/40 text-left hover:border-primary/50 hover:bg-accent/30 transition-colors"
-                      >
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <p className={cn(tokens.label.default, 'text-foreground')}>{p.name}</p>
-                            <p className="text-xs text-muted-foreground font-sans mt-0.5">
-                              {diff > 0 ? '+' : ''}${diff}/mo from your current plan
-                            </p>
-                          </div>
-                          {p.isUpgrade ? (
-                            <ArrowUpRight className="w-4 h-4 text-primary shrink-0" />
-                          ) : (
-                            <ArrowDownRight className="w-4 h-4 text-muted-foreground shrink-0" />
-                          )}
-                        </div>
-                        <p className="text-lg font-display tracking-wide text-foreground mt-2">
-                          ${isAnnual ? p.annualPrice : p.price}/mo
-                        </p>
-                      </button>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-          )}
         </div>
       </div>
 
       <AddScalesDialog open={addScalesOpen} onOpenChange={setAddScalesOpen} />
-
-      <DowngradeConfirmDialog
-        open={!!downgradeTarget}
-        onOpenChange={(open) => { if (!open) setDowngradeTarget(null); }}
-        currentPlan={sub.plan || 'starter'}
-        targetPlan={downgradeTarget || 'starter'}
-        onConfirm={() => {
-          setDowngradeTarget(null);
-          openPortal();
-        }}
-      />
     </DashboardLayout>
   );
 }

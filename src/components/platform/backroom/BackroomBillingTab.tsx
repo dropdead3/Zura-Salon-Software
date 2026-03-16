@@ -75,14 +75,6 @@ function subscriptionBadge(status: string | null) {
   return <PlatformBadge variant={cfg.variant} size="sm">{cfg.label}</PlatformBadge>;
 }
 
-function daysUntil(dateStr: string | null): string {
-  if (!dateStr) return '—';
-  const diff = Math.ceil((new Date(dateStr).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-  if (diff < 0) return `${Math.abs(diff)}d overdue`;
-  if (diff === 0) return 'Today';
-  return `${diff}d`;
-}
-
 export function BackroomBillingTab() {
   const { data: metrics, isLoading } = useBackroomBillingHealth();
   const [search, setSearch] = useState('');
@@ -109,7 +101,6 @@ export function BackroomBillingTab() {
       );
     })
     .sort((a, b) => {
-      // Past due first, then by MRR descending
       const aRisk = a.subscriptionStatus === 'past_due' ? 0 : 1;
       const bRisk = b.subscriptionStatus === 'past_due' ? 0 : 1;
       if (aRisk !== bRisk) return aRisk - bRisk;
@@ -193,9 +184,7 @@ export function BackroomBillingTab() {
                   <TableHead className="font-sans text-xs text-slate-400">Organization</TableHead>
                   <TableHead className="font-sans text-xs text-slate-400">Status</TableHead>
                   <TableHead className="font-sans text-xs text-slate-400">Locations</TableHead>
-                  <TableHead className="font-sans text-xs text-slate-400">Plans</TableHead>
                   <TableHead className="font-sans text-xs text-slate-400">Scales</TableHead>
-                  
                   <TableHead className="font-sans text-xs text-slate-400 text-right pr-4">Est. MRR</TableHead>
                 </TableRow>
               </TableHeader>
@@ -216,15 +205,6 @@ export function BackroomBillingTab() {
                         <div className="text-slate-300">{org.activeLocationCount} active</div>
                         {org.suspendedLocationCount > 0 && (
                           <div className="text-red-400">{org.suspendedLocationCount} suspended</div>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {org.planTiers.length > 0 ? org.planTiers.map((t) => (
-                          <PlatformBadge key={t} variant="default" size="sm">{t}</PlatformBadge>
-                        )) : (
-                          <span className="font-sans text-xs text-slate-500">—</span>
                         )}
                       </div>
                     </TableCell>
