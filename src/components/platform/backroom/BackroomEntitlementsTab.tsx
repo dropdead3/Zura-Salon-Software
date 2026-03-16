@@ -191,7 +191,6 @@ export function BackroomEntitlementsTab() {
   const deleteLocEnt = useDeleteLocationEntitlement();
   const sendSetupLink = useSendPaymentSetupLink();
 
-  const queryClient = useQueryClient();
 
   const toggleBackroom = (org: OrgWithBackroom) => {
     if (org.backroom_enabled && org.override_id) {
