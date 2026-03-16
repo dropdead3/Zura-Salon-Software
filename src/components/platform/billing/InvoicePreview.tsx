@@ -45,21 +45,21 @@ export function InvoicePreview({
     <PlatformCard variant="glass">
       <PlatformCardHeader className="pb-3">
         <PlatformCardTitle className="text-lg flex items-center gap-2">
-          <Receipt className="h-5 w-5 text-primary" />
+          <Receipt className="h-5 w-5 text-violet-400" />
           Invoice Preview
         </PlatformCardTitle>
       </PlatformCardHeader>
       <PlatformCardContent className="space-y-4">
         {/* First Invoice */}
         <div className="space-y-3">
-          <p className="text-xs text-muted-foreground uppercase tracking-wider">First Invoice</p>
+          <p className="text-xs text-[hsl(var(--platform-foreground-muted))] uppercase tracking-wider">First Invoice</p>
           
           {calculation.isInTrial ? (
-            <div className="p-4 rounded-lg bg-primary/10 border border-primary/30">
-              <p className="text-sm text-primary">
+            <div className="p-4 rounded-lg bg-violet-500/10 border border-violet-500/30">
+              <p className="text-sm text-violet-400">
                 No payment due during {calculation.daysUntilTrialEnds}-day trial
               </p>
-              <p className="text-xs text-primary/70 mt-1">
+              <p className="text-xs text-violet-400/70 mt-1">
                 First invoice will be generated when trial ends
               </p>
             </div>
@@ -67,35 +67,35 @@ export function InvoicePreview({
             <div className="space-y-2">
               {/* Base Plan */}
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">{planName} ({getBillingCycleLabel(billingCycle)})</span>
-                <span className="text-foreground">{formatCurrency(calculation.cycleAmount)}</span>
+                <span className="text-[hsl(var(--platform-foreground-muted))]">{planName} ({getBillingCycleLabel(billingCycle)})</span>
+                <span className="text-[hsl(var(--platform-foreground))]">{formatCurrency(calculation.cycleAmount)}</span>
               </div>
 
               {/* Location Add-Ons */}
               {hasLocationAddOns && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">
+                  <span className="text-[hsl(var(--platform-foreground-muted))]">
                     Location Add-Ons ({additionalLocationsPurchased} × {formatCurrency(perLocationFee)})
                   </span>
-                  <span className="text-foreground">{formatCurrency(locationAddOnCost)}</span>
+                  <span className="text-[hsl(var(--platform-foreground))]">{formatCurrency(locationAddOnCost)}</span>
                 </div>
               )}
 
               {/* User Add-Ons */}
               {hasUserAddOns && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">
+                  <span className="text-[hsl(var(--platform-foreground-muted))]">
                     User Seat Add-Ons ({additionalUsersPurchased} × {formatCurrency(perUserFee)})
                   </span>
-                  <span className="text-foreground">{formatCurrency(userAddOnCost)}</span>
+                  <span className="text-[hsl(var(--platform-foreground))]">{formatCurrency(userAddOnCost)}</span>
                 </div>
               )}
 
               {/* Setup Fee */}
               {setupFee > 0 && !setupFeePaid && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Setup Fee (one-time)</span>
-                  <span className="text-foreground">{formatCurrency(setupFee)}</span>
+                  <span className="text-[hsl(var(--platform-foreground-muted))]">Setup Fee (one-time)</span>
+                  <span className="text-[hsl(var(--platform-foreground))]">{formatCurrency(setupFee)}</span>
                 </div>
               )}
 
@@ -116,9 +116,9 @@ export function InvoicePreview({
               )}
 
               {/* Total */}
-              <div className="flex justify-between pt-2 border-t border-border">
-                <span className="font-medium text-foreground">Total Due</span>
-                <span className="font-medium text-lg text-foreground">
+              <div className="flex justify-between pt-2 border-t border-[hsl(var(--platform-border)/0.5)]">
+                <span className="font-medium text-[hsl(var(--platform-foreground))]">Total Due</span>
+                <span className="font-medium text-lg text-[hsl(var(--platform-foreground))]">
                   {formatCurrency(calculation.firstInvoiceAmount)}
                 </span>
               </div>
@@ -127,29 +127,29 @@ export function InvoicePreview({
         </div>
 
         {/* Ongoing */}
-        <div className="space-y-3 pt-4 border-t border-border/50">
-          <p className="text-xs text-muted-foreground uppercase tracking-wider">Ongoing</p>
+        <div className="space-y-3 pt-4 border-t border-[hsl(var(--platform-border)/0.3)]">
+          <p className="text-xs text-[hsl(var(--platform-foreground-muted))] uppercase tracking-wider">Ongoing</p>
           
           <div className="flex items-center gap-3 text-sm">
-            <div className="flex-1 p-3 rounded-lg bg-card/50 text-center">
-              <p className="text-muted-foreground text-xs mb-1">Per Cycle</p>
-              <p className="font-medium text-foreground">{formatCurrency(calculation.cycleAmount)}</p>
+            <div className="flex-1 p-3 rounded-lg bg-[hsl(var(--platform-bg-card)/0.5)] text-center">
+              <p className="text-[hsl(var(--platform-foreground-muted))] text-xs mb-1">Per Cycle</p>
+              <p className="font-medium text-[hsl(var(--platform-foreground))]">{formatCurrency(calculation.cycleAmount)}</p>
             </div>
-            <ArrowRight className="h-4 w-4 text-muted-foreground" />
-            <div className="flex-1 p-3 rounded-lg bg-card/50 text-center">
-              <p className="text-muted-foreground text-xs mb-1">Annual Total</p>
-              <p className="font-medium text-foreground">{formatCurrency(calculation.annualAmount)}</p>
+            <ArrowRight className="h-4 w-4 text-[hsl(var(--platform-foreground-muted))]" />
+            <div className="flex-1 p-3 rounded-lg bg-[hsl(var(--platform-bg-card)/0.5)] text-center">
+              <p className="text-[hsl(var(--platform-foreground-muted))] text-xs mb-1">Annual Total</p>
+              <p className="font-medium text-[hsl(var(--platform-foreground))]">{formatCurrency(calculation.annualAmount)}</p>
             </div>
           </div>
 
           {calculation.isInPromo && (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-[hsl(var(--platform-foreground-muted))]">
               * After promotional period, rate increases to {formatCurrency(calculation.monthlyAmount)}/mo
             </p>
           )}
 
           {/* Summary of current capacity */}
-          <div className="text-xs text-muted-foreground space-y-1 pt-2">
+          <div className="text-xs text-[hsl(var(--platform-foreground-muted))] space-y-1 pt-2">
             <p>• {locationCount} location{locationCount !== 1 ? 's' : ''} active</p>
             {userCount > 0 && <p>• {userCount} user seat{userCount !== 1 ? 's' : ''} active</p>}
           </div>
