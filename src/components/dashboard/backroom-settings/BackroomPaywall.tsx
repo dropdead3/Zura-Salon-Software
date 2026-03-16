@@ -1235,27 +1235,27 @@ export function BackroomPaywall() {
 
                 {/* Annual impact summary */}
                 {hasPositiveBenefit && estimate && (
-                  <div className="rounded-xl bg-gradient-to-br from-emerald-500/5 to-primary/5 border border-emerald-500/20 p-6 space-y-4">
+                  <div className="rounded-xl bg-gradient-to-br from-success/5 to-primary/5 border border-success/20 p-6 space-y-4">
                     <div className="flex items-center justify-center gap-2">
-                      <TrendingUp className="w-4 h-4 text-emerald-400" />
-                      <p className="font-display text-xs tracking-wider text-emerald-400">Projected Annual Impact</p>
+                      <TrendingUp className="w-4 h-4 text-success" />
+                      <p className="font-display text-xs tracking-wider text-success">Projected Annual Impact</p>
                     </div>
                     <div className="text-center">
-                      <p className="font-display text-3xl md:text-4xl tracking-wide text-emerald-400">
+                      <p className="font-display text-3xl md:text-4xl tracking-wide text-success">
                         +<AnimatedNumber value={yearlyNetBenefit} duration={1200} formatOptions={{ style: 'currency', currency: 'USD', notation: 'compact', maximumFractionDigits: 1 }} />
-                        <span className="text-base text-emerald-400/70 ml-1">/yr</span>
+                        <span className="text-base text-success/70 ml-1">/yr</span>
                       </p>
                       {roiMultiplier >= 2 && (
-                        <span className="inline-flex items-center gap-1 mt-3 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-sm font-sans font-medium">
+                        <span className="inline-flex items-center gap-1 mt-3 px-3 py-1 rounded-full bg-success/10 text-success text-sm font-sans font-medium">
                           <TrendingUp className="w-3.5 h-3.5" />
                           {roiMultiplier}× ROI
                         </span>
                       )}
                     </div>
-                    <div className="space-y-1.5">
+                    <div className="space-y-2">
                       <div className="h-2 rounded-full bg-muted/40 overflow-hidden">
                         <div
-                          className="h-full rounded-full bg-emerald-500/60 transition-all duration-700"
+                          className="h-full rounded-full bg-success/60 transition-all duration-700"
                           style={{ width: `${Math.min(100, yearlySavings > 0 ? (yearlyCost / yearlySavings) * 100 : 100)}%` }}
                         />
                       </div>
