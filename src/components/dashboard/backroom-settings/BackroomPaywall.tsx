@@ -1783,6 +1783,7 @@ export function BackroomPaywall() {
                 )}
               </CardContent>
             </Card>
+            </RevealOnScroll>
 
             {/* Location Selector */}
             {activeLocations.length > 0 && (
