@@ -215,9 +215,6 @@ export function BackroomBillingTab() {
                     <TableCell>
                       <div className="font-sans text-xs space-y-0.5">
                         <div className="text-slate-300">{org.activeLocationCount} active</div>
-                        {org.trialLocationCount > 0 && (
-                          <div className="text-amber-400">{org.trialLocationCount} trial</div>
-                        )}
                         {org.suspendedLocationCount > 0 && (
                           <div className="text-red-400">{org.suspendedLocationCount} suspended</div>
                         )}
