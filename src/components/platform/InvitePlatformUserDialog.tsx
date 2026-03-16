@@ -4,12 +4,12 @@ import { useCreatePlatformInvitation } from '@/hooks/usePlatformInvitations';
 import { supabase } from '@/integrations/supabase/client';
 import {
   Dialog,
-  DialogContent,
-  DialogDescription,
+  PlatformDialogContent as DialogContent,
+  PlatformDialogDescription as DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  PlatformDialogTitle as DialogTitle,
+} from '@/components/platform/ui/PlatformDialog';
 import {
   Select,
   SelectValue,
