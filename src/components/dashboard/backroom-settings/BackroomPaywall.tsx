@@ -6,6 +6,7 @@ import {
   Scale, Droplets, ShieldCheck, MapPin, TrendingUp, DollarSign, Star,
   Info, Clock, AlertTriangle, CheckCircle2, XCircle,
   Brain, Users, PackageSearch, ChevronRight,
+  Calendar,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -940,6 +941,128 @@ export function BackroomPaywall() {
             {/* Supporting message */}
             <p className="text-center font-sans text-sm text-muted-foreground font-light max-w-xl mx-auto">
               Most salons operate the backroom on guesswork. Zura Backroom turns it into a measurable system.
+            </p>
+
+            <div className="flex justify-center">
+              <ActivateButton />
+            </div>
+          </div>
+        </section>
+
+        {/* ═══════════════════════════════════════════
+            SECTION 4.95 — CONTROL LAYER HUB
+            ═══════════════════════════════════════════ */}
+        <section className="pb-20 md:pb-24">
+          <div className="space-y-8 md:space-y-10">
+            <div className="text-center space-y-4">
+              <SectionHeading>The System That Connects Your Backroom</SectionHeading>
+              <p className="font-sans text-base md:text-lg text-muted-foreground font-light leading-relaxed max-w-2xl mx-auto">
+                Zura Backroom links your services, formulas, inventory, and analytics into one connected system.
+              </p>
+            </div>
+
+            {/* Hub Diagram — Desktop: radial layout, Mobile: grid */}
+            {(() => {
+              const hubNodes = [
+                { icon: Calendar, title: 'Appointments', desc: 'Every service connects to tracked product usage.', angle: 0 },
+                { icon: Beaker, title: 'Mix Sessions', desc: 'Every bowl mixed becomes recorded data.', angle: 51.4 },
+                { icon: Brain, title: 'Client Formulas', desc: 'Formulas are automatically stored for future visits.', angle: 102.8 },
+                { icon: PackageSearch, title: 'Inventory Tracking', desc: 'Product usage updates inventory instantly.', angle: 154.3 },
+                { icon: Users, title: 'Assistant Workflows', desc: 'Assistants can prep bowls with clear guidance.', angle: 205.7 },
+                { icon: DollarSign, title: 'Service Profitability', desc: 'Real product costs are tied directly to services.', angle: 257.1 },
+                { icon: BarChart3, title: 'Operational Insights', desc: 'Backroom activity becomes measurable intelligence.', angle: 308.6 },
+              ];
+
+              const radius = 210;
+
+              return (
+                <>
+                  {/* Desktop radial hub */}
+                  <div className="hidden md:block">
+                    <div className="relative mx-auto" style={{ width: 540, height: 540 }}>
+                      {/* SVG connecting lines */}
+                      <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 540 540">
+                        {hubNodes.map((node, i) => {
+                          const rad = (node.angle - 90) * (Math.PI / 180);
+                          const x = 270 + radius * Math.cos(rad);
+                          const y = 270 + radius * Math.sin(rad);
+                          return (
+                            <line
+                              key={i}
+                              x1="270" y1="270"
+                              x2={x} y2={y}
+                              className="stroke-border/30"
+                              strokeWidth="1"
+                            />
+                          );
+                        })}
+                      </svg>
+
+                      {/* Center hub */}
+                      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
+                        <div className="w-28 h-28 rounded-full bg-primary/10 border-2 border-primary/30 flex flex-col items-center justify-center gap-1.5">
+                          <Beaker className="w-7 h-7 text-primary" />
+                          <span className="font-display text-[9px] tracking-wide text-primary">BACKROOM</span>
+                        </div>
+                      </div>
+
+                      {/* Nodes */}
+                      {hubNodes.map((node, i) => {
+                        const rad = (node.angle - 90) * (Math.PI / 180);
+                        const x = 270 + radius * Math.cos(rad);
+                        const y = 270 + radius * Math.sin(rad);
+                        const NodeIcon = node.icon;
+                        return (
+                          <div
+                            key={i}
+                            className="absolute -translate-x-1/2 -translate-y-1/2 z-10 w-[130px] text-center"
+                            style={{ left: x, top: y }}
+                          >
+                            <div className="flex flex-col items-center gap-2">
+                              <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                                <NodeIcon className="w-5 h-5 text-primary" />
+                              </div>
+                              <span className="font-display text-[10px] tracking-wide">{node.title.toUpperCase()}</span>
+                              <span className="font-sans text-[11px] text-muted-foreground font-light leading-tight">{node.desc}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Mobile grid fallback */}
+                  <div className="md:hidden space-y-6">
+                    {/* Center hub */}
+                    <div className="flex justify-center">
+                      <div className="w-24 h-24 rounded-full bg-primary/10 border-2 border-primary/30 flex flex-col items-center justify-center gap-1.5">
+                        <Beaker className="w-6 h-6 text-primary" />
+                        <span className="font-display text-[8px] tracking-wide text-primary">BACKROOM</span>
+                      </div>
+                    </div>
+                    {/* Node grid */}
+                    <div className="grid grid-cols-2 gap-4">
+                      {hubNodes.map((node, i) => {
+                        const NodeIcon = node.icon;
+                        return (
+                          <div key={i} className="flex flex-col items-center text-center gap-2 p-4 rounded-xl bg-card border border-border/50">
+                            <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                              <NodeIcon className="w-5 h-5 text-primary" />
+                            </div>
+                            <span className="font-display text-[10px] tracking-wide">{node.title.toUpperCase()}</span>
+                            <span className="font-sans text-[11px] text-muted-foreground font-light leading-tight">{node.desc}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
+
+            {/* Supporting message */}
+            <p className="text-center font-sans text-sm text-muted-foreground font-light max-w-xl mx-auto">
+              Most tools track individual actions. Zura Backroom connects the entire workflow.
             </p>
 
             <div className="flex justify-center">
