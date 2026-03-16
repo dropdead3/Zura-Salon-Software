@@ -131,7 +131,7 @@ Deno.serve(async (req) => {
       
       await stripe.invoiceItems.create({
         customer: customerId,
-        price: SCALE_HARDWARE_PRICE_ID,
+        pricing: { price: SCALE_HARDWARE_PRICE_ID },
         quantity: scaleQty,
         description: `Precision Scale hardware × ${scaleQty}`,
       });
