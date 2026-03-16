@@ -23058,6 +23058,15 @@ export type Database = {
           success: boolean
         }[]
       }
+      sync_platform_logos_to_business_settings: {
+        Args: {
+          _icon_dark_url: string
+          _icon_light_url: string
+          _logo_dark_url: string
+          _logo_light_url: string
+        }
+        Returns: undefined
+      }
       update_booking_status: {
         Args: {
           p_appointment_id: string
