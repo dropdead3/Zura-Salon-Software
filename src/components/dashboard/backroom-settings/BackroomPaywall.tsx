@@ -473,7 +473,8 @@ export function BackroomPaywall() {
             </div>
 
             {/* Right — Live System Preview */}
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4 relative">
+              <div className="absolute top-1/2 right-0 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-primary/[0.03] blur-3xl pointer-events-none hidden lg:block" />
               <Card className="relative overflow-hidden min-h-[320px] bg-card/80 backdrop-blur-xl border-border/40 shadow-xl shadow-primary/5">
                 <CardContent className="p-6 flex flex-col justify-center min-h-[320px]">
                   {/* Step content */}
