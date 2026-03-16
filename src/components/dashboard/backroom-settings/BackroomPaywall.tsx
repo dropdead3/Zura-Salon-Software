@@ -146,7 +146,7 @@ function ProductPreview() {
             {/* Dispensing bars — Color */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] text-muted-foreground font-sans">Color — 7N + 8G</span>
+                <span className="text-[10px] text-muted-foreground font-sans">Color — Liberator 7</span>
                 <span className="text-[10px] text-primary font-sans font-medium">42g / 45g target</span>
               </div>
               <div className="h-2 rounded-full bg-muted/40 overflow-hidden">
