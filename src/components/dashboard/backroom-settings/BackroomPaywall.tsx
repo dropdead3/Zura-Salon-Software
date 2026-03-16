@@ -376,7 +376,7 @@ export function BackroomPaywall() {
     <Button
       size="lg"
       className={cn(
-        'font-sans font-medium gap-2 rounded-full h-12 px-10 text-base shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all duration-200',
+        'font-sans font-medium gap-2 rounded-full h-12 px-10 text-base shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 active:scale-[0.98] transition-all duration-200',
         className,
       )}
       onClick={() => setConfirmDialogOpen(true)}
