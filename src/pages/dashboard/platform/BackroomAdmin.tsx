@@ -6,6 +6,7 @@ import { PriceQueueTab } from '@/components/platform/backroom/PriceQueueTab';
 import { PriceSourcesTab } from '@/components/platform/backroom/PriceSourcesTab';
 import { BackroomEntitlementsTab } from '@/components/platform/backroom/BackroomEntitlementsTab';
 import { SupplyLibraryTab } from '@/components/platform/backroom/SupplyLibraryTab';
+import { HardwareOrdersTab } from '@/components/platform/backroom/HardwareOrdersTab';
 import { BackroomAnalyticsTab } from '@/components/platform/backroom/BackroomAnalyticsTab';
 import { BackroomBillingTab } from '@/components/platform/backroom/BackroomBillingTab';
 import { CoachPerformanceTab } from '@/components/platform/backroom/CoachPerformanceTab';
