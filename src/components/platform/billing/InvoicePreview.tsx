@@ -55,11 +55,11 @@ export function InvoicePreview({
           <p className="text-xs text-[hsl(var(--platform-foreground-muted))] uppercase tracking-wider">First Invoice</p>
           
           {calculation.isInTrial ? (
-            <div className="p-4 rounded-lg bg-primary/10 border border-primary/30">
-              <p className="text-sm text-primary">
+            <div className="p-4 rounded-lg bg-violet-500/10 border border-violet-500/30">
+              <p className="text-sm text-violet-400">
                 No payment due during {calculation.daysUntilTrialEnds}-day trial
               </p>
-              <p className="text-xs text-primary/70 mt-1">
+              <p className="text-xs text-violet-400/70 mt-1">
                 First invoice will be generated when trial ends
               </p>
             </div>
