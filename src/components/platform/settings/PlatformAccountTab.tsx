@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEmployeeProfile, useUpdateEmployeeProfile, useUploadProfilePhoto } from '@/hooks/useEmployeeProfile';
-import { usePlatformTheme } from '@/contexts/PlatformThemeContext';
 import { cn } from '@/lib/utils';
 import { Camera, Loader2, Save, User, Crown, Shield, Headphones, Code } from 'lucide-react';
 import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
@@ -31,11 +30,8 @@ export function PlatformAccountTab() {
   const { data: profile, isLoading } = useEmployeeProfile();
   const updateProfile = useUpdateEmployeeProfile();
   const uploadPhoto = useUploadProfilePhoto();
-  const { resolvedTheme } = usePlatformTheme();
-  const isDark = resolvedTheme === 'dark';
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  // Get the highest priority role for display
   const primaryRole = platformRoles[0] as PlatformRole | undefined;
   const roleInfo = primaryRole ? roleConfig[primaryRole] : null;
 
@@ -45,7 +41,6 @@ export function PlatformAccountTab() {
     phone: '',
   });
 
-  // Sync form data with profile
   useEffect(() => {
     if (profile) {
       setFormData({
@@ -60,19 +55,11 @@ export function PlatformAccountTab() {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleSave = () => {
-    updateProfile.mutate(formData);
-  };
-
-  const handlePhotoClick = () => {
-    fileInputRef.current?.click();
-  };
-
+  const handleSave = () => { updateProfile.mutate(formData); };
+  const handlePhotoClick = () => { fileInputRef.current?.click(); };
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      uploadPhoto.mutate({ input: file });
-    }
+    if (file) uploadPhoto.mutate({ input: file });
   };
 
   const getInitials = () => {
@@ -91,7 +78,7 @@ export function PlatformAccountTab() {
     return (
       <PlatformCard variant="glass">
         <PlatformCardContent className="flex items-center justify-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-violet-400" />
+          <Loader2 className="w-6 h-6 animate-spin text-[hsl(var(--platform-primary))]" />
         </PlatformCardContent>
       </PlatformCard>
     );
@@ -101,7 +88,7 @@ export function PlatformAccountTab() {
     <PlatformCard variant="glass">
       <PlatformCardHeader>
         <PlatformCardTitle className="flex items-center gap-2">
-          <User className={cn('h-5 w-5', isDark ? 'text-violet-400' : 'text-violet-600')} />
+          <User className="h-5 w-5 text-[hsl(var(--platform-primary))]" />
           Account Settings
         </PlatformCardTitle>
         <PlatformCardDescription>
@@ -113,24 +100,19 @@ export function PlatformAccountTab() {
           {/* Photo Upload Section */}
           <div className="flex flex-col items-center gap-3">
             <div className="relative group">
-              <Avatar className="h-24 w-24 border-2 border-slate-600">
+              <Avatar className="h-24 w-24 border-2 border-[hsl(var(--platform-border))]">
                 <AvatarImage src={profile?.photo_url || undefined} alt="Profile photo" />
-                <AvatarFallback className={cn(
-                  'text-xl font-medium',
-                  isDark ? 'bg-slate-700 text-slate-300' : 'bg-slate-200 text-slate-700'
-                )}>
+                <AvatarFallback className="text-xl font-medium bg-[hsl(var(--platform-bg-card))] text-[hsl(var(--platform-foreground)/0.85)]">
                   {getInitials()}
                 </AvatarFallback>
               </Avatar>
               
-              {/* Online indicator */}
               <OnlineIndicator 
                 isOnline={true} 
                 size="lg" 
                 className="absolute bottom-1 right-1"
               />
               
-              {/* Camera overlay */}
               <button
                 onClick={handlePhotoClick}
                 disabled={uploadPhoto.isPending}
@@ -147,22 +129,12 @@ export function PlatformAccountTab() {
                 )}
               </button>
               
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handlePhotoChange}
-              />
+              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
             </div>
-            <p className={cn(
-              'text-xs',
-              isDark ? 'text-slate-500' : 'text-slate-400'
-            )}>
+            <p className="text-xs text-[hsl(var(--platform-foreground-subtle))]">
               Click to upload photo
             </p>
             
-            {/* Role Badge */}
             {roleInfo && (
               <PlatformBadge variant={roleInfo.variant} size="lg" className="gap-1.5 mt-2">
                 <roleInfo.icon className="w-3.5 h-3.5" />
@@ -202,10 +174,7 @@ export function PlatformAccountTab() {
                 disabled
                 className="opacity-60 cursor-not-allowed"
               />
-              <p className={cn(
-                'text-xs',
-                isDark ? 'text-slate-500' : 'text-slate-400'
-              )}>
+              <p className="text-xs text-[hsl(var(--platform-foreground-subtle))]">
                 Email is linked to your account and cannot be changed here
               </p>
             </div>

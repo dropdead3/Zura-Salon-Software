@@ -40,12 +40,12 @@ export function PromoConfigForm({
   return (
     <div className="space-y-4">
       {/* Promo Toggle */}
-      <div className="flex items-center justify-between p-3 rounded-lg bg-slate-800/50 border border-slate-700/50">
+      <div className="flex items-center justify-between p-3 rounded-lg bg-[hsl(var(--platform-bg-card)/0.5)] border border-[hsl(var(--platform-border)/0.5)]">
         <div className="flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-violet-400" />
+          <Sparkles className="h-4 w-4 text-[hsl(var(--platform-primary))]" />
           <div>
             <PlatformLabel className="text-sm font-medium">Promotional Pricing</PlatformLabel>
-            <p className="text-xs text-slate-500 mt-0.5">Offer introductory pricing that reverts to regular rate</p>
+            <p className="text-xs text-[hsl(var(--platform-foreground-subtle))] mt-0.5">Offer introductory pricing that reverts to regular rate</p>
           </div>
         </div>
         <Switch
@@ -58,7 +58,7 @@ export function PromoConfigForm({
         <div className="space-y-4 pl-4 border-l-2 border-violet-500/30">
           {/* Quick Promo Options */}
           <div className="space-y-2">
-            <PlatformLabel className="text-xs text-slate-400">Quick Options</PlatformLabel>
+            <PlatformLabel className="text-xs text-[hsl(var(--platform-muted))]">Quick Options</PlatformLabel>
             <div className="flex flex-wrap gap-2">
               {quickPromoOptions.map((opt) => (
                 <button
@@ -91,7 +91,7 @@ export function PromoConfigForm({
             <div className="space-y-2">
               <PlatformLabel htmlFor="promoPrice">Promo Price</PlatformLabel>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--platform-muted))]">$</span>
                 <PlatformInput
                   id="promoPrice"
                   type="number"

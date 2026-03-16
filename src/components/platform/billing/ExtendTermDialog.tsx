@@ -42,11 +42,7 @@ export function ExtendTermDialog({
     if (!reason.trim() || monthsToAdd < 1) return;
 
     extendTerm.mutate(
-      {
-        organizationId,
-        monthsToAdd,
-        reason: reason.trim(),
-      },
+      { organizationId, monthsToAdd, reason: reason.trim() },
       {
         onSuccess: () => {
           setMonthsToAdd(1);
@@ -69,16 +65,16 @@ export function ExtendTermDialog({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {currentEndDate && (
-            <div className="p-3 rounded-lg bg-slate-800/50 border border-slate-700/50">
-              <p className="text-sm text-slate-400">Current End Date</p>
-              <p className="text-white font-medium">
+            <div className="p-3 rounded-lg bg-[hsl(var(--platform-bg-card)/0.5)] border border-[hsl(var(--platform-border)/0.5)]">
+              <p className="text-sm text-[hsl(var(--platform-muted))]">Current End Date</p>
+              <p className="text-[hsl(var(--platform-foreground))] font-medium">
                 {format(parseISO(currentEndDate), 'MMMM d, yyyy')}
               </p>
             </div>
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="months" className="text-slate-300">Months to Add</Label>
+            <Label htmlFor="months">Months to Add</Label>
             <Input
               id="months"
               type="number"
@@ -86,21 +82,20 @@ export function ExtendTermDialog({
               max={24}
               value={monthsToAdd}
               onChange={(e) => setMonthsToAdd(parseInt(e.target.value, 10) || 1)}
-              className="bg-slate-800 border-slate-700 text-white"
             />
           </div>
 
           {newEndDate && (
             <div className="p-3 rounded-lg bg-violet-500/10 border border-violet-500/30">
               <p className="text-sm text-violet-300">New End Date</p>
-              <p className="text-white font-medium">
+              <p className="text-[hsl(var(--platform-foreground))] font-medium">
                 {format(newEndDate, 'MMMM d, yyyy')}
               </p>
             </div>
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="reason" className="text-slate-300">Reason</Label>
+            <Label htmlFor="reason">Reason</Label>
             <PlatformTextarea
               id="reason"
               value={reason}
@@ -122,7 +117,6 @@ export function ExtendTermDialog({
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
-              className="border-slate-700 text-slate-300"
             >
               Cancel
             </Button>
