@@ -1270,48 +1270,7 @@ export function BackroomPaywall() {
 
       </div>
 
-      {/* ─── Sticky Bottom Conversion Bar ─── */}
-      <AnimatePresence>
-        {showStickyBar && !stickyDismissed && (
-          <motion.div
-            initial={{ opacity: 0, y: 60 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 60 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className={cn(
-              "fixed bottom-0 right-0 left-0 z-40 border-t border-border/60 bg-card/80 backdrop-blur-xl shadow-[0_-4px_20px_rgba(0,0,0,0.08)]",
-              sidebarCollapsed ? 'lg:left-20' : 'lg:left-72'
-            )}
-          >
-            <div className="max-w-[1100px] mx-auto px-6 lg:pr-20 py-3 flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3 min-w-0">
-                {hasPositiveBenefit && yearlySavings > 0 && (
-                  <p className="font-sans text-sm text-muted-foreground hidden sm:block">
-                    Est. <span className="text-success font-medium">{formatCurrencyCompact(yearlySavings)}/yr</span> recovered
-                  </p>
-                )}
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <Button
-                  size="default"
-                  className="font-sans font-medium gap-2 rounded-full h-10 px-6 text-sm shadow-lg shadow-primary/20"
-                  onClick={() => setConfirmDialogOpen(true)}
-                  disabled={loading || selectedLocationIds.size === 0}
-                >
-                  {ctaLabel}
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </Button>
-                <button
-                  onClick={() => setStickyDismissed(true)}
-                  className="p-1.5 rounded-full hover:bg-muted/60 transition-colors text-muted-foreground"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+
 
       <BackroomCheckoutConfirmDialog
         open={confirmDialogOpen}
