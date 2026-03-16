@@ -1126,11 +1126,37 @@ export function BackroomPaywall() {
           <div className="space-y-10 md:space-y-12">
             <RevealOnScroll>
               <div className="text-center space-y-3">
-                <SectionHeading>A Color Service With Zura Backroom</SectionHeading>
+                <SectionHeading>How It Works</SectionHeading>
                 <p className="font-sans text-base text-muted-foreground font-light max-w-2xl mx-auto">
-                  From the first bowl to the final insight. Here is what happens behind the scenes.
+                  From the first bowl to the final insight — three steps, one connected system.
                 </p>
               </div>
+            </RevealOnScroll>
+
+            {/* 3-step summary */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 md:gap-6">
+              {howItWorks.map((step, i) => (
+                <RevealOnScroll key={step.step} delay={i * 100}>
+                  <Card className="bg-card border-border/50 shadow-sm hover:shadow-md transition-shadow duration-200 hover-lift">
+                    <CardContent className="p-6 space-y-3">
+                      <span className="font-display text-2xl tracking-wider text-primary/20">{step.step}</span>
+                      <p className="font-sans text-lg font-medium text-foreground">{step.title}</p>
+                      <p className="text-sm text-muted-foreground font-sans leading-relaxed">{step.description}</p>
+                    </CardContent>
+                  </Card>
+                </RevealOnScroll>
+              ))}
+            </div>
+
+            {/* Divider */}
+            <div className="flex justify-center">
+              <div className="w-12 h-px bg-border/40" />
+            </div>
+
+            <RevealOnScroll>
+              <p className="text-center font-display text-lg tracking-wide text-foreground">
+                Here's what that looks like in practice
+              </p>
             </RevealOnScroll>
 
             {/* Desktop: horizontal timeline */}
