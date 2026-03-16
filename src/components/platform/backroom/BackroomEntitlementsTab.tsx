@@ -139,6 +139,7 @@ export function BackroomEntitlementsTab() {
           created_at: org.created_at || null,
           flag_created_at: flag?.created_at || null,
           stripe_customer_id: org.stripe_customer_id || null,
+          last_setup_link_sent_at: org.last_setup_link_sent_at || null,
         };
       });
     },
