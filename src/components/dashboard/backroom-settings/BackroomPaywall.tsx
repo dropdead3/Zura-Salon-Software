@@ -407,39 +407,188 @@ export function BackroomPaywall() {
         {/* ═══════════════════════════════════════════
             SECTION 1 — HERO
             ═══════════════════════════════════════════ */}
-        <section className="text-center space-y-8 pt-4 pb-20 md:pb-24">
-          {/* Headline */}
-          <div className="space-y-4 max-w-3xl mx-auto">
-            <h1 className="font-display text-4xl md:text-5xl lg:text-[56px] font-medium tracking-wide leading-[1.1]">
-              Stop Losing Money in Your Color Room
-            </h1>
-            <p className="text-muted-foreground text-lg md:text-xl max-w-xl mx-auto font-sans leading-relaxed">
-              Track every gram. Recover supply costs. Reorder before you run out.
-            </p>
-          </div>
+        <section className="pt-4 pb-20 md:pb-24">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+            {/* Left — Text */}
+            <div className="space-y-8 text-center lg:text-left">
+              <div className="space-y-4">
+                <h1 className="font-display text-4xl md:text-5xl lg:text-[56px] font-medium tracking-wide leading-[1.1]">
+                  Stop Losing Money in Your Color Room
+                </h1>
+                <p className="text-muted-foreground text-lg md:text-xl max-w-xl mx-auto lg:mx-0 font-sans leading-relaxed">
+                  Track every gram. Recover supply costs. Reorder before you run out.
+                </p>
+              </div>
 
-          {/* CTA */}
-          <div className="space-y-3 pt-2">
-            <ActivateButton />
-            <p className="text-sm text-muted-foreground/60 font-sans">Setup takes minutes. Cancel anytime.</p>
-          </div>
+              <div className="space-y-3">
+                <ActivateButton />
+                <p className="text-sm text-muted-foreground/60 font-sans">Setup takes minutes. Cancel anytime.</p>
+              </div>
 
-          {/* Social Proof */}
-          <div className="border-t border-border/20 pt-8 mt-4 max-w-lg mx-auto">
-            <div className="flex flex-col items-center gap-3">
-              <div className="flex gap-0.5">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
+              <div className="border-t border-border/20 pt-6">
+                <div className="flex flex-col items-center lg:items-start gap-3">
+                  <div className="flex gap-0.5">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
+                    ))}
+                  </div>
+                  <blockquote className="text-center lg:text-left space-y-2">
+                    <p className="text-muted-foreground text-sm md:text-base font-sans leading-relaxed italic">
+                      "Zura Backroom saved us thousands per month and helps us recoup over $50,000 a year in color costs. 10/10 add-on feature."
+                    </p>
+                    <footer className="text-xs text-muted-foreground/70 font-sans tracking-wide">
+                      — Drop Dead Salon
+                    </footer>
+                  </blockquote>
+                </div>
+              </div>
+            </div>
+
+            {/* Right — Live System Preview */}
+            <div className="flex flex-col gap-4">
+              <Card className="relative overflow-hidden min-h-[320px] bg-card/80 backdrop-blur-xl border-border/40">
+                <CardContent className="p-6 flex flex-col justify-center min-h-[320px]">
+                  {/* Step content */}
+                  <div key={heroStep} className="animate-fade-in space-y-4">
+                    {heroStep === 0 && (
+                      <div className="flex flex-col items-center gap-4">
+                        <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center">
+                          <Scale className="w-8 h-8 text-primary" />
+                        </div>
+                        <p className="text-sm text-muted-foreground font-sans">Bowl placed on scale</p>
+                        <div className="bg-muted/50 rounded-xl p-6 w-full max-w-[260px]">
+                          <p className="text-xs text-muted-foreground/70 font-sans mb-1">Current Weight</p>
+                          <p className="font-display text-4xl tracking-wide text-foreground">0.0g</p>
+                        </div>
+                      </div>
+                    )}
+                    {heroStep === 1 && (
+                      <div className="flex flex-col items-center gap-4">
+                        <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
+                          <Droplets className="w-8 h-8 text-primary" />
+                        </div>
+                        <p className="text-sm text-muted-foreground font-sans">Dispensing product…</p>
+                        <div className="bg-muted/50 rounded-xl p-6 w-full max-w-[260px]">
+                          <p className="text-xs text-muted-foreground/70 font-sans mb-1">Koleston 7/0</p>
+                          <p className="font-display text-4xl tracking-wide text-foreground">{heroWeight}g</p>
+                          <div className="mt-3 h-2 bg-muted rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-primary rounded-full transition-all duration-200"
+                              style={{ width: `${(heroWeight / 28.4) * 100}%` }}
+                            />
+                          </div>
+                          <p className="text-xs text-muted-foreground/60 font-sans mt-1">Target: 28.4g</p>
+                        </div>
+                      </div>
+                    )}
+                    {heroStep === 2 && (
+                      <div className="flex flex-col items-center gap-4">
+                        <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
+                          <CheckCircle2 className="w-8 h-8 text-primary" />
+                        </div>
+                        <p className="text-sm text-muted-foreground font-sans">Usage captured</p>
+                        <div className="bg-muted/50 rounded-xl p-4 w-full max-w-[280px] space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-sans text-foreground">Koleston 7/0</span>
+                            <span className="text-sm font-display tracking-wide text-foreground">28.4g</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-sans text-foreground">Welloxon 6%</span>
+                            <span className="text-sm font-display tracking-wide text-foreground">42.6g</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    {heroStep === 3 && (
+                      <div className="flex flex-col items-center gap-4">
+                        <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
+                          <Brain className="w-8 h-8 text-primary" />
+                        </div>
+                        <p className="text-sm text-muted-foreground font-sans">Formula saved to client profile</p>
+                        <div className="bg-muted/50 rounded-xl p-4 w-full max-w-[280px] space-y-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                              <Users className="w-4 h-4 text-primary" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-sans text-foreground">Sarah Mitchell</p>
+                              <p className="text-xs text-muted-foreground font-sans">Last visit: Mar 2</p>
+                            </div>
+                          </div>
+                          <div className="border-t border-border/30 pt-2 space-y-1">
+                            <p className="text-xs text-muted-foreground/70 font-sans">Formula #4</p>
+                            <p className="text-xs font-sans text-foreground">Koleston 7/0 — 28.4g</p>
+                            <p className="text-xs font-sans text-foreground">Welloxon 6% — 42.6g</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    {heroStep === 4 && (
+                      <div className="flex flex-col items-center gap-4">
+                        <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
+                          <PackageSearch className="w-8 h-8 text-primary" />
+                        </div>
+                        <p className="text-sm text-muted-foreground font-sans">Inventory updated</p>
+                        <div className="bg-muted/50 rounded-xl p-4 w-full max-w-[300px] space-y-2">
+                          {[
+                            { name: 'Koleston 7/0', stock: '340g', status: 'Good', color: 'text-primary' },
+                            { name: 'Welloxon 6%', stock: '180g', status: 'Low', color: 'text-amber-500' },
+                            { name: 'Blondor', stock: '45g', status: 'Critical', color: 'text-destructive' },
+                          ].map((item) => (
+                            <div key={item.name} className="flex items-center justify-between text-sm">
+                              <span className="font-sans text-foreground">{item.name}</span>
+                              <div className="flex items-center gap-2">
+                                <span className="font-sans text-muted-foreground">{item.stock}</span>
+                                <span className={cn('text-xs font-sans', item.color)}>{item.status}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {heroStep === 5 && (
+                      <div className="flex flex-col items-center gap-4">
+                        <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
+                          <DollarSign className="w-8 h-8 text-primary" />
+                        </div>
+                        <p className="text-sm text-muted-foreground font-sans">Service cost insight</p>
+                        <div className="bg-muted/50 rounded-xl p-4 w-full max-w-[280px] space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-sans text-foreground">Service Revenue</span>
+                            <span className="text-sm font-display tracking-wide text-foreground">$185</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-sans text-foreground">Product Cost</span>
+                            <span className="text-sm font-display tracking-wide text-muted-foreground">$12.40</span>
+                          </div>
+                          <div className="border-t border-border/30 pt-2 flex items-center justify-between">
+                            <span className="text-sm font-sans text-foreground">Margin</span>
+                            <span className="text-sm font-display tracking-wide text-primary">93.3%</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Step indicator */}
+              <div className="flex items-center justify-center gap-2">
+                {['Bowl on Scale', 'Dispensing', 'Usage Captured', 'Formula Saved', 'Inventory Updated', 'Cost Insight'].map((label, i) => (
+                  <button
+                    key={label}
+                    onClick={() => setHeroStep(i)}
+                    className={cn(
+                      'h-1.5 rounded-full transition-all duration-300',
+                      heroStep === i ? 'w-8 bg-primary' : 'w-4 bg-muted hover:bg-muted-foreground/30'
+                    )}
+                    aria-label={label}
+                  />
                 ))}
               </div>
-              <blockquote className="text-center space-y-2">
-                <p className="text-muted-foreground text-sm md:text-base font-sans leading-relaxed italic">
-                  "Zura Backroom saved us thousands per month and helps us recoup over $50,000 a year in color costs. 10/10 add-on feature."
-                </p>
-                <footer className="text-xs text-muted-foreground/70 font-sans tracking-wide">
-                  — Drop Dead Salon
-                </footer>
-              </blockquote>
+              <p className="text-xs text-center text-muted-foreground/60 font-sans">
+                {['Bowl on Scale', 'Dispensing Product', 'Usage Captured', 'Formula Saved', 'Inventory Updated', 'Cost Insight'][heroStep]}
+              </p>
             </div>
           </div>
         </section>
