@@ -68,9 +68,7 @@ export default function BackroomSubscription() {
   if (isLoading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-        </div>
+        <DashboardLoader className="h-64" />
       </DashboardLayout>
     );
   }

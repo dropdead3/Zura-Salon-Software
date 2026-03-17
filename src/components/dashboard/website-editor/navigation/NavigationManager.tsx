@@ -137,11 +137,7 @@ export function NavigationManager() {
 
   // Loading state
   if (menusLoading || seedMenus.isPending) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <DashboardLoader className="h-64" />;
   }
 
   // Empty state — menus failed to seed or don't exist

@@ -978,9 +978,7 @@ function AppointmentRemindersManager() {
       </p>
 
       {isLoading ? (
-        <div className="flex justify-center py-8">
-          <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-        </div>
+        <DashboardLoader className="py-8" size="md" />
       ) : (
         <div className="space-y-3">
           {reminderTypes.map(rt => (

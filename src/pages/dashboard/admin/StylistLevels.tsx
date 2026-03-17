@@ -219,9 +219,7 @@ export default function StylistLevels() {
   if (isLoading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center min-h-[400px]">
-          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-        </div>
+        <DashboardLoader className="min-h-[400px]" />
       </DashboardLayout>
     );
   }
