@@ -157,11 +157,13 @@ export function SupplyLibraryTab() {
 
   // Build brand card data from server-side summaries
   const brandCards = useMemo<BrandCardData[]>(() => {
-    const map = new Map<string, { count: number; cats: Map<string, number> }>();
+    const map = new Map<string, { count: number; missingPrice: number; missingSwatch: number; cats: Map<string, number> }>();
     brandSummaryRows.forEach((row) => {
-      if (!map.has(row.brand)) map.set(row.brand, { count: 0, cats: new Map() });
+      if (!map.has(row.brand)) map.set(row.brand, { count: 0, missingPrice: 0, missingSwatch: 0, cats: new Map() });
       const entry = map.get(row.brand)!;
       entry.count += row.cnt;
+      entry.missingPrice += row.missing_price;
+      entry.missingSwatch += row.missing_swatch;
       entry.cats.set(row.category, (entry.cats.get(row.category) || 0) + row.cnt);
     });
     const cards: BrandCardData[] = [];
@@ -169,6 +171,7 @@ export function SupplyLibraryTab() {
       cards.push({
         brand,
         productCount: val.count,
+        isComplete: val.missingPrice === 0 && val.missingSwatch === 0,
         categorySummary: Array.from(val.cats.entries())
           .map(([category, count]) => ({ category, count }))
           .sort((a, b) => b.count - a.count),
