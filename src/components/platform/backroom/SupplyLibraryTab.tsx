@@ -60,8 +60,27 @@ export function SupplyLibraryTab() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [csvOpen, setCsvOpen] = useState(false);
   const [inlineEditing, setInlineEditing] = useState<{ id: string; field: string; value: string } | null>(null);
-  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
-  const [collapsedSubLines, setCollapsedSubLines] = useState<Set<string>>(new Set());
+  // localStorage-backed collapse state
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(() => {
+    try {
+      const stored = localStorage.getItem('supply-library-categories');
+      return stored ? new Set(JSON.parse(stored)) : new Set();
+    } catch { return new Set(); }
+  });
+  const [collapsedSubLines, setCollapsedSubLines] = useState<Set<string>>(() => {
+    try {
+      const stored = localStorage.getItem('supply-library-sublines');
+      return stored ? new Set(JSON.parse(stored)) : new Set();
+    } catch { return new Set(); }
+  });
+
+  // Persist collapse state to localStorage
+  useEffect(() => {
+    localStorage.setItem('supply-library-categories', JSON.stringify([...collapsedCategories]));
+  }, [collapsedCategories]);
+  useEffect(() => {
+    localStorage.setItem('supply-library-sublines', JSON.stringify([...collapsedSubLines]));
+  }, [collapsedSubLines]);
 
   const { data: initStatus, isLoading: initLoading } = useSupplyLibraryInitStatus();
   const seedMutation = useSeedSupplyLibrary();
