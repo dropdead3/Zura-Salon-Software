@@ -287,7 +287,7 @@ function EditGiftCardDialog({ card, onClose }: { card: GiftCard; onClose: () => 
           <div className="space-y-2">
             <Label className="text-xs">Redemption History</Label>
             {txLoading ? (
-              <div className="flex justify-center py-4"><Loader2 className="w-4 h-4 animate-spin text-muted-foreground" /></div>
+              <DashboardLoader size="sm" className="py-4" />
             ) : transactions.length === 0 ? (
               <p className="text-xs text-muted-foreground py-2">No redemptions yet</p>
             ) : (
