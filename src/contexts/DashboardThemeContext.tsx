@@ -51,7 +51,10 @@ export function DashboardThemeProvider({ children }: { children: ReactNode }) {
   }, [theme, systemTheme]);
 
   // Sync the 'dark' class on <html> so CSS variables in index.css activate
+  // Skip on platform routes — platform manages its own theme independently
   useEffect(() => {
+    if (window.location.pathname.startsWith('/dashboard/platform')) return;
+
     const root = document.documentElement;
     if (resolvedTheme === 'dark') {
       root.classList.add('dark');

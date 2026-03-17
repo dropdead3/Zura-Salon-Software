@@ -92,9 +92,10 @@ export function PlatformThemeEditor({ themeColors, onChange }: PlatformThemeEdit
   const handleResetAll = () => {
     onChange({});
     
-    // Remove all custom properties
+    // Remove all custom properties — scoped to platform container
+    const target = (document.querySelector('.platform-theme') as HTMLElement) || document.documentElement;
     Object.keys(PLATFORM_THEME_TOKENS).forEach((key) => {
-      document.documentElement.style.removeProperty(`--${key}`);
+      target.style.removeProperty(`--${key}`);
     });
   };
 
