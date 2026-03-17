@@ -265,7 +265,13 @@ export function BulkCatalogImport({ existingBrands, open, onOpenChange }: BulkCa
   const existingSet = useMemo(() => new Set(existingBrands.map(b => b.toLowerCase())), [existingBrands]);
 
   const availableBrands = useMemo(() => {
-    return ALL_BRANDS.filter(b => !existingSet.has(b.brand.toLowerCase()));
+    const existingArr = Array.from(existingSet);
+    return ALL_BRANDS.filter(b => {
+      const lower = b.brand.toLowerCase();
+      return !existingArr.some(existing =>
+        lower === existing || lower.startsWith(existing + ' ')
+      );
+    });
   }, [existingSet]);
 
   const filteredBrands = useMemo(() => {
