@@ -648,8 +648,8 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
               )}
             </>
           )}
-        </PlatformCardContent>
-      </PlatformCard>
+        </CardContent>
+      </Card>
 
       {/* Dialogs */}
       {orgId && (
