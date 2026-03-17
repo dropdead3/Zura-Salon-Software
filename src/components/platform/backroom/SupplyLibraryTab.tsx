@@ -67,6 +67,7 @@ export function SupplyLibraryTab() {
   // localStorage-backed collapse state
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
   const [collapsedSubLines, setCollapsedSubLines] = useState<Set<string>>(new Set());
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
 
   // Helper to build org+brand scoped localStorage key
   const collapseKey = useCallback((type: 'categories' | 'sublines', brand: string) =>
