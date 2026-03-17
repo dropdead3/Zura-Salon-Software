@@ -45,6 +45,7 @@ export function SupplyLibraryTab() {
   const queryClient = useQueryClient();
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
   const [brandSearch, setBrandSearch] = useState('');
+  const [activeLetter, setActiveLetter] = useState<string | null>(null);
   const [productSearch, setProductSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [addOpen, setAddOpen] = useState(false);
@@ -89,11 +90,25 @@ export function SupplyLibraryTab() {
     return cards.sort((a, b) => a.brand.localeCompare(b.brand));
   }, [allProducts]);
 
-  // Filter brand cards by search
+  // Filter brand cards by search + active letter
   const filteredBrands = useMemo(() => {
-    if (!brandSearch.trim()) return brandCards;
-    const q = brandSearch.toLowerCase();
-    return brandCards.filter((b) => b.brand.toLowerCase().includes(q));
+    let result = brandCards;
+    if (brandSearch.trim()) {
+      const q = brandSearch.toLowerCase();
+      result = result.filter((b) => b.brand.toLowerCase().includes(q));
+    }
+    if (activeLetter) {
+      result = result.filter((b) => b.brand[0]?.toUpperCase() === activeLetter);
+    }
+    return result;
+  }, [brandCards, brandSearch, activeLetter]);
+
+  // Available first letters from all brand cards (unfiltered by letter)
+  const availableLetters = useMemo(() => {
+    const searchFiltered = brandSearch.trim()
+      ? brandCards.filter((b) => b.brand.toLowerCase().includes(brandSearch.toLowerCase()))
+      : brandCards;
+    return new Set(searchFiltered.map((b) => b.brand[0]?.toUpperCase()).filter(Boolean));
   }, [brandCards, brandSearch]);
 
   // Group brand products by category for detail view
@@ -370,8 +385,43 @@ export function SupplyLibraryTab() {
                   icon={<Search className="w-4 h-4" />}
                   placeholder="Search brands..."
                   value={brandSearch}
-                  onChange={(e) => setBrandSearch(e.target.value)}
+                  onChange={(e) => { setBrandSearch(e.target.value); setActiveLetter(null); }}
                 />
+              </div>
+
+              {/* ─── A-Z Alphabet Selector ─── */}
+              <div className="flex flex-wrap gap-1">
+                <button
+                  onClick={() => setActiveLetter(null)}
+                  className={cn(
+                    'h-8 px-2.5 rounded-lg font-sans text-xs transition-colors',
+                    !activeLetter
+                      ? 'bg-violet-600 text-white'
+                      : 'text-[hsl(var(--platform-foreground-muted))] hover:bg-[hsl(var(--platform-bg-hover))] hover:text-[hsl(var(--platform-foreground))]'
+                  )}
+                >
+                  All
+                </button>
+                {'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map((letter) => {
+                  const hasBrands = availableLetters.has(letter);
+                  const isActive = activeLetter === letter;
+                  return (
+                    <button
+                      key={letter}
+                      onClick={() => hasBrands && setActiveLetter(isActive ? null : letter)}
+                      className={cn(
+                        'h-8 w-8 rounded-lg font-sans text-xs transition-colors',
+                        isActive
+                          ? 'bg-violet-600 text-white'
+                          : hasBrands
+                            ? 'text-[hsl(var(--platform-foreground))] hover:bg-[hsl(var(--platform-bg-hover))]'
+                            : 'text-[hsl(var(--platform-foreground-muted))] opacity-40 cursor-default'
+                      )}
+                    >
+                      {letter}
+                    </button>
+                  );
+                })}
               </div>
 
               {allLoading ? (
