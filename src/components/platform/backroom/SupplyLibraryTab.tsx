@@ -723,6 +723,46 @@ export function SupplyLibraryTab() {
                     <SelectItem value="priced">Priced</SelectItem>
                   </SelectContent>
                 </Select>
+                {/* Collapse All / Expand All toggle */}
+                <PlatformButton
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    const allCatKeys = categoryGroups.map(([cat]) => cat);
+                    const allSubKeys: string[] = [];
+                    categoryGroups.forEach(([cat, products]) => {
+                      const { shouldGroup, groups } = groupByProductLine(products);
+                      if (shouldGroup) {
+                        groups.forEach(([lineName]) => allSubKeys.push(`${cat}::${lineName}`));
+                      }
+                    });
+                    const totalSections = allCatKeys.length + allSubKeys.length;
+                    const collapsedCount = allCatKeys.filter(k => collapsedCategories.has(k)).length + allSubKeys.filter(k => collapsedSubLines.has(k)).length;
+                    const shouldCollapse = collapsedCount < totalSections / 2;
+                    if (shouldCollapse) {
+                      setCollapsedCategories(new Set(allCatKeys));
+                      setCollapsedSubLines(new Set(allSubKeys));
+                    } else {
+                      setCollapsedCategories(new Set());
+                      setCollapsedSubLines(new Set());
+                    }
+                  }}
+                >
+                  <ChevronsUpDown className="w-3.5 h-3.5 mr-1" />
+                  {(() => {
+                    const allCatKeys = categoryGroups.map(([cat]) => cat);
+                    const collapsedCount = allCatKeys.filter(k => collapsedCategories.has(k)).length;
+                    return collapsedCount >= allCatKeys.length / 2 ? 'Expand All' : 'Collapse All';
+                  })()}
+                </PlatformButton>
+                    <SelectValue placeholder="All Pricing" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Pricing</SelectItem>
+                    <SelectItem value="missing">Missing Price</SelectItem>
+                    <SelectItem value="priced">Priced</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               {brandLoading ? (
