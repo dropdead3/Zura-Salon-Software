@@ -30,6 +30,8 @@ import {
 } from '@/hooks/platform/useSupplyLibrary';
 import { SUPPLY_CATEGORY_LABELS, getBrandCoverage } from '@/data/professional-supply-library';
 import { CSVImportDialog } from './CSVImportDialog';
+import { AddBrandWizard } from './AddBrandWizard';
+import { useSupplyBrandsMeta, type SupplyBrandMeta } from '@/hooks/platform/useSupplyLibraryBrandMeta';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { formatCurrency } from '@/lib/format';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -63,6 +65,7 @@ export function SupplyLibraryTab() {
   const [deleteTarget, setDeleteTarget] = useState<SupplyLibraryProduct | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [csvOpen, setCsvOpen] = useState(false);
+  const [addBrandOpen, setAddBrandOpen] = useState(false);
   const [inlineEditing, setInlineEditing] = useState<{ id: string; field: string; value: string } | null>(null);
   // localStorage-backed collapse state
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
@@ -132,8 +135,16 @@ export function SupplyLibraryTab() {
     search: productSearch || undefined,
   });
   const { data: brands = [] } = useSupplyLibraryBrands();
+  const { data: brandsMeta = [] } = useSupplyBrandsMeta();
   const { data: supplyRequests = [] } = useSupplyLibraryRequests();
   const resolveRequest = useResolveSupplyRequest();
+
+  // Build a logo lookup from brand metadata
+  const brandLogoMap = useMemo(() => {
+    const map = new Map<string, string>();
+    brandsMeta.forEach((b) => { if (b.logo_url) map.set(b.name, b.logo_url); });
+    return map;
+  }, [brandsMeta]);
 
   // Build brand card data from allProducts
   const brandCards = useMemo<BrandCardData[]>(() => {
@@ -635,6 +646,9 @@ export function SupplyLibraryTab() {
               <PlatformButton size="sm" onClick={() => { setEditProduct(null); setAddOpen(true); }}>
                 <Plus className="w-3.5 h-3.5 mr-1" /> Add Product
               </PlatformButton>
+              <PlatformButton size="sm" variant="outline" onClick={() => setAddBrandOpen(true)}>
+                <Plus className="w-3.5 h-3.5 mr-1" /> Add Brand
+              </PlatformButton>
             </div>
           </div>
         </PlatformCardHeader>
@@ -707,6 +721,13 @@ export function SupplyLibraryTab() {
                       className="cursor-pointer p-4 flex flex-col items-center text-center gap-2"
                       onClick={() => { setSelectedBrand(b.brand); setProductSearch(''); setCategoryFilter('all'); try { const cats = localStorage.getItem(collapseKey('categories', b.brand)); setCollapsedCategories(cats ? new Set(JSON.parse(cats)) : new Set()); const subs = localStorage.getItem(collapseKey('sublines', b.brand)); setCollapsedSubLines(subs ? new Set(JSON.parse(subs)) : new Set()); } catch { setCollapsedCategories(new Set()); setCollapsedSubLines(new Set()); } }}
                     >
+                      {brandLogoMap.has(b.brand) ? (
+                        <img src={brandLogoMap.get(b.brand)!} alt={b.brand} className="w-10 h-10 rounded-lg object-contain bg-white/5 p-0.5" />
+                      ) : (
+                        <div className="w-10 h-10 rounded-lg bg-violet-500/10 flex items-center justify-center">
+                          <Package className="w-5 h-5 text-violet-400" />
+                        </div>
+                      )}
                       <span className="font-display text-sm tracking-wide text-[hsl(var(--platform-foreground))]">
                         {b.brand}
                       </span>
@@ -946,6 +967,9 @@ export function SupplyLibraryTab() {
 
       {/* CSV Import Dialog */}
       <CSVImportDialog open={csvOpen} onOpenChange={setCsvOpen} />
+
+      {/* Add Brand Wizard */}
+      <AddBrandWizard open={addBrandOpen} onOpenChange={setAddBrandOpen} />
 
       {/* Add/Edit Dialog */}
       <AddEditDialog
