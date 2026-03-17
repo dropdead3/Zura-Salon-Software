@@ -21,6 +21,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Loader2, Search, TrendingUp, Users, Video, CheckCircle } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 
 interface TeamMember {
   user_id: string;
