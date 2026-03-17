@@ -6,9 +6,9 @@ import { useActiveLocations } from '@/hooks/useLocations';
 import { supabase } from '@/integrations/supabase/client';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { PlatformCard, PlatformCardContent, PlatformCardHeader, PlatformCardTitle, PlatformCardDescription } from '@/components/platform/ui/PlatformCard';
-import { PlatformButton } from '@/components/platform/ui/PlatformButton';
-import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
@@ -139,53 +139,53 @@ export function MultiLocationSection() {
       <Infotainer id="backroom-multilocation-guide" title="Multi-Location Settings" description="View and manage setting differences between locations. Push org defaults to all locations at once, copy between locations, or compare side-by-side." icon={<Building2 className="h-4 w-4 text-primary" />} />
 
       {/* Push to All Locations */}
-      <PlatformCard variant="default" className="border-[hsl(var(--platform-primary)/0.2)]">
-        <PlatformCardHeader className="flex flex-row items-center justify-between">
+      <Card className="border-primary/20">
+        <CardHeader className="flex flex-row items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-[hsl(var(--platform-bg-hover))] flex items-center justify-center">
-              <Upload className="w-5 h-5 text-[hsl(var(--platform-primary))]" />
+            <div className={tokens.card.iconBox}>
+              <Upload className={tokens.card.icon} />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <PlatformCardTitle>Push Org Defaults to All Locations</PlatformCardTitle>
+                <CardTitle className={tokens.card.title}>Push Org Defaults to All Locations</CardTitle>
                 <MetricInfoTooltip description="Takes your organization-level backroom settings and replicates them as overrides for every active location. Stations are excluded since they're hardware-specific. Existing location overrides will be replaced." />
               </div>
-              <PlatformCardDescription>Apply your org-level configuration to every location at once for faster multi-location setup.</PlatformCardDescription>
+              <CardDescription>Apply your org-level configuration to every location at once for faster multi-location setup.</CardDescription>
             </div>
           </div>
-        </PlatformCardHeader>
-        <PlatformCardContent>
+        </CardHeader>
+        <CardContent>
           {pushPreFlight && pushPreFlight.settingsCount === 0 ? (
-            <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">No org-level settings to push. Configure settings in other sections first.</p>
+            <p className="text-sm text-muted-foreground">No org-level settings to push. Configure settings in other sections first.</p>
           ) : (
             <div className="space-y-4">
               <div className="flex flex-wrap gap-4">
-                <div className="rounded-lg border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.5)] px-4 py-3 flex-1 min-w-[140px]">
+                <div className="rounded-lg border bg-card/50 px-4 py-3 flex-1 min-w-[140px]">
                   <p className={tokens.label.default}>Settings</p>
-                  <p className={cn(tokens.body.emphasis, 'text-[hsl(var(--platform-foreground))]')}>{pushPreFlight?.settingsCount ?? 0} org default(s)</p>
+                  <p className={cn(tokens.body.emphasis, 'text-foreground')}>{pushPreFlight?.settingsCount ?? 0} org default(s)</p>
                 </div>
-                <div className="rounded-lg border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.5)] px-4 py-3 flex-1 min-w-[140px]">
+                <div className="rounded-lg border bg-card/50 px-4 py-3 flex-1 min-w-[140px]">
                   <p className={tokens.label.default}>Locations</p>
-                  <p className={cn(tokens.body.emphasis, 'text-[hsl(var(--platform-foreground))]')}>{pushPreFlight?.locationsCount ?? 0} active</p>
+                  <p className={cn(tokens.body.emphasis, 'text-foreground')}>{pushPreFlight?.locationsCount ?? 0} active</p>
                 </div>
-                <div className="rounded-lg border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.5)] px-4 py-3 flex-1 min-w-[140px]">
+                <div className="rounded-lg border bg-card/50 px-4 py-3 flex-1 min-w-[140px]">
                   <p className={tokens.label.default}>Alert Rules</p>
-                  <p className={cn(tokens.body.emphasis, 'text-[hsl(var(--platform-foreground))]')}>{pushPreFlight?.alertRulesCount ?? 0} org rule(s)</p>
+                  <p className={cn(tokens.body.emphasis, 'text-foreground')}>{pushPreFlight?.alertRulesCount ?? 0} org rule(s)</p>
                 </div>
                 {(pushPreFlight?.existingOverrideCount ?? 0) > 0 && (
-                  <div className="rounded-lg border border-amber-500/30 bg-[hsl(var(--platform-bg-card)/0.5)] px-4 py-3 flex-1 min-w-[140px]">
+                  <div className="rounded-lg border border-amber-500/30 bg-card/50 px-4 py-3 flex-1 min-w-[140px]">
                     <p className="text-sm text-amber-500">Existing Overrides</p>
-                    <p className={cn(tokens.body.emphasis, 'text-[hsl(var(--platform-foreground))]')}>{pushPreFlight?.existingOverrideCount} will be replaced</p>
+                    <p className={cn(tokens.body.emphasis, 'text-foreground')}>{pushPreFlight?.existingOverrideCount} will be replaced</p>
                   </div>
                 )}
               </div>
-              <PlatformButton onClick={() => setShowPushDialog(true)} disabled={!pushPreFlight || pushPreFlight.settingsCount === 0}>
+              <Button onClick={() => setShowPushDialog(true)} disabled={!pushPreFlight || pushPreFlight.settingsCount === 0}>
                 <Upload className="w-4 h-4 mr-1.5" /> Push to All Locations
-              </PlatformButton>
+              </Button>
             </div>
           )}
-        </PlatformCardContent>
-      </PlatformCard>
+        </CardContent>
+      </Card>
 
       {/* Push Confirmation Dialog */}
       <AlertDialog open={showPushDialog} onOpenChange={setShowPushDialog}>
@@ -220,19 +220,19 @@ export function MultiLocationSection() {
       </AlertDialog>
 
       {/* Override Summary */}
-      <PlatformCard variant="default">
-        <PlatformCardHeader className="flex flex-row items-center justify-between">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-[hsl(var(--platform-bg-hover))] flex items-center justify-center">
-              <Building2 className="w-5 h-5 text-[hsl(var(--platform-primary))]" />
+            <div className={tokens.card.iconBox}>
+              <Building2 className={tokens.card.icon} />
             </div>
             <div>
-              <div className="flex items-center gap-2"><PlatformCardTitle>Location Overrides</PlatformCardTitle><MetricInfoTooltip description="Shows all backroom settings with their org-level defaults and any location-specific overrides. Reset an override to fall back to the org default." /></div>
-              <PlatformCardDescription>Manage org defaults and location-specific overrides for backroom settings.</PlatformCardDescription>
+              <div className="flex items-center gap-2"><CardTitle className={tokens.card.title}>Location Overrides</CardTitle><MetricInfoTooltip description="Shows all backroom settings with their org-level defaults and any location-specific overrides. Reset an override to fall back to the org default." /></div>
+              <CardDescription>Manage org defaults and location-specific overrides for backroom settings.</CardDescription>
             </div>
           </div>
-        </PlatformCardHeader>
-        <PlatformCardContent className="space-y-3">
+        </CardHeader>
+        <CardContent className="space-y-3">
           {settingKeys.length === 0 ? (
             <div className={tokens.empty.container}>
               <Building2 className={tokens.empty.icon} />
@@ -243,22 +243,22 @@ export function MultiLocationSection() {
             settingKeys.map(key => {
               const { orgDefault, overrides } = grouped[key];
               return (
-                <div key={key} className="rounded-lg border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.5)] p-4">
+                <div key={key} className="rounded-lg border bg-card/50 p-4">
                   <div className="flex items-center justify-between mb-2">
-                    <p className={cn(tokens.body.emphasis, 'text-[hsl(var(--platform-foreground))]')}>{key.replace(/_/g, ' ')}</p>
-                    <PlatformBadge variant="outline">{overrides.length} override{overrides.length !== 1 ? 's' : ''}</PlatformBadge>
+                    <p className={cn(tokens.body.emphasis, 'text-foreground')}>{key.replace(/_/g, ' ')}</p>
+                    <Badge variant="outline">{overrides.length} override{overrides.length !== 1 ? 's' : ''}</Badge>
                   </div>
-                  {orgDefault && <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">Org default: {JSON.stringify(orgDefault.setting_value).slice(0, 100)}…</p>}
+                  {orgDefault && <p className="text-sm text-muted-foreground">Org default: {JSON.stringify(orgDefault.setting_value).slice(0, 100)}…</p>}
                   {overrides.length > 0 && (
                     <div className="mt-2 space-y-1">
                       {overrides.map(o => {
                         const loc = locations.find(l => l.id === o.location_id);
                         return (
                           <div key={o.id} className="flex items-center justify-between text-sm">
-                            <span className="text-[hsl(var(--platform-foreground-muted))]">{loc?.name || o.location_id}</span>
-                            <PlatformButton variant="ghost" size="sm" onClick={() => handleResetOverride(o.id)}>
+                            <span className="text-muted-foreground">{loc?.name || o.location_id}</span>
+                            <Button variant="ghost" size="sm" onClick={() => handleResetOverride(o.id)}>
                               <RotateCcw className="w-3 h-3 mr-1" /> Reset
-                            </PlatformButton>
+                            </Button>
                           </div>
                         );
                       })}
@@ -268,22 +268,22 @@ export function MultiLocationSection() {
               );
             })
           )}
-        </PlatformCardContent>
-      </PlatformCard>
+        </CardContent>
+      </Card>
 
       {/* Copy Settings */}
-      <PlatformCard variant="default">
-        <PlatformCardHeader>
-          <div className="flex items-center gap-2"><PlatformCardTitle>Copy Settings</PlatformCardTitle><MetricInfoTooltip description="Copies all backroom setting overrides from the source location to the target. Choose 'All other locations' to bulk-replicate one location's config everywhere." /></div>
-          <PlatformCardDescription>Duplicate all backroom settings from one location to another or all others.</PlatformCardDescription>
-        </PlatformCardHeader>
-        <PlatformCardContent>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2"><CardTitle className={tokens.card.title}>Copy Settings</CardTitle><MetricInfoTooltip description="Copies all backroom setting overrides from the source location to the target. Choose 'All other locations' to bulk-replicate one location's config everywhere." /></div>
+          <CardDescription>Duplicate all backroom settings from one location to another or all others.</CardDescription>
+        </CardHeader>
+        <CardContent>
           <div className="flex items-center gap-3 flex-wrap">
             <Select value={sourceLocId} onValueChange={setSourceLocId}>
               <SelectTrigger className="w-48"><SelectValue placeholder="Source location" /></SelectTrigger>
               <SelectContent>{locations.map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}</SelectContent>
             </Select>
-            <ArrowRight className="w-4 h-4 text-[hsl(var(--platform-foreground-muted))]" />
+            <ArrowRight className="w-4 h-4 text-muted-foreground" />
             <Select value={targetLocId} onValueChange={setTargetLocId}>
               <SelectTrigger className="w-48"><SelectValue placeholder="Target location" /></SelectTrigger>
               <SelectContent>
@@ -291,26 +291,26 @@ export function MultiLocationSection() {
                 {locations.filter(l => l.id !== sourceLocId).map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}
               </SelectContent>
             </Select>
-            <PlatformButton size="sm" onClick={handleCopySettings} disabled={!sourceLocId || !targetLocId}>
+            <Button size="sm" onClick={handleCopySettings} disabled={!sourceLocId || !targetLocId}>
               <Copy className="w-4 h-4 mr-1.5" /> Copy
-            </PlatformButton>
+            </Button>
           </div>
-        </PlatformCardContent>
-      </PlatformCard>
+        </CardContent>
+      </Card>
 
       {/* Compare Mode */}
-      <PlatformCard variant="default">
-        <PlatformCardHeader>
-          <div className="flex items-center gap-2"><PlatformCardTitle>Compare Locations</PlatformCardTitle><MetricInfoTooltip description="Select two locations to see which backroom settings differ. 'Different' means one or both have overrides with non-matching values." /></div>
-          <PlatformCardDescription>See which settings differ between two locations.</PlatformCardDescription>
-        </PlatformCardHeader>
-        <PlatformCardContent className="space-y-4">
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2"><CardTitle className={tokens.card.title}>Compare Locations</CardTitle><MetricInfoTooltip description="Select two locations to see which backroom settings differ. 'Different' means one or both have overrides with non-matching values." /></div>
+          <CardDescription>See which settings differ between two locations.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
           <div className="flex items-center gap-3">
             <Select value={compareLocA} onValueChange={setCompareLocA}>
               <SelectTrigger className="w-48"><SelectValue placeholder="Location A" /></SelectTrigger>
               <SelectContent>{locations.map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}</SelectContent>
             </Select>
-            <span className="text-sm text-[hsl(var(--platform-foreground-muted))]">vs</span>
+            <span className="text-sm text-muted-foreground">vs</span>
             <Select value={compareLocB} onValueChange={setCompareLocB}>
               <SelectTrigger className="w-48"><SelectValue placeholder="Location B" /></SelectTrigger>
               <SelectContent>{locations.filter(l => l.id !== compareLocA).map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}</SelectContent>
@@ -320,19 +320,19 @@ export function MultiLocationSection() {
           {compareLocA && compareLocB && (
             <div className="space-y-2">
               {compareKeys.length === 0 ? (
-                <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">No overrides found for either location.</p>
+                <p className="text-sm text-muted-foreground">No overrides found for either location.</p>
               ) : (
                 compareKeys.map(item => (
-                  <div key={item.key} className="rounded-lg border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.5)] p-3 flex items-center justify-between">
-                    <p className="text-sm text-[hsl(var(--platform-foreground))]">{item.key.replace(/_/g, ' ')}</p>
-                    <PlatformBadge variant={item.differs ? 'error' : 'default'}>{item.differs ? 'Different' : 'Same'}</PlatformBadge>
+                  <div key={item.key} className="rounded-lg border bg-card/50 p-3 flex items-center justify-between">
+                    <p className="text-sm text-foreground">{item.key.replace(/_/g, ' ')}</p>
+                    <Badge variant={item.differs ? 'destructive' : 'secondary'}>{item.differs ? 'Different' : 'Same'}</Badge>
                   </div>
                 ))
               )}
             </div>
           )}
-        </PlatformCardContent>
-      </PlatformCard>
+        </CardContent>
+      </Card>
     </div>
   );
 }

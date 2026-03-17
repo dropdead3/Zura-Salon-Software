@@ -6,33 +6,27 @@ import { useBackroomInventoryTable, STOCK_STATUS_CONFIG, computeChargePerGram, t
 import { postLedgerEntry } from '@/lib/backroom/services/inventory-ledger-service';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import {
-  PlatformCard,
-  PlatformCardContent,
-  PlatformCardHeader,
-  PlatformCardTitle,
-  PlatformCardDescription,
-} from '@/components/platform/ui/PlatformCard';
-import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
-import { PlatformButton } from '@/components/platform/ui/PlatformButton';
-import { PlatformInput } from '@/components/platform/ui/PlatformInput';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Select,
-  PlatformSelectTrigger,
-  PlatformSelectContent,
-  PlatformSelectItem,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
   SelectValue,
-} from '@/components/platform/ui/PlatformSelect';
+} from '@/components/ui/select';
 import {
-  PlatformTable,
-  PlatformTableHeader,
-  PlatformTableBody,
-  PlatformTableHead,
-  PlatformTableRow,
-  PlatformTableCell,
-} from '@/components/platform/ui/PlatformTable';
+  Table,
+  TableHeader,
+  TableBody,
+  TableHead,
+  TableRow,
+  TableCell,
+} from '@/components/ui/table';
 import { BrowseColumn, type BrowseColumnItem } from '@/components/platform/backroom/BrowseColumn';
 import { extractProductLine, groupByProductLine } from '@/lib/supply-line-parser';
 import { useSupplyBrandsMeta, type SupplyBrandMeta } from '@/hooks/platform/useSupplyLibraryBrandMeta';

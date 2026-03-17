@@ -9,9 +9,9 @@ import {
 } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { PlatformCard, PlatformCardContent, PlatformCardHeader, PlatformCardTitle, PlatformCardDescription } from '@/components/platform/ui/PlatformCard';
-import { PlatformButton } from '@/components/platform/ui/PlatformButton';
-import { PlatformTable, PlatformTableBody, PlatformTableCell, PlatformTableHead, PlatformTableHeader, PlatformTableRow } from '@/components/platform/ui/PlatformTable';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
@@ -98,7 +98,7 @@ export function BackroomInsightsSection() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h2 className={tokens.heading.section}>Backroom Insights</h2>
-          <p className="text-sm text-[hsl(var(--platform-foreground-muted))] mt-1">High-level backroom performance for {rangeLabel.toLowerCase()}</p>
+          <p className="text-sm text-muted-foreground mt-1">High-level backroom performance for {rangeLabel.toLowerCase()}</p>
         </div>
         <Select value={datePreset} onValueChange={(v) => setDatePreset(v as DatePreset)}>
           <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
@@ -133,25 +133,25 @@ export function BackroomInsightsSection() {
       </div>
 
       {/* Employee Performance Table */}
-      <PlatformCard variant="default">
-        <PlatformCardHeader className="flex flex-row items-start justify-between gap-4">
+      <Card>
+        <CardHeader className="flex flex-row items-start justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-[hsl(var(--platform-bg-hover))] flex items-center justify-center">
-              <Beaker className="w-5 h-5 text-[hsl(var(--platform-primary))]" />
+            <div className={tokens.card.iconBox}>
+              <Beaker className={tokens.card.icon} />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <PlatformCardTitle>Employee Performance</PlatformCardTitle>
+                <CardTitle className={tokens.card.title}>Employee Performance</CardTitle>
                 <MetricInfoTooltip description="Per-stylist backroom efficiency metrics for the selected date range. Sessions/Day, average mix duration, waste percentage, and reweigh compliance." />
               </div>
-              <PlatformCardDescription className="text-xs">{rangeLabel}</PlatformCardDescription>
+              <CardDescription className="text-xs">{rangeLabel}</CardDescription>
             </div>
           </div>
-          <PlatformButton variant="outline" size="sm" onClick={handleExportCSV} disabled={!sortedStaff.length}>
+          <Button variant="outline" size="sm" onClick={handleExportCSV} disabled={!sortedStaff.length}>
             <Download className="w-4 h-4 mr-1.5" /> Export
-          </PlatformButton>
-        </PlatformCardHeader>
-        <PlatformCardContent>
+          </Button>
+        </CardHeader>
+        <CardContent>
           {staffLoading ? (
             <div className="space-y-3">{[1, 2, 3, 4].map((i) => <Skeleton key={i} className={tokens.loading.skeleton} />)}</div>
           ) : !sortedStaff.length ? (
@@ -162,40 +162,40 @@ export function BackroomInsightsSection() {
             </div>
           ) : (
             <div className="relative w-full overflow-auto">
-              <PlatformTable>
-                <PlatformTableHeader>
-                  <PlatformTableRow>
-                    <PlatformTableHead><SortButton label="Staff" field="name" /></PlatformTableHead>
-                    <PlatformTableHead className="text-right"><SortButton label="Sessions/Day" field="sessions" /></PlatformTableHead>
-                    <PlatformTableHead className="text-right"><SortButton label="Avg Duration" field="duration" /></PlatformTableHead>
-                    <PlatformTableHead className="text-right"><SortButton label="Waste %" field="waste" /></PlatformTableHead>
-                    <PlatformTableHead className="text-right"><SortButton label="Reweigh %" field="reweigh" /></PlatformTableHead>
-                  </PlatformTableRow>
-                </PlatformTableHeader>
-                <PlatformTableBody>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead><SortButton label="Staff" field="name" /></TableHead>
+                    <TableHead className="text-right"><SortButton label="Sessions/Day" field="sessions" /></TableHead>
+                    <TableHead className="text-right"><SortButton label="Avg Duration" field="duration" /></TableHead>
+                    <TableHead className="text-right"><SortButton label="Waste %" field="waste" /></TableHead>
+                    <TableHead className="text-right"><SortButton label="Reweigh %" field="reweigh" /></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {sortedStaff.map((s) => (
-                    <PlatformTableRow key={s.staffUserId}>
-                      <PlatformTableCell className="font-sans text-sm font-medium">{s.staffName}</PlatformTableCell>
-                      <PlatformTableCell className="text-right tabular-nums">{s.sessionsPerDay}</PlatformTableCell>
-                      <PlatformTableCell className="text-right tabular-nums">{s.avgSessionDurationMinutes} min</PlatformTableCell>
-                      <PlatformTableCell className="text-right">
-                        <span className={cn('tabular-nums', s.wastePct > 20 && 'text-destructive', s.wastePct <= 10 && 'text-[hsl(var(--platform-primary))]')}>
+                    <TableRow key={s.staffUserId}>
+                      <TableCell className="font-sans text-sm font-medium">{s.staffName}</TableCell>
+                      <TableCell className="text-right tabular-nums">{s.sessionsPerDay}</TableCell>
+                      <TableCell className="text-right tabular-nums">{s.avgSessionDurationMinutes} min</TableCell>
+                      <TableCell className="text-right">
+                        <span className={cn('tabular-nums', s.wastePct > 20 && 'text-destructive', s.wastePct <= 10 && 'text-primary')}>
                           {formatPercent(s.wastePct, false)}
                         </span>
-                      </PlatformTableCell>
-                      <PlatformTableCell className="text-right">
-                        <span className={cn('tabular-nums', s.reweighCompliancePct < 50 && 'text-destructive', s.reweighCompliancePct >= 80 && 'text-[hsl(var(--platform-primary))]')}>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <span className={cn('tabular-nums', s.reweighCompliancePct < 50 && 'text-destructive', s.reweighCompliancePct >= 80 && 'text-primary')}>
                           {formatPercent(s.reweighCompliancePct, false)}
                         </span>
-                      </PlatformTableCell>
-                    </PlatformTableRow>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </PlatformTableBody>
-              </PlatformTable>
+                </TableBody>
+              </Table>
             </div>
           )}
-        </PlatformCardContent>
-      </PlatformCard>
+        </CardContent>
+      </Card>
 
       <BackroomHistoryChart startDate={start} endDate={end} rangeLabel={rangeLabel} />
       <BackroomBrandUsageCard startDate={start} endDate={end} rangeLabel={rangeLabel} />
@@ -210,7 +210,7 @@ function KPICard({ icon: Icon, label, tooltip, loading, children, accent }: {
     <div className={cn(tokens.kpi.tile, 'relative')}>
       <div className={tokens.kpi.infoIcon}><MetricInfoTooltip description={tooltip} /></div>
       <div className="flex items-center gap-2 mb-1">
-        <Icon className="w-4 h-4 text-[hsl(var(--platform-foreground-muted))]" />
+        <Icon className="w-4 h-4 text-muted-foreground" />
         <span className={tokens.kpi.label}>{label}</span>
       </div>
       {loading ? <Skeleton className="h-7 w-24" /> : <div className={accent}>{children}</div>}
@@ -220,14 +220,14 @@ function KPICard({ icon: Icon, label, tooltip, loading, children, accent }: {
 
 function getComplianceAccent(pct?: number): string | undefined {
   if (pct === undefined) return undefined;
-  if (pct >= 80) return 'text-[hsl(var(--platform-primary))]';
+  if (pct >= 80) return 'text-primary';
   if (pct < 50) return 'text-destructive';
   return 'text-warning';
 }
 
 function getWasteAccent(pct?: number): string | undefined {
   if (pct === undefined) return undefined;
-  if (pct <= 10) return 'text-[hsl(var(--platform-primary))]';
+  if (pct <= 10) return 'text-primary';
   if (pct > 20) return 'text-destructive';
   return 'text-warning';
 }
