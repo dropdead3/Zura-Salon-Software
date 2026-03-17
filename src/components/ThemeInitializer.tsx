@@ -9,8 +9,10 @@ import { supabase } from '@/integrations/supabase/client';
 export function ThemeInitializer() {
   useEffect(() => {
     const loadCustomTheme = async () => {
-      // Skip theme customization on public routes - only apply on dashboard
-      if (!window.location.pathname.startsWith('/dashboard')) {
+      // Skip theme customization on public routes and platform routes
+      // Platform manages its own theme via PlatformThemeContext + usePlatformBrandingEffect
+      if (!window.location.pathname.startsWith('/dashboard') 
+          || window.location.pathname.startsWith('/dashboard/platform')) {
         return;
       }
       
@@ -60,12 +62,12 @@ export function ThemeInitializer() {
       if (event === 'SIGNED_IN') {
         loadCustomTheme();
       } else if (event === 'SIGNED_OUT') {
-        // Clear custom CSS variables on sign out
+        // Clear custom CSS variables on sign out, but preserve platform-* vars
         const style = document.documentElement.style;
         const propsToRemove: string[] = [];
         for (let i = 0; i < style.length; i++) {
           const prop = style[i];
-          if (prop.startsWith('--')) {
+          if (prop.startsWith('--') && !prop.startsWith('--platform-')) {
             propsToRemove.push(prop);
           }
         }

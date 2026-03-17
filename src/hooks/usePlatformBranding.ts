@@ -133,10 +133,15 @@ export function usePlatformBrandingEffect() {
   const { branding } = usePlatformBranding();
 
   useEffect(() => {
+    // Scope platform branding vars to the .platform-theme container
+    // so they never leak into org dashboard pages
+    const platformRoot = document.querySelector('.platform-theme') as HTMLElement | null;
+    const target = platformRoot || document.documentElement;
+
     if (branding?.theme_colors) {
       Object.entries(branding.theme_colors).forEach(([key, value]) => {
         if (value) {
-          document.documentElement.style.setProperty(`--${key}`, value);
+          target.style.setProperty(`--${key}`, value);
         }
       });
     }
@@ -145,7 +150,7 @@ export function usePlatformBrandingEffect() {
     return () => {
       if (branding?.theme_colors) {
         Object.keys(branding.theme_colors).forEach((key) => {
-          document.documentElement.style.removeProperty(`--${key}`);
+          target.style.removeProperty(`--${key}`);
         });
       }
     };

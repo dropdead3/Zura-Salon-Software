@@ -75,24 +75,27 @@ export function PlatformThemeEditor({ themeColors, onChange }: PlatformThemeEdit
     const hslValue = hexToHsl(hexValue);
     onChange({ ...themeColors, [key]: hslValue });
     
-    // Apply immediately for live preview
-    document.documentElement.style.setProperty(`--${key}`, hslValue);
+    // Apply immediately for live preview — scoped to platform container
+    const target = (document.querySelector('.platform-theme') as HTMLElement) || document.documentElement;
+    target.style.setProperty(`--${key}`, hslValue);
   };
 
   const handleReset = (key: string) => {
     const { [key]: _, ...rest } = themeColors;
     onChange(rest);
     
-    // Remove custom property to revert to default
-    document.documentElement.style.removeProperty(`--${key}`);
+    // Remove custom property to revert to default — scoped to platform container
+    const target = (document.querySelector('.platform-theme') as HTMLElement) || document.documentElement;
+    target.style.removeProperty(`--${key}`);
   };
 
   const handleResetAll = () => {
     onChange({});
     
-    // Remove all custom properties
+    // Remove all custom properties — scoped to platform container
+    const target = (document.querySelector('.platform-theme') as HTMLElement) || document.documentElement;
     Object.keys(PLATFORM_THEME_TOKENS).forEach((key) => {
-      document.documentElement.style.removeProperty(`--${key}`);
+      target.style.removeProperty(`--${key}`);
     });
   };
 
