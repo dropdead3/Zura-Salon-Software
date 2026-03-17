@@ -954,18 +954,13 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                                     </TableCell>
                                     {showSwatch && (
                                       <TableCell className="w-[40px] pr-0">
-                                        {isGhostSwatch ? (
+                                        {effectiveSwatch ? (
                                           <div
-                                            className="w-5 h-5 rounded-full border border-dashed border-border/40 opacity-50"
-                                            style={{ backgroundColor: effectiveSwatch ?? undefined }}
-                                            title="From library — click to adopt"
-                                            onClick={() => updateMutation.mutate({ id: p.id, updates: { swatch_color: effectiveSwatch } as any })}
+                                            className="w-5 h-5 rounded-full border border-border/40"
+                                            style={{ backgroundColor: effectiveSwatch }}
                                           />
                                         ) : (
-                                          <SwatchCell
-                                            color={p.swatch_color ?? null}
-                                            onSave={(color) => updateMutation.mutate({ id: p.id, updates: { swatch_color: color } as any })}
-                                          />
+                                          <div className="w-5 h-5 rounded-full border border-dashed border-border/40" />
                                         )}
                                       </TableCell>
                                     )}
