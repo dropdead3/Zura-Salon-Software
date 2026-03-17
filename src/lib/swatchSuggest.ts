@@ -39,6 +39,27 @@ const TONE_CODE_MAP: Record<string, ToneFamily> = {
   'B': 'natural',
   'BB': 'natural',
   'BG': 'gold',
+  // Redken Shades EQ chart additions
+  'T': 'ash',         // Titanium
+  'SB': 'ash',        // Silver Blue
+  'GY': 'ash',        // Green Yellow (Matte)
+  'P': 'ash',         // Pearl
+  'PP': 'ash',        // Pearl Pearl
+  'M': 'ash',         // Matte
+  'BP': 'ash',        // Blue Pearl
+  'W': 'gold',        // Warm
+  'WG': 'gold',       // Warm Gold
+  'WN': 'gold',       // Warm Natural
+  'NW': 'gold',       // Natural Warm
+  'NG': 'gold',       // Natural Gold
+  'Y': 'gold',        // Yellow
+  'NB': 'natural',    // Natural Blue / Mahogany
+  'O': 'copper',      // Orange
+  'RO': 'copper',     // Red Orange
+  'OR': 'copper',     // Orange Red
+  'VG': 'violet',     // Violet Gold
+  'VRo': 'red_violet', // Violet Rose
+  'RVG': 'red_violet', // Red Violet Gold
 };
 
 /** Keyword → tone family (checked against full product name) */
