@@ -1,7 +1,11 @@
 import { Moon, Sun, Monitor, Check, Palette, Upload, ImageIcon, Crown, Save, RotateCcw, Sparkles, Loader } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { usePlatformTheme } from '@/contexts/PlatformThemeContext';
-import { usePlatformBranding, PlatformBranding } from '@/hooks/usePlatformBranding';
+import { usePlatformBranding, PlatformBranding, LoaderStyleOption } from '@/hooks/usePlatformBranding';
+import { ZuraLoader } from '@/components/ui/ZuraLoader';
+import { SpinnerLoader, DotsLoader, BarLoader } from '@/components/ui/loaders';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
