@@ -19915,6 +19915,7 @@ export type Database = {
           product_line: string | null
           recommended_retail: number | null
           size_options: string[] | null
+          swatch_color: string | null
           updated_at: string
           wholesale_price: number | null
         }
@@ -19934,6 +19935,7 @@ export type Database = {
           product_line?: string | null
           recommended_retail?: number | null
           size_options?: string[] | null
+          swatch_color?: string | null
           updated_at?: string
           wholesale_price?: number | null
         }
@@ -19953,6 +19955,7 @@ export type Database = {
           product_line?: string | null
           recommended_retail?: number | null
           size_options?: string[] | null
+          swatch_color?: string | null
           updated_at?: string
           wholesale_price?: number | null
         }
