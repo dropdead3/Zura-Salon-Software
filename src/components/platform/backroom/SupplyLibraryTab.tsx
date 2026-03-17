@@ -700,9 +700,14 @@ export function SupplyLibraryTab() {
                 <Plus className="w-3.5 h-3.5 mr-1" /> Add Product
               </PlatformButton>
               {!selectedBrand && (
-                <PlatformButton size="sm" variant="outline" onClick={() => setAddBrandOpen(true)}>
-                  <Plus className="w-3.5 h-3.5 mr-1" /> Add Brand
-                </PlatformButton>
+                <>
+                  <PlatformButton size="sm" variant="outline" onClick={() => setAddBrandOpen(true)}>
+                    <Plus className="w-3.5 h-3.5 mr-1" /> Add Brand
+                  </PlatformButton>
+                  <PlatformButton size="sm" variant="outline" onClick={() => setBulkImportOpen(true)}>
+                    <Sparkles className="w-3.5 h-3.5 mr-1" /> Build Full Catalog
+                  </PlatformButton>
+                </>
               )}
             </div>
           </div>
