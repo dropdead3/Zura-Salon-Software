@@ -271,6 +271,53 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
     onError: (error) => toast.error('Bulk update failed: ' + error.message),
   });
 
+  /* Sync from Library — pulls missing pricing/swatch data from supply_library_products */
+  const syncFromLibraryMutation = useMutation({
+    mutationFn: async (brand: string) => {
+      const { data: libraryData, error: libErr } = await supabase
+        .from('supply_library_products')
+        .select('name, wholesale_price, default_markup_pct, swatch_color, size_options')
+        .eq('is_active', true)
+        .ilike('brand', brand);
+      if (libErr) throw libErr;
+      if (!libraryData?.length) throw new Error('No library data found for this brand');
+
+      // Get org products for this brand that need filling
+      const { data: orgProducts, error: orgErr } = await supabase
+        .from('products')
+        .select('id, name, cost_price, markup_pct, swatch_color, container_size')
+        .eq('organization_id', orgId!)
+        .eq('is_active', true)
+        .eq('product_type', 'Supplies')
+        .ilike('brand', brand);
+      if (orgErr) throw orgErr;
+
+      let updated = 0;
+      for (const op of orgProducts || []) {
+        const match = libraryData.find((lp: any) =>
+          op.name.toLowerCase().startsWith(lp.name.toLowerCase())
+        );
+        if (!match) continue;
+        const updates: Record<string, any> = {};
+        if (op.cost_price == null && match.wholesale_price != null) updates.cost_price = match.wholesale_price;
+        if (op.markup_pct == null && match.default_markup_pct != null) updates.markup_pct = match.default_markup_pct;
+        if (op.swatch_color == null && match.swatch_color != null) updates.swatch_color = match.swatch_color;
+        if (op.container_size == null && (match as any).size_options?.[0] != null) updates.container_size = (match as any).size_options[0];
+        if (Object.keys(updates).length === 0) continue;
+        updates.updated_at = new Date().toISOString();
+        await supabase.from('products').update(updates).eq('id', op.id);
+        updated++;
+      }
+      return updated;
+    },
+    onSuccess: (count) => {
+      queryClient.invalidateQueries({ queryKey: ['backroom-product-catalog'] });
+      queryClient.invalidateQueries({ queryKey: ['backroom-inventory-table'] });
+      toast.success(`Synced ${count} products from library`);
+    },
+    onError: (error) => toast.error('Sync failed: ' + error.message),
+  });
+
   /* ====== Derived data ====== */
   const allProducts = products || [];
   const trackedCount = allProducts.filter((p) => p.is_backroom_tracked).length;
