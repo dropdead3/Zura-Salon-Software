@@ -53,6 +53,7 @@ interface BrandCardData {
   brand: string;
   productCount: number;
   categorySummary: { category: string; count: number }[];
+  isComplete: boolean;
 }
 
 export function SupplyLibraryTab() {
