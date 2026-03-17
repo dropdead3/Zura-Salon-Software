@@ -380,10 +380,10 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                   </>
                 ) : (
                   <>
-                    <PlatformCardTitle>Backroom Product Catalog</PlatformCardTitle>
-                    <PlatformCardDescription>
+                    <CardTitle className={tokens.card.title}>Backroom Product Catalog</CardTitle>
+                    <CardDescription>
                       Select a brand to manage tracking, depletion methods, and pricing.
-                    </PlatformCardDescription>
+                    </CardDescription>
                   </>
                 )}
               </div>
