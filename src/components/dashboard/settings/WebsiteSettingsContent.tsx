@@ -649,7 +649,7 @@ function BookingTab() {
   };
 
   if (isLoading) {
-    return <div className="flex items-center justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
+    return <DashboardLoader size="md" className="py-12" />;
   }
 
   return (
