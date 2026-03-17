@@ -917,7 +917,7 @@ function FinderProductRow({ product, onUpdate }: { product: BackroomProduct; onU
             />
           </div>
           <div className="flex items-center gap-1">
-            <span className="text-[10px] text-[hsl(var(--platform-foreground-muted))]">Size</span>
+            <span className="text-[10px] text-muted-foreground">Size</span>
             <input
               type="text"
               value={localContainer}
