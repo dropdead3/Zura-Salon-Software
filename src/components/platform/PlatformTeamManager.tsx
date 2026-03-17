@@ -36,10 +36,10 @@ import {
   MoreHorizontal, 
   Trash2,
   UserPlus,
-  Loader2,
   Filter,
   Circle
 } from 'lucide-react';
+import { ZuraLoader } from '@/components/ui/ZuraLoader';
 import { InvitePlatformUserDialog } from './InvitePlatformUserDialog';
 import { PendingInvitationsSection } from './PendingInvitationsSection';
 import {

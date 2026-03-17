@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { MessageSquare, Loader2 } from 'lucide-react';
+import { ZuraLoader } from '@/components/ui/ZuraLoader';
 import {
   PlatformCard,
   PlatformCardContent,
