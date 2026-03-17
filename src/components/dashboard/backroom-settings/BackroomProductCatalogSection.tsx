@@ -460,7 +460,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
       const cat = p.category || 'uncategorized';
       const cur = catMap.get(cat) || { total: 0, tracked: 0, missingPrice: 0 };
       cur.total++;
-      if (p.is_backroom_tracked) cur.tracked++;
+      if (isTrackedAtLocation(p.id)) cur.tracked++;
       if (p.cost_price == null) cur.missingPrice++;
       catMap.set(cat, cur);
     });
