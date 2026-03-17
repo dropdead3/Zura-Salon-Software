@@ -1,4 +1,4 @@
-import { Moon, Sun, Monitor, Check, Palette, Upload, ImageIcon, Crown, Save, RotateCcw, Sparkles } from 'lucide-react';
+import { Moon, Sun, Monitor, Check, Palette, Upload, ImageIcon, Crown, Save, RotateCcw, Sparkles, Loader } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { usePlatformTheme } from '@/contexts/PlatformThemeContext';
 import { usePlatformBranding, PlatformBranding } from '@/hooks/usePlatformBranding';
