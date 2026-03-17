@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useBackroomOrgId } from '@/hooks/backroom/useBackroomOrgId';
@@ -44,6 +44,106 @@ import {
   type SupplyLibraryItem,
 } from '@/data/professional-supply-library';
 import { useSupplyLibraryItemsByBrand } from '@/hooks/platform/useSupplyLibrary';
+
+/* ====== Inline Edit Cell ====== */
+function InlineEditCell({
+  value,
+  prefix,
+  suffix,
+  placeholder = '—',
+  onSave,
+}: {
+  value: number | null;
+  prefix?: string;
+  suffix?: string;
+  placeholder?: string;
+  onSave: (v: number | null) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const startEdit = () => {
+    setDraft(value != null ? String(value) : '');
+    setEditing(true);
+    setTimeout(() => inputRef.current?.select(), 0);
+  };
+
+  const commit = () => {
+    setEditing(false);
+    const num = parseFloat(draft);
+    const newVal = isNaN(num) ? null : num;
+    if (newVal !== value) onSave(newVal);
+  };
+
+  if (editing) {
+    return (
+      <input
+        ref={inputRef}
+        type="number"
+        step="any"
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') setEditing(false); }}
+        autoFocus
+        className="w-16 h-6 px-1 text-xs font-sans bg-muted border border-border rounded text-foreground outline-none focus:border-primary/50"
+      />
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={startEdit}
+      className="text-left hover:bg-muted/50 rounded px-1 -mx-1 transition-colors cursor-text"
+    >
+      {value != null ? (
+        <span className="text-foreground">{prefix}{typeof value === 'number' ? value.toFixed(suffix === '%' ? 0 : 2) : value}{suffix}</span>
+      ) : (
+        <span className="text-muted-foreground">{placeholder}</span>
+      )}
+    </button>
+  );
+}
+
+/* ====== Swatch Cell ====== */
+function SwatchCell({
+  color,
+  onSave,
+}: {
+  color: string | null;
+  onSave: (color: string | null) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => { setOpen(true); setTimeout(() => inputRef.current?.click(), 0); }}
+        className="block"
+      >
+        {color ? (
+          <div className="w-5 h-5 rounded-full border border-border/40" style={{ backgroundColor: color }} />
+        ) : (
+          <div className="w-5 h-5 rounded-full border border-dashed border-border/40 hover:border-primary/40 transition-colors" />
+        )}
+      </button>
+      {open && (
+        <input
+          ref={inputRef}
+          type="color"
+          value={color || '#888888'}
+          onChange={(e) => { onSave(e.target.value); setOpen(false); }}
+          onBlur={() => setOpen(false)}
+          className="absolute top-0 left-0 w-5 h-5 opacity-0 cursor-pointer"
+        />
+      )}
+    </div>
+  );
+}
 
 /* ====== Constants ====== */
 const DEPLETION_METHODS = [
@@ -125,7 +225,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('id, name, brand, sku, category, cost_price, is_backroom_tracked, depletion_method, is_billable_to_client, is_overage_eligible, is_forecast_eligible, cost_per_gram, unit_of_measure, markup_pct, container_size')
+        .select('id, name, brand, sku, category, cost_price, is_backroom_tracked, depletion_method, is_billable_to_client, is_overage_eligible, is_forecast_eligible, cost_per_gram, unit_of_measure, markup_pct, container_size, swatch_color')
         .eq('organization_id', orgId!)
         .eq('is_active', true)
         .eq('product_type', 'Supplies')
@@ -691,14 +791,10 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                                     </TableCell>
                                     {showSwatch && (
                                       <TableCell className="w-[40px] pr-0">
-                                        {(p as any).swatch_color ? (
-                                          <div
-                                            className="w-5 h-5 rounded-full border border-border/40"
-                                            style={{ backgroundColor: (p as any).swatch_color }}
-                                          />
-                                        ) : (
-                                          <div className="w-5 h-5 rounded-full border border-dashed border-border/40" />
-                                        )}
+                                        <SwatchCell
+                                          color={p.swatch_color ?? null}
+                                          onSave={(color) => updateMutation.mutate({ id: p.id, updates: { swatch_color: color } as any })}
+                                        />
                                       </TableCell>
                                     )}
                                     <TableCell className="font-sans text-sm font-medium text-foreground">{p.name}</TableCell>
@@ -714,14 +810,20 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                                       {p.unit_of_measure || '—'}
                                     </TableCell>
                                     <TableCell className="font-sans text-xs">
-                                      {p.cost_price != null ? (
-                                        <span className="text-foreground">${p.cost_price.toFixed(2)}</span>
-                                      ) : (
-                                        <span className="text-muted-foreground">—</span>
-                                      )}
+                                      <InlineEditCell
+                                        value={p.cost_price}
+                                        prefix="$"
+                                        placeholder="—"
+                                        onSave={(v) => updateMutation.mutate({ id: p.id, updates: { cost_price: v } })}
+                                      />
                                     </TableCell>
-                                    <TableCell className="hidden md:table-cell font-sans text-xs text-muted-foreground">
-                                      {p.markup_pct != null && p.markup_pct > 0 ? `${p.markup_pct}%` : '—'}
+                                    <TableCell className="hidden md:table-cell font-sans text-xs">
+                                      <InlineEditCell
+                                        value={p.markup_pct}
+                                        suffix="%"
+                                        placeholder="—"
+                                        onSave={(v) => updateMutation.mutate({ id: p.id, updates: { markup_pct: v } })}
+                                      />
                                     </TableCell>
                                     <TableCell className="hidden md:table-cell font-sans text-xs">
                                       {retail != null ? (

@@ -16,6 +16,11 @@ export interface SupplyLibraryItem {
   defaultDepletion: 'weighed' | 'per_service' | 'manual' | 'per_pump';
   defaultUnit: 'g' | 'ml' | 'oz';
   sizeOptions?: string[];
+  /** Pre-populated from supply library DB */
+  wholesalePrice?: number | null;
+  defaultMarkupPct?: number | null;
+  swatchColor?: string | null;
+  containerSize?: string | null;
 }
 
 // ─── Helper to generate shade entries ───────────────────────────

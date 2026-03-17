@@ -13804,6 +13804,7 @@ export type Database = {
           sku: string | null
           subcategory: string | null
           supplier_id: string | null
+          swatch_color: string | null
           unit_of_measure: string
           updated_at: string | null
           variant: string | null
@@ -13849,6 +13850,7 @@ export type Database = {
           sku?: string | null
           subcategory?: string | null
           supplier_id?: string | null
+          swatch_color?: string | null
           unit_of_measure?: string
           updated_at?: string | null
           variant?: string | null
@@ -13894,6 +13896,7 @@ export type Database = {
           sku?: string | null
           subcategory?: string | null
           supplier_id?: string | null
+          swatch_color?: string | null
           unit_of_measure?: string
           updated_at?: string | null
           variant?: string | null
