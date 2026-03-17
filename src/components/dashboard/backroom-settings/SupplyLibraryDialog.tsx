@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -191,6 +191,41 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
   const [showSuggest, setShowSuggest] = useState(false);
   const [suggestBrand, setSuggestBrand] = useState('');
   const [suggestDetails, setSuggestDetails] = useState('');
+
+  // --- localStorage persistence for column selections ---
+  const columnKey = useCallback(
+    (col: 'cat' | 'line', brand: string) =>
+      `supply-dialog-${col}::${orgId}::${brand}`,
+    [orgId],
+  );
+
+  // Persist selectedCategory
+  useEffect(() => {
+    if (!selectedBrand) return;
+    const key = columnKey('cat', selectedBrand);
+    if (selectedCategory) localStorage.setItem(key, selectedCategory);
+    else localStorage.removeItem(key);
+  }, [selectedCategory, selectedBrand, columnKey]);
+
+  // Persist selectedLine
+  useEffect(() => {
+    if (!selectedBrand) return;
+    const key = columnKey('line', selectedBrand);
+    if (selectedLine) localStorage.setItem(key, selectedLine);
+    else localStorage.removeItem(key);
+  }, [selectedLine, selectedBrand, columnKey]);
+
+  // Prune old keys (keep max 500)
+  useEffect(() => {
+    const PREFIX = 'supply-dialog-';
+    const allKeys = Object.keys(localStorage).filter((k) => k.startsWith(PREFIX));
+    if (allKeys.length <= 500) return;
+    const currentPrefix = `${PREFIX}cat::${orgId}::`;
+    const currentPrefixLine = `${PREFIX}line::${orgId}::`;
+    allKeys
+      .filter((k) => !k.startsWith(currentPrefix) && !k.startsWith(currentPrefixLine))
+      .forEach((k) => localStorage.removeItem(k));
+  }, [orgId]);
   const [isSuggesting, setIsSuggesting] = useState(false);
 
   // --- Data: brand summaries (server-side aggregation, no row-limit) ---
@@ -582,7 +617,14 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
               brands={brandCardData}
               search={search}
               onSearch={setSearch}
-              onSelectBrand={(brand) => { setSelectedBrand(brand); setSelectedCategory(null); setSelectedLine(null); setSearch(''); }}
+              onSelectBrand={(brand) => {
+                setSelectedBrand(brand);
+                const savedCat = localStorage.getItem(columnKey('cat', brand));
+                const savedLine = localStorage.getItem(columnKey('line', brand));
+                setSelectedCategory(savedCat);
+                setSelectedLine(savedLine);
+                setSearch('');
+              }}
               onShowSuggest={() => setShowSuggest(true)}
             />
           ) : brandItemsLoading ? (
