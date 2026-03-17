@@ -7,13 +7,18 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { Search, Package, Check, Library, Loader2, MessageSquarePlus, Send, PackagePlus } from 'lucide-react';
+import {
+  Search, Package, Check, Library, Loader2, MessageSquarePlus, Send,
+  PackagePlus, ChevronLeft, ArrowLeft,
+} from 'lucide-react';
 import { PLATFORM_NAME } from '@/lib/brand';
 import {
   SUPPLY_CATEGORY_LABELS,
   type SupplyLibraryItem,
 } from '@/data/professional-supply-library';
 import { useSupplyLibraryItems } from '@/hooks/platform/useSupplyLibrary';
+import { useSupplyBrandsMeta } from '@/hooks/platform/useSupplyLibraryBrandMeta';
+import { ColoredLogo } from '@/components/dashboard/ColoredLogo';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -25,16 +30,190 @@ interface Props {
   existingProducts: Array<{ name: string; brand: string | null }>;
 }
 
-/** Build a selection key — includes size when present */
+/* ────── Helpers ────── */
+
 function sizedKey(brand: string, name: string, size?: string) {
   const b = brand.toLowerCase(), n = name.toLowerCase();
   return size ? `${b}::${n}::${size.toLowerCase()}` : `${b}::${n}`;
 }
 
-/** Build the product name with optional size suffix */
 function sizedName(name: string, size?: string) {
   return size ? `${name} — ${size}` : name;
 }
+
+const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+
+/* ────── Brand Card Grid (Level 0) ────── */
+
+interface BrandCardData {
+  brand: string;
+  logoUrl: string | null;
+  totalProducts: number;
+  addedCount: number;
+  categories: string[];
+}
+
+function BrandCardGrid({
+  brands,
+  search,
+  onSearch,
+  onSelectBrand,
+  onShowSuggest,
+}: {
+  brands: BrandCardData[];
+  search: string;
+  onSearch: (v: string) => void;
+  onSelectBrand: (brand: string) => void;
+  onShowSuggest: () => void;
+}) {
+  const [activeLetter, setActiveLetter] = useState<string | null>(null);
+
+  const filtered = useMemo(() => {
+    let list = brands;
+    if (search) {
+      const q = search.toLowerCase();
+      list = list.filter((b) => b.brand.toLowerCase().includes(q));
+    }
+    if (activeLetter) {
+      list = list.filter((b) => b.brand[0]?.toUpperCase() === activeLetter);
+    }
+    return list;
+  }, [brands, search, activeLetter]);
+
+  const availableLetters = useMemo(
+    () => new Set(brands.map((b) => b.brand[0]?.toUpperCase())),
+    [brands],
+  );
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* A-Z bar */}
+      <div className="px-6 pt-2 pb-1 flex flex-wrap gap-0.5 justify-center">
+        {ALPHABET.map((letter) => {
+          const available = availableLetters.has(letter);
+          const active = activeLetter === letter;
+          return (
+            <button
+              key={letter}
+              onClick={() => setActiveLetter(active ? null : letter)}
+              disabled={!available}
+              className={cn(
+                'w-7 h-7 rounded-md text-[11px] font-display uppercase tracking-wider transition-colors',
+                active
+                  ? 'bg-primary text-primary-foreground'
+                  : available
+                  ? 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'
+                  : 'text-muted-foreground/30 cursor-default',
+              )}
+            >
+              {letter}
+            </button>
+          );
+        })}
+        {activeLetter && (
+          <button
+            onClick={() => setActiveLetter(null)}
+            className="ml-1 text-[10px] font-sans text-muted-foreground hover:text-foreground underline"
+          >
+            Clear
+          </button>
+        )}
+      </div>
+
+      {/* Brand cards */}
+      <ScrollArea className="flex-1 min-h-0">
+        <div className="p-6 pt-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+          {filtered.map((b) => {
+            const allAdded = b.addedCount >= b.totalProducts && b.totalProducts > 0;
+            return (
+              <button
+                key={b.brand}
+                onClick={() => onSelectBrand(b.brand)}
+                className={cn(
+                  'group relative flex flex-col items-center gap-2.5 rounded-xl border p-4 text-center transition-all',
+                  allAdded
+                    ? 'border-primary/20 bg-primary/5'
+                    : 'border-border/40 bg-card/50 hover:border-border hover:shadow-sm hover:bg-muted/30',
+                )}
+              >
+                {/* Logo or initial */}
+                <div className="h-10 flex items-center justify-center">
+                  {b.logoUrl ? (
+                    <ColoredLogo logoUrl={b.logoUrl} size={36} alt={b.brand} />
+                  ) : (
+                    <div className="w-10 h-10 rounded-lg bg-muted/60 flex items-center justify-center text-sm font-display text-muted-foreground">
+                      {b.brand[0]}
+                    </div>
+                  )}
+                </div>
+
+                {/* Brand name */}
+                <span className="text-xs font-sans font-medium text-foreground leading-tight line-clamp-2">
+                  {b.brand}
+                </span>
+
+                {/* Stats */}
+                <div className="flex items-center gap-1.5">
+                  {b.addedCount > 0 ? (
+                    <Badge
+                      variant={allAdded ? 'default' : 'secondary'}
+                      className={cn(
+                        'text-[10px] h-5 px-1.5',
+                        allAdded && 'bg-primary/15 text-primary border-primary/20',
+                      )}
+                    >
+                      {allAdded ? (
+                        <><Check className="w-3 h-3 mr-0.5" /> All added</>
+                      ) : (
+                        `${b.addedCount}/${b.totalProducts} added`
+                      )}
+                    </Badge>
+                  ) : (
+                    <span className="text-[10px] text-muted-foreground">
+                      {b.totalProducts} products
+                    </span>
+                  )}
+                </div>
+
+                {/* Category pills */}
+                {b.categories.length > 0 && (
+                  <div className="flex flex-wrap gap-1 justify-center">
+                    {b.categories.slice(0, 3).map((cat) => (
+                      <span
+                        key={cat}
+                        className="text-[9px] px-1.5 py-0.5 rounded-full bg-muted/50 text-muted-foreground capitalize"
+                      >
+                        {SUPPLY_CATEGORY_LABELS[cat] || cat}
+                      </span>
+                    ))}
+                    {b.categories.length > 3 && (
+                      <span className="text-[9px] text-muted-foreground">
+                        +{b.categories.length - 3}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Missing brand CTA */}
+        <div className="px-6 pb-6 pt-2">
+          <button
+            onClick={onShowSuggest}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-dashed border-border/60 text-xs font-sans text-muted-foreground hover:text-foreground hover:border-border hover:bg-muted/30 transition-colors"
+          >
+            <MessageSquarePlus className="w-4 h-4 shrink-0" />
+            <span>Missing a brand? Suggest one</span>
+          </button>
+        </div>
+      </ScrollArea>
+    </div>
+  );
+}
+
+/* ────── Main Dialog ────── */
 
 export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProducts }: Props) {
   const queryClient = useQueryClient();
@@ -48,40 +227,69 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
   const [suggestDetails, setSuggestDetails] = useState('');
   const [isSuggesting, setIsSuggesting] = useState(false);
 
-  // Fetch supply library from DB (falls back to static data if empty)
   const { data: libraryItems = [] } = useSupplyLibraryItems();
+  const { data: brandsMeta = [] } = useSupplyBrandsMeta();
 
-  // Derived helpers from DB data
+  // Brand logo map
+  const brandLogoMap = useMemo(() => {
+    const m = new Map<string, string | null>();
+    brandsMeta.forEach((b) => m.set(b.name.toLowerCase(), b.logo_url));
+    return m;
+  }, [brandsMeta]);
+
   const brands = useMemo(() => [...new Set(libraryItems.map((i) => i.brand))].sort(), [libraryItems]);
-  const getProductsByBrand = useCallback((brand: string) => libraryItems.filter((i) => i.brand === brand), [libraryItems]);
+  const getProductsByBrand = useCallback(
+    (brand: string) => libraryItems.filter((i) => i.brand === brand),
+    [libraryItems],
+  );
 
-  // Build set of existing keys — match both "Product Name" and "Product Name — 60ml"
+  // Existing keys
   const existingKeys = useMemo(() => {
     const s = new Set<string>();
     existingProducts.forEach((p) => {
-      if (p.brand && p.name) {
-        s.add(`${p.brand.toLowerCase()}::${p.name.toLowerCase()}`);
-      }
+      if (p.brand && p.name) s.add(`${p.brand.toLowerCase()}::${p.name.toLowerCase()}`);
     });
     return s;
   }, [existingProducts]);
 
-  const isExisting = (brand: string, name: string, size?: string) => {
-    return existingKeys.has(sizedKey(brand, name, size))
-      || existingKeys.has(`${brand.toLowerCase()}::${sizedName(name, size).toLowerCase()}`);
+  const isExisting = (brand: string, name: string, size?: string) =>
+    existingKeys.has(sizedKey(brand, name, size))
+    || existingKeys.has(`${brand.toLowerCase()}::${sizedName(name, size).toLowerCase()}`);
+
+  const getItemKeys = (item: SupplyLibraryItem): { key: string; size?: string }[] => {
+    if (item.sizeOptions && item.sizeOptions.length > 0) {
+      return item.sizeOptions.map((size) => ({ key: sizedKey(item.brand, item.name, size), size }));
+    }
+    return [{ key: sizedKey(item.brand, item.name) }];
   };
 
-  // Filter brands by search
-  const filteredBrands = useMemo(() => {
-    if (!search) return brands;
-    const q = search.toLowerCase();
-    return brands.filter((brand) => {
-      if (brand.toLowerCase().includes(q)) return true;
-      return getProductsByBrand(brand).some((p) => p.name.toLowerCase().includes(q));
+  // Brand card data
+  const brandCardData = useMemo<BrandCardData[]>(() => {
+    return brands.map((brand) => {
+      const products = getProductsByBrand(brand);
+      const cats = [...new Set(products.map((p) => p.category))];
+      let addedCount = 0;
+      products.forEach((p) => {
+        const keys = getItemKeys(p);
+        keys.forEach(({ size }) => {
+          if (isExisting(p.brand, p.name, size)) addedCount++;
+        });
+      });
+      const totalProducts = products.reduce(
+        (sum, p) => sum + (p.sizeOptions?.length || 1),
+        0,
+      );
+      return {
+        brand,
+        logoUrl: brandLogoMap.get(brand.toLowerCase()) || null,
+        totalProducts,
+        addedCount,
+        categories: cats,
+      };
     });
-  }, [brands, search, getProductsByBrand]);
+  }, [brands, getProductsByBrand, existingKeys, brandLogoMap]);
 
-  // Products for selected brand, optionally filtered
+  // Products for selected brand
   const brandProducts = useMemo(() => {
     if (!selectedBrand) return [];
     const products = getProductsByBrand(selectedBrand);
@@ -91,13 +299,16 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
     return products.filter((p) => p.name.toLowerCase().includes(q));
   }, [selectedBrand, search, getProductsByBrand]);
 
-  /** Get all selectable keys for an item (one per size, or one if no sizes) */
-  const getItemKeys = (item: SupplyLibraryItem): { key: string; size?: string }[] => {
-    if (item.sizeOptions && item.sizeOptions.length > 0) {
-      return item.sizeOptions.map((size) => ({ key: sizedKey(item.brand, item.name, size), size }));
-    }
-    return [{ key: sizedKey(item.brand, item.name) }];
-  };
+  // Group products by category
+  const productsByCategory = useMemo(() => {
+    const map = new Map<string, SupplyLibraryItem[]>();
+    brandProducts.forEach((p) => {
+      const cat = SUPPLY_CATEGORY_LABELS[p.category] || p.category;
+      if (!map.has(cat)) map.set(cat, []);
+      map.get(cat)!.push(p);
+    });
+    return map;
+  }, [brandProducts]);
 
   const toggleSize = (item: SupplyLibraryItem, size?: string) => {
     const key = sizedKey(item.brand, item.name, size);
@@ -128,18 +339,11 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
   const handleAdd = async () => {
     if (selected.size === 0) return;
     setIsAdding(true);
-
     try {
       const itemsToInsert: Array<{
-        name: string;
-        brand: string;
-        category: string;
-        product_type: string;
-        is_backroom_tracked: boolean;
-        depletion_method: string;
-        unit_of_measure: string;
-        organization_id: string;
-        is_active: boolean;
+        name: string; brand: string; category: string; product_type: string;
+        is_backroom_tracked: boolean; depletion_method: string; unit_of_measure: string;
+        organization_id: string; is_active: boolean;
       }> = [];
 
       libraryItems.forEach((item) => {
@@ -160,7 +364,6 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
       });
 
       if (itemsToInsert.length === 0) return;
-
       const { error } = await supabase.from('products').insert(itemsToInsert);
       if (error) throw error;
 
@@ -176,25 +379,6 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
     } finally {
       setIsAdding(false);
     }
-  };
-
-  // Count selected per brand for badges
-  const selectedCountForBrand = (brand: string) => {
-    let count = 0;
-    getProductsByBrand(brand).forEach((p) => {
-      getItemKeys(p).forEach(({ key }) => {
-        if (selected.has(key)) count++;
-      });
-    });
-    return count;
-  };
-
-  // Check if all selectable items for a brand are fully in catalog
-  const brandFullyAdded = (brand: string) => {
-    const items = getProductsByBrand(brand);
-    return items.every((p) =>
-      getItemKeys(p).every(({ size }) => isExisting(p.brand, p.name, size))
-    );
   };
 
   const handleAddEntireBrand = async (brand: string) => {
@@ -236,7 +420,7 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
       queryClient.invalidateQueries({ queryKey: ['backroom-setup-health'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
 
-      const insertedNames = itemsToInsert.map(i => i.name);
+      const insertedNames = itemsToInsert.map((i) => i.name);
       toast.success(`Added ${insertedNames.length} ${brand} products to your catalog`, {
         action: {
           label: 'Undo',
@@ -300,25 +484,81 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
     }
   };
 
+  const brandFullyAdded = (brand: string) => {
+    const items = getProductsByBrand(brand);
+    return items.every((p) =>
+      getItemKeys(p).every(({ size }) => isExisting(p.brand, p.name, size)),
+    );
+  };
+
+  const handleBack = () => {
+    setSelectedBrand(null);
+    setSearch('');
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl p-0 gap-0 max-h-[80vh] flex flex-col">
-        <DialogHeader className="px-6 pt-6 pb-4 border-b border-border/40">
+      <DialogContent className="max-w-5xl p-0 gap-0 max-h-[85vh] flex flex-col">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b border-border/40 shrink-0">
           <div className="flex items-center gap-3">
-            <div className={tokens.card.iconBox}>
-              <Library className={tokens.card.icon} />
+            {selectedBrand ? (
+              <button
+                onClick={handleBack}
+                className="flex items-center justify-center w-10 h-10 rounded-lg bg-muted/40 hover:bg-muted transition-colors"
+              >
+                <ArrowLeft className="w-5 h-5 text-muted-foreground" />
+              </button>
+            ) : (
+              <div className={tokens.card.iconBox}>
+                <Library className={tokens.card.icon} />
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              {selectedBrand ? (
+                <>
+                  <div className="flex items-center gap-2">
+                    <button onClick={handleBack} className="text-xs font-sans text-muted-foreground hover:text-foreground transition-colors">
+                      Supply Library
+                    </button>
+                    <ChevronLeft className="w-3 h-3 text-muted-foreground rotate-180" />
+                    <DialogTitle className={cn(tokens.card.title, 'truncate')}>{selectedBrand}</DialogTitle>
+                  </div>
+                  <DialogDescription className={tokens.body.muted}>
+                    Select products to add to your backroom catalog
+                  </DialogDescription>
+                </>
+              ) : (
+                <>
+                  <DialogTitle className={tokens.card.title}>Professional Supply Library</DialogTitle>
+                  <DialogDescription className={tokens.body.muted}>
+                    Browse {brands.length}+ brands. Select which products your salon carries.
+                  </DialogDescription>
+                </>
+              )}
             </div>
-            <div>
-              <DialogTitle className={tokens.card.title}>Professional Supply Library</DialogTitle>
-              <DialogDescription className={tokens.body.muted}>
-                Browse 26+ brands. Select products and sizes to add to your catalog.
-              </DialogDescription>
-            </div>
+            {selectedBrand && !brandFullyAdded(selectedBrand) && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleAddEntireBrand(selectedBrand)}
+                disabled={addingBrand === selectedBrand}
+                className="text-xs font-sans h-8 gap-1.5 shrink-0"
+              >
+                {addingBrand === selectedBrand ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <PackagePlus className="w-3.5 h-3.5" />
+                )}
+                Add Entire Brand
+              </Button>
+            )}
           </div>
+
+          {/* Search */}
           <div className="relative mt-3">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Search brands or products..."
+              placeholder={selectedBrand ? `Search ${selectedBrand} products...` : 'Search brands...'}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9 font-sans"
@@ -326,265 +566,205 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
           </div>
         </DialogHeader>
 
-        <div className="flex flex-1 min-h-0">
-          {/* Brand list */}
-          <ScrollArea className="w-[220px] border-r border-border/40">
-            <div className="p-2 space-y-0.5">
-              {filteredBrands.map((brand) => {
-                const count = getProductsByBrand(brand).length;
-                const selCount = selectedCountForBrand(brand);
-                const allAdded = brandFullyAdded(brand);
-
-                return (
-                  <button
-                    key={brand}
-                    onClick={() => setSelectedBrand(brand)}
-                    className={cn(
-                      'w-full text-left px-3 py-2.5 rounded-lg text-sm font-sans transition-colors flex items-center justify-between gap-2 relative',
-                      selectedBrand === brand
-                        ? 'bg-accent text-accent-foreground'
-                        : 'hover:bg-muted/60 text-foreground'
-                    )}
-                  >
-                    {selectedBrand === brand && (
-                      <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-full bg-primary" />
-                    )}
-                    <span className="truncate">{brand}</span>
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      {selCount > 0 && (
-                        <Badge className="h-5 min-w-[20px] px-1.5 text-[10px] bg-primary text-primary-foreground">
-                          {selCount}
-                        </Badge>
-                      )}
-                      {allAdded ? (
-                        <Check className="w-3.5 h-3.5 text-muted-foreground" />
-                      ) : (
-                        <span className="text-[10px] text-muted-foreground">{count}</span>
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
-
-              {/* Suggest Missing Brand */}
-              <div className="mt-3 pt-3 border-t border-border/30 px-1">
-                {!showSuggest ? (
-                  <button
-                    onClick={() => setShowSuggest(true)}
-                    className="w-full flex items-center gap-2 px-2 py-2.5 rounded-lg text-xs font-sans text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
-                  >
-                    <MessageSquarePlus className="w-3.5 h-3.5 shrink-0" />
-                    <span>Missing a brand?</span>
-                  </button>
-                ) : (
-                  <div className="space-y-2.5 pb-1">
-                    <p className="text-[11px] font-sans font-medium text-muted-foreground">Suggest a brand:</p>
-                    <Input
-                      placeholder="Brand name"
-                      value={suggestBrand}
-                      onChange={(e) => setSuggestBrand(e.target.value)}
-                      className="h-9 text-xs font-sans rounded-lg"
-                      autoCapitalize="words"
-                    />
-                    <Input
-                      placeholder="Products (optional)"
-                      value={suggestDetails}
-                      onChange={(e) => setSuggestDetails(e.target.value)}
-                      className="h-9 text-xs font-sans rounded-lg"
-                    />
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="flex-1 h-8 text-xs font-sans"
-                        onClick={() => { setShowSuggest(false); setSuggestBrand(''); setSuggestDetails(''); }}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        size="sm"
-                        className="flex-1 h-8 text-xs font-sans"
-                        disabled={!suggestBrand.trim() || isSuggesting}
-                        onClick={handleSuggestBrand}
-                      >
-                        {isSuggesting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
-                        Send
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </ScrollArea>
-
-          {/* Product list */}
-          <ScrollArea className="flex-1">
-            {selectedBrand ? (
-              <div className="p-4 space-y-3">
+        {/* Content area — Level 0 (brand grid) or Level 1 (product selection) */}
+        <div className="flex-1 min-h-0 flex flex-col">
+          {!selectedBrand ? (
+            <BrandCardGrid
+              brands={brandCardData}
+              search={search}
+              onSearch={setSearch}
+              onSelectBrand={(brand) => { setSelectedBrand(brand); setSearch(''); }}
+              onShowSuggest={() => setShowSuggest(true)}
+            />
+          ) : (
+            <ScrollArea className="flex-1 min-h-0">
+              <div className="p-6 space-y-6">
+                {/* Select all bar */}
                 <div className="flex items-center justify-between">
-                  <h3 className="font-sans text-sm font-medium text-foreground">{selectedBrand}</h3>
-                  <div className="flex items-center gap-1.5">
-                    {selectedBrand && !brandFullyAdded(selectedBrand) && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleAddEntireBrand(selectedBrand)}
-                        disabled={addingBrand === selectedBrand}
-                        className="text-xs font-sans h-7 gap-1"
-                      >
-                        {addingBrand === selectedBrand ? (
-                          <Loader2 className="w-3 h-3 animate-spin" />
-                        ) : (
-                          <PackagePlus className="w-3 h-3" />
-                        )}
-                        Add Entire Brand
-                      </Button>
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={toggleAllBrand}
-                      className="text-xs font-sans h-7"
-                    >
-                      {(() => {
-                        const allKeys: string[] = [];
-                        brandProducts.forEach((p) => {
-                          getItemKeys(p).forEach(({ key, size }) => {
-                            if (!isExisting(p.brand, p.name, size)) allKeys.push(key);
-                          });
+                  <span className="text-xs font-sans text-muted-foreground">
+                    {brandProducts.length} products
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={toggleAllBrand}
+                    className="text-xs font-sans h-7"
+                  >
+                    {(() => {
+                      const allKeys: string[] = [];
+                      brandProducts.forEach((p) => {
+                        getItemKeys(p).forEach(({ key, size }) => {
+                          if (!isExisting(p.brand, p.name, size)) allKeys.push(key);
                         });
-                        return allKeys.length > 0 && allKeys.every((k) => selected.has(k))
-                          ? 'Deselect All'
-                          : 'Select All';
-                      })()}
-                    </Button>
-                  </div>
+                      });
+                      return allKeys.length > 0 && allKeys.every((k) => selected.has(k))
+                        ? 'Deselect All'
+                        : 'Select All';
+                    })()}
+                  </Button>
                 </div>
 
-                <div className="space-y-2">
-                  {brandProducts.map((item) => {
-                    const hasSizes = item.sizeOptions && item.sizeOptions.length > 0;
-                    const itemKeys = getItemKeys(item);
-                    const allExisting = itemKeys.every(({ size }) => isExisting(item.brand, item.name, size));
-                    const anySelected = itemKeys.some(({ key }) => selected.has(key));
-                    const allSelected = itemKeys.every(({ key, size }) =>
-                      selected.has(key) || isExisting(item.brand, item.name, size)
-                    );
+                {/* Products grouped by category */}
+                {[...productsByCategory.entries()].map(([category, items]) => (
+                  <div key={category}>
+                    <h4 className="text-xs font-display uppercase tracking-wider text-muted-foreground mb-3">
+                      {category}
+                    </h4>
+                    <div className="space-y-2">
+                      {items.map((item) => {
+                        const hasSizes = item.sizeOptions && item.sizeOptions.length > 0;
+                        const itemKeys = getItemKeys(item);
+                        const allExisting = itemKeys.every(({ size }) => isExisting(item.brand, item.name, size));
+                        const anySelected = itemKeys.some(({ key }) => selected.has(key));
 
-                    return (
-                      <div
-                        key={`${item.brand}::${item.name}`}
-                        className={cn(
-                          'rounded-lg border p-4 transition-colors',
-                          allExisting
-                            ? 'border-border/30 bg-muted/20 opacity-60'
-                            : anySelected
-                            ? 'border-primary/40 bg-primary/5'
-                            : 'border-border/40 hover:border-border hover:bg-muted/30'
-                        )}
-                      >
-                        <div className="flex items-start gap-3">
-                          {/* If no sizes, single checkbox */}
-                          {!hasSizes && (
-                            <Checkbox
-                              checked={allExisting || selected.has(sizedKey(item.brand, item.name))}
-                              disabled={allExisting}
-                              onCheckedChange={() => toggleSize(item)}
-                              className="shrink-0 mt-0.5"
-                            />
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-sans text-foreground">{item.name}</span>
-                              {allExisting && (
-                                <Badge variant="secondary" className="text-[10px] shrink-0">
-                                  <Check className="w-3 h-3 mr-0.5" /> Added
-                                </Badge>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-2 mt-0.5">
-                              <Badge variant="outline" className="text-[10px] capitalize">
-                                {SUPPLY_CATEGORY_LABELS[item.category] || item.category}
-                              </Badge>
-                              <span className="text-[10px] text-muted-foreground capitalize">
-                                {item.defaultDepletion === 'per_pump' ? 'Per Pump' : item.defaultDepletion} · {item.defaultUnit}
-                              </span>
-                            </div>
-
-                            {/* Size chips */}
-                            {hasSizes && (
-                              <div className="flex flex-wrap gap-2 mt-2.5">
-                                {item.sizeOptions!.map((size) => {
-                                  const key = sizedKey(item.brand, item.name, size);
-                                  const sizeExisting = isExisting(item.brand, item.name, size);
-                                  const sizeSelected = selected.has(key);
-
-                                  return (
-                                    <button
-                                      key={size}
-                                      type="button"
-                                      disabled={sizeExisting}
-                                      onClick={() => toggleSize(item, size)}
-                                      className={cn(
-                                        'inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-sans transition-colors border',
-                                        sizeExisting
-                                          ? 'border-border/30 bg-muted/30 text-muted-foreground cursor-default'
-                                          : sizeSelected
-                                          ? 'border-primary bg-primary/10 text-primary'
-                                          : 'border-border/60 hover:border-border text-foreground/70 hover:text-foreground'
-                                      )}
-                                    >
-                                      {(sizeExisting || sizeSelected) && (
-                                        <Check className="w-3 h-3" />
-                                      )}
-                                      {size}
-                                    </button>
-                                  );
-                                })}
-                              </div>
+                        return (
+                          <div
+                            key={`${item.brand}::${item.name}`}
+                            className={cn(
+                              'rounded-lg border p-4 transition-colors',
+                              allExisting
+                                ? 'border-border/30 bg-muted/20 opacity-60'
+                                : anySelected
+                                ? 'border-primary/40 bg-primary/5'
+                                : 'border-border/40 hover:border-border hover:bg-muted/30',
                             )}
+                          >
+                            <div className="flex items-start gap-3">
+                              {!hasSizes && (
+                                <Checkbox
+                                  checked={allExisting || selected.has(sizedKey(item.brand, item.name))}
+                                  disabled={allExisting}
+                                  onCheckedChange={() => toggleSize(item)}
+                                  className="shrink-0 mt-0.5"
+                                />
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm font-sans text-foreground">{item.name}</span>
+                                  {allExisting && (
+                                    <Badge variant="secondary" className="text-[10px] shrink-0">
+                                      <Check className="w-3 h-3 mr-0.5" /> Added
+                                    </Badge>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  <span className="text-[10px] text-muted-foreground capitalize">
+                                    {item.defaultDepletion === 'per_pump' ? 'Per Pump' : item.defaultDepletion} · {item.defaultUnit}
+                                  </span>
+                                </div>
+
+                                {hasSizes && (
+                                  <div className="flex flex-wrap gap-2 mt-2.5">
+                                    {item.sizeOptions!.map((size) => {
+                                      const key = sizedKey(item.brand, item.name, size);
+                                      const sizeExisting = isExisting(item.brand, item.name, size);
+                                      const sizeSelected = selected.has(key);
+
+                                      return (
+                                        <button
+                                          key={size}
+                                          type="button"
+                                          disabled={sizeExisting}
+                                          onClick={() => toggleSize(item, size)}
+                                          className={cn(
+                                            'inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-sans transition-colors border',
+                                            sizeExisting
+                                              ? 'border-border/30 bg-muted/30 text-muted-foreground cursor-default'
+                                              : sizeSelected
+                                              ? 'border-primary bg-primary/10 text-primary'
+                                              : 'border-border/60 hover:border-border text-foreground/70 hover:text-foreground',
+                                          )}
+                                        >
+                                          {(sizeExisting || sizeSelected) && <Check className="w-3 h-3" />}
+                                          {size}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
               </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center h-full py-20 px-8 text-center">
-                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl border border-border/60 bg-muted/40">
-                  <Package className="w-7 h-7 text-muted-foreground/50" />
-                </div>
-                <p className="font-sans text-sm text-muted-foreground max-w-xs">
-                  Select a brand from the left to browse their professional supply products.
+            </ScrollArea>
+          )}
+        </div>
+
+        {/* Footer — shows when products are selected OR in product view */}
+        {(selected.size > 0 || selectedBrand) && (
+          <div className="px-6 py-4 border-t border-border/40 flex items-center justify-between bg-muted/20 shadow-[0_-4px_12px_-4px_hsl(var(--foreground)/0.04)] shrink-0">
+            <span className="text-sm font-sans text-muted-foreground">
+              {selected.size > 0
+                ? `${selected.size} product${selected.size === 1 ? '' : 's'} selected`
+                : 'No products selected'}
+            </span>
+            <Button
+              onClick={handleAdd}
+              disabled={selected.size === 0 || isAdding}
+              className="font-sans"
+            >
+              {isAdding ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin mr-1" />
+                  Adding...
+                </>
+              ) : (
+                `Add ${selected.size || ''} Product${selected.size === 1 ? '' : 's'}`
+              )}
+            </Button>
+          </div>
+        )}
+
+        {/* Suggest brand modal overlay */}
+        {showSuggest && (
+          <div className="absolute inset-0 z-10 bg-background/80 backdrop-blur-sm flex items-center justify-center p-8 rounded-2xl">
+            <div className="w-full max-w-sm space-y-4">
+              <div className="text-center">
+                <MessageSquarePlus className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
+                <h3 className="font-display text-sm uppercase tracking-wider text-foreground">Suggest a Brand</h3>
+                <p className="text-xs font-sans text-muted-foreground mt-1">
+                  Let the {PLATFORM_NAME} team know which brands you'd like added.
                 </p>
               </div>
-            )}
-          </ScrollArea>
-        </div>
-
-        {/* Footer */}
-        <div className="px-6 py-4 border-t border-border/40 flex items-center justify-between bg-muted/20 shadow-[0_-4px_12px_-4px_hsl(var(--foreground)/0.04)]">
-          <span className="text-sm font-sans text-muted-foreground">
-            {selected.size > 0
-              ? `${selected.size} product${selected.size === 1 ? '' : 's'} selected`
-              : 'No products selected'}
-          </span>
-          <Button
-            onClick={handleAdd}
-            disabled={selected.size === 0 || isAdding}
-            className="font-sans"
-          >
-            {isAdding ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin mr-1" />
-                Adding...
-              </>
-            ) : (
-              `Add ${selected.size || ''} Product${selected.size === 1 ? '' : 's'}`
-            )}
-          </Button>
-        </div>
+              <Input
+                placeholder="Brand name"
+                value={suggestBrand}
+                onChange={(e) => setSuggestBrand(e.target.value)}
+                className="font-sans"
+                autoCapitalize="words"
+                autoFocus
+              />
+              <Input
+                placeholder="Products or details (optional)"
+                value={suggestDetails}
+                onChange={(e) => setSuggestDetails(e.target.value)}
+                className="font-sans"
+              />
+              <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  className="flex-1 font-sans"
+                  onClick={() => { setShowSuggest(false); setSuggestBrand(''); setSuggestDetails(''); }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="flex-1 font-sans"
+                  disabled={!suggestBrand.trim() || isSuggesting}
+                  onClick={handleSuggestBrand}
+                >
+                  {isSuggesting ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Send className="w-4 h-4 mr-1" />}
+                  Submit
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
