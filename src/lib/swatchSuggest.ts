@@ -39,6 +39,27 @@ const TONE_CODE_MAP: Record<string, ToneFamily> = {
   'B': 'natural',
   'BB': 'natural',
   'BG': 'gold',
+  // Redken Shades EQ chart additions
+  'T': 'ash',         // Titanium
+  'SB': 'ash',        // Silver Blue
+  'GY': 'ash',        // Green Yellow (Matte)
+  'P': 'ash',         // Pearl
+  'PP': 'ash',        // Pearl Pearl
+  'M': 'ash',         // Matte
+  'BP': 'ash',        // Blue Pearl
+  'W': 'gold',        // Warm
+  'WG': 'gold',       // Warm Gold
+  'WN': 'gold',       // Warm Natural
+  'NW': 'gold',       // Natural Warm
+  'NG': 'gold',       // Natural Gold
+  'Y': 'gold',        // Yellow
+  'NB': 'natural',    // Natural Blue / Mahogany
+  'O': 'copper',      // Orange
+  'RO': 'copper',     // Red Orange
+  'OR': 'copper',     // Orange Red
+  'VG': 'violet',     // Violet Gold
+  'VRo': 'red_violet', // Violet Rose
+  'RVG': 'red_violet', // Red Violet Gold
 };
 
 /** Keyword → tone family (checked against full product name) */
@@ -88,6 +109,10 @@ const KEYWORD_TONE_MAP: [RegExp, ToneFamily][] = [
   [/\bgreige\b/i, 'ash'],
   [/\bmushroom\b/i, 'ash'],
   [/\bsteel\s*beige\b/i, 'ash'],
+  [/\bpearl\b/i, 'ash'],
+  [/\bmatte\b/i, 'ash'],
+  [/\btitanium\b/i, 'ash'],
+  [/\bdriftwood\b/i, 'ash'],
   [/\bgold\b/i, 'gold'],
   [/\bbeige\b/i, 'gold'],
   [/\bhoney\b/i, 'gold'],
@@ -102,12 +127,16 @@ const KEYWORD_TONE_MAP: [RegExp, ToneFamily][] = [
   [/\btitian\b/i, 'copper'],
   [/\brusset\b/i, 'copper'],
   [/\bburnt\s*sienna\b/i, 'copper'],
+  [/\bflamme\b/i, 'copper'],
+  [/\bpaprika\b/i, 'copper'],
   [/\bmahogany\b/i, 'red'],
   [/\bred\b/i, 'red'],
   [/\bburgundy\b/i, 'red'],
   [/\bwine\b/i, 'red'],
   [/\bcherry\b/i, 'red'],
   [/\bstrawberry\b/i, 'red'],
+  [/\bbonfire\b/i, 'red'],
+  [/\bcayenne\b/i, 'red'],
   [/\baubergine\b/i, 'violet'],
   [/\bviolet\b/i, 'violet'],
   [/\bpurple\b/i, 'violet'],
@@ -128,6 +157,15 @@ const KEYWORD_TONE_MAP: [RegExp, ToneFamily][] = [
   [/\bcaramel\b/i, 'natural'],
   [/\bchocolate\b/i, 'natural'],
   [/\bchestnut\b/i, 'natural'],
+  // Redken-specific warm brown keywords
+  [/\bchicory\b/i, 'warm_brown'],
+  [/\bmaple\b/i, 'warm_brown'],
+  [/\bmocha\s*java\b/i, 'warm_brown'],
+  [/\bcardamom\b/i, 'warm_brown'],
+  [/\bcedar\b/i, 'warm_brown'],
+  [/\bsandal\b/i, 'warm_brown'],
+  // Rose (standalone, not "rose gold") → red_violet
+  [/\brose\b/i, 'red_violet'],
 ];
 
 /**
@@ -347,6 +385,20 @@ function guessColorFromName(name: string): string | null {
     [/\bcaf[eé]\s*au\s*lait\b/, '#B09070'],
     [/\bmushroom\s*brown\b/, '#8A7760'],
     [/\bsand\b/, '#C4AB82'],
+    // Redken-specific shade names
+    [/\bdriftwood\b/, '#8A8A7B'],            // ash level 7
+    [/\bmother\s*of\s*pearl\b/, '#D5CFC0'],  // ash level 10
+    [/\bstorm\s*cloud\b/, '#6B6B5E'],        // ash level 6
+    [/\bchicory\b/, '#6B4A30'],              // warm brown level 5
+    [/\bmaple\b/, '#7A5638'],                // warm brown level 6
+    [/\bmocha\s*java\b/, '#4A2E1C'],         // warm brown level 4
+    [/\bcardamom\b/, '#A08060'],             // warm brown level 7
+    [/\bcedar\b/, '#6B4A30'],                // warm brown level 5
+    [/\bsandal\b/, '#C4AB82'],               // warm brown level 9
+    [/\bflamme\b/, '#CC6C28'],               // copper level 8
+    [/\bpaprika\b/, '#9A4414'],              // copper level 6
+    [/\bbonfire\b/, '#8B2020'],              // red level 7
+    [/\bcayenne\b/, '#7A1E1E'],              // red level 6
     // Ash / cool expanded
     [/\bcool\s*sand\b/, '#C4BAA2'],
     [/\bcool\s*tan\b/, '#B0A68E'],
