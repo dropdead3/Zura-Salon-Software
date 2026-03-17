@@ -1214,7 +1214,7 @@ function ColumnBrowser({
   onClearCategory: () => void;
   onClearProductLine: () => void;
   onSetPricing: (ids: string[], label: string) => void;
-  renderProductTable: (products: SupplyLibraryProduct[], category?: string) => React.ReactNode;
+  renderProductTable: (products: SupplyLibraryProduct[], category?: string) => JSX.Element;
   reanalyzingCategory: string | null;
   onAutoAssignSwatches: (products: SupplyLibraryProduct[], category: string) => void;
   onReanalyzeSwatches: (products: SupplyLibraryProduct[], category: string) => void;
