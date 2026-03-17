@@ -58,7 +58,7 @@ export function DashboardThemeProvider({ children }: { children: ReactNode }) {
   const location = useLocation();
 
   useEffect(() => {
-    if (location.pathname.startsWith('/dashboard/platform')) {
+    if (isPlatformRoute(location.pathname)) {
       // On platform routes, remove org-level dark class so it doesn't bleed
       document.documentElement.classList.remove('dark');
       return;
