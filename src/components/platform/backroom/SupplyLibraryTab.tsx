@@ -376,8 +376,16 @@ export function SupplyLibraryTab() {
   };
 
   // ─── Product row renderer (shared between views) ───
-  const renderProductRow = (p: SupplyLibraryProduct) => (
+  const renderProductRow = (p: SupplyLibraryProduct, showSwatch = false) => (
     <TableRow key={p.id} className="border-[hsl(var(--platform-border)/0.3)]">
+      {showSwatch && (
+        <TableCell className="w-[40px] pr-0">
+          <SwatchPicker
+            value={(p as any).swatch_color ?? null}
+            onChange={(hex) => handleSwatchSave(p.id, hex)}
+          />
+        </TableCell>
+      )}
       <TableCell className="font-sans text-sm font-medium text-[hsl(var(--platform-foreground))]">{p.name}</TableCell>
       <TableCell>
         {inlineEditing?.id === p.id && inlineEditing.field === 'category' ? (
