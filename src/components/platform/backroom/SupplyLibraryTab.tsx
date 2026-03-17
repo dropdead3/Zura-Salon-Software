@@ -16,7 +16,7 @@ import { PlatformTable as Table, PlatformTableHeader as TableHeader, PlatformTab
 import { Dialog, PlatformDialogContent as DialogContent, DialogHeader, PlatformDialogTitle as DialogTitle, DialogFooter, PlatformDialogDescription as DialogDescription } from '@/components/platform/ui/PlatformDialog';
 import { PlatformLabel as Label } from '@/components/platform/ui/PlatformLabel';
 import { PlatformInput as Input } from '@/components/platform/ui/PlatformInput';
-import { Loader2, Search, Package, Plus, Database, Pencil, Trash2, AlertTriangle, Upload, Download, ChevronLeft, ChevronRight, ChevronDown, DollarSign } from 'lucide-react';
+import { Loader2, Search, Package, Plus, Database, Pencil, Trash2, AlertTriangle, Upload, Download, ChevronLeft, ChevronRight, ChevronDown, DollarSign, CheckCircle2, X, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
@@ -33,6 +33,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { formatCurrency } from '@/lib/format';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { formatRelativeTime } from '@/lib/format';
+import { useSupplyLibraryRequests, useResolveSupplyRequest } from '@/hooks/platform/useSupplyLibraryRequests';
 
 const CATEGORIES = ['color', 'lightener', 'developer', 'toner', 'bond builder', 'treatment', 'additive'];
 const DEPLETION_METHODS = ['weighed', 'per_service', 'manual', 'per_pump'];
@@ -71,6 +72,8 @@ export function SupplyLibraryTab() {
     search: productSearch || undefined,
   });
   const { data: brands = [] } = useSupplyLibraryBrands();
+  const { data: supplyRequests = [] } = useSupplyLibraryRequests();
+  const resolveRequest = useResolveSupplyRequest();
 
   // Build brand card data from allProducts
   const brandCards = useMemo<BrandCardData[]>(() => {
@@ -390,6 +393,95 @@ export function SupplyLibraryTab() {
 
   return (
     <div className="space-y-4">
+      {/* ─── User Requests Panel ─── */}
+      {supplyRequests.length > 0 && (
+        <Collapsible defaultOpen>
+          <PlatformCard variant="glass">
+            <CollapsibleTrigger className="w-full">
+              <div className="flex items-center justify-between px-6 py-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center">
+                    <MessageSquare className="w-4 h-4 text-amber-400" />
+                  </div>
+                  <span className="font-display text-sm tracking-wide text-[hsl(var(--platform-foreground))]">
+                    User Requests
+                  </span>
+                  <PlatformBadge variant="warning" size="sm">
+                    {supplyRequests.length}
+                  </PlatformBadge>
+                </div>
+                <ChevronDown className="w-4 h-4 text-[hsl(var(--platform-foreground-muted))] transition-transform [[data-state=open]_&]:rotate-180" />
+              </div>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div className="px-6 pb-4 space-y-2">
+                {supplyRequests.map((req) => (
+                  <div
+                    key={req.id}
+                    className="flex items-start justify-between gap-4 rounded-lg border border-[hsl(var(--platform-border)/0.4)] bg-[hsl(var(--platform-bg-hover)/0.3)] p-3"
+                  >
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <p className="font-sans text-sm font-medium text-[hsl(var(--platform-foreground))] truncate">
+                        {req.title}
+                      </p>
+                      {req.description && (
+                        <p className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))] line-clamp-2">
+                          {req.description}
+                        </p>
+                      )}
+                      <div className="flex items-center gap-2 text-xs text-[hsl(var(--platform-foreground-muted))]">
+                        {req.submitter_name && <span className="font-sans">{req.submitter_name}</span>}
+                        {req.org_name && (
+                          <>
+                            <span>·</span>
+                            <span className="font-sans">{req.org_name}</span>
+                          </>
+                        )}
+                        <span>·</span>
+                        <span className="font-sans">{formatRelativeTime(req.created_at)}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <PlatformButton
+                              variant="ghost"
+                              size="icon-sm"
+                              className="text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10"
+                              disabled={resolveRequest.isPending}
+                              onClick={() => resolveRequest.mutate({ id: req.id, status: 'completed' })}
+                            >
+                              <CheckCircle2 className="w-4 h-4" />
+                            </PlatformButton>
+                          </TooltipTrigger>
+                          <TooltipContent><span className="font-sans text-xs">Mark Complete</span></TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <PlatformButton
+                              variant="ghost"
+                              size="icon-sm"
+                              className="text-[hsl(var(--platform-foreground-muted))] hover:text-red-400 hover:bg-red-500/10"
+                              disabled={resolveRequest.isPending}
+                              onClick={() => resolveRequest.mutate({ id: req.id, status: 'dismissed' })}
+                            >
+                              <X className="w-4 h-4" />
+                            </PlatformButton>
+                          </TooltipTrigger>
+                          <TooltipContent><span className="font-sans text-xs">Dismiss</span></TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CollapsibleContent>
+          </PlatformCard>
+        </Collapsible>
+      )}
       <PlatformCard variant="glass">
         <PlatformCardHeader>
           <div className="flex items-center justify-between flex-wrap gap-3">
