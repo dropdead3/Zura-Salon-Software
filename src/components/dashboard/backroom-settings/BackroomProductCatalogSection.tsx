@@ -941,9 +941,9 @@ function FinderProductRow({ product, onUpdate }: { product: BackroomProduct; onU
             <span className="text-[10px] text-muted-foreground">%</span>
           </div>
           {chargePerGram != null && (
-            <PlatformBadge variant="secondary" size="sm" className="text-[10px] font-sans">
+            <Badge variant="secondary" className="text-[10px] font-sans">
               ${chargePerGram.toFixed(4)}/g
-            </PlatformBadge>
+            </Badge>
           )}
 
           <div className="w-px h-3 bg-[hsl(var(--platform-border)/0.3)]" />
