@@ -1025,6 +1025,7 @@ export function SupplyLibraryTab() {
                                   size="sm"
                                   variant="ghost"
                                   className="h-6 px-2 text-[10px] font-sans text-amber-400 hover:text-amber-300"
+                                  disabled={reanalyzingCategory === (SUPPLY_CATEGORY_LABELS[category] || category)}
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     const updates = products
@@ -1034,8 +1035,8 @@ export function SupplyLibraryTab() {
                                     setReanalyzeConfirm({ category: SUPPLY_CATEGORY_LABELS[category] || category, updates });
                                   }}
                                 >
-                                  <RefreshCw className="w-3 h-3 mr-0.5" />
-                                  Re-analyze all
+                                  <RefreshCw className={cn('w-3 h-3 mr-0.5', reanalyzingCategory === (SUPPLY_CATEGORY_LABELS[category] || category) && 'animate-spin')} />
+                                  {reanalyzingCategory === (SUPPLY_CATEGORY_LABELS[category] || category) ? 'Analyzing...' : 'Re-analyze all'}
                                 </PlatformButton>
                               )}
                             </div>
