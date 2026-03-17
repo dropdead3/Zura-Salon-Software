@@ -877,9 +877,6 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                               <TableHead className="w-8 font-sans text-xs">Track</TableHead>
                               {showSwatch && <TableHead className="w-[40px] font-sans text-xs" />}
                               <TableHead className="font-sans text-xs">Name</TableHead>
-                              <TableHead className="font-sans text-xs hidden md:table-cell">Category</TableHead>
-                              <TableHead className="font-sans text-xs hidden lg:table-cell">Depletion</TableHead>
-                              <TableHead className="font-sans text-xs hidden lg:table-cell">Unit</TableHead>
                               <TableHead className="font-sans text-xs">Wholesale</TableHead>
                               <TableHead className="font-sans text-xs hidden md:table-cell">Markup</TableHead>
                               <TableHead className="font-sans text-xs hidden md:table-cell">Retail</TableHead>
@@ -889,7 +886,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                           <TableBody>
                             {displayProducts.length === 0 ? (
                               <TableRow>
-                                <TableCell colSpan={showSwatch ? 10 : 9} className="text-center py-8">
+                                <TableCell colSpan={showSwatch ? 7 : 6} className="text-center py-8">
                                   <p className="font-sans text-xs text-muted-foreground">No products in this selection</p>
                                 </TableCell>
                               </TableRow>
@@ -927,17 +924,8 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                                         )}
                                       </TableCell>
                                     )}
-                                    <TableCell className="font-sans text-sm font-medium text-foreground">{p.name}</TableCell>
-                                    <TableCell className="hidden md:table-cell">
-                                      <Badge variant="outline" className="text-[10px] capitalize">
-                                        {(SUPPLY_CATEGORY_LABELS as Record<string, string>)[p.category || ''] || p.category || '—'}
-                                      </Badge>
-                                    </TableCell>
-                                    <TableCell className="hidden lg:table-cell font-sans text-xs text-muted-foreground">
-                                      {p.depletion_method || '—'}
-                                    </TableCell>
-                                    <TableCell className="hidden lg:table-cell font-sans text-xs text-muted-foreground">
-                                      {p.unit_of_measure || '—'}
+                                    <TableCell className="font-sans text-sm font-medium text-foreground">
+                                      {p.name.replace(/\s*[—–-]\s*\d+\.?\d*\s*(g|ml|oz|L|l)\s*$/i, '')}
                                     </TableCell>
                                     <TableCell className="font-sans text-xs">
                                       {isGhostCost ? (
