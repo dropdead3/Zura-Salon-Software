@@ -1160,6 +1160,21 @@ function AddEditDialog({
         if (error) throw error;
         toast.success('Product updated');
       } else {
+        // Check for duplicate before inserting (case-insensitive)
+        const { data: dupes } = await supabase
+          .from('supply_library_products')
+          .select('id')
+          .eq('is_active', true)
+          .ilike('brand', payload.brand)
+          .ilike('name', payload.name)
+          .limit(1);
+
+        if (dupes && dupes.length > 0) {
+          toast.error('A product with this brand and name already exists');
+          setSaving(false);
+          return;
+        }
+
         const { error } = await supabase.from('supply_library_products').insert({ ...payload, is_active: true });
         if (error) throw error;
         toast.success('Product added to supply library');

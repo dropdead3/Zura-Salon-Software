@@ -83,9 +83,33 @@ export function CSVImportDialog({ open, onOpenChange }: CSVImportDialogProps) {
     if (validRows.length === 0) return;
     setImporting(true);
     try {
+      // Fetch existing products to filter out duplicates (case-insensitive)
+      const brands = [...new Set(validRows.map((r) => r.brand))];
+      const { data: existing } = await supabase
+        .from('supply_library_products')
+        .select('brand, name')
+        .eq('is_active', true)
+        .in('brand', brands);
+
+      const existingSet = new Set(
+        (existing || []).map((p: any) => `${p.brand}::${p.name}`.toLowerCase())
+      );
+
+      const deduped = validRows.filter(
+        (r) => !existingSet.has(`${r.brand}::${r.name}`.toLowerCase())
+      );
+
+      if (deduped.length === 0) {
+        toast.info('All products already exist in the library');
+        onOpenChange(false);
+        return;
+      }
+
+      const skipped = validRows.length - deduped.length;
+
       const BATCH = 200;
-      for (let i = 0; i < validRows.length; i += BATCH) {
-        const batch = validRows.slice(i, i + BATCH).map((r) => ({
+      for (let i = 0; i < deduped.length; i += BATCH) {
+        const batch = deduped.slice(i, i + BATCH).map((r) => ({
           brand: r.brand, name: r.name, category: r.category,
           default_depletion: r.default_depletion, default_unit: r.default_unit,
           size_options: r.size_options, is_active: true,
@@ -96,7 +120,7 @@ export function CSVImportDialog({ open, onOpenChange }: CSVImportDialogProps) {
       queryClient.invalidateQueries({ queryKey: ['supply-library-products'] });
       queryClient.invalidateQueries({ queryKey: ['supply-library-brands'] });
       queryClient.invalidateQueries({ queryKey: ['supply-library-init-status'] });
-      toast.success(`Imported ${validRows.length} products`);
+      toast.success(`Imported ${deduped.length} products${skipped > 0 ? ` (${skipped} duplicates skipped)` : ''}`);
       onOpenChange(false);
       setRows([]);
       setFileName('');
