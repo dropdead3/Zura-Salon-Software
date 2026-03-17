@@ -1090,7 +1090,8 @@ function AddEditDialog({
     try {
       const sizeArr = sizes.split(',').map((s) => s.trim()).filter(Boolean);
       const wpVal = wholesalePrice.trim() ? parseFloat(wholesalePrice) : null;
-      const rrVal = recommendedRetail.trim() ? parseFloat(recommendedRetail) : null;
+      const mpVal = markupPct.trim() ? parseFloat(markupPct) : null;
+      const rrVal = wpVal != null && mpVal != null ? Math.round(wpVal * (1 + mpVal / 100) * 100) / 100 : null;
       const payload: any = {
         brand: brand.trim(),
         name: name.trim(),
@@ -1099,6 +1100,7 @@ function AddEditDialog({
         default_unit: unit,
         size_options: sizeArr,
         wholesale_price: wpVal,
+        default_markup_pct: mpVal,
         recommended_retail: rrVal,
         ...(wpVal != null ? { price_updated_at: new Date().toISOString() } : {}),
       };
