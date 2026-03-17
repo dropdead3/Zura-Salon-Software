@@ -318,7 +318,7 @@ function guessColorFromName(name: string): string | null {
     [/\bhoney\b/, '#C4981E'],                // gold 8
     [/\bplatinum\b/, '#D5CFC0'],             // ash 10
     [/\bsilver\b/, '#C5C5BB'],               // ash 9
-    [/\bmauve\b/, '#926092'],                // violet 8
+    [/\bmauve\b/, '#7E4E7E'],                // palette Mauve
     [/\borchid\b/, '#9E789E'],               // violet 9
     [/\bslate\b/, '#4A6070'],                // blue 8
     [/\bsteel\b/, '#5A7A90'],                // blue 9
