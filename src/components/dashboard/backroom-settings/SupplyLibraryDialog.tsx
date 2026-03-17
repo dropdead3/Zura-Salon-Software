@@ -500,6 +500,8 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
 
   const handleBack = () => {
     setSelectedBrand(null);
+    setSelectedCategory(null);
+    setSelectedLine(null);
     setSearch('');
   };
 
