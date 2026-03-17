@@ -100,12 +100,27 @@ export function useSeedSupplyLibrary() {
 
   return useMutation({
     mutationFn: async () => {
+      // Fetch existing (brand, name) pairs to skip duplicates
+      const { data: existing, error: fetchErr } = await supabase
+        .from('supply_library_products')
+        .select('brand, name')
+        .eq('is_active', true);
+      if (fetchErr) throw fetchErr;
+
+      const existingSet = new Set(
+        (existing || []).map((p: any) => `${p.brand}::${p.name}`.toLowerCase())
+      );
+
+      const newItems = SUPPLY_LIBRARY.filter(
+        (item) => !existingSet.has(`${item.brand}::${item.name}`.toLowerCase())
+      );
+
       // Insert in batches of 200 to avoid payload limits
       const BATCH_SIZE = 200;
       let inserted = 0;
 
-      for (let i = 0; i < SUPPLY_LIBRARY.length; i += BATCH_SIZE) {
-      const batch = SUPPLY_LIBRARY.slice(i, i + BATCH_SIZE).map((item) => ({
+      for (let i = 0; i < newItems.length; i += BATCH_SIZE) {
+        const batch = newItems.slice(i, i + BATCH_SIZE).map((item) => ({
           brand: item.brand,
           name: item.name,
           category: item.category,
