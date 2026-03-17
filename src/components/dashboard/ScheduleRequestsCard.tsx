@@ -50,8 +50,8 @@ export function ScheduleRequestsCard() {
   if (isLoading) {
     return (
       <Card>
-        <CardContent className="flex items-center justify-center py-8">
-          <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+        <CardContent className="py-8">
+          <DashboardLoader size="sm" />
         </CardContent>
       </Card>
     );

@@ -153,8 +153,8 @@ export function PerformanceTrendChart({ userId, weeks = 8 }: PerformanceTrendCha
   if (isLoading) {
     return (
       <Card>
-        <CardContent className="p-6 flex items-center justify-center min-h-[200px]">
-          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        <CardContent className="p-6 min-h-[200px]">
+          <DashboardLoader size="md" className="min-h-[200px]" />
         </CardContent>
       </Card>
     );

@@ -262,11 +262,7 @@ export function EmailBrandingSettings() {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <DashboardLoader size="md" className="py-12" />;
   }
 
   // Social icons for preview

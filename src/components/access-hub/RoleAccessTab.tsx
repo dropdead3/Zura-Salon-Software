@@ -97,8 +97,8 @@ export function RoleAccessTab({ canManage }: RoleAccessTabProps) {
   if (rolesLoading || visibilityLoading) {
     return (
       <Card>
-        <CardContent className="flex items-center justify-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        <CardContent className="py-12">
+          <DashboardLoader size="md" />
         </CardContent>
       </Card>
     );
