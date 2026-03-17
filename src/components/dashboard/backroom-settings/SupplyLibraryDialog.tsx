@@ -121,7 +121,7 @@ function BrandCardGrid({
       </div>
 
       {/* Brand cards */}
-      <ScrollArea className="flex-1 h-0">
+      <ScrollArea className="flex-1 min-h-0">
         <div className="p-6 pt-3">
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {filtered.map((b) => {
