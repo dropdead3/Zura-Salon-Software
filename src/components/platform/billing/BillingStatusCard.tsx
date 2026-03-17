@@ -17,15 +17,15 @@ import {
 import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
 import type { BillingStatus } from '@/hooks/useOrganizationBilling';
 import type { BillingCalculation } from '@/hooks/useBillingCalculations';
-import { formatCurrency, getBillingCycleLabel } from '@/hooks/useBillingCalculations';
-import type { BillingCycle } from '@/hooks/useOrganizationBilling';
+import { formatCurrency } from '@/hooks/useBillingCalculations';
 
 interface BillingStatusCardProps {
   billingStatus: BillingStatus;
   calculation: BillingCalculation;
-  billingCycle: BillingCycle;
   nextInvoiceDate?: string | null;
   planName?: string;
+  /** @deprecated billingCycle is no longer used — monthly only */
+  billingCycle?: unknown;
 }
 
 const statusConfig: Record<BillingStatus, { 
@@ -44,7 +44,6 @@ const statusConfig: Record<BillingStatus, {
 export function BillingStatusCard({
   billingStatus,
   calculation,
-  billingCycle,
   nextInvoiceDate,
   planName,
 }: BillingStatusCardProps) {
@@ -76,7 +75,7 @@ export function BillingStatusCard({
           {/* Billing Cycle */}
           <div>
             <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Billing Cycle</p>
-            <p className="text-lg font-medium text-white">{getBillingCycleLabel(billingCycle)}</p>
+            <p className="text-lg font-medium text-white">Monthly</p>
           </div>
 
           {/* Effective Rate */}
@@ -117,18 +116,6 @@ export function BillingStatusCard({
             <p className="text-xs text-violet-400/70 mt-1">
               Saving {formatCurrency(calculation.promoSavings)}/mo during promo period
             </p>
-          </div>
-        )}
-
-        {/* Cycle Savings */}
-        {calculation.savingsAmount > 0 && !calculation.isInTrial && (
-          <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-3">
-            <div className="flex items-center gap-2 text-emerald-300">
-              <CheckCircle2 className="h-4 w-4" />
-              <span className="text-sm font-medium">
-                Saving {calculation.savingsPercentage}% with {getBillingCycleLabel(billingCycle).toLowerCase()} billing
-              </span>
-            </div>
           </div>
         )}
       </PlatformCardContent>
