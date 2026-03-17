@@ -314,7 +314,7 @@ function guessColorFromName(name: string): string | null {
     [/\bginger\b/, '#9A4414'],               // copper 6
     [/\bchocolate\b/, '#3B2314'],            // natural 4
     [/\bcaramel\b/, '#8B6239'],              // natural 6
-    [/\bchampagne\b/, '#D4A830'],            // gold 9
+    [/\bchampagne\b/, '#D9C48E'],            // palette Champagne
     [/\bhoney\b/, '#C4981E'],                // gold 8
     [/\bplatinum\b/, '#D5CFC0'],             // ash 10
     [/\bsilver\b/, '#C5C5BB'],               // ash 9
