@@ -75,8 +75,9 @@ export function PlatformThemeEditor({ themeColors, onChange }: PlatformThemeEdit
     const hslValue = hexToHsl(hexValue);
     onChange({ ...themeColors, [key]: hslValue });
     
-    // Apply immediately for live preview
-    document.documentElement.style.setProperty(`--${key}`, hslValue);
+    // Apply immediately for live preview — scoped to platform container
+    const target = (document.querySelector('.platform-theme') as HTMLElement) || document.documentElement;
+    target.style.setProperty(`--${key}`, hslValue);
   };
 
   const handleReset = (key: string) => {
