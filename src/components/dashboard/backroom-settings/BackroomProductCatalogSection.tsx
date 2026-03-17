@@ -1156,16 +1156,12 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                         )}
 
                         {/* Center: Logo + Name */}
-                        {meta?.logo_url ? (
+                        {meta?.logo_url && (
                           <img
                             src={meta.logo_url}
                             alt={brandName}
                             className="w-12 h-12 rounded-lg object-contain bg-white/10 p-0.5"
                           />
-                        ) : (
-                          <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center text-base font-display text-muted-foreground">
-                            {brandName[0]}
-                          </div>
                         )}
                         <span className="text-sm font-display tracking-wide text-foreground text-center">{brandName}</span>
 
