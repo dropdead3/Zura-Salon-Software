@@ -830,10 +830,10 @@ function BrandFinder({
 
       {/* Next step */}
       {onNavigate && trackedCount > 0 && (
-        <div className="flex justify-end pt-2 border-t border-[hsl(var(--platform-border)/0.4)]">
-          <PlatformButton variant="ghost" size="sm" className="text-xs font-sans" onClick={() => onNavigate('services')}>
+        <div className="flex justify-end pt-2 border-t">
+          <Button variant="ghost" size="sm" className="text-xs font-sans" onClick={() => onNavigate('services')}>
             Next: Service Tracking <ArrowRight className="w-3 h-3 ml-1" />
-          </PlatformButton>
+          </Button>
         </div>
       )}
     </div>
