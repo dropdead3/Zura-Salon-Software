@@ -33,6 +33,7 @@ import {
   GitMerge,
   Home
 } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { BannedClientBadge } from '@/components/dashboard/clients/BannedClientBadge';
 import { DuplicateDrilldown } from '@/components/dashboard/clients/DuplicateDrilldown';
 import { DuplicatePairCard } from '@/components/dashboard/clients/DuplicatePairCard';
