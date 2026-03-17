@@ -6,6 +6,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, TrendingUp, TrendingDown, AlertTriangle, Check, HelpCircle } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { cn } from '@/lib/utils';
 import { useUsageVariance, type UsageVariance } from '@/hooks/inventory/useUsageVariance';
 
