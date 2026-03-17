@@ -255,6 +255,7 @@ export interface BrandSummaryRow {
   cnt: number;
   missing_price: number;
   missing_swatch: number;
+  is_professional: boolean;
 }
 
 export function useSupplyLibraryBrandSummaries() {

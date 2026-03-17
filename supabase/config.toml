@@ -230,3 +230,9 @@ verify_jwt = false
 
 [functions.send-payment-setup-link]
 verify_jwt = false
+
+[functions.generate-color-catalog]
+verify_jwt = false
+
+[functions.bulk-catalog-import]
+verify_jwt = false

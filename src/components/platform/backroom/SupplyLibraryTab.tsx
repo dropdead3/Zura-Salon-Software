@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
+import { BulkCatalogImport } from './BulkCatalogImport';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import {
@@ -16,7 +17,7 @@ import { PlatformTable as Table, PlatformTableHeader as TableHeader, PlatformTab
 import { Dialog, PlatformDialogContent as DialogContent, DialogHeader, PlatformDialogTitle as DialogTitle, DialogFooter, PlatformDialogDescription as DialogDescription, AlertDialog, PlatformAlertDialogContent, PlatformAlertDialogTitle, PlatformAlertDialogDescription, PlatformAlertDialogCancel, AlertDialogAction, AlertDialogFooter, AlertDialogHeader } from '@/components/platform/ui/PlatformDialog';
 import { PlatformLabel as Label } from '@/components/platform/ui/PlatformLabel';
 import { PlatformInput as Input } from '@/components/platform/ui/PlatformInput';
-import { Loader2, Search, Package, Plus, Database, Pencil, Trash2, AlertTriangle, Upload, Download, ChevronLeft, ChevronRight, ChevronDown, DollarSign, CheckCircle2, X, MessageSquare, ChevronsUpDown, Clock, RefreshCw, RotateCcw } from 'lucide-react';
+import { Loader2, Search, Package, Plus, Database, Pencil, Trash2, AlertTriangle, Upload, Download, ChevronLeft, ChevronRight, ChevronDown, DollarSign, CheckCircle2, X, MessageSquare, ChevronsUpDown, Clock, RefreshCw, RotateCcw, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
@@ -78,6 +79,7 @@ export function SupplyLibraryTab() {
   const [collapsedSubLines, setCollapsedSubLines] = useState<Set<string>>(new Set());
   const [editBrandOpen, setEditBrandOpen] = useState(false);
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
+  const [bulkImportOpen, setBulkImportOpen] = useState(false);
   const [reanalyzeConfirm, setReanalyzeConfirm] = useState<{ category: string; updates: { id: string; hex: string }[] } | null>(null);
   const [reanalyzingCategory, setReanalyzingCategory] = useState<string | null>(null);
 
@@ -698,9 +700,14 @@ export function SupplyLibraryTab() {
                 <Plus className="w-3.5 h-3.5 mr-1" /> Add Product
               </PlatformButton>
               {!selectedBrand && (
-                <PlatformButton size="sm" variant="outline" onClick={() => setAddBrandOpen(true)}>
-                  <Plus className="w-3.5 h-3.5 mr-1" /> Add Brand
-                </PlatformButton>
+                <>
+                  <PlatformButton size="sm" variant="outline" onClick={() => setAddBrandOpen(true)}>
+                    <Plus className="w-3.5 h-3.5 mr-1" /> Add Brand
+                  </PlatformButton>
+                  <PlatformButton size="sm" variant="outline" onClick={() => setBulkImportOpen(true)}>
+                    <Sparkles className="w-3.5 h-3.5 mr-1" /> Build Full Catalog
+                  </PlatformButton>
+                </>
               )}
             </div>
           </div>
@@ -1105,6 +1112,13 @@ export function SupplyLibraryTab() {
 
       {/* Add Brand Wizard */}
       <AddBrandWizard open={addBrandOpen} onOpenChange={setAddBrandOpen} />
+
+      {/* Bulk AI Catalog Import */}
+      <BulkCatalogImport
+        existingBrands={brandCards.map(b => b.brand)}
+        open={bulkImportOpen}
+        onOpenChange={setBulkImportOpen}
+      />
 
       {/* Edit Brand Dialog */}
       {selectedBrand && (
