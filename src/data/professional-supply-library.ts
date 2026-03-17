@@ -2844,28 +2844,66 @@ export const SUPPLY_LIBRARY: SupplyLibraryItem[] = [
   // ELGON
   // ════════════════════════════════════════════════════════════════
 
-  // ── I-Light Permanent (60ml) — key shades ──
+  // ── I-Light Permanent (60ml) — full catalog ──
   c('Elgon', 'I-Light 1/0 Black', 'color', ['60ml']),
   c('Elgon', 'I-Light 3/0 Dark Brown', 'color', ['60ml']),
   c('Elgon', 'I-Light 4/0 Brown', 'color', ['60ml']),
+  c('Elgon', 'I-Light 4/1 Brown Ash', 'color', ['60ml']),
+  c('Elgon', 'I-Light 4/4 Brown Copper', 'color', ['60ml']),
+  c('Elgon', 'I-Light 4/5 Brown Mahogany', 'color', ['60ml']),
+  c('Elgon', 'I-Light 4/6 Brown Red', 'color', ['60ml']),
+  c('Elgon', 'I-Light 4/7 Brown Brown', 'color', ['60ml']),
   c('Elgon', 'I-Light 5/0 Light Brown', 'color', ['60ml']),
+  c('Elgon', 'I-Light 5/1 Light Ash Brown', 'color', ['60ml']),
   c('Elgon', 'I-Light 5/3 Light Golden Brown', 'color', ['60ml']),
   c('Elgon', 'I-Light 5/4 Light Copper Brown', 'color', ['60ml']),
+  c('Elgon', 'I-Light 5/5 Light Mahogany Brown', 'color', ['60ml']),
+  c('Elgon', 'I-Light 5/6 Light Red Brown', 'color', ['60ml']),
+  c('Elgon', 'I-Light 5/7 Light Brown Brown', 'color', ['60ml']),
   c('Elgon', 'I-Light 6/0 Dark Blonde', 'color', ['60ml']),
+  c('Elgon', 'I-Light 6/1 Dark Ash Blonde', 'color', ['60ml']),
   c('Elgon', 'I-Light 6/3 Dark Golden Blonde', 'color', ['60ml']),
+  c('Elgon', 'I-Light 6/4 Dark Copper Blonde', 'color', ['60ml']),
+  c('Elgon', 'I-Light 6/5 Dark Mahogany Blonde', 'color', ['60ml']),
+  c('Elgon', 'I-Light 6/6 Dark Red Blonde', 'color', ['60ml']),
+  c('Elgon', 'I-Light 6/7 Dark Brown Blonde', 'color', ['60ml']),
   c('Elgon', 'I-Light 7/0 Blonde', 'color', ['60ml']),
   c('Elgon', 'I-Light 7/1 Ash Blonde', 'color', ['60ml']),
   c('Elgon', 'I-Light 7/3 Golden Blonde', 'color', ['60ml']),
+  c('Elgon', 'I-Light 7/4 Copper Blonde', 'color', ['60ml']),
+  c('Elgon', 'I-Light 7/5 Mahogany Blonde', 'color', ['60ml']),
+  c('Elgon', 'I-Light 7/6 Red Blonde', 'color', ['60ml']),
   c('Elgon', 'I-Light 8/0 Light Blonde', 'color', ['60ml']),
   c('Elgon', 'I-Light 8/1 Light Ash Blonde', 'color', ['60ml']),
+  c('Elgon', 'I-Light 8/3 Light Golden Blonde', 'color', ['60ml']),
+  c('Elgon', 'I-Light 8/4 Light Copper Blonde', 'color', ['60ml']),
   c('Elgon', 'I-Light 9/0 Very Light Blonde', 'color', ['60ml']),
+  c('Elgon', 'I-Light 9/1 Very Light Ash Blonde', 'color', ['60ml']),
   c('Elgon', 'I-Light 10/0 Extra Light Blonde', 'color', ['60ml']),
 
-  // ── Moda & Styling Color (60ml) ──
+  // ── I-Light Correctors ──
+  c('Elgon', 'I-Light 0/1 Ash Corrector', 'additive', ['60ml']),
+  c('Elgon', 'I-Light 0/3 Gold Corrector', 'additive', ['60ml']),
+  c('Elgon', 'I-Light 0/4 Copper Corrector', 'additive', ['60ml']),
+  c('Elgon', 'I-Light 0/6 Red Corrector', 'additive', ['60ml']),
+  c('Elgon', 'I-Light 0/7 Brown Corrector', 'additive', ['60ml']),
+
+  // ── Moda & Styling Color (60ml) — expanded ──
   c('Elgon', 'Moda & Styling 5/0 Light Brown', 'color', ['60ml']),
+  c('Elgon', 'Moda & Styling 5/1 Light Ash Brown', 'color', ['60ml']),
+  c('Elgon', 'Moda & Styling 5/3 Light Golden Brown', 'color', ['60ml']),
+  c('Elgon', 'Moda & Styling 5/4 Light Copper Brown', 'color', ['60ml']),
   c('Elgon', 'Moda & Styling 6/0 Dark Blonde', 'color', ['60ml']),
+  c('Elgon', 'Moda & Styling 6/1 Dark Ash Blonde', 'color', ['60ml']),
+  c('Elgon', 'Moda & Styling 6/3 Dark Golden Blonde', 'color', ['60ml']),
+  c('Elgon', 'Moda & Styling 6/4 Dark Copper Blonde', 'color', ['60ml']),
   c('Elgon', 'Moda & Styling 7/0 Blonde', 'color', ['60ml']),
+  c('Elgon', 'Moda & Styling 7/1 Ash Blonde', 'color', ['60ml']),
+  c('Elgon', 'Moda & Styling 7/3 Golden Blonde', 'color', ['60ml']),
+  c('Elgon', 'Moda & Styling 7/4 Copper Blonde', 'color', ['60ml']),
   c('Elgon', 'Moda & Styling 8/0 Light Blonde', 'color', ['60ml']),
+  c('Elgon', 'Moda & Styling 8/1 Light Ash Blonde', 'color', ['60ml']),
+  c('Elgon', 'Moda & Styling 8/3 Light Golden Blonde', 'color', ['60ml']),
   c('Elgon', 'Moda & Styling 9/0 Very Light Blonde', 'color', ['60ml']),
 
   // ── Elgon Lightener ──
