@@ -261,7 +261,7 @@ export function SwatchPicker({ value, suggestedValue, onChange, disabled }: Swat
               </span>
             </button>
           )}
-          <ScrollArea className="max-h-[350px]">
+          <ScrollArea className="h-[350px]">
             <div className="space-y-2 pr-2">
               {HAIR_COLOR_SECTIONS.map((section) => (
                 <div key={section.label}>
