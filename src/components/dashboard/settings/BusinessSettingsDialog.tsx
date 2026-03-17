@@ -696,17 +696,32 @@ export function BusinessSettingsDialog({ open, onOpenChange }: BusinessSettingsD
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 pt-4">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={updateSettings.isPending}>
-                {updateSettings.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                Save Changes
-              </Button>
-            </div>
           </form>
         )}
+        </div>
+
+        {/* Sticky footer */}
+        <div
+          className={cn(
+            'sticky bottom-0 z-10 flex justify-end gap-3 border-t border-border bg-background/80 backdrop-blur-xl px-6 py-4 transition-all duration-200',
+            isDirty ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0 pointer-events-none'
+          )}
+        >
+          <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            disabled={updateSettings.isPending}
+            onClick={() => {
+              const form = document.querySelector('[role="dialog"] form') as HTMLFormElement | null;
+              form?.requestSubmit();
+            }}
+          >
+            {updateSettings.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            Save Changes
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );
