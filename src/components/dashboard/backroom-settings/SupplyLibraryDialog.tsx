@@ -8,7 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import {
-  Search, Package, Check, Library, Loader2, MessageSquarePlus, Send,
+  Search, Check, Library, Loader2, MessageSquarePlus, Send,
   PackagePlus, ChevronLeft, ArrowLeft,
 } from 'lucide-react';
 import { PLATFORM_NAME } from '@/lib/brand';
