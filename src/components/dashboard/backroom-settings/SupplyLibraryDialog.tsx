@@ -756,7 +756,12 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
 
                       {/* Product rows */}
                       <ScrollArea className="flex-1 min-h-0">
-                        <div className="p-1.5 space-y-0.5">
+                        <motion.div
+                          className="p-1.5 space-y-0.5"
+                          initial="hidden"
+                          animate="show"
+                          variants={{ hidden: {}, show: { transition: { staggerChildren: 0.02 } } }}
+                        >
                           {displayProducts.map((item) => {
                             const hasSizes = item.sizeOptions && item.sizeOptions.length > 0;
                             const itemKeys = getItemKeys(item);
@@ -764,8 +769,10 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
                             const anySelected = itemKeys.some(({ key }) => selected.has(key));
 
                             return (
-                              <div
+                              <motion.div
                                 key={`${item.brand}::${item.name}`}
+                                variants={{ hidden: { opacity: 0, y: 4 }, show: { opacity: 1, y: 0 } }}
+                                transition={{ duration: 0.15, ease: 'easeOut' }}
                                 className={cn(
                                   'rounded-lg px-3 py-2.5 transition-colors',
                                   allExisting
