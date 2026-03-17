@@ -490,7 +490,7 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
   };
 
   const brandFullyAdded = (brand: string) => {
-    const items = getProductsByBrand(brand);
+    const items = brandItems;
     return items.every((p) =>
       getItemKeys(p).every(({ size }) => isExisting(p.brand, p.name, size)),
     );
