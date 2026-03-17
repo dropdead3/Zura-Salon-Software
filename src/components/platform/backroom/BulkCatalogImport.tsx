@@ -633,7 +633,20 @@ export function BulkCatalogImport({ existingBrands, open, onOpenChange }: BulkCa
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-xs font-sans text-[hsl(var(--platform-foreground-muted))]">
                   <span>{completedCount} / {results.length} brands processed</span>
-                  <span>{totalGenerated} products generated</span>
+                  <div className="flex items-center gap-3">
+                    <span>{totalGenerated} products generated</span>
+                    <button
+                      type="button"
+                      className="font-sans text-xs text-violet-400 hover:text-violet-300 transition-colors"
+                      onClick={() => {
+                        const allBrands = results.filter(r => r.products && r.products.length > 0).map(r => r.brand);
+                        const allExpanded = allBrands.every(b => expandedBrands.has(b));
+                        setExpandedBrands(allExpanded ? new Set() : new Set(allBrands));
+                      }}
+                    >
+                      {results.filter(r => r.products && r.products.length > 0).every(r => expandedBrands.has(r.brand)) ? 'Collapse All' : 'Expand All'}
+                    </button>
+                  </div>
                 </div>
                 <Progress value={progress} className="h-2" />
               </div>
@@ -721,25 +734,24 @@ export function BulkCatalogImport({ existingBrands, open, onOpenChange }: BulkCa
                             );
                           })()}
 
-                          {/* Sample product names (first 10) */}
-                          {r.products!.slice(0, 10).map((p, i) => (
-                            <div key={i} className="flex items-center gap-2">
-                              {p.swatch_hex && (
-                                <div
-                                  className="w-3 h-3 rounded-full border border-[hsl(var(--platform-border)/0.5)] shrink-0"
-                                  style={{ backgroundColor: p.swatch_hex }}
-                                />
-                              )}
-                              <span className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))] truncate">
-                                {p.name}
-                              </span>
+                          {/* Full product list */}
+                          <ScrollArea className="max-h-[300px]">
+                            <div className="space-y-0.5 pr-2">
+                              {r.products!.map((p, i) => (
+                                <div key={i} className="flex items-center gap-2">
+                                  {p.swatch_hex && (
+                                    <div
+                                      className="w-3 h-3 rounded-full border border-[hsl(var(--platform-border)/0.5)] shrink-0"
+                                      style={{ backgroundColor: p.swatch_hex }}
+                                    />
+                                  )}
+                                  <span className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))] truncate">
+                                    {p.name}
+                                  </span>
+                                </div>
+                              ))}
                             </div>
-                          ))}
-                          {r.products!.length > 10 && (
-                            <span className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))/0.6] italic">
-                              ... and {r.products!.length - 10} more
-                            </span>
-                          )}
+                          </ScrollArea>
                         </div>
                       </CollapsibleContent>
                     )}
