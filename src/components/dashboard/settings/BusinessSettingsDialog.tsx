@@ -84,6 +84,64 @@ export function BusinessSettingsDialog({ open, onOpenChange }: BusinessSettingsD
     return null;
   };
 
+  const trimTransparentPadding = (file: File): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      if (file.type !== 'image/png') {
+        resolve(file);
+        return;
+      }
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) { resolve(file); return; }
+        ctx.drawImage(img, 0, 0);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const { data, width, height } = imageData;
+        let top = height, left = width, right = 0, bottom = 0;
+        // Scan for non-transparent, non-near-white pixels
+        for (let y = 0; y < height; y++) {
+          for (let x = 0; x < width; x++) {
+            const idx = (y * width + x) * 4;
+            const a = data[idx + 3];
+            const r = data[idx], g = data[idx + 1], b = data[idx + 2];
+            // Consider pixel "content" if it's not transparent AND not near-white
+            if (a > 10 && !(r > 240 && g > 240 && b > 240 && a > 240)) {
+              if (y < top) top = y;
+              if (y > bottom) bottom = y;
+              if (x < left) left = x;
+              if (x > right) right = x;
+            }
+          }
+        }
+        if (top > bottom || left > right) { resolve(file); return; }
+        // Add small padding (4px each side)
+        const pad = 4;
+        top = Math.max(0, top - pad);
+        left = Math.max(0, left - pad);
+        bottom = Math.min(height - 1, bottom + pad);
+        right = Math.min(width - 1, right + pad);
+        const trimW = right - left + 1;
+        const trimH = bottom - top + 1;
+        const trimCanvas = document.createElement('canvas');
+        trimCanvas.width = trimW;
+        trimCanvas.height = trimH;
+        const trimCtx = trimCanvas.getContext('2d');
+        if (!trimCtx) { resolve(file); return; }
+        trimCtx.drawImage(img, left, top, trimW, trimH, 0, 0, trimW, trimH);
+        trimCanvas.toBlob((blob) => {
+          if (blob) resolve(blob); else resolve(file);
+        }, 'image/png');
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+      img.src = url;
+    });
+  };
+
   const uploadLogo = async (file: File, type: 'light' | 'dark') => {
     const error = validateFile(file);
     if (error) {
@@ -95,13 +153,15 @@ export function BusinessSettingsDialog({ open, onOpenChange }: BusinessSettingsD
     setUploading(true);
 
     try {
+      // Auto-trim transparent/white padding from PNGs
+      const processedBlob = await trimTransparentPadding(file);
       const fileExt = file.name.split('.').pop();
       const fileName = `logo-${type}-${Date.now()}.${fileExt}`;
       const filePath = `${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('business-logos')
-        .upload(filePath, file, { upsert: true });
+        .upload(filePath, processedBlob, { upsert: true });
 
       if (uploadError) throw uploadError;
 
