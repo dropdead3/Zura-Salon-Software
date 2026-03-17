@@ -514,7 +514,7 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
         </CardHeader>
         <CardContent>
           {clientLoading ? (
-            <div className="h-48 flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-muted-foreground" /></div>
+            <div className="h-48 flex items-center justify-center"><DashboardLoader size="md" /></div>
           ) : clientSorted.length === 0 ? (
             <EmptyState icon={CalendarRange} title="Not enough data" description="Fewer than 3 services found. Try widening your date range (e.g. Last 30 Days) for more meaningful insights." />
           ) : (

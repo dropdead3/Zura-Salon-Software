@@ -356,9 +356,7 @@ export function WorkScheduleWidget() {
 
         {/* Current schedule display */}
         {isLoading ? (
-          <div className="flex items-center justify-center py-4">
-            <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-          </div>
+          <DashboardLoader size="sm" className="py-4" />
         ) : (
           <div className="space-y-3">
             <div className="flex flex-wrap gap-2">
