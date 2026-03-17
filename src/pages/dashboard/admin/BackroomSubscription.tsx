@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
-import { Loader2, CreditCard, Scale, Settings, Plus, Beaker } from 'lucide-react';
+import { Loader2, CreditCard, Weight, Settings, Plus, Beaker } from 'lucide-react';
 import { AddScalesDialog } from '@/components/dashboard/backroom-settings/AddScalesDialog';
 import { BackroomROICard } from '@/components/dashboard/backroom-settings/BackroomROICard';
 import { BACKROOM_BASE_PRICE, BACKROOM_PER_SERVICE_FEE, SCALE_LICENSE_MONTHLY } from '@/hooks/backroom/useLocationStylistCounts';
@@ -181,7 +181,7 @@ export default function BackroomSubscription() {
             <CardContent className="p-6 space-y-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
-                  <Scale className="w-5 h-5 text-primary" />
+                  <Weight className="w-5 h-5 text-primary" />
                 </div>
                 <div>
                   <p className={cn(tokens.label.default, 'text-foreground')}>Scale Hardware</p>

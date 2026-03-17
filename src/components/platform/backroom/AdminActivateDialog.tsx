@@ -17,7 +17,7 @@ import {
   PlatformSelectTrigger as SelectTrigger,
 } from '@/components/platform/ui/PlatformSelect';
 import { Switch } from '@/components/ui/switch';
-import { MapPin, CreditCard, Scale, AlertTriangle } from 'lucide-react';
+import { MapPin, CreditCard, Weight, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -179,7 +179,7 @@ export function AdminActivateDialog({
                       </td>
                       <td className="px-3 py-2">
                         <div className="flex items-center gap-1">
-                          <Scale className="w-3 h-3 text-slate-500" />
+                          <Weight className="w-3 h-3 text-slate-500" />
                           <Select
                             value={String(cfg.scale_count)}
                             onValueChange={(val) => updateConfig(cfg.location_id, { scale_count: parseInt(val) })}

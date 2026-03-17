@@ -23,7 +23,7 @@ import {
 } from '@/components/platform/ui/PlatformSelect';
 import { PlatformTable as Table, PlatformTableBody as TableBody, PlatformTableCell as TableCell, PlatformTableHead as TableHead, PlatformTableHeader as TableHeader, PlatformTableRow as TableRow } from '@/components/platform/ui/PlatformTable';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Building2, Search, Loader2, ChevronDown, ChevronRight, MapPin, Scale, AlertTriangle, ShieldCheck, Undo2, CreditCard, Send } from 'lucide-react';
+import { Building2, Search, Loader2, ChevronDown, ChevronRight, MapPin, Weight, AlertTriangle, ShieldCheck, Undo2, CreditCard, Send } from 'lucide-react';
 import { useBatchPaymentMethods, type PaymentMethodInfo } from '@/hooks/platform/useBatchPaymentMethods';
 import { useSendPaymentSetupLink } from '@/hooks/platform/useSendPaymentSetupLink';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
@@ -774,7 +774,7 @@ function LocationEntitlementPanel({
                   <td className="px-4 py-2.5">
                     {isActive && ent ? (
                       <div className="flex items-center gap-1.5">
-                        <Scale className="w-3.5 h-3.5 text-slate-500" />
+                        <Weight className="w-3.5 h-3.5 text-slate-500" />
                         <Select
                           value={String(ent.scale_count)}
                           onValueChange={(val) =>

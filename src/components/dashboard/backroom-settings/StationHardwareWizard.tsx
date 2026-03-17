@@ -32,7 +32,7 @@ import {
   Monitor,
   Bluetooth,
   Tablet,
-  Scale,
+  Weight,
   Check,
   ArrowLeft,
   ArrowRight,
@@ -57,7 +57,7 @@ interface WizardState {
 const STEPS = [
   { label: 'Station', icon: Monitor },
   { label: 'Device', icon: Tablet },
-  { label: 'Scale', icon: Scale },
+  { label: 'Scale', icon: Weight },
   { label: 'Confirm', icon: Check },
 ];
 
@@ -576,7 +576,7 @@ function StepScalePairing({
                     )}
                   >
                     <div className="flex items-center gap-2">
-                      <Scale className="w-4 h-4 text-muted-foreground" />
+                      <Weight className="w-4 h-4 text-muted-foreground" />
                       <span className={tokens.body.emphasis}>{d.name}</span>
                     </div>
                     <Badge variant="outline" className="text-[10px]">Pair</Badge>

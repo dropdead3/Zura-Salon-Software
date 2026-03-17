@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Scale } from 'lucide-react';
+import { Weight } from 'lucide-react';
 
 interface ManualWeightInputProps {
   onSubmit: (weight: number, unit: string) => void;
@@ -57,7 +57,7 @@ export function ManualWeightInput({
         disabled={disabled || !value || parseFloat(value) <= 0}
         className="h-12 min-w-[48px] shrink-0"
       >
-        <Scale className="w-4 h-4 mr-1.5" />
+        <Weight className="w-4 h-4 mr-1.5" />
         Capture
       </Button>
     </div>
