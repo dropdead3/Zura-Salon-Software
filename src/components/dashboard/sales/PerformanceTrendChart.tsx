@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { TrendingUp, TrendingDown, Minus, Loader2, MapPin } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, MapPin } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format, subWeeks, startOfWeek, endOfWeek } from 'date-fns';
