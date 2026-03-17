@@ -508,8 +508,8 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                   className={cn(
                     'inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] sm:text-xs font-sans font-medium transition-all whitespace-nowrap',
                     !activeLetter
-                      ? 'bg-[hsl(var(--platform-foreground))] text-[hsl(var(--platform-bg))]'
-                      : 'bg-[hsl(var(--platform-bg-hover)/0.6)] text-[hsl(var(--platform-foreground)/0.7)] hover:bg-[hsl(var(--platform-bg-hover))] hover:text-[hsl(var(--platform-foreground))]'
+                      ? 'bg-foreground text-background'
+                      : 'bg-muted/60 text-foreground/70 hover:bg-muted hover:text-foreground'
                   )}
                 >
                   All
