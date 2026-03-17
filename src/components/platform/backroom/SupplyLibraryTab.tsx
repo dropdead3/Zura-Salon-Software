@@ -72,6 +72,8 @@ export function SupplyLibraryTab() {
     search: productSearch || undefined,
   });
   const { data: brands = [] } = useSupplyLibraryBrands();
+  const { data: supplyRequests = [] } = useSupplyLibraryRequests();
+  const resolveRequest = useResolveSupplyRequest();
 
   // Build brand card data from allProducts
   const brandCards = useMemo<BrandCardData[]>(() => {
