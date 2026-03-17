@@ -252,18 +252,25 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
     return m;
   }, [brandsMeta]);
 
-  // Existing keys
+  // Existing keys — includes base names (size suffix stripped) to catch size-variant duplicates
   const existingKeys = useMemo(() => {
     const s = new Set<string>();
     existingProducts.forEach((p) => {
-      if (p.brand && p.name) s.add(`${p.brand.toLowerCase()}::${p.name.toLowerCase()}`);
+      if (p.brand && p.name) {
+        const fullKey = `${p.brand.toLowerCase()}::${p.name.toLowerCase()}`;
+        s.add(fullKey);
+        // Also store the base name (strip size suffix) so size-variant matches are caught
+        const baseName = p.name.replace(/\s*[—–-]\s*\d+\.?\d*\s*(g|ml|oz|L|l)\s*$/i, '').toLowerCase();
+        s.add(`${p.brand.toLowerCase()}::${baseName}`);
+      }
     });
     return s;
   }, [existingProducts]);
 
   const isExisting = (brand: string, name: string, size?: string) =>
     existingKeys.has(sizedKey(brand, name, size))
-    || existingKeys.has(`${brand.toLowerCase()}::${sizedName(name, size).toLowerCase()}`);
+    || existingKeys.has(`${brand.toLowerCase()}::${sizedName(name, size).toLowerCase()}`)
+    || existingKeys.has(`${brand.toLowerCase()}::${name.toLowerCase()}`);
 
   const getItemKeys = (item: SupplyLibraryItem): { key: string; size?: string }[] => {
     if (item.sizeOptions && item.sizeOptions.length > 0) {
