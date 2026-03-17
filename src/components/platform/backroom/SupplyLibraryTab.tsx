@@ -55,6 +55,7 @@ export function SupplyLibraryTab() {
   const [productSearch, setProductSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [pricingFilter, setPricingFilter] = useState<'all' | 'missing' | 'priced'>('all');
+  const [recencyFilter, setRecencyFilter] = useState<'all' | 'recent'>('all');
   const [addOpen, setAddOpen] = useState(false);
   const [editProduct, setEditProduct] = useState<SupplyLibraryProduct | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<SupplyLibraryProduct | null>(null);
