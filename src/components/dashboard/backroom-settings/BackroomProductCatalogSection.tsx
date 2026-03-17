@@ -37,7 +37,7 @@ import {
   TableRow,
   TableCell,
 } from '@/components/ui/table';
-import { BrowseColumn, type BrowseColumnItem } from '@/components/platform/backroom/BrowseColumn';
+import { OrgBrowseColumn as BrowseColumn, type BrowseColumnItem } from '@/components/dashboard/backroom-settings/OrgBrowseColumn';
 import { extractProductLine, groupByProductLine } from '@/lib/supply-line-parser';
 import { useSupplyBrandsMeta, type SupplyBrandMeta } from '@/hooks/platform/useSupplyLibraryBrandMeta';
 import { sortByShadeLevel, SHADE_SORTED_CATEGORIES } from '@/lib/shadeSort';

@@ -13,7 +13,7 @@ import {
   PackagePlus, ChevronLeft, ArrowLeft, Package,
 } from 'lucide-react';
 import { PLATFORM_NAME } from '@/lib/brand';
-import { BrowseColumn, type BrowseColumnItem } from '@/components/platform/backroom/BrowseColumn';
+import { OrgBrowseColumn as BrowseColumn, type BrowseColumnItem } from '@/components/dashboard/backroom-settings/OrgBrowseColumn';
 import { groupByProductLine } from '@/lib/supply-line-parser';
 import {
   SUPPLY_CATEGORY_LABELS,
