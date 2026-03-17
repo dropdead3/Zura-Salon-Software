@@ -38,6 +38,16 @@ const KNOWN_MULTI_WORD_PREFIXES = [
   'High Speed',
   // Pravana
   'Pure Light', 'Vivids Pastels', 'Vivids Everlasting', 'Vivids Jewels', 'Vivids Neons',
+  // Framesi
+  'Framcolor Futura', 'Framcolor Eclectic', 'Decolor B',
+  // Lakme
+  'K.Blonde', 'Collage Developer',
+  // Keune
+  'Tinta Color', 'Tinta Developer', 'Semi Color', 'Ultimate Blonde', 'Freedom Blonde',
+  // Elgon
+  'Moda & Styling', 'Decolorvit Plus',
+  // Oligo
+  'Calura Gloss', 'Calura Booster', 'Calura Developer', 'Blacklight Smart', 'Blacklight Blue',
   // Generic
   'Silk Infusion', 'Keratin Mist',
 ].sort((a, b) => b.length - a.length); // longest-first for greedy match
