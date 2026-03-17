@@ -23059,6 +23059,14 @@ export type Database = {
           slot_start: string
         }[]
       }
+      get_supply_library_brand_summaries: {
+        Args: never
+        Returns: {
+          brand: string
+          category: string
+          cnt: number
+        }[]
+      }
       get_user_accessible_organizations: {
         Args: { _user_id: string }
         Returns: string[]
