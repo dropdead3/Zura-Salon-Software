@@ -40,6 +40,7 @@ import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { AnalyticsFilterBadge } from '@/components/dashboard/AnalyticsFilterBadge';
 import { useAnalyticsCardOrder } from '@/hooks/useAnalyticsCardOrder';
 import { AnalyticsCardReorderDrawer, type CardDefinition } from '@/components/dashboard/analytics/AnalyticsCardReorderDrawer';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 
 interface ServicesContentProps {
   dateFrom: string;
