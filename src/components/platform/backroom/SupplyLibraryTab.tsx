@@ -1191,8 +1191,8 @@ function AddEditDialog({
               <Input type="number" autoCapitalize="off" value={wholesalePrice} onChange={(e) => setWholesalePrice(e.target.value)} placeholder="0.00" className="font-sans" />
             </div>
             <div className="space-y-1.5">
-              <Label className="font-sans text-xs">Recommended Retail</Label>
-              <Input type="number" autoCapitalize="off" value={recommendedRetail} onChange={(e) => setRecommendedRetail(e.target.value)} placeholder="0.00" className="font-sans" />
+              <Label className="font-sans text-xs">Markup %</Label>
+              <Input type="number" autoCapitalize="off" value={markupPct} onChange={(e) => setMarkupPct(e.target.value)} placeholder="0" className="font-sans" />
             </div>
           </div>
         </div>
