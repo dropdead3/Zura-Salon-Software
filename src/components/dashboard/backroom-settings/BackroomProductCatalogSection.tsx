@@ -458,16 +458,32 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
     });
   }, [categoryProducts, selectedLine]);
 
-  // Display products for Col 3 — shade sorted when applicable
+  // Display products for Col 3 — shade sorted when applicable, enriched with library fallbacks
   const displayProducts = useMemo(() => {
     if (!selectedCategory) return [];
-    const prods = selectedLine ? lineProducts : [];
+    let prods = selectedLine ? lineProducts : [];
     if (prods.length === 0) return prods;
+
+    // Enrich with library ghost values for display
+    const enriched = prods.map((p) => {
+      if (p.cost_price != null && p.swatch_color != null && p.markup_pct != null) return p;
+      const match = libraryItems.find((li) =>
+        p.name.toLowerCase().startsWith(li.name.toLowerCase())
+      );
+      if (!match) return p;
+      return {
+        ...p,
+        _ghostCost: p.cost_price == null ? match.wholesalePrice ?? null : null,
+        _ghostMarkup: p.markup_pct == null ? match.defaultMarkupPct ?? null : null,
+        _ghostSwatch: p.swatch_color == null ? match.swatchColor ?? null : null,
+      } as BackroomProduct & { _ghostCost?: number | null; _ghostMarkup?: number | null; _ghostSwatch?: string | null };
+    });
+
     if (SHADE_SORTED_CATEGORIES.has(selectedCategory)) {
-      return sortByShadeLevel(prods);
+      return sortByShadeLevel(enriched);
     }
-    return prods;
-  }, [selectedCategory, selectedLine, lineProducts]);
+    return enriched;
+  }, [selectedCategory, selectedLine, lineProducts, libraryItems]);
 
   // Bulk toggle helpers
   const toggleCategoryTracking = useCallback((enabled: boolean) => {
