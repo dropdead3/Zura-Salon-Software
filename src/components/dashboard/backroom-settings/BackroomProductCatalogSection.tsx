@@ -43,7 +43,7 @@ import {
   SUPPLY_CATEGORY_LABELS,
   type SupplyLibraryItem,
 } from '@/data/professional-supply-library';
-import { useSupplyLibraryItems } from '@/hooks/platform/useSupplyLibrary';
+import { useSupplyLibraryItemsByBrand } from '@/hooks/platform/useSupplyLibrary';
 
 /* ====== Constants ====== */
 const DEPLETION_METHODS = [
