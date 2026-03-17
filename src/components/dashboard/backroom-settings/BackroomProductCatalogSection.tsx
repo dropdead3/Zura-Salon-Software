@@ -536,7 +536,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
               )}
 
               {/* Three-column browser */}
-              <div className="rounded-xl border overflow-hidden flex min-h-[400px] max-h-[600px]">
+              <div className="rounded-xl border border-border/40 overflow-hidden flex min-h-[400px] max-h-[600px]">
                 {/* Column 1: Categories */}
                 <BrowseColumn
                   title="Categories"
