@@ -76,6 +76,7 @@ export function SupplyLibraryTab() {
   const [collapsedSubLines, setCollapsedSubLines] = useState<Set<string>>(new Set());
   const [editBrandOpen, setEditBrandOpen] = useState(false);
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
+  const [reanalyzeConfirm, setReanalyzeConfirm] = useState<{ category: string; updates: { id: string; hex: string }[] } | null>(null);
 
   // Count how many brands have saved collapse state
   const savedBrandCount = useMemo(() => {
@@ -919,6 +920,37 @@ export function SupplyLibraryTab() {
                     </AlertDialogFooter>
                   </PlatformAlertDialogContent>
                 </AlertDialog>
+                <AlertDialog open={!!reanalyzeConfirm} onOpenChange={(open) => { if (!open) setReanalyzeConfirm(null); }}>
+                  <PlatformAlertDialogContent>
+                    <AlertDialogHeader>
+                      <PlatformAlertDialogTitle>Re-analyze Swatches</PlatformAlertDialogTitle>
+                      <PlatformAlertDialogDescription>
+                        Re-analyze {reanalyzeConfirm?.updates.length ?? 0} swatches in {reanalyzeConfirm?.category}? This overwrites existing assignments.
+                      </PlatformAlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <PlatformAlertDialogCancel>Cancel</PlatformAlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={async () => {
+                          if (!reanalyzeConfirm) return;
+                          let saved = 0;
+                          for (const u of reanalyzeConfirm.updates) {
+                            const { error } = await supabase
+                              .from('supply_library_products')
+                              .update({ swatch_color: u.hex } as any)
+                              .eq('id', u.id);
+                            if (!error) saved++;
+                          }
+                          queryClient.invalidateQueries({ queryKey: ['supply-library-products'] });
+                          toast.success(`Re-analyzed ${saved} swatches`);
+                          setReanalyzeConfirm(null);
+                        }}
+                      >
+                        Continue
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </PlatformAlertDialogContent>
+                </AlertDialog>
                 {/* Recently Added filter */}
                 <PlatformButton
                   variant={recencyFilter === 'recent' ? 'secondary' : 'ghost'}
@@ -986,23 +1018,13 @@ export function SupplyLibraryTab() {
                                   size="sm"
                                   variant="ghost"
                                   className="h-6 px-2 text-[10px] font-sans text-amber-400 hover:text-amber-300"
-                                  onClick={async (e) => {
+                                  onClick={(e) => {
                                     e.stopPropagation();
                                     const updates = products
                                       .map((p) => ({ id: p.id, hex: suggestSwatchColor(p.name) }))
-                                      .filter((u) => u.hex !== null);
+                                      .filter((u): u is { id: string; hex: string } => u.hex !== null);
                                     if (!updates.length) { toast.info('No suggestions available'); return; }
-                                    if (!confirm(`Re-analyze ${updates.length} swatches in ${SUPPLY_CATEGORY_LABELS[category] || category}? This overwrites existing assignments.`)) return;
-                                    let saved = 0;
-                                    for (const u of updates) {
-                                      const { error } = await supabase
-                                        .from('supply_library_products')
-                                        .update({ swatch_color: u.hex } as any)
-                                        .eq('id', u.id);
-                                      if (!error) saved++;
-                                    }
-                                    queryClient.invalidateQueries({ queryKey: ['supply-library-products'] });
-                                    toast.success(`Re-analyzed ${saved} swatches`);
+                                    setReanalyzeConfirm({ category: SUPPLY_CATEGORY_LABELS[category] || category, updates });
                                   }}
                                 >
                                   <RefreshCw className="w-3 h-3 mr-0.5" />
