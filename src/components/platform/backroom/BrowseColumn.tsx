@@ -131,8 +131,8 @@ export function BrowseColumn({
                   className={cn(
                     'w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-colors',
                     isActive
-                      ? 'bg-violet-600/20 border-l-2 border-violet-500 text-[hsl(var(--platform-foreground))]'
-                      : 'hover:bg-[hsl(var(--platform-bg-hover)/0.5)] text-[hsl(var(--platform-foreground-muted))] border-l-2 border-transparent',
+                      ? 'bg-primary/10 border-l-2 border-primary text-foreground'
+                      : 'hover:bg-muted/50 text-muted-foreground border-l-2 border-transparent',
                   )}
                 >
                   {/* Health dot */}
