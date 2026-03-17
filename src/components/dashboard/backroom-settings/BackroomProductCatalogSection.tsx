@@ -492,7 +492,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
               )}
 
               {/* Search */}
-              <PlatformInput
+              <Input
                 placeholder="Search brands..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
