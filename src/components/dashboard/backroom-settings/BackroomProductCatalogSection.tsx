@@ -889,14 +889,14 @@ function FinderProductRow({ product, onUpdate }: { product: BackroomProduct; onU
             value={product.depletion_method}
             onValueChange={(v) => onUpdate({ depletion_method: v })}
           >
-            <PlatformSelectTrigger className="w-[100px] h-6 text-[11px] font-sans">
+            <SelectTrigger className="w-[100px] h-6 text-[11px] font-sans">
               <SelectValue />
-            </PlatformSelectTrigger>
-            <PlatformSelectContent>
+            </SelectTrigger>
+            <SelectContent>
               {DEPLETION_METHODS.map((m) => (
-                <PlatformSelectItem key={m.value} value={m.value} className="text-[11px]">{m.label}</PlatformSelectItem>
+                <SelectItem key={m.value} value={m.value} className="text-[11px]">{m.label}</SelectItem>
               ))}
-            </PlatformSelectContent>
+            </SelectContent>
           </Select>
         )}
       </div>
