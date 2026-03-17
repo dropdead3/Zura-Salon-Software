@@ -17,7 +17,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Plus, MoreHorizontal, Pencil, Trash2, Copy, Loader2 } from 'lucide-react';
+import { Plus, MoreHorizontal, Pencil, Trash2, Copy } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { isPast, isFuture } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
