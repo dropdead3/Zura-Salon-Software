@@ -1019,6 +1019,14 @@ export function SupplyLibraryTab() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Bulk Pricing Dialog */}
+      <SupplyBulkPricingDialog
+        open={bulkPricingOpen}
+        onOpenChange={setBulkPricingOpen}
+        productIds={bulkPricingProductIds}
+        scopeLabel={bulkPricingScopeLabel}
+      />
     </div>
   );
 }
