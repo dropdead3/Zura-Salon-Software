@@ -564,8 +564,8 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
       : 'All';
 
   // Category + line tracking states
-  const categoryAllTracked = categoryProducts.length > 0 && categoryProducts.every((p) => p.is_backroom_tracked);
-  const lineAllTracked = lineProducts.length > 0 && lineProducts.every((p) => p.is_backroom_tracked);
+  const categoryAllTracked = categoryProducts.length > 0 && categoryProducts.every((p) => isTrackedAtLocation(p.id));
+  const lineAllTracked = lineProducts.length > 0 && lineProducts.every((p) => isTrackedAtLocation(p.id));
 
   // Inventory table
   const filteredInventory = useMemo(() => {
