@@ -1,7 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { tokens } from '@/lib/design-tokens';
 import { Button } from '@/components/ui/button';
-import { Loader2, Target, RefreshCw } from 'lucide-react';
+import { Target, RefreshCw } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { WeeklyLeverBrief } from '@/components/executive-brief/WeeklyLeverBrief';
 import { SilenceState } from '@/components/executive-brief/SilenceState';
 import { EnforcementGateBanner } from '@/components/enforcement/EnforcementGateBanner';
@@ -58,9 +59,7 @@ export function WeeklyLeverSection({ onClose }: WeeklyLeverSectionProps) {
       <CardContent>
         <EnforcementGateBanner gateKey="gate_kpi_architecture">
           {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
+            <DashboardLoader size="md" className="py-12" />
           ) : recommendation ? (
             <WeeklyLeverBrief recommendation={recommendation} />
           ) : (

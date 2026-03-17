@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Trash2, Crown, Loader2, X, Sparkles } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { 
   useLoyaltyTiers, 
   useCreateLoyaltyTier, 
@@ -67,11 +68,7 @@ export function LoyaltyTiersEditor({ organizationId }: LoyaltyTiersEditorProps) 
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <DashboardLoader size="md" className="py-12" />;
   }
 
   if (tiers.length === 0) {

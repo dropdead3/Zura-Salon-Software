@@ -12,6 +12,7 @@ import {
   Loader2, Plus, Pencil, Trash2, GripVertical, Palette, Info, Clock, DollarSign, Scissors, Search, Eye, Archive, ArchiveRestore, ChevronDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { tokens } from '@/lib/design-tokens';
 import {
   useServiceCategoryColors,
@@ -405,7 +406,7 @@ export function ServicesSettingsContent() {
 
 
   if (catsLoading || servicesLoading) {
-    return <div className="flex items-center justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
+    return <DashboardLoader size="md" className="py-12" />;
   }
 
   return (

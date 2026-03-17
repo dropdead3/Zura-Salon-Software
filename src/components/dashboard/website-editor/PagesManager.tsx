@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
-import { Plus, Copy, Trash2, Archive, FileText, Loader2, RotateCcw } from 'lucide-react';
+import { Plus, Copy, Trash2, Archive, FileText, RotateCcw } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -167,11 +168,7 @@ export function PagesManager() {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <DashboardLoader size="md" className="h-64" />;
   }
 
   return (

@@ -584,7 +584,7 @@ function StepLocationOverrides({ stepId }: { stepId: string }) {
   };
 
   if (isLoading) {
-    return <div className="flex justify-center py-4"><Loader2 className="w-4 h-4 animate-spin" /></div>;
+    return <DashboardLoader size="sm" className="py-4" />;
   }
 
   return (

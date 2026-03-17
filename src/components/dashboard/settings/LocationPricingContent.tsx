@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { useLocations } from '@/hooks/useLocations';
@@ -56,11 +57,7 @@ export function LocationPricingContent({ serviceId, basePrice, onSaved }: Locati
   const activeLocations = locations.filter(l => l.is_active !== false);
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-8">
-        <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <DashboardLoader size="sm" className="py-8" />;
   }
 
   return (

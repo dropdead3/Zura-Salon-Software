@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, MessageCircle, Crown, Shield } from 'lucide-react';
+import { MessageCircle, Crown, Shield } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useLeadershipMembers, LeadershipMember } from '@/hooks/team-chat/useLeadershipMembers';
@@ -122,11 +123,7 @@ export function ChatLeadershipTab() {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <DashboardLoader size="md" className="h-full" />;
   }
 
   if (members.length === 0) {

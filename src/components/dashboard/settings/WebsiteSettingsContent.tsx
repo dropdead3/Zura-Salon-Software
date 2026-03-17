@@ -19,6 +19,7 @@ import {
   PanelLeftClose, PanelLeftOpen, Copy, Link as LinkIcon, QrCode,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { colorThemes, type ColorTheme } from '@/hooks/useColorTheme';
 import {
   useWebsiteBookingSettings,
@@ -163,7 +164,7 @@ function GeneralTab() {
   const isLoading = annLoading || socialLoading;
 
   if (isLoading) {
-    return <div className="flex items-center justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
+    return <DashboardLoader size="md" className="py-12" />;
   }
 
   return (
@@ -497,11 +498,7 @@ function ThemeTab() {
   const isLoading = themesLoading || activeLoading;
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <DashboardLoader size="md" className="py-12" />;
   }
 
   // ── Editor Mode ──
@@ -653,7 +650,7 @@ function BookingTab() {
   };
 
   if (isLoading) {
-    return <div className="flex items-center justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
+    return <DashboardLoader size="md" className="py-12" />;
   }
 
   return (
@@ -769,7 +766,7 @@ function RetailTab() {
   };
 
   if (isLoading) {
-    return <div className="flex items-center justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
+    return <DashboardLoader size="md" className="py-12" />;
   }
 
   return (
@@ -951,7 +948,7 @@ function SeoLegalTab() {
   };
 
   if (isLoading) {
-    return <div className="flex items-center justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
+    return <DashboardLoader size="md" className="py-12" />;
   }
 
   return (

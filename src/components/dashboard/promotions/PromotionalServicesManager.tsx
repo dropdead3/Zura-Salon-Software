@@ -17,7 +17,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Plus, MoreHorizontal, PowerOff, Trash2, Loader2, Clock } from 'lucide-react';
+import { Plus, MoreHorizontal, PowerOff, Trash2, Clock } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { isPast, differenceInDays } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { 
@@ -96,9 +97,7 @@ export function PromotionalServicesManager({ organizationId }: PromotionalServic
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
+            <DashboardLoader size="md" className="py-8" />
           ) : !promoServices?.length ? (
             <div className="text-center py-8 text-muted-foreground">
               <p>No promotional services yet</p>

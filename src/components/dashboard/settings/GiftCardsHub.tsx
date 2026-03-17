@@ -14,6 +14,7 @@ import {
   CreditCard, Package, Settings, Palette, Ban, CalendarDays,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { toast } from 'sonner';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
@@ -156,7 +157,7 @@ function ActiveCardsTab() {
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow><TableCell colSpan={8} className="text-center py-8"><Loader2 className="w-6 h-6 animate-spin mx-auto text-muted-foreground" /></TableCell></TableRow>
+              <TableRow><TableCell colSpan={8} className="text-center py-8"><DashboardLoader size="md" className="py-4" /></TableCell></TableRow>
             ) : filteredCards.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-8">
@@ -287,7 +288,7 @@ function EditGiftCardDialog({ card, onClose }: { card: GiftCard; onClose: () => 
           <div className="space-y-2">
             <Label className="text-xs">Redemption History</Label>
             {txLoading ? (
-              <div className="flex justify-center py-4"><Loader2 className="w-4 h-4 animate-spin text-muted-foreground" /></div>
+              <DashboardLoader size="sm" className="py-4" />
             ) : transactions.length === 0 ? (
               <p className="text-xs text-muted-foreground py-2">No redemptions yet</p>
             ) : (
@@ -327,7 +328,7 @@ function GiftCardSettingsTab() {
   const [newDenomination, setNewDenomination] = useState('');
   const { formatCurrency } = useFormatCurrency();
 
-  if (isLoading || !settings) return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
+  if (isLoading || !settings) return <DashboardLoader size="md" className="py-12" />;
 
   const denominations = settings.suggested_amounts || [25, 50, 100, 150, 200];
 

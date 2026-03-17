@@ -5,7 +5,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, CheckCircle2, Truck } from 'lucide-react';
+import { CheckCircle2, Truck } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { usePurchaseOrders, useMarkPurchaseOrderReceived, type PurchaseOrder } from '@/hooks/usePurchaseOrders';
@@ -52,7 +53,7 @@ export function PurchaseOrdersPanel() {
   }, [orders, groupBySupplier]);
 
   if (isLoading) {
-    return <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>;
+    return <DashboardLoader size="sm" className="py-8" />;
   }
 
   const renderRow = (po: PurchaseOrder) => {

@@ -35,6 +35,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { useStylistLevels, useSaveStylistLevels, type StylistLevel } from '@/hooks/useStylistLevels';
 import { Link } from 'react-router-dom';
 
@@ -181,9 +182,7 @@ export function StylistLevelsEditor({
         </DialogHeader>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-          </div>
+          <DashboardLoader size="md" className="py-8" />
         ) : (
           <div className="space-y-3 py-4 pr-2 mr-1 max-h-[400px] overflow-y-auto scrollbar-thin">
             {editingLevels.map((level, index) => (

@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { Save, Star, Loader2 } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { useLoyaltySettings, useUpdateLoyaltySettings } from '@/hooks/useLoyaltySettings';
 
 interface LoyaltyProgramConfiguratorProps {
@@ -68,11 +69,7 @@ export function LoyaltyProgramConfigurator({ organizationId }: LoyaltyProgramCon
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <DashboardLoader size="md" className="py-12" />;
   }
 
   return (
