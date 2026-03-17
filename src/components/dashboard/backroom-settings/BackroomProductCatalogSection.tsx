@@ -397,7 +397,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                     onClick={() => setCatalogView('brands')}
                     className={cn(
                       'flex items-center justify-center w-8 h-8 transition-colors',
-                      catalogView === 'brands' ? 'bg-[hsl(var(--platform-foreground))] text-[hsl(var(--platform-bg))]' : 'text-[hsl(var(--platform-foreground-muted))] hover:text-[hsl(var(--platform-foreground))] hover:bg-[hsl(var(--platform-bg-hover)/0.4)]'
+                      catalogView === 'brands' ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'
                     )}
                     title="Brand view"
                   >
