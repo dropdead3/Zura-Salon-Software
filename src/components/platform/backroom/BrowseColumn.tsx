@@ -94,23 +94,6 @@ export function BrowseColumn({
           {title} ({filtered.length})
         </span>
 
-        {/* Health dot legend */}
-        {items.some((i) => i.health) && (
-          <div className="flex items-center gap-3 mt-1.5">
-            <div className="flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              <span className="font-sans text-[9px] text-[hsl(var(--platform-foreground-subtle))]">Complete</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-              <span className="font-sans text-[9px] text-[hsl(var(--platform-foreground-subtle))]">Some missing</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
-              <span className="font-sans text-[9px] text-[hsl(var(--platform-foreground-subtle))]">Most missing</span>
-            </div>
-          </div>
-        )}
 
         {items.length >= searchThreshold && (
           <div className="relative mt-1.5">
