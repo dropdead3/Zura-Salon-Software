@@ -744,7 +744,7 @@ function BrandFinder({
                 Product Lines ({productLines.length})
               </span>
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] font-sans text-[hsl(var(--platform-foreground-muted))]">Track All</span>
+                <span className="text-[10px] font-sans text-muted-foreground">Track All</span>
                 <Switch
                   checked={categoryAllTracked}
                   onCheckedChange={(v) => onToggleCategoryTracking(v)}
