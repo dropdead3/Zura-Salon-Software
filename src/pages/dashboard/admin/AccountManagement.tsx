@@ -71,6 +71,7 @@ import {
   Maximize2,
   ArrowLeft,
 } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { cn } from '@/lib/utils';
 import { QRCodeCanvas } from 'qrcode.react';
 import BrandLogo from '@/assets/brand-logo-secondary.svg';
