@@ -805,7 +805,7 @@ export function SupplyLibraryTab() {
                       key={b.brand}
                       variant="interactive"
                       size="md"
-                      className="cursor-pointer p-4 flex flex-col items-center text-center gap-2 relative"
+                      className={cn("cursor-pointer p-4 flex flex-col items-center text-center gap-2 relative", !b.isComplete && "pt-9")}
                       onClick={() => { setSelectedBrand(b.brand); setProductSearch(''); setCategoryFilter('all'); try { const cats = localStorage.getItem(collapseKey('categories', b.brand)); setCollapsedCategories(cats ? new Set(JSON.parse(cats)) : new Set()); const subs = localStorage.getItem(collapseKey('sublines', b.brand)); setCollapsedSubLines(subs ? new Set(JSON.parse(subs)) : new Set()); } catch { setCollapsedCategories(new Set()); setCollapsedSubLines(new Set()); } }}
                     >
                       {!b.isComplete && (
@@ -816,7 +816,7 @@ export function SupplyLibraryTab() {
                       {brandLogoMap.has(b.brand) && (
                         <img src={brandLogoMap.get(b.brand)!} alt={b.brand} className="w-10 h-10 rounded-lg object-contain bg-white/5 p-0.5" />
                       )}
-                      <span className="font-display text-sm tracking-wide text-[hsl(var(--platform-foreground))] px-8 mt-1">
+                      <span className="font-display text-sm tracking-wide text-[hsl(var(--platform-foreground))]">
                         {b.brand}
                       </span>
                       <PlatformBadge variant="primary" size="sm">
