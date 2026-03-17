@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -425,6 +425,94 @@ export function BusinessSettingsDialog({ open, onOpenChange }: BusinessSettingsD
     );
   };
 
+  // Sidebar Logo Preview sub-component
+  const SidebarLogoPreview = ({ logoLightUrl, logoDarkUrl, iconLightUrl, iconDarkUrl, businessName }: {
+    logoLightUrl: string; logoDarkUrl: string; iconLightUrl: string; iconDarkUrl: string; businessName: string;
+  }) => {
+    const [previewDark, setPreviewDark] = useState(false);
+
+    const activeLogo = previewDark ? logoDarkUrl : logoLightUrl;
+    const activeIcon = previewDark ? iconDarkUrl : iconLightUrl;
+    const initials = (businessName || 'SA').slice(0, 2).toUpperCase();
+
+    const navPlaceholders = ['Command Center', 'Schedule', 'Team Chat'];
+
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-display uppercase tracking-wider text-muted-foreground">Sidebar Preview</p>
+          <button
+            type="button"
+            onClick={() => setPreviewDark(!previewDark)}
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            {previewDark ? <Moon className="w-3 h-3" /> : <Sun className="w-3 h-3" />}
+            {previewDark ? 'Dark' : 'Light'}
+          </button>
+        </div>
+
+        <div className="flex gap-4">
+          {/* Expanded preview */}
+          <div className={cn(
+            "flex-1 rounded-lg border overflow-hidden",
+            previewDark ? "bg-[hsl(0,0%,4%)] border-[hsl(0,0%,12%)]" : "bg-sidebar border-border"
+          )}>
+            <div className={cn("px-4 py-3 border-b", previewDark ? "border-[hsl(0,0%,12%)]" : "border-border")}>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">Expanded</p>
+              <div className="h-7 flex items-center">
+                {activeLogo ? (
+                  <img src={activeLogo} alt="Logo" className="h-7 max-w-[160px] object-contain" />
+                ) : (
+                  <span className={cn(
+                    "font-display text-sm uppercase tracking-wider",
+                    previewDark ? "text-[hsl(0,0%,92%)]" : "text-foreground"
+                  )}>
+                    {businessName || 'Your Business'}
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="px-3 py-2 space-y-1">
+              {navPlaceholders.map((label) => (
+                <div key={label} className="flex items-center gap-2 px-2 py-1.5 rounded-md">
+                  <div className={cn("w-3.5 h-3.5 rounded", previewDark ? "bg-[hsl(0,0%,15%)]" : "bg-muted")} />
+                  <span className={cn("text-[11px]", previewDark ? "text-[hsl(0,0%,55%)]" : "text-muted-foreground")}>{label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Collapsed preview */}
+          <div className={cn(
+            "w-16 rounded-lg border overflow-hidden flex flex-col items-center",
+            previewDark ? "bg-[hsl(0,0%,4%)] border-[hsl(0,0%,12%)]" : "bg-sidebar border-border"
+          )}>
+            <div className={cn("w-full px-2 py-3 border-b flex flex-col items-center", previewDark ? "border-[hsl(0,0%,12%)]" : "border-border")}>
+              <p className="text-[8px] uppercase tracking-wider text-muted-foreground mb-2">Mini</p>
+              <div className="h-8 w-8 flex items-center justify-center">
+                {activeIcon ? (
+                  <img src={activeIcon} alt="Icon" className="h-6 max-w-[32px] object-contain" />
+                ) : (
+                  <div className={cn(
+                    "w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-display",
+                    previewDark ? "bg-[hsl(0,0%,12%)] text-[hsl(0,0%,70%)]" : "bg-muted text-muted-foreground"
+                  )}>
+                    {initials}
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="px-2 py-2 space-y-1.5 w-full flex flex-col items-center">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className={cn("w-6 h-6 rounded", previewDark ? "bg-[hsl(0,0%,10%)]" : "bg-muted/60")} />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const bothLogosUploaded = formData.logo_light_url && formData.logo_dark_url;
 
   return (
@@ -539,6 +627,17 @@ export function BusinessSettingsDialog({ open, onOpenChange }: BusinessSettingsD
                 />
               </div>
             </div>
+
+            {/* Sidebar Logo Preview */}
+            {(formData.logo_light_url || formData.logo_dark_url || formData.icon_light_url || formData.icon_dark_url) && (
+              <SidebarLogoPreview
+                logoLightUrl={formData.logo_light_url}
+                logoDarkUrl={formData.logo_dark_url}
+                iconLightUrl={formData.icon_light_url}
+                iconDarkUrl={formData.icon_dark_url}
+                businessName={formData.business_name}
+              />
+            )}
 
             {/* Secondary Icons */}
             <div className="space-y-4">
