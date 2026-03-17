@@ -68,7 +68,7 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
 
   const isExisting = (brand: string, name: string, size?: string) => {
     return existingKeys.has(sizedKey(brand, name, size))
-      || existingKeys.has(`${brand}::${sizedName(name, size)}`);
+      || existingKeys.has(`${brand.toLowerCase()}::${sizedName(name, size).toLowerCase()}`);
   };
 
   // Filter brands by search

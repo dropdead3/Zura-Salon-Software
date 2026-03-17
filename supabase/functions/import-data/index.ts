@@ -230,6 +230,38 @@ serve(async (req) => {
           continue;
         }
 
+        // For products: upsert — update pricing if duplicate, insert if new
+        if (entity_type === 'products' && mapped.organization_id && mapped.brand && mapped.name) {
+          const { data: existingProduct } = await supabase
+            .from('products')
+            .select('id')
+            .eq('organization_id', mapped.organization_id)
+            .eq('is_active', true)
+            .ilike('brand', mapped.brand)
+            .ilike('name', mapped.name)
+            .limit(1)
+            .maybeSingle();
+
+          if (existingProduct) {
+            // Update pricing fields only
+            const pricingUpdate: Record<string, any> = { updated_at: new Date().toISOString() };
+            if (mapped.retail_price != null) pricingUpdate.retail_price = mapped.retail_price;
+            if (mapped.cost_price != null) pricingUpdate.cost_price = mapped.cost_price;
+            if (mapped.sku) pricingUpdate.sku = mapped.sku;
+            if (mapped.barcode) pricingUpdate.barcode = mapped.barcode;
+
+            const { error: updateError } = await supabase
+              .from('products')
+              .update(pricingUpdate)
+              .eq('id', existingProduct.id);
+
+            if (updateError) throw updateError;
+            skipCount++;
+            warnings.push({ row: rowNum, message: 'Existing product — pricing updated' });
+            continue;
+          }
+        }
+
         // Insert into appropriate table
         const { error: insertError } = await supabase
           .from(targetTable)
