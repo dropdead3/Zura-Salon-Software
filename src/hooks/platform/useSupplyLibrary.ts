@@ -168,12 +168,12 @@ export function useSyncSupplyLibrary() {
       if (fetchErr) throw fetchErr;
 
       const existingSet = new Set(
-        (existing || []).map((p: any) => `${p.brand}::${p.name}`)
+        (existing || []).map((p: any) => `${p.brand}::${p.name}`.toLowerCase())
       );
 
-      // 2. Diff against static library — find missing products
+      // 2. Diff against static library — find missing products (case-insensitive)
       const missing = SUPPLY_LIBRARY.filter(
-        (item) => !existingSet.has(`${item.brand}::${item.name}`)
+        (item) => !existingSet.has(`${item.brand}::${item.name}`.toLowerCase())
       );
 
       // 3. Insert missing in batches

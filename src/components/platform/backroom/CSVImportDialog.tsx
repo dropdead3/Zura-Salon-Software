@@ -120,7 +120,7 @@ export function CSVImportDialog({ open, onOpenChange }: CSVImportDialogProps) {
       queryClient.invalidateQueries({ queryKey: ['supply-library-products'] });
       queryClient.invalidateQueries({ queryKey: ['supply-library-brands'] });
       queryClient.invalidateQueries({ queryKey: ['supply-library-init-status'] });
-      toast.success(`Imported ${validRows.length} products`);
+      toast.success(`Imported ${deduped.length} products${skipped > 0 ? ` (${skipped} duplicates skipped)` : ''}`);
       onOpenChange(false);
       setRows([]);
       setFileName('');
