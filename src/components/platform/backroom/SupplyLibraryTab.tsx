@@ -42,6 +42,7 @@ import { groupByProductLine, extractProductLine } from '@/lib/supply-line-parser
 import { useBackroomOrgId } from '@/hooks/backroom/useBackroomOrgId';
 import { sortByShadeLevel, SHADE_SORTED_CATEGORIES } from '@/lib/shadeSort';
 import { SwatchPicker } from './SwatchPicker';
+import { suggestSwatchColor } from '@/lib/swatchSuggest';
 
 const CATEGORIES = ['color', 'lightener', 'developer', 'toner', 'bond builder', 'treatment', 'additive'];
 const DEPLETION_METHODS = ['weighed', 'per_service', 'manual', 'per_pump'];
