@@ -1290,6 +1290,47 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
           reorderItems={reorderItems}
         />
       )}
+      {/* Sync from Zura Library confirmation dialog */}
+      <AlertDialog open={syncConfirmOpen} onOpenChange={setSyncConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sync from Zura Library</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>
+                  This will update {syncScope === 'brand' && selectedBrand ? `all <strong class="text-foreground font-medium">${selectedBrand}</strong>` : 'all'} products missing pricing, markup, swatch, or size data with values from the Zura Library.
+                </p>
+                <div className="rounded-lg border bg-muted/50 p-3 text-sm text-muted-foreground">
+                  <p className="font-medium text-foreground mb-1">What gets updated:</p>
+                  <ul className="list-disc list-inside space-y-0.5">
+                    <li>Wholesale cost price</li>
+                    <li>Default markup percentage</li>
+                    <li>Swatch color</li>
+                    <li>Container size</li>
+                  </ul>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Any overrides you've already made will be preserved.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (syncScope === 'brand' && selectedBrand) {
+                  syncFromLibraryMutation.mutate(selectedBrand);
+                } else {
+                  syncAllBrandsMutation.mutate();
+                }
+              }}
+            >
+              Yes, sync now
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
