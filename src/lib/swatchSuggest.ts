@@ -334,37 +334,72 @@ function guessColorFromName(name: string): string | null {
     [/\bsilver\s*smoke\b/, '#A8A898'],       // ash 8
     [/\bhot\s*pink\b/, '#FF1493'],           // vivid pink
     [/\belectric\s*blue\b/, '#0050FF'],      // vivid blue
-    [/\bmagenta\b/, '#FF1493'],              // vivid pink
-    [/\bfuchsia\b/, '#FF1493'],              // vivid pink
-    [/\bteal\b/, '#2A6060'],                 // palette Teal
-    [/\bpurple\b/, '#8B00FF'],               // vivid purple
-    [/\borange\b/, '#FF6600'],               // vivid orange
-    [/\byellow\b/, '#FFD700'],               // vivid yellow
-    [/\bpink\b/, '#FF1493'],                 // vivid pink
-    [/\bred\b/, '#EE0000'],                  // vivid red
-    [/\bviolet\b/, '#8B00FF'],               // vivid purple
-    [/\blavender\b/, '#D4B8E0'],             // pastel lavender
-    [/\bmint\b/, '#A8E0C8'],                 // pastel mint
-    [/\bpeach\b/, '#FADADD'],                // pastel peach
-    [/\bcoral\b/, '#FF6600'],                // vivid orange
-    [/\bplum\b/, '#6B3A6B'],                 // violet 6
-    [/\bnavy\b/, '#1E3450'],                 // blue 4
-    [/\bburgundy\b/, '#5B1414'],             // red 4
-    [/\bcherry\b/, '#8B2020'],               // red 7
-    [/\bauburn\b/, '#8B3A0F'],               // copper 5
-    [/\bcopper\b/, '#B5541A'],               // copper 7
-    [/\bginger\b/, '#9A4414'],               // copper 6
-    [/\bchocolate\b/, '#3B2314'],            // natural 4
-    [/\bcaramel\b/, '#8B6239'],              // natural 6
-    [/\bchampagne\b/, '#D9C48E'],            // palette Champagne
-    [/\bhoney\b/, '#C4981E'],                // gold 8
-    [/\bplatinum\b/, '#D5CFC0'],             // ash 10
-    [/\bsilver\b/, '#C5C5BB'],               // ash 9
-    [/\bmauve\b/, '#7E4E7E'],                // palette Mauve
-    [/\borchid\b/, '#926092'],               // palette Orchid
-    [/\bslate\b/, '#4A6070'],                // blue 8
-    [/\bsteel\b/, '#5A7A90'],                // blue 9
-    [/\bsmoke\b/, '#C5C5BB'],                // palette Smoke
+    // Red violet family
+    [/\bred\s*violet\b/, '#8B2A4E'],
+    [/\bcranberry\b/, '#8E1B3D'],
+    [/\bmerlot\b/, '#6D2040'],
+    [/\braspberry\b/, '#A02050'],
+    [/\brose\s*violet\b/, '#A0406A'],
+    // Warm brown / mocha
+    [/\bmocha\b/, '#6B4A30'],
+    [/\bespresso\b/, '#4A2E1C'],
+    [/\bcinnamon\b/, '#8B5E3C'],
+    [/\bcaf[eé]\s*au\s*lait\b/, '#B09070'],
+    [/\bmushroom\s*brown\b/, '#8A7760'],
+    [/\bsand\b/, '#C4AB82'],
+    // Ash / cool expanded
+    [/\bcool\s*sand\b/, '#C4BAA2'],
+    [/\bcool\s*tan\b/, '#B0A68E'],
+    [/\bgreige\b/, '#A89F8B'],
+    [/\bmushroom\b/, '#9C8E7A'],
+    [/\bsteel\s*beige\b/, '#BEB8AA'],
+    // Copper expanded
+    [/\bcopper[\s-]*red\b/, '#A03818'],
+    [/\bcopper[\s-]*violet\b/, '#8B3A50'],
+    [/\bburnt\s*sienna\b/, '#964B22'],
+    // Gold expanded
+    [/\btoffee\b/, '#A07028'],
+    [/\bbutterscotch\b/, '#D4982C'],
+    [/\bcaramel\s*gold\b/, '#C08A30'],
+    // Red expanded
+    [/\bred[\s-]*mahogany\b/, '#6B2828'],
+    // Violet expanded
+    [/\baubergine\b/, '#3D1C38'],
+    [/\bwarm\s*plum\b/, '#5E2848'],
+    [/\bpurple[\s-]*brown\b/, '#4A2A3A'],
+    [/\biridescent\s*violet\b/, '#7858A0'],
+    // Original entries
+    [/\bmagenta\b/, '#FF1493'],
+    [/\bfuchsia\b/, '#FF1493'],
+    [/\bteal\b/, '#2A6060'],
+    [/\bpurple\b/, '#8B00FF'],
+    [/\borange\b/, '#FF6600'],
+    [/\byellow\b/, '#FFD700'],
+    [/\bpink\b/, '#FF1493'],
+    [/\bred\b/, '#EE0000'],
+    [/\bviolet\b/, '#8B00FF'],
+    [/\blavender\b/, '#D4B8E0'],
+    [/\bmint\b/, '#A8E0C8'],
+    [/\bpeach\b/, '#FADADD'],
+    [/\bcoral\b/, '#FF6600'],
+    [/\bplum\b/, '#6B3A6B'],
+    [/\bnavy\b/, '#1E3450'],
+    [/\bburgundy\b/, '#5B1414'],
+    [/\bcherry\b/, '#8B2020'],
+    [/\bauburn\b/, '#8B3A0F'],
+    [/\bcopper\b/, '#B5541A'],
+    [/\bginger\b/, '#9A4414'],
+    [/\bchocolate\b/, '#3B2314'],
+    [/\bcaramel\b/, '#8B6239'],
+    [/\bchampagne\b/, '#D9C48E'],
+    [/\bhoney\b/, '#C4981E'],
+    [/\bplatinum\b/, '#D5CFC0'],
+    [/\bsilver\b/, '#C5C5BB'],
+    [/\bmauve\b/, '#7E4E7E'],
+    [/\borchid\b/, '#926092'],
+    [/\bslate\b/, '#4A6070'],
+    [/\bsteel\b/, '#5A7A90'],
+    [/\bsmoke\b/, '#C5C5BB'],
   ];
 
   for (const [regex, hex] of directColorMap) {
