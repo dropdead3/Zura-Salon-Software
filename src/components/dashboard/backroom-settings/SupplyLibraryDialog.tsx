@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useCallback } from 'react';
+import { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -67,8 +67,6 @@ function BrandCardGrid({
   onShowSuggest: () => void;
 }) {
   const [activeLetter, setActiveLetter] = useState<string | null>(null);
-  const letterRefs = useRef<Map<string, HTMLDivElement>>(new Map());
-  const scrollRef = useRef<HTMLDivElement>(null);
 
   const filtered = useMemo(() => {
     let list = brands;
@@ -76,48 +74,20 @@ function BrandCardGrid({
       const q = search.toLowerCase();
       list = list.filter((b) => b.brand.toLowerCase().includes(q));
     }
+    if (activeLetter) {
+      list = list.filter((b) => b.brand[0]?.toUpperCase() === activeLetter);
+    }
     return list;
-  }, [brands, search]);
-
-  // Group filtered brands by first letter
-  const groupedByLetter = useMemo(() => {
-    const map = new Map<string, BrandCardData[]>();
-    filtered.forEach((b) => {
-      const letter = b.brand[0]?.toUpperCase() || '#';
-      if (!map.has(letter)) map.set(letter, []);
-      map.get(letter)!.push(b);
-    });
-    return map;
-  }, [filtered]);
+  }, [brands, search, activeLetter]);
 
   const availableLetters = useMemo(
     () => new Set(brands.map((b) => b.brand[0]?.toUpperCase())),
     [brands],
   );
 
-  const scrollToLetter = useCallback((letter: string) => {
-    setActiveLetter((prev) => {
-      const next = prev === letter ? null : letter;
-      if (next) {
-        requestAnimationFrame(() => {
-          const el = letterRefs.current.get(next);
-          if (el) {
-            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }
-        });
-      }
-      return next;
-    });
-  }, []);
-
-  const setLetterRef = useCallback((letter: string, el: HTMLDivElement | null) => {
-    if (el) letterRefs.current.set(letter, el);
-    else letterRefs.current.delete(letter);
-  }, []);
-
   return (
     <div className="flex flex-col flex-1 h-0">
-      {/* A-Z bar */}
+      {/* A-Z filter bar */}
       <div className="px-6 pt-2 pb-1 flex flex-wrap gap-0.5 justify-center">
         {ALPHABET.map((letter) => {
           const available = availableLetters.has(letter);
@@ -125,7 +95,7 @@ function BrandCardGrid({
           return (
             <button
               key={letter}
-              onClick={() => scrollToLetter(letter)}
+              onClick={() => setActiveLetter((prev) => (prev === letter ? null : letter))}
               disabled={!available}
               className={cn(
                 'w-7 h-7 rounded-md text-[11px] font-display uppercase tracking-wider transition-colors',
@@ -151,17 +121,10 @@ function BrandCardGrid({
       </div>
 
       {/* Brand cards */}
-      <ScrollArea className="flex-1 h-0" ref={scrollRef}>
-        <div className="p-6 pt-3 space-y-4">
-          {[...groupedByLetter.entries()].map(([letter, letterBrands]) => (
-            <div key={letter} ref={(el) => setLetterRef(letter, el)}>
-              <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm py-1 mb-2">
-                <span className="text-[11px] font-display uppercase tracking-widest text-muted-foreground/60 px-1">
-                  {letter}
-                </span>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                {letterBrands.map((b) => {
+      <ScrollArea className="flex-1 h-0">
+        <div className="p-6 pt-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            {filtered.map((b) => {
                   const allAdded = b.addedCount >= b.totalProducts && b.totalProducts > 0;
                   return (
                     <button
@@ -233,10 +196,8 @@ function BrandCardGrid({
                       )}
                     </button>
                   );
-                })}
-              </div>
-            </div>
-          ))}
+            })}
+          </div>
         </div>
 
         {/* Missing brand CTA */}
