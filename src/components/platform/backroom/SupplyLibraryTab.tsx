@@ -77,6 +77,7 @@ export function SupplyLibraryTab() {
   const [editBrandOpen, setEditBrandOpen] = useState(false);
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
   const [reanalyzeConfirm, setReanalyzeConfirm] = useState<{ category: string; updates: { id: string; hex: string }[] } | null>(null);
+  const [reanalyzingCategory, setReanalyzingCategory] = useState<string | null>(null);
 
   // Count how many brands have saved collapse state
   const savedBrandCount = useMemo(() => {
