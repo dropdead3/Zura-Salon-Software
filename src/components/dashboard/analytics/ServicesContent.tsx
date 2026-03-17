@@ -392,7 +392,7 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="h-64 flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-muted-foreground" /></div>
+            <div className="h-64 flex items-center justify-center"><DashboardLoader size="lg" /></div>
           ) : categoryMix.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">No service data for this period</p>
           ) : (
