@@ -13,6 +13,16 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   Select,
   SelectTrigger,
   SelectContent,
@@ -198,6 +208,8 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [bulkPricingOpen, setBulkPricingOpen] = useState(false);
   const [bulkReorderOpen, setBulkReorderOpen] = useState(false);
+  const [syncConfirmOpen, setSyncConfirmOpen] = useState(false);
+  const [syncScope, setSyncScope] = useState<'brand' | 'all'>('brand');
 
   // Brand-first navigation
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
@@ -684,29 +696,29 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                 <Badge variant="outline">{brandProductsAll.length} products</Badge>
               )}
               {selectedBrand && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => syncFromLibraryMutation.mutate(selectedBrand)}
-                  disabled={syncFromLibraryMutation.isPending}
-                  className="font-sans gap-1.5"
-                >
-                  <RefreshCw className={cn('w-3.5 h-3.5', syncFromLibraryMutation.isPending && 'animate-spin')} />
-                  Sync from Library
-                </Button>
-              )}
-              {!selectedBrand && hasProducts && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => syncAllBrandsMutation.mutate()}
-                  disabled={syncAllBrandsMutation.isPending}
-                  className="font-sans gap-1.5"
-                >
-                  <RefreshCw className={cn('w-3.5 h-3.5', syncAllBrandsMutation.isPending && 'animate-spin')} />
-                  Sync All Brands
-                </Button>
-              )}
+                 <Button
+                   variant="outline"
+                   size="sm"
+                   onClick={() => { setSyncScope('brand'); setSyncConfirmOpen(true); }}
+                   disabled={syncFromLibraryMutation.isPending}
+                   className="font-sans gap-1.5"
+                 >
+                   <RefreshCw className={cn('w-3.5 h-3.5', syncFromLibraryMutation.isPending && 'animate-spin')} />
+                   Sync from Zura Library
+                 </Button>
+               )}
+               {!selectedBrand && hasProducts && (
+                 <Button
+                   variant="outline"
+                   size="sm"
+                   onClick={() => { setSyncScope('all'); setSyncConfirmOpen(true); }}
+                   disabled={syncAllBrandsMutation.isPending}
+                   className="font-sans gap-1.5"
+                 >
+                   <RefreshCw className={cn('w-3.5 h-3.5', syncAllBrandsMutation.isPending && 'animate-spin')} />
+                   Sync from Zura Library
+                 </Button>
+               )}
               <Button
                 variant="outline"
                 size="sm"
@@ -1278,6 +1290,47 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
           reorderItems={reorderItems}
         />
       )}
+      {/* Sync from Zura Library confirmation dialog */}
+      <AlertDialog open={syncConfirmOpen} onOpenChange={setSyncConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sync from Zura Library</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>
+                  This will update {syncScope === 'brand' && selectedBrand ? `all <strong class="text-foreground font-medium">${selectedBrand}</strong>` : 'all'} products missing pricing, markup, swatch, or size data with values from the Zura Library.
+                </p>
+                <div className="rounded-lg border bg-muted/50 p-3 text-sm text-muted-foreground">
+                  <p className="font-medium text-foreground mb-1">What gets updated:</p>
+                  <ul className="list-disc list-inside space-y-0.5">
+                    <li>Wholesale cost price</li>
+                    <li>Default markup percentage</li>
+                    <li>Swatch color</li>
+                    <li>Container size</li>
+                  </ul>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Any overrides you've already made will be preserved.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (syncScope === 'brand' && selectedBrand) {
+                  syncFromLibraryMutation.mutate(selectedBrand);
+                } else {
+                  syncAllBrandsMutation.mutate();
+                }
+              }}
+            >
+              Yes, sync now
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
