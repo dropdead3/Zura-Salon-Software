@@ -530,9 +530,7 @@ export default function HomepageStylists() {
 
           <TabsContent value="visible">
             {loadingVisible ? (
-              <div className="flex justify-center py-12">
-                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-              </div>
+              <DashboardLoader className="py-12" />
             ) : visibleStylists.length === 0 ? (
               <Card>
                 <CardContent className="p-8 text-center text-muted-foreground">
