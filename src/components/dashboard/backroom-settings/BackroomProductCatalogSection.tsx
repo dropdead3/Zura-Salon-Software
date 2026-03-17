@@ -1199,7 +1199,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                         className={cn(
                           'group relative flex flex-col rounded-xl border p-4 text-left transition-all duration-200 min-h-[140px]',
                           'border bg-card/50',
-                          'hover:border-border hover:bg-card hover:shadow-lg',
+                          'hover:border-border hover:bg-muted/40 hover:scale-[1.02] hover:shadow-sm',
                         )}
                       >
                         {/* Top-left badge: product count */}
