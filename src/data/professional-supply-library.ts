@@ -3218,13 +3218,13 @@ export const BRAND_CATALOG_COVERAGE: Record<string, CatalogCoverage> = {
   'CHI': 'complete',
   'Clairol Professional': 'complete',
   'Rusk': 'complete',
-  // Remaining partial brands:
-  'Framesi': 'partial',
-  'Lakme': 'partial',
-  'Keune': 'partial',
-  'Elgon': 'partial',
-  '#mydentity': 'partial',
-  'Oligo': 'partial',
+  'Framesi': 'complete',
+  'Lakme': 'complete',
+  'Keune': 'complete',
+  'Elgon': 'complete',
+  '#mydentity': 'complete',
+  'Oligo': 'complete',
+  'Generic / Salon Supplies': 'complete',
 };
 
 /**
