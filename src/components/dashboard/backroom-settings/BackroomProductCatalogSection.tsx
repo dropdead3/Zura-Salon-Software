@@ -886,7 +886,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                           <TableBody>
                             {displayProducts.length === 0 ? (
                               <TableRow>
-                                <TableCell colSpan={showSwatch ? 10 : 9} className="text-center py-8">
+                                <TableCell colSpan={showSwatch ? 7 : 6} className="text-center py-8">
                                   <p className="font-sans text-xs text-muted-foreground">No products in this selection</p>
                                 </TableCell>
                               </TableRow>
