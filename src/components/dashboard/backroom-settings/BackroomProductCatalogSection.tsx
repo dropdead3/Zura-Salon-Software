@@ -575,8 +575,8 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                         }}
                         className={cn(
                           'group relative flex flex-col rounded-xl border p-4 text-left transition-all duration-200',
-                          'border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.5)]',
-                          'hover:border-[hsl(var(--platform-border))] hover:bg-[hsl(var(--platform-bg-card))] hover:shadow-lg hover:shadow-[hsl(var(--platform-primary)/0.05)]',
+                          'border bg-card/50',
+                          'hover:border-border hover:bg-card hover:shadow-lg',
                         )}
                       >
                         {/* Logo / Initial */}
