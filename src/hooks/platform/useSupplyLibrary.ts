@@ -104,19 +104,16 @@ export function useSeedSupplyLibrary() {
       let inserted = 0;
 
       for (let i = 0; i < SUPPLY_LIBRARY.length; i += BATCH_SIZE) {
-      const batch = SUPPLY_LIBRARY.slice(i, i + BATCH_SIZE).map((item) => {
-          const { extractProductLine } = require('@/lib/supply-line-parser');
-          return {
-            brand: item.brand,
-            name: item.name,
-            category: item.category,
-            default_depletion: item.defaultDepletion,
-            default_unit: item.defaultUnit,
-            size_options: item.sizeOptions || [],
-            product_line: extractProductLine(item.name),
-            is_active: true,
-          };
-        });
+      const batch = SUPPLY_LIBRARY.slice(i, i + BATCH_SIZE).map((item) => ({
+          brand: item.brand,
+          name: item.name,
+          category: item.category,
+          default_depletion: item.defaultDepletion,
+          default_unit: item.defaultUnit,
+          size_options: item.sizeOptions || [],
+          product_line: extractProductLine(item.name),
+          is_active: true,
+        }));
 
         const { error } = await supabase
           .from('supply_library_products')
