@@ -1118,6 +1118,10 @@ function AddEditDialog({
     setSizes(product?.size_options?.join(', ') || '');
     setWholesalePrice(product?.wholesale_price != null ? String(product.wholesale_price) : '');
     setMarkupPct(product?.default_markup_pct != null ? String(product.default_markup_pct) : '');
+    const wp = product?.wholesale_price;
+    const mp = product?.default_markup_pct;
+    setRetailPrice(wp != null && mp != null ? String(Math.round(wp * (1 + mp / 100) * 100) / 100) : '');
+    setLastEdited(null);
   };
 
   const handleSave = async () => {
