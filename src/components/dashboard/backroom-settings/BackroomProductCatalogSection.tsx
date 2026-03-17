@@ -31,7 +31,7 @@ import { BrowseColumn, type BrowseColumnItem } from '@/components/platform/backr
 import { extractProductLine, groupByProductLine } from '@/lib/supply-line-parser';
 import { useSupplyBrandsMeta, type SupplyBrandMeta } from '@/hooks/platform/useSupplyLibraryBrandMeta';
 import { sortByShadeLevel, SHADE_SORTED_CATEGORIES } from '@/lib/shadeSort';
-import { Loader2, Search, Package, ArrowRight, ArrowLeft, Library, Check, ChevronLeft, PackagePlus, LayoutGrid, TableIcon, DollarSign, AlertTriangle, Archive, ShoppingCart } from 'lucide-react';
+import { Loader2, Search, Package, ArrowRight, ArrowLeft, Library, Check, ChevronLeft, PackagePlus, LayoutGrid, TableIcon, DollarSign, AlertTriangle, Archive, ShoppingCart, RefreshCw } from 'lucide-react';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { toast } from 'sonner';
 import { Infotainer } from '@/components/ui/Infotainer';
@@ -271,6 +271,53 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
     onError: (error) => toast.error('Bulk update failed: ' + error.message),
   });
 
+  /* Sync from Library — pulls missing pricing/swatch data from supply_library_products */
+  const syncFromLibraryMutation = useMutation({
+    mutationFn: async (brand: string) => {
+      const { data: libraryData, error: libErr } = await supabase
+        .from('supply_library_products')
+        .select('name, wholesale_price, default_markup_pct, swatch_color, size_options')
+        .eq('is_active', true)
+        .ilike('brand', brand);
+      if (libErr) throw libErr;
+      if (!libraryData?.length) throw new Error('No library data found for this brand');
+
+      // Get org products for this brand that need filling
+      const { data: orgProducts, error: orgErr } = await supabase
+        .from('products')
+        .select('id, name, cost_price, markup_pct, swatch_color, container_size')
+        .eq('organization_id', orgId!)
+        .eq('is_active', true)
+        .eq('product_type', 'Supplies')
+        .ilike('brand', brand);
+      if (orgErr) throw orgErr;
+
+      let updated = 0;
+      for (const op of orgProducts || []) {
+        const match = libraryData.find((lp: any) =>
+          op.name.toLowerCase().startsWith(lp.name.toLowerCase())
+        );
+        if (!match) continue;
+        const updates: Record<string, any> = {};
+        if (op.cost_price == null && match.wholesale_price != null) updates.cost_price = match.wholesale_price;
+        if (op.markup_pct == null && match.default_markup_pct != null) updates.markup_pct = match.default_markup_pct;
+        if (op.swatch_color == null && match.swatch_color != null) updates.swatch_color = match.swatch_color;
+        if (op.container_size == null && (match as any).size_options?.[0] != null) updates.container_size = (match as any).size_options[0];
+        if (Object.keys(updates).length === 0) continue;
+        updates.updated_at = new Date().toISOString();
+        await supabase.from('products').update(updates).eq('id', op.id);
+        updated++;
+      }
+      return updated;
+    },
+    onSuccess: (count) => {
+      queryClient.invalidateQueries({ queryKey: ['backroom-product-catalog'] });
+      queryClient.invalidateQueries({ queryKey: ['backroom-inventory-table'] });
+      toast.success(`Synced ${count} products from library`);
+    },
+    onError: (error) => toast.error('Sync failed: ' + error.message),
+  });
+
   /* ====== Derived data ====== */
   const allProducts = products || [];
   const trackedCount = allProducts.filter((p) => p.is_backroom_tracked).length;
@@ -411,16 +458,32 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
     });
   }, [categoryProducts, selectedLine]);
 
-  // Display products for Col 3 — shade sorted when applicable
+  // Display products for Col 3 — shade sorted when applicable, enriched with library fallbacks
   const displayProducts = useMemo(() => {
     if (!selectedCategory) return [];
-    const prods = selectedLine ? lineProducts : [];
+    let prods = selectedLine ? lineProducts : [];
     if (prods.length === 0) return prods;
+
+    // Enrich with library ghost values for display
+    const enriched = prods.map((p) => {
+      if (p.cost_price != null && p.swatch_color != null && p.markup_pct != null) return p;
+      const match = libraryItems.find((li) =>
+        p.name.toLowerCase().startsWith(li.name.toLowerCase())
+      );
+      if (!match) return p;
+      return {
+        ...p,
+        _ghostCost: p.cost_price == null ? match.wholesalePrice ?? null : null,
+        _ghostMarkup: p.markup_pct == null ? match.defaultMarkupPct ?? null : null,
+        _ghostSwatch: p.swatch_color == null ? match.swatchColor ?? null : null,
+      } as BackroomProduct & { _ghostCost?: number | null; _ghostMarkup?: number | null; _ghostSwatch?: string | null };
+    });
+
     if (SHADE_SORTED_CATEGORIES.has(selectedCategory)) {
-      return sortByShadeLevel(prods);
+      return sortByShadeLevel(enriched);
     }
-    return prods;
-  }, [selectedCategory, selectedLine, lineProducts]);
+    return enriched;
+  }, [selectedCategory, selectedLine, lineProducts, libraryItems]);
 
   // Bulk toggle helpers
   const toggleCategoryTracking = useCallback((enabled: boolean) => {
@@ -575,6 +638,18 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
               <Badge variant="outline">{trackedCount} tracked</Badge>
               {selectedBrand && (
                 <Badge variant="outline">{brandProductsAll.length} products</Badge>
+              )}
+              {selectedBrand && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => syncFromLibraryMutation.mutate(selectedBrand)}
+                  disabled={syncFromLibraryMutation.isPending}
+                  className="font-sans gap-1.5"
+                >
+                  <RefreshCw className={cn('w-3.5 h-3.5', syncFromLibraryMutation.isPending && 'animate-spin')} />
+                  Sync from Library
+                </Button>
               )}
               <Button
                 variant="outline"
@@ -777,9 +852,17 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                               </TableRow>
                             ) : (
                               displayProducts.map((p) => {
-                                const retail = p.cost_price != null && p.markup_pct != null && p.markup_pct > 0
-                                  ? p.cost_price * (1 + p.markup_pct / 100)
+                                const ghost = p as any;
+                                const effectiveCost = p.cost_price ?? ghost._ghostCost ?? null;
+                                const effectiveMarkup = p.markup_pct ?? ghost._ghostMarkup ?? null;
+                                const effectiveSwatch = p.swatch_color ?? ghost._ghostSwatch ?? null;
+                                const isGhostCost = p.cost_price == null && ghost._ghostCost != null;
+                                const isGhostMarkup = p.markup_pct == null && ghost._ghostMarkup != null;
+                                const isGhostSwatch = p.swatch_color == null && ghost._ghostSwatch != null;
+                                const retail = effectiveCost != null && effectiveMarkup != null && effectiveMarkup > 0
+                                  ? effectiveCost * (1 + effectiveMarkup / 100)
                                   : null;
+                                const isGhostRetail = isGhostCost || isGhostMarkup;
                                 return (
                                   <TableRow key={p.id} className={cn(!p.is_backroom_tracked && 'opacity-50')}>
                                     <TableCell className="w-8 pr-0">
@@ -791,10 +874,19 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                                     </TableCell>
                                     {showSwatch && (
                                       <TableCell className="w-[40px] pr-0">
-                                        <SwatchCell
-                                          color={p.swatch_color ?? null}
-                                          onSave={(color) => updateMutation.mutate({ id: p.id, updates: { swatch_color: color } as any })}
-                                        />
+                                        {isGhostSwatch ? (
+                                          <div
+                                            className="w-5 h-5 rounded-full border border-dashed border-border/40 opacity-50"
+                                            style={{ backgroundColor: effectiveSwatch ?? undefined }}
+                                            title="From library — click to adopt"
+                                            onClick={() => updateMutation.mutate({ id: p.id, updates: { swatch_color: effectiveSwatch } as any })}
+                                          />
+                                        ) : (
+                                          <SwatchCell
+                                            color={p.swatch_color ?? null}
+                                            onSave={(color) => updateMutation.mutate({ id: p.id, updates: { swatch_color: color } as any })}
+                                          />
+                                        )}
                                       </TableCell>
                                     )}
                                     <TableCell className="font-sans text-sm font-medium text-foreground">{p.name}</TableCell>
@@ -810,24 +902,38 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                                       {p.unit_of_measure || '—'}
                                     </TableCell>
                                     <TableCell className="font-sans text-xs">
-                                      <InlineEditCell
-                                        value={p.cost_price}
-                                        prefix="$"
-                                        placeholder="—"
-                                        onSave={(v) => updateMutation.mutate({ id: p.id, updates: { cost_price: v } })}
-                                      />
+                                      {isGhostCost ? (
+                                        <span className="text-muted-foreground/50 italic" title="From library">
+                                          ${effectiveCost?.toFixed(2)}
+                                        </span>
+                                      ) : (
+                                        <InlineEditCell
+                                          value={p.cost_price}
+                                          prefix="$"
+                                          placeholder="—"
+                                          onSave={(v) => updateMutation.mutate({ id: p.id, updates: { cost_price: v } })}
+                                        />
+                                      )}
                                     </TableCell>
                                     <TableCell className="hidden md:table-cell font-sans text-xs">
-                                      <InlineEditCell
-                                        value={p.markup_pct}
-                                        suffix="%"
-                                        placeholder="—"
-                                        onSave={(v) => updateMutation.mutate({ id: p.id, updates: { markup_pct: v } })}
-                                      />
+                                      {isGhostMarkup ? (
+                                        <span className="text-muted-foreground/50 italic" title="From library">
+                                          {effectiveMarkup}%
+                                        </span>
+                                      ) : (
+                                        <InlineEditCell
+                                          value={p.markup_pct}
+                                          suffix="%"
+                                          placeholder="—"
+                                          onSave={(v) => updateMutation.mutate({ id: p.id, updates: { markup_pct: v } })}
+                                        />
+                                      )}
                                     </TableCell>
                                     <TableCell className="hidden md:table-cell font-sans text-xs">
                                       {retail != null ? (
-                                        <span className="text-foreground">${retail.toFixed(2)}</span>
+                                        <span className={cn('text-foreground', isGhostRetail && 'text-muted-foreground/50 italic')}>
+                                          ${retail.toFixed(2)}
+                                        </span>
                                       ) : (
                                         <span className="text-muted-foreground">—</span>
                                       )}
