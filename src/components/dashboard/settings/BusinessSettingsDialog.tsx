@@ -461,7 +461,7 @@ export function BusinessSettingsDialog({ open, onOpenChange }: BusinessSettingsD
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col overflow-hidden p-0">
-        <DialogHeader>
+        <DialogHeader className="px-6 pt-6 pb-0">
           <DialogTitle className="flex items-center gap-2 font-display text-xl">
             <Building2 className="w-5 h-5" />
             Business Configuration
@@ -470,6 +470,8 @@ export function BusinessSettingsDialog({ open, onOpenChange }: BusinessSettingsD
             Configure your business details. These settings are used throughout the application.
           </DialogDescription>
         </DialogHeader>
+
+        <div className="flex-1 overflow-y-auto px-6 pb-2">
 
         {isLoading ? (
           <div className="space-y-4">
