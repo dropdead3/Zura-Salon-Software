@@ -987,7 +987,7 @@ export function SupplyLibraryTab() {
                                         </button>
                                       </CollapsibleTrigger>
                                       <CollapsibleContent>
-                                        <div className="mt-1">{renderProductTable(lineProducts)}</div>
+                                        <div className="mt-1">{renderProductTable(lineProducts, category)}</div>
                                       </CollapsibleContent>
                                     </Collapsible>
                                   );
