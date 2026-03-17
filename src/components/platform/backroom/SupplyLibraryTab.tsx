@@ -29,7 +29,7 @@ import {
   useSupplyLibraryBrandSummaries,
   type SupplyLibraryProduct,
 } from '@/hooks/platform/useSupplyLibrary';
-import { SUPPLY_CATEGORY_LABELS, getBrandCoverage } from '@/data/professional-supply-library';
+import { SUPPLY_CATEGORY_LABELS } from '@/data/professional-supply-library';
 import { CSVImportDialog } from './CSVImportDialog';
 import { AddBrandWizard } from './AddBrandWizard';
 import { useSupplyBrandsMeta, type SupplyBrandMeta } from '@/hooks/platform/useSupplyLibraryBrandMeta';
@@ -53,6 +53,7 @@ interface BrandCardData {
   brand: string;
   productCount: number;
   categorySummary: { category: string; count: number }[];
+  isComplete: boolean;
 }
 
 export function SupplyLibraryTab() {
@@ -156,11 +157,13 @@ export function SupplyLibraryTab() {
 
   // Build brand card data from server-side summaries
   const brandCards = useMemo<BrandCardData[]>(() => {
-    const map = new Map<string, { count: number; cats: Map<string, number> }>();
+    const map = new Map<string, { count: number; missingPrice: number; missingSwatch: number; cats: Map<string, number> }>();
     brandSummaryRows.forEach((row) => {
-      if (!map.has(row.brand)) map.set(row.brand, { count: 0, cats: new Map() });
+      if (!map.has(row.brand)) map.set(row.brand, { count: 0, missingPrice: 0, missingSwatch: 0, cats: new Map() });
       const entry = map.get(row.brand)!;
       entry.count += row.cnt;
+      entry.missingPrice += row.missing_price;
+      entry.missingSwatch += row.missing_swatch;
       entry.cats.set(row.category, (entry.cats.get(row.category) || 0) + row.cnt);
     });
     const cards: BrandCardData[] = [];
@@ -168,6 +171,7 @@ export function SupplyLibraryTab() {
       cards.push({
         brand,
         productCount: val.count,
+        isComplete: val.missingPrice === 0 && val.missingSwatch === 0,
         categorySummary: Array.from(val.cats.entries())
           .map(([category, count]) => ({ category, count }))
           .sort((a, b) => b.count - a.count),
@@ -767,9 +771,14 @@ export function SupplyLibraryTab() {
                       key={b.brand}
                       variant="interactive"
                       size="md"
-                      className="cursor-pointer p-4 flex flex-col items-center text-center gap-2"
+                      className="cursor-pointer p-4 flex flex-col items-center text-center gap-2 relative"
                       onClick={() => { setSelectedBrand(b.brand); setProductSearch(''); setCategoryFilter('all'); try { const cats = localStorage.getItem(collapseKey('categories', b.brand)); setCollapsedCategories(cats ? new Set(JSON.parse(cats)) : new Set()); const subs = localStorage.getItem(collapseKey('sublines', b.brand)); setCollapsedSubLines(subs ? new Set(JSON.parse(subs)) : new Set()); } catch { setCollapsedCategories(new Set()); setCollapsedSubLines(new Set()); } }}
                     >
+                      {!b.isComplete && (
+                        <PlatformBadge variant="warning" size="sm" className="absolute top-2 right-2">
+                          Partial
+                        </PlatformBadge>
+                      )}
                       {brandLogoMap.has(b.brand) ? (
                         <img src={brandLogoMap.get(b.brand)!} alt={b.brand} className="w-10 h-10 rounded-lg object-contain bg-white/5 p-0.5" />
                       ) : (
@@ -782,12 +791,6 @@ export function SupplyLibraryTab() {
                       </span>
                       <PlatformBadge variant="primary" size="sm">
                         {b.productCount} products
-                      </PlatformBadge>
-                      <PlatformBadge
-                        variant={getBrandCoverage(b.brand) === 'complete' ? 'success' : 'warning'}
-                        size="sm"
-                      >
-                        {getBrandCoverage(b.brand) === 'complete' ? 'Complete' : 'Partial'}
                       </PlatformBadge>
                       <p className="font-sans text-[10px] text-[hsl(var(--platform-foreground-muted))] leading-tight">
                         {b.categorySummary.slice(0, 3).map((cs) =>
