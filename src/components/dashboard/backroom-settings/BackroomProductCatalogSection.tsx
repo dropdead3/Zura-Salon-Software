@@ -431,9 +431,9 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
               </Button>
             </div>
           </div>
-        </PlatformCardHeader>
+        </CardHeader>
 
-        <PlatformCardContent className="space-y-4">
+        <CardContent className="space-y-4">
           {/* ====== BRAND DETAIL (FINDER) ====== */}
           {selectedBrand ? (
             <BrandFinder
