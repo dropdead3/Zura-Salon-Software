@@ -946,7 +946,7 @@ function FinderProductRow({ product, onUpdate }: { product: BackroomProduct; onU
             </Badge>
           )}
 
-          <div className="w-px h-3 bg-[hsl(var(--platform-border)/0.3)]" />
+          <div className="w-px h-3 bg-border/30" />
 
           <div className="flex items-center gap-1">
             <span className="text-[10px] text-[hsl(var(--platform-foreground-muted))]">Billable</span>
