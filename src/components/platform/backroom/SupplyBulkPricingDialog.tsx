@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -29,16 +29,35 @@ export function SupplyBulkPricingDialog({ open, onOpenChange, productIds, scopeL
   const queryClient = useQueryClient();
   const [wholesalePrice, setWholesalePrice] = useState('');
   const [markupPct, setMarkupPct] = useState('');
+  const [retailPrice, setRetailPrice] = useState('');
   const [containerSize, setContainerSize] = useState('');
 
-  const retailPreview = useMemo(() => {
-    const wp = parseFloat(wholesalePrice);
-    const mp = parseFloat(markupPct);
-    if (!isNaN(wp) && wp > 0 && !isNaN(mp) && mp >= 0) {
-      return (wp * (1 + mp / 100)).toFixed(2);
+  const handleWholesaleChange = (val: string) => {
+    setWholesalePrice(val);
+    const wp = parseFloat(val);
+    if (!isNaN(wp) && wp > 0) {
+      const mp = parseFloat(markupPct);
+      if (!isNaN(mp)) setRetailPrice(String(Math.round(wp * (1 + mp / 100) * 100) / 100));
     }
-    return null;
-  }, [wholesalePrice, markupPct]);
+  };
+
+  const handleMarkupChange = (val: string) => {
+    setMarkupPct(val);
+    const wp = parseFloat(wholesalePrice);
+    const mp = parseFloat(val);
+    if (!isNaN(wp) && wp > 0 && !isNaN(mp)) {
+      setRetailPrice(String(Math.round(wp * (1 + mp / 100) * 100) / 100));
+    }
+  };
+
+  const handleRetailChange = (val: string) => {
+    setRetailPrice(val);
+    const wp = parseFloat(wholesalePrice);
+    const rp = parseFloat(val);
+    if (!isNaN(wp) && wp > 0 && !isNaN(rp) && rp >= 0) {
+      setMarkupPct(String(Math.round(((rp / wp) - 1) * 10000) / 100));
+    }
+  };
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -70,6 +89,7 @@ export function SupplyBulkPricingDialog({ open, onOpenChange, productIds, scopeL
       onOpenChange(false);
       setWholesalePrice('');
       setMarkupPct('');
+      setRetailPrice('');
       setContainerSize('');
     },
     onError: (err: any) => {
@@ -93,44 +113,57 @@ export function SupplyBulkPricingDialog({ open, onOpenChange, productIds, scopeL
         </DialogHeader>
 
         <div className="space-y-4 py-2">
-          <div className="space-y-1.5">
-            <Label>Wholesale Price ($)</Label>
-            <PlatformInput
-              type="number"
-              step="0.01"
-              placeholder="0.00"
-              value={wholesalePrice}
-              onChange={(e) => setWholesalePrice(e.target.value)}
-              autoCapitalize="off"
-            />
+          <div className="grid grid-cols-3 gap-3">
+            <div className="space-y-1.5">
+              <Label>Wholesale ($)</Label>
+              <PlatformInput
+                type="number"
+                step="0.01"
+                placeholder="0.00"
+                value={wholesalePrice}
+                onChange={(e) => handleWholesaleChange(e.target.value)}
+                autoCapitalize="off"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Markup %</Label>
+              <PlatformInput
+                type="number"
+                step="1"
+                placeholder="0"
+                value={markupPct}
+                onChange={(e) => handleMarkupChange(e.target.value)}
+                autoCapitalize="off"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Retail ($)</Label>
+              <PlatformInput
+                type="number"
+                step="0.01"
+                placeholder="0.00"
+                value={retailPrice}
+                onChange={(e) => handleRetailChange(e.target.value)}
+                autoCapitalize="off"
+              />
+            </div>
           </div>
 
-          <div className="space-y-1.5">
-            <Label>Markup %</Label>
-            <PlatformInput
-              type="number"
-              step="1"
-              placeholder="0"
-              value={markupPct}
-              onChange={(e) => setMarkupPct(e.target.value)}
-              autoCapitalize="off"
-            />
-            <div className="flex items-center gap-1.5 pt-1">
-              {MARKUP_PRESETS.map((pct) => (
-                <button
-                  key={pct}
-                  type="button"
-                  onClick={() => setMarkupPct(String(pct))}
-                  className={`px-2.5 py-1 rounded-full text-xs font-sans transition-colors ${
-                    markupPct === String(pct)
-                      ? 'bg-[hsl(var(--platform-primary))] text-[hsl(var(--platform-primary-foreground))]'
-                      : 'bg-[hsl(var(--platform-muted))] text-[hsl(var(--platform-foreground-muted))] hover:text-[hsl(var(--platform-foreground))]'
-                  }`}
-                >
-                  {pct}%
-                </button>
-              ))}
-            </div>
+          <div className="flex items-center gap-1.5">
+            {MARKUP_PRESETS.map((pct) => (
+              <button
+                key={pct}
+                type="button"
+                onClick={() => handleMarkupChange(String(pct))}
+                className={`px-2.5 py-1 rounded-full text-xs font-sans transition-colors ${
+                  markupPct === String(pct)
+                    ? 'bg-[hsl(var(--platform-primary))] text-[hsl(var(--platform-primary-foreground))]'
+                    : 'bg-[hsl(var(--platform-muted))] text-[hsl(var(--platform-foreground-muted))] hover:text-[hsl(var(--platform-foreground))]'
+                }`}
+              >
+                {pct}%
+              </button>
+            ))}
           </div>
 
           <div className="space-y-1.5">
@@ -142,16 +175,9 @@ export function SupplyBulkPricingDialog({ open, onOpenChange, productIds, scopeL
             />
           </div>
 
-          {retailPreview && (
-            <div className="text-xs font-sans text-[hsl(var(--platform-foreground-muted))] bg-[hsl(var(--platform-muted)/0.4)] rounded-lg px-3 py-2 space-y-1">
-              <div>
-                Retail price: <span className="text-[hsl(var(--platform-foreground))] font-medium">${retailPreview}</span>
-              </div>
-              <div className="text-[10px] text-[hsl(var(--platform-foreground-muted))]">
-                Clients are charged this rate per unit for overage beyond the service allowance
-              </div>
-            </div>
-          )}
+          <div className="text-[10px] font-sans text-[hsl(var(--platform-foreground-muted))] px-1">
+            Clients are charged the retail rate per unit for overage beyond the service allowance
+          </div>
         </div>
 
         <DialogFooter>

@@ -1072,6 +1072,42 @@ function AddEditDialog({
   const [sizes, setSizes] = useState(product?.size_options?.join(', ') || '');
   const [wholesalePrice, setWholesalePrice] = useState(product?.wholesale_price != null ? String(product.wholesale_price) : '');
   const [markupPct, setMarkupPct] = useState(product?.default_markup_pct != null ? String(product.default_markup_pct) : '');
+  const [retailPrice, setRetailPrice] = useState(() => {
+    const wp = product?.wholesale_price;
+    const mp = product?.default_markup_pct;
+    if (wp != null && mp != null) return String(Math.round(wp * (1 + mp / 100) * 100) / 100);
+    return '';
+  });
+  const [lastEdited, setLastEdited] = useState<'markup' | 'retail' | null>(null);
+
+  const handleWholesaleChange = (val: string) => {
+    setWholesalePrice(val);
+    const wp = parseFloat(val);
+    if (!isNaN(wp) && wp > 0) {
+      const mp = parseFloat(markupPct);
+      if (!isNaN(mp)) setRetailPrice(String(Math.round(wp * (1 + mp / 100) * 100) / 100));
+    }
+  };
+
+  const handleMarkupChange = (val: string) => {
+    setMarkupPct(val);
+    setLastEdited('markup');
+    const wp = parseFloat(wholesalePrice);
+    const mp = parseFloat(val);
+    if (!isNaN(wp) && wp > 0 && !isNaN(mp)) {
+      setRetailPrice(String(Math.round(wp * (1 + mp / 100) * 100) / 100));
+    }
+  };
+
+  const handleRetailChange = (val: string) => {
+    setRetailPrice(val);
+    setLastEdited('retail');
+    const wp = parseFloat(wholesalePrice);
+    const rp = parseFloat(val);
+    if (!isNaN(wp) && wp > 0 && !isNaN(rp) && rp >= 0) {
+      setMarkupPct(String(Math.round(((rp / wp) - 1) * 10000) / 100));
+    }
+  };
 
   const resetForm = () => {
     setBrand(product?.brand || '');
@@ -1082,6 +1118,10 @@ function AddEditDialog({
     setSizes(product?.size_options?.join(', ') || '');
     setWholesalePrice(product?.wholesale_price != null ? String(product.wholesale_price) : '');
     setMarkupPct(product?.default_markup_pct != null ? String(product.default_markup_pct) : '');
+    const wp = product?.wholesale_price;
+    const mp = product?.default_markup_pct;
+    setRetailPrice(wp != null && mp != null ? String(Math.round(wp * (1 + mp / 100) * 100) / 100) : '');
+    setLastEdited(null);
   };
 
   const handleSave = async () => {
@@ -1185,14 +1225,18 @@ function AddEditDialog({
             <Label className="font-sans text-xs">Size Options (comma-separated)</Label>
             <Input value={sizes} onChange={(e) => setSizes(e.target.value)} placeholder="e.g. 60ml, 120ml" className="font-sans" />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <div className="space-y-1.5">
               <Label className="font-sans text-xs">Wholesale Price</Label>
-              <Input type="number" autoCapitalize="off" value={wholesalePrice} onChange={(e) => setWholesalePrice(e.target.value)} placeholder="0.00" className="font-sans" />
+              <Input type="number" step="0.01" autoCapitalize="off" value={wholesalePrice} onChange={(e) => handleWholesaleChange(e.target.value)} placeholder="0.00" className="font-sans" />
             </div>
             <div className="space-y-1.5">
               <Label className="font-sans text-xs">Markup %</Label>
-              <Input type="number" autoCapitalize="off" value={markupPct} onChange={(e) => setMarkupPct(e.target.value)} placeholder="0" className="font-sans" />
+              <Input type="number" step="1" autoCapitalize="off" value={markupPct} onChange={(e) => handleMarkupChange(e.target.value)} placeholder="0" className="font-sans" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="font-sans text-xs">Retail Price</Label>
+              <Input type="number" step="0.01" autoCapitalize="off" value={retailPrice} onChange={(e) => handleRetailChange(e.target.value)} placeholder="0.00" className="font-sans" />
             </div>
           </div>
         </div>
