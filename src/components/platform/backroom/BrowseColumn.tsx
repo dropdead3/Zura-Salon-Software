@@ -147,7 +147,7 @@ export function BrowseColumn({
                   <span
                     className={cn(
                       'shrink-0 font-sans text-[10px] tabular-nums',
-                      isActive ? 'text-violet-400' : 'text-[hsl(var(--platform-foreground-subtle))]',
+                      isActive ? 'text-primary' : 'text-muted-foreground/60',
                     )}
                   >
                     {item.count}
