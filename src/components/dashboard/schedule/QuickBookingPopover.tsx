@@ -163,7 +163,7 @@ function ClientListWithAlphabet({ clients, isLoading, clientSearch, onSelectClie
       <ScrollArea className="h-full">
         <div className={cn('p-2', showStrip && 'pr-8')}>
           {isLoading ? (
-            <div className="flex items-center justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+            <DashboardLoader size="sm" className="py-8" />
           ) : filteredClients.length === 0 ? (
             <div className="text-center py-8"><p className="text-muted-foreground text-sm">{activeLetter ? `No clients starting with "${activeLetter}"` : clientSearch ? 'No clients found' : 'Start typing to search'}</p>{activeLetter && <button className="text-primary text-xs mt-1 hover:underline" onClick={() => setActiveLetter(null)}>Clear filter</button>}</div>
           ) : (

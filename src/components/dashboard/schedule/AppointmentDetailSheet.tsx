@@ -81,6 +81,7 @@ import { tokens } from '@/lib/design-tokens';
 import { getClientInitials, getAvatarColor } from '@/lib/appointment-card-utils';
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
 import { formatRelativeTime } from '@/lib/format';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { useAssistantTimeBlocks } from '@/hooks/useAssistantTimeBlocks';
 import { useLogAuditEvent } from '@/hooks/useAppointmentAuditLog';
 import { formatDisplayName } from '@/lib/utils';
