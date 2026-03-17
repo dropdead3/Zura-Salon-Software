@@ -349,41 +349,41 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
         id="backroom-products-guide"
         title="Products & Supplies"
         description="Choose which products stylists use at the mixing station. Toggle tracking on, set costs, and pick how each product is measured (weighed, pumped, etc). Do this first — services can't be tracked without products."
-        icon={<Package className="h-4 w-4 text-[hsl(var(--platform-primary))]" />}
+        icon={<Package className="h-4 w-4 text-primary" />}
       />
 
-      <PlatformCard>
-        <PlatformCardHeader>
+      <Card>
+        <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
               {selectedBrand ? (
                 <button
                   type="button"
                   onClick={goBack}
-                  className="w-10 h-10 rounded-lg bg-[hsl(var(--platform-bg-hover))] flex items-center justify-center shrink-0 hover:bg-[hsl(var(--platform-bg-hover)/0.8)] transition-colors"
+                  className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0 hover:bg-muted/80 transition-colors"
                 >
-                  <ArrowLeft className="w-5 h-5 text-[hsl(var(--platform-foreground-muted))]" />
+                  <ArrowLeft className="w-5 h-5 text-muted-foreground" />
                 </button>
               ) : (
-                <div className="w-10 h-10 rounded-lg bg-[hsl(var(--platform-bg-hover))] flex items-center justify-center shrink-0">
-                  <Package className="w-5 h-5 text-[hsl(var(--platform-primary))]" />
+                <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                  <Package className="w-5 h-5 text-primary" />
                 </div>
               )}
               <div>
                 {selectedBrand ? (
                   <>
-                    <div className="flex items-center gap-1.5 text-xs font-sans text-[hsl(var(--platform-foreground-muted))]">
-                      <button type="button" onClick={goBack} className="hover:text-[hsl(var(--platform-foreground))] transition-colors">My Catalog</button>
+                    <div className="flex items-center gap-1.5 text-xs font-sans text-muted-foreground">
+                      <button type="button" onClick={goBack} className="hover:text-foreground transition-colors">My Catalog</button>
                       <span>/</span>
                     </div>
-                    <PlatformCardTitle>{selectedBrand}</PlatformCardTitle>
+                    <CardTitle className={tokens.card.title}>{selectedBrand}</CardTitle>
                   </>
                 ) : (
                   <>
-                    <PlatformCardTitle>Backroom Product Catalog</PlatformCardTitle>
-                    <PlatformCardDescription>
+                    <CardTitle className={tokens.card.title}>Backroom Product Catalog</CardTitle>
+                    <CardDescription>
                       Select a brand to manage tracking, depletion methods, and pricing.
-                    </PlatformCardDescription>
+                    </CardDescription>
                   </>
                 )}
               </div>
@@ -391,13 +391,13 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
             <div className="flex items-center gap-2 self-start sm:self-auto flex-shrink-0 flex-wrap">
               {/* View toggle */}
               {hasProducts && !selectedBrand && (
-                <div className="flex items-center rounded-lg border border-[hsl(var(--platform-border)/0.6)] overflow-hidden">
+                <div className="flex items-center rounded-lg border overflow-hidden">
                   <button
                     type="button"
                     onClick={() => setCatalogView('brands')}
                     className={cn(
                       'flex items-center justify-center w-8 h-8 transition-colors',
-                      catalogView === 'brands' ? 'bg-[hsl(var(--platform-foreground))] text-[hsl(var(--platform-bg))]' : 'text-[hsl(var(--platform-foreground-muted))] hover:text-[hsl(var(--platform-foreground))] hover:bg-[hsl(var(--platform-bg-hover)/0.4)]'
+                      catalogView === 'brands' ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'
                     )}
                     title="Brand view"
                   >
@@ -408,7 +408,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                     onClick={() => setCatalogView('inventory')}
                     className={cn(
                       'flex items-center justify-center w-8 h-8 transition-colors',
-                      catalogView === 'inventory' ? 'bg-[hsl(var(--platform-foreground))] text-[hsl(var(--platform-bg))]' : 'text-[hsl(var(--platform-foreground-muted))] hover:text-[hsl(var(--platform-foreground))] hover:bg-[hsl(var(--platform-bg-hover)/0.4)]'
+                      catalogView === 'inventory' ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'
                     )}
                     title="Inventory table"
                   >
@@ -416,11 +416,11 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                   </button>
                 </div>
               )}
-              <PlatformBadge variant="outline">{trackedCount} tracked</PlatformBadge>
+              <Badge variant="outline">{trackedCount} tracked</Badge>
               {selectedBrand && (
-                <PlatformBadge variant="outline">{brandProducts.length} products</PlatformBadge>
+                <Badge variant="outline">{brandProducts.length} products</Badge>
               )}
-              <PlatformButton
+              <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setLibraryOpen(true)}
@@ -428,12 +428,12 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
               >
                 <Library className="w-4 h-4" />
                 Supply Library
-              </PlatformButton>
+              </Button>
             </div>
           </div>
-        </PlatformCardHeader>
+        </CardHeader>
 
-        <PlatformCardContent className="space-y-4">
+        <CardContent className="space-y-4">
           {/* ====== BRAND DETAIL (FINDER) ====== */}
           {selectedBrand ? (
             <BrandFinder
@@ -476,29 +476,31 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
               {/* KPI row */}
               {hasProducts && (
                 <div className="grid grid-cols-3 gap-3">
-                  <div className="rounded-xl border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card))] p-4">
-                    <span className="text-[11px] font-display uppercase tracking-wider text-[hsl(var(--platform-foreground-muted))]">Tracked</span>
-                    <span className="block text-2xl font-display tracking-tight text-[hsl(var(--platform-foreground))] mt-1">{trackedCount}</span>
+                  <div className="rounded-xl border bg-card p-4">
+                    <span className="text-[11px] font-display uppercase tracking-wider text-muted-foreground">Tracked</span>
+                    <span className="block text-2xl font-display tracking-tight text-foreground mt-1">{trackedCount}</span>
                   </div>
-                  <div className="rounded-xl border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card))] p-4">
-                    <span className="text-[11px] font-display uppercase tracking-wider text-[hsl(var(--platform-foreground-muted))]">In Stock</span>
-                    <span className="block text-2xl font-display tracking-tight text-[hsl(var(--platform-foreground))] mt-1">{kpis.inStock}</span>
+                  <div className="rounded-xl border bg-card p-4">
+                    <span className="text-[11px] font-display uppercase tracking-wider text-muted-foreground">In Stock</span>
+                    <span className="block text-2xl font-display tracking-tight text-foreground mt-1">{kpis.inStock}</span>
                   </div>
-                  <div className="rounded-xl border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card))] p-4">
-                    <span className="text-[11px] font-display uppercase tracking-wider text-[hsl(var(--platform-foreground-muted))]">To Reorder</span>
-                    <span className={cn('block text-2xl font-display tracking-tight text-[hsl(var(--platform-foreground))] mt-1', kpis.toReorder > 0 && 'text-amber-400')}>{kpis.toReorder}</span>
+                  <div className="rounded-xl border bg-card p-4">
+                    <span className="text-[11px] font-display uppercase tracking-wider text-muted-foreground">To Reorder</span>
+                    <span className={cn('block text-2xl font-display tracking-tight text-foreground mt-1', kpis.toReorder > 0 && 'text-amber-400')}>{kpis.toReorder}</span>
                   </div>
                 </div>
               )}
 
               {/* Search */}
-              <PlatformInput
-                placeholder="Search brands..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                icon={<Search className="w-4 h-4" />}
-                className="font-sans"
-              />
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search brands..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="font-sans pl-10"
+                />
+              </div>
 
               {/* A-Z alphabet bar */}
               <div className="flex flex-wrap items-center gap-0.5 sm:gap-1">
@@ -508,8 +510,8 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                   className={cn(
                     'inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] sm:text-xs font-sans font-medium transition-all whitespace-nowrap',
                     !activeLetter
-                      ? 'bg-[hsl(var(--platform-foreground))] text-[hsl(var(--platform-bg))]'
-                      : 'bg-[hsl(var(--platform-bg-hover)/0.6)] text-[hsl(var(--platform-foreground)/0.7)] hover:bg-[hsl(var(--platform-bg-hover))] hover:text-[hsl(var(--platform-foreground))]'
+                      ? 'bg-foreground text-background'
+                      : 'bg-muted/60 text-foreground/70 hover:bg-muted hover:text-foreground'
                   )}
                 >
                   All
@@ -526,10 +528,10 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                       className={cn(
                         'w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center rounded-md text-[10px] sm:text-xs font-sans font-medium transition-all',
                         isActive
-                          ? 'bg-[hsl(var(--platform-foreground))] text-[hsl(var(--platform-bg))]'
+                          ? 'bg-foreground text-background'
                           : hasBrands
-                          ? 'text-[hsl(var(--platform-foreground)/0.7)] hover:bg-[hsl(var(--platform-bg-hover))] hover:text-[hsl(var(--platform-foreground))]'
-                          : 'text-[hsl(var(--platform-foreground-muted)/0.3)] cursor-default'
+                          ? 'text-foreground/70 hover:bg-muted hover:text-foreground'
+                          : 'text-muted-foreground/30 cursor-default'
                       )}
                     >
                       {letter}
@@ -541,8 +543,8 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
               {/* Brand cards */}
               {!hasProducts ? (
                 <div className={cn(tokens.empty.container, 'py-14')}>
-                  <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl border border-[hsl(var(--platform-border)/0.6)] bg-[hsl(var(--platform-bg-hover)/0.4)]">
-                    <Library className="h-7 w-7 text-[hsl(var(--platform-foreground-muted))]" />
+                  <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl border bg-muted/40">
+                    <Library className="h-7 w-7 text-muted-foreground" />
                   </div>
                   <h3 className={tokens.empty.heading}>Build Your Supply Catalog</h3>
                   <p className={cn(tokens.empty.description, 'max-w-sm mx-auto mt-2')}>
@@ -575,8 +577,8 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                         }}
                         className={cn(
                           'group relative flex flex-col rounded-xl border p-4 text-left transition-all duration-200',
-                          'border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.5)]',
-                          'hover:border-[hsl(var(--platform-border))] hover:bg-[hsl(var(--platform-bg-card))] hover:shadow-lg hover:shadow-[hsl(var(--platform-primary)/0.05)]',
+                          'border bg-card/50',
+                          'hover:border-border hover:bg-card hover:shadow-lg',
                         )}
                       >
                         {/* Logo / Initial */}
@@ -588,26 +590,26 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                               className="w-10 h-10 rounded-lg object-contain bg-white/10 p-1"
                             />
                           ) : (
-                            <div className="w-10 h-10 rounded-lg bg-[hsl(var(--platform-bg-hover))] flex items-center justify-center text-base font-display text-[hsl(var(--platform-foreground-muted))]">
+                            <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center text-base font-display text-muted-foreground">
                               {brandName[0]}
                             </div>
                           )}
                           <div className="flex-1 min-w-0">
-                            <span className="text-sm font-sans font-medium text-[hsl(var(--platform-foreground))] truncate block">{brandName}</span>
-                            <span className="text-[11px] font-sans text-[hsl(var(--platform-foreground-muted))]">{brandProds.length} products</span>
+                            <span className="text-sm font-sans font-medium text-foreground truncate block">{brandName}</span>
+                            <span className="text-[11px] font-sans text-muted-foreground">{brandProds.length} products</span>
                           </div>
                         </div>
 
                         {/* Status row */}
                         <div className="flex items-center gap-2 mt-auto">
                           {tracked > 0 ? (
-                            <PlatformBadge variant="secondary" size="sm" className="text-[10px]">
+                            <Badge variant="secondary" className="text-[10px]">
                               {tracked}/{brandProds.length} tracked
-                            </PlatformBadge>
+                            </Badge>
                           ) : (
-                            <PlatformBadge variant="outline" size="sm" className="text-[10px] opacity-60">
+                            <Badge variant="outline" className="text-[10px] opacity-60">
                               Not tracked
-                            </PlatformBadge>
+                            </Badge>
                           )}
                         </div>
 
@@ -617,13 +619,13 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                             {cats.slice(0, 3).map((cat) => (
                               <span
                                 key={cat}
-                                className="text-[9px] font-sans px-1.5 py-0.5 rounded bg-[hsl(var(--platform-bg-hover)/0.5)] text-[hsl(var(--platform-foreground-muted))] capitalize"
+                                className="text-[9px] font-sans px-1.5 py-0.5 rounded bg-muted/50 text-muted-foreground capitalize"
                               >
                                 {cat}
                               </span>
                             ))}
                             {cats.length > 3 && (
-                              <span className="text-[9px] font-sans px-1.5 py-0.5 rounded bg-[hsl(var(--platform-bg-hover)/0.5)] text-[hsl(var(--platform-foreground-muted))]">
+                              <span className="text-[9px] font-sans px-1.5 py-0.5 rounded bg-muted/50 text-muted-foreground">
                                 +{cats.length - 3}
                               </span>
                             )}
@@ -631,7 +633,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                         )}
 
                         {/* Hover arrow */}
-                        <ArrowRight className="absolute top-4 right-4 w-4 h-4 text-[hsl(var(--platform-foreground-muted))] opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <ArrowRight className="absolute top-4 right-4 w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                       </button>
                     );
                   })}
@@ -640,16 +642,16 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
 
               {/* Next step hint */}
               {onNavigate && trackedCount > 0 && (
-                <div className="flex justify-end pt-2 border-t border-[hsl(var(--platform-border)/0.4)]">
-                  <PlatformButton variant="ghost" size="sm" className="text-xs font-sans" onClick={() => onNavigate('services')}>
+                <div className="flex justify-end pt-2 border-t">
+                  <Button variant="ghost" size="sm" className="text-xs font-sans" onClick={() => onNavigate('services')}>
                     Next: Service Tracking <ArrowRight className="w-3 h-3 ml-1" />
-                  </PlatformButton>
+                  </Button>
                 </div>
               )}
             </>
           )}
-        </PlatformCardContent>
-      </PlatformCard>
+        </CardContent>
+      </Card>
 
       {/* Dialogs */}
       {orgId && (
@@ -722,7 +724,7 @@ function BrandFinder({
   return (
     <div className="space-y-4">
       {/* Finder browser */}
-      <div className="rounded-xl border border-[hsl(var(--platform-border)/0.5)] overflow-hidden flex" style={{ minHeight: 420 }}>
+      <div className="rounded-xl border overflow-hidden flex" style={{ minHeight: 420 }}>
         {/* Column 1: Categories */}
         <BrowseColumn
           title="Categories"
@@ -735,14 +737,14 @@ function BrandFinder({
 
         {/* Column 2: Product Lines */}
         {selectedCategory ? (
-          <div className="flex flex-col flex-1 min-w-0 border-r border-[hsl(var(--platform-border)/0.3)]">
+          <div className="flex flex-col flex-1 min-w-0 border-r border-border/30">
             {/* Track All Category header */}
-            <div className="sticky top-0 z-10 px-3 pt-3 pb-2 bg-[hsl(var(--platform-bg-card)/0.6)] backdrop-blur-sm border-b border-[hsl(var(--platform-border)/0.2)] flex items-center justify-between">
-              <span className="font-display text-[10px] tracking-wider text-[hsl(var(--platform-foreground-muted))] uppercase">
+            <div className="sticky top-0 z-10 px-3 pt-3 pb-2 bg-card/60 backdrop-blur-sm border-b border-border/20 flex items-center justify-between">
+              <span className="font-display text-[10px] tracking-wider text-muted-foreground uppercase">
                 Product Lines ({productLines.length})
               </span>
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] font-sans text-[hsl(var(--platform-foreground-muted))]">Track All</span>
+                <span className="text-[10px] font-sans text-muted-foreground">Track All</span>
                 <Switch
                   checked={categoryAllTracked}
                   onCheckedChange={(v) => onToggleCategoryTracking(v)}
@@ -753,7 +755,7 @@ function BrandFinder({
             <ScrollArea className="flex-1">
               <div className="p-1.5 space-y-0.5">
                 {productLines.length === 0 ? (
-                  <p className="px-3 py-4 font-sans text-xs text-[hsl(var(--platform-foreground-muted))] text-center">No product lines</p>
+                  <p className="px-3 py-4 font-sans text-xs text-muted-foreground text-center">No product lines</p>
                 ) : (
                   productLines.map((item) => {
                     const isActive = item.key === selectedLine;
@@ -764,8 +766,8 @@ function BrandFinder({
                         className={cn(
                           'w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-colors',
                           isActive
-                            ? 'bg-violet-600/20 border-l-2 border-violet-500 text-[hsl(var(--platform-foreground))]'
-                            : 'hover:bg-[hsl(var(--platform-bg-hover)/0.5)] text-[hsl(var(--platform-foreground-muted))] border-l-2 border-transparent',
+                            ? 'bg-primary/20 border-l-2 border-primary text-foreground'
+                            : 'hover:bg-muted/50 text-muted-foreground border-l-2 border-transparent',
                         )}
                       >
                         {item.health && (
@@ -774,7 +776,7 @@ function BrandFinder({
                           )} />
                         )}
                         <span className="flex-1 font-sans text-xs font-medium truncate">{item.label}</span>
-                        <span className={cn('shrink-0 font-sans text-[10px] tabular-nums', isActive ? 'text-violet-400' : 'text-[hsl(var(--platform-foreground-subtle))]')}>
+                        <span className={cn('shrink-0 font-sans text-[10px] tabular-nums', isActive ? 'text-primary' : 'text-muted-foreground/60')}>
                           {item.count}
                         </span>
                       </button>
@@ -786,7 +788,7 @@ function BrandFinder({
           </div>
         ) : (
           <div className="flex-1 flex items-center justify-center">
-            <p className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Select a category</p>
+            <p className="font-sans text-xs text-muted-foreground">Select a category</p>
           </div>
         )}
 
@@ -794,12 +796,12 @@ function BrandFinder({
         {selectedLine ? (
           <div className="flex flex-col flex-[1.5] min-w-0">
             {/* Track All Line header */}
-            <div className="sticky top-0 z-10 px-3 pt-3 pb-2 bg-[hsl(var(--platform-bg-card)/0.6)] backdrop-blur-sm border-b border-[hsl(var(--platform-border)/0.2)] flex items-center justify-between">
-              <span className="font-display text-[10px] tracking-wider text-[hsl(var(--platform-foreground-muted))] uppercase">
+            <div className="sticky top-0 z-10 px-3 pt-3 pb-2 bg-card/60 backdrop-blur-sm border-b border-border/20 flex items-center justify-between">
+              <span className="font-display text-[10px] tracking-wider text-muted-foreground uppercase">
                 {selectedLine} ({lineProducts.length})
               </span>
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] font-sans text-[hsl(var(--platform-foreground-muted))]">Track All</span>
+                <span className="text-[10px] font-sans text-muted-foreground">Track All</span>
                 <Switch
                   checked={lineAllTracked}
                   onCheckedChange={(v) => onToggleLineTracking(v)}
@@ -821,17 +823,17 @@ function BrandFinder({
           </div>
         ) : selectedCategory ? (
           <div className="flex-[1.5] flex items-center justify-center">
-            <p className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Select a product line</p>
+            <p className="font-sans text-xs text-muted-foreground">Select a product line</p>
           </div>
         ) : null}
       </div>
 
       {/* Next step */}
       {onNavigate && trackedCount > 0 && (
-        <div className="flex justify-end pt-2 border-t border-[hsl(var(--platform-border)/0.4)]">
-          <PlatformButton variant="ghost" size="sm" className="text-xs font-sans" onClick={() => onNavigate('services')}>
+        <div className="flex justify-end pt-2 border-t">
+          <Button variant="ghost" size="sm" className="text-xs font-sans" onClick={() => onNavigate('services')}>
             Next: Service Tracking <ArrowRight className="w-3 h-3 ml-1" />
-          </PlatformButton>
+          </Button>
         </div>
       )}
     </div>
@@ -863,14 +865,14 @@ function FinderProductRow({ product, onUpdate }: { product: BackroomProduct; onU
     if (localContainer !== (product.container_size || '')) onUpdate({ container_size: localContainer || null } as any);
   };
 
-  const inputClass = "h-6 w-16 rounded border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-input))] px-1.5 text-[11px] font-sans text-[hsl(var(--platform-foreground))] focus:outline-none focus:border-[hsl(var(--platform-primary)/0.5)] transition-colors";
+  const inputClass = "h-6 w-16 rounded border px-1.5 text-[11px] font-sans text-foreground bg-background focus:outline-none focus:border-primary/50 transition-colors";
 
   return (
     <div className={cn(
       'rounded-lg border p-3 transition-all',
       product.is_backroom_tracked
-        ? 'border-[hsl(var(--platform-border)/0.6)] bg-[hsl(var(--platform-bg-card)/0.5)]'
-        : 'border-[hsl(var(--platform-border)/0.3)] bg-transparent opacity-70'
+        ? 'border bg-card/50'
+        : 'border-border/30 bg-transparent opacity-70'
     )}>
       {/* Row 1: Toggle + name + depletion */}
       <div className="flex items-center gap-2">
@@ -879,7 +881,7 @@ function FinderProductRow({ product, onUpdate }: { product: BackroomProduct; onU
           onCheckedChange={(checked) => onUpdate({ is_backroom_tracked: checked })}
           className="scale-75 shrink-0"
         />
-        <span className="flex-1 text-xs font-sans font-medium text-[hsl(var(--platform-foreground))] truncate min-w-0">
+        <span className="flex-1 text-xs font-sans font-medium text-foreground truncate min-w-0">
           {product.name}
         </span>
         {product.is_backroom_tracked && (
@@ -887,23 +889,23 @@ function FinderProductRow({ product, onUpdate }: { product: BackroomProduct; onU
             value={product.depletion_method}
             onValueChange={(v) => onUpdate({ depletion_method: v })}
           >
-            <PlatformSelectTrigger className="w-[100px] h-6 text-[11px] font-sans">
+            <SelectTrigger className="w-[100px] h-6 text-[11px] font-sans">
               <SelectValue />
-            </PlatformSelectTrigger>
-            <PlatformSelectContent>
+            </SelectTrigger>
+            <SelectContent>
               {DEPLETION_METHODS.map((m) => (
-                <PlatformSelectItem key={m.value} value={m.value} className="text-[11px]">{m.label}</PlatformSelectItem>
+                <SelectItem key={m.value} value={m.value} className="text-[11px]">{m.label}</SelectItem>
               ))}
-            </PlatformSelectContent>
+            </SelectContent>
           </Select>
         )}
       </div>
 
       {/* Row 2: Pricing + switches (only when tracked) */}
       {product.is_backroom_tracked && (
-        <div className="flex flex-wrap items-center gap-2 mt-2 pt-2 border-t border-[hsl(var(--platform-border)/0.2)]">
+        <div className="flex flex-wrap items-center gap-2 mt-2 pt-2 border-t border-border/20">
           <div className="flex items-center gap-1">
-            <span className="text-[10px] text-[hsl(var(--platform-foreground-muted))]">$/g</span>
+            <span className="text-[10px] text-muted-foreground">$/g</span>
             <input
               type="number"
               step="0.0001"
@@ -915,7 +917,7 @@ function FinderProductRow({ product, onUpdate }: { product: BackroomProduct; onU
             />
           </div>
           <div className="flex items-center gap-1">
-            <span className="text-[10px] text-[hsl(var(--platform-foreground-muted))]">Size</span>
+            <span className="text-[10px] text-muted-foreground">Size</span>
             <input
               type="text"
               value={localContainer}
@@ -926,7 +928,7 @@ function FinderProductRow({ product, onUpdate }: { product: BackroomProduct; onU
             />
           </div>
           <div className="flex items-center gap-1">
-            <span className="text-[10px] text-[hsl(var(--platform-foreground-muted))]">Markup</span>
+            <span className="text-[10px] text-muted-foreground">Markup</span>
             <input
               type="number"
               step="1"
@@ -936,22 +938,22 @@ function FinderProductRow({ product, onUpdate }: { product: BackroomProduct; onU
               placeholder="0"
               className={cn(inputClass, 'w-12')}
             />
-            <span className="text-[10px] text-[hsl(var(--platform-foreground-muted))]">%</span>
+            <span className="text-[10px] text-muted-foreground">%</span>
           </div>
           {chargePerGram != null && (
-            <PlatformBadge variant="secondary" size="sm" className="text-[10px] font-sans">
+            <Badge variant="secondary" className="text-[10px] font-sans">
               ${chargePerGram.toFixed(4)}/g
-            </PlatformBadge>
+            </Badge>
           )}
 
-          <div className="w-px h-3 bg-[hsl(var(--platform-border)/0.3)]" />
+          <div className="w-px h-3 bg-border/30" />
 
           <div className="flex items-center gap-1">
-            <span className="text-[10px] text-[hsl(var(--platform-foreground-muted))]">Billable</span>
+            <span className="text-[10px] text-muted-foreground">Billable</span>
             <Switch checked={product.is_billable_to_client} onCheckedChange={(v) => onUpdate({ is_billable_to_client: v })} className="scale-[0.6]" />
           </div>
           <div className="flex items-center gap-1">
-            <span className="text-[10px] text-[hsl(var(--platform-foreground-muted))]">Overage</span>
+            <span className="text-[10px] text-muted-foreground">Overage</span>
             <Switch checked={product.is_overage_eligible} onCheckedChange={(v) => onUpdate({ is_overage_eligible: v })} className="scale-[0.6]" />
           </div>
         </div>
@@ -1002,92 +1004,94 @@ function InventoryView({
           type="button"
           onClick={() => setStockFilter(stockFilter === 'in_stock' ? 'all' : 'in_stock')}
           className={cn(
-            'rounded-xl border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card))] p-4 text-left transition-all cursor-pointer',
-            stockFilter === 'in_stock' ? 'border-[hsl(var(--platform-primary)/0.4)] bg-[hsl(var(--platform-primary)/0.05)]' : 'hover:border-[hsl(var(--platform-border)/0.8)] hover:shadow-sm'
+            'rounded-xl border bg-card p-4 text-left transition-all cursor-pointer',
+            stockFilter === 'in_stock' ? 'border-primary/40 bg-primary/5' : 'hover:border-border/80 hover:shadow-sm'
           )}
         >
-          <span className="text-[11px] font-display uppercase tracking-wider text-[hsl(var(--platform-foreground-muted))]">Current Stock</span>
-          <span className="block text-2xl font-display tracking-tight text-[hsl(var(--platform-foreground))] mt-1">{kpis.inStock}</span>
+          <span className="text-[11px] font-display uppercase tracking-wider text-muted-foreground">Current Stock</span>
+          <span className="block text-2xl font-display tracking-tight text-foreground mt-1">{kpis.inStock}</span>
         </button>
         <button
           type="button"
           onClick={() => setStockFilter(stockFilter === 'reorder' ? 'all' : 'reorder')}
           className={cn(
-            'rounded-xl border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card))] p-4 text-left transition-all cursor-pointer',
-            stockFilter === 'reorder' ? 'border-amber-500/40 bg-amber-500/5' : 'hover:border-[hsl(var(--platform-border)/0.8)] hover:shadow-sm'
+            'rounded-xl border bg-card p-4 text-left transition-all cursor-pointer',
+            stockFilter === 'reorder' ? 'border-amber-500/40 bg-amber-500/5' : 'hover:border-border/80 hover:shadow-sm'
           )}
         >
-          <span className="text-[11px] font-display uppercase tracking-wider text-[hsl(var(--platform-foreground-muted))]">To Reorder</span>
-          <span className={cn('block text-2xl font-display tracking-tight text-[hsl(var(--platform-foreground))] mt-1', kpis.toReorder > 0 && 'text-amber-400')}>{kpis.toReorder}</span>
+          <span className="text-[11px] font-display uppercase tracking-wider text-muted-foreground">To Reorder</span>
+          <span className={cn('block text-2xl font-display tracking-tight text-foreground mt-1', kpis.toReorder > 0 && 'text-amber-400')}>{kpis.toReorder}</span>
         </button>
-        <div className="rounded-xl border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card))] p-4">
-          <span className="text-[11px] font-display uppercase tracking-wider text-[hsl(var(--platform-foreground-muted))]">Total Tracked</span>
-          <span className="block text-2xl font-display tracking-tight text-[hsl(var(--platform-foreground))] mt-1">{kpis.totalTracked}</span>
+        <div className="rounded-xl border bg-card p-4">
+          <span className="text-[11px] font-display uppercase tracking-wider text-muted-foreground">Total Tracked</span>
+          <span className="block text-2xl font-display tracking-tight text-foreground mt-1">{kpis.totalTracked}</span>
         </div>
       </div>
 
       {/* Search + Filters */}
-      <PlatformInput
-        placeholder="Search inventory..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        icon={<Search className="w-4 h-4" />}
-        className="font-sans"
-      />
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Input
+          placeholder="Search inventory..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="font-sans pl-10"
+        />
+      </div>
       <div className="flex flex-wrap items-center gap-3">
         <Select value={filterCategory} onValueChange={setFilterCategory}>
-          <PlatformSelectTrigger className="w-full sm:w-[180px] font-sans">
+          <SelectTrigger className="w-full sm:w-[180px] font-sans">
             <SelectValue placeholder="Category" />
-          </PlatformSelectTrigger>
-          <PlatformSelectContent>
-            <PlatformSelectItem value="all">All Categories</PlatformSelectItem>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Categories</SelectItem>
             {CATEGORIES.map((c) => (
-              <PlatformSelectItem key={c} value={c} className="capitalize">{c}</PlatformSelectItem>
+              <SelectItem key={c} value={c} className="capitalize">{c}</SelectItem>
             ))}
-          </PlatformSelectContent>
+          </SelectContent>
         </Select>
         {bulkProductIds.length > 0 && orgId && (
-          <PlatformButton variant="outline" size="sm" onClick={onOpenPricing} className="font-sans gap-1.5">
+          <Button variant="outline" size="sm" onClick={onOpenPricing} className="font-sans gap-1.5">
             <DollarSign className="w-3.5 h-3.5" />
             Set Pricing
-          </PlatformButton>
+          </Button>
         )}
         {reorderItems.length > 0 && orgId && (
-          <PlatformButton variant="outline" size="sm" onClick={onOpenReorder} className="font-sans gap-1.5">
+          <Button variant="outline" size="sm" onClick={onOpenReorder} className="font-sans gap-1.5">
             <ShoppingCart className="w-3.5 h-3.5" />
             Reorder All
-            <PlatformBadge variant="secondary" size="sm" className="ml-1">{reorderItems.length}</PlatformBadge>
-          </PlatformButton>
+            <Badge variant="secondary" className="ml-1">{reorderItems.length}</Badge>
+          </Button>
         )}
       </div>
 
       {/* Table */}
-      <div className="rounded-xl border border-[hsl(var(--platform-border)/0.5)] overflow-hidden">
-        <PlatformTable>
-          <PlatformTableHeader>
-            <PlatformTableRow>
-              <PlatformTableHead>Product</PlatformTableHead>
-              <PlatformTableHead className="hidden sm:table-cell">Category</PlatformTableHead>
-              <PlatformTableHead className="hidden md:table-cell">Container</PlatformTableHead>
-              <PlatformTableHead>Stock</PlatformTableHead>
-              <PlatformTableHead className="hidden md:table-cell">Min</PlatformTableHead>
-              <PlatformTableHead className="hidden md:table-cell">Max</PlatformTableHead>
-              <PlatformTableHead className="hidden lg:table-cell">Order Qty</PlatformTableHead>
-              <PlatformTableHead>Status</PlatformTableHead>
-              <PlatformTableHead className="hidden lg:table-cell">Cost/g</PlatformTableHead>
-            </PlatformTableRow>
-          </PlatformTableHeader>
-          <PlatformTableBody>
+      <div className="rounded-xl border overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Product</TableHead>
+              <TableHead className="hidden sm:table-cell">Category</TableHead>
+              <TableHead className="hidden md:table-cell">Container</TableHead>
+              <TableHead>Stock</TableHead>
+              <TableHead className="hidden md:table-cell">Min</TableHead>
+              <TableHead className="hidden md:table-cell">Max</TableHead>
+              <TableHead className="hidden lg:table-cell">Order Qty</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="hidden lg:table-cell">Cost/g</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {filteredInventory.length === 0 ? (
-              <PlatformTableRow>
-                <PlatformTableCell colSpan={9} className="text-center py-8">
+              <TableRow>
+                <TableCell colSpan={9} className="text-center py-8">
                   <div className={tokens.empty.container}>
                     <Package className={tokens.empty.icon} />
                     <h3 className={tokens.empty.heading}>No products found</h3>
                     <p className={tokens.empty.description}>Adjust filters or track products in brand view first.</p>
                   </div>
-                </PlatformTableCell>
-              </PlatformTableRow>
+                </TableCell>
+              </TableRow>
             ) : (
               filteredInventory.map((row) => (
                 <InventoryTableRow
@@ -1098,8 +1102,8 @@ function InventoryView({
                 />
               ))
             )}
-          </PlatformTableBody>
-        </PlatformTable>
+          </TableBody>
+        </Table>
       </div>
     </>
   );
@@ -1162,23 +1166,23 @@ function InventoryTableRow({
     if (val !== row.par_level) onUpdate({ par_level: val });
   };
 
-  const inlineInputClass = "h-6 w-14 rounded border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-input))] px-1.5 text-xs font-sans text-[hsl(var(--platform-foreground))] focus:outline-none focus:border-[hsl(var(--platform-primary)/0.5)]";
+  const inlineInputClass = "h-6 w-14 rounded border px-1.5 text-xs font-sans text-foreground bg-background focus:outline-none focus:border-primary/50";
 
   return (
-    <PlatformTableRow>
-      <PlatformTableCell>
+    <TableRow>
+      <TableCell>
         <div className="min-w-0">
-          <span className="text-sm font-sans font-medium text-[hsl(var(--platform-foreground))] truncate block">{row.name}</span>
-          {row.brand && <span className="text-[11px] text-[hsl(var(--platform-foreground-muted))]">{row.brand}</span>}
+          <span className="text-sm font-sans font-medium text-foreground truncate block">{row.name}</span>
+          {row.brand && <span className="text-[11px] text-muted-foreground">{row.brand}</span>}
         </div>
-      </PlatformTableCell>
-      <PlatformTableCell className="hidden sm:table-cell">
-        {row.category && <PlatformBadge variant="outline" size="sm" className="capitalize">{row.category}</PlatformBadge>}
-      </PlatformTableCell>
-      <PlatformTableCell className="hidden md:table-cell">
-        <span className="text-xs font-sans text-[hsl(var(--platform-foreground-muted))]">{row.container_size || '—'}</span>
-      </PlatformTableCell>
-      <PlatformTableCell>
+      </TableCell>
+      <TableCell className="hidden sm:table-cell">
+        {row.category && <Badge variant="outline" className="capitalize">{row.category}</Badge>}
+      </TableCell>
+      <TableCell className="hidden md:table-cell">
+        <span className="text-xs font-sans text-muted-foreground">{row.container_size || '—'}</span>
+      </TableCell>
+      <TableCell>
         {editingStock ? (
           <input
             type="number"
@@ -1193,47 +1197,47 @@ function InventoryTableRow({
           <button
             type="button"
             onClick={() => { setEditingStock(true); setStockValue(row.quantity_on_hand.toString()); }}
-            className="text-xs font-sans text-[hsl(var(--platform-foreground))] hover:text-[hsl(var(--platform-primary))] transition-colors cursor-pointer tabular-nums"
+            className="text-xs font-sans text-foreground hover:text-primary transition-colors cursor-pointer tabular-nums"
           >
             {row.quantity_on_hand}
           </button>
         )}
-      </PlatformTableCell>
-      <PlatformTableCell className="hidden md:table-cell">
+      </TableCell>
+      <TableCell className="hidden md:table-cell">
         {editingMin ? (
           <input type="number" value={minValue} onChange={(e) => setMinValue(e.target.value)} onBlur={handleMinSave} onKeyDown={(e) => e.key === 'Enter' && handleMinSave()} autoFocus className={inlineInputClass} />
         ) : (
-          <button type="button" onClick={() => { setEditingMin(true); setMinValue(row.reorder_level?.toString() || ''); }} className="text-xs font-sans text-[hsl(var(--platform-foreground-muted))] hover:text-[hsl(var(--platform-foreground))] transition-colors cursor-pointer tabular-nums">
+          <button type="button" onClick={() => { setEditingMin(true); setMinValue(row.reorder_level?.toString() || ''); }} className="text-xs font-sans text-muted-foreground hover:text-foreground transition-colors cursor-pointer tabular-nums">
             {row.reorder_level ?? '—'}
           </button>
         )}
-      </PlatformTableCell>
-      <PlatformTableCell className="hidden md:table-cell">
+      </TableCell>
+      <TableCell className="hidden md:table-cell">
         {editingMax ? (
           <input type="number" value={maxValue} onChange={(e) => setMaxValue(e.target.value)} onBlur={handleMaxSave} onKeyDown={(e) => e.key === 'Enter' && handleMaxSave()} autoFocus className={inlineInputClass} />
         ) : (
-          <button type="button" onClick={() => { setEditingMax(true); setMaxValue(row.par_level?.toString() || ''); }} className="text-xs font-sans text-[hsl(var(--platform-foreground-muted))] hover:text-[hsl(var(--platform-foreground))] transition-colors cursor-pointer tabular-nums">
+          <button type="button" onClick={() => { setEditingMax(true); setMaxValue(row.par_level?.toString() || ''); }} className="text-xs font-sans text-muted-foreground hover:text-foreground transition-colors cursor-pointer tabular-nums">
             {row.par_level ?? '—'}
           </button>
         )}
-      </PlatformTableCell>
-      <PlatformTableCell className="hidden lg:table-cell">
+      </TableCell>
+      <TableCell className="hidden lg:table-cell">
         {row.order_qty > 0 ? (
           <span className="text-xs font-sans font-medium text-amber-400 tabular-nums">{row.order_qty}</span>
         ) : (
-          <span className="text-xs text-[hsl(var(--platform-foreground-muted))]">—</span>
+          <span className="text-xs text-muted-foreground">—</span>
         )}
-      </PlatformTableCell>
-      <PlatformTableCell>
-        <PlatformBadge variant="outline" className={cn('text-[10px] border', statusConfig.className)}>
+      </TableCell>
+      <TableCell>
+        <Badge variant="outline" className={cn('text-[10px] border', statusConfig.className)}>
           {statusConfig.label}
-        </PlatformBadge>
-      </PlatformTableCell>
-      <PlatformTableCell className="hidden lg:table-cell">
-        <span className="text-xs font-sans text-[hsl(var(--platform-foreground-muted))] tabular-nums">
+        </Badge>
+      </TableCell>
+      <TableCell className="hidden lg:table-cell">
+        <span className="text-xs font-sans text-muted-foreground tabular-nums">
           {row.cost_per_gram != null ? `$${row.cost_per_gram.toFixed(4)}` : '—'}
         </span>
-      </PlatformTableCell>
-    </PlatformTableRow>
+      </TableCell>
+    </TableRow>
   );
 }
