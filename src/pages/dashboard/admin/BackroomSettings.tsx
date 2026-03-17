@@ -177,7 +177,7 @@ export default function BackroomSettings() {
   if (entitlementLoading) {
     return (
       <DashboardLayout>
-        <DashboardLoader size="md" className="h-64" />
+        <DashboardLoader size="md" className="h-[60vh]" />
       </DashboardLayout>
     );
   }
