@@ -118,7 +118,7 @@ export function BrowseColumn({
           className="p-1.5 space-y-0.5 outline-none"
         >
           {filtered.length === 0 ? (
-            <p className="px-3 py-4 font-sans text-xs text-[hsl(var(--platform-foreground-muted))] text-center">
+            <p className="px-3 py-4 font-sans text-xs text-muted-foreground text-center">
               No items
             </p>
           ) : (
