@@ -196,7 +196,7 @@ export default function BackroomSettings() {
 
   return (
     <DashboardLayout>
-      <div className="px-4 py-6 sm:px-6 sm:py-8 lg:px-8 max-w-[1600px] mx-auto w-full space-y-6">
+      <div className="platform-theme platform-dark px-4 py-6 sm:px-6 sm:py-8 lg:px-8 max-w-[1600px] mx-auto w-full space-y-6">
         <PlatformPageHeader
           title="Backroom Settings"
           description="Configure products, services, allowances, and operational policies that power Zura Backroom."
