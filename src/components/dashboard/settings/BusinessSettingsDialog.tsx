@@ -540,6 +540,17 @@ export function BusinessSettingsDialog({ open, onOpenChange }: BusinessSettingsD
               </div>
             </div>
 
+            {/* Sidebar Logo Preview */}
+            {(formData.logo_light_url || formData.logo_dark_url || formData.icon_light_url || formData.icon_dark_url) && (
+              <SidebarLogoPreview
+                logoLightUrl={formData.logo_light_url}
+                logoDarkUrl={formData.logo_dark_url}
+                iconLightUrl={formData.icon_light_url}
+                iconDarkUrl={formData.icon_dark_url}
+                businessName={formData.business_name}
+              />
+            )}
+
             {/* Secondary Icons */}
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
