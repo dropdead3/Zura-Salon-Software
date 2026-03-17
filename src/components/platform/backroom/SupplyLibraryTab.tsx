@@ -1,6 +1,8 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { BulkCatalogImport } from './BulkCatalogImport';
 import { tokens } from '@/lib/design-tokens';
+import { BrowseColumn, type BrowseColumnItem } from './BrowseColumn';
+import { SupplyBulkPricingDialog } from './SupplyBulkPricingDialog';
 import { cn } from '@/lib/utils';
 import {
   PlatformCard,
