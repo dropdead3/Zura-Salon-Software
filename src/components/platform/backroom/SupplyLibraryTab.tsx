@@ -791,6 +791,16 @@ function AddEditDialog({
             <Label className="font-sans text-xs">Size Options (comma-separated)</Label>
             <Input value={sizes} onChange={(e) => setSizes(e.target.value)} placeholder="e.g. 60ml, 120ml" className="font-sans" />
           </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className="font-sans text-xs">Wholesale Price</Label>
+              <Input type="number" autoCapitalize="off" value={wholesalePrice} onChange={(e) => setWholesalePrice(e.target.value)} placeholder="0.00" className="font-sans" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="font-sans text-xs">Recommended Retail</Label>
+              <Input type="number" autoCapitalize="off" value={recommendedRetail} onChange={(e) => setRecommendedRetail(e.target.value)} placeholder="0.00" className="font-sans" />
+            </div>
+          </div>
         </div>
         <DialogFooter>
           <PlatformButton variant="outline" onClick={() => onOpenChange(false)}>Cancel</PlatformButton>
