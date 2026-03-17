@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { useAnnouncementBarSettings, useUpdateAnnouncementBarSettings, type AnnouncementBarSettings } from '@/hooks/useAnnouncementBar';
 import { toast } from 'sonner';
 import { Megaphone, ExternalLink, ArrowRight, Save, Loader2 } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 
 export default function AnnouncementBarManager() {
   const { data: settings, isLoading } = useAnnouncementBarSettings();

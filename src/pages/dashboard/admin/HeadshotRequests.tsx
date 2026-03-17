@@ -43,6 +43,7 @@ import {
   MapPin,
   ArrowLeft,
 } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { format } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useToast } from '@/hooks/use-toast';

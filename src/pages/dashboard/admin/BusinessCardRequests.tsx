@@ -42,6 +42,7 @@ import {
   Eye,
   ArrowLeft,
 } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
