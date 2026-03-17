@@ -410,7 +410,9 @@ export function BulkCatalogImport({ existingBrands, open, onOpenChange }: BulkCa
                     <span className="font-sans text-sm text-[hsl(var(--platform-foreground))] flex-1">{b.brand}</span>
                     {!b.is_professional && <PlatformBadge variant="default" size="sm">Consumer</PlatformBadge>}
                     {BRAND_VERIFY_URLS[b.brand] && (
-                      <ShieldCheck className="w-3.5 h-3.5 text-[hsl(var(--platform-foreground-muted))]" title="Web verification available" />
+                      <span title="Web verification available">
+                        <ShieldCheck className="w-3.5 h-3.5 text-[hsl(var(--platform-foreground-muted))]" />
+                      </span>
                     )}
                   </div>
                 ))}
