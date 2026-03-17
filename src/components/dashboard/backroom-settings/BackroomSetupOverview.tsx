@@ -3,9 +3,9 @@ import { useBackroomSetupHealth, type SetupWarning } from '@/hooks/backroom/useB
 import { useBackroomSetting } from '@/hooks/backroom/useBackroomSettings';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { PlatformCard, PlatformCardContent, PlatformCardHeader, PlatformCardTitle, PlatformCardDescription } from '@/components/platform/ui/PlatformCard';
-import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
-import { PlatformButton } from '@/components/platform/ui/PlatformButton';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Loader2, AlertTriangle, CheckCircle2, Info, Package, Wrench, DollarSign, Monitor, BarChart3, Bell, Sparkles, LayoutDashboard } from 'lucide-react';
 import { BackroomSetupWizard } from './BackroomSetupWizard';
@@ -31,13 +31,13 @@ export function BackroomSetupOverview({ onNavigate }: Props) {
 
   if (!health) {
     return (
-      <PlatformCard variant="default">
-        <PlatformCardContent className="py-12 text-center">
-          <Info className="w-10 h-10 mx-auto mb-3 text-[hsl(var(--platform-foreground-muted))]" />
-          <p className={cn(tokens.body.emphasis, 'text-[hsl(var(--platform-foreground))]')}>No organization selected</p>
-          <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">Select an organization from the switcher to view Backroom setup status.</p>
-        </PlatformCardContent>
-      </PlatformCard>
+      <Card>
+        <CardContent className="py-12 text-center">
+          <Info className="w-10 h-10 mx-auto mb-3 text-muted-foreground" />
+          <p className={cn(tokens.body.emphasis, 'text-foreground')}>No organization selected</p>
+          <p className="text-sm text-muted-foreground">Select an organization from the switcher to view Backroom setup status.</p>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -72,31 +72,31 @@ export function BackroomSetupOverview({ onNavigate }: Props) {
       />
       {/* Wizard launch CTA */}
       {!wizardCompleted && completedCount < checklistItems.length && (
-        <PlatformCard variant="default" className="border-[hsl(var(--platform-primary)/0.3)]">
-          <PlatformCardContent className="py-6 flex items-center gap-4">
-            <div className="w-10 h-10 rounded-lg bg-[hsl(var(--platform-primary)/0.15)] flex items-center justify-center shrink-0">
-              <Sparkles className="w-5 h-5 text-[hsl(var(--platform-primary))]" />
+        <Card className="border-primary/30">
+          <CardContent className="py-6 flex items-center gap-4">
+            <div className="w-10 h-10 rounded-lg bg-primary/15 flex items-center justify-center shrink-0">
+              <Sparkles className="w-5 h-5 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className={cn(tokens.body.emphasis, 'text-[hsl(var(--platform-foreground))]')}>First time? Use the Setup Wizard</p>
-              <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">Walk through product selection, service mapping, allowances, and station setup step by step.</p>
+              <p className={cn(tokens.body.emphasis, 'text-foreground')}>First time? Use the Setup Wizard</p>
+              <p className="text-sm text-muted-foreground">Walk through product selection, service mapping, allowances, and station setup step by step.</p>
             </div>
-            <PlatformButton onClick={() => setShowWizard(true)} className="shrink-0">
+            <Button onClick={() => setShowWizard(true)} className="shrink-0">
               Launch Wizard
-            </PlatformButton>
-          </PlatformCardContent>
-        </PlatformCard>
+            </Button>
+          </CardContent>
+        </Card>
       )}
 
       {/* Progress card */}
-      <PlatformCard variant="default">
-        <PlatformCardHeader>
-          <PlatformCardTitle>Setup Progress</PlatformCardTitle>
-          <PlatformCardDescription>
+      <Card>
+        <CardHeader>
+          <CardTitle className={tokens.card.title}>Setup Progress</CardTitle>
+          <CardDescription>
             {completedCount} of {checklistItems.length} configuration areas completed
-          </PlatformCardDescription>
-        </PlatformCardHeader>
-        <PlatformCardContent className="space-y-4">
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
           <Progress value={progressPct} className="h-2" />
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {checklistItems.map((item) => {
@@ -107,57 +107,57 @@ export function BackroomSetupOverview({ onNavigate }: Props) {
                   onClick={() => onNavigate(item.section)}
                   className={cn(
                     'flex items-center gap-3 rounded-lg border p-3 text-left transition-colors',
-                    'border-[hsl(var(--platform-border)/0.5)] hover:bg-[hsl(var(--platform-bg-hover)/0.5)]',
-                    item.done && 'border-[hsl(var(--platform-border)/0.7)]'
+                    'border-border/60 hover:bg-muted/50',
+                    item.done && 'border-border'
                   )}
                 >
                   <div className={cn(
                     'w-8 h-8 rounded-lg flex items-center justify-center shrink-0',
-                    item.done ? 'bg-[hsl(var(--platform-primary)/0.15)]' : 'bg-[hsl(var(--platform-bg-hover))]'
+                    item.done ? 'bg-primary/15' : 'bg-muted'
                   )}>
-                    <Icon className={cn('w-4 h-4', item.done ? 'text-[hsl(var(--platform-primary))]' : 'text-[hsl(var(--platform-foreground-muted))]')} />
+                    <Icon className={cn('w-4 h-4', item.done ? 'text-primary' : 'text-muted-foreground')} />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className={cn('text-sm font-sans', item.done ? 'text-[hsl(var(--platform-foreground))]' : 'text-[hsl(var(--platform-foreground-muted))]')}>
+                    <p className={cn('text-sm font-sans', item.done ? 'text-foreground' : 'text-muted-foreground')}>
                       {item.label}
                     </p>
-                    <p className="text-xs text-[hsl(var(--platform-foreground-subtle))]">
+                    <p className="text-xs text-muted-foreground/60">
                       {item.value}{item.total != null ? ` / ${item.total}` : ''} configured
                     </p>
                   </div>
-                  {item.done && <CheckCircle2 className="w-4 h-4 text-[hsl(var(--platform-primary))] shrink-0" />}
+                  {item.done && <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />}
                 </button>
               );
             })}
           </div>
-        </PlatformCardContent>
-      </PlatformCard>
+        </CardContent>
+      </Card>
 
       {/* Warnings */}
       {health.warnings.length > 0 && (
-        <PlatformCard variant="default">
-          <PlatformCardHeader>
-            <PlatformCardTitle>Configuration Warnings</PlatformCardTitle>
-            <PlatformCardDescription>
+        <Card>
+          <CardHeader>
+            <CardTitle className={tokens.card.title}>Configuration Warnings</CardTitle>
+            <CardDescription>
               Issues that may affect Backroom functionality
-            </PlatformCardDescription>
-          </PlatformCardHeader>
-          <PlatformCardContent className="space-y-2">
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
             {health.warnings.map((w) => (
               <WarningRow key={w.id} warning={w} onNavigate={onNavigate} />
             ))}
-          </PlatformCardContent>
-        </PlatformCard>
+          </CardContent>
+        </Card>
       )}
 
       {health.warnings.length === 0 && completedCount === checklistItems.length && (
-        <PlatformCard variant="default" className="border-[hsl(var(--platform-primary)/0.2)]">
-          <PlatformCardContent className="py-8 text-center">
-            <CheckCircle2 className="w-10 h-10 mx-auto mb-3 text-[hsl(var(--platform-primary))]" />
-            <p className={cn(tokens.body.emphasis, 'text-[hsl(var(--platform-foreground))]')}>All systems configured</p>
-            <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">Backroom is ready to operate.</p>
-          </PlatformCardContent>
-        </PlatformCard>
+        <Card className="border-primary/20">
+          <CardContent className="py-8 text-center">
+            <CheckCircle2 className="w-10 h-10 mx-auto mb-3 text-primary" />
+            <p className={cn(tokens.body.emphasis, 'text-foreground')}>All systems configured</p>
+            <p className="text-sm text-muted-foreground">Backroom is ready to operate.</p>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
@@ -166,21 +166,21 @@ export function BackroomSetupOverview({ onNavigate }: Props) {
 function WarningRow({ warning, onNavigate }: { warning: SetupWarning; onNavigate: (s: string) => void }) {
   const icon = warning.severity === 'error' ? AlertTriangle : warning.severity === 'warning' ? AlertTriangle : Info;
   const Icon = icon;
-  const color = warning.severity === 'error' ? 'text-destructive' : warning.severity === 'warning' ? 'text-amber-500' : 'text-[hsl(var(--platform-foreground-muted))]';
+  const color = warning.severity === 'error' ? 'text-destructive' : warning.severity === 'warning' ? 'text-amber-500' : 'text-muted-foreground';
 
   return (
     <button
       onClick={() => onNavigate(warning.section)}
-      className="flex items-start gap-3 rounded-lg border border-[hsl(var(--platform-border)/0.5)] p-3 w-full text-left hover:bg-[hsl(var(--platform-bg-hover)/0.5)] transition-colors"
+      className="flex items-start gap-3 rounded-lg border border-border/60 p-3 w-full text-left hover:bg-muted/50 transition-colors"
     >
       <Icon className={cn('w-4 h-4 mt-0.5 shrink-0', color)} />
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-sans font-medium text-[hsl(var(--platform-foreground))]">{warning.title}</p>
-        <p className="text-xs text-[hsl(var(--platform-foreground-muted))] mt-0.5">{warning.description}</p>
+        <p className="text-sm font-sans font-medium text-foreground">{warning.title}</p>
+        <p className="text-xs text-muted-foreground mt-0.5">{warning.description}</p>
       </div>
-      <PlatformBadge variant="outline" className="shrink-0 text-xs">
+      <Badge variant="outline" className="shrink-0 text-xs">
         {warning.severity}
-      </PlatformBadge>
+      </Badge>
     </button>
   );
 }

@@ -4,12 +4,12 @@ import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { PlatformPageHeader } from '@/components/platform/ui/PlatformPageHeader';
 import { useBackroomEntitlement } from '@/hooks/backroom/useBackroomEntitlement';
 import { useBackroomOrgId } from '@/hooks/backroom/useBackroomOrgId';
 import { BackroomPaywall } from '@/components/dashboard/backroom-settings/BackroomPaywall';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 import {
   LayoutDashboard,
   Package,
@@ -27,6 +27,7 @@ import {
   CreditCard,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Button } from '@/components/ui/button';
 import { useBackroomSetupHealth } from '@/hooks/backroom/useBackroomSetupHealth';
 import { BackroomSetupOverview } from '@/components/dashboard/backroom-settings/BackroomSetupOverview';
 import { BackroomProductCatalogSection } from '@/components/dashboard/backroom-settings/BackroomProductCatalogSection';
@@ -175,10 +176,8 @@ export default function BackroomSettings() {
   if (entitlementLoading) {
     return (
       <DashboardLayout>
-        <div className="platform-theme platform-dark">
-          <div className="flex items-center justify-center h-64">
-            <Loader2 className="w-6 h-6 animate-spin text-[hsl(var(--platform-foreground-muted))]" />
-          </div>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
         </div>
       </DashboardLayout>
     );
@@ -187,24 +186,35 @@ export default function BackroomSettings() {
   if (!isEntitled) {
     return (
       <DashboardLayout>
-        <div className="platform-theme platform-dark">
-          <BackroomPaywall />
-        </div>
+        <BackroomPaywall />
       </DashboardLayout>
     );
   }
 
   return (
     <DashboardLayout>
-      <div className="platform-theme platform-dark px-4 py-6 sm:px-6 sm:py-8 lg:px-8 max-w-[1600px] mx-auto w-full space-y-6">
-        <PlatformPageHeader
-          title="Backroom Settings"
-          description="Configure products, services, allowances, and operational policies that power Zura Backroom."
-          backTo="/dashboard/admin/team-hub"
-        />
+      <div className="px-4 py-6 sm:px-6 sm:py-8 lg:px-8 max-w-[1600px] mx-auto w-full space-y-6">
+        {/* Page Header */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex items-start gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate('/dashboard/admin/team-hub')}
+              aria-label="Go back"
+              className="mt-1 shrink-0"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <div>
+              <h1 className={tokens.heading.page}>Backroom Settings</h1>
+              <p className="text-muted-foreground">Configure products, services, allowances, and operational policies that power Zura Backroom.</p>
+            </div>
+          </div>
+        </div>
 
         <div className="flex gap-6">
-          {/* Sidebar nav — platform styled */}
+          {/* Sidebar nav */}
           <nav className="w-56 shrink-0 hidden lg:block">
             <TooltipProvider delayDuration={300}>
               <div className="space-y-0.5 sticky top-24">
@@ -222,26 +232,26 @@ export default function BackroomSettings() {
                           className={cn(
                             'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-sans transition-colors text-left',
                             isActive
-                              ? 'bg-[hsl(var(--platform-bg-hover))] text-[hsl(var(--platform-foreground))] font-medium'
-                              : 'text-[hsl(var(--platform-foreground-muted))] hover:text-[hsl(var(--platform-foreground))] hover:bg-[hsl(var(--platform-bg-hover)/0.5)]',
+                              ? 'bg-muted text-foreground font-medium'
+                              : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
                             !prereqOk && !isActive && 'opacity-60'
                           )}
                         >
                           {!prereqOk ? (
-                            <Lock className="w-4 h-4 shrink-0 text-[hsl(var(--platform-foreground-subtle))]" />
+                            <Lock className="w-4 h-4 shrink-0 text-muted-foreground/60" />
                           ) : (
                             <Icon className="w-4 h-4 shrink-0" />
                           )}
                           <span className="flex-1 truncate">{s.label}</span>
                           {status === 'done' && (
-                            <span className="w-2 h-2 rounded-full bg-[hsl(var(--platform-primary))] shrink-0" />
+                            <span className="w-2 h-2 rounded-full bg-primary shrink-0" />
                           )}
                         </button>
                       </TooltipTrigger>
-                      <TooltipContent side="right" className="max-w-[220px] bg-[hsl(var(--platform-bg-elevated))] border-[hsl(var(--platform-border))] text-[hsl(var(--platform-foreground))]">
+                      <TooltipContent side="right" className="max-w-[220px]">
                         <p className="text-xs font-sans">{s.tooltip}</p>
                         {!prereqOk && s.requiresLabel && (
-                          <p className="text-xs text-[hsl(var(--platform-foreground-muted))] mt-1">Requires {s.requiresLabel} first</p>
+                          <p className="text-xs text-muted-foreground mt-1">Requires {s.requiresLabel} first</p>
                         )}
                       </TooltipContent>
                     </Tooltip>
@@ -249,10 +259,10 @@ export default function BackroomSettings() {
                 })}
 
                 {/* Subscription link */}
-                <div className="mt-4 pt-4 border-t border-[hsl(var(--platform-border)/0.4)]">
+                <div className="mt-4 pt-4 border-t border-border/40">
                   <button
                     onClick={() => navigate('/dashboard/admin/backroom-subscription')}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-sans text-[hsl(var(--platform-foreground-muted))] hover:text-[hsl(var(--platform-foreground))] hover:bg-[hsl(var(--platform-bg-hover)/0.5)] transition-colors text-left"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-sans text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors text-left"
                   >
                     <CreditCard className="w-4 h-4 shrink-0" />
                     <span className="flex-1 truncate">Subscription</span>
@@ -262,12 +272,12 @@ export default function BackroomSettings() {
             </TooltipProvider>
           </nav>
 
-          {/* Mobile section selector — platform styled */}
+          {/* Mobile section selector */}
           <div className="lg:hidden w-full mb-4">
             <select
               value={activeSection}
               onChange={(e) => setActiveSection(e.target.value as BackroomSection)}
-              className="w-full rounded-xl border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-input))] px-4 py-2.5 text-sm font-sans text-[hsl(var(--platform-foreground))]"
+              className="w-full rounded-xl border border-border/60 bg-background px-4 py-2.5 text-sm font-sans text-foreground"
             >
               {sections.map((s) => (
                 <option key={s.id} value={s.id}>{s.label}</option>
