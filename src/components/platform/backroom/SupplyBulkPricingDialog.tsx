@@ -89,6 +89,7 @@ export function SupplyBulkPricingDialog({ open, onOpenChange, productIds, scopeL
       onOpenChange(false);
       setWholesalePrice('');
       setMarkupPct('');
+      setRetailPrice('');
       setContainerSize('');
     },
     onError: (err: any) => {
