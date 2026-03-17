@@ -134,7 +134,7 @@ export function SupplyLibraryTab() {
       if (bi !== -1) return 1;
       return a[0].localeCompare(b[0]);
     });
-  }, [brandProducts, categoryFilter]);
+  }, [brandProducts, categoryFilter, pricingFilter]);
 
   const toggleCategory = (cat: string) => {
     setCollapsedCategories((prev) => {
