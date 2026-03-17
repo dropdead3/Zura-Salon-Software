@@ -349,7 +349,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
         id="backroom-products-guide"
         title="Products & Supplies"
         description="Choose which products stylists use at the mixing station. Toggle tracking on, set costs, and pick how each product is measured (weighed, pumped, etc). Do this first — services can't be tracked without products."
-        icon={<Package className="h-4 w-4 text-[hsl(var(--platform-primary))]" />}
+        icon={<Package className="h-4 w-4 text-primary" />}
       />
 
       <PlatformCard>
