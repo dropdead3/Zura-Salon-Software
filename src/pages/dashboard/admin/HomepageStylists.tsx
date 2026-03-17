@@ -508,9 +508,7 @@ export default function HomepageStylists() {
 
           <TabsContent value="requests">
             {loadingPending ? (
-              <div className="flex justify-center py-12">
-                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-              </div>
+              <DashboardLoader className="py-12" />
             ) : pendingRequests.length === 0 ? (
               <Card>
                 <CardContent className="p-8 text-center text-muted-foreground">
