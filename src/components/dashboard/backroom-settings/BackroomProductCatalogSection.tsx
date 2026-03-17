@@ -724,7 +724,7 @@ function BrandFinder({
   return (
     <div className="space-y-4">
       {/* Finder browser */}
-      <div className="rounded-xl border border-[hsl(var(--platform-border)/0.5)] overflow-hidden flex" style={{ minHeight: 420 }}>
+      <div className="rounded-xl border overflow-hidden flex" style={{ minHeight: 420 }}>
         {/* Column 1: Categories */}
         <BrowseColumn
           title="Categories"
