@@ -633,7 +633,20 @@ export function BulkCatalogImport({ existingBrands, open, onOpenChange }: BulkCa
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-xs font-sans text-[hsl(var(--platform-foreground-muted))]">
                   <span>{completedCount} / {results.length} brands processed</span>
-                  <span>{totalGenerated} products generated</span>
+                  <div className="flex items-center gap-3">
+                    <span>{totalGenerated} products generated</span>
+                    <button
+                      type="button"
+                      className="font-sans text-xs text-violet-400 hover:text-violet-300 transition-colors"
+                      onClick={() => {
+                        const allBrands = results.filter(r => r.products && r.products.length > 0).map(r => r.brand);
+                        const allExpanded = allBrands.every(b => expandedBrands.has(b));
+                        setExpandedBrands(allExpanded ? new Set() : new Set(allBrands));
+                      }}
+                    >
+                      {results.filter(r => r.products && r.products.length > 0).every(r => expandedBrands.has(r.brand)) ? 'Collapse All' : 'Expand All'}
+                    </button>
+                  </div>
                 </div>
                 <Progress value={progress} className="h-2" />
               </div>
