@@ -246,11 +246,21 @@ export function BulkCatalogImport({ existingBrands, open, onOpenChange }: BulkCa
   const queryClient = useQueryClient();
   const [phase, setPhase] = useState<Phase>('select');
   const [isRunning, setIsRunning] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
   const [results, setResults] = useState<BrandResult[]>([]);
   const [selectedBrands, setSelectedBrands] = useState<Set<string>>(new Set());
   const [showPro, setShowPro] = useState(true);
   const [showConsumer, setShowConsumer] = useState(true);
   const [expandedBrands, setExpandedBrands] = useState<Set<string>>(new Set());
+  const activeRequestRef = useRef<AbortController | null>(null);
+  const cancelRequestedRef = useRef(false);
+  const closeAfterStopRef = useRef(false);
+
+  useEffect(() => {
+    return () => {
+      activeRequestRef.current?.abort();
+    };
+  }, []);
 
   const existingSet = useMemo(() => new Set(existingBrands.map(b => b.toLowerCase())), [existingBrands]);
 
@@ -290,7 +300,31 @@ export function BulkCatalogImport({ existingBrands, open, onOpenChange }: BulkCa
   const totalInserted = results.reduce((s, r) => s + (r.products_inserted || 0), 0);
   const totalGenerated = results.reduce((s, r) => s + (r.products_generated || 0), 0);
 
+  const stopGeneration = (closeAfterStop = false) => {
+    if (!isRunning || phase !== 'review') {
+      if (closeAfterStop) onOpenChange(false);
+      return;
+    }
+
+    closeAfterStopRef.current = closeAfterStop;
+    cancelRequestedRef.current = true;
+    setIsCancelling(true);
+    activeRequestRef.current?.abort();
+  };
+
+  const handleDialogOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen && isRunning && phase === 'review') {
+      stopGeneration(true);
+      return;
+    }
+
+    onOpenChange(nextOpen);
+  };
+
   const handleReset = () => {
+    cancelRequestedRef.current = false;
+    closeAfterStopRef.current = false;
+    setIsCancelling(false);
     setPhase('select');
     setResults([]);
     setExpandedBrands(new Set());
@@ -304,27 +338,52 @@ export function BulkCatalogImport({ existingBrands, open, onOpenChange }: BulkCa
       return;
     }
 
+    cancelRequestedRef.current = false;
+    closeAfterStopRef.current = false;
+    setIsCancelling(false);
     setIsRunning(true);
     setPhase('review');
     const initialResults: BrandResult[] = brandsToProcess.map(b => ({ brand: b.brand, status: 'pending' }));
     setResults(initialResults);
 
+    const { data: { session } } = await supabase.auth.getSession();
+
     // Process one brand at a time — each call is ~30-60s, well within edge-fn timeout
     for (const brandTarget of brandsToProcess) {
+      if (cancelRequestedRef.current) {
+        setResults(prev => prev.map(r =>
+          r.status === 'pending' ? { ...r, status: 'skipped' as const, error: 'Generation stopped' } : r
+        ));
+        break;
+      }
+
       setResults(prev => prev.map(r =>
-        r.brand === brandTarget.brand ? { ...r, status: 'running' as const } : r
+        r.brand === brandTarget.brand ? { ...r, status: 'running' as const, error: undefined } : r
       ));
 
+      const controller = new AbortController();
+      activeRequestRef.current = controller;
+
       try {
-        const { data, error } = await supabase.functions.invoke('generate-color-catalog', {
-          body: {
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-color-catalog`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({
             brand: brandTarget.brand,
             is_professional: brandTarget.is_professional,
             verify_url: BRAND_VERIFY_URLS[brandTarget.brand] || undefined,
-          },
+          }),
+          signal: controller.signal,
         });
 
-        if (error) throw error;
+        const data = await response.json().catch(() => null);
+
+        if (!response.ok) {
+          throw new Error(data?.error || data?.message || 'Failed to generate catalog');
+        }
 
         if (data?.success && data?.products) {
           setResults(prev => prev.map(r =>
@@ -335,6 +394,7 @@ export function BulkCatalogImport({ existingBrands, open, onOpenChange }: BulkCa
                   products_generated: data.product_count || data.products.length,
                   products: data.products,
                   verification: data.verification || null,
+                  error: undefined,
                 }
               : r
           ));
@@ -346,14 +406,44 @@ export function BulkCatalogImport({ existingBrands, open, onOpenChange }: BulkCa
           ));
         }
       } catch (err: any) {
+        if (err?.name === 'AbortError') {
+          setResults(prev => prev.map(r => {
+            if (r.brand === brandTarget.brand && r.status === 'running') {
+              return { ...r, status: 'skipped' as const, error: 'Generation stopped' };
+            }
+            if (r.status === 'pending') {
+              return { ...r, status: 'skipped' as const, error: 'Generation stopped' };
+            }
+            return r;
+          }));
+          break;
+        }
+
         setResults(prev => prev.map(r =>
           r.brand === brandTarget.brand
             ? { ...r, status: 'error' as const, error: err.message || 'Failed to fetch' }
             : r
         ));
+      } finally {
+        activeRequestRef.current = null;
       }
     }
+
+    const wasCancelled = cancelRequestedRef.current;
+    cancelRequestedRef.current = false;
     setIsRunning(false);
+    setIsCancelling(false);
+
+    if (wasCancelled) {
+      toast.message('Generation stopped');
+      if (closeAfterStopRef.current) {
+        closeAfterStopRef.current = false;
+        onOpenChange(false);
+      }
+      return;
+    }
+
+    closeAfterStopRef.current = false;
   };
 
   // Phase 2: Confirm & Import — send pre-generated products to bulk-catalog-import (insert-only, fast)
