@@ -63,7 +63,9 @@ export function ZuraLoader({ size = 'md', className, platformColors = false }: Z
                 cell,
                 'border',
                 isLit
-                  ? 'bg-foreground/80 border-foreground/20 zura-shimmer'
+                  ? platformColors
+                    ? 'bg-violet-400/80 border-violet-500/20 zura-shimmer'
+                    : 'bg-foreground/80 border-foreground/20 zura-shimmer'
                   : 'bg-transparent border-border/30',
               )}
               style={

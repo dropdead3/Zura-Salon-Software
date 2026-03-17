@@ -67,7 +67,7 @@ export function PendingInvitationsSection() {
     return (
       <PlatformCard variant="glass">
         <PlatformCardContent className="flex items-center justify-center py-8">
-          <Loader2 className="w-5 h-5 animate-spin text-violet-400" />
+          <ZuraLoader size="xl" platformColors />
         </PlatformCardContent>
       </PlatformCard>
     );

@@ -627,8 +627,8 @@ function LocationEntitlementPanel({
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-24">
-        <Loader2 className="w-5 h-5 animate-spin text-slate-500" />
+      <div className="flex items-center justify-center py-12">
+        <ZuraLoader size="xl" platformColors />
       </div>
     );
   }

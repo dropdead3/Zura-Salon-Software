@@ -133,7 +133,7 @@ export function PlatformTeamManager() {
     return (
       <PlatformCard variant="glass">
         <PlatformCardContent className="flex items-center justify-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-violet-400" />
+          <ZuraLoader size="xl" platformColors />
         </PlatformCardContent>
       </PlatformCard>
     );
