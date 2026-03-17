@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { Save, Star, Loader2 } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { useLoyaltySettings, useUpdateLoyaltySettings } from '@/hooks/useLoyaltySettings';
 
 interface LoyaltyProgramConfiguratorProps {
