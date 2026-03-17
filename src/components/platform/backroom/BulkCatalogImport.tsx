@@ -444,7 +444,7 @@ export function BulkCatalogImport({ existingBrands, open, onOpenChange }: BulkCa
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
+      <DialogContent className="max-w-2xl h-[85vh] max-h-[85vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-violet-400" />
@@ -543,7 +543,7 @@ export function BulkCatalogImport({ existingBrands, open, onOpenChange }: BulkCa
               </div>
             )}
 
-            <ScrollArea className="flex-1 min-h-0 max-h-[50vh]">
+            <ScrollArea className="flex-1 h-full min-h-0">
               <div className="space-y-1 pr-4">
                 {results.map(r => (
                   <Collapsible key={r.brand} open={expandedBrands.has(r.brand)} onOpenChange={() => toggleExpand(r.brand)}>
