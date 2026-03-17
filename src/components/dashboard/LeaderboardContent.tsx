@@ -10,6 +10,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Trophy, Flame, Target, Loader2, Crown, Medal, Award, Users, Repeat, ShoppingBag, Sparkles, Star, Info, History, BadgeCheck, RefreshCw, Settings } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { format, startOfWeek, endOfWeek } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useLeaderboardHistory } from '@/hooks/useLeaderboardHistory';
