@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Users, UserPlus, UserCheck, TrendingUp } from 'lucide-react';
+import { Users, UserPlus, UserCheck, TrendingUp } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { useClientFunnel } from '@/hooks/useSalesAnalytics';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
