@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -52,9 +52,11 @@ export function BusinessSettingsDialog({ open, onOpenChange }: BusinessSettingsD
   const [uploadingLightIcon, setUploadingLightIcon] = useState(false);
   const [uploadingDarkIcon, setUploadingDarkIcon] = useState(false);
 
+  const [initialFormData, setInitialFormData] = useState<typeof formData | null>(null);
+
   useEffect(() => {
     if (settings) {
-      setFormData({
+      const snapshot = {
         business_name: settings.business_name || '',
         legal_name: settings.legal_name || '',
         logo_light_url: settings.logo_light_url || '',
@@ -70,9 +72,36 @@ export function BusinessSettingsDialog({ open, onOpenChange }: BusinessSettingsD
         email: settings.email || '',
         website: settings.website || '',
         default_tax_rate: settings.default_tax_rate != null ? (settings.default_tax_rate * 100).toString() : '',
-      });
+      };
+      setFormData(snapshot);
+      setInitialFormData(snapshot);
     }
   }, [settings]);
+
+  const isDirty = useMemo(() => {
+    if (!initialFormData) return false;
+    return JSON.stringify(formData) !== JSON.stringify(initialFormData);
+  }, [formData, initialFormData]);
+
+  const forceClose = useCallback(() => {
+    setFormData(initialFormData || formData);
+    onOpenChange(false);
+  }, [initialFormData, formData, onOpenChange]);
+
+  const handleOpenChange = useCallback((nextOpen: boolean) => {
+    if (!nextOpen && isDirty) {
+      toast.warning('You have unsaved changes', {
+        description: 'Your changes will be lost if you close without saving.',
+        action: {
+          label: 'Discard & Close',
+          onClick: forceClose,
+        },
+        duration: 5000,
+      });
+      return;
+    }
+    onOpenChange(nextOpen);
+  }, [isDirty, forceClose, onOpenChange]);
 
   const validateFile = (file: File): string | null => {
     if (!ALLOWED_TYPES.includes(file.type)) {
@@ -265,6 +294,7 @@ export function BusinessSettingsDialog({ open, onOpenChange }: BusinessSettingsD
       ...rest,
       default_tax_rate: taxRateValue,
     });
+    setInitialFormData(formData);
     onOpenChange(false);
   };
 
@@ -429,9 +459,9 @@ export function BusinessSettingsDialog({ open, onOpenChange }: BusinessSettingsD
   const bothLogosUploaded = formData.logo_light_url && formData.logo_dark_url;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col overflow-hidden p-0">
+        <DialogHeader className="px-6 pt-6 pb-0">
           <DialogTitle className="flex items-center gap-2 font-display text-xl">
             <Building2 className="w-5 h-5" />
             Business Configuration
@@ -440,6 +470,8 @@ export function BusinessSettingsDialog({ open, onOpenChange }: BusinessSettingsD
             Configure your business details. These settings are used throughout the application.
           </DialogDescription>
         </DialogHeader>
+
+        <div className="flex-1 overflow-y-auto px-6 pb-2">
 
         {isLoading ? (
           <div className="space-y-4">
@@ -664,17 +696,32 @@ export function BusinessSettingsDialog({ open, onOpenChange }: BusinessSettingsD
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 pt-4">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={updateSettings.isPending}>
-                {updateSettings.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                Save Changes
-              </Button>
-            </div>
           </form>
         )}
+        </div>
+
+        {/* Sticky footer */}
+        <div
+          className={cn(
+            'sticky bottom-0 z-10 flex justify-end gap-3 border-t border-border bg-background/80 backdrop-blur-xl px-6 py-4 transition-all duration-200',
+            isDirty ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0 pointer-events-none'
+          )}
+        >
+          <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            disabled={updateSettings.isPending}
+            onClick={() => {
+              const form = document.querySelector('[role="dialog"] form') as HTMLFormElement | null;
+              form?.requestSubmit();
+            }}
+          >
+            {updateSettings.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            Save Changes
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );
