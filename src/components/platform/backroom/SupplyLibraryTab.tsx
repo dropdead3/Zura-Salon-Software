@@ -86,6 +86,7 @@ export function SupplyLibraryTab() {
 
   const { data: initStatus, isLoading: initLoading } = useSupplyLibraryInitStatus();
   const seedMutation = useSeedSupplyLibrary();
+  const syncMutation = useSyncSupplyLibrary();
 
   // Fetch all products (no brand filter) for building brand cards
   const { data: allProducts = [], isLoading: allLoading } = useSupplyLibraryProducts();
