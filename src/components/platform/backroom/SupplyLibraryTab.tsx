@@ -963,7 +963,7 @@ export function SupplyLibraryTab() {
                           {(() => {
                             const { shouldGroup, groups } = groupByProductLine(products);
                             if (!shouldGroup) {
-                              return <div className="mt-1.5">{renderProductTable(products)}</div>;
+                              return <div className="mt-1.5">{renderProductTable(products, category)}</div>;
                             }
                             return (
                               <div className="mt-1.5 space-y-1.5 pl-3">
