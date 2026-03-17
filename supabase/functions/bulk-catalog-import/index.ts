@@ -6,26 +6,20 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-interface BrandRequest {
-  brand: string;
-  is_professional: boolean;
-  verify_url?: string;
-}
-
 interface ProductEntry {
   name: string;
   category: string;
   product_line: string;
-  default_unit: string;
-  default_depletion: string;
-  size_options: string[];
+  default_unit?: string;
+  default_depletion?: string;
+  size_options?: string[];
   swatch_hex?: string;
 }
 
-interface VerificationResult {
-  verified: boolean;
-  warnings: string[];
-  confidence: "high" | "medium" | "low";
+interface BrandProductPayload {
+  brand: string;
+  is_professional: boolean;
+  products: ProductEntry[];
 }
 
 Deno.serve(async (req) => {
@@ -34,11 +28,11 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { brands, dry_run } = (await req.json()) as { brands: BrandRequest[]; dry_run?: boolean };
+    const { brand_products } = (await req.json()) as { brand_products: BrandProductPayload[] };
 
-    if (!Array.isArray(brands) || brands.length === 0) {
+    if (!Array.isArray(brand_products) || brand_products.length === 0) {
       return new Response(
-        JSON.stringify({ success: false, error: "brands array is required" }),
+        JSON.stringify({ success: false, error: "brand_products array is required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -62,79 +56,21 @@ Deno.serve(async (req) => {
     const results: {
       brand: string;
       status: "success" | "error" | "skipped";
-      products_generated?: number;
       products_inserted?: number;
       products_skipped?: number;
-      products?: ProductEntry[];
-      verification?: VerificationResult | null;
       error?: string;
     }[] = [];
 
-    // Process brands sequentially to respect rate limits
-    for (const brandReq of brands) {
-      const { brand, is_professional, verify_url } = brandReq;
-
+    for (const { brand, is_professional, products } of brand_products) {
       try {
-        console.log(`Processing brand: ${brand}`);
-
-        // Call generate-color-catalog with optional verify_url
-        const genResponse = await fetch(`${supabaseUrl}/functions/v1/generate-color-catalog`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${supabaseKey}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ brand, is_professional, verify_url }),
-        });
-
-        if (!genResponse.ok) {
-          const errText = await genResponse.text();
-          console.error(`Failed to generate for ${brand}:`, errText);
-          results.push({ brand, status: "error", error: `Generation failed: ${genResponse.status}` });
-          if (genResponse.status === 429) {
-            console.log("Rate limited, waiting 30s...");
-            await new Promise((r) => setTimeout(r, 30000));
-          }
-          continue;
-        }
-
-        const genData = await genResponse.json();
-        if (!genData.success || !genData.products) {
-          results.push({ brand, status: "error", error: genData.error || "No products returned" });
-          continue;
-        }
-
-        const products: ProductEntry[] = genData.products;
-        const verification: VerificationResult | null = genData.verification || null;
-        console.log(`Generated ${products.length} products for ${brand}`);
-
         // Filter out duplicates
-        const newProducts = products.filter((p) => !existingSet.has(`${brand}::${p.name}`.toLowerCase()));
+        const newProducts = products.filter(
+          (p) => !existingSet.has(`${brand}::${p.name}`.toLowerCase())
+        );
         const skippedCount = products.length - newProducts.length;
 
-        if (dry_run) {
-          // Return full products for review
-          results.push({
-            brand,
-            status: "success",
-            products_generated: products.length,
-            products_inserted: 0,
-            products_skipped: skippedCount,
-            products: newProducts,
-            verification,
-          });
-          continue;
-        }
-
         if (newProducts.length === 0) {
-          results.push({
-            brand,
-            status: "skipped",
-            products_generated: products.length,
-            products_inserted: 0,
-            products_skipped: skippedCount,
-            verification,
-          });
+          results.push({ brand, status: "skipped", products_inserted: 0, products_skipped: skippedCount });
           continue;
         }
 
@@ -148,12 +84,11 @@ Deno.serve(async (req) => {
             name: p.name,
             category: p.category,
             product_line: p.product_line,
-            default_unit: p.default_unit,
-            default_depletion: p.default_depletion,
-            size_options: p.size_options,
+            default_unit: p.default_unit || (["color", "lightener"].includes(p.category) ? "g" : "ml"),
+            default_depletion: p.default_depletion || (["color", "lightener"].includes(p.category) ? "weighed" : "per_service"),
+            size_options: p.size_options || [],
             is_active: true,
-            is_professional: is_professional,
-            // Include swatch_color from AI-generated swatch_hex for consumer brands
+            is_professional,
             ...(p.swatch_hex ? { swatch_color: p.swatch_hex } : {}),
           }));
 
@@ -173,16 +108,13 @@ Deno.serve(async (req) => {
         results.push({
           brand,
           status: "success",
-          products_generated: products.length,
           products_inserted: insertedCount,
           products_skipped: skippedCount,
-          verification,
         });
 
         console.log(`${brand}: inserted ${insertedCount}, skipped ${skippedCount}`);
-        await new Promise((r) => setTimeout(r, 2000));
       } catch (brandError) {
-        console.error(`Error processing ${brand}:`, brandError);
+        console.error(`Error inserting ${brand}:`, brandError);
         results.push({
           brand,
           status: "error",
@@ -192,15 +124,12 @@ Deno.serve(async (req) => {
     }
 
     const totalInserted = results.reduce((s, r) => s + (r.products_inserted || 0), 0);
-    const totalGenerated = results.reduce((s, r) => s + (r.products_generated || 0), 0);
 
     return new Response(
       JSON.stringify({
         success: true,
-        dry_run: !!dry_run,
         summary: {
           brands_processed: results.length,
-          total_generated: totalGenerated,
           total_inserted: totalInserted,
           brands_succeeded: results.filter((r) => r.status === "success").length,
           brands_failed: results.filter((r) => r.status === "error").length,
