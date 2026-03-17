@@ -1,7 +1,8 @@
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
-import { TrendingUp, DollarSign, BarChart3, Loader2 } from 'lucide-react';
+import { TrendingUp, DollarSign, BarChart3 } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { useBackroomROI } from '@/hooks/backroom/useBackroomROI';
 import { formatCurrency } from '@/lib/format';
 
