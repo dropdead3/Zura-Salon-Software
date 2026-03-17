@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import {
@@ -16,7 +16,7 @@ import { PlatformTable as Table, PlatformTableHeader as TableHeader, PlatformTab
 import { Dialog, PlatformDialogContent as DialogContent, DialogHeader, PlatformDialogTitle as DialogTitle, DialogFooter, PlatformDialogDescription as DialogDescription } from '@/components/platform/ui/PlatformDialog';
 import { PlatformLabel as Label } from '@/components/platform/ui/PlatformLabel';
 import { PlatformInput as Input } from '@/components/platform/ui/PlatformInput';
-import { Loader2, Search, Package, Plus, Database, Pencil, Trash2, AlertTriangle, Upload, Download, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Loader2, Search, Package, Plus, Database, Pencil, Trash2, AlertTriangle, Upload, Download, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
@@ -29,44 +29,101 @@ import {
 } from '@/hooks/platform/useSupplyLibrary';
 import { SUPPLY_CATEGORY_LABELS } from '@/data/professional-supply-library';
 import { CSVImportDialog } from './CSVImportDialog';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 const CATEGORIES = ['color', 'lightener', 'developer', 'toner', 'bond builder', 'treatment', 'additive'];
 const DEPLETION_METHODS = ['weighed', 'per_service', 'manual', 'per_pump'];
 const UNITS = ['g', 'ml', 'oz'];
-const PAGE_SIZE = 50;
+
+interface BrandCardData {
+  brand: string;
+  productCount: number;
+  categorySummary: { category: string; count: number }[];
+}
 
 export function SupplyLibraryTab() {
   const queryClient = useQueryClient();
-  const [search, setSearch] = useState('');
-  const [brandFilter, setBrandFilter] = useState<string>('all');
+  const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
+  const [brandSearch, setBrandSearch] = useState('');
+  const [productSearch, setProductSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [addOpen, setAddOpen] = useState(false);
   const [editProduct, setEditProduct] = useState<SupplyLibraryProduct | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<SupplyLibraryProduct | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [csvOpen, setCsvOpen] = useState(false);
-  const [page, setPage] = useState(0);
-
   const [inlineEditing, setInlineEditing] = useState<{ id: string; field: string; value: string } | null>(null);
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
 
   const { data: initStatus, isLoading: initLoading } = useSupplyLibraryInitStatus();
   const seedMutation = useSeedSupplyLibrary();
 
-  const { data: allProducts = [], isLoading } = useSupplyLibraryProducts({
-    brand: brandFilter !== 'all' ? brandFilter : undefined,
-    search: search || undefined,
+  // Fetch all products (no brand filter) for building brand cards
+  const { data: allProducts = [], isLoading: allLoading } = useSupplyLibraryProducts();
+  // Fetch brand-specific products when drilled in
+  const { data: brandProducts = [], isLoading: brandLoading } = useSupplyLibraryProducts({
+    brand: selectedBrand || undefined,
+    search: productSearch || undefined,
   });
   const { data: brands = [] } = useSupplyLibraryBrands();
 
-  const products = categoryFilter === 'all' ? allProducts : allProducts.filter((p) => p.category === categoryFilter);
-  const totalPages = Math.ceil(products.length / PAGE_SIZE);
-  const pagedProducts = products.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  // Build brand card data from allProducts
+  const brandCards = useMemo<BrandCardData[]>(() => {
+    const map = new Map<string, { count: number; cats: Map<string, number> }>();
+    allProducts.forEach((p) => {
+      if (!map.has(p.brand)) map.set(p.brand, { count: 0, cats: new Map() });
+      const entry = map.get(p.brand)!;
+      entry.count++;
+      entry.cats.set(p.category, (entry.cats.get(p.category) || 0) + 1);
+    });
+    const cards: BrandCardData[] = [];
+    map.forEach((val, brand) => {
+      cards.push({
+        brand,
+        productCount: val.count,
+        categorySummary: Array.from(val.cats.entries())
+          .map(([category, count]) => ({ category, count }))
+          .sort((a, b) => b.count - a.count),
+      });
+    });
+    return cards.sort((a, b) => a.brand.localeCompare(b.brand));
+  }, [allProducts]);
 
-  const categoryCounts = allProducts.reduce<Record<string, number>>((acc, p) => {
-    acc[p.category] = (acc[p.category] || 0) + 1;
-    return acc;
-  }, {});
+  // Filter brand cards by search
+  const filteredBrands = useMemo(() => {
+    if (!brandSearch.trim()) return brandCards;
+    const q = brandSearch.toLowerCase();
+    return brandCards.filter((b) => b.brand.toLowerCase().includes(q));
+  }, [brandCards, brandSearch]);
 
+  // Group brand products by category for detail view
+  const categoryGroups = useMemo(() => {
+    const filtered = categoryFilter === 'all' ? brandProducts : brandProducts.filter((p) => p.category === categoryFilter);
+    const groups = new Map<string, SupplyLibraryProduct[]>();
+    filtered.forEach((p) => {
+      if (!groups.has(p.category)) groups.set(p.category, []);
+      groups.get(p.category)!.push(p);
+    });
+    // Sort categories by CATEGORIES order, then alphabetically for unknown
+    return Array.from(groups.entries()).sort((a, b) => {
+      const ai = CATEGORIES.indexOf(a[0]);
+      const bi = CATEGORIES.indexOf(b[0]);
+      if (ai !== -1 && bi !== -1) return ai - bi;
+      if (ai !== -1) return -1;
+      if (bi !== -1) return 1;
+      return a[0].localeCompare(b[0]);
+    });
+  }, [brandProducts, categoryFilter]);
+
+  const toggleCategory = (cat: string) => {
+    setCollapsedCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(cat)) next.delete(cat); else next.add(cat);
+      return next;
+    });
+  };
+
+  // ─── Handlers (unchanged) ──────────────────────
   const handleDelete = async () => {
     if (!deleteTarget) return;
     setIsDeleting(true);
@@ -105,6 +162,7 @@ export function SupplyLibraryTab() {
   };
 
   const handleExportCSV = () => {
+    const products = selectedBrand ? brandProducts : allProducts;
     const headers = ['brand', 'name', 'category', 'default_depletion', 'default_unit', 'size_options'];
     const rows = products.map((p) => [
       p.brand, p.name, p.category, p.default_depletion, p.default_unit,
@@ -115,13 +173,13 @@ export function SupplyLibraryTab() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `supply-library-${brandFilter !== 'all' ? brandFilter : 'all'}-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `supply-library-${selectedBrand || 'all'}-${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
     toast.success(`Exported ${products.length} products`);
   };
 
-  // Show initialization panel if DB is empty
+  // ─── Init screen ───────────────────────────────
   if (!initLoading && initStatus && !initStatus.isInitialized) {
     return (
       <PlatformCard variant="glass">
@@ -141,20 +199,152 @@ export function SupplyLibraryTab() {
     );
   }
 
+  // ─── Product row renderer (shared between views) ───
+  const renderProductRow = (p: SupplyLibraryProduct) => (
+    <TableRow key={p.id} className="border-[hsl(var(--platform-border)/0.3)]">
+      <TableCell className="font-sans text-sm font-medium text-[hsl(var(--platform-foreground))]">{p.name}</TableCell>
+      <TableCell>
+        {inlineEditing?.id === p.id && inlineEditing.field === 'category' ? (
+          <Select
+            value={inlineEditing.value}
+            onValueChange={(v) => {
+              supabase.from('supply_library_products').update({ category: v }).eq('id', p.id).then(() => {
+                queryClient.invalidateQueries({ queryKey: ['supply-library-products'] });
+              });
+              setInlineEditing(null);
+            }}
+          >
+            <SelectTrigger className="h-7 w-28 font-sans text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {CATEGORIES.map((c) => <SelectItem key={c} value={c}>{SUPPLY_CATEGORY_LABELS[c] || c}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        ) : (
+          <PlatformBadge
+            variant="default"
+            size="sm"
+            className="cursor-pointer"
+            onDoubleClick={() => setInlineEditing({ id: p.id, field: 'category', value: p.category })}
+          >
+            {SUPPLY_CATEGORY_LABELS[p.category] || p.category}
+          </PlatformBadge>
+        )}
+      </TableCell>
+      <TableCell className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">
+        {inlineEditing?.id === p.id && inlineEditing.field === 'default_depletion' ? (
+          <Select
+            value={inlineEditing.value}
+            onValueChange={(v) => {
+              supabase.from('supply_library_products').update({ default_depletion: v }).eq('id', p.id).then(() => {
+                queryClient.invalidateQueries({ queryKey: ['supply-library-products'] });
+              });
+              setInlineEditing(null);
+            }}
+          >
+            <SelectTrigger className="h-7 w-24 font-sans text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {DEPLETION_METHODS.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        ) : (
+          <span
+            className="cursor-pointer hover:text-violet-400 transition-colors"
+            onDoubleClick={() => setInlineEditing({ id: p.id, field: 'default_depletion', value: p.default_depletion })}
+          >
+            {p.default_depletion}
+          </span>
+        )}
+      </TableCell>
+      <TableCell className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">
+        {inlineEditing?.id === p.id && inlineEditing.field === 'default_unit' ? (
+          <Select
+            value={inlineEditing.value}
+            onValueChange={(v) => {
+              supabase.from('supply_library_products').update({ default_unit: v }).eq('id', p.id).then(() => {
+                queryClient.invalidateQueries({ queryKey: ['supply-library-products'] });
+              });
+              setInlineEditing(null);
+            }}
+          >
+            <SelectTrigger className="h-7 w-16 font-sans text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {UNITS.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        ) : (
+          <span
+            className="cursor-pointer hover:text-violet-400 transition-colors"
+            onDoubleClick={() => setInlineEditing({ id: p.id, field: 'default_unit', value: p.default_unit })}
+          >
+            {p.default_unit}
+          </span>
+        )}
+      </TableCell>
+      <TableCell className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">
+        {p.size_options?.join(', ') || '—'}
+      </TableCell>
+      <TableCell>
+        <div className="flex items-center gap-1">
+          <PlatformButton variant="ghost" size="icon-sm" onClick={() => { setEditProduct(p); setAddOpen(true); }}>
+            <Pencil className="w-3.5 h-3.5" />
+          </PlatformButton>
+          <PlatformButton
+            variant="ghost"
+            size="icon-sm"
+            className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+            onClick={() => setDeleteTarget(p)}
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </PlatformButton>
+        </div>
+      </TableCell>
+    </TableRow>
+  );
+
   return (
     <div className="space-y-4">
       <PlatformCard variant="glass">
         <PlatformCardHeader>
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-[hsl(var(--platform-bg-hover))] flex items-center justify-center">
-                <Package className="w-5 h-5 text-violet-400" />
-              </div>
+              {selectedBrand ? (
+                <PlatformButton
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => { setSelectedBrand(null); setProductSearch(''); setCategoryFilter('all'); }}
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </PlatformButton>
+              ) : (
+                <div className="w-10 h-10 rounded-lg bg-[hsl(var(--platform-bg-hover))] flex items-center justify-center">
+                  <Package className="w-5 h-5 text-violet-400" />
+                </div>
+              )}
               <div>
-                <PlatformCardTitle>Supply Library</PlatformCardTitle>
-                <PlatformCardDescription>
-                  {initStatus?.count ?? 0} products across {brands.length} brands
-                </PlatformCardDescription>
+                {selectedBrand ? (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => { setSelectedBrand(null); setProductSearch(''); setCategoryFilter('all'); }}
+                        className="font-sans text-sm text-[hsl(var(--platform-foreground-muted))] hover:text-[hsl(var(--platform-foreground))] transition-colors"
+                      >
+                        Supply Library
+                      </button>
+                      <span className="text-[hsl(var(--platform-foreground-muted))]">/</span>
+                      <PlatformCardTitle>{selectedBrand}</PlatformCardTitle>
+                    </div>
+                    <PlatformCardDescription>
+                      {brandProducts.length} products
+                    </PlatformCardDescription>
+                  </>
+                ) : (
+                  <>
+                    <PlatformCardTitle>Supply Library</PlatformCardTitle>
+                    <PlatformCardDescription>
+                      {initStatus?.count ?? 0} products across {brands.length} brands
+                    </PlatformCardDescription>
+                  </>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -170,212 +360,144 @@ export function SupplyLibraryTab() {
             </div>
           </div>
         </PlatformCardHeader>
-        <PlatformCardContent className="space-y-4">
-          {/* Filters */}
-          <div className="flex items-center gap-3 flex-wrap">
-            <div className="flex-1 max-w-sm">
-              <PlatformInput
-                icon={<Search className="w-4 h-4" />}
-                placeholder="Search products..."
-                value={search}
-                onChange={(e) => { setSearch(e.target.value); setPage(0); }}
-              />
-            </div>
-            <Select value={brandFilter} onValueChange={(v) => { setBrandFilter(v); setPage(0); }}>
-              <SelectTrigger className="w-[180px] font-sans">
-                <SelectValue placeholder="All Brands" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Brands</SelectItem>
-                {brands.map((b) => (
-                  <SelectItem key={b} value={b}>{b}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={categoryFilter} onValueChange={(v) => { setCategoryFilter(v); setPage(0); }}>
-              <SelectTrigger className="w-[160px] font-sans">
-                <SelectValue placeholder="All Categories" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                {CATEGORIES.map((c) => (
-                  <SelectItem key={c} value={c}>
-                    {SUPPLY_CATEGORY_LABELS[c] || c} ({categoryCounts[c] || 0})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
 
-          {/* Table */}
-          {isLoading ? (
-            <div className="flex items-center justify-center h-32">
-              <Loader2 className={tokens.loading.spinner} />
-            </div>
-          ) : products.length === 0 ? (
-            <div className={tokens.empty.container}>
-              <Package className={tokens.empty.icon} />
-              <h3 className={tokens.empty.heading}>No products found</h3>
-              <p className={tokens.empty.description}>Try adjusting your filters</p>
-            </div>
-          ) : (
-            <div className="rounded-lg border border-slate-700/40">
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-slate-700/50">
-                    <TableHead className="font-sans text-xs text-slate-400">Brand</TableHead>
-                    <TableHead className="font-sans text-xs text-slate-400">Name</TableHead>
-                    <TableHead className="font-sans text-xs text-slate-400">Category</TableHead>
-                    <TableHead className="font-sans text-xs text-slate-400">Depletion</TableHead>
-                    <TableHead className="font-sans text-xs text-slate-400">Unit</TableHead>
-                    <TableHead className="font-sans text-xs text-slate-400">Sizes</TableHead>
-                    <TableHead className="font-sans text-xs text-slate-400 w-[80px]">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {pagedProducts.map((p) => (
-                    <TableRow key={p.id} className="border-slate-700/30">
-                      <TableCell className="font-sans text-sm text-slate-300">
-                        {inlineEditing?.id === p.id && inlineEditing.field === 'brand' ? (
-                          <input
-                            autoFocus
-                            value={inlineEditing.value}
-                            onChange={(e) => setInlineEditing({ ...inlineEditing, value: e.target.value })}
-                            onBlur={handleInlineSave}
-                            onKeyDown={(e) => e.key === 'Enter' && handleInlineSave()}
-                            className="h-7 w-28 font-sans text-sm rounded-lg border border-slate-700/50 bg-slate-800/50 text-slate-200 px-1.5 focus:border-violet-500/50 focus:outline-none"
-                          />
-                        ) : (
-                          <span
-                            className="cursor-pointer hover:text-violet-400 transition-colors"
-                            onDoubleClick={() => setInlineEditing({ id: p.id, field: 'brand', value: p.brand })}
-                          >
-                            {p.brand}
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell className="font-sans text-sm font-medium text-slate-200">{p.name}</TableCell>
-                      <TableCell>
-                        {inlineEditing?.id === p.id && inlineEditing.field === 'category' ? (
-                          <Select
-                            value={inlineEditing.value}
-                            onValueChange={(v) => {
-                              setInlineEditing({ ...inlineEditing, value: v });
-                              supabase.from('supply_library_products').update({ category: v }).eq('id', p.id).then(() => {
-                                queryClient.invalidateQueries({ queryKey: ['supply-library-products'] });
-                              });
-                              setInlineEditing(null);
-                            }}
-                          >
-                            <SelectTrigger className="h-7 w-28 font-sans text-xs"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              {CATEGORIES.map((c) => <SelectItem key={c} value={c}>{SUPPLY_CATEGORY_LABELS[c] || c}</SelectItem>)}
-                            </SelectContent>
-                          </Select>
-                        ) : (
-                          <PlatformBadge
-                            variant="default"
-                            size="sm"
-                            className="cursor-pointer"
-                            onDoubleClick={() => setInlineEditing({ id: p.id, field: 'category', value: p.category })}
-                          >
-                            {SUPPLY_CATEGORY_LABELS[p.category] || p.category}
-                          </PlatformBadge>
-                        )}
-                      </TableCell>
-                      <TableCell className="font-sans text-xs text-slate-500">
-                        {inlineEditing?.id === p.id && inlineEditing.field === 'default_depletion' ? (
-                          <Select
-                            value={inlineEditing.value}
-                            onValueChange={(v) => {
-                              supabase.from('supply_library_products').update({ default_depletion: v }).eq('id', p.id).then(() => {
-                                queryClient.invalidateQueries({ queryKey: ['supply-library-products'] });
-                              });
-                              setInlineEditing(null);
-                            }}
-                          >
-                            <SelectTrigger className="h-7 w-24 font-sans text-xs"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              {DEPLETION_METHODS.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
-                            </SelectContent>
-                          </Select>
-                        ) : (
-                          <span
-                            className="cursor-pointer hover:text-violet-400 transition-colors"
-                            onDoubleClick={() => setInlineEditing({ id: p.id, field: 'default_depletion', value: p.default_depletion })}
-                          >
-                            {p.default_depletion}
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell className="font-sans text-xs text-slate-500">
-                        {inlineEditing?.id === p.id && inlineEditing.field === 'default_unit' ? (
-                          <Select
-                            value={inlineEditing.value}
-                            onValueChange={(v) => {
-                              supabase.from('supply_library_products').update({ default_unit: v }).eq('id', p.id).then(() => {
-                                queryClient.invalidateQueries({ queryKey: ['supply-library-products'] });
-                              });
-                              setInlineEditing(null);
-                            }}
-                          >
-                            <SelectTrigger className="h-7 w-16 font-sans text-xs"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              {UNITS.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}
-                            </SelectContent>
-                          </Select>
-                        ) : (
-                          <span
-                            className="cursor-pointer hover:text-violet-400 transition-colors"
-                            onDoubleClick={() => setInlineEditing({ id: p.id, field: 'default_unit', value: p.default_unit })}
-                          >
-                            {p.default_unit}
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell className="font-sans text-xs text-slate-500">
-                        {p.size_options?.join(', ') || '—'}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <PlatformButton
-                            variant="ghost"
-                            size="icon-sm"
-                            onClick={() => { setEditProduct(p); setAddOpen(true); }}
-                          >
-                            <Pencil className="w-3.5 h-3.5" />
-                          </PlatformButton>
-                          <PlatformButton
-                            variant="ghost"
-                            size="icon-sm"
-                            className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
-                            onClick={() => setDeleteTarget(p)}
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </PlatformButton>
-                        </div>
-                      </TableCell>
-                    </TableRow>
+        <PlatformCardContent className="space-y-4">
+          {/* ─── Level 1: Brand Card Grid ─── */}
+          {!selectedBrand && (
+            <>
+              <div className="max-w-sm">
+                <PlatformInput
+                  icon={<Search className="w-4 h-4" />}
+                  placeholder="Search brands..."
+                  value={brandSearch}
+                  onChange={(e) => setBrandSearch(e.target.value)}
+                />
+              </div>
+
+              {allLoading ? (
+                <div className="flex items-center justify-center h-32">
+                  <Loader2 className={tokens.loading.spinner} />
+                </div>
+              ) : filteredBrands.length === 0 ? (
+                <div className={tokens.empty.container}>
+                  <Package className={tokens.empty.icon} />
+                  <h3 className={tokens.empty.heading}>No brands found</h3>
+                  <p className={tokens.empty.description}>Try adjusting your search</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                  {filteredBrands.map((b) => (
+                    <PlatformCard
+                      key={b.brand}
+                      variant="interactive"
+                      className="cursor-pointer p-4 flex flex-col items-center text-center gap-2"
+                      onClick={() => { setSelectedBrand(b.brand); setProductSearch(''); setCategoryFilter('all'); setCollapsedCategories(new Set()); }}
+                    >
+                      <span className="font-display text-sm tracking-wide text-[hsl(var(--platform-foreground))]">
+                        {b.brand}
+                      </span>
+                      <PlatformBadge variant="primary" size="sm">
+                        {b.productCount} products
+                      </PlatformBadge>
+                      <p className="font-sans text-[10px] text-[hsl(var(--platform-foreground-muted))] leading-tight">
+                        {b.categorySummary.slice(0, 3).map((cs) =>
+                          `${cs.count} ${SUPPLY_CATEGORY_LABELS[cs.category] || cs.category}`
+                        ).join(' · ')}
+                        {b.categorySummary.length > 3 && ` +${b.categorySummary.length - 3}`}
+                      </p>
+                    </PlatformCard>
                   ))}
-                </TableBody>
-              </Table>
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="flex items-center justify-between px-4 py-3 border-t border-slate-700/30">
-                  <span className="font-sans text-xs text-slate-500">
-                    Page {page + 1} of {totalPages} · {products.length} products
-                  </span>
-                  <div className="flex items-center gap-1">
-                    <PlatformButton variant="ghost" size="icon-sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
-                      <ChevronLeft className="w-4 h-4" />
-                    </PlatformButton>
-                    <PlatformButton variant="ghost" size="icon-sm" disabled={page >= totalPages - 1} onClick={() => setPage((p) => p + 1)}>
-                      <ChevronRight className="w-4 h-4" />
-                    </PlatformButton>
-                  </div>
                 </div>
               )}
-            </div>
+            </>
+          )}
+
+          {/* ─── Level 2: Brand Detail — Products by Category ─── */}
+          {selectedBrand && (
+            <>
+              <div className="flex items-center gap-3 flex-wrap">
+                <div className="flex-1 max-w-sm">
+                  <PlatformInput
+                    icon={<Search className="w-4 h-4" />}
+                    placeholder={`Search ${selectedBrand} products...`}
+                    value={productSearch}
+                    onChange={(e) => setProductSearch(e.target.value)}
+                  />
+                </div>
+                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                  <SelectTrigger className="w-[160px] font-sans">
+                    <SelectValue placeholder="All Categories" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Categories</SelectItem>
+                    {CATEGORIES.map((c) => {
+                      const count = brandProducts.filter((p) => p.category === c).length;
+                      if (count === 0) return null;
+                      return (
+                        <SelectItem key={c} value={c}>
+                          {SUPPLY_CATEGORY_LABELS[c] || c} ({count})
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {brandLoading ? (
+                <div className="flex items-center justify-center h-32">
+                  <Loader2 className={tokens.loading.spinner} />
+                </div>
+              ) : categoryGroups.length === 0 ? (
+                <div className={tokens.empty.container}>
+                  <Package className={tokens.empty.icon} />
+                  <h3 className={tokens.empty.heading}>No products found</h3>
+                  <p className={tokens.empty.description}>Try adjusting your filters</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {categoryGroups.map(([category, products]) => {
+                    const isOpen = !collapsedCategories.has(category);
+                    return (
+                      <Collapsible key={category} open={isOpen} onOpenChange={() => toggleCategory(category)}>
+                        <CollapsibleTrigger asChild>
+                          <button className="flex items-center justify-between w-full px-4 py-2.5 rounded-lg bg-[hsl(var(--platform-bg-hover)/0.5)] hover:bg-[hsl(var(--platform-bg-hover))] transition-colors">
+                            <div className="flex items-center gap-2">
+                              <span className="font-display text-xs tracking-wide text-[hsl(var(--platform-foreground))]">
+                                {SUPPLY_CATEGORY_LABELS[category] || category}
+                              </span>
+                              <PlatformBadge variant="default" size="sm">{products.length}</PlatformBadge>
+                            </div>
+                            <ChevronDown className={cn(
+                              'w-4 h-4 text-[hsl(var(--platform-foreground-muted))] transition-transform duration-200',
+                              isOpen && 'rotate-180'
+                            )} />
+                          </button>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <div className="rounded-lg border border-[hsl(var(--platform-border)/0.4)] mt-1.5">
+                            <Table>
+                              <TableHeader>
+                                <TableRow className="border-[hsl(var(--platform-border)/0.3)]">
+                                  <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Name</TableHead>
+                                  <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Category</TableHead>
+                                  <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Depletion</TableHead>
+                                  <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Unit</TableHead>
+                                  <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Sizes</TableHead>
+                                  <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))] w-[80px]">Actions</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {products.map(renderProductRow)}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        </CollapsibleContent>
+                      </Collapsible>
+                    );
+                  })}
+                </div>
+              )}
+            </>
           )}
         </PlatformCardContent>
       </PlatformCard>
