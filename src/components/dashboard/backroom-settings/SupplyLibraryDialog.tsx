@@ -183,6 +183,8 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedLine, setSelectedLine] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [isAdding, setIsAdding] = useState(false);
   const [addingBrand, setAddingBrand] = useState<string | null>(null);
