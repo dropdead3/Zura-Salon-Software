@@ -1,6 +1,8 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { BulkCatalogImport } from './BulkCatalogImport';
 import { tokens } from '@/lib/design-tokens';
+import { BrowseColumn, type BrowseColumnItem } from './BrowseColumn';
+import { SupplyBulkPricingDialog } from './SupplyBulkPricingDialog';
 import { cn } from '@/lib/utils';
 import {
   PlatformCard,
@@ -74,7 +76,7 @@ export function SupplyLibraryTab() {
   const [csvOpen, setCsvOpen] = useState(false);
   const [addBrandOpen, setAddBrandOpen] = useState(false);
   const [inlineEditing, setInlineEditing] = useState<{ id: string; field: string; value: string } | null>(null);
-  // localStorage-backed collapse state
+  // localStorage-backed collapse state (kept for backward compat)
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
   const [collapsedSubLines, setCollapsedSubLines] = useState<Set<string>>(new Set());
   const [editBrandOpen, setEditBrandOpen] = useState(false);
@@ -82,6 +84,13 @@ export function SupplyLibraryTab() {
   const [bulkImportOpen, setBulkImportOpen] = useState(false);
   const [reanalyzeConfirm, setReanalyzeConfirm] = useState<{ category: string; updates: { id: string; hex: string }[] } | null>(null);
   const [reanalyzingCategory, setReanalyzingCategory] = useState<string | null>(null);
+
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedProductLine, setSelectedProductLine] = useState<string | null>(null);
+  const [focusedColumn, setFocusedColumn] = useState<0 | 1 | 2>(0);
+  const [bulkPricingOpen, setBulkPricingOpen] = useState(false);
+  const [bulkPricingProductIds, setBulkPricingProductIds] = useState<string[]>([]);
+  const [bulkPricingScopeLabel, setBulkPricingScopeLabel] = useState('');
 
   // Count how many brands have saved collapse state
   const savedBrandCount = useMemo(() => {
@@ -638,7 +647,7 @@ export function SupplyLibraryTab() {
                 <PlatformButton
                   variant="ghost"
                   size="icon-sm"
-                   onClick={() => { setSelectedBrand(null); setProductSearch(''); setCategoryFilter('all'); setPricingFilter('all'); setCollapsedCategories(new Set()); setCollapsedSubLines(new Set()); }}
+                   onClick={() => { setSelectedBrand(null); setProductSearch(''); setCategoryFilter('all'); setPricingFilter('all'); setCollapsedCategories(new Set()); setCollapsedSubLines(new Set()); setSelectedCategory(null); setSelectedProductLine(null); setFocusedColumn(0); }}
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </PlatformButton>
@@ -652,7 +661,7 @@ export function SupplyLibraryTab() {
                   <>
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => { setSelectedBrand(null); setProductSearch(''); setCategoryFilter('all'); setPricingFilter('all'); setCollapsedCategories(new Set()); setCollapsedSubLines(new Set()); }}
+                        onClick={() => { setSelectedBrand(null); setProductSearch(''); setCategoryFilter('all'); setPricingFilter('all'); setCollapsedCategories(new Set()); setCollapsedSubLines(new Set()); setSelectedCategory(null); setSelectedProductLine(null); setFocusedColumn(0); }}
                         className="font-sans text-sm text-[hsl(var(--platform-foreground-muted))] hover:text-[hsl(var(--platform-foreground))] transition-colors"
                       >
                         Supply Library
@@ -812,9 +821,10 @@ export function SupplyLibraryTab() {
             </>
           )}
 
-          {/* ─── Level 2: Brand Detail — Products by Category ─── */}
+          {/* ─── Level 2: Brand Detail — Column Browser ─── */}
           {selectedBrand && (
             <>
+              {/* Filter bar */}
               <div className="flex items-center gap-3 flex-wrap">
                 <div className="flex-1 max-w-sm">
                   <PlatformInput
@@ -824,23 +834,6 @@ export function SupplyLibraryTab() {
                     onChange={(e) => setProductSearch(e.target.value)}
                   />
                 </div>
-                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                  <SelectTrigger className="w-[160px] font-sans">
-                    <SelectValue placeholder="All Categories" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Categories</SelectItem>
-                    {CATEGORIES.map((c) => {
-                      const count = brandProducts.filter((p) => p.category === c).length;
-                      if (count === 0) return null;
-                      return (
-                        <SelectItem key={c} value={c}>
-                          {SUPPLY_CATEGORY_LABELS[c] || c} ({count})
-                        </SelectItem>
-                      );
-                    })}
-                  </SelectContent>
-                 </Select>
                 <Select value={pricingFilter} onValueChange={(v) => setPricingFilter(v as 'all' | 'missing' | 'priced')}>
                   <SelectTrigger className="w-[160px] font-sans">
                     <SelectValue placeholder="All Pricing" />
@@ -851,128 +844,6 @@ export function SupplyLibraryTab() {
                     <SelectItem value="priced">Priced</SelectItem>
                   </SelectContent>
                 </Select>
-                {/* Collapse All / Expand All toggle */}
-                <PlatformButton
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    const allCatKeys = categoryGroups.map(([cat]) => cat);
-                    const allSubKeys: string[] = [];
-                    categoryGroups.forEach(([cat, products]) => {
-                      const { shouldGroup, groups } = groupByProductLine(products);
-                      if (shouldGroup) {
-                        groups.forEach(([lineName]) => allSubKeys.push(`${cat}::${lineName}`));
-                      }
-                    });
-                    const totalSections = allCatKeys.length + allSubKeys.length;
-                    const collapsedCount = allCatKeys.filter(k => collapsedCategories.has(k)).length + allSubKeys.filter(k => collapsedSubLines.has(k)).length;
-                    const shouldCollapse = collapsedCount < totalSections / 2;
-                    if (shouldCollapse) {
-                      setCollapsedCategories(new Set(allCatKeys));
-                      setCollapsedSubLines(new Set(allSubKeys));
-                    } else {
-                      setCollapsedCategories(new Set());
-                      setCollapsedSubLines(new Set());
-                    }
-                  }}
-                >
-                  <ChevronsUpDown className="w-3.5 h-3.5 mr-1" />
-                  {(() => {
-                    const allCatKeys = categoryGroups.map(([cat]) => cat);
-                    const collapsedCount = allCatKeys.filter(k => collapsedCategories.has(k)).length;
-                    return collapsedCount >= allCatKeys.length / 2 ? 'Expand All' : 'Collapse All';
-                  })()}
-                </PlatformButton>
-                {/* Reset All Collapse State */}
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                    <PlatformButton
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={() => setResetConfirmOpen(true)}
-                        className="relative"
-                      >
-                        <RotateCcw className="w-3.5 h-3.5" />
-                        {savedBrandCount > 0 && (
-                          <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-violet-500/80 text-[10px] font-sans text-white flex items-center justify-center">
-                            {savedBrandCount}
-                          </span>
-                        )}
-                      </PlatformButton>
-                    </TooltipTrigger>
-                    <TooltipContent>Reset all collapse state</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                <AlertDialog open={resetConfirmOpen} onOpenChange={setResetConfirmOpen}>
-                  <PlatformAlertDialogContent>
-                    <AlertDialogHeader>
-                      <PlatformAlertDialogTitle>Reset collapse state?</PlatformAlertDialogTitle>
-                      <PlatformAlertDialogDescription>
-                        This will clear saved collapse/expand preferences for all brands. This action cannot be undone.
-                      </PlatformAlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <PlatformAlertDialogCancel>Cancel</PlatformAlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => {
-                          const keysToRemove: string[] = [];
-                          for (let i = 0; i < localStorage.length; i++) {
-                            const k = localStorage.key(i);
-                            if (k && (k.startsWith('supply-library-categories::') || k.startsWith('supply-library-sublines::'))) {
-                              keysToRemove.push(k);
-                            }
-                          }
-                          keysToRemove.forEach((k) => localStorage.removeItem(k));
-                          localStorage.setItem('supply-library-last-reset', new Date().toISOString());
-                          setCollapsedCategories(new Set());
-                          setCollapsedSubLines(new Set());
-                          toast.success('Collapse state reset for all brands');
-                        }}
-                      >
-                        Reset
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </PlatformAlertDialogContent>
-                </AlertDialog>
-                <AlertDialog open={!!reanalyzeConfirm} onOpenChange={(open) => { if (!open) setReanalyzeConfirm(null); }}>
-                  <PlatformAlertDialogContent>
-                    <AlertDialogHeader>
-                      <PlatformAlertDialogTitle>Re-analyze Swatches</PlatformAlertDialogTitle>
-                      <PlatformAlertDialogDescription>
-                        Re-analyze {reanalyzeConfirm?.updates.length ?? 0} swatches in {reanalyzeConfirm?.category}? This overwrites existing assignments.
-                      </PlatformAlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <PlatformAlertDialogCancel>Cancel</PlatformAlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={async () => {
-                          if (!reanalyzeConfirm) return;
-                          const categoryName = reanalyzeConfirm.category;
-                          setReanalyzingCategory(categoryName);
-                          setReanalyzeConfirm(null);
-                          let saved = 0;
-                          try {
-                            for (const u of reanalyzeConfirm.updates) {
-                              const { error } = await supabase
-                                .from('supply_library_products')
-                                .update({ swatch_color: u.hex } as any)
-                                .eq('id', u.id);
-                              if (!error) saved++;
-                            }
-                            queryClient.invalidateQueries({ queryKey: ['supply-library-products'] });
-                            toast.success(`Re-analyzed ${saved} swatches`);
-                          } finally {
-                            setReanalyzingCategory(null);
-                          }
-                        }}
-                      >
-                        Continue
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </PlatformAlertDialogContent>
-                </AlertDialog>
-                {/* Recently Added filter */}
                 <PlatformButton
                   variant={recencyFilter === 'recent' ? 'secondary' : 'ghost'}
                   size="sm"
@@ -995,113 +866,102 @@ export function SupplyLibraryTab() {
                   <p className={tokens.empty.description}>Try adjusting your filters</p>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {categoryGroups.map(([category, products]) => {
-                    const isOpen = !collapsedCategories.has(category);
-                    return (
-                      <Collapsible key={category} open={isOpen} onOpenChange={() => toggleCategory(category)}>
-                        <CollapsibleTrigger asChild>
-                          <button className="flex items-center justify-between w-full px-4 py-2.5 rounded-lg bg-[hsl(var(--platform-bg-hover)/0.5)] hover:bg-[hsl(var(--platform-bg-hover))] transition-colors">
-                            <div className="flex items-center gap-2">
-                              <span className="font-display text-xs tracking-wide text-[hsl(var(--platform-foreground))]">
-                                {SUPPLY_CATEGORY_LABELS[category] || category}
-                              </span>
-                              <PlatformBadge variant="default" size="sm">{products.length}</PlatformBadge>
-                              {SHADE_SORTED_CATEGORIES.has(category) && products.some((p) => !(p as any).swatch_color) && (
-                                <PlatformButton
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-6 px-2 text-[10px] font-sans text-violet-400 hover:text-violet-300"
-                                  onClick={async (e) => {
-                                    e.stopPropagation();
-                                    const unassigned = products.filter((p) => !(p as any).swatch_color);
-                                    const updates = unassigned
-                                      .map((p) => ({ id: p.id, hex: suggestSwatchColor(p.name) }))
-                                      .filter((u) => u.hex !== null);
-                                    if (!updates.length) { toast.info('No suggestions available'); return; }
-                                    let saved = 0;
-                                    for (const u of updates) {
-                                      const { error } = await supabase
-                                        .from('supply_library_products')
-                                        .update({ swatch_color: u.hex } as any)
-                                        .eq('id', u.id);
-                                      if (!error) saved++;
-                                    }
-                                    queryClient.invalidateQueries({ queryKey: ['supply-library-products'] });
-                                    toast.success(`Auto-assigned ${saved} swatches`);
-                                  }}
-                                >
-                                  Auto-assign swatches
-                                </PlatformButton>
-                              )}
-                              {SHADE_SORTED_CATEGORIES.has(category) && (
-                                <PlatformButton
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-6 px-2 text-[10px] font-sans text-amber-400 hover:text-amber-300"
-                                  disabled={reanalyzingCategory === (SUPPLY_CATEGORY_LABELS[category] || category)}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    const updates = products
-                                      .map((p) => ({ id: p.id, hex: suggestSwatchColor(p.name) }))
-                                      .filter((u): u is { id: string; hex: string } => u.hex !== null);
-                                    if (!updates.length) { toast.info('No suggestions available'); return; }
-                                    setReanalyzeConfirm({ category: SUPPLY_CATEGORY_LABELS[category] || category, updates });
-                                  }}
-                                >
-                                  <RefreshCw className={cn('w-3 h-3 mr-0.5', reanalyzingCategory === (SUPPLY_CATEGORY_LABELS[category] || category) && 'animate-spin')} />
-                                  {reanalyzingCategory === (SUPPLY_CATEGORY_LABELS[category] || category) ? 'Analyzing...' : 'Re-analyze all'}
-                                </PlatformButton>
-                              )}
-                            </div>
-                            <ChevronDown className={cn(
-                              'w-4 h-4 text-[hsl(var(--platform-foreground-muted))] transition-transform duration-200',
-                              isOpen && 'rotate-180'
-                            )} />
-                          </button>
-                        </CollapsibleTrigger>
-                        <CollapsibleContent>
-                          {(() => {
-                            const { shouldGroup, groups } = groupByProductLine(products);
-                            if (!shouldGroup) {
-                              return <div className="mt-1.5">{renderProductTable(products, category)}</div>;
-                            }
-                            return (
-                              <div className="mt-1.5 space-y-1.5 pl-3">
-                                {groups.map(([lineName, lineProducts]) => {
-                                  const subKey = `${category}::${lineName}`;
-                                  const isSubOpen = !collapsedSubLines.has(subKey);
-                                  return (
-                                    <Collapsible key={subKey} open={isSubOpen} onOpenChange={() => toggleSubLine(subKey)}>
-                                      <CollapsibleTrigger asChild>
-                                        <button className="flex items-center justify-between w-full px-3 py-1.5 rounded-md bg-[hsl(var(--platform-bg-hover)/0.3)] hover:bg-[hsl(var(--platform-bg-hover)/0.5)] transition-colors">
-                                          <div className="flex items-center gap-2">
-                                            <span className="font-sans text-xs font-medium text-[hsl(var(--platform-foreground-muted))]">
-                                              {lineName}
-                                            </span>
-                                            <PlatformBadge variant="default" size="sm">{lineProducts.length}</PlatformBadge>
-                                          </div>
-                                          <ChevronDown className={cn(
-                                            'w-3 h-3 text-[hsl(var(--platform-foreground-muted))] transition-transform duration-200',
-                                            isSubOpen && 'rotate-180'
-                                          )} />
-                                        </button>
-                                      </CollapsibleTrigger>
-                                      <CollapsibleContent>
-                                        <div className="mt-1">{renderProductTable(lineProducts, category)}</div>
-                                      </CollapsibleContent>
-                                    </Collapsible>
-                                  );
-                                })}
-                              </div>
-                            );
-                          })()}
-                        </CollapsibleContent>
-                      </Collapsible>
-                    );
-                  })}
-                </div>
+                <ColumnBrowser
+                  categoryGroups={categoryGroups}
+                  selectedCategory={selectedCategory}
+                  selectedProductLine={selectedProductLine}
+                  focusedColumn={focusedColumn}
+                  onSelectCategory={(cat) => {
+                    setSelectedCategory(cat);
+                    setSelectedProductLine(null);
+                    setFocusedColumn(1);
+                  }}
+                  onSelectProductLine={(line) => {
+                    setSelectedProductLine(line);
+                    setFocusedColumn(2);
+                  }}
+                  onFocusColumn={setFocusedColumn}
+                  onClearCategory={() => {
+                    setSelectedCategory(null);
+                    setSelectedProductLine(null);
+                    setFocusedColumn(0);
+                  }}
+                  onClearProductLine={() => {
+                    setSelectedProductLine(null);
+                    setFocusedColumn(1);
+                  }}
+                  onSetPricing={(ids, label) => {
+                    setBulkPricingProductIds(ids);
+                    setBulkPricingScopeLabel(label);
+                    setBulkPricingOpen(true);
+                  }}
+                  renderProductTable={renderProductTable}
+                  reanalyzingCategory={reanalyzingCategory}
+                  onAutoAssignSwatches={async (products, category) => {
+                    const unassigned = products.filter((p) => !(p as any).swatch_color);
+                    const updates = unassigned
+                      .map((p) => ({ id: p.id, hex: suggestSwatchColor(p.name) }))
+                      .filter((u) => u.hex !== null);
+                    if (!updates.length) { toast.info('No suggestions available'); return; }
+                    let saved = 0;
+                    for (const u of updates) {
+                      const { error } = await supabase
+                        .from('supply_library_products')
+                        .update({ swatch_color: u.hex } as any)
+                        .eq('id', u.id);
+                      if (!error) saved++;
+                    }
+                    queryClient.invalidateQueries({ queryKey: ['supply-library-products'] });
+                    toast.success(`Auto-assigned ${saved} swatches`);
+                  }}
+                  onReanalyzeSwatches={(products, category) => {
+                    const updates = products
+                      .map((p) => ({ id: p.id, hex: suggestSwatchColor(p.name) }))
+                      .filter((u): u is { id: string; hex: string } => u.hex !== null);
+                    if (!updates.length) { toast.info('No suggestions available'); return; }
+                    setReanalyzeConfirm({ category: SUPPLY_CATEGORY_LABELS[category] || category, updates });
+                  }}
+                />
               )}
+
+              {/* Reanalyze confirmation dialog */}
+              <AlertDialog open={!!reanalyzeConfirm} onOpenChange={(open) => { if (!open) setReanalyzeConfirm(null); }}>
+                <PlatformAlertDialogContent>
+                  <AlertDialogHeader>
+                    <PlatformAlertDialogTitle>Re-analyze Swatches</PlatformAlertDialogTitle>
+                    <PlatformAlertDialogDescription>
+                      Re-analyze {reanalyzeConfirm?.updates.length ?? 0} swatches in {reanalyzeConfirm?.category}? This overwrites existing assignments.
+                    </PlatformAlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <PlatformAlertDialogCancel>Cancel</PlatformAlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={async () => {
+                        if (!reanalyzeConfirm) return;
+                        const categoryName = reanalyzeConfirm.category;
+                        setReanalyzingCategory(categoryName);
+                        setReanalyzeConfirm(null);
+                        let saved = 0;
+                        try {
+                          for (const u of reanalyzeConfirm.updates) {
+                            const { error } = await supabase
+                              .from('supply_library_products')
+                              .update({ swatch_color: u.hex } as any)
+                              .eq('id', u.id);
+                            if (!error) saved++;
+                          }
+                          queryClient.invalidateQueries({ queryKey: ['supply-library-products'] });
+                          toast.success(`Re-analyzed ${saved} swatches`);
+                        } finally {
+                          setReanalyzingCategory(null);
+                        }
+                      }}
+                    >
+                      Continue
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </PlatformAlertDialogContent>
+              </AlertDialog>
             </>
           )}
         </PlatformCardContent>
@@ -1159,6 +1019,14 @@ export function SupplyLibraryTab() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Bulk Pricing Dialog */}
+      <SupplyBulkPricingDialog
+        open={bulkPricingOpen}
+        onOpenChange={setBulkPricingOpen}
+        productIds={bulkPricingProductIds}
+        scopeLabel={bulkPricingScopeLabel}
+      />
     </div>
   );
 }
@@ -1316,5 +1184,235 @@ function AddEditDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+// ─── Column Browser Component ─────────────────────────────────
+function ColumnBrowser({
+  categoryGroups,
+  selectedCategory,
+  selectedProductLine,
+  focusedColumn,
+  onSelectCategory,
+  onSelectProductLine,
+  onFocusColumn,
+  onClearCategory,
+  onClearProductLine,
+  onSetPricing,
+  renderProductTable,
+  reanalyzingCategory,
+  onAutoAssignSwatches,
+  onReanalyzeSwatches,
+}: {
+  categoryGroups: [string, SupplyLibraryProduct[]][];
+  selectedCategory: string | null;
+  selectedProductLine: string | null;
+  focusedColumn: 0 | 1 | 2;
+  onSelectCategory: (cat: string) => void;
+  onSelectProductLine: (line: string) => void;
+  onFocusColumn: (col: 0 | 1 | 2) => void;
+  onClearCategory: () => void;
+  onClearProductLine: () => void;
+  onSetPricing: (ids: string[], label: string) => void;
+  renderProductTable: (products: SupplyLibraryProduct[], category?: string) => JSX.Element;
+  reanalyzingCategory: string | null;
+  onAutoAssignSwatches: (products: SupplyLibraryProduct[], category: string) => void;
+  onReanalyzeSwatches: (products: SupplyLibraryProduct[], category: string) => void;
+}) {
+  // Compute health for each category
+  const categoryItems = useMemo<BrowseColumnItem[]>(() => {
+    return categoryGroups.map(([cat, products]) => {
+      const missing = products.filter(
+        (p) => p.wholesale_price == null || (SHADE_SORTED_CATEGORIES.has(cat) && !(p as any).swatch_color),
+      ).length;
+      const ratio = products.length > 0 ? missing / products.length : 0;
+      const health: 'green' | 'amber' | 'red' = ratio === 0 ? 'green' : ratio < 0.5 ? 'amber' : 'red';
+      return {
+        key: cat,
+        label: SUPPLY_CATEGORY_LABELS[cat] || cat,
+        count: products.length,
+        health,
+      };
+    });
+  }, [categoryGroups]);
+
+  // Product lines within selected category
+  const selectedCategoryProducts = useMemo(
+    () => categoryGroups.find(([cat]) => cat === selectedCategory)?.[1] ?? [],
+    [categoryGroups, selectedCategory],
+  );
+
+  const { shouldGroup, groups: productLineGroups } = useMemo(
+    () => groupByProductLine(selectedCategoryProducts, 0),
+    [selectedCategoryProducts],
+  );
+
+  const productLineItems = useMemo<BrowseColumnItem[]>(() => {
+    if (!shouldGroup && selectedCategoryProducts.length > 0) {
+      // Single group for all products
+      return [{ key: '__all__', label: 'All Products', count: selectedCategoryProducts.length }];
+    }
+    return productLineGroups.map(([line, products]) => {
+      const missing = products.filter((p) => p.wholesale_price == null).length;
+      const ratio = products.length > 0 ? missing / products.length : 0;
+      const health: 'green' | 'amber' | 'red' = ratio === 0 ? 'green' : ratio < 0.5 ? 'amber' : 'red';
+      return { key: line, label: line, count: products.length, health };
+    });
+  }, [shouldGroup, productLineGroups, selectedCategoryProducts]);
+
+  // Products to display in Column 3
+  const displayProducts = useMemo(() => {
+    if (!selectedCategory) return [];
+    if (!selectedProductLine) return selectedCategoryProducts;
+    if (selectedProductLine === '__all__') return selectedCategoryProducts;
+    const group = productLineGroups.find(([line]) => line === selectedProductLine);
+    return group ? group[1] : [];
+  }, [selectedCategory, selectedProductLine, selectedCategoryProducts, productLineGroups]);
+
+  // Stats
+  const totalProducts = categoryGroups.reduce((sum, [, p]) => sum + p.length, 0);
+  const scopeProducts = selectedCategory ? (selectedProductLine ? displayProducts : selectedCategoryProducts) : [];
+  const missingPriceCount = scopeProducts.filter((p) => p.wholesale_price == null).length;
+  const missingSwatchCount = scopeProducts.filter(
+    (p) => selectedCategory && SHADE_SORTED_CATEGORIES.has(selectedCategory) && !(p as any).swatch_color,
+  ).length;
+
+  const scopeLabel = selectedProductLine && selectedProductLine !== '__all__'
+    ? `${SUPPLY_CATEGORY_LABELS[selectedCategory!] || selectedCategory} › ${selectedProductLine}`
+    : selectedCategory
+      ? SUPPLY_CATEGORY_LABELS[selectedCategory] || selectedCategory
+      : 'All';
+
+  return (
+    <div className="space-y-3">
+      {/* Three-column browser */}
+      <div className="rounded-xl border border-[hsl(var(--platform-border)/0.4)] overflow-hidden flex min-h-[400px] max-h-[600px]">
+        {/* Column 1: Categories */}
+        <BrowseColumn
+          title="Categories"
+          items={categoryItems}
+          selectedKey={selectedCategory}
+          onSelect={onSelectCategory}
+          focusActive={focusedColumn === 0}
+          onKeyNav={(dir) => {
+            if (dir === 'right' && selectedCategory) onFocusColumn(1);
+            if (dir === 'escape') onClearCategory();
+          }}
+          className="w-[200px] shrink-0"
+        />
+
+        {/* Column 2: Product Lines */}
+        {selectedCategory && (
+          <BrowseColumn
+            title="Product Lines"
+            items={productLineItems}
+            selectedKey={selectedProductLine}
+            onSelect={onSelectProductLine}
+            focusActive={focusedColumn === 1}
+            onKeyNav={(dir) => {
+              if (dir === 'right' && selectedProductLine) onFocusColumn(2);
+              if (dir === 'left') onClearCategory();
+              if (dir === 'escape') onClearProductLine();
+            }}
+            className="w-[220px] shrink-0"
+          />
+        )}
+
+        {/* Column 3: Product Table */}
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+          {!selectedCategory ? (
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center space-y-2">
+                <Package className="w-8 h-8 mx-auto text-[hsl(var(--platform-foreground-subtle))]" />
+                <p className="font-sans text-sm text-[hsl(var(--platform-foreground-muted))]">
+                  Select a category to browse products
+                </p>
+              </div>
+            </div>
+          ) : displayProducts.length === 0 && selectedProductLine ? (
+            <div className="flex-1 flex items-center justify-center">
+              <p className="font-sans text-sm text-[hsl(var(--platform-foreground-muted))]">
+                Select a product line
+              </p>
+            </div>
+          ) : (
+            <>
+              {/* Column 3 header */}
+              <div className="flex items-center justify-between px-4 py-2.5 border-b border-[hsl(var(--platform-border)/0.3)] bg-[hsl(var(--platform-bg-card)/0.3)]">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="font-display text-[10px] tracking-wider text-[hsl(var(--platform-foreground-muted))] uppercase truncate">
+                    {scopeLabel}
+                  </span>
+                  <PlatformBadge variant="default" size="sm">{displayProducts.length}</PlatformBadge>
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  {selectedCategory && SHADE_SORTED_CATEGORIES.has(selectedCategory) && displayProducts.some((p) => !(p as any).swatch_color) && (
+                    <PlatformButton
+                      size="sm"
+                      variant="ghost"
+                      className="h-6 px-2 text-[10px]"
+                      onClick={() => onAutoAssignSwatches(displayProducts, selectedCategory)}
+                    >
+                      Auto-assign swatches
+                    </PlatformButton>
+                  )}
+                  {selectedCategory && SHADE_SORTED_CATEGORIES.has(selectedCategory) && (
+                    <PlatformButton
+                      size="sm"
+                      variant="ghost"
+                      className="h-6 px-2 text-[10px] text-amber-400 hover:text-amber-300"
+                      disabled={reanalyzingCategory === (SUPPLY_CATEGORY_LABELS[selectedCategory] || selectedCategory)}
+                      onClick={() => onReanalyzeSwatches(displayProducts, selectedCategory)}
+                    >
+                      <RefreshCw className={cn('w-3 h-3 mr-0.5', reanalyzingCategory === (SUPPLY_CATEGORY_LABELS[selectedCategory] || selectedCategory) && 'animate-spin')} />
+                      Re-analyze
+                    </PlatformButton>
+                  )}
+                  <PlatformButton
+                    size="sm"
+                    variant="outline"
+                    className="h-6 px-2 text-[10px]"
+                    onClick={() => onSetPricing(displayProducts.map((p) => p.id), scopeLabel)}
+                  >
+                    <DollarSign className="w-3 h-3 mr-0.5" />
+                    Set Pricing
+                  </PlatformButton>
+                </div>
+              </div>
+              {/* Table */}
+              <div className="flex-1 overflow-auto">
+                {renderProductTable(
+                  displayProducts.length > 0 ? displayProducts : selectedCategoryProducts,
+                  selectedCategory || undefined,
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Stats bar */}
+      <div className="flex items-center gap-4 px-1 font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">
+        <span>{totalProducts} total products</span>
+        {selectedCategory && (
+          <>
+            <span className="text-[hsl(var(--platform-border))]">·</span>
+            <span>{scopeProducts.length} in scope</span>
+            {missingPriceCount > 0 && (
+              <>
+                <span className="text-[hsl(var(--platform-border))]">·</span>
+                <span className="text-amber-400">{missingPriceCount} missing price</span>
+              </>
+            )}
+            {missingSwatchCount > 0 && (
+              <>
+                <span className="text-[hsl(var(--platform-border))]">·</span>
+                <span className="text-amber-400">{missingSwatchCount} missing swatch</span>
+              </>
+            )}
+          </>
+        )}
+      </div>
+    </div>
   );
 }
