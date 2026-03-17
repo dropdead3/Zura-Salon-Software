@@ -32,6 +32,7 @@ import { useDraftBookings, type DraftBooking } from '@/hooks/useDraftBookings';
 import { useServiceLookup } from '@/hooks/useServiceLookup';
 import { useAppointmentAssistantNames } from '@/hooks/useAppointmentAssistantNames';
 import { Loader2, Sparkles, Users } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { MeetingSchedulerWizard, ScheduleTypeSelector, MeetingDetailPanel } from '@/components/dashboard/schedule/meetings';
