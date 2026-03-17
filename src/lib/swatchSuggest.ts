@@ -36,9 +36,9 @@ const TONE_CODE_MAP: Record<string, ToneFamily> = {
   'VV': 'violet',
   'BV': 'violet',
   'VB': 'violet',
-  'B': 'blue',
-  'BB': 'blue',
-  'BG': 'blue',
+  'B': 'natural',
+  'BB': 'natural',
+  'BG': 'gold',
 };
 
 /** Keyword → tone family (checked against full product name) */
