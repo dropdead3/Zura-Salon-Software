@@ -53,12 +53,12 @@ export function DashboardThemeProvider({ children }: { children: ReactNode }) {
 
   // Sync the 'dark' class on <html> so CSS variables in index.css activate.
   // Skip on platform routes — platform manages its own theme independently.
-  // useLocation ensures this re-evaluates on every client-side navigation.
-  const location = useLocation();
+  // useRouteZone re-evaluates on every client-side navigation.
+  const zone = useRouteZone();
 
   useEffect(() => {
-    if (isPlatformRoute(location.pathname)) {
-      // On platform routes, remove org-level dark class so it doesn't bleed
+    if (zone !== 'org-dashboard') {
+      // Outside org dashboard, remove org-level dark class so it doesn't bleed
       document.documentElement.classList.remove('dark');
       return;
     }
@@ -69,7 +69,7 @@ export function DashboardThemeProvider({ children }: { children: ReactNode }) {
     } else {
       root.classList.remove('dark');
     }
-  }, [resolvedTheme, location.pathname]);
+  }, [resolvedTheme, zone]);
 
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);

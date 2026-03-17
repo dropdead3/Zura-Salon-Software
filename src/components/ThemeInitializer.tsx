@@ -85,10 +85,10 @@ export function ThemeInitializer() {
     }
   };
 
-  // Re-run on every route change so vars are applied/cleaned on navigation
+  // Re-run on every route zone change so vars are applied/cleaned on navigation
   useEffect(() => {
     loadCustomTheme();
-  }, [location.pathname]);
+  }, [zone]);
 
   // Auth state listener
   useEffect(() => {
