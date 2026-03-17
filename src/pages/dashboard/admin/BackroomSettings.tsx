@@ -175,8 +175,10 @@ export default function BackroomSettings() {
   if (entitlementLoading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="w-6 h-6 animate-spin text-[hsl(var(--platform-foreground-muted))]" />
+        <div className="platform-theme platform-dark">
+          <div className="flex items-center justify-center h-64">
+            <Loader2 className="w-6 h-6 animate-spin text-[hsl(var(--platform-foreground-muted))]" />
+          </div>
         </div>
       </DashboardLayout>
     );
@@ -185,14 +187,16 @@ export default function BackroomSettings() {
   if (!isEntitled) {
     return (
       <DashboardLayout>
-        <BackroomPaywall />
+        <div className="platform-theme platform-dark">
+          <BackroomPaywall />
+        </div>
       </DashboardLayout>
     );
   }
 
   return (
     <DashboardLayout>
-      <div className="px-4 py-6 sm:px-6 sm:py-8 lg:px-8 max-w-[1600px] mx-auto w-full space-y-6">
+      <div className="platform-theme platform-dark px-4 py-6 sm:px-6 sm:py-8 lg:px-8 max-w-[1600px] mx-auto w-full space-y-6">
         <PlatformPageHeader
           title="Backroom Settings"
           description="Configure products, services, allowances, and operational policies that power Zura Backroom."
