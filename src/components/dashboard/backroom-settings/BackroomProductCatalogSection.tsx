@@ -1066,32 +1066,32 @@ function InventoryView({
       </div>
 
       {/* Table */}
-      <div className="rounded-xl border border-[hsl(var(--platform-border)/0.5)] overflow-hidden">
-        <PlatformTable>
-          <PlatformTableHeader>
-            <PlatformTableRow>
-              <PlatformTableHead>Product</PlatformTableHead>
-              <PlatformTableHead className="hidden sm:table-cell">Category</PlatformTableHead>
-              <PlatformTableHead className="hidden md:table-cell">Container</PlatformTableHead>
-              <PlatformTableHead>Stock</PlatformTableHead>
-              <PlatformTableHead className="hidden md:table-cell">Min</PlatformTableHead>
-              <PlatformTableHead className="hidden md:table-cell">Max</PlatformTableHead>
-              <PlatformTableHead className="hidden lg:table-cell">Order Qty</PlatformTableHead>
-              <PlatformTableHead>Status</PlatformTableHead>
-              <PlatformTableHead className="hidden lg:table-cell">Cost/g</PlatformTableHead>
-            </PlatformTableRow>
-          </PlatformTableHeader>
-          <PlatformTableBody>
+      <div className="rounded-xl border overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Product</TableHead>
+              <TableHead className="hidden sm:table-cell">Category</TableHead>
+              <TableHead className="hidden md:table-cell">Container</TableHead>
+              <TableHead>Stock</TableHead>
+              <TableHead className="hidden md:table-cell">Min</TableHead>
+              <TableHead className="hidden md:table-cell">Max</TableHead>
+              <TableHead className="hidden lg:table-cell">Order Qty</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="hidden lg:table-cell">Cost/g</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {filteredInventory.length === 0 ? (
-              <PlatformTableRow>
-                <PlatformTableCell colSpan={9} className="text-center py-8">
+              <TableRow>
+                <TableCell colSpan={9} className="text-center py-8">
                   <div className={tokens.empty.container}>
                     <Package className={tokens.empty.icon} />
                     <h3 className={tokens.empty.heading}>No products found</h3>
                     <p className={tokens.empty.description}>Adjust filters or track products in brand view first.</p>
                   </div>
-                </PlatformTableCell>
-              </PlatformTableRow>
+                </TableCell>
+              </TableRow>
             ) : (
               filteredInventory.map((row) => (
                 <InventoryTableRow
@@ -1102,8 +1102,8 @@ function InventoryView({
                 />
               ))
             )}
-          </PlatformTableBody>
-        </PlatformTable>
+          </TableBody>
+        </Table>
       </div>
     </>
   );
