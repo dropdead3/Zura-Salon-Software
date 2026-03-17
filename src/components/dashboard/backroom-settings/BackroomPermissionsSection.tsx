@@ -3,8 +3,8 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useBackroomSetting, useUpsertBackroomSetting } from '@/hooks/backroom/useBackroomSettings';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { PlatformCard, PlatformCardContent, PlatformCardHeader, PlatformCardTitle, PlatformCardDescription } from '@/components/platform/ui/PlatformCard';
-import { PlatformButton } from '@/components/platform/ui/PlatformButton';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, Shield, Save } from 'lucide-react';
 import { Infotainer } from '@/components/ui/Infotainer';
@@ -104,22 +104,22 @@ export function BackroomPermissionsSection() {
   return (
     <div className="space-y-6">
       <Infotainer id="backroom-permissions-guide" title="Backroom Permissions" description="Decide who can do what in Backroom — from mixing bowls to viewing costs to overriding charges. Each column is a role, each row is a capability." icon={<Shield className="h-4 w-4 text-primary" />} />
-      <PlatformCard variant="default">
-        <PlatformCardHeader className="flex flex-row items-center justify-between">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-[hsl(var(--platform-bg-hover))] flex items-center justify-center">
-              <Shield className="w-5 h-5 text-[hsl(var(--platform-primary))]" />
+            <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
+              <Shield className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <PlatformCardTitle>Backroom Permissions</PlatformCardTitle>
-              <PlatformCardDescription>Control which roles can access backroom features.</PlatformCardDescription>
+              <CardTitle className={tokens.card.title}>Backroom Permissions</CardTitle>
+              <CardDescription>Control which roles can access backroom features.</CardDescription>
             </div>
           </div>
-          <PlatformButton size="sm" onClick={handleSave} disabled={!perms || upsert.isPending}>
+          <Button size="sm" onClick={handleSave} disabled={!perms || upsert.isPending}>
             <Save className="w-4 h-4 mr-1.5" /> Save
-          </PlatformButton>
-        </PlatformCardHeader>
-        <PlatformCardContent>
+          </Button>
+        </CardHeader>
+        <CardContent>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -139,7 +139,7 @@ export function BackroomPermissionsSection() {
                       </td>
                     </tr>
                     {PERMISSIONS.filter(p => p.group === group).map(perm => (
-                      <tr key={perm.key} className="border-b border-[hsl(var(--platform-border)/0.3)]">
+                      <tr key={perm.key} className="border-b border-border/40">
                         <td className={cn(tokens.body.default, 'py-2.5 pr-4')}>
                           <span className="flex items-center gap-1">
                             {perm.label}
@@ -158,11 +158,11 @@ export function BackroomPermissionsSection() {
               </tbody>
             </table>
           </div>
-          <p className="text-sm text-[hsl(var(--platform-foreground-muted))] mt-4">
+          <p className="text-sm text-muted-foreground mt-4">
             Owner permissions cannot be modified. Changes apply to all backroom features across locations.
           </p>
-        </PlatformCardContent>
-      </PlatformCard>
+        </CardContent>
+      </Card>
     </div>
   );
 }
