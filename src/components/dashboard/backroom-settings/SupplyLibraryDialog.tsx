@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,7 +16,7 @@ import {
   SUPPLY_CATEGORY_LABELS,
   type SupplyLibraryItem,
 } from '@/data/professional-supply-library';
-import { useSupplyLibraryItems } from '@/hooks/platform/useSupplyLibrary';
+import { useSupplyLibraryItemsByBrand, useSupplyLibraryBrandSummaries, type BrandSummaryRow } from '@/hooks/platform/useSupplyLibrary';
 import { useSupplyBrandsMeta } from '@/hooks/platform/useSupplyLibraryBrandMeta';
 import { ColoredLogo } from '@/components/dashboard/ColoredLogo';
 import { supabase } from '@/integrations/supabase/client';
@@ -227,8 +227,12 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
   const [suggestDetails, setSuggestDetails] = useState('');
   const [isSuggesting, setIsSuggesting] = useState(false);
 
-  const { data: libraryItems = [] } = useSupplyLibraryItems();
+  // --- Data: brand summaries (server-side aggregation, no row-limit) ---
+  const { data: brandSummaries = [] } = useSupplyLibraryBrandSummaries();
   const { data: brandsMeta = [] } = useSupplyBrandsMeta();
+
+  // --- Data: per-brand products (fetched only when drilled in) ---
+  const { data: brandItems = [], isLoading: brandItemsLoading } = useSupplyLibraryItemsByBrand(selectedBrand);
 
   // Brand logo map
   const brandLogoMap = useMemo(() => {
@@ -236,12 +240,6 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
     brandsMeta.forEach((b) => m.set(b.name.toLowerCase(), b.logo_url));
     return m;
   }, [brandsMeta]);
-
-  const brands = useMemo(() => [...new Set(libraryItems.map((i) => i.brand))].sort(), [libraryItems]);
-  const getProductsByBrand = useCallback(
-    (brand: string) => libraryItems.filter((i) => i.brand === brand),
-    [libraryItems],
-  );
 
   // Existing keys
   const existingKeys = useMemo(() => {
@@ -263,41 +261,48 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
     return [{ key: sizedKey(item.brand, item.name) }];
   };
 
-  // Brand card data
+  // Brand card data — built from server-side summaries (no row-limit issue)
   const brandCardData = useMemo<BrandCardData[]>(() => {
-    return brands.map((brand) => {
-      const products = getProductsByBrand(brand);
-      const cats = [...new Set(products.map((p) => p.category))];
-      let addedCount = 0;
-      products.forEach((p) => {
-        const keys = getItemKeys(p);
-        keys.forEach(({ size }) => {
-          if (isExisting(p.brand, p.name, size)) addedCount++;
-        });
-      });
-      const totalProducts = products.reduce(
-        (sum, p) => sum + (p.sizeOptions?.length || 1),
-        0,
-      );
-      return {
+    // Group summaries by brand
+    const brandMap = new Map<string, { totalProducts: number; categories: string[] }>();
+    brandSummaries.forEach((row) => {
+      const existing = brandMap.get(row.brand);
+      if (existing) {
+        existing.totalProducts += Number(row.cnt);
+        if (!existing.categories.includes(row.category)) existing.categories.push(row.category);
+      } else {
+        brandMap.set(row.brand, { totalProducts: Number(row.cnt), categories: [row.category] });
+      }
+    });
+
+    // Count existing products per brand from existingProducts prop
+    const existingByBrand = new Map<string, number>();
+    existingProducts.forEach((p) => {
+      if (p.brand) {
+        const key = p.brand.toLowerCase();
+        existingByBrand.set(key, (existingByBrand.get(key) || 0) + 1);
+      }
+    });
+
+    return [...brandMap.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([brand, info]) => ({
         brand,
         logoUrl: brandLogoMap.get(brand.toLowerCase()) || null,
-        totalProducts,
-        addedCount,
-        categories: cats,
-      };
-    });
-  }, [brands, getProductsByBrand, existingKeys, brandLogoMap]);
+        totalProducts: info.totalProducts,
+        addedCount: existingByBrand.get(brand.toLowerCase()) || 0,
+        categories: info.categories,
+      }));
+  }, [brandSummaries, existingProducts, brandLogoMap]);
 
-  // Products for selected brand
+  // Products for selected brand (from per-brand hook)
   const brandProducts = useMemo(() => {
-    if (!selectedBrand) return [];
-    const products = getProductsByBrand(selectedBrand);
-    if (!search) return products;
+    if (!selectedBrand || brandItems.length === 0) return [];
+    if (!search) return brandItems;
     const q = search.toLowerCase();
-    if (selectedBrand.toLowerCase().includes(q)) return products;
-    return products.filter((p) => p.name.toLowerCase().includes(q));
-  }, [selectedBrand, search, getProductsByBrand]);
+    if (selectedBrand.toLowerCase().includes(q)) return brandItems;
+    return brandItems.filter((p) => p.name.toLowerCase().includes(q));
+  }, [selectedBrand, search, brandItems]);
 
   // Group products by category
   const productsByCategory = useMemo(() => {
@@ -346,7 +351,7 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
         organization_id: string; is_active: boolean;
       }> = [];
 
-      libraryItems.forEach((item) => {
+      brandItems.forEach((item) => {
         getItemKeys(item).forEach(({ key, size }) => {
           if (!selected.has(key)) return;
           itemsToInsert.push({
@@ -384,7 +389,7 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
   const handleAddEntireBrand = async (brand: string) => {
     setAddingBrand(brand);
     try {
-      const items = getProductsByBrand(brand);
+      const items = brandItems;
       const itemsToInsert: Array<{
         name: string; brand: string; category: string; product_type: string;
         is_backroom_tracked: boolean; depletion_method: string; unit_of_measure: string;
@@ -485,7 +490,7 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
   };
 
   const brandFullyAdded = (brand: string) => {
-    const items = getProductsByBrand(brand);
+    const items = brandItems;
     return items.every((p) =>
       getItemKeys(p).every(({ size }) => isExisting(p.brand, p.name, size)),
     );
@@ -531,7 +536,7 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
                 <>
                   <DialogTitle className={tokens.card.title}>Professional Supply Library</DialogTitle>
                   <DialogDescription className={tokens.body.muted}>
-                    Browse {brands.length}+ brands. Select which products your salon carries.
+                    Browse {brandCardData.length}+ brands. Select which products your salon carries.
                   </DialogDescription>
                 </>
               )}
@@ -576,6 +581,10 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
               onSelectBrand={(brand) => { setSelectedBrand(brand); setSearch(''); }}
               onShowSuggest={() => setShowSuggest(true)}
             />
+          ) : brandItemsLoading ? (
+            <div className="flex-1 flex items-center justify-center">
+              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+            </div>
           ) : (
             <ScrollArea className="flex-1 min-h-0">
               <div className="p-6 space-y-6">
