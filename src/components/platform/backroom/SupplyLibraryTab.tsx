@@ -1113,6 +1113,13 @@ export function SupplyLibraryTab() {
       {/* Add Brand Wizard */}
       <AddBrandWizard open={addBrandOpen} onOpenChange={setAddBrandOpen} />
 
+      {/* Bulk AI Catalog Import */}
+      <BulkCatalogImport
+        existingBrands={brandCards.map(b => b.brand)}
+        open={bulkImportOpen}
+        onOpenChange={setBulkImportOpen}
+      />
+
       {/* Edit Brand Dialog */}
       {selectedBrand && (
         <EditBrandDialog
