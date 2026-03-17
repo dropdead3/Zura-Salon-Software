@@ -492,13 +492,15 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
               )}
 
               {/* Search */}
-              <Input
-                placeholder="Search brands..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                icon={<Search className="w-4 h-4" />}
-                className="font-sans"
-              />
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search brands..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="font-sans pl-10"
+                />
+              </div>
 
               {/* A-Z alphabet bar */}
               <div className="flex flex-wrap items-center gap-0.5 sm:gap-1">
