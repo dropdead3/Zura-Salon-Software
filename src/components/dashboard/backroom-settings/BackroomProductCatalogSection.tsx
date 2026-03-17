@@ -593,7 +593,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
 
   const bulkProductIds = useMemo(() => {
     return allProducts.filter((p) => isTrackedAtLocation(p.id)).map((p) => p.id);
-  }, [allProducts]);
+  }, [allProducts, isTrackedAtLocation]);
 
   /* ====== Navigation ====== */
   const goBack = () => {
