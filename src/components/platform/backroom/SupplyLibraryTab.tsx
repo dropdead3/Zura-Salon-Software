@@ -715,8 +715,8 @@ export function SupplyLibraryTab() {
               {initStatus?.isInitialized && (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <PlatformButton variant="outline" size="sm" onClick={() => syncMutation.mutate()} loading={syncMutation.isPending}>
-                      <RefreshCw className="w-3.5 h-3.5 mr-1" /> Sync Library
+                    <PlatformButton variant="outline" size="sm" onClick={() => syncMutation.mutate()} disabled={syncMutation.isPending}>
+                      <RefreshCw className={cn('w-3.5 h-3.5 mr-1', syncMutation.isPending && 'animate-spin')} /> Sync Library
                     </PlatformButton>
                   </TooltipTrigger>
                   <TooltipContent side="bottom">Fetches the latest product data from Phorest and updates your library.</TooltipContent>
