@@ -17,6 +17,11 @@ export interface SupplyLibraryProduct {
   default_unit: string;
   size_options: string[];
   is_active: boolean;
+  wholesale_price: number | null;
+  recommended_retail: number | null;
+  currency: string;
+  price_source_id: string | null;
+  price_updated_at: string | null;
   created_at: string;
   updated_at: string;
 }

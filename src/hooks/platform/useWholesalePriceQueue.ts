@@ -81,6 +81,19 @@ export function useApprovePriceUpdate() {
 
         if (prodErr) throw prodErr;
       }
+
+      // Also update matching supply library product (by brand + name)
+      if (params.brand && params.productName) {
+        await supabase
+          .from('supply_library_products')
+          .update({
+            wholesale_price: params.wholesalePrice,
+            price_source_id: params.sourceId || null,
+            price_updated_at: new Date().toISOString(),
+          } as any)
+          .eq('brand', params.brand)
+          .eq('name', params.productName);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['wholesale-price-queue'] });
