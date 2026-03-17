@@ -63,26 +63,18 @@ export function SupplyLibraryTab() {
   const [csvOpen, setCsvOpen] = useState(false);
   const [inlineEditing, setInlineEditing] = useState<{ id: string; field: string; value: string } | null>(null);
   // localStorage-backed collapse state
-  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(() => {
-    try {
-      const stored = localStorage.getItem('supply-library-categories');
-      return stored ? new Set(JSON.parse(stored)) : new Set();
-    } catch { return new Set(); }
-  });
-  const [collapsedSubLines, setCollapsedSubLines] = useState<Set<string>>(() => {
-    try {
-      const stored = localStorage.getItem('supply-library-sublines');
-      return stored ? new Set(JSON.parse(stored)) : new Set();
-    } catch { return new Set(); }
-  });
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
+  const [collapsedSubLines, setCollapsedSubLines] = useState<Set<string>>(new Set());
 
-  // Persist collapse state to localStorage
+  // Persist collapse state to brand-scoped localStorage keys
   useEffect(() => {
-    localStorage.setItem('supply-library-categories', JSON.stringify([...collapsedCategories]));
-  }, [collapsedCategories]);
+    if (!selectedBrand) return;
+    localStorage.setItem(`supply-library-categories::${selectedBrand}`, JSON.stringify([...collapsedCategories]));
+  }, [collapsedCategories, selectedBrand]);
   useEffect(() => {
-    localStorage.setItem('supply-library-sublines', JSON.stringify([...collapsedSubLines]));
-  }, [collapsedSubLines]);
+    if (!selectedBrand) return;
+    localStorage.setItem(`supply-library-sublines::${selectedBrand}`, JSON.stringify([...collapsedSubLines]));
+  }, [collapsedSubLines, selectedBrand]);
 
   const { data: initStatus, isLoading: initLoading } = useSupplyLibraryInitStatus();
   const seedMutation = useSeedSupplyLibrary();
