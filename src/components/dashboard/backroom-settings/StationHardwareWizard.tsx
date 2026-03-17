@@ -32,7 +32,7 @@ import {
   Monitor,
   Bluetooth,
   Tablet,
-  Scale,
+  Weight,
   Check,
   ArrowLeft,
   ArrowRight,
