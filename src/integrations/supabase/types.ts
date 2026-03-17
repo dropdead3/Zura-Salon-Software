@@ -9280,6 +9280,64 @@ export type Database = {
           },
         ]
       }
+      location_product_settings: {
+        Row: {
+          created_at: string
+          id: string
+          is_tracked: boolean
+          location_id: string
+          organization_id: string
+          par_level: number | null
+          product_id: string
+          reorder_level: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_tracked?: boolean
+          location_id: string
+          organization_id: string
+          par_level?: number | null
+          product_id: string
+          reorder_level?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_tracked?: boolean
+          location_id?: string
+          organization_id?: string
+          par_level?: number | null
+          product_id?: string
+          reorder_level?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "location_product_settings_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "location_product_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "location_product_settings_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       locations: {
         Row: {
           address: string
