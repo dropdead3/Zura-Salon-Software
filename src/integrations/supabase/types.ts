@@ -19906,6 +19906,7 @@ export type Database = {
           created_at: string
           currency: string
           default_depletion: string
+          default_markup_pct: number | null
           default_unit: string
           id: string
           is_active: boolean
@@ -19927,6 +19928,7 @@ export type Database = {
           created_at?: string
           currency?: string
           default_depletion?: string
+          default_markup_pct?: number | null
           default_unit?: string
           id?: string
           is_active?: boolean
@@ -19948,6 +19950,7 @@ export type Database = {
           created_at?: string
           currency?: string
           default_depletion?: string
+          default_markup_pct?: number | null
           default_unit?: string
           id?: string
           is_active?: boolean
