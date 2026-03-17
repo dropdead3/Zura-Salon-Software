@@ -617,7 +617,14 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
               brands={brandCardData}
               search={search}
               onSearch={setSearch}
-              onSelectBrand={(brand) => { setSelectedBrand(brand); setSelectedCategory(null); setSelectedLine(null); setSearch(''); }}
+              onSelectBrand={(brand) => {
+                setSelectedBrand(brand);
+                const savedCat = localStorage.getItem(columnKey('cat', brand));
+                const savedLine = localStorage.getItem(columnKey('line', brand));
+                setSelectedCategory(savedCat);
+                setSelectedLine(savedLine);
+                setSearch('');
+              }}
               onShowSuggest={() => setShowSuggest(true)}
             />
           ) : brandItemsLoading ? (
