@@ -459,8 +459,8 @@ export function BusinessSettingsDialog({ open, onOpenChange }: BusinessSettingsD
   const bothLogosUploaded = formData.logo_light_url && formData.logo_dark_url;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col overflow-hidden p-0">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 font-display text-xl">
             <Building2 className="w-5 h-5" />
