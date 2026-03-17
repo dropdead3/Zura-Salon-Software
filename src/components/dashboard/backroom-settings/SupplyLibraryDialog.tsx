@@ -227,8 +227,12 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
   const [suggestDetails, setSuggestDetails] = useState('');
   const [isSuggesting, setIsSuggesting] = useState(false);
 
-  const { data: libraryItems = [] } = useSupplyLibraryItems();
+  // --- Data: brand summaries (server-side aggregation, no row-limit) ---
+  const { data: brandSummaries = [] } = useSupplyLibraryBrandSummaries();
   const { data: brandsMeta = [] } = useSupplyBrandsMeta();
+
+  // --- Data: per-brand products (fetched only when drilled in) ---
+  const { data: brandItems = [], isLoading: brandItemsLoading } = useSupplyLibraryItemsByBrand(selectedBrand);
 
   // Brand logo map
   const brandLogoMap = useMemo(() => {
@@ -236,12 +240,6 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
     brandsMeta.forEach((b) => m.set(b.name.toLowerCase(), b.logo_url));
     return m;
   }, [brandsMeta]);
-
-  const brands = useMemo(() => [...new Set(libraryItems.map((i) => i.brand))].sort(), [libraryItems]);
-  const getProductsByBrand = useCallback(
-    (brand: string) => libraryItems.filter((i) => i.brand === brand),
-    [libraryItems],
-  );
 
   // Existing keys
   const existingKeys = useMemo(() => {
@@ -263,41 +261,48 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
     return [{ key: sizedKey(item.brand, item.name) }];
   };
 
-  // Brand card data
+  // Brand card data — built from server-side summaries (no row-limit issue)
   const brandCardData = useMemo<BrandCardData[]>(() => {
-    return brands.map((brand) => {
-      const products = getProductsByBrand(brand);
-      const cats = [...new Set(products.map((p) => p.category))];
-      let addedCount = 0;
-      products.forEach((p) => {
-        const keys = getItemKeys(p);
-        keys.forEach(({ size }) => {
-          if (isExisting(p.brand, p.name, size)) addedCount++;
-        });
-      });
-      const totalProducts = products.reduce(
-        (sum, p) => sum + (p.sizeOptions?.length || 1),
-        0,
-      );
-      return {
+    // Group summaries by brand
+    const brandMap = new Map<string, { totalProducts: number; categories: string[] }>();
+    brandSummaries.forEach((row) => {
+      const existing = brandMap.get(row.brand);
+      if (existing) {
+        existing.totalProducts += Number(row.cnt);
+        if (!existing.categories.includes(row.category)) existing.categories.push(row.category);
+      } else {
+        brandMap.set(row.brand, { totalProducts: Number(row.cnt), categories: [row.category] });
+      }
+    });
+
+    // Count existing products per brand from existingProducts prop
+    const existingByBrand = new Map<string, number>();
+    existingProducts.forEach((p) => {
+      if (p.brand) {
+        const key = p.brand.toLowerCase();
+        existingByBrand.set(key, (existingByBrand.get(key) || 0) + 1);
+      }
+    });
+
+    return [...brandMap.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([brand, info]) => ({
         brand,
         logoUrl: brandLogoMap.get(brand.toLowerCase()) || null,
-        totalProducts,
-        addedCount,
-        categories: cats,
-      };
-    });
-  }, [brands, getProductsByBrand, existingKeys, brandLogoMap]);
+        totalProducts: info.totalProducts,
+        addedCount: existingByBrand.get(brand.toLowerCase()) || 0,
+        categories: info.categories,
+      }));
+  }, [brandSummaries, existingProducts, brandLogoMap]);
 
-  // Products for selected brand
+  // Products for selected brand (from per-brand hook)
   const brandProducts = useMemo(() => {
-    if (!selectedBrand) return [];
-    const products = getProductsByBrand(selectedBrand);
-    if (!search) return products;
+    if (!selectedBrand || brandItems.length === 0) return [];
+    if (!search) return brandItems;
     const q = search.toLowerCase();
-    if (selectedBrand.toLowerCase().includes(q)) return products;
-    return products.filter((p) => p.name.toLowerCase().includes(q));
-  }, [selectedBrand, search, getProductsByBrand]);
+    if (selectedBrand.toLowerCase().includes(q)) return brandItems;
+    return brandItems.filter((p) => p.name.toLowerCase().includes(q));
+  }, [selectedBrand, search, brandItems]);
 
   // Group products by category
   const productsByCategory = useMemo(() => {
