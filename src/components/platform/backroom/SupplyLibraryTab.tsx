@@ -796,12 +796,18 @@ export function SupplyLibraryTab() {
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <PlatformButton
+                    <PlatformButton
                         variant="ghost"
                         size="icon-sm"
                         onClick={() => setResetConfirmOpen(true)}
+                        className="relative"
                       >
                         <RotateCcw className="w-3.5 h-3.5" />
+                        {savedBrandCount > 0 && (
+                          <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-violet-500/80 text-[10px] font-sans text-white flex items-center justify-center">
+                            {savedBrandCount}
+                          </span>
+                        )}
                       </PlatformButton>
                     </TooltipTrigger>
                     <TooltipContent>Reset all collapse state</TooltipContent>
@@ -827,6 +833,7 @@ export function SupplyLibraryTab() {
                             }
                           }
                           keysToRemove.forEach((k) => localStorage.removeItem(k));
+                          localStorage.setItem('supply-library-last-reset', new Date().toISOString());
                           setCollapsedCategories(new Set());
                           setCollapsedSubLines(new Set());
                           toast.success('Collapse state reset for all brands');
