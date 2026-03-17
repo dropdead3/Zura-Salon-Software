@@ -483,11 +483,278 @@ function getMidLevelHex(tone: ToneFamily): string {
  * Given a product name, suggest the closest swatch hex from the palette.
  * Returns null if no reasonable suggestion can be made.
  */
-export function suggestSwatchColor(productName: string): string | null {
+/**
+ * Consumer brand shade name → exact hex color.
+ * These brands have well-known, specific colors per shade.
+ */
+const CONSUMER_SHADE_MAP: Record<string, Record<string, string>> = {
+  'Arctic Fox': {
+    'Aquamarine': '#00C5CD',
+    'Beetle Juice': '#BA2FA2',
+    'Blue Jean Baby': '#5B8FD4',
+    'Cosmic Sunshine': '#FFD700',
+    'Electric Paradise': '#FF1493',
+    'Frose': '#F77FBE',
+    'Girls Night': '#4B0082',
+    'Iris Green': '#00947A',
+    'Phantom Green': '#0A6B4F',
+    'Poison': '#7FFF00',
+    'Poseidon': '#003B6F',
+    'Purple AF': '#9B30FF',
+    'Purple Rain': '#7D26CD',
+    'Ritual': '#8B0000',
+    'Sterling': '#C0C0C0',
+    'Sunset Orange': '#FF4500',
+    'Transylvania': '#1A1A2E',
+    'True Romance': '#C71585',
+    'Virgin Pink': '#FF69B4',
+    'Wrath': '#E10600',
+    'Neverland': '#2E8B57',
+    'Periwinkle': '#7B68EE',
+  },
+  'Manic Panic': {
+    'After Midnight Blue': '#003366',
+    'Alien Grey': '#A9A9A9',
+    'Amplified Blue Steel': '#4682B4',
+    'Atomic Turquoise': '#00B2AA',
+    'Bad Boy Blue': '#7EC8E3',
+    'Blue Moon': '#0066CC',
+    'Cotton Candy Pink': '#FFB7C5',
+    'Cleo Rose': '#C35D8E',
+    'Deep Purple Dream': '#4B0082',
+    'Divine Wine': '#722F37',
+    'Dreamtone': '#E6C3C3',
+    'Electric Amethyst': '#9966CC',
+    'Electric Banana': '#FFFF00',
+    'Electric Lizard': '#CCFF00',
+    'Electric Tiger Lily': '#FF6347',
+    'Enchanted Forest': '#004225',
+    'Fuchsia Shock': '#FF00FF',
+    'Green Envy': '#009B48',
+    'Hot Hot Pink': '#FF69B4',
+    'Inferno': '#FF2400',
+    'Lie Locks': '#9370DB',
+    'Pillarbox Red': '#DC143C',
+    'Plum Passion': '#8B008B',
+    'Pretty Flamingo': '#FF6EB4',
+    'Psychedelic Sunset': '#FF8C00',
+    'Purple Haze': '#9400D3',
+    'Raven': '#0D0D0D',
+    'Red Passion': '#B22222',
+    'Rock n Roll Red': '#C80815',
+    'Rockabilly Blue': '#4169E1',
+    'Shocking Blue': '#0066FF',
+    'Siren\'s Song': '#009E60',
+    'Sunshine': '#FFD700',
+    'Ultra Violet': '#6B3FA0',
+    'Vampire Red': '#8B0000',
+    'Vampire\'s Kiss': '#660000',
+    'Voodoo Blue': '#005F9E',
+    'Voodoo Forest': '#2F4F2F',
+    'Wildfire': '#EE4000',
+  },
+  'Good Dye Young': {
+    'Ex-Girl': '#C71585',
+    'Blue Ruin': '#4169E1',
+    'Kowabunga': '#00CED1',
+    'PPL Eater': '#7B2D8E',
+    'Rock Lobster': '#CC3333',
+    'Narsissy': '#FF8C00',
+    'None More Black': '#0A0A0A',
+    'Steal My Sunshine': '#FFD700',
+    'Bip': '#00FF7F',
+    'Riot': '#FF0040',
+  },
+  'Crazy Color': {
+    'Bubblegum Blue': '#6FA8DC',
+    'Candy Floss': '#FFB6C1',
+    'Capri Blue': '#00BFFF',
+    'Coral Red': '#FF4040',
+    'Cyclamen': '#FF1DC2',
+    'Emerald Green': '#00A86B',
+    'Fire': '#FF4500',
+    'Hot Purple': '#7B2FA0',
+    'Lavender': '#B57EDC',
+    'Lime Twist': '#BFFF00',
+    'Marshmallow': '#F0C0D0',
+    'Peppermint': '#98FF98',
+    'Pine Green': '#01796F',
+    'Platinum': '#E5E4E2',
+    'Rebel UV': '#9933FF',
+    'Silver': '#C0C0C0',
+    'Sky Blue': '#87CEEB',
+    'Slate': '#708090',
+    'Toxic UV': '#7FFF00',
+    'Vermillion Red': '#E34234',
+    'Violette': '#7F00FF',
+  },
+  'Lime Crime Unicorn Hair': {
+    'Anime': '#FF007F',
+    'Blue Smoke': '#778899',
+    'Bubblegum Rose': '#FF6EB4',
+    'Butterfly': '#00BFFF',
+    'Chocolate Cherry': '#5C0A1E',
+    'Dirty Mermaid': '#2E8B57',
+    'Juicy': '#FF6B6B',
+    'Mystical': '#9370DB',
+    'Neon Peach': '#FF9966',
+    'Oyster': '#E8DCC8',
+    'Pony': '#DA70D6',
+    'Sea Witch': '#005F6A',
+    'Squid': '#6A0DAD',
+  },
+  'oVertone': {
+    'Extreme Blue': '#0000CD',
+    'Extreme Pink': '#FF1493',
+    'Extreme Purple': '#7B2D8E',
+    'Extreme Red': '#CC0000',
+    'Extreme Orange': '#FF4500',
+    'Extreme Silver': '#C0C0C0',
+    'Extreme Teal': '#008080',
+    'Pastel Blue': '#A4C8E1',
+    'Pastel Pink': '#FFB6C1',
+    'Pastel Purple': '#D8B2D1',
+    'Rose Gold': '#B76E79',
+    'Vibrant Blue': '#0066FF',
+    'Vibrant Purple': '#8B00FF',
+    'Vibrant Red': '#E00000',
+  },
+  'Punky Colour': {
+    'Alpine Green': '#006B3C',
+    'Atlantic Blue': '#003DA5',
+    'Cherry on Top': '#DE3163',
+    'Coral': '#FF6F61',
+    'Cotton Candy': '#FFB7D5',
+    'Flame': '#E25822',
+    'Lavender': '#B57EDC',
+    'Lynx': '#FFD700',
+    'Plum': '#8E4585',
+    'Purple': '#800080',
+    'Red Wine': '#722F37',
+    'Rose': '#FF007F',
+    'Spring Green': '#00FF7F',
+    'Turquoise': '#30D5C8',
+    'Violet': '#7F00FF',
+  },
+  'Lunar Tides': {
+    'Amethyst': '#9966CC',
+    'Aurora Green': '#00C957',
+    'Beetle': '#1C1C2E',
+    'Cerulean Sea': '#2A52BE',
+    'Coral Reef': '#FF7F50',
+    'Cosmos': '#4A0E4E',
+    'Crescent': '#7EC8E3',
+    'Dandelion': '#F0E130',
+    'Eclipse': '#3C1361',
+    'Ember': '#CC4E00',
+    'Fuchsia': '#FF00FF',
+    'Garnet': '#733635',
+    'Juniper': '#3B7A57',
+    'Orchid': '#DA70D6',
+    'Petal Pink': '#FFB7C5',
+    'Siam Orange': '#FF6347',
+    'Smokey Teal': '#5F8A8B',
+    'Slate Grey': '#708090',
+  },
+  'Iroiro': {
+    '10 Black': '#0A0A0A',
+    '20 Purple': '#6A0DAD',
+    '30 Violet': '#7F00FF',
+    '40 Blue': '#0000CD',
+    '50 Turquoise': '#30D5C8',
+    '60 Green': '#00A550',
+    '70 Yellow': '#FFD700',
+    '80 Orange': '#FF6600',
+    '90 Red': '#CC0000',
+    '100 Pink': '#FF69B4',
+    '110 Dark Red': '#8B0000',
+    '120 Neon Green': '#39FF14',
+    '130 Neon Pink': '#FF10F0',
+  },
+  'Adore': {
+    'African Violet': '#7F3FB0',
+    'Aquamarine': '#00CED1',
+    'Blue Black': '#1A1A3E',
+    'Burgundy Envy': '#722F37',
+    'Clover': '#009B48',
+    'Crimson': '#DC143C',
+    'Crystal Clear': 'transparent',
+    'Dark Plum': '#5C005C',
+    'Electric Lime': '#CCFF00',
+    'Fruit Punch': '#FF3366',
+    'Indigo Blue': '#3F00BF',
+    'Jade': '#00A86B',
+    'Lavender': '#B57EDC',
+    'Paprika': '#8B2500',
+    'Pink Blush': '#FFB6C1',
+    'Purple Rage': '#7B00FF',
+    'Raging Red': '#FF0000',
+    'Ruby Red': '#9B111E',
+    'Sienna Brown': '#A0522D',
+    'Sky Blue': '#87CEEB',
+    'Sunrise Orange': '#FF7F24',
+    'Sweet Plum': '#8E4585',
+    'Thunder': '#2A2A4A',
+    'Wild Cherry': '#E32636',
+  },
+  'Splat': {
+    'Berry Blast': '#8E4585',
+    'Blue Envy': '#007FFF',
+    'Crimson Obsession': '#990000',
+    'Luscious Raspberries': '#CE2029',
+    'Lusty Lavender': '#9966CC',
+    'Midnight Indigo': '#2E0854',
+    'Neon Green': '#39FF14',
+    'Ocean Ombre': '#004B6B',
+    'Pink Fetish': '#FF69B4',
+    'Purple Desire': '#7B2D8E',
+    'Red Ignite': '#FF2400',
+  },
+};
+
+/**
+ * Look up a consumer brand shade by exact or fuzzy match.
+ */
+function lookupConsumerSwatch(brand: string, productName: string): string | null {
+  // Try direct brand lookup
+  const brandShades = CONSUMER_SHADE_MAP[brand];
+  if (!brandShades) return null;
+
+  const nameLower = productName.toLowerCase().trim();
+
+  // Exact match first
+  for (const [shade, hex] of Object.entries(brandShades)) {
+    if (nameLower === shade.toLowerCase()) return hex;
+  }
+
+  // Shade name contained in product name (e.g. "Manic Panic Vampire Red" contains "Vampire Red")
+  for (const [shade, hex] of Object.entries(brandShades)) {
+    if (nameLower.includes(shade.toLowerCase())) return hex;
+  }
+
+  return null;
+}
+
+export function suggestSwatchColor(productName: string, brand?: string): string | null {
   if (!productName) return null;
 
   // "Clear" products
   if (/\bclear\b/i.test(productName)) return 'transparent';
+
+  // Check consumer brand shade map first
+  if (brand) {
+    const consumerHex = lookupConsumerSwatch(brand, productName);
+    if (consumerHex) return consumerHex;
+  }
+  // Also try to detect brand from product name if not provided
+  if (!brand) {
+    for (const brandName of Object.keys(CONSUMER_SHADE_MAP)) {
+      if (productName.toLowerCase().includes(brandName.toLowerCase())) {
+        const consumerHex = lookupConsumerSwatch(brandName, productName);
+        if (consumerHex) return consumerHex;
+      }
+    }
+  }
 
   const tone = detectTone(productName);
 

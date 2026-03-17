@@ -9,6 +9,7 @@ const corsHeaders = {
 interface BrandRequest {
   brand: string;
   is_professional: boolean;
+  verify_url?: string;
 }
 
 interface ProductEntry {
@@ -18,6 +19,13 @@ interface ProductEntry {
   default_unit: string;
   default_depletion: string;
   size_options: string[];
+  swatch_hex?: string;
+}
+
+interface VerificationResult {
+  verified: boolean;
+  warnings: string[];
+  confidence: "high" | "medium" | "low";
 }
 
 Deno.serve(async (req) => {
@@ -26,7 +34,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { brands, dry_run } = await req.json() as { brands: BrandRequest[]; dry_run?: boolean };
+    const { brands, dry_run } = (await req.json()) as { brands: BrandRequest[]; dry_run?: boolean };
 
     if (!Array.isArray(brands) || brands.length === 0) {
       return new Response(
@@ -57,31 +65,32 @@ Deno.serve(async (req) => {
       products_generated?: number;
       products_inserted?: number;
       products_skipped?: number;
+      products?: ProductEntry[];
+      verification?: VerificationResult | null;
       error?: string;
     }[] = [];
 
     // Process brands sequentially to respect rate limits
     for (const brandReq of brands) {
-      const { brand, is_professional } = brandReq;
+      const { brand, is_professional, verify_url } = brandReq;
 
       try {
         console.log(`Processing brand: ${brand}`);
 
-        // Call generate-color-catalog
+        // Call generate-color-catalog with optional verify_url
         const genResponse = await fetch(`${supabaseUrl}/functions/v1/generate-color-catalog`, {
           method: "POST",
           headers: {
             Authorization: `Bearer ${supabaseKey}`,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ brand, is_professional }),
+          body: JSON.stringify({ brand, is_professional, verify_url }),
         });
 
         if (!genResponse.ok) {
           const errText = await genResponse.text();
           console.error(`Failed to generate for ${brand}:`, errText);
           results.push({ brand, status: "error", error: `Generation failed: ${genResponse.status}` });
-          // If rate limited, wait before continuing
           if (genResponse.status === 429) {
             console.log("Rate limited, waiting 30s...");
             await new Promise((r) => setTimeout(r, 30000));
@@ -96,22 +105,23 @@ Deno.serve(async (req) => {
         }
 
         const products: ProductEntry[] = genData.products;
+        const verification: VerificationResult | null = genData.verification || null;
         console.log(`Generated ${products.length} products for ${brand}`);
 
         // Filter out duplicates
-        const newProducts = products.filter(
-          (p) => !existingSet.has(`${brand}::${p.name}`.toLowerCase())
-        );
-
+        const newProducts = products.filter((p) => !existingSet.has(`${brand}::${p.name}`.toLowerCase()));
         const skippedCount = products.length - newProducts.length;
 
         if (dry_run) {
+          // Return full products for review
           results.push({
             brand,
             status: "success",
             products_generated: products.length,
             products_inserted: 0,
             products_skipped: skippedCount,
+            products: newProducts,
+            verification,
           });
           continue;
         }
@@ -123,6 +133,7 @@ Deno.serve(async (req) => {
             products_generated: products.length,
             products_inserted: 0,
             products_skipped: skippedCount,
+            verification,
           });
           continue;
         }
@@ -142,6 +153,8 @@ Deno.serve(async (req) => {
             size_options: p.size_options,
             is_active: true,
             is_professional: is_professional,
+            // Include swatch_color from AI-generated swatch_hex for consumer brands
+            ...(p.swatch_hex ? { swatch_color: p.swatch_hex } : {}),
           }));
 
           const { error: insertError, data: inserted } = await supabase
@@ -151,10 +164,8 @@ Deno.serve(async (req) => {
 
           if (insertError) {
             console.error(`Insert error for ${brand} chunk ${i}:`, insertError);
-            // Continue with other chunks even if one fails
           } else {
             insertedCount += (inserted || []).length;
-            // Add to existing set so later brands don't duplicate
             chunk.forEach((p) => existingSet.add(`${brand}::${p.name}`.toLowerCase()));
           }
         }
@@ -165,11 +176,10 @@ Deno.serve(async (req) => {
           products_generated: products.length,
           products_inserted: insertedCount,
           products_skipped: skippedCount,
+          verification,
         });
 
         console.log(`${brand}: inserted ${insertedCount}, skipped ${skippedCount}`);
-
-        // Small delay between brands to avoid overwhelming AI gateway
         await new Promise((r) => setTimeout(r, 2000));
       } catch (brandError) {
         console.error(`Error processing ${brand}:`, brandError);
@@ -187,6 +197,7 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
+        dry_run: !!dry_run,
         summary: {
           brands_processed: results.length,
           total_generated: totalGenerated,
