@@ -12,6 +12,8 @@ import {
   PackagePlus, ChevronLeft, ArrowLeft,
 } from 'lucide-react';
 import { PLATFORM_NAME } from '@/lib/brand';
+import { BrowseColumn, type BrowseColumnItem } from '@/components/platform/backroom/BrowseColumn';
+import { groupByProductLine } from '@/lib/supply-line-parser';
 import {
   SUPPLY_CATEGORY_LABELS,
   type SupplyLibraryItem,
