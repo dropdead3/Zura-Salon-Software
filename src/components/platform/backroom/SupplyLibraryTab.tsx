@@ -147,6 +147,10 @@ export function SupplyLibraryTab() {
     let filtered = categoryFilter === 'all' ? brandProducts : brandProducts.filter((p) => p.category === categoryFilter);
     if (pricingFilter === 'missing') filtered = filtered.filter((p) => p.wholesale_price == null);
     else if (pricingFilter === 'priced') filtered = filtered.filter((p) => p.wholesale_price != null);
+    if (recencyFilter === 'recent') {
+      const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString();
+      filtered = filtered.filter((p) => p.created_at >= sevenDaysAgo);
+    }
     const groups = new Map<string, SupplyLibraryProduct[]>();
     filtered.forEach((p) => {
       if (!groups.has(p.category)) groups.set(p.category, []);
