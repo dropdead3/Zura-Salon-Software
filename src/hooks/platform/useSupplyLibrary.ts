@@ -65,7 +65,8 @@ export function useSupplyLibraryBrands() {
         .from('supply_library_products')
         .select('brand')
         .eq('is_active', true)
-        .order('brand');
+        .order('brand')
+        .limit(10000);
 
       if (error) throw error;
       if (!data || data.length === 0) {
