@@ -618,6 +618,13 @@ export function SupplyLibraryTab() {
                       </button>
                       <span className="text-[hsl(var(--platform-foreground-muted))]">/</span>
                       <PlatformCardTitle>{selectedBrand}</PlatformCardTitle>
+                      <button
+                        onClick={() => setEditBrandOpen(true)}
+                        className="ml-1 p-1 rounded-md text-[hsl(var(--platform-foreground-muted))] hover:text-[hsl(var(--platform-foreground))] hover:bg-[hsl(var(--platform-bg-hover))] transition-colors"
+                        title="Edit brand"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                     <PlatformCardDescription>
                       {brandProducts.length} products
