@@ -877,9 +877,6 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                               <TableHead className="w-8 font-sans text-xs">Track</TableHead>
                               {showSwatch && <TableHead className="w-[40px] font-sans text-xs" />}
                               <TableHead className="font-sans text-xs">Name</TableHead>
-                              <TableHead className="font-sans text-xs hidden md:table-cell">Category</TableHead>
-                              <TableHead className="font-sans text-xs hidden lg:table-cell">Depletion</TableHead>
-                              <TableHead className="font-sans text-xs hidden lg:table-cell">Unit</TableHead>
                               <TableHead className="font-sans text-xs">Wholesale</TableHead>
                               <TableHead className="font-sans text-xs hidden md:table-cell">Markup</TableHead>
                               <TableHead className="font-sans text-xs hidden md:table-cell">Retail</TableHead>
