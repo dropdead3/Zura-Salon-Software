@@ -242,7 +242,8 @@ export function useSupplyLibraryItems() {
         .select('*')
         .eq('is_active', true)
         .order('brand')
-        .order('name');
+        .order('name')
+        .range(0, 4999);
 
       if (error) throw error;
 
@@ -261,6 +262,40 @@ export function useSupplyLibraryItems() {
       // Fallback to static data
       return SUPPLY_LIBRARY;
     },
+    staleTime: 120_000,
+  });
+}
+
+/** Fetch supply library items for a single brand (avoids row-limit issues) */
+export function useSupplyLibraryItemsByBrand(brand: string | null) {
+  return useQuery({
+    queryKey: ['supply-library-items-brand', brand],
+    queryFn: async (): Promise<SupplyLibraryItem[]> => {
+      if (!brand) return [];
+      const { data, error } = await supabase
+        .from('supply_library_products')
+        .select('*')
+        .eq('is_active', true)
+        .eq('brand', brand)
+        .order('name')
+        .range(0, 999);
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        return (data as any[]).map((p) => ({
+          brand: p.brand,
+          name: p.name,
+          category: p.category as SupplyLibraryItem['category'],
+          defaultDepletion: p.default_depletion as SupplyLibraryItem['defaultDepletion'],
+          defaultUnit: p.default_unit as SupplyLibraryItem['defaultUnit'],
+          sizeOptions: p.size_options || [],
+        }));
+      }
+
+      return [];
+    },
+    enabled: !!brand,
     staleTime: 120_000,
   });
 }
