@@ -256,9 +256,7 @@ export default function TeamDirectory() {
             </div>
 
             {isLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-              </div>
+              <DashboardLoader size="lg" className="py-12" />
             ) : filteredTeam.length === 0 ? (
               <Card>
                 <CardContent className="p-8 text-center text-muted-foreground">

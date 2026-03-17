@@ -127,9 +127,7 @@ export default function RewardShop() {
           {/* Redemptions Tab */}
           <TabsContent value="history" className="mt-6">
             {redemptionsLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-              </div>
+              <DashboardLoader size="md" className="py-12" />
             ) : redemptions.length === 0 ? (
               <Card className="p-12 text-center">
                 <Gift className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
